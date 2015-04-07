@@ -21,13 +21,12 @@
 
 package org.micromanager.internal;
 
-import com.swtdesigner.SwingResourceManager;
-
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.ImageIcon;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -144,7 +143,7 @@ public final class ConfigPadButtonPanel extends JPanel {
       JButton theButton = createButton();
       theButton.setText(buttonText);
       if (iconPath.length()>0)
-         theButton.setIcon(SwingResourceManager.getIcon(MMStudio.class,iconPath));
+         theButton.setIcon(new ImageIcon( getClass().getResource(iconPath)));
       return theButton;
    }
 

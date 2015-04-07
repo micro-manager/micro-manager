@@ -21,7 +21,6 @@
 package org.micromanager.display.internal.link;
 
 import com.google.common.eventbus.Subscribe;
-import com.swtdesigner.SwingResourceManager;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -51,11 +50,12 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class LinkButton extends JToggleButton {
    // This icon is a modified version of
    // http://icon-park.com/icon/black-link-icon-vector-data/
-   private static final ImageIcon LINK_ICON = SwingResourceManager.getIcon(
-         LinkButton.class, "/org/micromanager/internal/icons/linkflat.png");
+   private static final ImageIcon LINK_ICON = new ImageIcon( 
+           LinkButton.class.getResource( 
+                   "/org/micromanager/internal/icons/linkflat.png") );
 
    private SettingsLinker linker_;
-   private DisplayWindow display_;
+   private final DisplayWindow display_;
 
    public LinkButton(final SettingsLinker linker,
          final DisplayWindow display) {
@@ -104,6 +104,7 @@ public class LinkButton extends JToggleButton {
 
    /**
     * Pop up a menu to let the user manually link to a specific display.
+    * @param p
     */
    public void showLinkMenu(Point p) {
       JPopupMenu menu = new JPopupMenu();
@@ -140,7 +141,9 @@ public class LinkButton extends JToggleButton {
 
    /**
     * We want to be slightly larger than the icon we contain.
+    * @return 
     */
+   @Override
    public Dimension getPreferredSize() {
       return new Dimension(LINK_ICON.getIconWidth() + 6,
             LINK_ICON.getIconHeight() + 2);
@@ -160,6 +163,7 @@ public class LinkButton extends JToggleButton {
    /**
     * When a LinkButton on another display toggles, we need to also toggle
     * if their linker matches our own.
+    * @param event
     */
    @Subscribe
    public void onRemoteLinkEvent(RemoteLinkEvent event) {
@@ -175,6 +179,7 @@ public class LinkButton extends JToggleButton {
 
    /**
     * Unregister for events so that garbage collection can go through.
+    * @param event
     */
    @Subscribe
    public void onDisplayDestroyed(DisplayDestroyedEvent event) {

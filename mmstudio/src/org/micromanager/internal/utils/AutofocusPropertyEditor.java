@@ -52,8 +52,8 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 
-import com.swtdesigner.SwingResourceManager;
 import java.text.ParseException;
+import javax.swing.ImageIcon;
 
 /**
  * JFrame based component for generic manipulation of device properties.
@@ -135,7 +135,8 @@ public class AutofocusPropertyEditor extends MMDialog {
       springLayout.putConstraint(SpringLayout.WEST, refreshButton, 10, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.SOUTH, refreshButton, 33, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.EAST, refreshButton, 110, SpringLayout.WEST, getContentPane());
-      refreshButton.setIcon(SwingResourceManager.getIcon(AutofocusPropertyEditor.class, "/org/micromanager/internal/icons/arrow_refresh.png"));
+      refreshButton.setIcon(new ImageIcon( getClass().getResource(
+              "/org/micromanager/internal/icons/arrow_refresh.png")));
       refreshButton.setFont(new Font("Arial", Font.PLAIN, 10));
       getContentPane().add(refreshButton);
       refreshButton.addActionListener(new ActionListener() {
@@ -363,8 +364,7 @@ public class AutofocusPropertyEditor extends MMDialog {
          
          try {            
         	
-            for (int i=0; i<propList_.size(); i++){
-               PropertyItem item = propList_.get(i);
+            for (PropertyItem item : propList_) {
                item.value = afMgr_.getDevice().getPropertyValue(item.name);
             }
         	
@@ -382,10 +382,10 @@ public class AutofocusPropertyEditor extends MMDialog {
          if (afMgr_.getDevice() != null)
             properties = afMgr_.getDevice().getProperties();
          
-         for (int j=0; j<properties.length; j++){  
-            if (!properties[j].preInit) {
-               if ((showReadOnly_ && properties[j].readOnly) || !properties[j].readOnly) {
-                  propList_.add(properties[j]);
+         for (PropertyItem propertie : properties) {
+            if (!propertie.preInit) {
+               if ((showReadOnly_ && propertie.readOnly) || !propertie.readOnly) {
+                  propList_.add(propertie);
                }
             }
          }
@@ -481,11 +481,12 @@ public class AutofocusPropertyEditor extends MMDialog {
             }
          
             ActionListener[] l = combo_.getActionListeners();
-            for (int i=0; i<l.length; i++)
-               combo_.removeActionListener(l[i]);
+            for (ActionListener l1 : l) {
+               combo_.removeActionListener(l1);
+            }
             combo_.removeAllItems();
-            for (int i=0; i<item_.allowed.length; i++){
-               combo_.addItem(item_.allowed[i]);
+            for (String allowed : item_.allowed) {
+               combo_.addItem(allowed);
             }
             combo_.setSelectedItem(item_.value);
             

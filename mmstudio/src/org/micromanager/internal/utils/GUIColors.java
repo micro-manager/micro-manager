@@ -41,25 +41,25 @@ public class GUIColors {
    final public String[] styleOptions = {STYLE_DAY, STYLE_NIGHT};
 
    // background color of the UI
-   public HashMap<String, ColorUIResource> background;
+   public HashMap<String, ColorUIResource> background_;
    // background color of pads in the UI
-   public HashMap<String, ColorUIResource> padBackground;
+   public HashMap<String, ColorUIResource> padBackground_;
    // Color of text.
-   public HashMap<String, ColorUIResource> textColor;
+   public HashMap<String, ColorUIResource> textColor_;
 
    public GUIColors() {
       // Possible: make UI to let user set these colors
-      background = new HashMap<String, ColorUIResource>();
-      background.put(STYLE_DAY, new ColorUIResource(java.awt.SystemColor.control));
-      background.put(STYLE_NIGHT, new ColorUIResource(Color.gray));
+      background_ = new HashMap<String, ColorUIResource>();
+      background_.put(STYLE_DAY, new ColorUIResource(java.awt.SystemColor.control));
+      background_.put(STYLE_NIGHT, new ColorUIResource(Color.gray));
 
-      padBackground = new HashMap<String, ColorUIResource>();
-      padBackground.put(STYLE_DAY, new ColorUIResource(Color.white));
-      padBackground.put(STYLE_NIGHT, new ColorUIResource(java.awt.SystemColor.control));
+      padBackground_ = new HashMap<String, ColorUIResource>();
+      padBackground_.put(STYLE_DAY, new ColorUIResource(Color.white));
+      padBackground_.put(STYLE_NIGHT, new ColorUIResource(java.awt.SystemColor.control));
 
-      textColor = new HashMap<String, ColorUIResource>();
-      textColor.put(STYLE_DAY, new ColorUIResource(UIManager.getColor("TextField.foreground")));
-      textColor.put(STYLE_NIGHT, new ColorUIResource(200, 200, 200));
+      textColor_ = new HashMap<String, ColorUIResource>();
+      textColor_.put(STYLE_DAY, new ColorUIResource(UIManager.getColor("TextField.foreground")));
+      textColor_.put(STYLE_NIGHT, new ColorUIResource(200, 200, 200));
    }
 
 }

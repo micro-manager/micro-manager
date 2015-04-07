@@ -22,7 +22,6 @@
 package org.micromanager.internal;
 
 import com.google.common.eventbus.Subscribe;
-import com.swtdesigner.SwingResourceManager;
 
 
 import java.awt.Dimension;
@@ -45,6 +44,7 @@ import java.util.List;
 
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -522,10 +522,10 @@ public class MainFrame extends MMFrame implements LiveModeListener {
          toggleShutterButton_.setText(isEnabled ? "Close" : "Open" );
       }
       snapButton_.setEnabled(!isEnabled);
-      liveButton_.setIcon(isEnabled ? SwingResourceManager.getIcon(MainFrame.class,
-              "/org/micromanager/internal/icons/cancel.png")
-              : SwingResourceManager.getIcon(MainFrame.class,
-              "/org/micromanager/internal/icons/camera_go.png"));
+      liveButton_.setIcon(isEnabled ? new ImageIcon( getClass().getResource(
+               "/org/micromanager/internal/icons/cancel.png") )
+            : new ImageIcon( getClass().getResource(
+               "/org/micromanager/internal/icons/camera_go.png") ) );
       liveButton_.setSelected(false);
       liveButton_.setText(isEnabled ? "Stop Live" : "Live");
    }
@@ -585,8 +585,8 @@ public class MainFrame extends MMFrame implements LiveModeListener {
          List<String> items = sortBinningItems(Arrays.asList(binSizes.toArray()));
 
          listeners = comboBinning_.getActionListeners();
-         for (int i = 0; i < listeners.length; i++) {
-             comboBinning_.removeActionListener(listeners[i]);
+         for (ActionListener listener : listeners) {
+            comboBinning_.removeActionListener(listener);
          }
 
          for (String item : items) {
@@ -600,8 +600,8 @@ public class MainFrame extends MMFrame implements LiveModeListener {
              comboBinning_.setEditable(false);
          }
 
-         for (int i = 0; i < listeners.length; i++) {
-             comboBinning_.addActionListener(listeners[i]);
+         for (ActionListener listener : listeners) {
+            comboBinning_.addActionListener(listener);
          }
       } catch (Exception e) {
          // getAllowedPropertyValues probably failed.

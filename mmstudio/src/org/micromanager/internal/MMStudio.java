@@ -24,7 +24,6 @@ import bsh.EvalError;
 import bsh.Interpreter;
 
 import com.google.common.eventbus.Subscribe;
-import com.swtdesigner.SwingResourceManager;
 
 import ij.IJ;
 import ij.ImageJ;
@@ -36,6 +35,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -61,7 +61,6 @@ import mmcorej.StrVector;
 import mmcorej.TaggedImage;
 
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import org.micromanager.Album;
 import org.micromanager.Autofocus;
@@ -77,7 +76,6 @@ import org.micromanager.events.EventManager;
 import org.micromanager.IAcquisitionEngine2010;
 import org.micromanager.LogManager;
 import org.micromanager.MMListenerInterface;
-import org.micromanager.display.OverlayPanel;
 import org.micromanager.PositionList;
 import org.micromanager.ScriptController;
 import org.micromanager.Studio;
@@ -301,8 +299,8 @@ public class MMStudio implements Studio, CompatibilityInterface {
       snapLiveManager_ = new SnapLiveManager(core_);
 
       frame_ = new MainFrame(this, core_, snapLiveManager_);
-      frame_.setIconImage(SwingResourceManager.getImage(MMStudio.class,
-            "icons/microscope.gif"));
+      frame_.setIconImage(Toolkit.getDefaultToolkit().getImage(
+               getClass().getResource("/org/micromanager/internal/icons/microscope.gif")));
       frame_.loadApplicationPrefs(OptionsDlg.getShouldCloseOnExit());
       ReportingUtils.SetContainingFrame(frame_);
 
@@ -1583,14 +1581,14 @@ public class MMStudio implements Studio, CompatibilityInterface {
       // Ensure every GUI object type gets the right background color.
       for (String key : BACKGROUND_COLOR_KEYS) {
          UIManager.put(key + ".background",
-               guiColors_.background.get(backgroundType));
+               guiColors_.background_.get(backgroundType));
       }
       // HACK: ensure that disabled checkboxes and radio buttons have legible
       // text in both modes.
       UIManager.put("RadioButton.foreground",
-            guiColors_.textColor.get(backgroundType));
+            guiColors_.textColor_.get(backgroundType));
       UIManager.put("CheckBox.foreground",
-            guiColors_.textColor.get(backgroundType));
+            guiColors_.textColor_.get(backgroundType));
       // Update existing components.
       for (Window w : Window.getWindows()) {
          SwingUtilities.updateComponentTreeUI(w);

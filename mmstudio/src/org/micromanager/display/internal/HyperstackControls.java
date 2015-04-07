@@ -29,13 +29,10 @@ import com.google.common.eventbus.Subscribe;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.lang.Math;
 import java.util.concurrent.TimeUnit;
 
-import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JToggleButton;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -54,14 +51,9 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 public class HyperstackControls extends JPanel {
 
-   private final static int DEFAULT_FPS = 10;
-   private final static double MAX_FPS = 5000;
-   // Height in pixels of our controls, not counting scrollbars.
-   private final static int CONTROLS_HEIGHT = 65;
-
-   private DisplayWindow parent_;
-   private Datastore store_;
-   private MMVirtualStack stack_;
+   private final DisplayWindow parent_;
+   private final Datastore store_;
+   private final MMVirtualStack stack_;
 
    // Last known mouse positions.
    private int mouseX_ = 0;
@@ -75,19 +67,11 @@ public class HyperstackControls extends JPanel {
    private JLabel countdownLabel_;
    // Displays general status information.
    private JLabel statusLabel_;
-   private JButton showFolderButton_;
-
-   // Standard control set
-   private javax.swing.JTextField fpsField_;
-   private JButton abortButton_;
-   private JToggleButton pauseAndResumeToggleButton_;
-
-   // Snap/live control set
-   private JButton snapButton_;
-   private JButton snapToAlbumButton_;
-   private JButton liveButton_;
 
    /**
+    * @param store
+    * @param stack
+    * @param parent
     * @param shouldUseLiveControls - indicates if we should use the buttons for 
     *        the "Snap/Live" window or the buttons for normal displays.
     */
@@ -98,11 +82,11 @@ public class HyperstackControls extends JPanel {
       store_ = store;
       store_.registerForEvents(this);
       stack_ = stack;
-      initComponents(shouldUseLiveControls);
+      initComponents();
       parent_.registerForEvents(this);
    }
 
-   private void initComponents(final boolean shouldUseLiveControls) {
+   private void initComponents() {
       // This layout minimizes space between components.
       setLayout(new MigLayout("insets 0, fillx, align center"));
 
@@ -140,8 +124,9 @@ public class HyperstackControls extends JPanel {
    }
 
    /**
-    * User moused over the display; update our indication of pixel intensities.
-    */
+    * User moused over the display; update our indication of pixel intensities. 
+    * @param event
+    * */
    @Subscribe
    public void onMouseMoved(MouseMovedEvent event) {
       try {
@@ -204,6 +189,7 @@ public class HyperstackControls extends JPanel {
    /**
     * A new image has been made available. Update our pixel info, assuming
     * we have a valid mouse position.
+    * @param event
     */
    @Subscribe
    public void onNewImage(NewImageEvent event) {
@@ -221,6 +207,7 @@ public class HyperstackControls extends JPanel {
 
    /**
     * New information on our FPS; update a label.
+    * @param event
     */
    @Subscribe
    public void onFPSUpdate(FPSEvent event) {

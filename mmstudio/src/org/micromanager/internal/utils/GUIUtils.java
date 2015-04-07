@@ -23,7 +23,6 @@
 
 package org.micromanager.internal.utils;
 
-import com.swtdesigner.SwingResourceManager;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
 
@@ -56,11 +55,13 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.text.JTextComponent;
+import org.micromanager.internal.MMStudio;
 
 
 
 public class GUIUtils {
    private static final String DIALOG_POSITION = "dialogPosition";
+   public static final Font buttonFont = new Font("Arial", Font.PLAIN, 10);
 
    public static void setComboSelection(JComboBox cb, String sel){
       ActionListener[] listeners = cb.getActionListeners();
@@ -75,8 +76,9 @@ public class GUIUtils {
       
       // remove listeners
       ActionListener[] listeners = cb.getActionListeners();
-      for (int i=0; i<listeners.length; i++)            
-         cb.removeActionListener(listeners[i]);
+      for (ActionListener listener : listeners) {
+         cb.removeActionListener(listener);
+      }
 
       if (cb.getItemCount() > 0)
          cb.removeAllItems();
@@ -87,8 +89,9 @@ public class GUIUtils {
       }
       
       // restore listeners
-      for (int i=0; i<listeners.length; i++)            
-         cb.addActionListener(listeners[i]);
+      for (ActionListener listener : listeners) {
+         cb.addActionListener(listener);
+      }
    }
    
    public static ChangeListener[] detachChangeListeners(JSpinner spinner) {
@@ -127,7 +130,17 @@ public class GUIUtils {
             //Send notification that display may have changed, so that display count is updated.
             envClass.getDeclaredMethod("displayChanged").invoke(envClass.cast(ge));
          }
-      } catch (Exception e) {
+      } catch (ClassNotFoundException e) {
+         ReportingUtils.logError(e);
+      } catch (NoSuchMethodException e) {
+         ReportingUtils.logError(e);
+      } catch (SecurityException e) {
+         ReportingUtils.logError(e);
+      } catch (IllegalAccessException e) {
+         ReportingUtils.logError(e);
+      } catch (IllegalArgumentException e) {
+         ReportingUtils.logError(e);
+      } catch (InvocationTargetException e) {
          ReportingUtils.logError(e);
       }
 
@@ -162,6 +175,9 @@ public class GUIUtils {
    /**
     * Return the maximum size of a window that contains the specified XY
     * screen location.
+    * @param x
+    * @param y
+    * @return 
     */
    public static Rectangle getMaxWindowSizeForPoint(int x, int y) {
       // First we try to accomplish this with the given coordinates. Then,
@@ -285,9 +301,8 @@ public class GUIUtils {
     * given file name, to specified the button or menu.
     */
    public static void setIcon(AbstractButton component, String iconFileName) {
-      component.setIcon(SwingResourceManager.getIcon(
-              org.micromanager.internal.MMStudio.class,
-              "/org/micromanager/internal/icons/" + iconFileName));
+      component.setIcon(new ImageIcon( MMStudio.class.getResource(
+              "/org/micromanager/internal/icons/" + iconFileName)));
    }
    
       
@@ -498,9 +513,11 @@ public class GUIUtils {
       final String lastValue[] = {""};
       final JTextField field = new JTextField();
       field.getDocument().addDocumentListener(new DocumentListener() {
+         @Override
          public void insertUpdate(DocumentEvent e) {}
+         @Override
          public void removeUpdate(DocumentEvent e) {}
-
+         @Override
          public void changedUpdate(DocumentEvent e) {
             lastValue[0] = field.getText();         }
       });
@@ -516,6 +533,7 @@ public class GUIUtils {
 
    public static StringValidator integerStringValidator(final int minValue, final int maxValue) {
       return new StringValidator() {
+         @Override
          public void validate(String string) {
             try {
                int value = Integer.parseInt(string.trim());
@@ -531,6 +549,7 @@ public class GUIUtils {
    
    public static StringValidator floatStringValidator(final double minValue, final double maxValue) {
        return new StringValidator() {
+         @Override
          public void validate(String string) {
             try {
                double value = Double.parseDouble(string);
