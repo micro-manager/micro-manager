@@ -30,12 +30,19 @@ import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.LUT;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.List;
+
+import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
@@ -186,6 +193,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void initComponents() {
+      setBorder(BorderFactory.createRaisedBevelBorder());
       fullButton_ = new javax.swing.JButton();
       autoButton_ = new javax.swing.JButton();
       colorPickerLabel_ = new javax.swing.JLabel();
@@ -199,10 +207,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
       setOpaque(false);
 
+      Insets zeroInsets = new Insets(0, 0, 0, 0);
+
       fullButton_.setFont(fullButton_.getFont().deriveFont((float) 9));
+      fullButton_.setMargin(zeroInsets);
       fullButton_.setName("Full channel histogram width");
       fullButton_.setText("Full");
-      fullButton_.setToolTipText("Stretch the display gamma curve over the full pixel range");
+      fullButton_.setToolTipText("Set the min to 0 and the max to the current display range");
       fullButton_.addActionListener(new java.awt.event.ActionListener() {
 
          @Override
@@ -212,11 +223,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       });
 
       autoButton_.setFont(autoButton_.getFont().deriveFont((float) 9));
+      autoButton_.setMargin(zeroInsets);
       autoButton_.setName("Auto channel histogram width");
-      autoButton_.setText("Auto");
-      autoButton_.setToolTipText("Align the display gamma curve with minimum and maximum measured intensity values");
+      autoButton_.setText("Auto once");
+      autoButton_.setToolTipText("Set the min and max to the min and max in the current image");
       autoButton_.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-      autoButton_.setIconTextGap(0);
       autoButton_.addActionListener(new java.awt.event.ActionListener() {
 
          @Override
@@ -226,6 +237,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       });
 
       colorPickerLabel_.setBackground(color_);
+      colorPickerLabel_.setMinimumSize(new Dimension(18, 18));
       colorPickerLabel_.setToolTipText("Change the color for displaying this channel");
       colorPickerLabel_.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
       colorPickerLabel_.setOpaque(true);
@@ -267,10 +279,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             "11bit (0-2047)", "12bit (0-4095)", "13bit (0-8191)",
             "14bit (0-16383)", "15bit (0-32767)", "16bit (0-65535)"}));
 
-      zoomInButton_ = new JButton();
-      zoomInButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
-            "/org/micromanager/internal/icons/zoom_in.png"));
-      zoomInButton_.setMinimumSize(new Dimension(20, 20));
+      // Looks like < but more compact.
+      zoomInButton_ = new JButton("\u2039");
       zoomInButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -278,10 +288,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
       
-      zoomOutButton_ = new JButton();
-      zoomOutButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
-            "/org/micromanager/internal/icons/zoom_out.png"));   
-      zoomOutButton_.setMinimumSize(new Dimension(20, 20));
+      // Looks like > but more compact.
+      zoomOutButton_ = new JButton("\u203a");
       zoomOutButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -289,26 +297,24 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
 
-      // No insets on the top/bottom/right, only on the left.
-      setLayout(new MigLayout("fill, flowy, insets 0",
-               "[]0[]0[]", "[]0[]0[]"));
+      setLayout(new MigLayout("fill, flowy, insets 0"));
 
-      JPanel firstRow = new JPanel(new MigLayout("insets 0"));
+      JPanel firstRow = new JPanel(new MigLayout("fill, insets 0"));
 
       firstRow.add(isEnabledButton_);
+      firstRow.add(colorPickerLabel_);
+
       nameLabel_ = new JLabel(name_);
       firstRow.add(nameLabel_);
-
-      firstRow.add(colorPickerLabel_);
 
       fullButton_.setPreferredSize(new Dimension(35, 20));
       linkButton_ = new LinkButton(
             new ContrastLinker(channelIndex_, display_), display_);
       firstRow.add(linkButton_);
-      firstRow.add(fullButton_);
+      firstRow.add(fullButton_, "grow 0");
 
       autoButton_.setPreferredSize(new Dimension(35, 20));
-      firstRow.add(autoButton_, "wrap");
+      firstRow.add(autoButton_, "grow 0, wrap");
 
       add(firstRow);
 
@@ -316,14 +322,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       histogram_.setMinimumSize(new Dimension(100, 60));
       histogram_.setToolTipText("Adjust the brightness and contrast by dragging triangles at top and bottom. Change the gamma by dragging the curve. (These controls only change display, and do not edit the image data.)");
 
-      add(histogram_, "grow");
+      add(histogram_, "grow, gapright 0");
 
-      JPanel secondRow = new JPanel(new MigLayout("insets 0"));
-      colorPickerLabel_.setMinimumSize(new Dimension(18, 18));
+      JPanel secondRow = new JPanel(new MigLayout("fill, insets 0"));
 
-      secondRow.add(zoomInButton_);
-      secondRow.add(zoomOutButton_);
-      secondRow.add(histRangeComboBox_);
+      secondRow.add(zoomInButton_, "gapright 0, width ::15, height 20!, aligny center center");
+      secondRow.add(histRangeComboBox_, "gapleft 0, gapright 0, height 20!, aligny center center");
+      secondRow.add(zoomOutButton_, "gapleft 0, width ::15, height 20!, aligny center center");
       secondRow.add(minMaxLabel_);
 
       add(secondRow);
@@ -465,6 +470,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          // Not multi-channel; ignore.
          return;
       }
+      // These icons are adapted from the public-domain icon at
+      // https://openclipart.org/detail/182888/eye-icon
+      isEnabledButton_.setIcon(isEnabledButton_.isSelected() ?
+            new ImageIcon(getClass().getResource(
+                  "/org/micromanager/internal/icons/eye.png")) :
+            new ImageIcon(getClass().getResource(
+                  "/org/micromanager/internal/icons/eye-out.png")));
       boolean[] active = composite_.getActiveChannels();
       if (composite_.getMode() != CompositeImage.COMPOSITE) {
          if (active[channelIndex_]) {
