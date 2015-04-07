@@ -422,7 +422,7 @@ public class MMStudio implements ScriptInterface {
 
       frame_.paintToFront();
       
-            engine_.setCore(core_, afMgr_);
+      engine_.setCore(core_, afMgr_);
       posList_ = new PositionList();
       engine_.setPositionList(posList_);
       // load (but do no show) the scriptPanel
