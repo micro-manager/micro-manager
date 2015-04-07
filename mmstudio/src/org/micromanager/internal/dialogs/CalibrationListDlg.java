@@ -225,7 +225,7 @@ public class CalibrationListDlg extends MMDialog {
             removeCalibration();
          }
       });
-      //removeButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/cross.png"));
+     
       removeButton.setText("Remove");
       getContentPane().add(removeButton);
       springLayout.putConstraint(SpringLayout.SOUTH, removeButton, 88, SpringLayout.NORTH, getContentPane());

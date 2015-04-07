@@ -20,9 +20,7 @@
 
 package org.micromanager.display.internal.inspector;
 
-import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import com.swtdesigner.SwingResourceManager;
 
 import ij.CompositeImage;
 import ij.ImagePlus;
@@ -42,7 +40,6 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 
@@ -51,7 +48,6 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.Inspector;
 import org.micromanager.display.InspectorPanel;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.NewDisplaySettingsEvent;
@@ -68,9 +64,9 @@ import org.micromanager.internal.utils.ReportingUtils;
  * some of that is addressed here, and some in the histograms.
  */
 public class DisplaySettingsPanel extends InspectorPanel {
-   private static String[] COLOR_DESCRIPTORS = new String[] {
+   private static final String[] COLOR_DESCRIPTORS = new String[] {
       "RGBCMYW", "CMYRGBW", "Custom"};
-   private static Color[][] DEFAULT_COLORS = new Color[][] {
+   private static final Color[][] DEFAULT_COLORS = new Color[][] {
       {Color.RED, Color.GREEN, Color.BLUE, Color.CYAN, Color.MAGENTA,
          Color.YELLOW, Color.WHITE},
       {Color.CYAN, Color.MAGENTA, Color.YELLOW, Color.RED, Color.GREEN,
@@ -81,12 +77,12 @@ public class DisplaySettingsPanel extends InspectorPanel {
    private ImagePlus ijImage_;
    private DisplayWindow display_;
    private JComboBox displayMode_;
-   private JComboBox colorPresets_;
+   private final JComboBox colorPresets_;
    // Index of colorPresets_ last time its position was set.
    private int prevPresetIndex_ = -1;
-   private JCheckBox shouldAutostretch_;
-   private JComboBox histogramUpdateRate_;
-   private JSpinner trimPercentage_;
+   private final JCheckBox shouldAutostretch_;
+   private final JComboBox histogramUpdateRate_;
+   private final JSpinner trimPercentage_;
 
    public DisplaySettingsPanel() {
       setLayout(new MigLayout());
@@ -275,6 +271,8 @@ public class DisplaySettingsPanel extends InspectorPanel {
    /**
     * We care when the channel colors change, and when autostretch is turned
     * on/off.
+    * 
+    * @param event
     */
    @Subscribe
    public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
@@ -375,6 +373,8 @@ public class DisplaySettingsPanel extends InspectorPanel {
    /**
     * This is mostly relevant for our handling of the display mode (grayscale,
     * composite, etc.).
+    * 
+    * @param event
     */
    @Subscribe
    public void onNewImagePlus(NewImagePlusEvent event) {
@@ -394,4 +394,3 @@ public class DisplaySettingsPanel extends InspectorPanel {
       }
    }
 }
-

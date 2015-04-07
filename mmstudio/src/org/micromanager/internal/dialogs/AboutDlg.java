@@ -30,6 +30,7 @@ import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.ImageIcon;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -39,7 +40,6 @@ import javax.swing.WindowConstants;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.LineBorder;
 
-import com.swtdesigner.SwingResourceManager;
 
 /**
  * Help | About dialog for MMStudio.
@@ -47,9 +47,9 @@ import com.swtdesigner.SwingResourceManager;
  */
 public class AboutDlg extends JDialog {
    private static final long serialVersionUID = 1L;
-   private JTextArea welcomeTextArea_;
-   private JTextArea homeHttphcs100ximagingcomBugTextArea;
-   private JTextArea versionInfo_;
+   private final JTextArea welcomeTextArea_;
+   private final JTextArea homeHttphcs100ximagingcomBugTextArea;
+   private final JTextArea versionInfo_;
    
    public static String COPYRIGHT_TEXT = 
       
@@ -127,7 +127,8 @@ public class AboutDlg extends JDialog {
       getContentPane().add(homeHttphcs100ximagingcomBugTextArea);
 
       final JLabel label = new JLabel();
-      label.setIcon(SwingResourceManager.getIcon(AboutDlg.class, "/org/micromanager/internal/icons/microscope.gif"));
+      label.setIcon(new ImageIcon( getClass().getResource( 
+              "/org/micromanager/internal/icons/microscope.gif")));
       label.setBounds(6, 14, 32, 32);
       getContentPane().add(label);
 

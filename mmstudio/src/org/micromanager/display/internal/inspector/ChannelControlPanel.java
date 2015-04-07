@@ -20,9 +20,7 @@
 
 package org.micromanager.display.internal.inspector;
 
-import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import com.swtdesigner.SwingResourceManager;
 
 import ij.CompositeImage;
 import ij.ImagePlus;
@@ -44,7 +42,6 @@ import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -96,11 +93,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private static final int NUM_BINS = 256;
    private final int channelIndex_;
    private HistogramPanel histogram_;
-   private HistogramsPanel parent_;
-   private Datastore store_;
+   private final HistogramsPanel parent_;
+   private final Datastore store_;
    private DisplayWindow display_;
-   private MMVirtualStack stack_;
-   private ImagePlus plus_;
+   private final MMVirtualStack stack_;
+   private final ImagePlus plus_;
    private CompositeImage composite_;
 
    private JButton autoButton_;
@@ -129,7 +126,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private int bitDepth_;
    private Color color_;
    private String name_;
-   private AtomicBoolean haveInitialized_;
+   private final AtomicBoolean haveInitialized_;
 
    public ChannelControlPanel(int channelIndex, HistogramsPanel parent,
          Datastore store, DisplayWindow display, MMVirtualStack stack,
@@ -201,8 +198,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       // http://thenounproject.com/term/eye/421/
       // (this particular one is public domain)
       isEnabledButton_ = new javax.swing.JToggleButton(
-            SwingResourceManager.getIcon(ChannelControlPanel.class,
-               "/org/micromanager/internal/icons/eye.png"));
+            new ImageIcon( getClass().getResource(
+               "/org/micromanager/internal/icons/eye.png")));
       minMaxLabel_ = new javax.swing.JLabel();
 
       setOpaque(false);
@@ -290,6 +287,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       
       // Looks like > but more compact.
       zoomOutButton_ = new JButton("\u203a");
+      zoomOutButton_.setMinimumSize(new Dimension(20, 20));
       zoomOutButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -866,6 +864,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
    }
    
+   @Override
    public void contrastMaxInput(int max) {
       disableAutostretch();
       contrastMax_ = max;
@@ -898,6 +897,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       postNewSettings();
    }
 
+   @Override
    public void onLeftCursor(double pos) {
       disableAutostretch();
       contrastMin_ = (int) (Math.max(0, pos) * binSize_);
@@ -952,9 +952,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
       Object[] channelSettings = DefaultDisplaySettings.getPerChannelArrays(settings);
       // TODO: ordering of these values is closely tied to the above function!
-      Object[] ourParams = new Object[] {color_,
-         new Integer(contrastMin_), new Integer(contrastMax_),
-         new Double(gamma_)};
+      Object[] ourParams = new Object[] {color_, contrastMin_, contrastMax_,
+         gamma_};
       // For each of the above parameters, ensure that there's an array in
       // the display settings that's at least long enough to hold our channel,
       // and that our values are represented in that array.
@@ -1005,6 +1004,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    /**
     * Display settings have changed; update our color.
+    * @param event
     */
    @Subscribe
    public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
@@ -1024,6 +1024,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    /**
     * Summary metadata has changed; check for change in channel name.
+    * @param event
     */
    @Subscribe
    public void onNewSummaryMetadata(NewSummaryMetadataEvent event) {
@@ -1043,6 +1044,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     * depth yet, then do so now. And if we're the first channel, our color is
     * white (i.e. the default color), and an image for another channel arrives,
     * then we need to re-load our color.
+    * @param event
     */
    @Subscribe
    public void onNewImage(NewImageEvent event) {

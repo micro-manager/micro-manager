@@ -25,12 +25,12 @@ import bsh.EvalError;
 import bsh.Interpreter;
 import bsh.util.JConsole;
 
-import com.swtdesigner.SwingResourceManager;
 
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
@@ -85,7 +85,6 @@ import org.fife.ui.rtextarea.SearchEngine;
 import org.fife.ui.rtextarea.SearchResult;
 
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.PropertyEditor;
 import org.micromanager.ScriptController;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.DefaultUserProfile;
@@ -201,10 +200,8 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       }
 
       public boolean isScriptAvailable(int rowNumber, int columnNumber) {
-         if ( (rowNumber >= 0) && (columnNumber >=0) && ((rowNumber * columnCount_) + columnNumber) < scriptFileArray_.size())
-            return true;
-         else
-            return false;
+         return (rowNumber >= 0) && (columnNumber >=0) && 
+                 ((rowNumber * columnCount_) + columnNumber) < scriptFileArray_.size();
       }
 
       public ArrayList<File> getFileArray() {
@@ -389,7 +386,9 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       interp_.setInterpreter(beanshellREPLint_);
       
       setTitle("Script Panel");
-      setIconImage(SwingResourceManager.getImage(PropertyEditor.class, "icons/microscope.gif"));
+      setIconImage(Toolkit.getDefaultToolkit().getImage(
+               MMStudio.class.getResource( 
+                       "/org/micromanager/internal/icons/microscope.gif")));
 
       int buttonHeight = 15;
       Dimension buttonSize = new Dimension(80, buttonHeight);

@@ -1,8 +1,6 @@
 package org.micromanager.internal;
 
 import com.google.common.eventbus.Subscribe;
-import com.swtdesigner.SwingResourceManager;
-
 
 import java.awt.Component;
 import java.awt.Dimension;
@@ -14,6 +12,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import javax.swing.ImageIcon;
 
 import javax.swing.JButton;
 
@@ -95,9 +94,9 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
 
    private void setLiveButtonMode(JButton button, boolean isOn) {
       String label = isOn ? "Stop Live" : "Live";
-      String iconPath = isOn ? "/org/micromanager/internal/icons/cancel.png" : "/org/micromanager/internal/icons/camera_go.png";
-      button.setIcon(
-            SwingResourceManager.getIcon(MMStudio.class, iconPath));
+      String iconPath = isOn ? "/org/micromanager/internal/icons/cancel.png" : 
+              "/org/micromanager/internal/icons/camera_go.png";
+      button.setIcon( new ImageIcon( getClass().getResource(iconPath)));
       button.setText(label);
    }
 
@@ -293,8 +292,8 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       // This button needs to be enabled/disabled when live mode is turned
       // off/on.
       JButton snapButton = new JButton("Snap",
-            SwingResourceManager.getIcon(MMStudio.class,
-               "/org/micromanager/internal/icons/camera.png")) {
+            new ImageIcon( getClass().getResource(
+               "/org/micromanager/internal/icons/camera.png"))) {
          @Subscribe
          public void onLiveMode(LiveModeEvent event) {
             setEnabled(!event.getIsOn());
@@ -345,8 +344,8 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       controls.add(liveButton);
 
       JButton toAlbumButton = new JButton("Album",
-            SwingResourceManager.getIcon(MMStudio.class,
-               "/org/micromanager/internal/icons/arrow_right.png"));
+            new ImageIcon( getClass().getResource(
+               "/org/micromanager/internal/icons/arrow_right.png")));
       toAlbumButton.setToolTipText("Add the current image to the Album collection");
       toAlbumButton.setPreferredSize(new Dimension(90, 28));
       toAlbumButton.setFont(GUIUtils.buttonFont);

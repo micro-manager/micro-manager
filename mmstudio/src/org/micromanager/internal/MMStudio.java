@@ -24,7 +24,6 @@ import bsh.EvalError;
 import bsh.Interpreter;
 
 import com.google.common.eventbus.Subscribe;
-import com.swtdesigner.SwingResourceManager;
 
 import ij.IJ;
 import ij.ImageJ;
@@ -36,6 +35,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -44,6 +44,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import javax.swing.ImageIcon;
 
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
@@ -299,8 +300,8 @@ public class MMStudio implements Studio, CompatibilityInterface {
       snapLiveManager_ = new SnapLiveManager(core_);
 
       frame_ = new MainFrame(this, core_, snapLiveManager_);
-      frame_.setIconImage(SwingResourceManager.getImage(MMStudio.class,
-            "icons/microscope.gif"));
+      frame_.setIconImage(Toolkit.getDefaultToolkit().getImage(
+               getClass().getResource("/org/micromanager/internal/icons/microscope.gif")));
       frame_.loadApplicationPrefs(OptionsDlg.getShouldCloseOnExit());
       ReportingUtils.SetContainingFrame(frame_);
 

@@ -20,7 +20,6 @@
 
 package org.micromanager.internal.dialogs;
 
-import com.swtdesigner.SwingResourceManager;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -52,7 +51,6 @@ import org.micromanager.internal.utils.ColorEditor;
 import org.micromanager.internal.utils.ColorRenderer;
 import org.micromanager.internal.utils.ContrastSettings;
 import org.micromanager.internal.utils.DefaultUserProfile;
-import org.micromanager.internal.utils.DisplayMode;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.internal.utils.GUIColors;
@@ -277,7 +275,8 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       positionsPanel_.setToolTipText("Acquire images from a series of positions in the XY plane");
       slicesPanel_.setToolTipText("Acquire images from a series of Z positions");
 
-      String imageName = getClass().getResource("/org/micromanager/internal/icons/acq_order_figure.png").toString();
+      String imageName = getClass().getResource(
+              "/org/micromanager/internal/icons/acq_order_figure.png").toString();
 
       String acqOrderToolTip =
               "<html>Lets you select the order of image acquisition when some combination of multiple dimensions<br>"
@@ -323,8 +322,9 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       studio_ = gui;
       guiColors_ = new GUIColors();
 
-      setIconImage(SwingResourceManager.getImage(MMStudio.class,
-            "icons/microscope.gif"));
+      setIconImage(Toolkit.getDefaultToolkit().getImage(
+              MMStudio.class.getResource(
+            "/org/micromanager/internal/icons/microscope.gif")));
       
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
@@ -450,7 +450,8 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
          }
       });
       listButton_.setToolTipText("Open XY list dialog");
-      listButton_.setIcon(SwingResourceManager.getIcon(AcqControlDlg.class, "icons/application_view_list.png"));
+      listButton_.setIcon(new ImageIcon( MMStudio.class.getResource(
+              "/org/micromanager/internal/icons/application_view_list.png")));
       listButton_.setText("Edit position list...");
       listButton_.setMargin(new Insets(2, 5, 2, 5));
       listButton_.setFont(new Font("Dialog", Font.PLAIN, 10));
@@ -612,7 +613,8 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
          }
       });
       afButton_.setText("Options...");
-      afButton_.setIcon(SwingResourceManager.getIcon(AcqControlDlg.class, "icons/wrench_orange.png"));
+      afButton_.setIcon(new ImageIcon( MMStudio.class.getResource(
+              "/org/micromanager/internal/icons/wrench_orange.png")));
       afButton_.setMargin(new Insets(2, 5, 2, 5));
       afButton_.setFont(new Font("Dialog", Font.PLAIN, 10));
       afButton_.setBounds(50, 21, 100, 28);

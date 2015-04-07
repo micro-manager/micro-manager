@@ -23,8 +23,6 @@
 
 package org.micromanager.internal.dialogs;
 
-import com.swtdesigner.SwingResourceManager;
-
 import ij.IJ;
 
 import java.awt.Color;
@@ -42,6 +40,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.border.EtchedBorder;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -109,7 +108,8 @@ public class IntroDlg extends JDialog {
       setLocation(screenSize.width/2 - (winSize.width/2), screenSize.height/2 - (winSize.height/2));
 
       JLabel introImage = new JLabel();
-      introImage.setIcon(SwingResourceManager.getIcon(IntroDlg.class, "/org/micromanager/internal/icons/splash.gif"));
+      introImage.setIcon(new ImageIcon( getClass().getResource(
+              "/org/micromanager/internal/icons/splash.gif")));
       introImage.setLayout(null);
       introImage.setBounds(0, 0, 392, 197);
       introImage.setFocusable(false);

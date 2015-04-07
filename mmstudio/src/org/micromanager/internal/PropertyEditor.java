@@ -30,10 +30,12 @@ package org.micromanager.internal;
 
 import java.awt.Font;
 import java.awt.Component;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import javax.swing.ImageIcon;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -43,8 +45,6 @@ import javax.swing.JTable;
 import javax.swing.SpringLayout;
 import javax.swing.border.BevelBorder;
 import javax.swing.table.TableColumn;
-
-import com.swtdesigner.SwingResourceManager;
 
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
@@ -118,7 +118,8 @@ public class PropertyEditor extends MMFrame {
       flags_ = new ShowFlags();
       flags_.load(PropertyEditor.class);
       
-      setIconImage(SwingResourceManager.getImage(PropertyEditor.class, "icons/microscope.gif"));
+      setIconImage(Toolkit.getDefaultToolkit().getImage(
+              getClass().getResource("icons/microscope.gif") ) );
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
       setSize(551, 514);
@@ -155,7 +156,8 @@ public class PropertyEditor extends MMFrame {
       table_.setAutoCreateColumnsFromModel(false);
       
       final JButton refreshButton = new JButton();
-      refreshButton.setIcon(SwingResourceManager.getIcon(PropertyEditor.class, "/org/micromanager/internal/icons/arrow_refresh.png"));
+      refreshButton.setIcon(new ImageIcon( getClass().getResource( 
+              "/org/micromanager/internal/icons/arrow_refresh.png")) );
       refreshButton.setFont(new Font("Arial", Font.PLAIN, 10));
       getContentPane().add(refreshButton);
       springLayout.putConstraint(SpringLayout.EAST, refreshButton, 285, SpringLayout.WEST, getContentPane());
