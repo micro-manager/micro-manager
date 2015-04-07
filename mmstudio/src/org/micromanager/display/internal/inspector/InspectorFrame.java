@@ -68,16 +68,45 @@ import org.micromanager.internal.utils.ReportingUtils;
  * consists of a set of expandable panels in a vertical configuration.
  */
 public class InspectorFrame extends MMFrame implements Inspector {
+
+   /**
+    * This class is used to represent entries in the dropdown menu the user
+    * uses to select which DisplayWindow the InspectorFrame is controlling.
+    * Functionally it serves as a mapping of DisplayWindow names to those
+    * DisplayWindows, with the caveat that DisplayWindow names can change
+    * any time a duplicate display is created or destroyed (see the note on
+    * populateChooser(), below).
+    * HACK: as a special case, if one of these is created with a null display,
+    * then it pretends to be the TOPMOST_DISPLAY option instead.
+    */
+   private class DisplayMenuItem {
+      private DisplayWindow menuDisplay_;
+      public DisplayMenuItem(DisplayWindow display) {
+         menuDisplay_ = display;
+      }
+
+      public DisplayWindow getDisplay() {
+         return menuDisplay_;
+      }
+
+      public String toString() {
+         if (menuDisplay_ != null) {
+            return menuDisplay_.getName();
+         }
+         return TOPMOST_DISPLAY;
+      }
+   }
+
    private static final String TOPMOST_DISPLAY = "Topmost Window";
    private static final String CONTRAST_TITLE = "Contrast";
    private DisplayWindow display_;
    private ArrayList<InspectorPanel> panels_;
    private JPanel contents_;
    private JComboBox displayChooser_;
+   private JLabel curDisplayTitle_;
 
    public InspectorFrame(DisplayWindow display) {
       super();
-      panels_ = new ArrayList<InspectorPanel>();
       setTitle("Image Inspector");
       setAlwaysOnTop(true);
       // Use a small title bar.
@@ -96,11 +125,22 @@ public class InspectorFrame extends MMFrame implements Inspector {
       displayChooser_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            setDisplayByName((String) displayChooser_.getSelectedItem());
+            DisplayMenuItem item = (DisplayMenuItem) (displayChooser_.getSelectedItem());
+            if (item.getDisplay() != null) {
+               // In other words, the user didn't select the "topmost display"
+               // option.
+               setDisplay(item.getDisplay());
+            }
          }
       });
       contents_.add(new JLabel("Show info for:"), "flowx, split 2");
       contents_.add(displayChooser_);
+
+      curDisplayTitle_ = new JLabel("");
+      curDisplayTitle_.setVisible(false);
+      // This hidemode causes invisible elements to take up no space.
+      contents_.add(curDisplayTitle_, "hidemode 2");
+
       JScrollPane scroller = new JScrollPane(contents_,
             ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
             ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -115,6 +155,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
          }
       });
 
+      panels_ = new ArrayList<InspectorPanel>();
       // Hard-coded initial panels.
       addPanel(CONTRAST_TITLE, new HistogramsPanel());
       addPanel("Settings", new DisplaySettingsPanel());
@@ -129,29 +170,36 @@ public class InspectorFrame extends MMFrame implements Inspector {
    }
 
    /**
-    * Fill in the list of DisplayWindows the user can select from.
+    * Fill in the display names in the display chooser. These can change
+    * whenever a display is added or destroyed, as that display may be a
+    * duplicate, causing the numbers to appear (e.g. when a duplicate of
+    * Snap/Live is created, the old "Snap/Live View" becomes
+    * "#1: Snap/Live View").
     */
    private void populateChooser() {
-      String curItem = (String) displayChooser_.getSelectedItem();
-      displayChooser_.removeAllItems();
-      displayChooser_.addItem(TOPMOST_DISPLAY);
-      List<DisplayWindow> allDisplays = DefaultDisplayManager.getInstance().getAllImageWindows();
-      for (DisplayWindow display : allDisplays) {
-         displayChooser_.addItem(display.getName());
+      // Disable the listener so selections don't change while we do this.
+      ActionListener[] listeners = displayChooser_.getActionListeners();
+      for (ActionListener listener : listeners) {
+         displayChooser_.removeActionListener(listener);
       }
-      displayChooser_.setSelectedItem(curItem);
-   }
+      DisplayMenuItem curItem = (DisplayMenuItem) (displayChooser_.getSelectedItem());
 
-   /**
-    * Set our current target display based on the provided display name.
-    */
-   private void setDisplayByName(String name) {
+      displayChooser_.removeAllItems();
+      // See the HACK note on DisplayMenuItem.
+      DisplayMenuItem nullItem = new DisplayMenuItem(null);
+      displayChooser_.addItem(nullItem);
       List<DisplayWindow> allDisplays = DefaultDisplayManager.getInstance().getAllImageWindows();
       for (DisplayWindow display : allDisplays) {
-         if (display.getName().contentEquals(name)) {
-            setDisplay(display);
-            break;
+         DisplayMenuItem newItem = new DisplayMenuItem(display);
+         displayChooser_.addItem(newItem);
+         if (display_ == display && curItem.getDisplay() != null) {
+            // This is the display that we were previously targeting.
+            displayChooser_.setSelectedItem(newItem);
          }
+      }
+
+      for (ActionListener listener : listeners) {
+         displayChooser_.addActionListener(listener);
       }
    }
 
@@ -213,27 +261,26 @@ public class InspectorFrame extends MMFrame implements Inspector {
 
    @Subscribe
    public void onNewDisplay(DisplayAboutToShowEvent event) {
-      event.getDisplay().registerForEvents(this);
-      displayChooser_.addItem(event.getDisplay().getName());
+      try {
+         event.getDisplay().registerForEvents(this);
+         populateChooser();
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error adding new display to inspector");
+      }
    }
 
    @Subscribe
    public void onDisplayDestroyed(DisplayDestroyedEvent event) {
       event.getDisplay().unregisterForEvents(this);
-      String curDisplay = (String) displayChooser_.getSelectedItem();
-      String deadDisplay = event.getDisplay().getName();
-      displayChooser_.removeItem(event.getDisplay().getName());
-      if (curDisplay.contentEquals(event.getDisplay().getName())) {
-         // Just removed the one we had selected.
-         displayChooser_.setSelectedItem(TOPMOST_DISPLAY);
-      }
+      populateChooser();
    }
 
    @Subscribe
    public void onDisplayActivated(DisplayActivatedEvent event) {
       try {
-         String displayName = (String) displayChooser_.getSelectedItem();
-         if (!displayName.contentEquals(TOPMOST_DISPLAY)) {
+         DisplayMenuItem item = (DisplayMenuItem) (displayChooser_.getSelectedItem());
+         if (item.getDisplay() != null) {
             // We're keyed to a specific display, so we don't care that another
             // one is now on top.
             return;
@@ -259,5 +306,17 @@ public class InspectorFrame extends MMFrame implements Inspector {
             ReportingUtils.logError(e, "Error dispatching new display to " + panel);
          }
       }
+      DisplayMenuItem item = (DisplayMenuItem) (displayChooser_.getSelectedItem());
+      if (item.getDisplay() == null) {
+         // Show the title of the current display, to make it clear which one
+         // we're controlling.
+         curDisplayTitle_.setText(display_.getName());
+         curDisplayTitle_.setVisible(true);
+      }
+      else {
+         curDisplayTitle_.setVisible(false);
+      }
+      // Redo the layout to account for curDisplayTitle_ being shown/hidden.
+      validate();
    }
 }
