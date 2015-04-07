@@ -51,7 +51,7 @@ public class GUIColors {
       // Possible: make UI to let user set these colors
       background_ = new HashMap<String, ColorUIResource>();
       background_.put(STYLE_DAY, new ColorUIResource(java.awt.SystemColor.control));
-      background_.put(STYLE_NIGHT, new ColorUIResource(Color.gray));
+      background_.put(STYLE_NIGHT, new ColorUIResource(new Color(64, 64, 64)));
 
       padBackground_ = new HashMap<String, ColorUIResource>();
       padBackground_.put(STYLE_DAY, new ColorUIResource(Color.white));
