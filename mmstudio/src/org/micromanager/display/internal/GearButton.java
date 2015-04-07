@@ -53,7 +53,7 @@ public class GearButton extends JButton {
       });
       menu_.add(openInspector);
 
-      JMenuItem duplicate = new JMenuItem("Duplicate This Display");
+      JMenuItem duplicate = new JMenuItem("Duplicate This Window");
       duplicate.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
