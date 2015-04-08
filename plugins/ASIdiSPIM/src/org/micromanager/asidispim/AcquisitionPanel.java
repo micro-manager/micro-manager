@@ -1956,50 +1956,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          multiChannelPanel_.setConfig(originalChannelConfig);
       }
       
-      // the controller will end with both beams disabled and scan off so reflect
-      // that in device properties
-      props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.BEAM_ENABLED,
-            Properties.Values.NO, true);
-      props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.BEAM_ENABLED,
-            Properties.Values.NO, true);
-      props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SA_MODE_X,
-            Properties.Values.SAM_DISABLED, true);
-      props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SA_MODE_X,
-            Properties.Values.SAM_DISABLED, true);
-      
-      // sets BNC3 output low again
-      // this only happens after images have all been received (or timeout occurred)
-      // but if using DemoCam devices then it happens too early
-      // at least part of the problem is that both DemoCam devices "acquire" at the same time
-      // instead of actually obeying the controller's triggers
-      // as a result with DemoCam the side select (BNC4) isn't correct
-      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET, 
-            Properties.Values.PLOGIC_PRESET_2, true);
-
-      // move piezos back to center (neutral) position
-      // TODO move to center position instead of to 0
-      if (devices_.isValidMMDevice(Devices.Keys.PIEZOA)) {
-         positions_.setPosition(Devices.Keys.PIEZOA, Joystick.Directions.NONE, 0.0);
-      }
-      if (devices_.isValidMMDevice(Devices.Keys.PIEZOB)) {
-         positions_.setPosition(Devices.Keys.PIEZOB, Joystick.Directions.NONE, 0.0);
-      }
-      
-      if ( isStageScanning() ) {
-         try {
-            core_.setXYPosition(devices_.getMMDevice(Devices.Keys.XYSTAGE), xyPosUm.x, xyPosUm.y);
-         } catch (Exception ex) {
-            MyDialogUtils.showError("Could not get XY stage position for stage scan initialization");
-            return false;
-         }
-      }
-      
-      // make sure to stop the SPIM state machine in case the acquisition was cancelled
-      // even if the acquisition wasn't cancelled make sure the Micro-Manager properties are updated
-      props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
-            Properties.Values.SPIM_IDLE, true);
-      props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SPIM_STATE,
-            Properties.Values.SPIM_IDLE, true);
+      controller_.cleanUpAfterAcquisition(isStageScanning(), xyPosUm, 0.0f, 0.0f);
          
       updateAcquisitionStatus(AcquisitionStatus.DONE);
       posUpdater_.pauseUpdates(false);

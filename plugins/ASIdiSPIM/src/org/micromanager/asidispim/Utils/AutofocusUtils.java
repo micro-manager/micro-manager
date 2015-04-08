@@ -121,7 +121,10 @@ public class AutofocusUtils {
       
       final double start = center - ( 0.5 * (nrImages - 1) * stepSize);
       
-           
+      // remember galvo position so that we can restore it
+      final double galvoPosition = positions_.getUpdatedPosition(
+              Devices.getSideSpecificKey(Devices.Keys.GALVOA, side), 
+              Joystick.Directions.Y);  
               
       // TODO: run this on its own thread
       controller_.prepareControllerForAquisition(
@@ -141,7 +144,7 @@ public class AutofocusUtils {
               100.0f, // delay before side (can go to 0?)
               stepSize, // stepSize in microns
               sliceTiming);
-
+      
       double[] focusScores = new double[nrImages];
       TaggedImage[] imageStore = new TaggedImage[nrImages];
       // Use array to store data so that we can expand to plotting multiple
@@ -275,37 +278,27 @@ public class AutofocusUtils {
          try {
             gui_.getMMCore().stopSequenceAcquisition(camera);
             gui_.getMMCore().setCameraDevice(originalCamera);
+            gui_.closeAcquisition(acqName);
+
+            controller_.cleanUpAfterAcquisition(false, null, 0.0f, 0.0f);                
+
+            cameras_.setSPIMCamerasForAcquisition(false);      
+            
+            // Let the calling panel restore the settings
+            caller.gotSelected();
             
             // move piezo  to focussed position
             Devices.Keys piezo = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side);
             if (devices_.isValidMMDevice(piezo)) {
                positions_.setPosition(piezo, Joystick.Directions.NONE, bestScore);
             }
-            // TODO move to center position instead of to 0
-            /*
-            if (devices_.isValidMMDevice(Devices.Keys.PIEZOA)) {
-               positions_.setPosition(Devices.Keys.PIEZOA, Joystick.Directions.NONE, 0.0);
+            // move Galvo to its original position
+            Devices.Keys galvo = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side);
+            if (devices_.isValidMMDevice(galvo)) {
+               positions_.setPosition(galvo, Joystick.Directions.Y, galvoPosition);
             }
-            if (devices_.isValidMMDevice(Devices.Keys.PIEZOB)) {
-               positions_.setPosition(Devices.Keys.PIEZOB, Joystick.Directions.NONE, 0.0);
-            }
-            */
-
-            // make sure to stop the SPIM state machine in case the acquisition was cancelled
-            // even if the acquisition wasn't cancelled make sure the Micro-Manager properties are updated
-            props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
-                  Properties.Values.SPIM_IDLE, true);
-            props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SPIM_STATE,
-                  Properties.Values.SPIM_IDLE, true);
-
+            
             posUpdater_.pauseUpdates(false);
-            
-            cameras_.setSPIMCamerasForAcquisition(false);
-            
-            gui_.closeAcquisition(acqName);
-            
-            // Let the calling panel restore the settings
-            caller.gotSelected();
             
             if (liveModeOriginally) {
                gui_.getMMCore().waitForDevice(camera);
