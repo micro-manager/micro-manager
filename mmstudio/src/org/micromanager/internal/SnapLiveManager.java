@@ -25,7 +25,6 @@ import org.json.JSONObject;
 
 import org.micromanager.data.internal.StorageRAM;
 
-import org.micromanager.data.AbortEvent;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
@@ -160,11 +159,6 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
             ReportingUtils.logError(e, "Interrupted while waiting for grabber thread to end");
          }
       }
-   }
-
-   @Subscribe
-   public void onAbort(AbortEvent event) {
-      setLiveMode(false);
    }
 
    /**
