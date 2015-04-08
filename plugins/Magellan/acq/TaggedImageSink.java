@@ -2,7 +2,6 @@ package acq;
 
 import java.util.concurrent.BlockingQueue;
 import mmcorej.TaggedImage;
-import org.micromanager.api.ImageCache;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -14,13 +13,13 @@ import org.micromanager.utils.ReportingUtils;
 public class TaggedImageSink  {
 
    private final BlockingQueue<TaggedImage> imageProducingQueue_;
-   private ImageCache imageCache_ = null;
+   private MMImageCache imageCache_ = null;
    private volatile String lastImageLabel_;
    private Thread savingThread_;
    private Acquisition acq_;
    
    public TaggedImageSink(BlockingQueue<TaggedImage> imageProducingQueue,
-           ImageCache imageCache, Acquisition acq) {
+           MMImageCache imageCache, Acquisition acq) {
       imageProducingQueue_ = imageProducingQueue;
       imageCache_ = imageCache;
       acq_ = acq;

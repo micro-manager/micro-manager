@@ -26,28 +26,16 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.WindowManager;
 import ij.gui.ImageCanvas;
-import ij.gui.ImageWindow;
 import ij.io.FileInfo;
-import ij.measure.Calibration;
-import java.awt.MouseInfo;
-import java.awt.Point;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
-import javax.swing.event.MouseInputAdapter;
 import acq.MMImageCache;
 import mmcloneclasses.graph.HistogramSettings;
 import mmcloneclasses.graph.MultiChannelHistograms;
@@ -55,16 +43,9 @@ import mmcloneclasses.graph.Histograms;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.acquisition.AcquisitionEngine;
-import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
-import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
-import org.micromanager.api.ImageCache;
-import org.micromanager.api.ImageCacheListener;
-import org.micromanager.api.events.PixelSizeChangedEvent;
-import org.micromanager.events.EventManager;
 import org.micromanager.utils.*;
 
-public abstract class VirtualAcquisitionDisplay implements ImageCacheListener {
+public abstract class VirtualAcquisitionDisplay{
 
    /**
     * Given an ImagePlus, retrieve the associated VirtualAcquisitionDisplay.
@@ -368,7 +349,6 @@ public abstract class VirtualAcquisitionDisplay implements ImageCacheListener {
     * required by ImageCacheListener
     * @param taggedImage 
     */
-   @Override
    public void imageReceived(final TaggedImage taggedImage) {
       updateDisplay(taggedImage);
    }
@@ -377,7 +357,6 @@ public abstract class VirtualAcquisitionDisplay implements ImageCacheListener {
     * Method required by ImageCacheListener
     * @param path
     */
-   @Override
    public void imagingFinished(String path) {
       if (amClosing_) {
          // Don't care, we'll be closing soon anyway.
@@ -693,73 +672,6 @@ public abstract class VirtualAcquisitionDisplay implements ImageCacheListener {
 //      }
    }
    
-   private Class createSaveTypePopup() {
-      if (saveTypePopup_ != null) {
-         saveTypePopup_.setVisible(false);
-         saveTypePopup_ = null;
-      }
-      final JPopupMenu menu = new JPopupMenu();
-      saveTypePopup_ = menu;
-      JMenuItem single = new JMenuItem("Save as separate image files");
-      JMenuItem multi = new JMenuItem("Save as image stack file");
-      JMenuItem cancel = new JMenuItem("Cancel");
-      menu.add(single);
-      menu.add(multi);
-      menu.addSeparator();
-      menu.add(cancel);
-      final AtomicInteger ai = new AtomicInteger(-1);
-      cancel.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            ai.set(0);
-         }
-      });
-      single.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            ai.set(1);
-         }
-      });
-      multi.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            ai.set(2);
-         }
-      });
-      MouseInputAdapter highlighter = new MouseInputAdapter() {
-         @Override
-         public void mouseEntered(MouseEvent e) {
-            ((JMenuItem) e.getComponent()).setArmed(true);
-         }
-         @Override
-         public void mouseExited(MouseEvent e) {
-            ((JMenuItem) e.getComponent()).setArmed(false);
-         }       
-      };
-      single.addMouseListener(highlighter);
-      multi.addMouseListener(highlighter);
-      cancel.addMouseListener(highlighter);  
-      Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
-      menu.show(null, mouseLocation.x, mouseLocation.y);
-      while (ai.get() == -1) {
-         try {
-            Thread.sleep(10);
-         } catch (InterruptedException ex) {}
-         if (!menu.isVisible()) {
-            return null;
-         }
-      }
-      menu.setVisible(false);
-      saveTypePopup_ = null;
-      if (ai.get() == 0) {
-         return null;
-      } else if (ai.get() == 1) {
-         return TaggedImageStorageDiskDefault.class;
-      } else {
-         return TaggedImageStorageMultipageTiff.class;
-      }  
-   }
-
    final public MMImagePlus createMMImagePlus(AcquisitionVirtualStack virtualStack) {
       MMImagePlus img = new MMImagePlus(imageCache_.getDiskLocation(), 
             virtualStack, virtualStack.getVirtualAcquisitionDisplay().getEventBus());
@@ -791,7 +703,6 @@ public abstract class VirtualAcquisitionDisplay implements ImageCacheListener {
       DisplayWindow win = new DisplayWindow(hyperImage_, bus_, (DisplayPlus) this );   
       subImageControls_ = win.getSubImageControls();
       imageChangedUpdate();
-      EventManager.post(new DisplayCreatedEvent(this, win));
    }
 
    @Subscribe
@@ -910,7 +821,7 @@ public abstract class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public boolean isDiskCached() {
-      ImageCache imageCache = imageCache_;
+      MMImageCache imageCache = imageCache_;
       if (imageCache == null) {
          return false;
       } else {

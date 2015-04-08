@@ -323,7 +323,8 @@ public class FixedAreaAcquisition extends Acquisition {
                      while (true) {
                         sliceIndex++;
                         double zPos = zTop + sliceIndex * zStep_;
-                        if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D) {
+                        if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D ||
+                                settings_.spaceMode_ == FixedAreaAcquisitionSettings.NO_SPACE) {
                            //2D region
                            if (sliceIndex > 0) {
                               break;

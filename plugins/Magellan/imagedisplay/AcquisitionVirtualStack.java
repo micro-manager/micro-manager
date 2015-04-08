@@ -1,13 +1,13 @@
 
 package imagedisplay;
 
+import acq.MMImageCache;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import java.awt.image.ColorModel;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
@@ -19,14 +19,14 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class AcquisitionVirtualStack extends ij.VirtualStack {
 
-   final private TaggedImageStorage imageCache_;
+   final private MMImageCache imageCache_;
    final protected VirtualAcquisitionDisplay vad_;
    final protected int width_, height_, type_;
    private final int nSlices_;
    private int positionIndex_ = 0;
 
    public AcquisitionVirtualStack(int width, int height, int type,
-           ColorModel cm, TaggedImageStorage imageCache, int nSlices,
+           ColorModel cm, MMImageCache imageCache, int nSlices,
            VirtualAcquisitionDisplay acq) {
       super(width, height, cm, "");
       imageCache_ = imageCache;

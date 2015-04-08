@@ -119,7 +119,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       setupKeyListeners();
       setupMouseListeners();
       IJ.setTool(Toolbar.SPARE6);
-      stitchedCache.addImageCacheListener(this);
+      stitchedCache.setDisplay(this);
       canvas_.requestFocus();
       activeDisplays_.add(this);
    }

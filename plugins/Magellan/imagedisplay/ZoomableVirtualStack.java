@@ -7,13 +7,11 @@ package imagedisplay;
 import acq.Acquisition;
 import acq.ExploreAcquisition;
 import acq.FixedAreaAcquisition;
+import acq.MMImageCache;
 import acq.MultiResMultipageTiffStorage;
-import ij.IJ;
 import java.awt.Dimension;
 import java.awt.Point;
-import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
-import org.micromanager.api.TaggedImageStorage;
 
 /**
  * This class acts as an intermediary between display and multiresolution
@@ -26,7 +24,7 @@ import org.micromanager.api.TaggedImageStorage;
 public class ZoomableVirtualStack extends AcquisitionVirtualStack {
 
    private int type_, nSlices_;
-   private TaggedImageStorage imageCache_;
+   private MMImageCache imageCache_;
    private volatile int resolutionIndex_ = 0;
    private volatile int displayImageWidth_, displayImageHeight_;
    private volatile int xView_ = 0, yView_ = 0;  //top left pixel of view in current res
@@ -36,7 +34,7 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
    private final boolean constrainPanning_;
    private int xMax_, yMax_;
 
-   public ZoomableVirtualStack(int type, int width, int height, TaggedImageStorage imageCache,
+   public ZoomableVirtualStack(int type, int width, int height, MMImageCache imageCache,
            int nSlices, VirtualAcquisitionDisplay vad, MultiResMultipageTiffStorage multiResStorage,
            Acquisition acq) {
       super(width, height, type, null, imageCache, nSlices, vad);

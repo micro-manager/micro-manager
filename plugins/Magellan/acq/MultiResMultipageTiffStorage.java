@@ -18,8 +18,6 @@ import java.util.regex.Pattern;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
-import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
@@ -33,7 +31,7 @@ import org.micromanager.utils.ReportingUtils;
  * downsample factor without truncation
  *
  */
-public class MultiResMultipageTiffStorage implements TaggedImageStorage {
+public class MultiResMultipageTiffStorage  {
 
    private final double BACKGROUND_PIXEL_PERCENTILE = 0.1; // assume background pixels are at 10th percentile of histogram
    private final int MAX_PIXELS_FOR_BACKGROUND_CALC = 1000000;
@@ -348,7 +346,7 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
          if (!lowResStorages_.containsKey(resolutionIndex) || lowResStorages_.get(resolutionIndex) == null) {
             createDownsampledStorage(resolutionIndex);
             //add all tiles from existing resolution levels to this new one            
-            TaggedImageStorage previousLevelStorage;
+            TaggedImageStorageMultipageTiff previousLevelStorage;
             if (resolutionIndex == 1) {
                previousLevelStorage = fullResStorage_;
             } else {
@@ -512,7 +510,6 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
       }
    }
 
-   @Override
    public void putImage(TaggedImage taggedImage) throws MMException {
       try {
          synchronized (this) {
@@ -527,23 +524,19 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
       }
    }
 
-   @Override
    public TaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
       //return a single tile from the full res image
       return fullResStorage_.getImage(channelIndex, sliceIndex, frameIndex, positionIndex);
    }
 
-   @Override
    public JSONObject getImageTags(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
       return getImage(channelIndex, sliceIndex, frameIndex, positionIndex).tags;
    }
 
-   @Override
    public Set<String> imageKeys() {
       return fullResStorage_.imageKeys();
    }
 
-   @Override
    public void finished() {
       fullResStorage_.finished();
       for (TaggedImageStorageMultipageTiff s : lowResStorages_.values()) {
@@ -556,32 +549,26 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
       finished_ = true;
    }
 
-   @Override
    public boolean isFinished() {
       return finished_;
    }
 
-   @Override
    public void setSummaryMetadata(JSONObject md) {
       fullResStorage_.setSummaryMetadata(md);
    }
 
-   @Override
    public JSONObject getSummaryMetadata() {
       return fullResStorage_.getSummaryMetadata();
    }
 
-   @Override
    public void setDisplayAndComments(JSONObject settings) {
       fullResStorage_.setDisplayAndComments(settings);
    }
 
-   @Override
    public JSONObject getDisplayAndComments() {
       return fullResStorage_.getDisplayAndComments();
    }
 
-   @Override
    public void close() {
       //put closing on differnt channel so as to not hang up EDT while waiting for finishing
       new Thread(new Runnable() {
@@ -603,18 +590,15 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
       },"closing thread").start();
    }
 
-   @Override
    public String getDiskLocation() {
       //For display purposes
       return directory_;
    }
 
-   @Override
    public int lastAcquiredFrame() {
       return fullResStorage_.lastAcquiredFrame();
    }
 
-   @Override
    public long getDataSetSize() {
       long sum = 0;
       sum += fullResStorage_.getDataSetSize();
@@ -624,7 +608,6 @@ public class MultiResMultipageTiffStorage implements TaggedImageStorage {
       return sum;
    }
 
-   @Override
    public void writeDisplaySettings() {
       //TODO later
    }
