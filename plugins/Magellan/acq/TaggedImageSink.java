@@ -54,9 +54,10 @@ public class TaggedImageSink  {
                }
                if (image != null) {
                   if (SignalTaggedImage.isAcquisitionFinsihedSignal(image)) {
+                     System.out.println("Signal to close image sink received");
                      break;
                   } else if (SignalTaggedImage.isTimepointFinishedSignal(image)) {
-                     ((FixedAreaAcquisition) acq_).timepointImagesFinishedWriting();
+                     ((FixedAreaAcquisition) acq_).imagesAtTimepointFinishedWriting();
                      continue;
                   } else {
                      ++imageCount;
@@ -75,7 +76,7 @@ public class TaggedImageSink  {
             imageCache_.finished();
             if (acq_ instanceof FixedAreaAcquisition) {
                //once everything is done, can signal back upstream to multiple acquisition manager
-               ((FixedAreaAcquisition) acq_).allImagesFinishedWriting();
+               ((FixedAreaAcquisition) acq_).imagesAtTimepointFinishedWriting();
             }
          }
       };

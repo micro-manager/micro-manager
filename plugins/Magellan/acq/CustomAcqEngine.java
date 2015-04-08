@@ -156,12 +156,11 @@ public class CustomAcqEngine {
         if (event.isReQueryEvent()) {
             //nothing to do, just a dummy event to get of blocking call when switching between parallel acquisitions
         } else if (event.isAcquisitionFinishedEvent()) {
+           System.out.println("Executing acq finished event");
             //signal to TaggedImageSink to finish saving thread and mark acquisition as finished
-            System.out.println("making acq finished tagged image");
             event.acquisition_.getImageSavingQueue().put(new SignalTaggedImage(SignalTaggedImage.AcqSingal.AcqusitionFinsihed));
         } else if (event.isTimepointFinishedEvent()) {
             //signal to TaggedImageSink to let acqusition know that saving for the current time point has completed  
-            System.out.println("Making tp finished tagged image");
             event.acquisition_.getImageSavingQueue().put(new SignalTaggedImage(SignalTaggedImage.AcqSingal.TimepointFinished));
         } else if (event.isAutofocusAdjustmentEvent()) {
             setAutofocusPosition(event.autofocusZName_, event.autofocusPosition_);
@@ -232,10 +231,6 @@ public class CustomAcqEngine {
         loopHardwareCommandRetries(new HardwareCommand() {
             @Override
             public void run() throws Exception {
-                //TODO: remove this once hysteresis accounted for in device adapter
-                if (zName.equals("Sutter MPC Z")) {
-                    core_.setPosition(zName, pos - 50);
-                }
                 core_.setPosition(zName, pos);
             }
         }, "Setting autofocus position");

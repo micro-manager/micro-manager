@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -41,16 +42,15 @@ public class FixedAreaAcquisition extends Acquisition {
    private ParallelAcquisitionGroup acqGroup_;
    //barrier to wait for event generation at successive time points
    //signals come from 1) event genreating thread 2) Parallel acq group
-   private CyclicBarrier startNextTPBarrier_ = new CyclicBarrier(2);
+   private CountDownLatch startNextTPLatch_ = new CountDownLatch(1);
    //barrier to wait for all images to be written before starting nex time point stuff
    //signals come from 1) event generating thread 2) tagged iamge sink
-   private CyclicBarrier tpImagesFinishedWritingBarrier_ = new CyclicBarrier(2);
+   private CountDownLatch tpImagesFinishedWritingLatch_ = new CountDownLatch(1);
    //executor service to wait for next execution
    private ScheduledExecutorService waitForNextTPSerivice_ = Executors.newScheduledThreadPool(1);
    private ExecutorService eventGenerator_;
    private CrossCorrelationAutofocus autofocus_;
    private int maxSliceIndex_ = 0;
-   private volatile boolean aborted_ = false;
 
    /**
     * Acquisition with fixed XY positions (although they can potentially all be
@@ -189,77 +189,59 @@ public class FixedAreaAcquisition extends Acquisition {
          //acq already aborted
          return;
       }
-      aborted_ = true;
       //interrupt event generating thread
       eventGenerator_.shutdownNow();
+      waitForNextTPSerivice_.shutdownNow();
       try {
          //wait for it to exit        
          while (!eventGenerator_.isTerminated()) {
              Thread.sleep(5);
          }
       } catch (InterruptedException ex) {
-         ReportingUtils.showError("Unexpected interrupt whil trying to abort acquisition");
+         IJ.log("Unexpected interrupt whil trying to abort acquisition");
          //shouldn't happen
       }
-      IJ.log("Event generator terminated");
       //clear any pending events, specific to this acqusition (since parallel acquisitions
       //share their event queue
       events_.clear();
       try {
-         //add finishing events to shoutdown all the downstream stuff       
-          System.out.println("addind acq finsihed event");
+         //not a big deal if an extra one of these is added since sink will shut down on the first one
+         System.out.println("Addind acq finished event");
          events_.put(AcquisitionEvent.createAcquisitionFinishedEvent(this));
+         //make sure engine doesnt get stuck
+         
       } catch (InterruptedException ex) {
          ReportingUtils.showError("Unexpected interrupted exception while trying to abort"); //shouldnt happen
       }
 
-      
+        
+      //singal aborted will wait for the image sink to die so this function doesnt return until abort complete
       acqGroup_.signalAborted(this);
-      //singal aborted should wait for the image sink to die so this function doesnt return until abort complete
       
-            //make sure parallel group doesnt hang waiting to signal this acq to start next TP
-      startNextTPBarrier_.reset();
+      //make sure parallel group doesnt hang waiting to signal this acq to start next TP
+      startNextTPLatch_.countDown();
    }
    
-   public void signalReadyForNextTP() throws InterruptedException, BrokenBarrierException {
+   public void signalReadyForNextTP() {
       //called by event generating thread and and parallel manager thread to
      //ensure enough time has passed to start next TP and that parallel group allows it 
-      startNextTPBarrier_.await();
-   }
-   
-   /**
-    * called by image sink when it is exiting, i.e. when acquisition
-    * has been finished or aborted
-    */
-   public void allImagesFinishedWriting() {
-       IJ.log("All images finished");
-      if (tpImagesFinishedWritingBarrier_.getNumberWaiting() == 1) {
-         try {
-            //release event generator if needed
-            tpImagesFinishedWritingBarrier_.await();
-         } catch (Exception ex) {
-            ReportingUtils.showError("Unexpected interrupt while wiating for acqusition finished");
-         }
-      }
+      startNextTPLatch_.countDown();
    }
    
    /**
     * Called by image sink at the end of writing images of each time point
+    * or when image sink is finishing, either due to an abort or the end
+    * of the final timepoint
     */
-   public void timepointImagesFinishedWriting() {
-      try {
-          IJ.log("TP images finished");
-         tpImagesFinishedWritingBarrier_.await();
-         //these exception should never happen because event generating thread will always be awaiting first
-      } catch (InterruptedException ex) {
-         ReportingUtils.showError("Image sink interrupeted");
-      } catch (BrokenBarrierException ex) {
-         ReportingUtils.showError("Image sink broken barrier");
-      }
+   public void imagesAtTimepointFinishedWriting() {
+      tpImagesFinishedWritingLatch_.countDown();
    }
 
+   /**
+    * 
+    * @throws InterruptedException if acq aborted while waiting for next TP
+    */
    private void pauseUntilReadyForTP() throws InterruptedException {
-      try {
          //Pause here bfore next time point starts
          long timeUntilNext = nextTimePointStartTime_ms_ - System.currentTimeMillis();
          if (timeUntilNext > 0) {
@@ -269,22 +251,24 @@ public class FixedAreaAcquisition extends Acquisition {
                @Override
                public void run() {
                   try {
-                     startNextTPBarrier_.await();                     
-                  } catch (Exception ex) {
-                     throw new RuntimeException(); //propogate interrupt
+                     startNextTPLatch_.await();
+                     startNextTPLatch_ = new CountDownLatch(1);
+                  } catch (InterruptedException ex) {
+                     throw new RuntimeException(); //propogate interrupt due to abort
                   }
                }
             }, timeUntilNext, TimeUnit.MILLISECONDS);
-            future.get();
+            try {
+               future.get();
+            } catch (ExecutionException ex) {
+               throw new InterruptedException(); //acq aborted         
+            }
          } else {
             //already enough time passed, just wait for go-ahead from parallel group
-            startNextTPBarrier_.await();
+            startNextTPLatch_.await();
+            startNextTPLatch_ = new CountDownLatch(1);
          }
-      } catch (BrokenBarrierException e) {
-         throw new InterruptedException(); //acq aborted
-      } catch (ExecutionException ex) {
-         throw new InterruptedException(); //acq aborted         
-      }
+
    }
 
    private void createEventGenerator() {
@@ -295,11 +279,14 @@ public class FixedAreaAcquisition extends Acquisition {
             try {
                nextTimePointStartTime_ms_ = 0;
                for (int timeIndex = 0; timeIndex < numTimePoints_; timeIndex++) {
-                  if (Thread.interrupted()) {
+                  if (eventGenerator_.isShutdown()) {
+                     throw new InterruptedException();
+                  }
+                  pauseUntilReadyForTP();                
+                  if (eventGenerator_.isShutdown()) {
                      throw new InterruptedException();
                   }
                   
-                  pauseUntilReadyForTP();         
                   //set autofocus position
                   if (autofocus_ != null && timeIndex > 1) {
                      events_.put(AcquisitionEvent.createAutofocusEvent(settings_.autoFocusZDevice_, autofocus_.getAutofocusPosition()));
@@ -341,7 +328,7 @@ public class FixedAreaAcquisition extends Acquisition {
                         }
                         AcquisitionEvent event = new AcquisitionEvent(FixedAreaAcquisition.this, timeIndex, channelIndex, sliceIndex,
                                 positionIndex, zPos, position, settings_.propPairings_);                        
-                        if (Thread.interrupted()) {
+                        if (eventGenerator_.isShutdown()) {
                            throw new InterruptedException();
                         }
                         //keep track of biggest slice index
@@ -350,7 +337,6 @@ public class FixedAreaAcquisition extends Acquisition {
                      }
                   } //position loop finished
 
-                  IJ.log("Adding finishing event");
                   if (timeIndex == numTimePoints_ - 1) {
                      //acquisition now finished, add event with null acq field so engine will mark acquisition as finished                    
                      events_.put(AcquisitionEvent.createAcquisitionFinishedEvent(FixedAreaAcquisition.this));
@@ -358,51 +344,48 @@ public class FixedAreaAcquisition extends Acquisition {
                      events_.put(AcquisitionEvent.createTimepointFinishedEvent(FixedAreaAcquisition.this));
                   }
                   
-                  IJ.log("Checking for shutdown");
                   //wait for final image of timepoint to be written before beginning end of timepoint stuff
-                  if (eventGenerator_.isShutdown()) {
-                      IJ.log("event genertator was shutdown");
+                  if (eventGenerator_.isShutdown()) {                    
                      throw new InterruptedException();
                   }
-                  IJ.log("awaiting TP finished");
-                  try {
-                  tpImagesFinishedWritingBarrier_.await();
-                  } catch (InterruptedException ex) {
-                      IJ.log("Event generator interupted while waiting at end of tp barrier");
-                      throw new InterruptedException();
-                  }
+                  //three ways to get past this barrier:
+                  //1) interuption by an abort request will throw an interrupted exception and cause this thread to return
+                  //2) image sink will get a timepointFinished signal and call timepointImagesFinishedWriting
+                  //3) image sink will get an acquisitionFinsihed signal and call allImagesFinishedWriting
+                  //in the unlikely scenario that shudown is called by abort between these two calls, the imagesink should be able
+                  //to finish writing images as expected
+                  tpImagesFinishedWritingLatch_.await();
+                  //timepoint images finshed writing, so rest the latch
+                  tpImagesFinishedWritingLatch_ = new CountDownLatch(1);
+
                   //this call starts a new thread to not hang up cyclic barriers   
                   //signal to next acquisition in parallel group to start generating events, then continue using the event generator thread
                   //to calculate autofocus
-                  IJ.log("Calling finished TP event generation");
                   acqGroup_.finishedTPEventGeneration(FixedAreaAcquisition.this);
 
                   //all images finished writing--can now run autofocus
                   if (autofocus_ != null) {
                      try {
                         autofocus_.run(timeIndex);
-                     } catch (Exception ex) {
-                        
+                     } catch (Exception ex) {                    
                         IJ.log("Problem running autofocus " + ex.getMessage());
                      }
                   }
                }
                //acqusiition has generated all of its events
-               eventGenerator_.shutdown();
-            } catch (BrokenBarrierException ex) {
-               ReportingUtils.showError("Unexpected broken barrier exception in event generator");
-               ex.printStackTrace();
-               return; //acq aborted
+               eventGeneratorShutdown();
             } catch (InterruptedException e) {
+               eventGeneratorShutdown();
                return; //acq aborted
-            } finally {
-               eventGenerator_.shutdown();
-               waitForNextTPSerivice_.shutdown();
-            }
+            } 
          }
       }); 
    }
 
+   private void eventGeneratorShutdown() {
+      eventGenerator_.shutdown();
+      waitForNextTPSerivice_.shutdown();
+   }
 
    /**
     * This function and the one below determine which slices will be collected
