@@ -132,14 +132,14 @@ public interface DisplayManager {
     * manage() method for more information).
     * @return A list of all Datastores that Micro-Manager is managing.
     */
-   public List<Datastore> getTrackedDatastores();
+   public List<Datastore> getManagedDatastores();
 
    /**
     * Returns true iff the Datastore is being managed by MicroManager.
     * @param store The Datastore whose management status is under question.
     * @return Whether or not Micro-Manager is managing the Datastore.
     */
-   public boolean getIsTracked(Datastore store);
+   public boolean getIsManaged(Datastore store);
 
    /**
     * Return all associated DisplayWindows for the Datastore. Returns null if
@@ -163,6 +163,17 @@ public interface DisplayManager {
     * @return A list of all DisplayWindows that Micro-Manager knows about.
     */
    public List<DisplayWindow> getAllImageWindows();
+
+   /**
+    * Display a prompt for the user to save their data. This is the same
+    * prompt that is generated when the last DisplayWindow for a managed
+    * Datastore is closed.
+    * @param store The Datastore to save.
+    * @param display The DisplayWindow over which to show the prompt.
+    * @return true if saving was successful or the user explicitly declined
+    *         to save; false if the user cancelled or if saving failed.
+    */
+   public boolean promptToSave(Datastore store, DisplayWindow display);
 
    /**
     * Given a Datastore, close any open DisplayWindows for that Datastore.

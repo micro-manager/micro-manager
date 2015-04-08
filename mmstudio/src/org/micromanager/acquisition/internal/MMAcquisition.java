@@ -73,6 +73,7 @@ import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.DefaultDisplayWindow;
+import org.micromanager.display.RequestToCloseEvent;
 
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MDUtils;
@@ -139,7 +140,6 @@ public class MMAcquisition {
       eng_ = eng;
       show_ = show;
       store_ = new DefaultDatastore();
-      MMStudio.getInstance().displays().manage(store_);
       try {
          if (summaryMetadata.has("Directory") && summaryMetadata.get("Directory").toString().length() > 0) {
             // Set up saving to the target directory.
@@ -283,7 +283,6 @@ public class MMAcquisition {
       String name = name_;
       
       store_ = new DefaultDatastore();
-      MMStudio.getInstance().displays().manage(store_);
 
       if (virtual_ && existing_) {
          String dirName = rootDirectory_ + File.separator + name;
@@ -669,6 +668,20 @@ public class MMAcquisition {
          return true;
       }
       return false;
+   }
+
+   @Subscribe
+   public void onRequestToClose(RequestToCloseEvent event) {
+      // Prompt to stop the acquisition if it's still running.
+      if (!eng_.abortRequest()) {
+         // User cancelled abort.
+         return;
+      }
+      if (store_.getSavePath() != null ||
+            MMStudio.getInstance().displays().promptToSave(store_, display_)) {
+         // Datastore is saved, or user declined to save.
+         display_.forceClosed();
+      }
    }
 
    @Subscribe

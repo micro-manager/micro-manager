@@ -534,8 +534,11 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
             stop(true);
             return true;
          }
+         else {
+            return false;
+         }
       }
-      return false;
+      return true;
    }
 
    @Override

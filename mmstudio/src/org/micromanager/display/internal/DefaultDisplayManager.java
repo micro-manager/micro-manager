@@ -91,7 +91,7 @@ public class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
-   public List<Datastore> getTrackedDatastores() {
+   public List<Datastore> getManagedDatastores() {
       return new ArrayList<Datastore>(storeToDisplays_.keySet());
    }
 
@@ -110,7 +110,7 @@ public class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
-   public boolean getIsTracked(Datastore store) {
+   public boolean getIsManaged(Datastore store) {
       return storeToDisplays_.containsKey(store);
    }
 
@@ -255,15 +255,23 @@ public class DefaultDisplayManager implements DisplayManager {
          removeDisplay(display);
          return;
       }
-
       // Last display; check for saving now.
       if (store.getSavePath() != null) {
          // No problem with saving.
          removeDisplay(display);
          return;
       }
-
       // Prompt the user to save their data.
+      if (promptToSave(store, display)) {
+         removeDisplay(display);
+         store.freeze();
+         // This will invoke our onDatastoreClosed() method.
+         store.close();
+      }
+   }
+
+   @Override
+   public boolean promptToSave(Datastore store, DisplayWindow display) {
       String[] options = {"Save as Separate Files", "Save as Single File",
          "Discard", "Cancel"};
       int result = JOptionPane.showOptionDialog(display.getAsWindow(),
@@ -272,7 +280,7 @@ public class DefaultDisplayManager implements DisplayManager {
             JOptionPane.QUESTION_MESSAGE, null, options, options[1]);
       if (result == 3) {
          // User cancelled.
-         return;
+         return false;
       }
       Datastore.SaveMode mode = Datastore.SaveMode.MULTIPAGE_TIFF;
       if (result == 0) {
@@ -281,13 +289,10 @@ public class DefaultDisplayManager implements DisplayManager {
       if (result != 2) { // I.e. not the "discard" option
          if (!store.save(mode, display.getAsWindow())) {
             // Don't close the window, as saving failed.
-            return;
+            return false;
          }
       }
-      removeDisplay(display);
-      store.freeze();
-      // This will invoke our onDatastoreClosed() method.
-      store.close();
+      return true;
    }
 
    private void removeDisplay(DisplayWindow display) {
@@ -305,7 +310,7 @@ public class DefaultDisplayManager implements DisplayManager {
    public void onNewDisplayEvent(NewDisplayEvent event) {
       DisplayWindow display = event.getDisplay();
       Datastore store = display.getDatastore();
-      if (getIsTracked(store)) {
+      if (getIsManaged(store)) {
          storeToDisplays_.get(store).add(display);
          display.registerForEvents(this);
       }
@@ -318,7 +323,7 @@ public class DefaultDisplayManager implements DisplayManager {
    public void onDisplayDestroyed(DisplayDestroyedEvent event) {
       DisplayWindow display = event.getDisplay();
       Datastore store = display.getDatastore();
-      if (getIsTracked(store)) {
+      if (getIsManaged(store)) {
          storeToDisplays_.get(store).remove(display);
       }
    }
