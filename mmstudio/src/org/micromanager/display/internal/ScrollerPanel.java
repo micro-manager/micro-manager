@@ -123,6 +123,7 @@ class ScrollerPanel extends JPanel {
 
    private final Datastore store_;
    private final DisplayWindow parent_;
+   private DisplaySettings settingsCache_;
 
    private final HashMap<String, AxisState> axisToState_;
    private final HashMap<String, Integer> axisToSavedPosition_;
@@ -274,20 +275,21 @@ class ScrollerPanel extends JPanel {
 
    /**
     * Change the displayed image coordinate along the given axis to the
-    * specified position.
+    * specified position. Even if we don't actually change the displayed
+    * image, we still need to update our GUI components (scrollbar and
+    * button).
     */
-   private synchronized void setPosition(String axis, int pos) {
+   private void setPosition(String axis, int pos) {
       if (pos == axisToState_.get(axis).cachedIndex_) {
          // We're already where we were told to go.
          return;
       }
+      boolean didChange = axisToState_.get(axis).cachedIndex_ != pos;
       axisToState_.get(axis).cachedIndex_ = pos;
       // Update controls: the scrollbar and text field. Avoid redundant set
       // commands to avoid posting redundant events (which could hang the EDT).
-      boolean didChange = false;
       JScrollBar scrollbar = axisToState_.get(axis).scrollbar_;
       if (scrollbar.getValue() != pos) {
-         didChange = true;
          scrollbar.setValue(pos);
       }
       // Add one so displayed values are 1-indexed.
@@ -295,7 +297,6 @@ class ScrollerPanel extends JPanel {
             Math.min(store_.getAxisLength(axis), Math.max(0, pos + 1)));
       JButton button = axisToState_.get(axis).posButton_;
       if (!button.getText().contentEquals(newText)) {
-         didChange = true;
          button.setText(newText);
       }
       if (didChange) {
@@ -326,6 +327,7 @@ class ScrollerPanel extends JPanel {
       Coords target = builder.build();
       DisplaySettings settings = parent_.getDisplaySettings();
       settings = settings.copy().imageCoords(target).build();
+      settingsCache_ = settings;
       parent_.setDisplaySettings(settings);
       parent_.postEvent(new ImageCoordsEvent(target));
       parent_.postEvent(new DefaultRequestToDrawEvent(builder.build()));
@@ -348,6 +350,11 @@ class ScrollerPanel extends JPanel {
    @Subscribe
    public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
       DisplaySettings settings = event.getDisplaySettings();
+      if (settings == settingsCache_) {
+         // Display is telling us about settings that we set on it, so we can
+         // safely ignore these as we're already up-to-date.
+         return;
+      }
       if (settings.getAnimationFPS() != null &&
             settings.getAnimationFPS() != fps_) {
          fps_ = settings.getAnimationFPS();

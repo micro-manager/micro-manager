@@ -107,7 +107,7 @@ public class MMAcquisition {
    private final String comment_ = "";
    private String rootDirectory_;
    private DefaultDatastore store_;
-   private DefaultDisplayWindow display_;
+   private DisplayWindow display_;
    private final boolean existing_;
    private final boolean virtual_;
    private AcquisitionEngine eng_;
@@ -169,7 +169,8 @@ public class MMAcquisition {
          ReportingUtils.logError(e, "Couldn't set summary metadata");
       }
       if (show_) {
-         display_ = new DefaultDisplayWindow(store_, makeControlsFactory());
+         display_ = MMStudio.getInstance().displays().createDisplay(store_,
+               makeControlsFactory());
          display_.setDisplaySettings(DefaultDisplaySettings.legacyFromJSON(summaryMetadata));
          display_.registerForEvents(this);
       }
@@ -398,7 +399,8 @@ public class MMAcquisition {
       if (store_.getSummaryMetadata() != null) {
          if (show_ && !existing_) {
             // NB pre-existing setups will have loaded saved display settings.
-            display_ = new DefaultDisplayWindow(store_, makeControlsFactory());
+            display_ = MMStudio.getInstance().displays().createDisplay(store_,
+                  makeControlsFactory());
             display_.registerForEvents(this);
          }
          initialized_ = true;

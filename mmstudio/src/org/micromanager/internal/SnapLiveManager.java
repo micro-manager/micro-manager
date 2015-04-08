@@ -275,7 +275,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
     * We need to [re]create the display and its associated custom controls.
     */
    private void createDisplay() {
-      display_ = new DefaultDisplayWindow(store_,
+      display_ = MMStudio.getInstance().displays().createDisplay(store_,
          new ControlsFactory() {
             @Override
             public List<Component> makeControls(DisplayWindow display) {

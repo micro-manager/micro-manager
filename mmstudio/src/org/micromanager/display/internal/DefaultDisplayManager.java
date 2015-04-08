@@ -43,6 +43,7 @@ import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.display.RequestToDrawEvent;
 import org.micromanager.display.OverlayPanel;
 import org.micromanager.display.OverlayPanelFactory;
+import org.micromanager.display.internal.events.DefaultNewDisplayEvent;
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
 import org.micromanager.display.internal.events.NewOverlayEvent;
 
@@ -147,13 +148,26 @@ public class DefaultDisplayManager implements DisplayManager {
 
    @Override
    public DisplayWindow createDisplay(Datastore store) {
-      return new DefaultDisplayWindow(store, null);
+      return createDisplay(store, null);
    }
 
    @Override
    public DisplayWindow createDisplay(Datastore store,
          ControlsFactory factory) {
-      return new DefaultDisplayWindow(store, factory);
+      DefaultDisplayWindow result = new DefaultDisplayWindow(store, factory);
+      // Handle some setup for the window, now that its constructor has
+      // completed.
+      // There's a race condition here: if the Datastore adds an image
+      // between us registering and us manually checking for images, then
+      // we risk creating GUI objects twice, so the display's GUI creation has
+      // to be coded defensively to avoid double-calls.
+      store.registerForEvents(result);
+      if (store.getNumImages() > 0) {
+         result.makeGUI();
+      }
+      DefaultEventManager.getInstance().post(new DefaultNewDisplayEvent(result));
+      DefaultEventManager.getInstance().registerForEvents(result);
+      return result;
    }
 
    @Override
@@ -168,12 +182,14 @@ public class DefaultDisplayManager implements DisplayManager {
       if (path != null) {
          List<DisplaySettings> allSettings = DefaultDisplaySettings.load(path);
          for (DisplaySettings settings : allSettings) {
-            result.add(new DefaultDisplayWindow(store, null, settings, null));
+            DisplayWindow tmp = createDisplay(store);
+            tmp.setDisplaySettings(settings);
+            result.add(tmp);
          }
       }
       else {
          // Just create a blank new display.
-         result.add(new DefaultDisplayWindow(store, null));
+         result.add(createDisplay(store));
       }
       return result;
    }

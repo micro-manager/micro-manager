@@ -140,6 +140,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    private JPanel controlsPanel_;
    private HyperstackControls hyperstackControls_;
 
+   private Object guiLock_ = new Object();
    private boolean haveCreatedGUI_ = false;
 
    // Used by the pack() method to track changes in our size.
@@ -172,7 +173,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          String customName) {
       super("image display window");
       store_ = store;
-      store_.registerForEvents(this);
       if (settings == null) {
          displaySettings_ = DefaultDisplaySettings.getStandardSettings();
       }
@@ -185,10 +185,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       controlsFactory_ = controlsFactory;
 
       // The DisplayGroupManager will want to know about us, so this must
-      // happen before our creation event gets posted.
+      // happen before our creation event gets posted by the
+      // DefaultDisplayManager.
       DisplayGroupManager.ensureInitialized();
-      DefaultEventManager.getInstance().post(
-            new DefaultNewDisplayEvent(this));
 
       final DefaultDisplayWindow thisWindow = this;
       // Post an event whenever we're made active, so that the InspectorFrame
@@ -200,12 +199,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
                new DisplayActivatedEvent(thisWindow));
          }
       });
-
-      // Wait to actually create our GUI until there's at least one image
-      // to display.
-      if (store_.getNumImages() > 0) {
-         makeWindowAndIJObjects();
-      }
 
       // HACK: on OSX, we want to show the ImageJ menubar for our windows.
       // However, if we simply do setMenuBar(Menus.getMenuBar()), then somehow
@@ -232,8 +225,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             }
          });
       }
-
-      DefaultEventManager.getInstance().registerForEvents(this);
    }
 
    /**
@@ -242,34 +233,42 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     * construction is spun off into the EDT (Event Dispatch Thread), unless
     * of course we're already in that thread.
     */
-   private void makeWindowAndIJObjects() {
-      if (!SwingUtilities.isEventDispatchThread()) {
-         try {
-            SwingUtilities.invokeAndWait(new Runnable() {
-               @Override
-               public void run() {
-                  makeWindowAndIJObjects_EDTSafe();
-               }
-            });
+   public void makeGUI() {
+      synchronized(guiLock_) {
+         if (haveCreatedGUI_) {
+            // Already done this.
+            return;
          }
-         catch (InterruptedException e) {
-            // This should never happen.
-            ReportingUtils.showError(e, "Interrupted while creating DisplayWindow");
+         if (!SwingUtilities.isEventDispatchThread()) {
+            try {
+               SwingUtilities.invokeAndWait(new Runnable() {
+                  @Override
+                  public void run() {
+                     makeGUI_EDTSafe();
+                  }
+               });
+            }
+            catch (InterruptedException e) {
+               // This should never happen.
+               ReportingUtils.showError(e,
+                     "Interrupted while creating DisplayWindow");
+            }
+            catch (java.lang.reflect.InvocationTargetException e) {
+               ReportingUtils.showError(e,
+                     "Exception while creating DisplayWindow");
+            }
          }
-         catch (java.lang.reflect.InvocationTargetException e) {
-            ReportingUtils.showError(e, "Exception while creating DisplayWindow");
+         else {
+            makeGUI_EDTSafe();
          }
-      }
-      else {
-         makeWindowAndIJObjects_EDTSafe();
       }
    }
 
    /**
-    * This method should only be called from makeWindowAndIJObjects, which
+    * This method should only be called from makeGUI, which
     * ensures that this method is only called from within the EDT.
     */
-   private void makeWindowAndIJObjects_EDTSafe() {
+   private void makeGUI_EDTSafe() {
       loadAndRestorePosition(getLocation().x, getLocation().y);
       stack_ = new MMVirtualStack(store_, displayBus_);
       ijImage_ = new MMImagePlus();
@@ -801,7 +800,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
                GUIUtils.invokeAndWait(new Runnable() {
                   @Override
                   public void run() {
-                     thisWindow.makeWindowAndIJObjects();
+                     thisWindow.makeGUI();
                   }
                });
             }
@@ -941,8 +940,11 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
 
    @Override
    public DisplayWindow duplicate() {
-      return new DefaultDisplayWindow(store_, controlsFactory_,
-            displaySettings_, customName_);
+      DisplayWindow result = DefaultDisplayManager.getInstance().createDisplay(
+            store_, controlsFactory_);
+      result.setDisplaySettings(displaySettings_);
+      result.setCustomTitle(customName_);
+      return result;
    }
 
    // Implemented to help out DummyImageWindow.
