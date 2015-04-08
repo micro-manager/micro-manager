@@ -24,7 +24,17 @@
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/move/move.hpp>
+
+#include <boost/version.hpp>
+#if BOOST_VERSION / 100 == 1048
+   // In Boost 1.48, the boost::move provided by Boost.Move and Boost.Thread
+   // collide. Avoid including Boost.Move header so that we use the
+   // Boost.Thread version.
+   // See also: https://github.com/libcoin/libcoin/issues/47
+#else
+#  include <boost/move/move.hpp>
+#endif
+
 #include <iomanip>
 #include <ios>
 #include <set>
