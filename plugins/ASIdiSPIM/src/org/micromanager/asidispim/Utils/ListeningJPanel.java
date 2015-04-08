@@ -58,6 +58,11 @@ public class ListeningJPanel extends JPanel {
    public void saveSettings() {};
    
    /**
+    * Called when the plugin window is closing
+    */
+   public void windowClosing() {};
+   
+   /**
     * Called when new stage positions are available in the device class
     */
    public void updateStagePositions() {};

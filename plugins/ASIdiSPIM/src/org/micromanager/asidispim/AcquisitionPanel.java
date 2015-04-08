@@ -2070,6 +2070,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    /**
     * Gets called when enclosing window closes
     */
+   @Override
    public void windowClosing() {
       sliceFrameAdvanced_.savePosition();
       sliceFrameAdvanced_.dispose();

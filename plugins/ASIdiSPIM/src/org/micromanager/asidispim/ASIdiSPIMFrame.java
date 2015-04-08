@@ -281,6 +281,7 @@ public class ASIdiSPIMFrame extends MMFrame
    public void slmExposureChanged(String cameraName, double newExposureTime) {
    }
    
+   // TODO make this automatically call all panels' method
    private void saveSettings() {
       // save selections as needed
       devices_.saveSettings();
@@ -294,11 +295,18 @@ public class ASIdiSPIMFrame extends MMFrame
       prefs_.putInt(MAIN_PREF_NODE, Prefs.Keys.TAB_INDEX, tabbedPane_.getSelectedIndex());
    }
    
+// TODO make this automatically call all panels' method
+   private void windowClosing() {
+      acquisitionPanel_.windowClosing();
+      setupPanelA_.windowClosing();
+      setupPanelB_.windowClosing();
+   }
+   
    @Override
    public void dispose() {
       stagePosUpdater_.stop();
       saveSettings();
-      acquisitionPanel_.windowClosing();
+      windowClosing();
       super.dispose();
    }
 }
