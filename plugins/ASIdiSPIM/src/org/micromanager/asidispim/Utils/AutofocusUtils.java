@@ -77,8 +77,11 @@ public class AutofocusUtils {
     * temporarily set the center position to the current position (but restore 
     * the center position on exit).
     *
-    * @param side
-    * @param sliceTiming
+    * @param caller - calling panel, used to restore settings after focussing
+    * @param side - A or B
+    * @param centerAtCurrentZ - whether to focus around the current position, or 
+    *                           around middle set in the setup panel
+    * @param sliceTiming - Data structure with current device timing setting
     * 
     * @return position of the moving device associated with highest focus score
     * @throws org.micromanager.asidispim.api.ASIdiSPIMException
