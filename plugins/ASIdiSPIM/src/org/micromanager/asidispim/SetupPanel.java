@@ -53,6 +53,7 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Utils.AutofocusUtils;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.internalinterfaces.LiveModeListener;
+import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -76,7 +77,13 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private final JoystickSubPanel joystickPanel_;
    private final CameraSubPanel cameraPanel_;
    private final BeamSubPanel beamPanel_;
+   private final MMFrame slopeCalibrationFrame_;
+   // TODO rearrange these variables
    // used to store the start/stop positions of the single-axis moves for imaging piezo and micromirror sheet move axis
+   private final StoredFloatLabel sheetStartPositionLabel_;
+   private final StoredFloatLabel sheetStopPositionLabel_;
+   private final StoredFloatLabel imagingPiezoStartPositionLabel_;
+   private final StoredFloatLabel imagingPiezoStopPositionLabel_;
    private double imagingPiezoStartPos_;
    private double imagingPiezoStopPos_;
    private double imagingCenterPos_;
@@ -95,10 +102,8 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private final JLabel imagingPiezoPositionLabel_;
    private final JLabel illuminationPiezoPositionLabel_;
    private final JLabel sheetPositionLabel_;
-   private final StoredFloatLabel sheetStartPositionLabel_;
-   private final StoredFloatLabel sheetStopPositionLabel_;
-   private final StoredFloatLabel imagingPiezoStartPositionLabel_;
-   private final StoredFloatLabel imagingPiezoStopPositionLabel_;
+
+
 
    public SetupPanel(ScriptInterface gui, 
            Devices devices, 
@@ -197,7 +202,12 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       tmp_but = new JButton("Update");
       tmp_but.setMargin(new Insets(4,8,4,8));
       tmp_but.setToolTipText("Computes piezo vs. slice slope and offset from start and end positions");
-      // TODO implement
+      tmp_but.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            updateCalibrationSlopeAndOffset();
+         }
+      });
       tmp_but.setBackground(Color.green);
       calibrationPanel.add(tmp_but);
 
@@ -212,18 +222,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       tmp_but.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            try {
-               double rate = (Double) rateField_.getValue();
-               // bypass cached positions in positions_ in case they aren't current
-               double currentScanner = core_.getGalvoPosition(
-                     devices_.getMMDeviceException(micromirrorDeviceKey_)).y;
-               double currentPiezo = core_.getPosition(
-                     devices_.getMMDeviceException(piezoImagingDeviceKey_));
-               double newOffset = currentPiezo - rate * currentScanner;
-               offsetField_.setValue((Double) newOffset);
-            } catch (Exception ex) {
-               MyDialogUtils.showError(ex);
-            }
+            updateCalibrationOffset();
          }
       });
       tmp_but.setBackground(Color.green);
@@ -243,6 +242,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          @Override
          public void actionPerformed(ActionEvent e) {
             try {
+               // TODO make this adjust slice position, not piezo
                double piezoPos = autofocus_.runFocus(setupPanel, side, true,
                   ASIdiSPIM.getFrame().getAcquisitionPanel().getSliceTiming());
                positions_.setPosition(piezoImagingDeviceKey_, 
@@ -252,6 +252,154 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          }
       });
       calibrationPanel.add(tmp_but, "center, span 3, wrap");
+      
+      // start 2-point calibration frame
+      // this frame is separate from main plugin window
+      
+      slopeCalibrationFrame_ = new MMFrame();
+      slopeCalibrationFrame_.setTitle("Slope and Offset Calibration");
+      slopeCalibrationFrame_.loadPosition(100, 100);
+      
+      JPanel slopeCalibrationPanel = new JPanel(new MigLayout(
+            "",
+            "[center]8[center]8[center]8[center]8[center]",
+            "[]8[]"));
+      
+      // TODO improve interface with multi-page UI and forward/back buttons
+      // e.g. \mmstudio\src\org\micromanager\conf2\ConfiguratorDlg2.java
+      
+      slopeCalibrationPanel.add(new JLabel("Calibration Start Position"), "span 3, center");
+      slopeCalibrationPanel.add(new JLabel("Calibration End Position"), "span 3, center, wrap");
+
+      slopeCalibrationPanel.add(sheetStartPositionLabel_);
+      
+      // Go to start button
+      tmp_but = new JButton("Go to");
+      tmp_but.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            try {
+               positions_.setPosition(micromirrorDeviceKey_, 
+                       Joystick.Directions.Y, sliceStartPos_);
+               positions_.setPosition(piezoImagingDeviceKey_, 
+                       Joystick.Directions.NONE, imagingPiezoStartPos_);       
+            } catch (Exception ex) {
+               MyDialogUtils.showError(ex);
+            }
+         }
+      });
+      slopeCalibrationPanel.add(tmp_but, "");   
+      slopeCalibrationPanel.add(new JSeparator(SwingConstants.VERTICAL), "spany 2, growy");
+     
+      slopeCalibrationPanel.add(sheetStopPositionLabel_);
+
+      // go to end button
+      tmp_but = new JButton("Go to");
+      tmp_but.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            try {
+               positions_.setPosition(micromirrorDeviceKey_, 
+                       Joystick.Directions.Y, sliceStopPos_);
+               positions_.setPosition(piezoImagingDeviceKey_, 
+                       Joystick.Directions.NONE, imagingPiezoStopPos_);
+            } catch (Exception ex) {
+               MyDialogUtils.showError(ex);
+            }
+         }
+      });
+      slopeCalibrationPanel.add(tmp_but, "wrap");
+      
+      slopeCalibrationPanel.add(imagingPiezoStartPositionLabel_);
+      
+      tmp_but = new JButton("Set");
+      tmp_but.setToolTipText("Saves calibration start position for imaging piezo and scanner slice (should be focused)");
+      tmp_but.setBackground(Color.red);
+      tmp_but.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            try {
+               // bypass cached positions in positions_ in case they aren't current
+               Point2D.Double pt = core_.getGalvoPosition(
+                       devices_.getMMDeviceException(micromirrorDeviceKey_));
+               sliceStartPos_ = pt.y;
+               sheetStartPositionLabel_.setFloat((float)sliceStartPos_);
+               imagingPiezoStartPos_ = core_.getPosition(
+                       devices_.getMMDeviceException(piezoImagingDeviceKey_));
+               imagingPiezoStartPositionLabel_.setFloat((float)imagingPiezoStartPos_);
+            } catch (Exception ex) {
+               MyDialogUtils.showError(ex);
+            }
+         }
+      });
+      slopeCalibrationPanel.add(tmp_but);
+      
+      slopeCalibrationPanel.add(imagingPiezoStopPositionLabel_);
+      
+      tmp_but = new JButton("Set");
+      tmp_but.setToolTipText("Saves calibration end position for imaging piezo and scanner slice (should be focused)");
+      tmp_but.setBackground(Color.red);
+      tmp_but.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            try {
+               // bypass cached positions in positions_ in case they aren't current
+               Point2D.Double pt = core_.getGalvoPosition(
+                       devices_.getMMDeviceException(micromirrorDeviceKey_));
+               sliceStopPos_ = pt.y;
+               sheetStopPositionLabel_.setFloat((float)sliceStopPos_);
+               imagingPiezoStopPos_ = core_.getPosition(
+                       devices_.getMMDeviceException(piezoImagingDeviceKey_));
+               imagingPiezoStopPositionLabel_.setFloat((float)imagingPiezoStopPos_);
+            } catch (Exception ex) {
+               MyDialogUtils.showError(ex);
+            }
+         }
+      });
+      slopeCalibrationPanel.add(tmp_but, "wrap");
+      
+      slopeCalibrationPanel.add(new JSeparator(SwingConstants.HORIZONTAL), "span 5, growx, shrinky, wrap");
+      
+      tmp_but = new JButton("Looks good, use these!");
+      tmp_but.setBackground(Color.green);
+      tmp_but.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            try {
+               double rate = (imagingPiezoStopPos_ - imagingPiezoStartPos_)/(sliceStopPos_ - sliceStartPos_);
+               rateField_.setValue((Double)rate);
+               double offset = (imagingPiezoStopPos_ + imagingPiezoStartPos_) / 2 - 
+                       (rate * ( (sliceStopPos_ + sliceStartPos_) / 2) );
+               offsetField_.setValue((Double) offset);
+            } catch (Exception ex) {
+               MyDialogUtils.showError(ex);
+            }
+            slopeCalibrationFrame_.setVisible(false);   
+         }
+      });
+      slopeCalibrationPanel.add(tmp_but, "span 3, left");
+      
+      tmp_but = new JButton("Cancel");
+      tmp_but.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            slopeCalibrationFrame_.setVisible(false);   
+         }
+      });
+      slopeCalibrationPanel.add(tmp_but, "span 2, right, wrap");
+      
+      slopeCalibrationFrame_.add(slopeCalibrationPanel);
+      slopeCalibrationFrame_.pack();
+      slopeCalibrationFrame_.setResizable(false);
+      
+//      class slopeCalibrationFrameAdapter extends WindowAdapter {
+//         @Override
+//         public void windowClosing(WindowEvent e) {
+//            slopeCalibrationFrame_.savePosition();
+//            slopeCalibrationFrame_.dispose();
+//         }
+//      }
+//      slopeCalibrationFrame_.addWindowListener(new slopeCalibrationFrameAdapter());
       
       
       final int positionWidth = 50;
@@ -335,62 +483,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       });
       slicePanel.add(tmp_but, "wrap");
       
-      
-      
-      
-      /*
-      sheetPanel.add(new JLabel("Set calibration:"), "span 2");
-      
-      JButton tmp_but = new JButton("2-point");
-      tmp_but.setMargin(new Insets(4,8,4,8));
-      tmp_but.setToolTipText("Computes piezo vs. slice slope and offset from start and end positions");
-      tmp_but.setBackground(Color.green);
-      tmp_but.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            try {
-               double rate = (imagingPiezoStopPos_ - imagingPiezoStartPos_)/(sliceStopPos_ - sliceStartPos_);
-               rateField_.setValue((Double)rate);
-               double offset = (imagingPiezoStopPos_ + imagingPiezoStartPos_) / 2 - 
-                       (rate * ( (sliceStopPos_ + sliceStartPos_) / 2) );
-               offsetField_.setValue((Double) offset);
-            } catch (Exception ex) {
-               MyDialogUtils.showError(ex);
-            }
-         }
-      });
-      sheetPanel.add(tmp_but, "center");
-      
-      tmp_but = new JButton("Offset");
-      tmp_but.setMargin(new Insets(4,8,4,8));
-      tmp_but.setToolTipText("Adjusts piezo vs. slice offset from current position");
-      tmp_but.setBackground(Color.green);
-      tmp_but.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            try {
-               double rate = (Double) rateField_.getValue();
-               // bypass cached positions in positions_ in case they aren't current
-               double currentScanner = core_.getGalvoPosition(
-                     devices_.getMMDeviceException(micromirrorDeviceKey_)).y;
-               double currentPiezo = core_.getPosition(
-                     devices_.getMMDeviceException(piezoImagingDeviceKey_));
-               double newOffset = currentPiezo - rate * currentScanner;
-               offsetField_.setValue((Double) newOffset);
-            } catch (Exception ex) {
-               MyDialogUtils.showError(ex);
-            }
-         }
-      });
-      sheetPanel.add(tmp_but, "center");
-      */
-      
       slicePanel.add(new JSeparator(SwingConstants.HORIZONTAL), "span 5, growx, shrinky, wrap");
-      
-      /*
-      sheetPanel.add(new JLabel("Calibration Start Position"), "skip 3, span 3, center");
-      sheetPanel.add(new JLabel("Calibration End Position"), "span 3, center, wrap");
-      */
       
       slicePanel.add(new JLabel("Slice position:"));
       sheetPositionLabel_ = new JLabel("");
@@ -402,48 +495,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       // TODO implement function
       slicePanel.add(tmp_but, "wrap");
       
-      /*
-      sheetPanel.add(new JSeparator(SwingConstants.VERTICAL), "spany 2, growy, shrinkx, center");
-      sheetPanel.add(sheetStartPositionLabel_);
-
-      // Go to start button
-      tmp_but = new JButton("Go to");
-      tmp_but.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            try {
-               positions_.setPosition(micromirrorDeviceKey_, 
-                       Joystick.Directions.Y, sliceStartPos_);
-               positions_.setPosition(piezoImagingDeviceKey_, 
-                       Joystick.Directions.NONE, imagingPiezoStartPos_);       
-            } catch (Exception ex) {
-               MyDialogUtils.showError(ex);
-            }
-         }
-      });
-      sheetPanel.add(tmp_but, "");   
-      sheetPanel.add(new JSeparator(SwingConstants.VERTICAL), "spany 2, growy");
-     
-      sheetPanel.add(sheetStopPositionLabel_);
-
-      // go to end button
-      tmp_but = new JButton("Go to");
-      tmp_but.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            try {
-               positions_.setPosition(micromirrorDeviceKey_, 
-                       Joystick.Directions.Y, sliceStopPos_);
-               positions_.setPosition(piezoImagingDeviceKey_, 
-                       Joystick.Directions.NONE, imagingPiezoStopPos_);
-            } catch (Exception ex) {
-               MyDialogUtils.showError(ex);
-            }
-         }
-      });
-      sheetPanel.add(tmp_but, "wrap");
-      */
-     
       slicePanel.add(new JLabel("Imaging piezo:"));
       imagingPiezoPositionLabel_ = new JLabel("");
       slicePanel.add(imagingPiezoPositionLabel_);
@@ -454,57 +505,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       // TODO implement function
       slicePanel.add(tmp_but, "wrap");
 
-      /*
-      sheetPanel.add(imagingPiezoStartPositionLabel_);
-            
-      tmp_but = new JButton("Set");
-      tmp_but.setToolTipText("Saves calibration start position for imaging piezo and scanner slice (should be focused)");
-      tmp_but.setBackground(Color.red);
-      tmp_but.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            try {
-               // bypass cached positions in positions_ in case they aren't current
-               Point2D.Double pt = core_.getGalvoPosition(
-                       devices_.getMMDeviceException(micromirrorDeviceKey_));
-               sliceStartPos_ = pt.y;
-               sheetStartPositionLabel_.setFloat((float)sliceStartPos_);
-               imagingPiezoStartPos_ = core_.getPosition(
-                       devices_.getMMDeviceException(piezoImagingDeviceKey_));
-               imagingPiezoStartPositionLabel_.setFloat((float)imagingPiezoStartPos_);
-            } catch (Exception ex) {
-               MyDialogUtils.showError(ex);
-            }
-         }
-      });
-      sheetPanel.add(tmp_but);
-
-      sheetPanel.add(imagingPiezoStopPositionLabel_);
-      
-      tmp_but = new JButton("Set");
-      tmp_but.setToolTipText("Saves calibration end position for imaging piezo and scanner slice (should be focused)");
-      tmp_but.setBackground(Color.red);
-      tmp_but.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            try {
-               // bypass cached positions in positions_ in case they aren't current
-               Point2D.Double pt = core_.getGalvoPosition(
-                       devices_.getMMDeviceException(micromirrorDeviceKey_));
-               sliceStopPos_ = pt.y;
-               sheetStopPositionLabel_.setFloat((float)sliceStopPos_);
-               imagingPiezoStopPos_ = core_.getPosition(
-                       devices_.getMMDeviceException(piezoImagingDeviceKey_));
-               imagingPiezoStopPositionLabel_.setFloat((float)imagingPiezoStopPos_);
-            } catch (Exception ex) {
-               MyDialogUtils.showError(ex);
-            }
-         }
-      });
-      sheetPanel.add(tmp_but, "wrap");
-      */
-
-      
       
       // Create sheet controls
       JPanel sheetPanel = new JPanel(new MigLayout(
@@ -626,7 +626,38 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
 
    }// end of SetupPanel constructor
 
+   /**
+    * Performs "1-point" calibration updating the offset
+    * but not the slope.
+    */
+   private void updateCalibrationOffset() {
+      try {
+         double rate = (Double) rateField_.getValue();
+         // bypass cached positions in positions_ in case they aren't current
+         double currentScanner = core_.getGalvoPosition(
+               devices_.getMMDeviceException(micromirrorDeviceKey_)).y;
+         double currentPiezo = core_.getPosition(
+               devices_.getMMDeviceException(piezoImagingDeviceKey_));
+         double newOffset = currentPiezo - rate * currentScanner;
+         offsetField_.setValue((Double) newOffset);
+      } catch (Exception ex) {
+         MyDialogUtils.showError(ex);
+      }
+   }
    
+   /**
+    * Performs "2-point" calibration updating the offset and slope.
+    * Pops up a sub-window.
+    */
+   private void updateCalibrationSlopeAndOffset() {
+      slopeCalibrationFrame_.setVisible(true);
+   }
+   
+   /**
+    * Moves piezo and slice together. Specify the factor by which the step 
+    * size is multiplied by (e.g. +/- 1).
+    * @param factor
+    */
    private void stepPiezoAndGalvo(double factor) {
       try {
          double piezoPos = core_.getPosition(
@@ -635,7 +666,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          positions_.setPosition(piezoImagingDeviceKey_, 
                Joystick.Directions.NONE, piezoPos);
          double galvoPos = computeGalvoFromPiezo(piezoPos);
-         positions_.setPosition(micromirrorDeviceKey_, 
+         positions_.setPosition(micromirrorDeviceKey_,
                Joystick.Directions.Y, galvoPos);
       } catch (Exception ex) {
          MyDialogUtils.showError(ex);
@@ -783,5 +814,13 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    @Override
    public void gotDeSelected() {
       joystickPanel_.gotDeSelected();
+      slopeCalibrationFrame_.savePosition();
+      slopeCalibrationFrame_.setVisible(false);
+   }
+   
+   @Override
+   public void windowClosing() {
+      slopeCalibrationFrame_.savePosition();
+      slopeCalibrationFrame_.dispose();
    }
 }
