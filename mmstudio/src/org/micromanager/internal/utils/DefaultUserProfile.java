@@ -190,7 +190,7 @@ public class DefaultUserProfile implements UserProfile {
    }
 
    private void startSaveThread() {
-      saveThread_ = new Thread() {
+      saveThread_ = new Thread("User profile save thread") {
          @Override
          public void run() {
             runSaveThread();
