@@ -192,7 +192,11 @@ public class Properties {
       PREFS_USE_TIMEPOINTS("UseTimePoints"),
       PLUGIN_AUTOFOCUS_DEBUG("DebugMode"),
       PLUGIN_AUTOFOCUS_NRIMAGES("AutofocusNrImages"),
-      PLUGIN_AUTOFOCUS_STEPSIZE("AutofocusStepSize")
+      PLUGIN_AUTOFOCUS_STEPSIZE("AutofocusStepSize"),
+      PLUGIN_AUTOFOCUS_WINDOWPOSX("AutofocusWindowPosx"),
+      PLUGIN_AUTOFOCUS_WINDOWPOSY("AutofocusWindowPosy"),
+      PLUGIN_AUTOFOCUS_WINDOW_WIDTH("AutofocusWindowWidth"),
+      PLUGIN_AUTOFOCUS_WINDOW_HEIGHT("AutofocusWIndowHeight")
       ;
       private final String text;
       private final boolean hasPattern;  // true if string has substitution pattern
@@ -628,8 +632,7 @@ public class Properties {
       if (device == Devices.Keys.PLUGIN) {
          val = prefs_.getString(PLUGIN_PREF_NODE, name, "");
       } else {
-         String mmDevice = null;
-         mmDevice = devices_.getMMDevice(device);
+         String mmDevice = devices_.getMMDevice(device);
          val = "";  // set to be empty string to avoid null pointer exceptions
          if (mmDevice != null) {
             try {

@@ -492,7 +492,12 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       
       tmp_but = new JButton("Go to 0");
       tmp_but.setMargin(new Insets(4,4,4,4));
-      // TODO implement function
+      tmp_but.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            setGalvoPosition(0.0f);
+         }
+      } );
       slicePanel.add(tmp_but, "wrap");
       
       slicePanel.add(new JLabel("Imaging piezo:"));
@@ -501,8 +506,13 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       slicePanel.add(pu.makeSetPositionField(piezoImagingDeviceKey_, 
               Joystick.Directions.NONE, positions_));
       tmp_but = new JButton("Go to 0");
-      tmp_but.setMargin(new Insets(4,4,4,4));
-      // TODO implement function
+      tmp_but.setMargin(new Insets(4,4,4,4));      
+      tmp_but.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            setPiezoPosition(0.0f);
+         }
+      } );
       slicePanel.add(tmp_but, "wrap");
 
       
@@ -691,22 +701,46 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    * @throws Exception 
    */
    private void centerPiezoAndGalvo() {
-      if (!devices_.isValidMMDevice(piezoImagingDeviceKey_) ||
-            !devices_.isValidMMDevice(micromirrorDeviceKey_)) {
-         return;  // don't do anything if devices aren't assigned
-         //
+      if (setPiezoPosition(imagingCenterPos_))
+         setGalvoPosition( computeGalvoFromPiezo(imagingCenterPos_) );
+   }
+   
+   /**
+    * Sets micro-mirror to requested position Doesn't do anything if it is
+    * not assigned to prevent spurious exceptions.
+    */
+   private boolean setGalvoPosition(double galvoPos) {
+      if (!devices_.isValidMMDevice(micromirrorDeviceKey_)) {
+         return false;
       }
+
       try {
-         imagingCenterPos_ = imagingCenterPosLabel_.getFloat();
-         core_.setPosition(devices_.getMMDeviceException(piezoImagingDeviceKey_),
-               imagingCenterPos_);
-         double sliceCenterPos = computeGalvoFromPiezo(imagingCenterPos_);
          core_.setGalvoPosition(
-               devices_.getMMDeviceException(micromirrorDeviceKey_),
-               0, sliceCenterPos);
+                 devices_.getMMDeviceException(micromirrorDeviceKey_),
+                 0, galvoPos);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
+         return false;
       }
+      return true;
+   }
+   
+    /**
+    * Sets piezo to requested position Doesn't do anything if it is
+    * not assigned to prevent spurious exceptions.
+    */
+   private boolean setPiezoPosition(double pos) {
+      if (!devices_.isValidMMDevice(piezoImagingDeviceKey_)) {
+         return false;
+      }
+      try {
+         core_.setPosition(
+                 devices_.getMMDeviceException(piezoImagingDeviceKey_), pos);
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+         return false;
+      }
+      return true;
    }
    
    private JButton makeIncrementButton(Devices.Keys devKey, Properties.Keys propKey, 

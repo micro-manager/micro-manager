@@ -8,7 +8,9 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Frame;
+import java.awt.Point;
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
@@ -125,6 +127,8 @@ public class AutofocusUtils {
       final double galvoPosition = positions_.getUpdatedPosition(
               Devices.getSideSpecificKey(Devices.Keys.GALVOA, side), 
               Joystick.Directions.Y);  
+      
+      posUpdater_.pauseUpdates(true);
               
       // TODO: run this on its own thread
       controller_.prepareControllerForAquisition(
@@ -227,6 +231,7 @@ public class AutofocusUtils {
                   timg.tags.put("ZPositionUm", zPos);
                   gui_.addImageToAcquisition(acqName, 0, 0,counter, 0, timg);
                   scoresToPlot[0].add(zPos, focusScores[counter]);
+                  gui_.getMMCore().logMessage("Focus Image: " + counter);
                }
                counter++;
                if (counter >= nrImages) {
@@ -238,6 +243,7 @@ public class AutofocusUtils {
                throw new ASIdiSPIMException("No image arrived in 5 seconds");
             }
          }
+         
          // now find the position in the focus Score array with the highest score
          // TODO: use more sophisticated analysis here
          double highestScore = focusScores[0];
@@ -262,8 +268,30 @@ public class AutofocusUtils {
          }
 
          if (debug) {
-            plotDataN("Focus curve", scoresToPlot, "z (micron)", "Score", 100, 100,
-                    true, false);
+            // most of this code is to remember window position and size
+            Point screenLoc = new Point();
+            String node = "AutofocusUtils";
+            screenLoc.x = prefs_.getInt(node, 
+                    Properties.Keys.PLUGIN_AUTOFOCUS_WINDOWPOSX, 100);
+            screenLoc.y = prefs_.getInt(node, 
+                    Properties.Keys.PLUGIN_AUTOFOCUS_WINDOWPOSY, 100);
+            Dimension windowSize = new Dimension();
+            windowSize.width = prefs_.getInt(node, 
+                    Properties.Keys.PLUGIN_AUTOFOCUS_WINDOW_WIDTH, 300);
+            windowSize.height = prefs_.getInt(node, 
+                    Properties.Keys.PLUGIN_AUTOFOCUS_WINDOW_HEIGHT, 400);
+            // actual call to function plotting the data
+            plotDataN("Focus curve", scoresToPlot, "z (micron)", "Score", 
+                    screenLoc, windowSize, true, false);
+            // store window position and size to prefs
+            prefs_.putInt(node,Properties.Keys.PLUGIN_AUTOFOCUS_WINDOWPOSX, 
+                    screenLoc.x);
+            prefs_.putInt(node, Properties.Keys.PLUGIN_AUTOFOCUS_WINDOWPOSY, 
+                    screenLoc.y);
+            prefs_.putInt(node, Properties.Keys.PLUGIN_AUTOFOCUS_WINDOW_WIDTH, 
+                    windowSize.width);
+            prefs_.putInt(node, Properties.Keys.PLUGIN_AUTOFOCUS_WINDOW_HEIGHT,
+                    windowSize.height);
          }
 
          // return the position of the scanning device associated with the highest
@@ -273,7 +301,7 @@ public class AutofocusUtils {
       } catch (ASIdiSPIMException ex) {
          throw ex;
       } catch (Exception ex) {
-         throw new ASIdiSPIMException("Hardware Error while executing Autofocus");
+         throw new ASIdiSPIMException(ex, "Hardware Error while executing Autofocus");
       } finally {
          try {
             gui_.getMMCore().stopSequenceAcquisition(camera);
@@ -398,12 +426,16 @@ public class AutofocusUtils {
     * @param logLog
     */
    public static void plotDataN(String title, XYSeries[] data, String xTitle,
-                 String yTitle, int xLocation, int yLocation, boolean showShapes, 
-                 Boolean logLog) {
-      // if we already have a plot open with this title, close it:
+                 String yTitle, Point screenLoc, Dimension windowSize, 
+                 boolean showShapes, Boolean logLog) {
+      
+      // if we already have a plot open with this title, close it, but remember
+      // its position:
       Frame[] gfs = ChartFrame.getFrames();
       for (Frame f :gfs) {
          if (f.getTitle().equals(title)) {
+            screenLoc = f.getLocation();
+            windowSize = f.getSize();
             f.dispose();
          }
       }
@@ -508,7 +540,8 @@ public class AutofocusUtils {
       ChartFrame graphFrame = new ChartFrame(title, chart);
       graphFrame.getChartPanel().setMouseWheelEnabled(true);
       graphFrame.pack();
-      graphFrame.setLocation(xLocation, yLocation);
+      graphFrame.setLocation(screenLoc.x, screenLoc.y);
+      graphFrame.setSize(windowSize);
       graphFrame.setVisible(true);
       
 
