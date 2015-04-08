@@ -23,6 +23,8 @@ package org.micromanager.display.internal;
 import com.google.common.eventbus.Subscribe;
 
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.KeyAdapter;
@@ -40,6 +42,7 @@ import javax.swing.event.MouseInputAdapter;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollBar;
 import javax.swing.JTextField;
 
@@ -72,7 +75,7 @@ class ScrollerPanel extends JPanel {
     */
    private class AxisState {
       boolean isAnimated_;
-      JTextField posText_;
+      JButton posButton_;
       JLabel maxLabel_;
       JScrollBar scrollbar_;
       ScrollbarLockIcon.LockedState lockState_;
@@ -82,14 +85,39 @@ class ScrollerPanel extends JPanel {
       // scrollbar.
       int cachedIndex_;
       
-      public AxisState(JTextField posText, JScrollBar scrollbar, JLabel maxLabel) {
+      public AxisState(JButton posButton, JScrollBar scrollbar, JLabel maxLabel) {
          isAnimated_ = false;
-         posText_ = posText;
+         posButton_ = posButton;
          scrollbar_ = scrollbar;
          maxLabel_ = maxLabel;
          lockState_ = ScrollbarLockIcon.LockedState.UNLOCKED;
          savedIndex_ = 0;
          cachedIndex_ = 0;
+      }
+   }
+
+   /**
+    * This class shows a popup menu to set the exact location of an axis.
+    */
+   public class PositionPopup extends JPopupMenu {
+      public PositionPopup(final String axis, JButton button) {
+         add(new JLabel("Set index: "));
+         final JTextField field = new JTextField(button.getText());
+         field.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent event) {
+               try {
+                  // Subtract one because displayed indices are 1-indexed
+                  // while internal are 0-indexed.
+                  int newPos = Integer.parseInt(field.getText()) - 1;
+                  setPosition(axis, newPos);
+               }
+               catch (NumberFormatException e) {
+                  // Ignore it
+               }
+            }
+         });
+         add(field);
       }
    }
 
@@ -169,24 +197,32 @@ class ScrollerPanel extends JPanel {
       });
       add(animateIcon, "grow 0");
 
-      final JTextField positionText = new JTextField("0");
-      // Allow the user to type in a specific position in the position text
-      // to go to.
-      positionText.addKeyListener(new KeyAdapter() {
+      // This button displays the current position along the axis, and when
+      // clicked, pops up a text field for the user to edit in a new position.
+      // Normally we would just use the text field directly; however, then we
+      // run into the problem that the setPosition() method calls the non-
+      // thread-safe JTextField.setText() method, potentially leading to EDT
+      // hangs (because setText() acquires a document lock that the drawing
+      // thread needs). And we can't just run setPosition() in the EDT because
+      // that causes a gigantic pileup of events on the EDT and a horribly
+      // buggy display (which continues making seemingly-random display updates
+      // long after an acquisition is finished, for example).
+      // The JButton approach dodges this issue because the text field we
+      // create on click is not modified by setPosition(), and there are no
+      // locks associated with changing the label on the JButton.
+      final JButton positionButton = new JButton("0");
+      positionButton.setFont(GUIUtils.buttonFont);
+      positionButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
+      positionButton.setMinimumSize(new Dimension(30, 18));
+      positionButton.setPreferredSize(new Dimension(30, 18));
+      positionButton.addActionListener(new ActionListener() {
          @Override
-         public void keyReleased(KeyEvent event) {
-            try {
-               // Subtract one to account for one-indexed display positions
-               // vs. zero-indexed internal positions.
-               int newPos = Integer.parseInt(positionText.getText()) - 1;
-               setPosition(axis, newPos);
-            }
-            catch (NumberFormatException e) {
-               // Ignore it.
-            }
+         public void actionPerformed(ActionEvent e) {
+            new PositionPopup(axis, positionButton).show(
+               positionButton, 0, positionButton.getHeight());
          }
       });
-      add(positionText, "grow 0");
+      add(positionButton, "grow 0");
 
       JLabel maxLabel = new JLabel("/ " + store_.getAxisLength(axis));
       add(maxLabel, "grow 0");
@@ -211,7 +247,7 @@ class ScrollerPanel extends JPanel {
             parent_);
       add(linker, "grow 0, wrap");
 
-      axisToState_.put(axis, new AxisState(positionText, scrollbar, maxLabel));
+      axisToState_.put(axis, new AxisState(positionButton, scrollbar, maxLabel));
 
       if (fpsButton_ == null) {
          // We have at least one scroller, so add our FPS control button.
@@ -240,7 +276,7 @@ class ScrollerPanel extends JPanel {
     * Change the displayed image coordinate along the given axis to the
     * specified position.
     */
-   private void setPosition(String axis, int pos) {
+   private synchronized void setPosition(String axis, int pos) {
       if (pos == axisToState_.get(axis).cachedIndex_) {
          // We're already where we were told to go.
          return;
@@ -257,10 +293,10 @@ class ScrollerPanel extends JPanel {
       // Add one so displayed values are 1-indexed.
       String newText = String.valueOf(
             Math.min(store_.getAxisLength(axis), Math.max(0, pos + 1)));
-      JTextField field = axisToState_.get(axis).posText_;
-      if (!field.getText().contentEquals(newText)) {
+      JButton button = axisToState_.get(axis).posButton_;
+      if (!button.getText().contentEquals(newText)) {
          didChange = true;
-         field.setText(newText);
+         button.setText(newText);
       }
       if (didChange) {
          postDrawEvent();

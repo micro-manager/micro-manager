@@ -57,6 +57,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
 import net.miginfocom.swing.MigLayout;
@@ -237,66 +238,92 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
 
    /**
     * Now that there's at least one image in the Datastore, we need to create
-    * our UI and the objects we'll use to communicate with ImageJ.
+    * our UI and the objects we'll use to communicate with ImageJ. Actual
+    * construction is spun off into the EDT (Event Dispatch Thread), unless
+    * of course we're already in that thread.
     */
    private void makeWindowAndIJObjects() {
-      // Nothing that touches the GUI should run while we do this.
-      synchronized(this) {
-         loadAndRestorePosition(getLocation().x, getLocation().y);
-         stack_ = new MMVirtualStack(store_, displayBus_);
-         ijImage_ = new MMImagePlus();
-         setImagePlusMetadata(ijImage_);
-         stack_.setImagePlus(ijImage_);
-         ijImage_.setStack(getName(), stack_);
-         ijImage_.setOpenAsHyperStack(true);
-         displayBus_.post(new DefaultNewImagePlusEvent(this, ijImage_));
-         // The ImagePlus object needs to be pseudo-polymorphic, depending on
-         // the number of channels in the Datastore. However, we may not have
-         // all of the channels available to us at the time this display is
-         // created, so we may need to re-create things down the road.
-         if (store_.getAxisLength(Coords.CHANNEL) > 1) {
-            // Have multiple channels.
-            shiftToCompositeImage();
+      if (!SwingUtilities.isEventDispatchThread()) {
+         try {
+            SwingUtilities.invokeAndWait(new Runnable() {
+               @Override
+               public void run() {
+                  makeWindowAndIJObjects_EDTSafe();
+               }
+            });
          }
-         if (ijImage_ instanceof MMCompositeImage) {
-            ((MMCompositeImage) ijImage_).reset();
+         catch (InterruptedException e) {
+            // This should never happen.
+            ReportingUtils.showError(e, "Interrupted while creating DisplayWindow");
          }
-
-         // Make the canvas thread before any of our other control objects,
-         // which may perform draw requests that need to be processed.
-         canvasThread_ = new CanvasUpdateThread(store_, stack_, ijImage_,
-               this);
-         canvasThread_.start();
-
-         makeWindowControls();
-         // This needs to be done after the canvas is created, but before we
-         // call zoomToPreferredSize.
-         dummyWindow_ = DummyImageWindow.makeWindow(ijImage_, this);
-         zoomToPreferredSize();
-         setVisible(true);
-
-         addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent event) {
-               requestToClose();
-            }
-         });
-         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-
-         // Set us to draw the first image in the dataset.
-         // TODO: potentially there could be no image at these Coords, though
-         // that seems unlikely. Such an edge case isn't all that harmful
-         // anyway; we'll just display a blank image until the user adjusts the
-         // display to an image that does exist.
-         DefaultCoords.Builder builder = new DefaultCoords.Builder();
-         for (String axis : store_.getAxes()) {
-            builder.index(axis, 0);
+         catch (java.lang.reflect.InvocationTargetException e) {
+            ReportingUtils.showError(e, "Exception while creating DisplayWindow");
          }
-         setDisplayedImageTo(builder.build());
-
-         // Must set this before we call resetTitle(), which checks it.
-         haveCreatedGUI_ = true;
       }
+      else {
+         makeWindowAndIJObjects_EDTSafe();
+      }
+   }
+
+   /**
+    * This method should only be called from makeWindowAndIJObjects, which
+    * ensures that this method is only called from within the EDT.
+    */
+   private void makeWindowAndIJObjects_EDTSafe() {
+      loadAndRestorePosition(getLocation().x, getLocation().y);
+      stack_ = new MMVirtualStack(store_, displayBus_);
+      ijImage_ = new MMImagePlus();
+      setImagePlusMetadata(ijImage_);
+      stack_.setImagePlus(ijImage_);
+      ijImage_.setStack(getName(), stack_);
+      ijImage_.setOpenAsHyperStack(true);
+      displayBus_.post(new DefaultNewImagePlusEvent(this, ijImage_));
+      // The ImagePlus object needs to be pseudo-polymorphic, depending on
+      // the number of channels in the Datastore. However, we may not have
+      // all of the channels available to us at the time this display is
+      // created, so we may need to re-create things down the road.
+      if (store_.getAxisLength(Coords.CHANNEL) > 1) {
+         // Have multiple channels.
+         shiftToCompositeImage();
+      }
+      if (ijImage_ instanceof MMCompositeImage) {
+         ((MMCompositeImage) ijImage_).reset();
+      }
+
+      // Make the canvas thread before any of our other control objects,
+      // which may perform draw requests that need to be processed.
+      canvasThread_ = new CanvasUpdateThread(store_, stack_, ijImage_,
+            this);
+      canvasThread_.start();
+
+      makeWindowControls();
+      // This needs to be done after the canvas is created, but before we
+      // call zoomToPreferredSize.
+      dummyWindow_ = DummyImageWindow.makeWindow(ijImage_, this);
+      zoomToPreferredSize();
+      setVisible(true);
+
+      addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowClosing(WindowEvent event) {
+            requestToClose();
+         }
+      });
+      setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+
+      // Set us to draw the first image in the dataset.
+      // TODO: potentially there could be no image at these Coords, though
+      // that seems unlikely. Such an edge case isn't all that harmful
+      // anyway; we'll just display a blank image until the user adjusts the
+      // display to an image that does exist.
+      DefaultCoords.Builder builder = new DefaultCoords.Builder();
+      for (String axis : store_.getAxes()) {
+         builder.index(axis, 0);
+      }
+      setDisplayedImageTo(builder.build());
+
+      // Must set this before we call resetTitle(), which checks it.
+      haveCreatedGUI_ = true;
       resetTitle();
       setWindowSize();
 
