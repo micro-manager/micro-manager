@@ -25,6 +25,8 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.ArrayList;
@@ -39,6 +41,7 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
+import javax.swing.JTextField;
 
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
@@ -69,7 +72,7 @@ class ScrollerPanel extends JPanel {
     */
    private class AxisState {
       boolean isAnimated_;
-      JLabel posLabel_;
+      JTextField posText_;
       JLabel maxLabel_;
       JScrollBar scrollbar_;
       ScrollbarLockIcon.LockedState lockState_;
@@ -79,9 +82,9 @@ class ScrollerPanel extends JPanel {
       // scrollbar.
       int cachedIndex_;
       
-      public AxisState(JLabel posLabel, JScrollBar scrollbar, JLabel maxLabel) {
+      public AxisState(JTextField posText, JScrollBar scrollbar, JLabel maxLabel) {
          isAnimated_ = false;
-         posLabel_ = posLabel;
+         posText_ = posText;
          scrollbar_ = scrollbar;
          maxLabel_ = maxLabel;
          lockState_ = ScrollbarLockIcon.LockedState.UNLOCKED;
@@ -114,8 +117,10 @@ class ScrollerPanel extends JPanel {
       axisToSavedPosition_ = new HashMap<String, Integer>();
 
       // Only the scrollbar column is allowed to grow in width
+      // Columns are animate, current position, max position, scrollbar,
+      // lock, link
       setLayout(new MigLayout("insets 0", 
-               "[][][grow, shrink][][][][]"));
+               "[][][][grow, shrink][][]"));
       // Don't prevent other components from shrinking
       setMinimumSize(new Dimension(1, 1));
 
@@ -164,16 +169,36 @@ class ScrollerPanel extends JPanel {
       });
       add(animateIcon, "grow 0");
 
-      JLabel positionLabel = new JLabel();
-      add(positionLabel, "grow 0");
+      final JTextField positionText = new JTextField("0");
+      // Allow the user to type in a specific position in the position text
+      // to go to.
+      positionText.addKeyListener(new KeyAdapter() {
+         @Override
+         public void keyReleased(KeyEvent event) {
+            try {
+               // Subtract one to account for one-indexed display positions
+               // vs. zero-indexed internal positions.
+               int newPos = Integer.parseInt(positionText.getText()) - 1;
+               setPosition(axis, newPos);
+            }
+            catch (NumberFormatException e) {
+               // Ignore it.
+            }
+         }
+      });
+      add(positionText, "grow 0");
+
+      JLabel maxLabel = new JLabel("/ " + store_.getAxisLength(axis));
+      add(maxLabel, "grow 0");
 
       final JScrollBar scrollbar = new JScrollBar(JScrollBar.HORIZONTAL, 0, 1,
             0, store_.getAxisLength(axis));
+
       scrollbar.setMinimumSize(new Dimension(1, 1));
       scrollbar.addAdjustmentListener(new AdjustmentListener() {
          @Override
          public void adjustmentValueChanged(AdjustmentEvent e) {
-            onScrollbarMoved(axis, scrollbar);
+            setPosition(axis, scrollbar.getValue());
          }
       });
       add(scrollbar, "shrinkx, growx");
@@ -184,12 +209,9 @@ class ScrollerPanel extends JPanel {
 
       LinkButton linker = new LinkButton(new ImageCoordsLinker(axis, parent_),
             parent_);
-      add(linker, "grow 0");
+      add(linker, "grow 0, wrap");
 
-      JLabel maxLabel = new JLabel();
-      add(maxLabel, "grow 0, wrap");
-
-      axisToState_.put(axis, new AxisState(positionLabel, scrollbar, maxLabel));
+      axisToState_.put(axis, new AxisState(positionText, scrollbar, maxLabel));
 
       if (fpsButton_ == null) {
          // We have at least one scroller, so add our FPS control button.
@@ -215,20 +237,34 @@ class ScrollerPanel extends JPanel {
    }
 
    /**
-    * One of our scrollbars has changed position; request drawing the
-    * appropriate image.
+    * Change the displayed image coordinate along the given axis to the
+    * specified position.
     */
-   private void onScrollbarMoved(String axis, JScrollBar scrollbar) {
-      // TODO: for some reason we get events telling us the scrollbar has
-      // moved to a position it already has. Don't bother publishing redundant
-      // events.
-      int pos = scrollbar.getValue();
+   private void setPosition(String axis, int pos) {
       if (pos == axisToState_.get(axis).cachedIndex_) {
+         // We're already where we were told to go.
          return;
       }
       axisToState_.get(axis).cachedIndex_ = pos;
-      axisToState_.get(axis).posLabel_.setText(String.valueOf(pos));
-      postDrawEvent();
+      // Update controls: the scrollbar and text field. Avoid redundant set
+      // commands to avoid posting redundant events (which could hang the EDT).
+      boolean didChange = false;
+      JScrollBar scrollbar = axisToState_.get(axis).scrollbar_;
+      if (scrollbar.getValue() != pos) {
+         didChange = true;
+         scrollbar.setValue(pos);
+      }
+      // Add one so displayed values are 1-indexed.
+      String newText = String.valueOf(
+            Math.min(store_.getAxisLength(axis), Math.max(0, pos + 1)));
+      JTextField field = axisToState_.get(axis).posText_;
+      if (!field.getText().contentEquals(newText)) {
+         didChange = true;
+         field.setText(newText);
+      }
+      if (didChange) {
+         postDrawEvent();
+      }
    }
 
    /**
@@ -370,7 +406,8 @@ class ScrollerPanel extends JPanel {
             if (scrollbar.getMaximum() < axisLen) {
                // Expand the range on the scrollbar.
                scrollbar.setMaximum(axisLen);
-               axisToState_.get(axis).maxLabel_.setText(String.valueOf(axisLen));
+               axisToState_.get(axis).maxLabel_.setText(
+                     "/ " + (String.valueOf(axisLen)));
             }
             int pos = scrollbar.getValue();
             ScrollbarLockIcon.LockedState lockState = axisToState_.get(axis).lockState_;
