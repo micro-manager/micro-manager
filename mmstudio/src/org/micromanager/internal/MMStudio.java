@@ -162,6 +162,12 @@ public class MMStudio implements Studio, CompatibilityInterface {
          "Viewport"
    };
 
+   // As above, but for disabled text; each of these keys will have
+   // ".disabledText" appended to it later.
+   public static final String[] DISABLED_TEXT_COLOR_KEYS = new String[] {
+         "Button", "CheckBox", "RadioButton", "ToggleButton"
+   };
+
    // cfg file saving
    private static final String CFGFILE_ENTRY_BASE = "CFGFileEntry";
    // GUI components
@@ -1583,12 +1589,11 @@ public class MMStudio implements Studio, CompatibilityInterface {
          UIManager.put(key + ".background",
                guiColors_.background_.get(backgroundType));
       }
-      // HACK: ensure that disabled checkboxes and radio buttons have legible
-      // text in both modes.
-      UIManager.put("RadioButton.foreground",
-            guiColors_.textColor_.get(backgroundType));
-      UIManager.put("CheckBox.foreground",
-            guiColors_.textColor_.get(backgroundType));
+      // Ensure disabled text is still legible.
+      for (String key : DISABLED_TEXT_COLOR_KEYS) {
+         UIManager.put(key + ".disabledText",
+            guiColors_.disabledTextColor_.get(backgroundType));
+      }
       // Update existing components.
       for (Window w : Window.getWindows()) {
          SwingUtilities.updateComponentTreeUI(w);

@@ -45,7 +45,7 @@ public class GUIColors {
    // background color of pads in the UI
    public HashMap<String, ColorUIResource> padBackground_;
    // Color of text.
-   public HashMap<String, ColorUIResource> textColor_;
+   public HashMap<String, ColorUIResource> disabledTextColor_;
 
    public GUIColors() {
       // Possible: make UI to let user set these colors
@@ -57,9 +57,9 @@ public class GUIColors {
       padBackground_.put(STYLE_DAY, new ColorUIResource(Color.white));
       padBackground_.put(STYLE_NIGHT, new ColorUIResource(java.awt.SystemColor.control));
 
-      textColor_ = new HashMap<String, ColorUIResource>();
-      textColor_.put(STYLE_DAY, new ColorUIResource(UIManager.getColor("TextField.foreground")));
-      textColor_.put(STYLE_NIGHT, new ColorUIResource(200, 200, 200));
+      disabledTextColor_ = new HashMap<String, ColorUIResource>();
+      disabledTextColor_.put(STYLE_DAY, new ColorUIResource(UIManager.getColor("CheckBox.disabledText")));
+      disabledTextColor_.put(STYLE_NIGHT, new ColorUIResource(200, 200, 200));
    }
 
 }
