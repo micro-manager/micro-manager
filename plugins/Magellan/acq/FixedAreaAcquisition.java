@@ -44,12 +44,13 @@ public class FixedAreaAcquisition extends Acquisition {
    private CyclicBarrier startNextTPBarrier_ = new CyclicBarrier(2);
    //barrier to wait for all images to be written before starting nex time point stuff
    //signals come from 1) event generating thread 2) tagged iamge sink
-   private CyclicBarrier tpFinishedBarrier_ = new CyclicBarrier(2);
+   private CyclicBarrier tpImagesFinishedWritingBarrier_ = new CyclicBarrier(2);
    //executor service to wait for next execution
    private ScheduledExecutorService waitForNextTPSerivice_ = Executors.newScheduledThreadPool(1);
    private ExecutorService eventGenerator_;
    private CrossCorrelationAutofocus autofocus_;
    private int maxSliceIndex_ = 0;
+   private volatile boolean aborted_ = false;
 
    /**
     * Acquisition with fixed XY positions (although they can potentially all be
@@ -183,26 +184,30 @@ public class FixedAreaAcquisition extends Acquisition {
    /**
     * abort acquisition. Block until successfully finished
     */
-   public void abort() {
-      
+   public void abort() {      
       if (finished_) {
          //acq already aborted
          return;
       }
+      aborted_ = true;
       //interrupt event generating thread
       eventGenerator_.shutdownNow();
       try {
-         //wait for it to exit
-         while (!eventGenerator_.awaitTermination(5, TimeUnit.MILLISECONDS)) {}
+         //wait for it to exit        
+         while (!eventGenerator_.isTerminated()) {
+             Thread.sleep(5);
+         }
       } catch (InterruptedException ex) {
          ReportingUtils.showError("Unexpected interrupt whil trying to abort acquisition");
          //shouldn't happen
       }
+      IJ.log("Event generator terminated");
       //clear any pending events, specific to this acqusition (since parallel acquisitions
       //share their event queue
       events_.clear();
       try {
-         //add finishing events to shoutdown all the downstream stuff          
+         //add finishing events to shoutdown all the downstream stuff       
+          System.out.println("addind acq finsihed event");
          events_.put(AcquisitionEvent.createAcquisitionFinishedEvent(this));
       } catch (InterruptedException ex) {
          ReportingUtils.showError("Unexpected interrupted exception while trying to abort"); //shouldnt happen
@@ -223,13 +228,15 @@ public class FixedAreaAcquisition extends Acquisition {
    }
    
    /**
-    * called by image sink when acquisition is finsihed or aborted
+    * called by image sink when it is exiting, i.e. when acquisition
+    * has been finished or aborted
     */
    public void allImagesFinishedWriting() {
-      if (tpFinishedBarrier_.getNumberWaiting() == 1) {
+       IJ.log("All images finished");
+      if (tpImagesFinishedWritingBarrier_.getNumberWaiting() == 1) {
          try {
             //release event generator if needed
-            tpFinishedBarrier_.await();
+            tpImagesFinishedWritingBarrier_.await();
          } catch (Exception ex) {
             ReportingUtils.showError("Unexpected interrupt while wiating for acqusition finished");
          }
@@ -241,7 +248,8 @@ public class FixedAreaAcquisition extends Acquisition {
     */
    public void timepointImagesFinishedWriting() {
       try {
-         tpFinishedBarrier_.await();
+          IJ.log("TP images finished");
+         tpImagesFinishedWritingBarrier_.await();
          //these exception should never happen because event generating thread will always be awaiting first
       } catch (InterruptedException ex) {
          ReportingUtils.showError("Image sink interrupeted");
@@ -341,6 +349,7 @@ public class FixedAreaAcquisition extends Acquisition {
                      }
                   } //position loop finished
 
+                  IJ.log("Adding finishing event");
                   if (timeIndex == numTimePoints_ - 1) {
                      //acquisition now finished, add event with null acq field so engine will mark acquisition as finished                    
                      events_.put(AcquisitionEvent.createAcquisitionFinishedEvent(FixedAreaAcquisition.this));
@@ -348,15 +357,23 @@ public class FixedAreaAcquisition extends Acquisition {
                      events_.put(AcquisitionEvent.createTimepointFinishedEvent(FixedAreaAcquisition.this));
                   }
                   
-
+                  IJ.log("Checking for shutdown");
                   //wait for final image of timepoint to be written before beginning end of timepoint stuff
-                  if (Thread.interrupted()) {
+                  if (eventGenerator_.isShutdown()) {
+                      IJ.log("event genertator was shutdown");
                      throw new InterruptedException();
                   }
-                  tpFinishedBarrier_.await();
+                  IJ.log("awaiting TP finished");
+                  try {
+                  tpImagesFinishedWritingBarrier_.await();
+                  } catch (InterruptedException ex) {
+                      IJ.log("Event generator interupted while waiting at end of tp barrier");
+                      throw new InterruptedException();
+                  }
                   //this call starts a new thread to not hang up cyclic barriers   
                   //signal to next acquisition in parallel group to start generating events, then continue using the event generator thread
                   //to calculate autofocus
+                  IJ.log("Calling finished TP event generation");
                   acqGroup_.finishedTPEventGeneration(FixedAreaAcquisition.this);
 
                   //all images finished writing--can now run autofocus

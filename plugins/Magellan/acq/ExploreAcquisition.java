@@ -4,6 +4,7 @@
  */
 package acq;
 
+import ij.IJ;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -57,6 +58,7 @@ public class ExploreAcquisition extends Acquisition {
       events_.clear();      
       //signal acquisition engine to start finishigng process
       try {
+//          IJ.log("Adding finishing events");
          events_.put(AcquisitionEvent.createAcquisitionFinishedEvent(this));         
          events_.put(AcquisitionEvent.createEngineTaskFinishedEvent());
       } catch (InterruptedException ex) {

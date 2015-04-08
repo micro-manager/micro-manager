@@ -84,6 +84,8 @@ public class CustomAcqEngine {
             //clear events so exploring doesn't surprisingly restart after acquisition
             currentExploreAcq_.clearEventQueue();
             try {
+                //finish task as if explore had been aborted, but don't actually abort explore, so
+                //that it can be returned to after
                 currentExploreAcq_.events_.put(AcquisitionEvent.createEngineTaskFinishedEvent());
             } catch (InterruptedException ex) {
                 ReportingUtils.showError("Unexpected interrupt when trying to switch acquisition tasks");
@@ -155,9 +157,11 @@ public class CustomAcqEngine {
             //nothing to do, just a dummy event to get of blocking call when switching between parallel acquisitions
         } else if (event.isAcquisitionFinishedEvent()) {
             //signal to TaggedImageSink to finish saving thread and mark acquisition as finished
+            System.out.println("making acq finished tagged image");
             event.acquisition_.getImageSavingQueue().put(new SignalTaggedImage(SignalTaggedImage.AcqSingal.AcqusitionFinsihed));
         } else if (event.isTimepointFinishedEvent()) {
-            //signal to TaggedImageSink to let acqusition know that saving for the current time point has completed            
+            //signal to TaggedImageSink to let acqusition know that saving for the current time point has completed  
+            System.out.println("Making tp finished tagged image");
             event.acquisition_.getImageSavingQueue().put(new SignalTaggedImage(SignalTaggedImage.AcqSingal.TimepointFinished));
         } else if (event.isAutofocusAdjustmentEvent()) {
             setAutofocusPosition(event.autofocusZName_, event.autofocusPosition_);
@@ -246,35 +250,7 @@ public class CustomAcqEngine {
         final String xyStage = event.acquisition_.getXYStageName();
         final String zStage = event.acquisition_.getZStageName();
 
-        /////////////////////////////XY Stage/////////////////////////////
-        if (lastEvent_ == null || event.positionIndex_ != lastEvent_.positionIndex_) {
-            //wait for it to not be busy (is this even needed??)
-            loopHardwareCommandRetries(new HardwareCommand() {
-                @Override
-                public void run() throws Exception {
-                    while (core_.deviceBusy(xyStage)) {
-                        Thread.sleep(2);
-                    }
-                }
-            }, "waiting for XY stage to not be busy");
-            //move to new position
-            loopHardwareCommandRetries(new HardwareCommand() {
-                @Override
-                public void run() throws Exception {
-                    core_.setXYPosition(xyStage, event.xyPosition_.getCenter().x, event.xyPosition_.getCenter().y);
-                }
-            }, "moving XY stage");
-            //wait for it to not be busy (is this even needed??)
-            loopHardwareCommandRetries(new HardwareCommand() {
-                @Override
-                public void run() throws Exception {
-                    while (core_.deviceBusy(xyStage)) {
-                        Thread.sleep(2);
-                    }
-                }
-            }, "waiting for XY stage to not be busy");
-        }
-
+        //move Z before XY 
         /////////////////////////////Z stage/////////////////////////////
         if (lastEvent_ == null || event.sliceIndex_ != lastEvent_.sliceIndex_) {
             //wait for it to not be busy (is this even needed?)
@@ -302,6 +278,35 @@ public class CustomAcqEngine {
                     }
                 }
             }, "waiting for Z stage to not be busy");
+        }
+        
+        /////////////////////////////XY Stage/////////////////////////////
+        if (lastEvent_ == null || event.positionIndex_ != lastEvent_.positionIndex_) {
+            //wait for it to not be busy (is this even needed??)
+            loopHardwareCommandRetries(new HardwareCommand() {
+                @Override
+                public void run() throws Exception {
+                    while (core_.deviceBusy(xyStage)) {
+                        Thread.sleep(2);
+                    }
+                }
+            }, "waiting for XY stage to not be busy");
+            //move to new position
+            loopHardwareCommandRetries(new HardwareCommand() {
+                @Override
+                public void run() throws Exception {
+                    core_.setXYPosition(xyStage, event.xyPosition_.getCenter().x, event.xyPosition_.getCenter().y);
+                }
+            }, "moving XY stage");
+            //wait for it to not be busy (is this even needed??)
+            loopHardwareCommandRetries(new HardwareCommand() {
+                @Override
+                public void run() throws Exception {
+                    while (core_.deviceBusy(xyStage)) {
+                        Thread.sleep(2);
+                    }
+                }
+            }, "waiting for XY stage to not be busy");
         }
 
         /////////////////////////////Channels/////////////////////////////
