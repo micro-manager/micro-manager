@@ -12,8 +12,6 @@ import java.awt.Frame;
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
@@ -75,6 +73,9 @@ public class AutofocusUtils {
    
    /**
     * Acquires image stack by scanning the mirror, calculates focus scores
+    * Acquires around the current piezo position.  As a side effect, will 
+    * temporarily set the center position to the current position (but restore 
+    * the center position on exit).
     *
     * @param side
     * @param sliceTiming
@@ -85,8 +86,10 @@ public class AutofocusUtils {
    public double runFocus(
            final ListeningJPanel caller,
            final Devices.Sides side,
+           final boolean centerAtCurrentZ,
            final SliceTiming sliceTiming) throws ASIdiSPIMException {
 
+      double bestScore = 0;
       
       if (gui_.getAutofocus() == null) {
          throw new ASIdiSPIMException("No Autofocus method defined");
@@ -103,11 +106,16 @@ public class AutofocusUtils {
       final boolean debug = prefs_.getBoolean(
               MyStrings.PanelNames.AUTOFOCUS.toString(), 
               Properties.Keys.PLUGIN_AUTOFOCUS_DEBUG, false);
-      final float center = prefs_.getFloat(
-            MyStrings.PanelNames.SETUP.toString() + side.toString(), 
-            Properties.Keys.PLUGIN_PIEZO_CENTER_POS, 0);
       final float stepSize = props_.getPropValueFloat(Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_AUTOFOCUS_STEPSIZE); 
+      final float originalCenter = prefs_.getFloat(
+            MyStrings.PanelNames.SETUP.toString() + side.toString(), 
+            Properties.Keys.PLUGIN_PIEZO_CENTER_POS, 0);
+      final double pos = positions_.getUpdatedPosition(
+              Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side), 
+              Joystick.Directions.NONE);
+      final double center = centerAtCurrentZ ? pos : originalCenter;
+      
       final double start = center - ( 0.5 * (nrImages - 1) * stepSize);
       
            
@@ -121,11 +129,12 @@ public class AutofocusUtils {
               1, // numChannels
               nrImages, // numSlices
               1, // numTimepoints
-              0, // timeInterval
+              1, // timeInterval
               1, // numSides
               side.toString(), // firstside
               false, // useTimepoints
               AcquisitionModes.Keys.SLICE_SCAN_ONLY, // scan only the mirror
+              centerAtCurrentZ,
               100.0f, // delay before side (can go to 0?)
               stepSize, // stepSize in microns
               sliceTiming);
@@ -207,9 +216,11 @@ public class AutofocusUtils {
                if (debug) {
                   // we are using the slow way to insert images, should be OK
                   // as long as the circular buffer is big enough
-                  gui_.addImageToAcquisition(acqName, counter, 0, 0, 0, timg);
-                  scoresToPlot[0].add(start + counter * stepSize, 
-                       focusScores[counter]);
+                  double zPos = start + counter * stepSize;
+                  timg.tags.put("SlicePosition", zPos);
+                  timg.tags.put("ZPositionUm", zPos);
+                  gui_.addImageToAcquisition(acqName, 0, 0,counter, 0, timg);
+                  scoresToPlot[0].add(zPos, focusScores[counter]);
                }
                counter++;
                if (counter >= nrImages) {
@@ -221,6 +232,38 @@ public class AutofocusUtils {
                throw new ASIdiSPIMException("No image arrived in 5 seconds");
             }
          }
+         // now find the position in the focus Score array with the highest score
+         // TODO: use more sophisticated analysis here
+         double highestScore = focusScores[0];
+         int highestIndex = 0;
+         for (int i = 1; i < focusScores.length; i++) {
+            if (focusScores[i] > highestScore) {
+               highestIndex = i;
+               highestScore = focusScores[i];
+            }
+         }
+         // display the best scoring image in the snap/live window
+         ImageProcessor bestIP = makeProcessor(imageStore[highestIndex]);
+         ImagePlus bestIPlus = new ImagePlus();
+         bestIPlus.setProcessor(bestIP);
+         if (gui_.getSnapLiveWin() != null) {
+            try {
+               gui_.addImageToAcquisition("Snap/Live Window", 0, 0, 0, 0,
+                       imageStore[highestIndex]);
+            } catch (MMScriptException ex) {
+               ReportingUtils.logError(ex, "Failed to add image to Snap/Live Window");
+            }
+         }
+
+         if (debug) {
+            plotDataN("Focus curve", scoresToPlot, "z (micron)", "Score", 100, 100,
+                    true, false);
+         }
+
+         // return the position of the scanning device associated with the highest
+         // focus score
+         bestScore = start + stepSize * highestIndex;
+
       } catch (ASIdiSPIMException ex) {
          throw ex;
       } catch (Exception ex) {
@@ -230,14 +273,20 @@ public class AutofocusUtils {
             gui_.getMMCore().stopSequenceAcquisition(camera);
             gui_.getMMCore().setCameraDevice(originalCamera);
             
-            // move piezos back to center (neutral) position
+            // move piezo  to focussed position
+            Devices.Keys piezo = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side);
+            if (devices_.isValidMMDevice(piezo)) {
+               positions_.setPosition(piezo, Joystick.Directions.NONE, bestScore);
+            }
             // TODO move to center position instead of to 0
+            /*
             if (devices_.isValidMMDevice(Devices.Keys.PIEZOA)) {
                positions_.setPosition(Devices.Keys.PIEZOA, Joystick.Directions.NONE, 0.0);
             }
             if (devices_.isValidMMDevice(Devices.Keys.PIEZOB)) {
                positions_.setPosition(Devices.Keys.PIEZOB, Joystick.Directions.NONE, 0.0);
             }
+            */
 
             // make sure to stop the SPIM state machine in case the acquisition was cancelled
             // even if the acquisition wasn't cancelled make sure the Micro-Manager properties are updated
@@ -265,39 +314,6 @@ public class AutofocusUtils {
             ReportingUtils.logError(ex, "Error while restoring hardware state");
          }
       }
-
-      // now find the position in the focus Score array with the highest score
-      // TODO: use more sophisticated analysis here
-      double highestScore = focusScores[0];
-      int highestIndex = 0;
-      for (int i = 1; i < focusScores.length; i++) {
-         if (focusScores[i] > highestScore) {
-            highestIndex = i;
-            highestScore = focusScores[i];
-         }
-      }
-      
-      // display the best scoring image in the snap/live window
-      ImageProcessor bestIP = makeProcessor(imageStore[highestIndex]);
-      ImagePlus bestIPlus = new ImagePlus();
-      bestIPlus.setProcessor(bestIP);
-      if (gui_.getSnapLiveWin() != null) {
-         try {
-            gui_.addImageToAcquisition("Snap/Live Window", 0, 0, 0, 0, 
-                    imageStore[highestIndex]);
-         } catch (MMScriptException ex) {
-           ReportingUtils.logError(ex, "Failed to add image to Snap/Live Window");
-         }
-      }
-
-      if (debug) {
-         plotDataN("Focus curve", scoresToPlot, "z (micron)", "Score", 100, 100,
-                 true, false);
-      }
-      
-      // return the position of the scanning device associated with the highest
-      // focus score
-      double bestScore = start + stepSize * highestIndex;
       
       return bestScore;
    }

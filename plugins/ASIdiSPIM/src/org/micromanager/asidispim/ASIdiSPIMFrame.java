@@ -120,7 +120,7 @@ public class ASIdiSPIMFrame extends MMFrame
       positions_ = new Positions(gui, devices_);
       joystick_ = new Joystick(devices_, props_);
       cameras_ = new Cameras(gui, devices_, props_, prefs_);
-      controller_ = new ControllerUtils(gui, props_, prefs_, devices_);
+      controller_ = new ControllerUtils(gui, props_, prefs_, devices_, positions_);
       
       // create the panels themselves
       // in some cases dependencies create required ordering

@@ -1282,6 +1282,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               getFirstSide(),
               useTimepointsCB_.isSelected(),
               getAcquisitionMode(),
+              false,
               getDelayBeforeSide(),
               getStepSizeUm(),
               sliceTiming_

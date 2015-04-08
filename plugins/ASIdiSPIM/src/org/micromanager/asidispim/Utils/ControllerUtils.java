@@ -29,8 +29,10 @@ import org.micromanager.asidispim.Data.AcquisitionModes;
 import org.micromanager.asidispim.Data.CameraModes;
 import org.micromanager.asidispim.Data.ChannelSpec;
 import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Data.Joystick;
 import org.micromanager.asidispim.Data.MultichannelModes;
 import org.micromanager.asidispim.Data.MyStrings;
+import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 
@@ -43,14 +45,16 @@ public class ControllerUtils {
    final Properties props_;
    final Prefs prefs_;
    final Devices devices_;
+   final Positions positions_;
    final CMMCore core_;
    
    public ControllerUtils(ScriptInterface gui, final Properties props, 
-           final Prefs prefs, final Devices devices) {
+           final Prefs prefs, final Devices devices, final Positions positions) {
       gui_ = gui;
       props_ = props;
       prefs_ = prefs;
       devices_ = devices;
+      positions_ = positions;
       core_ = gui_.getMMCore();
    }
    
@@ -92,6 +96,7 @@ public class ControllerUtils {
            final String firstSide, 
            final boolean useTimepoints, 
            final AcquisitionModes.Keys spimMode,
+           final boolean centerAtCurrentZ,
            final float delayBeforeSide,
            final float stepSizeUm,
            final SliceTiming sliceTiming
@@ -149,9 +154,16 @@ public class ControllerUtils {
       props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_REPEATS, numVolumesPerTrigger, skipScannerWarnings);
       
       // figure out the piezo parameters
-      float piezoCenter = prefs_.getFloat(
+      float piezoCenter;
+      if (centerAtCurrentZ) {
+         piezoCenter = (float) positions_.getUpdatedPosition(
+              Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side), 
+              Joystick.Directions.NONE);
+      } else {
+         piezoCenter = prefs_.getFloat(
             MyStrings.PanelNames.SETUP.toString() + side.toString(), 
             Properties.Keys.PLUGIN_PIEZO_CENTER_POS, 0);
+      }
       
       // if we set piezoAmplitude to 0 here then sliceAmplitude will also be 0
       float piezoAmplitude;
@@ -189,7 +201,10 @@ public class ControllerUtils {
             MyStrings.PanelNames.SETUP.toString() + side.toString(), 
             Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0);
       float sliceAmplitude = piezoAmplitude / sliceRate;
-      float sliceCenter = (piezoCenter - sliceOffset) / sliceRate;
+      float currentSlice = (float) positions_.getUpdatedPosition(
+              Devices.getSideSpecificKey(Devices.Keys.GALVOA, side), Joystick.Directions.X);
+      float sliceCenter = centerAtCurrentZ ? 
+              currentSlice : (piezoCenter - sliceOffset) / sliceRate;
 
       // get the micro-mirror card ready
       // SA_AMPLITUDE_X_DEG and SA_OFFSET_X_DEG done by setup tabs

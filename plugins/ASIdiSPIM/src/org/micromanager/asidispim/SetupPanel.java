@@ -243,7 +243,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          @Override
          public void actionPerformed(ActionEvent e) {
             try {
-               double piezoPos = autofocus_.runFocus(setupPanel, side,
+               double piezoPos = autofocus_.runFocus(setupPanel, side, true,
                   ASIdiSPIM.getFrame().getAcquisitionPanel().getSliceTiming());
                positions_.setPosition(piezoImagingDeviceKey_, 
                      Joystick.Directions.NONE, piezoPos);
