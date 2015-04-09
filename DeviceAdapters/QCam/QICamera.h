@@ -59,6 +59,8 @@
 //#define ERR_BUFFER_ALLOCATION_FAILED        1001
 //#define ERR_INCOMPLETE_SNAP_IMAGE_CYCLE     1002
 
+#define SER_NUM_LEN 64 
+
 //////////////////////////////////////////////////////////////////////////////
 // Properties
 //

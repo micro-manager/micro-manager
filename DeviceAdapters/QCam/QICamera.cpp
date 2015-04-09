@@ -442,15 +442,32 @@ vector<string> QIDriver::AvailableCameras()
                displayString += ConvertCameraTypeToString(cameras[i].cameraType);
             }
 
-            char serial[512];
+            
+            char serial[SER_NUM_LEN];
             memset(serial, 0, sizeof(serial));
-            err = QCam_GetSerialString(camera, serial, sizeof(serial) - 1);
-            if (err == qerrSuccess) {
-               if (strlen(serial) == 0) {
-                  strcpy(serial, "N/A");
+            unsigned long serialNumber;
+            if (cameras[i].cameraType == qcCameraGoBolt)
+            {
+                err = QCam_GetInfo(camera, qinfSerialNumber, &serialNumber);
+                if (err == qerrSuccess) {
+                   snprintf(serial, SER_NUM_LEN, "%u", serialNumber);
+                   if (strlen(serial) == 0) {
+                       strcpy(serial, "N/A");
+                 }
+                 displayString += " S/N ";
+                 displayString += serial;
                }
-               displayString += " S/N ";
-               displayString += serial;
+            }
+            else
+            {
+               err = QCam_GetSerialString(camera, serial, sizeof(serial) -1);
+               if (err == qerrSuccess) {
+                  if (strlen(serial) == 0) {
+                     strcpy(serial, "N/A");
+                  }
+                  displayString += " S/N ";
+                  displayString += serial;
+                }
             }
 
             err = QCam_CloseCamera(camera);
@@ -602,6 +619,7 @@ int QICamera::Initialize()
    char	               cameraIDStr[256];
    unsigned long	      ccdType;
    unsigned long	      cameraType;
+   unsigned long       serialNumber;
    int                 nRet;
 
    START_METHOD("QICamera::Initialize");
@@ -786,26 +804,28 @@ int QICamera::Initialize()
       }
 
       // CAMERA ID
-
+      if (cameraType == qcCameraGoBolt) {
+          err = QCam_GetInfo(m_camera, qinfSerialNumber, &serialNumber);
+          if (err != qerrSuccess) {
+             REPORT_QERR(err);
+             throw DEVICE_ERR;
+          }
+          else {
+            snprintf(cameraStr, CAMERA_STRING_LENGTH, "%u", serialNumber);
+         }
+      }
+      else {
       // get the camera serial string
-      err = QCam_GetSerialString(m_camera, cameraStr, CAMERA_STRING_LENGTH);
-      if (err != qerrSuccess) {
-         REPORT_QERR(err);
-         throw DEVICE_ERR;
+         err = QCam_GetSerialString(m_camera, cameraStr, CAMERA_STRING_LENGTH);
+         if (err != qerrSuccess) {
+            REPORT_QERR(err);
+            throw DEVICE_ERR;
+         }
       }
 
       // if the string is empty, fill it with "N/A"
       if (strcmp(cameraStr, "") == 0) {
          strcpy(cameraStr, "N/A");
-      }
-      // The Bolt sends a string that is terminated with '10' rather than '0':
-      char * pCh;
-      const char ten = 10;
-      const char zero = 0;
-      pCh = strstr (cameraStr, &ten);
-      if (pCh != 0)
-      {
-         strncpy (pCh, &zero, 1);
       }
 
       sprintf(cameraIDStr, "Serial number %s", cameraStr);
