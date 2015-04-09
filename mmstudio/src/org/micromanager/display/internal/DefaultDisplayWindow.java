@@ -152,14 +152,48 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
 
    // Custom string in the title.
    private String customName_;
-   
+
    /**
-    * Convenience constructor that uses default DisplaySettings and no custom
-    * title.
+    * Factory method to create a new DisplayWindow with default
+    * DisplaySettings and title. See the main createDisplay below for
+    * more info on parameters.
     */
-   public DefaultDisplayWindow(Datastore store,
-         ControlsFactory controlsFactory) {
-      this(store, controlsFactory, null, null);
+   public static DefaultDisplayWindow createDisplay(Datastore store,
+         ControlsFactory factory) {
+      return createDisplay(store, factory, null, null);
+   }
+
+   /**
+    * Create a new DefaultDisplayWindow. Use this method instead of calling
+    * the constructor directly, as some setup needs to be performed after
+    * the display has completed its constructor.
+    * @param store The Datastore this display will show images for.
+    * @param factory A ControlsFactory to create any extra controls for this
+    *        display. May be null, in which case there will be no extra
+    *        controls
+    * @param DisplaySettings The DisplaySettings to use for this display. May
+    *        be null, in which case default settings will be pulled from the
+    *        user's profile.
+    * @param title A custom title. May be null, in which case the title will
+    *        be "MM image display".
+    * @return The new DisplayWindow in a ready-to-use state.
+    */
+   public static DefaultDisplayWindow createDisplay(Datastore store,
+         ControlsFactory factory, DisplaySettings settings, String title) {
+      DefaultDisplayWindow result = new DefaultDisplayWindow(store, factory,
+            settings, title);
+      // There's a race condition here: if the Datastore adds an image
+      // between us registering and us manually checking for images, then
+      // we risk creating GUI objects twice, so makeGUI() has to be coded
+      // defensively to avoid double-calls.
+      store.registerForEvents(result);
+      if (store.getNumImages() > 0) {
+         result.makeGUI();
+      }
+      DefaultEventManager.getInstance().post(
+            new DefaultNewDisplayEvent(result));
+      DefaultEventManager.getInstance().registerForEvents(result);
+      return result;
    }
 
    /**
@@ -168,7 +202,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     * @param settings DisplaySettings to use as initial state for this display
     * @param customName Custom title to show in title bar, or null for none.
     */
-   public DefaultDisplayWindow(Datastore store,
+   private DefaultDisplayWindow(Datastore store,
          ControlsFactory controlsFactory, DisplaySettings settings,
          String customName) {
       super("image display window");
@@ -940,8 +974,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
 
    @Override
    public DisplayWindow duplicate() {
-      DisplayWindow result = DefaultDisplayManager.getInstance().createDisplay(
-            store_, controlsFactory_);
+      DisplayWindow result = createDisplay(store_, controlsFactory_);
       result.setDisplaySettings(displaySettings_);
       result.setCustomTitle(customName_);
       return result;
