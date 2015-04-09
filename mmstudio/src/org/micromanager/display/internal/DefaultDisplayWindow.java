@@ -1077,4 +1077,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          super.pack();
       }
    }
+
+   @Override
+   public String toString() {
+      return String.format("<DefaultDisplayWindow named %s with unique ID %s>", getName(), hashCode());
+   }
 }
