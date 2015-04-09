@@ -89,7 +89,7 @@ public class Positions {
     * @param dir
     * @return
     */
-   public double getPosition(Devices.Keys devKey, Joystick.Directions dir) {
+   public double getCachedPosition(Devices.Keys devKey, Joystick.Directions dir) {
       if (devices_.is1DStage(devKey)) {
          Double pos = getOneAxisStagePosition(devKey);
          if (pos != null) {
@@ -107,6 +107,16 @@ public class Positions {
          }
       }
       return 0;
+   }
+   
+   /**
+    * Returns the current position of the specified stage, or 0 if the stage wasn't found.
+    * Updates the cache with the value as well.
+    * @param devKey
+    * @return
+    */
+   public double getUpdatedPosition(Devices.Keys devKey) {
+      return getUpdatedPosition(devKey, Joystick.Directions.NONE);
    }
    
    /**
@@ -208,6 +218,7 @@ public class Positions {
     * @param devKey
     * @param dir
     * @param pos new position of the stage
+    * @param ignoreErrors true will return without any errors (or any action) if device is missing
     */
    public boolean setPosition(Devices.Keys devKey, double pos, boolean ignoreErrors) {
       return setPosition(devKey, Directions.NONE, pos, false);

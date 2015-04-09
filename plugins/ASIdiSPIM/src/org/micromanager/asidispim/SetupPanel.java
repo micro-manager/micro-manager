@@ -320,12 +320,10 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          public void actionPerformed(ActionEvent e) {
             try {
                // bypass cached positions in positions_ in case they aren't current
-               Point2D.Double pt = core_.getGalvoPosition(
-                       devices_.getMMDeviceException(micromirrorDeviceKey_));
-               sliceStartPos_ = pt.y;
+               sliceStartPos_ = positions_.getUpdatedPosition(micromirrorDeviceKey_,
+                     Directions.Y);
                sheetStartPositionLabel_.setFloat((float)sliceStartPos_);
-               imagingPiezoStartPos_ = core_.getPosition(
-                       devices_.getMMDeviceException(piezoImagingDeviceKey_));
+               imagingPiezoStartPos_ = positions_.getUpdatedPosition(piezoImagingDeviceKey_); 
                imagingPiezoStartPositionLabel_.setFloat((float)imagingPiezoStartPos_);
             } catch (Exception ex) {
                MyDialogUtils.showError(ex);
@@ -344,12 +342,10 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          public void actionPerformed(ActionEvent e) {
             try {
                // bypass cached positions in positions_ in case they aren't current
-               Point2D.Double pt = core_.getGalvoPosition(
-                       devices_.getMMDeviceException(micromirrorDeviceKey_));
-               sliceStopPos_ = pt.y;
+               sliceStopPos_ = positions_.getUpdatedPosition(micromirrorDeviceKey_,
+                     Directions.Y);
                sheetStopPositionLabel_.setFloat((float)sliceStopPos_);
-               imagingPiezoStopPos_ = core_.getPosition(
-                       devices_.getMMDeviceException(piezoImagingDeviceKey_));
+               imagingPiezoStopPos_ = positions_.getUpdatedPosition(piezoImagingDeviceKey_);
                imagingPiezoStopPositionLabel_.setFloat((float)imagingPiezoStopPos_);
             } catch (Exception ex) {
                MyDialogUtils.showError(ex);
@@ -439,8 +435,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          @Override
          public void actionPerformed(ActionEvent e) {
             try {
-               imagingCenterPos_ = core_.getPosition(
-                    devices_.getMMDeviceException(piezoImagingDeviceKey_));
+               imagingCenterPos_ = positions_.getUpdatedPosition(piezoImagingDeviceKey_); 
                imagingCenterPosLabel_.setFloat((float)imagingCenterPos_);
             } catch (Exception ex) {
                MyDialogUtils.showError(ex);
@@ -474,6 +469,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
 
          @Override
          public void actionPerformed(ActionEvent e) {
+         // TODO replace with positions_ call to 2D position set (need to implement still)
             try {
                xyCenterPos_ = core_.getXYStagePosition(
                      devices_.getMMDeviceException(Devices.Keys.XYSTAGE));
@@ -630,7 +626,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       beamPanel_ = new BeamSubPanel(gui_, devices_, panelName_, side, prefs_, props_);
       add(beamPanel_, "center, wrap");
 
-
       cameraPanel_ = new CameraSubPanel(gui_, cameras_, devices_, panelName_, 
               side, prefs_, true);
       add(cameraPanel_, "center");
@@ -645,10 +640,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       try {
          double rate = (Double) rateField_.getValue();
          // bypass cached positions in positions_ in case they aren't current
-         double currentScanner = core_.getGalvoPosition(
-               devices_.getMMDeviceException(micromirrorDeviceKey_)).y;
-         double currentPiezo = core_.getPosition(
-               devices_.getMMDeviceException(piezoImagingDeviceKey_));
+         double currentScanner = positions_.getUpdatedPosition(micromirrorDeviceKey_,
+               Directions.Y);
+         double currentPiezo = positions_.getUpdatedPosition(piezoImagingDeviceKey_);
          double newOffset = currentPiezo - rate * currentScanner;
          offsetField_.setValue((Double) newOffset);
       } catch (Exception ex) {
@@ -671,8 +665,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     */
    private void stepPiezoAndGalvo(double factor) {
       try {
-         double piezoPos = core_.getPosition(
-               devices_.getMMDeviceException(piezoImagingDeviceKey_));
+         double piezoPos = positions_.getUpdatedPosition(piezoImagingDeviceKey_); 
          piezoPos += (factor * (Double) piezoDeltaField_.getValue());
          positions_.setPosition(piezoImagingDeviceKey_, piezoPos, true);
          double galvoPos = computeGalvoFromPiezo(piezoPos);

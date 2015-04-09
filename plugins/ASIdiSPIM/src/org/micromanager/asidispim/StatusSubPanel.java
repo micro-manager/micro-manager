@@ -141,8 +141,8 @@ public final class StatusSubPanel extends ListeningJPanel {
          return;
       }
       double displacement = Math.max(
-            Math.abs(positions_.getPosition(devKey, Joystick.Directions.X)),
-            Math.abs(positions_.getPosition(devKey, Joystick.Directions.Y)));
+            Math.abs(positions_.getCachedPosition(devKey, Joystick.Directions.X)),
+            Math.abs(positions_.getCachedPosition(devKey, Joystick.Directions.Y)));
       if ( displacement < GALVO_CONSIDERED_CENTER) {
          square.setColor(Color.GREEN);
       } else if (displacement < GALVO_CLOSE_TO_CENTER) {
@@ -166,7 +166,7 @@ public final class StatusSubPanel extends ListeningJPanel {
          square.setColor(Color.LIGHT_GRAY);
          return;
       }
-      double displacement = Math.abs(positions_.getPosition(devKey, Joystick.Directions.NONE));
+      double displacement = Math.abs(positions_.getCachedPosition(devKey, Joystick.Directions.NONE));
       if ( displacement < PIEZO_CONSIDERED_CENTER) {
          square.setColor(Color.GREEN);
       } else if (displacement < PIEZO_CLOSE_TO_CENTER) {
