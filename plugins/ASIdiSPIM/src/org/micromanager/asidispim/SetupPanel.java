@@ -52,7 +52,6 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Utils.AutofocusUtils;
-import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.ReportingUtils;
@@ -242,13 +241,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       tmp_but.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            try {
-               // TODO make this adjust slice position, not piezo
-               double piezoPos = autofocus_.runFocus(setupPanel, side, true,
-                  ASIdiSPIM.getFrame().getAcquisitionPanel().getSliceTiming());
-               positions_.setPosition(piezoImagingDeviceKey_, piezoPos, true);
-            } catch (ASIdiSPIMException ex) {
-               MyDialogUtils.showError(ex, "Autofocus failed.  Sorry!");}
+            autofocus_.runFocus(setupPanel, side, true,
+                    ASIdiSPIM.getFrame().getAcquisitionPanel().getSliceTiming(),
+                    true);
          }
       });
       calibrationPanel.add(tmp_but, "center, span 3, wrap");
