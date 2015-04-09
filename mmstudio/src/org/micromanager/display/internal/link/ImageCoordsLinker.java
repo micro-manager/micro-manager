@@ -41,6 +41,7 @@ public class ImageCoordsLinker extends SettingsLinker {
    public ImageCoordsLinker(String axis, DisplayWindow parent) {
       super(parent, RELEVANT_EVENTS);
       axis_ = axis;
+      addToSiblings();
    }
 
    /**
