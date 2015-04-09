@@ -1057,12 +1057,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private double computeActualVolumeDuration() {
       double stackDuration = getNumSlices()
               * controller_.computeActualSlicePeriod(sliceTiming_);
-      if (isMultichannel()) {
-         if (getChannelMode().equals(MultichannelModes.Keys.VOLUME)) {
-            stackDuration += 500;   // estimate channel switching overhead time as 0.5s
-                                    // actual value will be hardware-dependent
-         }
-      }
       switch (getAcquisitionMode()) {
          case STAGE_SCAN:
          case STAGE_SCAN_INTERLEAVED:
@@ -1073,8 +1067,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             return getNumSides() * getNumChannels()
                     * (rampDuration * 2 + stackDuration);
          default: // piezo scan
+            double channelSwitchDelay = 0;
+            if (isMultichannel()) {
+               if (getChannelMode().equals(MultichannelModes.Keys.VOLUME)) {
+                  channelSwitchDelay = 500;   // estimate channel switching overhead time as 0.5s
+                                              // actual value will be hardware-dependent
+               }
+            }
             return getNumSides() * getNumChannels()
-                    * (getDelayBeforeSide() + stackDuration);
+                    * (getDelayBeforeSide() + stackDuration)
+                    + (getNumChannels() - 1) * channelSwitchDelay;
       }
    }
    
@@ -1639,14 +1641,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   nrSlices, nrPositions, show, save);
             }
             
-//            // because demo camera sends images without waiting for controller
-//            // set exposure time to be slice duration (or x2 for 2-sided)
-//            // so the sequence acquisition takes about the right amount of time
-//            if (usingDemoCam) {
-//               ReportingUtils.logDebugMessage("Demo camera exposure value changed from "
-//                     + exposureTime + " to make acquisition timing correct.");
-//               exposureTime = sliceDuration * nrSides;
-//            }
+            // because demo camera sends images without waiting for controller
+            // set exposure time to be slice duration (or x2 for 2-sided)
+            // so the sequence acquisition takes about the right amount of time
+            if (usingDemoCam) {
+               ReportingUtils.logDebugMessage("Demo camera exposure value changed from "
+                     + exposureTime + " to make acquisition timing correct.");
+               exposureTime = sliceDuration * nrSides;
+            }
             
             core_.setExposure(firstCamera, exposureTime);
             if (twoSided) {
@@ -1902,7 +1904,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            // if we are using demo camera then add some extra time to let controller finish
                            // since we got images without waiting for controller to actually send triggers
                            if (usingDemoCam) {
-                              Thread.sleep(100);  // for serial communication overhead
+                              Thread.sleep(200);  // for serial communication overhead
                               if (isMultichannel()) {
                                  Thread.sleep(500);
                               }
