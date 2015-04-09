@@ -76,6 +76,7 @@ public class ControllerUtils {
     * @param useTimepoints whether or not we use time points
     * @param spimMode piezo scanning, vibration, stage scanning, i.e. what is 
     *                 moved between slices
+    * @param centerAtCurrentZ
     * @param delayBeforeSide wait in ms before starting each side (piezo only)
     * @param stepSizeUm spacing between slices in microns
     * @param sliceTiming low level controller timing parameters

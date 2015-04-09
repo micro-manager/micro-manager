@@ -86,11 +86,11 @@ public class AutofocusUtils {
     * @param caller - calling panel, used to restore settings after focussing
     * @param side - A or B
     * @param centerAtCurrentZ - whether to focus around the current position, or
-    * around middle set in the setup panel
+    *                            around the middle set in the setup panel
     * @param sliceTiming - Data structure with current device timing setting
     * @param runAsynchronously - whether or not to run the function asynchronously
     *
-    * @return position of the moving device associated with highest focus score
+    * @return position of the galvo device associated with highest focus score
     */
    public double runFocus(
            final ListeningJPanel caller,
@@ -111,8 +111,6 @@ public class AutofocusUtils {
             }
             gui_.getAutofocus().applySettings();
 
-
-
             String camera = devices_.getMMDevice(Devices.Keys.CAMERAA);
             if (side.equals(Devices.Sides.B)) {
                camera = devices_.getMMDevice(Devices.Keys.CAMERAB);
@@ -123,28 +121,23 @@ public class AutofocusUtils {
             final boolean debug = prefs_.getBoolean(
                     MyStrings.PanelNames.AUTOFOCUS.toString(),
                     Properties.Keys.PLUGIN_AUTOFOCUS_DEBUG, false);
-            final float stepSize = props_.getPropValueFloat(Devices.Keys.PLUGIN,
+            final float piezoStepSize = props_.getPropValueFloat(Devices.Keys.PLUGIN,
                     Properties.Keys.PLUGIN_AUTOFOCUS_STEPSIZE);
             final float originalCenter = prefs_.getFloat(
                     MyStrings.PanelNames.SETUP.toString() + side.toString(),
                     Properties.Keys.PLUGIN_PIEZO_CENTER_POS, 0);
-            final double pos = positions_.getUpdatedPosition(
+            final double piezoPosition = positions_.getUpdatedPosition(
                     Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side),
                     Joystick.Directions.NONE);
-            final double center = centerAtCurrentZ ? pos : originalCenter;
+            final double center = centerAtCurrentZ ? piezoPosition : originalCenter;
 
-            final double start = center - (0.5 * (nrImages - 1) * stepSize);
+            final double start = center - (0.5 * (nrImages - 1) * piezoStepSize);
 
-            // remember galvo position so that we can restore it
-            final double galvoPosition = positions_.getUpdatedPosition(
-                    Devices.getSideSpecificKey(Devices.Keys.GALVOA, side),
-                    Joystick.Directions.Y);
 
             posUpdater_.pauseUpdates(true);
 
             // TODO: run this on its own thread
-            controller_.prepareControllerForAquisition(
-                    side,
+            controller_.prepareControllerForAquisition(side,
                     false, // no hardware timepoints
                     MultichannelModes.Keys.NONE,
                     false, // do not use channels
@@ -156,11 +149,20 @@ public class AutofocusUtils {
                     side.toString(), // firstside
                     false, // useTimepoints
                     AcquisitionModes.Keys.SLICE_SCAN_ONLY, // scan only the mirror
-                    centerAtCurrentZ,
+                    centerAtCurrentZ,  // center around the current Z or the middle set in the setup panel
                     100.0f, // delay before side (can go to 0?)
-                    stepSize, // stepSize in microns
+                    piezoStepSize, // piezoStepSize in microns
                     sliceTiming);
 
+            final float galvoRate = prefs_.getFloat(
+                     MyStrings.PanelNames.SETUP.toString() + side.toString(), 
+                     Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, -80);
+            final float galvoOffset = prefs_.getFloat(
+                     MyStrings.PanelNames.SETUP.toString() + side.toString(), 
+                     Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0);
+            final double galvoStepSize = piezoStepSize / galvoRate;
+            final double galvoStart = start * galvoRate - galvoOffset;
+            
             double[] focusScores = new double[nrImages];
             TaggedImage[] imageStore = new TaggedImage[nrImages];
             // Use array to store data so that we can expand to plotting multiple
@@ -168,8 +170,6 @@ public class AutofocusUtils {
             XYSeries[] scoresToPlot = new XYSeries[1];
             scoresToPlot[0] = new XYSeries(nrImages);
 
-            // boolean autoShutter = gui_.getMMCore().getAutoShutter();
-            // boolean shutterOpen = false;  // will read later
             boolean liveModeOriginally = false;
             String originalCamera = gui_.getMMCore().getCameraDevice();
             String acqName = "";
@@ -184,7 +184,6 @@ public class AutofocusUtils {
                if (debug) {
                   acqName = gui_.getUniqueAcquisitionName("diSPIM Autofocus");
                   gui_.openAcquisition(acqName, "", nrImages, 1, 1, 1, true, false);
-                  // initialize acquisition
                   gui_.initializeAcquisition(acqName,
                           (int) gui_.getMMCore().getImageWidth(),
                           (int) gui_.getMMCore().getImageHeight(),
@@ -238,11 +237,12 @@ public class AutofocusUtils {
                      if (debug) {
                         // we are using the slow way to insert images, should be OK
                         // as long as the circular buffer is big enough
-                        double zPos = start + counter * stepSize;
+                        double zPos = start + counter * piezoStepSize;
+                        double galvoPos = galvoStart + counter * galvoStepSize;
                         timg.tags.put("SlicePosition", zPos);
                         timg.tags.put("ZPositionUm", zPos);
                         gui_.addImageToAcquisition(acqName, 0, 0, counter, 0, timg);
-                        scoresToPlot[0].add(zPos, focusScores[counter]);
+                        scoresToPlot[0].add(galvoPos, focusScores[counter]);
                      }
                      counter++;
                      if (counter >= nrImages) {
@@ -281,12 +281,12 @@ public class AutofocusUtils {
                if (debug) {
                   PlotUtils plotter = new PlotUtils(prefs_, "AutofocusUtils");
                   plotter.plotDataN("Focus curve", scoresToPlot, 
-                          "z (micron)", "Score", true, false);
+                          "Galvo position (degree)", "Score", true, false);
                }
 
-               // return the position of the scanning device associated with the highest
-               // focus score
-               bestScore = start + stepSize * highestIndex;
+               // return the position of the galvo device associated with the 
+               // highest focus score
+               bestScore = galvoStart + galvoStepSize * highestIndex;
 
             } catch (ASIdiSPIMException ex) {
                throw ex;
@@ -298,7 +298,10 @@ public class AutofocusUtils {
 
                   gui_.getMMCore().stopSequenceAcquisition(camera);
                   gui_.getMMCore().setCameraDevice(originalCamera);
-                  gui_.closeAcquisition(acqName);
+                  if (debug) {
+                     gui_.closeAcquisition(acqName);
+                     gui_.promptToSaveAcquisition(acqName, false);
+                  }
 
                   controller_.cleanUpAfterAcquisition(false, null, 0.0f, 0.0f);
 
@@ -307,15 +310,15 @@ public class AutofocusUtils {
                   // Let the calling panel restore the settings
                   caller.gotSelected();
 
-                  // move piezo  to focussed position
+                  // move piezo  to original position
                   Devices.Keys piezo = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side);
                   if (devices_.isValidMMDevice(piezo)) {
-                     positions_.setPosition(piezo, Joystick.Directions.NONE, bestScore);
+                     positions_.setPosition(piezo, Joystick.Directions.NONE, center);
                   }
-                  // move Galvo to its original position
+                  // move Galvo to its focussed position
                   Devices.Keys galvo = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side);
                   if (devices_.isValidMMDevice(galvo)) {
-                     positions_.setPosition(galvo, Joystick.Directions.Y, galvoPosition);
+                     positions_.setPosition(galvo, Joystick.Directions.Y, bestScore);
                   }
 
                   posUpdater_.pauseUpdates(false);
