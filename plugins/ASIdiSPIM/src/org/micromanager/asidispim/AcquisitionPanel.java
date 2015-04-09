@@ -282,9 +282,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          public void actionPerformed(ActionEvent e) {
             boolean doMin = minSlicePeriodCB_.isSelected();
             desiredSlicePeriod_.setEnabled(!doMin);
-            if (doMin) {
-               recalculateSliceTiming(false);
-            }
+            recalculateSliceTiming(false);
          }
       });
       volPanel_.add(minSlicePeriodCB_, "span 2, wrap");
