@@ -51,6 +51,8 @@ import surfacesandregions.SurfaceRegionComboBoxModel;
 import surfacesandregions.XYFootprint;
 import utility.ExactlyOneRowSelectionModel;
 import channels.SimpleChannelTableModel;
+import coordinates.AffineCalibrator;
+import coordinates.AffineGUI;
 
 
 /**
@@ -618,6 +620,7 @@ public class GUI extends javax.swing.JFrame {
         exploreOverlapLabel_ = new javax.swing.JLabel();
         exploreTileOverlapSpinner_ = new javax.swing.JSpinner();
         explorePercentLabel_ = new javax.swing.JLabel();
+        jButton1 = new javax.swing.JButton();
 
         SettingsButton.setText("Settings");
         SettingsButton.addActionListener(new java.awt.event.ActionListener() {
@@ -1838,16 +1841,17 @@ public class GUI extends javax.swing.JFrame {
 
         explorePercentLabel_.setText("%");
 
+        jButton1.setText("Calibrate");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(320, 320, 320)
-                .addComponent(runAcqButton_)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(SettingsButton)
-                .addGap(25, 25, 25))
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
@@ -1856,7 +1860,6 @@ public class GUI extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addGap(2, 2, 2)
                         .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 801, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(acqTabbedPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 799, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(exploreSampleLabel_)
@@ -1888,8 +1891,17 @@ public class GUI extends javax.swing.JFrame {
                         .addComponent(exploreSavingNameTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, 699, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(329, 329, 329)
-                        .addComponent(newExploreWindowButton_)))
-                .addContainerGap())
+                        .addComponent(newExploreWindowButton_))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                            .addGap(320, 320, 320)
+                            .addComponent(runAcqButton_)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jButton1)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(SettingsButton))
+                        .addComponent(acqTabbedPane_, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 799, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1921,11 +1933,11 @@ public class GUI extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(acqTabbedPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 306, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(runAcqButton_)
-                        .addContainerGap())
-                    .addComponent(SettingsButton, javax.swing.GroupLayout.Alignment.TRAILING)))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(runAcqButton_)
+                    .addComponent(SettingsButton)
+                    .addComponent(jButton1))
+                .addContainerGap())
         );
 
         addTextEditListener(zStepSpinner_);
@@ -2271,6 +2283,10 @@ public class GUI extends javax.swing.JFrame {
       storeCurrentAcqSettings();
    }//GEN-LAST:event_autofocusInitialPositionCheckBox_ActionPerformed
 
+   private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+      new AffineGUI();
+   }//GEN-LAST:event_jButton1ActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel ChannelsTab_;
@@ -2334,6 +2350,7 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JTable gridTable_;
     private javax.swing.JPanel gridsPanel_;
     private javax.swing.JButton intereaveButton_;
+    private javax.swing.JButton jButton1;
     private javax.swing.JComboBox jComboBox2;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
