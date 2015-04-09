@@ -148,26 +148,13 @@ public class DefaultDisplayManager implements DisplayManager {
 
    @Override
    public DisplayWindow createDisplay(Datastore store) {
-      return createDisplay(store, null);
+      return DefaultDisplayWindow.createDisplay(store, null);
    }
 
    @Override
    public DisplayWindow createDisplay(Datastore store,
          ControlsFactory factory) {
-      DefaultDisplayWindow result = new DefaultDisplayWindow(store, factory);
-      // Handle some setup for the window, now that its constructor has
-      // completed.
-      // There's a race condition here: if the Datastore adds an image
-      // between us registering and us manually checking for images, then
-      // we risk creating GUI objects twice, so the display's GUI creation has
-      // to be coded defensively to avoid double-calls.
-      store.registerForEvents(result);
-      if (store.getNumImages() > 0) {
-         result.makeGUI();
-      }
-      DefaultEventManager.getInstance().post(new DefaultNewDisplayEvent(result));
-      DefaultEventManager.getInstance().registerForEvents(result);
-      return result;
+      return DefaultDisplayWindow.createDisplay(store, factory);
    }
 
    @Override
