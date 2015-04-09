@@ -175,6 +175,9 @@ int CPLogic::Initialize()
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode21, 21);
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode22, 22);
    }
+   if (firmwareVersion_ > 3.089) {
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode23, 23);
+   }
    UpdateProperty(g_SetCardPresetPropertyName);
 
 

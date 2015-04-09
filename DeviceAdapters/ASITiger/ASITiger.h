@@ -415,6 +415,7 @@ const char* const g_PresetCode19 = "19 - cells 9-16 on BNC1-8";
 const char* const g_PresetCode20 = "20 - cells 13-16 on BNC5-8";
 const char* const g_PresetCode21 = "21 - mod2 counter";
 const char* const g_PresetCode22 = "22 - no counter";
+const char* const g_PresetCode23 = "23 - TTL0-7 on BNC1-8";
 const char* const g_PLogicModeNone = "None";
 const char* const g_PLogicModediSPIMShutter = "diSPIM Shutter";
 const char* const g_ChannelNone = "none of outputs 5-8";
@@ -500,6 +501,7 @@ const char* const g_OnState = "On";
 // yes/no control settings
 const char* const g_YesState = "Yes";
 const char* const g_NoState = "No";
+const char* const g_OneTimeState = "One time";
 // shutter states
 const char* const g_OpenState = "Open";
 const char* const g_ClosedState = "Closed";
