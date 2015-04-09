@@ -32,6 +32,7 @@ import java.awt.geom.Point2D;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
+import org.micromanager.asidispim.Data.Joystick.Directions;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Prefs;
@@ -245,8 +246,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                // TODO make this adjust slice position, not piezo
                double piezoPos = autofocus_.runFocus(setupPanel, side, true,
                   ASIdiSPIM.getFrame().getAcquisitionPanel().getSliceTiming());
-               positions_.setPosition(piezoImagingDeviceKey_, 
-                     Joystick.Directions.NONE, piezoPos);
+               positions_.setPosition(piezoImagingDeviceKey_, piezoPos, true);
             } catch (ASIdiSPIMException ex) {
                MyDialogUtils.showError(ex, "Autofocus failed.  Sorry!");}
          }
@@ -280,9 +280,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          public void actionPerformed(ActionEvent e) {
             try {
                positions_.setPosition(micromirrorDeviceKey_, 
-                       Joystick.Directions.Y, sliceStartPos_);
-               positions_.setPosition(piezoImagingDeviceKey_, 
-                       Joystick.Directions.NONE, imagingPiezoStartPos_);       
+                       Joystick.Directions.Y, sliceStartPos_, true);
+               positions_.setPosition(piezoImagingDeviceKey_,
+                     imagingPiezoStartPos_, true);       
             } catch (Exception ex) {
                MyDialogUtils.showError(ex);
             }
@@ -300,9 +300,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          public void actionPerformed(ActionEvent e) {
             try {
                positions_.setPosition(micromirrorDeviceKey_, 
-                       Joystick.Directions.Y, sliceStopPos_);
+                       Joystick.Directions.Y, sliceStopPos_, true);
                positions_.setPosition(piezoImagingDeviceKey_, 
-                       Joystick.Directions.NONE, imagingPiezoStopPos_);
+                       imagingPiezoStopPos_, true);
             } catch (Exception ex) {
                MyDialogUtils.showError(ex);
             }
@@ -457,6 +457,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       tmp_but.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
+            // TODO replace with positions_ call to 2D position set (need to implement still)
             try {
                core_.setXYPosition(xyCenterPos_.x, xyCenterPos_.y);
             } catch (Exception ex) {
@@ -495,7 +496,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       tmp_but.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            setGalvoPosition(0.0f);
+            positions_.setPosition(micromirrorDeviceKey_, Directions.Y, 0.0, true);
          }
       } );
       slicePanel.add(tmp_but, "wrap");
@@ -510,7 +511,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       tmp_but.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            setPiezoPosition(0.0f);
+            positions_.setPosition(piezoImagingDeviceKey_, 0.0, true);
          }
       } );
       slicePanel.add(tmp_but, "wrap");
@@ -673,11 +674,10 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          double piezoPos = core_.getPosition(
                devices_.getMMDeviceException(piezoImagingDeviceKey_));
          piezoPos += (factor * (Double) piezoDeltaField_.getValue());
-         positions_.setPosition(piezoImagingDeviceKey_, 
-               Joystick.Directions.NONE, piezoPos);
+         positions_.setPosition(piezoImagingDeviceKey_, piezoPos, true);
          double galvoPos = computeGalvoFromPiezo(piezoPos);
          positions_.setPosition(micromirrorDeviceKey_,
-               Joystick.Directions.Y, galvoPos);
+               Joystick.Directions.Y, galvoPos, true);
       } catch (Exception ex) {
          MyDialogUtils.showError(ex);
       }
@@ -701,46 +701,11 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    * @throws Exception 
    */
    private void centerPiezoAndGalvo() {
-      if (setPiezoPosition(imagingCenterPos_))
-         setGalvoPosition( computeGalvoFromPiezo(imagingCenterPos_) );
-   }
-   
-   /**
-    * Sets micro-mirror to requested position Doesn't do anything if it is
-    * not assigned to prevent spurious exceptions.
-    */
-   private boolean setGalvoPosition(double galvoPos) {
-      if (!devices_.isValidMMDevice(micromirrorDeviceKey_)) {
-         return false;
+      boolean success = positions_.setPosition(piezoImagingDeviceKey_, imagingCenterPos_, true);
+      if (success) {
+         positions_.setPosition(micromirrorDeviceKey_, Directions.Y,
+            computeGalvoFromPiezo(imagingCenterPos_));
       }
-
-      try {
-         core_.setGalvoPosition(
-                 devices_.getMMDeviceException(micromirrorDeviceKey_),
-                 0, galvoPos);
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-         return false;
-      }
-      return true;
-   }
-   
-    /**
-    * Sets piezo to requested position Doesn't do anything if it is
-    * not assigned to prevent spurious exceptions.
-    */
-   private boolean setPiezoPosition(double pos) {
-      if (!devices_.isValidMMDevice(piezoImagingDeviceKey_)) {
-         return false;
-      }
-      try {
-         core_.setPosition(
-                 devices_.getMMDeviceException(piezoImagingDeviceKey_), pos);
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-         return false;
-      }
-      return true;
    }
    
    private JButton makeIncrementButton(Devices.Keys devKey, Properties.Keys propKey, 
