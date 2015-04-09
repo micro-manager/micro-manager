@@ -868,7 +868,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return MultichannelModes.Keys.NONE;
       }
    }
-     
    
    private int getLineScanPeriod() {
       return (Integer) lineScanPeriod_.getValue();
@@ -1587,13 +1586,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       ImageUtils.setImageStorageClass(TaggedImageStorageMultipageTiff.class);
       
       // Set up controller SPIM parameters (including from Setup panel settings)
-      if (sideActiveA && !usingDemoCam) {
+      // want to do this, even with demo cameras, so we can test everything else
+      if (sideActiveA) {
          boolean success = prepareControllerForAquisition(Devices.Sides.A, hardwareTimepoints);
          if (! success) {
             return false;
          }
       }
-      if (sideActiveB && !usingDemoCam) {
+      if (sideActiveB) {
          boolean success = prepareControllerForAquisition(Devices.Sides.B, hardwareTimepoints);
          if (! success) {
             return false;
@@ -1787,13 +1787,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      }
 
                      // trigger the state machine on the controller
-                     if (!usingDemoCam) {
-                         boolean success = 
-                                controller_.triggerControllerStartAcquisition(
-                                        spimMode, firstSideA);
-                        if (!success) {
-                           return false;
-                        }
+                     // do this even with demo cameras to test everything else
+                     boolean success = 
+                           controller_.triggerControllerStartAcquisition(
+                                 spimMode, firstSideA);
+                     if (!success) {
+                        return false;
                      }
 
                      ReportingUtils.logDebugMessage("Starting time point " + (timePoint+1) + " of " + nrFrames
