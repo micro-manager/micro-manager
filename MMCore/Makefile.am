@@ -96,6 +96,10 @@ libMMCore_la_SOURCES = \
 	PluginManager.cpp \
 	PluginManager.h
 
-SUBDIRS = . unittest
+if BUILD_CPP_TESTS
+UNITTESTS = unittest
+endif
+
+SUBDIRS = . $(UNITTESTS)
 
 EXTRA_DIST = license.txt
