@@ -273,12 +273,14 @@ int CScanner::Initialize()
    }
 
    // turn the beam on and off
+   // always start with the beam off for safety
    pAct = new CPropertyAction (this, &CScanner::OnBeamEnabled);
-   CreateProperty(g_ScannerBeamEnabledPropertyName, g_YesState, MM::String, false, pAct);
+   CreateProperty(g_ScannerBeamEnabledPropertyName, g_NoState, MM::String, false, pAct);
    AddAllowedValue(g_ScannerBeamEnabledPropertyName, g_NoState);
    AddAllowedValue(g_ScannerBeamEnabledPropertyName, g_YesState);
    UpdateIlluminationState();
    UpdateProperty(g_ScannerBeamEnabledPropertyName);
+   SetProperty(g_ScannerBeamEnabledPropertyName, g_NoState);
 
    // single-axis mode settings
    // todo fix firmware TTL initialization problem where SAM p=2 triggers by itself 1st time
