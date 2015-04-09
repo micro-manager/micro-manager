@@ -627,7 +627,8 @@ Camera::GetFramerate()
 
 void
 Camera::StartContinuousCapture(uint32_t nrDMABuffers, size_t nrFrames,
-      unsigned firstFrameTimeoutMs, FrameCallbackFunction frameCallback)
+      unsigned firstFrameTimeoutMs, FrameCallbackFunction frameCallback,
+      FinishCallbackFunction finishCallback)
 {
    EnsureReadyForCapture();
 
@@ -635,14 +636,16 @@ Camera::StartContinuousCapture(uint32_t nrDMABuffers, size_t nrFrames,
    boost::shared_ptr<Capture> capture =
       boost::make_shared<ContinuousCapture>(libdc1394camera_,
             nrDMABuffers, nrFrames, firstFrameTimeoutMs,
-            boost::bind<void>(&Camera::HandleCapturedFrame, this, _1));
+            boost::bind<void>(&Camera::HandleCapturedFrame, this, _1),
+            finishCallback);
    RunCaptureInBackground(capture);
 }
 
 
 void
 Camera::StartMultiShotCapture(uint32_t nrDMABuffers, uint16_t nrFrames,
-      unsigned firstFrameTimeoutMs, FrameCallbackFunction frameCallback)
+      unsigned firstFrameTimeoutMs, FrameCallbackFunction frameCallback,
+      FinishCallbackFunction finishCallback)
 {
    EnsureReadyForCapture();
 
@@ -653,14 +656,16 @@ Camera::StartMultiShotCapture(uint32_t nrDMABuffers, uint16_t nrFrames,
    boost::shared_ptr<Capture> capture =
       boost::make_shared<MultiShotCapture>(libdc1394camera_,
             nrDMABuffers, nrFrames, firstFrameTimeoutMs,
-            boost::bind<void>(&Camera::HandleCapturedFrame, this, _1));
+            boost::bind<void>(&Camera::HandleCapturedFrame, this, _1),
+            finishCallback);
    RunCaptureInBackground(capture);
 }
 
 
 void
 Camera::StartOneShotCapture(uint32_t nrDMABuffers, unsigned timeoutMs,
-      FrameCallbackFunction frameCallback)
+      FrameCallbackFunction frameCallback,
+      FinishCallbackFunction finishCallback)
 {
    EnsureReadyForCapture();
 
@@ -671,7 +676,8 @@ Camera::StartOneShotCapture(uint32_t nrDMABuffers, unsigned timeoutMs,
    boost::shared_ptr<Capture> capture =
       boost::make_shared<OneShotCapture>(libdc1394camera_,
             nrDMABuffers, timeoutMs,
-            boost::bind<void>(&Camera::HandleCapturedFrame, this, _1));
+            boost::bind<void>(&Camera::HandleCapturedFrame, this, _1),
+            finishCallback);
    RunCaptureInBackground(capture);
 }
 

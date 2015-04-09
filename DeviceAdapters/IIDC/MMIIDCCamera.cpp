@@ -452,10 +452,12 @@ MMIIDCCamera::SnapImage()
    {
       if (iidcCamera_->IsOneShotCapable())
          iidcCamera_->StartOneShotCapture(3, timeoutMs,
-               boost::bind<void>(&MMIIDCCamera::SnapCallback, this, _1, _2, _3, _4));
+               boost::bind<void>(&MMIIDCCamera::SnapCallback, this, _1, _2, _3, _4),
+               boost::function<void ()>());
       else
          iidcCamera_->StartContinuousCapture(3, 1, timeoutMs,
-               boost::bind<void>(&MMIIDCCamera::SnapCallback, this, _1, _2, _3, _4));
+               boost::bind<void>(&MMIIDCCamera::SnapCallback, this, _1, _2, _3, _4),
+               boost::function<void ()>());
       iidcCamera_->WaitForCapture();
    }
    CATCH_AND_RETURN_ERROR
@@ -589,18 +591,24 @@ MMIIDCCamera::StartSequenceAcquisition(long count, double /*intervalMs*/, bool s
 
    stopOnOverflow_ = stopOnOverflow;
 
+   err = GetCoreCallback()->PrepareForAcq(this);
+   if (err != DEVICE_OK)
+      return err;
+
    try
    {
       if (iidcCamera_->IsMultiShotCapable() && count < 65536)
       {
          iidcCamera_->StartMultiShotCapture(16, static_cast<uint16_t>(count), timeoutMs,
-               boost::bind<void>(&MMIIDCCamera::SequenceCallback, this, _1, _2, _3, _4));
+               boost::bind<void>(&MMIIDCCamera::SequenceCallback, this, _1, _2, _3, _4),
+               boost::bind<void>(&MMIIDCCamera::SequenceFinishCallback, this));
       }
       else
       {
          size_t nrFrames = (count == LONG_MAX) ? static_cast<size_t>(count) : 0;
          iidcCamera_->StartContinuousCapture(16, nrFrames, timeoutMs,
-               boost::bind<void>(&MMIIDCCamera::SequenceCallback, this, _1, _2, _3, _4));
+               boost::bind<void>(&MMIIDCCamera::SequenceCallback, this, _1, _2, _3, _4),
+               boost::bind<void>(&MMIIDCCamera::SequenceFinishCallback, this));
       }
    }
    CATCH_AND_RETURN_ERROR
@@ -1442,6 +1450,13 @@ MMIIDCCamera::SequenceCallback(const void* pixels, size_t width, size_t height, 
       BOOST_THROW_EXCEPTION(Error("Unknown error (" +
                boost::lexical_cast<std::string>(err) +
                ") while placing image in circular buffer"));
+}
+
+
+void
+MMIIDCCamera::SequenceFinishCallback()
+{
+   GetCoreCallback()->AcqFinished(this, DEVICE_OK);
 }
 
 

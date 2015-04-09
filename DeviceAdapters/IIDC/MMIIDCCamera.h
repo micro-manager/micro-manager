@@ -148,6 +148,7 @@ private:
 
    void SnapCallback(const void* pixels, size_t width, size_t height, IIDC::PixelFormat format);
    void SequenceCallback(const void* pixels, size_t width, size_t height, IIDC::PixelFormat format);
+   void SequenceFinishCallback();
 
    int AdHocErrorCode(const std::string& message);
 };

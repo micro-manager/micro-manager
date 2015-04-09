@@ -78,6 +78,7 @@ public:
     * The two size_t parameters are width and height.
     */
    typedef boost::function<void (const void*, size_t, size_t, PixelFormat)> FrameCallbackFunction;
+   typedef boost::function<void ()> FinishCallbackFunction;
 
 private:
    dc1394camera_t* libdc1394camera_;
@@ -148,19 +149,22 @@ public:
     * nrFrames == 0, continue until StopCapture() is called.
     */
    void StartContinuousCapture(uint32_t nrDMABuffers, size_t nrFrames,
-         unsigned firstFrameTimeoutMs, FrameCallbackFunction frameCallback);
+         unsigned firstFrameTimeoutMs, FrameCallbackFunction frameCallback,
+         FinishCallbackFunction finishCallback);
 
    /*
     * Start a multi-shot capture. Camera must be multi-shot capable.
     */
    void StartMultiShotCapture(uint32_t nrDMABuffers, uint16_t nrFrames,
-         unsigned firstFrameTimeoutMs, FrameCallbackFunction frameCallback);
+         unsigned firstFrameTimeoutMs, FrameCallbackFunction frameCallback,
+         FinishCallbackFunction finishCallback);
 
    /*
     * Start a single-shot caputre. Camera must be single-shot capable.
     */
    void StartOneShotCapture(uint32_t nrDMABuffers, unsigned timeoutMs,
-         FrameCallbackFunction frameCallback);
+         FrameCallbackFunction frameCallback,
+         FinishCallbackFunction finishCallback);
    /*
     * Stop the capture running in the background. Extra calls are innocuous.
     */

@@ -216,7 +216,7 @@ CaptureImpl::Run()
    {
       try
       {
-         CleanUp();
+         Finish();
       }
       catch (const Error& /*e*/)
       {
@@ -224,7 +224,7 @@ CaptureImpl::Run()
       }
       throw;
    }
-   CleanUp();
+   Finish();
 }
 
 
