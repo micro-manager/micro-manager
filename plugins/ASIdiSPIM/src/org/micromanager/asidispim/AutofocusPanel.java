@@ -20,12 +20,21 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 package org.micromanager.asidispim;
 
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.api.ScriptInterface;
 
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MyStrings;
@@ -41,6 +50,7 @@ import org.micromanager.asidispim.Utils.PanelUtils;
  */
 @SuppressWarnings("serial")
 public class AutofocusPanel extends ListeningJPanel{
+   final private ScriptInterface gui_;
    final private Properties props_;
    final private Prefs prefs_;
    final private Devices devices_;
@@ -48,13 +58,14 @@ public class AutofocusPanel extends ListeningJPanel{
    
    private final JPanel optionsPanel_;
    
-   public AutofocusPanel(Devices devices, Properties props, Prefs prefs, 
-           AutofocusUtils autofocus) {
+   public AutofocusPanel(ScriptInterface gui, Devices devices, Properties props, 
+           Prefs prefs, AutofocusUtils autofocus) {
             super(MyStrings.PanelNames.AUTOFOCUS.toString(),
               new MigLayout(
               "",
               "[center]8[center]",
               "[]16[]16[]"));
+            gui_ = gui;
       prefs_ = prefs;
       autofocus_ = autofocus;
       props_ = props;
@@ -88,8 +99,24 @@ public class AutofocusPanel extends ListeningJPanel{
             Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_AUTOFOCUS_STEPSIZE, 10);
       optionsPanel_.add(stepSizeSpinner, "wrap");
-      // end options subpanel
       
+      optionsPanel_.add(new JLabel("Algorithm:"));
+      JButton afcButton = new JButton();
+            afcButton.setFont(new Font("Arial", Font.PLAIN, 10));
+      afcButton.setMargin(new Insets(0, 0, 0, 0));
+      afcButton.setIconTextGap(4);
+      Icon wrench = new ImageIcon(getClass().getResource(
+              "/org/micromanager/icons/wrench_orange.png"));
+      afcButton.setIcon(wrench);
+      afcButton.setMinimumSize(new Dimension(30, 15));
+      afcButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            gui_.showAutofocusDialog();
+         }
+      });
+      optionsPanel_.add(afcButton, "wrap");
+      // end options subpanel
       
       // construct the main panel
       add(optionsPanel_);
