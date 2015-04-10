@@ -24,11 +24,19 @@ public class CoreCommunicator {
       System.out.println();
    }
 
+   //TODO:
+   //0) change camera files
+   //1) Do deinterlacing in Java
+   //2) add rank filtering
+   //3) try summing edge pixels to alleviate flat fielding (compare # pixels tosses to linescan from flat field slide)
+   //   -but you would hve to subtract the offset?
+   
+   
+   
    /**
     * This function operates on an interlaced, but still warped image its
-    * purpose is to generate a pixel LUT of warped pixel indices to unwarped
-    * indices
-    *
+    * purpose is to generate a pixel LUT with unwarped pixel indices and 
+    * warped pixel values
     * @return
     */
    public static int[] getCosineWarpLUT() {
@@ -51,7 +59,7 @@ public class CoreCommunicator {
       //Assuming the offset is correct, the pixelPerLine will start at phase 0 and end at 2pi
       //so the center pixel should be at pi/2
       int centerPixel = pixPerLine / 4 - lineStartThrowawayPixels;
-      
+      int lutOffset = -1; //used to 0 base indices since theyre calculated form image center
       double[] warpedPixPerPix = new double[interlacedWidth];
       for (int warpedPixIndex = 0; warpedPixIndex < interlacedWidth; warpedPixIndex++) {
          double angle = ((warpedPixIndex+0.5) + lineStartThrowawayPixels) * radiansPerPix; //add 0.5 to calculate from center of image
@@ -59,13 +67,20 @@ public class CoreCommunicator {
          double relativeSpeedOfMirror = Math.cos(angle - Math.PI / 2);
          //so the inverse of speed is the number of warped pixels per a single pixel in the unwarped image
          warpedPixPerPix[warpedPixIndex] = 1 / relativeSpeedOfMirror;
-         System.out.println(warpedPixPerPix[warpedPixIndex]);
+//         System.out.println(warpedPixPerPix[warpedPixIndex]);
          //correction factor = angular displacemnt / cos(angular displacement - pi/2)
          double displacement = angle - Math.PI/2;
          double correctionFactor = displacement / Math.cos(displacement - Math.PI / 2);
          
 //         System.out.println((warpedPixIndex - centerPixel) + "\t" + ((warpedPixIndex - centerPixel) /correctionFactor));
-         lut[warpedPixIndex] = centerPixel + (int)((warpedPixIndex - centerPixel) /correctionFactor); 
+         //make sure lutValues start at 0
+         int lutValue = centerPixel + (int)((warpedPixIndex - centerPixel) /correctionFactor); 
+         if (lutOffset == -1) {
+            lutOffset = lutValue;
+         }
+         lutValue -= lutOffset;
+//         System.out.println( warpedPixIndex + "\t" + lutValue );
+         lut[warpedPixIndex] = lutValue;
       }
       return lut;
    }
