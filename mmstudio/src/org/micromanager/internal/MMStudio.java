@@ -110,10 +110,10 @@ import org.micromanager.internal.pluginmanagement.PluginManager;
 import org.micromanager.internal.positionlist.PositionListDlg;
 import org.micromanager.internal.script.ScriptPanel;
 import org.micromanager.internal.utils.AutofocusManager;
+import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
-import org.micromanager.internal.utils.GUIColors;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMException;
@@ -265,7 +265,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
          startupScriptFile_ = "";
       }
 
-      setBackgroundStyle(GUIColors.getBackgroundMode());
+      setBackgroundStyle(DaytimeNighttime.getBackgroundMode());
 
       showRegistrationDialogMaybe();
 
@@ -1554,12 +1554,12 @@ public class MMStudio implements Studio, CompatibilityInterface {
     */
    @Override
    public final void setBackgroundStyle(String backgroundType) {
-      GUIColors.setMode(backgroundType);
+      DaytimeNighttime.setMode(backgroundType);
    }
 
    @Override
    public String getBackgroundStyle() {
-      return GUIColors.getBackgroundMode();
+      return DaytimeNighttime.getBackgroundMode();
    }
 
    

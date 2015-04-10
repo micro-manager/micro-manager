@@ -38,7 +38,7 @@ import org.micromanager.CompatibilityInterface;
  * interact well with Look and Feel; see
  * http://stackoverflow.com/questions/27933017/cant-update-look-and-feel-on-the-fly
  */
-public class GUIColors {
+public class DaytimeNighttime {
 
    // Key into the user's profile for the current display mode.
    private static final String BACKGROUND_MODE = "current window style (as per CompatibilityInterface.BACKGROUND_OPTIONS)";
@@ -70,10 +70,7 @@ public class GUIColors {
    // Color of disabled text.
    private static HashMap<String, ColorUIResource> disabledTextColor_;
 
-   private static GUIColors staticInstance_;
    static {
-      staticInstance_ = new GUIColors();
-
       // Possible: make UI to let user set these colors
       background_ = new HashMap<String, ColorUIResource>();
       background_.put(CompatibilityInterface.DAY,
@@ -124,7 +121,7 @@ public class GUIColors {
     * Set a new default background mode in the user's profile.
     */
    public static void storeBackgroundMode(String mode) {
-      DefaultUserProfile.getInstance().setString(GUIColors.class,
+      DefaultUserProfile.getInstance().setString(DaytimeNighttime.class,
             BACKGROUND_MODE, mode);
    }
 
@@ -132,7 +129,7 @@ public class GUIColors {
     * Return the current stored background mode from the profile.
     */
    public static String getBackgroundMode() {
-      return DefaultUserProfile.getInstance().getString(GUIColors.class,
+      return DefaultUserProfile.getInstance().getString(DaytimeNighttime.class,
             BACKGROUND_MODE, CompatibilityInterface.DAY);
    }
 }

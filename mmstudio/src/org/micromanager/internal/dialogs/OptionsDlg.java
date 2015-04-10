@@ -44,8 +44,8 @@ import org.micromanager.Studio;
 import org.micromanager.internal.logging.LogFileManager;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.script.ScriptPanel;
+import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.DefaultUserProfile;
-import org.micromanager.internal.utils.GUIColors;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -205,7 +205,7 @@ public class OptionsDlg extends MMDialog {
 
       comboDisplayBackground_ = new JComboBox(CompatibilityInterface.BACKGROUND_OPTIONS);
       comboDisplayBackground_.setMaximumRowCount(2);
-      comboDisplayBackground_.setSelectedItem(GUIColors.getBackgroundMode());
+      comboDisplayBackground_.setSelectedItem(DaytimeNighttime.getBackgroundMode());
       comboDisplayBackground_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
