@@ -161,7 +161,7 @@ public class AutofocusUtils {
                      MyStrings.PanelNames.SETUP.toString() + side.toString(), 
                      Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0);
             final double galvoStepSize = piezoStepSize / galvoRate;
-            final double galvoStart = start * galvoRate - galvoOffset;
+            final double galvoStart = (start - galvoOffset) / galvoRate;
             
             double[] focusScores = new double[nrImages];
             TaggedImage[] imageStore = new TaggedImage[nrImages];
@@ -299,8 +299,8 @@ public class AutofocusUtils {
                   gui_.getMMCore().stopSequenceAcquisition(camera);
                   gui_.getMMCore().setCameraDevice(originalCamera);
                   if (debug) {
-                     gui_.closeAcquisition(acqName);
                      gui_.promptToSaveAcquisition(acqName, false);
+                     gui_.closeAcquisition(acqName);
                   }
 
                   controller_.cleanUpAfterAcquisition(false, null, 0.0f, 0.0f);
