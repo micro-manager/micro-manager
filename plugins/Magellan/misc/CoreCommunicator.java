@@ -32,6 +32,7 @@ public class CoreCommunicator {
    //   -but you would hve to subtract the offset?
    //4) java layer image accumulater
    //5) put images into circular buffer when in a certain mode
+   //6) why 1400 pix per line?
    
    
    
