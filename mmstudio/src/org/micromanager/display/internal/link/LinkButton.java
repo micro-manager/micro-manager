@@ -29,6 +29,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.Insets;
 import java.awt.Point;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.ImageIcon;
@@ -85,8 +86,6 @@ public class LinkButton extends JButton {
 
    /**
     * Pop up a menu to let the user manually link to a specific display.
-    * TODO: add an option to synchro with all displays for this display's
-    * Datastore (assuming there's at least two such).
     * @param p
     */
    public void showLinkMenu(Point p) {
@@ -109,9 +108,9 @@ public class LinkButton extends JButton {
          menu.add(removeItem);
       }
 
-      // If there are at least two potential siblings to link to, then add an
-      // "All" item.
       final List<SettingsLinker> siblings = linker_.getSortedSiblings();
+      // If there are at least two potential siblings to link to, then add
+      // an "All" item.
       if (siblings.size() > 1) {
          JMenuItem allItem = new JMenuItem("All applicable windows");
          allItem.addActionListener(new ActionListener() {
@@ -123,6 +122,27 @@ public class LinkButton extends JButton {
             }
          });
          menu.add(allItem);
+      }
+
+      // If there are at least two siblings for the same dataset, then add an
+      // "all for this data" option.
+      final ArrayList<SettingsLinker> displaySiblings = new ArrayList<SettingsLinker>();
+      for (SettingsLinker linker : siblings) {
+         if (linker.getDisplay().getDatastore() == display_.getDatastore()) {
+            displaySiblings.add(linker);
+         }
+      }
+      if (displaySiblings.size() > 1) {
+         JMenuItem relatedItem = new JMenuItem("All windows for this dataset");
+         relatedItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               for (SettingsLinker sibling : displaySiblings) {
+                  linker_.synchronize(sibling);
+               }
+            }
+         });
+         menu.add(relatedItem);
       }
 
       for (final SettingsLinker sibling : siblings) {
