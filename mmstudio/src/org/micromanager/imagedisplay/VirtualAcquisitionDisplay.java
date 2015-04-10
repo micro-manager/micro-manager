@@ -1229,6 +1229,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    }
 
    public ImagePlus getImagePlus(int position) {
+      virtualStack_.setPositionIndex(position);
       ImagePlus iP = new ImagePlus();
       iP.setStack(virtualStack_);
       iP.setDimensions(numComponents_ * getNumChannels(), getNumSlices(), getNumFrames());
