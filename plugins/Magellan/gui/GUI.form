@@ -834,7 +834,7 @@
                                   <Component id="fixedSurfaceLabel_" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="fixedDistanceSurfaceComboBox_" min="-2" pref="156" max="-2" attributes="0"/>
-                                  <EmptySpace min="0" pref="10" max="32767" attributes="0"/>
+                                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                               </Group>
                           </Group>
                       </Group>
@@ -976,7 +976,7 @@
                               <Component id="footprin2DLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="footprint2DComboBox_" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace pref="24" max="32767" attributes="0"/>
+                          <EmptySpace max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -1995,6 +1995,7 @@
     <Component class="javax.swing.JLabel" name="channelGroupLabel_">
       <Properties>
         <Property name="text" type="java.lang.String" value="Channel Group: "/>
+        <Property name="enabled" type="boolean" value="false"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JComboBox" name="exploreChannelGroupCombo_">
@@ -2007,6 +2008,7 @@
             <StringItem index="3" value="Item 4"/>
           </StringArray>
         </Property>
+        <Property name="enabled" type="boolean" value="false"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="exploreOverlapLabel_">
