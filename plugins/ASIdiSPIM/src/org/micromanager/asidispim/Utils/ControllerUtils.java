@@ -304,6 +304,10 @@ public class ControllerUtils {
        
          // TODO handle other multichannel modes with stage scanning
          
+      // sets PLogic BNC3 output high to indicate acquisition is going on
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET, 
+               Properties.Values.PLOGIC_PRESET_3, true);
+         
       }
       
       return true;

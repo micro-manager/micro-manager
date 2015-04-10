@@ -1052,6 +1052,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    
    /**
     * Compute the volume duration in ms based on controller's timing settings.
+    * Includes time for multiple channels.
     * @return duration in ms
     */
    private double computeActualVolumeDuration() {
@@ -1607,10 +1608,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
       
-      // sets PLogic BNC3 output high to indicate acquisition is going on
-      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET, 
-            Properties.Values.PLOGIC_PRESET_3, true);
-
       boolean nonfatalError = false;
       long acqButtonStart = System.currentTimeMillis();
 
@@ -1639,15 +1636,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             } else {
                gui_.openAcquisition(acqName, rootDir, nrFrames, nrSides * nrChannels,
                   nrSlices, nrPositions, show, save);
-            }
-            
-            // because demo camera sends images without waiting for controller
-            // set exposure time to be slice duration (or x2 for 2-sided)
-            // so the sequence acquisition takes about the right amount of time
-            if (usingDemoCam) {
-               ReportingUtils.logDebugMessage("Demo camera exposure value changed from "
-                     + exposureTime + " to make acquisition timing correct.");
-               exposureTime = sliceDuration * nrSides;
             }
             
             core_.setExposure(firstCamera, exposureTime);
@@ -1905,9 +1893,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            // since we got images without waiting for controller to actually send triggers
                            if (usingDemoCam) {
                               Thread.sleep(200);  // for serial communication overhead
-                              if (isMultichannel()) {
-                                 Thread.sleep(500);
-                              }
+                              Thread.sleep((long)volumeDuration/nrChannelsSoftware);  // estimate the time per channel, not ideal in case of software channel switching
                            }
 
                         } catch (InterruptedException iex) {
@@ -1960,6 +1946,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
       // cleanup after end of all acquisitions
+      
+      // TODO be more careful and always do these if we actually started acquisition, even if exception happened
       
       // reset channel to original if we clobbered it
       if (useChannels) {
