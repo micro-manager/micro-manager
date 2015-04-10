@@ -53,7 +53,6 @@ import org.micromanager.internal.utils.ContrastSettings;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
-import org.micromanager.internal.utils.GUIColors;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.MMFrame;
@@ -100,7 +99,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    private final JButton setBottomButton_;
    private final JButton setTopButton_;
    private MMStudio studio_;
-   private final GUIColors guiColors_;
    private final NumberFormat numberFormat_;
    private final JLabel namePrefixLabel_;
    private final JLabel saveTypeLabel_;
@@ -320,7 +318,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       super("acquisition configuration dialog");
 
       studio_ = gui;
-      guiColors_ = new GUIColors();
 
       setIconImage(Toolkit.getDefaultToolkit().getImage(
               MMStudio.class.getResource(

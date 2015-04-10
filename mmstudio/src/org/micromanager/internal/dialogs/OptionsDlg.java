@@ -44,8 +44,8 @@ import org.micromanager.Studio;
 import org.micromanager.internal.logging.LogFileManager;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.script.ScriptPanel;
+import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.DefaultUserProfile;
-import org.micromanager.internal.utils.GUIColors;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -59,7 +59,6 @@ public class OptionsDlg extends MMDialog {
    private static final long serialVersionUID = 1L;
    private static final String IS_DEBUG_LOG_ENABLED = "is debug logging enabled";
    private static final String SHOULD_CLOSE_ON_EXIT = "should close the entire program when the Micro-Manager plugin is closed";
-   private static final String BACKGROUND_MODE = "current window style (should be \"Day\" or \"Night\")";
 
    private final JTextField startupScriptFile_;
    private final JTextField bufSizeField_;
@@ -68,7 +67,6 @@ public class OptionsDlg extends MMDialog {
 
    private CMMCore core_;
    private Studio parent_;
-   private GUIColors guiColors_;
 
    /**
     * Create the dialog
@@ -79,7 +77,6 @@ public class OptionsDlg extends MMDialog {
       super("global micro-manager options");
       parent_ = parent;
       core_ = core;
-      guiColors_ = new GUIColors();
 
       setResizable(false);
       setModal(true);
@@ -206,9 +203,9 @@ public class OptionsDlg extends MMDialog {
       bufSizeField_ = new JTextField(
             Integer.toString(MMStudio.getCircularBufferSize()), 5);
 
-      comboDisplayBackground_ = new JComboBox(guiColors_.styleOptions);
+      comboDisplayBackground_ = new JComboBox(CompatibilityInterface.BACKGROUND_OPTIONS);
       comboDisplayBackground_.setMaximumRowCount(2);
-      comboDisplayBackground_.setSelectedItem(getBackgroundMode());
+      comboDisplayBackground_.setSelectedItem(DaytimeNighttime.getBackgroundMode());
       comboDisplayBackground_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -338,7 +335,6 @@ public class OptionsDlg extends MMDialog {
    private void changeBackground() {
       String background = (String) comboDisplayBackground_.getSelectedItem();
 
-      setBackgroundMode(background);
       parent_.compat().setBackgroundStyle(background);
    }
 
@@ -382,15 +378,5 @@ public class OptionsDlg extends MMDialog {
    public static void setShouldCloseOnExit(boolean shouldClose) {
       DefaultUserProfile.getInstance().setBoolean(OptionsDlg.class,
             SHOULD_CLOSE_ON_EXIT, shouldClose);
-   }
-
-   public static String getBackgroundMode() {
-      return DefaultUserProfile.getInstance().getString(OptionsDlg.class,
-            BACKGROUND_MODE, CompatibilityInterface.DAY);
-   }
-
-   public static void setBackgroundMode(String mode) {
-      DefaultUserProfile.getInstance().setString(OptionsDlg.class,
-            BACKGROUND_MODE, mode);
    }
 }

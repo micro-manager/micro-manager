@@ -69,7 +69,6 @@ import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
-import org.micromanager.internal.utils.GUIColors;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.MMException;
@@ -96,7 +95,6 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    private CMMCore core_;
    private Studio studio_;
    private AcqControlDlg acqControlDlg_;
-   private GUIColors guiColors_;
    private AxisList axisList_;
    private final JButton tileButton_;
 
@@ -155,7 +153,6 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       bus_ = new EventBus();
       bus_.register(this);
       acqControlDlg_ = acd;
-      guiColors_ = new GUIColors();
 
       setTitle("Stage Position List");
       setLayout(new MigLayout("flowy, filly, insets 8", "[grow][]", 
