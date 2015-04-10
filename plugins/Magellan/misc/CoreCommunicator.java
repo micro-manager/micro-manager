@@ -30,6 +30,8 @@ public class CoreCommunicator {
    //2) add rank filtering
    //3) try summing edge pixels to alleviate flat fielding (compare # pixels tosses to linescan from flat field slide)
    //   -but you would hve to subtract the offset?
+   //4) java layer image accumulater
+   //5) put images into circular buffer when in a certain mode
    
    
    
@@ -79,7 +81,7 @@ public class CoreCommunicator {
             lutOffset = lutValue;
          }
          lutValue -= lutOffset;
-//         System.out.println( warpedPixIndex + "\t" + lutValue );
+         System.out.println( lutValue );
          lut[warpedPixIndex] = lutValue;
       }
       return lut;
