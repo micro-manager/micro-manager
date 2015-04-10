@@ -48,6 +48,12 @@ public class ContrastLinker extends SettingsLinker {
    public ContrastLinker(int channelIndex, DisplayWindow parent) {
       super(parent, RELEVANT_EVENTS);
       channelIndex_ = channelIndex;
+      addToSiblings();
+   }
+
+   @Override
+   public String getProperty() {
+      return "contrast for " + getName();
    }
 
    // Get our channel name.

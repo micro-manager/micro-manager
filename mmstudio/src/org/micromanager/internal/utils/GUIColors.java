@@ -44,13 +44,15 @@ public class GUIColors {
    public HashMap<String, ColorUIResource> background_;
    // background color of pads in the UI
    public HashMap<String, ColorUIResource> padBackground_;
-   // Color of text.
+   // Color of disabled text.
    public HashMap<String, ColorUIResource> disabledTextColor_;
 
    public GUIColors() {
       // Possible: make UI to let user set these colors
       background_ = new HashMap<String, ColorUIResource>();
       background_.put(STYLE_DAY, new ColorUIResource(java.awt.SystemColor.control));
+      // TODO: this 25% gray color is exactly the same color as the checkbox
+      // in a menu item, on OSX at least.
       background_.put(STYLE_NIGHT, new ColorUIResource(new Color(64, 64, 64)));
 
       padBackground_ = new HashMap<String, ColorUIResource>();

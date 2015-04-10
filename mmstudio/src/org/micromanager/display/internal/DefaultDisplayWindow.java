@@ -218,10 +218,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       displayBus_.register(this);
       controlsFactory_ = controlsFactory;
 
-      // The DisplayGroupManager will want to know about us, so this must
-      // happen before our creation event gets posted by the
-      // DefaultDisplayManager.
-      DisplayGroupManager.ensureInitialized();
+      DisplayGroupManager.getInstance().addDisplay(this);
 
       final DefaultDisplayWindow thisWindow = this;
       // Post an event whenever we're made active, so that the InspectorFrame
@@ -1076,5 +1073,10 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
                ourSize.height + heightDelta);
          super.pack();
       }
+   }
+
+   @Override
+   public String toString() {
+      return String.format("<DefaultDisplayWindow named %s with unique ID %s>", getName(), hashCode());
    }
 }

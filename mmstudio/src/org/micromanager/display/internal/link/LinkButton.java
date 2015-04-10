@@ -29,12 +29,14 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.Insets;
 import java.awt.Point;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
-import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 
 import org.micromanager.display.DisplayDestroyedEvent;
@@ -47,19 +49,22 @@ import org.micromanager.internal.utils.ReportingUtils;
  * This class provides the GUI for a button that links DisplaySettings
  * attributes across multiple DisplayWindows.
  */
-public class LinkButton extends JToggleButton {
-   // This icon is a modified version of
+public class LinkButton extends JButton {
+   // These icons are modified versions of the public domain icon at
    // http://icon-park.com/icon/black-link-icon-vector-data/
-   private static final ImageIcon LINK_ICON = new ImageIcon(
-           LinkButton.class.getResource( 
-                   "/org/micromanager/internal/icons/linkflat.png") );
+   private static final ImageIcon ACTIVE_ICON = new ImageIcon(
+           LinkButton.class.getResource(
+                   "/org/micromanager/internal/icons/linkflat_active.png"));
+   private static final ImageIcon INACTIVE_ICON = new ImageIcon(
+           LinkButton.class.getResource(
+                   "/org/micromanager/internal/icons/linkflat.png"));
 
    private SettingsLinker linker_;
    private final DisplayWindow display_;
 
    public LinkButton(final SettingsLinker linker,
          final DisplayWindow display) {
-      super(LINK_ICON);
+      super(INACTIVE_ICON);
       setMinimumSize(new Dimension(1, 1));
       setMargin(new Insets(0, 0, 0, 0));
 
@@ -67,39 +72,16 @@ public class LinkButton extends JToggleButton {
       linker_.setButton(this);
       display_ = display;
 
-      final LinkButton finalThis = this;
-      addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            linker_.setIsActive(finalThis.isSelected());
-         }
-      });
-
-      // On right-click, show a popup menu to manually link this to another
-      // display. Note we track both pressed and released because different
-      // platforms set isPopupTrigger() = true on different events. As for
-      // SwingUtilities, it allows us to detect e.g. control-click on OSX
-      // with single-button mice.
-      // TODO: control-clicking still toggles the state of the button.
+      // Show a popup menu to manually link this to another display.
       addMouseListener(new MouseAdapter() {
          @Override
-         public void mousePressed(MouseEvent event) {
-            if (event.isPopupTrigger() ||
-               SwingUtilities.isRightMouseButton(event)) {
-               finalThis.showLinkMenu(event.getPoint());
-            }
-         }
-         @Override
          public void mouseReleased(MouseEvent event) {
-            if (event.isPopupTrigger() ||
-               SwingUtilities.isRightMouseButton(event)) {
-               finalThis.showLinkMenu(event.getPoint());
-            }
+            showLinkMenu(event.getPoint());
          }
       });
       setToolTipText("Toggle linking of this control across all image windows for this dataset. Right-click to push changes to a specific display.");
       display.registerForEvents(this);
-      display.postEvent(new LinkButtonCreatedEvent(this, linker));
+      DisplayGroupManager.getInstance().addNewLinker(linker, display_);
    }
 
    /**
@@ -108,35 +90,93 @@ public class LinkButton extends JToggleButton {
     */
    public void showLinkMenu(Point p) {
       JPopupMenu menu = new JPopupMenu();
-      final List<DisplayWindow> displays = MMStudio.getInstance().displays().getAllImageWindows();
-      if (displays.size() > 2) { // i.e. at least two potential candidates
-         JMenuItem allItem = new JMenuItem("All");
+      // TODO: replace "this property" with a more descriptive phrase for the
+      // given SettingsLinker.
+      JMenuItem instructions = new JMenuItem(
+            String.format("Link %s to other windows", linker_.getProperty()));
+      instructions.setEnabled(false);
+      menu.add(instructions);
+      menu.addSeparator();
+
+      if (linker_.getIsActive()) {
+         JMenuItem removeItem = new JMenuItem("Unlink this window");
+         removeItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               linker_.desynchronize(linker_);
+            }
+         });
+         menu.add(removeItem);
+      }
+
+      final List<SettingsLinker> siblings = linker_.getSortedSiblings();
+      // If there are at least two potential siblings to link to, then add
+      // an "All" item.
+      if (siblings.size() > 1) {
+         JMenuItem allItem = new JMenuItem("All applicable windows");
          allItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-               for (DisplayWindow display : displays) {
-                  linker_.pushState(display);
+               for (SettingsLinker sibling : siblings) {
+                  linker_.synchronize(sibling);
                }
             }
          });
          menu.add(allItem);
       }
-      for (final DisplayWindow display : displays) {
-         if (display == display_) {
-            continue;
+
+      // If there are at least two siblings for the same dataset, then add an
+      // "all for this data" option.
+      final ArrayList<SettingsLinker> displaySiblings = new ArrayList<SettingsLinker>();
+      for (SettingsLinker linker : siblings) {
+         if (linker.getDisplay().getDatastore() == display_.getDatastore()) {
+            displaySiblings.add(linker);
          }
-         JMenuItem item = new JMenuItem(display.getName());
+      }
+      if (displaySiblings.size() > 1) {
+         JMenuItem relatedItem = new JMenuItem("All windows for this dataset");
+         relatedItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               for (SettingsLinker sibling : displaySiblings) {
+                  linker_.synchronize(sibling);
+               }
+            }
+         });
+         menu.add(relatedItem);
+      }
+
+      for (final SettingsLinker sibling : siblings) {
+         final JCheckBoxMenuItem item = new JCheckBoxMenuItem(
+               sibling.getDisplay().getName(),
+               linker_.getIsSynchronized(sibling));
          item.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-               linker_.pushState(display);
+               if (item.isSelected()) {
+                  linker_.synchronize(sibling);
+               }
+               else {
+                  // Already synchronized; desynch instead.
+                  linker_.desynchronize(sibling);
+               }
             }
          });
          menu.add(item);
       }
-      if (displays.size() > 1) { // i.e. more than just our own display
+      if (siblings.size() > 0) { // i.e. more than just our own display
          menu.show(this, p.x, p.y);
       }
+      else {
+         ReportingUtils.logError("Somehow got a link menu when there's no siblings");
+      }
+   }
+
+   /**
+    * Toggle "active" status, by switching our icon.
+    */
+   public void setActive(boolean isActive) {
+      setIcon(isActive ? ACTIVE_ICON : INACTIVE_ICON);
    }
 
    /**
@@ -145,8 +185,8 @@ public class LinkButton extends JToggleButton {
     */
    @Override
    public Dimension getPreferredSize() {
-      return new Dimension(LINK_ICON.getIconWidth() + 6,
-            LINK_ICON.getIconHeight() + 2);
+      return new Dimension(ACTIVE_ICON.getIconWidth() + 6,
+            ACTIVE_ICON.getIconHeight() + 2);
    }
 
    public DisplayWindow getDisplay() {

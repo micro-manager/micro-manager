@@ -30,7 +30,6 @@ import java.util.List;
 
 import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.events.NewDisplayEvent;
 
 import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.display.internal.DisplayDestroyedEvent;
@@ -66,11 +65,6 @@ public class DisplayGroupManager {
       }
 
       @Subscribe
-      public void onNewLinkButton(LinkButtonCreatedEvent event) {
-         master_.onNewLinkButton(display_, event);
-      }
-
-      @Subscribe
       public void onFullScreen(FullScreenEvent event) {
          master_.onFullScreen(display_, event);
       }
@@ -92,20 +86,19 @@ public class DisplayGroupManager {
    }
 
    private static DisplayGroupManager staticInstance_;
-   // We need to ensure this exists before any DisplayWindows post any events.
-   // If we just used a static initializer (i.e. not explicitly invoked
-   // anywhere, but just run when the module is first referred to), then that
-   // wouldn't happen until after the first display is created, which is too
-   // late. Instead, this method is called by the DefaultDisplayWindow
-   // constructor early on. I don't like having the explicit linkage, but it
-   // seems to be necessary.
-   public static void ensureInitialized() {
-      if (staticInstance_ == null) {
-         staticInstance_ = new DisplayGroupManager();
-      }
+   static {
+      staticInstance_ = new DisplayGroupManager();
    }
 
+   public static DisplayGroupManager getInstance() {
+      return staticInstance_;
+   }
+
+   // Keeps track of which displays have which SettingsLinkers, so we can
+   // propagate changes to linkers, and clean up when displays go away. This
+   // also serves as a convenient container of all displays.
    private HashMap<DisplayWindow, HashSet<SettingsLinker>> displayToLinkers_;
+   // Tracks which screen (a.k.a. monitor) a given window is on.
    private HashMap<GraphicsConfiguration, DisplayWindow> screenToDisplay_;
    private HashMap<Datastore, ArrayList<DisplayWindow>> storeToDisplays_;
    private ArrayList<WindowListener> listeners_;
@@ -122,9 +115,7 @@ public class DisplayGroupManager {
     * A new display has arrived; register for its events, and add it to our
     * list of displays for its datastore.
     */
-   @Subscribe
-   public void onNewDisplay(NewDisplayEvent event) {
-      DisplayWindow display = event.getDisplay();
+   public void addDisplay(DisplayWindow display) {
       listeners_.add(new WindowListener(display, this));
       displayToLinkers_.put(display, new HashSet<SettingsLinker>());
       Datastore store = display.getDatastore();
@@ -142,12 +133,13 @@ public class DisplayGroupManager {
    }
 
    /**
-    * A display was destroyed; stop tracking it, and unlink linkers.
+    * A display was destroyed; stop tracking it, and remove siblings from
+    * linkers.
     */
    public void onDisplayDestroyed(DisplayWindow source,
          DisplayDestroyedEvent event) {
       for (SettingsLinker linker : displayToLinkers_.get(source)) {
-         linker.unlinkAll();
+         linker.destroy();
       }
       displayToLinkers_.remove(source);
       for (WindowListener listener : listeners_) {
@@ -187,19 +179,14 @@ public class DisplayGroupManager {
 
    /**
     * A new LinkButton has been created; we need to start tracking its linker,
-    * and all related linkers need to be linked to it.
+    * and all related linkers need to know about it.
     */
-   public void onNewLinkButton(DisplayWindow source,
-         LinkButtonCreatedEvent event) {
-      SettingsLinker newLinker = event.getLinker();
+   public void addNewLinker(SettingsLinker newLinker, DisplayWindow source) {
       displayToLinkers_.get(source).add(newLinker);
       for (DisplayWindow display : displayToLinkers_.keySet()) {
-         for (SettingsLinker linker : displayToLinkers_.get(display)) {
-            if (linker.getID() == newLinker.getID() &&
-                  linker != newLinker) {
-               // This also creates the reciprocal link.
-               linker.link(newLinker);
-            }
+         if (display == newLinker.getDisplay()) {
+            // Assume that linkers are unique for a specific display.
+            continue;
          }
       }
    }
@@ -215,7 +202,7 @@ public class DisplayGroupManager {
       if (displayToLinkers_.containsKey(source)) {
          displayToLinkers_.get(source).remove(linker);
       }
-      linker.unlinkAll();
+      linker.destroy();
    }
 
    /**
