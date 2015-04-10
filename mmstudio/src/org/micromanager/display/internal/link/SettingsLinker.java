@@ -325,6 +325,12 @@ public abstract class SettingsLinker {
    }
 
    /**
+    * Provide a short textual description of the propert[y|ies] this linker
+    * controls. This is used in the link button menu instructions.
+    */
+   public abstract String getProperty();
+
+   /**
     * Copy from source to dest the portion of the DisplaySettings that we care
     * about. Should return the dest parameter unmodified if no change needs
     * to occur.

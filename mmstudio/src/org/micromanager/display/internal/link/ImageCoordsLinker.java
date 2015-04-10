@@ -44,6 +44,11 @@ public class ImageCoordsLinker extends SettingsLinker {
       addToSiblings();
    }
 
+   @Override
+   public String getProperty() {
+      return axis_ + " index";
+   }
+
    /**
     * We care about changes if the change is an ImageCoordsEvent and the axis
     * we are linked for is different.

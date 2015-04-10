@@ -92,7 +92,8 @@ public class LinkButton extends JButton {
       JPopupMenu menu = new JPopupMenu();
       // TODO: replace "this property" with a more descriptive phrase for the
       // given SettingsLinker.
-      JMenuItem instructions = new JMenuItem("Link this property to other windows");
+      JMenuItem instructions = new JMenuItem(
+            String.format("Link %s to other windows", linker_.getProperty()));
       instructions.setEnabled(false);
       menu.add(instructions);
       menu.addSeparator();

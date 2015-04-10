@@ -51,6 +51,11 @@ public class ContrastLinker extends SettingsLinker {
       addToSiblings();
    }
 
+   @Override
+   public String getProperty() {
+      return "contrast for " + getName();
+   }
+
    // Get our channel name.
    private String getName() {
       String[] names = parent_.getDatastore().getSummaryMetadata().getChannelNames();
