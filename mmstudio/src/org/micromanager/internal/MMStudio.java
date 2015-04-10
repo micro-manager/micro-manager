@@ -147,32 +147,10 @@ public class MMStudio implements Studio, CompatibilityInterface {
    private static final String CORE_LOG_LIFETIME_DAYS = "how many days to keep MMCore log files, before they get deleted";
    private static final String CIRCULAR_BUFFER_SIZE = "size, in megabytes of the circular buffer used to temporarily store images before they are written to disk";
 
-   // List of keys to UIManager.put() method for setting the background color
-   // look and feel. Selected from this page:
-   // http://alvinalexander.com/java/java-uimanager-color-keys-list
-   // Each of these keys will have ".background" appended to it later.
-   public static final String[] BACKGROUND_COLOR_KEYS = new String[] {
-         "Button", "CheckBox", "CheckBoxMenuItem", "ColorChooser",
-         "ComboBox", "EditorPane", "FormattedTextField", "InternalFrame",
-         "Label", "List", "Menu", "MenuBar", "MenuItem", "OptionPane",
-         "Panel", "PasswordField", "PopupMenu", "ProgressBar", "RadioButton",
-         "RadioButtonMenuItem", "ScrollBar", "ScrollPane", "Slider", "Spinner",
-         "SplitPane", "TabbedPane", "Table", "TableHeader", "TextArea",
-         "TextField", "TextPane", "ToggleButton", "TollBar", "Tree",
-         "Viewport"
-   };
-
-   // As above, but for disabled text; each of these keys will have
-   // ".disabledText" appended to it later.
-   public static final String[] DISABLED_TEXT_COLOR_KEYS = new String[] {
-         "Button", "CheckBox", "RadioButton", "ToggleButton"
-   };
-
    // cfg file saving
    private static final String CFGFILE_ENTRY_BASE = "CFGFileEntry";
    // GUI components
    private boolean amRunningAsPlugin_;
-   private GUIColors guiColors_;
    private PropertyEditor propertyBrowser_;
    private CalibrationListDlg calibrationListDlg_;
    private AcqControlDlg acqControlWin_;
@@ -272,8 +250,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
 
       UIMonitor.enable(OptionsDlg.getIsDebugLogEnabled());
       
-      guiColors_ = new GUIColors();
-
       studio_ = this;
 
       amRunningAsPlugin_ = shouldRunAsPlugin;
@@ -289,7 +265,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
          startupScriptFile_ = "";
       }
 
-      setBackgroundStyle(OptionsDlg.getBackgroundMode());
+      setBackgroundStyle(GUIColors.getBackgroundMode());
 
       showRegistrationDialogMaybe();
 
@@ -1578,31 +1554,12 @@ public class MMStudio implements Studio, CompatibilityInterface {
     */
    @Override
    public final void setBackgroundStyle(String backgroundType) {
-      if (!(backgroundType.contentEquals(CompatibilityInterface.DAY) ||
-            backgroundType.contentEquals(CompatibilityInterface.NIGHT))) {
-         throw new IllegalArgumentException("Invalid background style \"" +
-               backgroundType + "\"");
-      }
-      OptionsDlg.setBackgroundMode(backgroundType);
-      // Ensure every GUI object type gets the right background color.
-      for (String key : BACKGROUND_COLOR_KEYS) {
-         UIManager.put(key + ".background",
-               guiColors_.background_.get(backgroundType));
-      }
-      // Ensure disabled text is still legible.
-      for (String key : DISABLED_TEXT_COLOR_KEYS) {
-         UIManager.put(key + ".disabledText",
-            guiColors_.disabledTextColor_.get(backgroundType));
-      }
-      // Update existing components.
-      for (Window w : Window.getWindows()) {
-         SwingUtilities.updateComponentTreeUI(w);
-      }
+      GUIColors.setMode(backgroundType);
    }
 
    @Override
    public String getBackgroundStyle() {
-      return OptionsDlg.getBackgroundMode();
+      return GUIColors.getBackgroundMode();
    }
 
    

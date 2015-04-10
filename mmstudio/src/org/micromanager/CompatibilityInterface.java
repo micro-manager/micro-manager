@@ -234,16 +234,27 @@ public interface CompatibilityInterface {
    public String getVersion();
 
    /**
-    * These strings are the only valid inputs to setBackgroundStyle, below.
+    * One of the allowed inputs to setBackgroundStyle(), to set the program
+    * to a bright, high-contrast "daytime" mode.
     */
    public static final String DAY = "Day";
+   /**
+    * One of the allowed inputs to setBackgroundStyle(), to set the program
+    * to a dark, low-contrast "nighttime" mode.
+    */
    public static final String NIGHT = "Night";
+   /**
+    * A list compiling all of the possible inputs to setBackgroundStyle().
+    */
+   public static final String[] BACKGROUND_OPTIONS = new String[] {
+      DAY, NIGHT
+   };
 
    /**
-    * Sets the background color of the GUI and all its registered components to 
-    * the selected backGroundType
-    * @param backgroundType either ScriptInterface.DAY or
-    * ScriptInterface.NIGHT.
+    * Sets the background color of the GUI to the selected mode. Will throw an
+    * IllegalArgumentException if the provided input is not an item from
+    * BACKGROUND_OPTIONS.
+    * @param backgroundType One of the values from the BACKGROUND_OPTIONS list.
     */
    public void setBackgroundStyle(String backgroundType);
 
