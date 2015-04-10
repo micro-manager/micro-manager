@@ -26,6 +26,8 @@ import java.awt.Color;
 import java.awt.Window;
 import java.util.HashMap;
 
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -47,14 +49,21 @@ public class DaytimeNighttime {
    // http://alvinalexander.com/java/java-uimanager-color-keys-list
    // Each of these keys will have ".background" appended to it later.
    private static final String[] BACKGROUND_COLOR_KEYS = new String[] {
-         "Button", "CheckBox", "CheckBoxMenuItem", "ColorChooser",
-         "ComboBox", "EditorPane", "FormattedTextField", "InternalFrame",
-         "Label", "List", "Menu", "MenuBar", "MenuItem", "OptionPane",
-         "Panel", "PasswordField", "PopupMenu", "ProgressBar", "RadioButton",
-         "RadioButtonMenuItem", "ScrollBar", "ScrollPane", "Slider", "Spinner",
+         "Button", "CheckBox", "ColorChooser", "EditorPane",
+         "FormattedTextField", "InternalFrame", "Label", "List", "MenuBar",
+         "OptionPane", "Panel", "PasswordField", "ProgressBar",
+         "RadioButton", "ScrollBar", "ScrollPane", "Slider", "Spinner",
          "SplitPane", "TabbedPane", "Table", "TableHeader", "TextArea",
          "TextField", "TextPane", "ToggleButton", "TollBar", "Tree",
          "Viewport"
+   };
+
+   // Keys that get a slightly lighter background for "night" mode. We do this
+   // because unfortunately on OSX, the checkmark for selected menu items is
+   // 25% gray, and thus invisible against our normal background color.
+   private static final String[] LIGHTER_BACKGROUND_COLOR_KEYS = new String[] {
+         "CheckBoxMenuItem", "ComboBox", "Menu", "MenuItem", "PopupMenu",
+         "RadioButtonMenuItem"
    };
 
    // As above, but for disabled text; each of these keys will have
@@ -63,8 +72,15 @@ public class DaytimeNighttime {
          "Button", "CheckBox", "RadioButton", "ToggleButton"
    };
 
+   // Keys that we have to specify manually; nothing will be appended to them.
+   private static final String[] MANUAL_BACKGROUND_COLOR_KEYS = new String[] {
+      "ComboBox.buttonBackground"
+   };
+
    // background color of the UI
    private static HashMap<String, ColorUIResource> background_;
+   // Lighter background colors, for certain elements.
+   private static HashMap<String, ColorUIResource> lightBackground_;
    // background color of pads in the UI
    private static HashMap<String, ColorUIResource> padBackground_;
    // Color of disabled text.
@@ -75,10 +91,16 @@ public class DaytimeNighttime {
       background_ = new HashMap<String, ColorUIResource>();
       background_.put(CompatibilityInterface.DAY,
             new ColorUIResource(java.awt.SystemColor.control));
-      // TODO: this 25% gray color is exactly the same color as the checkbox
-      // in a menu item, on OSX at least.
       background_.put(CompatibilityInterface.NIGHT,
             new ColorUIResource(new Color(64, 64, 64)));
+
+      lightBackground_ = new HashMap<String, ColorUIResource>();
+      lightBackground_.put(CompatibilityInterface.DAY,
+            new ColorUIResource(java.awt.SystemColor.control));
+      // 37.5% gray; dodging both the OSX checkmark (25% gray) and disabled
+      // text (50% gray).
+      lightBackground_.put(CompatibilityInterface.NIGHT,
+            new ColorUIResource(new Color(96, 96, 96)));
 
       padBackground_ = new HashMap<String, ColorUIResource>();
       padBackground_.put(CompatibilityInterface.DAY,
@@ -103,13 +125,17 @@ public class DaytimeNighttime {
 
       // Ensure every GUI object type gets the right background color.
       for (String key : BACKGROUND_COLOR_KEYS) {
-         UIManager.put(key + ".background",
-               background_.get(mode));
+         UIManager.put(key + ".background", background_.get(mode));
+      }
+      for (String key : LIGHTER_BACKGROUND_COLOR_KEYS) {
+         UIManager.put(key + ".background", lightBackground_.get(mode));
+      }
+      for (String key : MANUAL_BACKGROUND_COLOR_KEYS) {
+         UIManager.put(key, background_.get(mode));
       }
       // Ensure disabled text is still legible.
       for (String key : DISABLED_TEXT_COLOR_KEYS) {
-         UIManager.put(key + ".disabledText",
-            disabledTextColor_.get(mode));
+         UIManager.put(key + ".disabledText", disabledTextColor_.get(mode));
       }
       // Update existing components.
       for (Window w : Window.getWindows()) {
