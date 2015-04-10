@@ -4,7 +4,6 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 import ij.CompositeImage;
-import ij.gui.GUI;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.ImageCanvas;
@@ -18,15 +17,11 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.Toolkit;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
-import java.lang.Math;
 import java.util.prefs.Preferences;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.JPanel;
@@ -46,7 +41,7 @@ import org.micromanager.utils.ReportingUtils;
  * HACK: we have overridden getComponents() on this function to "fix" bugs
  * in other bits of code; see that function's comment.
  */
-public class DisplayWindow extends StackWindow {
+public final class DisplayWindow extends StackWindow  {
 
    private boolean closed_ = false;
    private final EventBus bus_;
@@ -85,6 +80,10 @@ public class DisplayWindow extends StackWindow {
       if (displayPrefs_ != null) {
          posX = displayPrefs_.getInt(WINDOWPOSX, DEFAULTPOSX); 
          posY = displayPrefs_.getInt(WINDOWPOSY, DEFAULTPOSY);
+         if (GUIUtils.getGraphicsConfigurationContaining(posX, posY) == null) {
+            posX = DEFAULTPOSX;
+            posY = DEFAULTPOSY;
+         }
       }
       setLocation(posX, posY);
 
@@ -261,6 +260,7 @@ public class DisplayWindow extends StackWindow {
     * if any other entity draws the border, the canvas will "shadow" the 
     * border and make it largely invisible.
     */
+   @Override
    public void paint(Graphics g) {
       drawInfo(g);
    }
@@ -423,7 +423,7 @@ public class DisplayWindow extends StackWindow {
          Dimension newSize = new Dimension(desiredCanvasSize);
          while (newSize.width + 50 > displayWidth ||
                newSize.height + 150 > displayHeight) {
-            double nextMag = ic.getLowerZoomLevel(curMag);
+            double nextMag = ImageCanvas.getLowerZoomLevel(curMag);
             if (nextMag == curMag) {
                // Hit the bottom of the zoom levels; give up.
                break;
