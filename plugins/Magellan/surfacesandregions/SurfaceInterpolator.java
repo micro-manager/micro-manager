@@ -22,6 +22,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
+import misc.CoreCommunicator;
 import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
 import org.apache.commons.math3.geometry.euclidean.twod.PolygonsSet;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
@@ -286,10 +287,10 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    public ArrayList<XYStagePosition> getXYPositonsAtSlice(double zPos) throws InterruptedException {
       SingleResolutionInterpolation interp = waitForCurentInterpolation();
       double overlapPercent = FixedAreaAcquisitionSettings.getStoredTileOverlapPercentage() / 100;
-      int overlapX = (int) (MMStudio.getInstance().getCore().getImageWidth() * overlapPercent);
-      int overlapY = (int) (MMStudio.getInstance().getCore().getImageHeight() * overlapPercent);
-      int tileWidth = (int) MMStudio.getInstance().getCore().getImageWidth() - overlapX;
-      int tileHeight = (int) MMStudio.getInstance().getCore().getImageHeight() - overlapY;
+      int overlapX = (int) (CoreCommunicator.getImageWidth() * overlapPercent);
+      int overlapY = (int) (CoreCommunicator.getImageHeight() * overlapPercent);
+      int tileWidth = (int) CoreCommunicator.getImageWidth() - overlapX;
+      int tileHeight = (int) CoreCommunicator.getImageHeight() - overlapY;
       while (interp.getPixelsPerInterpPoint() >= Math.max(tileWidth,tileHeight) / NUM_XY_TEST_POINTS ) {
          synchronized (interpolationLock_) {
             interpolationLock_.wait();
@@ -393,10 +394,10 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    protected abstract void interpolateSurface(LinkedList<Point3d> points) throws InterruptedException;
 
    private void fitXYPositionsToConvexHull(double overlap) throws InterruptedException {
-      int fullTileWidth = (int) MMStudio.getInstance().getCore().getImageWidth();
-      int fullTileHeight = (int) MMStudio.getInstance().getCore().getImageHeight();
-      int overlapX = (int) (MMStudio.getInstance().getCore().getImageWidth() * overlap / 100);
-      int overlapY = (int) (MMStudio.getInstance().getCore().getImageHeight() * overlap / 100);
+      int fullTileWidth = CoreCommunicator.getImageWidth();
+      int fullTileHeight = CoreCommunicator.getImageHeight();
+      int overlapX = (int) (CoreCommunicator.getImageWidth() * overlap / 100);
+      int overlapY = (int) (CoreCommunicator.getImageHeight() * overlap / 100);
       int tileWidthMinusOverlap = fullTileWidth - overlapX;
       int tileHeightMinusOverlap =  fullTileHeight - overlapY;
       int pixelPadding = (int) (xyPadding_um_ / MMStudio.getInstance().getCore().getPixelSizeUm());

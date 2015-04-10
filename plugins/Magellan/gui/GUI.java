@@ -49,7 +49,7 @@ import surfacesandregions.SurfaceInterpolator;
 import surfacesandregions.SurfaceManager;
 import surfacesandregions.SurfaceRegionComboBoxModel;
 import surfacesandregions.XYFootprint;
-import utility.ExactlyOneRowSelectionModel;
+import misc.ExactlyOneRowSelectionModel;
 import channels.SimpleChannelTableModel;
 import coordinates.AffineCalibrator;
 import coordinates.AffineGUI;

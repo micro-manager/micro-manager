@@ -19,6 +19,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
+import misc.CoreCommunicator;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
@@ -393,8 +394,8 @@ public class CustomAcqEngine {
             summary.put("TimeFirst", false);
             summary.put("PixelType", core.getBytesPerPixel() == 1 ? "GRAY8" : "GRAY16");
             summary.put("BitDepth", core.getImageBitDepth());
-            summary.put("Width", core.getImageWidth());
-            summary.put("Height", core.getImageHeight());
+            summary.put("Width", CoreCommunicator.getImageWidth());
+            summary.put("Height", CoreCommunicator.getImageHeight());
             summary.put("Prefix", prefix);
             JSONArray initialPosList = acq.createInitialPositionList();
             summary.put("InitialPositionList", initialPosList);

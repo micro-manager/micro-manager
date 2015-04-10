@@ -8,7 +8,7 @@ import propsandcovariants.Covariant;
 import propsandcovariants.EligibleCovariantTableModel;
 import propsandcovariants.CovariantPairing;
 import propsandcovariants.CovariantPairingsManager;
-import utility.ExactlyOneRowSelectionModel;
+import misc.ExactlyOneRowSelectionModel;
 
 /**
  *

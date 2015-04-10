@@ -23,6 +23,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import misc.CoreCommunicator;
 import org.json.JSONArray;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.ReportingUtils;
@@ -92,8 +93,8 @@ public class FixedAreaAcquisition extends Acquisition {
          } else {
             //no space mode, use current stage positon
             positions_ = new ArrayList<XYStagePosition>();
-            int fullTileWidth = (int) MMStudio.getInstance().getCore().getImageWidth();
-            int fullTileHeight = (int) MMStudio.getInstance().getCore().getImageHeight();
+            int fullTileWidth = CoreCommunicator.getImageWidth();
+            int fullTileHeight = CoreCommunicator.getImageHeight();
             int tileWidthMinusOverlap = fullTileWidth - this.getOverlapX();
             int tileHeightMinusOverlap = fullTileHeight - this.getOverlapY();
             positions_.add(new XYStagePosition(MMStudio.getInstance().getCore().getXYStagePosition(xyStage_),

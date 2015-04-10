@@ -13,6 +13,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import misc.CoreCommunicator;
 import mmcorej.CMMCore;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -426,8 +427,6 @@ public class PositionManager {
       try {
          ScriptInterface app = MMStudio.getInstance();
          CMMCore core = app.getMMCore();
-         long height = app.getMMCore().getImageHeight();
-         long width = app.getMMCore().getImageWidth();
          if ( positionList_.length() == 0) {
             try {
                //create position 0 based on current XY stage position
@@ -444,8 +443,8 @@ public class PositionManager {
             int existingRow = existingPosition.getInt(ROW_KEY);
             int existingColumn = existingPosition.getInt(COL_KEY);
 
-            double xPixelOffset = (col - existingColumn) * (width - pixelOverlapX);
-            double yPixelOffset = (row - existingRow) * (height - pixelOverlapY);
+            double xPixelOffset = (col - existingColumn) * (CoreCommunicator.getImageWidth() - pixelOverlapX);
+            double yPixelOffset = (row - existingRow) * (CoreCommunicator.getImageHeight() - pixelOverlapY);
 
             AffineTransform transform = AffineUtils.getAffineTransform(pixelSizeConfig_, exisitngX, exisitngY);
             Point2D.Double stagePos = new Point2D.Double();
