@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
+import misc.GlobalSettings;
 import mmcorej.CMMCore;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.ReportingUtils;
@@ -33,7 +34,7 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
       
       //TODO: freeze channelspec
       public String[] getActiveChannelNames() {
-         int numCameraChannels = (int) ( SettingsDialog.getDemoMode() ? 6 :
+         int numCameraChannels = (int) ( GlobalSettings.getDemoMode() ? 6 :
                         MMStudio.getInstance().getCore().getNumberOfCameraChannels());
          int numActive = 0;
          
@@ -45,7 +46,7 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
                return new String[]{"no channels active"};
             } else {
                //multichannel camera channels only
-               if (SettingsDialog.getDemoMode()) {
+               if (GlobalSettings.getDemoMode()) {
                   return new String[] {"Violet","Blue","Green","Yellow","Red","FarRed"};
                }
                String[] names = new String[numCameraChannels];

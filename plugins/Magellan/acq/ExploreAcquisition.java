@@ -4,13 +4,11 @@
  */
 package acq;
 
-import ij.IJ;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import mmcorej.CMMCore;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.ReportingUtils;
 
@@ -24,15 +22,17 @@ public class ExploreAcquisition extends Acquisition {
    private volatile double zTop_, zBottom_;
    private volatile int lowestSliceIndex_ = 0, highestSliceIndex_ = 0;
    private ExecutorService eventAdderExecutor_ = Executors.newSingleThreadExecutor();
-   private CustomAcqEngine eng_;
+   private double rank_;
+   private int imageFilterType_;
 
-   public ExploreAcquisition(ExploreAcqSettings settings, CustomAcqEngine eng) throws Exception {
+   public ExploreAcquisition(ExploreAcqSettings settings) throws Exception {
       super(settings.zStep_);
       try {
          //start at current z position
          zTop_ = core_.getPosition(zStage_);
          zBottom_ = core_.getPosition(zStage_);
-         eng_ = eng;
+         imageFilterType_ = settings.filterType_;
+         rank_ = settings.filterType_;
          initialize(settings.dir_, settings.name_, settings.tileOverlap_);
       } catch (Exception ex) {
          ReportingUtils.showError("Couldn't get focus device position");
@@ -217,5 +217,15 @@ public class ExploreAcquisition extends Acquisition {
          ReportingUtils.showError("Couldn't create initial position list");
          return null;
       }
+   }
+
+   @Override
+   public double getRank() {
+      return rank_;
+   }
+
+   @Override
+   public int getFilterType() {
+      return imageFilterType_;
    }
 }

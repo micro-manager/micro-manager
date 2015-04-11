@@ -11,7 +11,7 @@ import gui.SettingsDialog;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
-import misc.CoreCommunicator;
+import imageconstruction.CoreCommunicator;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.ReportingUtils;
 

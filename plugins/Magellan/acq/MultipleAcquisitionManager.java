@@ -11,9 +11,8 @@ import ij.IJ;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.CyclicBarrier;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
+import misc.GlobalSettings;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.ReportingUtils;
 
@@ -232,7 +231,7 @@ public class MultipleAcquisitionManager {
          public void run() {
             FixedAreaAcquisition firstAcq = null;
             double secretAFDrivePos = 0;
-            boolean secretAutofocus = SettingsDialog.getAutofocusBetweenSerialAcqusitions();
+            boolean secretAutofocus = GlobalSettings.getAutofocusBetweenSerialAcqusitions();
             if (secretAutofocus) {
                IJ.log("Secret autofocus between acquisitions activated!");
                if (!acqSettingsList_.get(0).autofocusEnabled_) {

@@ -11,9 +11,7 @@ import ij.IJ;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -21,9 +19,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import misc.CoreCommunicator;
+import imageconstruction.CoreCommunicator;
+import misc.GlobalSettings;
 import org.json.JSONArray;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.ReportingUtils;
@@ -120,7 +117,7 @@ public class FixedAreaAcquisition extends Acquisition {
          if (settings_.channels_.size() == 0) {
             if (MMStudio.getInstance().getCore().getNumberOfCameraChannels() == 1) {
                cIndex = 0;
-            } else if (SettingsDialog.getDemoMode()) {
+            } else if (GlobalSettings.getDemoMode()) {
                cIndex = Arrays.asList(new String[]{"Violet","Blue","Green","Yellow","Red","FarRed"}).indexOf(settings_.autofocusChannelName_);
             } else {
                //multichannel cam only
@@ -457,6 +454,16 @@ public class FixedAreaAcquisition extends Acquisition {
          pList.put(xyPos.getMMPosition());
       }
       return pList;
+   }
+
+   @Override
+   public double getRank() {
+      return settings_.rank_;
+   }
+
+   @Override
+   public int getFilterType() {
+      return settings_.imageFilterType_;
    }
 
 }

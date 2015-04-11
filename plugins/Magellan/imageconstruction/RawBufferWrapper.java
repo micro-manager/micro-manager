@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package misc;
+package imageconstruction;
 
 import org.micromanager.MMStudio;
 
@@ -14,28 +14,46 @@ import org.micromanager.MMStudio;
  */
 public class RawBufferWrapper {
    
+   //set in Bitflow camera file or other A/D converter
+   private static final int PIXELS_PER_LINE = 1288;
+   private static final int MAX_FRAME_OFFSET = 128;
+
    
    private int processedHeight_, processedWidth_;
-   private static int[] unwarpedPixIndices_;
+   private static int[] warpedIndicesFromUnwarped_;
    
    private byte[] buffer_;
    private int offset_;
+   private static int unwarpedWidth_;
    
    public RawBufferWrapper(byte[] buffer, int offset, int doubleWidth) {
-
+      if (warpedIndicesFromUnwarped_ == null) {
+         warpedIndicesFromUnwarped_ = getCosineWarpLUT(PIXELS_PER_LINE);
+         unwarpedWidth_ = warpedIndicesFromUnwarped_.length;
+      }
       
       offset_ = offset;
       buffer_ = buffer;
    }
    
+   public short getUnwarpedImageValue(int x, int y) {
+      int warpedX = warpedIndicesFromUnwarped_[x];
+      //TODO: reverse if on second half of image to account for image
+      //channelPtr = const_cast<unsigned char*>(buf) + i*bufLen + BFCamera::MAX_FRAME_OFFSET + GetChannelOffset(i);
+      int warpedIndex = warpedX + y * (PIXELS_PER_LINE / 2);
+      return (short) (buffer_[warpedIndex] & 0xff);
+   }
+   
    public static int getWidth() {
-      if (unwarpedPixIndices_ == null) {
-         unwarpedPixIndices_ = getCosineWarpLUT((int) (MMStudio.getInstance().getCore().getImageWidth() * 2));
+      if (warpedIndicesFromUnwarped_ == null) {
+         warpedIndicesFromUnwarped_ = getCosineWarpLUT(PIXELS_PER_LINE);
+         unwarpedWidth_ = warpedIndicesFromUnwarped_.length;
       }
-      return unwarpedPixIndices_.length;
+      return unwarpedWidth_;
    }
    
    public static int getHeight() {
+      //twice the raw image height
       return (int) (MMStudio.getInstance().getCore().getImageHeight() * 2);
    }
    
@@ -45,7 +63,7 @@ public class RawBufferWrapper {
     * warped pixel values
     * Function assumes that number of pixels per line is equal to number of pixels
     * in the double wide image (i.e. no pixels thrown away at start and end of line)
-    * @return
+    * 1288 pixels per line to get 410 pixels per image
     */
    public static int[] getCosineWarpLUT(int pixPerLine) {
       int lineStartThrowawayPixels = 0;
@@ -56,7 +74,7 @@ public class RawBufferWrapper {
       //for each warped one
       double radiansPerPix = 2 * Math.PI / (double) pixPerLine;
 
-      int[] lut = new int[pixPerLine / 2];
+      int[] unwarpedFromWarped = new int[pixPerLine / 2];
 
       //find center pixel, i.e. the pixel where distortion is minimized, and 1 pixel
       //in warped image corresponds to one pixel in unwarped image
@@ -84,18 +102,18 @@ public class RawBufferWrapper {
             lutOffset = lutValue;
          }
          lutValue -= lutOffset;
-         System.out.println( lutValue );
-         lut[warpedPixIndex] = lutValue;
+//         System.out.println( lutValue );
+         unwarpedFromWarped[warpedPixIndex] = lutValue;
       }
       //now invert the indices and values of LUT
       
-      int[] unwarpedPixIndices = new int[lut[lut.length-1]+1];
-      for (int i = 0; i < unwarpedPixIndices.length; i++) {
-         unwarpedPixIndices[i] = getCenterIndexOf(lut, i);     
+      int[] warpedFromUnwarped = new int[unwarpedFromWarped[unwarpedFromWarped.length-1]+1];
+      for (int i = 0; i < warpedFromUnwarped.length; i++) {
+         warpedFromUnwarped[i] = getCenterIndexOf(unwarpedFromWarped, i);     
       }
       
-      return unwarpedPixIndices;
-   }
+      return warpedFromUnwarped;
+  }
    
    /**
     * @param array

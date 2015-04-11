@@ -10,6 +10,7 @@ import ij.ImageStack;
 import ij.process.FloatProcessor;
 import ij.process.ImageConverter;
 import ij3d.image3d.FHTImage3D;
+import imageconstruction.CoreCommunicator;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.concurrent.CountDownLatch;
@@ -155,8 +156,8 @@ public class AffineCalibrator {
    private TaggedImage snapAndAdd() throws Exception {
       ScriptInterface gui = MMStudio.getInstance();
       CMMCore core = gui.getMMCore();
-      core.snapImage();      
-      TaggedImage image = core.getTaggedImage();
+      CoreCommunicator.snapImage();      
+      TaggedImage image = CoreCommunicator.getTaggedImage(0);
       gui.addToAlbum(image);
       return image;
    }

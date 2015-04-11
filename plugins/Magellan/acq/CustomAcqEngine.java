@@ -19,7 +19,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
-import misc.CoreCommunicator;
+import imageconstruction.CoreCommunicator;
+import misc.GlobalSettings;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
@@ -45,12 +46,9 @@ public class CustomAcqEngine {
     private ExploreAcquisition currentExploreAcq_;
     private ParallelAcquisitionGroup currentFixedAcqs_;
     private MultipleAcquisitionManager multiAcqManager_;
-    private CustomAcqEngine singleton_;
     private ExecutorService acqExecutor_;
-    private TaggedImage curentImg_;
 
     public CustomAcqEngine(CMMCore core) {
-        singleton_ = this;
         core_ = core;
         acqExecutor_ = Executors.newSingleThreadExecutor(new ThreadFactory() {
             @Override
@@ -122,7 +120,7 @@ public class CustomAcqEngine {
             }
         }
         try {
-            currentExploreAcq_ = new ExploreAcquisition(settings, this);
+            currentExploreAcq_ = new ExploreAcquisition(settings);
         } catch (Exception ex) {
             ReportingUtils.showError("Couldn't initialize explore acquisiton");
             return;
@@ -154,15 +152,14 @@ public class CustomAcqEngine {
     }
 
     private void executeAcquisitionEvent(AcquisitionEvent event) throws InterruptedException {
-        if (event.isReQueryEvent()) {
+       if (event.isReQueryEvent()) {
             //nothing to do, just a dummy event to get of blocking call when switching between parallel acquisitions
         } else if (event.isAcquisitionFinishedEvent()) {
-           System.out.println("Executing acq finished event");
             //signal to TaggedImageSink to finish saving thread and mark acquisition as finished
-            event.acquisition_.getImageSavingQueue().put(new SignalTaggedImage(SignalTaggedImage.AcqSingal.AcqusitionFinsihed));
+           CoreCommunicator.addSignalTaggedImage(event.acquisition_, new SignalTaggedImage(SignalTaggedImage.AcqSingal.AcqusitionFinsihed));
         } else if (event.isTimepointFinishedEvent()) {
             //signal to TaggedImageSink to let acqusition know that saving for the current time point has completed  
-            event.acquisition_.getImageSavingQueue().put(new SignalTaggedImage(SignalTaggedImage.AcqSingal.TimepointFinished));
+            CoreCommunicator.addSignalTaggedImage(event.acquisition_, new SignalTaggedImage(SignalTaggedImage.AcqSingal.TimepointFinished));
         } else if (event.isAutofocusAdjustmentEvent()) {
             setAutofocusPosition(event.autofocusZName_, event.autofocusPosition_);
         } else {
@@ -171,60 +168,35 @@ public class CustomAcqEngine {
         }
     }
 
-    private void acquireImage(AcquisitionEvent event) throws InterruptedException {
+    private void acquireImage(final AcquisitionEvent event) throws InterruptedException {
         loopHardwareCommandRetries(new HardwareCommand() {
             @Override
             public void run() throws Exception {
-                core_.snapImage();
+                CoreCommunicator.snapImage();
             }
         }, "snapping image");
 
         //get elapsed time
-        long currentTime = System.currentTimeMillis();
+        final long currentTime = System.currentTimeMillis();
         if (event.acquisition_.getStartTime_ms() == -1) {
             //first image, initialize
             event.acquisition_.setStartTime_ms(currentTime);
         }
 
-        int numCamChannels = (int) core_.getNumberOfCameraChannels();
-        if (SettingsDialog.getDemoMode()) {
-            numCamChannels = SettingsDialog.getDemoNumChannels();
-        }
+        final int numCamChannels = (int) core_.getNumberOfCameraChannels();
         for (int c = 0; c < numCamChannels; c++) {
             //send to storage
             final int channelIndex = c;
             loopHardwareCommandRetries(new HardwareCommand() {
                 @Override
                 public void run() throws Exception {
-                    curentImg_ = core_.getTaggedImage(channelIndex);
+                    CoreCommunicator.getTaggedImageAndAddToAcq(channelIndex, event, currentTime, 
+                            GlobalSettings.getDemoMode()? GlobalSettings.getDemoNumChannels() : numCamChannels); 
                 }
-            }, "getting tagged image");
-            TaggedImage img = curentImg_;
-            curentImg_ = null;
-            
-
-            //substitute in dummy pixel data for demo mode
-            if (SettingsDialog.getDemoMode()) {
-                Object demoPix;
-                try {
-                    if (core_.getBytesPerPixel() == 1) {
-                        demoPix = DemoModeImageData.getBytePixelData(c, (int) event.xyPosition_.getCenter().x, (int) event.xyPosition_.getCenter().y,
-                                (int) event.zPosition_, MDUtils.getWidth(img.tags), MDUtils.getHeight(img.tags));
-                    } else {
-                        demoPix = DemoModeImageData.getShortPixelData(c, (int) event.xyPosition_.getCenter().x, (int) event.xyPosition_.getCenter().y,
-                                (int) event.zPosition_, MDUtils.getWidth(img.tags), MDUtils.getHeight(img.tags));
-                    }
-                    img = new TaggedImage(demoPix, img.tags);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    ReportingUtils.showError("Problem getting demo data");
-                }
-            }
-            //add metadata
-            addImageMetadata(img, event, numCamChannels, c, currentTime - event.acquisition_.getStartTime_ms());
-
-            event.acquisition_.addImage(img);
+            }, "getting tagged image");          
         }
+        //now that Core Communicator has added images into construction pipeline,
+        //free to snap again which will add more to circular buffer
     }
 
     private void setAutofocusPosition(final String zName, final double pos) throws InterruptedException {
@@ -351,7 +323,7 @@ public class CustomAcqEngine {
         return df.format(calobj.getTime());
     }
 
-    private void addImageMetadata(TaggedImage img, AcquisitionEvent event,
+    public static void addImageMetadata(TaggedImage img, AcquisitionEvent event,
             int numCamChannels, int camChannel, long elapsed_ms) {
         try {
             //add tags
@@ -381,7 +353,7 @@ public class CustomAcqEngine {
         try {
 
             //num channels is camera channels * acquisitionChannels
-            int numChannels = SettingsDialog.getDemoMode() ? SettingsDialog.getDemoNumChannels() : acq.getNumChannels();
+            int numChannels = GlobalSettings.getDemoMode() ? GlobalSettings.getDemoNumChannels() : acq.getNumChannels();
 
             /////////////////////////////////////////////////////////////////
             ////Summary metadata equivalent to normal MM metadata////////////
@@ -418,7 +390,7 @@ public class CustomAcqEngine {
             JSONArray chNames = new JSONArray();
             JSONArray chColors = new JSONArray();
             for (int i = 0; i < numChannels; i++) {
-                if (SettingsDialog.getDemoMode()) {
+                if (GlobalSettings.getDemoMode()) {
                     String[] names = {"Violet", "Blue", "Green", "Yellow", "Red", "Far red"};
                     int[] colors = {new Color(127, 0, 255).getRGB(), Color.blue.getRGB(), Color.green.getRGB(),
                         Color.yellow.getRGB(), Color.red.getRGB(), Color.pink.getRGB()};
@@ -443,10 +415,6 @@ public class CustomAcqEngine {
     private interface HardwareCommand {
 
         void run() throws Exception;
-    }
-
-    public CustomAcqEngine getInstance() {
-        return singleton_;
     }
 
     public void setMultiAcqManager(MultipleAcquisitionManager multiAcqManager) {

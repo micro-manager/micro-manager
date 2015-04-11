@@ -13,7 +13,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import misc.CoreCommunicator;
+import imageconstruction.CoreCommunicator;
 import mmcorej.CMMCore;
 import org.json.JSONArray;
 import org.json.JSONException;

@@ -2,10 +2,11 @@ package acq;
 
 import coordinates.PositionManager;
 import gui.SettingsDialog;
+import ij.IJ;
 import imagedisplay.DisplayPlus;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import misc.CoreCommunicator;
+import imageconstruction.CoreCommunicator;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
@@ -58,6 +59,10 @@ public abstract class Acquisition implements AcquisitionEventSource{
       zOrigin_ = core_.getPosition(zStage_);
       pixelSizeConfig_ = core_.getCurrentPixelSizeConfig();
    }
+   
+   public abstract double getRank();
+   
+   public abstract int getFilterType(); 
 
    public MultiResMultipageTiffStorage getStorage() {
       return imageStorage_;
@@ -134,10 +139,6 @@ public abstract class Acquisition implements AcquisitionEventSource{
       imageSink_.start();
    }
    
-   public BlockingQueue<TaggedImage> getImageSavingQueue() {
-      return engineOutputQueue_;
-   }
-   
    public String getName() {
       return name_;
    }
@@ -154,7 +155,7 @@ public abstract class Acquisition implements AcquisitionEventSource{
       try {
          engineOutputQueue_.put(img);
       } catch (InterruptedException ex) {
-         ReportingUtils.showError("Acquisition engine thread interrupted");
+         IJ.log("Acquisition engine thread interrupted");
       }
    }
 

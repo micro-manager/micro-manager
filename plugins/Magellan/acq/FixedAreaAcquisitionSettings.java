@@ -1,6 +1,7 @@
 package acq;
 
 import channels.ChannelSettings;
+import imageconstruction.FrameIntegrationMethod;
 import propsandcovariants.CovariantPairing;
 import propsandcovariants.CovariantPairingsManager;
 import java.util.ArrayList;
@@ -60,11 +61,12 @@ public class FixedAreaAcquisitionSettings  {
    public boolean setInitialAutofocusPosition_;
    public double initialAutofocusPosition_;
    
-   
+   //image construction
+   public int imageFilterType_;
+   public double rank_;
    
    public FixedAreaAcquisitionSettings() {
       Preferences prefs = Magellan.getPrefs();
-      dir_ =  prefs.get(PREF_PREFIX + "DIR", FileSystemView.getFileSystemView().getHomeDirectory().getAbsolutePath());
       name_ = prefs.get(PREF_PREFIX + "NAME", "Untitled");
       timeEnabled_ = prefs.getBoolean(PREF_PREFIX + "TE", false);
       timePointInterval_ = prefs.getDouble(PREF_PREFIX + "TPI", 0);
@@ -95,6 +97,9 @@ public class FixedAreaAcquisitionSettings  {
             }
          }
       }
+      //image filtering
+      imageFilterType_ = prefs.getInt(PREF_PREFIX + "IMAGE_FILTER", FrameIntegrationMethod.FRAME_AVERAGE);
+      rank_ = prefs.getDouble(PREF_PREFIX + "RANK", 0.95);
    }
    
    public boolean hasPairing(CovariantPairing pair) {
@@ -131,7 +136,6 @@ public class FixedAreaAcquisitionSettings  {
    
    public void storePreferedValues() {
       Preferences prefs = Magellan.getPrefs();
-      prefs.put(PREF_PREFIX + "DIR", dir_);
       prefs.put(PREF_PREFIX + "NAME", name_);
       prefs.putBoolean(PREF_PREFIX + "TE", timeEnabled_);
       prefs.putDouble(PREF_PREFIX + "TPI", timePointInterval_);
@@ -155,6 +159,10 @@ public class FixedAreaAcquisitionSettings  {
       if (autoFocusZDevice_ != null) {
          prefs.put(PREF_PREFIX + "AFZNAME", autoFocusZDevice_);
       }
+      //image filtering
+      //don't store filter type for noe
+//      imageFilterType_ = prefs.getInt(PREF_PREFIX + "IMAGE_FILTER", FRAME_AVERAGING);      
+      prefs.putDouble(PREF_PREFIX + "RANK", rank_);
       
    }
    

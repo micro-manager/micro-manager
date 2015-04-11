@@ -15,53 +15,35 @@ import org.micromanager.MMStudio;
  */
 public class SettingsDialog extends javax.swing.JDialog {
    
-   Preferences prefs_;
-   private GUI gui_;
-   private static boolean demoMode_ = false;
-   private static boolean afBetweenAcqs_ = false;
+//   Preferences prefs_;
+//   private GUI gui_;
+//   private static boolean demoMode_ = false;
+//   private static boolean afBetweenAcqs_ = false;
+//   
+//   
+//   public SettingsDialog(Preferences prefs, GUI gui) {
+//      super(gui.getOwner(),Dialog.ModalityType.APPLICATION_MODAL);
+//      this.setLocationRelativeTo(null);
+//      prefs_ = prefs;
+//      gui_ = gui;
+//      initComponents();
+//      
+//          //Demo mode 
+//      try {
+//         String s = MMStudio.getInstance().getSysConfigFile();
+//         if (s.endsWith("NavDemo.cfg") ||s.endsWith("NavDemo16Bit.cfg") ) {
+//            SettingsDialog.setDemoMode(true);
+//         } else if (s.contains("BIDC")) {
+//            //secret features!           
+//         
+//         } else {
+//            //no secret features :(
+//           autofocusBetweenSerialAcqsCheckBox_.setVisible(false);
+//         }
+//      } catch (Exception e) {
+//      }
+//   }
    
-   
-   public SettingsDialog(Preferences prefs, GUI gui) {
-      super(gui.getOwner(),Dialog.ModalityType.APPLICATION_MODAL);
-      this.setLocationRelativeTo(null);
-      prefs_ = prefs;
-      gui_ = gui;
-      initComponents();
-      
-          //Demo mode 
-      try {
-         String s = MMStudio.getInstance().getSysConfigFile();
-         if (s.endsWith("NavDemo.cfg") ||s.endsWith("NavDemo16Bit.cfg") ) {
-            SettingsDialog.setDemoMode(true);
-         } else if (s.contains("BIDC")) {
-            //secret features!           
-         
-         } else {
-            //no secret features :(
-           autofocusBetweenSerialAcqsCheckBox_.setVisible(false);
-         }
-      } catch (Exception e) {
-      }
-   }
-   
-   
-   public static boolean getAutofocusBetweenSerialAcqusitions() {
-      return afBetweenAcqs_;
-   }
-   
-   public static boolean getDemoMode() {
-      return demoMode_;
-   }
-   
-   public static int getDemoNumChannels() {
-      return 6;
-   }
-   
-   public static void setDemoMode(boolean demo) {
-      demoMode_ = true;
-      new DemoModeImageData();
-   }
-
    /**
     * This method is called from within the constructor to initialize the form.
     * WARNING: Do NOT modify this code. The content of this method is always
@@ -126,7 +108,7 @@ public class SettingsDialog extends javax.swing.JDialog {
    }//GEN-LAST:event_jButton2ActionPerformed
 
    private void autofocusBetweenSerialAcqsCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autofocusBetweenSerialAcqsCheckBox_ActionPerformed
-      afBetweenAcqs_ = autofocusBetweenSerialAcqsCheckBox_.isSelected();
+//      afBetweenAcqs_ = autofocusBetweenSerialAcqsCheckBox_.isSelected();
    }//GEN-LAST:event_autofocusBetweenSerialAcqsCheckBox_ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
