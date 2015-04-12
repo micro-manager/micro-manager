@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          AutofocusUtils.java
+//FILE:          Fitter.java
 //PROJECT:       Micro-Manager 
 //SUBSYSTEM:     ASIdiSPIM plugin
 //-----------------------------------------------------------------------------
@@ -19,13 +19,12 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.asidispim.Utils;
+package org.micromanager.asidispim.fit;
 
 import org.apache.commons.math3.analysis.function.Gaussian;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.analysis.solvers.BracketingNthOrderBrentSolver;
 import org.apache.commons.math3.analysis.solvers.UnivariateSolver;
-import org.apache.commons.math3.fitting.GaussianCurveFitter;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.jfree.data.xy.XYSeries;
@@ -34,8 +33,8 @@ import org.jfree.data.xy.XYSeries;
  *
  * @author nico
  */
-public class FitUtils {
-   public static enum FunctionType {Pol2, Pol3, Gaussian};
+public class Fitter {
+   public static enum FunctionType {Pol1, Pol2, Pol3, Gaussian};
    
    /**
     * Utility to facilitate fitting data plotted in JFreeChart
@@ -47,7 +46,7 @@ public class FitUtils {
     * improve accuracy
     * 
     * @param data xy series in JFReeChart format
-    * @param type one of the FitUtils.FunctionType predefined functions
+    * @param type one of the Fitter.FunctionType predefined functions
     * @param guess initial guess for the fit.  The number and meaning of these
              parameters depends on the FunctionType.  Implemented:
              Gaussian: 0: Normalization, 1: Mean 2: Sigma
@@ -66,6 +65,10 @@ public class FitUtils {
       
       double[] result = null;
       switch (type) {
+         case Pol1:
+            final PolynomialCurveFitter fitter1 = PolynomialCurveFitter.create(1);
+            result = fitter1.fit(obs.toList());
+            break;
          case Pol2:
             final PolynomialCurveFitter fitter2 = PolynomialCurveFitter.create(2);
             result = fitter2.fit(obs.toList());
@@ -75,7 +78,7 @@ public class FitUtils {
             result = fitter3.fit(obs.toList());
             break;
          case Gaussian:
-            final GaussianCurveFitter gf = GaussianCurveFitter.create();
+            final GaussianWithOffsetCurveFitter gf = GaussianWithOffsetCurveFitter.create();
             if (guess != null) {
                gf.withStartPoint(guess);
             }
@@ -91,7 +94,7 @@ public class FitUtils {
     * predicted by the function
     * 
     * @param data input JFreeChart data set
-    * @param type one of the FitUtils.FunctionType predefined functions
+    * @param type one of the Fitter.FunctionType predefined functions
     * @param parms parameters describing the function.  These need to match the
     *             selected function or an IllegalArgumentEception will be thrown
     * 
@@ -101,12 +104,10 @@ public class FitUtils {
            double[] parms) {
       XYSeries result = new XYSeries(data.getItemCount());
       switch (type) {
+         case Pol1:
          case Pol2:
-            if (parms.length != 2)
-               throw new IllegalArgumentException("Needs a double[] of size 2");
          case Pol3:
-            if (parms.length != 3)
-               throw new IllegalArgumentException("Needs a double[] of size 3");
+            checkParms(type, parms);
             PolynomialFunction polFunction = new PolynomialFunction(parms);
             for (int i = 0; i < data.getItemCount(); i++) {
                double x = data.getX(i).doubleValue();
@@ -115,10 +116,13 @@ public class FitUtils {
             }
             break;
          case Gaussian:
+            checkParms(type, parms);
             Gaussian.Parametric gf = new Gaussian.Parametric();
             for (int i = 0; i < data.getItemCount(); i++) {
                double x = data.getX(i).doubleValue();
-               double y = gf.value(x, parms);
+               double[] gparms = new double[3];
+               System.arraycopy(parms, 0, gparms, 0, 3);
+               double y = gf.value(x, gparms) + parms[3];
                result.add(x, y);
             }
             break;
@@ -131,7 +135,7 @@ public class FitUtils {
     * Finds the x value corresponding to the maximum function value within the 
     * range of the provided data set
     * 
-    * @param type one of the FitUtils.FunctionType predefined functions
+    * @param type one of the Fitter.FunctionType predefined functions
     * @param parms parameters describing the function.  These need to match the
     *             selected function or an IllegalArgumentEception will be thrown
     * @param data JFreeChart series, used to bracket the range in which the 
@@ -139,17 +143,15 @@ public class FitUtils {
     * 
     * @return x value corresponding to the maximum function value
     */
-   public double getMaxX(FunctionType type, double[] parms, XYSeries data) {
+   public static double getMaxX(XYSeries data, FunctionType type, double[] parms) {
       double xMax = 0.0;
       double minRange = data.getMinX();
       double maxRange = data.getMaxX();
       switch (type) {
+         case Pol1:
          case Pol2:
-            if (parms.length != 2)
-               throw new IllegalArgumentException("Needs a double[] of size 2");
          case Pol3:
-            if (parms.length != 3)
-               throw new IllegalArgumentException("Needs a double[] of size 3");  
+            checkParms(type, parms);
             PolynomialFunction derivativePolFunction = 
                     (new PolynomialFunction(parms)).polynomialDerivative();
 
@@ -167,6 +169,31 @@ public class FitUtils {
       }
               
       return xMax;
+   }
+   
+   private static void checkParms(FunctionType type, double[] parms) {
+      switch (type) {
+         case Pol1:
+            if (parms.length != 2) {
+               throw new IllegalArgumentException("Needs a double[] of size 2");
+            }
+            break;
+         case Pol2:
+            if (parms.length != 3) {
+               throw new IllegalArgumentException("Needs a double[] of size 3");
+            }
+            break;
+         case Pol3:
+            if (parms.length != 4) {
+               throw new IllegalArgumentException("Needs a double[] of size 4");
+            }
+            break;
+         case Gaussian:
+            if (parms.length != 4) {
+               throw new IllegalArgumentException("Needs a double[] of size 4");
+            }
+            break;
+      }
    }
    
 }

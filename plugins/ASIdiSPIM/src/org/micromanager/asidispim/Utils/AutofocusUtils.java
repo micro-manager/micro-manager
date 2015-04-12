@@ -165,8 +165,9 @@ public class AutofocusUtils {
             
             double[] focusScores = new double[nrImages];
             TaggedImage[] imageStore = new TaggedImage[nrImages];
+            
             // Use array to store data so that we can expand to plotting multiple
-            // data sets.  For now, use only 1
+            // data sets.  
             XYSeries[] scoresToPlot = new XYSeries[1];
             scoresToPlot[0] = new XYSeries(nrImages);
 
@@ -254,7 +255,7 @@ public class AutofocusUtils {
                      throw new ASIdiSPIMException("No image arrived in 5 seconds");
                   }
                }
-
+               
                // now find the position in the focus Score array with the highest score
                // TODO: use more sophisticated analysis here
                double highestScore = focusScores[0];
@@ -265,6 +266,10 @@ public class AutofocusUtils {
                      highestScore = focusScores[i];
                   }
                }
+               // return the position of the galvo device associated with the 
+               // highest focus score
+               bestScore = galvoStart + galvoStepSize * highestIndex;
+               
                // display the best scoring image in the snap/live window
                ImageProcessor bestIP = makeProcessor(imageStore[highestIndex]);
                ImagePlus bestIPlus = new ImagePlus();
@@ -280,13 +285,10 @@ public class AutofocusUtils {
 
                if (debug) {
                   PlotUtils plotter = new PlotUtils(prefs_, "AutofocusUtils");
+                  boolean[] showSymbols = {true};
                   plotter.plotDataN("Focus curve", scoresToPlot, 
-                          "Galvo position (degree)", "Score", true, false);
+                          "Galvo position (degree)", "Score", showSymbols, false);
                }
-
-               // return the position of the galvo device associated with the 
-               // highest focus score
-               bestScore = galvoStart + galvoStepSize * highestIndex;
 
             } catch (ASIdiSPIMException ex) {
                throw ex;

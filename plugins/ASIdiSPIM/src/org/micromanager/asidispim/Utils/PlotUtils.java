@@ -32,6 +32,8 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
 import org.jfree.chart.JFreeChart;
@@ -44,8 +46,10 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.micromanager.MMStudio;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
+import org.micromanager.utils.MMScriptException;
 
 /**
  * Utility class to make it simple to show a plot of XY data
@@ -122,7 +126,7 @@ public class PlotUtils {
     * @return Frame that displays the data
     */
    public Frame plotDataN(String title, XYSeries[] data, String xTitle,
-           String yTitle, boolean showShapes, Boolean logLog) {
+           String yTitle, boolean[] showShapes, Boolean logLog) {
 
       // if we already have a plot open with this title, close it, but remember
       // its position:
@@ -162,7 +166,7 @@ public class PlotUtils {
               yTitle, // y-axis Label
               dataset, // Dataset
               PlotOrientation.VERTICAL, // Plot Orientation
-              true, // Show Legend
+              false, // Show Legend
               true, // Use tooltips
               false // Configure chart to generate URLs?
       );
@@ -215,8 +219,8 @@ public class PlotUtils {
          renderer.setSeriesShape(3, rect, false);
       }
 
-      if (!showShapes) {
-         for (int i = 0; i < data.length; i++) {
+      for (int i = 0; i < data.length; i++) {
+         if (showShapes.length > i && !showShapes[i]) {
             renderer.setSeriesShapesVisible(i, false);
          }
       }
@@ -246,6 +250,14 @@ public class PlotUtils {
       graphFrame.setVisible(true);
 
       return graphFrame;
+   }
+   
+   public  void message(String msg) {
+      try {
+         MMStudio.getInstance().message(msg);
+      } catch (MMScriptException ex) {
+         Logger.getLogger(PlotUtils.class.getName()).log(Level.SEVERE, null, ex);
+      }
    }
 
 }
