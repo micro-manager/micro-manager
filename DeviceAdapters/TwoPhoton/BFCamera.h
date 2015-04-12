@@ -25,7 +25,7 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.  
 //                
 // AUTHOR:        Nenad Amodaj, November 2009
-//
+// UPDATED:		  Henry Pinkard, 2015
 ///////////////////////////////////////////////////////////////////////////////
 #pragma once
 
@@ -52,18 +52,18 @@ public:
    unsigned long GetBufferSize() {return (unsigned long)width_ * height_ * depth_ + 2 * MAX_FRAME_OFFSET;}
    unsigned GetNumberOfBuffers() {return (unsigned) boards_.size();}
    const unsigned char* GetImage(unsigned& retCode, char* errText, unsigned bufLen, BitFlowCamera* bf);
-   bool WaitForImage();
    const unsigned char* GetImageCont();
-   int StartContinuousAcq();
-   int StopContinuousAcq();
-   int StartSequence();
-   int StopSequence();
+   int StartContinuousAcq() {return StartAcquiring();};
+   int StopContinuousAcq() {return StopAcquiring();};
+   int StartSequence() {return StartAcquiring();};
+   int StopSequence() {return StopAcquiring();};
    bool isAcquiring() {return acquiring_;}
    int GetTimeout();
   
-   unsigned Width() {return width_;}
-   unsigned Height() {return height_;}
+   unsigned Width() const {return width_;}
+   unsigned Height() const {return height_;}
    unsigned Depth() {return depth_;}
+   int GetImageNumber() {return imageCount_;};
 
    bool isInitialized() {return initialized_;}
 
@@ -75,12 +75,16 @@ private:
    unsigned width_;
    unsigned height_;
    unsigned depth_;
+   unsigned imageCount_;
    bool initialized_;
-   CiSIGNAL eofSignal_;
+   std::vector<CiSIGNAL*> eofSignals_;
    BFU32 timeoutMs_;
+   BFU32 numInterrupts_;
    bool acquiring_;
-   int frameOffset_;
    bool dual_;
    MM::Device* caller_;
    MM::Core* core_;
+
+   int StartAcquiring();
+   int StopAcquiring();
 };
