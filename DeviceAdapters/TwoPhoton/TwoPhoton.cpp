@@ -41,7 +41,7 @@ const char* g_BitFlowCameraDeviceName2 = "BitFlowCameraX2";
 const char* g_PropertyChannel = "InputChannel";
 const char* g_On = "On";
 const char* g_Off = "Off";
-const char* g_OnWarp = "On + Unwarp";
+const char* g_OnWarp = "On+Unwarp";
 const char* g_FrameAverage = "FrameAverage";
 const char* g_RawFramesToCircularBuffer = "RawFramesToCircularBuffer";
 const char* g_PropertyDeinterlace = "Deinterlace";
@@ -52,10 +52,7 @@ const char* g_PropertyCenterOffset = "CenterOffset";
 const char* g_PropertyChannelOffset = "ChannelOffsets";
 const char* g_PropertySlow = "SlowStreaming";
 const char* g_PropertyEnableChannels = "EnableChannels";
-
-const char* g_PropertyColor_R = "R";
-const char* g_PropertyColor_G = "G";
-const char* g_PropertyColor_B = "B";
+const char* g_PropertyUseBitflowChannels = "EnableBitflowChannels";
 
 extern const char* g_VShutterDeviceName;
 
@@ -137,6 +134,12 @@ BitFlowCamera::BitFlowCamera(bool dual) :
    SetErrorText(ERR_NUM_CHANNELS, "Number of available channels too high for this device adapter."
 								  "Your system probably has two Bitflow cards installed."
                                   "Use BitFlowCameraX2 adapter instead.");
+   //pre-init properties
+
+   	//skip certain channels on bitflow board(s) if they have problems
+   CPropertyAction *pAct = new CPropertyAction (this, &BitFlowCamera::OnEnableBitflowChannels);
+   int ret = CreateProperty(g_PropertyUseBitflowChannels, "11111111", MM::String, false, pAct, true);
+   assert(ret == DEVICE_OK);
 
    img_.resize(numChannels_);
 }
@@ -254,15 +257,14 @@ int BitFlowCamera::Initialize()
    ret = CreateProperty(g_PropertyChannelOffset,  "000000", MM::String, false, pAct);
    assert(ret == DEVICE_OK);
 
-   // slow stream
-   ret = CreateProperty(g_PropertySlow, g_Off, MM::String, false);
-   assert(ret == DEVICE_OK);
-
    // enable specific channels
    pAct = new CPropertyAction (this, &BitFlowCamera::OnEnableChannels);
    ret = CreateProperty(g_PropertyEnableChannels, "11111111", MM::String, false, pAct);
    assert(ret == DEVICE_OK);
 
+   // slow stream
+   ret = CreateProperty(g_PropertySlow, g_Off, MM::String, false);
+   assert(ret == DEVICE_OK);
    vector<string> slowValues;
    slowValues.push_back(g_Off);
    slowValues.push_back(g_On);
@@ -270,12 +272,30 @@ int BitFlowCamera::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
-
+   
    // synchronize all properties
    // --------------------------
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
       return ret;
+
+
+   //Initialize bitflow wrapper
+   if (!bfDev_.isInitialized())  {
+	   int ret = bfDev_.Initialize(this, this->GetCoreCallback());
+	   if (ret != DEVICE_OK) {
+		   return ret;
+	   }
+
+	   // at this point frame grabber is successfully initialized so
+	   // we can re-assign image buffers
+	   if (bfDev_.GetNumberOfBuffers() != numChannels_)
+	   {
+		   bfDev_.Shutdown();
+		   return ERR_NUM_CHANNELS;
+	   }
+   }
+
 
    // setup the buffer
    // ----------------
@@ -326,6 +346,10 @@ int BitFlowCamera::SnapImage()
 		return ERR_HARDWARE_NOT_INITIALIZED;
 	bfDev_.StartSequence(); // start streaming mode
 	for (int k=0; k<expNumFrames_; k++) {
+		//char message[100];
+		//strcpy(message,"Frame number ");
+		//strcat(message,CDeviceUtils::ConvertToString(k));
+		//GetCoreCallback()->LogMessage(this, message,false);
 		unsigned char* buf = const_cast<unsigned char*>(bfDev_.GetImageCont());      
 		if (buf == 0) {
 			ostringstream txt;
@@ -341,15 +365,9 @@ int BitFlowCamera::SnapImage()
 				unsigned int width = bfDev_.Width();
 				unsigned int height = bfDev_.Height();
 
-				Metadata md;
-				MetadataSingleTag mstElapsed("Image number", "bitflow", true);
-				mstElapsed.SetValue(CDeviceUtils::ConvertToString(bfDev_.GetImageNumber()));
-				md.SetTag(mstElapsed);
-
-				unsigned ret = GetCoreCallback()->InsertImage(this,buf + i*bufLen + BFCamera::MAX_FRAME_OFFSET,width,height,1, 
-					md.Serialize().c_str());
+				unsigned ret = GetCoreCallback()->InsertImage(this,buf + i*bufLen + BFCamera::MAX_FRAME_OFFSET,width,height,1);
 				if (ret == DEVICE_BUFFER_OVERFLOW) {
-					GetCoreCallback()-> LogMessage(this, "BitFlow thread: error inserting image", false);
+					GetCoreCallback()-> LogMessage(this, "BitFlow snapImage: device buffer overflow", false);
 					return DEVICE_ERR;
 				} else if (ret != DEVICE_OK) {
 					GetCoreCallback()-> LogMessage(this, "BitFlow thread: error inserting image", false);
@@ -903,6 +921,25 @@ int BitFlowCamera::OnEnableChannels(MM::PropertyBase* pProp, MM::ActionType eAct
        string chanlist;
 	   for (unsigned i=0; i< img_.size(); i++)
 		   if (img_[i].IsEnabled())
+			  chanlist += "1";
+		   else
+		      chanlist += "0";
+	   pProp->Set(chanlist.c_str());
+   }
+
+   return DEVICE_OK;
+}
+
+int BitFlowCamera::OnEnableBitflowChannels(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)  {
+      string chanlist;
+	  pProp->Get(chanlist);	  
+	  bfDev_.UseVFGs(chanlist);
+   }  else if (eAct == MM::BeforeGet) {
+       string chanlist;
+	   for (unsigned i=0; i < 8; i++)
+		   if (bfDev_.VFGActive(i))
 			  chanlist += "1";
 		   else
 		      chanlist += "0";

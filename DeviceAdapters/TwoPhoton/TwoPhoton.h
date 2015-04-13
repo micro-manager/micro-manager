@@ -120,6 +120,7 @@ public:
    int OnChannelOffset(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnColorMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnEnableChannels(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEnableBitflowChannels(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    void ShowError(const char* errTxt) {LogMessage(errTxt);}
 

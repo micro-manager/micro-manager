@@ -51,7 +51,6 @@ public:
    int Shutdown();
    unsigned long GetBufferSize() {return (unsigned long)width_ * height_ * depth_ + 2 * MAX_FRAME_OFFSET;}
    unsigned GetNumberOfBuffers() {return (unsigned) boards_.size();}
-   const unsigned char* GetImage(unsigned& retCode, char* errText, unsigned bufLen, BitFlowCamera* bf);
    const unsigned char* GetImageCont();
    int StartContinuousAcq() {return StartAcquiring();};
    int StopContinuousAcq() {return StopAcquiring();};
@@ -59,6 +58,8 @@ public:
    int StopSequence() {return StopAcquiring();};
    bool isAcquiring() {return acquiring_;}
    int GetTimeout();
+   void UseVFGs(std::string useChannels);
+   bool VFGActive(int index);
   
    unsigned Width() const {return width_;}
    unsigned Height() const {return height_;}
@@ -79,12 +80,13 @@ private:
    bool initialized_;
    std::vector<CiSIGNAL*> eofSignals_;
    BFU32 timeoutMs_;
-   BFU32 numInterrupts_;
    bool acquiring_;
    bool dual_;
    MM::Device* caller_;
    MM::Core* core_;
+   std::vector<int> useVFGs_;
 
    int StartAcquiring();
    int StopAcquiring();
+   void LogInterrupts();
 };
