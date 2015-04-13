@@ -111,12 +111,13 @@ public class MetadataPanel extends InspectorPanel {
             return canEdit[columnIndex];
          }
       });
-      summaryMetadataTable_.setToolTipText("Metadata tags for the whole acquisition");
+      summaryMetadataTable_.setToolTipText(
+            "Metadata tags for the whole acquisition");
       summaryMetadataScrollPane.setViewportView(summaryMetadataTable_);
 
       jLabel3.setText("Summary metadata");
 
-      summaryMetadataPanel.setLayout(new MigLayout("flowy"));
+      summaryMetadataPanel.setLayout(new MigLayout("flowy, fillx, insets 0"));
       summaryMetadataPanel.add(jLabel3);
       summaryMetadataPanel.add(summaryMetadataScrollPane, "grow");
 
@@ -159,7 +160,8 @@ public class MetadataPanel extends InspectorPanel {
 
       jLabel2.setText("Image metadata");
 
-      imageMetadataScrollPane.setLayout(new MigLayout("flowy"));
+      imageMetadataScrollPane.setLayout(
+            new MigLayout("insets 0, flowy, fillx"));
       imageMetadataScrollPane.add(jLabel2);
       imageMetadataScrollPane.add(showUnchangingPropertiesCheckbox_);
       imageMetadataScrollPane.add(imageMetadataTableScrollPane, "grow");
@@ -167,9 +169,9 @@ public class MetadataPanel extends InspectorPanel {
       metadataSplitPane.setRightComponent(imageMetadataScrollPane);
       metadataSplitPane.setResizeWeight(.5);
 
-      setLayout(new MigLayout("flowy"));
+      setLayout(new MigLayout("flowy, fillx"));
       add(metadataSplitPane, "grow");
-      setMaximumSize(new Dimension(280, 500));
+      setMaximumSize(new Dimension(800, 500));
    }
 
    /**
