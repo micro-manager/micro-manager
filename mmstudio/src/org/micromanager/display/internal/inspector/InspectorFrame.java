@@ -167,6 +167,8 @@ public class InspectorFrame extends MMFrame implements Inspector {
          displayChooser_.setSelectedItem(display.getName());
          setDisplay(display);
       }
+
+      loadAndRestorePosition(0, 0);
    }
 
    /**
