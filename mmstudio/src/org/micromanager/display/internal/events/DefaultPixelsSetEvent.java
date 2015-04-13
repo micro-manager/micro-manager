@@ -21,6 +21,7 @@
 package org.micromanager.display.internal.events;
 
 import org.micromanager.data.Image;
+import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.PixelsSetEvent;
 
 /**
@@ -30,13 +31,20 @@ import org.micromanager.display.PixelsSetEvent;
  */
 public class DefaultPixelsSetEvent implements PixelsSetEvent {
    private Image image_;
+   private DisplayWindow display_;
 
-   public DefaultPixelsSetEvent(Image image) {
+   public DefaultPixelsSetEvent(Image image, DisplayWindow display) {
       image_ = image;
+      display_ = display;
    }
 
    @Override
    public Image getImage() {
       return image_;
+   }
+
+   @Override
+   public DisplayWindow getDisplay() {
+      return display_;
    }
 }

@@ -164,7 +164,7 @@ public class CanvasUpdateThread extends Thread {
          stack_.setCoords(image.getCoords());
          plus_.getProcessor().setPixels(image.getRawPixels());
          plus_.updateAndDraw();
-         display_.postEvent(new DefaultPixelsSetEvent(image));
+         display_.postEvent(new DefaultPixelsSetEvent(image, display_));
       }
    }
 
