@@ -127,7 +127,7 @@ public class DefaultDatastore implements Datastore {
       if (isFrozen_) {
          throw new DatastoreFrozenException();
       }
-      bus_.post(new NewImageEvent(image));
+      bus_.post(new NewImageEvent(image, this));
    }
 
    @Override

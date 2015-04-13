@@ -21,6 +21,7 @@
 package org.micromanager.data.internal;
 
 import org.micromanager.data.Coords;
+import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 
 /**
@@ -28,10 +29,12 @@ import org.micromanager.data.Image;
  * TODO: should be renamed to DefaultNewImageEvent.
  */
 public class NewImageEvent implements org.micromanager.data.NewImageEvent {
-   public Image image_;
-   
-   public NewImageEvent(Image image) {
+   private Image image_;
+   private Datastore store_;
+
+   public NewImageEvent(Image image, Datastore store) {
       image_ = image;
+      store_ = store;
    }
 
    @Override
@@ -42,5 +45,10 @@ public class NewImageEvent implements org.micromanager.data.NewImageEvent {
    @Override
    public Coords getCoords() {
       return image_.getCoords();
+   }
+
+   @Override
+   public Datastore getDatastore() {
+      return store_;
    }
 }
