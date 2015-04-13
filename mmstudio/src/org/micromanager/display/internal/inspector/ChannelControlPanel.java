@@ -60,6 +60,7 @@ import org.micromanager.data.NewSummaryMetadataEvent;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.NewDisplaySettingsEvent;
+import org.micromanager.display.NewImagePlusEvent;
 
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.internal.graph.GraphData;
@@ -97,7 +98,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private final Datastore store_;
    private DisplayWindow display_;
    private final MMVirtualStack stack_;
-   private final ImagePlus plus_;
+   private ImagePlus plus_;
    private CompositeImage composite_;
 
    private JButton autoButton_;
@@ -137,15 +138,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       store_ = store;
       display_ = display;
       stack_ = stack;
-      plus_ = plus;
-
-      // We may be for a single-channel system or a multi-channel one; the two
-      // require different backing objects (ImagePlus vs. CompositeImage).
-      // Hence why we have both the plus_ and composite_ objects, and use the
-      // appropriate one depending on context.
-      if (plus_ instanceof CompositeImage) {
-         composite_ = (CompositeImage) plus_;
-      }
+      setImagePlus(plus);
 
       // Default to a generic name based on our channel index.
       name_ = String.format("channel %d", channelIndex_);
@@ -168,6 +161,18 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          // Found an image for our channel
          bitDepth_ = images.get(0).getMetadata().getBitDepth();
          initialize();
+      }
+   }
+
+   private void setImagePlus(ImagePlus plus) {
+      plus_ = plus;
+
+      // We may be for a single-channel system or a multi-channel one; the two
+      // require different backing objects (ImagePlus vs. CompositeImage).
+      // Hence why we have both the plus_ and composite_ objects, and use the
+      // appropriate one depending on context.
+      if (plus_ instanceof CompositeImage) {
+         composite_ = (CompositeImage) plus_;
       }
    }
 
@@ -1020,6 +1025,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       catch (Exception e) {
          ReportingUtils.logError(e, "Failed to update histogram display settings");
       }
+   }
+
+   @Subscribe
+   public void onNewImagePlus(NewImagePlusEvent event) {
+      setImagePlus(event.getImagePlus());
    }
 
    /**
