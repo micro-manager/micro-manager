@@ -21,8 +21,6 @@
 
 package org.micromanager.asidispim.fit;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.commons.math3.analysis.function.Gaussian;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.analysis.solvers.BracketingNthOrderBrentSolver;
@@ -36,6 +34,13 @@ import org.jfree.data.xy.XYSeries;
  * @author nico
  */
 public class Fitter {
+   
+   private static final String NOFIT = "No fit";
+   private static final String POL1 = "Polynomial 1";
+   private static final String POL2 = "Polynomial 2";
+   private static final String POL3 = "Polynomial 3";
+   private static final String GAUSSIAN = "Gaussian";
+   
    public static enum FunctionType {NoFit, Pol1, Pol2, Pol3, Gaussian};
    
    /**
@@ -254,6 +259,35 @@ public class Fitter {
             }
             break;
       }
+   }
+   
+   public static String getFunctionTypeAsString(FunctionType key) {
+      switch (key) {
+         case NoFit: return NOFIT;
+         case Pol1 : return POL1;
+         case Pol2 : return POL2;
+         case Pol3 : return POL2;
+         case Gaussian : return GAUSSIAN;
+      }
+      return "";
+   }
+   
+   public static FunctionType getFunctionTypeAsType(String key) {
+      if (key.equals(NOFIT))
+         return FunctionType.NoFit;
+      if (key.equals(POL1))
+         return FunctionType.Pol1;
+      if (key.equals(POL2))
+         return FunctionType.Pol2;
+      if (key.equals(POL3))
+         return FunctionType.Pol3;
+      if (key.equals(GAUSSIAN))
+         return FunctionType.Gaussian;
+      return FunctionType.NoFit;
+   }
+   
+   public static String[] getFunctionTypes() {
+      return new String[] {NOFIT, POL1, POL2, POL3, GAUSSIAN};
    }
    
 }

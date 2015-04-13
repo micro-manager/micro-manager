@@ -29,6 +29,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
@@ -43,6 +44,7 @@ import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.AutofocusUtils;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.PanelUtils;
+import org.micromanager.asidispim.fit.Fitter;
 
 /**
  *
@@ -73,7 +75,6 @@ public class AutofocusPanel extends ListeningJPanel{
       
       PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
 
-      
       // start options panel
       optionsPanel_ = new JPanel(new MigLayout(
             "",
@@ -116,6 +117,25 @@ public class AutofocusPanel extends ListeningJPanel{
          }
       });
       optionsPanel_.add(afcButton, "wrap");
+      
+      optionsPanel_.add(new JLabel("Fit using:"));
+      final JComboBox fitFunctionSelection = new JComboBox();
+      for (String fitFunction : Fitter.getFunctionTypes()) {
+         fitFunctionSelection.addItem(fitFunction);
+      }
+      fitFunctionSelection.setSelectedItem(prefs_.getString(panelName_, 
+              Prefs.Keys.AUTOFOCUSFITFUNCTION, 
+              Fitter.getFunctionTypeAsString(Fitter.FunctionType.Gaussian)));
+      fitFunctionSelection.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            prefs_.putString(panelName_, Prefs.Keys.AUTOFOCUSFITFUNCTION, 
+                    (String) fitFunctionSelection.getSelectedItem());
+         }
+      });
+      optionsPanel_.add(fitFunctionSelection);
+
+      
       // end options subpanel
       
       // construct the main panel

@@ -374,7 +374,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       slopeCalibrationPanel.add(tmp_but, "span 5, split 3");
       
       tmp_but = new JButton("Focus");
-      tmp_but.setMargin(new Insets(4,8,4,8));
       tmp_but.setToolTipText("Autofocus at current piezo position");
       tmp_but.setBackground(Color.green);
       tmp_but.addActionListener(new ActionListener() {
@@ -398,17 +397,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       
       slopeCalibrationFrame_.add(slopeCalibrationPanel);
       slopeCalibrationFrame_.pack();
-      slopeCalibrationFrame_.setResizable(false);
-      
-//      class slopeCalibrationFrameAdapter extends WindowAdapter {
-//         @Override
-//         public void windowClosing(WindowEvent e) {
-//            slopeCalibrationFrame_.savePosition();
-//            slopeCalibrationFrame_.dispose();
-//         }
-//      }
-//      slopeCalibrationFrame_.addWindowListener(new slopeCalibrationFrameAdapter());
-      
+      slopeCalibrationFrame_.setResizable(false);   
       
       final int positionWidth = 50;
       final int labelWidth = 80;

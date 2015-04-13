@@ -47,7 +47,6 @@ import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.asidispim.fit.Fitter;
-import org.micromanager.asidispim.fit.Fitter;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
@@ -112,6 +111,15 @@ public class AutofocusUtils {
                throw new ASIdiSPIMException("Please define an autofocus methods first");
             }
             gui_.getAutofocus().applySettings();
+            
+            final Fitter.FunctionType function = Fitter.getFunctionTypeAsType(
+                    prefs_.getString (
+                        MyStrings.PanelNames.AUTOFOCUS.toString(), 
+                        Prefs.Keys.AUTOFOCUSFITFUNCTION, 
+                        Fitter.getFunctionTypeAsString(
+                        Fitter.FunctionType.Gaussian) 
+                    ) 
+            );
 
             String camera = devices_.getMMDevice(Devices.Keys.CAMERAA);
             if (side.equals(Devices.Sides.B)) {
@@ -258,16 +266,11 @@ public class AutofocusUtils {
                   }
                }
                
-               Fitter.FunctionType fitType = Fitter.FunctionType.Gaussian;
-               double[] fitParms = Fitter.fit(scoresToPlot[0], fitType, null);
-               bestScore = Fitter.getMaxX(scoresToPlot[0], fitType, fitParms);
+               double[] fitParms = Fitter.fit(scoresToPlot[0], function, null);
+               bestScore = Fitter.getMaxX(scoresToPlot[0], function, fitParms);
                int highestIndex = Fitter.getIndex(scoresToPlot[0], bestScore);
                scoresToPlot[1] = Fitter.getFittedSeries(scoresToPlot[0], 
-                       fitType, fitParms);
-               
-               // return the position of the galvo device associated with the 
-               // highest focus score
-               // bestScore = galvoStart + galvoStepSize * highestIndex;
+                       function, fitParms);
                
                // display the best scoring image in the snap/live window
                ImageProcessor bestIP = makeProcessor(imageStore[highestIndex]);
