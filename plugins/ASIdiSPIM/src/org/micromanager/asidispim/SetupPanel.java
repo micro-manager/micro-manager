@@ -354,7 +354,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       
       slopeCalibrationPanel.add(new JSeparator(SwingConstants.HORIZONTAL), "span 5, growx, shrinky, wrap");
       
-      tmp_but = new JButton("Looks good, use these!");
+      tmp_but = new JButton("Use these!");
       tmp_but.setBackground(Color.green);
       tmp_but.addActionListener(new ActionListener() {
          @Override
@@ -371,7 +371,21 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             slopeCalibrationFrame_.setVisible(false);   
          }
       });
-      slopeCalibrationPanel.add(tmp_but, "span 3, left");
+      slopeCalibrationPanel.add(tmp_but, "span 5, split 3");
+      
+      tmp_but = new JButton("Focus");
+      tmp_but.setMargin(new Insets(4,8,4,8));
+      tmp_but.setToolTipText("Autofocus at current piezo position");
+      tmp_but.setBackground(Color.green);
+      tmp_but.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            autofocus_.runFocus(setupPanel, side, true,
+                    ASIdiSPIM.getFrame().getAcquisitionPanel().getSliceTiming(),
+                    true);
+         }
+      });
+      slopeCalibrationPanel.add(tmp_but);
       
       tmp_but = new JButton("Cancel");
       tmp_but.addActionListener(new ActionListener() {
@@ -380,7 +394,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             slopeCalibrationFrame_.setVisible(false);   
          }
       });
-      slopeCalibrationPanel.add(tmp_but, "span 2, right, wrap");
+      slopeCalibrationPanel.add(tmp_but, "wrap");
       
       slopeCalibrationFrame_.add(slopeCalibrationPanel);
       slopeCalibrationFrame_.pack();
