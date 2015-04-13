@@ -1083,11 +1083,4 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
       linkButton_.cleanup();
    }
-
-   public void setDisplay(DisplayWindow display) {
-      cleanup();
-      display_ = display;
-      haveInitialized_.set(false);
-      initialize();
-   }
 }

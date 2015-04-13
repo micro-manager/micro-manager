@@ -26,6 +26,7 @@ import ij.CompositeImage;
 import ij.ImagePlus;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -60,6 +61,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 public final class HistogramsPanel extends InspectorPanel implements Histograms {
    private Inspector inspector_;
 
+   private HashMap<DisplayWindow, ArrayList<ChannelControlPanel>> displayToPanels_;
    private ArrayList<ChannelControlPanel> channelPanels_;
    private Datastore store_;
    private DisplayWindow display_;
@@ -72,6 +74,7 @@ public final class HistogramsPanel extends InspectorPanel implements Histograms 
    public HistogramsPanel() {
       super();
       setMinimumSize(new java.awt.Dimension(280, 0));
+      displayToPanels_ = new HashMap<DisplayWindow, ArrayList<ChannelControlPanel>>();
    }
 
    /**
@@ -80,11 +83,6 @@ public final class HistogramsPanel extends InspectorPanel implements Histograms 
    public synchronized void setupChannelControls() {
       removeAll();
       invalidate();
-      if (channelPanels_ != null) {
-         for (ChannelControlPanel panel : channelPanels_) {
-            panel.cleanup();
-         }
-      }
 
       // TODO: ignoring the possibility of RGB images for now.
       final int nChannels = store_.getAxisLength(Coords.CHANNEL);
@@ -94,16 +92,26 @@ public final class HistogramsPanel extends InspectorPanel implements Histograms 
       }
 
       setLayout(new MigLayout("flowy, fillx, insets 0"));
-      channelPanels_ = new ArrayList<ChannelControlPanel>();
+      // If available, re-use existing panels.
+      if (displayToPanels_.containsKey(display_)) {
+         channelPanels_ = displayToPanels_.get(display_);
+      }
+      else {
+         channelPanels_ = new ArrayList<ChannelControlPanel>();
+      }
+      // Create new ChannelControlPanels as needed.
       for (int i = 0; i < nChannels; ++i) {
-         ChannelControlPanel panel = new ChannelControlPanel(i, this, store_,
-               display_, stack_, ijImage_);
-         add(panel, "grow, gap 0");
-         channelPanels_.add(panel);
+         if (channelPanels_.size() <= i) {
+            ChannelControlPanel panel = new ChannelControlPanel(i, this,
+                  store_, display_, stack_, ijImage_);
+            channelPanels_.add(panel);
+         }
+         add(channelPanels_.get(i), "grow, gap 0");
       }
 
       validate();
       inspector_.relayout();
+      displayToPanels_.put(display_, channelPanels_);
    }
    
    public synchronized void fullScaleChannels() {
