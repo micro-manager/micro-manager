@@ -165,13 +165,16 @@ public class DisplaySettingsPanel extends InspectorPanel {
    }
 
    @Override
-   public void setDisplay(DisplayWindow display) {
+   public synchronized void setDisplay(DisplayWindow display) {
       if (display_ != null) {
          display_.unregisterForEvents(this);
          display_.getDatastore().unregisterForEvents(this);
       }
       display_ = display;
       display_.registerForEvents(this);
+      if (store_ != null) {
+         store_.unregisterForEvents(this);
+      }
       store_ = display_.getDatastore();
       store_.registerForEvents(this);
       ijImage_ = display_.getImagePlus();
@@ -206,6 +209,16 @@ public class DisplaySettingsPanel extends InspectorPanel {
       }
       if (settings.getTrimPercentage() != null) {
          trimPercentage_.setValue(settings.getTrimPercentage());
+      }
+   }
+
+   @Override
+   public synchronized void cleanup() {
+      if (display_ != null) {
+         display_.unregisterForEvents(this);
+      }
+      if (store_ != null) {
+         store_.unregisterForEvents(this);
       }
    }
 

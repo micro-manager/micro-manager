@@ -27,6 +27,8 @@ import ij.ImagePlus;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -45,26 +47,44 @@ import org.micromanager.display.Inspector;
 import org.micromanager.display.InspectorPanel;
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
 import org.micromanager.display.internal.events.LUTUpdateEvent;
+import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.display.internal.DisplayDestroyedEvent;
+import org.micromanager.display.internal.link.DisplayGroupManager;
 import org.micromanager.display.internal.MMVirtualStack;
 import org.micromanager.display.PixelsSetEvent;
 
-import org.micromanager.internal.interfaces.Histograms;
+import org.micromanager.events.internal.DefaultEventManager;
+import org.micromanager.events.DisplayAboutToShowEvent;
+
 import org.micromanager.internal.utils.ContrastSettings;
 import org.micromanager.internal.utils.ReportingUtils;
 
+// This class tracks all histograms for all displays in a given inspector
+// window.
+// TODO: ideally the histogram *data* should be associated with the
+// DisplayWindow, and we would only handle the histogram *controls*. This
+// doesn't save us that much effort in terms of bookkeeping but it would give
+// us a lot more flexibility in terms of how we control contrast settings.
 // HACK TODO: all methods that interact with channelPanels_ are synchronized
 // to prevent concurrent modification exceptions. In fact, I don't think we
-// really need this class in the first place, or at least we don't need it to
-// be so tightly-bound to the ChannelControlPanels it contains.
-public final class HistogramsPanel extends InspectorPanel implements Histograms {
+// really need this class to be so tightly-bound to the ChannelControlPanels it
+// contains. Everything should be doable by event-passing between the various
+// histograms without using this as a go-between.
+public final class HistogramsPanel extends InspectorPanel {
    private Inspector inspector_;
 
+   // Maps displays to the histograms for those displays. We need one histogram
+   // for every channel in every open display window, so that they can link
+   // between each other correctly.
+   // TODO: this is potentially inefficient in the use case where there are
+   // multiple Inspector windows open, as each will have a complete set of
+   // histograms. Make this a static singleton, maybe?
    private HashMap<DisplayWindow, ArrayList<ChannelControlPanel>> displayToPanels_;
+   // The current active (displayed) set of histograms.
    private ArrayList<ChannelControlPanel> channelPanels_;
    private Datastore store_;
-   private DisplayWindow display_;
+   private DefaultDisplayWindow display_;
    private MMVirtualStack stack_;
    private ImagePlus ijImage_;
    private Timer histogramUpdateTimer_;
@@ -75,6 +95,23 @@ public final class HistogramsPanel extends InspectorPanel implements Histograms 
       super();
       setMinimumSize(new java.awt.Dimension(280, 0));
       displayToPanels_ = new HashMap<DisplayWindow, ArrayList<ChannelControlPanel>>();
+      // Populate displayToPanels now.
+      for (DisplayWindow display : DefaultDisplayManager.getInstance().getAllImageWindows()) {
+         setupDisplay(display);
+      }
+      DefaultEventManager.getInstance().registerForEvents(this);
+   }
+
+   // Create a list of histograms for the display, and register to it and its
+   // datastore for events.
+   private void setupDisplay(DisplayWindow display) {
+      displayToPanels_.put(display, new ArrayList<ChannelControlPanel>());
+      // Check the display to see how many histograms it needs at the start.
+      for (int i = 0; i < display.getDatastore().getAxisLength(Coords.CHANNEL); ++i) {
+         addPanel((DefaultDisplayWindow) display, i);
+      }
+      display.registerForEvents(this);
+      display.getDatastore().registerForEvents(this);
    }
 
    /**
@@ -92,28 +129,26 @@ public final class HistogramsPanel extends InspectorPanel implements Histograms 
       }
 
       setLayout(new MigLayout("flowy, fillx, insets 0"));
-      // If available, re-use existing panels.
-      if (displayToPanels_.containsKey(display_)) {
-         channelPanels_ = displayToPanels_.get(display_);
-      }
-      else {
-         channelPanels_ = new ArrayList<ChannelControlPanel>();
-      }
-      // Create new ChannelControlPanels as needed.
-      for (int i = 0; i < nChannels; ++i) {
-         if (channelPanels_.size() <= i) {
-            ChannelControlPanel panel = new ChannelControlPanel(i, this,
-                  store_, display_, stack_, ijImage_);
-            channelPanels_.add(panel);
-         }
-         add(channelPanels_.get(i), "grow, gap 0");
+      channelPanels_ = displayToPanels_.get(display_);
+      for (ChannelControlPanel panel : channelPanels_) {
+         add(panel, "grow, gap 0");
       }
 
       validate();
       inspector_.relayout();
-      displayToPanels_.put(display_, channelPanels_);
    }
-   
+
+   private void addPanel(DefaultDisplayWindow display, int channelIndex) {
+      ChannelControlPanel panel = new ChannelControlPanel(channelIndex, this,
+            display.getDatastore(), display, display.getStack(),
+            display.getImagePlus());
+      displayToPanels_.get(display).add(panel);
+      if (display == display_) {
+         // Also add the panel to our contents.
+         add(panel, "grow, gap 0");
+      }
+   }
+
    public synchronized void fullScaleChannels() {
       if (channelPanels_ == null) {
          return;
@@ -123,16 +158,6 @@ public final class HistogramsPanel extends InspectorPanel implements Histograms 
       }
       display_.postEvent(new LUTUpdateEvent(null, null, null));
       display_.postEvent(new DefaultRequestToDrawEvent());
-   }
-
-   @Override
-   public synchronized ContrastSettings getChannelContrastSettings(int channel) {
-      if (channelPanels_ == null || channelPanels_.size() - 1 > channel) {
-         return null;
-      }
-      ChannelControlPanel panel = channelPanels_.get(channel);
-      return new ContrastSettings(panel.getContrastMin(),
-              panel.getContrastMax(), panel.getContrastGamma());
    }
 
    public synchronized void updateOtherDisplayCombos(int selectedIndex) {
@@ -146,35 +171,6 @@ public final class HistogramsPanel extends InspectorPanel implements Histograms 
       updatingCombos_ = false;
    }
 
-   public synchronized void setChannelDisplayModeFromFirst() {
-      if (channelPanels_ == null || channelPanels_.size() <= 1) {
-         return;
-      }
-      int displayIndex = channelPanels_.get(0).getDisplayComboIndex();
-      //automatically syncs other channels
-      channelPanels_.get(0).setDisplayComboIndex(displayIndex);
-   }
-
-   public synchronized void setChannelContrastFromFirst() {
-      if (channelPanels_ == null || channelPanels_.size() <= 1) {
-         return;
-      }
-      int min = channelPanels_.get(0).getContrastMin();
-      int max = channelPanels_.get(0).getContrastMax();
-      double gamma = channelPanels_.get(0).getContrastGamma();
-      display_.postEvent(new LUTUpdateEvent(min, max, gamma));
-      display_.postEvent(new DefaultRequestToDrawEvent());
-   }
-
-   @Override
-   public synchronized void setChannelHistogramDisplayMax(int channelIndex, int histMax) {
-      if (channelPanels_ == null || channelPanels_.size() <= channelIndex) {
-         return;
-      }
-      int index = (int) (histMax == -1 ? 0 : Math.ceil(Math.log(histMax) / Math.log(2)) - 3);
-      channelPanels_.get(channelIndex).setDisplayComboIndex(index);
-   }
-
    public boolean amInCompositeMode() {
       return ((ijImage_ instanceof CompositeImage) &&
             ((CompositeImage) ijImage_).getMode() != CompositeImage.COMPOSITE);
@@ -182,33 +178,6 @@ public final class HistogramsPanel extends InspectorPanel implements Histograms 
 
    public boolean amMultiChannel() {
       return (ijImage_ instanceof CompositeImage);
-   }
-
-   @Override
-   public synchronized void setChannelContrast(int channelIndex, int min, int max, double gamma) {
-      if (channelIndex >= channelPanels_.size()) {
-         return;
-      }
-      channelPanels_.get(channelIndex).setContrast(min, max, gamma);
-   }
-   
-   @Override
-   public synchronized void autoscaleAllChannels() {
-      if (channelPanels_ != null && channelPanels_.size() > 0) {
-         for (ChannelControlPanel panel : channelPanels_) {
-            panel.autoButtonAction();
-         }
-      }
-   }
-
-   @Override
-   public synchronized void rejectOutliersChangeAction() {
-      if (channelPanels_ != null && channelPanels_.size() > 0) {
-         for (ChannelControlPanel panel : channelPanels_) {
-            panel.calcAndDisplayHistAndStats(true);
-            panel.autoButtonAction();
-         }
-      }
    }
 
    private double getHistogramUpdateRate() {
@@ -220,7 +189,6 @@ public final class HistogramsPanel extends InspectorPanel implements Histograms 
       return settings.getHistogramUpdateRate();
    }
 
-   @Override
    public synchronized void calcAndDisplayHistAndStats() {
       if (channelPanels_ == null) {
          return;
@@ -262,70 +230,75 @@ public final class HistogramsPanel extends InspectorPanel implements Histograms 
       }
    }
 
-   @Override
-   public synchronized void autostretch() {
-      if (channelPanels_ != null) {
-         for (ChannelControlPanel panel : channelPanels_) {
-            panel.autostretch();
-         }
-      }
-   }
-
-   @Override
-   public synchronized int getNumberOfChannels() {
-      return channelPanels_.size();
-   }
-
-   public void setImagePlus(ImagePlus ijImage) {
-      ijImage_ = ijImage;
-      setupChannelControls();
-   }
-
    @Subscribe
    public synchronized void onNewImage(NewImageEvent event) {
-      if (event.getImage().getCoords().getIndex("channel") >= channelPanels_.size()) {
-         // Need to add a new channel histogram.
-         setupChannelControls();
+      // Make certain we have enough histograms for the relevant display(s).
+      Datastore store = event.getDatastore();
+      List<DisplayWindow> displays = DisplayGroupManager.getDisplaysForDatastore(store);
+      for (DisplayWindow display : displays) {
+         ArrayList<ChannelControlPanel> panels = displayToPanels_.get(display);
+         if (display.getDatastore() == store) {
+            while (event.getImage().getCoords().getIndex("channel") >= panels.size()) {
+               // Need to add a new channel histogram. Note that this will modify
+               // the "panels" object's length, incrementing the value returned by
+               // panels.size() here and ensuring the while loop continues.
+               addPanel((DefaultDisplayWindow) display, panels.size());
+            }
+         }
       }
    }
 
    @Subscribe
    public void onPixelsSet(PixelsSetEvent event) {
-      calcAndDisplayHistAndStats();
+      if (event.getDisplay() == display_) {
+         calcAndDisplayHistAndStats();
+      }
    }
 
+   // A new display has arrived, so we need to start tracking its histograms.
    @Subscribe
-   public void onNewImagePlus(NewImagePlusEvent event) {
-      try {
-         setImagePlus(event.getImagePlus());
-      }
-      catch (Exception e) {
-         ReportingUtils.logError(e, "Failed to set new ImagePlus");
-      }
+   public synchronized void onNewDisplay(DisplayAboutToShowEvent event) {
+      setupDisplay(event.getDisplay());
    }
 
    @Subscribe
    public synchronized void onDisplayDestroyed(DisplayDestroyedEvent event) {
+      DisplayWindow display = event.getDisplay();
+      if (!displayToPanels_.containsKey(display)) {
+         // This should never happen.
+         ReportingUtils.logError("Got notified of a display being destroyed when we don't know about that display");
+         return;
+      }
       try {
-         for (ChannelControlPanel panel : channelPanels_) {
+         ArrayList<ChannelControlPanel> panels = displayToPanels_.get(display);
+         for (ChannelControlPanel panel : panels) {
             panel.cleanup();
          }
+         display.unregisterForEvents(this);
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Error during histograms cleanup");
       }
+      // If that was the last display for that datastore, then we should also
+      // unregister to that datastore.
+      displayToPanels_.remove(display);
+      boolean shouldKeep = false;
+      for (DisplayWindow alt : displayToPanels_.keySet()) {
+         if (alt.getDatastore() == display.getDatastore()) {
+            shouldKeep = true;
+         }
+      }
+      if (!shouldKeep) {
+         // Couldn't find any other displays using that datastore.
+         display.getDatastore().unregisterForEvents(this);
+      }
    }
 
    @Override
-   public void setDisplay(DisplayWindow display) {
-      if (display_ != null) {
-         display_.unregisterForEvents(this);
-      }
-      display_ = display;
-      display_.registerForEvents(this);
+   public synchronized void setDisplay(DisplayWindow display) {
+      display_ = (DefaultDisplayWindow) display;
       store_ = display_.getDatastore();
-      store_.registerForEvents(this);
-      stack_ = ((DefaultDisplayWindow) display_).getStack();
+      stack_ = display_.getStack();
       ijImage_ = display_.getImagePlus();
       setupChannelControls();
    }
@@ -333,5 +306,18 @@ public final class HistogramsPanel extends InspectorPanel implements Histograms 
    @Override
    public void setInspector(Inspector inspector) {
       inspector_ = inspector;
+   }
+
+   @Override
+   public synchronized void cleanup() {
+      DefaultEventManager.getInstance().unregisterForEvents(this);
+      HashSet<Datastore> stores = new HashSet<Datastore>();
+      for (DisplayWindow display : displayToPanels_.keySet()) {
+         display.unregisterForEvents(this);
+         stores.add(display.getDatastore());
+      }
+      for (Datastore store : stores) {
+         store.unregisterForEvents(this);
+      }
    }
 }

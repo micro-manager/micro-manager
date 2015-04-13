@@ -222,7 +222,7 @@ public class MetadataPanel extends InspectorPanel {
    }
 
    @Override
-   public void setDisplay(DisplayWindow display) {
+   public synchronized void setDisplay(DisplayWindow display) {
       if (display_ != null) {
          display_.unregisterForEvents(this);
       }
@@ -234,5 +234,12 @@ public class MetadataPanel extends InspectorPanel {
    @Override
    public void setInspector(Inspector inspector) {
       // We don't care.
+   }
+
+   @Override
+   public synchronized void cleanup() {
+      if (display_ != null) {
+         display_.unregisterForEvents(this);
+      }
    }
 }

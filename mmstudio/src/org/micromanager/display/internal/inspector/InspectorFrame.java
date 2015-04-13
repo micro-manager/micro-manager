@@ -147,14 +147,6 @@ public class InspectorFrame extends MMFrame implements Inspector {
       add(scroller);
       setVisible(true);
 
-      DefaultEventManager.getInstance().registerForEvents(this);
-      addWindowListener(new WindowAdapter() {
-         @Override
-         public void windowClosing(WindowEvent event) {
-            DefaultEventManager.getInstance().unregisterForEvents(this);
-         }
-      });
-
       panels_ = new ArrayList<InspectorPanel>();
       // Hard-coded initial panels.
       addPanel(CONTRAST_TITLE, new HistogramsPanel());
@@ -169,6 +161,17 @@ public class InspectorFrame extends MMFrame implements Inspector {
       }
 
       loadAndRestorePosition(0, 0);
+
+      DefaultEventManager.getInstance().registerForEvents(this);
+      addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowClosing(WindowEvent event) {
+            for (InspectorPanel panel : panels_) {
+               panel.cleanup();
+            }
+            DefaultEventManager.getInstance().unregisterForEvents(this);
+         }
+      });
    }
 
    /**

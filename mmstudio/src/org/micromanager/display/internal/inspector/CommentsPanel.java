@@ -212,4 +212,11 @@ public class CommentsPanel extends InspectorPanel {
    public void setInspector(Inspector inspector) {
       // We don't care.
    }
+
+   @Override
+   public synchronized void cleanup() {
+      if (display_ != null) {
+         display_.unregisterForEvents(this);
+      }
+   }
 }

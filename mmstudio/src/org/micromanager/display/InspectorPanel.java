@@ -42,4 +42,12 @@ public abstract class InspectorPanel extends JPanel {
     * @param display The newly-active DisplayWindow.
     */
    public abstract void setDisplay(DisplayWindow display);
+
+   /**
+    * Release resources and unregister for events, because the Inspector that
+    * this panel is a part of is about to be destroyed. For example, if your
+    * InspectorPanel is registered to a DisplayWindow's event system, then it
+    * needs to unregister in this method.
+    */
+   public abstract void cleanup();
 }

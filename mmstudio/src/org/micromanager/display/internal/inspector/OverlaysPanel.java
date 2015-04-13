@@ -145,12 +145,8 @@ class OverlaysPanel extends InspectorPanel {
       }
    }
 
-   public void cleanup() {
-      display_.unregisterForEvents(this);
-   }
-
    @Override
-   public void setDisplay(DisplayWindow display) {
+   public synchronized void setDisplay(DisplayWindow display) {
       if (display_ != null) {
          display_.unregisterForEvents(this);
       }
@@ -166,5 +162,12 @@ class OverlaysPanel extends InspectorPanel {
    @Override
    public void setInspector(Inspector inspector) {
       inspector_ = inspector;
+   }
+
+   @Override
+   public synchronized void cleanup() {
+      if (display_ != null) {
+         display_.unregisterForEvents(this);
+      }
    }
 }
