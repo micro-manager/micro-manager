@@ -46,6 +46,8 @@ import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
+import org.micromanager.asidispim.fit.Fitter;
+import org.micromanager.asidispim.fit.Fitter;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
@@ -168,7 +170,7 @@ public class AutofocusUtils {
             
             // Use array to store data so that we can expand to plotting multiple
             // data sets.  
-            XYSeries[] scoresToPlot = new XYSeries[1];
+            XYSeries[] scoresToPlot = new XYSeries[2];
             scoresToPlot[0] = new XYSeries(nrImages);
 
             boolean liveModeOriginally = false;
@@ -256,19 +258,16 @@ public class AutofocusUtils {
                   }
                }
                
-               // now find the position in the focus Score array with the highest score
-               // TODO: use more sophisticated analysis here
-               double highestScore = focusScores[0];
-               int highestIndex = 0;
-               for (int i = 1; i < focusScores.length; i++) {
-                  if (focusScores[i] > highestScore) {
-                     highestIndex = i;
-                     highestScore = focusScores[i];
-                  }
-               }
+               Fitter.FunctionType fitType = Fitter.FunctionType.Gaussian;
+               double[] fitParms = Fitter.fit(scoresToPlot[0], fitType, null);
+               bestScore = Fitter.getMaxX(scoresToPlot[0], fitType, fitParms);
+               int highestIndex = Fitter.getIndex(scoresToPlot[0], bestScore);
+               scoresToPlot[1] = Fitter.getFittedSeries(scoresToPlot[0], 
+                       fitType, fitParms);
+               
                // return the position of the galvo device associated with the 
                // highest focus score
-               bestScore = galvoStart + galvoStepSize * highestIndex;
+               // bestScore = galvoStart + galvoStepSize * highestIndex;
                
                // display the best scoring image in the snap/live window
                ImageProcessor bestIP = makeProcessor(imageStore[highestIndex]);
@@ -285,7 +284,7 @@ public class AutofocusUtils {
 
                if (debug) {
                   PlotUtils plotter = new PlotUtils(prefs_, "AutofocusUtils");
-                  boolean[] showSymbols = {true};
+                  boolean[] showSymbols = {true, false};
                   plotter.plotDataN("Focus curve", scoresToPlot, 
                           "Galvo position (degree)", "Score", showSymbols, false);
                }
