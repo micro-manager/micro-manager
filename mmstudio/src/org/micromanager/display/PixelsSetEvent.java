@@ -34,4 +34,12 @@ public interface PixelsSetEvent {
     * @return The most recently-drawn Image.
     */
    public Image getImage();
+
+   /**
+    * Provides the DisplayWindow in which the image was drawn; useful if you
+    * have a piece of code that listens for events from multiple
+    * DisplayWindows.
+    * @return The DisplayWindow in which the image was drawn.
+    */
+   public DisplayWindow getDisplay();
 }
