@@ -27,12 +27,15 @@ import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+
 import java.awt.Cursor;
 import java.util.concurrent.ExecutionException;
-import javax.swing.SwingWorker;
-import mmcorej.TaggedImage;
-import org.jfree.data.xy.XYSeries;
 
+import javax.swing.SwingWorker;
+
+import mmcorej.TaggedImage;
+
+import org.jfree.data.xy.XYSeries;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.api.ScriptInterface;
@@ -84,10 +87,10 @@ public class AutofocusUtils {
     * temporarily set the center position to the current position (but restore
     * the center position on exit).
     *
-    * @param caller - calling panel, used to restore settings after focussing
+    * @param caller - calling panel, used to restore settings after focusing
     * @param side - A or B
-    * @param centerAtCurrentZ - whether to focus around the current position, or
-    *                            around the middle set in the setup panel
+    * @param centerAtCurrentZ - whether to focus around the current position (true), or
+    *                            around the imaging center set in the setup panel (false)
     * @param sliceTiming - Data structure with current device timing setting
     * @param runAsynchronously - whether or not to run the function asynchronously
     *
@@ -122,8 +125,10 @@ public class AutofocusUtils {
             );
 
             String camera = devices_.getMMDevice(Devices.Keys.CAMERAA);
+            boolean usingDemoCam = devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA).equals(Devices.Libraries.DEMOCAM);
             if (side.equals(Devices.Sides.B)) {
                camera = devices_.getMMDevice(Devices.Keys.CAMERAB);
+               usingDemoCam = devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB).equals(Devices.Libraries.DEMOCAM);
             }
 
             final int nrImages = props_.getPropValueInteger(
@@ -147,7 +152,7 @@ public class AutofocusUtils {
             posUpdater_.pauseUpdates(true);
 
             // TODO: run this on its own thread
-            controller_.prepareControllerForAquisition(side,
+            controller_.prepareControllerForAquisition(
                     false, // no hardware timepoints
                     MultichannelModes.Keys.NONE,
                     false, // do not use channels
@@ -190,6 +195,16 @@ public class AutofocusUtils {
                if (liveModeOriginally) {
                   gui_.enableLiveMode(false);
                   gui_.getMMCore().waitForDevice(originalCamera);
+               }
+               // deal with shutter before starting acquisition
+               boolean autoShutter = gui_.getMMCore().getAutoShutter();
+               boolean shutterOpen = false;  // will read later
+               shutterOpen = gui_.getMMCore().getShutterOpen();
+               if (autoShutter) {
+                  gui_.getMMCore().setAutoShutter(false);
+                  if (!shutterOpen) {
+                     gui_.getMMCore().setShutterOpen(true);
+                  }
                }
                gui_.getMMCore().setCameraDevice(camera);
                if (debug) {
@@ -266,6 +281,16 @@ public class AutofocusUtils {
                   }
                }
                
+               // if we are using demo camera then add some extra time to let controller finish
+               // since we got images without waiting for controller to actually send triggers
+               if (usingDemoCam) {
+                  Thread.sleep(1000);
+               }
+               
+               // clean up shutter
+               gui_.getMMCore().setShutterOpen(shutterOpen);
+               gui_.getMMCore().setAutoShutter(autoShutter);
+               
                double[] fitParms = Fitter.fit(scoresToPlot[0], function, null);
                bestScore = Fitter.getMaxX(scoresToPlot[0], function, fitParms);
                int highestIndex = Fitter.getIndex(scoresToPlot[0], bestScore);
@@ -307,7 +332,7 @@ public class AutofocusUtils {
                      gui_.closeAcquisition(acqName);
                   }
 
-                  controller_.cleanUpAfterAcquisition(false, null, 0.0f, 0.0f);
+                  controller_.cleanUpControllerAfterAcquisition(1, side.toString(), false);
 
                   cameras_.setSPIMCamerasForAcquisition(false);
 
