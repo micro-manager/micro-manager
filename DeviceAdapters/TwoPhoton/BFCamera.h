@@ -89,4 +89,5 @@ private:
    int StartAcquiring();
    int StopAcquiring();
    void LogInterrupts();
+   int SignalWaitErrorInterpret(BFRC ret);
 };

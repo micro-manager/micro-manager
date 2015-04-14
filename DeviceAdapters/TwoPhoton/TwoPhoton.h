@@ -130,7 +130,6 @@ private:
 
    std::vector<ImgAccumulator> img_;
    unsigned int numChannels_;
-   bool slowStream_;
    int byteDepth_;
 
    std::vector<int> GetEnabledChannels() const {
@@ -145,14 +144,12 @@ private:
    friend class LiveThread;
    class LiveThread : public MMDeviceThreadBase {
       public:
-         LiveThread(BitFlowCamera* cam) : cam_(cam), stopRunning_(false), running_(false), streaming_(false), imageCounter_(0),
+         LiveThread(BitFlowCamera* cam) : cam_(cam), stopRunning_(false), running_(false), imageCounter_(0),
          numImages_(-1) {}
          ~LiveThread() {}
       
          bool IsRunning() {return running_;}
          void Abort();
-         void EnableStreaming(bool enable) {streaming_ = enable;}
-         bool isStreaming() {return streaming_;}
          void SetNumImages(long num) {numImages_ = num;}
 
          // thread procedure
@@ -162,7 +159,6 @@ private:
          BitFlowCamera* cam_;
          bool running_;
          bool stopRunning_;
-         bool streaming_;
          long imageCounter_;
          long numImages_;
    };
@@ -217,7 +213,6 @@ private:
    
    int ResizeImageBuffer();
    void GenerateSyntheticImage(void* buffer, unsigned width, unsigned height, unsigned depth, double exp);
-   int SnapImageCont();
    int GetChannelOffset(int index);
 
    void DeinterlaceBuffer(unsigned char* buf, int buferLength, unsigned rawWidth, bool warp);

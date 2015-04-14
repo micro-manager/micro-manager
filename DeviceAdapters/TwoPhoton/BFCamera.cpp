@@ -206,16 +206,12 @@ void BFCamera::LogInterrupts() {
 	core_->LogMessage(caller_,message, false );
 }
 
-const unsigned char* BFCamera::GetImageCont()
-{
+const unsigned char* BFCamera::GetImageCont() {
 	//this function returns the location of the buffer that the bitflow boards are DMAing data into,
 	//The boards will continue to overwrite data at this location, so the only way to guarantee
 	//frames aren't lost is if copying data from this buffer is a lot faster than Bitflow can DMA
 	if (!initialized_ || boards_.empty())
 		return 0;
-
-
-
 
 	//Like CiSignalWait, this function waits efficiently for an interrupt. However, this version
 	//always ignores any interrupts that might have occurred since it was called last, and
@@ -229,11 +225,8 @@ const unsigned char* BFCamera::GetImageCont()
 		//---For this reason, creat and start the signals on initialization of the camera, to eliminate the possibility of 
 		//unneccesary waiting at the start of acq
 
-		//if (i==0)
-		//	continue;
-
 		//char message[200];
-		//strcpy(message,"Interrupts before wait for channel ");
+		//strcpy(message,"interrupts before wait for channel ");
 		//strcat(message,  CDeviceUtils::ConvertToString(i));
 		//core_->LogMessage(caller_,message, false );
 		//LogInterrupts();
@@ -247,26 +240,31 @@ const unsigned char* BFCamera::GetImageCont()
 		//core_->LogMessage(caller_,message2, false );
 		//LogInterrupts();
 
-
-
-		if (ret != BF_OK) {
-			if (ret == CISYS_ERROR_BAD_BOARDPTR){ 
-				core_->LogMessage(caller_,"BF Get image error: An invalid board handle was passed to the function",false);	
-			} else if (ret == BF_SIGNAL_TIMEOUT) { 
-				core_->LogMessage(caller_,"BF Get image error: Timeout has expired before interrupt occurred",false);
-			} else if (ret == BF_SIGNAL_CANCEL ) {
-				core_->LogMessage(caller_,"BF Get image error: Signal was canceled by another thread (see CiSignalCancel)",false);	
-			} else if (ret == BF_BAD_SIGNAL ) {
-				core_->LogMessage(caller_,"BF Get image error: Signal has not been created correctly or was not created for this board",false);	
-			} else if (ret == BF_WAIT_FAILED) { 
-				core_->LogMessage(caller_,"BF Get image error: Operating system killed the signal",false);	
-			} else {
-				core_->LogMessage(caller_,"BF Get image error: unknown error",false);			
-			}
+		if (SignalWaitErrorInterpret(ret) == 0) {
 			return 0;
 		}
 	}
 	return buf_;
+}
+
+int BFCamera::SignalWaitErrorInterpret(BFRC ret) {
+	if (ret != BF_OK) {
+		if (ret == CISYS_ERROR_BAD_BOARDPTR){ 
+			core_->LogMessage(caller_,"BF Get image error: An invalid board handle was passed to the function",false);	
+		} else if (ret == BF_SIGNAL_TIMEOUT) { 
+			core_->LogMessage(caller_,"BF Get image error: Timeout has expired before interrupt occurred",false);
+		} else if (ret == BF_SIGNAL_CANCEL ) {
+			core_->LogMessage(caller_,"BF Get image error: Signal was canceled by another thread (see CiSignalCancel)",false);	
+		} else if (ret == BF_BAD_SIGNAL ) {
+			core_->LogMessage(caller_,"BF Get image error: Signal has not been created correctly or was not created for this board",false);	
+		} else if (ret == BF_WAIT_FAILED) { 
+			core_->LogMessage(caller_,"BF Get image error: Operating system killed the signal",false);	
+		} else {
+			core_->LogMessage(caller_,"BF Get image error: unknown error",false);			
+		}
+		return 0;
+	}
+	return 1;
 }
 
 int BFCamera::StartAcquiring() {
@@ -306,17 +304,28 @@ int BFCamera::StopAcquiring() {
 	if (!isAcquiring())
 		return DEVICE_OK;
 
-	for (unsigned i=0; i<boards_.size(); i++) {
+	//CiConFreeze - stop acquiring at the end of the current frame. If in between
+	//frames, do not acquire any more frames.
+	for (int i=0; i<boards_.size(); i++) {
 		//could call CIConAsync instead of wait to return quicker and end snapimage sooner,
-		//but what would happen if tried to start acquiring again before frame ended, as unlikely as that seems...
-		//BFRC ret = CiAqCommand(boards_[i], CiConFreeze, CiConWait, CiQTabBank0, AqEngJ);
-		BFRC ret = CiAqCommand(boards_[i], CiConFreeze, CiConAsync, CiQTabBank0, AqEngJ);
-		if (ret != BF_OK)
-		{
+		//but what would happen if tried to start acquiring again before frame ended, as unlikely as that seems...		
+		//-Async return right away before interrupts accuulate, as expected
+		//-Wait doesnt introduce a delay if frames go directly into circular buffer, so use it to be safe
+		BFRC ret = CiAqCommand(boards_[i], CiConFreeze, CiConWait, CiQTabBank0, AqEngJ);
+		//BFRC ret = CiAqCommand(boards_[i], CiConFreeze, CiConAsync, CiQTabBank0, AqEngJ);
+
+		//char message[200];
+		//strcpy(message,"interrupts after closing channel ");
+		//strcat(message,  CDeviceUtils::ConvertToString(i));
+		//core_->LogMessage(caller_,message, false );
+		//LogInterrupts();
+		if (ret != BF_OK) {
 			acquiring_ = false;
 			return ret; // returning immediately, but what about remaining boards?
 		}
 	}
+
+
 	acquiring_ = false;
 	return DEVICE_OK;
 }

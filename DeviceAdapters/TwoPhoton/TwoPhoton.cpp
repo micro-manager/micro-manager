@@ -50,7 +50,6 @@ const char* g_PropertyIntervalMs = "FrameIntervalMs";
 const char* g_PropertyProcessingTimeMs = "ProcessingTimeMs";
 const char* g_PropertyCenterOffset = "CenterOffset";
 const char* g_PropertyChannelOffset = "ChannelOffsets";
-const char* g_PropertySlow = "SlowStreaming";
 const char* g_PropertyEnableChannels = "EnableChannels";
 const char* g_PropertyUseBitflowChannels = "EnableBitflowChannels";
 
@@ -119,7 +118,6 @@ BitFlowCamera::BitFlowCamera(bool dual) :
    rawFramesToCircularBuffer_(false),
    frameOffset_(0),
    channelOffsets_(0),
-   slowStream_(false),
    bfDev_(dual),
    byteDepth_(1)
 {
@@ -261,17 +259,6 @@ int BitFlowCamera::Initialize()
    pAct = new CPropertyAction (this, &BitFlowCamera::OnEnableChannels);
    ret = CreateProperty(g_PropertyEnableChannels, "11111111", MM::String, false, pAct);
    assert(ret == DEVICE_OK);
-
-   // slow stream
-   ret = CreateProperty(g_PropertySlow, g_Off, MM::String, false);
-   assert(ret == DEVICE_OK);
-   vector<string> slowValues;
-   slowValues.push_back(g_Off);
-   slowValues.push_back(g_On);
-   ret = SetAllowedValues(g_PropertySlow, slowValues);
-   if (ret != DEVICE_OK)
-      return ret;
-
    
    // synchronize all properties
    // --------------------------
@@ -369,6 +356,9 @@ int BitFlowCamera::SnapImage()
 				if (ret == DEVICE_BUFFER_OVERFLOW) {
 					GetCoreCallback()-> LogMessage(this, "BitFlow snapImage: device buffer overflow", false);
 					return DEVICE_ERR;
+				} else if (ret == DEVICE_INCOMPATIBLE_IMAGE) {
+					GetCoreCallback()-> LogMessage(this, "BitFlow thread: wrong image size for circular buffer insert", false);
+					return DEVICE_ERR;			
 				} else if (ret != DEVICE_OK) {
 					GetCoreCallback()-> LogMessage(this, "BitFlow thread: error inserting image", false);
 					return DEVICE_ERR;
@@ -390,51 +380,6 @@ int BitFlowCamera::SnapImage()
    channelsProcessed_ = false;
    //return here so that shutter closes ASAP
    //Do frame averaging/rank filtering later once shutter closed
-   return DEVICE_OK;
-}
-
-/**
- * Continuous acqusition frame grab.
- * Intended for live video, performs frame integration
- */
-int BitFlowCamera::SnapImageCont()
-{
-   if (expNumFrames_ <= 0)
-      return DEVICE_OK;
-
-   // clear all accumulators (set to zero)
-   for (unsigned j=0; j<img_.size(); j++)
-	   img_[j].ResetPixels();
-   
-
-   if (!bfDev_.isInitialized())
-	   return ERR_HARDWARE_NOT_INITIALIZED;
-
-   for (int k=0; k<expNumFrames_; k++) {
-	   unsigned char* buf = const_cast<unsigned char*>(bfDev_.GetImageCont());
-
-	   if (buf == 0)
-		   return ERR_SNAP_FAILED;
-
-	   unsigned bufLen = bfDev_.GetBufferSize();
-
-	   if (deinterlace_){
-		   // de-interlace, re-size and correct image
-		   DeinterlaceBuffer(buf, bufLen, bfDev_.Width(), cosineWarp_);
-	   } else {
-		   for (unsigned i=0; i<img_.size(); i++)
-			   img_[i].AddPixels(buf + i*bufLen+GetChannelOffset(i) + BFCamera::MAX_FRAME_OFFSET, bfDev_.Width(), roi_.x, roi_.y);
-	   }
-
-
-	   for (unsigned i=0; i<img_.size(); i++)
-		   img_[i].CalculateOutputImage(); // average or rank filter
-   }
-
-   MM::MMTime end = GetCoreCallback()->GetCurrentMMTime();
-   intervalMs_ = (end - startTime_).getMsec();
-   startTime_ = end;
-
    return DEVICE_OK;
 }
 
@@ -630,8 +575,7 @@ int BitFlowCamera::SetBinning(int binFactor)
    return DEVICE_OK;
 }
 
-int BitFlowCamera::StartSequenceAcquisition(long numImages, double, bool)
-{
+int BitFlowCamera::StartSequenceAcquisition(long numImages, double, bool){
    if (IsCapturing())
       return DEVICE_CAMERA_BUSY_ACQUIRING;
 
@@ -645,7 +589,6 @@ int BitFlowCamera::StartSequenceAcquisition(long numImages, double, bool)
 
    startTime_ = GetCurrentMMTime();
 
-   liveThd_->EnableStreaming(true);
    liveThd_->SetNumImages(numImages);
    startTime_ = GetCoreCallback()->GetCurrentMMTime();
    liveThd_->activate();
@@ -660,7 +603,6 @@ int BitFlowCamera::StartSequenceAcquisition(double ) {
    // this will open the shutter
    GetCoreCallback()->PrepareForAcq(this);
 
-   liveThd_->EnableStreaming(false);
    liveThd_->SetNumImages(-1);
 
    startTime_ = GetCoreCallback()->GetCurrentMMTime();
@@ -1046,22 +988,14 @@ int BitFlowCamera::LiveThread::svc()
    running_ = true;
    imageCounter_ = 0;
 
- //  bool slow = cam_->IsPropertyEqualTo(g_PropertySlow, g_On);
-
    // put the hardware into a continuous acqusition state
    while (true)  {
       if (stopRunning_)
          break;
 
-      int ret = 0;
+      int ret = cam_->SnapImage();
 
-      if (streaming_)
-         ret = cam_->SnapImageCont();
-      else
-         ret = cam_->SnapImage();
-
-      if (ret != DEVICE_OK)
-      {
+      if (ret != DEVICE_OK) {
          char txt[1000];
          sprintf(txt, "BitFlow live thread: ImageSnap() error %d", ret);
          cam_->GetCoreCallback()->LogMessage(cam_, txt, false);
@@ -1088,81 +1022,44 @@ int BitFlowCamera::LiveThread::svc()
 	  mstCount.SetValue(CDeviceUtils::ConvertToString(imageCounter_));
 	  md.SetTag(mstCount);
 
-	  if (streaming_) {
-		  // insert all enabled channels
-		  for (unsigned i=0; i<cam_->GetNumberOfChannels(); i++)
-		  {
-			  char buf[MM::MaxStrLength];
-			  MetadataSingleTag mstChannel(MM::g_Keyword_CameraChannelIndex, label, true);
-			  snprintf(buf, MM::MaxStrLength, "%d", i);
-			  mstChannel.SetValue(buf);
-			  md.SetTag(mstChannel);
 
-			  MetadataSingleTag mstChannelName(MM::g_Keyword_CameraChannelName, label, true);
-			  cam_->GetChannelName(i, buf);
-			  mstChannelName.SetValue(buf);
-			  md.SetTag(mstChannelName);
-			  ret = cam_->GetCoreCallback()->InsertImage(cam_, cam_->GetImageBuffer(i),
+	  // insert all channels
+	  for (unsigned i=0; i<cam_->GetNumberOfChannels(); i++)
+	  {
+		  char buf[MM::MaxStrLength];
+		  MetadataSingleTag mstChannel(MM::g_Keyword_CameraChannelIndex, label, true);
+		  snprintf(buf, MM::MaxStrLength, "%d", i);
+		  mstChannel.SetValue(buf);
+		  md.SetTag(mstChannel);
+
+		  MetadataSingleTag mstChannelName(MM::g_Keyword_CameraChannelName, label, true);
+		  cam_->GetChannelName(i, buf);
+		  mstChannelName.SetValue(buf);
+		  md.SetTag(mstChannelName);
+
+
+		  ret = cam_->GetCoreCallback()->InsertImage(cam_, cam_->GetImageBuffer(i),
+			  cam_->GetImageWidth(),
+			  cam_->GetImageHeight(),
+			  cam_->GetImageBytesPerPixel(),
+			  md.Serialize().c_str());
+		  if (ret == DEVICE_BUFFER_OVERFLOW) {
+			  cam_->GetCoreCallback()->ClearImageBuffer(cam_);
+			  cam_->GetCoreCallback()->InsertImage(cam_, cam_->GetImageBuffer(i),
 				  cam_->GetImageWidth(),
 				  cam_->GetImageHeight(),
 				  cam_->GetImageBytesPerPixel(),
 				  md.Serialize().c_str());
-			  if (ret == DEVICE_BUFFER_OVERFLOW)
-			  {
-				  cam_->GetCoreCallback()->ClearImageBuffer(cam_);
-				  cam_->GetCoreCallback()->InsertImage(cam_, cam_->GetImageBuffer(i),
-					  cam_->GetImageWidth(),
-					  cam_->GetImageHeight(),
-					  cam_->GetImageBytesPerPixel(),
-					  md.Serialize().c_str());
-			  }
-			  else if (ret != DEVICE_OK)
-			  {
-				  cam_->GetCoreCallback()->LogMessage(cam_, "BitFlow thread: error inserting image", false);
-				  break;
-			  }
 		  }
-	  } else {
-		  // insert all channels
-		  for (unsigned i=0; i<cam_->GetNumberOfChannels(); i++)
-		  {
-			  char buf[MM::MaxStrLength];
-			  MetadataSingleTag mstChannel(MM::g_Keyword_CameraChannelIndex, label, true);
-			  snprintf(buf, MM::MaxStrLength, "%d", i);
-			  mstChannel.SetValue(buf);
-			  md.SetTag(mstChannel);
-
-			  MetadataSingleTag mstChannelName(MM::g_Keyword_CameraChannelName, label, true);
-			  cam_->GetChannelName(i, buf);
-			  mstChannelName.SetValue(buf);
-			  md.SetTag(mstChannelName);
-
-
-			  ret = cam_->GetCoreCallback()->InsertImage(cam_, cam_->GetImageBuffer(i),
-				  cam_->GetImageWidth(),
-				  cam_->GetImageHeight(),
-				  cam_->GetImageBytesPerPixel(),
-				  md.Serialize().c_str());
-			  if (ret == DEVICE_BUFFER_OVERFLOW)
-			  {
-				  cam_->GetCoreCallback()->ClearImageBuffer(cam_);
-				  cam_->GetCoreCallback()->InsertImage(cam_, cam_->GetImageBuffer(i),
-					  cam_->GetImageWidth(),
-					  cam_->GetImageHeight(),
-					  cam_->GetImageBytesPerPixel(),
-					  md.Serialize().c_str());
-			  }
-			  else if (ret != DEVICE_OK)
-			  {
-				  cam_->GetCoreCallback()->LogMessage(cam_, "BitFlow thread: error inserting image", false);
-				  break;
-			  }
+		  else if (ret != DEVICE_OK) {
+			  cam_->GetCoreCallback()->LogMessage(cam_, "BitFlow thread: error inserting image", false);
+			  break;
 		  }
 	  }
 
+
       imageCounter_++;
-      if (numImages_ >=0 && imageCounter_ >= numImages_)
-      {
+      if (numImages_ >=0 && imageCounter_ >= numImages_) {
          cam_->bfDev_.StopContinuousAcq();
          break;
       }
@@ -1171,8 +1068,7 @@ int BitFlowCamera::LiveThread::svc()
    return 0;
 }
 
-void BitFlowCamera::LiveThread::Abort()
-{
+void BitFlowCamera::LiveThread::Abort() {
    stopRunning_ = true;
    wait();
 }
@@ -1203,7 +1099,7 @@ void BitFlowCamera::GetCosineWarpLUT(vector<int> &new_pixel, int image_width, in
    int old_pixel;
 	int pixel;
 	int center_pixel;
-   //char ch;
+
 
    /* image width in pixels after pixel reversal routine
       half value in H_Max_Capture_size in MU Tech Driver file
@@ -1307,9 +1203,10 @@ void BitFlowCamera::GetCosineWarpLUT(vector<int> &new_pixel, int image_width, in
 /**
  * Get offset specific to channel
  */
-int BitFlowCamera::GetChannelOffset(int index)
-{
-	return frameOffset_ + (channelOffsets_[index] / 2);
+int BitFlowCamera::GetChannelOffset(int index) {
+
+	int offset = frameOffset_ + (channelOffsets_[index] / 2);
+	return offset;
 }
 
 /**
