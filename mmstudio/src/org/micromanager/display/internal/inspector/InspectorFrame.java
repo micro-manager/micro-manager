@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -103,6 +104,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
    private ArrayList<InspectorPanel> panels_;
    private JPanel contents_;
    private JComboBox displayChooser_;
+   private JButton raiseButton_;
    private JLabel curDisplayTitle_;
 
    public InspectorFrame(DisplayWindow display) {
@@ -131,10 +133,28 @@ public class InspectorFrame extends MMFrame implements Inspector {
                // option.
                setDisplay(item.getDisplay());
             }
+            // Show the raise button only if the "topmost display" option
+            // isn't set.
+            raiseButton_.setVisible(item.getDisplay() != null);
          }
       });
-      contents_.add(new JLabel("Show info for:"), "flowx, split 2");
+
+      // Add a button for raising the currently-selected display to the top.
+      // This button is only shown if the "topmost display" option is *not*
+      // selected.
+      raiseButton_ = new JButton("Raise");
+      raiseButton_.setToolTipText("Bring the selected window to the front");
+      raiseButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            display_.toFront();
+         }
+      });
+      raiseButton_.setVisible(false);
+
+      contents_.add(new JLabel("Show info for:"), "flowx, split 3");
       contents_.add(displayChooser_);
+      contents_.add(raiseButton_);
 
       curDisplayTitle_ = new JLabel("");
       curDisplayTitle_.setVisible(false);
