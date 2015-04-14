@@ -104,7 +104,6 @@ import java.awt.geom.Point2D;
 
 import javax.swing.BorderFactory;
 
-
 import org.micromanager.asidispim.Data.ChannelSpec;
 import org.micromanager.asidispim.Utils.ControllerUtils;
 import org.micromanager.asidispim.Utils.AutofocusUtils;
@@ -1273,11 +1272,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @param hardwareTimepoints
     * @return false if there was some error that should abort acquisition
     */
-   private boolean prepareControllerForAquisition(Devices.Sides side, 
-           boolean hardwareTimepoints) {
+   private boolean prepareControllerForAquisition(boolean hardwareTimepoints) {
       
       return controller_.prepareControllerForAquisition(
-              side, 
               hardwareTimepoints, 
               getChannelMode(),
               isMultichannel(),
@@ -1572,6 +1569,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return false;
       }
       
+      // initialize stage scanning so we can restore state
       Point2D.Double xyPosUm = new Point2D.Double();
       if (isStageScanning()) {
          try {
@@ -1595,23 +1593,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // Set up controller SPIM parameters (including from Setup panel settings)
       // want to do this, even with demo cameras, so we can test everything else
-      if (sideActiveA) {
-         boolean success = prepareControllerForAquisition(Devices.Sides.A, hardwareTimepoints);
-         if (! success) {
-            return false;
-         }
-      }
-      if (sideActiveB) {
-         boolean success = prepareControllerForAquisition(Devices.Sides.B, hardwareTimepoints);
-         if (! success) {
-            return false;
-         }
+      if (! prepareControllerForAquisition(hardwareTimepoints)) {
+         return false;
       }
       
       boolean nonfatalError = false;
       long acqButtonStart = System.currentTimeMillis();
 
-      // do not want to return from within this loop
+      // do not want to return from within this loop => throw exception instead
       // loop is executed once per acquisition (i.e. once if separate viewers isn't selected)
       for (int tp = 0; tp < nrRepeats; tp++) {
          BlockingQueue<TaggedImage> bq = new LinkedBlockingQueue<TaggedImage>(10);
@@ -1786,11 +1775,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
                         // trigger the state machine on the controller
                         // do this even with demo cameras to test everything else
-                        boolean success = 
-                              controller_.triggerControllerStartAcquisition(
+                        boolean success = controller_.triggerControllerStartAcquisition(
                                     spimMode, firstSideA);
                         if (!success) {
-                           return false;
+                           throw new Exception("Controller triggering not successful");
                         }
 
                         ReportingUtils.logDebugMessage("Starting time point " + (timePoint+1) + " of " + nrFrames
@@ -1954,8 +1942,22 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          multiChannelPanel_.setConfig(originalChannelConfig);
       }
       
-      controller_.cleanUpAfterAcquisition(isStageScanning(), xyPosUm, 0.0f, 0.0f);
-         
+      // clean up controller settings after acquisition
+      // want to do this, even with demo cameras, so we can test everything else
+      // TODO figure out if we really want to return piezos to 0 position (maybe center position,
+      //   maybe not at all since we move when we switch to setup tab, something else??)
+      controller_.cleanUpControllerAfterAcquisition(getNumSides(), getFirstSide(), true);
+      
+      if (isStageScanning()) {
+         try {
+            core_.setXYPosition(devices_.getMMDevice(Devices.Keys.XYSTAGE), 
+                    xyPosUm.x, xyPosUm.y);
+         } catch (Exception ex) {
+            MyDialogUtils.showError("Could not get XY stage position for stage scan initialization");
+            return false;
+         }
+      }
+      
       updateAcquisitionStatus(AcquisitionStatus.DONE);
       posUpdater_.pauseUpdates(false);
       
