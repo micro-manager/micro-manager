@@ -445,9 +445,10 @@ vector<string> QIDriver::AvailableCameras()
             
             char serial[SER_NUM_LEN];
             memset(serial, 0, sizeof(serial));
-            unsigned long serialNumber;
+#ifdef _WIN32
             if (cameras[i].cameraType == qcCameraGoBolt)
             {
+                unsigned long serialNumber;
                 err = QCam_GetInfo(camera, qinfSerialNumber, &serialNumber);
                 if (err == qerrSuccess) {
                    snprintf(serial, SER_NUM_LEN, "%u", serialNumber);
@@ -459,6 +460,7 @@ vector<string> QIDriver::AvailableCameras()
                }
             }
             else
+#endif
             {
                err = QCam_GetSerialString(camera, serial, sizeof(serial) -1);
                if (err == qerrSuccess) {
@@ -619,7 +621,6 @@ int QICamera::Initialize()
    char	               cameraIDStr[256];
    unsigned long	      ccdType;
    unsigned long	      cameraType;
-   unsigned long       serialNumber;
    int                 nRet;
 
    START_METHOD("QICamera::Initialize");
@@ -804,7 +805,10 @@ int QICamera::Initialize()
       }
 
       // CAMERA ID
-      if (cameraType == qcCameraGoBolt) {
+#ifdef _WIN32
+      if (cameraType == qcCameraGoBolt)
+      {
+          unsigned long serialNumber;
           err = QCam_GetInfo(m_camera, qinfSerialNumber, &serialNumber);
           if (err != qerrSuccess) {
              REPORT_QERR(err);
@@ -814,7 +818,9 @@ int QICamera::Initialize()
             snprintf(cameraStr, CAMERA_STRING_LENGTH, "%u", serialNumber);
          }
       }
-      else {
+      else
+#endif
+      {
       // get the camera serial string
          err = QCam_GetSerialString(m_camera, cameraStr, CAMERA_STRING_LENGTH);
          if (err != qerrSuccess) {
