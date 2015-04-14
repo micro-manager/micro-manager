@@ -38,18 +38,29 @@ import javax.swing.JTextField;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.data.Image;
+import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.OverlayPanel;
+import org.micromanager.PropertyMap;
 
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * This class provides a GUI for drawing a scale bar.
  */
 public class ScaleBarOverlayPanel extends OverlayPanel {
-   private static Color[] COLORS = new Color[] {
+   private static final String DRAW_TEXT = "scaleBarOverlay: whether or not to draw text";
+   private static final String IS_FILLED = "scaleBarOverlay: if the scale bar is drawn as solid";
+   private static final String COLOR = "scaleBarOverlay: color to draw everything";
+   private static final String X_OFFSET = "scaleBarOverlay: X offset at which to draw";
+   private static final String Y_OFFSET = "scaleBarOverlay: Y offset at which to draw";
+   private static final String SIZE = "scaleBarOverlay: size of scalebar in microns";
+   private static final String POSITION = "scaleBarOverlay: corner to draw in";
+
+   private static final Color[] COLORS = new Color[] {
       Color.black, Color.white, Color.gray, Color.yellow, Color.orange,
          Color.red, Color.magenta, Color.blue, Color.cyan, Color.green};
    // Would you believe this isn't built-in to the Color module? Naturally
@@ -59,7 +70,6 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
          "Blue", "Cyan", "Green"
    };
 
-   private JCheckBox shouldDraw_;
    private JCheckBox shouldDrawText_;
    private JCheckBox isBarFilled_;
    private JComboBox color_;
@@ -71,25 +81,22 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
    private boolean haveLoggedError_ = false;
    
    public ScaleBarOverlayPanel() {
-      ActionListener redrawListener = new ActionListener() {
+      ActionListener changeListener = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
+               saveSettings();
                redraw();
             }
       };
       setLayout(new MigLayout("flowy"));
 
-      shouldDraw_ = new JCheckBox("Draw scale bar");
-      shouldDraw_.addActionListener(redrawListener);
-      add(shouldDraw_);
-
       add(new JLabel("Color: "));
       color_ = new JComboBox(COLORNAMES);
-      color_.addActionListener(redrawListener);
+      color_.addActionListener(changeListener);
       add(color_);
 
       shouldDrawText_ = new JCheckBox("Show scale text");
-      shouldDrawText_.addActionListener(redrawListener);
+      shouldDrawText_.addActionListener(changeListener);
       add(shouldDrawText_);
 
       add(new JLabel("X offset: "), "split 2, flowx");
@@ -97,24 +104,25 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
       xOffset_.addKeyListener(new KeyAdapter() {
          @Override
          public void keyPressed(KeyEvent event) {
+            saveSettings();
             redraw();
          }
       });
       add(xOffset_, "wrap");
 
       isBarFilled_ = new JCheckBox("Solid scale bar");
-      isBarFilled_.addActionListener(redrawListener);
+      isBarFilled_.addActionListener(changeListener);
       add(isBarFilled_);
 
       add(new JLabel("Position: "));
       position_ = new JComboBox(new String[] {
             "Upper left", "Upper right", "Lower right", "Lower left"});
-      position_.addActionListener(redrawListener);
+      position_.addActionListener(changeListener);
       add(position_);
 
       add(new JLabel("Size (\u00B5m):"), "split 2, flowx");
       scaleSize_ = new JTextField("80", 3);
-      scaleSize_.addActionListener(redrawListener);
+      scaleSize_.addActionListener(changeListener);
       add(scaleSize_);
 
       add(new JLabel("Y offset: "), "split 2, flowx");
@@ -122,10 +130,34 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
       yOffset_.addKeyListener(new KeyAdapter() {
          @Override
          public void keyPressed(KeyEvent event) {
+            saveSettings();
             redraw();
          }
       });
       add(yOffset_);
+   }
+
+   /**
+    * Record our current settings in the DisplaySettings.
+    */
+   private void saveSettings() {
+      PropertyMap userData = display_.getDisplaySettings().getUserData();
+      PropertyMap.PropertyMapBuilder builder;
+      if (userData != null) {
+         builder = userData.copy();
+      }
+      else {
+         builder = MMStudio.getInstance().data().getPropertyMapBuilder();
+      }
+      builder.putInt(COLOR, color_.getSelectedIndex());
+      builder.putBoolean(DRAW_TEXT, shouldDrawText_.isSelected());
+      builder.putString(X_OFFSET, xOffset_.getText());
+      builder.putString(Y_OFFSET, yOffset_.getText());
+      builder.putBoolean(IS_FILLED, isBarFilled_.isSelected());
+      builder.putInt(POSITION, position_.getSelectedIndex());
+      builder.putString(SIZE, scaleSize_.getText());
+      DisplaySettings newSettings = display_.getDisplaySettings().copy().userData(builder.build()).build();
+      display_.setDisplaySettings(newSettings);
    }
 
    // Update our controls to reflect the settings stored in the DisplaySettings
@@ -135,46 +167,23 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
    @Override
    public void setDisplay(DisplayWindow display) {
       super.setDisplay(display);
-      DisplaySettings settings = display.getDisplaySettings();
-
-      if (settings.getShouldShowScaleBar() != null) {
-         shouldDraw_.setSelected(settings.getShouldShowScaleBar());
+      PropertyMap userData = display.getDisplaySettings().getUserData();
+      if (userData == null) {
+         // Start with blank data.
+         userData = MMStudio.getInstance().data().getPropertyMapBuilder().build();
       }
 
-      if (settings.getScaleBarColorIndex() != null) {
-         color_.setSelectedIndex(settings.getScaleBarColorIndex());
-      }
-
-      if (settings.getScaleBarShouldDrawText() != null) {
-         shouldDrawText_.setSelected(settings.getScaleBarShouldDrawText());
-      }
-
-      if (settings.getScaleBarOffsetX() != null) {
-         xOffset_.setText(String.valueOf(settings.getScaleBarOffsetX()));
-      }
-
-      if (settings.getScaleBarIsFilled() != null) {
-         isBarFilled_.setSelected(settings.getScaleBarIsFilled());
-      }
-
-      if (settings.getScaleBarLocationIndex() != null) {
-         position_.setSelectedIndex(settings.getScaleBarLocationIndex());
-      }
-
-      if (settings.getScaleBarSize() != null) {
-         scaleSize_.setText(settings.getScaleBarSize().toString());
-      }
-
-      if (settings.getScaleBarOffsetY() != null) {
-         yOffset_.setText(String.valueOf(settings.getScaleBarOffsetY()));
-      }
+      color_.setSelectedIndex(userData.getInt(COLOR, 0));
+      shouldDrawText_.setSelected(userData.getBoolean(DRAW_TEXT, true));
+      xOffset_.setText(userData.getString(X_OFFSET, "15"));
+      yOffset_.setText(userData.getString(Y_OFFSET, "15"));
+      isBarFilled_.setSelected(userData.getBoolean(IS_FILLED, true));
+      position_.setSelectedIndex(userData.getInt(POSITION, 0));
+      scaleSize_.setText(userData.getString(SIZE, "100"));
    }
 
    @Override
    public void drawOverlay(Graphics g, DisplayWindow display, Image image, ImageCanvas canvas) {
-      if (!shouldDraw_.isSelected()) {
-         return;
-      }
       Double pixelSize = image.getMetadata().getPixelSizeUm();
       if (pixelSize == null || Math.abs(pixelSize - 0) < .0001) {
          // No pixel size info available. Log an error message, once, and then
@@ -194,12 +203,16 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
 
       int width = (int) (pixelSize * scaleSize * canvas.getMagnification());
       g.setColor(COLORS[color_.getSelectedIndex()]);
-      int xOffset = 0, yOffset = 0;
+      int xOffset = 0;
       try {
          xOffset = Integer.parseInt(xOffset_.getText());
+      }
+      catch (NumberFormatException e) {} // Ignore it.
+      int yOffset = 0;
+      try {
          yOffset = Integer.parseInt(yOffset_.getText());
       }
-      catch (NumberFormatException e) {} // Just use what we have.
+      catch (NumberFormatException e) {} // Ignore it.
 
       String position = (String) position_.getSelectedItem();
       Dimension canvasSize = canvas.getPreferredSize();

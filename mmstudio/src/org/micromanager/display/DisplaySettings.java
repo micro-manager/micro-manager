@@ -57,14 +57,6 @@ public interface DisplaySettings {
       DisplaySettingsBuilder imageCoords(Coords imageCoords);
       DisplaySettingsBuilder histogramUpdateRate(Double histogramUpdateRate);
       DisplaySettingsBuilder shouldSyncChannels(Boolean shouldSyncChannels);
-      DisplaySettingsBuilder scaleBarColorIndex(Integer scaleBarColorIndex);
-      DisplaySettingsBuilder scaleBarLocationIndex(Integer scaleBarLocationIndex);
-      DisplaySettingsBuilder scaleBarShouldDrawText(Boolean shouldDrawText);
-      DisplaySettingsBuilder scaleBarSize(Double size);
-      DisplaySettingsBuilder scaleBarOffsetX(Integer scaleBarOffsetX);
-      DisplaySettingsBuilder scaleBarOffsetY(Integer scaleBarOffsetY);
-      DisplaySettingsBuilder scaleBarIsFilled(Boolean scaleBarIsFilled);
-      DisplaySettingsBuilder shouldShowScaleBar(Boolean shouldShowScaleBar);
       DisplaySettingsBuilder shouldAutostretch(Boolean shouldAutostretch);
       DisplaySettingsBuilder trimPercentage(Double trimPercentage);
       DisplaySettingsBuilder shouldUseLogScale(Boolean shouldUseLogScale);
@@ -102,27 +94,6 @@ public interface DisplaySettings {
    public Double getHistogramUpdateRate();
    /** Whether histogram settings should be synced across channels */
    public Boolean getShouldSyncChannels();
-   /** Controls the color of the scale bar overlay as an index into its
-     * color dropdown menu */
-   public Integer getScaleBarColorIndex();
-   /** Controls the position of the scale bar overlay as an index into its
-     * position dropdown menu */
-   public Integer getScaleBarLocationIndex();
-   /** If true, a text label indicating the size of the scale bar will be
-     * drawn (assuming the scale bar overlay is displayed) */
-   public Boolean getScaleBarShouldDrawText();
-   /** Size of the scale bar, in microns */
-   public Double getScaleBarSize();
-   /** How many pixels away from the left/right edge of the display to draw the
-     * scale bar overlay */
-   public Integer getScaleBarOffsetX();
-   /** How many pixels away from the top/bottom edge of the display to draw the
-     * scale bar overlay */
-   public Integer getScaleBarOffsetY();
-   /** Whether to draw the scale bar overlay as hollow or filled */
-   public Boolean getScaleBarIsFilled();
-   /** Whether to draw the scale bar overlay at all */
-   public Boolean getShouldShowScaleBar();
    /** Whether each newly-displayed image should be autostretched */
    public Boolean getShouldAutostretch();
    /** The percentage of values off the top and bottom of the image's value

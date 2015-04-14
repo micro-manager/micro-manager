@@ -70,22 +70,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
             DefaultDisplaySettings.class, "magnification", 1.0));
       builder.shouldSyncChannels(profile.getBoolean(
             DefaultDisplaySettings.class, "shouldSyncChannels", false));
-      builder.scaleBarColorIndex(profile.getInt(
-            DefaultDisplaySettings.class, "scaleBarColorIndex", 0));
-      builder.scaleBarLocationIndex(profile.getInt(
-            DefaultDisplaySettings.class, "scaleBarLocationIndex", 0));
-      builder.scaleBarShouldDrawText(profile.getBoolean(
-            DefaultDisplaySettings.class, "scaleBarShouldDrawText", true));
-      builder.scaleBarSize(profile.getDouble(
-            DefaultDisplaySettings.class, "scaleBarSize", 80.0));
-      builder.scaleBarOffsetX(profile.getInt(
-            DefaultDisplaySettings.class, "scaleBarOffsetX", 15));
-      builder.scaleBarOffsetY(profile.getInt(
-            DefaultDisplaySettings.class, "scaleBarOffsetY", 15));
-      builder.scaleBarIsFilled(profile.getBoolean(
-            DefaultDisplaySettings.class, "scaleBarIsFilled", true));
-      builder.shouldShowScaleBar(profile.getBoolean(
-            DefaultDisplaySettings.class, "shouldShowScaleBar", false));
       builder.shouldAutostretch(profile.getBoolean(
             DefaultDisplaySettings.class, "shouldAutostretch", true));
       builder.trimPercentage(profile.getDouble(
@@ -109,22 +93,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
             "magnification", settings.getMagnification());
       profile.setBoolean(DefaultDisplaySettings.class,
             "shouldSyncChannels", settings.getShouldSyncChannels());
-      profile.setInt(DefaultDisplaySettings.class,
-            "scaleBarColorIndex", settings.getScaleBarColorIndex());
-      profile.setInt(DefaultDisplaySettings.class,
-            "scaleBarLocationIndex", settings.getScaleBarLocationIndex());
-      profile.setBoolean(DefaultDisplaySettings.class,
-            "scaleBarShouldDrawText", settings.getScaleBarShouldDrawText());
-      profile.setDouble(DefaultDisplaySettings.class,
-            "scaleBarSize", settings.getScaleBarSize());
-      profile.setInt(DefaultDisplaySettings.class,
-            "scaleBarOffsetX", settings.getScaleBarOffsetX());
-      profile.setInt(DefaultDisplaySettings.class,
-            "scaleBarOffsetY", settings.getScaleBarOffsetY());
-      profile.setBoolean(DefaultDisplaySettings.class,
-            "scaleBarIsFilled", settings.getScaleBarIsFilled());
-      profile.setBoolean(DefaultDisplaySettings.class,
-            "shouldShowScaleBar", settings.getShouldShowScaleBar());
       profile.setBoolean(DefaultDisplaySettings.class,
             "shouldAutostretch", settings.getShouldAutostretch());
       profile.setDouble(DefaultDisplaySettings.class,
@@ -175,14 +143,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
       private Coords imageCoords_ = null;
       private Double histogramUpdateRate_ = null;
       private Boolean shouldSyncChannels_ = null;
-      private Integer scaleBarColorIndex_ = null;
-      private Integer scaleBarLocationIndex_ = null;
-      private Boolean scaleBarShouldDrawText_ = null;
-      private Double scaleBarSize_ = null;
-      private Integer scaleBarOffsetX_ = null;
-      private Integer scaleBarOffsetY_ = null;
-      private Boolean scaleBarIsFilled_ = null;
-      private Boolean shouldShowScaleBar_ = null;
       private Boolean shouldAutostretch_ = null;
       private Double trimPercentage_ = null;
       private Boolean shouldUseLogScale_ = null;
@@ -254,54 +214,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
-      public DisplaySettingsBuilder scaleBarColorIndex(Integer scaleBarColorIndex) {
-         scaleBarColorIndex_ = scaleBarColorIndex;
-         return this;
-      }
-
-      @Override
-      public DisplaySettingsBuilder scaleBarLocationIndex(Integer scaleBarLocationIndex) {
-         scaleBarLocationIndex_ = scaleBarLocationIndex;
-         return this;
-      }
-
-      @Override
-      public DisplaySettingsBuilder scaleBarShouldDrawText(Boolean scaleBarShouldDrawText) {
-         scaleBarShouldDrawText_ = scaleBarShouldDrawText;
-         return this;
-      }
-
-      @Override
-      public DisplaySettingsBuilder scaleBarSize(Double scaleBarSize) {
-         scaleBarSize_ = scaleBarSize;
-         return this;
-      }
-
-      @Override
-      public DisplaySettingsBuilder scaleBarOffsetX(Integer scaleBarOffsetX) {
-         scaleBarOffsetX_ = scaleBarOffsetX;
-         return this;
-      }
-
-      @Override
-      public DisplaySettingsBuilder scaleBarOffsetY(Integer scaleBarOffsetY) {
-         scaleBarOffsetY_ = scaleBarOffsetY;
-         return this;
-      }
-
-      @Override
-      public DisplaySettingsBuilder scaleBarIsFilled(Boolean scaleBarIsFilled) {
-         scaleBarIsFilled_ = scaleBarIsFilled;
-         return this;
-      }
-
-      @Override
-      public DisplaySettingsBuilder shouldShowScaleBar(Boolean shouldShowScaleBar) {
-         shouldShowScaleBar_ = shouldShowScaleBar;
-         return this;
-      }
-
-      @Override
       public DisplaySettingsBuilder shouldAutostretch(Boolean shouldAutostretch) {
          shouldAutostretch_ = shouldAutostretch;
          return this;
@@ -336,14 +248,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
    private Coords imageCoords_ = null;
    private Double histogramUpdateRate_ = null;
    private Boolean shouldSyncChannels_ = null;
-   private Integer scaleBarColorIndex_ = null;
-   private Integer scaleBarLocationIndex_ = null;
-   private Boolean scaleBarShouldDrawText_ = null;
-   private Double scaleBarSize_ = null;
-   private Integer scaleBarOffsetX_ = null;
-   private Integer scaleBarOffsetY_ = null;
-   private Boolean scaleBarIsFilled_ = null;
-   private Boolean shouldShowScaleBar_ = null;
    private Boolean shouldAutostretch_ = null;
    private Double trimPercentage_ = null;
    private Boolean shouldUseLogScale_ = null;
@@ -360,14 +264,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
       imageCoords_ = builder.imageCoords_;
       histogramUpdateRate_ = builder.histogramUpdateRate_;
       shouldSyncChannels_ = builder.shouldSyncChannels_;
-      scaleBarColorIndex_ = builder.scaleBarColorIndex_;
-      scaleBarLocationIndex_ = builder.scaleBarLocationIndex_;
-      scaleBarShouldDrawText_ = builder.scaleBarShouldDrawText_;
-      scaleBarSize_ = builder.scaleBarSize_;
-      scaleBarOffsetX_ = builder.scaleBarOffsetX_;
-      scaleBarOffsetY_ = builder.scaleBarOffsetY_;
-      scaleBarIsFilled_ = builder.scaleBarIsFilled_;
-      shouldShowScaleBar_ = builder.shouldShowScaleBar_;
       shouldAutostretch_ = builder.shouldAutostretch_;
       trimPercentage_ = builder.trimPercentage_;
       shouldUseLogScale_ = builder.shouldUseLogScale_;
@@ -425,46 +321,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
-   public Integer getScaleBarColorIndex() {
-      return scaleBarColorIndex_;
-   }
-
-   @Override
-   public Integer getScaleBarLocationIndex() {
-      return scaleBarLocationIndex_;
-   }
-
-   @Override
-   public Boolean getScaleBarShouldDrawText() {
-      return scaleBarShouldDrawText_;
-   }
-
-   @Override
-   public Double getScaleBarSize() {
-      return scaleBarSize_;
-   }
-
-   @Override
-   public Integer getScaleBarOffsetX() {
-      return scaleBarOffsetX_;
-   }
-
-   @Override
-   public Integer getScaleBarOffsetY() {
-      return scaleBarOffsetY_;
-   }
-
-   @Override
-   public Boolean getScaleBarIsFilled() {
-      return scaleBarIsFilled_;
-   }
-
-   @Override
-   public Boolean getShouldShowScaleBar() {
-      return shouldShowScaleBar_;
-   }
-
-   @Override
    public Boolean getShouldAutostretch() {
       return shouldAutostretch_;
    }
@@ -497,14 +353,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
             .imageCoords(imageCoords_)
             .histogramUpdateRate(histogramUpdateRate_)
             .shouldSyncChannels(shouldSyncChannels_)
-            .scaleBarColorIndex(scaleBarColorIndex_)
-            .scaleBarLocationIndex(scaleBarLocationIndex_)
-            .scaleBarShouldDrawText(scaleBarShouldDrawText_)
-            .scaleBarSize(scaleBarSize_)
-            .scaleBarOffsetX(scaleBarOffsetX_)
-            .scaleBarOffsetY(scaleBarOffsetY_)
-            .scaleBarIsFilled(scaleBarIsFilled_)
-            .shouldShowScaleBar(shouldShowScaleBar_)
             .shouldAutostretch(shouldAutostretch_)
             .trimPercentage(trimPercentage_)
             .shouldUseLogScale(shouldUseLogScale_)
@@ -561,21 +409,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
          }
          if (tags.has("shouldSyncChannels")) {
             builder.shouldSyncChannels(tags.getBoolean("shouldSyncChannels"));
-         }
-         if (tags.has("scaleBarColorIndex")) {
-            builder.scaleBarColorIndex(tags.getInt("scaleBarColorIndex"));
-         }
-         if (tags.has("scaleBarLocationIndex")) {
-            builder.scaleBarLocationIndex(tags.getInt("scaleBarLocationIndex"));
-         }
-         if (tags.has("scaleBarShouldDrawText")) {
-            builder.scaleBarShouldDrawText(tags.getBoolean("scaleBarShouldDrawText"));
-         }
-         if (tags.has("scaleBarSize")) {
-            builder.scaleBarSize(tags.getDouble("scaleBarSize"));
-         }
-         if (tags.has("shouldShowScaleBar")) {
-            builder.shouldShowScaleBar(tags.getBoolean("shouldShowScaleBar"));
          }
          if (tags.has("shouldAutostretch")) {
             builder.shouldAutostretch(tags.getBoolean("shouldAutostretch"));
@@ -687,11 +520,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
          result.put("animationFPS", animationFPS_);
          result.put("histogramUpdateRate", histogramUpdateRate_);
          result.put("shouldSyncChannels", shouldSyncChannels_);
-         result.put("scaleBarColorIndex", scaleBarColorIndex_);
-         result.put("scaleBarLocationIndex", scaleBarLocationIndex_);
-         result.put("scaleBarShouldDrawText", scaleBarShouldDrawText_);
-         result.put("scaleBarSize", scaleBarSize_);
-         result.put("shouldShowScaleBar", shouldShowScaleBar_);
          result.put("shouldAutostretch", shouldAutostretch_);
          result.put("trimPercentage", trimPercentage_);
          result.put("shouldUseLogScale", shouldUseLogScale_);

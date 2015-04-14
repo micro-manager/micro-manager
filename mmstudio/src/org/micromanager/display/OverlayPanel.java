@@ -36,8 +36,8 @@ import org.micromanager.display.DisplayWindow;
  * display windows.
  */
 public abstract class OverlayPanel extends JPanel {
-   private DisplayManager manager_;
-   private DisplayWindow display_;
+   protected DisplayManager manager_;
+   protected DisplayWindow display_;
 
    /**
     * Receive a reference to the DisplayManager, for use in instantiating
