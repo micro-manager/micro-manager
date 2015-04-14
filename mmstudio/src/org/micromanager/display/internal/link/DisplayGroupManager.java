@@ -175,42 +175,47 @@ public class DisplayGroupManager {
     */
    public void onDisplayDestroyed(DisplayWindow source,
          DisplayDestroyedEvent event) {
-      for (SettingsLinker linker : displayToLinkers_.get(source).getLinkers()) {
-         linker.destroy();
-      }
-      displayToLinkers_.remove(source);
-      for (WindowListener listener : listeners_) {
-         if (listener.getDisplay() == source) {
-            listeners_.remove(listener);
-            break;
+      try {
+         for (SettingsLinker linker : displayToLinkers_.get(source).getLinkers()) {
+            linker.destroy();
          }
-      }
+         displayToLinkers_.remove(source);
+         for (WindowListener listener : listeners_) {
+            if (listener.getDisplay() == source) {
+               listeners_.remove(listener);
+               break;
+            }
+         }
 
-      // Check if we were tracking this display in screenToDisplay_.
-      for (GraphicsConfiguration config : screenToDisplay_.keySet()) {
-         if (screenToDisplay_.get(config) == source) {
-            screenToDisplay_.remove(config);
-            break;
+         // Check if we were tracking this display in screenToDisplay_.
+         for (GraphicsConfiguration config : screenToDisplay_.keySet()) {
+            if (screenToDisplay_.get(config) == source) {
+               screenToDisplay_.remove(config);
+               break;
+            }
          }
-      }
 
-      // Remove from our datastore-based tracking, and update other displays'
-      // titles if necessary.
-      Datastore store = source.getDatastore();
-      if (storeToDisplays_.containsKey(store)) {
-         ArrayList<DisplayWindow> displays = storeToDisplays_.get(store);
-         displays.remove(source);
-         if (displays.size() == 1) {
-            // Back down to one display; hide display numbers.
-            ((DefaultDisplayWindow) displays.get(0)).resetTitle();
+         // Remove from our datastore-based tracking, and update other
+         // displays' titles if necessary.
+         Datastore store = source.getDatastore();
+         if (storeToDisplays_.containsKey(store)) {
+            ArrayList<DisplayWindow> displays = storeToDisplays_.get(store);
+            displays.remove(source);
+            if (displays.size() == 1) {
+               // Back down to one display; hide display numbers.
+               ((DefaultDisplayWindow) displays.get(0)).resetTitle();
+            }
+            else if (displays.size() == 0) {
+               // Stop tracking.
+               storeToDisplays_.remove(store);
+            }
          }
-         else if (displays.size() == 0) {
-            // Stop tracking.
-            storeToDisplays_.remove(store);
+         else {
+            ReportingUtils.logError("Display was destroyed, but somehow we don't know about its datastore.");
          }
       }
-      else {
-         ReportingUtils.logError("Display was destroyed, but somehow we don't know about its datastore.");
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error when cleaning up after destroyed display");
       }
    }
 

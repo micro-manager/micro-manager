@@ -216,6 +216,10 @@ public abstract class SettingsLinker {
     */
    public void destroy() {
       HashSet<SettingsLinker> siblings = idToSiblings_.get(getID());
+      if (siblings == null) {
+         // We're the only linker of this type.
+         return;
+      }
       siblings.remove(this);
       if (siblings.size() <= 1) {
          // Time to hide our sibling's link button.
@@ -301,6 +305,9 @@ public abstract class SettingsLinker {
          return;
       }
       for (SettingsLinker linker : group) {
+         if (linker == parent_) {
+            continue;
+         }
          if (linker.getShouldApplyChanges(source, event)) {
             linker.applyChange(source, event);
          }

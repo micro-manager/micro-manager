@@ -28,6 +28,7 @@ import org.micromanager.display.DisplayWindow;
 
 import org.micromanager.display.internal.DefaultDisplaySettings;
 
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * The ContrastLinker links the contrast settings for a specific channel.
@@ -95,6 +96,7 @@ public class ContrastLinker extends SettingsLinker {
       ContrastEvent event = (ContrastEvent) changeEvent;
       String name = event.getChannelName();
       String ourName = getName();
+      ReportingUtils.logError("Display " + parent_ + " checking " + name + " vs. " + ourName + " for contrast event");
       // The first check handles the case where one is null but the other
       // isn't.
       if (name != ourName || (name != null && ourName != null && !name.contentEquals(getName()))) {
@@ -112,24 +114,29 @@ public class ContrastLinker extends SettingsLinker {
       }
 
       int newIndex = getIndex(source, newSettings);
+      ReportingUtils.logError("Note channels are " + channelIndex_ + " vs. " + newIndex);
       // Scan each of the arrays we care about and see if our value in those
       // arrays has changed.
       Object[] oldChannelSettings = DefaultDisplaySettings.getPerChannelArrays(oldSettings);
       Object[] newChannelSettings = DefaultDisplaySettings.getPerChannelArrays(newSettings);
       for (int i = 0; i < oldChannelSettings.length; ++i) {
+         ReportingUtils.logError("Comparing item " + i + ": " + oldChannelSettings[i] + ", " + newChannelSettings[i]);
          if (newChannelSettings[i] == oldChannelSettings[i]) {
             // These two arrays are the same reference, so they can't
             // possibly be different.
+            ReportingUtils.logError("For item " + i + " the two have the same reference");
             continue;
          }
          Object[] oldVals = DefaultDisplaySettings.makePerChannelArray(i, (Object[]) oldChannelSettings[i], channelIndex_ + 1);
          Object[] newVals = DefaultDisplaySettings.makePerChannelArray(i, (Object[]) newChannelSettings[i], newIndex + 1);
          if (newVals[newIndex] != oldVals[channelIndex_]) {
+            ReportingUtils.logError("For item " + i + " we differ");
             // Found an array where, for the index we care about,
             // we are different.
             return true;
          }
       }
+      ReportingUtils.logError("Defaulting to not caring");
       return false;
    }
 
