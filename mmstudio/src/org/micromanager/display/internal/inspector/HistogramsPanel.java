@@ -135,6 +135,11 @@ public final class HistogramsPanel extends InspectorPanel {
       }
 
       validate();
+      // TODO: for some reason if we don't manually repaint at this stage,
+      // the link button(s) won't redraw (which can make it look like they have
+      // the wrong icons). Everything *else* redraws fine, but the link buttons
+      // don't.
+      repaint();
       inspector_.relayout();
    }
 
