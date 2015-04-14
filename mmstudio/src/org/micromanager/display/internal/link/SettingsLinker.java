@@ -283,9 +283,7 @@ public abstract class SettingsLinker {
 
    /**
     * Push the provided event to the linkers we are connected to -- only if
-    * the event is one of the event classes we care about. Note that the event
-    * is assumed to originate from our parent, so we don't apply it to
-    * ourselves.
+    * the event is one of the event classes we care about.
     */
    public void pushEvent(DisplayWindow source, DisplaySettingsEvent event) {
       boolean isRelevant = false;
@@ -305,7 +303,8 @@ public abstract class SettingsLinker {
          return;
       }
       for (SettingsLinker linker : group) {
-         if (linker == parent_) {
+         if (linker.getDisplay() == source) {
+            // Don't push the event to the originator.
             continue;
          }
          if (linker.getShouldApplyChanges(source, event)) {
