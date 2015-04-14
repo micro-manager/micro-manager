@@ -258,7 +258,12 @@ public final class HistogramsPanel extends InspectorPanel {
    // A new display has arrived, so we need to start tracking its histograms.
    @Subscribe
    public synchronized void onNewDisplay(DisplayAboutToShowEvent event) {
-      setupDisplay(event.getDisplay());
+      try {
+         setupDisplay(event.getDisplay());
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Unable to set up new display's histograms");
+      }
    }
 
    @Subscribe

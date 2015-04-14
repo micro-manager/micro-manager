@@ -94,17 +94,54 @@ public class DisplayGroupManager {
       return staticInstance_;
    }
 
+   /**
+    * This class tracks linkers for a single DisplayWindow.
+    */
+   private class LinkersGroup {
+      private HashSet<SettingsLinker> genericLinkers_;
+      // As a special case, we maintain the ContrastLinkers for each
+      // DisplayWindow. These are special because they aren't stored in the
+      // DisplayWindow itself, but in the InspectorFrame; consequently, there
+      // can be multiple LinkButtons all working with the same ContrastLinker.
+      // This means they need to be stored centrally somewhere, and that place
+      // is here.
+      private HashMap<Integer, ContrastLinker> channelToContrastLinker_;
+      private DisplayWindow display_;
+
+      public LinkersGroup(DisplayWindow display) {
+         genericLinkers_ = new HashSet<SettingsLinker>();
+         channelToContrastLinker_ = new HashMap<Integer, ContrastLinker>();
+         display_ = display;
+      }
+
+      public HashSet<SettingsLinker> getLinkers() {
+         return genericLinkers_;
+      }
+
+      /**
+       * Retrieve the specified ContrastLinker. Create it if it doesn't already
+       * exist.
+       */
+      public ContrastLinker getContrastLinker(int channel) {
+         if (!channelToContrastLinker_.containsKey(channel)) {
+            ContrastLinker linker = new ContrastLinker(channel, display_);
+            channelToContrastLinker_.put(channel, linker);
+         }
+         return channelToContrastLinker_.get(channel);
+      }
+   }
+
    // Keeps track of which displays have which SettingsLinkers, so we can
    // propagate changes to linkers, and clean up when displays go away. This
    // also serves as a convenient container of all displays.
-   private HashMap<DisplayWindow, HashSet<SettingsLinker>> displayToLinkers_;
+   private HashMap<DisplayWindow, LinkersGroup> displayToLinkers_;
    // Tracks which screen (a.k.a. monitor) a given window is on.
    private HashMap<GraphicsConfiguration, DisplayWindow> screenToDisplay_;
    private HashMap<Datastore, ArrayList<DisplayWindow>> storeToDisplays_;
    private ArrayList<WindowListener> listeners_;
 
    public DisplayGroupManager() {
-      displayToLinkers_ = new HashMap<DisplayWindow, HashSet<SettingsLinker>>();
+      displayToLinkers_ = new HashMap<DisplayWindow, LinkersGroup>();
       screenToDisplay_ = new HashMap<GraphicsConfiguration, DisplayWindow>();
       storeToDisplays_ = new HashMap<Datastore, ArrayList<DisplayWindow>>();
       listeners_ = new ArrayList<WindowListener>();
@@ -117,7 +154,7 @@ public class DisplayGroupManager {
     */
    public void addDisplay(DisplayWindow display) {
       listeners_.add(new WindowListener(display, this));
-      displayToLinkers_.put(display, new HashSet<SettingsLinker>());
+      displayToLinkers_.put(display, new LinkersGroup(display));
       Datastore store = display.getDatastore();
       if (!storeToDisplays_.containsKey(store)) {
          storeToDisplays_.put(store, new ArrayList<DisplayWindow>());
@@ -138,7 +175,7 @@ public class DisplayGroupManager {
     */
    public void onDisplayDestroyed(DisplayWindow source,
          DisplayDestroyedEvent event) {
-      for (SettingsLinker linker : displayToLinkers_.get(source)) {
+      for (SettingsLinker linker : displayToLinkers_.get(source).getLinkers()) {
          linker.destroy();
       }
       displayToLinkers_.remove(source);
@@ -178,17 +215,10 @@ public class DisplayGroupManager {
    }
 
    /**
-    * A new LinkButton has been created; we need to start tracking its linker,
-    * and all related linkers need to know about it.
+    * A new LinkButton has been created; we need to start tracking its linker.
     */
    public void addNewLinker(SettingsLinker newLinker, DisplayWindow source) {
-      displayToLinkers_.get(source).add(newLinker);
-      for (DisplayWindow display : displayToLinkers_.keySet()) {
-         if (display == newLinker.getDisplay()) {
-            // Assume that linkers are unique for a specific display.
-            continue;
-         }
-      }
+      displayToLinkers_.get(source).getLinkers().add(newLinker);
    }
 
    /**
@@ -200,9 +230,16 @@ public class DisplayGroupManager {
       // We might not have the display around any more if this was called
       // as a side-effect of the display being removed.
       if (displayToLinkers_.containsKey(source)) {
-         displayToLinkers_.get(source).remove(linker);
+         displayToLinkers_.get(source).getLinkers().remove(linker);
       }
       linker.destroy();
+   }
+
+   /**
+    * Retrieve a ContrastLinker.
+    */
+   public static ContrastLinker getContrastLinker(int channel, DisplayWindow display) {
+      return staticInstance_.displayToLinkers_.get(display).getContrastLinker(channel);
    }
 
    /**
@@ -251,7 +288,7 @@ public class DisplayGroupManager {
          return;
       }
       try {
-         for (SettingsLinker linker : displayToLinkers_.get(source)) {
+         for (SettingsLinker linker : displayToLinkers_.get(source).getLinkers()) {
             linker.pushEvent(source, event);
          }
       }

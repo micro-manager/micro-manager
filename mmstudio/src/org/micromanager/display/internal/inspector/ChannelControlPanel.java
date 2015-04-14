@@ -72,6 +72,7 @@ import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
 import org.micromanager.display.internal.events.LUTUpdateEvent;
 import org.micromanager.display.internal.link.ContrastEvent;
 import org.micromanager.display.internal.link.ContrastLinker;
+import org.micromanager.display.internal.link.DisplayGroupManager;
 import org.micromanager.display.internal.link.LinkButton;
 import org.micromanager.display.internal.ChannelSettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
@@ -312,7 +313,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
       fullButton_.setPreferredSize(new Dimension(35, 20));
       linkButton_ = new LinkButton(
-            new ContrastLinker(channelIndex_, display_), display_);
+            DisplayGroupManager.getContrastLinker(channelIndex_, display_),
+            display_);
       firstRow.add(linkButton_);
       firstRow.add(fullButton_, "grow 0");
 

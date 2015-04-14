@@ -69,7 +69,7 @@ public class LinkButton extends JButton {
       setMargin(new Insets(0, 0, 0, 0));
 
       linker_ = linker;
-      linker_.setButton(this);
+      linker_.addButton(this);
       display_ = display;
 
       // Show a popup menu to manually link this to another display.
@@ -80,8 +80,8 @@ public class LinkButton extends JButton {
          }
       });
       setToolTipText("Toggle linking of this control across all image windows for this dataset. Right-click to push changes to a specific display.");
-      display.registerForEvents(this);
       DisplayGroupManager.getInstance().addNewLinker(linker, display_);
+      display.registerForEvents(this);
    }
 
    /**
@@ -224,5 +224,6 @@ public class LinkButton extends JButton {
    @Subscribe
    public void onDisplayDestroyed(DisplayDestroyedEvent event) {
       display_.unregisterForEvents(this);
+      linker_.removeButton(this);
    }
 }

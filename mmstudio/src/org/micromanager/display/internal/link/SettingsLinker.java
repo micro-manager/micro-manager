@@ -59,7 +59,7 @@ public abstract class SettingsLinker {
 
    protected DisplayWindow parent_;
    private List<Class<?>> relevantEvents_;
-   private LinkButton button_;
+   private HashSet<LinkButton> buttons_;
    private boolean isActive_;
 
    public SettingsLinker(DisplayWindow parent,
@@ -68,6 +68,7 @@ public abstract class SettingsLinker {
       parent_.registerForEvents(this);
       isActive_ = false;
       relevantEvents_ = relevantEventClasses;
+      buttons_ = new HashSet<LinkButton>();
    }
 
    /**
@@ -115,9 +116,16 @@ public abstract class SettingsLinker {
     * NOTE: this must be called before the button is interacted with!
     * Preferably in the LinkButton constructor.
     */
-   public void setButton(LinkButton button) {
-      button_ = button;
-      button_.setVisible(idToSiblings_.get(getID()).size() > 1);
+   public void addButton(LinkButton button) {
+      buttons_.add(button);
+      button.setVisible(idToSiblings_.get(getID()).size() > 1);
+   }
+
+   /**
+    * This should be called when the LinkButton is removed.
+    */
+   public void removeButton(LinkButton button) {
+      buttons_.remove(button);
    }
 
    /**
@@ -155,6 +163,10 @@ public abstract class SettingsLinker {
       // Figure out if we need to create a new group, add to an existing group,
       // or merge two groups.
       HashSet<SettingsLinker> ourGroup = getSynchroGroup(this);
+      if (ourGroup != null && ourGroup.contains(linker)) {
+         // Already linked to them.
+         return;
+      }
       HashSet<SettingsLinker> altGroup = getSynchroGroup(linker);
       if (ourGroup == null && altGroup == null) {
          // Create a new group containing us both.
@@ -235,15 +247,17 @@ public abstract class SettingsLinker {
          return;
       }
       isActive_ = isActive;
-      button_.setActive(isActive);
+      for (LinkButton button : buttons_) {
+         button.setActive(isActive);
+      }
    }
 
    /**
     * Set visibility of our button.
     */
    public void setVisible(boolean isVisible) {
-      if (button_ != null) {
-         button_.setVisible(isVisible);
+      for (LinkButton button : buttons_) {
+         button.setVisible(isVisible);
       }
    }
 
