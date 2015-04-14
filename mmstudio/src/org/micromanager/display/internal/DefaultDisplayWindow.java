@@ -556,6 +556,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    /**
     * Tell the ImagePlus about certain properties of our data that it doesn't
     * otherwise know how to access.
+    * TODO: this should maybe live in DummyImageWindow?
     */
    private void setImagePlusMetadata(ImagePlus plus) {
       try {
@@ -658,6 +659,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       return store_;
    }
 
+   // TODO: ideally we should not need this exposed (and definitely not
+   // exposed in the API, as it's an implementation detail). Find out what
+   // our users need this method for and find a better way.
    public MMVirtualStack getStack() {
       return stack_;
    }
@@ -908,6 +912,13 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       resetTitle();
    }
 
+   /**
+    * If a DisplayWindow is topmost, return that DisplayWindow; otherwise
+    * return null. This relies on ImageJ's tracking of what the topmost window
+    * is (NB Java does not have any method for determining the Z order of
+    * a window, so any implementation of this method would require manual
+    * tracking by *someone*).
+    */
    public static DisplayWindow getCurrentWindow() {
       ImageWindow current = WindowManager.getCurrentWindow();
       if (current instanceof DummyImageWindow) {
