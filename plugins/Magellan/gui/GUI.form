@@ -6,9 +6,12 @@
     </Component>
     <Component class="javax.swing.ButtonGroup" name="filterMethodButtonGroup_">
     </Component>
+    <Component class="javax.swing.ButtonGroup" name="exploreFilterMethodButtonGroup_">
+    </Component>
   </NonVisualComponents>
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
+    <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
   </SyntheticProperties>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
@@ -67,7 +70,7 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="deviceControlScrollPane_" alignment="0" pref="767" max="32767" attributes="0"/>
+                      <Component id="deviceControlScrollPane_" alignment="0" pref="764" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
                 <DimensionLayout dim="1">
@@ -268,7 +271,7 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Component id="jScrollPane2" pref="767" max="32767" attributes="0"/>
                       <Group type="102" alignment="0" attributes="0">
-                          <EmptySpace max="32767" attributes="0"/>
+                          <EmptySpace pref="262" max="32767" attributes="0"/>
                           <Component id="deleteSelectedRegionButton_" min="-2" max="-2" attributes="0"/>
                           <EmptySpace min="-2" pref="41" max="-2" attributes="0"/>
                           <Component id="deleteAllRegionsButton_" min="-2" max="-2" attributes="0"/>
@@ -340,7 +343,7 @@
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
-                          <EmptySpace max="32767" attributes="0"/>
+                          <EmptySpace pref="260" max="32767" attributes="0"/>
                           <Component id="deleteSelectedSurfaceButton_" min="-2" max="-2" attributes="0"/>
                           <EmptySpace min="-2" pref="41" max="-2" attributes="0"/>
                           <Component id="deleteAllSurfacesButton_" min="-2" max="-2" attributes="0"/>
@@ -548,6 +551,9 @@
             </Component>
             <Component class="javax.swing.JRadioButton" name="exploreRankFilterButton_">
               <Properties>
+                <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+                  <ComponentRef name="exploreFilterMethodButtonGroup_"/>
+                </Property>
                 <Property name="text" type="java.lang.String" value="Rank filter"/>
               </Properties>
               <Events>
@@ -556,6 +562,9 @@
             </Component>
             <Component class="javax.swing.JRadioButton" name="exploreFrameAverageButton_">
               <Properties>
+                <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+                  <ComponentRef name="exploreFilterMethodButtonGroup_"/>
+                </Property>
                 <Property name="selected" type="boolean" value="true"/>
                 <Property name="text" type="java.lang.String" value="Frame average"/>
               </Properties>
@@ -2112,12 +2121,21 @@
                   <SubComponents>
                     <Component class="javax.swing.JRadioButton" name="frameAverageRadioButton_">
                       <Properties>
+                        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+                          <ComponentRef name="filterMethodButtonGroup_"/>
+                        </Property>
                         <Property name="selected" type="boolean" value="true"/>
                         <Property name="text" type="java.lang.String" value="Frame average"/>
                       </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="frameAverageRadioButton_ActionPerformed"/>
+                      </Events>
                     </Component>
                     <Component class="javax.swing.JRadioButton" name="rankFilterRadioButton_">
                       <Properties>
+                        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+                          <ComponentRef name="filterMethodButtonGroup_"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Rank filter"/>
                       </Properties>
                       <Events>
@@ -2130,6 +2148,9 @@
                           <SpinnerModel initial="0.95" maximum="1.0" minimum="0.0" numberType="java.lang.Double" stepSize="0.01" type="number"/>
                         </Property>
                       </Properties>
+                      <Events>
+                        <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="rankSpinner_StateChanged"/>
+                      </Events>
                     </Component>
                     <Component class="javax.swing.JLabel" name="jLabel9">
                       <Properties>
@@ -2145,6 +2166,9 @@
                       <Events>
                         <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="ch0OffsetSpinner_StateChanged"/>
                       </Events>
+                      <AuxValues>
+                        <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="ch0OffsetSpinner_.setValue(GlobalSettings.getInstance().getChannelOffset(0));"/>
+                      </AuxValues>
                     </Component>
                     <Component class="javax.swing.JLabel" name="jLabel10">
                       <Properties>
@@ -2175,6 +2199,9 @@
                       <Events>
                         <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="ch1OffsetSpinner_StateChanged"/>
                       </Events>
+                      <AuxValues>
+                        <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="ch1OffsetSpinner_.setValue(GlobalSettings.getInstance().getChannelOffset(1));"/>
+                      </AuxValues>
                     </Component>
                     <Component class="javax.swing.JLabel" name="ch2OffsetLabel_">
                       <Properties>
@@ -2190,6 +2217,9 @@
                       <Events>
                         <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="ch2OffsetSpinner_StateChanged"/>
                       </Events>
+                      <AuxValues>
+                        <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="ch2OffsetSpinner_.setValue(GlobalSettings.getInstance().getChannelOffset(2));"/>
+                      </AuxValues>
                     </Component>
                     <Component class="javax.swing.JLabel" name="ch3OffsetLabel_">
                       <Properties>
@@ -2205,6 +2235,9 @@
                       <Events>
                         <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="ch3OffsetSpinner_StateChanged"/>
                       </Events>
+                      <AuxValues>
+                        <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="ch3OffsetSpinner_.setValue(GlobalSettings.getInstance().getChannelOffset(3));"/>
+                      </AuxValues>
                     </Component>
                     <Component class="javax.swing.JLabel" name="ch4OffsetLabel_">
                       <Properties>
@@ -2220,6 +2253,9 @@
                       <Events>
                         <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="ch4OffsetSpinner_StateChanged"/>
                       </Events>
+                      <AuxValues>
+                        <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="ch4OffsetSpinner_.setValue(GlobalSettings.getInstance().getChannelOffset(4));"/>
+                      </AuxValues>
                     </Component>
                     <Component class="javax.swing.JLabel" name="ch5OffsetLabel_">
                       <Properties>
@@ -2235,6 +2271,9 @@
                       <Events>
                         <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="ch5OffsetSpinner_StateChanged"/>
                       </Events>
+                      <AuxValues>
+                        <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="ch5OffsetSpinner_.setValue(GlobalSettings.getInstance().getChannelOffset(5));"/>
+                      </AuxValues>
                     </Component>
                   </SubComponents>
                 </Container>

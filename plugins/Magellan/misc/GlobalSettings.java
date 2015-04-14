@@ -10,6 +10,7 @@ import gui.SettingsDialog;
 import java.awt.Dialog;
 import java.util.prefs.Preferences;
 import javax.swing.filechooser.FileSystemView;
+import mmcorej.CMMCore;
 import org.micromanager.MMStudio;
 
 /**
@@ -22,15 +23,15 @@ public class GlobalSettings {
    private static final String SAVING_DIR = "SAVING DIRECTORY";
    private static final String CHANNEL_OFFSET_PREFIX = "CHANNEL_OFFSET_";
    
-   
+   private static GlobalSettings singleton_;
    Preferences prefs_;
    private GUI gui_;
    private static boolean demoMode_ = false;
    private static boolean afBetweenAcqs_ = false;
-   private static int[] chOffsets_ = new int[8];
+   private int[] chOffsets_ = new int[8];
 
    public GlobalSettings(Preferences prefs, GUI gui) {
-
+       singleton_ = this;
       prefs_ = prefs;
       gui_ = gui;
 
@@ -49,9 +50,13 @@ public class GlobalSettings {
       }
       
       //load channel offsets
-      for(int i =0; i < 8; i++) {
+      for(int i =0; i < 6; i++) {
          chOffsets_[i] = prefs_.getInt(CHANNEL_OFFSET_PREFIX + i, 0);
       }      
+   }
+   
+   public static GlobalSettings getInstance() {
+       return singleton_;
    }
    
    public void storeSavingDirectory(String dir) {
@@ -79,17 +84,42 @@ public class GlobalSettings {
       new DemoModeImageData();
    }
 
-   public static int getChannelOffset(int i) {
+   public int getChannelOffset(int i) {
       return chOffsets_[i];
    }
-   
-   public void channelOffsetChanged() {
-      for (int i = 0; i < 8; i++) {
-         Integer offset = gui_.getChannelOffset(i);
-         if (offset != null) {
-            prefs_.putInt(CHANNEL_OFFSET_PREFIX + i, offset);
-            chOffsets_[i] = offset;
-         }
-      }
-   }
+
+    public void channelOffsetChanged() {
+        int minVal = 200;
+        for (int i = 0; i < 6; i++) {
+            Integer offset = gui_.getChannelOffset(i);
+            if (offset != null) {
+                prefs_.putInt(CHANNEL_OFFSET_PREFIX + i, offset);
+                chOffsets_[i] = offset;
+                minVal = Math.min(minVal, offset);
+//            System.out.println("Ch "+i+prefs_.getInt(CHANNEL_OFFSET_PREFIX + i, -50));
+            }
+        }
+        //synchrnize with offsets in device adapter
+        try {
+            if (minVal != 200) {
+                CMMCore core = MMStudio.getInstance().getCore();
+                String channelOffsets = "";
+                for (int i = 0; i < 6; i++) {                    
+                    channelOffsets += chOffsets_[i] - minVal;
+                }
+                if (core.hasProperty("BitFlowCameraX2", "CenterOffset")) {
+                    core.setProperty("BitFlowCameraX2", "CenterOffset", minVal);
+                } else if (core.hasProperty("bitFlowCamera", "CenterOffset")) {
+                    core.setProperty("BitFlowCamera", "CenterOffset", minVal);
+                }
+                if (core.hasProperty("BitFlowCameraX2", "ChannelOffsets")) {
+                    core.setProperty("BitFlowCameraX2", "ChannelOffsets", channelOffsets);
+                } else if (core.hasProperty("bitFlowCamera", "ChannelOffsets")) {
+                    core.setProperty("BitFlowCamera", "ChannelOffsets", channelOffsets);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

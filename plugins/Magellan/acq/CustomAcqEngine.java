@@ -40,7 +40,7 @@ import propsandcovariants.CovariantPairing;
 public class CustomAcqEngine {
 
     private static final int HARDWARE_ERROR_RETRIES = 6;
-    private static final int DELWAY_BETWEEN_RETRIES_MS = 50;
+    private static final int DELWAY_BETWEEN_RETRIES_MS = 5;
     private CMMCore core_;
     private AcquisitionEvent lastEvent_ = null;
     private ExploreAcquisition currentExploreAcq_;
@@ -156,10 +156,10 @@ public class CustomAcqEngine {
             //nothing to do, just a dummy event to get of blocking call when switching between parallel acquisitions
         } else if (event.isAcquisitionFinishedEvent()) {
             //signal to TaggedImageSink to finish saving thread and mark acquisition as finished
-           CoreCommunicator.addSignalTaggedImage(event.acquisition_, new SignalTaggedImage(SignalTaggedImage.AcqSingal.AcqusitionFinsihed));
+           CoreCommunicator.getInstance().addSignalTaggedImage(event, new SignalTaggedImage(SignalTaggedImage.AcqSingal.AcqusitionFinsihed));
         } else if (event.isTimepointFinishedEvent()) {
             //signal to TaggedImageSink to let acqusition know that saving for the current time point has completed  
-            CoreCommunicator.addSignalTaggedImage(event.acquisition_, new SignalTaggedImage(SignalTaggedImage.AcqSingal.TimepointFinished));
+            CoreCommunicator.getInstance().addSignalTaggedImage(event, new SignalTaggedImage(SignalTaggedImage.AcqSingal.TimepointFinished));
         } else if (event.isAutofocusAdjustmentEvent()) {
             setAutofocusPosition(event.autofocusZName_, event.autofocusPosition_);
         } else {
@@ -183,18 +183,14 @@ public class CustomAcqEngine {
             event.acquisition_.setStartTime_ms(currentTime);
         }
 
-        final int numCamChannels = (int) core_.getNumberOfCameraChannels();
-        for (int c = 0; c < numCamChannels; c++) {
-            //send to storage
-            final int channelIndex = c;
-            loopHardwareCommandRetries(new HardwareCommand() {
-                @Override
-                public void run() throws Exception {
-                    CoreCommunicator.getTaggedImageAndAddToAcq(channelIndex, event, currentTime, 
-                            GlobalSettings.getDemoMode()? GlobalSettings.getDemoNumChannels() : numCamChannels); 
-                }
-            }, "getting tagged image");          
-        }
+        //send to storage
+        loopHardwareCommandRetries(new HardwareCommand() {
+            @Override
+            public void run() throws Exception {
+                CoreCommunicator.getInstance().getTaggedImagesAndAddToAcq(event, currentTime);
+            }
+        }, "getting tagged image");
+
         //now that Core Communicator has added images into construction pipeline,
         //free to snap again which will add more to circular buffer
     }
@@ -209,6 +205,26 @@ public class CustomAcqEngine {
         }, "Setting autofocus position");
     }
 
+    //from MM website, a potential way to speed up acq:
+    //To further streamline synchronization tasks you can define all devices which must be non-busy before the image is acquired.
+// The following devices must stop moving before the image is acquired
+//core.assignImageSynchro("X");
+//core.assignImageSynchro("Y");
+//core.assignImageSynchro("Z");
+//core.assignImageSynchro("Emission");
+//
+//// Set all the positions. For some of the devices it will take a while
+//// to stop moving
+//core.SetPosition("X", 1230);
+//core.setPosition("Y", 330);
+//core.SetPosition("Z", 8000);
+//core.setState("Emission", 3);
+//
+//// Just go ahead and snap an image. The system will automatically wait
+//// for all of the above devices to stop moving before the
+//// image is acquired
+//core.snapImage();
+    
     private void updateHardware(final AcquisitionEvent event) throws InterruptedException {
         //compare to last event to see what needs to change
         if (lastEvent_ != null && lastEvent_.acquisition_ != event.acquisition_) {
@@ -342,6 +358,8 @@ public class CustomAcqEngine {
             //Magellan specific tags
             img.tags.put("GridColumnIndex", gridCol);
             img.tags.put("GridRowIndex", gridRow);
+            img.tags.put("StagePositionX", event.xyPosition_.getCenter().x);
+            img.tags.put("StagePositionY", event.xyPosition_.getCenter().y);
         } catch (JSONException e) {
             IJ.log("Problem adding image tags");
             IJ.log(e.toString());

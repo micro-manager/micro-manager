@@ -204,7 +204,6 @@ public class FixedAreaAcquisition extends Acquisition {
       events_.clear();
       try {
          //not a big deal if an extra one of these is added since sink will shut down on the first one
-         System.out.println("Addind acq finished event");
          events_.put(AcquisitionEvent.createAcquisitionFinishedEvent(this));
          //make sure engine doesnt get stuck
          

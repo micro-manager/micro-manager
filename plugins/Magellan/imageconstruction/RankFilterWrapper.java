@@ -27,6 +27,7 @@ public class RankFilterWrapper extends FrameIntegrationMethod{
 
     @Override
    public byte[] constructImage() {
+        long start = System.currentTimeMillis();
       //iterate through every pixel location in final image
       for (int x = -1; x < width_ + 1; x++) {
          for (int y = -1; y < height_ + 1; y++) {
@@ -44,6 +45,7 @@ public class RankFilterWrapper extends FrameIntegrationMethod{
          Arrays.sort(pixelValues_[i]);
          filteredPix[i] = (byte) pixelValues_[i][(int)((numFrames_*9 -1) *rank_)];
       }
+//      System.out.println("rank filtering time: " + (System.currentTimeMillis() - start));
       return filteredPix;
    }
    

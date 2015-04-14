@@ -32,7 +32,8 @@ public class PropertyAndGroupUtils {
       }
       //add new ones
       for (int i = 0; i < props.size(); i++) {
-         addPropToPrefs(prefs, props.get(i), labels.get(props.get(i).toString()), i);
+          SinglePropertyOrGroup prop = props.get(i);
+         addPropToPrefs(prefs, prop, labels.get(prop.toString()), i);
       }
    }
    
@@ -42,12 +43,16 @@ public class PropertyAndGroupUtils {
       for (SinglePropertyOrGroup item : all) {
          String label = getPropNickname(prefs, item);
          if (label != null) {
-            stored.put(getPropIndex(prefs, item), item);
+             int index = getPropIndex(prefs, item);
+             if (index != -1) {
+                 stored.put(index, item);
+             }
          }
       }
       LinkedList<SinglePropertyOrGroup> list = new LinkedList<SinglePropertyOrGroup>();
-      for (int i = 0; i < stored.keySet().size(); i++) {
-         list.add(stored.get(i));
+      for (int i : stored.keySet()) {
+          SinglePropertyOrGroup singlePropOrGroup = stored.get(i);      
+         list.add(singlePropOrGroup);
       }
       return list;
    }
@@ -59,7 +64,10 @@ public class PropertyAndGroupUtils {
    }
 
    public static String getPropNickname(Preferences prefs, SinglePropertyOrGroup prop) {
-      return prefs.get(PROPERTY_LABEL_PREFIX + prop.toString(), null);
+      if (prop == null) {        
+          return null;
+      }
+       return prefs.get(PROPERTY_LABEL_PREFIX + prop.toString(), null);
    }
 
    private static void addPropToPrefs(Preferences prefs, SinglePropertyOrGroup prop, String label, int index) {

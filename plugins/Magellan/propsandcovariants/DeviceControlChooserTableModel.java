@@ -44,7 +44,7 @@ public class DeviceControlChooserTableModel  extends AbstractTableModel {
    }
    
    public void storeProperties() {
-      PropertyAndGroupUtils.saveStoredProperties(prefs_, storedGroupsAndProps_, propLabels_);
+      PropertyAndGroupUtils.saveStoredProperties(prefs_, storedGroupsAndProps_, propLabels_); 
    }
 
    @Override

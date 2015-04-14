@@ -4,25 +4,118 @@
  */
 package coordinates;
 
+import ij.IJ;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.prefs.Preferences;
+import org.micromanager.MMStudio;
+import org.micromanager.utils.JavaUtils;
+
 /**
- *
+ * 
  * @author Henry
  */
 public class AffineGUI extends javax.swing.JFrame {
 
    private AffineCalibrator affineCalibrator_;
+   private String pixelSizeConfig_;
+   private double pixelSize_;
    
    /**
     * Creates new form AffineGUI
     */
-   public AffineGUI() {
+   public AffineGUI()  {
       initComponents();
       this.setLocationRelativeTo(null);
+       try {
+           pixelSizeConfig_ = MMStudio.getInstance().getMMCore().getCurrentPixelSizeConfig();
+       } catch (Exception ex) {
+           IJ.log("No pixel size found for current config!");
+           throw new RuntimeException();
+       }
+      pixelCalLabel_.setText("Pixel size Calibration: " + pixelSizeConfig_);
+      pixelSize_ = MMStudio.getInstance().getMMCore().getPixelSizeUm();
       setVisible(true);
+       try {
+           populateValues(AffineUtils.getAffineTransform(pixelSizeConfig_, 0, 0));
+       } catch (NoninvertibleTransformException ex) {
+           IJ.log("Couldn't populate current values due to invalid transform");
+       }
    }
+   
+   //decompose affine, see http://math.stackexchange.com/questions/612006/decomposing-an-affine-transformation
+   private void populateValues(AffineTransform transform) throws NoninvertibleTransformException {
+       //[T] = [R][Sc][Sh]
+       pixSizeLabel_.setText( pixelSize_ + " um");
+       //{ m00 m10 m01 m11 m02 m12 }
+       double[] matrix = new double[6];
+       transform.getMatrix(matrix);
+       double angle = Math.atan(matrix[1] / matrix[0]); //radians
+       //figure out which quadrant 
+       //sin && cos
+       if (matrix[1] > 0 && matrix[0] > 0) {
+           //first quadrant, do nothing
+       } else if (matrix[1] > 0 && matrix[0] < 0) {
+           //second quadrant
+           angle -= 2*(Math.PI / 2 + angle);            
+       } else if (matrix[1] < 0 && matrix[0] > 0) {
+           //fourth quadrant, do nothing
+       } else {
+           //third quadrant, subtract 90 degrees
+           angle += 2*(Math.PI / 2 - angle);
+           angle *= -1; //make sure angle is negative
+       }
+       
+       //get shear by reversing the rotation, then reversing the scaling
+       AffineTransform at = AffineTransform.getRotateInstance(angle).createInverse();
+       at.concatenate(transform); //take out the rotations
+       //get scales
+       double[] newMat = new double[6];
+       at.getMatrix(newMat);
+       double scale = Math.sqrt(newMat[0] * newMat[0] + newMat[1] * newMat[1]);
+       AffineTransform at2 = AffineTransform.getScaleInstance(scale, scale).createInverse();
+       at2.concatenate(at); // take out the scale
+       //should now be left with shear transform;
+       double shear = at2.getShearX();
+       rotationSpinner_.setValue(angle / Math.PI * 180.0);
+       shearSpinner_.setValue(shear);
+       scaleSpinner_.setValue(scale);
 
-   public void calibrationFinished() {
-      captureButton_.setEnabled(false);
+   }
+   
+   private void applyValues() {      
+       //[T] = [R][Sc][Sh]
+       AffineTransform transform = AffineUtils.getAffineTransform(pixelSizeConfig_, 0, 0);
+       double[] matrix = new double[6];
+       transform.getMatrix(matrix);
+       double scale = ((Number)scaleSpinner_.getValue()).doubleValue() ;
+       double angle = ((Number)rotationSpinner_.getValue()).doubleValue() /180.0 * Math.PI;
+       double shear = ((Number)shearSpinner_.getValue()).doubleValue();
+       //scale shear and rotate to genrate affine
+       AffineTransform scaleAT = AffineTransform.getScaleInstance(scale, scale);
+       AffineTransform rotAT = AffineTransform.getRotateInstance(angle);
+       AffineTransform shearAT = AffineTransform.getShearInstance(shear, 0);
+       
+       scaleAT.concatenate(shearAT);
+       rotAT.concatenate(scaleAT);
+       
+       try {
+           populateValues(rotAT);
+       } catch (NoninvertibleTransformException e) {
+           IJ.log("Invalid affine parameters");
+           return;
+       }
+        //store affine
+        Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
+        JavaUtils.putObjectInPrefs(prefs, "affine_transform_" + pixelSizeConfig_, rotAT);
+        //mark as updated
+        AffineUtils.transformUpdated(pixelSizeConfig_, rotAT);
+    }
+
+    public void calibrationFinished() {
+        captureButton_.setEnabled(false);
       calibrateButton_.setText("Start");
       affineCalibrator_ = null;
    }
@@ -38,6 +131,18 @@ public class AffineGUI extends javax.swing.JFrame {
 
         calibrateButton_ = new javax.swing.JButton();
         captureButton_ = new javax.swing.JButton();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        pixelCalLabel_ = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
+        jLabel5 = new javax.swing.JLabel();
+        jLabel6 = new javax.swing.JLabel();
+        pixSizeLabel_ = new javax.swing.JLabel();
+        rotationSpinner_ = new javax.swing.JSpinner();
+        scaleSpinner_ = new javax.swing.JSpinner();
+        shearSpinner_ = new javax.swing.JSpinner();
+        jButton1 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Affine transform calibrator");
@@ -57,25 +162,111 @@ public class AffineGUI extends javax.swing.JFrame {
             }
         });
 
+        jLabel1.setText("Automatic");
+
+        jLabel2.setText("Manual");
+
+        pixelCalLabel_.setText("Pixel size config: ");
+
+        jLabel3.setText("Pixel size");
+
+        jLabel4.setText("Rotation (degrees)");
+
+        jLabel5.setText("Scale");
+
+        jLabel6.setText("Shear");
+
+        pixSizeLabel_.setText("jLabel7");
+
+        rotationSpinner_.setModel(new javax.swing.SpinnerNumberModel(-1.0d, -180.0d, 180.0d, 1.0d));
+
+        scaleSpinner_.setModel(new javax.swing.SpinnerNumberModel(1.0d, 0.2d, 5.0d, 0.01d));
+
+        shearSpinner_.setModel(new javax.swing.SpinnerNumberModel(0.0d, -1.0d, 1.0d, 0.01d));
+
+        jButton1.setText("Apply");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(49, 49, 49)
-                .addComponent(captureButton_)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 114, Short.MAX_VALUE)
-                .addComponent(calibrateButton_)
-                .addGap(47, 47, 47))
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(pixelCalLabel_)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel1)
+                            .addComponent(jButton1))
+                        .addGap(129, 129, 129))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(calibrateButton_)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(layout.createSequentialGroup()
+                                    .addComponent(pixSizeLabel_)
+                                    .addGap(27, 27, 27)
+                                    .addComponent(rotationSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGroup(layout.createSequentialGroup()
+                                    .addComponent(jLabel3)
+                                    .addGap(18, 18, 18)
+                                    .addComponent(jLabel4))))
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(23, 23, 23)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(12, 12, 12)
+                                        .addComponent(jLabel5)
+                                        .addGap(65, 65, 65)
+                                        .addComponent(jLabel6))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(scaleSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(34, 34, 34)
+                                        .addComponent(shearSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(42, 42, 42)
+                                .addComponent(captureButton_)))))
+                .addGap(84, 84, 84))
+            .addGroup(layout.createSequentialGroup()
+                .addGap(171, 171, 171)
+                .addComponent(jLabel2)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(79, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(pixelCalLabel_)
+                .addGap(9, 9, 9)
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel3)
+                    .addComponent(jLabel4)
+                    .addComponent(jLabel5)
+                    .addComponent(jLabel6))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(pixSizeLabel_)
+                    .addComponent(rotationSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(scaleSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(shearSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jButton1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 11, Short.MAX_VALUE)
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(captureButton_)
                     .addComponent(calibrateButton_))
-                .addGap(15, 15, 15))
+                .addContainerGap())
         );
 
         pack();
@@ -94,6 +285,11 @@ public class AffineGUI extends javax.swing.JFrame {
    private void captureButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_captureButton_ActionPerformed
       affineCalibrator_.readyForNextImage();
    }//GEN-LAST:event_captureButton_ActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        applyValues();
+//        populateValues();
+    }//GEN-LAST:event_jButton1ActionPerformed
 
    /**
     * @param args the command line arguments
@@ -132,12 +328,28 @@ public class AffineGUI extends javax.swing.JFrame {
       java.awt.EventQueue.invokeLater(new Runnable() {
 
          public void run() {
+             try {
             new AffineGUI().setVisible(true);
+             }catch (Exception e) {
+                 IJ.log("Couldnt find current pixel size config");
+             }
          }
       });
    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton calibrateButton_;
     private javax.swing.JButton captureButton_;
+    private javax.swing.JButton jButton1;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel pixSizeLabel_;
+    private javax.swing.JLabel pixelCalLabel_;
+    private javax.swing.JSpinner rotationSpinner_;
+    private javax.swing.JSpinner scaleSpinner_;
+    private javax.swing.JSpinner shearSpinner_;
     // End of variables declaration//GEN-END:variables
 }

@@ -98,7 +98,8 @@ public class FixedAreaAcquisitionSettings  {
          }
       }
       //image filtering
-      imageFilterType_ = prefs.getInt(PREF_PREFIX + "IMAGE_FILTER", FrameIntegrationMethod.FRAME_AVERAGE);
+      //dont load so defaults to frame average for now
+//      imageFilterType_ = prefs.getInt(PREF_PREFIX + "IMAGE_FILTER", FrameIntegrationMethod.FRAME_AVERAGE);   
       rank_ = prefs.getDouble(PREF_PREFIX + "RANK", 0.95);
    }
    
@@ -160,8 +161,8 @@ public class FixedAreaAcquisitionSettings  {
          prefs.put(PREF_PREFIX + "AFZNAME", autoFocusZDevice_);
       }
       //image filtering
-      //don't store filter type for noe
-//      imageFilterType_ = prefs.getInt(PREF_PREFIX + "IMAGE_FILTER", FRAME_AVERAGING);      
+      //store but dont load filter type for now
+      imageFilterType_ = prefs.getInt(PREF_PREFIX + "IMAGE_FILTER", FrameIntegrationMethod.FRAME_AVERAGE);      
       prefs.putDouble(PREF_PREFIX + "RANK", rank_);
       
    }
