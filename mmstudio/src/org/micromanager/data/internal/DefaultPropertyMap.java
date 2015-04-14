@@ -343,11 +343,25 @@ public class DefaultPropertyMap implements PropertyMap {
       return null;
    }
    @Override
+   public String getString(String key, String defaultVal) {
+      if (propMap_.containsKey(key)) {
+         return propMap_.get(key).getAsString();
+      }
+      return defaultVal;
+   }
+   @Override
    public String[] getStringArray(String key) {
       if (propMap_.containsKey(key)) {
          return propMap_.get(key).getAsStringArray();
       }
       return null;
+   }
+   @Override
+   public String[] getStringArray(String key, String[] defaultVal) {
+      if (propMap_.containsKey(key)) {
+         return propMap_.get(key).getAsStringArray();
+      }
+      return defaultVal;
    }
 
    @Override
@@ -358,11 +372,25 @@ public class DefaultPropertyMap implements PropertyMap {
       return null;
    }
    @Override
+   public Integer getInt(String key, Integer defaultVal) {
+      if (propMap_.containsKey(key)) {
+         return propMap_.get(key).getAsInteger();
+      }
+      return defaultVal;
+   }
+   @Override
    public Integer[] getIntArray(String key) {
       if (propMap_.containsKey(key)) {
          return propMap_.get(key).getAsIntegerArray();
       }
       return null;
+   }
+   @Override
+   public Integer[] getIntArray(String key, Integer[] defaultVal) {
+      if (propMap_.containsKey(key)) {
+         return propMap_.get(key).getAsIntegerArray();
+      }
+      return defaultVal;
    }
 
    @Override
@@ -373,11 +401,25 @@ public class DefaultPropertyMap implements PropertyMap {
       return null;
    }
    @Override
+   public Long getLong(String key, Long defaultVal) {
+      if (propMap_.containsKey(key)) {
+         return propMap_.get(key).getAsLong();
+      }
+      return defaultVal;
+   }
+   @Override
    public Long[] getLongArray(String key) {
       if (propMap_.containsKey(key)) {
          return propMap_.get(key).getAsLongArray();
       }
       return null;
+   }
+   @Override
+   public Long[] getLongArray(String key, Long[] defaultVal) {
+      if (propMap_.containsKey(key)) {
+         return propMap_.get(key).getAsLongArray();
+      }
+      return defaultVal;
    }
 
    @Override
@@ -388,11 +430,25 @@ public class DefaultPropertyMap implements PropertyMap {
       return null;
    }
    @Override
+   public Double getDouble(String key, Double defaultVal) {
+      if (propMap_.containsKey(key)) {
+         return propMap_.get(key).getAsDouble();
+      }
+      return defaultVal;
+   }
+   @Override
    public Double[] getDoubleArray(String key) {
       if (propMap_.containsKey(key)) {
          return propMap_.get(key).getAsDoubleArray();
       }
       return null;
+   }
+   @Override
+   public Double[] getDoubleArray(String key, Double[] defaultVal) {
+      if (propMap_.containsKey(key)) {
+         return propMap_.get(key).getAsDoubleArray();
+      }
+      return defaultVal;
    }
 
    @Override
@@ -403,11 +459,25 @@ public class DefaultPropertyMap implements PropertyMap {
       return null;
    }
    @Override
+   public Boolean getBoolean(String key, Boolean defaultVal) {
+      if (propMap_.containsKey(key)) {
+         return propMap_.get(key).getAsBoolean();
+      }
+      return defaultVal;
+   }
+   @Override
    public Boolean[] getBooleanArray(String key) {
       if (propMap_.containsKey(key)) {
          return propMap_.get(key).getAsBooleanArray();
       }
       return null;
+   }
+   @Override
+   public Boolean[] getBooleanArray(String key, Boolean[] defaultVal) {
+      if (propMap_.containsKey(key)) {
+         return propMap_.get(key).getAsBooleanArray();
+      }
+      return defaultVal;
    }
 
    @Override

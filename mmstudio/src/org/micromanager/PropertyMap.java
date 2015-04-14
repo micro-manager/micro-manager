@@ -88,12 +88,30 @@ public interface PropertyMap {
     */
    public String getString(String key);
    /**
+    * Retrieve a String value from the mapping. If the key is not found, then
+    * the provided default value will be returned. If the mapped value is not a
+    * String, a RuntimeException will be thrown.
+    * @param defaultVal the default value to use if the key is not found.
+    * @return the String corresponding to the specified key, or defaultVal
+    *         if the key is not found.
+    */
+   public String getString(String key, String defaultVal);
+   /**
     * Retrieve a String array from the mapping. Will return null if the key is
     * not found. If the mapped value is not a String[], a RuntimeException will
     * be thrown.
     * @return the String array corresponding to the specified key.
     */
    public String[] getStringArray(String key);
+   /**
+    * Retrieve a String array from the mapping. If the key is not found, then
+    * the provided default value will be returned. If the mapped value is not a
+    * String[], a RuntimeException will be thrown.
+    * @param defaultVal the default value to use if the key is not found.
+    * @return the String array corresponding to the specified key, or
+    *         defaultVal if the key is not found.
+    */
+   public String[] getStringArray(String key, String[] defaultVal);
 
    /**
     * Retrieve an Integer value from the mapping. Will return null if the key
@@ -103,12 +121,30 @@ public interface PropertyMap {
     */
    public Integer getInt(String key);
    /**
+    * Retrieve an Integer value from the mapping. If the key is not found, then
+    * the provided default value will be returned. d. If the mapped value is
+    * not an Integer, a RuntimeException will be thrown.
+    * @param defaultVal the default value to use if the key is not found.
+    * @return The Integer corresponding to the provided key, or defaultVal
+    *         if the key is not found.
+    */
+   public Integer getInt(String key, Integer defaultVal);
+   /**
     * Retrieve an Integer array from the mapping. Will return null if the key
     * is not found. If the mapped value is not an Integer[], a RuntimeException
     * will be thrown.
     * @return The Integer[] corresponding to the provided key.
     */
    public Integer[] getIntArray(String key);
+   /**
+    * Retrieve an Integer array from the mapping. If the key is not found, then
+    * the provided default value will be returned. d. If the mapped value is
+    * not an Integer[], a RuntimeException will be thrown.
+    * @param defaultVal the default value to use if the key is not found.
+    * @return The Integer[] corresponding to the provided key, or defaultVal
+    *         if the key is not found.
+    */
+   public Integer[] getIntArray(String key, Integer[] defaultVal);
 
    /**
     * Retrieve a Long value from the mapping. Will return null if the key
@@ -118,12 +154,30 @@ public interface PropertyMap {
     */
    public Long getLong(String key);
    /**
+    * Retrieve a Long value from the mapping. If the key is not found, then
+    * the provided default value will be returned. d. If the mapped value is
+    * not an Long, a RuntimeException will be thrown.
+    * @param defaultVal the default value to use if the key is not found.
+    * @return The Long corresponding to the provided key, or defaultVal
+    *         if the key is not found.
+    */
+   public Long getLong(String key, Long defaultVal);
+   /**
     * Retrieve a Long array from the mapping. Will return null if the key
     * is not found. If the mapped value is not an Long, a RuntimeException
     * will be thrown.
     * @return The Long[] corresponding to the provided key.
     */
    public Long[] getLongArray(String key);
+   /**
+    * Retrieve a Long array from the mapping. If the key is not found, then
+    * the provided default value will be returned. d. If the mapped value is
+    * not an Long, a RuntimeException will be thrown.
+    * @param defaultVal the default value to use if the key is not found.
+    * @return The Long[] corresponding to the provided key, or defaultVal
+    *         if the key is not found.
+    */
+   public Long[] getLongArray(String key, Long[] defaultVal);
 
    /**
     * Retrieve a Double value from the mapping. Will return null if the key
@@ -133,12 +187,30 @@ public interface PropertyMap {
     */
    public Double getDouble(String key);
    /**
+    * Retrieve a Double value from the mapping. If the key is not found, then
+    * the provided default value will be returned. d. If the mapped value is
+    * not a Double, a RuntimeException will be thrown.
+    * @param defaultVal the default value to use if the key is not found.
+    * @return The Double corresponding to the provided key, or defaultVal
+    *         if the key is not found.
+    */
+   public Double getDouble(String key, Double defaultVal);
+   /**
     * Retrieve a Double array from the mapping. Will return null if the key
     * is not found. If the mapped value is not an Double, a RuntimeException
     * will be thrown.
     * @return The Double[] corresponding to the provided key.
     */
    public Double[] getDoubleArray(String key);
+   /**
+    * Retrieve a Double array from the mapping. If the key is not found, then
+    * the provided default value will be returned. d. If the mapped value is
+    * not an Double, a RuntimeException will be thrown.
+    * @param defaultVal the default value to use if the key is not found.
+    * @return The Double[] corresponding to the provided key, or defaultVal
+    *         if the key is not found.
+    */
+   public Double[] getDoubleArray(String key, Double[] defaultVal);
 
    /**
     * Retrieve a Boolean value from the mapping. Will return null if the key
@@ -148,12 +220,30 @@ public interface PropertyMap {
     */
    public Boolean getBoolean(String key);
    /**
+    * Retrieve a Boolean value from the mapping. If the key is not found, then
+    * the provided default value will be returned. d. If the mapped value is
+    * not a Boolean, a RuntimeException will be thrown.
+    * @param defaultVal the default value to use if the key is not found.
+    * @return The Boolean corresponding to the provided key, or defaultVal
+    *         if the key is not found.
+    */
+   public Boolean getBoolean(String key, Boolean defaultVal);
+   /**
     * Retrieve a Boolean array from the mapping. Will return null if the key
     * is not found. If the mapped value is not an Boolean, a RuntimeException
     * will be thrown.
     * @return The Boolean[] corresponding to the provided key.
     */
    public Boolean[] getBooleanArray(String key);
+   /**
+    * Retrieve a Boolean array from the mapping. If the key is not found, then
+    * the provided default value will be returned. d. If the mapped value is
+    * not an Boolean, a RuntimeException will be thrown.
+    * @param defaultVal the default value to use if the key is not found.
+    * @return The Boolean[] corresponding to the provided key, or defaultVal
+    *         if the key is not found.
+    */
+   public Boolean[] getBooleanArray(String key, Boolean[] defaultVal);
 
    /**
     * Create a new PropertyMap that is this map but with values copied across
