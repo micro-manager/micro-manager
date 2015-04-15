@@ -688,11 +688,17 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       ArrayList<Image> result = new ArrayList<Image>();
       Coords curCoords = stack_.getCurrentImageCoords();
       for (int i = 0; i < store_.getAxisLength("channel"); ++i) {
-         result.add(store_.getImage(curCoords.copy().index("channel", i).build()));
+         Image tmp = store_.getImage(curCoords.copy().index("channel", i).build());
+         if (tmp != null) {
+            result.add(tmp);
+         }
       }
       if (result.size() == 0) {
          // No "channel" axis; just return the current image.
-         result.add(store_.getImage(curCoords));
+         Image tmp = store_.getImage(curCoords);
+         if (tmp != null) {
+            result.add(tmp);
+         }
       }
       return result;
    }
