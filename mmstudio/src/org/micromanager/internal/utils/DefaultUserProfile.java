@@ -150,7 +150,7 @@ public class DefaultUserProfile implements UserProfile {
          return DefaultPropertyMap.fromJSON(
                new JSONObject(loadFileToString(path)));
       }
-      catch (JSONException e) {
+      catch (Exception e) {
          ReportingUtils.showError(e, "There was an error when loading saved user preferences. Please delete the file at " + path + " and re-start Micro-Manager.");
          return null;
       }

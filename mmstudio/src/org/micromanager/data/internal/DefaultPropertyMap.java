@@ -517,67 +517,79 @@ public class DefaultPropertyMap implements PropertyMap {
       JSONArray keys = map.names();
       for (int i = 0; i < keys.length(); ++i) {
          String key = keys.getString(i);
-         JSONObject property = map.getJSONObject(key);
-         String type = property.getString(TYPE);
-         if (type.contentEquals(STRING)) {
-            builder.putString(key, property.getString(VALUE));
-         }
-         else if (type.contentEquals(STRING_ARRAY)) {
-            JSONArray tmp = property.getJSONArray(VALUE);
-            String[] valArr = new String[tmp.length()];
-            for (int j = 0; j < tmp.length(); ++j) {
-               valArr[j] = tmp.getString(j);
+         try {
+            JSONObject property = map.getJSONObject(key);
+            if (!property.has(VALUE)) {
+               // Value must be null, because putting a null into a JSONObject
+               // results in deleting the key.
+               // TODO: for now we refuse to load null values. Should we allow
+               // nulls?
+               continue;
             }
-            builder.putStringArray(key, valArr);
-         }
-         else if (type.contentEquals(INTEGER)) {
-            builder.putInt(key, property.getInt(VALUE));
-         }
-         else if (type.contentEquals(INTEGER_ARRAY)) {
-            JSONArray tmp = property.getJSONArray(VALUE);
-            Integer[] valArr = new Integer[tmp.length()];
-            for (int j = 0; j < tmp.length(); ++j) {
-               valArr[j] = tmp.getInt(j);
+            String type = property.getString(TYPE);
+            if (type.contentEquals(STRING)) {
+               builder.putString(key, property.getString(VALUE));
             }
-            builder.putIntArray(key, valArr);
-         }
-         else if (type.contentEquals(LONG)) {
-            builder.putLong(key, property.getLong(VALUE));
-         }
-         else if (type.contentEquals(LONG_ARRAY)) {
-            JSONArray tmp = property.getJSONArray(VALUE);
-            Long[] valArr = new Long[tmp.length()];
-            for (int j = 0; j < tmp.length(); ++j) {
-               valArr[j] = tmp.getLong(j);
+            else if (type.contentEquals(STRING_ARRAY)) {
+               JSONArray tmp = property.getJSONArray(VALUE);
+               String[] valArr = new String[tmp.length()];
+               for (int j = 0; j < tmp.length(); ++j) {
+                  valArr[j] = tmp.getString(j);
+               }
+               builder.putStringArray(key, valArr);
             }
-            builder.putLongArray(key, valArr);
-         }
-         else if (type.contentEquals(DOUBLE)) {
-            builder.putDouble(key, property.getDouble(VALUE));
-         }
-         else if (type.contentEquals(DOUBLE_ARRAY)) {
-            JSONArray tmp = property.getJSONArray(VALUE);
-            Double[] valArr = new Double[tmp.length()];
-            for (int j = 0; j < tmp.length(); ++j) {
-               valArr[j] = tmp.getDouble(j);
+            else if (type.contentEquals(INTEGER)) {
+               builder.putInt(key, property.getInt(VALUE));
             }
-            builder.putDoubleArray(key, valArr);
-         }
-         else if (type.contentEquals(BOOLEAN)) {
-            builder.putBoolean(key, property.getBoolean(VALUE));
-         }
-         else if (type.contentEquals(BOOLEAN_ARRAY)) {
-            JSONArray tmp = property.getJSONArray(VALUE);
-            Boolean[] valArr = new Boolean[tmp.length()];
-            for (int j = 0; j < tmp.length(); ++j) {
-               valArr[j] = tmp.getBoolean(j);
+            else if (type.contentEquals(INTEGER_ARRAY)) {
+               JSONArray tmp = property.getJSONArray(VALUE);
+               Integer[] valArr = new Integer[tmp.length()];
+               for (int j = 0; j < tmp.length(); ++j) {
+                  valArr[j] = tmp.getInt(j);
+               }
+               builder.putIntArray(key, valArr);
             }
-            builder.putBooleanArray(key, valArr);
+            else if (type.contentEquals(LONG)) {
+               builder.putLong(key, property.getLong(VALUE));
+            }
+            else if (type.contentEquals(LONG_ARRAY)) {
+               JSONArray tmp = property.getJSONArray(VALUE);
+               Long[] valArr = new Long[tmp.length()];
+               for (int j = 0; j < tmp.length(); ++j) {
+                  valArr[j] = tmp.getLong(j);
+               }
+               builder.putLongArray(key, valArr);
+            }
+            else if (type.contentEquals(DOUBLE)) {
+               builder.putDouble(key, property.getDouble(VALUE));
+            }
+            else if (type.contentEquals(DOUBLE_ARRAY)) {
+               JSONArray tmp = property.getJSONArray(VALUE);
+               Double[] valArr = new Double[tmp.length()];
+               for (int j = 0; j < tmp.length(); ++j) {
+                  valArr[j] = tmp.getDouble(j);
+               }
+               builder.putDoubleArray(key, valArr);
+            }
+            else if (type.contentEquals(BOOLEAN)) {
+               builder.putBoolean(key, property.getBoolean(VALUE));
+            }
+            else if (type.contentEquals(BOOLEAN_ARRAY)) {
+               JSONArray tmp = property.getJSONArray(VALUE);
+               Boolean[] valArr = new Boolean[tmp.length()];
+               for (int j = 0; j < tmp.length(); ++j) {
+                  valArr[j] = tmp.getBoolean(j);
+               }
+               builder.putBooleanArray(key, valArr);
+            }
+            else {
+               throw new IllegalArgumentException(
+                     "Illegal property type " + type + " for property " +
+                     property);
+            }
          }
-         else {
-            throw new IllegalArgumentException(
-                  "Illegal property type " + type + " for property " +
-                  property);
+         catch (JSONException e) {
+            throw new RuntimeException("Error converting key " + key + " from JSON: " + e);
          }
       }
       return (DefaultPropertyMap) builder.build();
