@@ -269,9 +269,12 @@ public class CommentsPanel extends InspectorPanel {
       }
       // Set these before we register for the new display's events, so we have
       // them set properly before imageChangedUpdate() can be called.
-      store_ = display.getDatastore();
-      stack_ = ((DefaultDisplayWindow) display).getStack();
       display_ = display;
+      if (display_ == null) {
+         return;
+      }
+      store_ = display_.getDatastore();
+      stack_ = ((DefaultDisplayWindow) display_).getStack();
       display_.registerForEvents(this);
       List<Image> images = display_.getDisplayedImages();
       if (images.size() > 0) {

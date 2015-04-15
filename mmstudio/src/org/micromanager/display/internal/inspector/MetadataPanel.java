@@ -227,6 +227,9 @@ public class MetadataPanel extends InspectorPanel {
          display_.unregisterForEvents(this);
       }
       display_ = display;
+      if (display_ == null) {
+         return;
+      }
       display_.registerForEvents(this);
       store_ = display.getDatastore();
    }

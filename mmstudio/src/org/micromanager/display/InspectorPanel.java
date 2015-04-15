@@ -39,7 +39,8 @@ public abstract class InspectorPanel extends JPanel {
     * Receive a new DisplayWindow. For panels whose contents change in response
     * to the DisplayWindow that is currently "active", this method must be
     * overridden to update those contents.
-    * @param display The newly-active DisplayWindow.
+    * @param display The newly-active DisplayWindow. This may be null, in which
+    *        case no DisplayWindow is available.
     */
    public abstract void setDisplay(DisplayWindow display);
 

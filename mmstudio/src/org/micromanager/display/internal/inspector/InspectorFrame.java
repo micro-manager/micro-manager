@@ -299,6 +299,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
    public void onDisplayDestroyed(DisplayDestroyedEvent event) {
       event.getDisplay().unregisterForEvents(this);
       populateChooser();
+      setDisplay(null);
    }
 
    @Subscribe
@@ -331,15 +332,21 @@ public class InspectorFrame extends MMFrame implements Inspector {
             ReportingUtils.logError(e, "Error dispatching new display to " + panel);
          }
       }
-      DisplayMenuItem item = (DisplayMenuItem) (displayChooser_.getSelectedItem());
-      if (item.getDisplay() == null) {
-         // Show the title of the current display, to make it clear which one
-         // we're controlling.
-         curDisplayTitle_.setText(display_.getName());
+      if (display_ == null) {
+         curDisplayTitle_.setText("No available display");
          curDisplayTitle_.setVisible(true);
       }
       else {
-         curDisplayTitle_.setVisible(false);
+         DisplayMenuItem item = (DisplayMenuItem) (displayChooser_.getSelectedItem());
+         if (item.getDisplay() == null) {
+            // Show the title of the current display, to make it clear which one
+            // we're controlling.
+            curDisplayTitle_.setText(display_.getName());
+            curDisplayTitle_.setVisible(true);
+         }
+         else {
+            curDisplayTitle_.setVisible(false);
+         }
       }
       // Redo the layout to account for curDisplayTitle_ being shown/hidden.
       validate();

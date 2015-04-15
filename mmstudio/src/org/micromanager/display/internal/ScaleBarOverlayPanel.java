@@ -167,6 +167,9 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
    @Override
    public void setDisplay(DisplayWindow display) {
       super.setDisplay(display);
+      if (display == null) {
+         return;
+      }
       PropertyMap userData = display.getDisplaySettings().getUserData();
       if (userData == null) {
          // Start with blank data.

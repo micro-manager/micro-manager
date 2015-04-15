@@ -307,6 +307,11 @@ public final class HistogramsPanel extends InspectorPanel {
    @Override
    public synchronized void setDisplay(DisplayWindow display) {
       display_ = (DefaultDisplayWindow) display;
+      if (display_ == null) {
+         removeAll();
+         invalidate();
+         return;
+      }
       store_ = display_.getDatastore();
       stack_ = display_.getStack();
       ijImage_ = display_.getImagePlus();

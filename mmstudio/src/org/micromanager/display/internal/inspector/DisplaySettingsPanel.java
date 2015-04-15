@@ -171,6 +171,9 @@ public class DisplaySettingsPanel extends InspectorPanel {
          display_.getDatastore().unregisterForEvents(this);
       }
       display_ = display;
+      if (display_ == null) {
+         return;
+      }
       display_.registerForEvents(this);
       if (store_ != null) {
          store_.unregisterForEvents(this);

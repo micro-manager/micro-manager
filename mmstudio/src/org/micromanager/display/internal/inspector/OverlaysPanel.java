@@ -151,12 +151,14 @@ class OverlaysPanel extends InspectorPanel {
          display_.unregisterForEvents(this);
       }
       display_ = display;
-      stack_ = ((DefaultDisplayWindow) display).getStack();
-      plus_ = display.getImagePlus();
       for (OverlayPanel overlay : overlays_) {
          overlay.setDisplay(display);
       }
-      display_.registerForEvents(this);
+      if (display_ != null) {
+         stack_ = ((DefaultDisplayWindow) display).getStack();
+         plus_ = display.getImagePlus();
+         display_.registerForEvents(this);
+      }
    }
 
    @Override
