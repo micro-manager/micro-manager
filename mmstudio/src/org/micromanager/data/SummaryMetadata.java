@@ -48,7 +48,7 @@ public interface SummaryMetadata {
       // The following functions each set the relevant value for the 
       // SummaryMetadata. See the corresponding getter methods of
       // SummaryMetadata, below, for the meaning of these properties.
-      SummaryMetadataBuilder fileName(String fileName);
+      SummaryMetadataBuilder name(String name);
       SummaryMetadataBuilder prefix(String prefix);
       SummaryMetadataBuilder userName(String userName);
       SummaryMetadataBuilder profileName(String profileName);
@@ -80,18 +80,18 @@ public interface SummaryMetadata {
    SummaryMetadataBuilder copy();
 
    /**
-    * The complete filename for this file, including any suffix attached by
-    * Micro-Manager
-    * @return complete filename for this file, including any suffix attached by
-    * Micro-Manager
+    * The complete name for this dataset. Typically this will be the name of
+    * the directory in which the data is stored (note: not the full path, just
+    * that one directory).
+    * @return name of the dataset.
     */
-   public String getFileName();
+   public String getName();
 
    /**
     * The user-supplied portion of the filename, not including Micro-Manager's
     * additional suffix
-    * @return user-supplied portion of the filename, not including Micro-Manager's
-    * additional suffix
+    * @return user-supplied portion of the filename, not including
+    * Micro-Manager's additional suffix
     */
    public String getPrefix();
 

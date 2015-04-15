@@ -94,7 +94,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
 
    public static class Builder implements SummaryMetadata.SummaryMetadataBuilder {
 
-      private String fileName_ = null;
+      private String name_ = null;
       private String prefix_ = null;
       private String userName_ = null;
       private String profileName_ = null;
@@ -121,8 +121,8 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
       
       @Override
-      public SummaryMetadataBuilder fileName(String fileName) {
-         fileName_ = fileName;
+      public SummaryMetadataBuilder name(String name) {
+         name_ = name;
          return this;
       }
 
@@ -229,7 +229,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
    }
    
-   private String fileName_ = null;
+   private String name_ = null;
    private String prefix_ = null;
    private String userName_ = null;
    private String profileName_ = null;
@@ -251,7 +251,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    private PropertyMap userData_ = null;
 
    public DefaultSummaryMetadata(Builder builder) {
-      fileName_ = builder.fileName_;
+      name_ = builder.name_;
       prefix_ = builder.prefix_;
       userName_ = builder.userName_;
       profileName_ = builder.profileName_;
@@ -274,8 +274,8 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    }
 
    @Override
-   public String getFileName() {
-      return fileName_;
+   public String getName() {
+      return name_;
    }
 
    @Override
@@ -366,7 +366,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    @Override
    public SummaryMetadataBuilder copy() {
       return new Builder()
-            .fileName(fileName_)
+            .name(name_)
             .prefix(prefix_)
             .userName(userName_)
             .profileName(profileName_)
@@ -540,7 +540,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    public JSONObject toJSON() {
       try {
          JSONObject result = new JSONObject();
-         MDUtils.setFileName(result, fileName_);
+         MDUtils.setFileName(result, name_);
          result.put("Prefix", prefix_);
          result.put("UserName", userName_);
          result.put("ProfileName", profileName_);

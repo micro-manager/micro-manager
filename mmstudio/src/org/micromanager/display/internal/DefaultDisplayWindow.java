@@ -587,7 +587,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
 
          FileInfo info = new FileInfo();
          info.directory = summary.getDirectory();
-         info.fileName = summary.getFileName();
+         info.fileName = summary.getName();
          info.width = sample.getWidth();
          info.height = sample.getHeight();
          ijImage_.setFileInfo(info);
@@ -954,7 +954,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       String name = customName_;
       if (name == null) {
          // Use the filename instead.
-         name = store_.getSummaryMetadata().getFileName();
+         name = store_.getSummaryMetadata().getName();
       }
       if (name == null || name.contentEquals("")) {
          // Use a fallback name.
