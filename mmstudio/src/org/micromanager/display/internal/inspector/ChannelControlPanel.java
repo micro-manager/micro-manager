@@ -416,18 +416,25 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       applyLUT(true);
    }
 
+   /**
+    * Pop up a dialog to let the user set a new color for our channel.
+    */
    private void colorPickerLabelMouseClicked() {
-      String[] channelNames = store_.getSummaryMetadata().getChannelNames();
+      // Pick an appropriate string for the dialog prompt.
       String name = "selected";
+      String[] channelNames = store_.getSummaryMetadata().getChannelNames();
       if (channelNames != null && channelNames.length > channelIndex_) {
          name = channelNames[channelIndex_];
       }
+
+      // Pick the default color to start with.
       DisplaySettings settings = display_.getDisplaySettings();
       Color defaultColor = color_;
       Color[] channelColors = settings.getChannelColors();
       if (channelColors != null && channelColors.length > channelIndex_) {
          defaultColor = channelColors[channelIndex_];
       }
+
       Color newColor = JColorChooser.showDialog(this, "Choose a color for the "
               + name + " channel", defaultColor);
       if (newColor != null) {
@@ -456,6 +463,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
          newColors[channelIndex_] = newColor;
          DisplaySettings newSettings = settings.copy().channelColors(newColors).build();
+         // This will update our color_ field via onNewDisplaySettings().
          display_.setDisplaySettings(newSettings);
       }
       reloadDisplaySettings();
@@ -634,10 +642,30 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     * by future displays for our channel name/group.
     */
    private void saveChannelSettings() {
+      // HACK: because we override colors to white for singlechannel displays,
+      // we need to try to "recover" the actual color from the profile or
+      // display settings here; otherwise the first channel in every new
+      // acquisition will always be white.
+      Color color = color_;
+      if (display_.getDatastore().getAxisLength(Coords.CHANNEL) == 1) {
+         ChannelSettings channelSettings = ChannelSettings.loadSettings(
+               name_, store_.getSummaryMetadata().getChannelGroup(),
+               null, -1, -1, true);
+         color = channelSettings.getColor();
+         if (color == null) {
+            Color[] colors = display_.getDisplaySettings().getChannelColors();
+            if (colors != null && colors.length > channelIndex_) {
+               color = colors[channelIndex_];
+            }
+         }
+      }
+      if (color == null) {
+         color = Color.WHITE;
+      }
       // TODO: no per-channel autoscale controls, so defaulting to true here.
       ChannelSettings settings = new ChannelSettings(name_,
             store_.getSummaryMetadata().getChannelGroup(),
-            color_, contrastMin_, contrastMax_, true);
+            color, contrastMin_, contrastMax_, true);
       settings.saveToProfile();
    }
 
