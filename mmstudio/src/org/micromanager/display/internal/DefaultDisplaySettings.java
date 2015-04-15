@@ -83,7 +83,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    /**
     * Set new settings in the user's profile.
     */
-   public static void setStandardSettings(DisplaySettings settings) throws IOException {
+   public static void setStandardSettings(DisplaySettings settings) {
       DefaultUserProfile profile = DefaultUserProfile.getInstance();
       profile.setInt(DefaultDisplaySettings.class,
             "channelDisplayModeIndex", settings.getChannelDisplayModeIndex());
