@@ -55,6 +55,7 @@ import org.micromanager.display.NewImagePlusEvent;
 
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
 
+import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -72,6 +73,15 @@ public class DisplaySettingsPanel extends InspectorPanel {
       {Color.CYAN, Color.MAGENTA, Color.YELLOW, Color.RED, Color.GREEN,
          Color.BLUE, Color.WHITE}
    };
+
+   private static final String DISPLAY_MODE = "color mixing mode";
+   private static final String SHOULD_AUTOSTRETCH = "whether or not to autostretch";
+   private static final String UPDATE_RATE = "rate at which to update histogram";
+   private static final String TRIM_PERCENTAGE = "percentage of image data ignored when stretching";
+
+   private static final int GRAYSCALE = 0;
+   private static final int COLOR = 1;
+   private static final int COMPOSITE = 2;
 
    private Datastore store_;
    private ImagePlus ijImage_;
@@ -152,16 +162,6 @@ public class DisplaySettingsPanel extends InspectorPanel {
          }
       });
       add(trimPercentage_, "align right, wrap");
-
-      JButton saveButton = new JButton("Set as default");
-      saveButton.setToolTipText("Save the current display settings as default for all new image windows.");
-      saveButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            saveAsDefaults();
-         }
-      });
-      add(saveButton, "split 2, flowx, growx, align left");
    }
 
    @Override
@@ -179,9 +179,15 @@ public class DisplaySettingsPanel extends InspectorPanel {
       store_.registerForEvents(this);
       ijImage_ = display_.getImagePlus();
       DisplaySettings settings = display_.getDisplaySettings();
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
 
       if (settings.getChannelDisplayModeIndex() != null) {
          displayMode_.setSelectedIndex(settings.getChannelDisplayModeIndex());
+      }
+      else {
+         // Default is composite mode.
+         displayMode_.setSelectedIndex(profile.getInt(getClass(),
+                  DISPLAY_MODE, COMPOSITE));
       }
       displayMode_.setEnabled(ijImage_ instanceof CompositeImage);
 
@@ -201,14 +207,22 @@ public class DisplaySettingsPanel extends InspectorPanel {
          }
       }
       else {
-         // Default to "update every image"
+         // Default is "update every image"
          histogramUpdateRate_.setSelectedIndex(1);
       }
       if (settings.getShouldAutostretch() != null) {
          shouldAutostretch_.setSelected(settings.getShouldAutostretch());
       }
+      else {
+         shouldAutostretch_.setSelected(profile.getBoolean(getClass(),
+                  SHOULD_AUTOSTRETCH, true));
+      }
       if (settings.getTrimPercentage() != null) {
          trimPercentage_.setValue(settings.getTrimPercentage());
+      }
+      else {
+         trimPercentage_.setValue(String.valueOf(profile.getDouble(
+                     getClass(), TRIM_PERCENTAGE, 0.0)));
       }
    }
 
@@ -228,37 +242,41 @@ public class DisplaySettingsPanel extends InspectorPanel {
    private void setDisplayMode(JComboBox displayMode) {
       if (!(ijImage_ instanceof CompositeImage)) {
          // Non-composite images are always in grayscale mode.
-         displayMode.setSelectedIndex(1);
+         displayMode.setSelectedIndex(GRAYSCALE);
          return;
       }
-      
+
       CompositeImage composite = (CompositeImage) ijImage_;
-      String selection = (String) displayMode.getSelectedItem();
+      int selection = displayMode.getSelectedIndex();
       DisplaySettings.DisplaySettingsBuilder builder = display_.getDisplaySettings().copy();
-      if (selection.equals("Composite")) {
+      if (selection == COMPOSITE) {
          if (store_.getAxisLength("channel") > 7) {
             JOptionPane.showMessageDialog(null,
                "Images with more than 7 channels cannot be displayed in Composite mode.");
             // Send them back to Color mode.
-            displayMode.setSelectedIndex(0);
-            builder.channelDisplayModeIndex(0);
+            displayMode.setSelectedIndex(COLOR);
+            builder.channelDisplayModeIndex(COLOR);
          }
          else {
             composite.setMode(CompositeImage.COMPOSITE);
-            builder.channelDisplayModeIndex(2);
+            builder.channelDisplayModeIndex(COMPOSITE);
          }
       }
-      else if (selection.equals("Color")) {
+      else if (selection == COLOR) {
          composite.setMode(CompositeImage.COLOR);
-         builder.channelDisplayModeIndex(0);
+         builder.channelDisplayModeIndex(COLOR);
       }
       else {
          // Assume grayscale mode.
          composite.setMode(CompositeImage.GRAYSCALE);
-         builder.channelDisplayModeIndex(1);
+         builder.channelDisplayModeIndex(GRAYSCALE);
       }
       composite.updateAndDraw();
-      display_.setDisplaySettings(builder.build());
+      DisplaySettings settings = builder.build();
+      DefaultUserProfile.getInstance().setInt(getClass(), DISPLAY_MODE,
+            settings.getChannelDisplayModeIndex());
+      DefaultDisplaySettings.setStandardSettings(settings);
+      display_.setDisplaySettings(settings);
       display_.postEvent(new DefaultRequestToDrawEvent());
    }
 
@@ -346,6 +364,9 @@ public class DisplaySettingsPanel extends InspectorPanel {
       }
       DisplaySettings settings = display_.getDisplaySettings();
       settings = settings.copy().histogramUpdateRate(rate).build();
+      DefaultUserProfile.getInstance().setDouble(getClass(), UPDATE_RATE,
+            settings.getHistogramUpdateRate());
+      DefaultDisplaySettings.setStandardSettings(settings);
       display_.setDisplaySettings(settings);
    }
 
@@ -355,6 +376,9 @@ public class DisplaySettingsPanel extends InspectorPanel {
    private void setShouldAutostretch() {
       DisplaySettings settings = display_.getDisplaySettings();
       settings = settings.copy().shouldAutostretch(shouldAutostretch_.isSelected()).build();
+      DefaultUserProfile.getInstance().setBoolean(getClass(),
+            SHOULD_AUTOSTRETCH, settings.getShouldAutostretch());
+      DefaultDisplaySettings.setStandardSettings(settings);
       display_.setDisplaySettings(settings);
       display_.postEvent(new DefaultRequestToDrawEvent());
    }
@@ -366,21 +390,11 @@ public class DisplaySettingsPanel extends InspectorPanel {
       DisplaySettings settings = display_.getDisplaySettings();
       double percentage = (Double) trimPercentage_.getValue();
       settings = settings.copy().trimPercentage(percentage).build();
+      DefaultUserProfile.getInstance().setDouble(getClass(),
+            TRIM_PERCENTAGE, settings.getTrimPercentage());
+      DefaultDisplaySettings.setStandardSettings(settings);
       display_.setDisplaySettings(settings);
       display_.postEvent(new DefaultRequestToDrawEvent());
-   }
-
-   /**
-    * Save the current display settings as default settings.
-    */
-   private void saveAsDefaults() {
-      try {
-         DefaultDisplaySettings.setStandardSettings(
-               display_.getDisplaySettings());
-      }
-      catch (java.io.IOException e) {
-         ReportingUtils.showError(e, "Unable to save display settings");
-      }
    }
 
    /**
@@ -398,7 +412,7 @@ public class DisplaySettingsPanel extends InspectorPanel {
             // appropriate.
             displayMode_.setEnabled(true);
             if (((CompositeImage) ijImage_).getMode() == CompositeImage.COMPOSITE) {
-               displayMode_.setSelectedIndex(2);
+               displayMode_.setSelectedIndex(COMPOSITE);
             }
          }
       }
