@@ -1565,7 +1565,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
       try {
          applySettings();
-         //saveAcqSettings(); // This is too slow.
+         saveAcqSettings();
          ChannelTableModel model = (ChannelTableModel) channelTable_.getModel();
          if (acqEng_.isChannelsSettingEnabled() && model.duplicateChannels()) {
             JOptionPane.showMessageDialog(this, "Cannot start acquisition using the same channel twice");
