@@ -1125,8 +1125,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
          posListDlg_.dispose();
       }
       
-      LineProfile.cleanup();
-
       if (scriptPanel_ != null) {
          scriptPanel_.closePanel();
       }

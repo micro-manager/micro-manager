@@ -54,6 +54,7 @@ public class GraphFrame extends MMFrame {
    private JTextField fldXMin;
    private SpringLayout springLayout;
    private GraphPanel panel_;
+   private LineProfile parent_;
    
    /*
    public static void main(String args[]) {
@@ -117,8 +118,9 @@ public class GraphFrame extends MMFrame {
 	   
    }
 
-   public GraphFrame() {
+   public GraphFrame(LineProfile parent) {
       super("graph frame");
+      parent_ = parent;
      
       setFont(new Font("Arial", Font.PLAIN, 10));
       
@@ -218,7 +220,7 @@ public class GraphFrame extends MMFrame {
       btnRefresh.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            LineProfile.updateLineProfile();
+            parent_.updateLineProfile();
          }
       });
       btnRefresh.setText("Refresh");

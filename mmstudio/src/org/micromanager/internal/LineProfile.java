@@ -1,14 +1,22 @@
 package org.micromanager.internal;
 
+import com.google.common.eventbus.Subscribe;
+
 import ij.gui.Line;
 import ij.gui.Roi;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import ij.WindowManager;
 
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.Rectangle;
 
 import javax.swing.JFrame;
+
+import org.micromanager.display.DisplayDestroyedEvent;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.PixelsSetEvent;
 
 import org.micromanager.internal.graph.GraphData;
 import org.micromanager.internal.graph.GraphFrame;
@@ -17,28 +25,30 @@ import org.micromanager.internal.graph.GraphFrame;
  * This class collects information related to the Line Profile display.
  */
 public class LineProfile {
-   private static GraphData lineProfileData_;
-   private static GraphFrame profileWin_;
+   private GraphData lineProfileData_;
+   private GraphFrame profileWin_;
+   private DisplayWindow display_;
    
-   public static void openLineProfileWindow() {
-      if (WindowManager.getCurrentWindow() == null ||
-            WindowManager.getCurrentWindow().isClosed()) {
-         return;
-      }
-      calculateLineProfileData(WindowManager.getCurrentImage());
-      if (lineProfileData_ == null) {
-         return;
-      }
-      profileWin_ = new GraphFrame();
+   public LineProfile(DisplayWindow display) {
+      display_ = display;
+      display_.registerForEvents(this);
+      calculateLineProfileData(display_.getImagePlus());
+
+      profileWin_ = new GraphFrame(this);
+      profileWin_.addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowClosing(WindowEvent event) {
+            cleanup();
+         }
+      });
       profileWin_.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
       profileWin_.setData(lineProfileData_);
       profileWin_.setAutoScale();
-      profileWin_.setTitle("Live line profile");
-      MMStudio studio = MMStudio.getInstance();
+      profileWin_.setTitle("Line profile for " + display_.getName());
       profileWin_.setVisible(true);
    }
 
-   public static void calculateLineProfileData(ImagePlus imp) {
+   private void calculateLineProfileData(ImagePlus imp) {
       Roi roi = imp.getRoi();
       if (roi == null || !roi.isLine()) {
          // if there is no line ROI, create one
@@ -68,17 +78,23 @@ public class LineProfile {
       lineProfileData_.setData(line.getPixels());
    }
 
-   public static void updateLineProfile() {
-      if (WindowManager.getCurrentWindow() == null || profileWin_ == null
-            || !profileWin_.isShowing()) {
-         return;
-      }
-
+   public void updateLineProfile() {
       calculateLineProfileData(WindowManager.getCurrentImage());
       profileWin_.setData(lineProfileData_);
    }
 
-   public static void cleanup() {
+   @Subscribe
+   public void onPixelsSet(PixelsSetEvent event) {
+      updateLineProfile();
+   }
+
+   @Subscribe
+   public void onDisplayDestroyed(DisplayDestroyedEvent event) {
+      cleanup();
+   }
+
+   public void cleanup() {
+      display_.unregisterForEvents(this);
       if (profileWin_ != null) {
          profileWin_.dispose();
       }

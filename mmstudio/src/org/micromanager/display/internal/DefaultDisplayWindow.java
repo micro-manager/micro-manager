@@ -87,7 +87,6 @@ import org.micromanager.display.internal.events.DisplayActivatedEvent;
 import org.micromanager.display.internal.events.FullScreenEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.display.internal.events.NewDisplaySettingsEvent;
-import org.micromanager.display.PixelsSetEvent;
 import org.micromanager.display.internal.events.RequestToCloseEvent;
 import org.micromanager.display.internal.events.StatusEvent;
 import org.micromanager.display.internal.inspector.InspectorFrame;
@@ -806,19 +805,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    @Override
    public EventBus getDisplayBus() {
       return displayBus_;
-   }
-
-   @Subscribe
-   public void onPixelsSet(PixelsSetEvent event) {
-      try {
-         // TODO: I think this means we're on top, but I'm not certain.
-         if (isFocusableWindow()) {
-            LineProfile.updateLineProfile();
-         }
-      }
-      catch (Exception e) {
-         ReportingUtils.logError(e, "Failed to respond properly to pixels-set event");
-      }
    }
 
    /**

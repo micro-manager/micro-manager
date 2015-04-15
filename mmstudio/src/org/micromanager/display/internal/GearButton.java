@@ -33,6 +33,7 @@ import javax.swing.JPopupMenu;
 import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.inspector.InspectorFrame;
+import org.micromanager.internal.LineProfile;
 
 /**
  * This class provides access to various rarely-used functions (like save or
@@ -61,6 +62,17 @@ public class GearButton extends JButton {
          }
       });
       menu_.add(duplicate);
+
+      menu_.addSeparator();
+
+      JMenuItem lineProfile = new JMenuItem("Show Line Profile");
+      lineProfile.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            new LineProfile(display);
+         }
+      });
+      menu_.add(lineProfile);
 
       menu_.addSeparator();
 

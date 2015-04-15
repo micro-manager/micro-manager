@@ -411,19 +411,6 @@ public class MainFrame extends MMFrame implements LiveModeListener {
          },
          "arrow_out.png", topPanel, 40, 154, 70, 174);
       
-      // Line profile.
-      createLabel("Profile", true, topPanel, 91, 140, 149, 154);
-
-      GUIUtils.createButton(false, "lineProfileButton", null,
-         "Open line profile window (requires line selection)",
-         new Runnable() {
-            @Override
-            public void run() {
-               LineProfile.openLineProfileWindow();
-            }
-         },
-         "chart_curve.png", topPanel, 94, 154, 124, 174);
-
       // Autofocus
       createLabel("Autofocus", true, topPanel, 172, 140, 254, 154);
       autofocusNowButton_ = (JButton) GUIUtils.createButton(false,
