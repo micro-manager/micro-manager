@@ -221,8 +221,8 @@ public class DisplaySettingsPanel extends InspectorPanel {
          trimPercentage_.setValue(settings.getTrimPercentage());
       }
       else {
-         trimPercentage_.setValue(String.valueOf(profile.getDouble(
-                     getClass(), TRIM_PERCENTAGE, 0.0)));
+         trimPercentage_.setValue(profile.getDouble(
+                     getClass(), TRIM_PERCENTAGE, 0.0));
       }
    }
 
