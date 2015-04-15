@@ -1183,7 +1183,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
    }
 
    public synchronized boolean closeSequence(boolean calledByImageJ) {
-
       if (!getIsProgramRunning()) {
          if (core_ != null) {
             core_.logMessage("MMStudio::closeSequence called while isProgramRunning_ is false");
@@ -1203,10 +1202,13 @@ public class MMStudio implements Studio, CompatibilityInterface {
       }
 
       stopAllActivity();
-      
-      // TODO: we should close all open image display windows, and if the
-      // user cancels any of them, then we should abort shutdown.
-      ReportingUtils.logError("TODO: allow cancellation of shutdown if close-display option is selected for open display window");
+
+      for (DisplayWindow display : displays().getAllImageWindows()) {
+         if (!display.requestToClose()) {
+            // This display is unable to close for some reason.
+            return false;
+         }
+      }
 
       if (!cleanupOnClose(calledByImageJ)) {
          return false;
