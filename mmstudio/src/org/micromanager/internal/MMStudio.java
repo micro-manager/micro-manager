@@ -298,8 +298,8 @@ public class MMStudio implements Studio, CompatibilityInterface {
 
       staticInfo_ = new StaticInfo(core_, frame_);
 
-      openAcqDirectory_ = DefaultUserProfile.getInstance().getString(
-            MMStudio.class, OPEN_ACQ_DIR, "");
+      openAcqDirectory_ = profile().getString(MMStudio.class,
+            OPEN_ACQ_DIR, "");
       ReportingUtils.logError("TODO: restore previous default data saving method");
 
       ToolTipManager ttManager = ToolTipManager.sharedInstance();
@@ -475,16 +475,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       live().setLiveMode(false);
       JOptionPane.showMessageDialog(frame_, message);
       core_.logMessage(message);
-   }
-
-   public void saveChannelColor(String chName, int rgb) {
-      DefaultUserProfile.getInstance().setInt(MMStudio.class,
-            "Color_" + chName, rgb);
-   }
-   
-   public Color getChannelColor(String chName, int defaultColor) {  
-      return new Color(DefaultUserProfile.getInstance().getInt(
-               MMStudio.class, "Color_" + chName, defaultColor));
    }
 
    private void showRegistrationDialogMaybe() {
@@ -1171,13 +1161,12 @@ public class MMStudio implements Studio, CompatibilityInterface {
    private void saveSettings() {
       frame_.savePrefs();
       
-      DefaultUserProfile profile = DefaultUserProfile.getInstance();
-      profile.setString(MMStudio.class, OPEN_ACQ_DIR, openAcqDirectory_);
+      profile().setString(MMStudio.class, OPEN_ACQ_DIR, openAcqDirectory_);
       ReportingUtils.logError("TODO: record default data-saving method");
 
       // NOTE: do not save auto shutter state
       if (afMgr_ != null && afMgr_.getDevice() != null) {
-         profile.setString(MMStudio.class,
+         profile().setString(MMStudio.class,
                AUTOFOCUS_DEVICE, afMgr_.getDevice().getDeviceName());
       }
    }
@@ -1225,7 +1214,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
             ReportingUtils.logError(e);
       }
       try {
-         DefaultUserProfile.getInstance().syncToDisk();
+         profile().syncToDisk();
       }
       catch (IOException e) {
          if (core_ != null) {
@@ -1344,8 +1333,8 @@ public class MMStudio implements Studio, CompatibilityInterface {
             if (null != MRUConfigFiles_.get(icfg)) {
                value = MRUConfigFiles_.get(icfg);
             }
-            DefaultUserProfile.getInstance().setString(
-                  MMStudio.class, CFGFILE_ENTRY_BASE + icfg.toString(), value);
+            profile().setString(MMStudio.class,
+                  CFGFILE_ENTRY_BASE + icfg.toString(), value);
          }
       }
    }
@@ -1359,7 +1348,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
     * selecting which one to use.
     */
    private void loadMRUConfigFiles() {
-      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      UserProfile profile = profile();
       sysConfigFile_ = profile.getString(MMStudio.class,
             SYSTEM_CONFIG_FILE, sysConfigFile_);
       MRUConfigFiles_ = new ArrayList<String>();
