@@ -27,7 +27,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.micromanager.data.Metadata;
-import org.micromanager.data.SummaryMetadata;
 import org.micromanager.MultiStagePosition;
 
 import org.micromanager.internal.utils.MDUtils;
@@ -84,7 +83,6 @@ public class DefaultMetadata implements Metadata {
       private Double pixelAspect_ = null;
 
       private DefaultPropertyMap userData_ = null;
-      private DefaultSummaryMetadata summaryMetadata_ = null;
 
       @Override
       public DefaultMetadata build() {
@@ -264,12 +262,6 @@ public class DefaultMetadata implements Metadata {
          userData_ = (DefaultPropertyMap) userData;
          return this;
       }
-
-      @Override
-      public MetadataBuilder summaryMetadata(SummaryMetadata summaryMetadata) {
-         summaryMetadata_ = (DefaultSummaryMetadata) summaryMetadata;
-         return this;
-      }
    }
 
    private UUID uuid_ = null;
@@ -308,7 +300,6 @@ public class DefaultMetadata implements Metadata {
    private Double pixelAspect_ = null;
 
    private DefaultPropertyMap userData_ = null;
-   private DefaultSummaryMetadata summaryMetadata_ = null;
 
    public DefaultMetadata(Builder builder) {
       uuid_ = builder.uuid_;
@@ -347,7 +338,6 @@ public class DefaultMetadata implements Metadata {
       pixelAspect_ = builder.pixelAspect_;
 
       userData_ = builder.userData_;
-      summaryMetadata_ = builder.summaryMetadata_;
    }
    
    @Override
@@ -528,11 +518,6 @@ public class DefaultMetadata implements Metadata {
       return userData_;
    }
 
-   @Override
-   public SummaryMetadata getSummaryMetadata() {
-      return summaryMetadata_;
-   }
-
    /**
     * For backwards compatibility, convert our data into a JSONObject.
     */
@@ -568,9 +553,6 @@ public class DefaultMetadata implements Metadata {
          MDUtils.setComments(result, getComments());
          if (userData_ != null) {
             result.put("userData", userData_.toJSON());
-         }
-         if (summaryMetadata_ != null) {
-            result.put("summaryMetadata", summaryMetadata_.toJSON());
          }
          return result;
       }
@@ -763,13 +745,6 @@ public class DefaultMetadata implements Metadata {
       catch (JSONException e) {
          ReportingUtils.logDebugMessage("Metadata failed to extract field userData");
       }
-      try {
-         builder.summaryMetadata(DefaultSummaryMetadata.legacyFromJSON(
-               tags.getJSONObject("summaryMetadata")));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Metadata failed to extract field summaryMetadata");
-      }
       return builder.build();
    }
 
@@ -869,9 +844,6 @@ public class DefaultMetadata implements Metadata {
 
       if (userData_ != null) {
          result += "\n  userData: " + userData_.toString();
-      }
-      if (summaryMetadata_ != null) {
-         result += "\n  summaryMetadata: " + summaryMetadata_.toString();
       }
       return result + ">";
    }

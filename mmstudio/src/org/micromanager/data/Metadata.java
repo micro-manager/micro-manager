@@ -74,7 +74,6 @@ public interface Metadata {
       MetadataBuilder ROI(Rectangle ROI);
       MetadataBuilder source(String source);
       MetadataBuilder startTimeMs(Double startTimeMs);
-      MetadataBuilder summaryMetadata(SummaryMetadata summaryMetadata);
       MetadataBuilder userData(PropertyMap userData);
       MetadataBuilder uuid(UUID uuid);
       MetadataBuilder xPositionUm(Double xPositionUm);
@@ -151,9 +150,6 @@ public interface Metadata {
    String getReceivedTime();
    /** TODO: what is this? */
    String getSource();
-   /** A link to the SummaryMetadata instance for the acquisition this image
-     * was part of */
-   SummaryMetadata getSummaryMetadata();
    /** A unique identifier for this specific image */
    UUID getUUID();
 }
