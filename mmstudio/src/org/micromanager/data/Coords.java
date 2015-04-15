@@ -26,9 +26,14 @@ import java.util.List;
  * The Coords class tracks the position of an image in the dataset. This
  * position is represented as a mapping of Strings to non-negative ints. Coords
  * are immutable; construct a Coords using a CoordsBuilder. You are not expected
- * to implement your own Coords class. If you need to generate a new Coords, use
- * the getCoordsBuilder() method of the DataManager class, or call the copy()
- * method of an existing Coords instance.
+ * to implement your own Coords class.
+ * Coords can be compared to each other using &lt;, &gt;, ==, etc. Axes are
+ * compared in alphabetical order, and the indices of the respective Coords
+ * will determine which one is "less" or "greater".
+ * 
+ * If you need to generate a new Coords, use the getCoordsBuilder() method of
+ * the DataManager class, or call the copy() method of an existing Coords
+ * instance.
  * The Builder is an object that can be used to generate any number of new
  * Coords instances (which are themselves immutable). You can adjust the
  * positions recorded in the Builder using functions like time(), z(),
