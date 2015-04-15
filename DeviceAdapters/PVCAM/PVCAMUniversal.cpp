@@ -199,19 +199,34 @@ binYSize_(1),
 newBinSize_(1),
 newBinXSize_(1),
 newBinYSize_(1),
+prmTemp_(0),
+prmTempSetpoint_(0),
+prmGainIndex_(0),
+prmGainMultFactor_(0),
 redScale_(1.0),
 greenScale_(1.0),
 blueScale_(1.0),
 selectedCFAmask_(CFA_RGGB),
 selectedInterpolationAlgorithm_(ALG_REPLICATION),
-rgbaColor_(false)
+rgbaColor_(false),
 #ifdef PVCAM_SMART_STREAMING_SUPPORTED
-, smartStreamEntries_(4),
-ssWasOn_(false)
+smartStreamEntries_(4),
+ssWasOn_(false),
 #endif
 #ifdef PVCAM_FRAME_INFO_SUPPORTED
-,pFrameInfo_(0)
+pFrameInfo_(0),
 #endif
+#ifdef PVCAM_SMART_STREAMING_SUPPORTED
+prmSmartStreamingValues_(0),
+prmSmartStreamingEnabled_(0),
+#endif
+prmTriggerMode_(0),
+prmExpResIndex_(0),
+prmExpRes_(0),
+prmExposeOutMode_(0),
+prmClearCycles_(0),
+prmReadoutPort_(0),
+prmColorMode_(0)
 {
    InitializeDefaultErrorMessages();
 
