@@ -41,12 +41,14 @@ import org.micromanager.data.Image;
 public interface DisplayWindow {
    /**
     * Display the image at the specified coordinates in the Datastore the
-    * display is fronting.
+    * display is showing.
+    * @param coords The coordinates of the image to be displayed.
     */
    public void setDisplayedImageTo(Coords coords);
 
    /**
     * Display the specified status string.
+    * @param status String to display in the window.
     */
    public void displayStatusString(String status);
 
@@ -54,38 +56,54 @@ public interface DisplayWindow {
     * Set the zoom level for this display. This may result in the canvas
     * changing size, and there is no guarantee that you will get precisely
     * the zoom level you request, as ImageJ quantizes magnification levels.
+    * @param magnification Magnification level to set.
     */
    public void setMagnification(double magnification);
 
    /**
+    * Multiplay the current zoom level of the image canvas by the provided
+    * factor. Thus for example a zoom of 2.0 will double the amount of screen
+    * pixels dedicated to each camera pixel.
+    * @param factor Amount to adjust zoom by.
+    */
+   public void adjustZoom(double factor);
+
+   /**
     * Retrieve the current zoom level for the display.
+    * @return the current magnification level.
     */
    public double getMagnification();
 
    /**
     * Retrieve the Datastore backing this display.
+    * @return The Datastore backing this display.
     */
    public Datastore getDatastore();
 
    /**
     * Retrieve the DisplaySettings for this display.
+    * @return The DisplaySettings for this display.
     */
    public DisplaySettings getDisplaySettings();
 
    /**
     * Set new DisplaySettings for this display. This will post a
     * NewDisplaySettingsEvent to the display's EventBus.
+    * @param settings The new DisplaySettings to use.
     */
    public void setDisplaySettings(DisplaySettings settings);
 
    /**
     * Retrieve the Images currently being displayed (all channels).
+    * @return Every image at the currently-displayed image coordinates modulo
+    *         the channel coordinate (as all channels are represented).
     */
    public List<Image> getDisplayedImages();
 
    /**
     * Return the ImagePlus used to handle image display logic in ImageJ. This
     * may be a CompositeImage.
+    * @return The ImagePlus used by the window.
     */
    public ImagePlus getImagePlus();
 
@@ -120,6 +138,7 @@ public interface DisplayWindow {
 
    /**
     * Return true iff the window has been closed.
+    * @return whether the display has been closed.
     */
    public boolean getIsClosed();
 
@@ -133,16 +152,9 @@ public interface DisplayWindow {
    public void toggleFullScreen();
 
    /**
-    * Multiplay the current zoom level of the image canvas by the provided
-    * factor. Thus for example a zoom of 2.0 will double the amount of screen
-    * pixels dedicated to each camera pixel.
-    * @param factor Amount to adjust zoom by.
-    */
-   public void adjustZoom(double factor);
-
-   /**
     * Return the GraphicsConfiguration for the monitor the DisplayWindow's
     * upper-left corner is in.
+    * @return the GraphicsConfiguration of the monitor this window is in.
     */
    public GraphicsConfiguration getScreenConfig();
 
@@ -163,31 +175,33 @@ public interface DisplayWindow {
     * java.awt.Window that the DisplayWindow represents; MicroManager uses a
     * dummy ImageWindow to simplify communications with ImageJ. You probably
     * should not need to call this method.
+    * @return an ImageWindow corresponding to this DisplayWindow.
     */
    public ImageWindow getImageWindow();
 
    /**
     * Provide a java.awt.Window representing this display; mostly useful for
     * positioning dialogs or if you need to move a display window around.
+    * @return the DisplayWindow as a Window.
     */
    public Window getAsWindow();
 
    /**
     * Return the unique name of this display. Typically this will include the
-    * display number and the filename of the dataset; if no filename is
-    * available, then "MM image display" will be used instead. This string
-    * is displayed in ImageJ's "Windows" menu, and is also used when linking
-    * display properties.
+    * display number and the name of the dataset; if no name is available, then
+    * "MM image display" will be used instead. This string is displayed in
+    * the inspector window, ImageJ's "Windows" menu, and a few other places.
+    * @return a string labeling this window.
     */
    public String getName();
 
    /**
     * Add a custom extra string to the title of this display. The usual format
-    * for the window title is "#num: filename (magnification) (saved status)".
-    * If you call this method, then the filename will be replaced by your
-    * custom string. If there is no filename and this method has not been
-    * called, then "MM image display" is used instead. You can call this method
-    * with a null argument to revert to the default title.
+    * for the window title is "#num: name (magnification) (saved status)".
+    * If you call this method, then the name will be replaced by your custom
+    * string. If there is no name and this method has not been called, then "MM
+    * image display" is used instead. You can call this method with a null
+    * argument to revert to the default title.
     * @param title Custom title component to insert into the window's title.
     */
    public void setCustomTitle(String title);
@@ -196,23 +210,27 @@ public interface DisplayWindow {
     * Register for access to the EventBus that the window uses for propagating
     * events. Note that this is different from the EventBus that the Datastore
     * uses; this EventBus is specifically for events related to the display.
+    * @param obj The object that wants to subscribe for events.
     */
    public void registerForEvents(Object obj);
 
    /**
     * Unregister for events for this display. See documentation for
     * registerForEvents().
+    * @param obj The object that wants to no longer be subscribed for events.
     */
    public void unregisterForEvents(Object obj);
 
    /**
     * Post the provided event object on the display's EventBus, so that objects
     * that have called registerForEvents(), above, can receive it.
+    * @param obj The event to post.
     */
    public void postEvent(Object obj);
 
    /**
     * Return a reference to the display's EventBus.
+    * @return The display's EventBus.
     */
    public EventBus getDisplayBus();
 }
