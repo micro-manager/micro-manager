@@ -55,10 +55,6 @@ public class SettingsPanel extends ListeningJPanel {
    private final Prefs prefs_;
    private final StagePositionUpdater stagePosUpdater_;
    
-   private final JPanel guiPanel_;
-   private final JPanel scannerPanel_;
-   private final JPanel cameraPanel_;
-     
    /**
     * 
     * @param devices the (single) instance of the Devices class
@@ -84,11 +80,11 @@ public class SettingsPanel extends ListeningJPanel {
       
       // start GUI panel
       
-      guiPanel_ = new JPanel(new MigLayout(
+      final JPanel guiPanel = new JPanel(new MigLayout(
             "",
             "[right]16[center]",
             "[]8[]"));
-      guiPanel_.setBorder(PanelUtils.makeTitledBorder("GUI"));
+      guiPanel.setBorder(PanelUtils.makeTitledBorder("GUI"));
       
       final JCheckBox activeTimerCheckBox = pu.makeCheckBox("Update axis positions continually",
             Properties.Keys.PREFS_ENABLE_POSITION_UPDATES, panelName_, true); 
@@ -107,9 +103,9 @@ public class SettingsPanel extends ListeningJPanel {
       //   it is not called by setSelected unless there is a change in the value
       activeTimerCheckBox.doClick();
       activeTimerCheckBox.doClick();
-      guiPanel_.add(activeTimerCheckBox, "center, span 2, wrap");
+      guiPanel.add(activeTimerCheckBox, "center, span 2, wrap");
       
-      guiPanel_.add(new JLabel("Position refresh interval (s):"));
+      guiPanel.add(new JLabel("Position refresh interval (s):"));
       final JSpinner positionRefreshInterval = pu.makeSpinnerFloat(0.5, 1000, 0.5,
             Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_POSITION_REFRESH_INTERVAL, 1);
@@ -122,62 +118,76 @@ public class SettingsPanel extends ListeningJPanel {
          }
       };
       pu.addListenerLast(positionRefreshInterval, listenerLast);
-      guiPanel_.add(positionRefreshInterval, "wrap");
+      guiPanel.add(positionRefreshInterval, "wrap");
       
       final JCheckBox ignoreScannerMissing = pu.makeCheckBox("Ignore missing scanner (for debug)",
             Properties.Keys.PREFS_IGNORE_MISSING_SCANNER, panelName_, false);
-      guiPanel_.add(ignoreScannerMissing, "center, span 2, wrap");
+      guiPanel.add(ignoreScannerMissing, "center, span 2, wrap");
       
       // end GUI subpanel
       
       // start scanner panel
       
-      scannerPanel_ = new JPanel(new MigLayout(
+      final JPanel scannerPanel = new JPanel(new MigLayout(
             "",
             "[right]16[center]",
             "[]8[]"));
-      scannerPanel_.setBorder(PanelUtils.makeTitledBorder("Scanner"));
+      scannerPanel.setBorder(PanelUtils.makeTitledBorder("Scanner"));
 
-      scannerPanel_.add(new JLabel("Filter freq, sheet axis [kHz]:"));
+      scannerPanel.add(new JLabel("Filter freq, sheet axis [kHz]:"));
       final JSpinner scannerFilterX = pu.makeSpinnerFloat(0.1, 5, 0.1,
             new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SCANNER_FILTER_X, 0.8);
-      scannerPanel_.add(scannerFilterX, "wrap");
+      scannerPanel.add(scannerFilterX, "wrap");
       
-      scannerPanel_.add(new JLabel("Filter freq, slice axis [kHz]:"));
+      scannerPanel.add(new JLabel("Filter freq, slice axis [kHz]:"));
       final JSpinner scannerFilterY = pu.makeSpinnerFloat(0.1, 5, 0.1,
             new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SCANNER_FILTER_Y, 0.4);
-      scannerPanel_.add(scannerFilterY, "wrap");
+      scannerPanel.add(scannerFilterY, "wrap");
       
       final JCheckBox scanOppositeDirectionsCB = pu.makeCheckBox("Scan beam opposite directions each slice",
             Properties.Keys.PREFS_SCAN_OPPOSITE_DIRECTIONS, panelName_, false);
-      scannerPanel_.add(scanOppositeDirectionsCB, "center, span 2, wrap");
+      scannerPanel.add(scanOppositeDirectionsCB, "center, span 2, wrap");
       
       // end scanner panel
       
       
       // start camera panel
       
-      cameraPanel_ = new JPanel(new MigLayout(
+      final JPanel cameraPanel = new JPanel(new MigLayout(
             "",
             "[right]16[center]",
             "[]8[]"));
-      cameraPanel_.setBorder(PanelUtils.makeTitledBorder("Camera"));
+      cameraPanel.setBorder(PanelUtils.makeTitledBorder("Camera"));
       CameraModes camModeObject = new CameraModes(devices_, props_, prefs_);
       JComboBox camModeCB = camModeObject.getComboBox();
-      cameraPanel_.add(camModeCB);
-      
+      cameraPanel.add(camModeCB);
       
       // end camera panel
       
       
+      // start stage scan panel
+      
+      final JPanel stageScanPanel = new JPanel(new MigLayout(
+            "",
+            "[right]16[center]",
+            "[]8[]"));
+      stageScanPanel.setBorder(PanelUtils.makeTitledBorder("Stage scanning"));
+
+      stageScanPanel.add(new JLabel("Motor acceleration time [ms]:"));
+      final JSpinner stageAccelTime = pu.makeSpinnerFloat(10, 1000, 10,
+            Devices.Keys.XYSTAGE,
+            Properties.Keys.STAGESCAN_MOTOR_ACCEL, 50);
+      stageScanPanel.add(stageAccelTime, "wrap");
+      
+      // end stage scan panel
+      
       // construct main panel
-      add(guiPanel_);
-      add(scannerPanel_);
-      add(cameraPanel_);
-      
-      
+      add(guiPanel);
+      add(scannerPanel);
+      add(cameraPanel, "wrap");
+      add(stageScanPanel, "growx");
       
       
    }

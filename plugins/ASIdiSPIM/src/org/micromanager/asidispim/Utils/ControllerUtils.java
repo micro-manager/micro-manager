@@ -183,10 +183,8 @@ public class ControllerUtils {
          //    X motor speed = slice step size * sqrt(2) / slice duration
          //    number of scans = number of sides (1 or 2)
          //    scan mode = serpentine
-         //    X acceleration time = 20 ms (may need optimization, depend on X speed)
-         //    scan overshoot factor = 1 (may need optimization, depend on X speed)
-         //    note that "ramp length" is actually twice the distance covered during acceleration
-         //      so it takes 1.5*acceleration time to cover the ramp length
+         //    X acceleration time = use whatever current setting is
+         //    scan settling time = delay before side
          final Devices.Keys xyDevice = Devices.Keys.XYSTAGE;
          double sliceDuration = computeActualSlicePeriod(sliceTiming);
          
@@ -218,8 +216,7 @@ public class ControllerUtils {
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_NUMLINES, numSides);
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_PATTERN,
                Properties.Values.SERPENTINE);
-         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_OVERSHOOT_FACTOR, 1.0f);
-         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_ACCEL, 20);
+         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SETTLING_TIME, delayBeforeSide);
          
          // TODO handle other multichannel modes with stage scanning
       }

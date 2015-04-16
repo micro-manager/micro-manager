@@ -131,7 +131,7 @@ public class Properties {
       STAGESCAN_FAST_STOP("ScanFastAxisStopPosition(mm)"),
       STAGESCAN_SLOW_START("ScanSlowAxisStartPosition(mm)"),
       STAGESCAN_SLOW_STOP("ScanSlowAxisStopPosition(mm)"),
-      STAGESCAN_OVERSHOOT_FACTOR("ScanOvershootFactor"),
+      STAGESCAN_SETTLING_TIME("ScanSettlingTime(ms)"),
       STAGESCAN_MOTOR_SPEED("MotorSpeedX-S(mm/s)"),
       STAGESCAN_MOTOR_ACCEL("AccelerationX-AC(ms)"),
       TRIGGER_SOURCE("TRIGGER SOURCE"),   // for Hamamatsu
