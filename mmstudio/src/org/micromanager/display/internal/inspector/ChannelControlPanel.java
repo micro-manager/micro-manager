@@ -211,12 +211,14 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       setOpaque(false);
 
       Insets zeroInsets = new Insets(0, 0, 0, 0);
+      Dimension buttonSize = new Dimension(90, 25);
 
       fullButton_.setFont(fullButton_.getFont().deriveFont((float) 9));
       fullButton_.setMargin(zeroInsets);
       fullButton_.setName("Full channel histogram width");
       fullButton_.setText("Full");
       fullButton_.setToolTipText("Set the min to 0 and the max to the current display range");
+      fullButton_.setMaximumSize(buttonSize);
       fullButton_.addActionListener(new java.awt.event.ActionListener() {
 
          @Override
@@ -230,6 +232,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       autoButton_.setName("Auto channel histogram width");
       autoButton_.setText("Auto once");
       autoButton_.setToolTipText("Set the min and max to the min and max in the current image");
+      autoButton_.setMaximumSize(buttonSize);
       autoButton_.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
       autoButton_.addActionListener(new java.awt.event.ActionListener() {
 
@@ -239,8 +242,16 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
 
+      isEnabledButton_.setToolTipText("Show/hide this channel in the multi-dimensional viewer");
+      isEnabledButton_.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            isEnabledAction();
+         }
+      });
+
       colorPickerLabel_.setBackground(color_);
-      colorPickerLabel_.setMinimumSize(new Dimension(18, 18));
+      colorPickerLabel_.setMinimumSize(new Dimension(25, 25));
       colorPickerLabel_.setToolTipText("Change the color for displaying this channel");
       colorPickerLabel_.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
       colorPickerLabel_.setOpaque(true);
@@ -248,14 +259,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          @Override
          public void mouseClicked(java.awt.event.MouseEvent evt) {
             colorPickerLabelMouseClicked();
-         }
-      });
-
-      isEnabledButton_.setToolTipText("Show/hide this channel in the multi-dimensional viewer");
-      isEnabledButton_.addActionListener(new java.awt.event.ActionListener() {
-         @Override
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            isEnabledAction();
          }
       });
 
@@ -301,42 +304,51 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
 
-      setLayout(new MigLayout("fill, flowy, insets 0"));
+      // Allocate all extra space to the histogram, not the controls on the
+      // left.
+      setLayout(new MigLayout("fill, flowx, insets 0",
+               "[grow 0][fill]"));
 
-      JPanel firstRow = new JPanel(new MigLayout("fill, insets 0"));
-
-      firstRow.add(isEnabledButton_);
-      firstRow.add(colorPickerLabel_);
-
+      // Minimize gapping between the full and auto buttons.
+      JPanel firstColumn = new JPanel(
+            new MigLayout("novisualpadding, insets 0, flowy",
+               "[]", "[][][]0[]"));
       nameLabel_ = new JLabel(name_);
-      firstRow.add(nameLabel_);
-
-      fullButton_.setPreferredSize(new Dimension(35, 20));
+      firstColumn.add(nameLabel_, "alignx center");
+      firstColumn.add(isEnabledButton_, "split 3, flowx");
+      firstColumn.add(colorPickerLabel_, "aligny center");
       linkButton_ = new LinkButton(
             DisplayGroupManager.getContrastLinker(channelIndex_, display_),
             display_);
-      firstRow.add(linkButton_);
-      firstRow.add(fullButton_, "grow 0");
+      linkButton_.setMinimumSize(new Dimension(linkButton_.getWidth(), 25));
+      firstColumn.add(linkButton_, "aligny center");
+      // HACK: tweak padding to remove a gap between the two buttons.
+      firstColumn.add(fullButton_, "alignx center, width 70!, pad 0 0 0 0");
+      firstColumn.add(autoButton_, "alignx center, width 70!, pad -4 0 -4 0");
 
-      autoButton_.setPreferredSize(new Dimension(35, 20));
-      firstRow.add(autoButton_, "grow 0, wrap");
+      add(firstColumn, "growx 0");
 
-      add(firstRow);
+      JPanel secondColumn = new JPanel(new MigLayout("insets 0, flowy, fill"));
 
       histogram_ = makeHistogramPanel();
-      histogram_.setMinimumSize(new Dimension(100, 60));
+      histogram_.setMinimumSize(new Dimension(100, 100));
       histogram_.setToolTipText("Adjust the brightness and contrast by dragging triangles at top and bottom. Change the gamma by dragging the curve. (These controls only change display, and do not edit the image data.)");
 
-      add(histogram_, "grow, gapright 0");
+      secondColumn.add(histogram_, "grow, gapright 0");
 
-      JPanel secondRow = new JPanel(new MigLayout("fill, insets 0"));
+      // The two buttons should be right next to the dropdown they control.
+      JPanel scalePanel = new JPanel(new MigLayout("fill, insets 0",
+            "push[]0[]0[]push"));
+      // Tweak padding to eliminate blank space.
+      scalePanel.add(zoomInButton_,
+            "gapright 0, width ::15, height 20!, pad -1 0 0 4, aligny center center");
+      scalePanel.add(histRangeComboBox_, "gapleft 0, gapright 0, height 20!, aligny center center");
+      scalePanel.add(zoomOutButton_,
+            "gapleft 0, width ::15, height 20!, pad -1 -4 0 0, aligny center center");
+      scalePanel.add(minMaxLabel_);
 
-      secondRow.add(zoomInButton_, "gapright 0, width ::15, height 20!, aligny center center");
-      secondRow.add(histRangeComboBox_, "gapleft 0, gapright 0, height 20!, aligny center center");
-      secondRow.add(zoomOutButton_, "gapleft 0, width ::15, height 20!, aligny center center");
-      secondRow.add(minMaxLabel_);
-
-      add(secondRow);
+      secondColumn.add(scalePanel);
+      add(secondColumn, "growx");
 
       validate();
    }
