@@ -354,10 +354,10 @@ int CXYStage::Initialize()
       SetPropertyLimits(g_ScanNumLinesPropertyName, 1, 100);  // upper limit is arbitrary, have limits to enforce > 0
       UpdateProperty(g_ScanNumLinesPropertyName);
 
-      pAct = new CPropertyAction (this, &CXYStage::OnScanOvershootFactor);
-      CreateProperty(g_ScanOvershootFactorPropertyName, "1", MM::Float, false, pAct);
-      SetPropertyLimits(g_ScanOvershootFactorPropertyName, 0., 5.);  // limits are arbitrary really, just give a reasonable range
-      UpdateProperty(g_ScanOvershootFactorPropertyName);
+      pAct = new CPropertyAction (this, &CXYStage::OnScanOvershootTime);
+      CreateProperty(g_ScanOvershootTimePropertyName, "1", MM::Float, false, pAct);
+      SetPropertyLimits(g_ScanOvershootTimePropertyName, 0., 500.);  // limits are arbitrary really, just give a reasonable range
+      UpdateProperty(g_ScanOvershootTimePropertyName);
 
    }
 
@@ -1769,7 +1769,7 @@ int CXYStage::OnScanNumLines(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int CXYStage::OnScanOvershootFactor(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CXYStage::OnScanOvershootTime(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
    double tmp = 0;
