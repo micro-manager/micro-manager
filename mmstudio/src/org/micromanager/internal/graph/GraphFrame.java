@@ -54,7 +54,6 @@ public class GraphFrame extends MMFrame {
    private JTextField fldXMin;
    private SpringLayout springLayout;
    private GraphPanel panel_;
-   private LineProfile parent_;
    
    /*
    public static void main(String args[]) {
@@ -68,7 +67,7 @@ public class GraphFrame extends MMFrame {
    }
    */
    
-   private void updateBounds(){
+   private void updateBounds() {
       GraphData.Bounds bounds = panel_.getGraphBounds();
       DecimalFormat fmt = new DecimalFormat("#0.00");
       fldXMin.setText(fmt.format(bounds.xMin));
@@ -82,7 +81,8 @@ public class GraphFrame extends MMFrame {
       updateBounds();
       refresh();
    }
-   public void setData(GraphData data){
+
+   public void setData(GraphData data) {
       panel_.setData(data);
       refresh();
    }
@@ -102,25 +102,21 @@ public class GraphFrame extends MMFrame {
    }
    // This is a temporary hack to allow the setting of xlimits manually as the
    // auto identification is buggy. --Prashanth (14th May 2009)
-   public void SetXLimits(double xmin, double xmax)
-   {
-	      GraphData.Bounds bounds = panel_.getGraphBounds();
-	      if (fldXMin.getText().length() > 0 && fldYMin.getText().length() > 0 && 
-	          fldXMax.getText().length() > 0 && fldYMax.getText().length() > 0 )
-	      {      
-	         bounds.xMin = xmin;
-	         bounds.xMax = xmax;
-	         bounds.yMin = Double.parseDouble(fldYMin.getText());
-	         bounds.yMax = Double.parseDouble(fldYMax.getText());
-	       }
-	      panel_.setBounds(bounds);
-	      panel_.repaint();
-	   
+   public void SetXLimits(double xmin, double xmax) {
+      GraphData.Bounds bounds = panel_.getGraphBounds();
+      if (fldXMin.getText().length() > 0 && fldYMin.getText().length() > 0 && 
+          fldXMax.getText().length() > 0 && fldYMax.getText().length() > 0) {
+         bounds.xMin = xmin;
+         bounds.xMax = xmax;
+         bounds.yMin = Double.parseDouble(fldYMin.getText());
+         bounds.yMax = Double.parseDouble(fldYMax.getText());
+      }
+      panel_.setBounds(bounds);
+      panel_.repaint();
    }
 
-   public GraphFrame(LineProfile parent) {
+   public GraphFrame(final Runnable refreshAction) {
       super("graph frame");
-      parent_ = parent;
      
       setFont(new Font("Arial", Font.PLAIN, 10));
       
@@ -220,7 +216,7 @@ public class GraphFrame extends MMFrame {
       btnRefresh.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            parent_.updateLineProfile();
+            refreshAction.run();
          }
       });
       btnRefresh.setText("Refresh");
@@ -228,7 +224,5 @@ public class GraphFrame extends MMFrame {
       springLayout.putConstraint(SpringLayout.NORTH, btnRefresh, 137, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.EAST, btnRefresh, 116, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, btnRefresh, 25, SpringLayout.WEST, getContentPane());
-      //
    }
-
 }

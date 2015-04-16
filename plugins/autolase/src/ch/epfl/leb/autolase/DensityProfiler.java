@@ -9,7 +9,7 @@ import org.micromanager.internal.graph.GraphFrame;
  * 
  * @author Holden
  */
-public class DensityProfiler implements DensityMonitor{
+public class DensityProfiler implements DensityMonitor {
    private static final int NPOINTS_ = 100;
    private int nCur_ = 0;
    private GraphData densProfileData_;
@@ -47,7 +47,12 @@ public class DensityProfiler implements DensityMonitor{
     */
    private void updateProfiler(double xmin, double xmax){
       if (profileWin_==null){
-         profileWin_ = new GraphFrame();
+         profileWin_ = new GraphFrame(new Runnable() {
+            @Override
+            public void run() {
+               // Do nothing.
+            }
+         });
          profileWin_.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
          profileWin_.setTitle("Live density profile");
       }

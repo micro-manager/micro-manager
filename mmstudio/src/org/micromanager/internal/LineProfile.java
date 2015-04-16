@@ -34,7 +34,12 @@ public class LineProfile {
       display_.registerForEvents(this);
       calculateLineProfileData(display_.getImagePlus());
 
-      profileWin_ = new GraphFrame(this);
+      profileWin_ = new GraphFrame(new Runnable() {
+         @Override
+         public void run() {
+            updateLineProfile();
+         }
+      });
       profileWin_.addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent event) {
