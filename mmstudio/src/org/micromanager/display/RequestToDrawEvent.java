@@ -28,5 +28,10 @@ import org.micromanager.data.Coords;
  * Image to display.
  */
 public interface RequestToDrawEvent {
+   /**
+    * @return The coordinates of the image that the display is being asked to
+    *         draw. If null, then the display will redraw its currently-
+    *         displayed image(s).
+    */
    public Coords getCoords();
 }

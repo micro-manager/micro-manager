@@ -42,6 +42,7 @@ public abstract class OverlayPanel extends JPanel {
    /**
     * Receive a reference to the DisplayManager, for use in instantiating
     * objects.
+    * @param manager A reference to the DisplayManager.
     */
    public void setManager(DisplayManager manager) {
       manager_ = manager;
@@ -73,6 +74,10 @@ public abstract class OverlayPanel extends JPanel {
    /**
     * Draw the overlay using the provided Graphics object. This is called
     * immediately after the canvas has been drawn.
+    * @param g The Graphics object to be used to perform drawing actions.
+    * @param display The DisplayWindow being drawn on.
+    * @param image The image that was most recently drawn on the display.
+    * @param canvas The canvas used to draw the image.
     */
    public abstract void drawOverlay(Graphics g, DisplayWindow display,
          Image image, ImageCanvas canvas);

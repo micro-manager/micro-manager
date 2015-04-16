@@ -25,6 +25,13 @@ package org.micromanager.display;
  * DisplayWindow.
  */
 public interface NewDisplaySettingsEvent {
+   /**
+    * @return the newly-set DisplaySettings.
+    */
    public DisplaySettings getDisplaySettings();
+
+   /**
+    * @return the DisplayWindow that received the new DisplaySettings.
+    */
    public DisplayWindow getDisplay();
 }
