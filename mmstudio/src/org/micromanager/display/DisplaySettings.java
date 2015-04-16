@@ -62,7 +62,7 @@ public interface DisplaySettings {
       DisplaySettingsBuilder histogramUpdateRate(Double histogramUpdateRate);
       DisplaySettingsBuilder shouldSyncChannels(Boolean shouldSyncChannels);
       DisplaySettingsBuilder shouldAutostretch(Boolean shouldAutostretch);
-      DisplaySettingsBuilder trimPercentage(Double trimPercentage);
+      DisplaySettingsBuilder extremaPercentage(Double extremaPercentage);
       DisplaySettingsBuilder shouldUseLogScale(Boolean shouldUseLogScale);
 
       DisplaySettingsBuilder userData(PropertyMap userData);
@@ -102,7 +102,7 @@ public interface DisplaySettings {
    public Boolean getShouldAutostretch();
    /** The percentage of values off the top and bottom of the image's value
      * range that get ignored when autostretching */
-   public Double getTrimPercentage();
+   public Double getExtremaPercentage();
    /** Whether to display the histograms using a logarithmic scale */
    public Boolean getShouldUseLogScale();
    /** Any additional user-supplied data */

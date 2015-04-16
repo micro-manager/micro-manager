@@ -838,12 +838,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       // Determine what percentage of the histogram range to autotrim.
       maxAfterRejectingOutliers_ = rawHistogram.length;
       int totalPoints = imgHeight * imgWidth;
-      Double trimPercentage = settings.getTrimPercentage();
-      if (trimPercentage == null) {
-         trimPercentage = 0.0;
+      Double extremaPercentage = settings.getExtremaPercentage();
+      if (extremaPercentage == null) {
+         extremaPercentage = 0.0;
       }
       HistogramUtils hu = new HistogramUtils(rawHistogram, totalPoints, 
-            0.01 * trimPercentage);
+            0.01 * extremaPercentage);
       minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
       maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
 

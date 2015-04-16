@@ -35,11 +35,13 @@ import java.util.Arrays;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 
@@ -77,7 +79,7 @@ public class DisplaySettingsPanel extends InspectorPanel {
    private static final String DISPLAY_MODE = "color mixing mode";
    private static final String SHOULD_AUTOSTRETCH = "whether or not to autostretch";
    private static final String UPDATE_RATE = "rate at which to update histogram";
-   private static final String TRIM_PERCENTAGE = "percentage of image data ignored when stretching";
+   private static final String EXTREMA_PERCENT = "percentage of image data ignored when stretching";
 
    private static final int GRAYSCALE = 0;
    private static final int COLOR = 1;
@@ -92,7 +94,7 @@ public class DisplaySettingsPanel extends InspectorPanel {
    private int prevPresetIndex_ = -1;
    private final JCheckBox shouldAutostretch_;
    private final JComboBox histogramUpdateRate_;
-   private final JSpinner trimPercentage_;
+   private final JSpinner extremaPercentage_;
 
    public DisplaySettingsPanel() {
       setLayout(new MigLayout());
@@ -123,7 +125,11 @@ public class DisplaySettingsPanel extends InspectorPanel {
       });
       add(colorPresets_, "align right, wrap");
 
-      add(new JLabel("Histograms update "), "split 2, align left, growx");
+      JPanel histogramPanel = new JPanel(new MigLayout("flowy"));
+      histogramPanel.setBorder(BorderFactory.createLoweredBevelBorder());
+
+      histogramPanel.add(new JLabel("Histograms update "),
+            "flowx, split 2, align left, growx");
       histogramUpdateRate_ = new JComboBox(
             new String[] {"Never", "Every Image", "Once per Second"});
       histogramUpdateRate_.setToolTipText("Select how frequently to update histograms. Reduced histogram update rate may help reduce CPU load.");
@@ -133,7 +139,7 @@ public class DisplaySettingsPanel extends InspectorPanel {
             setHistogramUpdateRate();
          }
       });
-      add(histogramUpdateRate_, "align right, wrap");
+      histogramPanel.add(histogramUpdateRate_, "align right");
       
       shouldAutostretch_ = new JCheckBox("Autostretch images");
       shouldAutostretch_.setToolTipText("Automatically rescale the histograms every time a new image is displayed.");
@@ -143,25 +149,30 @@ public class DisplaySettingsPanel extends InspectorPanel {
             setShouldAutostretch();
          }
       });
-      add(shouldAutostretch_, "growx, align right, wrap");
+      histogramPanel.add(shouldAutostretch_, "growx, align right");
 
-      add(new JLabel("Truncate histograms: "), "split 2, align left, growx");
-      trimPercentage_ = new JSpinner();
-      trimPercentage_.setToolTipText("When autostretching histograms, the min and max will be moved inwards by the specified percentage (e.g. if this is set to 10, then the scaling will be from the 10th percentile to the 90th).");
-      trimPercentage_.setModel(new SpinnerNumberModel(0.0, 0.0, 100.0, 1.0));
-      trimPercentage_.addChangeListener(new ChangeListener() {
+      histogramPanel.add(new JLabel("Ignore extrema %: "),
+            "split 2, align left, growx, flowx");
+      extremaPercentage_ = new JSpinner();
+      extremaPercentage_.setToolTipText("Ignore the top and bottom percentage of the image when autostretching.");
+      // Going to 50% would mean the entire thing is ignored.
+      extremaPercentage_.setModel(
+            new SpinnerNumberModel(0.0, 0.0, 49.999, 1.0));
+      extremaPercentage_.addChangeListener(new ChangeListener() {
          @Override
          public void stateChanged(ChangeEvent event) {
-            setTrimPercentage();
+            setExtremaPercentage();
          }
       });
-      trimPercentage_.addKeyListener(new KeyAdapter() {
+      extremaPercentage_.addKeyListener(new KeyAdapter() {
          @Override
          public void keyPressed(KeyEvent event) {
-            setTrimPercentage();
+            setExtremaPercentage();
          }
       });
-      add(trimPercentage_, "align right, wrap");
+      histogramPanel.add(extremaPercentage_, "align right");
+
+      add(histogramPanel);
    }
 
    @Override
@@ -220,12 +231,12 @@ public class DisplaySettingsPanel extends InspectorPanel {
          shouldAutostretch_.setSelected(profile.getBoolean(getClass(),
                   SHOULD_AUTOSTRETCH, true));
       }
-      if (settings.getTrimPercentage() != null) {
-         trimPercentage_.setValue(settings.getTrimPercentage());
+      if (settings.getExtremaPercentage() != null) {
+         extremaPercentage_.setValue(settings.getExtremaPercentage());
       }
       else {
-         trimPercentage_.setValue(profile.getDouble(
-                     getClass(), TRIM_PERCENTAGE, 0.0));
+         extremaPercentage_.setValue(profile.getDouble(
+                     getClass(), EXTREMA_PERCENT, 0.0));
       }
    }
 
@@ -317,6 +328,9 @@ public class DisplaySettingsPanel extends InspectorPanel {
                settings.getShouldAutostretch() != null) {
             shouldAutostretch_.setSelected(settings.getShouldAutostretch());
          }
+         if (settings.getExtremaPercentage() != null) {
+            extremaPercentage_.setValue(settings.getExtremaPercentage());
+         }
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Failed to handle new display settings");
@@ -389,12 +403,12 @@ public class DisplaySettingsPanel extends InspectorPanel {
    /**
     * The user set a new trim percentage.
     */
-   private void setTrimPercentage() {
+   private void setExtremaPercentage() {
       DisplaySettings settings = display_.getDisplaySettings();
-      double percentage = (Double) trimPercentage_.getValue();
-      settings = settings.copy().trimPercentage(percentage).build();
+      double percentage = (Double) extremaPercentage_.getValue();
+      settings = settings.copy().extremaPercentage(percentage).build();
       DefaultUserProfile.getInstance().setDouble(getClass(),
-            TRIM_PERCENTAGE, settings.getTrimPercentage());
+            EXTREMA_PERCENT, settings.getExtremaPercentage());
       DefaultDisplaySettings.setStandardSettings(settings);
       display_.setDisplaySettings(settings);
       display_.postEvent(new DefaultRequestToDrawEvent());

@@ -72,8 +72,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
             DefaultDisplaySettings.class, "shouldSyncChannels", false));
       builder.shouldAutostretch(profile.getBoolean(
             DefaultDisplaySettings.class, "shouldAutostretch", true));
-      builder.trimPercentage(profile.getDouble(
-            DefaultDisplaySettings.class, "trimPercentage", 0.0));
+      builder.extremaPercentage(profile.getDouble(
+            DefaultDisplaySettings.class, "extremaPercentage", 0.0));
       builder.shouldUseLogScale(profile.getBoolean(
             DefaultDisplaySettings.class, "shouldUseLogScale", false));
       // TODO: should we store user data in the display prefs?
@@ -96,7 +96,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       profile.setBoolean(DefaultDisplaySettings.class,
             "shouldAutostretch", settings.getShouldAutostretch());
       profile.setDouble(DefaultDisplaySettings.class,
-            "trimPercentage", settings.getTrimPercentage());
+            "extremaPercentage", settings.getExtremaPercentage());
       profile.setBoolean(DefaultDisplaySettings.class,
             "shouldUseLogScale", settings.getShouldUseLogScale());
    }
@@ -144,7 +144,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       private Double histogramUpdateRate_ = null;
       private Boolean shouldSyncChannels_ = null;
       private Boolean shouldAutostretch_ = null;
-      private Double trimPercentage_ = null;
+      private Double extremaPercentage_ = null;
       private Boolean shouldUseLogScale_ = null;
       private PropertyMap userData_ = null;
 
@@ -220,8 +220,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
-      public DisplaySettingsBuilder trimPercentage(Double trimPercentage) {
-         trimPercentage_ = trimPercentage;
+      public DisplaySettingsBuilder extremaPercentage(Double extremaPercentage) {
+         extremaPercentage_ = extremaPercentage;
          return this;
       }
 
@@ -249,7 +249,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    private Double histogramUpdateRate_ = null;
    private Boolean shouldSyncChannels_ = null;
    private Boolean shouldAutostretch_ = null;
-   private Double trimPercentage_ = null;
+   private Double extremaPercentage_ = null;
    private Boolean shouldUseLogScale_ = null;
    private PropertyMap userData_ = null;
 
@@ -265,7 +265,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       histogramUpdateRate_ = builder.histogramUpdateRate_;
       shouldSyncChannels_ = builder.shouldSyncChannels_;
       shouldAutostretch_ = builder.shouldAutostretch_;
-      trimPercentage_ = builder.trimPercentage_;
+      extremaPercentage_ = builder.extremaPercentage_;
       shouldUseLogScale_ = builder.shouldUseLogScale_;
       userData_ = builder.userData_;
    }
@@ -326,8 +326,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
-   public Double getTrimPercentage() {
-      return trimPercentage_;
+   public Double getExtremaPercentage() {
+      return extremaPercentage_;
    }
 
    @Override
@@ -354,7 +354,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
             .histogramUpdateRate(histogramUpdateRate_)
             .shouldSyncChannels(shouldSyncChannels_)
             .shouldAutostretch(shouldAutostretch_)
-            .trimPercentage(trimPercentage_)
+            .extremaPercentage(extremaPercentage_)
             .shouldUseLogScale(shouldUseLogScale_)
             .userData(userData_);
    }
@@ -413,8 +413,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
          if (tags.has("shouldAutostretch")) {
             builder.shouldAutostretch(tags.getBoolean("shouldAutostretch"));
          }
-         if (tags.has("trimPercentage")) {
-            builder.trimPercentage(tags.getDouble("trimPercentage"));
+         if (tags.has("extremaPercentage")) {
+            builder.extremaPercentage(tags.getDouble("extremaPercentage"));
          }
          if (tags.has("shouldUseLogScale")) {
             builder.shouldUseLogScale(tags.getBoolean("shouldUseLogScale"));
@@ -521,7 +521,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
          result.put("histogramUpdateRate", histogramUpdateRate_);
          result.put("shouldSyncChannels", shouldSyncChannels_);
          result.put("shouldAutostretch", shouldAutostretch_);
-         result.put("trimPercentage", trimPercentage_);
+         result.put("extremaPercentage", extremaPercentage_);
          result.put("shouldUseLogScale", shouldUseLogScale_);
          // TODO: not storing user data at this time.
          return result;
