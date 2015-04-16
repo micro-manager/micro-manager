@@ -37,6 +37,10 @@ import org.micromanager.PropertyMap;
  * you can interact with Metadata created by Micro-Manager itself. If you need
  * to get a MetadataBuilder, call the getMetadataBuilder() method of the
  * DataManager class, or use the copy() method of an existing Metadata.
+ *
+ * This class uses a Builder pattern. Please see
+ * https://micro-manager.org/wiki/Using_Builders
+ * for more information.
  */
 public interface Metadata {
 

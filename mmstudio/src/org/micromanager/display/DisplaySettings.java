@@ -34,6 +34,10 @@ import org.micromanager.PropertyMap;
  * you need a DisplaySettingsBuilder, you can generate one via the
  * DataManager's getDisplaySettingsBuilder() method, or by using the copy()
  * method of an existing DisplaySettings instance.
+ *
+ * This class uses a Builder pattern. Please see
+ * https://micro-manager.org/wiki/Using_Builders
+ * for more information.
  */
 public interface DisplaySettings {
 

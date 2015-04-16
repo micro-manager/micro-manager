@@ -7,6 +7,10 @@ package org.micromanager;
  * store strings, integers, and doubles. New versions can be instantiated via
  * org.micromanager.data.DataManager or
  * org.micromanager.display.DisplayManager.
+ *
+ * This class uses a Builder pattern. Please see
+ * https://micro-manager.org/wiki/Using_Builders
+ * for more information.
  */
 public interface PropertyMap {
    interface PropertyMapBuilder {

@@ -32,6 +32,10 @@ import org.micromanager.PropertyMap;
  * Micro-Manager itself. If you need to create a new SummaryMetadata, either use
  * the getSummaryMetadataBuilder() method of the DataManager class, or call the
  * copy() method of an existing SummaryMetadata instance.
+ *
+ * This class uses a Builder pattern. Please see
+ * https://micro-manager.org/wiki/Using_Builders
+ * for more information.
  */
 public interface SummaryMetadata {
 
