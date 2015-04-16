@@ -13,60 +13,101 @@ public interface PropertyMap {
       /**
        * Construct a PropertyMap from the Builder. Call this once the
        * builder's values are all set.
+       * @return a new PropertyMap based on the values of the builder.
        */
       PropertyMap build();
 
       /**
        * Put a new String value into the mapping.
+       * @param key a string identifying this property. If there is already
+       *        a property with this key in the builder, that property will
+       *        be overwritten.
+       * @param value the value to associate with the key.
        * @return The PropertyMapBuilder, so that puts can be chained together
        */
       PropertyMapBuilder putString(String key, String value);
       /**
        * Put an array of Strings into the mapping.
+       * @param key a string identifying this property. If there is already
+       *        a property with this key in the builder, that property will
+       *        be overwritten.
+       * @param value the value to associate with the key.
        * @return The PropertyMapBuilder, so that puts can be chained together
        */
       PropertyMapBuilder putStringArray(String key, String[] values);
      
       /**
        * Put a new Integer value into the mapping.
+       * @param key a string identifying this property. If there is already
+       *        a property with this key in the builder, that property will
+       *        be overwritten.
+       * @param value the value to associate with the key.
        * @return The PropertyMapBuilder, so that puts can be chained together
        */
       PropertyMapBuilder putInt(String key, Integer value);
       /**
        * Put an array of Integers into the mapping.
+       * @param key a string identifying this property. If there is already
+       *        a property with this key in the builder, that property will
+       *        be overwritten.
+       * @param value the value to associate with the key.
        * @return The PropertyMapBuilder, so that puts can be chained together
        */
       PropertyMapBuilder putIntArray(String key, Integer[] values);
 
       /**
        * Put a new Long value into the mapping.
+       * @param key a string identifying this property. If there is already
+       *        a property with this key in the builder, that property will
+       *        be overwritten.
+       * @param value the value to associate with the key.
        * @return The PropertyMapBuilder, so that puts can be chained together
        */
       PropertyMapBuilder putLong(String key, Long value);
       /**
        * Put an array of Longs into the mapping.
+       * @param key a string identifying this property. If there is already
+       *        a property with this key in the builder, that property will
+       *        be overwritten.
+       * @param value the value to associate with the key.
        * @return The PropertyMapBuilder, so that puts can be chained together
        */
       PropertyMapBuilder putLongArray(String key, Long[] values);
 
       /**
        * Put a new Double value into the mapping.
+       * @param key a string identifying this property. If there is already
+       *        a property with this key in the builder, that property will
+       *        be overwritten.
+       * @param value the value to associate with the key.
        * @return The PropertyMapBuilder, so that puts can be chained together
        */
       PropertyMapBuilder putDouble(String key, Double value);
       /**
        * Put an array of Doubles into the mapping.
+       * @param key a string identifying this property. If there is already
+       *        a property with this key in the builder, that property will
+       *        be overwritten.
+       * @param value the value to associate with the key.
        * @return The PropertyMapBuilder, so that puts can be chained together
        */
       PropertyMapBuilder putDoubleArray(String key, Double[] values);
 
       /**
        * Put a new Boolean value into the mapping.
+       * @param key a string identifying this property. If there is already
+       *        a property with this key in the builder, that property will
+       *        be overwritten.
+       * @param value the value to associate with the key.
        * @return The PropertyMapBuilder, so that puts can be chained together
        */
       PropertyMapBuilder putBoolean(String key, Boolean value);
       /**
        * Put an array of Booleans into the mapping.
+       * @param key a string identifying this property. If there is already
+       *        a property with this key in the builder, that property will
+       *        be overwritten.
+       * @param value the value to associate with the key.
        * @return The PropertyMapBuilder, so that puts can be chained together
        */
       PropertyMapBuilder putBooleanArray(String key, Boolean[] values);
