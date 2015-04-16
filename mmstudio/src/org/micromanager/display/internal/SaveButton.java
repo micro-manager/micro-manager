@@ -31,48 +31,32 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
 import org.micromanager.data.Datastore;
-import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.internal.inspector.InspectorFrame;
-import org.micromanager.internal.LineProfile;
 
 /**
- * This class provides access to various rarely-used functions (like save or
- * duplicate) via a dropdown menu.
+ * This class provides a button for saving the current datastore to TIFF.
  */
-public class GearButton extends JButton {
+public class SaveButton extends JButton {
    private JPopupMenu menu_;
 
-   public GearButton(final DisplayWindow display) {
-      setToolTipText("Access additional commands");
+   public SaveButton(final Datastore store, final Window window) {
+      setToolTipText("Save data as a Micro-Manager dataset.");
       menu_ = new JPopupMenu();
-      JMenuItem openInspector = new JMenuItem("Open New Inspector Window");
-      openInspector.addActionListener(new ActionListener() {
+      JMenuItem separateImages = new JMenuItem("Save to Separate Image Files");
+      separateImages.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            new InspectorFrame(display);
+            store.save(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES, window);
          }
       });
-      menu_.add(openInspector);
-
-      JMenuItem duplicate = new JMenuItem("Duplicate This Window");
-      duplicate.addActionListener(new ActionListener() {
+      menu_.add(separateImages);
+      JMenuItem multistack = new JMenuItem("Save to Single Multistack Image");
+      multistack.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            display.duplicate();
+            store.save(Datastore.SaveMode.MULTIPAGE_TIFF, window);
          }
       });
-      menu_.add(duplicate);
-
-      menu_.addSeparator();
-
-      JMenuItem lineProfile = new JMenuItem("Show Line Profile");
-      lineProfile.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            new LineProfile(display);
-         }
-      });
-      menu_.add(lineProfile);
+      menu_.add(multistack);
 
       final JButton staticThis = this;
       addMouseListener(new MouseInputAdapter() {
@@ -82,9 +66,7 @@ public class GearButton extends JButton {
          }
       });
 
-      // This icon adapted from the public domain icon at
-      // https://openclipart.org/detail/35533/tango-emblem-system
       setIcon(new javax.swing.ImageIcon(
-               getClass().getResource("/org/micromanager/internal/icons/gear.png")));
+               getClass().getResource("/org/micromanager/internal/icons/disk.png")));
    }
 }

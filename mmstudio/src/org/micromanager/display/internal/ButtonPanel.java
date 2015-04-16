@@ -98,6 +98,8 @@ public class ButtonPanel extends JPanel {
       });
       add(zoomOutButton);
 
+      add(new SaveButton(display.getDatastore(), display.getAsWindow()));
+
       add(new GearButton(display));
       display.registerForEvents(this);
    }
