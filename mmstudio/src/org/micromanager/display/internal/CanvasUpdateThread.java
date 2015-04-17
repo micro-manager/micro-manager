@@ -62,7 +62,7 @@ public class CanvasUpdateThread extends Thread {
 
    public CanvasUpdateThread(Datastore store, MMVirtualStack stack,
          ImagePlus plus, DisplayWindow display) {
-      setName("Canvas display thread for store " + store.hashCode());
+      setName("Canvas display thread for display " + display.getName());
       store_ = store;
       stack_ = stack;
       plus_ = plus;
@@ -72,86 +72,74 @@ public class CanvasUpdateThread extends Thread {
       shouldStop_ = new AtomicBoolean(false);
    }
 
-   public void setImagePlus(ImagePlus plus) {
-      plus_ = plus;
-   }
-   
    @Override
    public void run() {
-      Coords coords = null;
       while (!shouldStop_.get()) {
-         boolean haveValidImage = false;
-         // Extract images from the queue until we get to the end.
-         do {
-            try {
-               // This will block until an image is available or we need
-               // to send a new FPS update.
-               coords = coordsQueue_.poll(500, TimeUnit.MILLISECONDS);
-               haveValidImage = (coords != null);
-               if (coords == null) {
-                  try {
-                     // We still need to generate an FPS update at 
-                     // regular intervals; we just have to do it without
-                     // any image coords.
-                     sendFPSUpdate(null);
-                  }
-                  catch (Exception e) {
-                     // Can't get image coords, apparently; give up.
-                     break;
-                  }
-                  continue;
-               }
+         Coords coords = null;
+         try {
+            // This will block until an image is available or we need
+            // to send a new FPS update. Or we get interrupted, of course.
+            coords = coordsQueue_.poll(500, TimeUnit.MILLISECONDS);
+         }
+         catch (InterruptedException e) {
+            // Interrupted while waiting for the queue to be populated.
+            if (shouldStop_.get()) {
+               // Our master wants us to stop now.
+               return;
             }
-            catch (InterruptedException e) {
-               // Interrupted while waiting for the queue to be 
-               // populated. 
-               if (shouldStop_.get()) {
-                  // Time to stop.
-                  return;
-               }
-            }
-         } while (coordsQueue_.peek() != null);
-
-         if (coords == null || !haveValidImage) {
-            // Nothing to show. 
+         }
+         if (coords == null) {
+            // We still need to generate an FPS update at regular intervals; we
+            // just have to do it without any image coords.
+            sendFPSUpdate(null);
+            // But since there's no image to show, we shouldn't do the rest of
+            // this loop.
             continue;
          }
 
-         if (plus_ != null && plus_.getCanvas() != null) {
-            // Wait for the canvas to be available. If we don't do this,
-            // then our framerate tanks, possibly because of repaint
-            // events piling up in the EDT. It's hard to tell. 
-            while (!shouldStop_.get() && plus_.getCanvas().getPaintPending()) {
-               try {
-                  Thread.sleep(10);
-               }
-               catch (InterruptedException e) {
-                  if (shouldStop_.get()) {
-                     // Time to stop.
-                     return;
-                  }
-               }
+         try {
+            waitForCanvas();
+         }
+         catch (InterruptedException e) {
+            if (shouldStop_.get()) {
+               // Time to stop.
+               return;
             }
-            plus_.getCanvas().setPaintPending(true);
          }
          final Image image = store_.getImage(coords);
-         if (image != null) {
-            // This must be on the EDT because drawing is not thread-safe.
-            SwingUtilities.invokeLater(new Runnable() {
-               @Override
-               public void run() {
-                  showImage(image);
-                  imagesDisplayed_++;
-                  sendFPSUpdate(image);
-               }
-            });
+         if (image == null) {
+            // Odd; is this an error situation?
+            continue;
          }
-         else if (plus_ != null && plus_.getCanvas() != null) {
-            // TODO: is this an error situation? I.e. that the image is null?
-            // Manually clear the paint pending; otherwise the display breaks.
-            plus_.getCanvas().setPaintPending(false);
-         }
+         plus_.getCanvas().setPaintPending(true);
+         // This must be on the EDT because drawing is not thread-safe.
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               showImage(image);
+               imagesDisplayed_++;
+               sendFPSUpdate(image);
+            }
+         });
       } // End while loop
+   }
+
+   private void waitForCanvas() throws InterruptedException {
+      // Wait for the canvas to be available. If we don't do this, then our
+      // framerate tanks, possibly because of repaint events piling up in the
+      // EDT. It's hard to tell.
+      int numTries = 0;
+      while (!shouldStop_.get() && plus_.getCanvas().getPaintPending()) {
+         numTries++;
+         if (numTries > 500) {
+            // Been a few seconds; force the canvas to stop pending, on
+            // the assumption that it's been broken.
+            ReportingUtils.logError("Coercing canvas paint pending to false after waiting too long.");
+            plus_.getCanvas().setPaintPending(false);
+            return;
+         }
+         Thread.sleep(10);
+      }
    }
 
    /**

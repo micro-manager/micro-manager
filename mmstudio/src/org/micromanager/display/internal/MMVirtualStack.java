@@ -58,16 +58,14 @@ public class MMVirtualStack extends ij.VirtualStack {
    private Coords curCoords_;
    private HashMap<Integer, Image> channelToLastValidImage_;
 
-   public MMVirtualStack(Datastore store, EventBus displayBus) {
+   public MMVirtualStack(Datastore store, EventBus displayBus,
+         ImagePlus plus) {
       store_ = store;
       displayBus_ = displayBus;
+      plus_ = plus;
       displayBus_.register(this);
       curCoords_ = new DefaultCoords.Builder().build();
       channelToLastValidImage_ = new HashMap<Integer, Image>();
-   }
-
-   public void setImagePlus(ImagePlus plus) {
-      plus_ = plus;
    }
 
    /**
@@ -326,7 +324,7 @@ public class MMVirtualStack extends ij.VirtualStack {
 
    @Subscribe
    public void onNewImagePlus(NewImagePlusEvent event) {
-      setImagePlus(event.getImagePlus());
+      plus_ = event.getImagePlus();
    }
 
    public Datastore getDatastore() {

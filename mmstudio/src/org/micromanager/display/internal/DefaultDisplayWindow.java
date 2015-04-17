@@ -300,10 +300,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     */
    private void makeGUI_EDTSafe() {
       loadAndRestorePosition(getLocation().x, getLocation().y);
-      stack_ = new MMVirtualStack(store_, displayBus_);
       ijImage_ = new MMImagePlus();
       setImagePlusMetadata(ijImage_);
-      stack_.setImagePlus(ijImage_);
+      stack_ = new MMVirtualStack(store_, displayBus_, ijImage_);
       ijImage_.setStack(getName(), stack_);
       ijImage_.setOpenAsHyperStack(true);
       displayBus_.post(new DefaultNewImagePlusEvent(this, ijImage_));
