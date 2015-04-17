@@ -67,9 +67,9 @@ public class CanvasUpdateThread extends Thread {
       stack_ = stack;
       plus_ = plus;
       display_ = display;
-      display_.registerForEvents(this);
       coordsQueue_ = new LinkedBlockingQueue<Coords>();
       shouldStop_ = new AtomicBoolean(false);
+      display_.registerForEvents(this);
    }
 
    @Override
