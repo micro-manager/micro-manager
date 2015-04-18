@@ -162,7 +162,7 @@ public class FixedAreaAcquisitionSettings  {
       }
       //image filtering
       //store but dont load filter type for now
-      imageFilterType_ = prefs.getInt(PREF_PREFIX + "IMAGE_FILTER", FrameIntegrationMethod.FRAME_AVERAGE);      
+      prefs.putInt(PREF_PREFIX + "IMAGE_FILTER", FrameIntegrationMethod.FRAME_AVERAGE);      
       prefs.putDouble(PREF_PREFIX + "RANK", rank_);
       
    }

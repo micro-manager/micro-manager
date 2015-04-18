@@ -4,6 +4,7 @@
  */
 package acq;
 
+import gui.GUI;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -22,7 +23,6 @@ public class ExploreAcquisition extends Acquisition {
    private volatile double zTop_, zBottom_;
    private volatile int lowestSliceIndex_ = 0, highestSliceIndex_ = 0;
    private ExecutorService eventAdderExecutor_ = Executors.newSingleThreadExecutor();
-   private double rank_;
    private int imageFilterType_;
 
    public ExploreAcquisition(ExploreAcqSettings settings) throws Exception {
@@ -32,7 +32,6 @@ public class ExploreAcquisition extends Acquisition {
          zTop_ = core_.getPosition(zStage_);
          zBottom_ = core_.getPosition(zStage_);
          imageFilterType_ = settings.filterType_;
-         rank_ = settings.rank_;
          initialize(settings.dir_, settings.name_, settings.tileOverlap_);
       } catch (Exception ex) {
          ReportingUtils.showError("Couldn't get focus device position");
@@ -221,7 +220,8 @@ public class ExploreAcquisition extends Acquisition {
 
    @Override
    public double getRank() {
-      return rank_;
+       //get from gui so it can be changed dynamically within a single explore
+      return GUI.getExploreRankSetting();
    }
 
    @Override

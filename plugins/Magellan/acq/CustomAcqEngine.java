@@ -4,8 +4,6 @@ package acq;
  * To change this template, choose Tools | Templates and open the template in
  * the editor.
  */
-import demo.DemoModeImageData;
-import gui.SettingsDialog;
 import ij.IJ;
 import java.awt.Color;
 import java.text.DateFormat;
@@ -16,11 +14,10 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import imageconstruction.CoreCommunicator;
 import misc.GlobalSettings;
+import misc.Log;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
@@ -29,7 +26,6 @@ import org.json.JSONObject;
 import org.micromanager.MMStudio;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.api.MMTags;
-import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 import propsandcovariants.CovariantPairing;
 
@@ -326,11 +322,11 @@ public class CustomAcqEngine {
                 return;
             } catch (Exception e) {
                 e.printStackTrace();
-                IJ.log(getCurrentDateAndTime() + ": Problem " + commandName + "\n Retry #" + i + " in " + DELWAY_BETWEEN_RETRIES_MS + " ms");
+                Log.log(getCurrentDateAndTime() + ": Problem " + commandName + "\n Retry #" + i + " in " + DELWAY_BETWEEN_RETRIES_MS + " ms");
                 Thread.sleep(DELWAY_BETWEEN_RETRIES_MS);
             }
         }
-        IJ.log("Couldn't successfully " + commandName);
+        Log.log(commandName + "unsuccessful");
     }
 
     private String getCurrentDateAndTime() {
@@ -340,7 +336,7 @@ public class CustomAcqEngine {
     }
 
     public static void addImageMetadata(TaggedImage img, AcquisitionEvent event,
-            int numCamChannels, int camChannel, long elapsed_ms) {
+            int numCamChannels, int camChannel, long elapsed_ms,int exposure) {
         try {
             //add tags
             long gridRow = event.acquisition_.getPositionManager().getGridRow(event.positionIndex_, 0);
@@ -356,13 +352,14 @@ public class CustomAcqEngine {
             img.tags.put(MMTags.Image.ELAPSED_TIME_MS, elapsed_ms);
             img.tags.put(MMTags.Image.TIME, (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss -")).format(Calendar.getInstance().getTime()));
             //Magellan specific tags
+            img.tags.put("ExposureRawFrames", exposure);
             img.tags.put("GridColumnIndex", gridCol);
             img.tags.put("GridRowIndex", gridRow);
             img.tags.put("StagePositionX", event.xyPosition_.getCenter().x);
             img.tags.put("StagePositionY", event.xyPosition_.getCenter().y);
         } catch (JSONException e) {
-            IJ.log("Problem adding image tags");
-            IJ.log(e.toString());
+            Log.log("Problem adding image tags");
+            Log.log(e.toString());
             e.printStackTrace();
         }
     }

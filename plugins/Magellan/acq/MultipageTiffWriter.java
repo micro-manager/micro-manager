@@ -22,6 +22,7 @@
 package acq;
 
 
+import ij.IJ;
 import ij.ImageJ;
 import ij.io.TiffDecoder;
 import ij.process.LUT;
@@ -459,7 +460,9 @@ public class MultipageTiffWriter {
          }
       }
       if (pixelOffset == -1 || bytesPerImage == -1) {
-         ReportingUtils.showError("Couldn't overwrite pixel data");
+         IJ.log("couldn't overwrite pixel data\n");
+         IJ.log("pixel offset " + pixelOffset);
+         IJ.log("bytes per image " + bytesPerImage);
          return;
       }
       

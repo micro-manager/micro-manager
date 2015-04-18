@@ -65,7 +65,6 @@ public class GUI extends javax.swing.JFrame {
 
     private static final Color DARK_GREEN = new Color(0, 128, 0);
     private ScriptInterface mmAPI_;
-    private CMMCore core_;
     private CustomAcqEngine eng_;
     private Preferences prefs_;
     private RegionManager regionManager_ = new RegionManager();
@@ -76,13 +75,14 @@ public class GUI extends javax.swing.JFrame {
     private boolean storeAcqSettings_ = true;
     private int multiAcqSelectedIndex_ = 0;
     private LinkedList<JSpinner> offsetSpinners_ = new LinkedList<JSpinner>();
+    private static GUI singleton_;
 
     public GUI(Preferences prefs, ScriptInterface mmapi, String version) {
+        singleton_ = this;
         prefs_ = prefs;
         settings_ = new GlobalSettings(prefs_, this);
         new CoreCommunicator();
         mmAPI_ = mmapi;
-        core_ = mmapi.getMMCore();
         this.setTitle("Micro-Magellan " + version);
         eng_ = new CustomAcqEngine(mmAPI_.getMMCore());
         multiAcqManager_ = new MultipleAcquisitionManager(this, eng_);
@@ -223,6 +223,10 @@ public class GUI extends javax.swing.JFrame {
         settings_.channelOffsetChanged();
     }
 
+    public static double getExploreRankSetting() {
+        return ((Number) singleton_.exploreRankSpinner_.getValue()).doubleValue();
+    }
+    
     public Integer getChannelOffset(int i) {
         if (i < offsetSpinners_.size()) {
             return ((Number) offsetSpinners_.get(i).getValue()).intValue();
@@ -387,7 +391,7 @@ public class GUI extends javax.swing.JFrame {
         }
 
         //filtering
-        settings.imageFilterType_ = frameAverageRadioButton_.isSelected() ? FrameIntegrationMethod.RANK_FILTER
+        settings.imageFilterType_ = frameAverageRadioButton_.isSelected() ? FrameIntegrationMethod.FRAME_AVERAGE
                 : FrameIntegrationMethod.RANK_FILTER;
         settings.rank_ = ((Number) rankSpinner_.getValue()).doubleValue();
 

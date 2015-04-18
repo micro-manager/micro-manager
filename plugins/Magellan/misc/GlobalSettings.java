@@ -108,9 +108,9 @@ public class GlobalSettings {
                     channelOffsets += chOffsets_[i] - minVal;
                 }
                 if (core.hasProperty("BitFlowCameraX2", "CenterOffset")) {
-                    core.setProperty("BitFlowCameraX2", "CenterOffset", minVal);
+                    core.setProperty("BitFlowCameraX2", "CenterOffset", minVal / 2);
                 } else if (core.hasProperty("bitFlowCamera", "CenterOffset")) {
-                    core.setProperty("BitFlowCamera", "CenterOffset", minVal);
+                    core.setProperty("BitFlowCamera", "CenterOffset", minVal / 2);
                 }
                 if (core.hasProperty("BitFlowCameraX2", "ChannelOffsets")) {
                     core.setProperty("BitFlowCameraX2", "ChannelOffsets", channelOffsets);

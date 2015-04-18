@@ -5,6 +5,8 @@
  */
 package imageconstruction;
 
+import ij.ImagePlus;
+import ij.ImageStack;
 import org.micromanager.MMStudio;
 
 /**
@@ -23,15 +25,12 @@ public class RawBufferWrapper {
    //number of pixels used must be a multiple of 8
    //mirroring goes away when moving to higher number of pixels per line, and comes back when moving to a lower number of pixels per line
    //but changing number of pixels used doesnt seem to affect it
-   private static final int MAX_FRAME_OFFSET = 128;
-
    
-   private int processedHeight_, processedWidth_;
    private static int[] warpedIndicesFromUnwarped_;
-   
    private byte[] buffer_;
    private int offset_;
    private static int unwarpedWidth_;
+   private static boolean unwarp_ = true; //for debugging
    
    public RawBufferWrapper(byte[] buffer, int offset, int doubleWidth) {
       if (warpedIndicesFromUnwarped_ == null) {
@@ -41,18 +40,34 @@ public class RawBufferWrapper {
       
       offset_ = offset;
       buffer_ = buffer;
-   }
+     
+        //debugging: show double wide, warped iamge
+//        ImageStack stack = new ImageStack(doubleWidth, buffer.length / doubleWidth);
+//        stack.addSlice(null, buffer);
+//        ImagePlus doubleWide = new ImagePlus("double wide", stack);
+//        doubleWide.show();
+//        doubleWide.close();
+    }
    
    public short getUnwarpedImageValue(int x, int y) {
-       //this gives you the single wide index, for an already interlaced image
-        
-       int warpedX = warpedIndicesFromUnwarped_[x];
+       //this gives you the single wide index in an interlaced image
+
+
+//       unwarp_ = false;
+       int warpedX;
+       if (unwarp_) {
+           warpedX = warpedIndicesFromUnwarped_[x];
+       } else {
+           warpedX = x;
+       }
+//       System.out.println(x + "\t" + warpedX);
+       
        if (y % 2 == 1) {
-            //take second half of line mirrored
-            //x value is double wide with - warped x
-            warpedX = (PIXELS_PER_LINE - LINE_START_THROWAWAY_PIX) - warpedX;
-            warpedX += (offset_ % 2);
-        }    
+           //take second half of line mirrored
+           //x value is double wide with - warped x
+           warpedX = (PIXELS_PER_LINE - LINE_START_THROWAWAY_PIX) - warpedX;
+           warpedX += (offset_ % 2);
+       }
 
               
         int warpedIndex = Math.max(0,Math.min(buffer_.length - 1, 

@@ -426,8 +426,8 @@ public class DisplayOverlayer {
       if (newGrid == null) {
          return overlay;
       }
-      int roiWidth = (int) ((newGrid.numCols() * dsTileWidth) - ((newGrid.numCols() - 1) * newGrid.overlapX()) / zoomableStack_.getDownsampleFactor());
-      int roiHeight = (int) ((newGrid.numRows() * dsTileHeight) - ((newGrid.numRows() - 1) * newGrid.overlapY()) / zoomableStack_.getDownsampleFactor());
+      int roiWidth = (int) ((newGrid.numCols() * dsTileWidth) );
+      int roiHeight = (int) ((newGrid.numRows() * dsTileHeight) );
       Point displayCenter = display_.imageCoordsFromStageCoords(newGrid.center().x, newGrid.center().y);
       Roi rectangle = new Roi(displayCenter.x - roiWidth / 2, displayCenter.y - roiHeight / 2, roiWidth, roiHeight);
       rectangle.setStrokeWidth(5f);
@@ -436,13 +436,13 @@ public class DisplayOverlayer {
       Point displayTopLeft = new Point(displayCenter.x - roiWidth / 2, displayCenter.y - roiHeight / 2);
       //draw boundries of tiles
       for (int row = 1; row < newGrid.numRows(); row++) {
-         int yPos = (int) (displayTopLeft.y + row * dsTileHeight + (newGrid.overlapY() / 2) / zoomableStack_.getDownsampleFactor());
+         int yPos = (int) (displayTopLeft.y + row * dsTileHeight );
          Line l = new Line(displayTopLeft.x, yPos, displayTopLeft.x + roiWidth, yPos);
          l.setStrokeColor(NEW_GRID_COLOR);
          overlay.add(l);
       }
       for (int col = 1; col < newGrid.numCols(); col++) {
-         int xPos = (int) (displayTopLeft.x + col * dsTileWidth + (newGrid.overlapX() / 2) / zoomableStack_.getDownsampleFactor());
+         int xPos = (int) (displayTopLeft.x + col * dsTileWidth );
          Line l = new Line(xPos, displayTopLeft.y, xPos, displayTopLeft.y + roiHeight);
          l.setStrokeColor(NEW_GRID_COLOR);
          overlay.add(l);
