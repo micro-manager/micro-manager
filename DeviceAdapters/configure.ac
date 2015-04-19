@@ -11,6 +11,9 @@ LT_INIT([disable-static])
 AC_PROG_CXX([clang++ llvm-g++ g++ c++])
 AC_PROG_CC([clang llvm-gcc gcc cc])
 
+MM_GMOCK([$srcdir/../testing/gmock], [\$(top_srcdir)/../testing/gmock])
+AM_CONDITIONAL([BUILD_CPP_TESTS], [test "x$have_gmock" = xyes])
+
 # TODO: Following should decide whether adapters depending on BOOST get build
 AX_BOOST_BASE([1.48.0])
 AX_BOOST_THREAD

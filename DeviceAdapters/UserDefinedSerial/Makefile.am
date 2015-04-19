@@ -12,6 +12,10 @@ libmmgr_dal_UserDefinedSerial_la_SOURCES = \
 libmmgr_dal_UserDefinedSerial_la_LIBADD = $(MMDEVAPI_LIBADD)
 libmmgr_dal_UserDefinedSerial_la_LDFLAGS = $(MMDEVAPI_LDFLAGS)
 
-SUBDIRS = . unittest
+if BUILD_CPP_TESTS
+UNITTESTS = unittest
+endif
+
+SUBDIRS = . $(UNITTESTS)
 
 EXTRA_DIST = license.txt
