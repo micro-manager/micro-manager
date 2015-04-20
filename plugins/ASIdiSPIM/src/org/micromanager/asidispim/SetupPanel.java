@@ -812,6 +812,12 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    }
    
    @Override
+   public void refreshSelected() {  // called after autofocus
+      cameraPanel_.gotSelected();
+      beamPanel_.gotSelected();
+   }
+   
+   @Override
    public void windowClosing() {
       slopeCalibrationFrame_.savePosition();
       slopeCalibrationFrame_.dispose();

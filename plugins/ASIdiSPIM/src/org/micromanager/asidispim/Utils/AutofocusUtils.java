@@ -42,7 +42,6 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.AcquisitionModes;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.Joystick;
 import org.micromanager.asidispim.Data.MultichannelModes;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Positions;
@@ -54,7 +53,6 @@ import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
 /**
- *
  * @author nico
  */
 public class AutofocusUtils {
@@ -115,6 +113,7 @@ public class AutofocusUtils {
             }
             gui_.getAutofocus().applySettings();
             
+            // TODO implement this pref as numeric code like other pull-downs
             final Fitter.FunctionType function = Fitter.getFunctionTypeAsType(
                     prefs_.getString (
                         MyStrings.PanelNames.AUTOFOCUS.toString(), 
@@ -130,6 +129,8 @@ public class AutofocusUtils {
                camera = devices_.getMMDevice(Devices.Keys.CAMERAB);
                usingDemoCam = devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB).equals(Devices.Libraries.DEMOCAM);
             }
+            Devices.Keys galvoDevice = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side);
+            Devices.Keys piezoDevice = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side);
 
             final int nrImages = props_.getPropValueInteger(
                     Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_AUTOFOCUS_NRIMAGES);
@@ -138,16 +139,13 @@ public class AutofocusUtils {
                     Properties.Keys.PLUGIN_AUTOFOCUS_DEBUG, false);
             final float piezoStepSize = props_.getPropValueFloat(Devices.Keys.PLUGIN,
                     Properties.Keys.PLUGIN_AUTOFOCUS_STEPSIZE);
-            final float originalCenter = prefs_.getFloat(
+            final float imagingCenter = prefs_.getFloat(
                     MyStrings.PanelNames.SETUP.toString() + side.toString(),
                     Properties.Keys.PLUGIN_PIEZO_CENTER_POS, 0);
-            final double piezoPosition = positions_.getUpdatedPosition(
-                    Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side),
-                    Joystick.Directions.NONE);
-            final double center = centerAtCurrentZ ? piezoPosition : originalCenter;
-
-            final double start = center - (0.5 * (nrImages - 1) * piezoStepSize);
-
+            final double piezoPosition = positions_.getUpdatedPosition(piezoDevice);
+            final double galvoPosition = positions_.getUpdatedPosition(galvoDevice);
+            final double piezoCenter = centerAtCurrentZ ? piezoPosition : imagingCenter;
+            final double piezoStart = piezoCenter - (0.5 * (nrImages - 1) * piezoStepSize);
 
             posUpdater_.pauseUpdates(true);
 
@@ -172,11 +170,14 @@ public class AutofocusUtils {
             final float galvoRate = prefs_.getFloat(
                      MyStrings.PanelNames.SETUP.toString() + side.toString(), 
                      Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, -80);
+            // TODO remove below comments when fixed
+            // galvoOffset is named inappropriately for now
+            // will be changing with change in calibration representation later on
             final float galvoOffset = prefs_.getFloat(
                      MyStrings.PanelNames.SETUP.toString() + side.toString(), 
                      Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0);
             final double galvoStepSize = piezoStepSize / galvoRate;
-            final double galvoStart = (start - galvoOffset) / galvoRate;
+            final double galvoStart = (piezoStart - galvoOffset) / galvoRate;
             
             double[] focusScores = new double[nrImages];
             TaggedImage[] imageStore = new TaggedImage[nrImages];
@@ -249,7 +250,7 @@ public class AutofocusUtils {
 
                // calculate focus scores of the acquired images, using the scoring
                // algorithm of the active autofocus device
-               // Store the scores in an array
+               // Store the scores in an array for fitting analysis
                boolean done = false;
                int counter = 0;
                startTime = System.currentTimeMillis();
@@ -267,9 +268,9 @@ public class AutofocusUtils {
                      if (debug) {
                         // we are using the slow way to insert images, should be OK
                         // as long as the circular buffer is big enough
-                        double zPos = start + counter * piezoStepSize;
+                        double zPos = piezoStart + counter * piezoStepSize;
                         double galvoPos = galvoStart + counter * galvoStepSize;
-                        timg.tags.put("SlicePosition", zPos);
+                        timg.tags.put("SlicePosition", galvoPos);
                         timg.tags.put("ZPositionUm", zPos);
                         gui_.addImageToAcquisition(acqName, 0, 0, counter, 0, timg);
                         scoresToPlot[0].add(galvoPos, focusScores[counter]);
@@ -295,6 +296,7 @@ public class AutofocusUtils {
                gui_.getMMCore().setShutterOpen(shutterOpen);
                gui_.getMMCore().setAutoShutter(autoShutter);
                
+               // fit the focus scores
                double[] fitParms = Fitter.fit(scoresToPlot[0], function, null);
                bestScore = Fitter.getMaxX(scoresToPlot[0], function, fitParms);
                int highestIndex = Fitter.getIndex(scoresToPlot[0], bestScore);
@@ -340,20 +342,12 @@ public class AutofocusUtils {
 
                   cameras_.setSPIMCamerasForAcquisition(false);
 
-                  // Let the calling panel restore the settings
-                  caller.gotSelected();
+                  // let the calling panel restore appropriate settings
+                  caller.refreshSelected();
 
-                  // move piezo  to original position
-                  Devices.Keys piezo = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side);
-                  if (devices_.isValidMMDevice(piezo)) {
-                     positions_.setPosition(piezo, Joystick.Directions.NONE, center);
-                  }
-                  // move Galvo to its focussed position
-                  Devices.Keys galvo = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side);
-                  if (devices_.isValidMMDevice(galvo)) {
-                     positions_.setPosition(galvo, Joystick.Directions.Y, bestScore);
-                  }
-
+                  // move galvo to original position
+                  positions_.setPosition(galvoDevice, galvoPosition);
+                     
                   posUpdater_.pauseUpdates(false);
 
                   if (liveModeOriginally) {

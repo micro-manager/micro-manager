@@ -1700,7 +1700,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.setAcquisitionProperty(acqName, "MVRotations", viewString);
                       
             // get circular buffer ready
-            // do once here but not per-acquisition; need to ensure ROI changes registered
+            // do once here but not per-trigger; need to ensure ROI changes registered
             core_.initializeCircularBuffer();
             
             // TODO: use new acquisition interface that goes through the pipeline

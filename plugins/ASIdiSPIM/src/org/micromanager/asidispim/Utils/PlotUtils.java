@@ -34,6 +34,7 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
 import org.jfree.chart.JFreeChart;
@@ -53,7 +54,7 @@ import org.micromanager.utils.MMScriptException;
 
 /**
  * Utility class to make it simple to show a plot of XY data
- * Multiple datasets can be shown simultanuously
+ * Multiple datasets can be shown simultaneously
  * 
  * 
  * @author nico
@@ -71,6 +72,7 @@ public class PlotUtils {
     * Simple class whose sole intention is to intercept the dispose function and
     * use it to store window position and size
     */
+   @SuppressWarnings("serial")
    class MyChartFrame extends ChartFrame {
 
       final String node_;
