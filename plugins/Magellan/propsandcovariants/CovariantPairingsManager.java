@@ -35,6 +35,7 @@ public class CovariantPairingsManager {
    private static CovariantPairingsManager singleton_;
    private GUI gui_;
    private CovariantPairingsTableModel pairingsTableModel_;
+   private CovariantPairValuesTableModel valuesTableModel_;
 
    public CovariantPairingsManager(GUI gui, MultipleAcquisitionManager multiAcqManager) {
       multiAcqManager_ = multiAcqManager;
@@ -71,16 +72,16 @@ public class CovariantPairingsManager {
       gui_.selectNewCovariantPair();
    }
 
-   public void deletePair(CovariantPairing pair) {
-      //Remove from all acquisiton settings that have a reference
-      for (int i = 0; i < multiAcqManager_.getSize(); i++) {
-         multiAcqManager_.getAcquisitionSettings(i).removePropPairing(pair);
-      }
-      //now remove from the list of pairings
-      pairs_.remove(pair);
-      pairingsTableModel_.fireTableDataChanged();
-
-   }
+    public void deletePair(CovariantPairing pair) {
+        //Remove from all acquisiton settings that have a reference
+        for (int i = 0; i < multiAcqManager_.getSize(); i++) {
+            multiAcqManager_.getAcquisitionSettings(i).removePropPairing(pair);
+        }
+        //now remove from the list of pairings
+        pairs_.remove(pair);
+        pairingsTableModel_.fireTableDataChanged();
+        //make sure values table gets updated if deleting last pair
+    }
 
    public CovariantPairing getPair(int index) {
       return index < pairs_.size() ? pairs_.get(index) : null;
@@ -93,6 +94,10 @@ public class CovariantPairingsManager {
    public void registerCovariantPairingsTableModel(CovariantPairingsTableModel model) {
       pairingsTableModel_ = model;
    }
+
+    public void registerCovariantValuesTableModel(CovariantPairValuesTableModel model) {
+        valuesTableModel_ = model;
+    }
 
    public void loadPairingsFile(GUI gui) {
       File selectedFile = null;
@@ -272,4 +277,9 @@ public class CovariantPairingsManager {
    public void surfaceorRegionNameChanged() {
       pairingsTableModel_.fireTableDataChanged();
    }
+
+    public void updatePairingNames() {
+        pairingsTableModel_.fireTableDataChanged();
+        valuesTableModel_.fireTableDataChanged();
+    }
 }

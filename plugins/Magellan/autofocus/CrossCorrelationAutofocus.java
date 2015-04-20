@@ -9,9 +9,9 @@ import acq.MultiResMultipageTiffStorage;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.process.ImageConverter;
 import ij3d.image3d.FHTImage3D;
 import java.util.Arrays;
+import misc.Log;
 import org.apache.commons.math.ArgumentOutsideDomainException;
 import org.apache.commons.math.analysis.interpolation.SplineInterpolator;
 import org.apache.commons.math.analysis.polynomials.PolynomialSplineFunction;
@@ -24,6 +24,7 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class CrossCorrelationAutofocus {
 
+    private static final int TIMEOUT_MS = 1000*60*10; //10 min
    //number of interppolated points per z step
    private static final double SPLINE_PRECISION = 100;
    //5e6--13 s
@@ -100,12 +101,22 @@ public class CrossCorrelationAutofocus {
          downsampleIndex_ = (int) Math.max(0, Math.ceil(Math.log10(dsFactor) / Math.log(2)));
          downsampledWidth_ = (int) (fullResPixelWidth / Math.pow(2, downsampleIndex_));
          downsampledHeight_ = (int) (fullResPixelHeight / Math.pow(2, downsampleIndex_));
+         Log.log("Autofocus DS Index: " + downsampleIndex_);
+         Log.log("Autofocus DS Width: " + downsampledWidth_);
+         Log.log("Autofocus DS Height: " + downsampledHeight_);
          return;
       }      
-      ImageStack tp0Stack = createAFStack(acq_, 0, channelIndex_, downsampledWidth_, downsampledHeight_, downsampleIndex_);
-      ImageStack currentTPStack = createAFStack(acq_, timeIndex, channelIndex_, downsampledWidth_, downsampledHeight_, downsampleIndex_);
-
-      //run autofocus
+            
+      logMemory();
+      Log.log("Autofocus: creating TP0 stack");
+      ImageStack tp0Stack = createAFStack(acq_, 0, channelIndex_, downsampledWidth_, downsampledHeight_, downsampleIndex_);     
+      logMemory();
+       Log.log("Autofocus: creating current TP stack");
+       ImageStack currentTPStack = createAFStack(acq_, timeIndex, channelIndex_, downsampledWidth_, downsampledHeight_, downsampleIndex_);
+       logMemory();
+       Log.log("Autofocus: made current TP stack, calculating focus drift");
+       logMemory();
+       //run autofocus
       double drift = calcFocusDrift(tp0Stack, currentTPStack, acq_.getZStep());
       //check if outside max displacement
       if (Math.abs(currentPosition_ - drift - initialPosition_) > maxDisplacement_) {
@@ -115,6 +126,16 @@ public class CrossCorrelationAutofocus {
       currentPosition_ -= drift;
    }
    
+   private void logMemory() {
+       Log.log("Free memory: " + Runtime.getRuntime().freeMemory());
+       Log.log("Max memory: " + Runtime.getRuntime().maxMemory());
+       Log.log("Total memory: " + Runtime.getRuntime().totalMemory());
+   }
+   
+   /**
+    * return a 32 bit for use with cross corr autofocus
+    * @return 
+    */
    private static ImageStack createAFStack(FixedAreaAcquisition acq, int timeIndex, int channelIndex, int width, int height, int dsIndex) {
       //pad by half of stack size in either direction so wrap around of xCorr doesnt give false values
       int numSlices = 2*(acq.getMaxSliceIndex() + 1);
@@ -125,18 +146,27 @@ public class CrossCorrelationAutofocus {
         for (int slice = 0; slice < numSlices; slice++) {
             if (slice >= frontPadding && slice < frontPadding + acq.getMaxSliceIndex() + 1) {
                 int dataSlice = slice - frontPadding;
-                stack.addSlice(null, acq.getStorage().getImageForDisplay(channelIndex, dataSlice, timeIndex, dsIndex, 0, 0, width, height).pix);
+                //add as int
+                float[] pix32;
+                if (MMStudio.getInstance().getCore().getBytesPerPixel() == 1) {
+                    byte[] pix = (byte[]) acq.getStorage().getImageForDisplay(channelIndex, dataSlice, timeIndex, dsIndex, 0, 0, width, height).pix;
+                    pix32 = new float[pix.length];
+                    for (int i = 0; i < pix.length; i++) {
+                        pix32[i] = pix[i] & 0xff;
+                    }
+                } else {
+                    short[] pix = (short[]) acq.getStorage().getImageForDisplay(channelIndex, dataSlice, timeIndex, dsIndex, 0, 0, width, height).pix;
+                    pix32 = new float[pix.length];
+                    for (int i = 0; i < pix.length; i++) {
+                        pix32[i] = pix[i] & 0xffff;
+                    }
+                }
+                stack.addSlice(null,pix32);
             } else {
                 //add dummy slices, which need to have backround pixels with the same 
                 //value as the background of the actual data
-                Object pix;
-                if (MMStudio.getInstance().getCore().getBytesPerPixel() == 1) {
-                    pix = new byte[width * height];
-                    Arrays.fill((byte[]) pix, (byte) backgroundVal);
-                } else {
-                    pix = new short[width * height];
-                    Arrays.fill((short[]) pix, (short) backgroundVal);
-                }
+                float[] pix = new float[width * height];
+                Arrays.fill(pix, backgroundVal);
                 stack.addSlice(null, pix);
             }
         }
@@ -152,13 +182,10 @@ public class CrossCorrelationAutofocus {
    * that current is focused 4 um deeper than current)
    */
    private static double calcFocusDrift(ImageStack tp0Stack, ImageStack currentTPStack, double pixelSizeZ) {    
-      ImagePlus original = new ImagePlus("Timepoint0",tp0Stack);
-      ImagePlus current = new ImagePlus("Current timepoint" ,currentTPStack);
-//      long start = System.currentTimeMillis();
-      //convert to 32 bit floats
-      new ImageConverter(original).convertToGray32();
-      new ImageConverter(current).convertToGray32();
-      ImageStack xCorrStack = FHTImage3D.crossCorrelation(original.getStack(), current.getStack());
+      //      long start = System.currentTimeMillis();       
+      Log.log("Autofocus: running autofocus");      
+      ImageStack xCorrStack = FHTImage3D.crossCorrelation(tp0Stack, currentTPStack);
+      Log.log("Autofocus: finished cross correlating..calculating drift");      
       ImagePlus xCorr = new ImagePlus("XCorr", xCorrStack);      
 //      System.out.println("Time to generate xCorr: " + ((System.currentTimeMillis() - start)/1000) + " s");       
 //      xCorr.show();
@@ -188,8 +215,6 @@ public class CrossCorrelationAutofocus {
       double ccMaxSliceIndex = sliceIndexInterpolationPoints[maxIndex];
       //convert to um
       double drift_um = (ccMaxSliceIndex - (((double) xCorr.getNSlices()) / 2.0)) * pixelSizeZ;
-      original.close();
-      current.close();
       xCorr.close();
       
       return drift_um;

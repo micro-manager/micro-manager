@@ -15,9 +15,11 @@ public class CovariantPairValuesTableModel extends AbstractTableModel{
 
    private CovariantPairing pair_;
    
-   public CovariantPairValuesTableModel() {
-      super();
-   }
+   public CovariantPairValuesTableModel( ) {
+        super();
+        CovariantPairingsManager manager = CovariantPairingsManager.getInstance();
+        manager.registerCovariantValuesTableModel(this);
+    }
 
    public void setPair(CovariantPairing pair) {
       pair_ = pair;

@@ -16,6 +16,7 @@ public class CovariantPairingsTableModel extends AbstractTableModel {
    CovariantPairingsManager manager_;
    
    public CovariantPairingsTableModel( ) {
+       super();
       manager_ = CovariantPairingsManager.getInstance();
       manager_.registerCovariantPairingsTableModel(this);
    }

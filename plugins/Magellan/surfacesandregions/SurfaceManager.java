@@ -139,4 +139,9 @@ public class SurfaceManager {
       }
       return stats;
    }
+
+    void surfaceRenamed() {
+        //update covariants that use this surface
+        CovariantPairingsManager.getInstance().updatePairingNames();
+    }
 }

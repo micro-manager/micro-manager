@@ -106,7 +106,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
          }
       });      
    }
-   
+     
    public String getPixelSizeConfig() {
       return pixelSizeConfig_;
    }
@@ -127,6 +127,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    public void rename(String newName) {
       name_ = newName;
       manager_.updateSurfaceTableAndCombos();
+      manager_.surfaceRenamed();
    }
    
    /**

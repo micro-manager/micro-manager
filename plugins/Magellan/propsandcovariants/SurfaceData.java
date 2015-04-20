@@ -7,14 +7,11 @@ package propsandcovariants;
 import acq.AcquisitionEvent;
 import coordinates.AffineUtils;
 import coordinates.XYStagePosition;
-import ij.IJ;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.micromanager.utils.ReportingUtils;
 import surfacesandregions.SingleResolutionInterpolation;
 import surfacesandregions.SurfaceInterpolator;
@@ -36,7 +33,7 @@ public class SurfaceData implements Covariant {
    public static String  DISTANCE_BELOW_SURFACE_MINIMUM = "--Minimum vertical distance below at XY position";
    public static String  DISTANCE_BELOW_SURFACE_MAXIMUM = "--Maximum vertical distance below at XY position";
    public static String  DISTANCE_FOR_MIN_INCIDENT_POWER = "--Vertical distance for minimum incident power on top";
-//   public static String  CLOSEST_DISTANCE_WITHIN_NA = "--Minimum distance to surface within 45 degree aperture";
+   public static String  DISTANCE_FOR_MIN_INCIDENT_POWER_CENTER_CAPPED = "--Vertical distance for minimum incident power on top (center distance capped)";
    
    private String category_;
    private SurfaceInterpolator surface_;
@@ -51,8 +48,8 @@ public class SurfaceData implements Covariant {
    }
    
    public static String[] enumerateDataTypes() {
-      return new String[] {DISTANCE_BELOW_SURFACE_CENTER, DISTANCE_BELOW_SURFACE_MINIMUM, DISTANCE_BELOW_SURFACE_MAXIMUM, DISTANCE_FOR_MIN_INCIDENT_POWER};
-//         CLOSEST_DISTANCE_WITHIN_NA};
+      return new String[] {DISTANCE_BELOW_SURFACE_CENTER, DISTANCE_BELOW_SURFACE_MINIMUM, 
+          DISTANCE_BELOW_SURFACE_MAXIMUM, DISTANCE_FOR_MIN_INCIDENT_POWER, DISTANCE_FOR_MIN_INCIDENT_POWER_CENTER_CAPPED};
    }
    
    @Override
@@ -71,30 +68,19 @@ public class SurfaceData implements Covariant {
          return "Max distance below " + surface_.getName();
       } else if (category_.equals(DISTANCE_FOR_MIN_INCIDENT_POWER)) {
          return "Min incident power dist " + surface_.getName();
-//      } else if (category_.equals(CLOSEST_DISTANCE_WITHIN_NA)) {
-//         return "min distance to " + surface_.getName();
+           } else if (category_.equals(DISTANCE_FOR_MIN_INCIDENT_POWER_CENTER_CAPPED)) {
+         return "Min incident power dist (center distance capped) " + surface_.getName();
       } else {
          ReportingUtils.showError("Unknown Surface data type");
          throw new RuntimeException();
       }
    }
 
-   @Override
-   public String getName() {
-      if (category_.equals(DISTANCE_BELOW_SURFACE_CENTER)) {
-         return PREFIX + surface_.getName() + DISTANCE_BELOW_SURFACE_CENTER;
-      } else if (category_.equals(DISTANCE_BELOW_SURFACE_MINIMUM)) {
-         return PREFIX + surface_.getName() + DISTANCE_BELOW_SURFACE_MINIMUM;
-      } else if (category_.equals(DISTANCE_BELOW_SURFACE_MAXIMUM)) {
-         return PREFIX + surface_.getName() + DISTANCE_BELOW_SURFACE_MAXIMUM;
-      } else if (category_.equals(DISTANCE_FOR_MIN_INCIDENT_POWER)) {
-         return PREFIX + surface_.getName() + DISTANCE_FOR_MIN_INCIDENT_POWER;
-      } else {
-         ReportingUtils.showError("Unknown Surface data type");
-         throw new RuntimeException();
-      }
-   }
- 
+    @Override
+    public String getName() {
+        return PREFIX + surface_.getName() + category_;
+    }
+
       @Override
    public boolean isValid(CovariantValue potentialValue) {
       return potentialValue.getType() == CovariantType.DOUBLE;
@@ -142,13 +128,15 @@ public class SurfaceData implements Covariant {
       }
    }
 
-   private double minIncidentPowerDistance(Point2D.Double[] corners, double zVal) {
-      double minDist = distanceToSurface(corners, zVal, true);
-      double maxDist = distanceToSurface(corners, zVal, false);
+   private double minIncidentPowerDistance(XYStagePosition xyPos, double zPosition, boolean centerCapped) {
+      Double interpValue = getDistanceToSurfaceAtPositionCenter(xyPos);
+      double centerDistance =   (interpValue == null ? 0 : zPosition - interpValue);
+      double minDist = distanceToSurface(xyPos.getFullTileCorners(), zPosition, true);
+      double maxDist = distanceToSurface(xyPos.getFullTileCorners(), zPosition, false);
       if (minDist <= 0 ) {
          return 0;
       } 
-      return Math.min(maxDist, minDist*minDist);
+      return Math.min(centerCapped ? centerDistance : maxDist, Math.pow(minDist, 1.75));
    }
    
 //   private double minDistanceToSurfaceWithinAngleAtPoint(double x, double y, double z) {
@@ -279,21 +267,27 @@ public class SurfaceData implements Covariant {
       return min ? minDistance : maxDistance;
    }
 
+    private Double getDistanceToSurfaceAtPositionCenter(XYStagePosition xyPos) {
+        Point2D.Double center = xyPos.getCenter();
+        SingleResolutionInterpolation interp = surface_.getCurrentInterpolation();
+        return interp.getInterpolatedValue(center.x, center.y, false);
+    }
+   
    @Override
    public CovariantValue getCurrentValue(AcquisitionEvent event) {
       XYStagePosition xyPos = event.xyPosition_;
       if (category_.equals(DISTANCE_BELOW_SURFACE_CENTER)) {
-         Point2D.Double center = xyPos.getCenter();
-         SingleResolutionInterpolation interp = surface_.getCurrentInterpolation();
-         Double interpValue = interp.getInterpolatedValue(center.x, center.y, false);
          //if interpolation is undefined at position center, assume distance below is 0
+         Double interpValue = getDistanceToSurfaceAtPositionCenter(xyPos);
          return new CovariantValue((interpValue == null ? 0 : event.zPosition_ - interpValue) );
       } else if (category_.equals(DISTANCE_BELOW_SURFACE_MINIMUM)) {
          return new CovariantValue(distanceToSurface(xyPos.getFullTileCorners(), event.zPosition_, true));
       } else if (category_.equals(DISTANCE_BELOW_SURFACE_MAXIMUM)) {
-         return new CovariantValue(distanceToSurface(xyPos.getFullTileCorners(), event.zPosition_, false));         
-       } else if (category_.equals(DISTANCE_FOR_MIN_INCIDENT_POWER)) {
-         return new CovariantValue(minIncidentPowerDistance(xyPos.getFullTileCorners(), event.zPosition_));    
+         return new CovariantValue(distanceToSurface(xyPos.getFullTileCorners(), event.zPosition_, false));
+      } else if (category_.equals(DISTANCE_FOR_MIN_INCIDENT_POWER)) {
+          return new CovariantValue(minIncidentPowerDistance(xyPos, event.zPosition_, false));
+      } else if (category_.equals(DISTANCE_FOR_MIN_INCIDENT_POWER_CENTER_CAPPED)) {
+          return new CovariantValue(minIncidentPowerDistance(xyPos, event.zPosition_, true));
       } else {
          ReportingUtils.showError("Unknown Surface data type");
          throw new RuntimeException();

@@ -51,7 +51,7 @@ public class FixedAreaAcquisitionSettings  {
    public ArrayList<ChannelSettings> channels_ = new ArrayList<ChannelSettings>();
    
    //Covarying props
-   public ArrayList<CovariantPairing> propPairings_ = new ArrayList<CovariantPairing>();
+   public ArrayList<CovariantPairing> covariantPairings_ = new ArrayList<CovariantPairing>();
    
    //autofocus
    public boolean autofocusEnabled_;
@@ -93,7 +93,7 @@ public class FixedAreaAcquisitionSettings  {
          for (int i = 0; i < pairManager.getNumPairings(); i++) {
             CovariantPairing potentialPair = pairManager.getPair(i);
             if (!checkForRedundantPairing(potentialPair)) {
-               propPairings_.add(potentialPair);
+               covariantPairings_.add(potentialPair);
             }
          }
       }
@@ -104,21 +104,24 @@ public class FixedAreaAcquisitionSettings  {
    }
    
    public boolean hasPairing(CovariantPairing pair) {
-      return propPairings_.contains(pair);
+      return covariantPairings_.contains(pair);
    }
    
    public void removePropPairing(CovariantPairing pair) {
-      propPairings_.remove(pair);
+      covariantPairings_.remove(pair);
    }
    
    public void addPropPairing(CovariantPairing pair) {
-      if (propPairings_.contains(pair)) {
+      if (covariantPairings_.contains(pair)) {
          ReportingUtils.showError("Tried to add property pair that was already present");
+         return;
       }
       if (checkForRedundantPairing(pair)) {
-         ReportingUtils.showMessage("Must existing pairing between same two properties first");
+         ReportingUtils.showMessage("Must delete existing pairing between same two properties first before a new"
+                 + "one can be added");
+         return;
       }
-      propPairings_.add(pair);
+      covariantPairings_.add(pair);
       
    }
    
@@ -127,7 +130,7 @@ public class FixedAreaAcquisitionSettings  {
    }
    
    private boolean checkForRedundantPairing(CovariantPairing pair) {
-      for (CovariantPairing p : propPairings_) {
+      for (CovariantPairing p : covariantPairings_) {
          if (p.getIndependentName(false).equals(pair.getIndependentName(false)) && p.getDependentName(false).equals(pair.getDependentName(false))) {
             return true;
          }

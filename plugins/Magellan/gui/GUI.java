@@ -2435,8 +2435,14 @@ public class GUI extends javax.swing.JFrame {
    }//GEN-LAST:event_loadPairingsButton_ActionPerformed
 
    private void removePairingButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removePairingButtonActionPerformed
+       int newSelectionIndex = covariantPairingsTable_.getSelectedRow();
+       if (newSelectionIndex == covariantPairingsTable_.getRowCount() - 1) {
+           newSelectionIndex--;
+       }
        covariantPairManager_.deletePair((CovariantPairing) ((CovariantPairingsTableModel) covariantPairingsTable_.getModel()).getValueAt(covariantPairingsTable_.getSelectedRow(), 1));
-
+       covariantPairingsTable_.getSelectionModel().setSelectionInterval(newSelectionIndex, newSelectionIndex);
+//       covariantPairingsTable_.valueChanged(new ListSelectionEvent(this, covariantPairingsTable_.getSelectedRow(),
+//               covariantPairingsTable_.getSelectedRow(), true));
    }//GEN-LAST:event_removePairingButtonActionPerformed
 
    private void deleteCovariedPairingValueButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteCovariedPairingValueButton_ActionPerformed
@@ -2453,7 +2459,7 @@ public class GUI extends javax.swing.JFrame {
                } else {
                    covariantPairValuesTable_.setRowSelectionInterval(selectedRow, selectedRow);
                }
-           }
+           } 
        }
    }//GEN-LAST:event_deleteCovariedPairingValueButton_ActionPerformed
 

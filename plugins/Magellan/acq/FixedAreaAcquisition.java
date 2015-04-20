@@ -21,6 +21,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import imageconstruction.CoreCommunicator;
 import misc.GlobalSettings;
+import misc.Log;
 import org.json.JSONArray;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.ReportingUtils;
@@ -324,7 +325,7 @@ public class FixedAreaAcquisition extends Acquisition {
                            }
                         }
                         AcquisitionEvent event = new AcquisitionEvent(FixedAreaAcquisition.this, timeIndex, channelIndex, sliceIndex,
-                                positionIndex, zPos, position, settings_.propPairings_);                        
+                                positionIndex, zPos, position, settings_.covariantPairings_);                        
                         if (eventGenerator_.isShutdown()) {
                            throw new InterruptedException();
                         }
@@ -363,6 +364,7 @@ public class FixedAreaAcquisition extends Acquisition {
                   //all images finished writing--can now run autofocus
                   if (autofocus_ != null) {
                      try {
+                         Log.log(FixedAreaAcquisition.this.getName() + " Running autofocus");
                         autofocus_.run(timeIndex);
                      } catch (Exception ex) {                    
                         IJ.log("Problem running autofocus " + ex.getMessage());
