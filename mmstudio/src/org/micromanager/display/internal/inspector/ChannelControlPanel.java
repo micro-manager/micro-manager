@@ -101,6 +101,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private final MMVirtualStack stack_;
    private ImagePlus plus_;
    private CompositeImage composite_;
+   private ChannelSettings channelSettingsCache_;
 
    private JButton autoButton_;
    private JButton zoomInButton_;
@@ -592,9 +593,19 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     */
    public void reloadDisplaySettings() {
       DisplaySettings settings = display_.getDisplaySettings();
+      // HACK: use a color based on the channel index: specifically, use the
+      // CMYRGB set from the DisplaySettings panel.
+      Color defaultColor = Color.WHITE;
+      if (channelIndex_ < DisplaySettingsPanel.DEFAULT_COLORS[1].length) {
+         defaultColor = DisplaySettingsPanel.DEFAULT_COLORS[1][channelIndex_];
+      }
       ChannelSettings channelSettings = ChannelSettings.loadSettings(
             name_, store_.getSummaryMetadata().getChannelGroup(),
-            Color.WHITE, contrastMin_, contrastMax_, true);
+            defaultColor, contrastMin_, contrastMax_, true);
+      if (channelSettings.equals(channelSettingsCache_)) {
+         // Nothing has actually changed.
+         return;
+      }
 
       contrastMin_ = channelSettings.getHistogramMin();
       Integer[] mins = settings.getChannelContrastMins();
@@ -625,7 +636,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          color_ = Color.WHITE;
       }
       else {
-         // Use the ChannelSettings value, or override with DisplaySettings
+         // Use the ChannelSettings value (which incorporates the hardcoded
+         // default when no color is set), or override with DisplaySettings
          // if available.
          color_ = channelSettings.getColor();
          Color[] colors = settings.getChannelColors();
@@ -679,6 +691,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             store_.getSummaryMetadata().getChannelGroup(),
             color, contrastMin_, contrastMax_, true);
       settings.saveToProfile();
+      channelSettingsCache_ = settings;
    }
 
    public int getContrastMin() {
@@ -701,64 +714,70 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    @Subscribe
    public void onLUTUpdate(LUTUpdateEvent event) {
-      if (event.getMin() != null) {
-         contrastMin_ = event.getMin();
-      }
-      if (event.getMax() != null) {
-         contrastMax_ = event.getMax();
-      }
-      if (event.getGamma() != null) {
-         gamma_ = event.getGamma();
-      }
-      // Need to put this on EDT to avoid index out of bounds because of
-      // setting currentChannel to -1
-      Runnable run = new Runnable() {
-         @Override
-         public void run() {
-            LUT lut = ImageUtils.makeLUT(color_, gamma_);
-            lut.min = contrastMin_;
-            lut.max = contrastMax_;
-            if (composite_ == null) {
-               // Single-channel case is straightforward.
-               plus_.getProcessor().setColorModel(lut);
-               plus_.getProcessor().setMinAndMax(lut.min, lut.max);
-            }
-            else {
-               // uses lut.min and lut.max to set min and max of processor
-               composite_.setChannelLut(lut, channelIndex_ + 1);
-
-               if (composite_.getMode() == CompositeImage.COLOR ||
-                     composite_.getMode() == CompositeImage.GRAYSCALE) {
-                  // ImageJ workaround: do this so the appropriate color model
-                  // gets applied in color or grayscale mode. Otherwise we
-                  // can end up with erroneously grayscale images.
-                  try {
-                     JavaUtils.setRestrictedFieldValue(composite_, 
-                           CompositeImage.class, "currentChannel", -1);
-                  } catch (NoSuchFieldException ex) {
-                     ReportingUtils.logError(ex);
-                  }
-               }
-
-               if (composite_.getChannel() == channelIndex_ + 1) {
-                  LUT grayLut = ImageUtils.makeLUT(Color.white, gamma_);
-                  ImageProcessor processor = composite_.getProcessor();
-                  if (processor != null) {
-                     processor.setColorModel(grayLut);
-                     processor.setMinAndMax(contrastMin_, contrastMax_);
-                  }
-                  if (composite_.getMode() == CompositeImage.GRAYSCALE) {
-                     composite_.updateImage();
-                  }
-               }
-            } // End multi-channel case.
-            updateHistogram();
+      try {
+         if (event.getMin() != null) {
+            contrastMin_ = event.getMin();
          }
-      };
-      if (SwingUtilities.isEventDispatchThread()) {
-         run.run();
-      } else {
-         SwingUtilities.invokeLater(run);
+         if (event.getMax() != null) {
+            contrastMax_ = event.getMax();
+         }
+         if (event.getGamma() != null) {
+            gamma_ = event.getGamma();
+         }
+         // Need to put this on EDT to avoid index out of bounds because of
+         // setting currentChannel to -1
+         Runnable run = new Runnable() {
+            @Override
+            public void run() {
+               LUT lut = ImageUtils.makeLUT(color_, gamma_);
+               lut.min = contrastMin_;
+               lut.max = contrastMax_;
+               if (composite_ == null) {
+                  // Single-channel case is straightforward.
+                  plus_.getProcessor().setColorModel(lut);
+                  plus_.getProcessor().setMinAndMax(lut.min, lut.max);
+               }
+               else {
+                  // uses lut.min and lut.max to set min and max of processor
+                  composite_.setChannelLut(lut, channelIndex_ + 1);
+
+                  if (composite_.getMode() == CompositeImage.COLOR ||
+                        composite_.getMode() == CompositeImage.GRAYSCALE) {
+                     // ImageJ workaround: do this so the appropriate color
+                     // model gets applied in color or grayscale mode.
+                     // Otherwise we can end up with erroneously grayscale
+                     // images.
+                     try {
+                        JavaUtils.setRestrictedFieldValue(composite_, 
+                              CompositeImage.class, "currentChannel", -1);
+                     } catch (NoSuchFieldException ex) {
+                        ReportingUtils.logError(ex);
+                     }
+                  }
+
+                  if (composite_.getChannel() == channelIndex_ + 1) {
+                     LUT grayLut = ImageUtils.makeLUT(Color.white, gamma_);
+                     ImageProcessor processor = composite_.getProcessor();
+                     if (processor != null) {
+                        processor.setColorModel(grayLut);
+                        processor.setMinAndMax(contrastMin_, contrastMax_);
+                     }
+                     if (composite_.getMode() == CompositeImage.GRAYSCALE) {
+                        composite_.updateImage();
+                     }
+                  }
+               } // End multi-channel case.
+               updateHistogram();
+            }
+         };
+         if (SwingUtilities.isEventDispatchThread()) {
+            run.run();
+         } else {
+            SwingUtilities.invokeLater(run);
+         }
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error updating LUT");
       }
    }
 
@@ -1100,14 +1119,19 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     */
    @Subscribe
    public void onNewImage(NewImageEvent event) {
-      int channel = event.getCoords().getChannel();
-      if (bitDepth_ == -1 && channel == channelIndex_) {
-         bitDepth_ = event.getImage().getMetadata().getBitDepth();
-         initialize();
+      try {
+         int channel = event.getCoords().getChannel();
+         if (bitDepth_ == -1 && channel == channelIndex_) {
+            bitDepth_ = event.getImage().getMetadata().getBitDepth();
+            initialize();
+         }
+         if (channelIndex_ == 0 && channel != channelIndex_ &&
+               color_.equals(Color.WHITE)) {
+            reloadDisplaySettings();
+         }
       }
-      if (channelIndex_ == 0 && channel != channelIndex_ &&
-            color_.equals(Color.WHITE)) {
-         reloadDisplaySettings();
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error handling new image in histogram for channel " + channelIndex_);
       }
    }
 
