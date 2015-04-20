@@ -68,12 +68,12 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 public class DisplaySettingsPanel extends InspectorPanel {
    private static final String[] COLOR_DESCRIPTORS = new String[] {
-      "RGBCMYW", "CMYRGBW", "Custom"};
+      "RGBCMYW", "MGBYRCW", "Custom"};
    public static final Color[][] DEFAULT_COLORS = new Color[][] {
       {Color.RED, Color.GREEN, Color.BLUE, Color.CYAN, Color.MAGENTA,
          Color.YELLOW, Color.WHITE},
-      {Color.CYAN, Color.MAGENTA, Color.YELLOW, Color.RED, Color.GREEN,
-         Color.BLUE, Color.WHITE}
+      {Color.MAGENTA, Color.GREEN, Color.BLUE, Color.YELLOW, Color.RED,
+         Color.CYAN, Color.WHITE}
    };
 
    private static final String DISPLAY_MODE = "color mixing mode";
