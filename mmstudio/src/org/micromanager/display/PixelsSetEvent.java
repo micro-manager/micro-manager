@@ -25,7 +25,12 @@ import org.micromanager.data.Image;
 /**
  * This event is fired immediately after the image data displayed by the
  * DisplayWindow is updated. Listen for it if you have a control that displays
- * information pertinent to the currently-displayed image.
+ * information pertinent to the currently-displayed image. This event fires
+ * in the main update loop, and thus it is safe to update GUI components from
+ * it -- but on the flipside that means that doing anything time-consuming in
+ * response to this event is a bad idea because you'll slow down the GUI.
+ * Also note that this event can fire multiple times for the same image, due
+ * to requests to the display to refresh the image display.
  */
 public interface PixelsSetEvent {
    /**
