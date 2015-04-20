@@ -30,14 +30,16 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.MouseEvent;
 
+import java.util.HashMap;
+
 import javax.swing.event.MouseInputAdapter;
-import javax.swing.JComponent;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 
 import org.micromanager.internal.utils.TooltipTextMaker;
 
-public class ScrollbarLockIcon extends JComponent   {
-
+public class ScrollbarLockIcon extends JButton {
    /**
     * This enum tracks the possible states of the lock icon. The difference
     * between "locked" and "superlocked" is that in the locked state, we will
@@ -45,6 +47,22 @@ public class ScrollbarLockIcon extends JComponent   {
     */
    public enum LockedState {
       UNLOCKED, LOCKED, SUPERLOCKED
+   }
+
+   // Paths to icons corresponding to the above.
+   // Icons adapted from the public-domain icon here:
+   // https://openclipart.org/detail/188461/closed-lock
+   private static final HashMap<LockedState, ImageIcon> stateToIcon_ = new HashMap<LockedState, ImageIcon>();
+   static {
+      stateToIcon_.put(LockedState.UNLOCKED,
+            new ImageIcon(ScrollbarLockIcon.class.getResource(
+               "/org/micromanager/internal/icons/lock_open.png")));
+      stateToIcon_.put(LockedState.LOCKED,
+            new ImageIcon(ScrollbarLockIcon.class.getResource(
+               "/org/micromanager/internal/icons/lock_locked.png")));
+      stateToIcon_.put(LockedState.SUPERLOCKED,
+            new ImageIcon(ScrollbarLockIcon.class.getResource(
+               "/org/micromanager/internal/icons/lock_super.png")));
    }
 
    /**
@@ -79,20 +97,16 @@ public class ScrollbarLockIcon extends JComponent   {
       }
    }
 
-   private static final int WIDTH = 17, HEIGHT = 14;
    private LockedState lockedState_;
    private String axis_;
    private EventBus bus_;
-   private final Color BACKGROUND_COLOR = Color.white;
-   private final Color LOCK_COLOR = Color.black;
-   private final Color SUPERLOCK_COLOR = Color.red;
-   private Color foreground_ = LOCK_COLOR;
    
    public ScrollbarLockIcon(final String axis, final EventBus bus) {
+      // Start out unlocked.
+      super(stateToIcon_.get(LockedState.UNLOCKED));
       lockedState_ = LockedState.UNLOCKED;
       axis_ = axis;
       bus_ = bus;
-      setSize(WIDTH, HEIGHT);
       this.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(
               "Lock the scrollbar to its current postion. Click twice to superlock; right-click to update all axes."));
       this.addMouseListener(new MouseInputAdapter() {
@@ -123,7 +137,7 @@ public class ScrollbarLockIcon extends JComponent   {
 
    public void setLockedState(LockedState state) {
       lockedState_ = state;
-      foreground_ = (lockedState_ == LockedState.SUPERLOCKED) ? SUPERLOCK_COLOR : LOCK_COLOR;
+      setIcon(stateToIcon_.get(state));
       bus_.post(new LockEvent(axis_, lockedState_));
       repaint();
    }
@@ -146,65 +160,19 @@ public class ScrollbarLockIcon extends JComponent   {
    }
 
    /**
-    * Overrides Component getPreferredSize().
+    * HACK: override this size so we don't take up too much space.
     */
    @Override
    public Dimension getPreferredSize() {
-      return new Dimension(WIDTH, HEIGHT);
+      return new Dimension(16, 16);
    }
-   
+
+   /**
+    * HACK: override this size so the layout will allow us to shrink small
+    * enough to fit.
+    */
    @Override
    public Dimension getMinimumSize() {
-       return new Dimension(WIDTH, HEIGHT);
-   }
-   
-   @Override
-    public Dimension getMaximumSize() {
-       return new Dimension(WIDTH, HEIGHT);
-   }
-
-   @Override
-   public void paint(Graphics g) {
-      if (g == null) {
-         return;
-      }
-      g.setColor(Color.white);
-      g.fillRect(0, 0, WIDTH, HEIGHT);
-      Graphics2D g2d = (Graphics2D) g;
-      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      if (lockedState_ == LockedState.UNLOCKED) {
-         drawUnlocked(g2d);
-      } 
-      else {
-         drawLocked(g2d);
-      }
-   }
-   
-   private void drawUnlocked(Graphics2D g) {
-      g.setColor(foreground_);
-      //body
-      g.fillRect(1, 7, 10, 6);
-
-      //lock part
-      g.fillRect(8, 4, 2, 3);
-      g.fillRect(14, 4, 2, 3);
-
-      g.fillArc(8, 1, 8, 8, 0, 180);
-      g.setColor(BACKGROUND_COLOR);
-      g.fillArc(10, 3, 4, 4, 0, 180);
-   }
-
-   private void drawLocked(Graphics2D g) {
-      g.setColor(foreground_);   
-      //body
-      g.fillRect(1, 7, 10, 6);
-      
-      //lock part
-      g.fillRect(2, 4, 2, 3);
-      g.fillRect(8, 4, 2, 3);
-      
-      g.fillArc(2, 1, 8, 8, 0, 180);
-      g.setColor(BACKGROUND_COLOR);
-      g.fillArc(4, 3, 4, 4, 0, 180);
+      return new Dimension(0, 0);
    }
 }
