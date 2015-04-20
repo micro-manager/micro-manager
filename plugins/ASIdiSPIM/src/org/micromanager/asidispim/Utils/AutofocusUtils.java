@@ -196,7 +196,9 @@ public class AutofocusUtils {
                   gui_.enableLiveMode(false);
                   gui_.getMMCore().waitForDevice(originalCamera);
                }
+               
                // deal with shutter before starting acquisition
+               // needed despite core's handling because of DemoCamera
                boolean autoShutter = gui_.getMMCore().getAutoShutter();
                boolean shutterOpen = false;  // will read later
                shutterOpen = gui_.getMMCore().getShutterOpen();
@@ -206,6 +208,7 @@ public class AutofocusUtils {
                      gui_.getMMCore().setShutterOpen(true);
                   }
                }
+               
                gui_.getMMCore().setCameraDevice(camera);
                if (debug) {
                   acqName = gui_.getUniqueAcquisitionName("diSPIM Autofocus");
@@ -217,6 +220,7 @@ public class AutofocusUtils {
                           (int) gui_.getMMCore().getImageBitDepth());
                }
                gui_.getMMCore().clearCircularBuffer();
+               gui_.getMMCore().initializeCircularBuffer();
                cameras_.setSPIMCamerasForAcquisition(true);
                gui_.getMMCore().setExposure((double) sliceTiming.cameraExposure);
 
