@@ -170,7 +170,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
       panels_ = new ArrayList<InspectorPanel>();
       // Hard-coded initial panels.
       addPanel(CONTRAST_TITLE, new HistogramsPanel());
-      addPanel("Settings", new DisplaySettingsPanel());
+      addPanel("Display Settings", new DisplaySettingsPanel());
       addPanel("Metadata", new MetadataPanel());
       addPanel("Comments", new CommentsPanel());
       addPanel("Overlays", new OverlaysPanel());
