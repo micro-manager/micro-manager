@@ -22,7 +22,6 @@
 package org.micromanager.display.internal;
 
 import java.awt.Color;
-import java.lang.Comparable;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -34,7 +33,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * named channel, and is used to ensure that when we need a new display that
  * uses that channel, we are able to recover it from the profile.
  */
-public class ChannelSettings implements Comparable<ChannelSettings> {
+public class ChannelSettings {
    private static final String NAMES = "names of channels and channel groups";
    private static final String COLORS = "colors to use for channels";
    private static final String MINS = "default minimum values to use in the histograms when scaling";
@@ -251,15 +250,15 @@ public class ChannelSettings implements Comparable<ChannelSettings> {
             histogramMax_, shouldAutoscale_);
    }
 
-   // All that matters here is if we are equal or inequal.
    @Override
-   public int compareTo(ChannelSettings alt) {
-      if (alt == null) {
-         return -1;
+   public boolean equals(Object obj) {
+      if (obj == null || !(obj instanceof ChannelSettings)) {
+         return false;
       }
+      ChannelSettings alt = (ChannelSettings) obj;
       return (color_.equals(alt.getColor()) &&
             histogramMin_ == alt.getHistogramMin() &&
             histogramMax_ == alt.getHistogramMax() &&
-            shouldAutoscale_ == alt.getShouldAutoscale()) ? 0 : 1;
+            shouldAutoscale_ == alt.getShouldAutoscale());
    }
 }
