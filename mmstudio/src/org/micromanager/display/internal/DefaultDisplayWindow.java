@@ -611,10 +611,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    @Subscribe
    public void onDrawEvent(RequestToDrawEvent event) {
       try {
-         Coords drawCoords = displaySettings_.getImageCoords();
-         if (drawCoords == null) {
-            drawCoords = stack_.getCurrentImageCoords();
-         }
+         Coords drawCoords = stack_.getCurrentImageCoords();
          if (event.getCoords() != null) {
             // In particular, they want to display this image.
             drawCoords = event.getCoords();

@@ -31,6 +31,9 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Timer;
@@ -60,6 +63,7 @@ import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.display.internal.link.ImageCoordsEvent;
 import org.micromanager.display.internal.link.ImageCoordsLinker;
 import org.micromanager.display.internal.link.LinkButton;
+import org.micromanager.display.PixelsSetEvent;
 import org.micromanager.internal.utils.GUIUtils;
 
 import org.micromanager.internal.utils.ReportingUtils;
@@ -69,7 +73,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * This class displays a grid of scrollbars for selecting which images in a
  * Datastore to show.
  */
-class ScrollerPanel extends JPanel {
+public class ScrollerPanel extends JPanel {
    /**
     * This class tracks relevant state for a single axis' set of controls.
     */
@@ -123,7 +127,9 @@ class ScrollerPanel extends JPanel {
 
    private final Datastore store_;
    private final DisplayWindow parent_;
-   private DisplaySettings settingsCache_;
+   private final Thread updateThread_;
+   private final LinkedBlockingQueue<Coords> updateQueue_;
+   private AtomicBoolean shouldStopUpdates_;
 
    private final HashMap<String, AxisState> axisToState_;
    private final HashMap<String, Integer> axisToSavedPosition_;
@@ -141,6 +147,9 @@ class ScrollerPanel extends JPanel {
    public ScrollerPanel(Datastore store, DisplayWindow parent) {
       store_ = store;
       parent_ = parent;
+
+      updateQueue_ = new LinkedBlockingQueue<Coords>();
+      shouldStopUpdates_ = new AtomicBoolean(false);
 
       axisToState_ = new HashMap<String, AxisState>();
       axisToSavedPosition_ = new HashMap<String, Integer>();
@@ -172,6 +181,15 @@ class ScrollerPanel extends JPanel {
                .animationFPS(fps_).build());
       }
 
+      // Spin up a new thread to handle changes to the scrollbar positions.
+      // See runUpdateThread() for more information.
+      updateThread_ = new Thread(new Runnable() {
+         @Override
+         public void run() {
+            runUpdateThread();
+         }
+      });
+      updateThread_.start();
       store_.registerForEvents(this);
       parent_.registerForEvents(this);
    }
@@ -244,7 +262,8 @@ class ScrollerPanel extends JPanel {
             parent_.getDisplayBus());
       add(lock, "grow 0");
 
-      LinkButton linker = new LinkButton(new ImageCoordsLinker(axis, parent_),
+      LinkButton linker = new LinkButton(
+            new ImageCoordsLinker(axis, parent_, this),
             parent_);
       add(linker, "grow 0, wrap");
 
@@ -325,12 +344,9 @@ class ScrollerPanel extends JPanel {
          builder.index(axis, pos);
       }
       Coords target = builder.build();
-      DisplaySettings settings = parent_.getDisplaySettings();
-      settings = settings.copy().imageCoords(target).build();
-      settingsCache_ = settings;
-      parent_.setDisplaySettings(settings);
+      // Coordinate our linkers.
       parent_.postEvent(new ImageCoordsEvent(target));
-      parent_.postEvent(new DefaultRequestToDrawEvent(builder.build()));
+      parent_.postEvent(new DefaultRequestToDrawEvent(target));
    }
 
    /**
@@ -345,31 +361,67 @@ class ScrollerPanel extends JPanel {
    }
 
    /**
-    * Display settings have changed; check for new drawing coordinates and FPS.
+    * Display settings have changed; check for new FPS.
     */
    @Subscribe
    public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
       DisplaySettings settings = event.getDisplaySettings();
-      if (settings == settingsCache_) {
-         // Display is telling us about settings that we set on it, so we can
-         // safely ignore these as we're already up-to-date.
-         return;
-      }
       if (settings.getAnimationFPS() != null &&
             settings.getAnimationFPS() != fps_) {
          fps_ = settings.getAnimationFPS();
          fpsButton_.setText("FPS: " + fps_);
          resetAnimation();
       }
-      Coords coords = settings.getImageCoords();
-      if (coords == null) {
-         return;
+   }
+
+   /**
+    * The drawn image has (potentially) changed; start the process of updating
+    * our scrollbars to match.
+    */
+   @Subscribe
+   public void onPixelsSet(PixelsSetEvent event) {
+      Coords coords = event.getImage().getCoords();
+      try {
+         updateQueue_.put(coords);
       }
-      shouldPostEvents_ = false;
-      for (String axis : axisToState_.keySet()) {
-         axisToState_.get(axis).scrollbar_.setValue(coords.getIndex(axis));
+      catch (InterruptedException e) {} // Ignore it.
+   }
+
+   /**
+    * We need to keep our scrollbars up-to-date with the currently-displayed
+    * images. However, this takes time, and generates Swing events for each
+    * scrollbar (which we don't do anything with, but nonetheless they can
+    * clog up the EDT). Since images can change rapidly, we don't want to
+    * change the scrollbars for each and every new image. Hence this
+    * thread-and-queue system, which ignores image updates that we can't
+    * respond to quickly enough.
+    */
+   private void runUpdateThread() {
+      while(!shouldStopUpdates_.get()) {
+         Coords coords = null;
+         // Chew through the queue and take only the last item.
+         while (!updateQueue_.isEmpty()) {
+            coords = updateQueue_.poll();
+         }
+         if (coords == null) {
+            continue;
+         }
+         synchronized(this) {
+            shouldPostEvents_ = false;
+            for (String axis : axisToState_.keySet()) {
+               JScrollBar scroller = axisToState_.get(axis).scrollbar_;
+               if (scroller.getValue() != coords.getIndex(axis)) {
+                  scroller.setValue(coords.getIndex(axis));
+               }
+            }
+            shouldPostEvents_ = true;
+         }
+         try {
+            // In any case limit ourselves to about 30FPS.
+            Thread.sleep(1000/30);
+         }
+         catch (InterruptedException e) {} // Ignore it.
       }
-      shouldPostEvents_ = true;
    }
 
    /**
@@ -431,45 +483,10 @@ class ScrollerPanel extends JPanel {
          boolean didAddScrollers = false;
          for (String axis : store_.getAxes()) {
             int newPos = coords.getIndex(axis);
-            if (!axisToState_.containsKey(axis)) {
-               if (newPos != 0) {
-                  // Now have at least two positions along this axis; add a
-                  // scroller.
-                  addScroller(axis);
-                  didAddScrollers = true;
-               }
-               else {
-                  // Don't care about this axis as we have no scrollbar to
-                  // manipulate.
-                  continue;
-               }
-            }
-            JScrollBar scrollbar = axisToState_.get(axis).scrollbar_;
-            int axisLen = coords.getIndex(axis) + 1;
-            if (scrollbar.getMaximum() < axisLen) {
-               // Expand the range on the scrollbar.
-               scrollbar.setMaximum(axisLen);
-               axisToState_.get(axis).maxLabel_.setText(
-                     "/ " + (String.valueOf(axisLen)));
-            }
-            int pos = scrollbar.getValue();
-            ScrollbarLockIcon.LockedState lockState = axisToState_.get(axis).lockState_;
-            if (lockState == ScrollbarLockIcon.LockedState.SUPERLOCKED) {
-               // This axis is not allowed to move.
-               displayedBuilder.index(axis, pos);
-            }
-            else if (lockState == ScrollbarLockIcon.LockedState.LOCKED) {
-               // This axis can change, but must be snapped back later. Only if
-               // we don't already have a saved index, though.
-               if (!axisToSavedPosition_.containsKey(axis)) {
-                  axisToSavedPosition_.put(axis, pos);
-               }
-               scrollbar.setValue(newPos);
-            }
-            else {
-               // This axis is allowed to move and we don't need to snap it
-               // back later.
-               scrollbar.setValue(newPos);
+            didAddScrollers = updateScrollbar(axis, newPos) || didAddScrollers;
+            if (axisToState_.containsKey(axis)) {
+               displayedBuilder.index(axis,
+                     axisToState_.get(axis).scrollbar_.getValue());
             }
          }
          if (didAddScrollers) {
@@ -505,6 +522,60 @@ class ScrollerPanel extends JPanel {
    }
 
    /**
+    * Silently (i.e. without sending a draw event) update the specified
+    * scrollbar to the desired position. Lengthen the scrollbar if necessary,
+    * and if it doesn't exist then create it. Returns true if a new scrollbar
+    * was created.
+    */
+   private boolean updateScrollbar(String axis, int newPos) {
+      boolean didAddScroller = false;
+      if (!axisToState_.containsKey(axis)) {
+         if (newPos != 0) {
+            // Now have at least two positions along this axis; add a
+            // scroller.
+            addScroller(axis);
+            didAddScroller = true;
+         }
+         else {
+            // Don't care about this axis as we have no scrollbar to
+            // manipulate.
+            return false;
+         }
+      }
+      JScrollBar scrollbar = axisToState_.get(axis).scrollbar_;
+      int axisLen = newPos + 1;
+      if (scrollbar.getMaximum() < axisLen) {
+         // Expand the range on the scrollbar.
+         scrollbar.setMaximum(axisLen);
+         axisToState_.get(axis).maxLabel_.setText(
+               "/ " + (String.valueOf(axisLen)));
+      }
+      int pos = scrollbar.getValue();
+      ScrollbarLockIcon.LockedState lockState = axisToState_.get(axis).lockState_;
+      synchronized(this) {
+         shouldPostEvents_ = false;
+         if (lockState == ScrollbarLockIcon.LockedState.SUPERLOCKED) {
+            // This axis is not allowed to move.
+         }
+         else if (lockState == ScrollbarLockIcon.LockedState.LOCKED) {
+            // This axis can change, but must be snapped back later. Only if
+            // we don't already have a saved index, though.
+            if (!axisToSavedPosition_.containsKey(axis)) {
+               axisToSavedPosition_.put(axis, pos);
+            }
+            scrollbar.setValue(newPos);
+         }
+         else {
+            // This axis is allowed to move and we don't need to snap it
+            // back later.
+            scrollbar.setValue(newPos);
+         }
+         shouldPostEvents_ = true;
+      }
+      return didAddScroller;
+   }
+
+   /**
     * Push the relevant scrollbar forward, wrapping around when it hits the
     * end.
     */
@@ -514,6 +585,7 @@ class ScrollerPanel extends JPanel {
       scrollbar.setValue(target);
    }
 
+   @Subscribe
    public void onDisplayDestroyed(DisplayDestroyedEvent event) {
       store_.unregisterForEvents(this);
       parent_.unregisterForEvents(this);
@@ -523,5 +595,12 @@ class ScrollerPanel extends JPanel {
       if (snapbackTimer_ != null) {
          snapbackTimer_.cancel();
       }
+      shouldStopUpdates_.set(true);
+      updateThread_.interrupt();
+   }
+
+   // Used by the ImageCoordsLinker to query position.
+   public int getIndex(String axis) {
+      return axisToState_.get(axis).scrollbar_.getValue();
    }
 }

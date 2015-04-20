@@ -58,7 +58,6 @@ public interface DisplaySettings {
       DisplaySettingsBuilder magnification(Double magnification);
       DisplaySettingsBuilder animationFPS(Integer animationFPS);
       DisplaySettingsBuilder channelDisplayModeIndex(Integer channelDisplayModeIndex);
-      DisplaySettingsBuilder imageCoords(Coords imageCoords);
       DisplaySettingsBuilder histogramUpdateRate(Double histogramUpdateRate);
       DisplaySettingsBuilder shouldSyncChannels(Boolean shouldSyncChannels);
       DisplaySettingsBuilder shouldAutostretch(Boolean shouldAutostretch);
@@ -90,8 +89,6 @@ public interface DisplaySettings {
    /** The index into the "Display mode" control; 0 = Color, 1 = Grayscale,
      * 2 = Composite */
    public Integer getChannelDisplayModeIndex();
-   /** The coordinates of the currently-displayed image */
-   public Coords getImageCoords();
    /** How much time to allow to pass between updates to the histogram, in
      * seconds (set to 0 for continuous update, or any negative value to
      * disable updates altogether) */

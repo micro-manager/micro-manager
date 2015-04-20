@@ -140,7 +140,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
       private Double magnification_ = null;
       private Integer animationFPS_ = null;
       private Integer channelDisplayModeIndex_ = null;
-      private Coords imageCoords_ = null;
       private Double histogramUpdateRate_ = null;
       private Boolean shouldSyncChannels_ = null;
       private Boolean shouldAutostretch_ = null;
@@ -196,12 +195,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
-      public DisplaySettingsBuilder imageCoords(Coords imageCoords) {
-         imageCoords_ = imageCoords;
-         return this;
-      }
-
-      @Override
       public DisplaySettingsBuilder histogramUpdateRate(Double histogramUpdateRate) {
          histogramUpdateRate_ = histogramUpdateRate;
          return this;
@@ -245,7 +238,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
    private Double magnification_ = null;
    private Integer animationFPS_ = null;
    private Integer channelDisplayModeIndex_ = null;
-   private Coords imageCoords_ = null;
    private Double histogramUpdateRate_ = null;
    private Boolean shouldSyncChannels_ = null;
    private Boolean shouldAutostretch_ = null;
@@ -261,7 +253,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
       magnification_ = builder.magnification_;
       animationFPS_ = builder.animationFPS_;
       channelDisplayModeIndex_ = builder.channelDisplayModeIndex_;
-      imageCoords_ = builder.imageCoords_;
       histogramUpdateRate_ = builder.histogramUpdateRate_;
       shouldSyncChannels_ = builder.shouldSyncChannels_;
       shouldAutostretch_ = builder.shouldAutostretch_;
@@ -306,11 +297,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
-   public Coords getImageCoords() {
-      return imageCoords_;
-   }
-
-   @Override
    public Double getHistogramUpdateRate() {
       return histogramUpdateRate_;
    }
@@ -350,7 +336,6 @@ public class DefaultDisplaySettings implements DisplaySettings {
             .magnification(magnification_)
             .animationFPS(animationFPS_)
             .channelDisplayModeIndex(channelDisplayModeIndex_)
-            .imageCoords(imageCoords_)
             .histogramUpdateRate(histogramUpdateRate_)
             .shouldSyncChannels(shouldSyncChannels_)
             .shouldAutostretch(shouldAutostretch_)

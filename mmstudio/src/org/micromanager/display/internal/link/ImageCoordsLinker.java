@@ -26,21 +26,28 @@ import java.util.List;
 import org.micromanager.data.Coords;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.internal.ScrollerPanel;
 
 import org.micromanager.data.internal.DefaultCoords;
 
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
- * The ImageCoordsLinker links a specific axis of the ImageCoords attribute.
+ * The ImageCoordsLinker links a specific axis of the displayed image
+ * coordinates. This is a bit different from the usual SettingsLinker as it
+ * operates through an attribute that is not part of the DisplaySettings.
  */
 public class ImageCoordsLinker extends SettingsLinker {
    private String axis_;
+   private ScrollerPanel scrollerPanel_;
    private static final List<Class<?>> RELEVANT_EVENTS = Arrays.asList(
          new Class<?>[] {ImageCoordsEvent.class});
 
-   public ImageCoordsLinker(String axis, DisplayWindow parent) {
+   public ImageCoordsLinker(String axis, DisplayWindow parent,
+         ScrollerPanel scrollerPanel) {
       super(parent, RELEVANT_EVENTS);
       axis_ = axis;
+      scrollerPanel_ = scrollerPanel;
       addToSiblings();
    }
 
@@ -57,12 +64,8 @@ public class ImageCoordsLinker extends SettingsLinker {
    public boolean getShouldApplyChanges(DisplayWindow source,
          DisplaySettingsEvent changeEvent) {
       ImageCoordsEvent event = (ImageCoordsEvent) changeEvent;
-      if (parent_.getDisplaySettings().getImageCoords() == null) {
-         // We don't have image coordinates, so we must de facto differ.
-         return true;
-      }
       int newPos = event.getImageCoords().getIndex(axis_);
-      int oldPos = parent_.getDisplaySettings().getImageCoords().getIndex(axis_);
+      int oldPos = scrollerPanel_.getIndex(axis_);
       return oldPos != newPos;
    }
 
@@ -73,33 +76,31 @@ public class ImageCoordsLinker extends SettingsLinker {
    public void applyChange(DisplayWindow source,
          DisplaySettingsEvent changeEvent) {
       ImageCoordsEvent event = (ImageCoordsEvent) changeEvent;
-      DisplaySettings settings = parent_.getDisplaySettings();
-      Coords curCoords = settings.getImageCoords();
+      Coords curCoords = parent_.getDisplayedImages().get(0).getCoords();
       Coords newCoords = event.getImageCoords();
-      if (curCoords == null) {
-         // Gotta have some valid coords to start; just copy the new ones.
-         curCoords = newCoords;
-      }
       curCoords = curCoords.copy().index(axis_, newCoords.getIndex(axis_)).build();
-      settings = settings.copy().imageCoords(curCoords).build();
-      parent_.setDisplaySettings(settings);
+      parent_.setDisplayedImageTo(curCoords);
+   }
+
+
+   /**
+    * HACK: We override this method because it relies on copySettings(), which
+    * doesn't do anything meaningful for us.
+    */
+   @Override
+   public void pushState(DisplayWindow display) {
+      Coords coords = parent_.getDisplayedImages().get(0).getCoords();
+      // Manually override our own position in the Coords, as it may not match
+      // what's in the above object (e.g. if we're linking the channel index).
+      coords = coords.copy().index(axis_, scrollerPanel_.getIndex(axis_)).build();
+      display.setDisplayedImageTo(coords);
    }
 
    @Override
    public DisplaySettings copySettings(DisplayWindow sourceDisplay,
          DisplaySettings source, DisplaySettings dest) {
-      Coords sourceCoords = source.getImageCoords();
-      Coords destCoords = dest.getImageCoords();
-      if (destCoords == null) {
-         destCoords = sourceCoords;
-      }
-      if (sourceCoords == null ||
-            sourceCoords.getIndex(axis_) == destCoords.getIndex(axis_)) {
-         // Nothing can/should be done.
-         return dest;
-      }
-      destCoords = destCoords.copy().index(axis_, sourceCoords.getIndex(axis_)).build();
-      return dest.copy().imageCoords(destCoords).build();
+      ReportingUtils.logError("copySettings() of ImageCoordsLinker should never be called.");
+      return null;
    }
 
    /**
