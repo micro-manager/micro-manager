@@ -76,24 +76,21 @@ public class CanvasUpdateThread extends Thread {
    public void run() {
       while (!shouldStop_.get()) {
          Coords coords = null;
-         try {
-            // This will block until an image is available or we need
-            // to send a new FPS update. Or we get interrupted, of course.
-            coords = coordsQueue_.poll(500, TimeUnit.MILLISECONDS);
-         }
-         catch (InterruptedException e) {
-            // Interrupted while waiting for the queue to be populated.
-            if (shouldStop_.get()) {
-               // Our master wants us to stop now.
-               return;
-            }
+         // Grab images from the queue until we get the last one, so all
+         // others get ignored (because we don't have time to display them).
+         while (!coordsQueue_.isEmpty()) {
+            coords = coordsQueue_.poll();
          }
          if (coords == null) {
+            // Nothing in the queue.
             // We still need to generate an FPS update at regular intervals; we
             // just have to do it without any image coords.
             sendFPSUpdate(null);
-            // But since there's no image to show, we shouldn't do the rest of
-            // this loop.
+            // Then rest for a bit so we aren't busy-waiting.
+            try {
+               Thread.sleep(20);
+            }
+            catch (InterruptedException e) {} // Ignore it.
             continue;
          }
 
@@ -105,6 +102,10 @@ public class CanvasUpdateThread extends Thread {
                // Time to stop.
                return;
             }
+         }
+         // The display may have gone away while we were waiting.
+         if (plus_.getCanvas() == null) {
+            continue;
          }
          final Image image = store_.getImage(coords);
          if (image == null) {
@@ -124,12 +125,19 @@ public class CanvasUpdateThread extends Thread {
       } // End while loop
    }
 
+   /**
+    * Wait for the canvas to be available. If we don't do this, then our
+    * framerate tanks, possibly because of repaint events piling up in the
+    * EDT. It's hard to tell.
+    */
    private void waitForCanvas() throws InterruptedException {
-      // Wait for the canvas to be available. If we don't do this, then our
-      // framerate tanks, possibly because of repaint events piling up in the
-      // EDT. It's hard to tell.
       int numTries = 0;
-      while (!shouldStop_.get() && plus_.getCanvas().getPaintPending()) {
+      // TODO: this conditional has a race condition, in that the canvas can
+      // become null at any time (e.g. due to the window closing), including
+      // between when we ask for the canvas and when we check its paint-pending
+      // status.
+      while (!shouldStop_.get() && plus_.getCanvas() != null &&
+            plus_.getCanvas().getPaintPending()) {
          numTries++;
          if (numTries > 500) {
             // Been a few seconds; force the canvas to stop pending, on
@@ -162,34 +170,36 @@ public class CanvasUpdateThread extends Thread {
     */
    private void sendFPSUpdate(Image image) {
       long curTimestamp = System.currentTimeMillis();
-      // Hack: if we have null image, then post a "blank" FPS event.
-      if (image == null) {
-         display_.postEvent(new FPSEvent(0, 0));
-         return;
-      }
       if (lastFPSUpdateTimestamp_ == -1) {
          // No data to operate on yet.
          lastFPSUpdateTimestamp_ = curTimestamp;
       }
       else if (curTimestamp - lastFPSUpdateTimestamp_ >= 500) {
-         // More than 500ms since last update.
-         double elapsedTime = (curTimestamp - lastFPSUpdateTimestamp_) / 1000.0;
-         try {
-            Long imageIndex = image.getMetadata().getImageNumber();
-            if (imageIndex != null) {
-               // HACK: Ignore the first FPS display event, to prevent us from
-               // showing FPS for the Snap window.
-               if (lastImageIndex_ != 0) {
-                  display_.postEvent(new FPSEvent((imageIndex - lastImageIndex_) / elapsedTime,
-                           imagesDisplayed_ / elapsedTime));
-               }
-               lastImageIndex_ = imageIndex;
-            }
-         }
-         catch (Exception e) {
-            // Post a "blank" event. This likely happens because the image
-            // image don't contain a sequence number (e.g. during an MDA).
+         // More than 500ms since last update; time to send an update.
+         // Hack: if we have null image, then post a "blank" FPS event.
+         if (image == null) {
             display_.postEvent(new FPSEvent(0, 0));
+         }
+         else {
+            double elapsedTime = (curTimestamp - lastFPSUpdateTimestamp_) / 1000.0;
+            try {
+               Long imageIndex = image.getMetadata().getImageNumber();
+               if (imageIndex != null) {
+                  // HACK: Ignore the first FPS display event, to prevent us
+                  // from showing FPS for the Snap window.
+                  if (lastImageIndex_ != 0) {
+                     display_.postEvent(new FPSEvent((
+                              imageIndex - lastImageIndex_) / elapsedTime,
+                              imagesDisplayed_ / elapsedTime));
+                  }
+                  lastImageIndex_ = imageIndex;
+               }
+            }
+            catch (Exception e) {
+               // Post a "blank" event. This likely happens because the image
+               // image don't contain a sequence number (e.g. during an MDA).
+               display_.postEvent(new FPSEvent(0, 0));
+            }
          }
          imagesDisplayed_ = 0;
          lastFPSUpdateTimestamp_ = curTimestamp;
