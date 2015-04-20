@@ -101,7 +101,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private final MMVirtualStack stack_;
    private ImagePlus plus_;
    private CompositeImage composite_;
-   private ChannelSettings channelSettingsCache_;
 
    private JButton autoButton_;
    private JButton zoomInButton_;
@@ -602,10 +601,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       ChannelSettings channelSettings = ChannelSettings.loadSettings(
             name_, store_.getSummaryMetadata().getChannelGroup(),
             defaultColor, contrastMin_, contrastMax_, true);
-      if (channelSettings.equals(channelSettingsCache_)) {
-         // Nothing has actually changed.
-         return;
-      }
 
       contrastMin_ = channelSettings.getHistogramMin();
       Integer[] mins = settings.getChannelContrastMins();
@@ -691,7 +686,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             store_.getSummaryMetadata().getChannelGroup(),
             color, contrastMin_, contrastMax_, true);
       settings.saveToProfile();
-      channelSettingsCache_ = settings;
    }
 
    public int getContrastMin() {
