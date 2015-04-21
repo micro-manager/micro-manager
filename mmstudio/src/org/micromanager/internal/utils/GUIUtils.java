@@ -300,9 +300,10 @@ public class GUIUtils {
     * Add an icon from the "org/micromanager/internal/icons/ folder with
     * given file name, to specified the button or menu.
     */
-   public static void setIcon(AbstractButton component, String iconFileName) {
+   public static void setIcon(AbstractButton component, String iconFileName,
+         double scale) {
       component.setIcon(new HighResIcon(MMStudio.class.getResource(
-              "/org/micromanager/internal/icons/" + iconFileName), .25));
+              "/org/micromanager/internal/icons/" + iconFileName), scale));
    }
    
       
@@ -380,7 +381,7 @@ public class GUIUtils {
            final String iconFileName) {
       final JMenuItem menuItem = addMenuItem(parentMenu,
               menuItemText, menuItemToolTip, menuActionRunnable);
-      setIcon(menuItem, iconFileName);
+      setIcon(menuItem, iconFileName, 1);
       return menuItem;
    }
   
@@ -421,13 +422,13 @@ public class GUIUtils {
       topLayout.putConstraint(SpringLayout.NORTH, component, north,
               (north >= 0) ? SpringLayout.NORTH : SpringLayout.SOUTH, parentContainer);
    }
-      
+
    /** 
     * Adds a component to the parent panel, set positions of the edges of
     * component relative to panel. If edges are positive, then they are
     * positioned relative to north and west edges of parent container. If edges
     * are negative, then they are positioned relative to south and east
-    * edges of parent container.
+    * edges of parent container. Allows for use of high-resolution image icons.
     * Requires that parent container uses SpringLayout.
     */
    public static AbstractButton createButton(final boolean isToggleButton,
@@ -435,7 +436,7 @@ public class GUIUtils {
            final String text,
            final String toolTipText,
            final Runnable buttonActionRunnable,
-           final String iconFileName,
+           final String iconFileName, final double scale,
            final Container parentPanel,
            int west, int north, int east, int south) {
       AbstractButton button = isToggleButton ? new JToggleButton() : new JButton();
@@ -447,7 +448,7 @@ public class GUIUtils {
       }
       if (iconFileName != null) {
          button.setIconTextGap(4);
-         setIcon(button, iconFileName);
+         setIcon(button, iconFileName, scale);
       }
       if (toolTipText != null) {
          button.setToolTipText(toolTipText);
@@ -462,6 +463,23 @@ public class GUIUtils {
       return button;
    }
 
+   /**
+    * As above, but defaults to a scale factor of 1.0. TODO: eventually all
+    * our icons should be high-res, at which point everyone should be using
+    * the method that this method calls.
+    */
+   public static AbstractButton createButton(final boolean isToggleButton,
+           final String name,
+           final String text,
+           final String toolTipText,
+           final Runnable buttonActionRunnable,
+           final String iconFileName,
+           final Container parentPanel,
+           int west, int north, int east, int south) {
+      return createButton(isToggleButton, name, text, toolTipText,
+            buttonActionRunnable, iconFileName, 1.0, parentPanel,
+            west, north, east, south);
+   }
    
    public interface StringValidator {
       public void validate(String string);

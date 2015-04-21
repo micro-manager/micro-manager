@@ -306,7 +306,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                studio_.live().snap(true);
             }
          }, 
-         "camera.png", topPanel, 7, 4, 95, 25);
+         "camera.png", .25, topPanel, 7, 4, 95, 25);
 
       liveButton_ = (JToggleButton) GUIUtils.createButton(true,
          "Live", "Live", "Continuous live view",
@@ -316,7 +316,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                studio_.live().setLiveMode(!studio_.live().getIsLiveModeOn());
             }
          },
-         "movie_camera.png", topPanel, 7, 26, 95, 47);
+         "movie_camera.png", .25, topPanel, 7, 26, 95, 47);
 
       GUIUtils.createButton(false, "Album", "Album",
          "Acquire single frame and add to an album",
@@ -326,7 +326,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                studio_.album().addImages(studio_.live().snap(false));
             }
          }, 
-         "camera_plus_arrow.png", topPanel, 7, 48, 95, 69);
+         "camera_plus_arrow.png", .25, topPanel, 7, 48, 95, 69);
 
       // This icon based on the public-domain icon at
       // https://openclipart.org/detail/2757/movie-tape
@@ -339,7 +339,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                studio_.openAcqControlDialog();
             }
          }, 
-         "film.png", topPanel, 7, 70, 95, 91);
+         "film.png", .25, topPanel, 7, 70, 95, 91);
 
       GUIUtils.createButton(false, "Refresh", "Refresh",
          "Refresh all GUI controls directly from the hardware",
