@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg2"
+   sodipodi:docname="camera-icon-estilizado-nofeet-nohandle.svg"
+   viewBox="0 0 184.59 145"
+   version="1.1"
+   inkscape:version="0.48.5 r10040"
+   width="100%"
+   height="100%">
+  <defs
+     id="defs3953" />
+  <sodipodi:namedview
+     id="base"
+     fit-margin-left="0"
+     inkscape:zoom="2"
+     borderopacity="1.0"
+     inkscape:current-layer="layer1"
+     inkscape:cx="159.68874"
+     inkscape:cy="86.72498"
+     inkscape:window-maximized="1"
+     showgrid="false"
+     fit-margin-right="0"
+     inkscape:guide-bbox="true"
+     showguides="true"
+     bordercolor="#666666"
+     inkscape:window-x="4"
+     inkscape:window-y="0"
+     fit-margin-bottom="0"
+     inkscape:window-width="1276"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     pagecolor="#ffffff"
+     inkscape:document-units="px"
+     inkscape:window-height="756"
+     fit-margin-top="0" />
+  <g
+     id="layer1"
+     inkscape:label="Capa 1"
+     inkscape:groupmode="layer"
+     transform="translate(-146.5 -151.81)">
+    <path
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cccsscccccccsscscccs"
+       d="m 220.999,151.81 c 20.6,0 37.691,14.991 40.97,34.656 l 5.094,0.969 c 5.989,-10.118 17.011,-16.906 29.625,-16.906 19.006,0 34.406,15.399 34.406,34.406 0,16.161 -11.136,29.709 -26.156,33.406 l 0,3.8438 c -0.0555,3.59879 0.38874,7.40047 0,11.65625 l 0,42.969 -119.59,0 0,-71.438 9.1875,0 c -9.22,-7.62 -15.1,-19.137 -15.1,-32.031 0,-22.945 18.62,-41.531 41.56,-41.531 z m 36.095,62.094 c -2.4967,4.3789 -5.7609,8.2739 -9.625,11.469 l 21.531,0 c -2.254,-3.05 -4.003,-6.485 -5.156,-10.188 z"
+       style="fill:#000000"
+       id="path2829"
+       inkscape:export-filename="/Users/chriswei/Downloads/movie_camera.png"
+       inkscape:export-xdpi="124.82"
+       inkscape:export-ydpi="124.82" />
+    <path
+       d="m 221.599,171.38 c 11.598,0 21,9.402 21,21 0,11.598 -9.402,21 -21,21 -11.598,0 -21,-9.402 -21,-21 0,-11.598 9.402,-21 21,-21 z"
+       inkscape:connector-curvature="0"
+       style="fill:#ffffff"
+       id="path3749"
+       sodipodi:nodetypes="sssss"
+       inkscape:export-filename="/Users/chriswei/Downloads/movie_camera.png"
+       inkscape:export-xdpi="124.82"
+       inkscape:export-ydpi="124.82" />
+    <path
+       d="m 296.599,186.38 c 9.3888,0 17,7.6112 17,17 0,9.3888 -7.6112,17 -17,17 -9.3888,0 -17,-7.6112 -17,-17 0,-9.3888 7.6112,-17 17,-17 z"
+       inkscape:connector-curvature="0"
+       style="fill:#ffffff"
+       id="path3751"
+       sodipodi:nodetypes="sssss"
+       inkscape:export-filename="/Users/chriswei/Downloads/movie_camera.png"
+       inkscape:export-xdpi="124.82"
+       inkscape:export-ydpi="124.82" />
+    <path
+       d="m 146.509,220.97 21.09,12.78 h 16.5 v 31.844 h -16.5 l -21.094,12.781 v -57.406 z"
+       inkscape:connector-curvature="0"
+       style="fill:#000000"
+       id="rect3789"
+       inkscape:export-filename="/Users/chriswei/Downloads/movie_camera.png"
+       inkscape:export-xdpi="124.82"
+       inkscape:export-ydpi="124.82" />
+  </g>
+  <metadata
+     id="metadata3951">
+    <rdf:RDF>
+      <cc:Work>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/publicdomain/" />
+        <dc:publisher>
+          <cc:Agent
+             rdf:about="http://openclipart.org/">
+            <dc:title>Openclipart</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:title></dc:title>
+        <dc:date>2012-06-30T11:43:58</dc:date>
+        <dc:description>iconic representation of a old camera. With feet and handle removed.</dc:description>
+        <dc:source>https://openclipart.org/detail/170979/camera-icon-by-qubodup-170979</dc:source>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>qubodup</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>camera</rdf:li>
+            <rdf:li>cinema</rdf:li>
+            <rdf:li>film</rdf:li>
+            <rdf:li>icon</rdf:li>
+            <rdf:li>movie</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/publicdomain/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>

@@ -316,7 +316,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                studio_.live().setLiveMode(!studio_.live().getIsLiveModeOn());
             }
          },
-         "camera_go.png", topPanel, 7, 26, 95, 47);
+         "movie_camera.png", topPanel, 7, 26, 95, 47);
 
       GUIUtils.createButton(false, "Album", "Album",
          "Acquire single frame and add to an album",
@@ -514,7 +514,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       snapButton_.setEnabled(!isEnabled);
       liveButton_.setIcon(new HighResIcon(getClass().getResource(
                isEnabled ? "/org/micromanager/internal/icons/cancel.png" : 
-               "/org/micromanager/internal/icons/camera_go.png"), .25));
+               "/org/micromanager/internal/icons/movie_camera.png"), .25));
       liveButton_.setSelected(false);
       liveButton_.setText(isEnabled ? "Stop Live" : "Live");
    }

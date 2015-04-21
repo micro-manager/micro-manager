@@ -93,8 +93,10 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
 
    private void setLiveButtonMode(JButton button, boolean isOn) {
       String label = isOn ? "Stop Live" : "Live";
+      // The camera icon here is based on the public-domain icon at
+      // https://openclipart.org/detail/170979/camera-icon
       String iconPath = isOn ? "/org/micromanager/internal/icons/cancel.png" : 
-              "/org/micromanager/internal/icons/camera_go.png";
+              "/org/micromanager/internal/icons/movie_camera.png";
       button.setIcon(new HighResIcon(getClass().getResource(iconPath), .25));
       button.setText(label);
    }
