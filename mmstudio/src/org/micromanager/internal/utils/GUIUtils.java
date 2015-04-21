@@ -306,6 +306,14 @@ public class GUIUtils {
               "/org/micromanager/internal/icons/" + iconFileName), scale));
    }
    
+   /*
+    * As above, but doesn't take a scale parameter (and so uses the hacky
+    * auto-derive-scale constructor of HighResIcon).
+    */
+   public static void setIcon(AbstractButton component, String iconFileName) {
+      component.setIcon(new HighResIcon(MMStudio.class.getResource(
+              "/org/micromanager/internal/icons/" + iconFileName)));
+   }
       
    /////////////////////// MENU ITEM UTILITY METHODS ///////////
    
@@ -381,7 +389,7 @@ public class GUIUtils {
            final String iconFileName) {
       final JMenuItem menuItem = addMenuItem(parentMenu,
               menuItemText, menuItemToolTip, menuActionRunnable);
-      setIcon(menuItem, iconFileName, 1);
+      setIcon(menuItem, iconFileName);
       return menuItem;
    }
   

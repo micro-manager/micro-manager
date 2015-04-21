@@ -52,6 +52,26 @@ public class HighResIcon implements Icon {
       scale_ = scale;
    }
 
+   /**
+    * Hacky version that assumes a scaling factor of 1 if the image is small
+    * or .25 if it is large.
+    * @param url URL of the image file to use.
+    */
+   public HighResIcon(URL url) {
+      try {
+         baseImage_ = ImageIO.read(url);
+      }
+      catch (java.io.IOException e) {
+         ReportingUtils.logError(e, "Unable to load image file at " + url);
+      }
+      if (Math.max(baseImage_.getWidth(), baseImage_.getHeight()) < 20) {
+         scale_ = 1.0;
+      }
+      else {
+         scale_ = .25;
+      }
+   }
+
    @Override
    public int getIconWidth() {
       return (int) (baseImage_.getWidth() * scale_);
