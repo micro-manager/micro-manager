@@ -34,6 +34,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.inspector.InspectorFrame;
 import org.micromanager.internal.LineProfile;
+import org.micromanager.internal.utils.HighResIcon;
 
 /**
  * This class provides access to various rarely-used functions (like save or
@@ -84,7 +85,7 @@ public class GearButton extends JButton {
 
       // This icon adapted from the public domain icon at
       // https://openclipart.org/detail/35533/tango-emblem-system
-      setIcon(new javax.swing.ImageIcon(
-               getClass().getResource("/org/micromanager/internal/icons/gear.png")));
+      setIcon(new HighResIcon(
+               getClass().getResource("/org/micromanager/internal/icons/gear.png"), .25));
    }
 }
