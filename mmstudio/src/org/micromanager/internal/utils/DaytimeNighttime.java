@@ -110,7 +110,7 @@ public class DaytimeNighttime {
 
       disabledTextColor_ = new HashMap<String, ColorUIResource>();
       disabledTextColor_.put(CompatibilityInterface.DAY,
-            new ColorUIResource(UIManager.getColor("CheckBox.disabledText")));
+            new ColorUIResource(100, 100, 100));
       disabledTextColor_.put(CompatibilityInterface.NIGHT,
             new ColorUIResource(200, 200, 200));
    }
