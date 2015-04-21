@@ -16,6 +16,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import javax.swing.JOptionPane;
 import imageconstruction.CoreCommunicator;
+import imageconstruction.FrameIntegrationMethod;
 import misc.GlobalSettings;
 import misc.Log;
 import mmcorej.CMMCore;
@@ -26,6 +27,7 @@ import org.json.JSONObject;
 import org.micromanager.MMStudio;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.api.MMTags;
+import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 import propsandcovariants.CovariantPairing;
 
@@ -379,8 +381,9 @@ public class CustomAcqEngine {
             summary.put("Frames", 1);
             summary.put("SlicesFirst", true);
             summary.put("TimeFirst", false);
-            summary.put("PixelType", core.getBytesPerPixel() == 1 ? "GRAY8" : "GRAY16");
-            summary.put("BitDepth", core.getImageBitDepth());
+            summary.put("PixelType", acq.getFilterType() == FrameIntegrationMethod.FRAME_SUMMATION ? "GRAY16" : "GRAY8");
+            //TODO: generic way of doing this
+            summary.put("BitDepth", acq.getFilterType() == FrameIntegrationMethod.FRAME_SUMMATION ? 16 : 8);
             summary.put("Width", CoreCommunicator.getImageWidth());
             summary.put("Height", CoreCommunicator.getImageHeight());
             summary.put("Prefix", prefix);

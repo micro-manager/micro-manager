@@ -4,9 +4,6 @@
  */
 package imageconstruction;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-
 /**
  * Alternative to rank filter wrapper that wraps frame averaging
  */
@@ -15,7 +12,6 @@ public class FrameAverageWrapper extends FrameIntegrationMethod {
    
    public FrameAverageWrapper(int offset, int doubleWidth, int numFrames) {
       super(doubleWidth, offset, numFrames);
-      doubleWidth_ = doubleWidth;
    }
 
    @Override

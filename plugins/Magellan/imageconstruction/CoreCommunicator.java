@@ -76,12 +76,15 @@ public class CoreCommunicator {
                         
                         //construct image from double wide
                         FrameIntegrationMethod integrator;
-                        if (firstIAI.event_ == null || firstIAI.event_.acquisition_.getFilterType() == FrameIntegrationMethod.FRAME_AVERAGE) {
+                        if (firstIAI.event_.acquisition_.getFilterType() == FrameIntegrationMethod.FRAME_AVERAGE) {
                             integrator = new FrameAverageWrapper(GlobalSettings.getInstance().getChannelOffset(firstIAI.camChannelIndex_),
                                     MDUtils.getWidth(firstIAI.img_.tags), firstIAI.numFrames_);
-                        } else {
+                        } else if (firstIAI.event_.acquisition_.getFilterType() == FrameIntegrationMethod.RANK_FILTER) {
                             integrator = new RankFilterWrapper(GlobalSettings.getInstance().getChannelOffset(firstIAI.camChannelIndex_),
                                     MDUtils.getWidth(firstIAI.img_.tags), firstIAI.numFrames_, firstIAI.event_.acquisition_.getRank());
+                        } else { //frame summation
+                            integrator = new FrameSummationWrapper(GlobalSettings.getInstance().getChannelOffset(firstIAI.camChannelIndex_),
+                                    MDUtils.getWidth(firstIAI.img_.tags), firstIAI.numFrames_);
                         }
 
                         //add first frame
@@ -97,9 +100,11 @@ public class CoreCommunicator {
                             }
                             integrator.addBuffer((byte[]) nextIAI.img_.pix);
                         }
-                        //TODO: alter more first image tags, like bit and byte depth if doing frame integration
                         MDUtils.setWidth(firstIAI.img_.tags, integrator.getConstructedImageWidth());
                         MDUtils.setHeight(firstIAI.img_.tags, integrator.getConstructedImageHeight());
+                        if (integrator instanceof FrameSummationWrapper) {
+                            MDUtils.setPixelTypeFromByteDepth(firstIAI.img_.tags, 2);
+                        }
 
                         //construct image
                         TaggedImage constructedImage;
@@ -131,7 +136,7 @@ public class CoreCommunicator {
     public static CoreCommunicator getInstance() {
         return singleton_;
     }
-
+    
     public static int getImageWidth() {
         return RawBufferWrapper.getWidth();
     }

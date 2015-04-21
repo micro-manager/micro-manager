@@ -107,16 +107,16 @@ public class CrossCorrelationAutofocus {
          BigInteger numRows = new BigInteger(((FixedAreaAcquisition) acq_).getNumRows() + "");
          //figure out how much downsampling needed to run autofocus in a reasonable amount of time
          //factor of two is for z padding
-         BigInteger numPix2D = tileWidth.multiply(numCols).multiply(tileHeight).multiply(numRows);
-         BigInteger numXCorrSlices = new BigInteger( (2*(acq_.getMaxSliceIndex() + 1) ) + "" );
-         double dsFactor =  //ratio of number of voxels to voxel target
-                 Math.sqrt( *  / (double) NUM_VOXEL_TARGET); 
-         downsampleIndex_ = (int) Math.max(0, Math.ceil(Math.log10(dsFactor) / Math.log(2)));
-         downsampledWidth_ = (int) (fullResPixelWidth / Math.pow(2, downsampleIndex_));
-         downsampledHeight_ = (int) (fullResPixelHeight / Math.pow(2, downsampleIndex_));
-         Log.log("Autofocus DS Index: " + downsampleIndex_);
-         Log.log("Autofocus DS Width: " + downsampledWidth_);
-         Log.log("Autofocus DS Height: " + downsampledHeight_);
+//         BigInteger numPix2D = tileWidth.multiply(numCols).multiply(tileHeight).multiply(numRows);
+//         BigInteger numXCorrSlices = new BigInteger( (2*(acq_.getMaxSliceIndex() + 1) ) + "" );
+//         double dsFactor =  //ratio of number of voxels to voxel target
+//                 Math.sqrt( *  / (double) NUM_VOXEL_TARGET); 
+//         downsampleIndex_ = (int) Math.max(0, Math.ceil(Math.log10(dsFactor) / Math.log(2)));
+//         downsampledWidth_ = (int) (fullResPixelWidth / Math.pow(2, downsampleIndex_));
+//         downsampledHeight_ = (int) (fullResPixelHeight / Math.pow(2, downsampleIndex_));
+//         Log.log("Autofocus DS Index: " + downsampleIndex_);
+//         Log.log("Autofocus DS Width: " + downsampledWidth_);
+//         Log.log("Autofocus DS Height: " + downsampledHeight_);
          return;
       }      
             

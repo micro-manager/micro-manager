@@ -8,10 +8,13 @@ import demo.DemoModeImageData;
 import gui.GUI;
 import gui.SettingsDialog;
 import java.awt.Dialog;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.filechooser.FileSystemView;
 import mmcorej.CMMCore;
 import org.micromanager.MMStudio;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -50,10 +53,14 @@ public class GlobalSettings {
       }
       
       //load channel offsets
-      for(int i =0; i < 6; i++) {
-         chOffsets_[i] = prefs_.getInt(CHANNEL_OFFSET_PREFIX + i, 0);
-      }      
-   }
+        try {
+            for (int i = 0; i < 6; i++) {
+                chOffsets_[i] = prefs_.getInt(CHANNEL_OFFSET_PREFIX + MMStudio.getInstance().getCore().getCurrentPixelSizeConfig() + i, 0);
+            }
+        } catch (Exception ex) {
+            Log.log("couldnt get pixel size config");
+        }
+    }
    
    public static GlobalSettings getInstance() {
        return singleton_;
@@ -90,10 +97,16 @@ public class GlobalSettings {
 
     public void channelOffsetChanged() {
         int minVal = 200;
+        String pixelSizeConfig = "";
+        try {
+            pixelSizeConfig = MMStudio.getInstance().getCore().getCurrentPixelSizeConfig();
+        } catch (Exception e) {
+            Log.log("couldnt get pixel size config");
+        }
         for (int i = 0; i < 6; i++) {
             Integer offset = gui_.getChannelOffset(i);
             if (offset != null) {
-                prefs_.putInt(CHANNEL_OFFSET_PREFIX + i, offset);
+                prefs_.putInt(CHANNEL_OFFSET_PREFIX + pixelSizeConfig + i, offset);
                 chOffsets_[i] = offset;
                 minVal = Math.min(minVal, offset);
 //            System.out.println("Ch "+i+prefs_.getInt(CHANNEL_OFFSET_PREFIX + i, -50));

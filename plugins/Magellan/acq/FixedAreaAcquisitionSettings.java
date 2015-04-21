@@ -164,8 +164,7 @@ public class FixedAreaAcquisitionSettings  {
          prefs.put(PREF_PREFIX + "AFZNAME", autoFocusZDevice_);
       }
       //image filtering
-      //store but dont load filter type for now
-      prefs.putInt(PREF_PREFIX + "IMAGE_FILTER", FrameIntegrationMethod.FRAME_AVERAGE);      
+      prefs.putInt(PREF_PREFIX + "IMAGE_FILTER", imageFilterType_);      
       prefs.putDouble(PREF_PREFIX + "RANK", rank_);
       
    }

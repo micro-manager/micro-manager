@@ -391,8 +391,8 @@ public class GUI extends javax.swing.JFrame {
         }
 
         //filtering
-        settings.imageFilterType_ = frameAverageRadioButton_.isSelected() ? FrameIntegrationMethod.FRAME_AVERAGE
-                : FrameIntegrationMethod.RANK_FILTER;
+        settings.imageFilterType_ = frameAverageRadioButton_.isSelected() ? FrameIntegrationMethod.FRAME_AVERAGE :
+                (rankFilterRadioButton_.isSelected() ? FrameIntegrationMethod.RANK_FILTER : FrameIntegrationMethod.FRAME_SUMMATION);
         settings.rank_ = ((Number) rankSpinner_.getValue()).doubleValue();
 
         settings.storePreferedValues();
@@ -445,6 +445,7 @@ public class GUI extends javax.swing.JFrame {
         //filtering stuff
         frameAverageRadioButton_.setSelected(settings.imageFilterType_ == FrameIntegrationMethod.FRAME_AVERAGE);
         rankFilterRadioButton_.setSelected(settings.imageFilterType_ == FrameIntegrationMethod.RANK_FILTER);
+        frameSummationButton_.setSelected(settings.imageFilterType_ == FrameIntegrationMethod.FRAME_SUMMATION);
         rankSpinner_.setValue(settings.rank_);
         
         enableAcquisitionComponentsAsNeeded();
@@ -704,6 +705,7 @@ public class GUI extends javax.swing.JFrame {
         ch4OffsetSpinner_ = new javax.swing.JSpinner();
         ch5OffsetLabel_ = new javax.swing.JLabel();
         ch5OffsetSpinner_ = new javax.swing.JSpinner();
+        frameSummationButton_ = new javax.swing.JRadioButton();
         runAcqButton_ = new javax.swing.JButton();
         configPropsButton_ = new javax.swing.JButton();
         jButton1 = new javax.swing.JButton();
@@ -1964,6 +1966,14 @@ public class GUI extends javax.swing.JFrame {
             }
         });
 
+        filterMethodButtonGroup_.add(frameSummationButton_);
+        frameSummationButton_.setText("Frame summation");
+        frameSummationButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                frameSummationButton_ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -1979,11 +1989,13 @@ public class GUI extends javax.swing.JFrame {
                         .addComponent(ch4OffsetLabel_)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(ch4OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(ch3OffsetLabel_)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(ch3OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addGroup(jPanel2Layout.createSequentialGroup()
+                            .addComponent(frameSummationButton_)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(ch3OffsetLabel_)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(ch3OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGroup(jPanel2Layout.createSequentialGroup()
                             .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                 .addComponent(jLabel10)
@@ -2041,7 +2053,8 @@ public class GUI extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(ch3OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(ch3OffsetLabel_))
+                    .addComponent(ch3OffsetLabel_)
+                    .addComponent(frameSummationButton_))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(ch4OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -2555,6 +2568,10 @@ public class GUI extends javax.swing.JFrame {
         storeCurrentAcqSettings();
     }//GEN-LAST:event_rankSpinner_StateChanged
 
+    private void frameSummationButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_frameSummationButton_ActionPerformed
+       storeCurrentAcqSettings();
+    }//GEN-LAST:event_frameSummationButton_ActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel ChannelsTab_;
     private javax.swing.JSpinner acqOverlapPercentSpinner_;
@@ -2629,6 +2646,7 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JLabel footprin2DLabel_;
     private javax.swing.JComboBox footprint2DComboBox_;
     private javax.swing.JRadioButton frameAverageRadioButton_;
+    private javax.swing.JRadioButton frameSummationButton_;
     private javax.swing.JTextField globalSavingDirTextField_;
     private javax.swing.JTable gridTable_;
     private javax.swing.JPanel gridsPanel_;

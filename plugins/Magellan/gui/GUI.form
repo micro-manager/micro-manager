@@ -2022,12 +2022,14 @@
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="ch4OffsetSpinner_" min="-2" pref="46" max="-2" attributes="0"/>
                                   </Group>
-                                  <Group type="102" attributes="0">
-                                      <Component id="ch3OffsetLabel_" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="ch3OffsetSpinner_" min="-2" pref="46" max="-2" attributes="0"/>
-                                  </Group>
-                                  <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="103" alignment="1" groupAlignment="0" max="-2" attributes="0">
+                                      <Group type="102" attributes="0">
+                                          <Component id="frameSummationButton_" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace max="32767" attributes="0"/>
+                                          <Component id="ch3OffsetLabel_" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Component id="ch3OffsetSpinner_" min="-2" pref="46" max="-2" attributes="0"/>
+                                      </Group>
                                       <Group type="102" alignment="0" attributes="0">
                                           <Group type="103" groupAlignment="0" attributes="0">
                                               <Component id="jLabel10" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -2102,6 +2104,7 @@
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="ch3OffsetSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="ch3OffsetLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="frameSummationButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
@@ -2274,6 +2277,17 @@
                       <AuxValues>
                         <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="ch5OffsetSpinner_.setValue(GlobalSettings.getInstance().getChannelOffset(5));"/>
                       </AuxValues>
+                    </Component>
+                    <Component class="javax.swing.JRadioButton" name="frameSummationButton_">
+                      <Properties>
+                        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+                          <ComponentRef name="filterMethodButtonGroup_"/>
+                        </Property>
+                        <Property name="text" type="java.lang.String" value="Frame summation"/>
+                      </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="frameSummationButton_ActionPerformed"/>
+                      </Events>
                     </Component>
                   </SubComponents>
                 </Container>
