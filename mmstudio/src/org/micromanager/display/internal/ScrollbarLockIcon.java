@@ -164,7 +164,7 @@ public class ScrollbarLockIcon extends JButton {
     */
    @Override
    public Dimension getPreferredSize() {
-      return new Dimension(16, 16);
+      return new Dimension(20, 16);
    }
 
    /**
