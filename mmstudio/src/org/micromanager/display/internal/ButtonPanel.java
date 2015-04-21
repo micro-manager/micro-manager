@@ -39,6 +39,7 @@ import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.events.FullScreenEvent;
 import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.HighResIcon;
 
 
 /**
@@ -63,8 +64,8 @@ public class ButtonPanel extends JPanel {
       }
 
       fullButton_ = new JButton("Fullscreen");
-      fullButton_.setIcon(new ImageIcon(
-               getClass().getResource("/org/micromanager/internal/icons/fullscreen.png")));
+      fullButton_.setIcon(new HighResIcon(
+               getClass().getResource("/org/micromanager/internal/icons/fullscreen.png"), .25));
       fullButton_.setFont(GUIUtils.buttonFont);
       fullButton_.setToolTipText("Turn fullscreen mode on or off.");
       fullButton_.addActionListener(new ActionListener() {
@@ -113,13 +114,13 @@ public class ButtonPanel extends JPanel {
    public void onFullScreen(FullScreenEvent event) {
       if (event.getIsFullScreen()) {
          fullButton_.setText("Windowed");
-         fullButton_.setIcon(new ImageIcon(
-                  getClass().getResource("/org/micromanager/internal/icons/windowed.png")));
+         fullButton_.setIcon(new HighResIcon(
+                  getClass().getResource("/org/micromanager/internal/icons/windowed.png"), .25));
       }
       else {
          fullButton_.setText("Fullscreen");
-         fullButton_.setIcon(new ImageIcon(
-                  getClass().getResource("/org/micromanager/internal/icons/fullscreen.png")));
+         fullButton_.setIcon(new HighResIcon(
+                  getClass().getResource("/org/micromanager/internal/icons/fullscreen.png"), .25));
       }
    }
 
