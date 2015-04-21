@@ -10,6 +10,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij3d.image3d.FHTImage3D;
+import java.math.BigInteger;
 import java.util.Arrays;
 import misc.Log;
 import org.apache.commons.math.ArgumentOutsideDomainException;
@@ -78,6 +79,12 @@ public class CrossCorrelationAutofocus {
       return initalPos - drift;
    }
    
+   public static void main(String[] args) {
+      double dsFactor = Math.sqrt( (long)3780 * (long)4158 * 2*(90) / (double) NUM_VOXEL_TARGET); 
+         int dsIndex = (int) Math.max(0, Math.ceil(Math.log10(dsFactor) / Math.log(2)));
+         System.out.println(dsIndex);
+   }
+   
    /**
     * Called by acquisitions at then end of time point
     * @param timeIndex 
@@ -93,11 +100,17 @@ public class CrossCorrelationAutofocus {
          }
          //figure out which resolution level will be used for xCorr
          MultiResMultipageTiffStorage storage = acq_.getStorage();
-         int fullResPixelWidth = ((FixedAreaAcquisition) acq_).getNumColumns() * storage.getTileWidth();
-         int fullResPixelHeight = ((FixedAreaAcquisition) acq_).getNumRows() * storage.getTileHeight();
+         //do these calulations with BigIntegers to prevent overflow and Nan values
+         BigInteger tileWidth = new BigInteger(storage.getTileWidth() + "");
+         BigInteger tileHeight = new BigInteger(storage.getTileHeight() + "");
+         BigInteger numCols = new BigInteger(((FixedAreaAcquisition) acq_).getNumColumns() + "");
+         BigInteger numRows = new BigInteger(((FixedAreaAcquisition) acq_).getNumRows() + "");
          //figure out how much downsampling needed to run autofocus in a reasonable amount of time
          //factor of two is for z padding
-         double dsFactor = Math.sqrt(fullResPixelWidth * fullResPixelHeight * 2*(acq_.getMaxSliceIndex() + 1) / (double) NUM_VOXEL_TARGET);
+         BigInteger numPix2D = tileWidth.multiply(numCols).multiply(tileHeight).multiply(numRows);
+         BigInteger numXCorrSlices = new BigInteger( (2*(acq_.getMaxSliceIndex() + 1) ) + "" );
+         double dsFactor =  //ratio of number of voxels to voxel target
+                 Math.sqrt( *  / (double) NUM_VOXEL_TARGET); 
          downsampleIndex_ = (int) Math.max(0, Math.ceil(Math.log10(dsFactor) / Math.log(2)));
          downsampledWidth_ = (int) (fullResPixelWidth / Math.pow(2, downsampleIndex_));
          downsampledHeight_ = (int) (fullResPixelHeight / Math.pow(2, downsampleIndex_));
