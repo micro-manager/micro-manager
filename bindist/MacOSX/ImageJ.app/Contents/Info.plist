@@ -49,6 +49,8 @@
 			<string>Editor</string>
 		</dict>
 	</array>
+	<key>NSHighResolutionCapable</key>
+	<true/>
 	<key>Java</key>
 	<dict>
 		<key>JVMArchs</key>
