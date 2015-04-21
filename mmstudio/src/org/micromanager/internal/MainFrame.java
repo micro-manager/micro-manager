@@ -68,6 +68,7 @@ import org.micromanager.internal.interfaces.LiveModeListener;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.DragDropUtil;
 import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.HighResIcon;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.MMKeyDispatcher;
 import org.micromanager.internal.utils.NumberUtils;

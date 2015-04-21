@@ -44,8 +44,8 @@ import org.micromanager.events.internal.DefaultEventManager;
 
 import org.micromanager.internal.interfaces.LiveModeListener;
 import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.HighResIcon;
 import org.micromanager.internal.utils.MMScriptException;
-
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -95,7 +95,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       String label = isOn ? "Stop Live" : "Live";
       String iconPath = isOn ? "/org/micromanager/internal/icons/cancel.png" : 
               "/org/micromanager/internal/icons/camera_go.png";
-      button.setIcon( new ImageIcon(getClass().getResource(iconPath)));
+      button.setIcon(new HighResIcon(getClass().getResource(iconPath), .25));
       button.setText(label);
    }
 
@@ -286,8 +286,8 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       // This button needs to be enabled/disabled when live mode is turned
       // off/on.
       JButton snapButton = new JButton("Snap",
-            new ImageIcon(getClass().getResource(
-               "/org/micromanager/internal/icons/camera.png"))) {
+            new HighResIcon(getClass().getResource(
+               "/org/micromanager/internal/icons/camera.png"), .25)) {
          @Subscribe
          public void onLiveMode(LiveModeEvent event) {
             setEnabled(!event.getIsOn());
@@ -338,8 +338,8 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       controls.add(liveButton);
 
       JButton toAlbumButton = new JButton("Album",
-            new ImageIcon(getClass().getResource(
-               "/org/micromanager/internal/icons/arrow_right.png")));
+            new HighResIcon(getClass().getResource(
+               "/org/micromanager/internal/icons/camera_plus_arrow.png"), .25));
       toAlbumButton.setToolTipText("Add the current image to the Album collection");
       toAlbumButton.setPreferredSize(new Dimension(90, 28));
       toAlbumButton.setFont(GUIUtils.buttonFont);
