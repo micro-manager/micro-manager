@@ -285,6 +285,8 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       Insets zeroInsets = new Insets(0, 0, 0, 0);
       // This button needs to be enabled/disabled when live mode is turned
       // off/on.
+      // The icon is based on the public-domain icon at
+      // https://openclipart.org/detail/34051/digicam
       JButton snapButton = new JButton("Snap",
             new HighResIcon(getClass().getResource(
                "/org/micromanager/internal/icons/camera.png"), .25)) {

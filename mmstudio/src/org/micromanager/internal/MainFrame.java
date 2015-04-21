@@ -328,6 +328,8 @@ public class MainFrame extends MMFrame implements LiveModeListener {
          }, 
          "camera_plus_arrow.png", topPanel, 7, 48, 95, 69);
 
+      // This icon based on the public-domain icon at
+      // https://openclipart.org/detail/2757/movie-tape
       GUIUtils.createButton(false,
          "Multi-D Acq.", "Multi-D Acq.",
          "Open multi-dimensional acquisition window",
