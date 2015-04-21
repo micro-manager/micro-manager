@@ -23,7 +23,9 @@
 package org.micromanager.internal.utils;
 
 import java.awt.Component;
+import java.awt.geom.AffineTransform;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.net.URL;
 
@@ -84,6 +86,9 @@ public class HighResIcon implements Icon {
 
    @Override
    public void paintIcon(Component c, Graphics g, int x, int y) {
-      g.drawImage(baseImage_, x, y, getIconWidth(), getIconHeight(), c);
+      AffineTransform tmp = new AffineTransform();
+      tmp.translate(x, y);
+      tmp.scale(scale_, scale_);
+      ((Graphics2D) g).drawImage(baseImage_, tmp, c);
    }
 }
