@@ -68,6 +68,8 @@ public class SaveButton extends JButton {
          }
       });
 
+      // This icon is a slight modification of the public-domain icon at
+      // https://openclipart.org/detail/34579/tango-media-floppy
       setIcon(IconLoader.getIcon(
             "/org/micromanager/internal/icons/disk.png"));
    }
