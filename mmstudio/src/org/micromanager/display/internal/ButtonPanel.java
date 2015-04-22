@@ -77,9 +77,11 @@ public class ButtonPanel extends JPanel {
       });
       add(fullButton_);
 
+      // This and the other zoom icon adapted from the public-domain icon at
+      // https://openclipart.org/detail/170636/magnifier-search-zoom
       JButton zoomInButton = new JButton();
-      zoomInButton.setIcon(new ImageIcon(
-               getClass().getResource("/org/micromanager/internal/icons/zoom_in.png")));
+      zoomInButton.setIcon(IconLoader.getIcon(
+               "/org/micromanager/internal/icons/zoom_in.png"));
       zoomInButton.setToolTipText("Zoom in");
       zoomInButton.addActionListener(new ActionListener() {
          @Override
@@ -89,8 +91,8 @@ public class ButtonPanel extends JPanel {
       });
       add(zoomInButton);
       JButton zoomOutButton = new JButton();
-      zoomOutButton.setIcon(new ImageIcon(
-               getClass().getResource("/org/micromanager/internal/icons/zoom_out.png")));
+      zoomOutButton.setIcon(IconLoader.getIcon(
+               "/org/micromanager/internal/icons/zoom_out.png"));
       zoomOutButton.setToolTipText("Zoom out");
       zoomOutButton.addActionListener(new ActionListener() {
          @Override

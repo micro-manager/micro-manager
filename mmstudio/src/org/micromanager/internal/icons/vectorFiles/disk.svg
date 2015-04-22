@@ -161,7 +161,10 @@
        sodipodi:nodetypes="ccccccccc"
        style="fill:#78a7e0;fill-opacity:1;stroke:#25375f;stroke-linecap:round;stroke-linejoin:round"
        d="m 4.5578,43.4603 h 38.89 c 0.589,0 1.064,-0.4744 1.064,-1.0637 V 4.6316 c 0,-0.59 -0.475,-1.064 -1.064,-1.064 h -36.89 c -2e-4,0 -3.0639,3.064 -3.0639,3.064 v 35.765 c 0,0.589 0.4744,1.0634 1.0637,1.0634 z"
-       inkscape:connector-curvature="0" />
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/Users/chriswei/disk.png"
+       inkscape:export-xdpi="34.290001"
+       inkscape:export-ydpi="34.290001" />
     <rect
        id="rect2328"
        style="fill:#ffffff"
@@ -169,7 +172,10 @@
        width="30"
        y="-43.027901"
        x="9"
-       transform="scale(1,-1)" />
+       transform="scale(1,-1)"
+       inkscape:export-filename="/Users/chriswei/disk.png"
+       inkscape:export-xdpi="34.290001"
+       inkscape:export-ydpi="34.290001" />
     <rect
        id="rect2330"
        style="fill:#d31c00"
@@ -179,7 +185,10 @@
        width="30"
        y="-43.027901"
        x="9"
-       transform="scale(1,-1)" />
+       transform="scale(1,-1)"
+       inkscape:export-filename="/Users/chriswei/disk.png"
+       inkscape:export-xdpi="34.290001"
+       inkscape:export-ydpi="34.290001" />
     <rect
        id="rect2332"
        style="opacity:0.73863998;fill:#000000"
@@ -189,34 +198,52 @@
        width="2"
        y="-41.027901"
        x="6"
-       transform="scale(1,-1)" />
+       transform="scale(1,-1)"
+       inkscape:export-filename="/Users/chriswei/disk.png"
+       inkscape:export-xdpi="34.290001"
+       inkscape:export-ydpi="34.290001" />
     <path
        id="path2334"
        style="opacity:0.13067998;fill:#000000;stroke:#000000"
        d="M 11,34.5279 H 37"
-       inkscape:connector-curvature="0" />
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/Users/chriswei/disk.png"
+       inkscape:export-xdpi="34.290001"
+       inkscape:export-ydpi="34.290001" />
     <path
        id="path2336"
        style="opacity:0.13067998;fill:#000000;stroke:#000000"
        d="M 11,29.5279 H 37"
-       inkscape:connector-curvature="0" />
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/Users/chriswei/disk.png"
+       inkscape:export-xdpi="34.290001"
+       inkscape:export-ydpi="34.290001" />
     <path
        id="path2338"
        style="opacity:0.13067998;fill:#000000;stroke:#000000"
        d="M 11,24.5279 H 37"
-       inkscape:connector-curvature="0" />
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/Users/chriswei/disk.png"
+       inkscape:export-xdpi="34.290001"
+       inkscape:export-ydpi="34.290001" />
     <path
        id="rect2273"
        sodipodi:nodetypes="ccccccccc"
        style="opacity:0.59658999;fill:none;stroke:url(#linearGradient2283);stroke-linecap:round"
        d="m 4.6189,42.5002 h 38.768 c 0.07,0 0.127,-0.0563 0.127,-0.1262 V 4.726 c 0,-0.07 -0.057,-0.126 -0.127,-0.126 H 6.9279 c 3e-4,0 -2.4353,2.391 -2.4353,2.391 v 35.383 c 0,0.07 0.0563,0.1263 0.1262,0.1263 z"
-       inkscape:connector-curvature="0" />
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/Users/chriswei/disk.png"
+       inkscape:export-xdpi="34.290001"
+       inkscape:export-ydpi="34.290001" />
     <path
        id="rect2340"
        sodipodi:nodetypes="ccccccc"
        style="fill:url(#linearGradient2348);stroke:#525252"
        d="m 14.114,18.4659 h 19.75 c 0.888,0 1.603,-0.751 1.603,-1.684 V 3.5809 H 12.511 v 13.201 c 0,0.933 0.715,1.684 1.603,1.684 z"
-       inkscape:connector-curvature="0" />
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/Users/chriswei/disk.png"
+       inkscape:export-xdpi="34.290001"
+       inkscape:export-ydpi="34.290001" />
     <rect
        id="rect2359"
        style="fill:#4967a2;stroke:#525252"
@@ -226,7 +253,10 @@
        width="5.0297999"
        y="-16.5709"
        x="16.464001"
-       transform="scale(1,-1)" />
+       transform="scale(1,-1)"
+       inkscape:export-filename="/Users/chriswei/disk.png"
+       inkscape:export-xdpi="34.290001"
+       inkscape:export-ydpi="34.290001" />
   </g>
   <metadata
      id="metadata6948">
