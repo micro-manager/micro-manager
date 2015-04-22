@@ -193,6 +193,7 @@ private:
    TBooleanProperty* LSPScanSpeedControlEnable_property;
    TFloatProperty* LSPLineScanSpeed_property;
    TFloatProperty* LSPRowReadTime_property;
+   TFloatProperty* LSPExternalTriggerDelay_Property;
 
 
    // atcore++ objects

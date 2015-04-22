@@ -611,6 +611,10 @@ int CAndorSDK3Camera::Initialize()
                                              cameraDevice->GetFloat(L"RowReadTime"),  
                                              callbackManager_, false, false);
 
+   LSPExternalTriggerDelay_Property = new TFloatProperty("LightScanPlus-ExternalTriggerDelay [s]", 
+                                             cameraDevice->GetFloat(L"ExternalTriggerDelay"), 
+                                             callbackManager_, false, false);
+
    char errorStr[MM::MaxStrLength];
    if (false == eventsManager_->Initialise(errorStr) )
    {
@@ -671,6 +675,7 @@ int CAndorSDK3Camera::Shutdown()
       delete temperatureControl_property;
       delete pixelReadoutRate_property;
       delete pixelEncoding_property;
+
       delete accumulationLength_property;
       delete readTemperature_property;
       delete temperatureStatus_property;
@@ -691,7 +696,7 @@ int CAndorSDK3Camera::Shutdown()
       delete LSPScanSpeedControlEnable_property;
       delete LSPLineScanSpeed_property;
       delete LSPRowReadTime_property;
-
+      delete LSPExternalTriggerDelay_Property;
 
       delete callbackManager_;
       delete snapShotController_;
