@@ -736,7 +736,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    }
 
    @Override
-   public boolean getIsClosed() {
+   public synchronized boolean getIsClosed() {
       // TODO: is this a proper indicator for if the window is closed?
       return (!isVisible() && fullScreenFrame_ == null);
    }
@@ -747,10 +747,20 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     * TODO: should this really be exposed in the API?
     */
    @Override
-   public void toggleFullScreen() {
+   public synchronized void toggleFullScreen() {
+      // If the canvas decides to update while we are changing to/from
+      // fullscreen mode, then bad things can happen, so we kill the canvas
+      // thread first.
+      canvasThread_.stopDisplayUpdates();
+      try {
+         canvasThread_.join();
+      }
+      catch (InterruptedException e) {
+         ReportingUtils.logError("Interrupted while waiting for canvas thread to exit before fullscreen transition");
+      }
       if (fullScreenFrame_ != null) {
-         // We're currently fullscreen and need to go away now.
-         // Retrieve our contents that had been in the fullscreen frame.
+         // We're currently fullscreen, and our fullscreen frame needs to go
+         // away now. Retrieve our contents from it first, of course.
          add(contentsPanel_);
          fullScreenFrame_.dispose();
          fullScreenFrame_ = null;
@@ -769,6 +779,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          fullScreenFrame_.add(contentsPanel_);
          fullScreenFrame_.setVisible(true);
       }
+      canvasThread_ = new CanvasUpdateThread(store_, stack_, ijImage_, this);
+      canvasThread_.start();
       displayBus_.post(
             new FullScreenEvent(getScreenConfig(), fullScreenFrame_ != null));
    }
@@ -1036,7 +1048,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     * image at the current zoom level.
     */
    @Override
-   public void pack() {
+   public synchronized void pack() {
       Dimension controlsSize = controlsPanel_.getPreferredSize();
       Dimension ourSize = contentsPanel_.getSize();
       boolean isFullScreen = (fullScreenFrame_ != null);
