@@ -718,6 +718,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          if (event.getGamma() != null) {
             gamma_ = event.getGamma();
          }
+         if (color_ == null) {
+            // Can't do anything about this yet.
+            return;
+         }
          // Need to put this on EDT to avoid index out of bounds because of
          // setting currentChannel to -1
          Runnable run = new Runnable() {
