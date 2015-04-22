@@ -352,6 +352,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TriggerScope", "DeviceAdapt
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StandaStage", "DeviceAdapters\StandaStage\StandaStage.vcxproj", "{977C1D7D-5CCC-466A-9FEF-3F7471032FE6}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Usb3CamHS", "SecretDeviceAdapters\Usb3CamHS\Usb3CamHS.vcxproj", "{504F5562-47FD-4D46-8F18-0F5D078212D2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1733,6 +1735,14 @@ Global
 		{977C1D7D-5CCC-466A-9FEF-3F7471032FE6}.Release|Win32.Build.0 = Release|Win32
 		{977C1D7D-5CCC-466A-9FEF-3F7471032FE6}.Release|x64.ActiveCfg = Release|x64
 		{977C1D7D-5CCC-466A-9FEF-3F7471032FE6}.Release|x64.Build.0 = Release|x64
+		{504F5562-47FD-4D46-8F18-0F5D078212D2}.Debug|Win32.ActiveCfg = Debug|Win32
+		{504F5562-47FD-4D46-8F18-0F5D078212D2}.Debug|Win32.Build.0 = Debug|Win32
+		{504F5562-47FD-4D46-8F18-0F5D078212D2}.Debug|x64.ActiveCfg = Debug|x64
+		{504F5562-47FD-4D46-8F18-0F5D078212D2}.Debug|x64.Build.0 = Debug|x64
+		{504F5562-47FD-4D46-8F18-0F5D078212D2}.Release|Win32.ActiveCfg = Release|Win32
+		{504F5562-47FD-4D46-8F18-0F5D078212D2}.Release|Win32.Build.0 = Release|Win32
+		{504F5562-47FD-4D46-8F18-0F5D078212D2}.Release|x64.ActiveCfg = Release|x64
+		{504F5562-47FD-4D46-8F18-0F5D078212D2}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
