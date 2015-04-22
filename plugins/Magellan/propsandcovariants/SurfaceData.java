@@ -12,6 +12,7 @@ import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.util.Arrays;
 import java.util.List;
+import misc.Log;
 import org.micromanager.utils.ReportingUtils;
 import surfacesandregions.SingleResolutionInterpolation;
 import surfacesandregions.SurfaceInterpolator;
@@ -61,15 +62,15 @@ public class SurfaceData implements Covariant {
    @Override
    public String getAbbreviatedName() {
       if (category_.equals(DISTANCE_BELOW_SURFACE_CENTER)) {
-         return "Distance below " + surface_.getName();
+         return "Vertical distance to " + surface_.getName();
       } else if (category_.equals(DISTANCE_BELOW_SURFACE_MINIMUM)) {
-         return "Min distance below " + surface_.getName();
+         return "Min vertical distance to " + surface_.getName();
       } else if (category_.equals(DISTANCE_BELOW_SURFACE_MAXIMUM)) {
-         return "Max distance below " + surface_.getName();
+         return "Min distance to " + surface_.getName();
       } else if (category_.equals(DISTANCE_FOR_MIN_INCIDENT_POWER)) {
-         return "Min incident power dist " + surface_.getName();
+         return "Min incident power distance to " + surface_.getName();
            } else if (category_.equals(DISTANCE_FOR_MIN_INCIDENT_POWER_CENTER_CAPPED)) {
-         return "Min incident power dist (center distance capped) " + surface_.getName();
+         return "Min incident power distance to (center distance capped) " + surface_.getName();
       } else {
          ReportingUtils.showError("Unknown Surface data type");
          throw new RuntimeException();
@@ -296,7 +297,7 @@ public class SurfaceData implements Covariant {
 
    @Override
    public void updateHardwareToValue(CovariantValue dVal) {
-      ReportingUtils.showError("No hardware associated with Surface data");
+      Log.log("No hardware associated with Surface data");
       throw new RuntimeException();
    }
 

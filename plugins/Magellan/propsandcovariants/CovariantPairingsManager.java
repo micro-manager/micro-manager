@@ -15,9 +15,12 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import misc.Log;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -100,6 +103,7 @@ public class CovariantPairingsManager {
     }
 
    public void loadPairingsFile(GUI gui) {
+     
       File selectedFile = null;
       if (JavaUtils.isMac()) {
          FileDialog fd = new FileDialog(gui, "Save covariant pairing values", FileDialog.LOAD);
@@ -151,36 +155,63 @@ public class CovariantPairingsManager {
          ReportingUtils.logError("Problem reading file");
       }
       //Read file and reconstruct covariants
-      for (String pairingText : fileContents.split("\n\n\n")) {
-         String[] lines = pairingText.split("\n");
+      for (String pairingText : fileContents.split("\n\n")) { //for each pairing
+         String[] lines = pairingText.trim().split("\n");
          String independentName = lines[0].split(",")[0];
          String dependentName = lines[0].split(",")[1];
          Covariant independent, dependent;
          //Generate covariants from names
          //Groups and surface data have specific prefixes. No prefix = property
-         try {
-            independent = initCovariantFromString(independentName);
-            dependent = initCovariantFromString(dependentName);
-         } catch (Exception e) {
-            //Problem with this pairing, go on to next
-            continue;
+         if (independentName.startsWith(SurfaceData.PREFIX)) {
+            SurfaceDataImportDialog importer = new SurfaceDataImportDialog(null, false);
+            String type = importer.getSurfaceDataType();
+            if (type == null) {
+               continue; // user canceled
+            }
+            String[] surfnames = importer.getSurfaceNames();
+            for (String name : surfnames) {
+
+               SurfaceInterpolator surface = SurfaceManager.getInstance().getSurfaceNamed(name);
+               if (surface == null) {
+                  Log.log("Expected surface null");
+                  throw new RuntimeException();
+               }
+               try {
+                  Covariant ind = new SurfaceData(surface, "--" + type);
+                  createCovariantAndAddValues(ind, dependentName, lines);
+               } catch (Exception e) {
+                  Log.log("Expected type wrong");
+                  throw new RuntimeException();
+               }
+            }
+         } else {
+            try {
+            createCovariantAndAddValues( initCovariantFromString(independentName), dependentName, lines);
+            } catch (Exception ex) {
+               continue;//problem with pairing, onto next
+            }
          }
-         CovariantPairing pairing = new CovariantPairing(independent, dependent);
-         for (int i = 1; i < lines.length; i++) {
-            String[] vals = lines[i].split(",");
-            CovariantValue iVal = independent.getType() == CovariantType.STRING ? new CovariantValue(vals[0])
-                    : independent.getType() == CovariantType.DOUBLE ? new CovariantValue(Double.parseDouble(vals[0]))
-                    : new CovariantValue(Integer.parseInt(vals[0]));
-            CovariantValue dVal = dependent.getType() == CovariantType.STRING ? new CovariantValue(vals[1])
-                    : dependent.getType() == CovariantType.DOUBLE ? new CovariantValue(Double.parseDouble(vals[1]))
-                    : new CovariantValue(Integer.parseInt(vals[1]));
-            pairing.addValuePair(iVal, dVal);
-         }
-         this.addPair(pairing);
       }
    }
 
-   private Covariant initCovariantFromString(String covariantName) throws Exception {
+   private void createCovariantAndAddValues(Covariant independent, String dependentName, String[] lines) throws Exception {
+      Covariant dependent = initCovariantFromString(dependentName);
+      CovariantPairing pairing = new CovariantPairing(independent, dependent);
+      for (int i = 1; i < lines.length; i++) {
+         String[] vals = lines[i].split(",");
+         CovariantValue iVal = independent.getType() == CovariantType.STRING ? new CovariantValue(vals[0])
+                 : independent.getType() == CovariantType.DOUBLE ? new CovariantValue(Double.parseDouble(vals[0]))
+                         : new CovariantValue(Integer.parseInt(vals[0]));
+         CovariantValue dVal = dependent.getType() == CovariantType.STRING ? new CovariantValue(vals[1])
+                 : dependent.getType() == CovariantType.DOUBLE ? new CovariantValue(Double.parseDouble(vals[1]))
+                         : new CovariantValue(Integer.parseInt(vals[1]));
+         pairing.addValuePair(iVal, dVal);
+      }
+      this.addPair(pairing);
+   }
+
+
+private Covariant initCovariantFromString(String covariantName) throws Exception {
       Covariant cov;
       if (covariantName.startsWith(SinglePropertyOrGroup.GROUP_PREFIX)) {
          cov = new SinglePropertyOrGroup();
@@ -193,19 +224,7 @@ public class CovariantPairingsManager {
          //group exists, initialize its representative object
          ((SinglePropertyOrGroup) cov).readGroupValuesFromConfig(groupName);
       } else if (covariantName.startsWith(SurfaceData.PREFIX)) {
-         //check if there is a surface with a valid name for this data
-         String surfaceName = covariantName.substring(SurfaceData.PREFIX.length()).split("--")[0];
-         SurfaceInterpolator surface = SurfaceManager.getInstance().getSurfaceNamed(surfaceName);
-         if (surface == null) {
-            JOptionPane.showMessageDialog(null, "No surface named \"" + surfaceName + "\"found. Skipping covariant pairing");
-            throw new Exception();
-         }
-         try {
-            cov = new SurfaceData(surface, "--" + covariantName.split("--")[1]);
-         } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Unknown surface data type. Skipping covariant pairing");
-            throw new Exception();
-         }
+        throw new RuntimeException(); //handled elsewhere 
       } else {
          //its a property
          cov = new SinglePropertyOrGroup();
