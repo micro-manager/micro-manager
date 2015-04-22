@@ -181,7 +181,7 @@
      showgrid="false"
      borderopacity="1.0"
      inkscape:current-layer="layer1"
-     inkscape:cx="210.93651"
+     inkscape:cx="148.63901"
      inkscape:cy="89.142323"
      inkscape:window-width="1024"
      inkscape:pageopacity="0.0"
@@ -296,7 +296,7 @@
        inkscape:export-ydpi="70.314804" />
     <path
        style="fill:#00b400;fill-opacity:1;stroke:#003c00;stroke-width:4.59238148;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-       d="m 196.87745,288.02323 110.35137,0 0,-36.2159 45.92122,60.35982 -45.92122,60.35981 0,-37.94045 -110.34369,0 z"
+       d="m 176.29164,-67.939717 110.35136,0 0,-36.215903 45.92122,60.359823 -45.92122,60.35981 0,-37.94045 -110.34368,0 z"
        id="path5386"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cccccccc"
@@ -309,12 +309,12 @@
        width="430.10687"
        height="345.19308"
        x="59.665257"
-       y="45.16497"
+       y="27.445292"
        rx="4.2997446"
        ry="4.0351996"
-       inkscape:export-filename="/Users/chriswei/Downloads/camera.png"
-       inkscape:export-xdpi="4.1715784"
-       inkscape:export-ydpi="4.1715784" />
+       inkscape:export-filename="/Users/chriswei/Downloads/camera@2x.png"
+       inkscape:export-xdpi="8.3431568"
+       inkscape:export-ydpi="8.3431568" />
   </g>
   <metadata
      id="metadata5357">
