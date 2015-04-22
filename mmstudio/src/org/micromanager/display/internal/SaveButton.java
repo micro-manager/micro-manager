@@ -20,6 +20,8 @@
 
 package org.micromanager.display.internal;
 
+import com.bulenkov.iconloader.IconLoader;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -66,7 +68,7 @@ public class SaveButton extends JButton {
          }
       });
 
-      setIcon(new javax.swing.ImageIcon(
-               getClass().getResource("/org/micromanager/internal/icons/disk.png")));
+      setIcon(IconLoader.getIcon(
+            "/org/micromanager/internal/icons/disk.png"));
    }
 }

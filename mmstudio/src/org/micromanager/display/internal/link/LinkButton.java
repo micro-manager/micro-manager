@@ -20,6 +20,8 @@
 
 package org.micromanager.display.internal.link;
 
+import com.bulenkov.iconloader.IconLoader;
+
 import com.google.common.eventbus.Subscribe;
 
 import java.awt.event.ActionEvent;
@@ -32,7 +34,7 @@ import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenuItem;
@@ -52,12 +54,10 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class LinkButton extends JButton {
    // These icons are modified versions of the public domain icon at
    // http://icon-park.com/icon/black-link-icon-vector-data/
-   private static final ImageIcon ACTIVE_ICON = new ImageIcon(
-           LinkButton.class.getResource(
-                   "/org/micromanager/internal/icons/linkflat_active.png"));
-   private static final ImageIcon INACTIVE_ICON = new ImageIcon(
-           LinkButton.class.getResource(
-                   "/org/micromanager/internal/icons/linkflat.png"));
+   private static final Icon ACTIVE_ICON = IconLoader.getIcon(
+                   "/org/micromanager/internal/icons/linkflat_active.png");
+   private static final Icon INACTIVE_ICON = IconLoader.getIcon(
+                   "/org/micromanager/internal/icons/linkflat.png");
 
    private SettingsLinker linker_;
    private final DisplayWindow display_;
