@@ -20,6 +20,8 @@
 
 package org.micromanager.display.internal;
 
+import com.bulenkov.iconloader.IconLoader;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -34,7 +36,6 @@ import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.inspector.InspectorFrame;
 import org.micromanager.internal.LineProfile;
-import org.micromanager.internal.utils.HighResIcon;
 
 /**
  * This class provides access to various rarely-used functions (like save or
@@ -85,7 +86,7 @@ public class GearButton extends JButton {
 
       // This icon adapted from the public domain icon at
       // https://openclipart.org/detail/35533/tango-emblem-system
-      setIcon(new HighResIcon(
-               getClass().getResource("/org/micromanager/internal/icons/gear.png"), .25));
+      setIcon(IconLoader.getIcon(
+               "/org/micromanager/internal/icons/gear.png"));
    }
 }

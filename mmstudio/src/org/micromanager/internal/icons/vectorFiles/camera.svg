@@ -176,13 +176,13 @@
      inkscape:window-y="0"
      pagecolor="#ffffff"
      inkscape:window-height="712"
-     inkscape:zoom="1.0544935"
+     inkscape:zoom="1.1658517"
      inkscape:window-x="-4"
      showgrid="false"
      borderopacity="1.0"
      inkscape:current-layer="layer1"
-     inkscape:cx="258.98823"
-     inkscape:cy="21.266416"
+     inkscape:cx="210.93651"
+     inkscape:cy="89.142323"
      inkscape:window-width="1024"
      inkscape:pageopacity="0.0"
      inkscape:document-units="px"
@@ -296,13 +296,25 @@
        inkscape:export-ydpi="70.314804" />
     <path
        style="fill:#00b400;fill-opacity:1;stroke:#003c00;stroke-width:4.59238148;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-       d="m 200.30842,277.73032 110.35137,0 0,-36.2159 45.92122,60.35982 -45.92122,60.35981 0,-37.94045 -110.34369,0 z"
+       d="m 196.87745,288.02323 110.35137,0 0,-36.2159 45.92122,60.35982 -45.92122,60.35981 0,-37.94045 -110.34369,0 z"
        id="path5386"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cccccccc"
        inkscape:export-filename="/Users/chriswei/Downloads/camera.png"
        inkscape:export-xdpi="70.314804"
        inkscape:export-ydpi="70.314804" />
+    <rect
+       style="fill:none;stroke:#000000;stroke-width:0.89097214000000002;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="rect4192"
+       width="430.10687"
+       height="345.19308"
+       x="59.665257"
+       y="45.16497"
+       rx="4.2997446"
+       ry="4.0351996"
+       inkscape:export-filename="/Users/chriswei/Downloads/camera.png"
+       inkscape:export-xdpi="4.1715784"
+       inkscape:export-ydpi="4.1715784" />
   </g>
   <metadata
      id="metadata5357">

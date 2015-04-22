@@ -1,5 +1,7 @@
 package org.micromanager.internal;
 
+import com.bulenkov.iconloader.IconLoader;
+
 import com.google.common.eventbus.Subscribe;
 
 import java.awt.Component;
@@ -44,7 +46,6 @@ import org.micromanager.events.internal.DefaultEventManager;
 
 import org.micromanager.internal.interfaces.LiveModeListener;
 import org.micromanager.internal.utils.GUIUtils;
-import org.micromanager.internal.utils.HighResIcon;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -93,11 +94,9 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
 
    private void setLiveButtonMode(JButton button, boolean isOn) {
       String label = isOn ? "Stop Live" : "Live";
-      // The camera icon here is based on the public-domain icon at
-      // https://openclipart.org/detail/170979/camera-icon
       String iconPath = isOn ? "/org/micromanager/internal/icons/cancel.png" : 
-              "/org/micromanager/internal/icons/movie_camera.png";
-      button.setIcon(new HighResIcon(getClass().getResource(iconPath), .25));
+              "/org/micromanager/internal/icons/camera_go.png";
+      button.setIcon(IconLoader.getIcon(iconPath));
       button.setText(label);
    }
 
@@ -290,8 +289,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       // The icon is based on the public-domain icon at
       // https://openclipart.org/detail/34051/digicam
       JButton snapButton = new JButton("Snap",
-            new HighResIcon(getClass().getResource(
-               "/org/micromanager/internal/icons/camera.png"), .25)) {
+            IconLoader.getIcon("/org/micromanager/internal/icons/camera.png")) {
          @Subscribe
          public void onLiveMode(LiveModeEvent event) {
             setEnabled(!event.getIsOn());
@@ -342,8 +340,8 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       controls.add(liveButton);
 
       JButton toAlbumButton = new JButton("Album",
-            new HighResIcon(getClass().getResource(
-               "/org/micromanager/internal/icons/camera_plus_arrow.png"), .25));
+            IconLoader.getIcon(
+               "/org/micromanager/internal/icons/camera_plus_arrow.png"));
       toAlbumButton.setToolTipText("Add the current image to the Album collection");
       toAlbumButton.setPreferredSize(new Dimension(90, 28));
       toAlbumButton.setFont(GUIUtils.buttonFont);

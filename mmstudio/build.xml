@@ -11,6 +11,7 @@
 		<pathelement location="${mm.java.lib.commons-math}"/>
 		<pathelement location="${mm.java.lib.gson}"/>
 		<pathelement location="${mm.java.lib.guava}"/>
+		<pathelement location="${mm.java.lib.iconloader}"/>
 		<pathelement location="${mm.java.lib.imagej}"/>
 		<pathelement location="${mm.java.libs}/imglib2-2.0.0-beta-26.jar"/>
 		<pathelement location="${mm.java.libs}/imglib2-algorithms-2.0.0-beta-26.jar"/>

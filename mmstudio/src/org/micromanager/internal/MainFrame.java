@@ -21,6 +21,8 @@
 
 package org.micromanager.internal;
 
+import com.bulenkov.iconloader.IconLoader;
+
 import com.google.common.eventbus.Subscribe;
 
 
@@ -68,7 +70,6 @@ import org.micromanager.internal.interfaces.LiveModeListener;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.DragDropUtil;
 import org.micromanager.internal.utils.GUIUtils;
-import org.micromanager.internal.utils.HighResIcon;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.MMKeyDispatcher;
 import org.micromanager.internal.utils.NumberUtils;
@@ -306,7 +307,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                studio_.live().snap(true);
             }
          }, 
-         "camera.png", .25, topPanel, 7, 4, 95, 25);
+         "camera.png", topPanel, 7, 4, 95, 25);
 
       liveButton_ = (JToggleButton) GUIUtils.createButton(true,
          "Live", "Live", "Continuous live view",
@@ -316,7 +317,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                studio_.live().setLiveMode(!studio_.live().getIsLiveModeOn());
             }
          },
-         "movie_camera.png", .25, topPanel, 7, 26, 95, 47);
+         "camera_go.png", topPanel, 7, 26, 95, 47);
 
       GUIUtils.createButton(false, "Album", "Album",
          "Acquire single frame and add to an album",
@@ -326,7 +327,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                studio_.album().addImages(studio_.live().snap(false));
             }
          }, 
-         "camera_plus_arrow.png", .25, topPanel, 7, 48, 95, 69);
+         "camera_plus_arrow.png", topPanel, 7, 48, 95, 69);
 
       // This icon based on the public-domain icon at
       // https://openclipart.org/detail/2757/movie-tape
@@ -339,7 +340,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                studio_.openAcqControlDialog();
             }
          }, 
-         "film.png", .25, topPanel, 7, 70, 95, 91);
+         "film.png", topPanel, 7, 70, 95, 91);
 
       GUIUtils.createButton(false, "Refresh", "Refresh",
          "Refresh all GUI controls directly from the hardware",
@@ -512,9 +513,9 @@ public class MainFrame extends MMFrame implements LiveModeListener {
          toggleShutterButton_.setText(isEnabled ? "Close" : "Open" );
       }
       snapButton_.setEnabled(!isEnabled);
-      liveButton_.setIcon(new HighResIcon(getClass().getResource(
+      liveButton_.setIcon(IconLoader.getIcon(
                isEnabled ? "/org/micromanager/internal/icons/cancel.png" : 
-               "/org/micromanager/internal/icons/movie_camera.png"), .25));
+               "/org/micromanager/internal/icons/camera_go.png"));
       liveButton_.setSelected(false);
       liveButton_.setText(isEnabled ? "Stop Live" : "Live");
    }

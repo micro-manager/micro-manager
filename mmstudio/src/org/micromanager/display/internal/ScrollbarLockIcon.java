@@ -20,6 +20,8 @@
 
 package org.micromanager.display.internal;
 
+import com.bulenkov.iconloader.IconLoader;
+
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
@@ -33,10 +35,10 @@ import java.awt.event.MouseEvent;
 import java.util.HashMap;
 
 import javax.swing.event.MouseInputAdapter;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 
-import org.micromanager.internal.utils.HighResIcon;
 import org.micromanager.internal.utils.TooltipTextMaker;
 
 public class ScrollbarLockIcon extends JButton {
@@ -53,17 +55,17 @@ public class ScrollbarLockIcon extends JButton {
    // Icons adapted from the public-domain icon here:
    // https://openclipart.org/detail/188461/closed-lock
    // .25x scaling factor gives us 16x16 icons from the 64x64 base images.
-   private static final HashMap<LockedState, HighResIcon> stateToIcon_ = new HashMap<LockedState, HighResIcon>();
+   private static final HashMap<LockedState, Icon> stateToIcon_ = new HashMap<LockedState, Icon>();
    static {
       stateToIcon_.put(LockedState.UNLOCKED,
-            new HighResIcon(ScrollbarLockIcon.class.getResource(
-               "/org/micromanager/internal/icons/lock_open.png"), .25));
+            IconLoader.getIcon(
+               "/org/micromanager/internal/icons/lock_open.png"));
       stateToIcon_.put(LockedState.LOCKED,
-            new HighResIcon(ScrollbarLockIcon.class.getResource(
-               "/org/micromanager/internal/icons/lock_locked.png"), .25));
+            IconLoader.getIcon(
+               "/org/micromanager/internal/icons/lock_locked.png"));
       stateToIcon_.put(LockedState.SUPERLOCKED,
-            new HighResIcon(ScrollbarLockIcon.class.getResource(
-               "/org/micromanager/internal/icons/lock_super.png"), .25));
+            IconLoader.getIcon(
+               "/org/micromanager/internal/icons/lock_super.png"));
    }
 
    /**
