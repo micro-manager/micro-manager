@@ -21,87 +21,63 @@
 
 package org.micromanager.display.internal;
 
-import java.awt.BasicStroke;
-import java.awt.Canvas;
-import java.awt.Color;
+import com.bulenkov.iconloader.IconLoader;
+
 import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.geom.GeneralPath;
+import java.awt.event.MouseEvent;
+
+import javax.swing.event.MouseInputAdapter;
+import javax.swing.Icon;
+import javax.swing.JButton;
 
 /**
  * This class displays a little play/pause icon with a single-character label,
  * and is used for handling animation of an AxisScroller.
  */
-public class ScrollbarAnimateIcon extends Canvas {
-   private static final int WIDTH = 24, HEIGHT = 14;
-   private BasicStroke stroke = new BasicStroke(2f);
+public class ScrollbarAnimateIcon extends JButton {
+   private static final int WIDTH = 30;
+   private static final int HEIGHT = 18;
+   private static final Icon PLAY_ICON = IconLoader.getIcon(
+         "/org/micromanager/internal/icons/play.png");
+   private static final Icon PAUSE_ICON = IconLoader.getIcon(
+         "/org/micromanager/internal/icons/pause.png");
    private String label_;
    private boolean isAnimated_;
 
-   public ScrollbarAnimateIcon(String axis) {
+   public ScrollbarAnimateIcon(final String axis, final ScrollerPanel parent) {
+      super(PLAY_ICON);
       setSize(WIDTH, HEIGHT);
       // Only use the first letter of the axis.
       label_ = axis.substring(0, 1);
+      setText(label_);
       isAnimated_ = false;
+      setToolTipText("Toggle animation of the " + axis + " axis.");
+      addMouseListener(new MouseInputAdapter() {
+         @Override
+         public void mousePressed(MouseEvent e) {
+            parent.toggleAnimation(axis);
+            setIsAnimated(!isAnimated_);
+         }
+      });
    }
 
    public void setIsAnimated(boolean isAnimated) {
       isAnimated_ = isAnimated;
-      repaint();
+      setIcon(isAnimated_ ? PAUSE_ICON : PLAY_ICON);
    }
 
    public boolean getIsAnimated() {
       return isAnimated_;
    }
 
-   /** Overrides Component getPreferredSize(). */
+   /** Don't require more space than is needed to show the icon. */
    @Override
    public Dimension getPreferredSize() {
       return new Dimension(WIDTH, HEIGHT);
    }
-   
    @Override
-   public void paint(Graphics g) {
-      g.setColor(Color.white);
-      g.fillRect(0, 0, WIDTH, HEIGHT);
-      Graphics2D g2d = (Graphics2D)g;
-      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      drawPlayPauseButton(g2d);
-      drawLetter(g);
+   public Dimension getMinimumSize() {
+      return new Dimension(WIDTH, HEIGHT);
    }
-   
-   private void drawCenteredLetter(Graphics g) {
-      g.setFont(new Font("SansSerif", Font.PLAIN, 14));
-      g.setColor(Color.black);
-      g.drawString(label_, 8, 12);
-   }
-   
-   private void drawLetter(Graphics g) {
-      g.setFont(new Font("SansSerif", Font.PLAIN, 14));
-      g.setColor(Color.black);
-      g.drawString(label_, 4, 12);
-   }
-
-   private void drawPlayPauseButton(Graphics2D g) {
-      if (isAnimated_) {
-         // Draw a pause button
-         g.setColor(Color.red);
-         g.setStroke(stroke);
-         g.drawLine(15, 3, 15, 11);
-         g.drawLine(20, 3, 20, 11);
-      } else {
-         // Draw a play button
-         g.setColor(new Color(0,150,0));
-         GeneralPath path = new GeneralPath();
-         path.moveTo(15f, 2f);
-         path.lineTo(22f, 7f);
-         path.lineTo(15f, 12f);
-         path.lineTo(15f, 2f);
-         g.fill(path);
-      }
-   }
-   }
+}
 

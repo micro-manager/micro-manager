@@ -203,17 +203,8 @@ public class ScrollerPanel extends JPanel {
     * - a lock icon for preventing the display from changing
     */
    private void addScroller(final String axis) {
-      final ScrollbarAnimateIcon animateIcon = new ScrollbarAnimateIcon(axis);
-      Dimension size = new Dimension(24, 14);
-      animateIcon.setPreferredSize(size);
-      animateIcon.setMaximumSize(size);
-      animateIcon.addMouseListener(new MouseInputAdapter() {
-         @Override
-         public void mousePressed(MouseEvent e) {
-            toggleAnimation(axis, animateIcon);
-            animateIcon.setIsAnimated(axisToState_.get(axis).isAnimated_);
-         }
-      });
+      final ScrollbarAnimateIcon animateIcon = new ScrollbarAnimateIcon(
+            axis, this);
       add(animateIcon, "grow 0");
 
       // This button displays the current position along the axis, and when
@@ -285,9 +276,9 @@ public class ScrollerPanel extends JPanel {
 
    /**
     * One of our animation icons has changed state; adjust animation for that
-    * icon.
+    * icon. Called from the ScrollbarAnimateIcon class.
     */
-   private void toggleAnimation(String axis, ScrollbarAnimateIcon icon) {
+   public void toggleAnimation(String axis) {
       axisToState_.get(axis).isAnimated_ = !axisToState_.get(axis).isAnimated_;
       resetAnimation();
    }
