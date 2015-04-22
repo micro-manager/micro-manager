@@ -3,6 +3,7 @@ package org.micromanager.menus;
 
 import com.google.common.collect.EvictingQueue;
 import java.io.File;
+import java.io.IOException;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import javax.swing.JMenu;
@@ -59,11 +60,7 @@ public class FileMenu {
                   @Override
                   public void run() {
                      File f = studio_.promptForAcquisitionToOpen(true);
-                     if (!recentFiles_.contains(f)) {
-                        recentFiles_.add(f);
-                     }
-                     writeFilesToPref(prefs_, PREFKEYBASE, recentFiles_);
-                     makeRecentFileRamMenu(openRecentRamMenu_, recentFiles_);
+                     addFileToRecentlyOpenedMenu(f);
                   }
                }.start();
             }
@@ -84,6 +81,14 @@ public class FileMenu {
             }
          }
       );
+   }
+   
+   public void addFileToRecentlyOpenedMenu(File f) {
+      if (!recentFiles_.contains(f)) {
+         recentFiles_.add(f);
+      }
+      writeFilesToPref(prefs_, PREFKEYBASE, recentFiles_);
+      makeRecentFileRamMenu(openRecentRamMenu_, recentFiles_);
    }
    
    
@@ -136,24 +141,28 @@ public class FileMenu {
          }
          final String path = p;
          f.getName();
-         GUIUtils.addMenuItem(recentFileMenu, f.getName(), null,
-         new Runnable() {
-            @Override
-            public void run() {
-               new Thread() {
-                  @Override
-                  public void run() {
-                     try {
-                        studio_.openAcquisitionData(path, true, true);
-                     } catch (MMScriptException ex) {
-                        ReportingUtils.showError("Failed to open file: " + 
-                                f.getName()); 
-                     }
-                  }
-               }.start();
+         try {
+            GUIUtils.addMenuItem(recentFileMenu, f.getCanonicalPath(), null,
+                    new Runnable() {
+                       @Override
+                       public void run() {
+                          new Thread() {
+                             @Override
+                             public void run() {
+                                try {
+                                   studio_.openAcquisitionData(path, true, true);
+                                } catch (MMScriptException ex) {
+                                   ReportingUtils.showError("Failed to open file: " +
+                                           f.getName());
+                                }
+                             }
+                          }.start();
+                       }
+                    }
+            ); } catch (IOException ex) {
+               ReportingUtils.logError(ex, "Failed to add file: " + f.getName() +
+                       " to the recent file menu");
             }
-         }
-      );
       }
    }
    

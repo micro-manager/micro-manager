@@ -206,6 +206,7 @@ public class MMStudio implements ScriptInterface {
    private final Object shutdownLock_ = new Object();
 
    private final JMenuBar menuBar_;
+   private final FileMenu fileMenu_;
    private JCheckBoxMenuItem centerAndDragMenuItem_;
    public static final FileType MM_DATA_SET 
            = new FileType("MM_DATA_SET",
@@ -362,8 +363,8 @@ public class MMStudio implements ScriptInterface {
 
       frame_.setJMenuBar(menuBar_);
 
-      FileMenu fileMenu = new FileMenu(studio_);
-      fileMenu.initializeFileMenu(menuBar_);
+      fileMenu_ = new FileMenu(studio_);
+      fileMenu_.initializeFileMenu(menuBar_);
 
       toolsMenu_ = new ToolsMenu(studio_, core_, options_);
       toolsMenu_.initializeToolsMenu(menuBar_, mainPrefs_);
@@ -983,13 +984,15 @@ public class MMStudio implements ScriptInterface {
    @Override
    public String openAcquisitionData(String dir, boolean inRAM, boolean show) 
            throws MMScriptException {
-      String rootDir = new File(dir).getAbsolutePath();
-      String name = new File(dir).getName();
+      File f = new File(dir);
+      String rootDir = f.getAbsolutePath();
+      String name = f.getName();
       rootDir = rootDir.substring(0, rootDir.length() - (name.length() + 1));
       name = acqMgr_.getUniqueAcquisitionName(name);
       acqMgr_.openAcquisition(name, rootDir, show, !inRAM, true);
       try {
          getAcquisition(name).initialize();
+         fileMenu_.addFileToRecentlyOpenedMenu(f);
       } catch (MMScriptException mex) {
          acqMgr_.closeAcquisition(name);
          throw (mex);
