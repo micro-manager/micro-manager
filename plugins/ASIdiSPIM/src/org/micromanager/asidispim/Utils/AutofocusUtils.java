@@ -189,7 +189,7 @@ public class AutofocusUtils {
 
             boolean liveModeOriginally = false;
             String originalCamera = gui_.getMMCore().getCameraDevice();
-            String acqName = "";
+            String acqName = "diSPIM Autofocus";
 
             try {
                liveModeOriginally = gui_.isLiveModeOn();
@@ -201,8 +201,7 @@ public class AutofocusUtils {
                // deal with shutter before starting acquisition
                // needed despite core's handling because of DemoCamera
                boolean autoShutter = gui_.getMMCore().getAutoShutter();
-               boolean shutterOpen = false;  // will read later
-               shutterOpen = gui_.getMMCore().getShutterOpen();
+               boolean shutterOpen = gui_.getMMCore().getShutterOpen();
                if (autoShutter) {
                   gui_.getMMCore().setAutoShutter(false);
                   if (!shutterOpen) {
@@ -212,7 +211,10 @@ public class AutofocusUtils {
                
                gui_.getMMCore().setCameraDevice(camera);
                if (debug) {
-                  acqName = gui_.getUniqueAcquisitionName("diSPIM Autofocus");
+                  if (gui_.acquisitionExists(acqName)) {
+                     gui_.closeAcquisitionWindow(acqName);
+                  }
+                  acqName = gui_.getUniqueAcquisitionName(acqName);
                   gui_.openAcquisition(acqName, "", nrImages, 1, 1, 1, true, false);
                   gui_.initializeAcquisition(acqName,
                           (int) gui_.getMMCore().getImageWidth(),
@@ -335,7 +337,6 @@ public class AutofocusUtils {
                   gui_.getMMCore().setCameraDevice(originalCamera);
                   if (debug) {
                      gui_.promptToSaveAcquisition(acqName, false);
-                     gui_.closeAcquisition(acqName);
                   }
 
                   controller_.cleanUpControllerAfterAcquisition(1, side.toString(), false);
@@ -345,8 +346,8 @@ public class AutofocusUtils {
                   // let the calling panel restore appropriate settings
                   caller.refreshSelected();
 
-                  // move galvo to original position
-                  positions_.setPosition(galvoDevice, galvoPosition);
+                  // set galvo to best position
+                  positions_.setPosition(galvoDevice, bestScore);
                      
                   posUpdater_.pauseUpdates(false);
 
