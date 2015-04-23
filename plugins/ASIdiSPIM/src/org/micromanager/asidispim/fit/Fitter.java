@@ -154,7 +154,7 @@ public class Fitter {
    
    /**
     * Finds the x value corresponding to the maximum function value within the 
-    * range of the provided data set
+    * range of the provided data set.  
     * 
     * @param type one of the Fitter.FunctionType predefined functions
     * @param parms parameters describing the function.  These need to match the
@@ -200,6 +200,12 @@ public class Fitter {
             // for a Gaussian we can take the mean and be sure it is the maximum
             xMax = parms[1];
       }
+      
+      // sanity checks:
+      if (xMax < minRange)
+         xMax = minRange;
+      if (xMax > maxRange)
+         xMax = maxRange;
               
       return xMax;
    }
