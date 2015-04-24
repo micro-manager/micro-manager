@@ -38,6 +38,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.Font;
 import java.awt.KeyboardFocusManager;
+import java.awt.Toolkit;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,6 +67,7 @@ import mmcorej.StrVector;
 
 import org.micromanager.events.ConfigGroupChangedEvent;
 import org.micromanager.events.internal.DefaultEventManager;
+import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.interfaces.LiveModeListener;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.DragDropUtil;
@@ -121,7 +123,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       snapLiveManager_.addLiveModeListener(this);
 
       setTitle(MICRO_MANAGER_TITLE + " " + MMVersion.VERSION_STRING);
-      setMinimumSize(new Dimension(605, 220));
+      setMinimumSize(new Dimension(605, 235));
 
       JPanel contents = new JPanel();
       contents.setLayout(new SpringLayout());
@@ -138,6 +140,14 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       MMKeyDispatcher mmKD = new MMKeyDispatcher();
       KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(mmKD);
       DropTarget dropTarget = new DropTarget(this, new DragDropUtil());
+
+      // put frame back where it was last time if possible
+      this.loadAndRestorePosition(100, 100, 644, 220);
+      setExitStrategy(OptionsDlg.getShouldCloseOnExit());
+      setIconImage(Toolkit.getDefaultToolkit().getImage(
+               getClass().getResource("/org/micromanager/internal/icons/microscope.gif")));
+
+      pack();
       setVisible(true);
    }
       
@@ -149,15 +159,8 @@ public class MainFrame extends MMFrame implements LiveModeListener {
             studio_.closeSequence(false);
          }
       });
-        
    }
 
-   public void loadApplicationPrefs(boolean shouldCloseOnExit) {
-      // put frame back where it was last time if possible
-      this.loadAndRestorePosition(100, 100, 644, 220);
-      setExitStrategy(shouldCloseOnExit);
-   }
-   
    public void paintToFront() {
       toFront();
       paint(getGraphics());

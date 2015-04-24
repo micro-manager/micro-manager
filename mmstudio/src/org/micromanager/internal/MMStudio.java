@@ -281,9 +281,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       snapLiveManager_ = new SnapLiveManager(core_);
 
       frame_ = new MainFrame(this, core_, snapLiveManager_);
-      frame_.setIconImage(Toolkit.getDefaultToolkit().getImage(
-               getClass().getResource("/org/micromanager/internal/icons/microscope.gif")));
-      frame_.loadApplicationPrefs(OptionsDlg.getShouldCloseOnExit());
       ReportingUtils.SetContainingFrame(frame_);
 
       // move ImageJ window to place where it last was if possible
@@ -404,7 +401,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
 
       DefaultUserProfile profile = DefaultUserProfile.getInstance();
       profile.setString(MMStudio.class, SYSTEM_CONFIG_FILE, sysConfigFile_);
-      
+
       // before loading the system configuration, we need to wait 
       // until the plugins are loaded
       final WaitDialog waitDlg = new WaitDialog(
