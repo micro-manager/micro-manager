@@ -209,7 +209,7 @@ public class CanvasUpdateThread extends Thread {
    /**
     * Add image coordinates for an image to display (i.e. request that the
     * display show the indicated image).
-    * @param coords ??? what kind of image coordinates are these?
+    * @param coords Coordinates of the image to be displayed.
     */
    public void addCoords(Coords coords) {
       try {
