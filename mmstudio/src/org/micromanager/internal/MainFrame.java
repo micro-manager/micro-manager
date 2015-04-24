@@ -147,7 +147,6 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                getClass().getResource("/org/micromanager/internal/icons/microscope.gif")));
 
       pack();
-      setVisible(true);
    }
 
    private void setupWindowHandlers() {

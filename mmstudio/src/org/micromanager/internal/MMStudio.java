@@ -429,6 +429,8 @@ public class MMStudio implements Studio, CompatibilityInterface {
          ReportingUtils.showErrorOn(false);
       }
 
+      // Done with main startup logic; show the main frame now.
+      frame_.setVisible(true);
       executeStartupScript();
 
       // Create Multi-D window here but do not show it.
