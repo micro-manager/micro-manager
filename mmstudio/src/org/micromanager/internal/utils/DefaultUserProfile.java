@@ -24,7 +24,7 @@ import org.json.JSONObject;
 import org.micromanager.PropertyMap;
 import org.micromanager.UserProfile;
 import org.micromanager.data.internal.DefaultPropertyMap;
-import org.micromanager.internal.utils.MDUtils;
+import org.micromanager.internal.MMStudio;
 
 public class DefaultUserProfile implements UserProfile {
    private static final String USERNAME_MAPPING_FILE = "Profiles.txt";
@@ -683,6 +683,12 @@ public class DefaultUserProfile implements UserProfile {
    public void setCurrentProfile(String profileName) {
       profileName_ = profileName;
       userProfile_ = loadProfile(profileName);
+      if (!profileName.contentEquals(DEFAULT_USER)) {
+         // Update a few things that have already pulled values from the
+         // default user profile by the time this has happened.
+         DaytimeNighttime.setMode(DaytimeNighttime.getBackgroundMode());
+         MMStudio.getInstance().getFrame().resetPosition();
+      }
    }
 
    @Override
