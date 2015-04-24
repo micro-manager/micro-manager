@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package imageconstruction;
+package bidc;
 
 /**
  * Alternative to rank filter wrapper that wraps frame averaging

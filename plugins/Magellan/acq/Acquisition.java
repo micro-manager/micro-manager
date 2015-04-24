@@ -6,7 +6,7 @@ import ij.IJ;
 import imagedisplay.DisplayPlus;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import imageconstruction.CoreCommunicator;
+import bidc.CoreCommunicator;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
@@ -124,8 +124,8 @@ public abstract class Acquisition implements AcquisitionEventSource{
    
    protected void initialize(String dir, String name, double overlapPercent) {
       engineOutputQueue_ = new LinkedBlockingQueue<TaggedImage>(OUTPUT_QUEUE_SIZE);
-      overlapX_ = (int) (CoreCommunicator.getImageWidth() * overlapPercent / 100);
-      overlapY_ = (int) (CoreCommunicator.getImageHeight() * overlapPercent / 100);
+      overlapX_ = (int) (CoreCommunicator.getInstance().getImageWidth() * overlapPercent / 100);
+      overlapY_ = (int) (CoreCommunicator.getInstance().getImageHeight() * overlapPercent / 100);
       JSONObject summaryMetadata = CustomAcqEngine.makeSummaryMD(this, name);
       imageStorage_ = new MultiResMultipageTiffStorage(dir, true, summaryMetadata, overlapX_, overlapY_, pixelSizeConfig_,
               (this instanceof FixedAreaAcquisition)); //estimatye background pixel values for fixed acqs but not explore

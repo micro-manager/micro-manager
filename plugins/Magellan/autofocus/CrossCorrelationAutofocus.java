@@ -26,7 +26,6 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class CrossCorrelationAutofocus {
 
-    private static final int TIMEOUT_MS = 1000*60*10; //10 min
    //number of interppolated points per z step
    private static final double SPLINE_PRECISION = 100;
    //5e6--13 s

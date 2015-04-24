@@ -29,9 +29,10 @@ public class GlobalSettings {
    private static GlobalSettings singleton_;
    Preferences prefs_;
    private GUI gui_;
-   private static boolean demoMode_ = false;
-   private static boolean afBetweenAcqs_ = false;
+   private boolean demoMode_ = false;
+   private boolean afBetweenAcqs_ = false;
    private int[] chOffsets_ = new int[8];
+   private boolean bidc2P_ = false;
 
    public GlobalSettings(Preferences prefs, GUI gui) {
        singleton_ = this;
@@ -43,8 +44,10 @@ public class GlobalSettings {
          String s = MMStudio.getInstance().getSysConfigFile();
          if (s.endsWith("NavDemo.cfg") || s.endsWith("NavDemo16Bit.cfg")) {
             demoMode_ = true;
-         } else if (s.contains("BIDC")) {
-            //secret features!           
+            new DemoModeImageData();
+         } else if (s.contains("BIDC") && s.contains("Gen")) {
+            bidc2P_ = true;
+            
          } else {
             //no secret features :(
 //           autofocusBetweenSerialAcqsCheckBox_.setVisible(false);
@@ -82,21 +85,16 @@ public class GlobalSettings {
       return prefs_.get(SAVING_DIR, FileSystemView.getFileSystemView().getHomeDirectory().getAbsolutePath());
    }
    
-    public static boolean getAutofocusBetweenSerialAcqusitions() {
+    public boolean getAutofocusBetweenSerialAcqusitions() {
       return afBetweenAcqs_;
    }
    
-   public static boolean getDemoMode() {
+   public boolean getDemoMode() {
       return demoMode_;
    }
    
-   public static int getDemoNumChannels() {
+   public int getDemoNumChannels() {
       return 6;
-   }
-   
-   public static void setDemoMode(boolean demo) {
-      demoMode_ = true;
-      new DemoModeImageData();
    }
 
    public int getChannelOffset(int i) {
@@ -143,4 +141,8 @@ public class GlobalSettings {
             e.printStackTrace();
         }
     }
+
+   public boolean isBIDCTwoPhoton() {
+      return bidc2P_;
+   }
 }

@@ -34,7 +34,7 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
       
       //TODO: freeze channelspec
       public String[] getActiveChannelNames() {
-         int numCameraChannels = (int) ( GlobalSettings.getDemoMode() ? 6 :
+         int numCameraChannels = (int) ( GlobalSettings.getInstance().getDemoMode() ? 6 :
                         MMStudio.getInstance().getCore().getNumberOfCameraChannels());
          int numActive = 0;
          
@@ -46,7 +46,7 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
                return new String[]{"no channels active"};
             } else {
                //multichannel camera channels only
-               if (GlobalSettings.getDemoMode()) {
+               if (GlobalSettings.getInstance().getDemoMode()) {
                   return new String[] {"Violet","Blue","Green","Yellow","Red","FarRed"};
                }
                String[] names = new String[numCameraChannels];

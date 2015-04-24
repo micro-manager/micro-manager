@@ -11,7 +11,7 @@ import gui.SettingsDialog;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
-import imageconstruction.CoreCommunicator;
+import bidc.CoreCommunicator;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.ReportingUtils;
 
@@ -55,7 +55,7 @@ public class MultiPosRegion implements XYFootprint{
 
    public double getWidth_um() {
       double pixelSize = MMStudio.getInstance().getCore().getPixelSizeUm();
-      int pixelWidth = cols_ * (CoreCommunicator.getImageWidth() - overlapX_) + overlapX_;
+      int pixelWidth = (int) (cols_ * (CoreCommunicator.getInstance().getImageWidth() - overlapX_) + overlapX_);
       return pixelSize * pixelWidth;
    }
 
@@ -75,8 +75,8 @@ public class MultiPosRegion implements XYFootprint{
    }
    
    private void updateOverlap(double overlapPercent) {
-      overlapX_ = (int) (CoreCommunicator.getImageWidth() * overlapPercent);
-      overlapY_ = (int) (CoreCommunicator.getImageHeight() * overlapPercent);
+      overlapX_ = (int) (CoreCommunicator.getInstance().getImageWidth() * overlapPercent);
+      overlapY_ = (int) (CoreCommunicator.getInstance().getImageHeight() * overlapPercent);
    }
 
    @Override
@@ -84,8 +84,8 @@ public class MultiPosRegion implements XYFootprint{
       try {
          AffineTransform transform = AffineUtils.getAffineTransform(MMStudio.getInstance().getCore().getCurrentPixelSizeConfig(), center_.x, center_.y);
          ArrayList<XYStagePosition> positions = new ArrayList<XYStagePosition>();
-         int fullTileWidth = (int) CoreCommunicator.getImageWidth();
-         int fullTileHeight = (int) CoreCommunicator.getImageHeight();
+         int fullTileWidth = (int) CoreCommunicator.getInstance().getImageWidth();
+         int fullTileHeight = (int) CoreCommunicator.getInstance().getImageHeight();
          updateOverlap(tileOverlapPercent / 100);
          int tileWidthMinusOverlap = fullTileWidth - overlapX_;
          int tileHeightMinusOverlap = fullTileHeight - overlapY_;

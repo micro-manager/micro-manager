@@ -15,8 +15,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import javax.swing.JOptionPane;
-import imageconstruction.CoreCommunicator;
-import imageconstruction.FrameIntegrationMethod;
+import bidc.CoreCommunicator;
+import bidc.FrameIntegrationMethod;
 import misc.GlobalSettings;
 import misc.Log;
 import mmcorej.CMMCore;
@@ -30,6 +30,7 @@ import org.micromanager.api.MMTags;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 import propsandcovariants.CovariantPairing;
+import sun.security.jca.GetInstance;
 
 /**
  * Engine has a single thread executor, which sits idly waiting for new
@@ -170,7 +171,7 @@ public class CustomAcqEngine {
         loopHardwareCommandRetries(new HardwareCommand() {
             @Override
             public void run() throws Exception {
-                CoreCommunicator.snapImage();
+                CoreCommunicator.getInstance().snapImage();
             }
         }, "snapping image");
 
@@ -337,28 +338,30 @@ public class CustomAcqEngine {
         return df.format(calobj.getTime());
     }
 
-    public static void addImageMetadata(TaggedImage img, AcquisitionEvent event,
+    public static void addImageMetadata(JSONObject tags, AcquisitionEvent event,
             int numCamChannels, int camChannel, long elapsed_ms,int exposure) {
         try {
             //add tags
             long gridRow = event.acquisition_.getPositionManager().getGridRow(event.positionIndex_, 0);
             long gridCol = event.acquisition_.getPositionManager().getGridCol(event.positionIndex_, 0);
-            img.tags.put(MMTags.Image.POS_NAME, "Grid_" + gridRow + "_" + gridCol);
-            img.tags.put(MMTags.Image.POS_INDEX, event.positionIndex_);
-            img.tags.put(MMTags.Image.SLICE_INDEX, event.sliceIndex_);
-            img.tags.put(MMTags.Image.SLICE, event.sliceIndex_);
-            img.tags.put(MMTags.Image.FRAME_INDEX, event.timeIndex_);
-            img.tags.put(MMTags.Image.FRAME, event.timeIndex_);
-            img.tags.put(MMTags.Image.CHANNEL_INDEX, event.channelIndex_ * numCamChannels + camChannel);
-            img.tags.put(MMTags.Image.ZUM, event.zPosition_);
-            img.tags.put(MMTags.Image.ELAPSED_TIME_MS, elapsed_ms);
-            img.tags.put(MMTags.Image.TIME, (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss -")).format(Calendar.getInstance().getTime()));
+            tags.put(MMTags.Image.POS_NAME, "Grid_" + gridRow + "_" + gridCol);
+            tags.put(MMTags.Image.POS_INDEX, event.positionIndex_);
+            tags.put(MMTags.Image.SLICE_INDEX, event.sliceIndex_);
+            tags.put(MMTags.Image.SLICE, event.sliceIndex_);
+            tags.put(MMTags.Image.FRAME_INDEX, event.timeIndex_);
+            tags.put(MMTags.Image.FRAME, event.timeIndex_);
+            tags.put(MMTags.Image.CHANNEL_INDEX, event.channelIndex_ * numCamChannels + camChannel);
+            tags.put(MMTags.Image.ZUM, event.zPosition_);
+            tags.put(MMTags.Image.ELAPSED_TIME_MS, elapsed_ms);
+            tags.put(MMTags.Image.TIME, (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss -")).format(Calendar.getInstance().getTime()));
             //Magellan specific tags
-            img.tags.put("ExposureRawFrames", exposure);
-            img.tags.put("GridColumnIndex", gridCol);
-            img.tags.put("GridRowIndex", gridRow);
-            img.tags.put("StagePositionX", event.xyPosition_.getCenter().x);
-            img.tags.put("StagePositionY", event.xyPosition_.getCenter().y);
+            if (GlobalSettings.getInstance().isBIDCTwoPhoton()) {
+              tags.put("ExposureRawFrames", exposure);
+           }
+            tags.put("GridColumnIndex", gridCol);
+            tags.put("GridRowIndex", gridRow);
+            tags.put("StagePositionX", event.xyPosition_.getCenter().x);
+            tags.put("StagePositionY", event.xyPosition_.getCenter().y);
         } catch (JSONException e) {
             Log.log("Problem adding image tags");
             Log.log(e.toString());
@@ -370,7 +373,7 @@ public class CustomAcqEngine {
         try {
 
             //num channels is camera channels * acquisitionChannels
-            int numChannels = GlobalSettings.getDemoMode() ? GlobalSettings.getDemoNumChannels() : acq.getNumChannels();
+            int numChannels = GlobalSettings.getInstance().getDemoMode() ? GlobalSettings.getInstance().getDemoNumChannels() : acq.getNumChannels();
 
             /////////////////////////////////////////////////////////////////
             ////Summary metadata equivalent to normal MM metadata////////////
@@ -384,8 +387,8 @@ public class CustomAcqEngine {
             summary.put("PixelType", acq.getFilterType() == FrameIntegrationMethod.FRAME_SUMMATION ? "GRAY16" : "GRAY8");
             //TODO: generic way of doing this
             summary.put("BitDepth", acq.getFilterType() == FrameIntegrationMethod.FRAME_SUMMATION ? 16 : 8);
-            summary.put("Width", CoreCommunicator.getImageWidth());
-            summary.put("Height", CoreCommunicator.getImageHeight());
+            summary.put("Width", CoreCommunicator.getInstance().getImageWidth());
+            summary.put("Height", CoreCommunicator.getInstance().getImageHeight());
             summary.put("Prefix", prefix);
             JSONArray initialPosList = acq.createInitialPositionList();
             summary.put("InitialPositionList", initialPosList);
@@ -408,7 +411,7 @@ public class CustomAcqEngine {
             JSONArray chNames = new JSONArray();
             JSONArray chColors = new JSONArray();
             for (int i = 0; i < numChannels; i++) {
-                if (GlobalSettings.getDemoMode()) {
+                if (GlobalSettings.getInstance().getDemoMode()) {
                     String[] names = {"Violet", "Blue", "Green", "Yellow", "Red", "Far red"};
                     int[] colors = {new Color(127, 0, 255).getRGB(), Color.blue.getRGB(), Color.green.getRGB(),
                         Color.yellow.getRGB(), Color.red.getRGB(), Color.pink.getRGB()};

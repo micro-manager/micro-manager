@@ -4,16 +4,13 @@
  */
 package coordinates;
 
-import gui.SettingsDialog;
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import imageconstruction.CoreCommunicator;
+import bidc.CoreCommunicator;
 import mmcorej.CMMCore;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -443,8 +440,8 @@ public class PositionManager {
             int existingRow = existingPosition.getInt(ROW_KEY);
             int existingColumn = existingPosition.getInt(COL_KEY);
 
-            double xPixelOffset = (col - existingColumn) * (CoreCommunicator.getImageWidth() - pixelOverlapX);
-            double yPixelOffset = (row - existingRow) * (CoreCommunicator.getImageHeight() - pixelOverlapY);
+            double xPixelOffset = (col - existingColumn) * (CoreCommunicator.getInstance().getImageWidth() - pixelOverlapX);
+            double yPixelOffset = (row - existingRow) * (CoreCommunicator.getInstance().getImageHeight() - pixelOverlapY);
 
             AffineTransform transform = AffineUtils.getAffineTransform(pixelSizeConfig_, exisitngX, exisitngY);
             Point2D.Double stagePos = new Point2D.Double();

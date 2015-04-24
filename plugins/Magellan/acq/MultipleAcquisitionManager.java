@@ -231,7 +231,7 @@ public class MultipleAcquisitionManager {
          public void run() {
             FixedAreaAcquisition firstAcq = null;
             double secretAFDrivePos = 0;
-            boolean secretAutofocus = GlobalSettings.getAutofocusBetweenSerialAcqusitions();
+            boolean secretAutofocus = GlobalSettings.getInstance().getAutofocusBetweenSerialAcqusitions();
             if (secretAutofocus) {
                IJ.log("Secret autofocus between acquisitions activated!");
                if (!acqSettingsList_.get(0).autofocusEnabled_) {

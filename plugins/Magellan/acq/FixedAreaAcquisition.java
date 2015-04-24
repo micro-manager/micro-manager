@@ -19,7 +19,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import imageconstruction.CoreCommunicator;
+import bidc.CoreCommunicator;
 import misc.GlobalSettings;
 import misc.Log;
 import org.json.JSONArray;
@@ -91,8 +91,8 @@ public class FixedAreaAcquisition extends Acquisition {
          } else {
             //no space mode, use current stage positon
             positions_ = new ArrayList<XYStagePosition>();
-            int fullTileWidth = CoreCommunicator.getImageWidth();
-            int fullTileHeight = CoreCommunicator.getImageHeight();
+            int fullTileWidth = (int) CoreCommunicator.getInstance().getImageWidth();
+            int fullTileHeight = (int) CoreCommunicator.getInstance().getImageHeight();
             int tileWidthMinusOverlap = fullTileWidth - this.getOverlapX();
             int tileHeightMinusOverlap = fullTileHeight - this.getOverlapY();
             positions_.add(new XYStagePosition(MMStudio.getInstance().getCore().getXYStagePosition(xyStage_),
@@ -118,7 +118,7 @@ public class FixedAreaAcquisition extends Acquisition {
          if (settings_.channels_.size() == 0) {
             if (MMStudio.getInstance().getCore().getNumberOfCameraChannels() == 1) {
                cIndex = 0;
-            } else if (GlobalSettings.getDemoMode()) {
+            } else if (GlobalSettings.getInstance().getDemoMode()) {
                cIndex = Arrays.asList(new String[]{"Violet","Blue","Green","Yellow","Red","FarRed"}).indexOf(settings_.autofocusChannelName_);
             } else {
                //multichannel cam only

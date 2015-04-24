@@ -1,7 +1,7 @@
 package acq;
 
 import channels.ChannelSettings;
-import imageconstruction.FrameIntegrationMethod;
+import bidc.FrameIntegrationMethod;
 import propsandcovariants.CovariantPairing;
 import propsandcovariants.CovariantPairingsManager;
 import java.util.ArrayList;
