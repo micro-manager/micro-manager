@@ -491,11 +491,13 @@ public class MetadataPanel extends JPanel
       }
     
       currentDisplay_ = getVirtualAcquisitionDisplay(win.getImagePlus()); 
-      summaryCommentsTextArea.setText(currentDisplay_.getSummaryComment());
-      imageCommentsTextArea.setText(currentDisplay_.getImageComment());
-      contrastPanel_.displayChanged(currentDisplay_);
+      if (currentDisplay_ != null) {
+         summaryCommentsTextArea.setText(currentDisplay_.getSummaryComment());
+         imageCommentsTextArea.setText(currentDisplay_.getImageComment());
+         contrastPanel_.displayChanged(currentDisplay_);
       
-      imageChangedUpdate(currentDisplay_);
+         imageChangedUpdate(currentDisplay_);
+      }
    }
 
    @Override
