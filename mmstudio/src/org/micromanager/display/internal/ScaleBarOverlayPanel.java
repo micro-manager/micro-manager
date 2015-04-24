@@ -38,13 +38,11 @@ import javax.swing.JTextField;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.data.Image;
-import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.OverlayPanel;
 import org.micromanager.PropertyMap;
 
-import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -65,18 +63,18 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
          Color.red, Color.magenta, Color.blue, Color.cyan, Color.green};
    // Would you believe this isn't built-in to the Color module? Naturally
    // this list of names must match the list of colors, above.
-   private static String[] COLORNAMES = new String[] {
+   private static final String[] COLORNAMES = new String[] {
       "Black", "White", "Gray", "Yellow", "Orange", "Red", "Magenta",
          "Blue", "Cyan", "Green"
    };
 
-   private JCheckBox shouldDrawText_;
-   private JCheckBox isBarFilled_;
-   private JComboBox color_;
-   private JTextField xOffset_;
-   private JTextField yOffset_;
-   private JTextField scaleSize_;
-   private JComboBox position_;
+   private final JCheckBox shouldDrawText_;
+   private final JCheckBox isBarFilled_;
+   private final JComboBox color_;
+   private final JTextField xOffset_;
+   private final JTextField yOffset_;
+   private final JTextField scaleSize_;
+   private final JComboBox position_;
 
    private boolean haveLoggedError_ = false;
    

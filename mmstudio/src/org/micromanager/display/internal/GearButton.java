@@ -25,14 +25,12 @@ import com.bulenkov.iconloader.IconLoader;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
-import java.awt.Window;
 
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.JButton;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
-import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.inspector.InspectorFrame;
 import org.micromanager.internal.LineProfile;

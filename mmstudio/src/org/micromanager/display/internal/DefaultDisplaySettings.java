@@ -35,7 +35,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import org.micromanager.data.Coords;
 import org.micromanager.display.DisplaySettings;
 
 import org.micromanager.internal.utils.DefaultUserProfile;
@@ -50,6 +49,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
     * Retrieve the display settings that have been saved in the preferences.
     * Note: we explicitly don't cache these settings, to ensure that
     * displays don't end up with copies of the same settings.
+    * @return 
     */
    public static DefaultDisplaySettings getStandardSettings() {
       DefaultUserProfile profile = DefaultUserProfile.getInstance();

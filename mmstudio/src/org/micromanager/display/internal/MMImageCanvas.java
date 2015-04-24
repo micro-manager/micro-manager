@@ -34,7 +34,6 @@ import java.awt.event.MouseEvent;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 
-import java.lang.Math;
 
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;

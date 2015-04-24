@@ -20,11 +20,11 @@
 
 package org.micromanager.display.internal;
 
-import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.OverlayPanel;
 import org.micromanager.display.OverlayPanelFactory;
 
 public class TimestampOverlayFactory implements OverlayPanelFactory {
+   @Override
    public OverlayPanel createOverlayPanel() {
       return new TimestampOverlayPanel();
    }

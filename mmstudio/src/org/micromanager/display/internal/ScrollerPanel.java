@@ -33,7 +33,6 @@ import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Timer;
@@ -129,7 +128,7 @@ public class ScrollerPanel extends JPanel {
    private final DisplayWindow parent_;
    private final Thread updateThread_;
    private final LinkedBlockingQueue<Coords> updateQueue_;
-   private AtomicBoolean shouldStopUpdates_;
+   private final AtomicBoolean shouldStopUpdates_;
 
    private final HashMap<String, AxisState> axisToState_;
    private final HashMap<String, Integer> axisToSavedPosition_;

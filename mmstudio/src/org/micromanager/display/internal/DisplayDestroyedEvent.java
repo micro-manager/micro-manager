@@ -27,12 +27,13 @@ import org.micromanager.display.DisplayWindow;
  * forceClosed() method.
  */
 public class DisplayDestroyedEvent implements org.micromanager.display.DisplayDestroyedEvent {
-   private DisplayWindow display_;
+   private final DisplayWindow display_;
 
    public DisplayDestroyedEvent(DisplayWindow display) {
       display_ = display;
    }
 
+   @Override
    public DisplayWindow getDisplay() {
       return display_;
    }

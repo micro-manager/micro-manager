@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.micromanager.internal.utils.DefaultUserProfile;
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * This container class stores histogram and color settings for a specific
@@ -42,13 +41,13 @@ public class ChannelSettings {
 
    // Used to prevent simultaneous read/writes of the profile
    private static final Object profileLock_ = new Object();
-   private String channelName_;
-   private String channelGroup_;
+   private final String channelName_;
+   private final String channelGroup_;
 
-   private Color color_;
-   private Integer histogramMin_;
-   private Integer histogramMax_;
-   private boolean shouldAutoscale_;
+   private final Color color_;
+   private final Integer histogramMin_;
+   private final Integer histogramMax_;
+   private final boolean shouldAutoscale_;
 
    public ChannelSettings(String channelName, String channelGroup,
          Color color, Integer histogramMin, Integer histogramMax,

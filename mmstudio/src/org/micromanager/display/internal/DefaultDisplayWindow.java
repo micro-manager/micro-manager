@@ -31,7 +31,6 @@ import ij.measure.Calibration;
 import ij.Menus;
 import ij.WindowManager;
 
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GraphicsConfiguration;
@@ -39,22 +38,17 @@ import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.Window;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-import java.lang.Math;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.event.MouseInputAdapter;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -92,7 +86,6 @@ import org.micromanager.display.internal.events.StatusEvent;
 import org.micromanager.display.internal.inspector.InspectorFrame;
 import org.micromanager.display.internal.link.DisplayGroupManager;
 
-import org.micromanager.internal.LineProfile;
 
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.JavaUtils;
@@ -117,7 +110,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       new InspectorFrame(null);
    }
 
-   private Datastore store_;
+   private final Datastore store_;
    private DisplaySettings displaySettings_;
    private MMVirtualStack stack_;
    private ImagePlus ijImage_;
@@ -130,7 +123,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    private JFrame fullScreenFrame_;
 
    // Used to generate custom display controls.
-   private ControlsFactory controlsFactory_;
+   private final ControlsFactory controlsFactory_;
 
    // GUI components
    private JPanel contentsPanel_;
@@ -139,7 +132,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    private JPanel controlsPanel_;
    private HyperstackControls hyperstackControls_;
 
-   private Object guiLock_ = new Object();
+   private final Object guiLock_ = new Object();
    private boolean haveCreatedGUI_ = false;
 
    // Used by the pack() method to track changes in our size.
@@ -170,7 +163,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     * @param factory A ControlsFactory to create any extra controls for this
     *        display. May be null, in which case there will be no extra
     *        controls
-    * @param DisplaySettings The DisplaySettings to use for this display. May
+    * @param settings The DisplaySettings to use for this display. May
     *        be null, in which case default settings will be pulled from the
     *        user's profile.
     * @param title A custom title. May be null, in which case the title will

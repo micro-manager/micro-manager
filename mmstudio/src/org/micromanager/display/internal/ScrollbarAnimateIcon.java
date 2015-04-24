@@ -35,18 +35,18 @@ import javax.swing.JButton;
  * and is used for handling animation of an AxisScroller.
  */
 public class ScrollbarAnimateIcon extends JButton {
-   private static final int WIDTH = 30;
-   private static final int HEIGHT = 18;
+   private static final int ICONWIDTH = 30;
+   private static final int ICONHEIGHT = 18;
    private static final Icon PLAY_ICON = IconLoader.getIcon(
          "/org/micromanager/internal/icons/play.png");
    private static final Icon PAUSE_ICON = IconLoader.getIcon(
          "/org/micromanager/internal/icons/pause.png");
-   private String label_;
+   private final String label_;
    private boolean isAnimated_;
 
    public ScrollbarAnimateIcon(final String axis, final ScrollerPanel parent) {
       super(PLAY_ICON);
-      setSize(WIDTH, HEIGHT);
+      setSize(ICONWIDTH, ICONHEIGHT);
       // Only use the first letter of the axis.
       label_ = axis.substring(0, 1);
       setText(label_);
@@ -73,11 +73,11 @@ public class ScrollbarAnimateIcon extends JButton {
    /** Don't require more space than is needed to show the icon. */
    @Override
    public Dimension getPreferredSize() {
-      return new Dimension(WIDTH, HEIGHT);
+      return new Dimension(ICONWIDTH, ICONHEIGHT);
    }
    @Override
    public Dimension getMinimumSize() {
-      return new Dimension(WIDTH, HEIGHT);
+      return new Dimension(ICONWIDTH, ICONHEIGHT);
    }
 }
 

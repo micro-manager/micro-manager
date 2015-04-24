@@ -20,7 +20,6 @@
 
 package org.micromanager.display.internal;
 
-import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 import ij.gui.ImageCanvas;
@@ -49,7 +48,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 public class DummyImageWindow extends StackWindow {
    private static DefaultDisplayWindow staticMaster_;
-   private static ReentrantLock masterLock_ = new ReentrantLock();
+   private static final ReentrantLock masterLock_ = new ReentrantLock();
    /**
     * We have a problem. StackWindows automatically try to draw themselves,
     * and raise themselves to the front, as soon as they are created. We
@@ -88,6 +87,7 @@ public class DummyImageWindow extends StackWindow {
    /**
     * Instead of drawing to our canvas, draw to our master's.
     */
+   @Override
    public ImageCanvas getCanvas() {
       if (master_ == null) { // I.e. we're still in the StackWindow constructor
          return staticMaster_.getCanvas();

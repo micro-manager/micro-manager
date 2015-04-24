@@ -25,11 +25,7 @@ import com.bulenkov.iconloader.IconLoader;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
 import java.awt.event.MouseEvent;
 
 import java.util.HashMap;
@@ -72,8 +68,8 @@ public class ScrollbarLockIcon extends JButton {
     * This event informs listeners of when the lock button is toggled.
     */
    public static class LockEvent {
-      private String axis_;
-      private LockedState lockedState_;
+      private final String axis_;
+      private final LockedState lockedState_;
       public LockEvent(String axis, LockedState lockedState) {
          axis_ = axis;
          lockedState_ = lockedState;
@@ -90,7 +86,7 @@ public class ScrollbarLockIcon extends JButton {
     * This event causes other lock icons to be updated to match our state.
     */
    public static class ForceLockEvent {
-      private LockedState state_;
+      private final LockedState state_;
       public ForceLockEvent(LockedState state) {
          state_ = state;
       }
@@ -101,8 +97,8 @@ public class ScrollbarLockIcon extends JButton {
    }
 
    private LockedState lockedState_;
-   private String axis_;
-   private EventBus bus_;
+   private final String axis_;
+   private final EventBus bus_;
    
    public ScrollbarLockIcon(final String axis, final EventBus bus) {
       // Start out unlocked.

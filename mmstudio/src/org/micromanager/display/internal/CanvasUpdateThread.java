@@ -20,15 +20,12 @@
 
 package org.micromanager.display.internal;
 
-import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
 import ij.ImagePlus;
 
-import java.lang.Thread;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 import javax.swing.SwingUtilities;
 
@@ -48,14 +45,13 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 public class CanvasUpdateThread extends Thread {
 
-   private Datastore store_;
-   private MMVirtualStack stack_;
-   private ImagePlus plus_;
-   private DisplayWindow display_;
+   private final Datastore store_;
+   private final MMVirtualStack stack_;
+   private final ImagePlus plus_;
+   private final DisplayWindow display_;
    
-   private LinkedBlockingQueue<Coords> coordsQueue_;
-   private AtomicBoolean shouldStop_;
-   private Thread displayThread_;
+   private final LinkedBlockingQueue<Coords> coordsQueue_;
+   private final AtomicBoolean shouldStop_;
    private int imagesDisplayed_ = 0;
    private long lastImageIndex_ = 0;
    private long lastFPSUpdateTimestamp_ = -1;
@@ -213,6 +209,7 @@ public class CanvasUpdateThread extends Thread {
    /**
     * Add image coordinates for an image to display (i.e. request that the
     * display show the indicated image).
+    * @param coords ??? what kind of image coordinates are these?
     */
    public void addCoords(Coords coords) {
       try {

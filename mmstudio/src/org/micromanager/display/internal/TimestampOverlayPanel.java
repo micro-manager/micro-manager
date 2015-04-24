@@ -50,21 +50,20 @@ import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.OverlayPanel;
 
-import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
 
 /**
  * This overlay draws the timestamps of the currently-displayed images.
  */
 public class TimestampOverlayPanel extends OverlayPanel {
-   private static int LINE_HEIGHT = 13;
+   private static final int LINE_HEIGHT = 13;
 
-   private JCheckBox shouldDraw_;
-   private JCheckBox amMultiChannel_;
-   private JCheckBox shouldDrawBackground_;
-   private JTextField xOffset_;
-   private JTextField yOffset_;
-   private JComboBox position_;
-   private JComboBox color_;
+   private final JCheckBox shouldDraw_;
+   private final JCheckBox amMultiChannel_;
+   private final JCheckBox shouldDrawBackground_;
+   private final JTextField xOffset_;
+   private final JTextField yOffset_;
+   private final JComboBox position_;
+   private final JComboBox color_;
 
    public TimestampOverlayPanel() {
       setLayout(new MigLayout("flowx"));

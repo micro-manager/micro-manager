@@ -43,7 +43,6 @@ import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.display.RequestToDrawEvent;
 import org.micromanager.display.OverlayPanel;
 import org.micromanager.display.OverlayPanelFactory;
-import org.micromanager.display.internal.events.DefaultNewDisplayEvent;
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
 import org.micromanager.display.internal.events.NewOverlayEvent;
 
@@ -59,12 +58,12 @@ import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.PropertyMap;
 
 
-public class DefaultDisplayManager implements DisplayManager {
+public final class DefaultDisplayManager implements DisplayManager {
    private static DefaultDisplayManager staticInstance_;
 
-   private MMStudio studio_;
-   private HashMap<Datastore, ArrayList<DisplayWindow>> storeToDisplays_;
-   private LinkedHashMap<String, OverlayPanelFactory> titleToOverlay_;
+   private final MMStudio studio_;
+   private final HashMap<Datastore, ArrayList<DisplayWindow>> storeToDisplays_;
+   private final LinkedHashMap<String, OverlayPanelFactory> titleToOverlay_;
 
    public DefaultDisplayManager(MMStudio studio) {
       studio_ = studio;
@@ -118,6 +117,7 @@ public class DefaultDisplayManager implements DisplayManager {
    /**
     * When a Datastore is closed, we need to remove all references to it so
     * it can be garbage-collected.
+    * @param event
     */
    @Subscribe
    public void onDatastoreClosed(DatastoreClosingEvent event) {

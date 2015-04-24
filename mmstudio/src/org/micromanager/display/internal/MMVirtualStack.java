@@ -52,11 +52,11 @@ import org.micromanager.internal.utils.ReportingUtils;
  * ever access an XYZTC volume.
  */
 public class MMVirtualStack extends ij.VirtualStack {
-   private Datastore store_;
-   private EventBus displayBus_;
+   private final Datastore store_;
+   private final EventBus displayBus_;
    private ImagePlus plus_;
    private Coords curCoords_;
-   private HashMap<Integer, Image> channelToLastValidImage_;
+   private final HashMap<Integer, Image> channelToLastValidImage_;
 
    public MMVirtualStack(Datastore store, EventBus displayBus,
          ImagePlus plus) {
