@@ -422,6 +422,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       return sum;
    }
 
+   @Override
    public double computeScore(final ImageProcessor proc) {
       if (scoringMethod.contentEquals("Mean")) {
          return computeMean(proc);

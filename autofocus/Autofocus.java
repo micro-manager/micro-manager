@@ -362,6 +362,7 @@ public class Autofocus extends AutofocusBase implements org.micromanager.api.Aut
     * @param impro ImageJ Processor
     * @return sharpness score
     */
+   @Override
    public double computeScore(final ImageProcessor impro){
 
 
