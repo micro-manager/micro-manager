@@ -10,6 +10,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij3d.image3d.FHTImage3D;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 import misc.Log;
@@ -79,83 +80,79 @@ public class CrossCorrelationAutofocus {
       return initalPos - drift;
    }
    
-   public static void main(String[] args) {
-      double dsFactor = Math.sqrt( (long)3780 * (long)4158 * 2*(90) / (double) NUM_VOXEL_TARGET); 
-         int dsIndex = (int) Math.max(0, Math.ceil(Math.log10(dsFactor) / Math.log(2)));
-         System.out.println(dsIndex);
-   }
-   
    /**
     * Called by acquisitions at then end of time point
     * @param timeIndex 
-    */
-   public void run(int timeIndex) throws Exception {
-      if (timeIndex == 0) {
-         //get initial position
-         try {
-            initialPosition_ = MMStudio.getInstance().getCore().getPosition(zDevice_);
-            currentPosition_ = initialPosition_;
-         } catch (Exception e) {
-            ReportingUtils.showError("Couldn't get autofocus Z drive initial position");
-         }
-         //figure out which resolution level will be used for xCorr
-         MultiResMultipageTiffStorage storage = acq_.getStorage();
-         //do these calulations with BigIntegers to prevent overflow and Nan values
-         BigInteger tileWidth = new BigInteger(storage.getTileWidth() + "");
-         BigInteger tileHeight = new BigInteger(storage.getTileHeight() + "");
-         BigInteger numCols = new BigInteger(((FixedAreaAcquisition) acq_).getNumColumns() + "");
-         BigInteger numRows = new BigInteger(((FixedAreaAcquisition) acq_).getNumRows() + "");
-         //figure out how much downsampling needed to run autofocus in a reasonable amount of time
-         //factor of two is for z padding
-//         BigInteger numPix2D = tileWidth.multiply(numCols).multiply(tileHeight).multiply(numRows);
-//         BigInteger numXCorrSlices = new BigInteger( (2*(acq_.getMaxSliceIndex() + 1) ) + "" );
-//         double dsFactor =  //ratio of number of voxels to voxel target
-//                 Math.sqrt( *  / (double) NUM_VOXEL_TARGET); 
-//         downsampleIndex_ = (int) Math.max(0, Math.ceil(Math.log10(dsFactor) / Math.log(2)));
-//         downsampledWidth_ = (int) (fullResPixelWidth / Math.pow(2, downsampleIndex_));
-//         downsampledHeight_ = (int) (fullResPixelHeight / Math.pow(2, downsampleIndex_));
-//         Log.log("Autofocus DS Index: " + downsampleIndex_);
-//         Log.log("Autofocus DS Width: " + downsampledWidth_);
-//         Log.log("Autofocus DS Height: " + downsampledHeight_);
-         return;
-      }      
-            
-      logMemory();
-      Log.log("Autofocus: creating TP0 stack");
-      ImageStack tp0Stack = createAFStack(acq_, 0, channelIndex_, downsampledWidth_, downsampledHeight_, downsampleIndex_);     
-      logMemory();
-       Log.log("Autofocus: creating current TP stack");
-       ImageStack currentTPStack = createAFStack(acq_, timeIndex, channelIndex_, downsampledWidth_, downsampledHeight_, downsampleIndex_);
-       logMemory();
-       Log.log("Autofocus: made current TP stack, calculating focus drift");
-       logMemory();
-       //run autofocus
-      double drift = calcFocusDrift(tp0Stack, currentTPStack, acq_.getZStep());
-      //check if outside max displacement
-      if (Math.abs(currentPosition_ - drift - initialPosition_) > maxDisplacement_) {
-         IJ.log("Calculated focus drift of " + drift + " um exceeds tolerance. Leaving autofocus offset unchanged");
-         return;
-      }
-      currentPosition_ -= drift;
-   }
-   
-   private void logMemory() {
-       Log.log("Free memory: " + Runtime.getRuntime().freeMemory());
-       Log.log("Max memory: " + Runtime.getRuntime().maxMemory());
-       Log.log("Total memory: " + Runtime.getRuntime().totalMemory());
-   }
-   
-   /**
-    * return a 32 bit for use with cross corr autofocus
-    * @return 
-    */
-   private static ImageStack createAFStack(FixedAreaAcquisition acq, int timeIndex, int channelIndex, int width, int height, int dsIndex) {
-      //pad by half of stack size in either direction so wrap around of xCorr doesnt give false values
-      int numSlices = 2*(acq.getMaxSliceIndex() + 1);
-      ImageStack stack = new ImageStack(width, height);
-      int frontPadding = (acq.getMaxSliceIndex() + 1) / 2;
-       //get background pixel value
-       int backgroundVal = acq.getStorage().getBackgroundPixelValue(channelIndex);
+ 
+     */
+    public void run(int timeIndex) throws Exception {
+        if (timeIndex == 0) {
+            //get initial position
+            try {
+                initialPosition_ = MMStudio.getInstance().getCore().getPosition(zDevice_);
+                currentPosition_ = initialPosition_;
+            } catch (Exception e) {
+                ReportingUtils.showError("Couldn't get autofocus Z drive initial position");
+            }
+            //figure out which resolution level will be used for xCorr
+            MultiResMultipageTiffStorage storage = acq_.getStorage();
+            //do these calulations with BigIntegers to prevent overflow and Nan values
+            BigInteger tileWidth = new BigInteger(storage.getTileWidth() + "");
+            BigInteger tileHeight = new BigInteger(storage.getTileHeight() + "");
+            BigInteger numCols = new BigInteger(((FixedAreaAcquisition) acq_).getNumColumns() + "");
+            BigInteger numRows = new BigInteger(((FixedAreaAcquisition) acq_).getNumRows() + "");
+            //figure out how much downsampling needed to run autofocus in a reasonable amount of time
+            //factor of two is for z padding
+            BigDecimal numPix2D = new BigDecimal(tileWidth.multiply(numCols).multiply(tileHeight).multiply(numRows));
+            BigDecimal numXCorrSlices = new BigDecimal((2 * (acq_.getMaxSliceIndex() + 1)) + "");
+            double dsFactor = //ratio of number of voxels to voxel target
+                    Math.sqrt(numPix2D.multiply(numXCorrSlices).divide(new BigDecimal((double) NUM_VOXEL_TARGET)).doubleValue());
+            downsampleIndex_ = (int) Math.max(0, Math.ceil(Math.log(dsFactor) / Math.log(2)));
+            downsampledWidth_ = (int) (tileWidth.multiply(numCols).longValue() / Math.pow(2, downsampleIndex_));
+            downsampledHeight_ = (int) (tileHeight.multiply(numRows).longValue() / Math.pow(2, downsampleIndex_));
+            Log.log("Autofocus DS Index: " + downsampleIndex_);
+            Log.log("Autofocus DS Width: " + downsampledWidth_);
+            Log.log("Autofocus DS Height: " + downsampledHeight_);
+            return;
+        }
+
+        logMemory();
+        Log.log("Autofocus: creating TP0 stack");
+        ImageStack tp0Stack = createAFStack(acq_, 0, channelIndex_, downsampledWidth_, downsampledHeight_, downsampleIndex_);
+        logMemory();
+        Log.log("Autofocus: creating current TP stack");
+        ImageStack currentTPStack = createAFStack(acq_, timeIndex, channelIndex_, downsampledWidth_, downsampledHeight_, downsampleIndex_);
+        logMemory();
+        Log.log("Autofocus: made current TP stack, calculating focus drift");
+        logMemory();
+        //run autofocus
+        double drift = calcFocusDrift(tp0Stack, currentTPStack, acq_.getZStep());
+        //check if outside max displacement
+        if (Math.abs(currentPosition_ - drift - initialPosition_) > maxDisplacement_) {
+            IJ.log("Calculated focus drift of " + drift + " um exceeds tolerance. Leaving autofocus offset unchanged");
+            return;
+        }
+        currentPosition_ -= drift;
+    }
+
+    private void logMemory() {
+        Log.log("Free memory: " + Runtime.getRuntime().freeMemory());
+        Log.log("Max memory: " + Runtime.getRuntime().maxMemory());
+        Log.log("Total memory: " + Runtime.getRuntime().totalMemory());
+    }
+
+    /**
+     * return a 32 bit for use with cross corr autofocus
+     *
+     * @return
+     */
+    private static ImageStack createAFStack(FixedAreaAcquisition acq, int timeIndex, int channelIndex, int width, int height, int dsIndex) {
+        //pad by half of stack size in either direction so wrap around of xCorr doesnt give false values
+        int numSlices = 2 * (acq.getMaxSliceIndex() + 1);
+        ImageStack stack = new ImageStack(width, height);
+        int frontPadding = (acq.getMaxSliceIndex() + 1) / 2;
+        //get background pixel value
+        int backgroundVal = acq.getStorage().getBackgroundPixelValue(channelIndex);
         for (int slice = 0; slice < numSlices; slice++) {
             if (slice >= frontPadding && slice < frontPadding + acq.getMaxSliceIndex() + 1) {
                 int dataSlice = slice - frontPadding;
