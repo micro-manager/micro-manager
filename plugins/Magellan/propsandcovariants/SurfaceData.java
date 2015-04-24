@@ -30,11 +30,12 @@ public class SurfaceData implements Covariant {
       //number of test points per dimension for finding minimum distance to surface within angle
 //   private static final int NUM_XY_TEST_POINTS_ANGLE = 5;
    
-   public static String  DISTANCE_BELOW_SURFACE_CENTER = "--Vertical distance below at XY position center";
-   public static String  DISTANCE_BELOW_SURFACE_MINIMUM = "--Minimum vertical distance below at XY position";
-   public static String  DISTANCE_BELOW_SURFACE_MAXIMUM = "--Maximum vertical distance below at XY position";
-   public static String  DISTANCE_FOR_MIN_INCIDENT_POWER = "--Vertical distance for minimum incident power on top";
-   public static String  DISTANCE_FOR_MIN_INCIDENT_POWER_CENTER_CAPPED = "--Vertical distance for minimum incident power on top (center distance capped)";
+   public static String  SPACER = "--";
+   public static String  DISTANCE_BELOW_SURFACE_CENTER = "Vertical distance below at XY position center";
+   public static String  DISTANCE_BELOW_SURFACE_MINIMUM = "Minimum vertical distance below at XY position";
+   public static String  DISTANCE_BELOW_SURFACE_MAXIMUM = "Maximum vertical distance below at XY position";
+   public static String  DISTANCE_FOR_MIN_INCIDENT_POWER = "Vertical distance for minimum incident power on top";
+   public static String  DISTANCE_FOR_MIN_INCIDENT_POWER_CENTER_CAPPED = "Vertical distance for minimum incident power on top (center distance capped)";
    
    private String category_;
    private SurfaceInterpolator surface_;
@@ -79,7 +80,7 @@ public class SurfaceData implements Covariant {
 
     @Override
     public String getName() {
-        return PREFIX + surface_.getName() + category_;
+        return PREFIX + surface_.getName() + SPACER + category_;
     }
 
       @Override

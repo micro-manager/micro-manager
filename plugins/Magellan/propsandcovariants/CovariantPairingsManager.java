@@ -20,6 +20,7 @@ import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import misc.GlobalSettings;
 import misc.Log;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.JavaUtils;
@@ -33,6 +34,8 @@ import surfacesandregions.SurfaceManager;
  */
 public class CovariantPairingsManager {
 
+    private static final String COV_DIR = "COVARIANT_LOADING_DIR";
+    
    private ArrayList<CovariantPairing> pairs_ = new ArrayList<CovariantPairing>();
    private MultipleAcquisitionManager multiAcqManager_;
    private static CovariantPairingsManager singleton_;
@@ -121,7 +124,7 @@ public class CovariantPairingsManager {
          }
          fd.dispose();
       } else {
-         JFileChooser fc = new JFileChooser();
+         JFileChooser fc = new JFileChooser(GlobalSettings.getInstance().getStringInPrefs(COV_DIR));
          fc.setFileFilter(new FileNameExtensionFilter("Text file", "txt", "TXT"));
          fc.setDialogTitle("Save covariant pairing values");
          int returnVal = fc.showSaveDialog(gui);
@@ -132,6 +135,9 @@ public class CovariantPairingsManager {
       if (selectedFile == null) {
          return; //canceled
       }
+      //store directory
+      GlobalSettings.getInstance().storeStringInPrefs(COV_DIR, selectedFile.getParent().toString());
+      
       String fileContents = "";
       FileReader reader;
       try {
@@ -177,7 +183,7 @@ public class CovariantPairingsManager {
                   throw new RuntimeException();
                }
                try {
-                  Covariant ind = new SurfaceData(surface, "--" + type);
+                  Covariant ind = new SurfaceData(surface, type);
                   createCovariantAndAddValues(ind, dependentName, lines);
                } catch (Exception e) {
                   Log.log("Expected type wrong");

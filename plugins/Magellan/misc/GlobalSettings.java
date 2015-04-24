@@ -62,6 +62,14 @@ public class GlobalSettings {
         }
     }
    
+   public void storeStringInPrefs(String key, String value) {
+       prefs_.put(key, value);
+   }
+   
+   public String getStringInPrefs(String key) {
+       return prefs_.get(key, null);
+   }
+   
    public static GlobalSettings getInstance() {
        return singleton_;
    }

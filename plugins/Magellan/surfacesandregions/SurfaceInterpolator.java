@@ -603,6 +603,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
          try {
             list.add(new SurfaceData(this, datumName));
          } catch (Exception e) {
+             e.printStackTrace();
             //this will never happen
          }
       }

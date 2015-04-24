@@ -5,6 +5,8 @@
  */
 package propsandcovariants;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.AbstractListModel;
 import javax.swing.DefaultComboBoxModel;
 import surfacesandregions.SurfaceManager;
@@ -17,16 +19,30 @@ import surfacesandregions.SurfaceManager;
  */
 public class SurfaceDataImportDialog extends javax.swing.JDialog {
 
+    private Object selectionMade_ = new Object();
+    
    /**
     * Creates new form SurfaceDataImportDialog
     */
    public SurfaceDataImportDialog(java.awt.Frame parent, boolean modal) {
       super(parent, modal);
       initComponents();
+      this.setLocationRelativeTo(null);
+      this.setVisible(true);
    }
 
    public String getSurfaceDataType() {
-      return (String) typeCombo_.getSelectedItem();
+       while(this.isVisible()) {
+           try {
+               synchronized (selectionMade_) {
+                   selectionMade_.wait();
+               }
+           } catch (InterruptedException ex) {
+               //nothing to do
+           }
+       }
+           
+      return SurfaceData.enumerateDataTypes()[surfaceList_.getSelectedIndex()];
    }
    
    public String[] getSurfaceNames() {      
@@ -127,13 +143,19 @@ public class SurfaceDataImportDialog extends javax.swing.JDialog {
    }// </editor-fold>//GEN-END:initComponents
 
    private void okButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButton_ActionPerformed
-      String type = SurfaceData.enumerateDataTypes()[surfaceList_.getSelectedIndex()];
-      
+      this.setVisible(false);
+       this.dispose();
+       synchronized (selectionMade_) {
+           selectionMade_.notifyAll();
+       }
    }//GEN-LAST:event_okButton_ActionPerformed
 
    private void cancelButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButton_ActionPerformed
       this.setVisible(false);
-      this.dispose();
+       this.dispose();
+       synchronized (selectionMade_) {
+           selectionMade_.notifyAll();
+       }
    }//GEN-LAST:event_cancelButton_ActionPerformed
 
    private void typeCombo_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_typeCombo_ActionPerformed

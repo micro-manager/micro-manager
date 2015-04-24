@@ -2444,7 +2444,12 @@ public class GUI extends javax.swing.JFrame {
    }//GEN-LAST:event_savePairingsButton_ActionPerformed
 
    private void loadPairingsButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadPairingsButton_ActionPerformed
-       covariantPairManager_.loadPairingsFile(this);
+       new Thread(new Runnable() {
+           @Override
+           public void run() {
+               covariantPairManager_.loadPairingsFile(GUI.this);
+           }
+       } ).start();     
    }//GEN-LAST:event_loadPairingsButton_ActionPerformed
 
    private void removePairingButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removePairingButtonActionPerformed

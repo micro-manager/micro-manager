@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.prefs.Preferences;
 import javax.swing.filechooser.FileSystemView;
 import main.Magellan;
+import misc.Log;
 import org.micromanager.utils.ReportingUtils;
 import surfacesandregions.SurfaceInterpolator;
 import surfacesandregions.XYFootprint;
@@ -113,7 +114,7 @@ public class FixedAreaAcquisitionSettings  {
    
    public void addPropPairing(CovariantPairing pair) {
       if (covariantPairings_.contains(pair)) {
-         ReportingUtils.showError("Tried to add property pair that was already present");
+         Log.log("Tried to add property pair that was already present");
          return;
       }
       if (checkForRedundantPairing(pair)) {
