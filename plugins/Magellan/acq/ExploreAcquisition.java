@@ -5,8 +5,10 @@
 package acq;
 
 import gui.GUI;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import mmcorej.CMMCore;
 import org.json.JSONArray;
@@ -24,6 +26,7 @@ public class ExploreAcquisition extends Acquisition {
    private volatile int lowestSliceIndex_ = 0, highestSliceIndex_ = 0;
    private ExecutorService eventAdderExecutor_ = Executors.newSingleThreadExecutor();
    private int imageFilterType_;
+   private ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>> queuedTileEvents_ = new ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>>();
 
    public ExploreAcquisition(ExploreAcqSettings settings) throws Exception {
       super(settings.zStep_);
@@ -41,6 +44,7 @@ public class ExploreAcquisition extends Acquisition {
    
    public void clearEventQueue() {
       events_.clear();
+      queuedTileEvents_.clear();
    }
 
    public void abort() {
@@ -54,7 +58,8 @@ public class ExploreAcquisition extends Acquisition {
          //shouldn't happen
       }
       //abort all pending events
-      events_.clear();      
+      events_.clear();     
+      queuedTileEvents_.clear();
       //signal acquisition engine to start finishigng process
       try {
 //          IJ.log("Adding finishing events");
@@ -65,6 +70,24 @@ public class ExploreAcquisition extends Acquisition {
       }
       imageSink_.waitToDie();
       //image sink will call finish when it completes
+   }
+   
+   public LinkedBlockingQueue<ExploreTileWaitingToAcquire> getTilesWaitingToAcquireAtSlice(int sliceIndex) {
+      return queuedTileEvents_.get(sliceIndex);
+   }
+   
+   //called by acq engine
+   public void eventAcquired(AcquisitionEvent e) {
+      //remove from tile queue for overlay drawing purposes
+      int sliceIndex = e.sliceIndex_;
+      queuedTileEvents_.get(sliceIndex).remove(new ExploreTileWaitingToAcquire(e.xyPosition_.getGridRow(), e.xyPosition_.getGridCol(), sliceIndex));
+   }
+
+   @Override
+   public AcquisitionEvent getNextEvent() throws InterruptedException {
+      AcquisitionEvent next = events_.take();
+      
+      return next;
    }
 
    public void acquireTiles(final int r1, final int c1, final int r2, final int c2) {
@@ -121,6 +144,17 @@ public class ExploreAcquisition extends Acquisition {
                      if (Thread.interrupted()){
                         throw new InterruptedException();
                      }
+                     //add tile tile to list waiting to acquire for drawing purposes
+                     if (!queuedTileEvents_.containsKey(sliceIndex)) {
+                        queuedTileEvents_.put(sliceIndex, new LinkedBlockingQueue<ExploreTileWaitingToAcquire>());
+                     }
+                     
+                     ExploreTileWaitingToAcquire tile = new ExploreTileWaitingToAcquire(posManager_.getXYPosition(posIndices[i]).getGridRow(), 
+                             posManager_.getXYPosition(posIndices[i]).getGridCol(), sliceIndex);
+                     if (queuedTileEvents_.get(sliceIndex).contains(tile)) {
+                        continue; //ignor commands for duplicates
+                     }
+                     queuedTileEvents_.get(sliceIndex).put(tile);
                      events_.put(new AcquisitionEvent(ExploreAcquisition.this, 0, 0, sliceIndex, posIndices[i], getZCoordinate(sliceIndex), 
                              posManager_.getXYPosition(posIndices[i]), null));
                   } catch (InterruptedException ex) {
@@ -227,5 +261,23 @@ public class ExploreAcquisition extends Acquisition {
    @Override
    public int getFilterType() {
       return imageFilterType_;
+   }
+   
+   //slice and row/col index of an acquisition event in the queue
+   public class ExploreTileWaitingToAcquire {
+      public int row, col, sliceIndex;
+      
+      public ExploreTileWaitingToAcquire(int r, int c, int z) {
+         row = r;
+         col = c;
+         sliceIndex = z;
+      }
+      
+      @Override 
+      public boolean equals(Object other) {
+         return ((ExploreTileWaitingToAcquire) other).col == col && ((ExploreTileWaitingToAcquire) other).row == row && ((ExploreTileWaitingToAcquire) other).sliceIndex == sliceIndex;
+      }
+      
+      
    }
 }

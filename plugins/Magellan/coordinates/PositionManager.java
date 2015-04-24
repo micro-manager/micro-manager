@@ -162,7 +162,7 @@ public class PositionManager {
     * @param colIndex
     * @return position index given res level or -1 if it doesn't exist
     */
-   public int getPositionIndexFromTilePosition(int dsIndex, int rowIndex, int colIndex) {
+   public int getPositionIndexFromTilePosition(int dsIndex, long rowIndex, long colIndex) {
       MultiResPositionNode nodeToFind = findExisitngNode(dsIndex, rowIndex, colIndex);
       if (nodeToFind != null) {
          return nodeToFind.positionIndex;
@@ -390,16 +390,16 @@ public class PositionManager {
     * @param yAbsolute y coordinate in the full res stitched image
     * @return stage coordinates of the given pixel position
     */
-   public synchronized Point2D.Double getStageCoordsFromPixelCoords(int xAbsolute, int yAbsolute) {
+   public synchronized Point2D.Double getStageCoordsFromPixelCoords(long xAbsolute, long yAbsolute) {
       try {
          JSONObject existingPosition = positionList_.getJSONObject(0);
          double exisitngX = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(0);
          double exisitngY = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(1);
-         int existingRow = existingPosition.getInt(ROW_KEY);
-         int existingColumn = existingPosition.getInt(COL_KEY);
+         long existingRow = existingPosition.getInt(ROW_KEY);
+         long existingColumn = existingPosition.getInt(COL_KEY);
          //get pixel displacement from center of the tile we have coordinates for
-         int dxPix = (int) (xAbsolute - (existingColumn + 0.5) * displayTileWidth_);
-         int dyPix = (int) (yAbsolute - (existingRow + 0.5) * displayTileHeight_);
+         long dxPix = (long) (xAbsolute - (existingColumn + 0.5) * displayTileWidth_);
+         long dyPix = (long) (yAbsolute - (existingRow + 0.5) * displayTileHeight_);
          AffineTransform transform = AffineUtils.getAffineTransform(pixelSizeConfig_,exisitngX, exisitngY);
          Point2D.Double stagePos = new Point2D.Double();
          transform.transform(new Point2D.Double(dxPix, dyPix), stagePos);  

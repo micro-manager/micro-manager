@@ -33,6 +33,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import misc.LongPoint;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.api.MMTags;
@@ -44,16 +45,18 @@ import surfacesandregions.SurfaceInterpolator;
 
 public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataListener {
 
+   private static final int MOUSE_WHEEL_ZOOM_INTERVAL_MS = 100;
    private static final int DELETE_SURF_POINT_PIXEL_TOLERANCE = 10;
    public static final int NONE = 0, EXPLORE = 1, NEWGRID = 2, NEWSURFACE = 3;
    private static ArrayList<DisplayPlus> activeDisplays_ = new ArrayList<DisplayPlus>();
    private Acquisition acq_;
    //all these are volatile because they are accessed by overlayer
    private volatile Point mouseDragStartPointLeft_, mouseDragStartPointRight_, currentMouseLocation_;
+   private volatile Point exploreStartTile_, exploreEndTile_;
+   private long lastMouseWheelZoomTime_ = 0;
    private ZoomableVirtualStack zoomableStack_;
    private final boolean exploreAcq_;
    private PositionManager posManager_;
-   private boolean cursorOverImage_;
    private volatile int mode_ = NONE;
    private boolean mouseDragging_ = false;
    private DisplayOverlayer overlayer_;
@@ -126,7 +129,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
 
    //Thread safe calls for getting displayed indices
    public int getVisibleSliceIndex() {
-      return subImageControls_.getDisplayedSlice();
+      return subImageControls_ == null ? 0 : subImageControls_.getDisplayedSlice();
    }
 
    public int getVisibleFrameIndex() {
@@ -313,11 +316,16 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
    private void mouseReleasedActions(MouseEvent e) {
       if (exploreAcq_ && mode_ == EXPLORE && SwingUtilities.isLeftMouseButton(e)) {
          Point p2 = e.getPoint();
-         //find top left row and column and number of columns spanned by drage event
-         Point tile1 = zoomableStack_.getTileIndicesFromDisplayedPixel(mouseDragStartPointLeft_.x, mouseDragStartPointLeft_.y);
-         Point tile2 = zoomableStack_.getTileIndicesFromDisplayedPixel(p2.x, p2.y);
-         //create events to acquire one or more tiles
-         ((ExploreAcquisition) acq_).acquireTiles(tile1.y, tile1.x, tile2.y, tile2.x);
+         if (exploreStartTile_ != null) {
+            //create events to acquire one or more tiles
+            ((ExploreAcquisition) acq_).acquireTiles(exploreStartTile_.y, exploreStartTile_.x, exploreEndTile_.y, exploreEndTile_.x);
+            exploreStartTile_ = null;
+            exploreEndTile_ = null;
+         } else {
+            //find top left row and column and number of columns spanned by drage event
+            exploreStartTile_ = zoomableStack_.getTileIndicesFromDisplayedPixel(mouseDragStartPointLeft_.x, mouseDragStartPointLeft_.y);
+            exploreEndTile_ = zoomableStack_.getTileIndicesFromDisplayedPixel(p2.x, p2.y);
+         }
       } else if (mode_ == NEWSURFACE) {
          if (SwingUtilities.isRightMouseButton(e) && !mouseDragging_) {
             //delete point if one is nearby
@@ -351,7 +359,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       mouseDragging_ = true;
       if (SwingUtilities.isRightMouseButton(e)) {
          //pan
-         zoomableStack_.translateView(mouseDragStartPointRight_.x - currentPoint.x, mouseDragStartPointRight_.y - currentPoint.y);
+         zoomableStack_.pan(mouseDragStartPointRight_.x - currentPoint.x, mouseDragStartPointRight_.y - currentPoint.y);
          redrawPixels(false);
          mouseDragStartPointRight_ = currentPoint;
       } else if (SwingUtilities.isLeftMouseButton(e)) {
@@ -370,16 +378,16 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       }
    }
 
-   public Point imageCoordsFromStageCoords(double x, double y) {
+   public LongPoint imageCoordsFromStageCoords(double x, double y) {
       //convert back to pixel coordinates
       Point xy = posManager_.getPixelCoordsFromStageCoords(x, y);
       //convert ful res pixel coordinates to coordinates of the viewed image
       return zoomableStack_.getDisplayImageCoordsFromFullImageCoords(xy);
    }
 
-   public Point2D.Double stageCoordFromImageCoords(int x, int y) {
-      Point fullResPix = zoomableStack_.getAbsoluteFullResPixelCoordinate(x, y);
-      return posManager_.getStageCoordsFromPixelCoords(fullResPix.x, fullResPix.y);
+   public Point2D.Double stageCoordFromImageCoords(long x, long y) {
+      LongPoint fullResPix = zoomableStack_.getAbsoluteFullResPixelCoordinate(x, y);
+      return posManager_.getStageCoordsFromPixelCoords(fullResPix.x_, fullResPix.y_);
    }
 
    /**
@@ -388,21 +396,28 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
     * @param numLevels
     */
    public void zoom(int numLevels) {
-      zoomableStack_.zoom(cursorOverImage_ ? canvas_.getCursorLoc() : null, numLevels);
+      zoomableStack_.zoom(currentMouseLocation_ != null ? canvas_.getCursorLoc() : null, numLevels);
       redrawPixels(true);
    }
 
    public void setMode(int mode) {
+      //delete potential explore tiles on mode change
+      exploreEndTile_ = null;
+      exploreStartTile_ = null;
       mode_ = mode;
       drawOverlay();
    }
-
-   public boolean cursorOverImage() {
-      return cursorOverImage_;
-   }
-
+   
    public Point getCurrentMouseLocation() {
       return currentMouseLocation_;
+   }
+   
+   public Point getExploreStartTile() {
+      return exploreStartTile_;
+   }
+   
+   public Point getExploreEndTile() {
+      return exploreEndTile_;
    }
 
    public Point getMouseDragStartPointLeft() {
@@ -423,10 +438,14 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
 
          @Override
          public void mouseWheelMoved(MouseWheelEvent mwe) {
-            if (mwe.getWheelRotation() < 0) {
-               zoom(-1); //zoom in
-            } else if (mwe.getWheelRotation() > 0) {
-               zoom(1); //zoom out
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - lastMouseWheelZoomTime_ > MOUSE_WHEEL_ZOOM_INTERVAL_MS) {
+               lastMouseWheelZoomTime_ = currentTime;
+               if (mwe.getWheelRotation() < 0) {
+                  zoom(-1); //zoom in
+               } else if (mwe.getWheelRotation() > 0) {
+                  zoom(1); //zoom out
+               }
             }
          }
       });
@@ -459,6 +478,9 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
             //to make zoom respond properly when switching between windows
             canvas_.requestFocusInWindow();
             if (SwingUtilities.isRightMouseButton(e)) {
+               //clear potential explore region
+               exploreEndTile_ = null;
+               exploreStartTile_ = null;
                mouseDragStartPointRight_ = e.getPoint();
             } else if (SwingUtilities.isLeftMouseButton(e)) {
                mouseDragStartPointLeft_ = e.getPoint();
@@ -474,7 +496,6 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
 
          @Override
          public void mouseEntered(MouseEvent e) {
-            cursorOverImage_ = true;
             if (mode_ == EXPLORE) {
                drawOverlay();
             }
@@ -483,7 +504,6 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
          @Override
          public void mouseExited(MouseEvent e) {
             currentMouseLocation_ = null;
-            cursorOverImage_ = false;
             if (mode_ == EXPLORE) {
                drawOverlay();
             }

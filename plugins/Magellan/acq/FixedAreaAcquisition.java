@@ -467,4 +467,9 @@ public class FixedAreaAcquisition extends Acquisition {
       return settings_.imageFilterType_;
    }
 
+   @Override
+   public AcquisitionEvent getNextEvent() throws InterruptedException {
+     return events_.take();
+   }
+
 }

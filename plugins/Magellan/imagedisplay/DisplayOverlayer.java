@@ -1,6 +1,7 @@
 package imagedisplay;
 
 import acq.Acquisition;
+import acq.ExploreAcquisition;
 import acq.FixedAreaAcquisition;
 import coordinates.XYStagePosition;
 import ij.IJ;
@@ -19,8 +20,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import javax.swing.SwingUtilities;
+import misc.LongPoint;
 import mmcloneclasses.graph.ContrastPanel;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.micromanager.utils.ReportingUtils;
@@ -195,21 +198,38 @@ public class DisplayOverlayer {
             //determine appropriate overlay
             int mode = display_.getMode();
             if (mode == DisplayPlus.EXPLORE) {
-               //highlight tiles as appropriate
-               if (display_.getCurrentMouseLocation() == null) {
-                  return createBackgroundOverlay();
+               Overlay overlay = createBackgroundOverlay();
+               if (display_.getExploreEndTile() != null) {
+                  //draw explore tiles waiting to be confirmed with a click
+                  highlightTilesOnOverlay(overlay, Math.min(display_.getExploreEndTile().y, display_.getExploreStartTile().y),
+                          Math.max(display_.getExploreEndTile().y, display_.getExploreStartTile().y),
+                          Math.min(display_.getExploreEndTile().x, display_.getExploreStartTile().x),
+                          Math.max(display_.getExploreEndTile().x, display_.getExploreStartTile().x), TRANSPARENT_MAGENTA);
                } else if (display_.getMouseDragStartPointLeft() != null) {
-                  //highlight multiple tiles       
+                  //highlight multiple tiles when mouse dragging      
                   Point p2Tiles = zoomableStack_.getTileIndicesFromDisplayedPixel(display_.getCurrentMouseLocation().x, display_.getCurrentMouseLocation().y),
                           p1Tiles = zoomableStack_.getTileIndicesFromDisplayedPixel(display_.getMouseDragStartPointLeft().x, display_.getMouseDragStartPointLeft().y);
-                  return highlightTileOverlay(Math.min(p1Tiles.y, p2Tiles.y), Math.max(p1Tiles.y, p2Tiles.y),
-                          Math.min(p1Tiles.x, p2Tiles.x), Math.max(p1Tiles.x, p2Tiles.x), TRANSPARENT_GREEN);
-               } else if (display_.cursorOverImage()) {
+                  highlightTilesOnOverlay(overlay, Math.min(p1Tiles.y, p2Tiles.y), Math.max(p1Tiles.y, p2Tiles.y),
+                          Math.min(p1Tiles.x, p2Tiles.x), Math.max(p1Tiles.x, p2Tiles.x), TRANSPARENT_BLUE);
+               } else if (display_.getCurrentMouseLocation() != null) {
+                  //draw single highlighted tile under mouse
                   Point coords = zoomableStack_.getTileIndicesFromDisplayedPixel(display_.getCurrentMouseLocation().x, display_.getCurrentMouseLocation().y);
-                  return highlightTileOverlay(coords.y, coords.y, coords.x, coords.x, TRANSPARENT_GREEN); //highligth single tile
-               } else {
-                  return createBackgroundOverlay();
+                  highlightTilesOnOverlay(overlay, coords.y, coords.y, coords.x, coords.x, TRANSPARENT_BLUE); //highligth single tile
                }
+               try {
+               //always draw tiles waiting to be acquired
+                  LinkedBlockingQueue<ExploreAcquisition.ExploreTileWaitingToAcquire> tiles = 
+                          ((ExploreAcquisition) acq_).getTilesWaitingToAcquireAtSlice(display_.getVisibleSliceIndex());
+                  if (tiles != null) {
+                     for (ExploreAcquisition.ExploreTileWaitingToAcquire t : tiles) {
+                        highlightTilesOnOverlay(overlay, t.row, t.row, t.col, t.col, TRANSPARENT_GREEN);
+                     }
+                  }
+               } catch (Exception e) {
+                  e.printStackTrace();
+               }
+              
+               return overlay;
             } else if (mode == DisplayPlus.NEWGRID) {
                return newGridOverlay();
             } else if (mode == DisplayPlus.NONE) {
@@ -255,13 +275,13 @@ public class DisplayOverlayer {
          return;
       }
       for (Point3d point : newSurface.getPoints()) {
-         Point displayLocation = display_.imageCoordsFromStageCoords(point.x, point.y);
+         LongPoint displayLocation = display_.imageCoordsFromStageCoords(point.x, point.y);
          int slice = zoomableStack_.getSliceIndexFromZCoordinate(point.z, display_.getVisibleFrameIndex());
          if (slice != display_.getVisibleSliceIndex()) {
             continue;
          }
 
-         Roi circle = new OvalRoi(displayLocation.x - INTERP_POINT_DIAMETER / 2, displayLocation.y - INTERP_POINT_DIAMETER / 2, INTERP_POINT_DIAMETER, INTERP_POINT_DIAMETER);
+         Roi circle = new OvalRoi(displayLocation.x_ - INTERP_POINT_DIAMETER / 2, displayLocation.y_ - INTERP_POINT_DIAMETER / 2, INTERP_POINT_DIAMETER, INTERP_POINT_DIAMETER);
          circle.setStrokeColor(INTERP_POINT_COLOR);
          overlay.add(circle);
       }
@@ -271,15 +291,15 @@ public class DisplayOverlayer {
       //draw convex hull
       Vector2D[] hullPoints = display_.getCurrentSurface().getConvexHullPoints();
 
-      Point lastPoint = null, firstPoint = null;
+      LongPoint lastPoint = null, firstPoint = null;
       for (Vector2D v : hullPoints) {
          if (Thread.interrupted()) {
             throw new InterruptedException();
          }
          //convert to image coords
-         Point p = display_.imageCoordsFromStageCoords(v.getX(), v.getY());
+         LongPoint p = display_.imageCoordsFromStageCoords(v.getX(), v.getY());
          if (lastPoint != null) {
-            Line l = new Line(p.x, p.y, lastPoint.x, lastPoint.y);
+            Line l = new Line(p.x_, p.y_, lastPoint.x_, lastPoint.y_);
             l.setStrokeColor(CONVEX_HULL_COLOR);
             overlay.add(l);
          } else {
@@ -288,7 +308,7 @@ public class DisplayOverlayer {
          lastPoint = p;
       }
       //draw last connection         
-      Line l = new Line(firstPoint.x, firstPoint.y, lastPoint.x, lastPoint.y);
+      Line l = new Line(firstPoint.x_, firstPoint.y_, lastPoint.x_, lastPoint.y_);
       l.setStrokeColor(CONVEX_HULL_COLOR);
       overlay.add(l);
    }
@@ -302,15 +322,15 @@ public class DisplayOverlayer {
             throw new InterruptedException();
          }
          Point2D.Double[] corners = pos.getDisplayedTileCorners();
-         Point corner1 = display_.imageCoordsFromStageCoords(corners[0].x, corners[0].y);
-         Point corner2 = display_.imageCoordsFromStageCoords(corners[1].x, corners[1].y);
-         Point corner3 = display_.imageCoordsFromStageCoords(corners[2].x, corners[2].y);
-         Point corner4 = display_.imageCoordsFromStageCoords(corners[3].x, corners[3].y);
+         LongPoint corner1 = display_.imageCoordsFromStageCoords(corners[0].x, corners[0].y);
+         LongPoint corner2 = display_.imageCoordsFromStageCoords(corners[1].x, corners[1].y);
+         LongPoint corner3 = display_.imageCoordsFromStageCoords(corners[2].x, corners[2].y);
+         LongPoint corner4 = display_.imageCoordsFromStageCoords(corners[3].x, corners[3].y);
          //add lines connecting 4 corners
-         Line l1 = new Line(corner1.x, corner1.y, corner2.x, corner2.y);
-         Line l2 = new Line(corner2.x, corner2.y, corner3.x, corner3.y);
-         Line l3 = new Line(corner3.x, corner3.y, corner4.x, corner4.y);
-         Line l4 = new Line(corner4.x, corner4.y, corner1.x, corner1.y);
+         Line l1 = new Line(corner1.x_, corner1.y_, corner2.x_, corner2.y_);
+         Line l2 = new Line(corner2.x_, corner2.y_, corner3.x_, corner3.y_);
+         Line l3 = new Line(corner3.x_, corner3.y_, corner4.x_, corner4.y_);
+         Line l4 = new Line(corner4.x_, corner4.y_, corner1.x_, corner1.y_);
          l1.setStrokeColor(Color.red);
          l2.setStrokeColor(Color.red);
          l3.setStrokeColor(Color.red);
@@ -428,12 +448,12 @@ public class DisplayOverlayer {
       }
       int roiWidth = (int) ((newGrid.numCols() * dsTileWidth) );
       int roiHeight = (int) ((newGrid.numRows() * dsTileHeight) );
-      Point displayCenter = display_.imageCoordsFromStageCoords(newGrid.center().x, newGrid.center().y);
-      Roi rectangle = new Roi(displayCenter.x - roiWidth / 2, displayCenter.y - roiHeight / 2, roiWidth, roiHeight);
+      LongPoint displayCenter = display_.imageCoordsFromStageCoords(newGrid.center().x, newGrid.center().y);
+      Roi rectangle = new Roi(displayCenter.x_ - roiWidth / 2, displayCenter.y_ - roiHeight / 2, roiWidth, roiHeight);
       rectangle.setStrokeWidth(5f);
       rectangle.setStrokeColor(NEW_GRID_COLOR);
 
-      Point displayTopLeft = new Point(displayCenter.x - roiWidth / 2, displayCenter.y - roiHeight / 2);
+      Point displayTopLeft = new Point((int)(displayCenter.x_ - roiWidth / 2), (int)(displayCenter.y_ - roiHeight / 2));
       //draw boundries of tiles
       for (int row = 1; row < newGrid.numRows(); row++) {
          int yPos = (int) (displayTopLeft.y + row * dsTileHeight );
@@ -452,19 +472,17 @@ public class DisplayOverlayer {
       return overlay;
    }
 
-   private Overlay highlightTileOverlay(int row1, int row2, int col1, int col2, Color color) {
-      Point topLeft = zoomableStack_.getDisplayedPixel(row1, col1);
-      int width = (int) Math.round(tileWidth_ / (double) zoomableStack_.getDownsampleFactor() * (col2 - col1 + 1));
-      int height = (int) Math.round(tileHeight_ / (double) zoomableStack_.getDownsampleFactor() * (row2 - row1 + 1));
-      Roi rect = new Roi(topLeft.x, topLeft.y, width, height);
+   private void highlightTilesOnOverlay(Overlay base, int row1, int row2, int col1, int col2, Color color) {
+      LongPoint topLeft = zoomableStack_.getDisplayedPixel(row1, col1);
+      int width = (int) Math.floor(tileWidth_ / (double) zoomableStack_.getDownsampleFactor() * (col2 - col1 + 1));
+      int height = (int) Math.floor(tileHeight_ / (double) zoomableStack_.getDownsampleFactor() * (row2 - row1 + 1));
+      Roi rect = new Roi(topLeft.x_, topLeft.y_, width, height);
       rect.setFillColor(color);
-      Overlay overlay = createBackgroundOverlay();
-      overlay.add(rect);
-      return overlay;
+      base.add(rect);
    }
 
    private void drawZoomIndicator(Overlay overlay) {
-      Point zoomPos = zoomableStack_.getZoomLocation(); 
+      LongPoint zoomPos = zoomableStack_.getZoomLocation(); 
       int outerWidth = 100;
       int fullResHeight = display_.getAcquisition().getPositionManager().getNumRows() * display_.getAcquisition().getStorage().getTileHeight();
       int fullResWidth = display_.getAcquisition().getPositionManager().getNumCols() * display_.getAcquisition().getStorage().getTileWidth();
@@ -475,8 +493,8 @@ public class DisplayOverlayer {
       //draw outer rectangle representing full image
       Roi outerRect = new Roi(10, 10, outerWidth, outerHeight);
       outerRect.setStrokeColor(new Color(255, 0, 255)); //magenta
-      int innerX = (int) Math.round(( (double) outerWidth / (double) fullResWidth ) * zoomPos.x *  dsFactor);
-      int innerY = (int) Math.round(( (double) outerHeight / (double) fullResHeight ) * zoomPos.y * dsFactor);
+      int innerX = (int) Math.round(( (double) outerWidth / (double) fullResWidth ) * zoomPos.x_ *  dsFactor);
+      int innerY = (int) Math.round(( (double) outerHeight / (double) fullResHeight ) * zoomPos.y_ * dsFactor);
       //outer width * percentage of width of full images that is shown
       int innerWidth = (int) (outerWidth * ((double) displayImageSize.width / (fullResWidth / dsFactor)));
       int innerHeight = (int) (outerHeight * ((double) displayImageSize.height / (fullResHeight / dsFactor)));

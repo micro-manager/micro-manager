@@ -164,6 +164,9 @@ public class CustomAcqEngine {
         } else {
             updateHardware(event);
             acquireImage(event);
+            if (event.acquisition_ instanceof ExploreAcquisition) {
+               ((ExploreAcquisition) event.acquisition_).eventAcquired(event);
+            }
         }
     }
 

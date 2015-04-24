@@ -11,6 +11,7 @@ import acq.MMImageCache;
 import acq.MultiResMultipageTiffStorage;
 import java.awt.Dimension;
 import java.awt.Point;
+import misc.LongPoint;
 import mmcorej.TaggedImage;
 
 /**
@@ -27,11 +28,11 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
    private MMImageCache imageCache_;
    private volatile int resolutionIndex_ = 0;
    private volatile int displayImageWidth_, displayImageHeight_;
-   private volatile int xView_ = 0, yView_ = 0;  //top left pixel of view in current res
+   private volatile long xView_ = 0, yView_ = 0;  //top left pixel of view in current res
    private MultiResMultipageTiffStorage multiResStorage_;
    private final int tileWidth_, tileHeight_;
    private Acquisition acquisition_;
-   private final boolean constrainPanning_;
+   private final boolean fixedAreaAcq_;
    private int xMax_, yMax_;
 
    public ZoomableVirtualStack(int type, int width, int height, MMImageCache imageCache,
@@ -49,11 +50,11 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
       tileWidth_ = multiResStorage.getTileWidth();
       acquisition_ = acq;
       if (acq instanceof FixedAreaAcquisition) {
-         constrainPanning_ = true;
+         fixedAreaAcq_ = true;
          xMax_ = ((FixedAreaAcquisition) acq).getNumColumns() * tileWidth_;
          yMax_ = ((FixedAreaAcquisition) acq).getNumRows() * tileHeight_;         
       } else {
-         constrainPanning_ = false;
+         fixedAreaAcq_ = false;
          xView_ = (multiResStorage.getTileWidth() - displayImageWidth_) / 2;
          yView_ = (multiResStorage.getTileHeight() - displayImageHeight_) / 2;
       }
@@ -82,7 +83,7 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
       xView_ = oldStack.xView_;
       yView_ = oldStack.yView_;
       if (acquisition_ instanceof FixedAreaAcquisition) {
-         constrainPanning_ = true;
+         fixedAreaAcq_ = true;
          xMax_ = ((FixedAreaAcquisition) acquisition_).getNumColumns() * tileWidth_;
          yMax_ = ((FixedAreaAcquisition) acquisition_).getNumRows() * tileHeight_;
          resolutionIndex_ = oldStack.resolutionIndex_;
@@ -90,7 +91,7 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
          xView_ = (int) Math.max(0, Math.min(xView_, xMax_ / Math.pow(2, resolutionIndex_) - displayImageWidth_));
          yView_ = (int) Math.max(0, Math.min(yView_, yMax_ / Math.pow(2, resolutionIndex_) - displayImageHeight_));
       } else {
-         constrainPanning_ = false;
+         fixedAreaAcq_ = false;
          resolutionIndex_ = oldStack.resolutionIndex_;
       }
    }
@@ -161,7 +162,7 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
          xView_ = (int) (fullResX / dsFactor - mouseLocation.x);
          yView_ = (int) (fullResY / dsFactor - mouseLocation.y);
          //make sure view doesn't go outside image bounds
-         if (constrainPanning_) {
+         if (fixedAreaAcq_) {
             xView_ = (int) Math.max(0, Math.min(xView_, xMax_ / Math.pow(2, resolutionIndex_) - displayImageWidth_));
             yView_ = (int) Math.max(0, Math.min(yView_, yMax_ / Math.pow(2, resolutionIndex_) - displayImageHeight_));
          }
@@ -174,11 +175,14 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
       }
    }
 
-   public void translateView(int dx, int dy) {
-      if (constrainPanning_) {
+   public void pan(int dx, int dy) {
+      if (fixedAreaAcq_) {
          xView_ = (int) Math.max(0, Math.min(xView_ + dx, xMax_ / Math.pow(2, resolutionIndex_) - displayImageWidth_));
          yView_ = (int) Math.max(0, Math.min(yView_ + dy, yMax_ / Math.pow(2, resolutionIndex_) - displayImageHeight_));
       } else {
+         //only accept pan if it keeps some portion of explored area in view
+         
+         
          xView_ += dx;
          yView_ += dy;
       }
@@ -191,11 +195,11 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
     * @param y y pixel coordinate at current res level
     * @return
     */
-   public Point getAbsoluteFullResPixelCoordinate(int x, int y) {
+   public LongPoint getAbsoluteFullResPixelCoordinate(long x, long y) {
       //add view offsets and convert to full resolution to get pixel location in full res image
-      int fullResX = (int) ((x + xView_) * Math.pow(2, resolutionIndex_));
-      int fullResY = (int) ((y + yView_) * Math.pow(2, resolutionIndex_));
-      return new Point(fullResX, fullResY);
+      long fullResX =  (long) ((x + xView_) * Math.pow(2, resolutionIndex_));
+      long fullResY =  (long) ((y + yView_) * Math.pow(2, resolutionIndex_));
+      return new LongPoint(fullResX, fullResY);
    }
 
    /**
@@ -214,8 +218,8 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
       return new Point(xTileIndex, yTileIndex);
    }
    
-   public Point getZoomLocation() {
-      return new Point(xView_, yView_);
+   public LongPoint getZoomLocation() {
+      return new LongPoint(xView_, yView_);
    }
    
    public Dimension getDisplayImageSize() {
@@ -230,10 +234,10 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
     * @param col
     * @return
     */
-   public Point getDisplayedPixel(int row, int col) {
-      int x = (col * tileWidth_) / getDownsampleFactor() - xView_;
-      int y = (row * tileHeight_) / getDownsampleFactor() - yView_;
-      return new Point(x, y);
+   public LongPoint getDisplayedPixel(int row, int col) {
+      long x = (col * tileWidth_) / getDownsampleFactor() - xView_;
+      long y = (row * tileHeight_) / getDownsampleFactor() - yView_;
+      return new LongPoint(x, y);
    }
 
    /**
@@ -243,8 +247,8 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
     * @param fullImageCoords
     * @return
     */
-   public Point getDisplayImageCoordsFromFullImageCoords(Point fullImageCoords) {
-      return new Point(fullImageCoords.x / getDownsampleFactor() - xView_, fullImageCoords.y / getDownsampleFactor() - yView_);
+   public LongPoint getDisplayImageCoordsFromFullImageCoords(Point fullImageCoords) {
+      return new LongPoint(fullImageCoords.x / getDownsampleFactor() - xView_, fullImageCoords.y / getDownsampleFactor() - yView_);
    }
 
    /**

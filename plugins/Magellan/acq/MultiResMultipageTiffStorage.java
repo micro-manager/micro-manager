@@ -130,7 +130,7 @@ public class MultiResMultipageTiffStorage  {
     * It doesnt matter what resolution level the pixel is at since tiles
     * are the same size at every level
     */
-   private int tileIndexFromPixelIndex(int i, boolean xDirection) {
+   private long tileIndexFromPixelIndex(long i, boolean xDirection) {
       if (i >= 0) {
          return i / (xDirection ? tileWidth_ : tileHeight_);
       } else {
@@ -178,7 +178,7 @@ public class MultiResMultipageTiffStorage  {
     * @return Tagged image or taggeded image with background pixels and null tags if no
     * pixel data is present
     */
-   public TaggedImage getImageForDisplay(int channel, int slice, int frame, int dsIndex, int x, int y, 
+   public TaggedImage getImageForDisplay(int channel, int slice, int frame, int dsIndex, long x, long y, 
            int width, int height) {
       Object pixels;
       if (byteDepth_ == 1) {
@@ -196,10 +196,10 @@ public class MultiResMultipageTiffStorage  {
       JSONObject topLeftMD = null;
       //first calculate how many columns and rows of tiles are relevant and the number of pixels
       //of each tile to copy into the returned image
-      int previousCol = tileIndexFromPixelIndex(x, true) - 1; //make it one less than the first col in loop
+      long previousCol = tileIndexFromPixelIndex(x, true) - 1; //make it one less than the first col in loop
       LinkedList<Integer> lineWidths = new LinkedList<Integer>();
-      for (int i = x; i < x + width; i++) { //Iterate through every column of pixels in the image to be returned
-         int colIndex = tileIndexFromPixelIndex(i, true);
+      for (long i = x; i < x + width; i++) { //Iterate through every column of pixels in the image to be returned
+         long colIndex = tileIndexFromPixelIndex(i, true);
          if (colIndex != previousCol) {
             lineWidths.add(0);
          }
@@ -208,10 +208,10 @@ public class MultiResMultipageTiffStorage  {
          previousCol = colIndex;
       }
       //do the same thing for rows
-      int previousRow = tileIndexFromPixelIndex(y, false) - 1; //one less than first row in loop?
+      long previousRow = tileIndexFromPixelIndex(y, false) - 1; //one less than first row in loop?
       LinkedList<Integer> lineHeights = new LinkedList<Integer>();
-      for (int i = y; i < y + height; i++) {
-         int rowIndex = tileIndexFromPixelIndex(i, false);
+      for (long i = y; i < y + height; i++) {
+         long rowIndex = tileIndexFromPixelIndex(i, false);
          if (rowIndex != previousRow) {
             lineHeights.add(0);
          }
@@ -220,14 +220,14 @@ public class MultiResMultipageTiffStorage  {
          previousRow = rowIndex;
       }
       //get starting row and column
-      int rowStart = tileIndexFromPixelIndex(y, false);
-      int colStart = tileIndexFromPixelIndex(x, true);
+      long rowStart = tileIndexFromPixelIndex(y, false);
+      long colStart = tileIndexFromPixelIndex(x, true);
       //xOffset and y offset are the distance from the top left of the display image into which 
       //we are copying data
       int xOffset = 0;
-      for (int col = colStart; col < colStart + lineWidths.size(); col++) {
+      for (long col = colStart; col < colStart + lineWidths.size(); col++) {
          int yOffset = 0;
-         for (int row = rowStart; row < rowStart + lineHeights.size(); row++) {
+         for (long row = rowStart; row < rowStart + lineHeights.size(); row++) {
             TaggedImage tile = null;          
             if (dsIndex == 0) {
                tile = fullResStorage_.getImage(channel, slice, frame, posManager_.getPositionIndexFromTilePosition(dsIndex, row, col));
@@ -236,14 +236,14 @@ public class MultiResMultipageTiffStorage  {
                        lowResStorages_.get(dsIndex).getImage(channel, slice, frame, posManager_.getPositionIndexFromTilePosition(dsIndex, row, col));
             }
             if (tile == null) {
-               yOffset += lineHeights.get(row - rowStart); //increment y offset so new tiles appear in correct position
+               yOffset += lineHeights.get((int)(row - rowStart)); //increment y offset so new tiles appear in correct position
                continue; //If no data present for this tile go on to next one
             } else if ( (tile.pix instanceof byte[] && ((byte[]) tile.pix).length == 0) ||
                     (tile.pix instanceof short[] && ((short[]) tile.pix).length == 0))  {
                //Somtimes an inability to read IFDs soon after they are written results in an image being read 
                //with 0 length pixels. Can't figure out why this happens, but it is rare and will result at worst with
                //a black flickering during acquisition
-               yOffset += lineHeights.get(row - rowStart); //increment y offset so new tiles appear in correct position
+               yOffset += lineHeights.get((int)(row - rowStart)); //increment y offset so new tiles appear in correct position
                continue;
             }
             //take top left tile for metadata
@@ -252,9 +252,9 @@ public class MultiResMultipageTiffStorage  {
             }
             //Copy pixels into the image to be returned
             //yOffset is how many rows from top of viewable area, y is top of image to top of area
-            for (int line = yOffset; line < lineHeights.get(row - rowStart) + yOffset; line++) {
-               int tileYPix = (y + line) % tileHeight_;
-               int tileXPix = (x + xOffset) % tileWidth_;                   
+            for (int line = yOffset; line < lineHeights.get((int)(row - rowStart)) + yOffset; line++) {
+               int tileYPix = (int) ((y + line) % tileHeight_);
+               int tileXPix = (int) ((x + xOffset) % tileWidth_);                   
                //make sure tile pixels are positive
                while (tileXPix < 0) {
                   tileXPix += tileWidth_;
@@ -267,19 +267,19 @@ public class MultiResMultipageTiffStorage  {
                      //account for overlaps when viewing full resolution tiles
                      tileYPix += yOverlap_ / 2;
                      tileXPix += xOverlap_ / 2;
-                     System.arraycopy(tile.pix, tileYPix * fullResTileWidthIncludingOverlap_ + tileXPix, pixels, xOffset + width * line, lineWidths.get(col - colStart));                 
+                     System.arraycopy(tile.pix, tileYPix * fullResTileWidthIncludingOverlap_ + tileXPix, pixels, xOffset + width * line, lineWidths.get((int) (col - colStart)));                 
                   } else {
-                     System.arraycopy(tile.pix, tileYPix * tileWidth_ + tileXPix, pixels, xOffset + width * line, lineWidths.get(col - colStart));
+                     System.arraycopy(tile.pix, tileYPix * tileWidth_ + tileXPix, pixels, xOffset + width * line, lineWidths.get((int)(col - colStart)));
                   }
                } catch (Exception e) {
                   e.printStackTrace();
                   ReportingUtils.showError("Problem copying pixels");
                }
             }
-            yOffset += lineHeights.get(row - rowStart);
+            yOffset += lineHeights.get((int)(row - rowStart));
 
          }
-         xOffset += lineWidths.get(col - colStart);
+         xOffset += lineWidths.get((int)(col - colStart));
       }
       return new TaggedImage(pixels, topLeftMD);
    }

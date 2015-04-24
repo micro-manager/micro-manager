@@ -23,7 +23,7 @@ public abstract class Acquisition implements AcquisitionEventSource{
    //max numberof images that are held in queue to be saved
    private static final int OUTPUT_QUEUE_SIZE = 40;
    //number of acquisiton events held at any given time
-   public static final int ACQ_EVENT_QUEUE_SIZE = 40;
+   public static final int ACQ_EVENT_QUEUE_SIZE = 200;
    
    protected final double zStep_;
    protected final double zOrigin_;
@@ -96,10 +96,6 @@ public abstract class Acquisition implements AcquisitionEventSource{
       return finished_;
    }
    
-   @Override
-   public AcquisitionEvent getNextEvent() throws InterruptedException {
-      return events_.take();
-   }
    
    public abstract void abort();
    

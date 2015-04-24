@@ -717,6 +717,7 @@ public class GUI extends javax.swing.JFrame {
         runAcqButton_ = new javax.swing.JButton();
         configPropsButton_ = new javax.swing.JButton();
         jButton1 = new javax.swing.JButton();
+        createdByHenryLabel_ = new javax.swing.JLabel();
 
         jSplitPane1.setBorder(null);
         jSplitPane1.setDividerLocation(200);
@@ -2097,6 +2098,8 @@ public class GUI extends javax.swing.JFrame {
             }
         });
 
+        createdByHenryLabel_.setText("Created by Henry Pinkard at the University of California San Francisco 2014-2015");
+
         javax.swing.GroupLayout splitPaneBottomPanel_Layout = new javax.swing.GroupLayout(splitPaneBottomPanel_);
         splitPaneBottomPanel_.setLayout(splitPaneBottomPanel_Layout);
         splitPaneBottomPanel_Layout.setHorizontalGroup(
@@ -2109,7 +2112,9 @@ public class GUI extends javax.swing.JFrame {
                         .addGroup(splitPaneBottomPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(splitPaneBottomPanel_Layout.createSequentialGroup()
                                 .addComponent(runAcqButton_)
-                                .addGap(425, 425, 425)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(createdByHenryLabel_)
+                                .addGap(29, 29, 29)
                                 .addComponent(configPropsButton_)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(jButton1))
@@ -2185,10 +2190,12 @@ public class GUI extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(acqTabbedPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 264, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(splitPaneBottomPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(runAcqButton_)
-                    .addComponent(configPropsButton_)
-                    .addComponent(jButton1))
+                .addGroup(splitPaneBottomPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(splitPaneBottomPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(runAcqButton_)
+                        .addComponent(configPropsButton_)
+                        .addComponent(jButton1))
+                    .addComponent(createdByHenryLabel_, javax.swing.GroupLayout.Alignment.TRAILING))
                 .addContainerGap())
         );
 
@@ -2624,6 +2631,7 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JTable covariantPairValuesTable_;
     private javax.swing.JTable covariantPairingsTable_;
     private javax.swing.JPanel covariedSettingsTab_;
+    private javax.swing.JLabel createdByHenryLabel_;
     private javax.swing.JButton deinterleaveButton_;
     private javax.swing.JButton deleteAllRegionsButton_;
     private javax.swing.JButton deleteAllSurfacesButton_;
