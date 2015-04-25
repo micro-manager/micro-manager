@@ -42,6 +42,7 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.AcquisitionModes;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Data.Joystick;
 import org.micromanager.asidispim.Data.MultichannelModes;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Positions;
@@ -347,7 +348,7 @@ public class AutofocusUtils {
                   caller.refreshSelected();
 
                   // set galvo to best position
-                  positions_.setPosition(galvoDevice, bestScore);
+                  positions_.setPosition(galvoDevice, Joystick.Directions.Y, bestScore);
                      
                   posUpdater_.pauseUpdates(false);
 

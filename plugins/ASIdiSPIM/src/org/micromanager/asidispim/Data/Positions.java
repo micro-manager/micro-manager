@@ -198,7 +198,7 @@ public class Positions {
    /**
     * Returns cached position in string form for 1D stage
     * @param devKey
-    * @return
+    * @return cached position in string form
     */
    public String getPositionString(Devices.Keys devKey) {
       return getPositionString(devKey, Joystick.Directions.NONE);
@@ -206,8 +206,9 @@ public class Positions {
    
    /**
     * Sets the position of specified stage to the specified value using appropriate core calls
-    * @param devKey
+    * @param devKey stage whose position should be set
     * @param pos new position of the stage
+    * @return 
     */
    public boolean setPosition(Devices.Keys devKey, double pos) {
       return setPosition(devKey, Directions.NONE, pos, false);
