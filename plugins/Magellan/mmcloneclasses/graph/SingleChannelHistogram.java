@@ -44,6 +44,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import acq.MMImageCache;
+import imagedisplay.DisplayPlus;
 import mmcloneclasses.graph.HistogramPanel.CursorListener;
 import imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.MMStudio;
@@ -663,14 +664,14 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
    }
 
    @Override
-    public void imageChanged() {
-        boolean update = true;
-        if (display_.acquisitionIsRunning() ||
-                (MMStudio.getInstance().isLiveModeOn())) {
-            if (cp_.getHistogramControlsState().slowHist) {
-                long time = System.currentTimeMillis();
-                if (time - lastUpdateTime_ < SLOW_HIST_UPDATE_INTERVAL_MS) {
-                    update = false;
+   public void imageChanged() {
+      boolean update = true;
+      if (!((DisplayPlus) display_).getAcquisition().isFinished()
+              && !((DisplayPlus) display_).getAcquisition().isPaused()) {
+         if (cp_.getHistogramControlsState().slowHist) {
+            long time = System.currentTimeMillis();
+            if (time - lastUpdateTime_ < SLOW_HIST_UPDATE_INTERVAL_MS) {
+               update = false;
                 } else {
                     lastUpdateTime_ = time;
                 }

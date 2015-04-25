@@ -20,6 +20,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import bidc.CoreCommunicator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import misc.GlobalSettings;
 import misc.Log;
 import org.json.JSONArray;
@@ -33,7 +35,6 @@ import surfacesandregions.Point3d;
  */
 public class FixedAreaAcquisition extends Acquisition {
 
-   private volatile boolean paused_ = false;
    private FixedAreaAcquisitionSettings settings_;
    private int numTimePoints_;
    private List<XYStagePosition> positions_;
@@ -50,6 +51,7 @@ public class FixedAreaAcquisition extends Acquisition {
    private ExecutorService eventGenerator_;
    private CrossCorrelationAutofocus autofocus_;
    private int maxSliceIndex_ = 0;
+   private  double zTop_;
 
    /**
     * Acquisition with fixed XY positions (although they can potentially all be
@@ -150,10 +152,6 @@ public class FixedAreaAcquisition extends Acquisition {
       numTimePoints_ = settings_.timeEnabled_ ? settings_.numTimePoints_ : 1;
    }
 
-   public boolean isPaused() {
-      return paused_;
-   }
-
    public double getTimeInterval_ms() {
       return settings_.timePointInterval_ * (settings_.timeIntervalUnit_ == 1 ? 1000 : (settings_.timeIntervalUnit_ == 2 ? 60000 : 1));
    }
@@ -187,6 +185,9 @@ public class FixedAreaAcquisition extends Acquisition {
       if (finished_) {
          //acq already aborted
          return;
+      }
+      if (this.isPaused()) {
+         this.togglePaused();
       }
       //interrupt event generating thread
       eventGenerator_.shutdownNow();
@@ -275,6 +276,9 @@ public class FixedAreaAcquisition extends Acquisition {
          @Override
          public void run() {
             try {
+                     //TODO: check signs for all of these
+               //get highest possible z position to image, which is slice index 0
+               zTop_ = getZTopCoordinate();
                nextTimePointStartTime_ms_ = 0;
                for (int timeIndex = 0; timeIndex < numTimePoints_; timeIndex++) {
                   if (eventGenerator_.isShutdown()) {
@@ -301,13 +305,10 @@ public class FixedAreaAcquisition extends Acquisition {
 
                      int channelIndex = 0; //TODO: channels
 
-                     //TODO: check signs for all of these
-                     //get highest possible z position to image, which is slice index 0
-                     double zTop = getZTopCoordinate();
                      int sliceIndex = -1;
                      while (true) {
                         sliceIndex++;
-                        double zPos = zTop + sliceIndex * zStep_;
+                        double zPos = zTop_ + sliceIndex * zStep_;
                         if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D ||
                                 settings_.spaceMode_ == FixedAreaAcquisitionSettings.NO_SPACE) {
                            //2D region
@@ -433,19 +434,24 @@ public class FixedAreaAcquisition extends Acquisition {
       } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
          return settings_.zStart_;
       } else {
-         //region2D or no region
-         return zOrigin_;
+         try {
+            //region2D or no region
+            return core_.getPosition(zStage_);
+         } catch (Exception ex) {
+            Log.log("couldn't get z position");
+            throw new RuntimeException();
+         }
       }
    }
 
    @Override
    public double getZCoordinateOfSlice(int sliceIndex, int frameIndex) {
-      return getZTopCoordinate() + sliceIndex  * zStep_;
+      return zTop_ + sliceIndex  * zStep_;
    }
 
    @Override
-   public int getSliceIndexFromZCoordinate(double z, int frameIndex) {
-      return (int) Math.round((z - getZTopCoordinate()) / zStep_);
+   public int getSliceIndexFromZCoordinate(double z) {
+      return (int) Math.round((z - zTop_) / zStep_);
    }
 
    @Override
@@ -465,11 +471,6 @@ public class FixedAreaAcquisition extends Acquisition {
    @Override
    public int getFilterType() {
       return settings_.imageFilterType_;
-   }
-
-   @Override
-   public AcquisitionEvent getNextEvent() throws InterruptedException {
-     return events_.take();
    }
 
 }

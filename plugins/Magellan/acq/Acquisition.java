@@ -26,7 +26,6 @@ public abstract class Acquisition implements AcquisitionEventSource{
    public static final int ACQ_EVENT_QUEUE_SIZE = 200;
    
    protected final double zStep_;
-   protected final double zOrigin_;
    private BlockingQueue<TaggedImage> engineOutputQueue_;
    protected CMMCore core_ = MMStudio.getInstance().getCore();
    protected String xyStage_, zStage_;
@@ -41,6 +40,8 @@ public abstract class Acquisition implements AcquisitionEventSource{
    private long startTime_ms_ = -1;
    private MultiResMultipageTiffStorage imageStorage_;
    private int overlapX_, overlapY_;
+   private volatile boolean pause_ = false;
+   private Object pauseLock_ = new Object();
 
    public Acquisition(double zStep) throws Exception {
       xyStage_ = core_.getXYStageDevice();
@@ -56,10 +57,18 @@ public abstract class Acquisition implements AcquisitionEventSource{
        }
       zStep_ = zStep;
       events_ = new LinkedBlockingQueue<AcquisitionEvent>(ACQ_EVENT_QUEUE_SIZE);
-      zOrigin_ = core_.getPosition(zStage_);
       pixelSizeConfig_ = core_.getCurrentPixelSizeConfig();
    }
    
+   public AcquisitionEvent getNextEvent() throws InterruptedException {
+      synchronized (pauseLock_) {
+         while (pause_) {
+            pauseLock_.wait();
+         }
+      }   
+      return events_.take();
+   }
+
    public abstract double getRank();
    
    public abstract int getFilterType(); 
@@ -85,7 +94,7 @@ public abstract class Acquisition implements AcquisitionEventSource{
     */
    public abstract double getZCoordinateOfSlice(int displaySliceIndex, int displayFrameIndex);
 
-   public abstract int getSliceIndexFromZCoordinate(double z, int displayFrameIndex);
+   public abstract int getSliceIndexFromZCoordinate(double z);
 
    //TODO: change this when number of channels acutally implemented
    public int getNumChannels() {
@@ -156,5 +165,16 @@ public abstract class Acquisition implements AcquisitionEventSource{
    }
 
    protected abstract JSONArray createInitialPositionList();
+
+   public boolean isPaused() {
+      return pause_; 
+   }
+   
+   public void togglePaused() {
+      pause_ = !pause_;
+      synchronized (pauseLock_) {
+         pauseLock_.notifyAll();
+      }
+   }
 
 }

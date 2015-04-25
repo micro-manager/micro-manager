@@ -326,6 +326,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
             exploreStartTile_ = zoomableStack_.getTileIndicesFromDisplayedPixel(mouseDragStartPointLeft_.x, mouseDragStartPointLeft_.y);
             exploreEndTile_ = zoomableStack_.getTileIndicesFromDisplayedPixel(p2.x, p2.y);
          }
+         overlayer_.redrawOverlay();
       } else if (mode_ == NEWSURFACE) {
          if (SwingUtilities.isRightMouseButton(e) && !mouseDragging_) {
             //delete point if one is nearby

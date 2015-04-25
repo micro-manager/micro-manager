@@ -267,8 +267,8 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
     * @param displayedFrameIndex - 0 based
     * @return 
     */
-   public int getSliceIndexFromZCoordinate(double zPos, int displayedFrameIndex) {
-      return acquisition_.getSliceIndexFromZCoordinate(zPos, displayedFrameIndex);
+   public int getSliceIndexFromZCoordinate(double zPos) {
+      return acquisition_.getSliceIndexFromZCoordinate(zPos);
    }
 
    //this method is called to get the tagged image for display purposes only

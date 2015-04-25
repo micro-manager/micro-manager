@@ -6,6 +6,7 @@ import java.awt.GridLayout;
 import java.util.ArrayList;
 import javax.swing.JPanel;
 import acq.MMImageCache;
+import imagedisplay.DisplayPlus;
 import imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.ContrastSettings;
@@ -188,8 +189,8 @@ public final class MultiChannelHistograms extends JPanel implements Histograms {
    @Override
    public void imageChanged() {
      boolean update = true;
-        if (display_.acquisitionIsRunning() ||
-                (MMStudio.getInstance().isLiveModeOn())) {
+        if ( !((DisplayPlus) display_).getAcquisition().isFinished()  &&
+                !((DisplayPlus) display_).getAcquisition().isPaused()) {
             if (hcs_.slowHist) {
                 long time = System.currentTimeMillis();
                 if (time - lastUpdateTime_ < SLOW_HIST_UPDATE_INTERVAL_MS) {

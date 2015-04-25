@@ -218,8 +218,7 @@ public class DisplayPlusControls extends Panel {
       abortButton_.addActionListener(new ActionListener() {
 
          public void actionPerformed(ActionEvent e) {
-            display_.abort();
-
+            acq_.abort();
          }
       });
 
@@ -234,12 +233,7 @@ public class DisplayPlusControls extends Panel {
       pauseButton_.addActionListener(new java.awt.event.ActionListener() {
 
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-//            display_.pause();
-//               if (acqEng_.isPaused()) {
-//                  pauseButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/resultset_next.png"))); // NOI18N
-//               } else {
-//                  pauseButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/control_pause.png"))); // NOI18N
-//               }
+            pauseButtonAction();
          }
       });
       
@@ -349,6 +343,15 @@ public class DisplayPlusControls extends Panel {
 //            validate();
 //         }
 //      });
+   }
+
+   private void pauseButtonAction() {
+      acq_.togglePaused();
+      if (acq_.isPaused()) {
+         pauseButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/play.png"))); 
+      } else {
+         pauseButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/pause.png"))); 
+      }
    }
 
    private JPanel makeSurfaceControlPanel() {

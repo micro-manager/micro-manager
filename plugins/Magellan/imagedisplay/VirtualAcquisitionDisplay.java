@@ -633,44 +633,10 @@ public abstract class VirtualAcquisitionDisplay{
 //      bus_.post(new Scroll);
    }
 
-   public boolean pause() {
-//      if (eng_ != null) {
-//         if (eng_.isPaused()) {
-//            eng_.setPause(false);
-//         } else {
-//            eng_.setPause(true);
-//         }
-//         updateWindowTitleAndStatus();
-//         return (eng_.isPaused());
-//      }
-      return false;
-   }
 
-   public boolean abort() {
-//      if (eng_ != null) {
-//         if (eng_.abortRequest()) {
-//            updateWindowTitleAndStatus();
-//            return true;
-//         }
-//      }
-      return false;
-   }
 
-   public boolean acquisitionIsRunning() {
-//      if (eng_ != null) {
-//         return eng_.isAcquisitionRunning();
-//      } else {
-         return false;
-//      }
-   }
 
-   private boolean isPaused() {
-//      if (eng_ != null) {
-//         return eng_.isPaused();
-//      } else {
-         return false;
-//      }
-   }
+
    
    final public MMImagePlus createMMImagePlus(AcquisitionVirtualStack virtualStack) {
       MMImagePlus img = new MMImagePlus(imageCache_.getDiskLocation(), 

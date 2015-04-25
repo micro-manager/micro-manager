@@ -219,7 +219,8 @@ public class DisplayOverlayer {
                try {
                //always draw tiles waiting to be acquired
                   LinkedBlockingQueue<ExploreAcquisition.ExploreTileWaitingToAcquire> tiles = 
-                          ((ExploreAcquisition) acq_).getTilesWaitingToAcquireAtSlice(display_.getVisibleSliceIndex());
+                          ((ExploreAcquisition) acq_).getTilesWaitingToAcquireAtSlice(display_.getVisibleSliceIndex() +
+                                  ((ExploreAcquisition) acq_).getLowestExploredSliceIndex());
                   if (tiles != null) {
                      for (ExploreAcquisition.ExploreTileWaitingToAcquire t : tiles) {
                         highlightTilesOnOverlay(overlay, t.row, t.row, t.col, t.col, TRANSPARENT_GREEN);
@@ -276,7 +277,7 @@ public class DisplayOverlayer {
       }
       for (Point3d point : newSurface.getPoints()) {
          LongPoint displayLocation = display_.imageCoordsFromStageCoords(point.x, point.y);
-         int slice = zoomableStack_.getSliceIndexFromZCoordinate(point.z, display_.getVisibleFrameIndex());
+         int slice = zoomableStack_.getSliceIndexFromZCoordinate(point.z);
          if (slice != display_.getVisibleSliceIndex()) {
             continue;
          }

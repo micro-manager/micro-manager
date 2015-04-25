@@ -27,12 +27,14 @@ public class ExploreAcquisition extends Acquisition {
    private ExecutorService eventAdderExecutor_ = Executors.newSingleThreadExecutor();
    private int imageFilterType_;
    private ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>> queuedTileEvents_ = new ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>>();
-
+   private double zOrigin_;
+   
    public ExploreAcquisition(ExploreAcqSettings settings) throws Exception {
-      super(settings.zStep_);
+      super(settings.zStep_);   
       try {
          //start at current z position
          zTop_ = core_.getPosition(zStage_);
+         zOrigin_ = zTop_;
          zBottom_ = core_.getPosition(zStage_);
          imageFilterType_ = settings.filterType_;
          initialize(settings.dir_, settings.name_, settings.tileOverlap_);
@@ -48,6 +50,9 @@ public class ExploreAcquisition extends Acquisition {
    }
 
    public void abort() {
+      if (this.isPaused()) {
+         this.togglePaused();
+      }
       eventAdderExecutor_.shutdownNow();
       //wait for shutdown
       try {
@@ -72,6 +77,11 @@ public class ExploreAcquisition extends Acquisition {
       //image sink will call finish when it completes
    }
    
+   /**
+    * 
+    * @param sliceIndex 0 based slice index
+    * @return 
+    */
    public LinkedBlockingQueue<ExploreTileWaitingToAcquire> getTilesWaitingToAcquireAtSlice(int sliceIndex) {
       return queuedTileEvents_.get(sliceIndex);
    }
@@ -81,13 +91,6 @@ public class ExploreAcquisition extends Acquisition {
       //remove from tile queue for overlay drawing purposes
       int sliceIndex = e.sliceIndex_;
       queuedTileEvents_.get(sliceIndex).remove(new ExploreTileWaitingToAcquire(e.xyPosition_.getGridRow(), e.xyPosition_.getGridCol(), sliceIndex));
-   }
-
-   @Override
-   public AcquisitionEvent getNextEvent() throws InterruptedException {
-      AcquisitionEvent next = events_.take();
-      
-      return next;
    }
 
    public void acquireTiles(final int r1, final int c1, final int r2, final int c2) {
@@ -175,7 +178,7 @@ public class ExploreAcquisition extends Acquisition {
    }
 
    @Override
-   public int getSliceIndexFromZCoordinate(double z, int frameIndex) {
+   public int getSliceIndexFromZCoordinate(double z) {
       return (int) Math.round((z - zOrigin_) / zStep_) - lowestSliceIndex_;
    }
 
