@@ -1,5 +1,6 @@
 AUTOMAKE_OPTIONS = foreign subdir-objects
 mmautofocus_DATA = \
+	HardwareFocusExtender.jar \
 	MMAutofocus.jar \
 	MMAutofocusDuo.jar \
 	MMAutofocusTB.jar \
