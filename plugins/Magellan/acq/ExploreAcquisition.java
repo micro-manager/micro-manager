@@ -174,7 +174,7 @@ public class ExploreAcquisition extends Acquisition {
    }
 
    @Override
-   public double getZCoordinateOfSlice(int sliceIndex, int frameIndex) {
+   public double getZCoordinateOfSlice(int sliceIndex) {
       //No frames in explorer acquisition
       sliceIndex += lowestSliceIndex_;
       return zOrigin_ + zStep_ * sliceIndex;

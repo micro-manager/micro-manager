@@ -37,7 +37,7 @@ import surfacesandregions.SurfaceInterpolator;
  */
 public class DisplayOverlayer {
 
-   private final static int INTERP_POINT_DIAMETER = 6;
+   private final static int INTERP_POINT_DIAMETER = 12;
    private final static int INITIAL_NUM_INTERPOLATION_DIVISIONS = 10;
    private final static Color INTERP_POINT_COLOR = Color.GREEN;
    private final static Color CONVEX_HULL_COLOR = Color.GREEN;
@@ -316,7 +316,7 @@ public class DisplayOverlayer {
    }
 
    private void addStagePositions(Overlay overlay) throws InterruptedException {
-      double zPosition = zoomableStack_.getZCoordinateOfDisplayedSlice(display_.getVisibleSliceIndex(), display_.getVisibleFrameIndex());
+      double zPosition = zoomableStack_.getZCoordinateOfDisplayedSlice(display_.getVisibleSliceIndex());
       //this will block until interpolation detailed enough to show stage positions
       ArrayList<XYStagePosition> positionsAtSlice = display_.getCurrentSurface().getXYPositonsAtSlice(zPosition);
       for (XYStagePosition pos : positionsAtSlice) {
@@ -403,7 +403,7 @@ public class DisplayOverlayer {
       int width = display_.getImagePlus().getWidth();
       int height = display_.getImagePlus().getHeight();
       ZoomableVirtualStack zStack = (ZoomableVirtualStack) display_.virtualStack_;
-      double sliceZ = zStack.getZCoordinateOfDisplayedSlice(display_.getVisibleSliceIndex(), display_.getVisibleFrameIndex() );
+      double sliceZ = zStack.getZCoordinateOfDisplayedSlice(display_.getVisibleSliceIndex());
       double zStep = acq_.getZStep();
 
       //Make numTestPoints a factor of image size for clean display of surface

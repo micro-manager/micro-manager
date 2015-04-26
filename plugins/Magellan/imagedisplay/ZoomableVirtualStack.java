@@ -257,8 +257,8 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
     * @param displayedFrameIndex - 0 based
     * @return 
     */
-   public double getZCoordinateOfDisplayedSlice(int displayedSliceIndex, int displayedFrameIndex) {
-      return acquisition_.getZCoordinateOfSlice(displayedSliceIndex, displayedFrameIndex);
+   public double getZCoordinateOfDisplayedSlice(int displayedSliceIndex) {
+      return acquisition_.getZCoordinateOfSlice(displayedSliceIndex);
    }
    
    /**

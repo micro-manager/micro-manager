@@ -22,16 +22,18 @@ public class SingleResolutionInterpolation {
    
    private final int pixPerInterpPoint_;
    private final Double[][] interpolation_;
+   private final double[][] normals_; //stored in degrees
    private final double boundXMin_, boundXMax_, boundYMin_, boundYMax_;
    private Region<Euclidean2D> convexHullRegion_;
    //for extrapolation
    private TreeSet<Vector2D> convexHullVertices_;
    private Point3d[] allPoints_;
    
-   public SingleResolutionInterpolation(int pixPerPoint, Double[][] interp, double boundXMin, double boundXMax, double boundYMin, double boundYMax, 
+   public SingleResolutionInterpolation(int pixPerPoint, Double[][] interp, double[][] normals, double boundXMin, double boundXMax, double boundYMin, double boundYMax, 
            Region<Euclidean2D> ch, Vector2D[] convexHullVertices, Point3d[] allPoints ) {
       pixPerInterpPoint_ = pixPerPoint;
       interpolation_ = interp;      
+      normals_ = normals;
       boundXMax_ = boundXMax;
       boundYMax_ = boundYMax;
       boundXMin_ = boundXMin;
@@ -58,6 +60,28 @@ public class SingleResolutionInterpolation {
       return pixPerInterpPoint_;
    }
    
+ 
+   /**
+    * Get the angle of the surface normal at this point to vertical
+    * If extrpolated value, return 0
+    * @param x
+    * @param y
+    * @return 
+    */
+   public double getNormalAngleToVertical(double x, double y) {
+      if (!isInsideConvexHull(x, y)) {
+         return 0;
+      }
+      int numInterpPointsX = normals_[0].length;
+      int numInterpPointsY = normals_.length;
+      int xIndex = (int) Math.round(((x - boundXMin_) / (boundXMax_ - boundXMin_)) * (numInterpPointsX - 1));
+      int yIndex = (int) Math.round(((y - boundYMin_) / (boundYMax_ - boundYMin_)) * (numInterpPointsY - 1));
+      if (xIndex >= 0 && yIndex >= 0 && xIndex < normals_[0].length && yIndex < normals_.length) {
+         return normals_[yIndex][xIndex];
+      }
+      return 0;
+   }
+
    /**
     *
     * @param x

@@ -23,6 +23,8 @@ import org.micromanager.MMStudio;
  */
 public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
 
+   private static final double TOLERANCE = 0.1;
+   
    public SurfaceInterpolatorSimple(SurfaceManager manager, String xyName, String zName) {
       super(manager, xyName, zName);
    }
@@ -54,6 +56,7 @@ public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
          double dy = (boundYMax_ - boundYMin_) / (numInterpPointsY - 1);
 
          Double[][] interpVals = new Double[numInterpPointsY][numInterpPointsX];
+         double[][] interpNormals = new double[numInterpPointsY][numInterpPointsX];
          for (int yInd = 0; yInd < interpVals.length; yInd++) {
             for (int xInd = 0; xInd < interpVals[0].length; xInd++) {
                if (Thread.interrupted()) {
@@ -68,13 +71,16 @@ public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
                   Vector3D v1 = new Vector3D(tri.p1().x(), tri.p1().y(), tri.p1().z());
                   Vector3D v2 = new Vector3D(tri.p2().x(), tri.p2().y(), tri.p2().z());
                   Vector3D v3 = new Vector3D(tri.p3().x(), tri.p3().y(), tri.p3().z());
-                  Plane plane = new Plane(v1, v2, v3);
-
-                  Vector3D pointInPlane = (Vector3D) plane.intersection(new Line(new Vector3D(xVal, yVal, 0), new Vector3D(xVal, yVal, 1)));
+                  Plane plane = new Plane(v1, v2, v3, TOLERANCE);
+                  //intersetion of vertical line at these x+y values with plane gives point in plane
+                  Vector3D pointInPlane = (Vector3D) plane.intersection(new Line(new Vector3D(xVal, yVal, 0), new Vector3D(xVal, yVal, 1),TOLERANCE));
                   double zVal = (double) pointInPlane.getZ();
                   interpVals[yInd][xInd] = zVal;
+                  double angle = Vector3D.angle(plane.getNormal(),new Vector3D(0, 0, 1)) / Math.PI * 180.0;
+                  interpNormals[yInd][xInd] = angle;
                } else {
                   interpVals[yInd][xInd] = null;
+                  interpNormals[yInd][xInd] = 0;
                }
             }
          }
@@ -82,7 +88,7 @@ public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
             throw new InterruptedException();
          }
          synchronized (interpolationLock_) {
-            currentInterpolation_ = new SingleResolutionInterpolation(pixelsPerInterpPoint, interpVals, boundXMin_, boundXMax_, boundYMin_, boundYMax_,
+            currentInterpolation_ = new SingleResolutionInterpolation(pixelsPerInterpPoint, interpVals, interpNormals, boundXMin_, boundXMax_, boundYMin_, boundYMax_,
                     convexHullRegion_, convexHullVertices_, getPoints());
             interpolationLock_.notifyAll();
          }

@@ -5,10 +5,9 @@
 package surfacesandregions;
 
 import acq.FixedAreaAcquisitionSettings;
-import propsandcovariants.SurfaceData;
+import bidc.CoreCommunicator;
 import coordinates.AffineUtils;
 import coordinates.XYStagePosition;
-import gui.SettingsDialog;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
@@ -22,7 +21,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
-import bidc.CoreCommunicator;
 import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
 import org.apache.commons.math3.geometry.euclidean.twod.PolygonsSet;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
@@ -32,6 +30,7 @@ import org.apache.commons.math3.geometry.partitioning.Region;
 import org.apache.commons.math3.geometry.partitioning.RegionFactory;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.ReportingUtils;
+import propsandcovariants.SurfaceData;
 
 /**
  *
@@ -464,24 +463,36 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       manager_.updateSurfaceTableAndCombos();
    }
    
+   
+   public synchronized  void deletePointsWithinZRange(double zMin, double zMax) {
+      for (Point3d point : points_) {
+         if ( point.z >= zMin && point.z >= zMax) {
+            points_.remove(point);
+         }         
+      }
+
+      updateConvexHullAndInterpolate(); 
+      manager_.drawSurfaceOverlay(this);
+   }
+   
    /**
     * delete closest point within XY tolerance
     * @param x
     * @param y
-    * @param tolerance radius in stage space
+    * @param toleranceXY radius in stage space
     */
-   public synchronized void deleteClosestPoint(double x, double y, double tolerance) {
-      double minDistance = tolerance + 1;
+   public synchronized void deleteClosestPoint(double x, double y, double toleranceXY, double zMin, double zMax) {
+      double minDistance = toleranceXY + 1;
       Point3d minDistancePoint = null;      
       for (Point3d point : points_) {
          double distance = Math.sqrt( (x-point.x)*(x-point.x) + (y-point.y)*(y-point.y) );
-         if (distance < minDistance) {
+         if (distance < minDistance && point.z >= zMin && point.z <= zMax) {
             minDistance = distance;
             minDistancePoint = point;
          }         
       }
       //delete if within tolerance
-      if (minDistance < tolerance && minDistancePoint != null) {
+      if (minDistance < toleranceXY && minDistancePoint != null) {
          points_.remove(minDistancePoint);
       }
 

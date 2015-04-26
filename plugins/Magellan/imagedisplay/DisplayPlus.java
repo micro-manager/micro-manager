@@ -329,18 +329,26 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
          overlayer_.redrawOverlay();
       } else if (mode_ == NEWSURFACE) {
          if (SwingUtilities.isRightMouseButton(e) && !mouseDragging_) {
-            //delete point if one is nearby
-            Point2D.Double stagePos = stageCoordFromImageCoords(e.getPoint().x, e.getPoint().y);
-            //calculate tolerance
-            Point2D.Double toleranceStagePos = stageCoordFromImageCoords(e.getPoint().x + DELETE_SURF_POINT_PIXEL_TOLERANCE, e.getPoint().y + DELETE_SURF_POINT_PIXEL_TOLERANCE);
-            double stageDistanceTolerance = Math.sqrt((toleranceStagePos.x - stagePos.x) * (toleranceStagePos.x - stagePos.x)
-                    + (toleranceStagePos.y - stagePos.y) * (toleranceStagePos.y - stagePos.y));
-            currentSurface_.deleteClosestPoint(stagePos.x, stagePos.y, stageDistanceTolerance);
+            double z = zoomableStack_.getZCoordinateOfDisplayedSlice(DisplayPlus.this.getVisibleSliceIndex());
+            if (e.isShiftDown()) {
+               //delete all points at slice
+               currentSurface_.deletePointsWithinZRange(Math.min(z - acq_.getZStep()/2, z + acq_.getZStep()/2),
+                       Math.max(z - acq_.getZStep()/2, z + acq_.getZStep()/2));
+            } else {
+                 //delete point if one is nearby
+               Point2D.Double stagePos = stageCoordFromImageCoords(e.getPoint().x, e.getPoint().y);
+               //calculate tolerance
+               Point2D.Double toleranceStagePos = stageCoordFromImageCoords(e.getPoint().x + DELETE_SURF_POINT_PIXEL_TOLERANCE, e.getPoint().y + DELETE_SURF_POINT_PIXEL_TOLERANCE);
+               double stageDistanceTolerance = Math.sqrt((toleranceStagePos.x - stagePos.x) * (toleranceStagePos.x - stagePos.x)
+                       + (toleranceStagePos.y - stagePos.y) * (toleranceStagePos.y - stagePos.y));
+               currentSurface_.deleteClosestPoint(stagePos.x, stagePos.y, stageDistanceTolerance, Math.min(z - acq_.getZStep()/2, z + acq_.getZStep()/2),
+                       Math.max(z - acq_.getZStep()/2, z + acq_.getZStep()/2));
+            }
          } else if (SwingUtilities.isLeftMouseButton(e)) {
             //convert to real coordinates in 3D space
             //Click point --> full res pixel point --> stage coordinate
             Point2D.Double stagePos = stageCoordFromImageCoords(e.getPoint().x, e.getPoint().y);
-            double z = zoomableStack_.getZCoordinateOfDisplayedSlice(this.getVisibleSliceIndex(), this.getVisibleFrameIndex());
+            double z = zoomableStack_.getZCoordinateOfDisplayedSlice(this.getVisibleSliceIndex());
             if (currentSurface_ == null) {
                ReportingUtils.showError("Can't add point--No surface selected");
             } else {

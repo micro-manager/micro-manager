@@ -34,8 +34,7 @@ public class SurfaceData implements Covariant {
    public static String  DISTANCE_BELOW_SURFACE_CENTER = "Vertical distance below at XY position center";
    public static String  DISTANCE_BELOW_SURFACE_MINIMUM = "Minimum vertical distance below at XY position";
    public static String  DISTANCE_BELOW_SURFACE_MAXIMUM = "Maximum vertical distance below at XY position";
-   public static String  DISTANCE_FOR_MIN_INCIDENT_POWER = "Vertical distance for minimum incident power on top";
-   public static String  DISTANCE_FOR_MIN_INCIDENT_POWER_CENTER_CAPPED = "Vertical distance for minimum incident power on top (center distance capped)";
+   public static String  DISTANCE_FOR_MIN_INCIDENT_POWER = "Lymph Node optimal distance";
    
    private String category_;
    private SurfaceInterpolator surface_;
@@ -51,7 +50,7 @@ public class SurfaceData implements Covariant {
    
    public static String[] enumerateDataTypes() {
       return new String[] {DISTANCE_BELOW_SURFACE_CENTER, DISTANCE_BELOW_SURFACE_MINIMUM, 
-          DISTANCE_BELOW_SURFACE_MAXIMUM, DISTANCE_FOR_MIN_INCIDENT_POWER, DISTANCE_FOR_MIN_INCIDENT_POWER_CENTER_CAPPED};
+          DISTANCE_BELOW_SURFACE_MAXIMUM, DISTANCE_FOR_MIN_INCIDENT_POWER};
    }
    
    @Override
@@ -69,9 +68,8 @@ public class SurfaceData implements Covariant {
        } else if (category_.equals(DISTANCE_BELOW_SURFACE_MAXIMUM)) {
            return "Min distance to " + surface_.getName();
        } else if (category_.equals(DISTANCE_FOR_MIN_INCIDENT_POWER)) {
-           return "Min incident power distance to " + surface_.getName();
-       } else if (category_.equals(DISTANCE_FOR_MIN_INCIDENT_POWER_CENTER_CAPPED)) {
-           return "Min incident power distance to (center distance capped) " + surface_.getName();
+           return "Lymph node optimal distance for " + surface_.getName();
+ 
        } else {
            ReportingUtils.showError("Unknown Surface data type");
            throw new RuntimeException();
@@ -130,17 +128,25 @@ public class SurfaceData implements Covariant {
       }
    }
 
-   private double minIncidentPowerDistance(XYStagePosition xyPos, double zPosition, boolean centerCapped) {
-      Double interpValue = getDistanceToSurfaceAtPositionCenter(xyPos);
-      double centerDistance =   (interpValue == null ? 0 : zPosition - interpValue);
-      double minDist = distanceToSurface(xyPos.getFullTileCorners(), zPosition, true);
-      double maxDist = distanceToSurface(xyPos.getFullTileCorners(), zPosition, false);
-      if (minDist <= 0 ) {
-         return 0;
-      } 
-      return Math.min(centerCapped ? centerDistance : maxDist, Math.pow(minDist, 1.75));
+   private double minIncidentPowerDistance(XYStagePosition xyPos, double zPosition) {
+      // a special measure for curved surfaces, which gives:
+      //-min distance at surface on flatter parts of curved surface (ie top)
+      //-increased distance up to max distance as you go deeper
+      //-higher distance at surface on side to account for curved surface blocking out some of exciation light
+      double[] vals = distanceAndNormalCalc(xyPos.getFullTileCorners(), zPosition);
+      double extraDistance = 0; //pretend actually deeper in LN than we are to account for blockage by curved surface
+      if (vals[3] < 45) { //max normal angle greater than 45 
+         //twice as much power if angle goes to 0
+         //doubling distance ~40-70 um when b = 0.01-0.018 i exponent
+         //add extra distance to account for blockage by LN surface
+         extraDistance = (vals[3] / 45) * 40;
+      }
+      double curvatureCorrectedMin = vals[0] + extraDistance;
+      double curvatureCorrectedMax = vals[1] + extraDistance;
+      //slowly increase curvature corrected value to the curvature corrected max distance as you go deeper
+      return Math.min(curvatureCorrectedMax, curvatureCorrectedMin + Math.pow(vals[0], 1.5));
    }
-   
+
 //   private double minDistanceToSurfaceWithinAngleAtPoint(double x, double y, double z) {
 //      //first test point, if it is above surface, distance is 0
 //      Double interpVal = surface_.getCurrentInterpolation().getInterpolatedValue(x, y, true);
@@ -222,9 +228,9 @@ public class SurfaceData implements Covariant {
     * 
     * @param corners
     * @param min true to get min, false to get max
-    * @return 
+    * @return {minDistance,maxDistance, minNormalAngle, maxNormalAngle)
     */
-   private double distanceToSurface(Point2D.Double[] corners, double zVal, boolean min) {      
+   private double[] distanceAndNormalCalc(Point2D.Double[] corners, double zVal) {      
       //check a grid of points spanning entire position        
       //square is aligned with axes in pixel space, so convert to pixel space to generate test points
       double xSpan = corners[2].getX() - corners[0].getX();
@@ -238,6 +244,8 @@ public class SurfaceData implements Covariant {
       }
       double minDistance = Integer.MAX_VALUE;
       double maxDistance = Integer.MIN_VALUE;
+      double minNormalAngle = 90;
+      double maxNormalAngle = 0;
       for (double x = 0; x <= pixelSpan.x; x += pixelSpan.x / (double) NUM_XY_TEST_POINTS) {
          for (double y = 0; y <= pixelSpan.y; y += pixelSpan.y / (double) NUM_XY_TEST_POINTS) {
             //convert these abritray pixel coordinates back to stage coordinates
@@ -251,22 +259,23 @@ public class SurfaceData implements Covariant {
             transform.transform(new Point2D.Double(x, y), stageCoords);
             //test point for inclusion of position
             Double interpVal = surface_.getCurrentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, false);
+            double normalAngle = surface_.getCurrentInterpolation().getNormalAngleToVertical(stageCoords.x, stageCoords.y);
             if (interpVal == null) {
-              //if position is outside of convex hull, assume min distance is 0
-                if (min) {
-                    return 0;
-                } else  {
-                    //get extrapolated value
-                    interpVal = surface_.getCurrentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, true);
-                    maxDistance = Math.max(zVal - interpVal, maxDistance);
-                }
+               //if position is outside of convex hull, assume min distance is 0
+               minDistance = 0;
+               //get extrapolated value for max distance
+               interpVal = surface_.getCurrentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, true);
+               maxDistance = Math.max(zVal - interpVal, maxDistance);
+               //only take actual values for normals
             } else {
-                minDistance = Math.min(zVal - interpVal, minDistance);
-                maxDistance = Math.max(zVal - interpVal, maxDistance);
+               minDistance = Math.min(zVal - interpVal, minDistance);
+               maxDistance = Math.max(zVal - interpVal, maxDistance);
+               minNormalAngle = Math.min(minNormalAngle, normalAngle);
+               maxNormalAngle = Math.min(maxNormalAngle, normalAngle);
             }
-           }
-       }
-      return min ? minDistance : maxDistance;
+         }
+      }
+      return new double[]{minDistance, maxDistance, minNormalAngle, maxNormalAngle};
    }
 
     private Double getDistanceToSurfaceAtPositionCenter(XYStagePosition xyPos) {
@@ -283,13 +292,11 @@ public class SurfaceData implements Covariant {
          Double interpValue = getDistanceToSurfaceAtPositionCenter(xyPos);
          return new CovariantValue((interpValue == null ? 0 : event.zPosition_ - interpValue) );
       } else if (category_.equals(DISTANCE_BELOW_SURFACE_MINIMUM)) {
-         return new CovariantValue(distanceToSurface(xyPos.getFullTileCorners(), event.zPosition_, true));
+         return new CovariantValue(distanceAndNormalCalc(xyPos.getFullTileCorners(), event.zPosition_)[0]);
       } else if (category_.equals(DISTANCE_BELOW_SURFACE_MAXIMUM)) {
-         return new CovariantValue(distanceToSurface(xyPos.getFullTileCorners(), event.zPosition_, false));
+         return new CovariantValue(distanceAndNormalCalc(xyPos.getFullTileCorners(), event.zPosition_)[1]);
       } else if (category_.equals(DISTANCE_FOR_MIN_INCIDENT_POWER)) {
-          return new CovariantValue(minIncidentPowerDistance(xyPos, event.zPosition_, false));
-      } else if (category_.equals(DISTANCE_FOR_MIN_INCIDENT_POWER_CENTER_CAPPED)) {
-          return new CovariantValue(minIncidentPowerDistance(xyPos, event.zPosition_, true));
+          return new CovariantValue(minIncidentPowerDistance(xyPos, event.zPosition_));
       } else {
          ReportingUtils.showError("Unknown Surface data type");
          throw new RuntimeException();

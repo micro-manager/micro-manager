@@ -92,7 +92,7 @@ public abstract class Acquisition implements AcquisitionEventSource{
     * @param frameIndex -
     * @return
     */
-   public abstract double getZCoordinateOfSlice(int displaySliceIndex, int displayFrameIndex);
+   public abstract double getZCoordinateOfSlice(int displaySliceIndex);
 
    public abstract int getSliceIndexFromZCoordinate(double z);
 
