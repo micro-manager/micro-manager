@@ -35,6 +35,8 @@ import surfacesandregions.Point3d;
  */
 public class FixedAreaAcquisition extends Acquisition {
 
+    private static final int EVENT_QUEUE_CAP = 10; // so that surfaces can be dynamically changed during acq
+    
    private FixedAreaAcquisitionSettings settings_;
    private int numTimePoints_;
    private List<XYStagePosition> positions_;
@@ -182,7 +184,7 @@ public class FixedAreaAcquisition extends Acquisition {
     * abort acquisition. Block until successfully finished
     */
    public void abort() {      
-      if (finished_) {
+       if (finished_) {
          //acq already aborted
          return;
       }
@@ -472,5 +474,10 @@ public class FixedAreaAcquisition extends Acquisition {
    public int getFilterType() {
       return settings_.imageFilterType_;
    }
+
+    @Override
+    public int getAcqEventQueueCap() {
+        return EVENT_QUEUE_CAP;
+    }
 
 }

@@ -42,7 +42,7 @@ public class SurfaceDataImportDialog extends javax.swing.JDialog {
            }
        }
            
-      return SurfaceData.enumerateDataTypes()[surfaceList_.getSelectedIndex()];
+      return SurfaceData.enumerateDataTypes()[typeCombo_.getSelectedIndex()];
    }
    
    public String[] getSurfaceNames() {      

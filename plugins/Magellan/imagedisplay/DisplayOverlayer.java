@@ -37,9 +37,9 @@ import surfacesandregions.SurfaceInterpolator;
  */
 public class DisplayOverlayer {
 
-   private final static int INTERP_POINT_DIAMETER = 4;
+   private final static int INTERP_POINT_DIAMETER = 6;
    private final static int INITIAL_NUM_INTERPOLATION_DIVISIONS = 10;
-   private final static Color INTERP_POINT_COLOR = Color.orange;
+   private final static Color INTERP_POINT_COLOR = Color.GREEN;
    private final static Color CONVEX_HULL_COLOR = Color.GREEN;
    private static final Color NEW_GRID_COLOR = Color.red;
    private static final int[] ICE_RED = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 4, 7, 9, 11, 14, 16, 19, 20, 21, 22, 24, 25, 26, 27, 29, 31, 34, 36, 39, 42, 44, 47, 50, 49, 49, 49, 49, 48, 48, 48, 48, 51, 55, 59, 63, 67, 71, 75, 79, 83, 87, 91, 95, 99, 103, 107, 112, 114, 117, 120, 123, 125, 128, 131, 134, 137, 140, 143, 146, 149, 152, 155, 158, 161, 165, 168, 172, 175, 179, 182, 186, 187, 189, 191, 193, 195, 197, 199, 201, 203, 205, 207, 209, 211, 213, 215, 217, 218, 220, 221, 223, 224, 226, 227, 229, 230, 232, 233, 235, 237, 238, 240, 242, 243, 244, 245, 246, 247, 248, 249, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 251, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 250, 251, 251, 251, 251, 251, 251, 251, 251, 251, 250, 249, 248, 247, 246, 245, 244, 243, 241, 239, 238, 236, 234, 233, 231, 230, 230, 230, 230, 230, 230, 230, 230};
@@ -283,6 +283,7 @@ public class DisplayOverlayer {
          }
 
          Roi circle = new OvalRoi(displayLocation.x_ - INTERP_POINT_DIAMETER / 2, displayLocation.y_ - INTERP_POINT_DIAMETER / 2, INTERP_POINT_DIAMETER, INTERP_POINT_DIAMETER);
+         circle.setFillColor(INTERP_POINT_COLOR);
          circle.setStrokeColor(INTERP_POINT_COLOR);
          overlay.add(circle);
       }

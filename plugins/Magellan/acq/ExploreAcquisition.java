@@ -22,6 +22,9 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class ExploreAcquisition extends Acquisition {
 
+    private static final int EXPLORE_EVENT_QUEUE_CAP = 250; //big so you can see a lot of tiles waiting to be acquired
+    
+    
    private volatile double zTop_, zBottom_;
    private volatile int lowestSliceIndex_ = 0, highestSliceIndex_ = 0;
    private ExecutorService eventAdderExecutor_ = Executors.newSingleThreadExecutor();
@@ -265,6 +268,11 @@ public class ExploreAcquisition extends Acquisition {
    public int getFilterType() {
       return imageFilterType_;
    }
+
+    @Override
+    public int getAcqEventQueueCap() {
+        return EXPLORE_EVENT_QUEUE_CAP;
+    }
    
    //slice and row/col index of an acquisition event in the queue
    public class ExploreTileWaitingToAcquire {

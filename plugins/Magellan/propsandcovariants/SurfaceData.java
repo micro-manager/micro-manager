@@ -64,18 +64,18 @@ public class SurfaceData implements Covariant {
    public String getAbbreviatedName() {
       if (category_.equals(DISTANCE_BELOW_SURFACE_CENTER)) {
          return "Vertical distance to " + surface_.getName();
-      } else if (category_.equals(DISTANCE_BELOW_SURFACE_MINIMUM)) {
-         return "Min vertical distance to " + surface_.getName();
-      } else if (category_.equals(DISTANCE_BELOW_SURFACE_MAXIMUM)) {
-         return "Min distance to " + surface_.getName();
-      } else if (category_.equals(DISTANCE_FOR_MIN_INCIDENT_POWER)) {
-         return "Min incident power distance to " + surface_.getName();
-           } else if (category_.equals(DISTANCE_FOR_MIN_INCIDENT_POWER_CENTER_CAPPED)) {
-         return "Min incident power distance to (center distance capped) " + surface_.getName();
-      } else {
-         ReportingUtils.showError("Unknown Surface data type");
-         throw new RuntimeException();
-      }
+       } else if (category_.equals(DISTANCE_BELOW_SURFACE_MINIMUM)) {
+           return "Min vertical distance to " + surface_.getName();
+       } else if (category_.equals(DISTANCE_BELOW_SURFACE_MAXIMUM)) {
+           return "Min distance to " + surface_.getName();
+       } else if (category_.equals(DISTANCE_FOR_MIN_INCIDENT_POWER)) {
+           return "Min incident power distance to " + surface_.getName();
+       } else if (category_.equals(DISTANCE_FOR_MIN_INCIDENT_POWER_CENTER_CAPPED)) {
+           return "Min incident power distance to (center distance capped) " + surface_.getName();
+       } else {
+           ReportingUtils.showError("Unknown Surface data type");
+           throw new RuntimeException();
+       }
    }
 
     @Override

@@ -22,8 +22,6 @@ public abstract class Acquisition implements AcquisitionEventSource{
 
    //max numberof images that are held in queue to be saved
    private static final int OUTPUT_QUEUE_SIZE = 40;
-   //number of acquisiton events held at any given time
-   public static final int ACQ_EVENT_QUEUE_SIZE = 200;
    
    protected final double zStep_;
    private BlockingQueue<TaggedImage> engineOutputQueue_;
@@ -56,7 +54,7 @@ public abstract class Acquisition implements AcquisitionEventSource{
            }
        }
       zStep_ = zStep;
-      events_ = new LinkedBlockingQueue<AcquisitionEvent>(ACQ_EVENT_QUEUE_SIZE);
+      events_ = new LinkedBlockingQueue<AcquisitionEvent>(getAcqEventQueueCap());
       pixelSizeConfig_ = core_.getCurrentPixelSizeConfig();
    }
    
@@ -72,6 +70,8 @@ public abstract class Acquisition implements AcquisitionEventSource{
    public abstract double getRank();
    
    public abstract int getFilterType(); 
+   
+   public abstract int getAcqEventQueueCap();
 
    public MultiResMultipageTiffStorage getStorage() {
       return imageStorage_;
