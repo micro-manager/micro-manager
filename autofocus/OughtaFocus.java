@@ -90,6 +90,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       imageCount_ = 0;
    }
 
+   @Override
    public void applySettings() {
       try {
          searchRange = NumberUtils.displayStringToDouble(getPropertyValue(SEARCH_RANGE));
@@ -108,10 +109,12 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       }
    }
 
+   @Override
    public String getDeviceName() {
       return AF_DEVICE_NAME;
    }
 
+   @Override
    public double fullFocus() throws MMException {
       startTimeMs_ = System.currentTimeMillis();
       applySettings();
@@ -269,18 +272,22 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       }
    }
 
+   @Override
    public double incrementalFocus() throws MMException {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
+   @Override
    public int getNumberOfImages() {
       return imageCount_;
    }
 
+   @Override
    public String getVerboseStatus() {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
+   @Override
    public double getCurrentFocusScore() {
       CMMCore core = app_.getMMCore();
       double score = 0.0;
@@ -302,6 +309,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       return score;
    }
 
+   @Override
    public void focus(double coarseStep, int numCoarse, double fineStep, int numFine) throws MMException {
       throw new UnsupportedOperationException("Not supported yet.");
    }

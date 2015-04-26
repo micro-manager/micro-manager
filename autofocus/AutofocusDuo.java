@@ -31,6 +31,7 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.AutofocusBase;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.PropertyItem;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * ImageJ plugin wrapper for uManager.
@@ -74,8 +75,7 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
          autoFocus1_ = getPropertyValue(KEY_AUTOFOCUS1);
          autoFocus2_ = getPropertyValue(KEY_AUTOFOCUS2);
       } catch (MMException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
+         ReportingUtils.logError(e);
       }
       
    }
