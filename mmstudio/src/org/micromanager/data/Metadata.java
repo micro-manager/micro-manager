@@ -78,6 +78,9 @@ public interface Metadata {
       MetadataBuilder ROI(Rectangle ROI);
       MetadataBuilder source(String source);
       MetadataBuilder startTimeMs(Double startTimeMs);
+      MetadataBuilder acquisitionData(PropertyMap acquisitionData);
+      MetadataBuilder deviceAdapterData(PropertyMap deviceAdapterData);
+      MetadataBuilder coreData(PropertyMap coreData);
       MetadataBuilder userData(PropertyMap userData);
       MetadataBuilder uuid(UUID uuid);
       MetadataBuilder xPositionUm(Double xPositionUm);
@@ -125,6 +128,32 @@ public interface Metadata {
    Integer getIjType();
    /** The sequence number of this image, for sequence acquisitions */
    Long getImageNumber();
+
+   /**
+    * Any metadata provided by the acquisition engine that is specific to this
+    * image.
+    * @return Metadata from the acquisition engine
+    */
+   public PropertyMap getAcquisitionData();
+
+   /**
+    * Any metadata provided by the Micro-Manager Core that is specific to this
+    * image.
+    * @return Metadata from the Core
+    */
+   public PropertyMap getCoreData();
+
+   /**
+    * A description of the Core's understanding of the current state of all
+    * device properties at the time this image was collected. It is possible
+    * that the values in this object are not up to date, as devices are allowed
+    * to change their settings without notifying the Core, and the Core does
+    * not manually update its copy of device settings after each image, for
+    * performance reasons.
+    * @return Potentially out-of-date device property information
+    */
+   public PropertyMap getDeviceAdapterData();
+
    /** Arbitrary additional metadata */
    PropertyMap getUserData();
    /** List of stage positions at the start of the acquisition (e.g. not taking
