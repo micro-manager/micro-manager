@@ -65,12 +65,28 @@ public class GlobalSettings {
         }
     }
    
+    public void storeIntInPrefs(String key, Integer value) {
+       prefs_.putInt(key, value);
+   }
+   
+   public int getIntInPrefs(String key) {
+       return prefs_.getInt(key, Integer.MIN_VALUE);
+   }
+   
    public void storeStringInPrefs(String key, String value) {
        prefs_.put(key, value);
    }
    
    public String getStringInPrefs(String key) {
        return prefs_.get(key, null);
+   }
+   
+   public void storeDoubleInPrefs(String key, double d) {
+      prefs_.putDouble(key, d);
+   }
+   
+   public double getDoubleInPrefs(String key) {
+      return prefs_.getDouble(key, -1);
    }
    
    public static GlobalSettings getInstance() {

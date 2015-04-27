@@ -86,7 +86,7 @@ public abstract class VirtualAcquisitionDisplay{
    private ImagePlus hyperImage_;
    protected SubImageControls subImageControls_;
    public AcquisitionVirtualStack virtualStack_;
-   private ContrastMetadataCommentsPanel cmcPanel_;
+   private ContrastMetadataPanel cmcPanel_;
    private boolean contrastInitialized_ = false; //used for autostretching on window opening
    private boolean firstImage_ = true;
    private String channelGroup_ = "none";
@@ -127,7 +127,7 @@ public abstract class VirtualAcquisitionDisplay{
       setupDisplayThread();
    }
    
-   public void setCMCPanel(ContrastMetadataCommentsPanel panel) {
+   public void setCMCPanel(ContrastMetadataPanel panel) {
       cmcPanel_ = panel;
    }
 
@@ -529,9 +529,7 @@ public abstract class VirtualAcquisitionDisplay{
             frame == 0) {
          IMMImagePlus img = (IMMImagePlus) hyperImage_;
          if (img.getNChannelsUnverified() == 1) {
-            if (img.getNSlicesUnverified() == 1) {
-               hyperImage_.getProcessor().setPixels(virtualStack_.getPixels(1));
-            }
+               hyperImage_.getProcessor().setPixels(virtualStack_.getPixels(hyperImage_.getCurrentSlice()));
          } else if (hyperImage_ instanceof MMCompositeImage) {
             //reset rebuilds each of the channel ImageProcessors with the correct pixels
             //from AcquisitionVirtualStack
@@ -763,26 +761,6 @@ public abstract class VirtualAcquisitionDisplay{
          } catch (IOException ex) {
             ReportingUtils.logError(ex);
          }
-      }
-   }
-
-   public String getSummaryComment() {
-      return imageCache_.getComment();
-   }
-
-   public void setSummaryComment(String comment) {
-      imageCache_.setComment(comment);
-   }
-
-   void setImageComment(String comment) {
-      imageCache_.setImageComment(comment, getCurrentMetadata());
-   }
-
-   String getImageComment() {
-      try {
-         return imageCache_.getImageComment(getCurrentMetadata());
-      } catch (NullPointerException ex) {
-         return "";
       }
    }
 

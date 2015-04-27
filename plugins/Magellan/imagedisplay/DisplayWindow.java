@@ -40,7 +40,7 @@ public class DisplayWindow extends StackWindow {
    private DisplayPlus disp_;
    private JPanel nonImagePanel_, controlsAndContrastPanel_;
    private volatile boolean saveWindowResize_ = false;
-   private ContrastMetadataCommentsPanel cmcPanel_;
+   private ContrastMetadataPanel cmcPanel_;
    private DisplayPlusControls dpControls_;
    
    // store window location in Java Preferences
@@ -130,7 +130,7 @@ public class DisplayWindow extends StackWindow {
 
 
       //create contrast, metadata, and other controls
-      cmcPanel_ = new ContrastMetadataCommentsPanel(disp);
+      cmcPanel_ = new ContrastMetadataPanel(disp);
       disp.setCMCPanel(cmcPanel_);
       dpControls_ = new DisplayPlusControls(disp, bus, disp.getAcquisition());
 

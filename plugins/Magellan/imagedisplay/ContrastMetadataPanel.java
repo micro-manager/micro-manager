@@ -48,13 +48,8 @@ import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
 
-public class ContrastMetadataCommentsPanel extends Panel  {
+public class ContrastMetadataPanel extends Panel  {
 
-   private JSplitPane CommentsSplitPane;
-   private JLabel imageCommentsLabel;
-   private JPanel imageCommentsPanel;
-   private JScrollPane imageCommentsScrollPane;
-   private JTextArea imageCommentsTextArea;
    private JPanel imageMetadataScrollPane;
    private JTable imageMetadataTable;
    private JScrollPane imageMetadataTableScrollPane;
@@ -62,10 +57,6 @@ public class ContrastMetadataCommentsPanel extends Panel  {
    private JLabel jLabel3;
    private JSplitPane metadataSplitPane;
    private JCheckBox showUnchangingPropertiesCheckbox;
-   private JLabel summaryCommentsLabel;
-   private JPanel summaryCommentsPane;
-   private JScrollPane summaryCommentsScrollPane;
-   private JTextArea summaryCommentsTextArea;
    private JPanel summaryMetadataPanel;
    private JScrollPane summaryMetadataScrollPane;
    private JTable summaryMetadataTable;
@@ -80,7 +71,7 @@ public class ContrastMetadataCommentsPanel extends Panel  {
    private Histograms histograms_;
 
    /** Creates new form MetadataPanel */
-   public ContrastMetadataCommentsPanel(VirtualAcquisitionDisplay display) {
+   public ContrastMetadataPanel(VirtualAcquisitionDisplay display) {
       imageMetadataModel_ = new MetadataTableModel();
       summaryMetadataModel_ = new MetadataTableModel();
       contrastPanel_ = new ContrastPanel();
@@ -88,8 +79,6 @@ public class ContrastMetadataCommentsPanel extends Panel  {
       initialize();
       imageMetadataTable.setModel(imageMetadataModel_);
       summaryMetadataTable.setModel(summaryMetadataModel_);
-      addTextChangeListeners();
-      addFocusListeners();
    }
    
    public ContrastPanel getContrastPanel() {
@@ -104,8 +93,6 @@ public class ContrastMetadataCommentsPanel extends Panel  {
    public void initialize(DisplayPlus display) {
       //setup for use with a single display
       currentDisplay_ = display;
-      summaryCommentsTextArea.setText(currentDisplay_.getSummaryComment());
-      imageCommentsTextArea.setText(currentDisplay_.getImageComment());
       if (currentDisplay_.getNumChannels() == 1) {
          histograms_ = new SingleChannelHistogram(currentDisplay_, contrastPanel_);
       } else {
@@ -132,15 +119,7 @@ public class ContrastMetadataCommentsPanel extends Panel  {
       summaryMetadataScrollPane = new JScrollPane();
       summaryMetadataTable = new JTable();
       jLabel3 = new JLabel();
-      CommentsSplitPane = new JSplitPane();
-      summaryCommentsPane = new JPanel();
-      summaryCommentsLabel = new JLabel();
-      summaryCommentsScrollPane = new JScrollPane();
-      summaryCommentsTextArea = new JTextArea();
-      imageCommentsPanel = new JPanel();
-      imageCommentsLabel = new JLabel();
-      imageCommentsScrollPane = new JScrollPane();
-      imageCommentsTextArea = new JTextArea();
+
 
       tabbedPane.setFocusable(false);
       tabbedPane.setPreferredSize(new java.awt.Dimension(400, 640));
@@ -152,7 +131,7 @@ public class ContrastMetadataCommentsPanel extends Panel  {
          }
       });
 
-      tabbedPane.addTab("Contrast", contrastPanel_);
+      tabbedPane.addTab("<html><body leftmargin=25 topmargin=8 marginwidth=25 marginheight=5>Contrast</body></html>", contrastPanel_);
 
       metadataSplitPane.setBorder(null);
       metadataSplitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
@@ -244,53 +223,7 @@ public class ContrastMetadataCommentsPanel extends Panel  {
 
       metadataSplitPane.setLeftComponent(summaryMetadataPanel);
 
-      tabbedPane.addTab("Metadata", metadataSplitPane);
-
-      CommentsSplitPane.setBorder(null);
-      CommentsSplitPane.setDividerLocation(200);
-      CommentsSplitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
-
-      summaryCommentsLabel.setText("Acquisition comments:");
-
-      summaryCommentsTextArea.setColumns(20);
-      summaryCommentsTextArea.setLineWrap(true);
-      summaryCommentsTextArea.setRows(1);
-      summaryCommentsTextArea.setTabSize(3);
-      summaryCommentsTextArea.setToolTipText("Enter your comments for the whole acquisition here");
-      summaryCommentsTextArea.setWrapStyleWord(true);
-      summaryCommentsScrollPane.setViewportView(summaryCommentsTextArea);
-
-      javax.swing.GroupLayout summaryCommentsPaneLayout = new javax.swing.GroupLayout(summaryCommentsPane);
-      summaryCommentsPane.setLayout(summaryCommentsPaneLayout);
-      summaryCommentsPaneLayout.setHorizontalGroup(
-              summaryCommentsPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addGroup(summaryCommentsPaneLayout.createSequentialGroup().addComponent(summaryCommentsLabel).addContainerGap(491, Short.MAX_VALUE)).addComponent(summaryCommentsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 620, Short.MAX_VALUE));
-      summaryCommentsPaneLayout.setVerticalGroup(
-              summaryCommentsPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addGroup(summaryCommentsPaneLayout.createSequentialGroup().addComponent(summaryCommentsLabel).addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED).addComponent(summaryCommentsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 177, Short.MAX_VALUE)));
-
-      CommentsSplitPane.setLeftComponent(summaryCommentsPane);
-
-      imageCommentsPanel.setPreferredSize(new java.awt.Dimension(500, 300));
-
-      imageCommentsLabel.setText("Per-image comments:");
-
-      imageCommentsTextArea.setColumns(20);
-      imageCommentsTextArea.setLineWrap(true);
-      imageCommentsTextArea.setRows(1);
-      imageCommentsTextArea.setTabSize(3);
-      imageCommentsTextArea.setToolTipText("Comments for each image may be entered here.");
-      imageCommentsTextArea.setWrapStyleWord(true);
-      imageCommentsScrollPane.setViewportView(imageCommentsTextArea);
-
-      javax.swing.GroupLayout imageCommentsPanelLayout = new javax.swing.GroupLayout(imageCommentsPanel);
-      imageCommentsPanel.setLayout(imageCommentsPanelLayout);
-      imageCommentsPanelLayout.setHorizontalGroup(
-              imageCommentsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addGroup(imageCommentsPanelLayout.createSequentialGroup().addComponent(imageCommentsLabel).addGap(400, 400, 400)).addComponent(imageCommentsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 620, Short.MAX_VALUE));
-      imageCommentsPanelLayout.setVerticalGroup(
-              imageCommentsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addGroup(imageCommentsPanelLayout.createSequentialGroup().addComponent(imageCommentsLabel).addGap(0, 0, 0).addComponent(imageCommentsScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 429, Short.MAX_VALUE)));
-
-      CommentsSplitPane.setRightComponent(imageCommentsPanel);
-
-      tabbedPane.addTab("Comments", CommentsSplitPane);
+      tabbedPane.addTab("<html><body leftmargin=25 topmargin=8 marginwidth=25 marginheight=5>Metadata</body></html>\"", metadataSplitPane);
 
       GroupLayout layout = new GroupLayout(this);
       this.setLayout(layout);
@@ -308,69 +241,7 @@ public class ContrastMetadataCommentsPanel extends Panel  {
    private void tabbedPaneStateChanged(ChangeEvent evt) {   
       imageChangedUpdate(currentDisplay_);         
    }
-
-   private void addFocusListeners() {
-      FocusListener listener = new FocusListener() {
-         @Override
-         public void focusGained(FocusEvent e) { }
-         @Override
-         public void focusLost(FocusEvent e) {
-            if (currentDisplay_ != null) {
-               currentDisplay_.imageCache_.writeDisplaySettings();
-            }
-         }        
-      };
-      summaryCommentsTextArea.addFocusListener(listener);
-      imageCommentsTextArea.addFocusListener(listener);
-   }
-   
-   private void addTextChangeListeners() {
-      summaryCommentsTextArea.getDocument().addDocumentListener(new DocumentListener() {
-
-         private void handleChange() {
-            if (currentDisplay_ != null)
-               writeSummaryComments();
-         }
-
-         @Override
-         public void insertUpdate(DocumentEvent e) {
-            handleChange();
-         }
-
-         @Override
-         public void removeUpdate(DocumentEvent e) {
-            handleChange();
-         }
-
-         @Override
-         public void changedUpdate(DocumentEvent e) {
-            handleChange();
-         }
-      });
-
-      imageCommentsTextArea.getDocument().addDocumentListener(new DocumentListener() {
-
-         private void handleChange() {
-            if (currentDisplay_ != null)
-               writeImageComments();
-         }
-
-         @Override
-         public void insertUpdate(DocumentEvent e) {
-            handleChange();
-         }
-
-         @Override
-         public void removeUpdate(DocumentEvent e) {
-            handleChange();
-         }
-
-         @Override
-         public void changedUpdate(DocumentEvent e) {
-            handleChange();
-         }
-      });
-   }
+       
 
    class MetadataTableModel extends AbstractTableModel {
 
@@ -459,18 +330,6 @@ public class ContrastMetadataCommentsPanel extends Panel  {
       return mdChanging;
    }
 
-   private void writeSummaryComments() {
-      if (currentDisplay_ == null)
-         return;
-      currentDisplay_.setSummaryComment(summaryCommentsTextArea.getText());    
-   }
-
-   private void writeImageComments() {
-      if (currentDisplay_ == null)
-         return;
-      currentDisplay_.setImageComment(imageCommentsTextArea.getText());
-   }
-
    private MMImageCache getCache(ImagePlus imgp) {
       if (VirtualAcquisitionDisplay.getDisplay(imgp) != null) {
          return VirtualAcquisitionDisplay.getDisplay(imgp).imageCache_;
@@ -501,8 +360,6 @@ public class ContrastMetadataCommentsPanel extends Panel  {
       if (disp == null ) {
          imageMetadataModel_.setMetadata(null);
          summaryMetadataModel_.setMetadata(null);
-         summaryCommentsTextArea.setText("");
-         imageCommentsTextArea.setText("");
          contrastPanel_.imageChanged();
       } else {
          if (updateTimer_ == null) {
@@ -511,8 +368,6 @@ public class ContrastMetadataCommentsPanel extends Panel  {
          TimerTask task = new TimerTask() {
             @Override
             public void run() {
-               //Update image comment
-               imageCommentsTextArea.setText(disp.getImageComment());
                AcquisitionVirtualStack stack = disp.virtualStack_;
                if (stack != null) {
                   JSONObject md = disp.getCurrentMetadata();

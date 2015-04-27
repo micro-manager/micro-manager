@@ -54,7 +54,13 @@ import coordinates.AffineCalibrator;
 import coordinates.AffineGUI;
 import bidc.CoreCommunicator;
 import bidc.FrameIntegrationMethod;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.LinkedList;
+import javax.swing.JSplitPane;
 import misc.GlobalSettings;
 
 /**
@@ -63,6 +69,9 @@ import misc.GlobalSettings;
  */
 public class GUI extends javax.swing.JFrame {
 
+   private static final String PREF_SIZE_WIDTH = "Magellan gui size width";
+   private static final String PREF_SIZE_HEIGHT = "Magellan gui size height";
+   private static final String PREF_SPLIT_PANE = "split pane location";
     private static final Color DARK_GREEN = new Color(0, 128, 0);
     private ScriptInterface mmAPI_;
     private CustomAcqEngine eng_;
@@ -93,7 +102,7 @@ public class GUI extends javax.swing.JFrame {
         updatePropertiesTable();
         addTextFieldListeners();
         addGlobalSettingsListeners();
-        storeCurrentAcqSettings();
+        storeCurrentAcqSettings();       
     }
 
     public void acquisitionSettingsChanged() {
@@ -212,6 +221,35 @@ public class GUI extends javax.swing.JFrame {
         populateAcqControls(multiAcqManager_.getAcquisitionSettings(0));
         enableAcquisitionComponentsAsNeeded();
 
+        int width = settings_.getIntInPrefs(PREF_SIZE_WIDTH);
+        int height = settings_.getIntInPrefs(PREF_SIZE_HEIGHT);
+        if (height != Integer.MIN_VALUE && width != Integer.MIN_VALUE) {
+           this.setSize(width, height);
+        }
+        
+        int splitPane = settings_.getIntInPrefs(PREF_SPLIT_PANE);
+        if (splitPane != Integer.MIN_VALUE) {
+           splitPane_.setDividerLocation(splitPane);
+        }
+
+        //save resizing
+        this.addComponentListener(new ComponentAdapter() {
+           @Override
+           public void componentResized(ComponentEvent e) {
+              settings_.storeIntInPrefs(PREF_SIZE_WIDTH, GUI.this.getWidth());
+              settings_.storeIntInPrefs(PREF_SIZE_HEIGHT, GUI.this.getHeight());
+          }
+       });
+       //save splitpane position
+       splitPane_.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY, new PropertyChangeListener() {
+
+           @Override
+           public void propertyChange(PropertyChangeEvent evt) {
+              settings_.storeIntInPrefs(PREF_SPLIT_PANE, splitPane_.getDividerLocation());
+           }
+       });
+        
+        
        if (GlobalSettings.getInstance().isBIDCTwoPhoton()) {
           //store offsetSpinners in list for fast access
           offsetSpinners_.add(ch0OffsetSpinner_);
@@ -553,7 +591,7 @@ public class GUI extends javax.swing.JFrame {
       zStackModeButtonGroup_ = new javax.swing.ButtonGroup();
       filterMethodButtonGroup_ = new javax.swing.ButtonGroup();
       exploreFilterMethodButtonGroup_ = new javax.swing.ButtonGroup();
-      jSplitPane1 = new javax.swing.JSplitPane();
+      splitPane_ = new javax.swing.JSplitPane();
       splitPaneTopPanel_ = new javax.swing.JTabbedPane();
       controlPanelName_ = new javax.swing.JPanel();
       deviceControlScrollPane_ = new javax.swing.JScrollPane();
@@ -719,9 +757,9 @@ public class GUI extends javax.swing.JFrame {
       jButton1 = new javax.swing.JButton();
       createdByHenryLabel_ = new javax.swing.JLabel();
 
-      jSplitPane1.setBorder(null);
-      jSplitPane1.setDividerLocation(200);
-      jSplitPane1.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+      splitPane_.setBorder(null);
+      splitPane_.setDividerLocation(200);
+      splitPane_.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
 
       deviceControlScrollPane_.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
@@ -743,7 +781,7 @@ public class GUI extends javax.swing.JFrame {
       );
       controlPanelName_Layout.setVerticalGroup(
          controlPanelName_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addComponent(deviceControlScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 172, Short.MAX_VALUE)
+         .addComponent(deviceControlScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 147, Short.MAX_VALUE)
       );
 
       splitPaneTopPanel_.addTab("Device status/control", controlPanelName_);
@@ -851,7 +889,7 @@ public class GUI extends javax.swing.JFrame {
          multipleAcquisitionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, multipleAcquisitionsPanelLayout.createSequentialGroup()
             .addContainerGap()
-            .addComponent(multipleAcqScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 121, Short.MAX_VALUE)
+            .addComponent(multipleAcqScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 99, Short.MAX_VALUE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
       );
@@ -892,7 +930,7 @@ public class GUI extends javax.swing.JFrame {
       gridsPanel_Layout.setVerticalGroup(
          gridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(gridsPanel_Layout.createSequentialGroup()
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 143, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 111, Short.MAX_VALUE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(gridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(deleteSelectedRegionButton_)
@@ -935,7 +973,7 @@ public class GUI extends javax.swing.JFrame {
       surfacesPanel_Layout.setVerticalGroup(
          surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(surfacesPanel_Layout.createSequentialGroup()
-            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 143, Short.MAX_VALUE)
+            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 111, Short.MAX_VALUE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(deleteAllSurfacesButton_)
@@ -944,7 +982,7 @@ public class GUI extends javax.swing.JFrame {
 
       splitPaneTopPanel_.addTab("Surfaces", surfacesPanel_);
 
-      jSplitPane1.setTopComponent(splitPaneTopPanel_);
+      splitPane_.setTopComponent(splitPaneTopPanel_);
 
       exploreSavingDirLabel_.setText("Saving directory: ");
 
@@ -1038,7 +1076,7 @@ public class GUI extends javax.swing.JFrame {
             .addComponent(savingNameLabel_)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(savingNameTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addContainerGap(162, Short.MAX_VALUE))
+            .addContainerGap(205, Short.MAX_VALUE))
       );
 
       acqTabbedPane_.addTab("Saving", savingTab_);
@@ -1131,7 +1169,7 @@ public class GUI extends javax.swing.JFrame {
             .addComponent(timePointsCheckBox_)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(timePointsPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addContainerGap(118, Short.MAX_VALUE))
+            .addContainerGap(135, Short.MAX_VALUE))
       );
 
       for (Component c : timePointsPanel_.getComponents()) {
@@ -1621,7 +1659,7 @@ public class GUI extends javax.swing.JFrame {
          ChannelsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(ChannelsTab_Layout.createSequentialGroup()
             .addContainerGap()
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 176, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(ChannelsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1711,9 +1749,7 @@ public class GUI extends javax.swing.JFrame {
                   .addGap(15, 15, 15)
                   .addComponent(jLabel6)
                   .addGap(244, 267, Short.MAX_VALUE))
-               .addGroup(covariedSettingsTab_Layout.createSequentialGroup()
-                  .addComponent(propertyPairingsScrollpane_, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
+               .addComponent(propertyPairingsScrollpane_, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
             .addGap(8, 8, 8)
             .addGroup(covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                .addComponent(propertyPairValuesScrollpane_, javax.swing.GroupLayout.PREFERRED_SIZE, 401, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -2104,6 +2140,16 @@ public class GUI extends javax.swing.JFrame {
          splitPaneBottomPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, splitPaneBottomPanel_Layout.createSequentialGroup()
             .addGap(2, 2, 2)
+            .addComponent(runAcqButton_)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(createdByHenryLabel_)
+            .addGap(1, 1, 1)
+            .addComponent(configPropsButton_)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(jButton1)
+            .addGap(377, 377, 377))
+         .addGroup(splitPaneBottomPanel_Layout.createSequentialGroup()
+            .addContainerGap()
             .addGroup(splitPaneBottomPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                .addGroup(splitPaneBottomPanel_Layout.createSequentialGroup()
                   .addComponent(exploreZStepLabel_)
@@ -2138,26 +2184,17 @@ public class GUI extends javax.swing.JFrame {
                   .addComponent(globalSavingDirTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, 579, javax.swing.GroupLayout.PREFERRED_SIZE)
                   .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                   .addComponent(exploreBrowseButton_))
+               .addComponent(newExploreWindowButton_)
                .addGroup(splitPaneBottomPanel_Layout.createSequentialGroup()
-                  .addComponent(newExploreWindowButton_)
-                  .addGap(225, 225, 225)
+                  .addGap(313, 313, 313)
                   .addComponent(jLabel1))
-               .addGroup(splitPaneBottomPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                  .addGroup(splitPaneBottomPanel_Layout.createSequentialGroup()
-                     .addComponent(runAcqButton_)
-                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                     .addComponent(createdByHenryLabel_)
-                     .addGap(1, 1, 1)
-                     .addComponent(configPropsButton_)
-                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                     .addComponent(jButton1))
-                  .addComponent(acqTabbedPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 843, javax.swing.GroupLayout.PREFERRED_SIZE)))
-            .addGap(377, 377, 377))
+               .addComponent(acqTabbedPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 843, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addContainerGap())
       );
       splitPaneBottomPanel_Layout.setVerticalGroup(
          splitPaneBottomPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, splitPaneBottomPanel_Layout.createSequentialGroup()
-            .addContainerGap(53, Short.MAX_VALUE)
+            .addContainerGap()
             .addGroup(splitPaneBottomPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(exploreSavingDirLabel_)
                .addComponent(globalSavingDirTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -2181,14 +2218,12 @@ public class GUI extends javax.swing.JFrame {
                .addComponent(exploreSavingNameTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                .addComponent(exploreSavingNameLabel_))
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addGroup(splitPaneBottomPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addGroup(splitPaneBottomPanel_Layout.createSequentialGroup()
-                  .addComponent(newExploreWindowButton_)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 16, Short.MAX_VALUE))
-               .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING))
+            .addComponent(newExploreWindowButton_)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(acqTabbedPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 264, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(jLabel1)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(acqTabbedPane_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(splitPaneBottomPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                .addGroup(splitPaneBottomPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                   .addComponent(runAcqButton_)
@@ -2200,17 +2235,17 @@ public class GUI extends javax.swing.JFrame {
 
       addTextEditListener(zStepSpinner_);
 
-      jSplitPane1.setRightComponent(splitPaneBottomPanel_);
+      splitPane_.setRightComponent(splitPaneBottomPanel_);
 
       javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
       getContentPane().setLayout(layout);
       layout.setHorizontalGroup(
          layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addComponent(jSplitPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 857, javax.swing.GroupLayout.PREFERRED_SIZE)
+         .addComponent(splitPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 857, javax.swing.GroupLayout.PREFERRED_SIZE)
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addComponent(jSplitPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 761, Short.MAX_VALUE)
+         .addComponent(splitPane_)
       );
 
       pack();
@@ -2688,7 +2723,6 @@ public class GUI extends javax.swing.JFrame {
    private javax.swing.JScrollPane jScrollPane1;
    private javax.swing.JScrollPane jScrollPane2;
    private javax.swing.JScrollPane jScrollPane3;
-   private javax.swing.JSplitPane jSplitPane1;
    private javax.swing.JButton loadPairingsButton_;
    private javax.swing.JButton moveAcqDownButton_;
    private javax.swing.JButton moveAcqUpButton_;
@@ -2721,6 +2755,7 @@ public class GUI extends javax.swing.JFrame {
    private javax.swing.JPanel spaceTab_;
    private javax.swing.JPanel splitPaneBottomPanel_;
    private javax.swing.JTabbedPane splitPaneTopPanel_;
+   private javax.swing.JSplitPane splitPane_;
    private javax.swing.JPanel surfacesPanel_;
    private javax.swing.JTable surfacesTable_;
    private javax.swing.JLabel timeIntervalLabel_;

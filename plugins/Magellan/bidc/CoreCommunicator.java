@@ -195,12 +195,17 @@ public class CoreCommunicator {
              //add demo image
             for (int c = 0; c < GlobalSettings.getInstance().getDemoNumChannels(); c++) {
                JSONObject tags = core_.getTaggedImage().tags;         
-                CustomAcqEngine.addImageMetadata(tags, event, GlobalSettings.getInstance().getDemoNumChannels(),
-                             c, currentTime, 1);    
-               event.acquisition_.addImage(makeDemoImage(c, event.xyPosition_.getCenter(), event.zPosition_,tags ));
+               CustomAcqEngine.addImageMetadata(tags, event, GlobalSettings.getInstance().getDemoNumChannels(),
+                       c, currentTime, 1);
+               event.acquisition_.addImage(makeDemoImage(c, event.xyPosition_.getCenter(), event.zPosition_, tags));
             }
          } else {
-            event.acquisition_.addImage(core_.getTaggedImage());
+            for (int c = 0; c < core_.getNumberOfCameraChannels(); c++) {
+               TaggedImage img = core_.getTaggedImage(c);
+               CustomAcqEngine.addImageMetadata(img.tags, event, (int) core_.getNumberOfCameraChannels(),
+                       c, currentTime, 1);
+               event.acquisition_.addImage(img);
+            }
          }
       }
    }
