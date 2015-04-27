@@ -133,18 +133,40 @@ public class SurfaceData implements Covariant {
       //-min distance at surface on flatter parts of curved surface (ie top)
       //-increased distance up to max distance as you go deeper
       //-higher distance at surface on side to account for curved surface blocking out some of exciation light
+      //{minDistance,maxDistance, minNormalAngle, maxNormalAngle)
       double[] vals = distanceAndNormalCalc(xyPos.getFullTileCorners(), zPosition);
       double extraDistance = 0; //pretend actually deeper in LN than we are to account for blockage by curved surface
-      if (vals[3] < 45) { //max normal angle greater than 45 
+      double angleCutoff = 90;
+      double doublingDistance = 50;
+      double minDistance = vals[0];
+      double maxDistance = vals[1];
+      double angleCutoffPercent = 0; 
+      if (vals[3] < angleCutoff) { //max normal angle greater than 45 
          //twice as much power if angle goes to 0
          //doubling distance ~40-70 um when b = 0.01-0.018 i exponent
          //add extra distance to account for blockage by LN surface
-         extraDistance = (vals[3] / 45) * 40;
+          //never want to make extra distance higher than the double distance,
+          //so extra power is capped at 2x
+          angleCutoffPercent = (angleCutoff - vals[3]) / angleCutoff;
+         extraDistance =  angleCutoffPercent * doublingDistance;
+//         extraDistance = Math.min(doublingDistance, extraDistance * )
+          
+         // extraDistance = (maxDistance - minDistance) / 100.0 * doublingDistance;
       }
       double curvatureCorrectedMin = vals[0] + extraDistance;
       double curvatureCorrectedMax = vals[1] + extraDistance;
+      double ret = Math.min(vals[1], curvatureCorrectedMin + Math.pow(vals[0], 1.25));
       //slowly increase curvature corrected value to the curvature corrected max distance as you go deeper
-      return Math.min(curvatureCorrectedMax, curvatureCorrectedMin + Math.pow(vals[0], 1.5));
+     Log.log("  ");
+//      Log.log("min Normal: " + vals[2]);
+//      Log.log("max Normal: " + vals[3]);
+      Log.log("min distance: " + vals[0]);
+      Log.log("max distance: " + vals[1]);
+      Log.log("Curve corrected min: " + curvatureCorrectedMin);
+      Log.log("Curve corrected max: " + curvatureCorrectedMax);
+//      Log.log("Angle cutoff percent: " + angleCutoffPercent);
+//      Log.log("Distance value used: " + ret);
+      return ret;
    }
 
 //   private double minDistanceToSurfaceWithinAngleAtPoint(double x, double y, double z) {
@@ -268,10 +290,10 @@ public class SurfaceData implements Covariant {
                maxDistance = Math.max(zVal - interpVal, maxDistance);
                //only take actual values for normals
             } else {
-               minDistance = Math.min(zVal - interpVal, minDistance);
+               minDistance = Math.min(Math.max(0,zVal - interpVal), minDistance);
                maxDistance = Math.max(zVal - interpVal, maxDistance);
                minNormalAngle = Math.min(minNormalAngle, normalAngle);
-               maxNormalAngle = Math.min(maxNormalAngle, normalAngle);
+               maxNormalAngle = Math.max(maxNormalAngle, normalAngle);
             }
          }
       }
