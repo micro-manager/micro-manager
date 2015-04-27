@@ -682,8 +682,9 @@ public class DefaultUserProfile implements UserProfile {
 
    public void setCurrentProfile(String profileName) {
       profileName_ = profileName;
+      boolean isFirstProfile = (userProfile_ == null);
       userProfile_ = loadProfile(profileName);
-      if (!profileName.contentEquals(DEFAULT_USER)) {
+      if (!isFirstProfile) {
          // Update a few things that have already pulled values from the
          // default user profile by the time this has happened.
          DaytimeNighttime.setMode(DaytimeNighttime.getBackgroundMode());
