@@ -40,6 +40,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
@@ -67,6 +68,9 @@ import org.micromanager.internal.utils.TextUtils;
  * TaggedImageStorageDiskDefault class.
  */
 public class StorageSinglePlaneTiffSeries implements Storage {
+   private static final HashSet<String> ALLOWED_AXES = new HashSet<String>(
+         Arrays.asList(Coords.CHANNEL, Coords.TIME, Coords.Z,
+            Coords.STAGE_POSITION));
    private DefaultDatastore store_;
    private final String dir_;
    private boolean firstElement_;
@@ -111,6 +115,13 @@ public class StorageSinglePlaneTiffSeries implements Storage {
    }
 
    private void addImage(Image image) {
+      // Require images to only have time/channel/z/position axes.
+      for (String axis : image.getCoords().getAxes()) {
+         if (!ALLOWED_AXES.contains(axis)) {
+            ReportingUtils.showError("Singleplane TIFF series storage cannot handle images with axis \"" + axis + "\". Allowed axes are " + ALLOWED_AXES);
+            return;
+         }
+      }
       if (!isDatasetWritable_ && !amLoading_) {
          // This should never happen!
          ReportingUtils.logError("Attempted to add an image to a read-only fileset");

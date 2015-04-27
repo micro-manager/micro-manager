@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -73,6 +74,9 @@ import org.micromanager.internal.utils.ReportingUtils;
 public final class StorageMultipageTiff implements Storage {
    private static final String SHOULD_GENERATE_METADATA_FILE = "generate a metadata file when saving datasets as multipage TIFF files";
    private static final String SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS = "generate a separate multipage TIFF file for each stage position";
+   private static final HashSet<String> ALLOWED_AXES = new HashSet<String>(
+         Arrays.asList(Coords.CHANNEL, Coords.TIME, Coords.Z,
+            Coords.STAGE_POSITION));
    private DefaultSummaryMetadata summaryMetadata_;
    private boolean amInWriteMode_;
    private int lastFrameOpenedDataSet_ = -1;
@@ -204,6 +208,13 @@ public final class StorageMultipageTiff implements Storage {
    @Subscribe
    public void onNewImage(NewImageEvent event) {
       DefaultImage image = (DefaultImage) event.getImage();
+      // Require images to only have time/channel/z/position axes.
+      for (String axis : image.getCoords().getAxes()) {
+         if (!ALLOWED_AXES.contains(axis)) {
+            ReportingUtils.showError("Multipage TIFF storage cannot handle images with axis \"" + axis + "\". Allowed axes are " + ALLOWED_AXES);
+            return;
+         }
+      }
       if (firstImage_ == null) {
          firstImage_ = image;
       }
