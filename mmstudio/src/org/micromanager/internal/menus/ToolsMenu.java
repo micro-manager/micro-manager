@@ -5,6 +5,7 @@ import ij.IJ;
 
 import java.awt.Cursor;
 import java.io.File;
+import java.util.HashSet;
 
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
@@ -280,17 +281,21 @@ public class ToolsMenu {
 
    public void updateSwitchConfigurationMenu() {
       switchConfigurationMenu_.removeAll();
+      HashSet<String> seenConfigs = new HashSet<String>();
       for (final String configFile : IntroDlg.getRecentlyUsedConfigs()) {
-         if (!configFile.equals(studio_.getSysConfigFile())) {
-            GUIUtils.addMenuItem(switchConfigurationMenu_,
-                    configFile, null,
-                    new Runnable() {
-               @Override
-               public void run() {
-                  studio_.setSysConfigFile(configFile);
-               }
-            });
+         if (configFile.equals(studio_.getSysConfigFile()) ||
+               seenConfigs.contains(configFile)) {
+            continue;
          }
+         GUIUtils.addMenuItem(switchConfigurationMenu_,
+                 configFile, null,
+                 new Runnable() {
+            @Override
+            public void run() {
+               studio_.setSysConfigFile(configFile);
+            }
+         });
+         seenConfigs.add(configFile);
       }
    }
 
