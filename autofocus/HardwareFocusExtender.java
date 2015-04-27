@@ -130,15 +130,17 @@ public class HardwareFocusExtender  extends AutofocusBase implements org.microma
    @Override
    public double fullFocus() throws MMException {
       CMMCore core = gui_.getMMCore();
+      double pos = 0.0;
       try {
          core.setAutoFocusDevice(hardwareFocusDevice_);
+         pos = core.getPosition(zDrive_);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
       boolean success = testFocus();
       for (int i = 0; i < lowerLimit_ / stepSize_ && !success; i++) {
          try {
-            core.setPosition(zDrive_, stepSize_ * -i);
+            core.setPosition(zDrive_, pos + (stepSize_ * -i) );
          } catch (Exception ex) {
             ReportingUtils.showError(ex, "Failed to set Z position");
          }
@@ -146,7 +148,7 @@ public class HardwareFocusExtender  extends AutofocusBase implements org.microma
       }
       for (int i = 0; i < upperLimit_ / stepSize_ && !success; i++) {
                   try {
-            core.setPosition(zDrive_, stepSize_ * i);
+            core.setPosition(zDrive_, pos + (stepSize_ * i) );
          } catch (Exception ex) {
             ReportingUtils.showError(ex, "Failed to set Z position");
          }
