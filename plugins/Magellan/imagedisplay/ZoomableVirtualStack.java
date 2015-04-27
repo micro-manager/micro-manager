@@ -235,8 +235,8 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
     * @return
     */
    public LongPoint getDisplayedPixel(int row, int col) {
-      long x = (col * tileWidth_) / getDownsampleFactor() - xView_;
-      long y = (row * tileHeight_) / getDownsampleFactor() - yView_;
+      long x = Math.round((col * tileWidth_) / (double)getDownsampleFactor()) - xView_;
+      long y = Math.round((row * tileHeight_) / (double)getDownsampleFactor()) - yView_;
       return new LongPoint(x, y);
    }
 

@@ -471,17 +471,20 @@ public class DisplayOverlayer {
       }
 
       overlay.add(rectangle);
-      return overlay;
-   }
+        return overlay;
+    }
 
-   private void highlightTilesOnOverlay(Overlay base, int row1, int row2, int col1, int col2, Color color) {
-      LongPoint topLeft = zoomableStack_.getDisplayedPixel(row1, col1);
-      int width = (int) Math.floor(tileWidth_ / (double) zoomableStack_.getDownsampleFactor() * (col2 - col1 + 1));
-      int height = (int) Math.floor(tileHeight_ / (double) zoomableStack_.getDownsampleFactor() * (row2 - row1 + 1));
-      Roi rect = new Roi(topLeft.x_, topLeft.y_, width, height);
-      rect.setFillColor(color);
-      base.add(rect);
-   }
+    private void highlightTilesOnOverlay(Overlay base, int row1, int row2, int col1, int col2, Color color) {
+        LongPoint topLeft = zoomableStack_.getDisplayedPixel(row1, col1);
+        int width = (int) (Math.round(tileWidth_ / (double) zoomableStack_.getDownsampleFactor() * (col2 + 1))
+                - Math.round(tileWidth_ / (double) zoomableStack_.getDownsampleFactor() * (col1 )));
+        int height = (int) (Math.round(tileHeight_ / (double) zoomableStack_.getDownsampleFactor() * (row2 + 1))
+                - Math.round(tileHeight_ / (double) zoomableStack_.getDownsampleFactor() * (row1 )));
+        System.out.println(row1 + "  " + row2 + "  " + width + "  " + height);
+        Roi rect = new Roi(topLeft.x_, topLeft.y_, width, height);
+        rect.setFillColor(color);
+        base.add(rect);
+    }
 
    private void drawZoomIndicator(Overlay overlay) {
       LongPoint zoomPos = zoomableStack_.getZoomLocation(); 
