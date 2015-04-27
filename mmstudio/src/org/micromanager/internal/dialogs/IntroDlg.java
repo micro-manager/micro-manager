@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
@@ -67,7 +68,10 @@ public class IntroDlg extends JDialog {
    private static final String RECENTLY_USED_CONFIGS = "recently-used config files";
    private static final String GLOBAL_CONFIGS = "config files supplied from a central authority";
    private static final String SHOULD_ASK_FOR_CONFIG = "whether or not the intro dialog should include a prompt for the config file";
-   private static final String DEFAULT_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
+   private static final String DEMO_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
+
+   private static final int MAX_RECENT_CONFIGS = 6;
+
    private final JTextArea welcomeTextArea_;
    private boolean okFlag_ = true;
    
@@ -224,6 +228,7 @@ public class IntroDlg extends JDialog {
       profilesAsList.add(0, DefaultUserProfile.DEFAULT_USER);
       profilesAsList.add(0, USERNAME_NEW);
       profileSelect_ = new JComboBox();
+      profileSelect_.setToolTipText("The profile contains saved settings like window positions and acquisition parameters.");
       profileSelect_.setFont(stdFont);
       for (String profileName : profilesAsList) {
          profileSelect_.addItem(profileName);
@@ -271,29 +276,21 @@ public class IntroDlg extends JDialog {
       cfgFileDropperDown_.removeAllItems();
       DefaultUserProfile profile = DefaultUserProfile.getInstance();
       ArrayList<String> configs = new ArrayList<String>(
-            Arrays.asList(profile.getStringArray(IntroDlg.class,
-               RECENTLY_USED_CONFIGS, new String[0])));
+            Arrays.asList(getRecentlyUsedConfigs()));
       Boolean doesExist = false;
       if (path != null) {
          doesExist = new File(path).exists();
       }
       if (doesExist) {
-         // Update the user's preferences for recently-used config files.
-         configs.add(path);
-         // Don't remember more than six profile-specific config files.
-         if (configs.size() > 6) {
-            configs.remove(configs.get(0));
-         }
-         String[] tmp = new String[configs.size()];
-         tmp = configs.toArray(tmp);
-         profile.setStringArray(IntroDlg.class,
-               RECENTLY_USED_CONFIGS, tmp);
+         addRecentlyUsedConfig(path);
+         configs = new ArrayList<String>(
+               Arrays.asList(getRecentlyUsedConfigs()));
       }
 
       // Add on global default configs.
       configs.addAll(Arrays.asList(profile.getStringArray(IntroDlg.class,
               GLOBAL_CONFIGS,
-              new String[] {new File(DEFAULT_CONFIG_FILE_NAME).getAbsolutePath()})));
+              new String[] {new File(DEMO_CONFIG_FILE_NAME).getAbsolutePath()})));
       // Remove duplicates, and then sort alphabetically.
       configs = new ArrayList<String>(new HashSet<String>(configs));
       Collections.sort(configs);
@@ -306,7 +303,8 @@ public class IntroDlg extends JDialog {
          cfgFileDropperDown_.setSelectedItem(path);
       }
       else {
-         cfgFileDropperDown_.setSelectedItem(configs.size() - 1);
+         String[] recentlyUsed = getRecentlyUsedConfigs();
+         cfgFileDropperDown_.setSelectedItem(recentlyUsed[recentlyUsed.length - 1]);
       }
    }
       
@@ -347,5 +345,38 @@ public class IntroDlg extends JDialog {
    public static void setShouldAskForConfigFile(boolean shouldAsk) {
       DefaultUserProfile.getInstance().setBoolean(IntroDlg.class,
             SHOULD_ASK_FOR_CONFIG, shouldAsk);
+   }
+
+   public static String[] getRecentlyUsedConfigs() {
+      // If there are no recently-used configs, supply the demo file.
+      String[] result = DefaultUserProfile.getInstance().getStringArray(
+            IntroDlg.class, RECENTLY_USED_CONFIGS, null);
+      if (result == null) {
+         result = new String[] {new File(DEMO_CONFIG_FILE_NAME).getAbsolutePath()};
+      }
+      return result;
+   }
+
+   // Add the provided config file onto the list of recently-used configs.
+   // We impose a cap of 6 on this list. The last element of the array is
+   // the most-recently used config file (and the first is the oldest).
+   public static void addRecentlyUsedConfig(String config) {
+      ArrayList<String> configs = new ArrayList<String>(
+            Arrays.asList(getRecentlyUsedConfigs()));
+      if (!configs.contains(config)) {
+         configs.add(config);
+      }
+      else {
+         // Move it to the end of the array.
+         for (int i = configs.indexOf(config); i < configs.size() - 1; ++i) {
+            configs.set(i, configs.get(i + 1));
+         }
+         configs.set(configs.size() - 1, config);
+      }
+      if (configs.size() > MAX_RECENT_CONFIGS) {
+         configs.remove(configs.get(0));
+      }
+      DefaultUserProfile.getInstance().setStringArray(IntroDlg.class,
+            RECENTLY_USED_CONFIGS, configs.toArray(new String[0]));
    }
 }

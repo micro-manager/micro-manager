@@ -134,15 +134,12 @@ import org.micromanager.internal.utils.WaitDialog;
 public class MMStudio implements Studio, CompatibilityInterface {
 
    private static final long serialVersionUID = 3556500289598574541L;
-   private static final String SYSTEM_CONFIG_FILE = "sysconfig_file";
    private static final String OPEN_ACQ_DIR = "openDataDir";
    private static final String SCRIPT_CORE_OBJECT = "mmc";
    private static final String AUTOFOCUS_DEVICE = "autofocus_device";
    private static final int TOOLTIP_DISPLAY_DURATION_MILLISECONDS = 15000;
    private static final int TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS = 2000;
-   private static final String DEFAULT_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
    // Note that this property is set by one of the launcher scripts.
-   private static final String DEFAULT_CONFIG_FILE_PROPERTY = "org.micromanager.default.config.file";
    private static final String SHOULD_DELETE_OLD_CORE_LOGS = "whether or not to delete old MMCore log files";
    private static final String CORE_LOG_LIFETIME_DAYS = "how many days to keep MMCore log files, before they get deleted";
    private static final String CIRCULAR_BUFFER_SIZE = "size, in megabytes of the circular buffer used to temporarily store images before they are written to disk";
@@ -163,8 +160,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
    private List<Component> MMFrames_
            = Collections.synchronizedList(new ArrayList<Component>());
    private AutofocusManager afMgr_;
-   private ArrayList<String> MRUConfigFiles_;
-   private static final int maxMRUCfgs_ = 5;
    private String sysConfigFile_;
    private String startupScriptFile_;
 
@@ -255,9 +250,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
       amRunningAsPlugin_ = shouldRunAsPlugin;
       isProgramRunning_ = true;
 
-      sysConfigFile_ = new File(DEFAULT_CONFIG_FILE_NAME).getAbsolutePath();
-      sysConfigFile_ = System.getProperty(DEFAULT_CONFIG_FILE_PROPERTY,
-            sysConfigFile_);
+      sysConfigFile_ = IntroDlg.getRecentlyUsedConfigs()[0];
 
       if (ScriptPanel.getStartupScript().length() > 0) {
          startupScriptFile_ = new File(ScriptPanel.getStartupScript()).getAbsolutePath();
@@ -364,7 +357,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       dataManager_ = new DefaultDataManager(this);
       displayManager_ = new DefaultDisplayManager(this);
 
-      loadMRUConfigFiles();
       afMgr_ = new AutofocusManager(studio_);
       pluginManager_ = new PluginManager(studio_, menuBar_);
       Thread pluginInitializer = pluginManager_.initializePlugins();
@@ -397,10 +389,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
          }
          sysConfigFile_ = introDlg.getConfigFile();
       }
-      saveMRUConfigFiles();
-
-      DefaultUserProfile profile = DefaultUserProfile.getInstance();
-      profile.setString(MMStudio.class, SYSTEM_CONFIG_FILE, sysConfigFile_);
 
       // before loading the system configuration, we need to wait 
       // until the plugins are loaded
@@ -440,7 +428,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
 
       frame_.initializeConfigPad();
 
-      String afDevice = profile.getString(MMStudio.class, AUTOFOCUS_DEVICE, "");
+      String afDevice = profile().getString(MMStudio.class, AUTOFOCUS_DEVICE, "");
       if (afMgr_.hasDevice(afDevice)) {
          try {
             afMgr_.selectDevice(afDevice);
@@ -704,8 +692,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
          if (f != null) {
             model.saveToFile(f.getAbsolutePath());
             sysConfigFile_ = f.getAbsolutePath();
-            DefaultUserProfile.getInstance().setString(MMStudio.class,
-                  SYSTEM_CONFIG_FILE, sysConfigFile_);
             configChanged_ = false;
             frame_.setConfigSaveButtonStatus(configChanged_);
             frame_.updateTitle(sysConfigFile_);
@@ -727,8 +713,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       sysConfigFile_ = newFile;
       configChanged_ = false;
       frame_.setConfigSaveButtonStatus(configChanged_);
-      DefaultUserProfile.getInstance().setString(MMStudio.class,
-            SYSTEM_CONFIG_FILE, sysConfigFile_);
       loadSystemConfiguration();
    }
 
@@ -1277,14 +1261,14 @@ public class MMStudio implements Studio, CompatibilityInterface {
    public boolean loadSystemConfiguration() {
       boolean result = true;
 
-      saveMRUConfigFiles();
-
       final WaitDialog waitDlg = new WaitDialog(
               "Loading system configuration, please wait...");
 
       waitDlg.setAlwaysOnTop(true);
       waitDlg.showDialog();
       frame_.setEnabled(false);
+
+      IntroDlg.addRecentlyUsedConfig(sysConfigFile_);
 
       try {
          if (sysConfigFile_.length() > 0) {
@@ -1315,65 +1299,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       FileDialogs.storePath(MM_CONFIG_FILE, new File(sysConfigFile_));
 
       return result;
-   }
-
-   private void saveMRUConfigFiles() {
-      if (0 < sysConfigFile_.length()) {
-         if (MRUConfigFiles_.contains(sysConfigFile_)) {
-            MRUConfigFiles_.remove(sysConfigFile_);
-         }
-         if (maxMRUCfgs_ <= MRUConfigFiles_.size()) {
-            MRUConfigFiles_.remove(maxMRUCfgs_ - 1);
-         }
-         MRUConfigFiles_.add(0, sysConfigFile_);
-         // save the MRU list to the preferences
-         for (Integer icfg = 0; icfg < MRUConfigFiles_.size(); ++icfg) {
-            String value = "";
-            if (null != MRUConfigFiles_.get(icfg)) {
-               value = MRUConfigFiles_.get(icfg);
-            }
-            profile().setString(MMStudio.class,
-                  CFGFILE_ENTRY_BASE + icfg.toString(), value);
-         }
-      }
-   }
-
-   public List<String> getMRUConfigFiles() {
-      return MRUConfigFiles_;
-   }
-
-   /**
-    * Load the most recently used config file(s) to help the user when
-    * selecting which one to use.
-    */
-   private void loadMRUConfigFiles() {
-      UserProfile profile = profile();
-      sysConfigFile_ = profile.getString(MMStudio.class,
-            SYSTEM_CONFIG_FILE, sysConfigFile_);
-      MRUConfigFiles_ = new ArrayList<String>();
-      for (Integer icfg = 0; icfg < maxMRUCfgs_; ++icfg) {
-         String value = "";
-         value = profile.getString(MMStudio.class,
-               CFGFILE_ENTRY_BASE + icfg.toString(), value);
-         if (0 < value.length()) {
-            File ruFile = new File(value);
-            if (ruFile.exists()) {
-               if (!MRUConfigFiles_.contains(value)) {
-                  MRUConfigFiles_.add(value);
-               }
-            }
-         }
-      }
-      // initialize MRU list from old persistant data containing only SYSTEM_CONFIG_FILE
-      if (sysConfigFile_.length() > 0) {
-         if (!MRUConfigFiles_.contains(sysConfigFile_)) {
-            // in case persistant data is inconsistent
-            if (maxMRUCfgs_ <= MRUConfigFiles_.size()) {
-               MRUConfigFiles_.remove(maxMRUCfgs_ - 1);
-            }
-            MRUConfigFiles_.add(0, sysConfigFile_);
-         }
-      }
    }
 
    public void openAcqControlDialog() {

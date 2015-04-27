@@ -15,6 +15,7 @@ import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 
 import org.micromanager.internal.conf2.ConfiguratorDlg2;
+import org.micromanager.internal.dialogs.IntroDlg;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.MainFrame;
 import org.micromanager.internal.MMStudio;
@@ -279,7 +280,7 @@ public class ToolsMenu {
 
    public void updateSwitchConfigurationMenu() {
       switchConfigurationMenu_.removeAll();
-      for (final String configFile : studio_.getMRUConfigFiles()) {
+      for (final String configFile : IntroDlg.getRecentlyUsedConfigs()) {
          if (!configFile.equals(studio_.getSysConfigFile())) {
             GUIUtils.addMenuItem(switchConfigurationMenu_,
                     configFile, null,
