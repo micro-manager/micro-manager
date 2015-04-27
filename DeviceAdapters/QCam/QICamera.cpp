@@ -613,9 +613,9 @@ int QICamera::Initialize()
 
    QCam_Err            err;
    QCam_CamListItem	   cameraList[10];
-   unsigned long	      numOfCameras;
+   unsigned long	   numOfCameras;
    char	               cameraStr[CAMERA_STRING_LENGTH];
-   char						cameraName[CAMERA_STRING_LENGTH];
+   char                cameraName[CAMERA_STRING_LENGTH];
    unsigned short	   major, minor, build;
    char	               qcamVersionStr[256];
    char	               cameraIDStr[256];
@@ -2310,6 +2310,7 @@ int QICamera::SnapImage()
           return DEVICE_ERR;
        }
 
+       m_frameDoneBuff = -1;
        //mark one buffer as available and queue up a frame
        m_frameBuffsAvail[0] = true;
        QueueFrame(0);
@@ -2337,7 +2338,9 @@ int QICamera::SnapImage()
    }
    //in modes other than software trigger use QCam_GrabFrame()
    else 
+   {
        err = QCam_GrabFrame(m_camera, m_frameBuffs[0]);
+   }
    
    if (err != qerrSuccess) {
       REPORT_QERR(err);
@@ -3589,6 +3592,12 @@ int QICamera::OnTriggerType(MM::PropertyBase* pProp, MM::ActionType eAct)
          REPORT_MMERR(nRet);
          return DEVICE_ERR;
       }
+
+      // abort any remaining frames
+       err = QCam_Abort(m_camera);
+       if (err != qerrSuccess) {
+          QCam_REPORT_QERR(m_pCam, err);
+       }
 
       // SnapImage needs to know if we have set software triggering
       m_softwareTrigger = (typeEnum == qcTriggerSoftware);
