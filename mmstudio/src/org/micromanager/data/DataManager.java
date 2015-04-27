@@ -59,6 +59,12 @@ public interface DataManager {
     * method for more information). Be certain to call the save() method of
     * the Datastore when you have finished adding data to it, as the Storage
     * must finalize the dataset before it is properly completed.
+    *
+    * Please note that the multipage TIFF storage system currently only
+    * supports the time, Z, channel, and stage position axes for images.
+    * Attempts to add images with "custom" axes will create an error dialog,
+    * and the image will not be added to the Datastore.
+    *
     * @param directory Location on disk to store the file(s).
     * @param shouldGenerateSeparateMetadata if true, a separate metadata.txt
     *        file will be generated.
@@ -79,6 +85,12 @@ public interface DataManager {
     * information).  Be certain to call the save() method of the Datastore when
     * you have finished adding data to it, as the Storage must finalize the
     * dataset before it is properly completed.
+    *
+    * Please note that the single-plane TIFF series storage system currently
+    * only supports the time, Z, channel, and stage position axes for images.
+    * Attempts to add images with "custom" axes will create an error dialog,
+    * and the image will not be added to the Datastore.
+    *
     * @param directory Location on disk to store the files.
     * @return an empty Datastore backed by the appropriate Storage
     */
