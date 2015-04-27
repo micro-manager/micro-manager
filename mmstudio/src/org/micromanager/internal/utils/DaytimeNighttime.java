@@ -74,7 +74,7 @@ public class DaytimeNighttime {
 
    // Keys that we have to specify manually; nothing will be appended to them.
    private static final String[] MANUAL_BACKGROUND_COLOR_KEYS = new String[] {
-      "ComboBox.buttonBackground"
+         "ComboBox.buttonBackground",
    };
 
    // background color of the UI
@@ -137,10 +137,15 @@ public class DaytimeNighttime {
       for (String key : DISABLED_TEXT_COLOR_KEYS) {
          UIManager.put(key + ".disabledText", disabledTextColor_.get(mode));
       }
-      // Update existing components.
-      for (Window w : Window.getWindows()) {
-         SwingUtilities.updateComponentTreeUI(w);
-      }
+      SwingUtilities.invokeLater(new Runnable() {
+         @Override
+         public void run() {
+            // Update existing components.
+            for (Window w : Window.getWindows()) {
+               SwingUtilities.updateComponentTreeUI(w);
+            }
+         }
+      });
    }
 
    /**
