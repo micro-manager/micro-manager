@@ -20,6 +20,8 @@
 
 package org.micromanager.display.internal.inspector;
 
+import com.bulenkov.iconloader.IconLoader;
+
 import com.google.common.eventbus.Subscribe;
 
 import java.awt.Color;
@@ -43,6 +45,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
@@ -239,13 +242,33 @@ public class InspectorFrame extends MMFrame implements Inspector {
             new MigLayout("flowy, insets 0, fillx"));
       wrapper.setBorder(BorderFactory.createRaisedBevelBorder());
 
-      // Create a clickable header to show/hide contents.
-      JPanel header = new JPanel(new MigLayout("fillx"));
-      header.setLayout(new MigLayout("flowx, insets 0, fillx"));
+      // Create a clickable header to show/hide contents, and hold a gear
+      // menu if available.
+      JPanel header = new JPanel(new MigLayout("flowx, insets 0, fillx",
+               "[fill]push[]"));
       final JLabel label = new JLabel(title,
                UIManager.getIcon("Tree.collapsedIcon"),
                SwingConstants.LEFT);
       header.add(label, "growx");
+
+      final JPopupMenu gearMenu = panel.getGearMenu();
+      final JButton gearButton;
+      if (gearMenu != null) {
+         gearButton = new JButton(IconLoader.getIcon(
+                  "/org/micromanager/internal/icons/gear.png"));
+         gearButton.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+               gearMenu.show(gearButton, e.getX(), e.getY());
+            }
+         });
+         header.add(gearButton, "growx 0, hidemode 2");
+      }
+      else {
+         // Final variables must be set to *something*.
+         gearButton = null;
+      }
+
       header.setCursor(new Cursor(Cursor.HAND_CURSOR));
       header.setBackground(new Color(220, 220, 220));
       header.addMouseListener(new MouseAdapter() {
@@ -260,6 +283,9 @@ public class InspectorFrame extends MMFrame implements Inspector {
                wrapper.remove(panel);
                label.setIcon(UIManager.getIcon("Tree.collapsedIcon"));
             }  
+            if (gearButton != null) {
+               gearButton.setVisible(panel.isVisible());
+            }
             pack();
          }
       });

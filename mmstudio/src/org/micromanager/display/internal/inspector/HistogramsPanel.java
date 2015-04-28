@@ -33,6 +33,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -308,6 +309,11 @@ public final class HistogramsPanel extends InspectorPanel {
          // Couldn't find any other displays using that datastore.
          display.getDatastore().unregisterForEvents(this);
       }
+   }
+
+   @Override
+   public JPopupMenu getGearMenu() {
+      return new JPopupMenu();
    }
 
    @Override

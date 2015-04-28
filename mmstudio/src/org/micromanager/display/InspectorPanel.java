@@ -20,6 +20,7 @@
 
 package org.micromanager.display;
 
+import javax.swing.JPopupMenu;
 import javax.swing.JPanel;
 
 import org.micromanager.display.DisplayWindow;
@@ -28,6 +29,16 @@ import org.micromanager.display.DisplayWindow;
  * An InspectorPanel is a single component in the inspector window. 
  */
 public abstract class InspectorPanel extends JPanel {
+   /**
+    * Provide a menu used for miscellaneous controls. This menu will be
+    * attached to a "gear button" visible in the title bar, when this
+    * panel is currently open. May be null, in which case no gear button will
+    * be shown.
+    */
+   public JPopupMenu getGearMenu() {
+      return null;
+   }
+
    /**
     * Set the Inspector instance. This is only needed if your class needs to
     * be able to invoke the methods exposed in the Inspector interface.
