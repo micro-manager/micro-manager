@@ -128,10 +128,10 @@ public class PlotUtils {
     * @return Frame that displays the data
     */
    public Frame plotDataN(String title, XYSeries[] data, String xTitle,
-           String yTitle, boolean[] showShapes, Boolean logLog) {
+           String yTitle, boolean[] showShapes) {
 
       // if we already have a plot open with this title, close it, but remember
-      // its position:
+      // its position
       Frame[] gfs = ChartFrame.getFrames();
       for (Frame f : gfs) {
          if (f.getTitle().equals(title)) {
@@ -175,23 +175,6 @@ public class PlotUtils {
       XYPlot plot = (XYPlot) chart.getPlot();
       plot.setBackgroundPaint(Color.white);
       plot.setRangeGridlinePaint(Color.lightGray);
-      if (logLog) {
-         LogAxis xAxis = new LogAxis(xTitle);
-         xAxis.setTickUnit(new NumberTickUnit(1.0, new java.text.DecimalFormat(), 10));
-         plot.setDomainAxis(xAxis);
-         plot.setDomainGridlinePaint(Color.lightGray);
-         plot.setDomainGridlineStroke(new BasicStroke(1.0f));
-         plot.setDomainMinorGridlinePaint(Color.lightGray);
-         plot.setDomainMinorGridlineStroke(new BasicStroke(0.2f));
-         plot.setDomainMinorGridlinesVisible(true);
-         LogAxis yAxis = new LogAxis(yTitle);
-         yAxis.setTickUnit(new NumberTickUnit(1.0, new java.text.DecimalFormat(), 10));
-         plot.setRangeAxis(yAxis);
-         plot.setRangeGridlineStroke(new BasicStroke(1.0f));
-         plot.setRangeMinorGridlinePaint(Color.lightGray);
-         plot.setRangeMinorGridlineStroke(new BasicStroke(0.2f));
-         plot.setRangeMinorGridlinesVisible(true);
-      }
 
       XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
       renderer.setBaseShapesVisible(true);
@@ -228,16 +211,6 @@ public class PlotUtils {
       }
 
       renderer.setUseFillPaint(true);
-
-      if (!logLog) {
-         // Since the axis autoscale only on the first dataset, we need to scale ourselves
-         NumberAxis yAxis = (NumberAxis) plot.getRangeAxis();
-         yAxis.setAutoRangeIncludesZero(false);
-         yAxis.setRangeWithMargins(minY, maxY);
-
-         ValueAxis xAxis = plot.getDomainAxis();
-         xAxis.setRangeWithMargins(minX, maxX);
-      }
 
       final MyChartFrame graphFrame = new MyChartFrame(title, chart);
       graphFrame.getChartPanel().setMouseWheelEnabled(true);
