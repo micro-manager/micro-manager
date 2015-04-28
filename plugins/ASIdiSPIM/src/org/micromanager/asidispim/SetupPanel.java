@@ -139,19 +139,19 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       micromirrorDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side);
 
       sheetStartPositionLabel_ = new StoredFloatLabel(panelName_, 
-              Properties.Keys.PLUGIN_SHEET_START_POS.toString(), -1,
+              Properties.Keys.PLUGIN_SHEET_START_POS.toString(), -0.5f,
               prefs_, " \u00B0");
       sliceStartPos_ = sheetStartPositionLabel_.getFloat();
       sheetStopPositionLabel_ = new StoredFloatLabel(panelName_, 
-              Properties.Keys.PLUGIN_SHEET_END_POS.toString(), 1,
+              Properties.Keys.PLUGIN_SHEET_END_POS.toString(), 0.5f,
               prefs_, " \u00B0");
       sliceStopPos_ = sheetStopPositionLabel_.getFloat();
       imagingPiezoStartPositionLabel_ = new StoredFloatLabel(panelName_, 
-              Properties.Keys.PLUGIN_PIEZO_START_POS.toString(), -80,
+              Properties.Keys.PLUGIN_PIEZO_START_POS.toString(), -50f,
               prefs_, " \u00B5" + "m");
       imagingPiezoStartPos_ = imagingPiezoStartPositionLabel_.getFloat();
       imagingPiezoStopPositionLabel_ = new StoredFloatLabel(panelName_, 
-              Properties.Keys.PLUGIN_PIEZO_END_POS.toString(), 80,
+              Properties.Keys.PLUGIN_PIEZO_END_POS.toString(), 50f,
               prefs_, " \u00B5" + "m");
       imagingPiezoStopPos_ = imagingPiezoStopPositionLabel_.getFloat();
       
@@ -165,9 +165,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       offsetField_ = pu.makeFloatEntryField(panelName_, 
             Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET.toString(), 0, 5);  
       rateField_ = pu.makeFloatEntryField(panelName_, 
-            Properties.Keys.PLUGIN_RATE_PIEZO_SHEET.toString(), 80, 5);
+            Properties.Keys.PLUGIN_RATE_PIEZO_SHEET.toString(), 100, 5);
       piezoDeltaField_ = pu.makeFloatEntryField(panelName_, 
-            Properties.Keys.PLUGIN_PIEZO_SHEET_INCREMENT.toString(), 10, 3);
+            Properties.Keys.PLUGIN_PIEZO_SHEET_INCREMENT.toString(), 5, 3);
       piezoDeltaField_.setToolTipText("Piezo increment used by up/down arrow buttons");
       
       JButton upButton = new JButton();

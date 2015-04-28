@@ -168,7 +168,7 @@ public class AutofocusUtils {
 
             final float galvoRate = prefs_.getFloat(
                      MyStrings.PanelNames.SETUP.toString() + side.toString(), 
-                     Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, -80);
+                     Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, 100);
             // TODO remove below comments when fixed
             // galvoOffset is named inappropriately for now
             // will be changing with change in calibration representation later on

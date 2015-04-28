@@ -364,7 +364,7 @@ public class ControllerUtils {
       
       float sliceRate = prefs_.getFloat(
             MyStrings.PanelNames.SETUP.toString() + side.toString(), 
-            Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, -80);
+            Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, 100);
       if (MyNumberUtils.floatsEqual(sliceRate, 0.0f)) {
          MyDialogUtils.showError("Rate for slice " + side.toString() + 
                " cannot be zero. Re-do calibration on Setup tab.");
