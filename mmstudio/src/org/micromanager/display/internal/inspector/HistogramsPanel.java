@@ -25,6 +25,7 @@ import com.google.common.eventbus.Subscribe;
 import ij.CompositeImage;
 import ij.ImagePlus;
 
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -35,6 +36,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
@@ -77,6 +79,13 @@ import org.micromanager.internal.utils.ReportingUtils;
 // contains. Everything should be doable by event-passing between the various
 // histograms without using this as a go-between.
 public final class HistogramsPanel extends InspectorPanel {
+   public static final Color[] RGB_COLORS = new Color[] {
+         Color.RED, Color.GREEN, Color.BLUE, Color.CYAN, Color.MAGENTA,
+         Color.YELLOW, Color.WHITE};
+   public static final Color[] MGB_COLORS = new Color[] {
+         Color.MAGENTA, Color.GREEN, Color.BLUE, Color.YELLOW, Color.RED,
+         Color.CYAN, Color.WHITE};
+
    private Inspector inspector_;
 
    // Maps displays to the histograms for those displays. We need one histogram
@@ -340,6 +349,59 @@ public final class HistogramsPanel extends InspectorPanel {
          }
       });
       result.add(logDisplay);
+
+      // The display mode menu opens a sub-menu with three options, one of
+      // which starts selected depending on the current color settings of the
+      // display.
+      JMenu displayMode = new JMenu("Color presets");
+      JCheckBoxMenuItem rgb = new JCheckBoxMenuItem("RGBCMYW");
+      rgb.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            DisplaySettings newSettings = settings.copy().channelColors(RGB_COLORS).build();
+            display_.setDisplaySettings(newSettings);
+         }
+      });
+      JCheckBoxMenuItem mgb = new JCheckBoxMenuItem("MGBYRCW");
+      mgb.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            DisplaySettings newSettings = settings.copy().channelColors(MGB_COLORS).build();
+            display_.setDisplaySettings(newSettings);
+         }
+      });
+      JCheckBoxMenuItem custom = new JCheckBoxMenuItem("Custom");
+      // This menu item doesn't actually do anything.
+      custom.setEnabled(false);
+      Color[] channelColors = settings.getChannelColors();
+      if (channelColors != null) {
+         boolean isRGB = true;
+         boolean isMGB = true;
+         for (int i = 0; i < channelColors.length; ++i) {
+            if (!channelColors[i].equals(RGB_COLORS[i])) {
+               isRGB = false;
+            }
+            if (!channelColors[i].equals(MGB_COLORS[i])) {
+               isMGB = false;
+            }
+         }
+         if (isRGB) {
+            rgb.setState(true);
+         }
+         else if (isMGB) {
+            mgb.setState(true);
+         }
+         else {
+            custom.setState(true);
+         }
+      }
+      // else TODO: if there's no colors, our defaults (per
+      // ChannelControlPanel) are the MGB set, so that option ought to be
+      // checked, but should this module really know about that?
+      displayMode.add(rgb);
+      displayMode.add(mgb);
+      displayMode.add(custom);
+      result.add(displayMode);
 
       return result;
    }
