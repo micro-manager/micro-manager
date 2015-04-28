@@ -27,19 +27,208 @@ public class DisplayWindowControls extends javax.swing.JPanel {
    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
    private void initComponents() {
 
+      jTabbedPane1 = new javax.swing.JTabbedPane();
+      explorePanel_ = new javax.swing.JPanel();
+      surfacePanel_ = new javax.swing.JPanel();
+      jButton2 = new javax.swing.JButton();
+      jLabel5 = new javax.swing.JLabel();
+      jComboBox2 = new javax.swing.JComboBox();
+      gridPanel_ = new javax.swing.JPanel();
+      jButton1 = new javax.swing.JButton();
+      jLabel2 = new javax.swing.JLabel();
+      jComboBox1 = new javax.swing.JComboBox();
+      jLabel3 = new javax.swing.JLabel();
+      jSpinner1 = new javax.swing.JSpinner();
+      jLabel4 = new javax.swing.JLabel();
+      jSpinner2 = new javax.swing.JSpinner();
+      showInFolderButton_ = new javax.swing.JButton();
+      abortButton_ = new javax.swing.JButton();
+      pauseButton_ = new javax.swing.JButton();
+      jLabel1 = new javax.swing.JLabel();
+      jTextField1 = new javax.swing.JTextField();
+
+      javax.swing.GroupLayout explorePanel_Layout = new javax.swing.GroupLayout(explorePanel_);
+      explorePanel_.setLayout(explorePanel_Layout);
+      explorePanel_Layout.setHorizontalGroup(
+         explorePanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+         .addGap(0, 513, Short.MAX_VALUE)
+      );
+      explorePanel_Layout.setVerticalGroup(
+         explorePanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+         .addGap(0, 84, Short.MAX_VALUE)
+      );
+
+      jTabbedPane1.addTab("Explore", explorePanel_);
+
+      jButton2.setText("New Surface");
+      jButton2.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            jButton2ActionPerformed(evt);
+         }
+      });
+
+      jLabel5.setText("Current Surface:");
+
+      jComboBox2.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+      javax.swing.GroupLayout surfacePanel_Layout = new javax.swing.GroupLayout(surfacePanel_);
+      surfacePanel_.setLayout(surfacePanel_Layout);
+      surfacePanel_Layout.setHorizontalGroup(
+         surfacePanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+         .addGroup(surfacePanel_Layout.createSequentialGroup()
+            .addComponent(jButton2)
+            .addGap(0, 0, Short.MAX_VALUE))
+         .addGroup(surfacePanel_Layout.createSequentialGroup()
+            .addGap(125, 125, 125)
+            .addComponent(jLabel5)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addContainerGap(185, Short.MAX_VALUE))
+      );
+      surfacePanel_Layout.setVerticalGroup(
+         surfacePanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+         .addGroup(surfacePanel_Layout.createSequentialGroup()
+            .addContainerGap()
+            .addGroup(surfacePanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+               .addComponent(jLabel5)
+               .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addGap(2, 2, 2)
+            .addComponent(jButton2)
+            .addContainerGap(20, Short.MAX_VALUE))
+      );
+
+      jTabbedPane1.addTab("Surface", surfacePanel_);
+
+      jButton1.setText("New Grid");
+
+      jLabel2.setText("Current grid:");
+
+      jComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+      jLabel3.setText("Rows:");
+
+      jLabel4.setText("Columns:");
+
+      javax.swing.GroupLayout gridPanel_Layout = new javax.swing.GroupLayout(gridPanel_);
+      gridPanel_.setLayout(gridPanel_Layout);
+      gridPanel_Layout.setHorizontalGroup(
+         gridPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+         .addGroup(gridPanel_Layout.createSequentialGroup()
+            .addComponent(jButton1)
+            .addGap(45, 45, 45)
+            .addGroup(gridPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+               .addGroup(gridPanel_Layout.createSequentialGroup()
+                  .addComponent(jLabel2)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(jComboBox1, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+               .addGroup(gridPanel_Layout.createSequentialGroup()
+                  .addComponent(jLabel3)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(jSpinner1, javax.swing.GroupLayout.DEFAULT_SIZE, 58, Short.MAX_VALUE)
+                  .addGap(18, 18, 18)
+                  .addComponent(jLabel4)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                  .addComponent(jSpinner2, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)))
+            .addGap(122, 122, 122))
+      );
+      gridPanel_Layout.setVerticalGroup(
+         gridPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+         .addGroup(gridPanel_Layout.createSequentialGroup()
+            .addGroup(gridPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+               .addGroup(gridPanel_Layout.createSequentialGroup()
+                  .addContainerGap()
+                  .addGroup(gridPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                     .addComponent(jLabel2)
+                     .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addGroup(gridPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                     .addComponent(jLabel3)
+                     .addComponent(jSpinner1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                     .addComponent(jLabel4)
+                     .addComponent(jSpinner2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+               .addGroup(gridPanel_Layout.createSequentialGroup()
+                  .addGap(24, 24, 24)
+                  .addComponent(jButton1)))
+            .addContainerGap(17, Short.MAX_VALUE))
+      );
+
+      jTabbedPane1.addTab("Grid", gridPanel_);
+
+      showInFolderButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder.png"))); // NOI18N
+      showInFolderButton_.setToolTipText("Show in folder");
+
+      abortButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/abort.png"))); // NOI18N
+      abortButton_.setToolTipText("Abort acquisition");
+
+      pauseButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/pause.png"))); // NOI18N
+      pauseButton_.setToolTipText("Pause/resume acquisition");
+
+      jLabel1.setText("Animation FPS:");
+
+      jTextField1.setText("jTextField1");
+
       javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
       this.setLayout(layout);
       layout.setHorizontalGroup(
          layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGap(0, 400, Short.MAX_VALUE)
+         .addGroup(layout.createSequentialGroup()
+            .addComponent(showInFolderButton_)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(abortButton_)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(pauseButton_)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(jLabel1)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(0, 0, Short.MAX_VALUE))
+         .addComponent(jTabbedPane1)
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGap(0, 300, Short.MAX_VALUE)
+         .addGroup(layout.createSequentialGroup()
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+               .addGroup(layout.createSequentialGroup()
+                  .addContainerGap()
+                  .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                     .addComponent(showInFolderButton_)
+                     .addComponent(abortButton_)
+                     .addComponent(pauseButton_)))
+               .addGroup(layout.createSequentialGroup()
+                  .addGap(9, 9, 9)
+                  .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                     .addComponent(jLabel1)
+                     .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(jTabbedPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 130, Short.MAX_VALUE)
+            .addContainerGap())
       );
    }// </editor-fold>//GEN-END:initComponents
 
+   private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+      // TODO add your handling code here:
+   }//GEN-LAST:event_jButton2ActionPerformed
+
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
+   private javax.swing.JButton abortButton_;
+   private javax.swing.JPanel explorePanel_;
+   private javax.swing.JPanel gridPanel_;
+   private javax.swing.JButton jButton1;
+   private javax.swing.JButton jButton2;
+   private javax.swing.JComboBox jComboBox1;
+   private javax.swing.JComboBox jComboBox2;
+   private javax.swing.JLabel jLabel1;
+   private javax.swing.JLabel jLabel2;
+   private javax.swing.JLabel jLabel3;
+   private javax.swing.JLabel jLabel4;
+   private javax.swing.JLabel jLabel5;
+   private javax.swing.JSpinner jSpinner1;
+   private javax.swing.JSpinner jSpinner2;
+   private javax.swing.JTabbedPane jTabbedPane1;
+   private javax.swing.JTextField jTextField1;
+   private javax.swing.JButton pauseButton_;
+   private javax.swing.JButton showInFolderButton_;
+   private javax.swing.JPanel surfacePanel_;
    // End of variables declaration//GEN-END:variables
 }
