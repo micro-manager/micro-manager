@@ -211,7 +211,7 @@ int CZStage::Initialize()
    AddAllowedValue(g_MotorControlPropertyName, g_OffState);
    UpdateProperty(g_MotorControlPropertyName);
 
-   if (firmwareVersion_ > 2.865)  // changed behavior of JS F and T as of v2.87
+   if (FirmwareVersionAtLeast(2.87))  // changed behavior of JS F and T as of v2.87
    {
       // fast wheel speed (JS F) (per-card, not per-axis)
       pAct = new CPropertyAction (this, &CZStage::OnWheelFastSpeed);
@@ -321,7 +321,7 @@ int CZStage::Stop()
 bool CZStage::Busy()
 {
    ostringstream command; command.str("");
-   if (firmwareVersion_ > 2.7) // can use more accurate RS <axis>?
+   if (FirmwareVersionAtLeast(2.7)) // can use more accurate RS <axis>?
    {
       command << "RS " << axisLetter_ << "?";
       if (hub_->QueryCommandVerify(command.str(),":A") != DEVICE_OK)  // say we aren't busy if we can't communicate

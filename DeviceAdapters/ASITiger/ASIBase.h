@@ -96,6 +96,11 @@ protected:
    string firmwareDate_;    // firmware compile date
    string firmwareBuild_;   // firmware build name
 
+   boolean FirmwareVersionAtLeast(double minimumFirmwareVersion)
+   {
+      return firmwareVersion_ > (minimumFirmwareVersion - 1e-6);  // 1e-6 to make sure match is counted as OK despite possible floating point arithmetic issues
+   }
+
    void InitializeASIErrorMessages()
    {
       this->SetErrorText(ERR_UNRECOGNIZED_ANSWER, g_Msg_ERR_UNRECOGNIZED_ANSWER);

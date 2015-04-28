@@ -136,7 +136,7 @@ int CClocked::Initialize()
 bool CClocked::Busy()
 {
    ostringstream command; command.str("");
-   if (firmwareVersion_ > 2.7) // can use more accurate RS <axis>?
+   if (FirmwareVersionAtLeast(2.7)) // can use more accurate RS <axis>?
    {
       command << "RS " << axisLetter_ << "?";
       if (hub_->QueryCommandVerify(command.str(),":A") != DEVICE_OK)  // say we aren't busy if we can't communicate

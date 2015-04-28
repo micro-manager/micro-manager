@@ -156,26 +156,26 @@ int CPLogic::Initialize()
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode9, 9);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode10, 10);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode11, 11);
-   if (firmwareVersion_ > 3.079) {
+   if (FirmwareVersionAtLeast(3.08)) {
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode12, 12);
    } else {
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode12_original, 12);
    }
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode13, 13);
    AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode14, 14);
-   if (firmwareVersion_ > 3.059) {
+   if (FirmwareVersionAtLeast(3.06)) {
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode15, 15);
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode16, 16);
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode17, 17);
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode18, 18);
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode19, 19);
    }
-   if (firmwareVersion_ > 3.069) {
+   if (FirmwareVersionAtLeast(3.07)) {
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode20, 20);
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode21, 21);
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode22, 22);
    }
-   if (firmwareVersion_ > 3.089) {
+   if (FirmwareVersionAtLeast(3.09)) {
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode23, 23);
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode24, 24);
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode25, 25);

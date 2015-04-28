@@ -242,7 +242,7 @@ int CScanner::Initialize()
    AddAllowedValue(g_JoystickSelectYPropertyName, g_JSCode_23, 23);
    UpdateProperty(g_JoystickSelectYPropertyName);
 
-   if (firmwareVersion_ > 2.865)  // changed behavior of JS F and T as of v2.87
+   if (FirmwareVersionAtLeast(2.87))  // changed behavior of JS F and T as of v2.87
    {
       // fast wheel speed (JS F) (per-card, not per-axis)
       pAct = new CPropertyAction (this, &CScanner::OnWheelFastSpeed);
@@ -264,7 +264,7 @@ int CScanner::Initialize()
       UpdateProperty(g_WheelMirrorPropertyName);
    }
 
-   if (firmwareVersion_ > 2.825)  // added in v2.83
+   if (FirmwareVersionAtLeast(2.83))  // added in v2.83
    {
       // scanner range
       command.str("");
@@ -365,7 +365,7 @@ int CScanner::Initialize()
    AddAllowedValue(g_AxisPolarityY, g_AxisPolarityNormal);
 
    // end now if we are pre-2.8 firmware
-   if (firmwareVersion_ < 2.795)
+   if (!FirmwareVersionAtLeast(2.8))
    {
       initialized_ = true;
       return DEVICE_OK;
@@ -423,7 +423,7 @@ int CScanner::Initialize()
       AddAllowedValue(g_SPIMStatePropertyName, g_SPIMStateRunning);
       UpdateProperty(g_SPIMStatePropertyName);
 
-      if (firmwareVersion_ > 2.84)
+      if (FirmwareVersionAtLeast(2.84))
       {
          pAct = new CPropertyAction (this, &CScanner::OnSPIMDelayBeforeRepeat);
          CreateProperty(g_SPIMDelayBeforeRepeatPropertyName, "0", MM::Float, false, pAct);
@@ -445,7 +445,7 @@ int CScanner::Initialize()
          CreateProperty(g_SPIMLaserDurationPropertyName, "0", MM::Float, false, pAct);
          UpdateProperty(g_SPIMLaserDurationPropertyName);
 
-         if (firmwareVersion_ < 2.879)  // as of v2.88 this changed; property will be added later if define present
+         if (!FirmwareVersionAtLeast(2.88))  // as of v2.88 this changed; property will be added later if define present
          {
             pAct = new CPropertyAction (this, &CScanner::OnLaserOutputMode);
             CreateProperty(g_LaserOutputModePropertyName, "0", MM::String, false, pAct);
@@ -456,7 +456,7 @@ int CScanner::Initialize()
          }
       }
 
-      if (firmwareVersion_ > 2.885)  // get 2.89 features
+      if (FirmwareVersionAtLeast(2.89))  // get 2.89 features
       {
          pAct = new CPropertyAction (this, &CScanner::OnSPIMScannerHomeEnable);
          CreateProperty(g_SPIMScannerHomeEnable, "0", MM::String, false, pAct);
@@ -471,7 +471,7 @@ int CScanner::Initialize()
          UpdateProperty(g_SPIMPiezoHomeEnable);
       }
 
-      if (firmwareVersion_ > 3.005)  // in 3.01 added setting to allow multiple slices per piezo movement
+      if (FirmwareVersionAtLeast(3.01))  // in 3.01 added setting to allow multiple slices per piezo movement
       {
          pAct = new CPropertyAction (this, &CScanner::OnSPIMNumSlicesPerPiezo);
          CreateProperty(g_SPIMNumSlicesPerPiezoPropertyName, "1", MM::Integer, false, pAct);
@@ -484,7 +484,7 @@ int CScanner::Initialize()
    }
 
    // add ring buffer properties if supported (starting 2.81)
-   if ((firmwareVersion_ > 2.8) && (build.vAxesProps[0] & BIT1))
+   if ((FirmwareVersionAtLeast(2.81)) && (build.vAxesProps[0] & BIT1))
    {
       ring_buffer_supported_ = true;
 
@@ -514,7 +514,7 @@ int CScanner::Initialize()
       UpdateProperty(g_RB_AutoplayRunningPropertyName);
    }
 
-   if (firmwareVersion_ > 2.875)  // 2.88+
+   if (FirmwareVersionAtLeast(2.88))  // 2.88+
    {
       // populate laser_side_ appropriately
       command.str("");
@@ -654,7 +654,7 @@ void CScanner::UpdateIlluminationState()
 {
    // no direct way to query the controller if we are in "home" position or not
    // here we make the assumption that if both axes are at upper limits we are at home
-   if (firmwareVersion_ > 2.7)  // require version 2.8 to do this
+   if (FirmwareVersionAtLeast(2.8))  // require version 2.8 to do this
    {
       ostringstream command; command.str("");
       command << "RS " << axisLetterX_ << "-";
@@ -685,7 +685,7 @@ int CScanner::SetIlluminationStateHelper(bool on)
 {
    ostringstream command; command.str("");
    long tmp;
-   if (firmwareVersion_ < 2.879) // only applies 2.88+
+   if (!FirmwareVersionAtLeast(2.88)) // doesn't work before 2.88
       return DEVICE_OK;
    if(!laserTTLenabled_)
       return DEVICE_OK;
@@ -1029,7 +1029,7 @@ int CScanner::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
       ostringstream response; response.str("");
-      if (firmwareVersion_ > 2.7)
+      if (FirmwareVersionAtLeast(2.7))
       {
          command << "PM " << axisLetterX_ << "?";
          response << axisLetterX_ << "=";
@@ -1039,10 +1039,10 @@ int CScanner::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
          command << "MA " << axisLetterX_ << "?";
          response << ":A " << axisLetterX_ << "=";
       }
-      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success = 0;
-      if (firmwareVersion_ > 2.7)  // using PM command
+      if (FirmwareVersionAtLeast(2.7))  // using PM command
       {
          switch (tmp)
          {
@@ -1066,7 +1066,7 @@ int CScanner::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet) {
       string tmpstr;
       pProp->Get(tmpstr);
-      if (firmwareVersion_ > 2.7)  // using PM command
+      if (FirmwareVersionAtLeast(2.7))  // using PM command
       {
          if (tmpstr.compare(g_ScannerMode_internal) == 0)
             tmp = 0;
@@ -2612,50 +2612,7 @@ int CScanner::OnLaserOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    ostringstream command; command.str("");
    long tmp = 0;
    bool success;
-   if (firmwareVersion_ < 2.879)  // corresponding serial command changed to LED Z in v2.88
-   {
-      if (eAct == MM::BeforeGet)
-      {
-         if (!refreshProps_ && initialized_)
-            return DEVICE_OK;
-         command << addressChar_ << "NR Z?";
-         RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
-         RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
-         tmp = tmp >> 2;   // shift left to get bits 2 and 3 in position of two LSBs
-         tmp &= (0x03);    // mask off all but what used to be bits 2 and 3; this mitigates uncertainty of whether 1 or 0 was shifted in
-         switch (tmp)
-         {
-            case 0: success = pProp->Set(g_SPIMLaserOutputMode_0); break;
-            case 1: success = pProp->Set(g_SPIMLaserOutputMode_1); break;
-            case 2: success = pProp->Set(g_SPIMLaserOutputMode_2); break;
-            default: success = 0;
-         }
-         if (!success)
-            return DEVICE_INVALID_PROPERTY_VALUE;
-      }
-      else if (eAct == MM::AfterSet) {
-         string tmpstr;
-         pProp->Get(tmpstr);
-         if (tmpstr.compare(g_SPIMLaserOutputMode_0) == 0)
-            tmp = 0;
-         else if (tmpstr.compare(g_SPIMLaserOutputMode_1) == 0)
-            tmp = 1;
-         else if (tmpstr.compare(g_SPIMLaserOutputMode_2) == 0)
-            tmp = 2;
-         else
-            return DEVICE_INVALID_PROPERTY_VALUE;
-         tmp = tmp << 2;  // right shift to get the value to bits 2 and 3
-         command << addressChar_ << "NR Z?";
-         long tmp2;
-         RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
-         RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp2) );
-         tmp += (tmp2 & (0xF3));  // preserve the upper 4 bits and the two LSBs from prior setting, add bits 2 and 3 in manually
-         command.str("");
-         command << addressChar_ << "NR Z=" << tmp;
-         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-      }
-   }
-   else  // v2.88+
+   if (FirmwareVersionAtLeast(2.88))  // corresponding serial command changed to LED Z in v2.88
    {
       if (eAct == MM::BeforeGet)
       {
@@ -2697,6 +2654,49 @@ int CScanner::OnLaserOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct)
          command << addressChar_ << "LED Z=" << tmp;
          RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
       }
+   }
+   else  // before v2.88
+   {
+      if (eAct == MM::BeforeGet)
+            {
+               if (!refreshProps_ && initialized_)
+                  return DEVICE_OK;
+               command << addressChar_ << "NR Z?";
+               RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+               RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+               tmp = tmp >> 2;   // shift left to get bits 2 and 3 in position of two LSBs
+               tmp &= (0x03);    // mask off all but what used to be bits 2 and 3; this mitigates uncertainty of whether 1 or 0 was shifted in
+               switch (tmp)
+               {
+                  case 0: success = pProp->Set(g_SPIMLaserOutputMode_0); break;
+                  case 1: success = pProp->Set(g_SPIMLaserOutputMode_1); break;
+                  case 2: success = pProp->Set(g_SPIMLaserOutputMode_2); break;
+                  default: success = 0;
+               }
+               if (!success)
+                  return DEVICE_INVALID_PROPERTY_VALUE;
+            }
+            else if (eAct == MM::AfterSet) {
+               string tmpstr;
+               pProp->Get(tmpstr);
+               if (tmpstr.compare(g_SPIMLaserOutputMode_0) == 0)
+                  tmp = 0;
+               else if (tmpstr.compare(g_SPIMLaserOutputMode_1) == 0)
+                  tmp = 1;
+               else if (tmpstr.compare(g_SPIMLaserOutputMode_2) == 0)
+                  tmp = 2;
+               else
+                  return DEVICE_INVALID_PROPERTY_VALUE;
+               tmp = tmp << 2;  // right shift to get the value to bits 2 and 3
+               command << addressChar_ << "NR Z?";
+               long tmp2;
+               RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+               RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp2) );
+               tmp += (tmp2 & (0xF3));  // preserve the upper 4 bits and the two LSBs from prior setting, add bits 2 and 3 in manually
+               command.str("");
+               command << addressChar_ << "NR Z=" << tmp;
+               RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+            }
    }
    return DEVICE_OK;
 }
@@ -3077,14 +3077,17 @@ int CScanner::OnSPIMState(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CScanner::OnRBMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   string pseudoAxisChar = FirmwareVersionAtLeast(2.89) ? "F" : "X";
    long tmp;
+
    if (eAct == MM::BeforeGet)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << addressChar_ << ((firmwareVersion_ < 2.885) ? "RM X?" : "RM F?");
-      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(),
-            (firmwareVersion_ < 2.885) ? ":A X=" : ":A F="));
+      command << addressChar_ << "RM " << pseudoAxisChar << "?";
+      response << ":A " << pseudoAxisChar << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()) );
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (tmp >= 128)
       {
@@ -3113,7 +3116,7 @@ int CScanner::OnRBMode(MM::PropertyBase* pProp, MM::ActionType eAct)
          tmp = 3;
       else
          return DEVICE_INVALID_PROPERTY_VALUE;
-      command << addressChar_ << ((firmwareVersion_ < 2.885) ? "RM X=" : "RM F=") << tmp;
+      command << addressChar_ << "RM " << pseudoAxisChar << "=" << tmp;
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
    }
    return DEVICE_OK;
@@ -3141,15 +3144,17 @@ int CScanner::OnRBTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CScanner::OnRBRunning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   string pseudoAxisChar = FirmwareVersionAtLeast(2.89) ? "F" : "X";
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
       if (!refreshProps_ && initialized_ && !refreshOverride_)
          return DEVICE_OK;
       refreshOverride_ = false;
-      command << addressChar_ << ((firmwareVersion_ < 2.885) ? "RM X?" : "RM F?");
-      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(),
-            (firmwareVersion_ < 2.885) ? ":A X=" : ":A F="));
+      command << addressChar_ << "RM " << pseudoAxisChar << "?";
+      response << ":A " << pseudoAxisChar << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()) );
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       bool success;
       if (tmp >= 128)
