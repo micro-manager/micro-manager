@@ -54,14 +54,15 @@ public class AffineGUI extends javax.swing.JFrame {
        transform.getMatrix(matrix);
        double angle = Math.atan(matrix[1] / matrix[0]); //radians
        System.out.println(angle / Math.PI * 180);
-//figure out which quadrant 
+       //figure out which quadrant 
        //sin && cos
        if (matrix[1] > 0 && matrix[0] >= 0) {
-           //first quadrant, do nothing
+           //first quadrant, make sure angle is positive (in case ts exactly 90 degrees
+          angle = Math.abs(angle);
        } else if (matrix[1] > 0 && matrix[0] < 0) {
            //second quadrant
-           angle -= 2*(Math.PI / 2 + angle);            
-       } else if (matrix[1] <= 0 && matrix[0] > 0) {
+           angle = Math.abs(angle - 2*(Math.PI / 2 + angle));            
+       } else if (matrix[1] <= 0 && matrix[0] >= 0) {
            //fourth quadrant, do nothing
        } else {
            //third quadrant, subtract 90 degrees
