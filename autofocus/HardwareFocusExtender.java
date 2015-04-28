@@ -129,7 +129,18 @@ public class HardwareFocusExtender  extends AutofocusBase implements org.microma
     */
    @Override
    public double fullFocus() throws MMException {
+      if (hardwareFocusDevice_ == null || zDrive_ == null) {
+         ReportingUtils.showError("Autofocus, and/or ZDrive have not been set");
+         return 0.0;
+      }
       CMMCore core = gui_.getMMCore();
+      try {
+         core.getDeviceType(hardwareFocusDevice_);
+         core.getDeviceType(zDrive_);
+      } catch (Exception ex) {
+         ReportingUtils.showError("Hardware focus device and/or ZDrive were not set");
+         return 0.0;
+      }
       double pos = 0.0;
       try {
          core.setAutoFocusDevice(hardwareFocusDevice_);
