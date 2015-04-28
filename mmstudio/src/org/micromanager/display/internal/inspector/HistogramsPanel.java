@@ -237,19 +237,25 @@ public final class HistogramsPanel extends InspectorPanel {
 
    @Subscribe
    public synchronized void onNewImage(NewImageEvent event) {
-      // Make certain we have enough histograms for the relevant display(s).
-      Datastore store = event.getDatastore();
-      List<DisplayWindow> displays = DisplayGroupManager.getDisplaysForDatastore(store);
-      for (DisplayWindow display : displays) {
-         ArrayList<ChannelControlPanel> panels = displayToPanels_.get(display);
-         if (display.getDatastore() == store) {
-            while (event.getImage().getCoords().getIndex("channel") >= panels.size()) {
-               // Need to add a new channel histogram. Note that this will modify
-               // the "panels" object's length, incrementing the value returned by
-               // panels.size() here and ensuring the while loop continues.
-               addPanel((DefaultDisplayWindow) display, panels.size());
+      try {
+         // Make certain we have enough histograms for the relevant display(s).
+         Datastore store = event.getDatastore();
+         List<DisplayWindow> displays = DisplayGroupManager.getDisplaysForDatastore(store);
+         for (DisplayWindow display : displays) {
+            ArrayList<ChannelControlPanel> panels = displayToPanels_.get(display);
+            if (display.getDatastore() == store) {
+               while (event.getImage().getCoords().getIndex("channel") >= panels.size()) {
+                  // Need to add a new channel histogram. Note that this will
+                  // modify the "panels" object's length, incrementing the
+                  // value returned by panels.size() here and ensuring the
+                  // while loop continues.
+                  addPanel((DefaultDisplayWindow) display, panels.size());
+               }
             }
          }
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error adjusting histograms to new image");
       }
    }
 

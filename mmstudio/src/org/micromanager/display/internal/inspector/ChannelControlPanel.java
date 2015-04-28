@@ -388,11 +388,27 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
    
    public void displayComboAction() {
-      int bits = histRangeComboBox_.getSelectedIndex() + 3;
-      if (bits == 3) {
+      int index = histRangeComboBox_.getSelectedIndex();
+      // Update the display settings.
+      DisplaySettings settings = display_.getDisplaySettings();
+      Integer[] curIndices = settings.getBitDepthIndices();
+      if (curIndices == null || curIndices.length <= channelIndex_) {
+         // Expand the array to contain our value.
+         Integer[] indices = new Integer[channelIndex_ + 1];
+         for (int i = 0; i < indices.length; ++i) {
+            indices[i] = (curIndices != null && curIndices.length > i) ? curIndices[i] : 0;
+         }
+         curIndices = indices;
+      }
+      curIndices[channelIndex_] = index;
+      settings = settings.copy().bitDepthIndices(curIndices).build();
+      display_.setDisplaySettings(settings);
+
+      // Update the histogram display.
+      histMax_ = (int) (Math.pow(2, index + 3) - 1);
+      if (index == 0) {
+         // User selected the "Camera depth" option.
          histMax_ = maxIntensity_;
-      } else {
-         histMax_ = (int) (Math.pow(2, bits) - 1);
       }
       binSize_ = ((double) (histMax_ + 1)) / ((double) NUM_BINS);
       histMaxLabel_ = histMax_ + "";
@@ -592,6 +608,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     */
    public void reloadDisplaySettings() {
       DisplaySettings settings = display_.getDisplaySettings();
+      Integer[] bitDepthIndices = settings.getBitDepthIndices();
+      if (bitDepthIndices != null && bitDepthIndices.length > channelIndex_ &&
+            bitDepthIndices[channelIndex_] != histRangeComboBox_.getSelectedIndex()) {
+         histRangeComboBox_.setSelectedIndex(bitDepthIndices[channelIndex_]);
+      }
       // HACK: use a color based on the channel index: specifically, use the
       // CMYRGB set from the DisplaySettings panel.
       Color defaultColor = Color.WHITE;

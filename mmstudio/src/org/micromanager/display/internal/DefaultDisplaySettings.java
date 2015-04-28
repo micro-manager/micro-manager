@@ -74,6 +74,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
             DefaultDisplaySettings.class, "shouldAutostretch", true));
       builder.extremaPercentage(profile.getDouble(
             DefaultDisplaySettings.class, "extremaPercentage", 0.0));
+      builder.bitDepthIndices(profile.getIntArray(
+            DefaultDisplaySettings.class, "bitDepthIndices", null));
       builder.shouldUseLogScale(profile.getBoolean(
             DefaultDisplaySettings.class, "shouldUseLogScale", false));
       // TODO: should we store user data in the display prefs?
@@ -97,6 +99,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
             "shouldAutostretch", settings.getShouldAutostretch());
       profile.setDouble(DefaultDisplaySettings.class,
             "extremaPercentage", settings.getExtremaPercentage());
+      profile.setIntArray(DefaultDisplaySettings.class,
+            "bitDepthIndices", settings.getBitDepthIndices());
       profile.setBoolean(DefaultDisplaySettings.class,
             "shouldUseLogScale", settings.getShouldUseLogScale());
    }
@@ -144,6 +148,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       private Boolean shouldSyncChannels_ = null;
       private Boolean shouldAutostretch_ = null;
       private Double extremaPercentage_ = null;
+      private Integer[] bitDepthIndices_ = null;
       private Boolean shouldUseLogScale_ = null;
       private PropertyMap userData_ = null;
 
@@ -219,6 +224,12 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
+      public DisplaySettingsBuilder bitDepthIndices(Integer[] bitDepthIndices) {
+         bitDepthIndices_ = bitDepthIndices;
+         return this;
+      }
+
+      @Override
       public DisplaySettingsBuilder shouldUseLogScale(Boolean shouldUseLogScale) {
          shouldUseLogScale_ = shouldUseLogScale;
          return this;
@@ -242,6 +253,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    private Boolean shouldSyncChannels_ = null;
    private Boolean shouldAutostretch_ = null;
    private Double extremaPercentage_ = null;
+   private Integer[] bitDepthIndices_ = null;
    private Boolean shouldUseLogScale_ = null;
    private PropertyMap userData_ = null;
 
@@ -257,6 +269,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       shouldSyncChannels_ = builder.shouldSyncChannels_;
       shouldAutostretch_ = builder.shouldAutostretch_;
       extremaPercentage_ = builder.extremaPercentage_;
+      bitDepthIndices_ = builder.bitDepthIndices_;
       shouldUseLogScale_ = builder.shouldUseLogScale_;
       userData_ = builder.userData_;
    }
@@ -317,6 +330,11 @@ public class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
+   public Integer[] getBitDepthIndices() {
+      return bitDepthIndices_;
+   }
+
+   @Override
    public Boolean getShouldUseLogScale() {
       return shouldUseLogScale_;
    }
@@ -340,6 +358,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
             .shouldSyncChannels(shouldSyncChannels_)
             .shouldAutostretch(shouldAutostretch_)
             .extremaPercentage(extremaPercentage_)
+            .bitDepthIndices(bitDepthIndices_)
             .shouldUseLogScale(shouldUseLogScale_)
             .userData(userData_);
    }
@@ -400,6 +419,14 @@ public class DefaultDisplaySettings implements DisplaySettings {
          }
          if (tags.has("extremaPercentage")) {
             builder.extremaPercentage(tags.getDouble("extremaPercentage"));
+         }
+         if (tags.has("bitDepthIndices")) {
+            JSONArray indices = tags.getJSONArray("bitDepthIndices");
+            Integer[] indicesArr = new Integer[indices.length()];
+            for (int i = 0; i < indicesArr.length; ++i) {
+               indicesArr[i] = indices.getInt(i);
+            }
+            builder.bitDepthIndices(indicesArr);
          }
          if (tags.has("shouldUseLogScale")) {
             builder.shouldUseLogScale(tags.getBoolean("shouldUseLogScale"));
@@ -507,6 +534,13 @@ public class DefaultDisplaySettings implements DisplaySettings {
          result.put("shouldSyncChannels", shouldSyncChannels_);
          result.put("shouldAutostretch", shouldAutostretch_);
          result.put("extremaPercentage", extremaPercentage_);
+         if (bitDepthIndices_ != null && bitDepthIndices_.length > 0) {
+            JSONArray indices = new JSONArray();
+            for (int i = 0; i < bitDepthIndices_.length; ++i) {
+               indices.put(bitDepthIndices_[i]);
+            }
+            result.put("bitDepthIndices", indices);
+         }
          result.put("shouldUseLogScale", shouldUseLogScale_);
          // TODO: not storing user data at this time.
          return result;

@@ -62,6 +62,7 @@ public interface DisplaySettings {
       DisplaySettingsBuilder shouldSyncChannels(Boolean shouldSyncChannels);
       DisplaySettingsBuilder shouldAutostretch(Boolean shouldAutostretch);
       DisplaySettingsBuilder extremaPercentage(Double extremaPercentage);
+      DisplaySettingsBuilder bitDepthIndices(Integer[] bitDepthIndices);
       DisplaySettingsBuilder shouldUseLogScale(Boolean shouldUseLogScale);
 
       DisplaySettingsBuilder userData(PropertyMap userData);
@@ -100,6 +101,9 @@ public interface DisplaySettings {
    /** The percentage of values off the top and bottom of the image's value
      * range that get ignored when autostretching */
    public Double getExtremaPercentage();
+   /** The indices into the bit depth dropdown for controlling the X scale of
+     * the histogram, for each channel. */
+   public Integer[] getBitDepthIndices();
    /** Whether to display the histograms using a logarithmic scale */
    public Boolean getShouldUseLogScale();
    /** Any additional user-supplied data */
