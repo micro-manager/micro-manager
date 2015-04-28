@@ -323,7 +323,7 @@ public class AutofocusUtils {
                   PlotUtils plotter = new PlotUtils(prefs_, "AutofocusUtils");
                   boolean[] showSymbols = {true, false};
                   plotter.plotDataN("Focus curve", scoresToPlot, 
-                          "Galvo position (degree)", "Score", showSymbols, false);
+                          "Galvo position (degree)", "Score", showSymbols);
                }
 
             } catch (ASIdiSPIMException ex) {
