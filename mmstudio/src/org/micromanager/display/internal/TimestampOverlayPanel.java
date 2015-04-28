@@ -57,7 +57,6 @@ import org.micromanager.display.OverlayPanel;
 public class TimestampOverlayPanel extends OverlayPanel {
    private static final int LINE_HEIGHT = 13;
 
-   private final JCheckBox shouldDraw_;
    private final JCheckBox amMultiChannel_;
    private final JCheckBox shouldDrawBackground_;
    private final JTextField xOffset_;
@@ -74,10 +73,6 @@ public class TimestampOverlayPanel extends OverlayPanel {
             redraw();
          }
       };
-
-      shouldDraw_ = new JCheckBox("Draw timestamps");
-      shouldDraw_.addActionListener(redrawListener);
-      add(shouldDraw_);
 
       add(new JLabel("Position: "), "split 2, flowy");
       position_ = new JComboBox(new String[] {
@@ -129,9 +124,6 @@ public class TimestampOverlayPanel extends OverlayPanel {
    @Override
    public void drawOverlay(Graphics g, DisplayWindow display, Image image,
          ImageCanvas canvas) {
-      if (!shouldDraw_.isSelected()) {
-         return;
-      }
       ArrayList<String> timestamps = new ArrayList<String>();
       ArrayList<Color> colors = new ArrayList<Color>();
       Datastore store = display.getDatastore();
