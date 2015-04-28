@@ -217,7 +217,7 @@ public class AutofocusUtils {
                      gui_.closeAcquisition(acqName);
                   }
                   acqName = gui_.getUniqueAcquisitionName(acqName);
-                  gui_.openAcquisition(acqName, "", nrImages, 1, 1, 1, true, false);
+                  gui_.openAcquisition(acqName, "", 1, 1, nrImages, 1, true, false);
                   gui_.initializeAcquisition(acqName,
                           (int) gui_.getMMCore().getImageWidth(),
                           (int) gui_.getMMCore().getImageHeight(),
