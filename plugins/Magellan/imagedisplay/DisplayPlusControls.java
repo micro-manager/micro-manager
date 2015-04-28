@@ -19,6 +19,7 @@ import javax.swing.event.ChangeListener;
 import net.miginfocom.swing.MigLayout;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.MMStudio;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
 import surfacesandregions.MultiPosRegion;
@@ -468,7 +469,8 @@ public class DisplayPlusControls extends Panel {
    private MultiPosRegion createNewGrid() {
       int imageWidth = display_.getImagePlus().getWidth();
       int imageHeight = display_.getImagePlus().getHeight();
-      return new MultiPosRegion(regionManager_,(Integer) gridRowSpinner_.getValue(), (Integer) gridColSpinner_.getValue(), 
+      return new MultiPosRegion(regionManager_, MMStudio.getInstance().getMMCore().getXYStageDevice(),
+              (Integer) gridRowSpinner_.getValue(), (Integer) gridColSpinner_.getValue(), 
               display_.stageCoordFromImageCoords(imageWidth / 2, imageHeight / 2));
    }
 

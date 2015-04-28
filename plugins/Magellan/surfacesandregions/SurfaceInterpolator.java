@@ -106,6 +106,14 @@ public abstract class SurfaceInterpolator implements XYFootprint {
          }
       });      
    }
+   
+   public String getXYDeviceName() {
+      return xyDeviceName_;
+   }
+   
+   public String getZDeviceName() {
+      return zDeviceName_;
+   }
      
    public String getPixelSizeConfig() {
       return pixelSizeConfig_;

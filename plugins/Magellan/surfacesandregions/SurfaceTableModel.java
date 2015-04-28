@@ -16,7 +16,7 @@ import org.micromanager.utils.ReportingUtils;
  */
 class SurfaceTableModel extends AbstractTableModel  {
 
-   private final String[] COLUMNS = {"Name", "XY padding (µm)", "# Positions"};
+   private final String[] COLUMNS = {"Name", "XY Device", "Z Device", "XY padding (µm)", "# Positions"};
    private SurfaceManager manager_;
    
    public SurfaceTableModel(SurfaceManager manager) {
@@ -65,6 +65,10 @@ class SurfaceTableModel extends AbstractTableModel  {
       if (columnIndex == 0) {
          return manager_.getSurface(rowIndex).getName();
       } else if (columnIndex == 1) {
+         return manager_.getSurface(rowIndex).getXYDeviceName();
+      } else if (columnIndex == 2) {
+         return manager_.getSurface(rowIndex).getZDeviceName();
+      } else if (columnIndex == 3) {
          return surface.getXYPadding();
       } else {
          int numPositions = surface.getNumPositions();

@@ -26,17 +26,23 @@ public class MultiPosRegion implements XYFootprint{
    private RegionManager manager_;
    private String name_;
    private String pixelSizeConfig_;
+   private String XYDevice_;
 
-   public MultiPosRegion(RegionManager manager, int r, int c, Point2D.Double center)  {
+   public MultiPosRegion(RegionManager manager, String xyDevice, int r, int c, Point2D.Double center)  {
       manager_ = manager;
       name_ = manager.getNewName();
       center_ = center;
+      XYDevice_ = xyDevice;
       try {
          pixelSizeConfig_ = MMStudio.getInstance().getCore().getCurrentPixelSizeConfig();
       } catch (Exception ex) {
          ReportingUtils.showError("couldnt get pixel size config");
       }
       updateParams(r, c);
+   }
+   
+   public String getXYDevice() {
+      return XYDevice_;
    }
 
    @Override

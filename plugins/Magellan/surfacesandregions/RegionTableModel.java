@@ -16,7 +16,7 @@ import surfacesandregions.RegionManager;
  */
 class RegionTableModel extends AbstractTableModel implements ListDataListener {
 
-   private final String[] COLUMNS = {"Name", "# Rows", "# Cols", "Width (µm)", "Height (µm)"};
+   private final String[] COLUMNS = {"Name", "XY Device", "# Rows", "# Cols", "Width (µm)", "Height (µm)"};
    private RegionManager manager_;
    
    public RegionTableModel(RegionManager manager) {
@@ -59,10 +59,12 @@ class RegionTableModel extends AbstractTableModel implements ListDataListener {
       if (columnIndex == 0) {
          return manager_.getRegion(rowIndex).getName();
       } else if (columnIndex == 1) {
-         return region.numRows();
+         return manager_.getRegion(rowIndex).getXYDevice();
       } else if (columnIndex == 2) {
-         return region.numCols();
+         return region.numRows();
       } else if (columnIndex == 3) {
+         return region.numCols();
+      } else if (columnIndex == 4) {
          return region.getWidth_um();
       } else {
          return region.getHeight_um();
