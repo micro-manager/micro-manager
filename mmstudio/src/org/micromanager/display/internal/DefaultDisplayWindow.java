@@ -407,7 +407,18 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       canvasPanel_.addComponentListener(new ComponentAdapter() {
          @Override
          public void componentResized(ComponentEvent e) {
-            canvas_.updateSize(canvasPanel_.getSize());
+            Dimension panelSize = canvasPanel_.getSize();
+            canvas_.updateSize(panelSize);
+            Dimension canvasSize = canvas_.getSize();
+            // The canvas may now be smaller than the panel containing it (e.g.
+            // if the panel is a rectangle containing a square canvas); shrink
+            // the panel to suit so we don't blow the window as a whole
+            // out-of-size.
+            if (canvasSize.width < panelSize.width ||
+               canvasSize.height < panelSize.height) {
+               canvasPanel_.setSize(canvasSize);
+               pack();
+            }
             doLayout();
          }
       });
@@ -992,7 +1003,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     * possible. This is conceptually similar to the override of the pack()
     * method, below, but in the opposite direction.
     */
-   private void setWindowSize() {
+   private synchronized void setWindowSize() {
       if (fullScreenFrame_ != null) {
          // Do nothing for now since we aren't visible anyway.
          return;
@@ -1044,9 +1055,15 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    public synchronized void pack() {
       Dimension controlsSize = controlsPanel_.getPreferredSize();
       Dimension ourSize = contentsPanel_.getSize();
+      Dimension screenSize = getScreenConfig().getBounds().getSize();
+      // HACK: coerce our size to not exceed that of the screen we are in. No
+      // idea how this happens in the first place, but it does with very large
+      // images (e.g. 2.5k x 2.5k).
+      ourSize = new Dimension(Math.min(ourSize.width, screenSize.width),
+            Math.min(ourSize.height, screenSize.height));
       boolean isFullScreen = (fullScreenFrame_ != null);
-      if (ourSize.width == 0 && ourSize.height == 0 && isFullScreen) {
-         // Substitute the size of the display we're in.
+      if (isFullScreen) {
+         // Substitute the size of the monitor our contents are in.
          ourSize = GUIUtils.getFullScreenBounds(getScreenConfig()).getSize();
       }
       // Determine if a given component is growing (we need to increase our
