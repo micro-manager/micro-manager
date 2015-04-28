@@ -44,8 +44,8 @@ public:
    // -----------
    int SetPosition(double x, double y);
    int GetPosition(double& x, double& y);
-   double GetXRange() { return limitX_; }  // this is only positive limit, on power-up limits are +/- this value
-   double GetYRange() { return limitY_; }  // this is only positive limit, on power-up limits are +/- this value
+   double GetXRange() { return upperLimitX_; }  // this is only positive limit, on power-up limits are +/- this value
+   double GetYRange() { return upperLimitY_; }  // this is only positive limit, on power-up limits are +/- this value
    int AddPolygonVertex(int polygonIndex, double x, double y);
    int DeletePolygons();
    int LoadPolygons();
@@ -142,12 +142,14 @@ private:
    string axisLetterY_;
    double unitMultX_;  // units per degree
    double unitMultY_;  // units per degree
-   double limitX_;   // positive limit only (on power-up things are symmetric about 0)
-   double limitY_;   // positive limit only (on power-up things are symmetric about 0)
-   double shutterX_; // home position, used to turn beam off
-   double shutterY_;  // home position, used to turn beam off
-   double lastX_;   // used to cache position
-   double lastY_;   // used to cache position
+   double upperLimitX_;   // positive limit only (on power-up things are symmetric about 0)
+   double upperLimitY_;   // positive limit only (on power-up things are symmetric about 0)
+   double lowerLimitX_;   // negative limit (on power-up things are symmetric about 0)
+   double lowerLimitY_;   // negative limit (on power-up things are symmetric about 0)
+   double shutterX_; // home position, used to turn beam off (in degrees)
+   double shutterY_; // home position, used to turn beam off (in degrees)
+   double lastX_;    // used to cache position (in degrees)
+   double lastY_;    // used to cache position (in degrees)
    bool illuminationState_;  // true if on, false if beam is turned off
    bool refreshOverride_;  // true temporarily if refreshing property
 

@@ -51,8 +51,10 @@ CScanner::CScanner(const char* name) :
    axisLetterY_(g_EmptyAxisLetterStr),    // value determined by extended name
    unitMultX_(g_ScannerDefaultUnitMult),  // later will try to read actual setting
    unitMultY_(g_ScannerDefaultUnitMult),  // later will try to read actual setting
-   limitX_(0),   // later will try to read actual setting
-   limitY_(0),   // later will try to read actual setting
+   upperLimitX_(0),   // later will try to read actual setting
+   upperLimitY_(0),   // later will try to read actual setting
+   lowerLimitX_(0),   // later will try to read actual setting
+   lowerLimitY_(0),   // later will try to read actual setting
    shutterX_(0), // home position, used to turn beam off
    shutterY_(0), // home position, used to turn beam off
    lastX_(0),    // cached position before blanking, used for SetIlluminationState
@@ -103,11 +105,12 @@ int CScanner::Initialize()
    command.str("");
    command << "HM " << axisLetterX_ << "? ";
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":") );
-   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(shutterX_) );
+   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(shutterX_) );  // already in units of degrees
+
    command.str("");
    command << "HM " << axisLetterY_ << "? ";
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":") );
-   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(shutterY_) );
+   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(shutterY_) ); // already in units of degrees
 
    // set controller card to return positions with 1 decimal places (3 is max allowed currently, units are millidegrees)
    command.str("");
@@ -163,6 +166,16 @@ int CScanner::Initialize()
    pAct = new CPropertyAction (this, &CScanner::OnUpperLimY);
    CreateProperty(g_ScannerUpperLimYPropertyName, "0", MM::Float, false, pAct);
    UpdateProperty(g_ScannerUpperLimYPropertyName);
+
+   // for older firmware fix the blanking position of 1000 degrees which is far beyond the limits
+   // assume that the blanking position is the maximum limit
+   // firmware 3.10+ this is fixed, but this code can still execute without problem
+   if (shutterX_ > 100) {
+      GetProperty(g_ScannerUpperLimXPropertyName, shutterX_);
+   }
+   if (shutterY_ > 100) {
+      GetProperty(g_ScannerUpperLimYPropertyName, shutterY_);
+   }
 
    // mode, currently just changes between internal and external input
    pAct = new CPropertyAction (this, &CScanner::OnMode);
@@ -580,23 +593,43 @@ bool CScanner::Busy()
 
 int CScanner::SetPosition(double x, double y)
 // will not change the position of an axis unless single-axis functions are inactive
+// also will not change the position if the beam is turned off, but it will change the
+// cached positions that are used when the beam is turned back on
 {
-   if (!illuminationState_) return DEVICE_OK;  // don't do anything if beam is turned off
    ostringstream command; command.str("");
-   char SAMode[MM::MaxStrLength];
-   RETURN_ON_MM_ERROR ( GetProperty(g_SAModeXPropertyName, SAMode) );
-   bool xMovable = strcmp(SAMode, g_SAMode_0) == 0;
-   RETURN_ON_MM_ERROR ( GetProperty(g_SAModeYPropertyName, SAMode) );
-   bool yMovable = strcmp(SAMode, g_SAMode_0) == 0;
-   if (xMovable && yMovable) {
-      command << "M " << axisLetterX_ << "=" << x*unitMultX_ << " " << axisLetterY_ << "=" << y*unitMultY_;
-      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-   } else if (xMovable && !yMovable) {
-      command << "M " << axisLetterX_ << "=" << x*unitMultX_;
-      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
-   } else if (!xMovable && yMovable) {
-      command << "M " << axisLetterY_ << "=" << y*unitMultY_;
-      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   if (illuminationState_) {  // beam is turned on
+      char SAMode[MM::MaxStrLength];
+      RETURN_ON_MM_ERROR ( GetProperty(g_SAModeXPropertyName, SAMode) );
+      bool xMovable = strcmp(SAMode, g_SAMode_0) == 0;
+      RETURN_ON_MM_ERROR ( GetProperty(g_SAModeYPropertyName, SAMode) );
+      bool yMovable = strcmp(SAMode, g_SAMode_0) == 0;
+      if (xMovable && yMovable) {
+         command << "M " << axisLetterX_ << "=" << x*unitMultX_ << " " << axisLetterY_ << "=" << y*unitMultY_;
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+      } else if (xMovable && !yMovable) {
+         command << "M " << axisLetterX_ << "=" << x*unitMultX_;
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+      } else if (!xMovable && yMovable) {
+         command << "M " << axisLetterY_ << "=" << y*unitMultY_;
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+      }
+   } else {  // beam is turned off
+      // update the cached position to be the current commanded position
+      // so that beam will go there when turned back on
+      // except don't do anything if we are setting position to blanking position
+      // this way we can update just one of the two cached positions by passing
+      // the other axis as the corresponding blanking position
+      hub_->QueryCommand(command.str());
+      if (double_cmp(x, shutterX_) != 0
+            && double_cmp(x, upperLimitX_) < 0
+            && double_cmp(x, lowerLimitX_) > 0) {
+         lastX_ = x;
+      }
+      if (double_cmp(y, shutterY_) != 0
+            && double_cmp(y, upperLimitY_) < 0
+            && double_cmp(y, lowerLimitY_) > 0) {
+         lastY_ = y;
+      }
    }
    return DEVICE_OK;
 }
@@ -881,19 +914,23 @@ int CScanner::OnLowerLimX(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
-      if (!refreshProps_ && initialized_)
+      if (!refreshProps_ && initialized_ && !refreshOverride_)
          return DEVICE_OK;
+      refreshOverride_ = false;
       command << "SL " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
+      lowerLimitX_ = tmp;  // already in units of degrees
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
       command << "SL " << axisLetterX_ << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      refreshOverride_ = true;
+      return OnLowerLimX(pProp, MM::BeforeGet);
    }
    return DEVICE_OK;
 }
@@ -905,19 +942,23 @@ int CScanner::OnLowerLimY(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
-      if (!refreshProps_ && initialized_)
+      if (!refreshProps_ && initialized_ && !refreshOverride_)
          return DEVICE_OK;
+      refreshOverride_ = false;
       command << "SL " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
+      lowerLimitY_ = tmp;  // already in units of degrees
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
       command << "SL " << axisLetterY_ << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      refreshOverride_ = true;
+      return OnLowerLimY(pProp, MM::BeforeGet);
    }
    return DEVICE_OK;
 }
@@ -929,20 +970,23 @@ int CScanner::OnUpperLimX(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
-      if (!refreshProps_ && initialized_)
+      if (!refreshProps_ && initialized_ && !refreshOverride_)
          return DEVICE_OK;
+      refreshOverride_ = false;
       command << "SU " << axisLetterX_ << "?";
       response << ":A " << axisLetterX_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
-      limitX_ = tmp;
+      upperLimitX_ = tmp;  // already in units of degrees
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
       command << "SU " << axisLetterX_ << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      refreshOverride_ = true;
+      return OnUpperLimX(pProp, MM::BeforeGet);
    }
    return DEVICE_OK;
 }
@@ -954,20 +998,23 @@ int CScanner::OnUpperLimY(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
-      if (!refreshProps_ && initialized_)
+      if (!refreshProps_ && initialized_ && !refreshOverride_)
          return DEVICE_OK;
+      refreshOverride_ = false;
       command << "SU " << axisLetterY_ << "?";
       response << ":A " << axisLetterY_ << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
-      limitY_ = tmp;
+      upperLimitY_ = tmp;  // already in units of degrees
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
       command << "SU " << axisLetterY_ << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      refreshOverride_ = true;
+      return OnUpperLimY(pProp, MM::BeforeGet);
    }
    return DEVICE_OK;
 }
