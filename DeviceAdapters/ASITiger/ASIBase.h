@@ -96,7 +96,7 @@ protected:
    string firmwareDate_;    // firmware compile date
    string firmwareBuild_;   // firmware build name
 
-   boolean FirmwareVersionAtLeast(double minimumFirmwareVersion)
+   bool FirmwareVersionAtLeast(double minimumFirmwareVersion)
    {
       return firmwareVersion_ > (minimumFirmwareVersion - 1e-6);  // 1e-6 to make sure match is counted as OK despite possible floating point arithmetic issues
    }

@@ -161,7 +161,7 @@ protected:
       // returns 0 if d1 and d2 are within precision of each other
       // otherwise returns -1 if d1 is less than d2
       // or returns 1 if d1 is greater than d2
-      if (abs(d1-d2) < abs(precision))
+      if (fabs(d1 - d2) < fabs(precision))
          return 0;
       return (d1 < d2) ? -1 : 1;
    }
