@@ -357,6 +357,11 @@ public class IntroDlg extends JDialog {
       return result;
    }
 
+   public static String getMostRecentlyUsedConfig() {
+      String[] configs = getRecentlyUsedConfigs();
+      return configs[configs.length - 1];
+   }
+
    // Add the provided config file onto the list of recently-used configs.
    // We impose a cap of 6 on this list. The last element of the array is
    // the most-recently used config file (and the first is the oldest).
@@ -368,10 +373,10 @@ public class IntroDlg extends JDialog {
       }
       else {
          // Move it to the end of the array.
-         for (int i = configs.indexOf(config); i < configs.size() - 1; ++i) {
-            configs.set(i, configs.get(i + 1));
+         while (configs.contains(config)) {
+            configs.remove(config);
          }
-         configs.set(configs.size() - 1, config);
+         configs.add(config);
       }
       if (configs.size() > MAX_RECENT_CONFIGS) {
          configs.remove(configs.get(0));

@@ -250,7 +250,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
       amRunningAsPlugin_ = shouldRunAsPlugin;
       isProgramRunning_ = true;
 
-      sysConfigFile_ = IntroDlg.getRecentlyUsedConfigs()[0];
+      sysConfigFile_ = IntroDlg.getMostRecentlyUsedConfig();
 
       if (ScriptPanel.getStartupScript().length() > 0) {
          startupScriptFile_ = new File(ScriptPanel.getStartupScript()).getAbsolutePath();
