@@ -151,7 +151,7 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
         try {
             chipName = core_.getProperty(CameraLabel, "ChipName");
         } catch (Exception ex) {
-            throw new Exception("Failed to read camera model.");
+            throw new Exception("Failed to read camera model. A PVCAM compatible camera is required.");
         }
 
         if (chipName.contains("QI_Retiga6000C")) {
