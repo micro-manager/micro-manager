@@ -29,6 +29,7 @@ import mmcorej.CMMCore;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.Joystick.Directions;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
+import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -89,7 +90,7 @@ public class Positions {
     * @param dir
     * @return
     */
-   public double getCachedPosition(Devices.Keys devKey, Joystick.Directions dir) {
+   public double getCachedPosition(Devices.Keys devKey, Directions dir) {
       if (devices_.is1DStage(devKey)) {
          Double pos = getOneAxisStagePosition(devKey);
          if (pos != null) {
@@ -99,9 +100,9 @@ public class Positions {
       if (devices_.isGalvo(devKey) || devices_.isXYStage(devKey)) {
          Point2D.Double pos = getTwoAxisStagePosition(devKey);
          if (pos != null) {
-            if (dir == Joystick.Directions.X) {
+            if (dir == Directions.X) {
                return pos.x;
-            } else if (dir == Joystick.Directions.Y) {
+            } else if (dir == Directions.Y) {
                return pos.y;
             }
          }
@@ -116,7 +117,7 @@ public class Positions {
     * @return
     */
    public double getUpdatedPosition(Devices.Keys devKey) {
-      return getUpdatedPosition(devKey, Joystick.Directions.NONE);
+      return getUpdatedPosition(devKey, Directions.NONE);
    }
    
    /**
@@ -126,7 +127,7 @@ public class Positions {
     * @param dir
     * @return
     */
-   public double getUpdatedPosition(Devices.Keys devKey, Joystick.Directions dir) {
+   public double getUpdatedPosition(Devices.Keys devKey, Directions dir) {
       String mmDevice = devices_.getMMDevice(devKey);
       if (mmDevice == null) {
          return 0;
@@ -146,9 +147,9 @@ public class Positions {
             pt = new Point2D.Double();
          }
          twoAxisDrivePositions_.put(devKey, pt);
-         if (dir == Joystick.Directions.X) {
+         if (dir == Directions.X) {
             return pt.x;
-         } else if (dir == Joystick.Directions.Y) {
+         } else if (dir == Directions.Y) {
             return pt.y;
          }
       } catch (Exception ex) {
@@ -164,8 +165,8 @@ public class Positions {
     * @param dir
     * @return
     */
-   public String getPositionString(Devices.Keys devKey, Joystick.Directions dir) {
-      if (devices_.is1DStage(devKey) || dir==Joystick.Directions.NONE) {
+   public String getPositionString(Devices.Keys devKey, Directions dir) {
+      if (devices_.is1DStage(devKey) || dir==Directions.NONE) {
          Double pt = getOneAxisStagePosition(devKey);
          if (pt != null) {
             return posToDisplayStringUm(pt.doubleValue());
@@ -174,9 +175,9 @@ public class Positions {
       if (devices_.isXYStage(devKey)) {
          Point2D.Double pt = getTwoAxisStagePosition(devKey);
          if (pt != null) {
-            if (dir == Joystick.Directions.X) {
+            if (dir == Directions.X) {
                return posToDisplayStringUm(pt.x);
-            } else if (dir == Joystick.Directions.Y) {
+            } else if (dir == Directions.Y) {
                return  posToDisplayStringUm(pt.y);
             }
          }
@@ -184,9 +185,9 @@ public class Positions {
       if (devices_.isGalvo(devKey)) {
          Point2D.Double pt = getTwoAxisStagePosition(devKey);
          if (pt != null) {
-            if (dir == Joystick.Directions.X) {
+            if (dir == Directions.X) {
                return posToDisplayStringDeg(pt.x);
-            } else if (dir == Joystick.Directions.Y) {
+            } else if (dir == Directions.Y) {
                return posToDisplayStringDeg(pt.y);
             }
          }
@@ -201,11 +202,12 @@ public class Positions {
     * @return cached position in string form
     */
    public String getPositionString(Devices.Keys devKey) {
-      return getPositionString(devKey, Joystick.Directions.NONE);
+      return getPositionString(devKey, Directions.NONE);
    }
    
    /**
-    * Sets the position of specified stage to the specified value using appropriate core calls
+    * Sets the position of specified stage to the specified value using appropriate core calls.
+    * This variant doesn't have X/Y specifier, so should not be used with galvo or XY stage.
     * @param devKey stage whose position should be set
     * @param pos new position of the stage
     * @return 
@@ -231,7 +233,7 @@ public class Positions {
     * @param dir
     * @param pos new position of the stage
     */
-   public boolean setPosition(Devices.Keys devKey, Joystick.Directions dir, double pos) {
+   public boolean setPosition(Devices.Keys devKey, Directions dir, double pos) {
       return setPosition(devKey, dir, pos, false);
    }
    
@@ -242,7 +244,7 @@ public class Positions {
     * @param pos new position of the stage
     * @param ignoreErrors true will return without any errors (or any action) if device is missing
     */
-   public boolean setPosition(Devices.Keys devKey, Joystick.Directions dir, double pos, boolean ignoreErrors) {
+   public boolean setPosition(Devices.Keys devKey, Directions dir, double pos, boolean ignoreErrors) {
       try {
          if (ignoreErrors && !devices_.isValidMMDevice(devKey)) {
             return false;
@@ -251,21 +253,24 @@ public class Positions {
          if (devices_.is1DStage(devKey)) {
             core_.setPosition(mmDevice, pos);
          } else  if (devices_.isXYStage(devKey)) {
-            if (dir == Joystick.Directions.X) {
+            if (dir == Directions.X) {
                // would prefer setXPosition but it doesn't exist so we stop any Y motion
                double ypos = core_.getYPosition(mmDevice);
                core_.setXYPosition(mmDevice, pos, ypos);
-            } else if (dir == Joystick.Directions.Y) {
+            } else if (dir == Directions.Y) {
                double xpos = core_.getXPosition(mmDevice);
                // would prefer setYPosition but it doesn't exist so we stop any X motion
                core_.setXYPosition(mmDevice, xpos, pos);
+            } else {
+               throw new ASIdiSPIMException("Tried to set XYStage position without direction.");
             }
          } else if (devices_.isGalvo(devKey)) {
-            Point2D.Double pos2D = core_.getGalvoPosition(mmDevice);
-            if (dir == Joystick.Directions.X) {
-               core_.setGalvoPosition(mmDevice, pos, pos2D.y);
-            } else if (dir == Joystick.Directions.Y) {
-               core_.setGalvoPosition(mmDevice, pos2D.x, pos);
+            if (dir == Directions.X) {
+               core_.setGalvoPosition(mmDevice, pos, getUpdatedPosition(devKey, Directions.Y));
+            } else if (dir == Directions.Y) {
+               core_.setGalvoPosition(mmDevice, getUpdatedPosition(devKey, Directions.X), pos);
+            } else {
+               throw new ASIdiSPIMException("Tried to set galvo position without direction.");
             }
          }
          return true;
@@ -281,23 +286,29 @@ public class Positions {
     * @param dir
     * @param pos new position of the stage
     */
-   public void setPositionRelative(Devices.Keys devKey, Joystick.Directions dir, double delta) {
+   public void setPositionRelative(Devices.Keys devKey, Directions dir, double delta) {
       try {
          String mmDevice = devices_.getMMDeviceException(devKey);
          if (devices_.is1DStage(devKey)) {
             core_.setRelativePosition(mmDevice, delta);
          } else if (devices_.isXYStage(devKey)) {
-            if (dir == Joystick.Directions.X) {
+            if (dir == Directions.X) {
                core_.setRelativeXYPosition(mmDevice, delta, 0);
-            } else if (dir == Joystick.Directions.Y) {
+            } else if (dir == Directions.Y) {
                core_.setRelativeXYPosition(mmDevice, 0, delta);
+            } else {
+               throw new ASIdiSPIMException("Tried to set XYStage position without direction.");
             }
          } else if (devices_.isGalvo(devKey)) {
-            Point2D.Double pos2D = core_.getGalvoPosition(mmDevice);
-            if (dir == Joystick.Directions.X) {
+            Point2D.Double pos2D = new Point2D.Double();
+            pos2D.x = getUpdatedPosition(devKey, Directions.X);  // will update cache for Y too
+            pos2D.y = getCachedPosition(devKey, Directions.Y);
+            if (dir == Directions.X) {
                core_.setGalvoPosition(mmDevice, pos2D.x + delta, pos2D.y);
-            } else if (dir == Joystick.Directions.Y) {
+            } else if (dir == Directions.Y) {
                core_.setGalvoPosition(mmDevice, pos2D.x, pos2D.y + delta);
+            } else {
+               throw new ASIdiSPIMException("Tried to set galvo position without direction.");
             }
          }
       } catch (Exception ex) {
@@ -311,20 +322,24 @@ public class Positions {
     * @param dir
     * @param pos
     */
-   public void setOrigin(Devices.Keys devKey, Joystick.Directions dir) {
+   public void setOrigin(Devices.Keys devKey, Directions dir) {
       try {
          String mmDevice = devices_.getMMDeviceException(devKey);
          switch (dir) {
          case X:
             if (devices_.isXYStage(devKey)) { 
-               double ypos = getUpdatedPosition(devKey, Joystick.Directions.Y);
-               core_.setAdapterOriginXY(mmDevice, 0.0, ypos);  // so serial com, since adapter keeps own origin
+               double ypos = getUpdatedPosition(devKey, Directions.Y);
+               core_.setAdapterOriginXY(mmDevice, 0.0, ypos);  // no serial traffic, since adapter keeps own origin
+               // downside is that origin isn't saved across Micro-Manager sessions => probably should change
+               // to use controller's HM command instead, but want to do two axes independently
             }
             break;
          case Y:
             if (devices_.isXYStage(devKey)) { 
-               double xpos = getUpdatedPosition(devKey, Joystick.Directions.X);
-               core_.setAdapterOriginXY(mmDevice, xpos, 0.0);  // so serial com, since adapter keeps own origin
+               double xpos = getUpdatedPosition(devKey, Directions.X);
+               core_.setAdapterOriginXY(mmDevice, xpos, 0.0);  // no serial traffic, since adapter keeps own origin
+               // downside is that origin isn't saved across Micro-Manager sessions => probably should change
+               // to use controller's HM command instead, but want to do two axes independently
             }
             break;
          case NONE:

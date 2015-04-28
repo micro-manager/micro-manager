@@ -104,7 +104,8 @@ public class ControllerUtils {
       
       // turn off beam and scan on both sides (they are turned off by SPIM state machine anyway)
       // also ensures that properties match reality at end of acquisition
-      // (these properties should not be set again until switching tabs to Navigation/Setup)
+      // SPIM state machine restores position of beam at end of SPIM state machine, now it
+      // will be restored to blanking position
       props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.BEAM_ENABLED,
             Properties.Values.NO, true);
       props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.BEAM_ENABLED,
@@ -346,7 +347,7 @@ public class ControllerUtils {
          piezoAmplitude = 0.0f;
          break;
       default:
-            piezoAmplitude = (numSlices - 1) * stepSizeUm;
+         piezoAmplitude = (numSlices - 1) * stepSizeUm;
       }
       
       // tweak the parameters if we are using synchronous/overlap mode
