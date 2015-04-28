@@ -182,6 +182,10 @@ public class HyperstackControls extends JPanel {
       String intensity = getIntensityString(x, y);
       pixelInfoLabel_.setText(String.format("x=%d, y=%d, value=%s",
                x, y, intensity));
+      // If the pixel info display grows (e.g. due to extra digits in the
+      // intensity display) then we don't want to let it shrink again, or else
+      // the FPS display to its right will get bounced back and forth.
+      pixelInfoLabel_.setMinimumSize(pixelInfoLabel_.getSize());
       // This validate call reduces the chance that the text will be truncated.
       validate();
    }
