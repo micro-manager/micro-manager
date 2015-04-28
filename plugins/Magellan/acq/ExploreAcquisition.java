@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import misc.Log;
 import mmcorej.CMMCore;
 import org.json.JSONArray;
 import org.micromanager.MMStudio;
@@ -31,22 +32,22 @@ public class ExploreAcquisition extends Acquisition {
    private int imageFilterType_;
    private ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>> queuedTileEvents_ = new ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>>();
    private double zOrigin_;
-   
+
    public ExploreAcquisition(ExploreAcqSettings settings) throws Exception {
-      super(settings.zStep_);   
+      super(settings.zStep_);
       try {
          //start at current z position
          zTop_ = core_.getPosition(zStage_);
          zOrigin_ = zTop_;
          zBottom_ = core_.getPosition(zStage_);
-         imageFilterType_ = settings.filterType_;
-         initialize(settings.dir_, settings.name_, settings.tileOverlap_);
       } catch (Exception ex) {
-         ReportingUtils.showError("Couldn't get focus device position");
+         Log.log("Couldn't get focus device position");
          throw new RuntimeException();
       }
+      imageFilterType_ = settings.filterType_;
+      initialize(settings.dir_, settings.name_, settings.tileOverlap_);
    }
-   
+
    public void clearEventQueue() {
       events_.clear();
       queuedTileEvents_.clear();

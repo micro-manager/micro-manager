@@ -39,7 +39,7 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class SubImageControls extends Panel {
 
-   private final static int DEFAULT_FPS = 10;
+   private final static int DEFAULT_FPS = 7;
    private static final DecimalFormat TWO_DECIMAL_FORMAT = new DecimalFormat("0.00");
    private EventBus bus_;
    private DisplayPlus display_;
@@ -61,6 +61,18 @@ public class SubImageControls extends Panel {
       acq_ = acq;
       zStep_ = acq_.getZStep();
       initComponents();
+   }
+   
+   public void unlockAllScrollers() {
+      scrollerPanel_.unlockAllScrollers();
+   }
+   
+   public void superLockAllScroller() {
+      scrollerPanel_.superlockAllScrollers();
+   }
+   
+   public void setAnimateFPS(double fps) {
+      scrollerPanel_.setFramesPerSecond(fps);
    }
    
    private void updateZTopAndBottom() {

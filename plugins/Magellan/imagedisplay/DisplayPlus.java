@@ -33,6 +33,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import misc.Log;
 import misc.LongPoint;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -47,7 +48,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
 
    private static final int MOUSE_WHEEL_ZOOM_INTERVAL_MS = 100;
    private static final int DELETE_SURF_POINT_PIXEL_TOLERANCE = 10;
-   public static final int NONE = 0, EXPLORE = 1, NEWGRID = 2, NEWSURFACE = 3;
+   public static final int NONE = 0, EXPLORE = 1, NEWGRID = 2, SURFACE = 3;
    private static ArrayList<DisplayPlus> activeDisplays_ = new ArrayList<DisplayPlus>();
    private Acquisition acq_;
    //all these are volatile because they are accessed by overlayer
@@ -262,15 +263,27 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       super.onWindowClose(event);
    }
 
-   public void setSurfaceDisplaySettings(boolean convexHull, boolean stagePos, boolean surf) {
-      overlayer_.setSurfaceDisplayParams(convexHull, stagePos, surf);
+   public void setSurfaceDisplaySettings(boolean convexHull, boolean stagePosAbove, boolean stagePosBelow, boolean surf) {
+      overlayer_.setSurfaceDisplayParams(convexHull, stagePosAbove, stagePosBelow, surf);
       overlayer_.redrawOverlay();
    }
 
    public int getMode() {
       return mode_;
    }
+   
+   public void unlockAllScroller() {
+      subImageControls_.unlockAllScrollers();
+   }
+   
+   public void superlockAllScrollers() {
+      subImageControls_.superLockAllScroller();
+   }
 
+   public void setAnimateFPS(double fps) {
+      subImageControls_.setAnimateFPS(fps);
+   }
+   
    public static void redrawRegionOverlay(MultiPosRegion region) {
       for (DisplayPlus display : activeDisplays_) {
          if (display.getCurrentRegion() == region) {
@@ -310,7 +323,9 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
    }
 
    public void drawOverlay() {
-      overlayer_.redrawOverlay();
+      if (overlayer_ != null) {
+         overlayer_.redrawOverlay();
+      }
    }
 
    private void mouseReleasedActions(MouseEvent e) {
@@ -327,7 +342,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
             exploreEndTile_ = zoomableStack_.getTileIndicesFromDisplayedPixel(p2.x, p2.y);
          }
          overlayer_.redrawOverlay();
-      } else if (mode_ == NEWSURFACE) {
+      } else if (mode_ == SURFACE) {
          if (SwingUtilities.isRightMouseButton(e) && !mouseDragging_) {
             double z = zoomableStack_.getZCoordinateOfDisplayedSlice(DisplayPlus.this.getVisibleSliceIndex());
             if (e.isShiftDown()) {
@@ -350,7 +365,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
             Point2D.Double stagePos = stageCoordFromImageCoords(e.getPoint().x, e.getPoint().y);
             double z = zoomableStack_.getZCoordinateOfDisplayedSlice(this.getVisibleSliceIndex());
             if (currentSurface_ == null) {
-               ReportingUtils.showError("Can't add point--No surface selected");
+               Log.log("Can't add point--No surface selected");
             } else {
                currentSurface_.addPoint(stagePos.x, stagePos.y, z);
             }
@@ -570,21 +585,21 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
 
    @Override
    public void intervalAdded(ListDataEvent e) {
-      if (mode_ == NEWSURFACE || mode_ == NEWGRID) {
+      if (mode_ == SURFACE || mode_ == NEWGRID) {
          drawOverlay();
       }
    }
 
    @Override
    public void intervalRemoved(ListDataEvent e) {
-      if (mode_ == NEWSURFACE || mode_ == NEWGRID) {
+      if (mode_ == SURFACE || mode_ == NEWGRID) {
          drawOverlay();
       }
    }
 
    @Override
    public void contentsChanged(ListDataEvent e) {
-      if (mode_ == NEWSURFACE || mode_ == NEWGRID) {
+      if (mode_ == SURFACE || mode_ == NEWGRID) {
          drawOverlay();
       }
    }

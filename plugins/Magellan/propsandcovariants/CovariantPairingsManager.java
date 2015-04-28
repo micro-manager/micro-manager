@@ -310,7 +310,7 @@ private Covariant initCovariantFromString(String covariantName) throws Exception
 
    public void deletePairsReferencingSurface(SurfaceInterpolator aThis) {
       //surface has been removed, so remove all pairings that refernece it
-      ArrayList<CovariantPairing> toRemove =  new ArrayList<>();
+      ArrayList<CovariantPairing> toRemove =  new ArrayList<CovariantPairing>();
       for (CovariantPairing pair : pairs_) {
          if (pair.getIndependentCovariant() instanceof SurfaceData && 
                  ((SurfaceData)pair.getIndependentCovariant()).getSurface() == aThis) {

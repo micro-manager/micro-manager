@@ -162,16 +162,6 @@ public abstract class VirtualAcquisitionDisplay{
                      tags = imageTagsQueue_.poll(500, TimeUnit.MILLISECONDS);
                      haveValidImage = (tags != null);
                      if (tags == null) {
-                        try {
-                           // We still need to generate an FPS update at 
-                           // regular intervals; we just have to do it without
-                           // any image tags.
-                           sendFPSUpdate(null);
-                        }
-                        catch (Exception e) {
-                           // Can't get image tags, apparently; give up.
-                           break;
-                        }
                         continue;
                      }
                   }
@@ -210,49 +200,10 @@ public abstract class VirtualAcquisitionDisplay{
                }
                showImage(tags, true);
                imagesDisplayed_++;
-               sendFPSUpdate(tags);
             } // End while loop
          }
       });
       displayThread_.start();
-   }
-
-   /**
-    * Send an update on our FPS, both data rate and image display rate. Only
-    * if it has been at least 500ms since our last update.
-    */
-   private void sendFPSUpdate(JSONObject tags) {
-      long curTimestamp = System.currentTimeMillis();
-      // Hack: if we have null tags, then post a "blank" FPS event.
-      if (tags == null) {
-         bus_.post(new FPSEvent(0, 0));
-         return;
-      }
-      if (lastFPSUpdateTimestamp_ == -1) {
-         // No data to operate on yet.
-         lastFPSUpdateTimestamp_ = curTimestamp;
-      }
-      else if (curTimestamp - lastFPSUpdateTimestamp_ >= 500) {
-         // More than 500ms since last update.
-         double elapsedTime = (curTimestamp - lastFPSUpdateTimestamp_) / 1000.0;
-         try {
-            long imageIndex = MDUtils.getSequenceNumber(tags);
-            // HACK: Ignore the first FPS display event, to prevent us from
-            // showing FPS for the Snap window.
-            if (lastImageIndex_ != 0) {
-               bus_.post(new FPSEvent((imageIndex - lastImageIndex_) / elapsedTime, 
-                        imagesDisplayed_ / elapsedTime));
-            }
-            lastImageIndex_ = imageIndex;
-         }
-         catch (Exception e) {
-            // Post a "blank" event. This likely happens because the image
-            // tags don't contain a sequence number (e.g. during an MDA).
-            bus_.post(new FPSEvent(0, 0));
-         }
-         imagesDisplayed_ = 0;
-         lastFPSUpdateTimestamp_ = curTimestamp;
-      }
    }
 
    // Retrieve our EventBus.
@@ -572,6 +523,7 @@ public abstract class VirtualAcquisitionDisplay{
       }
 
       updateAndDraw(true);
+      ((DisplayPlus) this).drawOverlay();
 
    }
 

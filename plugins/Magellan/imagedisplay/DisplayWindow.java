@@ -41,7 +41,7 @@ public class DisplayWindow extends StackWindow {
    private JPanel nonImagePanel_, controlsAndContrastPanel_;
    private volatile boolean saveWindowResize_ = false;
    private ContrastMetadataPanel cmcPanel_;
-   private DisplayPlusControls dpControls_;
+   private DisplayWindowControls dwControls_;
    
    // store window location in Java Preferences
    private static final int DEFAULTPOSX = 300;
@@ -132,12 +132,12 @@ public class DisplayWindow extends StackWindow {
       //create contrast, metadata, and other controls
       cmcPanel_ = new ContrastMetadataPanel(disp);
       disp.setCMCPanel(cmcPanel_);
-      dpControls_ = new DisplayPlusControls(disp, bus, disp.getAcquisition());
+      dwControls_ = new DisplayWindowControls(disp, bus, disp.getAcquisition());
 
       //create non image panel
       nonImagePanel_ = new JPanel(new BorderLayout());
       controlsAndContrastPanel_ = new JPanel(new BorderLayout());
-      controlsAndContrastPanel_.add(dpControls_, BorderLayout.PAGE_START);
+      controlsAndContrastPanel_.add(dwControls_, BorderLayout.PAGE_START);
       controlsAndContrastPanel_.add(cmcPanel_, BorderLayout.CENTER);
 
       //show stuff on explore acquisitions, collapse for fixed area cqs
@@ -230,6 +230,7 @@ public class DisplayWindow extends StackWindow {
                   windowResizedAction();
                }
             });
+            dwControls_.showStartupHints();
          }
       });
 
@@ -534,7 +535,7 @@ public class DisplayWindow extends StackWindow {
       MMStudio.getInstance().removeMMBackgroundListener(canvasPanel_);
       bus_.unregister(this); 
       cmcPanel_.prepareForClose();        
-      dpControls_.prepareForClose();
+      dwControls_.prepareForClose();
       
       closed_ = true;
    }

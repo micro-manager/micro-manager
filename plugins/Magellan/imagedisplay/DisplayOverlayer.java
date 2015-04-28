@@ -51,7 +51,7 @@ public class DisplayOverlayer {
    private static final Color TRANSPARENT_MAGENTA = new Color(255, 0, 255, 100);
    private DisplayPlus display_;
    private Acquisition acq_;
-   private volatile boolean showSurface_ = true, showConvexHull_ = true, showStagePositions_ = true;
+   private volatile boolean showSurface_ = true, showConvexHull_ = true, showStagePositionsBelow_ = true, showStagePositionsAbove_ = false;
    private ZoomableVirtualStack zoomableStack_;
    private ImageCanvas canvas_;
    private final int tileWidth_, tileHeight_;
@@ -86,9 +86,10 @@ public class DisplayOverlayer {
       });
    }
 
-   public void setSurfaceDisplayParams(boolean convexHull, boolean stagePos, boolean surf) {
+   public void setSurfaceDisplayParams(boolean convexHull, boolean stagePosAbove, boolean stagePosBelow, boolean surf) {
       showConvexHull_ = convexHull;
-      showStagePositions_ = stagePos;
+      showStagePositionsAbove_ = stagePosAbove;
+      showStagePositionsBelow_ = stagePosBelow;
       showSurface_ = surf;
    }
    
@@ -125,7 +126,7 @@ public class DisplayOverlayer {
     */
    private void createAndRenderOverlay() {
       //submit tasks for rendering the overlay at multiple levels of detail, drawing each as it becomes available
-      Future<Overlay> baseOverlayCreation = overlayMakerExecutor_.submit(createBaseOverlay());
+      final Future<Overlay> baseOverlayCreation = overlayMakerExecutor_.submit(createBaseOverlay());
       try {
          //block until overlay creation finished
          final Overlay baseOverlay = baseOverlayCreation.get();
@@ -139,7 +140,7 @@ public class DisplayOverlayer {
                canvas_.setOverlay(baseOverlay);
             }
          });
-         if (display_.getMode() == DisplayPlus.NEWSURFACE) {
+         if (display_.getMode() == DisplayPlus.SURFACE) {
             //now finished base overlay, move on to more detailed surface renderings 
             //first draw convex hull
             if (showConvexHull_) {
@@ -155,13 +156,13 @@ public class DisplayOverlayer {
                });
             }
             //then draw convex hull + stage positions
-            if (showStagePositions_) {
+            if (showStagePositionsAbove_ || showStagePositionsBelow_) {
                final Overlay overlay = createBackgroundOverlay();
                addInterpPoints(display_.getCurrentSurface(), overlay);
                if (showConvexHull_) {
                   addConvexHull(overlay);
                }
-               addStagePositions(overlay);
+               addStagePositions(overlay, showStagePositionsAbove_);
                SwingUtilities.invokeLater(new Runnable() {
 
                   @Override
@@ -184,6 +185,7 @@ public class DisplayOverlayer {
          //sholdn't ever happen because createBaseOverlay throw exceptions
          Log.log("Exception when creating base overlay");
          Log.log(ex.toString());
+         ex.printStackTrace();
       }
    }
 
@@ -236,14 +238,14 @@ public class DisplayOverlayer {
                return newGridOverlay();
             } else if (mode == DisplayPlus.NONE) {
                return createBackgroundOverlay();
-            } else if (mode == DisplayPlus.NEWSURFACE) {
+            } else if (mode == DisplayPlus.SURFACE) {
                //Do only fast version of surface overlay rendering, which don't require 
                //any progress in the interpolation
                Overlay overlay = createBackgroundOverlay();
                addInterpPoints(display_.getCurrentSurface(), overlay);
                return overlay;
             } else {
-               ReportingUtils.showError("Unkonwn display mode");
+               Log.log("Unkonwn display mode");
                throw new RuntimeException();
             }
          }
@@ -316,10 +318,10 @@ public class DisplayOverlayer {
       overlay.add(l);
    }
 
-   private void addStagePositions(Overlay overlay) throws InterruptedException {
+   private void addStagePositions(Overlay overlay, boolean above) throws InterruptedException {
       double zPosition = zoomableStack_.getZCoordinateOfDisplayedSlice(display_.getVisibleSliceIndex());
       //this will block until interpolation detailed enough to show stage positions
-      ArrayList<XYStagePosition> positionsAtSlice = display_.getCurrentSurface().getXYPositonsAtSlice(zPosition);
+      ArrayList<XYStagePosition> positionsAtSlice = display_.getCurrentSurface().getXYPositonsAtSlice(zPosition, above);
       for (XYStagePosition pos : positionsAtSlice) {
          if (Thread.interrupted()) {
             throw new InterruptedException();
@@ -373,9 +375,9 @@ public class DisplayOverlayer {
             display_.getCurrentSurface().waitForHigherResolutionInterpolation();
             interp = display_.getCurrentSurface().waitForCurentInterpolation();
          }
-         if (showStagePositions_) {
+         if (showStagePositionsAbove_ || showStagePositionsBelow_) {
             //these could concieveably change as function of interpolation detail
-            addStagePositions(surfOverlay);
+            addStagePositions(surfOverlay, showStagePositionsAbove_);
          }
          //add surface interpolation
          addSurfaceInterpolation(surfOverlay, interp, pixPerInterpPoint);

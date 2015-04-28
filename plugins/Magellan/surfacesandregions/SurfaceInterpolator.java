@@ -292,7 +292,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
     * block until interpolation is detailed enough to calculate stage positions
     * @param zPos 
     */
-   public ArrayList<XYStagePosition> getXYPositonsAtSlice(double zPos) throws InterruptedException {
+   public ArrayList<XYStagePosition> getXYPositonsAtSlice(double zPos, boolean above) throws InterruptedException {
       SingleResolutionInterpolation interp = waitForCurentInterpolation();
       double overlapPercent = FixedAreaAcquisitionSettings.getStoredTileOverlapPercentage() / 100;
       int overlapX = (int) (CoreCommunicator.getInstance().getImageWidth() * overlapPercent);
@@ -307,9 +307,14 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       }
       ArrayList<XYStagePosition> positionsAtSlice = new ArrayList<XYStagePosition>();
       for (XYStagePosition pos : xyPositions_) {
-         //TODO: support other modes of showing positions?
-         if (!isPositionCompletelyAboveSurface(pos, this, zPos)) {
-            positionsAtSlice.add(pos);
+         if (!above) {
+            if (!isPositionCompletelyAboveSurface(pos, this, zPos)) { //not completely above = below
+               positionsAtSlice.add(pos);
+            }
+         } else {
+            if (!isPositionCompletelyBelowSurface(pos, this, zPos)) { // not completely below = above
+               positionsAtSlice.add(pos);
+            }
          }
       }
 

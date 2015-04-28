@@ -146,6 +146,20 @@ public class ScrollerPanel extends Panel {
       resetAnimationTimer();
    }
 
+     
+   public void superlockAllScrollers() {
+      for (AxisScroller s : scrollers_) {
+         s.superlock();
+      }
+   }
+      
+   public void unlockAllScrollers() {
+      for (AxisScroller s : scrollers_) {
+         s.unlock();
+      }
+   }
+
+   
    /**
     * The window we're in is closing; cancel animations and timers, and ensure
     * that no new ones can get created.

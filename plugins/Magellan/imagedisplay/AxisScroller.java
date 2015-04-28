@@ -139,6 +139,14 @@ public class AxisScroller extends JPanel {
          bus_.post(new ScrollPositionEvent(this, scrollbar_.getValue()));
       }
    }
+   
+   public void superlock() {
+      lock_.setLockedState(ScrollbarLockIcon.LockedState.SUPERLOCKED);
+   }
+   
+   public void unlock() {
+      lock_.setLockedState(ScrollbarLockIcon.LockedState.UNLOCKED);
+   }
 
    /**
     * The lock icon was clicked; update our state to suit. Locking cancels 

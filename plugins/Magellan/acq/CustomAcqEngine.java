@@ -121,7 +121,8 @@ public class CustomAcqEngine {
         try {
             currentExploreAcq_ = new ExploreAcquisition(settings);
         } catch (Exception ex) {
-            ReportingUtils.showError("Couldn't initialize explore acquisiton");
+           ex.printStackTrace();
+           Log.log("Couldn't initialize explore acquisiton");
             return;
         }
         runAcq(currentExploreAcq_);
