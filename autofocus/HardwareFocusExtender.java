@@ -160,6 +160,7 @@ public class HardwareFocusExtender  extends AutofocusBase implements org.microma
       for (int i = 0; i < upperLimit_ / stepSize_ && !success; i++) {
                   try {
             core.setPosition(zDrive_, pos + (stepSize_ * i) );
+            core.waitForDevice(zDrive_);
          } catch (Exception ex) {
             ReportingUtils.showError(ex, "Failed to set Z position");
          }
@@ -183,6 +184,7 @@ public class HardwareFocusExtender  extends AutofocusBase implements org.microma
    private boolean testFocus() {
       try {
             gui_.getMMCore().fullFocus();
+            gui_.getMMCore().waitForDevice(hardwareFocusDevice_);
          } catch (Exception ex) {
             // focus failed
             return false;
