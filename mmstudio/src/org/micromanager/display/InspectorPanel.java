@@ -33,7 +33,11 @@ public abstract class InspectorPanel extends JPanel {
     * Provide a menu used for miscellaneous controls. This menu will be
     * attached to a "gear button" visible in the title bar, when this
     * panel is currently open. May be null, in which case no gear button will
-    * be shown.
+    * be shown. This method is called when the panel is first added to the
+    * inspector to determine if the button should be used; then when the
+    * button is clicked, the method is called again, in case you need to
+    * re-generate your menu based on context (e.g. changes in display
+    * settings).
     */
    public JPopupMenu getGearMenu() {
       return null;

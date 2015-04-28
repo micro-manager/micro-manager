@@ -25,6 +25,8 @@ import com.google.common.eventbus.Subscribe;
 import ij.CompositeImage;
 import ij.ImagePlus;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,6 +34,8 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 
@@ -313,7 +317,31 @@ public final class HistogramsPanel extends InspectorPanel {
 
    @Override
    public JPopupMenu getGearMenu() {
-      return new JPopupMenu();
+      JPopupMenu result = new JPopupMenu();
+      if (display_ == null) {
+         // Nothing to be done yet.
+         return result;
+      }
+      final DisplaySettings settings = display_.getDisplaySettings();
+
+      // Add option for turning log display on/off.
+      JCheckBoxMenuItem logDisplay = new JCheckBoxMenuItem("Logarithmic Y axis");
+      final Boolean shouldLog = settings.getShouldUseLogScale();
+      if (shouldLog != null) {
+         logDisplay.setState(shouldLog);
+      }
+      logDisplay.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            // Invert current setting; null counts as false here.
+            Boolean newVal = !(shouldLog == null || shouldLog);
+            DisplaySettings newSettings = settings.copy().shouldUseLogScale(newVal).build();
+            display_.setDisplaySettings(newSettings);
+         }
+      });
+      result.add(logDisplay);
+
+      return result;
    }
 
    @Override

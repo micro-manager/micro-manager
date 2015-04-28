@@ -259,7 +259,8 @@ public class InspectorFrame extends MMFrame implements Inspector {
          gearButton.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent e) {
-               gearMenu.show(gearButton, e.getX(), e.getY());
+               // Regenerate the menu as it may have changed.
+               panel.getGearMenu().show(gearButton, e.getX(), e.getY());
             }
          });
          header.add(gearButton, "growx 0, hidemode 2");
