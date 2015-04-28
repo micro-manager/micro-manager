@@ -28,6 +28,8 @@ import ij.ImagePlus;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,11 +37,19 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -55,6 +65,7 @@ import org.micromanager.display.InspectorPanel;
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
 import org.micromanager.display.internal.events.LUTUpdateEvent;
 import org.micromanager.display.internal.DefaultDisplayManager;
+import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.display.internal.DisplayDestroyedEvent;
 import org.micromanager.display.internal.link.DisplayGroupManager;
@@ -85,6 +96,9 @@ public final class HistogramsPanel extends InspectorPanel {
    public static final Color[] MGB_COLORS = new Color[] {
          Color.MAGENTA, Color.GREEN, Color.BLUE, Color.YELLOW, Color.RED,
          Color.CYAN, Color.WHITE};
+   private static final int GRAYSCALE = 0;
+   private static final int COLOR = 1;
+   private static final int COMPOSITE = 2;
 
    private Inspector inspector_;
 
@@ -107,6 +121,7 @@ public final class HistogramsPanel extends InspectorPanel {
 
    public HistogramsPanel() {
       super();
+      setLayout(new MigLayout("flowy, fillx, insets 0"));
       setMinimumSize(new java.awt.Dimension(280, 0));
       displayToPanels_ = new HashMap<DisplayWindow, ArrayList<ChannelControlPanel>>();
       // Populate displayToPanels now.
@@ -135,6 +150,8 @@ public final class HistogramsPanel extends InspectorPanel {
       removeAll();
       invalidate();
 
+      addStandardControls();
+
       // TODO: ignoring the possibility of RGB images for now.
       final int nChannels = store_.getAxisLength(Coords.CHANNEL);
       if (nChannels == 0) {
@@ -142,7 +159,6 @@ public final class HistogramsPanel extends InspectorPanel {
          return;
       }
 
-      setLayout(new MigLayout("flowy, fillx, insets 0"));
       channelPanels_ = displayToPanels_.get(display_);
       for (ChannelControlPanel panel : channelPanels_) {
          add(panel, "grow, gap 0");
@@ -155,6 +171,113 @@ public final class HistogramsPanel extends InspectorPanel {
       // don't.
       repaint();
       inspector_.relayout();
+   }
+
+   /**
+    * Set up the controls that are standard across all histograms: the display
+    * mode, autostretch, and extrema% controls.
+    */
+   private void addStandardControls() {
+      add(new JLabel("Color mode: "), "split 2, flowx, gapleft 15");
+      final JComboBox displayMode = new JComboBox(
+            new String[] {"Grayscale", "Color", "Composite"});
+      displayMode.setToolTipText("<html>Set the display mode for the image:<ul><li>Grayscale: single-channel grayscale<li>Color: single channel, in color<li>Composite: multi-channel color overlay</ul></html>");
+      displayMode.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            setDisplayMode(displayMode);
+         }
+      });
+      add(displayMode, "align right");
+
+      boolean shouldAutostretch = display_.getDisplaySettings().getShouldAutostretch();
+      final JCheckBox autostretch = new JCheckBox("Autostretch");
+      autostretch.setSelected(shouldAutostretch);
+      autostretch.setToolTipText("Automatically rescale the histograms every time a new image is displayed.");
+      add(autostretch, "split 4, flowx, gapleft 10");
+      final JLabel extremaLabel = new JLabel("(Ignore");
+      extremaLabel.setEnabled(shouldAutostretch);
+      add(extremaLabel);
+      final JSpinner extrema = new JSpinner();
+      extrema.setToolTipText("Ignore the top and bottom percentage of the image when autostretching.");
+      // Going to 50% would mean the entire image is ignored.
+      extrema.setModel(new SpinnerNumberModel(0.0, 0.0, 49.999, 0.1));
+      extrema.addChangeListener(new ChangeListener() {
+         @Override
+         public void stateChanged(ChangeEvent e) {
+            setExtremaPercentage(extrema);
+         }
+      });
+      extrema.addKeyListener(new KeyAdapter() {
+         @Override
+         public void keyPressed(KeyEvent e) {
+            setExtremaPercentage(extrema);
+         }
+      });
+      extrema.setEnabled(shouldAutostretch);
+      add(extrema);
+      final JLabel percentLabel = new JLabel("%)");
+      percentLabel.setEnabled(shouldAutostretch);
+      add(percentLabel);
+
+      autostretch.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            boolean newVal = autostretch.isSelected();
+            DisplaySettings newSettings = display_.getDisplaySettings()
+                  .copy().shouldAutostretch(newVal).build();
+            DefaultDisplaySettings.setStandardSettings(newSettings);
+            display_.setDisplaySettings(newSettings);
+            extremaLabel.setEnabled(newVal);
+            extrema.setEnabled(newVal);
+            percentLabel.setEnabled(newVal);
+         }
+      });
+   }
+
+   private void setDisplayMode(JComboBox displayMode) {
+      if (!(display_.getImagePlus() instanceof CompositeImage)) {
+         // Non-composite images must be in grayscale mode.
+         displayMode.setSelectedIndex(GRAYSCALE);
+         return;
+      }
+      CompositeImage composite = (CompositeImage) (display_.getImagePlus());
+      int selection = displayMode.getSelectedIndex();
+      DisplaySettings.DisplaySettingsBuilder builder = display_.getDisplaySettings().copy();
+      if (selection == COMPOSITE) {
+         if (store_.getAxisLength(Coords.CHANNEL) > 7) {
+            JOptionPane.showMessageDialog(null,
+               "Images with more than 7 channels cannot be displayed in Composite mode.");
+            // Send them back to Color mode.
+            displayMode.setSelectedIndex(COLOR);
+            builder.channelDisplayModeIndex(COLOR);
+         }
+         else {
+            composite.setMode(CompositeImage.COMPOSITE);
+            builder.channelDisplayModeIndex(COMPOSITE);
+         }
+      }
+      else if (selection == COLOR) {
+         composite.setMode(CompositeImage.COLOR);
+         builder.channelDisplayModeIndex(COLOR);
+      }
+      else {
+         // Assume grayscale mode.
+         composite.setMode(CompositeImage.GRAYSCALE);
+         builder.channelDisplayModeIndex(GRAYSCALE);
+      }
+      composite.updateAndDraw();
+      DisplaySettings settings = builder.build();
+      DefaultDisplaySettings.setStandardSettings(settings);
+      display_.setDisplaySettings(settings);
+   }
+
+   private void setExtremaPercentage(JSpinner extrema) {
+      DisplaySettings settings = display_.getDisplaySettings();
+      Double percentage = (Double) (extrema.getValue());
+      settings = settings.copy().extremaPercentage(percentage).build();
+      DefaultDisplaySettings.setStandardSettings(settings);
+      display_.setDisplaySettings(settings);
    }
 
    private void addPanel(DefaultDisplayWindow display, int channelIndex) {
@@ -378,6 +501,11 @@ public final class HistogramsPanel extends InspectorPanel {
          boolean isRGB = true;
          boolean isMGB = true;
          for (int i = 0; i < channelColors.length; ++i) {
+            if (channelColors[i] == null) {
+               isRGB = false;
+               isMGB = false;
+               break;
+            }
             if (!channelColors[i].equals(RGB_COLORS[i])) {
                isRGB = false;
             }

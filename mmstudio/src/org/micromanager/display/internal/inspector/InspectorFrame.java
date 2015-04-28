@@ -102,7 +102,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
    }
 
    private static final String TOPMOST_DISPLAY = "Topmost Window";
-   private static final String CONTRAST_TITLE = "Contrast";
+   private static final String CONTRAST_TITLE = "Histograms and Settings";
    private DisplayWindow display_;
    private ArrayList<InspectorPanel> panels_;
    private JPanel contents_;
@@ -173,7 +173,6 @@ public class InspectorFrame extends MMFrame implements Inspector {
       panels_ = new ArrayList<InspectorPanel>();
       // Hard-coded initial panels.
       addPanel(CONTRAST_TITLE, new HistogramsPanel());
-      addPanel("Display Settings", new DisplaySettingsPanel());
       addPanel("Metadata", new MetadataPanel());
       addPanel("Comments", new CommentsPanel());
       addPanel("Overlays", new OverlaysPanel());
