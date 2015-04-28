@@ -154,7 +154,7 @@ public class Fitter {
    
    /**
     * Finds the x value corresponding to the maximum function value within the 
-    * range of the provided data set.  
+    * range of the provided data set.
     * 
     * @param type one of the Fitter.FunctionType predefined functions
     * @param parms parameters describing the function.  These need to match the
@@ -164,10 +164,10 @@ public class Fitter {
     * 
     * @return x value corresponding to the maximum function value
     */
-   public static double getMaxX(XYSeries data, FunctionType type, double[] parms) {
-      double xMax = 0.0;
-      double minRange = data.getMinX();
-      double maxRange = data.getMaxX();
+   public static double getXofMaxY(XYSeries data, FunctionType type, double[] parms) {
+      double xAtMax = 0.0;
+      double minX = data.getMinX();
+      double maxX = data.getMaxX();
       switch (type) {
          case NoFit:
             //  find the position in data with the highest y value
@@ -194,20 +194,20 @@ public class Fitter {
             UnivariateSolver solver = 
                     new BracketingNthOrderBrentSolver(relativeAccuracy, 
                             absoluteAccuracy, maxOrder);
-            xMax = solver.solve(100, derivativePolFunction, minRange, maxRange);
+            xAtMax = solver.solve(100, derivativePolFunction, minX, maxX);
             break;
          case Gaussian:
             // for a Gaussian we can take the mean and be sure it is the maximum
-            xMax = parms[1];
+            // note that this may be outside our range of X values, but 
+            // this will be caught by our sanity checks below
+            xAtMax = parms[1];
       }
       
-      // sanity checks:
-      if (xMax < minRange)
-         xMax = minRange;
-      if (xMax > maxRange)
-         xMax = maxRange;
+      // sanity checks
+      if (xAtMax > maxX) xAtMax = maxX;
+      if (xAtMax < minX) xAtMax = minX;
               
-      return xMax;
+      return xAtMax;
    }
    
    /**

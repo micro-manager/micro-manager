@@ -42,7 +42,7 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.AcquisitionModes;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.Joystick;
+import org.micromanager.asidispim.Data.Joystick.Directions;
 import org.micromanager.asidispim.Data.MultichannelModes;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Positions;
@@ -50,7 +50,7 @@ import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.asidispim.fit.Fitter;
-import org.micromanager.utils.MMScriptException;
+import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -93,7 +93,6 @@ public class AutofocusUtils {
     * @param sliceTiming - Data structure with current device timing setting
     * @param runAsynchronously - whether or not to run the function asynchronously
     *
-    * @return position of the galvo device associated with highest focus score
     */
    public double runFocus(
            final ListeningJPanel caller,
@@ -107,7 +106,7 @@ public class AutofocusUtils {
          @Override
          protected Double doInBackground() throws Exception {
 
-            double bestScore = 0;
+            double bestGalvoPosition = 0;
 
             if (gui_.getAutofocus() == null) {
                throw new ASIdiSPIMException("Please define an autofocus methods first");
@@ -139,14 +138,13 @@ public class AutofocusUtils {
                     MyStrings.PanelNames.AUTOFOCUS.toString(),
                     Properties.Keys.PLUGIN_AUTOFOCUS_DEBUG, false);
             final float piezoStepSize = props_.getPropValueFloat(Devices.Keys.PLUGIN,
-                    Properties.Keys.PLUGIN_AUTOFOCUS_STEPSIZE);
+                    Properties.Keys.PLUGIN_AUTOFOCUS_STEPSIZE);  // user specifies step size in um, we translate to galvo and move only galvo
             final float imagingCenter = prefs_.getFloat(
                     MyStrings.PanelNames.SETUP.toString() + side.toString(),
                     Properties.Keys.PLUGIN_PIEZO_CENTER_POS, 0);
             final double piezoPosition = positions_.getUpdatedPosition(piezoDevice);
-            final double galvoPosition = positions_.getUpdatedPosition(galvoDevice);
+            final double originalGalvoPosition = positions_.getUpdatedPosition(galvoDevice);
             final double piezoCenter = centerAtCurrentZ ? piezoPosition : imagingCenter;
-            final double piezoStart = piezoCenter - (0.5 * (nrImages - 1) * piezoStepSize);
 
             posUpdater_.pauseUpdates(true);
 
@@ -165,7 +163,7 @@ public class AutofocusUtils {
                     AcquisitionModes.Keys.SLICE_SCAN_ONLY, // scan only the mirror
                     centerAtCurrentZ,  // center around the current Z or the middle set in the setup panel
                     100.0f, // delay before side (can go to 0?)
-                    piezoStepSize, // piezoStepSize in microns
+                    piezoStepSize, // piezoStepSize in microns, used in SLICE_SCAN_ONLY to compute slice movement
                     sliceTiming);
 
             final float galvoRate = prefs_.getFloat(
@@ -175,10 +173,11 @@ public class AutofocusUtils {
             // galvoOffset is named inappropriately for now
             // will be changing with change in calibration representation later on
             final float galvoOffset = prefs_.getFloat(
-                     MyStrings.PanelNames.SETUP.toString() + side.toString(), 
+                     MyStrings.PanelNames.SETUP.toString() + side.toString(),
                      Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0);
             final double galvoStepSize = piezoStepSize / galvoRate;
-            final double galvoStart = (piezoStart - galvoOffset) / galvoRate;
+            final double galvoCenter = (piezoCenter - galvoOffset) / galvoRate;
+            final double galvoStart = galvoCenter - 0.5 * (nrImages - 1) * galvoStepSize;
             
             double[] focusScores = new double[nrImages];
             TaggedImage[] imageStore = new TaggedImage[nrImages];
@@ -191,6 +190,8 @@ public class AutofocusUtils {
             boolean liveModeOriginally = false;
             String originalCamera = gui_.getMMCore().getCameraDevice();
             String acqName = "diSPIM Autofocus";
+            
+            int highestIndex = -1;
 
             try {
                liveModeOriginally = gui_.isLiveModeOn();
@@ -213,7 +214,7 @@ public class AutofocusUtils {
                gui_.getMMCore().setCameraDevice(camera);
                if (debug) {
                   if (gui_.acquisitionExists(acqName)) {
-                     gui_.closeAcquisitionWindow(acqName);
+                     gui_.closeAcquisition(acqName);
                   }
                   acqName = gui_.getUniqueAcquisitionName(acqName);
                   gui_.openAcquisition(acqName, "", nrImages, 1, 1, 1, true, false);
@@ -271,10 +272,9 @@ public class AutofocusUtils {
                      if (debug) {
                         // we are using the slow way to insert images, should be OK
                         // as long as the circular buffer is big enough
-                        double zPos = piezoStart + counter * piezoStepSize;
                         double galvoPos = galvoStart + counter * galvoStepSize;
                         timg.tags.put("SlicePosition", galvoPos);
-                        timg.tags.put("ZPositionUm", zPos);
+                        timg.tags.put("ZPositionUm", piezoCenter);
                         gui_.addImageToAcquisition(acqName, 0, 0, counter, 0, timg);
                         scoresToPlot[0].add(galvoPos, focusScores[counter]);
                      }
@@ -300,30 +300,32 @@ public class AutofocusUtils {
                gui_.getMMCore().setAutoShutter(autoShutter);
                
                // fit the focus scores
+               // limit the best position to the range of galvo range we used
                double[] fitParms = Fitter.fit(scoresToPlot[0], function, null);
-               bestScore = Fitter.getMaxX(scoresToPlot[0], function, fitParms);
-               int highestIndex = Fitter.getIndex(scoresToPlot[0], bestScore);
+               bestGalvoPosition = Fitter.getXofMaxY(scoresToPlot[0], function, fitParms);
+               highestIndex = Fitter.getIndex(scoresToPlot[0], bestGalvoPosition);
                scoresToPlot[1] = Fitter.getFittedSeries(scoresToPlot[0], 
                        function, fitParms);
                
-               // display the best scoring image in the snap/live window
-               ImageProcessor bestIP = makeProcessor(imageStore[highestIndex]);
-               ImagePlus bestIPlus = new ImagePlus();
-               bestIPlus.setProcessor(bestIP);
-               if (gui_.getSnapLiveWin() != null) {
-                  try {
-                     gui_.addImageToAcquisition("Snap/Live Window", 0, 0, 0, 0,
-                             imageStore[highestIndex]);
-                  } catch (MMScriptException ex) {
-                     ReportingUtils.logError(ex, "Failed to add image to Snap/Live Window");
-                  }
+               // display the best scoring image in the debug stack if it exists
+               // or if not then in the snap/live window if it exists
+               if (debug) {
+                  VirtualAcquisitionDisplay vad = gui_.getAcquisition(acqName).getAcquisitionWindow();
+                  vad.setSliceIndex(highestIndex);
+                  vad.updateDisplay(null);
+                  // TODO figure out why slice slider isn't updated, probably a bug in the core
+               } else if (gui_.getSnapLiveWin() != null) {
+                  // gui_.addImageToAcquisition("Snap/Live Window", 0, 0, 0, 0,
+                  //         imageStore[highestIndex]);
+                  gui_.displayImage(imageStore[highestIndex]);
                }
-
+               
                if (debug) {
                   PlotUtils plotter = new PlotUtils(prefs_, "AutofocusUtils");
                   boolean[] showSymbols = {true, false};
-                  plotter.plotDataN("Focus curve", scoresToPlot, 
-                          "Galvo position (degree)", "Score", showSymbols);
+                  plotter.plotDataN("Focus curve for piezo " + side, 
+                        scoresToPlot, "Galvo position [\u00B0]", "Focus Score", showSymbols);
+                  // TODO add annotations with piezo position, bestGalvoPosition, etc.
                }
 
             } catch (ASIdiSPIMException ex) {
@@ -347,8 +349,13 @@ public class AutofocusUtils {
                   // let the calling panel restore appropriate settings
                   caller.refreshSelected();
 
-                  // set galvo to best position
-                  positions_.setPosition(galvoDevice, Joystick.Directions.Y, bestScore);
+                  // move galvo to maximal focus position if we found one
+                  // if for some reason we were unsuccessful then restore to original position
+                  if (highestIndex >= 0) {
+                     positions_.setPosition(galvoDevice, Directions.Y, bestGalvoPosition);
+                  } else {
+                     positions_.setPosition(galvoDevice, Directions.Y, originalGalvoPosition);
+                  }
                      
                   posUpdater_.pauseUpdates(false);
 
@@ -362,7 +369,7 @@ public class AutofocusUtils {
                   throw new ASIdiSPIMException(ex, "Error while restoring hardware state");
                }
             }
-            return bestScore;
+            return bestGalvoPosition;
          }
 
          @Override
