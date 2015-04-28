@@ -347,6 +347,11 @@ public class IntroDlg extends JDialog {
             SHOULD_ASK_FOR_CONFIG, shouldAsk);
    }
 
+   /**
+    * Return the array of recently-used config files for the current user.
+    * They are sorted based on how recently they were used, from oldest to
+    * newest.
+    */
    public static String[] getRecentlyUsedConfigs() {
       // If there are no recently-used configs, supply the demo file.
       String[] result = DefaultUserProfile.getInstance().getStringArray(
@@ -357,6 +362,10 @@ public class IntroDlg extends JDialog {
       return result;
    }
 
+   /**
+    * This is a convenience method to save callers from having to know that
+    * configs are ordered from oldest to newest.
+    */
    public static String getMostRecentlyUsedConfig() {
       String[] configs = getRecentlyUsedConfigs();
       return configs[configs.length - 1];
