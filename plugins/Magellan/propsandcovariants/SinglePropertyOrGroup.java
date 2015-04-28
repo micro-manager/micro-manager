@@ -47,6 +47,17 @@ public class SinglePropertyOrGroup implements Covariant{
       return device == null;
    }
    
+   @Override 
+   public boolean equals(Object o) {
+      SinglePropertyOrGroup prop = (SinglePropertyOrGroup) o;
+      if ((device != null && prop.device == null) || (device == null && prop.device != null)) {
+         return false;
+      } else if (device != null && prop.device != null && !device.equals(prop.device)) {
+         return false;
+      }
+      return name.equals(prop.name);
+   }
+   
    @Override
    public String toString() {
       return getName();
