@@ -403,6 +403,51 @@ public final class HistogramsPanel extends InspectorPanel {
       displayMode.add(custom);
       result.add(displayMode);
 
+      JMenu updateRate = new JMenu("Histogram update rate");
+
+      JCheckBoxMenuItem never = new JCheckBoxMenuItem("Never");
+      never.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            DisplaySettings newSettings = settings.copy().histogramUpdateRate(-1.0).build();
+            display_.setDisplaySettings(newSettings);
+         }
+      });
+      JCheckBoxMenuItem always = new JCheckBoxMenuItem("Every Image");
+      always.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            DisplaySettings newSettings = settings.copy().histogramUpdateRate(0.0).build();
+            display_.setDisplaySettings(newSettings);
+         }
+      });
+      JCheckBoxMenuItem oncePerSec = new JCheckBoxMenuItem("Once per Second");
+      oncePerSec.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            DisplaySettings newSettings = settings.copy().histogramUpdateRate(1.0).build();
+            display_.setDisplaySettings(newSettings);
+         }
+      });
+
+      // Determine which of them should be checked, if any.
+      Double curRate = settings.getHistogramUpdateRate();
+      if (curRate == null || curRate == 0) {
+         always.setState(true);
+      }
+      else if (curRate == -1) {
+         never.setState(true);
+      }
+      else if (curRate == 1) {
+         oncePerSec.setState(true);
+      }
+      // Else must be a custom value.
+
+      updateRate.add(always);
+      updateRate.add(never);
+      updateRate.add(oncePerSec);
+      result.add(updateRate);
+
       return result;
    }
 
