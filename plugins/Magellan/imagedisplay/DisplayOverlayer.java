@@ -23,6 +23,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import javax.swing.SwingUtilities;
+import misc.Log;
 import misc.LongPoint;
 import mmcloneclasses.graph.ContrastPanel;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
@@ -181,8 +182,8 @@ public class DisplayOverlayer {
          return;
       } catch (ExecutionException ex) {
          //sholdn't ever happen because createBaseOverlay throw exceptions
-         IJ.log("Exception when creating base overlay");
-         ex.printStackTrace();
+         Log.log("Exception when creating base overlay");
+         Log.log(ex.toString());
       }
    }
 
@@ -480,7 +481,6 @@ public class DisplayOverlayer {
                 - Math.round(tileWidth_ / (double) zoomableStack_.getDownsampleFactor() * (col1 )));
         int height = (int) (Math.round(tileHeight_ / (double) zoomableStack_.getDownsampleFactor() * (row2 + 1))
                 - Math.round(tileHeight_ / (double) zoomableStack_.getDownsampleFactor() * (row1 )));
-        System.out.println(row1 + "  " + row2 + "  " + width + "  " + height);
         Roi rect = new Roi(topLeft.x_, topLeft.y_, width, height);
         rect.setFillColor(color);
         base.add(rect);

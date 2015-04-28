@@ -30,6 +30,7 @@ import org.apache.commons.math3.geometry.partitioning.Region;
 import org.apache.commons.math3.geometry.partitioning.RegionFactory;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.ReportingUtils;
+import propsandcovariants.CovariantPairingsManager;
 import propsandcovariants.SurfaceData;
 
 /**
@@ -110,8 +111,9 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       return pixelSizeConfig_;
    }
    
-   public void shutdown() {
+   public void delete() {
       executor_.shutdownNow();
+      CovariantPairingsManager.getInstance().deletePairsReferencingSurface(this);
    }
    
    @Override
@@ -125,8 +127,6 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    
    public void rename(String newName) {
       name_ = newName;
-      manager_.updateSurfaceTableAndCombos();
-      manager_.surfaceRenamed();
    }
    
    /**
@@ -462,19 +462,22 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       //let manger know new parmas caluclated
       manager_.updateSurfaceTableAndCombos();
    }
-   
-   
-   public synchronized  void deletePointsWithinZRange(double zMin, double zMax) {
+
+   public synchronized void deletePointsWithinZRange(double zMin, double zMax) {
+      ArrayList<Point3d> toRemove = new ArrayList<Point3d>();
       for (Point3d point : points_) {
-         if ( point.z >= zMin && point.z >= zMax) {
-            points_.remove(point);
-         }         
+         if (point.z >= zMin && point.z <= zMax) {
+            toRemove.add(point);
+         }
+      }
+      for (Point3d point : toRemove) {
+         points_.remove(point);
       }
 
-      updateConvexHullAndInterpolate(); 
+      updateConvexHullAndInterpolate();
       manager_.drawSurfaceOverlay(this);
    }
-   
+
    /**
     * delete closest point within XY tolerance
     * @param x

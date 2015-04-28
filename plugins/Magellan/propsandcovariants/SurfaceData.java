@@ -48,6 +48,10 @@ public class SurfaceData implements Covariant {
       }
    }
    
+   public SurfaceInterpolator getSurface() {
+      return surface_;
+   }
+   
    public static String[] enumerateDataTypes() {
       return new String[] {DISTANCE_BELOW_SURFACE_CENTER, DISTANCE_BELOW_SURFACE_MINIMUM, 
           DISTANCE_BELOW_SURFACE_MAXIMUM, DISTANCE_FOR_MIN_INCIDENT_POWER};

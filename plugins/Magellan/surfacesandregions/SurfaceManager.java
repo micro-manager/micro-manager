@@ -6,6 +6,7 @@ import imagedisplay.DisplayPlus;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import org.micromanager.MMStudio;
+import org.micromanager.utils.ReportingUtils;
 import propsandcovariants.CovariantPairingsManager;
 
 /**
@@ -62,7 +63,7 @@ public class SurfaceManager {
 
    public void deleteAll() {
       for (SurfaceInterpolator s: surfaces_) {
-         s.shutdown();
+         s.delete();
       }
       surfaces_.clear();
       for (SurfaceRegionComboBoxModel combo : comboBoxModels_) {
@@ -73,7 +74,7 @@ public class SurfaceManager {
    
    public void delete(int index) {
       SurfaceInterpolator s = surfaces_.remove(index);
-      s.shutdown();
+      s.delete();
       for (SurfaceRegionComboBoxModel combo : comboBoxModels_) {
          if (index == 0 && surfaces_.isEmpty()) {
             combo.setSelectedIndex(-1); //set selectionto null cause no surfaces left
@@ -139,9 +140,19 @@ public class SurfaceManager {
       }
       return stats;
    }
-
-    void surfaceRenamed() {
-        //update covariants that use this surface
-        CovariantPairingsManager.getInstance().updatePairingNames();
-    }
+   
+   void renameSurface(int row, String newName) throws Exception {
+      for (int i = 0; i < surfaces_.size(); i++) {
+         if (i == row) {
+            continue;
+         }
+         if (surfaces_.get(i).getName().equals(newName)) {
+            throw new Exception();
+         }
+      }
+      surfaces_.get(row).rename(newName);
+      updateSurfaceTableAndCombos();
+      //update covariants that use this surface
+      CovariantPairingsManager.getInstance().updatePairingNames();
+   }
 }

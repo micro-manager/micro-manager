@@ -307,4 +307,18 @@ private Covariant initCovariantFromString(String covariantName) throws Exception
         pairingsTableModel_.fireTableDataChanged();
         valuesTableModel_.fireTableDataChanged();
     }
+
+   public void deletePairsReferencingSurface(SurfaceInterpolator aThis) {
+      //surface has been removed, so remove all pairings that refernece it
+      ArrayList<CovariantPairing> toRemove =  new ArrayList<>();
+      for (CovariantPairing pair : pairs_) {
+         if (pair.getIndependentCovariant() instanceof SurfaceData && 
+                 ((SurfaceData)pair.getIndependentCovariant()).getSurface() == aThis) {
+            toRemove.add(pair);
+         }
+      }
+      for (CovariantPairing pair : toRemove) {
+         deletePair(pair);
+      }
+   }
 }

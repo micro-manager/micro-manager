@@ -4,13 +4,11 @@
  */
 package coordinates;
 
-import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.FloatProcessor;
 import ij.process.ImageConverter;
 import ij3d.image3d.FHTImage3D;
-import bidc.CoreCommunicator;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.Arrays;

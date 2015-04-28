@@ -4,7 +4,11 @@
  */
 package surfacesandregions;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.table.AbstractTableModel;
+import misc.Log;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -45,7 +49,11 @@ class SurfaceTableModel extends AbstractTableModel  {
    @Override   
    public void setValueAt(Object value, int row, int col) {
       if (col == 0) {
-         manager_.getSurface(row).rename((String) value);
+         try {
+            manager_.renameSurface(row,(String) value);
+         } catch (Exception ex) {
+            Log.log("Surface name already taken");
+         }
       } else if (col == 1) {
          manager_.getSurface(row).setXYPadding(Double.parseDouble((String) value));
       }  
