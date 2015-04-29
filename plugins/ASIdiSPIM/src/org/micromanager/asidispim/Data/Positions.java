@@ -327,19 +327,18 @@ public class Positions {
          String mmDevice = devices_.getMMDeviceException(devKey);
          switch (dir) {
          case X:
-            if (devices_.isXYStage(devKey)) { 
+            if (devices_.isXYStage(devKey)) {
+               // TODO fix this known issue: should controller origin and not just adapter's origin
+               // basically need to send command "H <axis>=0" (can get <axis> from device property
+               // AxisLetterX/Y for ASI XY stages, but should work with other stages too)
                double ypos = getUpdatedPosition(devKey, Directions.Y);
-               core_.setAdapterOriginXY(mmDevice, 0.0, ypos);  // no serial traffic, since adapter keeps own origin
-               // downside is that origin isn't saved across Micro-Manager sessions => probably should change
-               // to use controller's HM command instead, but want to do two axes independently
+               core_.setAdapterOriginXY(mmDevice, 0.0, ypos);
             }
             break;
          case Y:
             if (devices_.isXYStage(devKey)) { 
                double xpos = getUpdatedPosition(devKey, Directions.X);
-               core_.setAdapterOriginXY(mmDevice, xpos, 0.0);  // no serial traffic, since adapter keeps own origin
-               // downside is that origin isn't saved across Micro-Manager sessions => probably should change
-               // to use controller's HM command instead, but want to do two axes independently
+               core_.setAdapterOriginXY(mmDevice, xpos, 0.0);
             }
             break;
          case NONE:
