@@ -6,6 +6,7 @@ import java.awt.Rectangle;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.UUID;
 
@@ -16,6 +17,10 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import org.micromanager.data.internal.DefaultPropertyMap;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.PropertyMap;
 
 /**
  * This class is intended to standardize interactions with the tags in 
@@ -721,5 +726,93 @@ public class MDUtils {
    }
    public static void setComments(JSONObject map, String comments) throws JSONException {
       map.put("Comments", comments);
+   }
+
+   /**
+    * Given a JSONObject that is a TaggedImage's tags, extract all the
+    * properties that start with "Core-" and convert them into a PropertyMap.
+    */
+   public static PropertyMap extractCoreProperties(JSONObject tags) {
+      DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();
+      for (String key : getKeys(tags)) {
+         if (key.startsWith("Core-")) {
+            String subKey = key.substring(5);
+            try {
+               putProperty(builder, subKey, tags.get(key));
+            }
+            catch (JSONException e) {
+               // This should never happen.
+               ReportingUtils.logError(e, "Error extracting key " + key + " from JSON tags");
+            }
+         }
+      }
+      return builder.build();
+   }
+
+   /**
+    * Given a JSONObject that is a TaggedImage's tags, extract all the
+    * properties that start with the name of a device adapter, and convert the
+    * lot into a PropertyMap.
+    */
+   public static PropertyMap extractDeviceAdapterProperties(JSONObject tags) {
+      HashSet<String> devices = new HashSet<String>();
+      for (String device : MMStudio.getInstance().getCore().getLoadedDevices()) {
+         devices.add(device + "-");
+      }
+      // HACK: remove the "Core" device as it should be handled by
+      // extractCoreProperties, above.
+      if (devices.contains("Core-")) {
+         devices.remove("Core-");
+      }
+
+      DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();
+      for (String key : getKeys(tags)) {
+         boolean shouldKeep = false;
+         for (String device : devices) {
+            if (key.startsWith(device)) {
+               shouldKeep = true;
+               break;
+            }
+         }
+         if (shouldKeep) {
+            try {
+               putProperty(builder, key, tags.get(key));
+            }
+            catch (JSONException e) {
+               // This should never happen.
+               ReportingUtils.logError(e, "Error extracting key " + key + " from JSON tags");
+            }
+         }
+      }
+      return builder.build();
+   }
+
+   /**
+    * Helper method for extractCoreProperties and
+    * extractDeviceAdapterProperties, to add a single property to the map by
+    * inspecting the property's type.
+    * TODO: this currently only supports scalar values (i.e. no arrays).
+    */
+   private static DefaultPropertyMap.Builder putProperty(
+         DefaultPropertyMap.Builder builder, String key, Object val) {
+      if (val instanceof String) {
+         builder.putString(key, (String) val);
+      }
+      else if (val instanceof Integer) {
+         builder.putInt(key, (Integer) val);
+      }
+      else if (val instanceof Long) {
+         builder.putLong(key, (Long) val);
+      }
+      else if (val instanceof Boolean) {
+         builder.putBoolean(key, (Boolean) val);
+      }
+      else if (val instanceof Double) {
+         builder.putDouble(key, (Double) val);
+      }
+      else {
+         ReportingUtils.logError("Unrecognized object type for key " + key + ": " + val);
+      }
+      return builder;
    }
 }
