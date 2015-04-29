@@ -224,7 +224,12 @@ public class MetadataPanel extends InspectorPanel {
    @Override
    public synchronized void setDisplay(DisplayWindow display) {
       if (display_ != null) {
-         display_.unregisterForEvents(this);
+         try {
+            display_.unregisterForEvents(this);
+         }
+         catch (IllegalArgumentException e) {
+            // Must've already unregistered; ignore it.
+         }
       }
       display_ = display;
       if (display_ == null) {

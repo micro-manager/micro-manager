@@ -160,6 +160,13 @@ public final class HistogramsPanel extends InspectorPanel {
       }
 
       channelPanels_ = displayToPanels_.get(display_);
+      if (channelPanels_ == null) {
+         // This should never happen (it means that this object didn't know
+         // about the new display), but could potentially if there's a bug
+         // in event unregistering.
+         ReportingUtils.logError("Somehow defunct HistogramsPanel got notified of existence of " + display_);
+         return;
+      }
       for (ChannelControlPanel panel : channelPanels_) {
          add(panel, "grow, gap 0");
       }
@@ -606,11 +613,21 @@ public final class HistogramsPanel extends InspectorPanel {
       DefaultEventManager.getInstance().unregisterForEvents(this);
       HashSet<Datastore> stores = new HashSet<Datastore>();
       for (DisplayWindow display : displayToPanels_.keySet()) {
-         display.unregisterForEvents(this);
+         try {
+            display.unregisterForEvents(this);
+         }
+         catch (IllegalArgumentException e) {
+            // Must've already unregistered; ignore it.
+         }
          stores.add(display.getDatastore());
       }
       for (Datastore store : stores) {
-         store.unregisterForEvents(this);
+         try {
+            store.unregisterForEvents(this);
+         }
+         catch (IllegalArgumentException e) {
+            // Must've already unregistered; ignore it.
+         }
       }
    }
 }

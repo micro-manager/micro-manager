@@ -265,7 +265,12 @@ public class CommentsPanel extends InspectorPanel {
    @Override
    public synchronized void setDisplay(DisplayWindow display) {
       if (display_ != null) {
-         display_.unregisterForEvents(this);
+         try {
+            display_.unregisterForEvents(this);
+         }
+         catch (IllegalArgumentException e) {
+            // Must've already unregistered; ignore it.
+         }
       }
       // Set these before we register for the new display's events, so we have
       // them set properly before imageChangedUpdate() can be called.
@@ -290,7 +295,12 @@ public class CommentsPanel extends InspectorPanel {
    @Override
    public synchronized void cleanup() {
       if (display_ != null) {
-         display_.unregisterForEvents(this);
+         try {
+            display_.unregisterForEvents(this);
+         }
+         catch (IllegalArgumentException e) {
+            // Must've already unregistered; ignore it.
+         }
       }
    }
 }
