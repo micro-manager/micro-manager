@@ -242,6 +242,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
 
+      Dimension smallButtonSize = new Dimension(20, 20);
+
+      isEnabledButton_.setMargin(zeroInsets);
       isEnabledButton_.setToolTipText("Show/hide this channel in the multi-dimensional viewer");
       isEnabledButton_.addActionListener(new java.awt.event.ActionListener() {
          @Override
@@ -249,9 +252,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             isEnabledAction();
          }
       });
+      isEnabledButton_.setSize(smallButtonSize);
 
       colorPickerLabel_.setBackground(color_);
-      colorPickerLabel_.setMinimumSize(new Dimension(25, 25));
+      colorPickerLabel_.setMinimumSize(smallButtonSize);
       colorPickerLabel_.setToolTipText("Change the color for displaying this channel");
       colorPickerLabel_.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
       colorPickerLabel_.setOpaque(true);
@@ -320,7 +324,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       linkButton_ = new LinkButton(
             DisplayGroupManager.getContrastLinker(channelIndex_, display_),
             display_);
-      linkButton_.setMinimumSize(new Dimension(linkButton_.getWidth(), 25));
+      linkButton_.setMinimumSize(new Dimension(linkButton_.getWidth(),
+               smallButtonSize.height));
       firstColumn.add(linkButton_, "aligny center");
       // HACK: tweak padding to remove a gap between the two buttons.
       firstColumn.add(fullButton_, "alignx center, width 70!, pad 0 0 0 0");
