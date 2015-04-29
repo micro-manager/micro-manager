@@ -63,5 +63,4 @@ public class NoZoomCanvas extends ImageCanvas {
    @Override
    public void setMagnification(double magnification) {}
    
-   //TODO, disable window maximizing?
 }

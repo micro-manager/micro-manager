@@ -664,6 +664,8 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
                   done_ = true;
                   return;
                }
+               //update window title
+               DisplayPlus.this.getHyperImage().getWindow().repaint();
                //always draw overlay when pixels need to be updated, because this call will interrupt itself if need be     
                drawOverlay();
 

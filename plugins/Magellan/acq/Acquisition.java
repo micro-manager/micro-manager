@@ -44,7 +44,8 @@ public abstract class Acquisition implements AcquisitionEventSource{
    public Acquisition(double zStep) throws Exception {
       xyStage_ = core_.getXYStageDevice();
       zStage_ = core_.getFocusDevice();
-      //TODO: "postion" is not generic name??
+      //"postion" is not generic name..and as of right now there is now way of getting generic z positions
+      //from a z deviec in MM
       String positionName = "Position";
        if (core_.hasProperty(zStage_, positionName)) {
            zStageHasLimits_ = core_.hasPropertyLimits(zStage_, positionName);

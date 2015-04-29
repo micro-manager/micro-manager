@@ -378,7 +378,6 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       calcAndDisplayHistAndStats(true);
    }
    
-   // todo: implement!
    private void lutComboAction () {
       applyLUTToImage();
       display_.drawWithoutUpdate();

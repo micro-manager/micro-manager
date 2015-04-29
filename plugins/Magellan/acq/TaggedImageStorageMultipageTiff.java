@@ -105,7 +105,6 @@ public final class TaggedImageStorageMultipageTiff   {
       tiffReadersByLabel_ = new TreeMap<String, MultipageTiffReader>(new ImageLabelComparator());
       setSummaryMetadata(summaryMetadata);
 
-      // TODO: throw error if no existing dataset
       if (!newDataSet_) {       
          openExistingDataSet();
       }    

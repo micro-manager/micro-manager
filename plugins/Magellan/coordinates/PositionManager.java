@@ -11,6 +11,7 @@ import java.awt.geom.Point2D;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import bidc.CoreCommunicator;
+import misc.Log;
 import mmcorej.CMMCore;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -376,7 +377,8 @@ public class PositionManager {
          int yPixel = (int) ((existingRow + 0.5) * displayTileHeight_  + pixelOffset.y);
          return new Point(xPixel,yPixel);
       } catch (JSONException ex) {
-         ReportingUtils.showError("Problem with current position metadata");
+        ex.printStackTrace();
+         Log.log("Problem with current position metadata");
          return null;
       } catch (NoninvertibleTransformException e) {
          ReportingUtils.showError("Problem using affine transform to convert stage coordinates to pixel coordinates");
@@ -405,7 +407,8 @@ public class PositionManager {
          transform.transform(new Point2D.Double(dxPix, dyPix), stagePos);  
          return stagePos;
       } catch (JSONException ex) {
-         ReportingUtils.showError("Problem with current position metadata");
+        ex.printStackTrace();;
+         Log.log("Problem with current position metadata");
          return null;
 }
       
@@ -450,7 +453,8 @@ public class PositionManager {
          }
 
       } catch (JSONException ex) {
-         ReportingUtils.showError("Problem with current position metadata");
+         ex.printStackTrace();
+         Log.log("Problem with current position metadata");
          return null;
       }
    }
@@ -475,7 +479,7 @@ class MultiResPositionNode  implements Comparable<MultiResPositionNode> {
       gridCol = gCol;
    }
    
-   //TODO: serialize so this can be written to disk
+   //TODO: serialize so this can be written to disk?
    
    @Override
    public int compareTo(MultiResPositionNode n) {

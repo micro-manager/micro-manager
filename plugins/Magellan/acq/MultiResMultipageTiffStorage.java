@@ -312,7 +312,6 @@ public class MultiResMultipageTiffStorage  {
          lowResStorages_.put(1 + lowResStorages_.keySet().size(), null);
          //update position manager to reflect addition of new resolution level
          posManager_.updateLowerResolutionNodes(lowResStorages_.keySet().size());
-         //TODO: change this somehow when timepoints factor in
          String aLabel = fullResStorage_.imageKeys().iterator().next();
          int[] indices = MDUtils.getIndices(aLabel);
          TaggedImage anImage = fullResStorage_.getImage(indices[0], indices[1], indices[2], indices[3]);         
@@ -609,7 +608,7 @@ public class MultiResMultipageTiffStorage  {
    }
 
    public void writeDisplaySettings() {
-      //TODO later
+      //who cares
    }
 
    //Copied from MMAcquisition

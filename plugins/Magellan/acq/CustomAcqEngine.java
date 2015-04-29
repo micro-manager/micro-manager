@@ -40,7 +40,7 @@ public class CustomAcqEngine {
 
     private static final int HARDWARE_ERROR_RETRIES = 6;
     private static final int DELWAY_BETWEEN_RETRIES_MS = 5;
-    private CMMCore core_;
+    private static CMMCore core_;
     private AcquisitionEvent lastEvent_ = null;
     private ExploreAcquisition currentExploreAcq_;
     private ParallelAcquisitionGroup currentFixedAcqs_;
@@ -388,9 +388,12 @@ public class CustomAcqEngine {
             summary.put("Frames", 1);
             summary.put("SlicesFirst", true);
             summary.put("TimeFirst", false);
-            summary.put("PixelType", acq.getFilterType() == FrameIntegrationMethod.FRAME_SUMMATION ? "GRAY16" : "GRAY8");
-            //TODO: generic way of doing this
-            summary.put("BitDepth", acq.getFilterType() == FrameIntegrationMethod.FRAME_SUMMATION ? 16 : 8);
+            summary.put("PixelType", GlobalSettings.getInstance().isBIDCTwoPhoton() ? 
+                    (acq.getFilterType() == FrameIntegrationMethod.FRAME_SUMMATION ? "GRAY16" : "GRAY8") :
+            core_.getImageBitDepth() > 8 ? "GRAY16" : "GRAY8");
+            summary.put("BitDepth", GlobalSettings.getInstance().isBIDCTwoPhoton() ? 
+                    (acq.getFilterType() == FrameIntegrationMethod.FRAME_SUMMATION ? 16 : 8) :
+                    core_.getImageBitDepth() );
             summary.put("Width", CoreCommunicator.getInstance().getImageWidth());
             summary.put("Height", CoreCommunicator.getInstance().getImageHeight());
             summary.put("Prefix", prefix);

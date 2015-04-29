@@ -10,6 +10,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
+import misc.Log;
 import org.micromanager.utils.CanvasPaintPending;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.JavaUtils;
@@ -155,8 +156,7 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
                exx.printStackTrace();
                //swallow null pointer exception that happens at startup of acq and breaks everything
                //exception is because rgbPixels gets set to null while CompositeImage.updateImage is running
-               //TODO: disable at soem point
-               IJ.log("Null RGB pixels");
+               Log.log("Null RGB pixels");
             }
          }
       };

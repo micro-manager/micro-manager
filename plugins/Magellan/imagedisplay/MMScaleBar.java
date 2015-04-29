@@ -128,7 +128,6 @@ public class MMScaleBar {
       font_ = font_.deriveFont((int) (0.015 * ip_.getWidth()));
       TextRoi text = new MMText(10, 10, value_ + units_, font_);
       int textWidth = ip_.getProcessor().getStringWidth(value_ + units_);
-      // TODO: text positioning depends on textHeight, but I don't know how to get this...
       if (pos_ == Position.TOPLEFT) {
          text.setLocation((int) (OFFSET + (0.5 * barWidth_ ) - (0.5 * textWidth)),
                  OFFSET - barHeight_ );

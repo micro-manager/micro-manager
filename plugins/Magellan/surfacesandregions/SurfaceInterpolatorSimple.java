@@ -18,8 +18,7 @@ import org.micromanager.MMStudio;
 /**
  * Subclass that implements a particular interpolation method This one creates a
  * plane based on the 3 closest points in XY space using the delaunay
- * triangulation and calculates specific z values in that plane TODO:
- * extrapolation?
+ * triangulation and calculates specific z values in that plane
  */
 public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
 

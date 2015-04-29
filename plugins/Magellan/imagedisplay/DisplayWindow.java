@@ -5,8 +5,14 @@ import acq.ExploreAcquisition;
 import acq.FixedAreaAcquisition;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import ij.CompositeImage;
+import ij.IJ;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.gui.StackWindow;
+import ij.measure.Calibration;
+import ij.util.Java2;
+import ij.util.Tools;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Comparator;
@@ -480,9 +486,79 @@ public class DisplayWindow extends StackWindow {
          return true;
       }
    }
-   
+
+   @Override
    public void paint(Graphics g) {
-      drawInfo(g);
+      //draw subtitle
+         Insets insets = super.getInsets();
+         if (imp.isComposite()) {
+            CompositeImage ci = (CompositeImage) imp;
+            if (ci.getMode() == IJ.COMPOSITE) {
+               Color c = ci.getChannelColor();
+               if (Color.green.equals(c)) {
+                  c = new Color(0, 180, 0);
+               }
+               g.setColor(c);
+            }
+         }
+         Java2.setAntialiasedText(g, true);
+         int textGap = 1;
+         g.drawString(createSubtitle(), insets.left + 5, insets.top + textGap);
+   }
+   
+   public String createSubtitle() {
+      String s = "";      
+      /////"w x h um (w x h) in pixels
+      Calibration cal = imp.getCalibration();
+      if (cal.scaled()) {
+         boolean unitsMatch = cal.getXUnit().equals(cal.getYUnit());
+         double cwidth = imp.getWidth() * cal.pixelWidth;
+         double cheight = imp.getHeight() * cal.pixelHeight;
+         int digits = Tools.getDecimalPlaces(cwidth, cheight);
+         if (digits > 2) {
+            digits = 2;
+         }
+         if (unitsMatch) {
+            s += IJ.d2s(cwidth, digits) + "x" + IJ.d2s(cheight, digits)
+                    + " " + cal.getUnits() + " (" + imp.getWidth() + "x" + imp.getHeight() + "); ";
+         } else {
+            s += d2s(cwidth) + " " + cal.getXUnit() + " x " + d2s(cheight) + " " + cal.getYUnit()
+                    + " (" + imp.getWidth() + "x" + imp.getHeight() + "); ";
+         }
+      } else {
+         s += imp.getWidth() + "x" + imp.getHeight() + " pixels; ";
+      }
+
+            // c 4/5 f 3/5 etc
+      int[] dim = imp.getDimensions(false);
+      int channels = dim[2], slices = dim[3], frames = dim[4];
+      if (channels > 1) {
+         s += "c:" + imp.getChannel() + "/" + channels;
+         if (slices > 1 || frames > 1) {
+            s += " ";
+         }
+      }
+      if (slices > 1) {
+         s += "z:" + imp.getSlice() + "/" + slices;
+         if (frames > 1) {
+            s += " ";
+         }
+      }
+      if (frames > 1) {
+         s += "t:" + imp.getFrame() + "/" + frames;
+      }
+    
+      s+= " " + (100.0 / (double) disp_.getZoomableStack().getDownsampleFactor()) + "% Zoom";
+      
+      return s;
+   }
+
+   private String d2s(double n) {
+      int digits = Tools.getDecimalPlaces(n);
+      if (digits > 2) {
+         digits = 2;
+      }
+      return IJ.d2s(n, digits);
    }
 
    /**

@@ -401,7 +401,7 @@ public class FixedAreaAcquisition extends Acquisition {
          return zPos < settings_.zStart_;
       } else {
          //no zStack
-         throw new RuntimeException(); //TODO: something better
+         return zPos < zTop_;
       }
    }
 
@@ -414,7 +414,7 @@ public class FixedAreaAcquisition extends Acquisition {
          return zPos > settings_.zEnd_;
       } else {
          //no zStack
-         throw new RuntimeException(); //TODO: something better
+         return zPos > zTop_;
       }
    }
    //TODO: check sign of Z

@@ -83,7 +83,6 @@ public class ScrollerPanel extends Panel {
       // axis as the label. Default all scrollers to invisible unless they have
       // at least 2, um, "ticks"; they'll be shown once there's more than one
       // option along that axis.
-      // TODO: for now assuming all axes can animate.
       for (int i = 0; i < maximums.length; ++i) {
          int max = maximums[i];
          if (max < 1) {

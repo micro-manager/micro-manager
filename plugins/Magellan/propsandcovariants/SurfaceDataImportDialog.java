@@ -159,7 +159,6 @@ public class SurfaceDataImportDialog extends javax.swing.JDialog {
    }//GEN-LAST:event_cancelButton_ActionPerformed
 
    private void typeCombo_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_typeCombo_ActionPerformed
-      // TODO add your handling code here:
    }//GEN-LAST:event_typeCombo_ActionPerformed
 
 class SurfaceDataImportListModel extends AbstractListModel {

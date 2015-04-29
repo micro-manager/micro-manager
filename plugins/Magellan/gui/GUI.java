@@ -2454,7 +2454,6 @@ public class GUI extends javax.swing.JFrame {
    }//GEN-LAST:event_addAcqButton_ActionPerformed
 
    private void exploreZStepSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_exploreZStepSpinner_StateChanged
-       // TODO add your handling code here:
    }//GEN-LAST:event_exploreZStepSpinner_StateChanged
 
    private void exploreBrowseButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exploreBrowseButton_ActionPerformed
@@ -2476,7 +2475,6 @@ public class GUI extends javax.swing.JFrame {
    }//GEN-LAST:event_exploreBrowseButton_ActionPerformed
 
    private void exploreSavingNameTextField_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exploreSavingNameTextField_ActionPerformed
-       // TODO add your handling code here:
    }//GEN-LAST:event_exploreSavingNameTextField_ActionPerformed
 
    private void newParingButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newParingButton_ActionPerformed
@@ -2581,7 +2579,6 @@ public class GUI extends javax.swing.JFrame {
    }//GEN-LAST:event_rankFilterRadioButton_ActionPerformed
 
    private void exploreRankFilterButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exploreRankFilterButton_ActionPerformed
-       // TODO add your handling code here:
    }//GEN-LAST:event_exploreRankFilterButton_ActionPerformed
 
    private void ch0OffsetSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_ch0OffsetSpinner_StateChanged

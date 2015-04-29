@@ -524,7 +524,7 @@ public abstract class VirtualAcquisitionDisplay{
 
       updateAndDraw(true);
       ((DisplayPlus) this).drawOverlay();
-
+      hyperImage_.getWindow().repaint();
    }
 
    private void initializeContrast() {
@@ -768,14 +768,4 @@ public abstract class VirtualAcquisitionDisplay{
       }
    }
    
-   /**
-    * Retrieve the displayed intensity at the specified coordinates.
-    * TODO: for now only returning the value in the first channel.
-    */
-   public int getIntensityAt(int x, int y) {
-      if (hyperImage_ == null) {
-         return -1;
-      }
-      return ((IMMImagePlus) hyperImage_).getPixelIntensities(x, y)[0];
-   }
 }

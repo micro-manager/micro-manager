@@ -113,9 +113,7 @@ public class GraphData {
 
    public void setData(double xVals[], double yVals[]) {
       xVals_ = xVals;
-      yVals_ = yVals;
-      
-      // TODO: adjust lengths
+      yVals_ = yVals;   
    }
    
    public void setData(double yVals[]) {
