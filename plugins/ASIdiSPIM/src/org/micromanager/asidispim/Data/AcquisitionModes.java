@@ -164,7 +164,8 @@ public class AcquisitionModes {
          if (devices_.isTigerDevice(Devices.Keys.XYSTAGE)
                && props_.hasProperty(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_NUMLINES)) {
             keyList.add(Keys.STAGE_SCAN);
-            keyList.add(Keys.STAGE_SCAN_INTERLEAVED);
+            // TODO add firmware support for this and then implement
+            // keyList.add(Keys.STAGE_SCAN_INTERLEAVED);
          }
          return keyList;
       }
