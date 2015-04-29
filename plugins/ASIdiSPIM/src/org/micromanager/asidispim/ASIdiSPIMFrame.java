@@ -52,10 +52,8 @@ import org.micromanager.utils.MMFrame;
 
 //TODO devices tab automatically recognize default device names
 //TODO "swap sides" button (during alignment)
-//TODO setup tab have button for piezo/scanner go to 0 (eliminate calibration position display)
 //TODO alignment wizard that would guide through alignment steps
 //TODO easy mode that pulls most-used bits from all panels
-//TODO autofocus for finding calibration endpoints (http://dx.doi.org/10.1364/OE.16.008670, FFT method, or other)
 //TODO calibration for sheet width/offset (automatic based on image analysis?) and then optimize based on ROI
 //TODO recalculate slice timing automatically changing assigned camera
 //TODO add status bar to bottom of window (would include acquisition status, could show other messages too)
@@ -117,7 +115,7 @@ public class ASIdiSPIMFrame extends MMFrame
       prefs_ = new Prefs(Preferences.userNodeForPackage(this.getClass()));
       devices_ = new Devices(gui, prefs_);
       props_ = new Properties(gui, devices_, prefs_);
-      positions_ = new Positions(gui, devices_);
+      positions_ = new Positions(gui, devices_, props_);
       joystick_ = new Joystick(devices_, props_);
       cameras_ = new Cameras(gui, devices_, props_, prefs_);
       controller_ = new ControllerUtils(gui, props_, prefs_, devices_, positions_);
