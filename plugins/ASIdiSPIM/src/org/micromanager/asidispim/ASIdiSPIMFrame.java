@@ -115,7 +115,7 @@ public class ASIdiSPIMFrame extends MMFrame
       prefs_ = new Prefs(Preferences.userNodeForPackage(this.getClass()));
       devices_ = new Devices(gui, prefs_);
       props_ = new Properties(gui, devices_, prefs_);
-      positions_ = new Positions(gui, devices_, props_);
+      positions_ = new Positions(gui, devices_);
       joystick_ = new Joystick(devices_, props_);
       cameras_ = new Cameras(gui, devices_, props_, prefs_);
       controller_ = new ControllerUtils(gui, props_, prefs_, devices_, positions_);
