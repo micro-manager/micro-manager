@@ -190,7 +190,10 @@ public final class HistogramsPanel extends InspectorPanel {
       });
       add(displayMode, "align right");
 
-      boolean shouldAutostretch = display_.getDisplaySettings().getShouldAutostretch();
+      boolean shouldAutostretch = true;
+      if (display_.getDisplaySettings().getShouldAutostretch() != null) {
+         shouldAutostretch = display_.getDisplaySettings().getShouldAutostretch();
+      }
       final JCheckBox autostretch = new JCheckBox("Autostretch");
       autostretch.setSelected(shouldAutostretch);
       autostretch.setToolTipText("Automatically rescale the histograms every time a new image is displayed.");
