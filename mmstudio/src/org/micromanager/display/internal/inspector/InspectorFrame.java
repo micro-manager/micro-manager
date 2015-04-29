@@ -192,7 +192,8 @@ public class InspectorFrame extends MMFrame implements Inspector {
                panel.cleanup();
             }
             savePosition();
-            DefaultEventManager.getInstance().unregisterForEvents(this);
+            DefaultEventManager.getInstance().unregisterForEvents(
+               InspectorFrame.this);
          }
       });
    }
