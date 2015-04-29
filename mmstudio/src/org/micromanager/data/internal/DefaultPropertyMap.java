@@ -594,4 +594,15 @@ public class DefaultPropertyMap implements PropertyMap {
       }
       return (DefaultPropertyMap) builder.build();
    }
+
+   @Override
+   public String toString() {
+      try {
+         return toJSON().toString(2);
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Error converting PropertyMap to String");
+         return "<DefaultPropertyMap with unknown contents>";
+      }
+   }
 }
