@@ -127,8 +127,7 @@ public class DefaultImage implements Image {
             builder.imageNumber(MDUtils.getSequenceNumber(tags));
          }
          catch (JSONException e) {}
-         builder.coreData(MDUtils.extractCoreProperties(tags));
-         builder.deviceAdapterData(MDUtils.extractDeviceAdapterProperties(tags));
+         builder.scopeData(MDUtils.extractScopeProperties(tags));
          metadata = builder.build();
       }
       metadata_ = (DefaultMetadata) metadata;

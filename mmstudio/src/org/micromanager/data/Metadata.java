@@ -78,9 +78,7 @@ public interface Metadata {
       MetadataBuilder ROI(Rectangle ROI);
       MetadataBuilder source(String source);
       MetadataBuilder startTimeMs(Double startTimeMs);
-      MetadataBuilder acquisitionData(PropertyMap acquisitionData);
-      MetadataBuilder deviceAdapterData(PropertyMap deviceAdapterData);
-      MetadataBuilder coreData(PropertyMap coreData);
+      MetadataBuilder scopeData(PropertyMap scopeData);
       MetadataBuilder userData(PropertyMap userData);
       MetadataBuilder uuid(UUID uuid);
       MetadataBuilder xPositionUm(Double xPositionUm);
@@ -130,31 +128,18 @@ public interface Metadata {
    Long getImageNumber();
 
    /**
-    * Any metadata provided by the acquisition engine that is specific to this
-    * image.
-    * @return Metadata from the acquisition engine
+    * Any information provided by Micro-Manager or its device adapters that
+    * is relevant to this image. This includes a copy of the Core's
+    * knowledge of every device property at the time of image acquisition.
+    * It is possible that the values in this object are not up to date, as
+    * devices are allowed to change their settings without notifying the Core,
+    * and the Core does not manually update its copy of device settings after
+    * each image, for performance reasons.
+    * @return Miscellaneous medatada provided by the microscope.
     */
-   public PropertyMap getAcquisitionData();
+   public PropertyMap getScopeData();
 
-   /**
-    * Any metadata provided by the Micro-Manager Core that is specific to this
-    * image.
-    * @return Metadata from the Core
-    */
-   public PropertyMap getCoreData();
-
-   /**
-    * A description of the Core's understanding of the current state of all
-    * device properties at the time this image was collected. It is possible
-    * that the values in this object are not up to date, as devices are allowed
-    * to change their settings without notifying the Core, and the Core does
-    * not manually update its copy of device settings after each image, for
-    * performance reasons.
-    * @return Potentially out-of-date device property information
-    */
-   public PropertyMap getDeviceAdapterData();
-
-   /** Arbitrary additional metadata */
+   /** Arbitrary additional metadata added by third-party code */
    PropertyMap getUserData();
    /** List of stage positions at the start of the acquisition (e.g. not taking
      * into account changes caused by autofocus). TODO: should be part of

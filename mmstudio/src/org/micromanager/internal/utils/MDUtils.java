@@ -730,39 +730,13 @@ public class MDUtils {
 
    /**
     * Given a JSONObject that is a TaggedImage's tags, extract all the
-    * properties that start with "Core-" and convert them into a PropertyMap.
-    */
-   public static PropertyMap extractCoreProperties(JSONObject tags) {
-      DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();
-      for (String key : getKeys(tags)) {
-         if (key.startsWith("Core-")) {
-            String subKey = key.substring(5);
-            try {
-               putProperty(builder, subKey, tags.get(key));
-            }
-            catch (JSONException e) {
-               // This should never happen.
-               ReportingUtils.logError(e, "Error extracting key " + key + " from JSON tags");
-            }
-         }
-      }
-      return builder.build();
-   }
-
-   /**
-    * Given a JSONObject that is a TaggedImage's tags, extract all the
     * properties that start with the name of a device adapter, and convert the
     * lot into a PropertyMap.
     */
-   public static PropertyMap extractDeviceAdapterProperties(JSONObject tags) {
+   public static PropertyMap extractScopeProperties(JSONObject tags) {
       HashSet<String> devices = new HashSet<String>();
       for (String device : MMStudio.getInstance().getCore().getLoadedDevices()) {
          devices.add(device + "-");
-      }
-      // HACK: remove the "Core" device as it should be handled by
-      // extractCoreProperties, above.
-      if (devices.contains("Core-")) {
-         devices.remove("Core-");
       }
 
       DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();

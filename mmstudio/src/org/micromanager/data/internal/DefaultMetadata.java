@@ -82,9 +82,7 @@ public class DefaultMetadata implements Metadata {
 
       private Double pixelAspect_ = null;
 
-      private DefaultPropertyMap acquisitionData_ = null;
-      private DefaultPropertyMap coreData_ = null;
-      private DefaultPropertyMap deviceAdapterData_ = null;
+      private DefaultPropertyMap scopeData_ = null;
       private DefaultPropertyMap userData_ = null;
 
       @Override
@@ -261,20 +259,8 @@ public class DefaultMetadata implements Metadata {
       }
 
       @Override
-      public MetadataBuilder acquisitionData(PropertyMap acquisitionData) {
-         acquisitionData_ = (DefaultPropertyMap) acquisitionData;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder coreData(PropertyMap coreData) {
-         coreData_ = (DefaultPropertyMap) coreData;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder deviceAdapterData(PropertyMap deviceAdapterData) {
-         deviceAdapterData_ = (DefaultPropertyMap) deviceAdapterData;
+      public MetadataBuilder scopeData(PropertyMap scopeData) {
+         scopeData_ = (DefaultPropertyMap) scopeData;
          return this;
       }
 
@@ -320,9 +306,7 @@ public class DefaultMetadata implements Metadata {
 
    private Double pixelAspect_ = null;
 
-   private DefaultPropertyMap acquisitionData_ = null;
-   private DefaultPropertyMap coreData_ = null;
-   private DefaultPropertyMap deviceAdapterData_ = null;
+   private DefaultPropertyMap scopeData_ = null;
    private DefaultPropertyMap userData_ = null;
 
    public DefaultMetadata(Builder builder) {
@@ -361,9 +345,7 @@ public class DefaultMetadata implements Metadata {
 
       pixelAspect_ = builder.pixelAspect_;
 
-      acquisitionData_ = builder.acquisitionData_;
-      coreData_ = builder.coreData_;
-      deviceAdapterData_ = builder.deviceAdapterData_;
+      scopeData_ = builder.scopeData_;
       userData_ = builder.userData_;
    }
    
@@ -541,18 +523,8 @@ public class DefaultMetadata implements Metadata {
    }
 
    @Override
-   public PropertyMap getAcquisitionData() {
-      return acquisitionData_;
-   }
-
-   @Override
-   public PropertyMap getCoreData() {
-      return coreData_;
-   }
-
-   @Override
-   public PropertyMap getDeviceAdapterData() {
-      return deviceAdapterData_;
+   public PropertyMap getScopeData() {
+      return scopeData_;
    }
 
    @Override
