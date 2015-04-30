@@ -224,7 +224,7 @@ public class Positions {
     * @param ignoreErrors true will return without any errors (or any action) if device is missing
     */
    public boolean setPosition(Devices.Keys devKey, double pos, boolean ignoreErrors) {
-      return setPosition(devKey, Directions.NONE, pos, false);
+      return setPosition(devKey, Directions.NONE, pos, ignoreErrors);
    }
    
    /**
