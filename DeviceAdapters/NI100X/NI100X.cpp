@@ -203,7 +203,6 @@ int DigitalIO::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
          long niRet = DAQmxWriteDigitalU32(task_, 1, 1, 10.0, DAQmx_Val_GroupByChannel, &data, &written, NULL);
          if (niRet != DAQmxSuccess)
             return (int)niRet;
-            state_ = (int)data;
       }
       else {
          long closed_state;
@@ -217,6 +216,7 @@ int DigitalIO::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
             return (int)niRet;
       }
 
+      state_ = (int)state;
       open_ = gateOpen;
       pProp->Set((long)state_);
    }
