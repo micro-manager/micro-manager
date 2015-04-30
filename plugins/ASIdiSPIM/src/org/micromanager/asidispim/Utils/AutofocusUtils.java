@@ -22,6 +22,8 @@
 package org.micromanager.asidispim.Utils;
 
 import ij.ImagePlus;
+import ij.gui.ImageWindow;
+import ij.gui.Roi;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
@@ -92,6 +94,7 @@ public class AutofocusUtils {
     *                            around the imaging center set in the setup panel (false)
     * @param sliceTiming - Data structure with current device timing setting
     * @param runAsynchronously - whether or not to run the function asynchronously
+    * @return piezo position (in microns) with best focus
     *
     */
    public double runFocus(
@@ -112,6 +115,14 @@ public class AutofocusUtils {
                throw new ASIdiSPIMException("Please define an autofocus methods first");
             }
             gui_.getAutofocus().applySettings();
+            
+            // if the Snap/Live window has an ROI set, we will use the same 
+            // ROI for our focus calculations
+            // TODO: should this be an option?
+            ImageWindow iw = gui_.getSnapLiveWin();
+            Roi roi = null;
+            if (iw != null)
+               roi = iw.getImagePlus().getRoi();
             
             // TODO implement this pref as numeric code like other pull-downs
             final Fitter.FunctionType function = Fitter.getFunctionTypeAsType(
@@ -214,7 +225,7 @@ public class AutofocusUtils {
                gui_.getMMCore().setCameraDevice(camera);
                if (debug) {
                   if (gui_.acquisitionExists(acqName)) {
-                     gui_.closeAcquisition(acqName);
+                     gui_.closeAcquisitionWindow(acqName);
                   }
                   acqName = gui_.getUniqueAcquisitionName(acqName);
                   gui_.openAcquisition(acqName, "", 1, 1, nrImages, 1, true, false);
@@ -264,7 +275,13 @@ public class AutofocusUtils {
                   now = System.currentTimeMillis();
                   if (gui_.getMMCore().getRemainingImageCount() > 0) {  // we have an image to grab
                      TaggedImage timg = gui_.getMMCore().popNextTaggedImage();
+                     // reset our wait timer since we got an image
+                     startTime = System.currentTimeMillis();
                      ImageProcessor ip = makeProcessor(timg);
+                     if (roi != null) {
+                        ip.setRoi(roi);
+                        ip = ip.crop();
+                     }
                      focusScores[counter] = gui_.getAutofocus().computeScore(ip);
                      imageStore[counter] = timg;
                      ReportingUtils.logDebugMessage("Autofocus, image: " + counter
@@ -310,6 +327,7 @@ public class AutofocusUtils {
                // display the best scoring image in the debug stack if it exists
                // or if not then in the snap/live window if it exists
                if (debug) {
+                  // the following does not work.  Delete?
                   VirtualAcquisitionDisplay vad = gui_.getAcquisition(acqName).getAcquisitionWindow();
                   vad.setSliceIndex(highestIndex);
                   vad.updateDisplay(null);
