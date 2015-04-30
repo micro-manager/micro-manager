@@ -870,20 +870,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    /**
     * @return CameraModes.Keys value from Settings panel
     * (internal, edge, overlap, pseudo-overlap) 
-    * selection otherwise
     */
    private CameraModes.Keys getSPIMCameraMode() {
       return CameraModes.getKeyFromPrefCode(
             prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
                   Properties.Keys.PLUGIN_CAMERA_MODE, 0));
-   }
-   
-   private int getLineScanPeriod() {
-      return (Integer) lineScanPeriod_.getValue();
-   }
-   
-   private int getNumScansPerSlice() {
-      return (Integer) numScansPerSlice_.getValue();
    }
    
    private int getNumSlices() {
