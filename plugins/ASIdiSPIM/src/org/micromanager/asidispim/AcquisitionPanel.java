@@ -1027,9 +1027,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * If the values are the same nothing happens.  If they should be changed,
     * then the controller's properties will be set.
     * @param showWarnings will show warning if the user-specified slice period too short
+    *                      or if cameras aren't assigned
     */
    private void recalculateSliceTiming(boolean showWarnings) {
-      if(!checkCamerasAssigned(true)) {
+      if(!checkCamerasAssigned(showWarnings)) {
          return;
       }
       sliceTiming_ = getTimingFromPeriodAndLightExposure(showWarnings);
