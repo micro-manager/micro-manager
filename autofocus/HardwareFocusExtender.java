@@ -152,13 +152,14 @@ public class HardwareFocusExtender  extends AutofocusBase implements org.microma
       for (int i = 0; i < lowerLimit_ / stepSize_ && !success; i++) {
          try {
             core.setPosition(zDrive_, pos + (stepSize_ * -i) );
+            core.waitForDevice(zDrive_);
          } catch (Exception ex) {
             ReportingUtils.showError(ex, "Failed to set Z position");
          }
          success = testFocus();
       }
       for (int i = 0; i < upperLimit_ / stepSize_ && !success; i++) {
-                  try {
+        try {
             core.setPosition(zDrive_, pos + (stepSize_ * i) );
             core.waitForDevice(zDrive_);
          } catch (Exception ex) {
@@ -182,13 +183,22 @@ public class HardwareFocusExtender  extends AutofocusBase implements org.microma
     * @return true when the device locks, false otherwise
     */
    private boolean testFocus() {
+      CMMCore core = gui_.getMMCore();
       try {
-            gui_.getMMCore().fullFocus();
-            gui_.getMMCore().waitForDevice(hardwareFocusDevice_);
-         } catch (Exception ex) {
-            // focus failed
-            return false;
+         // specific for Nikon PFS.  Check if the PFS is within range instead of
+         // trying to lock
+         if (core.hasProperty(hardwareFocusDevice_, "Status")) {
+            String result = core.getProperty(hardwareFocusDevice_, "Status");
+            if (result.equals("Out of focus search range")) {
+               return false;
+            }
          }
+         core.fullFocus();
+         core.waitForDevice(hardwareFocusDevice_);
+      } catch (Exception ex) {
+         // focus failed
+         return false;
+      }
       return true;
    }
    
