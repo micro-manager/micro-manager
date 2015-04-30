@@ -3426,26 +3426,31 @@ int Universal::OnCFAmask(MM::PropertyBase* pProp, MM::ActionType eAct)
           case CFA_RGGB:
           pProp->Set(g_Keyword_RGGB);
           debayer_.SetOrderIndex(CFA_RGGB);
+          OnPropertyChanged(g_Keyword_CFAmask, g_Keyword_RGGB);
           break;
 
           case CFA_BGGR:
           pProp->Set(g_Keyword_BGGR);
           debayer_.SetOrderIndex(CFA_BGGR);
+          OnPropertyChanged(g_Keyword_CFAmask, g_Keyword_BGGR);
           break;
 
           case CFA_GRBG:
           pProp->Set(g_Keyword_GRBG);
           debayer_.SetOrderIndex(CFA_GRBG);
+          OnPropertyChanged(g_Keyword_CFAmask, g_Keyword_GRBG);
           break;
 
           case CFA_GBRG:
           pProp->Set(g_Keyword_GBRG);
           debayer_.SetOrderIndex(CFA_GBRG);
+          OnPropertyChanged(g_Keyword_CFAmask, g_Keyword_GBRG);
           break;
           
           default:
           pProp->Set(g_Keyword_RGGB);
           debayer_.SetOrderIndex(CFA_RGGB);
+          OnPropertyChanged(g_Keyword_CFAmask, g_Keyword_RGGB);
           break;
       }
       
