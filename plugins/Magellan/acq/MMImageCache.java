@@ -28,6 +28,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.swing.SwingUtilities;
+import misc.MagelUtils;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -125,7 +126,7 @@ public class MMImageCache {
       boolean wasSuccessful = true;
       for (int i = 0; i < n; ++i) {
          final int i1 = i;
-         int pos[] = MDUtils.getIndices(keys.get(i));
+         int pos[] = MagelUtils.getIndices(keys.get(i));
          try {
             newImageFileManager.putImage(getImage(pos[0], pos[1], pos[2], pos[3]));
          } catch (MMException ex) {

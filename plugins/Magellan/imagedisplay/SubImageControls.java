@@ -27,6 +27,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.MMStudio;
@@ -356,7 +357,13 @@ public class SubImageControls extends Panel {
       this.invalidate();
       this.validate();
       this.getParent().doLayout();
-//      ((DisplayWindow) display_.getHyperImage().getWindow()).resizeCanvas();
+      SwingUtilities.invokeLater(new Runnable() {
+
+         @Override
+         public void run() {
+            ((DisplayWindow) display_.getHyperImage().getWindow()).fitExploreCanvasToWindow();
+         }
+      });
    }
 
    public void prepareForClose() {

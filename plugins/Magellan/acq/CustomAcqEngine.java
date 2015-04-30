@@ -30,7 +30,6 @@ import org.micromanager.api.MMTags;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 import propsandcovariants.CovariantPairing;
-import sun.security.jca.GetInstance;
 
 /**
  * Engine has a single thread executor, which sits idly waiting for new

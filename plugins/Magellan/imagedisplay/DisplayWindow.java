@@ -15,6 +15,7 @@ import ij.util.Java2;
 import ij.util.Tools;
 import java.awt.*;
 import java.awt.event.*;
+import java.text.DecimalFormat;
 import java.util.Comparator;
 import java.util.prefs.Preferences;
 import javax.swing.*;
@@ -30,6 +31,8 @@ import org.micromanager.utils.ReportingUtils;
  * of code; see that function's comment.
  */
 public class DisplayWindow extends StackWindow {
+
+   private static final DecimalFormat TWO_DECIMAL_FORMAT = new DecimalFormat("0.00");
 
    public static int CANVAS_PIXEL_BORDER = 4;
    private static int RESIZE_WINDOW_DELAY = 50;
@@ -323,6 +326,10 @@ public class DisplayWindow extends StackWindow {
          windowResizeTimer_.start();
       }
    }
+   
+   public void fitExploreCanvasToWindow() {
+      windowResizeTimerAction();
+   }
 
    /**
     * Explore acquisitions: resize canvas to use all available space 
@@ -491,45 +498,27 @@ public class DisplayWindow extends StackWindow {
    public void paint(Graphics g) {
       //draw subtitle
          Insets insets = super.getInsets();
-         if (imp.isComposite()) {
-            CompositeImage ci = (CompositeImage) imp;
-            if (ci.getMode() == IJ.COMPOSITE) {
-               Color c = ci.getChannelColor();
-               if (Color.green.equals(c)) {
-                  c = new Color(0, 180, 0);
-               }
-               g.setColor(c);
-            }
-         }
+         g.setColor(Color.black);
          Java2.setAntialiasedText(g, true);
          int textGap = 1;
          g.drawString(createSubtitle(), insets.left + 5, insets.top + textGap);
    }
    
    public String createSubtitle() {
-      String s = "";      
+      String s = "";
       /////"w x h um (w x h) in pixels
       Calibration cal = imp.getCalibration();
       if (cal.scaled()) {
-         boolean unitsMatch = cal.getXUnit().equals(cal.getYUnit());
          double cwidth = imp.getWidth() * cal.pixelWidth;
          double cheight = imp.getHeight() * cal.pixelHeight;
-         int digits = Tools.getDecimalPlaces(cwidth, cheight);
-         if (digits > 2) {
-            digits = 2;
-         }
-         if (unitsMatch) {
-            s += IJ.d2s(cwidth, digits) + "x" + IJ.d2s(cheight, digits)
-                    + " " + cal.getUnits() + " (" + imp.getWidth() + "x" + imp.getHeight() + "); ";
-         } else {
-            s += d2s(cwidth) + " " + cal.getXUnit() + " x " + d2s(cheight) + " " + cal.getYUnit()
-                    + " (" + imp.getWidth() + "x" + imp.getHeight() + "); ";
-         }
+         s += TWO_DECIMAL_FORMAT.format(cwidth) + "x" + TWO_DECIMAL_FORMAT.format(cheight)
+                 + " " + cal.getUnits() + " (" + imp.getWidth() + "x" + imp.getHeight() + "); ";
+
       } else {
-         s += imp.getWidth() + "x" + imp.getHeight() + " pixels; ";
+         s += imp.getWidth() + "x" + imp.getHeight() + " pixels;  ";
       }
 
-            // c 4/5 f 3/5 etc
+      // c 4/5 f 3/5 etc
       int[] dim = imp.getDimensions(false);
       int channels = dim[2], slices = dim[3], frames = dim[4];
       if (channels > 1) {
@@ -547,18 +536,13 @@ public class DisplayWindow extends StackWindow {
       if (frames > 1) {
          s += "t:" + imp.getFrame() + "/" + frames;
       }
-    
-      s+= " " + (100.0 / (double) disp_.getZoomableStack().getDownsampleFactor()) + "% Zoom";
+     
+      s+= ";  " + (100.0 / (double) disp_.getZoomableStack().getDownsampleFactor()) + "% Zoom;  ";
+      //z position:
+      s+= acq_.getZStageName() + ": " + disp_.getZoomableStack().getZCoordinateOfDisplayedSlice(
+              disp_.getVisibleSliceIndex());
       
       return s;
-   }
-
-   private String d2s(double n) {
-      int digits = Tools.getDecimalPlaces(n);
-      if (digits > 2) {
-         digits = 2;
-      }
-      return IJ.d2s(n, digits);
    }
 
    /**
@@ -597,7 +581,6 @@ public class DisplayWindow extends StackWindow {
    
    @Subscribe
    public void onLayoutChange(ScrollerPanel.LayoutChangedEvent event) {
-//      System.out.println();
    }
 
    // Force this window to go away.

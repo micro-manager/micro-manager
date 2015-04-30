@@ -125,7 +125,7 @@ public class PositionManager {
          return node.positionIndex;
       } catch (Exception e) {
          e.printStackTrace();
-         ReportingUtils.showError("Couldnt read position list correctly");
+         Log.log("Couldnt read position list correctly");
          return 0;
       }
    }
@@ -138,7 +138,8 @@ public class PositionManager {
          }
          return node.gridRow;
       } catch (JSONException e) {
-         ReportingUtils.showError("Couldnt read position list correctly");
+         e.printStackTrace();
+         Log.log("Couldnt read position list correctly");
          return 0;
       }
    }
@@ -151,7 +152,8 @@ public class PositionManager {
          }
          return node.gridCol;
       } catch (JSONException e) {
-         ReportingUtils.showError("Couldnt read position list correctly");
+         e.printStackTrace();
+         Log.log("Couldnt read position list correctly");
          return 0;
       }
    }

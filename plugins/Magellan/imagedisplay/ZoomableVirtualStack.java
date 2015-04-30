@@ -11,6 +11,7 @@ import acq.MMImageCache;
 import acq.MultiResMultipageTiffStorage;
 import java.awt.Dimension;
 import java.awt.Point;
+import java.util.Set;
 import misc.LongPoint;
 import mmcorej.TaggedImage;
 
@@ -34,6 +35,7 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
    private Acquisition acquisition_;
    private final boolean fixedAreaAcq_;
    private int xMax_, yMax_;
+   private DisplayPlus disp_;
 
    public ZoomableVirtualStack(int type, int width, int height, MMImageCache imageCache,
            int nSlices, VirtualAcquisitionDisplay vad, MultiResMultipageTiffStorage multiResStorage,
@@ -42,6 +44,7 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
       type_ = type;
       imageCache_ = imageCache;
       nSlices_ = nSlices;
+      disp_ = (DisplayPlus) vad;
       multiResStorage_ = multiResStorage;
       //display image could conceivably be bigger than a single FOV, but not smaller
       displayImageWidth_ = width;
@@ -74,6 +77,7 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
       imageCache_ = oldStack.imageCache_;
       nSlices_ = oldStack.nSlices_;
       multiResStorage_ = oldStack.multiResStorage_;
+      disp_ = oldStack.disp_;
       //display image could conceivably be bigger than a single FOV, but not smaller
       displayImageWidth_ = width;
       displayImageHeight_ = height;
@@ -157,6 +161,7 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
          int dsFactor = (int) Math.pow(2, resolutionIndex_);
          int fullResX = (int) (dsFactor * (mouseLocation.x + xView_));
          int fullResY = (int) (dsFactor * (mouseLocation.y + yView_));
+         //do actual zooming
          resolutionIndex_ += numLevels;
          dsFactor = (int) Math.pow(2, resolutionIndex_);
          xView_ = (int) (fullResX / dsFactor - mouseLocation.x);
@@ -167,24 +172,84 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
             yView_ = (int) Math.max(0, Math.min(yView_, yMax_ / Math.pow(2, resolutionIndex_) - displayImageHeight_));
          }
       }
-      
-      
+
+      //explore acquisition must have some area you've already explored in view
+      if (acquisition_ instanceof ExploreAcquisition) {
+         moveViewToVisibleArea();
+      }
+
+
       if (acquisition_ instanceof FixedAreaAcquisition) {
          //change the canvas size, and shrink canvas only if moving out
          ((DisplayWindow) vad_.getHyperImage().getWindow()).resizeCanvas(numLevels > 0, previousDSFactor, true);
       }
    }
 
+   private void moveViewToVisibleArea() {
+      //compensate for the possibility of negative slice indices in explore acquisition
+      int slice = disp_.getVisibleSliceIndex() + ((ExploreAcquisition) acquisition_).getLowestExploredSliceIndex();
+      //check for valid tiles (at lowest res) at this slice        
+      Set<Point> tiles = multiResStorage_.getExploredTilesAtSlice(slice);
+      if (tiles.size() == 0) {
+         return;
+      }
+      //center of one tile must be within corners of current view 
+      double minDistance = Integer.MAX_VALUE;
+      //do all calculations at full resolution
+      long newXView = xView_ * getDownsampleFactor();
+      long newYView = yView_ * getDownsampleFactor();
+      for (Point p : tiles) {
+         //translate row, col to x, y pixel coords of position center
+         long xTileCenter = (long) ((0.5 + p.x) * tileWidth_);
+         long yTileCenter = (long) ((0.5 + p.y) * tileHeight_);
+         //get bounds of viewing area
+         long xMin = getAbsoluteFullResPixelCoordinate(0, 0).x_;
+         long yMin = getAbsoluteFullResPixelCoordinate(0, 0).y_;
+         long xMax = xMin + displayImageWidth_ * getDownsampleFactor();
+         long yMax = yMin + displayImageHeight_ * getDownsampleFactor();
+         boolean xInView = xTileCenter >= xMin && xTileCenter <= xMax;
+         boolean yInView = yTileCenter >= yMin && yTileCenter <= yMax;
+         if (xInView && yInView) {
+            return; //at least one tile is in view, don't need to do anything
+         }
+         //calculate min distance from among 4 corners
+         double d1 = Math.sqrt((xTileCenter - xMin) * (xTileCenter - xMin) + (yTileCenter - yMin) * (yTileCenter - yMin)); //top left
+         double d2 = Math.sqrt((xTileCenter - xMax) * (xTileCenter - xMax) + (yTileCenter - yMin) * (yTileCenter - yMin)); // top right
+         double d3 = Math.sqrt((xTileCenter - xMin) * (xTileCenter - xMin) + (yTileCenter - yMax) * (yTileCenter - yMax)); // bottom left
+         double d4 = Math.sqrt((xTileCenter - xMax) * (xTileCenter - xMax) + (yTileCenter - yMax) * (yTileCenter - yMax)); //bottom right
+         double minOf4 = Math.min(Math.min(d1, d2), Math.min(d3, d4));
+         if (minOf4 < minDistance) {
+            minDistance = minOf4;
+            if (d1 <= d2 && d1 <= d3 && d1 <= d4) { //top left
+               newXView = xInView ? newXView : xTileCenter;
+               newYView = yInView ? newYView : yTileCenter;
+            } else if (d2 <= d1 && d2 <= d3 && d2 <= d4) { // top right
+               newXView = xInView ? newXView : xTileCenter - displayImageWidth_ * getDownsampleFactor();
+               newYView = yInView ? newYView : yTileCenter;
+            } else if (d3 <= d1 && d3 <= d2 && d3 <= d4) { // bottom left
+               newXView = xInView ? newXView : xTileCenter;
+               newYView = yInView ? newYView : yTileCenter - displayImageHeight_ * getDownsampleFactor();
+            } else { // bottom right
+               newXView = xInView ? newXView : xTileCenter - displayImageWidth_ * getDownsampleFactor();
+               newYView = yInView ? newYView : yTileCenter - displayImageHeight_ * getDownsampleFactor();
+            }
+         }
+      }
+      //readjust to current res level
+      xView_ = newXView / getDownsampleFactor();
+      yView_ = newYView / getDownsampleFactor();
+   }
+   
    public void pan(int dx, int dy) {
       if (fixedAreaAcq_) {
          xView_ = (int) Math.max(0, Math.min(xView_ + dx, xMax_ / Math.pow(2, resolutionIndex_) - displayImageWidth_));
          yView_ = (int) Math.max(0, Math.min(yView_ + dy, yMax_ / Math.pow(2, resolutionIndex_) - displayImageHeight_));
       } else {
-         //only accept pan if it keeps some portion of explored area in view
-         
-         
          xView_ += dx;
          yView_ += dy;
+         //only accept pan if it keeps some portion of explored area in view
+         //explore acquisition must have some area you've already explored in view
+         moveViewToVisibleArea();
       }
    }
 

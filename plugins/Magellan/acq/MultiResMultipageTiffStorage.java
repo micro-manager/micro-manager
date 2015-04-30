@@ -5,16 +5,20 @@
 package acq;
 
 import coordinates.PositionManager;
+import java.awt.Point;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import misc.Log;
+import misc.MagelUtils;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -313,7 +317,7 @@ public class MultiResMultipageTiffStorage  {
          //update position manager to reflect addition of new resolution level
          posManager_.updateLowerResolutionNodes(lowResStorages_.keySet().size());
          String aLabel = fullResStorage_.imageKeys().iterator().next();
-         int[] indices = MDUtils.getIndices(aLabel);
+         int[] indices = MagelUtils.getIndices(aLabel);
          TaggedImage anImage = fullResStorage_.getImage(indices[0], indices[1], indices[2], indices[3]);         
          addToLowResStorage(anImage, 0, indices[3]);
          return true;
@@ -640,5 +644,33 @@ public class MultiResMultipageTiffStorage  {
          }
       }
       return maxNumber;
+   }
+
+   /**
+    * 
+    * @param slice
+    * @return set of points (col, row) with indices of tiles that have been added at this slice index 
+    */
+   public Set<Point> getExploredTilesAtSlice(int slice) {
+      Set<Point> exploredTiles = new TreeSet<Point>(new Comparator<Point>() {
+         @Override
+         public int compare(Point o1, Point o2) {
+           if (o1.x != o2.x) {
+              return o1.x - o2.x;
+           } else if (o1.y != o2.y) {
+              return o1.y - o2.y;
+           }
+           return 0;
+         }
+      } );
+      Set<String> keys = imageKeys();
+      for (String s : keys) {
+            int[] indices = MagelUtils.getIndices(s);
+            if (indices[1] == slice) {
+               exploredTiles.add(new Point((int) posManager_.getGridCol(indices[3], 0), (int) posManager_.getGridRow(indices[3], 0)));
+            }
+
+      }
+      return exploredTiles;
    }
 }
