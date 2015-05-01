@@ -38,7 +38,6 @@ import org.micromanager.utils.ReportingUtils;
 public class MultiResMultipageTiffStorage  {
 
    private final double BACKGROUND_PIXEL_PERCENTILE = 0.1; // assume background pixels are at 10th percentile of histogram
-   private final int MAX_PIXELS_FOR_BACKGROUND_CALC = 1000000;
    private static final String FULL_RES_SUFFIX = "Full resolution";
    private static final String DOWNSAMPLE_SUFFIX = "Downsampled_x";
    private TaggedImageStorageMultipageTiff fullResStorage_;

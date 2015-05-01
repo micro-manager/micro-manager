@@ -6,7 +6,6 @@ package acq;
 
 import autofocus.CrossCorrelationAutofocus;
 import gui.GUI;
-import gui.SettingsDialog;
 import ij.IJ;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,13 +25,13 @@ public class MultipleAcquisitionManager {
    private ArrayList<Integer> numberInGroup_ = new ArrayList<Integer>();
    private String[] acqStatus_;
    private GUI gui_;
-   private CustomAcqEngine eng_;
+   private MagellanEngine eng_;
    private volatile boolean running_ = false;
    private Thread managerThread_;
    private volatile ParallelAcquisitionGroup currentAcqs_;
    private CyclicBarrier acqGroupFinishedBarrier_ = new CyclicBarrier(2);
    
-   public MultipleAcquisitionManager(GUI gui, CustomAcqEngine eng ) {
+   public MultipleAcquisitionManager(GUI gui, MagellanEngine eng ) {
       gui_ = gui;
       acqSettingsList_.add(new FixedAreaAcquisitionSettings());
       eng_ = eng;
@@ -228,17 +227,7 @@ public class MultipleAcquisitionManager {
    public void runAllAcquisitions() {
      managerThread_ = new Thread(new Runnable() {
          @Override
-         public void run() {
-            FixedAreaAcquisition firstAcq = null;
-            double secretAFDrivePos = 0;
-            boolean secretAutofocus = GlobalSettings.getInstance().getAutofocusBetweenSerialAcqusitions();
-            if (secretAutofocus) {
-               IJ.log("Secret autofocus between acquisitions activated!");
-               if (!acqSettingsList_.get(0).autofocusEnabled_) {
-                  ReportingUtils.showError("Must enable autofocus on first acquisition for secret autofocus");
-               }
-            }
-            
+         public void run() {                
             gui_.enableMultiAcquisitionControls(false); //disallow changes while running
             running_ = true;
             acqStatus_ = new String[acqSettingsList_.size()];
@@ -254,31 +243,6 @@ public class MultipleAcquisitionManager {
                   acqStatus_[getFirstIndexOfGroup(groupIndex) + i] = "Running";
                   gui_.repaint();
                }
-               ////////////////////////////////////SECRET AUTOFOCUS///////////////////////////////////////////////////////////////////
-                if (secretAutofocus && groupIndex > 0) {
-                    if (groupIndex == 1) {
-                        try {
-                            //before the first "real" acq, get the intial position
-                            secretAFDrivePos = MMStudio.getInstance().getCore().getPosition(firstAcq.getSettings().autoFocusZDevice_);
-                        } catch (Exception ex) {
-                            ReportingUtils.showError("Couldn't get initial position of AF drive for secret AF");
-                        }
-                    } else {
-                        //before every acqusiition from the second "real" one and on,
-                        //run the autofocus acq and adjust position
-                        currentAcqs_ = eng_.runInterleavedAcquisitions(acqSettingsList_.subList(0, 1), true);
-                        FixedAreaAcquisition current = currentAcqs_.acqs_.get(0);
-                        try {
-                            acqGroupFinishedBarrier_.await();
-                        } catch (Exception ex) {
-                            //all multiple acquisitions aborted
-                            break;
-                        }
-                        //now can compare current secret acq to first and adjust accordingly
-                        secretAFDrivePos = CrossCorrelationAutofocus.runSecretSerialAutofocus(firstAcq, current, secretAFDrivePos);
-                    }
-                }
-               ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                //run one or more acquisitions in parallel group 
                try {
                   currentAcqs_ = eng_.runInterleavedAcquisitions(acqSettingsList_.subList(
@@ -292,12 +256,6 @@ public class MultipleAcquisitionManager {
                   //user has responded to dialog and doesnt want to interupt currently running ones
                   break;
                }   
-               ////////////////////////////////////SECRET AUTOFOCUS////////////////////////////////////////////////////////////////////
-               if (secretAutofocus && groupIndex == 0) {
-                  //get the stack from this acquisition
-                  firstAcq = currentAcqs_.acqs_.get(0);                             
-               }
-               //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                try {
                   acqGroupFinishedBarrier_.await();
                } catch (Exception ex) {

@@ -33,7 +33,7 @@ public class CrossCorrelationAutofocus {
    //4e7--92 s
    //1e8--92 s
    //8e8--682 s
-   private static final int NUM_VOXEL_TARGET = 10000000;
+   private static final int NUM_VOXEL_TARGET = 60000000; //this target shuld take 1-2 min to calculate, while maintaining images of a resonable size
    
    
    private final int channelIndex_;
@@ -54,35 +54,83 @@ public class CrossCorrelationAutofocus {
       acq_ = acq;
    }
    
-
    public double getAutofocusPosition() {
       return currentPosition_;
    }
-    
-   public static double runSecretSerialAutofocus(FixedAreaAcquisition refAcq, FixedAreaAcquisition currentAcq, double initalPos) {   
-       int channelIndex = refAcq.getAutofocusChannelIndex();
-      ImageStack tp0Stack = createAFStack(refAcq, 0, channelIndex, refAcq.getStorage().getTileWidth(), refAcq.getStorage().getTileHeight(), 0);
-      ImageStack currentTPStack = createAFStack(currentAcq,  0, channelIndex, currentAcq.getStorage().getTileWidth(), currentAcq.getStorage().getTileHeight(), 0);
-      //run autofocus
-      double drift = calcFocusDrift(tp0Stack, currentTPStack, refAcq.getZStep());
-      
-      if (Math.abs(drift) > refAcq.getSettings().autofocusMaxDisplacemnet_um_) {
-         ReportingUtils.showError("Focus drift exceeds max displacement");
-         return initalPos;
-      }
-      try {
-         //move autofocus focus
-         MMStudio.getInstance().getCore().setPosition(refAcq.getSettings().autoFocusZDevice_, initalPos - drift);
-      } catch (Exception ex) {
-         ReportingUtils.showError("Coulndt move secret autofocus drive");
-      }
-      return initalPos - drift;
-   }
+   
+//   public static void main(String[] args) {
+//      //figure out how much downsampling needed to run autofocus in a reasonable amount of time
+//      //factor of two is for z padding
+//      int width = 3780;
+//      int height = 4158;
+//      BigDecimal numPix2D = new BigDecimal(new BigInteger("" +width ).multiply(new BigInteger("" + height )));
+//      BigDecimal numXCorrSlices = new BigDecimal(180 + "");
+//      double dsFactor = //ratio of number of voxels to voxel target
+//              Math.sqrt(numPix2D.multiply(numXCorrSlices).divide(new BigDecimal((double) NUM_VOXEL_TARGET)).doubleValue());
+//      double log = Math.log(dsFactor) / Math.log(2);
+//      int downsampleIndex = (int) Math.max(0, Math.round(log));
+//      int downsampledWidth = (int) ((int) width / Math.pow(2, downsampleIndex));
+//      int downsampledHeight = (int) ((int) height / Math.pow(2, downsampleIndex));
+//      System.out.println(log + "\t" + downsampledWidth + "\t" + downsampledHeight);
+//      
+//   }
+//
+//   public static void debug() {
+////      ImagePlus tp0 = new ImagePlus("C:/Users/Henry/Desktop/SHG/tp0.tif");
+////      ImagePlus tpc = new ImagePlus("C:/Users/Henry/Desktop/SHG/tp13.tif");
+////      ImagePlus tp0 = new ImagePlus("C:/Users/Henry/Desktop/SHG/tp0_2x.tif");
+////      ImagePlus tpc = new ImagePlus("C:/Users/Henry/Desktop/SHG/tp13_2x.tif");
+////      ImagePlus tp0 = new ImagePlus("C:/Users/Henry/Desktop/SHG/tp0_4x.tif");
+////      ImagePlus tpc = new ImagePlus("C:/Users/Henry/Desktop/SHG/tp13_4x.tif");
+////      ImagePlus tp0 = new ImagePlus("C:/Users/Henry/Desktop/SHG/tp0_8x.tif");
+////      ImagePlus tpc = new ImagePlus("C:/Users/Henry/Desktop/SHG/tp13_8x.tif");
+//      ImagePlus tp0 = new ImagePlus("C:/Users/Henry/Desktop/SHG/tp0_16x.tif");
+//      ImagePlus tpc = new ImagePlus("C:/Users/Henry/Desktop/SHG/tp13_16x.tif");
+////      ImagePlus tp0 = new ImagePlus("C:/Users/Henry/Desktop/SHG/tp0_32x.tif");
+////      ImagePlus tpc = new ImagePlus("C:/Users/Henry/Desktop/SHG/tp13_32x.tif");
+//
+//      ImageStack stack1 = createAFStackFromDisk(tp0);
+//      ImageStack stack2 = createAFStackFromDisk(tpc);
+//
+//      long start = System.currentTimeMillis();
+//      double drift = calcFocusDrift(stack1, stack2, 4);
+//      long end = System.currentTimeMillis();
+//      System.out.println(drift + "\t" + (end - start));
+//   }
+//   //for debugging
+//    private static ImageStack createAFStackFromDisk(ImagePlus ip) {
+//        //pad by half of stack size in either direction so wrap around of xCorr doesnt give false values
+//        int numSlices = 2 * (ip.getNSlices());
+//        ImageStack stack = new ImageStack(ip.getWidth(), ip.getHeight());
+//        int frontPadding = (ip.getNSlices()) / 2;
+//        //get background pixel value
+//        int backgroundVal = 9;
+//        for (int slice = 0; slice < numSlices; slice++) {
+//            if (slice >= frontPadding && slice < frontPadding + ip.getNSlices()) {
+//                int dataSlice = slice - frontPadding;
+//               //add as int             
+//               byte[] pix = (byte[]) ip.getStack().getPixels(dataSlice + 1);
+//               float[] pix32 = new float[pix.length];
+//               for (int i = 0; i < pix.length; i++) {
+//                  pix32[i] = pix[i] == 0 ? backgroundVal : pix[i] & 0xff;
+//               }
+//               stack.addSlice(null,pix32);
+//            } else {
+//                //add dummy slices, which need to have backround pixels with the same 
+//                //value as the background of the actual data
+//                float[] pix = new float[ip.getWidth() * ip.getHeight()];
+//                Arrays.fill(pix, backgroundVal);
+//                stack.addSlice(null, pix);
+//            }
+//        }
+//        return stack;
+//    }
+//   
+   
    
    /**
     * Called by acquisitions at then end of time point
     * @param timeIndex 
- 
      */
     public void run(int timeIndex) throws Exception {
         if (timeIndex == 0) {
@@ -106,7 +154,7 @@ public class CrossCorrelationAutofocus {
             BigDecimal numXCorrSlices = new BigDecimal((2 * (acq_.getMaxSliceIndex() + 1)) + "");
             double dsFactor = //ratio of number of voxels to voxel target
                     Math.sqrt(numPix2D.multiply(numXCorrSlices).divide(new BigDecimal((double) NUM_VOXEL_TARGET)).doubleValue());
-            downsampleIndex_ = (int) Math.max(0, Math.ceil(Math.log(dsFactor) / Math.log(2)));
+            downsampleIndex_ = (int) Math.max(0, Math.round(Math.log(dsFactor) / Math.log(2)));
             downsampledWidth_ = (int) (tileWidth.multiply(numCols).longValue() / Math.pow(2, downsampleIndex_));
             downsampledHeight_ = (int) (tileHeight.multiply(numRows).longValue() / Math.pow(2, downsampleIndex_));
             Log.log("Autofocus DS Index: " + downsampleIndex_);
@@ -115,29 +163,19 @@ public class CrossCorrelationAutofocus {
             return;
         }
 
-        logMemory();
-        Log.log("Autofocus: creating TP0 stack");
         ImageStack tp0Stack = createAFStack(acq_, 0, channelIndex_, downsampledWidth_, downsampledHeight_, downsampleIndex_);
-        logMemory();
-        Log.log("Autofocus: creating current TP stack");
         ImageStack currentTPStack = createAFStack(acq_, timeIndex, channelIndex_, downsampledWidth_, downsampledHeight_, downsampleIndex_);
-        logMemory();
-        Log.log("Autofocus: made current TP stack, calculating focus drift");
-        logMemory();
         //run autofocus
         double drift = calcFocusDrift(tp0Stack, currentTPStack, acq_.getZStep());
         //check if outside max displacement
         if (Math.abs(currentPosition_ - drift - initialPosition_) > maxDisplacement_) {
-            IJ.log("Calculated focus drift of " + drift + " um exceeds tolerance. Leaving autofocus offset unchanged");
+            Log.log("Calculated focus drift of " + drift + " um exceeds tolerance. Leaving autofocus offset unchanged");
             return;
+        } else {
+           Log.log(acq_.getName() + " Autofocus: calculated drift of " + drift);
+           Log.log( "New position: " + (currentPosition_ - drift));
         }
         currentPosition_ -= drift;
-    }
-
-    private void logMemory() {
-        Log.log("Free memory: " + Runtime.getRuntime().freeMemory());
-        Log.log("Max memory: " + Runtime.getRuntime().maxMemory());
-        Log.log("Total memory: " + Runtime.getRuntime().totalMemory());
     }
 
     /**
@@ -228,8 +266,5 @@ public class CrossCorrelationAutofocus {
       
       return drift_um;
    }
-
-
- 
    
 }

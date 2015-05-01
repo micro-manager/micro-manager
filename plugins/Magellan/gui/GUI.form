@@ -11,7 +11,6 @@
   </NonVisualComponents>
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
-    <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
   </SyntheticProperties>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
@@ -33,7 +32,7 @@
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="splitPane_" alignment="0" pref="758" max="32767" attributes="0"/>
+          <Component id="splitPane_" alignment="0" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
   </Layout>
@@ -70,12 +69,12 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="deviceControlScrollPane_" alignment="0" pref="836" max="32767" attributes="0"/>
+                      <Component id="deviceControlScrollPane_" alignment="0" pref="852" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="deviceControlScrollPane_" alignment="0" pref="137" max="32767" attributes="0"/>
+                      <Component id="deviceControlScrollPane_" alignment="0" pref="172" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
               </Layout>
@@ -125,7 +124,7 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="1" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="multipleAcqScrollPane_" pref="89" max="32767" attributes="0"/>
+                          <Component id="multipleAcqScrollPane_" pref="121" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
                       </Group>
@@ -271,7 +270,7 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Component id="jScrollPane2" pref="836" max="32767" attributes="0"/>
                       <Group type="102" alignment="0" attributes="0">
-                          <EmptySpace pref="270" max="32767" attributes="0"/>
+                          <EmptySpace pref="350" max="32767" attributes="0"/>
                           <Component id="deleteSelectedRegionButton_" min="-2" max="-2" attributes="0"/>
                           <EmptySpace min="-2" pref="41" max="-2" attributes="0"/>
                           <Component id="deleteAllRegionsButton_" min="-2" max="-2" attributes="0"/>
@@ -282,7 +281,7 @@
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
-                          <Component id="jScrollPane2" pref="101" max="32767" attributes="0"/>
+                          <Component id="jScrollPane2" pref="143" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="deleteSelectedRegionButton_" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -343,7 +342,7 @@
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
-                          <EmptySpace pref="268" max="32767" attributes="0"/>
+                          <EmptySpace pref="348" max="32767" attributes="0"/>
                           <Component id="deleteSelectedSurfaceButton_" min="-2" max="-2" attributes="0"/>
                           <EmptySpace min="-2" pref="41" max="-2" attributes="0"/>
                           <Component id="deleteAllSurfacesButton_" min="-2" max="-2" attributes="0"/>
@@ -355,7 +354,7 @@
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
-                          <Component id="jScrollPane3" pref="101" max="32767" attributes="0"/>
+                          <Component id="jScrollPane3" pref="143" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="deleteAllSurfacesButton_" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -512,7 +511,7 @@
                       <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="acqTabbedPane_" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="32767" attributes="0"/>
+                      <EmptySpace pref="48" max="32767" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="runAcqButton_" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -691,7 +690,7 @@
                                   </Group>
                                   <Component id="savingNameLabel_" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace pref="124" max="32767" attributes="0"/>
+                              <EmptySpace pref="136" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -738,7 +737,7 @@
                                   <Component id="timePointsCheckBox_" min="-2" max="-2" attributes="0"/>
                                   <Component id="timePointsPanel_" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace pref="588" max="32767" attributes="0"/>
+                              <EmptySpace pref="610" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -749,7 +748,7 @@
                               <Component id="timePointsCheckBox_" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="timePointsPanel_" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace pref="146" max="32767" attributes="0"/>
+                              <EmptySpace pref="149" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -909,7 +908,7 @@
                               </Group>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
                               <Component id="fixedDistanceZPanel_" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace pref="11" max="32767" attributes="0"/>
+                              <EmptySpace pref="92" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -945,7 +944,7 @@
                                       </Group>
                                   </Group>
                               </Group>
-                              <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                              <EmptySpace min="0" pref="37" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -1534,7 +1533,7 @@
                   <Layout>
                     <DimensionLayout dim="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jScrollPane1" pref="822" max="32767" attributes="0"/>
+                          <Component id="jScrollPane1" pref="838" max="32767" attributes="0"/>
                           <Group type="102" attributes="0">
                               <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
@@ -1551,7 +1550,7 @@
                                   <Component id="ChannelGroupCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jScrollPane1" pref="239" max="32767" attributes="0"/>
+                              <Component id="jScrollPane1" pref="241" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -1564,7 +1563,7 @@
                         <Component class="javax.swing.JTable" name="channelsTable_">
                           <Properties>
                             <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-                              <Connection code="new SimpleChannelTableModel()" type="code"/>
+                              <Connection code="new SimpleChannelTableModel(false)" type="code"/>
                             </Property>
                           </Properties>
                         </Component>
@@ -1604,7 +1603,7 @@
                                   <Group type="102" attributes="0">
                                       <EmptySpace min="-2" pref="15" max="-2" attributes="0"/>
                                       <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace min="244" pref="267" max="32767" attributes="0"/>
+                                      <EmptySpace min="244" pref="311" max="32767" attributes="0"/>
                                   </Group>
                                   <Component id="propertyPairingsScrollpane_" pref="0" max="32767" attributes="0"/>
                               </Group>
@@ -1653,7 +1652,7 @@
                                   <Component id="addCovariedPairingValueButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="deleteCovariedPairingValueButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace max="32767" attributes="0"/>
+                              <EmptySpace pref="59" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -1790,7 +1789,7 @@
                                   <Component id="useAutofocusCheckBox_" min="-2" max="-2" attributes="0"/>
                                   <Component id="autofocusComponentsPanel_" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace pref="511" max="32767" attributes="0"/>
+                              <EmptySpace pref="562" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -1801,7 +1800,7 @@
                               <Component id="useAutofocusCheckBox_" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="autofocusComponentsPanel_" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="32767" attributes="0"/>
+                              <EmptySpace pref="67" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -2022,7 +2021,7 @@
                                       </Group>
                                   </Group>
                               </Group>
-                              <EmptySpace pref="405" max="32767" attributes="0"/>
+                              <EmptySpace pref="468" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -2069,7 +2068,7 @@
                                   <Component id="ch5OffsetSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="ch5OffsetLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace max="32767" attributes="0"/>
+                              <EmptySpace pref="86" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>

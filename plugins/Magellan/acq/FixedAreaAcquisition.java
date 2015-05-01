@@ -6,7 +6,6 @@ package acq;
 
 import autofocus.CrossCorrelationAutofocus;
 import coordinates.XYStagePosition;
-import gui.SettingsDialog;
 import ij.IJ;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,8 +19,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import bidc.CoreCommunicator;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import channels.ChannelSetting;
 import misc.GlobalSettings;
 import misc.Log;
 import org.json.JSONArray;
@@ -64,7 +62,7 @@ public class FixedAreaAcquisition extends Acquisition {
     * acquisition has another thread that generates events
     */
    public FixedAreaAcquisition(FixedAreaAcquisitionSettings settings, ParallelAcquisitionGroup acqGroup) throws Exception {
-      super(settings.zStep_);
+      super(settings.zStep_, settings.channels_);
       acqGroup_ = acqGroup;
       settings_ = settings;
       spaceMode_ = settings.spaceMode_;
@@ -118,28 +116,15 @@ public class FixedAreaAcquisition extends Acquisition {
    }
 
    public int getAutofocusChannelIndex() {
-       int cIndex = 0;
-         if (settings_.channels_.size() == 0) {
-            if (MMStudio.getInstance().getCore().getNumberOfCameraChannels() == 1) {
-               cIndex = 0;
-            } else if (GlobalSettings.getInstance().getDemoMode()) {
-               cIndex = Arrays.asList(new String[]{"Violet","Blue","Green","Yellow","Red","FarRed"}).indexOf(settings_.autofocusChannelName_);
-            } else {
-               //multichannel cam only
-               for (int i = 0; i < MMStudio.getInstance().getCore().getNumberOfCameraChannels(); i++) {
-                  if (MMStudio.getInstance().getCore().getCameraChannelName(i).equals(settings_.autofocusChannelName_)) {
-                     cIndex = i;
-                     break;
-                  }
-                  if (i == MMStudio.getInstance().getCore().getNumberOfCameraChannels() -1) {
-                     ReportingUtils.showError("Couldn't find channel: " + settings_.autofocusChannelName_ + ", Aborting autofocus");
-                  }
-               }
-            }
-         } else {
-             //TODO:
-         }   
-            return cIndex;
+       int index = 0;
+       for (ChannelSetting channel : channels_) {
+          if (channel.name_.equals(settings_.autofocusChannelName_)  ) {
+             return index;
+          }
+          index++;
+       }
+       Log.log("Warning: couldn't find autofocus channel index");
+       return index;
    }
    
    public int getMaxSliceIndex() {

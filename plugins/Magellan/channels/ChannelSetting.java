@@ -38,13 +38,14 @@ public class ChannelSetting {
    public double exposure_; // ms
    public Color color_;
    public boolean use_ = true;
-   public String camera = "";
+   public String camera_ = "";
    
-   public ChannelSetting(String name, double exposure, Color color, boolean use){
+   public ChannelSetting(String name, double exposure, Color color, boolean use, String camera){
       color_ = color;
       name_ = name;
-      color_ = color;
+      exposure_ = exposure;
       use_ = use;
+      camera_ = camera;
    }
    
    /**

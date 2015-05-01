@@ -5,7 +5,7 @@
 package bidc;
 
 import acq.AcquisitionEvent;
-import acq.CustomAcqEngine;
+import acq.MagellanEngine;
 import acq.SignalTaggedImage;
 import demo.DemoModeImageData;
 import gui.SettingsDialog;
@@ -111,7 +111,7 @@ public class CoreCommunicator {
                      }
 
                      //add metadata 
-                     CustomAcqEngine.addImageMetadata(constructedImage.tags, firstIAI.event_, firstIAI.numCamChannels_,
+                     MagellanEngine.addImageMetadata(constructedImage.tags, firstIAI.event_, firstIAI.numCamChannels_,
                              firstIAI.camChannelIndex_, firstIAI.currentTime_ - firstIAI.event_.acquisition_.getStartTime_ms(),
                              firstIAI.numFrames_);
 
@@ -195,13 +195,13 @@ public class CoreCommunicator {
              //add demo image
             for (int c = 0; c < 6; c++) {
                JSONObject tags = core_.getTaggedImage().tags;         
-               CustomAcqEngine.addImageMetadata(tags, event, 6, c, currentTime, 1);
+               MagellanEngine.addImageMetadata(tags, event, 6, c, currentTime, 1);
                event.acquisition_.addImage(makeDemoImage(c, event.xyPosition_.getCenter(), event.zPosition_, tags));
             }
          } else {
             for (int c = 0; c < core_.getNumberOfCameraChannels(); c++) {
                TaggedImage img = core_.getTaggedImage(c);
-               CustomAcqEngine.addImageMetadata(img.tags, event, (int) core_.getNumberOfCameraChannels(),
+               MagellanEngine.addImageMetadata(img.tags, event, (int) core_.getNumberOfCameraChannels(),
                        c, currentTime, 1);
                event.acquisition_.addImage(img);
             }

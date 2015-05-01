@@ -19,5 +19,6 @@ public interface XYFootprint {
     */
     public List<XYStagePosition> getXYPositions(double tileOverlapPercent) throws InterruptedException;
 
-   
+   public String getXYDeivce();
+    
 }

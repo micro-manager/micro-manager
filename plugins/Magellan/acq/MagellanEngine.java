@@ -4,7 +4,6 @@ package acq;
  * To change this template, choose Tools | Templates and open the template in
  * the editor.
  */
-import ij.IJ;
 import java.awt.Color;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -17,17 +16,16 @@ import java.util.concurrent.ThreadFactory;
 import javax.swing.JOptionPane;
 import bidc.CoreCommunicator;
 import bidc.FrameIntegrationMethod;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import misc.GlobalSettings;
 import misc.Log;
 import mmcorej.CMMCore;
-import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudio;
-import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.api.MMTags;
-import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 import propsandcovariants.CovariantPairing;
 
@@ -35,7 +33,7 @@ import propsandcovariants.CovariantPairing;
  * Engine has a single thread executor, which sits idly waiting for new
  * acquisitions when not in use
  */
-public class CustomAcqEngine {
+public class MagellanEngine {
 
     private static final int HARDWARE_ERROR_RETRIES = 6;
     private static final int DELWAY_BETWEEN_RETRIES_MS = 5;
@@ -46,7 +44,7 @@ public class CustomAcqEngine {
     private MultipleAcquisitionManager multiAcqManager_;
     private ExecutorService acqExecutor_;
 
-    public CustomAcqEngine(CMMCore core) {
+    public MagellanEngine(CMMCore core) {
         core_ = core;
         acqExecutor_ = Executors.newSingleThreadExecutor(new ThreadFactory() {
             @Override
@@ -55,19 +53,66 @@ public class CustomAcqEngine {
             }
         });
     }
+    
+   private void validateSettings(FixedAreaAcquisitionSettings settings) throws Exception {
+      //space
+      //non null surface
+      if ((settings.spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D || settings.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK)
+              && settings.footprint_ == null) {
+         Log.log("Error: No surface or region selected for " + settings.name_);
+         throw new Exception();
+      }
+      if (settings.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK && settings.fixedSurface_ == null) {
+         Log.log("Error: No surface selected for " + settings.name_);
+         throw new Exception();
+      }
+      if (settings.spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK
+              && (settings.topSurface_ == null || settings.bottomSurface_ == null)) {
+         Log.log("Error: No surface selected for " + settings.name_);
+         throw new Exception();
+      }
+      //correct coordinate devices
+      if ((settings.spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D || settings.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK)
+              && !settings.footprint_.getXYDeivce().equals(core_.getXYStageDevice())) {
+         Log.log("Error: XY device for surface/grid does match XY device in MM core in " + settings.name_);
+         throw new Exception();
+      }
+      if (settings.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK && 
+              !settings.fixedSurface_.getXYDeivce().equals(core_.getXYStageDevice())) {
+         Log.log("Error: XY device for surface does match XY device in MM core in " + settings.name_);
+         throw new Exception();
+      }
+      if (settings.spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK
+              && (!settings.topSurface_.getXYDeivce().equals(core_.getXYStageDevice()) || 
+              !settings.bottomSurface_.getXYDeivce().equals(core_.getXYStageDevice()))) {
+         Log.log("Error: XY device for surface does match XY device in MM core in " + settings.name_);
+         throw new Exception();
+      }     
+      //channels
+      //covariants
+   }
 
     /**
      * Called by run acquisition button
      */
     public void runFixedAreaAcquisition(final FixedAreaAcquisitionSettings settings) {
-        runInterleavedAcquisitions(Arrays.asList(new FixedAreaAcquisitionSettings[]{settings}), false);
+      try {
+         runInterleavedAcquisitions(Arrays.asList(new FixedAreaAcquisitionSettings[]{settings}), false);
+      } catch (Exception ex) {
+        Log.log(ex.toString());
+      }
     }
 
     /**
      * Called by run all button
      */
-    public synchronized ParallelAcquisitionGroup runInterleavedAcquisitions(List<FixedAreaAcquisitionSettings> acqs, boolean multiAcq) {
-        //check if current fixed acquisition is running
+   public synchronized ParallelAcquisitionGroup runInterleavedAcquisitions(List<FixedAreaAcquisitionSettings> acqs, boolean multiAcq) throws Exception {
+      //validate proposed settings
+      for (FixedAreaAcquisitionSettings settings : acqs) {
+         validateSettings(settings);
+      }
+       
+       //check if current fixed acquisition is running
         //abort existing fixed acq if needed
         if (currentFixedAcqs_ != null && !currentFixedAcqs_.isFinished()) {
             int result = JOptionPane.showConfirmDialog(null, "Finish exisiting acquisition?", "Finish Current Acquisition", JOptionPane.OK_CANCEL_OPTION);
@@ -412,21 +457,13 @@ public class CustomAcqEngine {
             summary.put("GridPixelOverlapY", acq.getOverlapY());
             summary.put("MagellanExploreAcquisition", acq instanceof ExploreAcquisition);
 
-
-            //TODO: make this legit
             JSONArray chNames = new JSONArray();
             JSONArray chColors = new JSONArray();
-            for (int i = 0; i < numChannels; i++) {
-                if (GlobalSettings.getInstance().getDemoMode()) {
-                    String[] names = {"Violet", "Blue", "Green", "Yellow", "Red", "Far red"};
-                    int[] colors = {new Color(127, 0, 255).getRGB(), Color.blue.getRGB(), Color.green.getRGB(),
-                        Color.yellow.getRGB(), Color.red.getRGB(), Color.pink.getRGB()};
-                    chNames.put(names[i]);
-                    chColors.put(colors[i]);
-                } else {
-                    chNames.put(core.getCameraChannelName(i));
-                    chColors.put(MMAcquisition.getMultiCamDefaultChannelColor(i, core.getCameraChannelName(i)));
-                }
+            String[] names = acq.getChannelNames();   
+            Color[] colors = acq.getChannelColors();
+            for (int i = 0; i < numChannels; i++) {  
+               chNames.put(names[i]);
+               chColors.put(colors[i]);
             }
             summary.put("ChNames", chNames);
             summary.put("ChColors", chColors);

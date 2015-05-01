@@ -7,6 +7,9 @@ import imagedisplay.DisplayPlus;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import bidc.CoreCommunicator;
+import channels.ChannelSetting;
+import java.awt.Color;
+import java.util.ArrayList;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
@@ -40,10 +43,12 @@ public abstract class Acquisition implements AcquisitionEventSource{
    private int overlapX_, overlapY_;
    private volatile boolean pause_ = false;
    private Object pauseLock_ = new Object();
+   protected ArrayList<ChannelSetting> channels_ = new ArrayList<ChannelSetting>();
 
-   public Acquisition(double zStep) throws Exception {
+   public Acquisition(double zStep, ArrayList<ChannelSetting> channels) throws Exception {
       xyStage_ = core_.getXYStageDevice();
       zStage_ = core_.getFocusDevice();
+      channels_ = channels;
       //"postion" is not generic name..and as of right now there is now way of getting generic z positions
       //from a z deviec in MM
       String positionName = "Position";
@@ -132,7 +137,7 @@ public abstract class Acquisition implements AcquisitionEventSource{
       engineOutputQueue_ = new LinkedBlockingQueue<TaggedImage>(OUTPUT_QUEUE_SIZE);
       overlapX_ = (int) (CoreCommunicator.getInstance().getImageWidth() * overlapPercent / 100);
       overlapY_ = (int) (CoreCommunicator.getInstance().getImageHeight() * overlapPercent / 100);
-      JSONObject summaryMetadata = CustomAcqEngine.makeSummaryMD(this, name);
+      JSONObject summaryMetadata = MagellanEngine.makeSummaryMD(this, name);
       imageStorage_ = new MultiResMultipageTiffStorage(dir, true, summaryMetadata, overlapX_, overlapY_, pixelSizeConfig_,
               (this instanceof FixedAreaAcquisition)); //estimatye background pixel values for fixed acqs but not explore
       //storage class has determined unique acq name, so it can now be stored
@@ -176,6 +181,23 @@ public abstract class Acquisition implements AcquisitionEventSource{
       synchronized (pauseLock_) {
          pauseLock_.notifyAll();
       }
+   }
+
+   
+   public String[] getChannelNames() {
+      String[] names = new String[channels_.size()];
+      for (int i = 0; i < names.length; i++) {
+         names[i] = channels_.get(i).name_;
+      }
+      return names;
+   }
+   
+    public Color[] getChannelColors() {
+      Color[] colors = new Color[channels_.size()];
+      for (int i = 0; i < colors.length; i++) {
+         colors[i] = channels_.get(i).color_;
+      }
+      return colors;
    }
 
 }

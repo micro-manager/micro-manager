@@ -1,5 +1,8 @@
 package acq;
 
+import channels.ChannelSetting;
+import channels.ChannelUtils;
+import java.util.ArrayList;
 import java.util.prefs.Preferences;
 import javax.swing.filechooser.FileSystemView;
 import main.Magellan;
@@ -21,13 +24,17 @@ public class ExploreAcqSettings {
    public final String dir_, name_;
    public final double tileOverlap_;
    public final int filterType_;
+   public final ArrayList<ChannelSetting> channels_;
 
-   public ExploreAcqSettings(double zStep, double overlapPercent, String dir, String name, int filterType, double rank) {
+   public ExploreAcqSettings(double zStep, double overlapPercent, String dir, String name, int filterType, double rank, String channelGroup) {
       zStep_ = zStep;
       dir_ = dir;
       name_ = name;   
       tileOverlap_ = overlapPercent;
       filterType_ = filterType;
+      //channels is all available channels for group
+      channels_ = ChannelUtils.getAvailableChannels(channelGroup);
+      
       Preferences prefs = Magellan.getPrefs();
       //now that explore acquisition is being run, store values
       prefs.put(EXPLORE_DIR_PREF, dir);

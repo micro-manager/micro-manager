@@ -4,7 +4,10 @@
  */
 package acq;
 
+import channels.ChannelSetting;
 import gui.GUI;
+import java.awt.Color;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,10 +34,10 @@ public class ExploreAcquisition extends Acquisition {
    private ExecutorService eventAdderExecutor_ = Executors.newSingleThreadExecutor();
    private int imageFilterType_;
    private ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>> queuedTileEvents_ = new ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>>();
-   private double zOrigin_;
+   private double zOrigin_; 
 
    public ExploreAcquisition(ExploreAcqSettings settings) throws Exception {
-      super(settings.zStep_);
+      super(settings.zStep_, settings.channels_);
       try {
          //start at current z position
          zTop_ = core_.getPosition(zStage_);
