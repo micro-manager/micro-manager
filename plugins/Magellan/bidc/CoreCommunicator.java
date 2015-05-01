@@ -193,10 +193,9 @@ public class CoreCommunicator {
       } else {
          if (GlobalSettings.getInstance().getDemoMode()) {
              //add demo image
-            for (int c = 0; c < GlobalSettings.getInstance().getDemoNumChannels(); c++) {
+            for (int c = 0; c < 6; c++) {
                JSONObject tags = core_.getTaggedImage().tags;         
-               CustomAcqEngine.addImageMetadata(tags, event, GlobalSettings.getInstance().getDemoNumChannels(),
-                       c, currentTime, 1);
+               CustomAcqEngine.addImageMetadata(tags, event, 6, c, currentTime, 1);
                event.acquisition_.addImage(makeDemoImage(c, event.xyPosition_.getCenter(), event.zPosition_, tags));
             }
          } else {

@@ -54,6 +54,7 @@ import coordinates.AffineCalibrator;
 import coordinates.AffineGUI;
 import bidc.CoreCommunicator;
 import bidc.FrameIntegrationMethod;
+import channels.ChannelComboBoxModel;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
@@ -210,6 +211,7 @@ public class GUI extends javax.swing.JFrame {
         //Table column widths
         multipleAcqTable_.getColumnModel().getColumn(0).setMaxWidth(40); //order column
         covariantPairingsTable_.getColumnModel().getColumn(0).setMaxWidth(40); //Acitve checkbox column
+        channelsTable_.getColumnModel().getColumn(0).setMaxWidth(40); //Acitve checkbox column
 
         //load global settings     
         globalSavingDirTextField_.setText(settings_.getStoredSavingDirectory());
@@ -690,12 +692,10 @@ public class GUI extends javax.swing.JFrame {
       acqOverlapPercentSpinner_ = new javax.swing.JSpinner();
       jLabel4 = new javax.swing.JLabel();
       ChannelsTab_ = new javax.swing.JPanel();
-      newChannelButton_ = new javax.swing.JButton();
-      removeChannelButton_ = new javax.swing.JButton();
-      jLabel3 = new javax.swing.JLabel();
-      jComboBox2 = new javax.swing.JComboBox();
       jScrollPane1 = new javax.swing.JScrollPane();
       channelsTable_ = new javax.swing.JTable();
+      jLabel3 = new javax.swing.JLabel();
+      ChannelGroupCombo_ = new javax.swing.JComboBox();
       covariedSettingsTab_ = new javax.swing.JPanel();
       propertyPairValuesScrollpane_ = new javax.swing.JScrollPane();
       covariantPairValuesTable_ = covariantPairValuesTable_ = new javax.swing.JTable() {
@@ -781,7 +781,7 @@ public class GUI extends javax.swing.JFrame {
       );
       controlPanelName_Layout.setVerticalGroup(
          controlPanelName_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addComponent(deviceControlScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 147, Short.MAX_VALUE)
+         .addComponent(deviceControlScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 137, Short.MAX_VALUE)
       );
 
       splitPaneTopPanel_.addTab("Device status/control", controlPanelName_);
@@ -889,7 +889,7 @@ public class GUI extends javax.swing.JFrame {
          multipleAcquisitionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, multipleAcquisitionsPanelLayout.createSequentialGroup()
             .addContainerGap()
-            .addComponent(multipleAcqScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 99, Short.MAX_VALUE)
+            .addComponent(multipleAcqScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 89, Short.MAX_VALUE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
       );
@@ -930,7 +930,7 @@ public class GUI extends javax.swing.JFrame {
       gridsPanel_Layout.setVerticalGroup(
          gridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(gridsPanel_Layout.createSequentialGroup()
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 111, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 101, Short.MAX_VALUE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(gridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(deleteSelectedRegionButton_)
@@ -973,7 +973,7 @@ public class GUI extends javax.swing.JFrame {
       surfacesPanel_Layout.setVerticalGroup(
          surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(surfacesPanel_Layout.createSequentialGroup()
-            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 111, Short.MAX_VALUE)
+            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 101, Short.MAX_VALUE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(deleteAllSurfacesButton_)
@@ -1076,7 +1076,7 @@ public class GUI extends javax.swing.JFrame {
             .addComponent(savingNameLabel_)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(savingNameTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addContainerGap(205, Short.MAX_VALUE))
+            .addContainerGap(216, Short.MAX_VALUE))
       );
 
       acqTabbedPane_.addTab("Saving", savingTab_);
@@ -1169,7 +1169,7 @@ public class GUI extends javax.swing.JFrame {
             .addComponent(timePointsCheckBox_)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(timePointsPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addContainerGap(135, Short.MAX_VALUE))
+            .addContainerGap(146, Short.MAX_VALUE))
       );
 
       for (Component c : timePointsPanel_.getComponents()) {
@@ -1609,64 +1609,37 @@ public class GUI extends javax.swing.JFrame {
 
       acqTabbedPane_.addTab("Space", spaceTab_);
 
-      newChannelButton_.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
-      newChannelButton_.setText("+");
-      newChannelButton_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            newChannelButton_ActionPerformed(evt);
-         }
-      });
-
-      removeChannelButton_.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
-      removeChannelButton_.setText("-");
-      removeChannelButton_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            removeChannelButton_ActionPerformed(evt);
-         }
-      });
+      channelsTable_.setModel(new SimpleChannelTableModel());
+      jScrollPane1.setViewportView(channelsTable_);
 
       jLabel3.setText("Channel group:");
 
-      jComboBox2.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-      jComboBox2.addActionListener(new java.awt.event.ActionListener() {
+      ChannelGroupCombo_.setModel(new ChannelComboBoxModel());
+      ChannelGroupCombo_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jComboBox2ActionPerformed(evt);
+            ChannelGroupCombo_ActionPerformed(evt);
          }
       });
-
-      channelsTable_.setModel(new SimpleChannelTableModel());
-      jScrollPane1.setViewportView(channelsTable_);
 
       javax.swing.GroupLayout ChannelsTab_Layout = new javax.swing.GroupLayout(ChannelsTab_);
       ChannelsTab_.setLayout(ChannelsTab_Layout);
       ChannelsTab_Layout.setHorizontalGroup(
          ChannelsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+         .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 822, Short.MAX_VALUE)
          .addGroup(ChannelsTab_Layout.createSequentialGroup()
-            .addContainerGap()
-            .addGroup(ChannelsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addGroup(ChannelsTab_Layout.createSequentialGroup()
-                  .addComponent(newChannelButton_)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                  .addComponent(removeChannelButton_)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                  .addComponent(jLabel3)
-                  .addGap(18, 18, 18)
-                  .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE))
-               .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 810, Short.MAX_VALUE))
-            .addContainerGap())
+            .addComponent(jLabel3)
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(ChannelGroupCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, 171, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(0, 0, Short.MAX_VALUE))
       );
       ChannelsTab_Layout.setVerticalGroup(
          ChannelsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(ChannelsTab_Layout.createSequentialGroup()
-            .addContainerGap()
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, ChannelsTab_Layout.createSequentialGroup()
             .addGroup(ChannelsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                .addComponent(jLabel3)
-               .addComponent(newChannelButton_)
-               .addComponent(removeChannelButton_))
-            .addGap(20, 20, 20))
+               .addComponent(ChannelGroupCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 239, Short.MAX_VALUE))
       );
 
       acqTabbedPane_.addTab("Channels", ChannelsTab_);
@@ -2245,7 +2218,7 @@ public class GUI extends javax.swing.JFrame {
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addComponent(splitPane_)
+         .addComponent(splitPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 758, Short.MAX_VALUE)
       );
 
       pack();
@@ -2277,21 +2250,12 @@ public class GUI extends javax.swing.JFrame {
        storeCurrentAcqSettings();
    }//GEN-LAST:event_autofocusChannelCombo_ActionPerformed
 
-   private void jComboBox2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox2ActionPerformed
-       storeCurrentAcqSettings();
-   }//GEN-LAST:event_jComboBox2ActionPerformed
-
-   private void removeChannelButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeChannelButton_ActionPerformed
-       storeCurrentAcqSettings();
-   }//GEN-LAST:event_removeChannelButton_ActionPerformed
-
-//   private void setZSliderPosition(double pos) {
-//      int ticks = (int) (((pos - zMin_) / (zMax_ - zMin_)) * SLIDER_TICKS);
-//      zSlider_.setValue(ticks);
-//   }
-   private void newChannelButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newChannelButton_ActionPerformed
-       storeCurrentAcqSettings();
-   }//GEN-LAST:event_newChannelButton_ActionPerformed
+   private void ChannelGroupCombo_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ChannelGroupCombo_ActionPerformed
+      ((SimpleChannelTableModel) channelsTable_.getModel()).setChannelGroup((String) ChannelGroupCombo_.getSelectedItem());
+      ((SimpleChannelTableModel) channelsTable_.getModel()).refreshChannels();
+      ((SimpleChannelTableModel) channelsTable_.getModel()).fireTableDataChanged();
+      storeCurrentAcqSettings();
+   }//GEN-LAST:event_ChannelGroupCombo_ActionPerformed
 
    private void zStepSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_zStepSpinner_StateChanged
        storeCurrentAcqSettings();
@@ -2624,6 +2588,7 @@ public class GUI extends javax.swing.JFrame {
     }//GEN-LAST:event_frameSummationButton_ActionPerformed
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
+   private javax.swing.JComboBox ChannelGroupCombo_;
    private javax.swing.JPanel ChannelsTab_;
    private javax.swing.JSpinner acqOverlapPercentSpinner_;
    private javax.swing.JTabbedPane acqTabbedPane_;
@@ -2705,7 +2670,6 @@ public class GUI extends javax.swing.JFrame {
    private javax.swing.JPanel imageFilteringTab_;
    private javax.swing.JButton intereaveButton_;
    private javax.swing.JButton jButton1;
-   private javax.swing.JComboBox jComboBox2;
    private javax.swing.JLabel jLabel1;
    private javax.swing.JLabel jLabel10;
    private javax.swing.JLabel jLabel2;
@@ -2726,7 +2690,6 @@ public class GUI extends javax.swing.JFrame {
    private javax.swing.JScrollPane multipleAcqScrollPane_;
    private javax.swing.JTable multipleAcqTable_;
    private javax.swing.JPanel multipleAcquisitionsPanel;
-   private javax.swing.JButton newChannelButton_;
    private javax.swing.JButton newExploreWindowButton_;
    private javax.swing.JButton newParingButton_;
    private javax.swing.JLabel numTimePointsLabel_;
@@ -2738,7 +2701,6 @@ public class GUI extends javax.swing.JFrame {
    private javax.swing.JRadioButton rankFilterRadioButton_;
    private javax.swing.JSpinner rankSpinner_;
    private javax.swing.JButton removeAcqButton_;
-   private javax.swing.JButton removeChannelButton_;
    private javax.swing.JButton removePairingButton;
    private javax.swing.JButton runAcqButton_;
    private javax.swing.JButton runMultipleAcquisitionsButton_;

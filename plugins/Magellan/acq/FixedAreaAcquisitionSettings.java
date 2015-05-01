@@ -1,6 +1,6 @@
 package acq;
 
-import channels.ChannelSettings;
+import channels.ChannelSetting;
 import bidc.FrameIntegrationMethod;
 import propsandcovariants.CovariantPairing;
 import propsandcovariants.CovariantPairingsManager;
@@ -49,7 +49,7 @@ public class FixedAreaAcquisitionSettings  {
    public double tileOverlap_; //stored as percent * 100, i.e. 55 => 55%
    
    //channels
-   public ArrayList<ChannelSettings> channels_ = new ArrayList<ChannelSettings>();
+   public ArrayList<ChannelSetting> channels_ = new ArrayList<ChannelSetting>();
    
    //Covarying props
    public ArrayList<CovariantPairing> covariantPairings_ = new ArrayList<CovariantPairing>();

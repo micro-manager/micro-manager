@@ -30,27 +30,27 @@ import com.google.gson.GsonBuilder;
 /**
  * Channel acquisition protocol. 
  */
-public class ChannelSettings {
+public class ChannelSetting {
    public static final String DEFAULT_CHANNEL_GROUP = "Channel";
    public static final double Version = 1.0;
 
-   public Boolean doZStack = true;
-   public String config = ""; // Configuration setting name
-   public double exposure = 10.0; // ms
-   public double zOffset = 0.0; // um
-   public Color color = Color.gray;
-   public int skipFactorFrame = 0;
-   public boolean useChannel = true;
+   public String name_ = ""; // Configuration setting name
+   public double exposure_; // ms
+   public Color color_;
+   public boolean use_ = true;
    public String camera = "";
    
-   public ChannelSettings(){
-      color = Color.WHITE;
+   public ChannelSetting(String name, double exposure, Color color, boolean use){
+      color_ = color;
+      name_ = name;
+      color_ = color;
+      use_ = use;
    }
    
    /**
     * Serialize to JSON encoded string
     */
-   public static String toJSONStream(ChannelSettings cs) {
+   public static String toJSONStream(ChannelSetting cs) {
       Gson gson = new GsonBuilder().setPrettyPrinting().create();
       return gson.toJson(cs);
    }
@@ -58,9 +58,9 @@ public class ChannelSettings {
    /**
     * De-serialize from JSON encoded string
     */
-   public static ChannelSettings fromJSONStream(String stream) {
+   public static ChannelSetting fromJSONStream(String stream) {
       Gson gson = new Gson();
-      ChannelSettings cs = gson.fromJson(stream, ChannelSettings.class);
+      ChannelSetting cs = gson.fromJson(stream, ChannelSetting.class);
       return cs;
    }
    

@@ -64,6 +64,14 @@ public class GlobalSettings {
             Log.log("couldnt get pixel size config");
         }
     }
+ 
+   public void storeBooleanInPrefs(String key, Boolean value) {
+       prefs_.putBoolean(key, value);
+   }
+   
+   public boolean getBooleanInPrefs(String key) {
+       return prefs_.getBoolean(key, false);
+   }
    
     public void storeIntInPrefs(String key, Integer value) {
        prefs_.putInt(key, value);
@@ -107,10 +115,6 @@ public class GlobalSettings {
    
    public boolean getDemoMode() {
       return demoMode_;
-   }
-   
-   public int getDemoNumChannels() {
-      return 6;
    }
 
    public int getChannelOffset(int i) {

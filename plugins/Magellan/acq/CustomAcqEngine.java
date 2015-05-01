@@ -376,7 +376,7 @@ public class CustomAcqEngine {
         try {
 
             //num channels is camera channels * acquisitionChannels
-            int numChannels = GlobalSettings.getInstance().getDemoMode() ? GlobalSettings.getInstance().getDemoNumChannels() : acq.getNumChannels();
+            int numChannels = GlobalSettings.getInstance().getDemoMode() ? 6 : acq.getNumChannels();
 
             /////////////////////////////////////////////////////////////////
             ////Summary metadata equivalent to normal MM metadata////////////
