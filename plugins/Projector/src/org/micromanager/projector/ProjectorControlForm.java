@@ -677,6 +677,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          return (mirrorString.contentEquals("On"));
       } catch (JSONException e) {
          return false;
+      } catch (NullPointerException npe) {
+         return false;
       }
    }
 
