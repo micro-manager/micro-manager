@@ -1815,30 +1815,33 @@ public:
    }
 
    /**
-   * Defines position x,y (relative to current position) as the origin of our coordinate system
-   * Get the current (stage-native) XY position
+    * Alter the software coordinate translation between micrometers and steps,
+    * such that the current position becomes the given coordinates.
+    *
+    * \param newXUm the new coordinate to assign to the current X position
+    * \param newYUm the new coordinate to assign to the current Y position
    */
-   virtual int SetAdapterOriginUm(double x, double y)
+   virtual int SetAdapterOriginUm(double newXUm, double newYUm)
    {
       bool mirrorX, mirrorY;
       GetOrientation(mirrorX, mirrorY);
 
       long xStep, yStep;
       int ret = this->GetPositionSteps(xStep, yStep);
-      if (ret != DEVICE_OK)                                                     
-         return ret;                                 
+      if (ret != DEVICE_OK)
+         return ret;
 
       if (mirrorX)
-         originXSteps_ = xStep + nint(x / this->GetStepSizeXUm());
+         originXSteps_ = xStep + nint(newXUm / this->GetStepSizeXUm());
       else
-         originXSteps_ = xStep - nint(x / this->GetStepSizeXUm());
+         originXSteps_ = xStep - nint(newXUm / this->GetStepSizeXUm());
       if (mirrorY)
-         originYSteps_ = yStep + nint(y / this->GetStepSizeYUm());
+         originYSteps_ = yStep + nint(newYUm / this->GetStepSizeYUm());
       else
-         originYSteps_ = yStep - nint(y / this->GetStepSizeYUm());
+         originYSteps_ = yStep - nint(newYUm / this->GetStepSizeYUm());
 
-      return DEVICE_OK;                                                         
-   }                                                                            
+      return DEVICE_OK;
+   }
 
    virtual int GetPositionUm(double& x, double& y)
    {

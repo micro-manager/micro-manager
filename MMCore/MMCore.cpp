@@ -1597,7 +1597,11 @@ void CMMCore::home(const char* label) throw (CMMError)
 }
 
 /**
- * zero the current XY position.
+ * Zero the given XY stage's coordinates at the current position.
+ *
+ * The current position becomes the new origin. Not to be confused with
+ * setAdapterOriginXY().
+ *
  * @param label    the stage device label
  */
 void CMMCore::setOriginXY(const char* label) throw (CMMError)
@@ -1617,7 +1621,10 @@ void CMMCore::setOriginXY(const char* label) throw (CMMError)
 }
 
 /**
- * zero the current XY position. Uses the current XY stage device.
+ * Zero the current XY stage's coordinates at the current position.
+ *
+ * The current position becomes the new origin. Not to be confused with
+ * setAdapterOriginXY().
  */
 void CMMCore::setOriginXY() throw (CMMError)
 {
@@ -1625,7 +1632,11 @@ void CMMCore::setOriginXY() throw (CMMError)
 }
 
 /**
- * zero the current stage position.
+ * Zero the given focus/Z stage's coordinates at the current position.
+ *
+ * The current position becomes the new origin (Z = 0). Not to be confused with
+ * setAdapterOrigin().
+ *
  * @param label    the stage device label
  */
 void CMMCore::setOrigin(const char* label) throw (CMMError)
@@ -1645,8 +1656,10 @@ void CMMCore::setOrigin(const char* label) throw (CMMError)
 }
 
 /**
- * zero the current stage position. Uses the current Z positioner (focus)
- * device.
+ * Zero the current focus/Z stage's coordinates at the current position.
+ *
+ * The current position becomes the new origin (Z = 0). Not to be confused with
+ * setAdapterOrigin().
  */
 void CMMCore::setOrigin() throw (CMMError)
 {
@@ -1654,71 +1667,88 @@ void CMMCore::setOrigin() throw (CMMError)
 }
 
 /**
- * Zero the stage at a particular position (in microns)
+ * Enable software translation of coordinates for the given focus/Z stage.
+ *
+ * The current position of the stage becomes Z = newZUm. Only some stages
+ * support this functionality; it is recommended that setOrigin() be used
+ * instead where available.
+ *
  * @param label    the stage device label
- * @param d             the position in the old coordinate (in microns)
+ * @param newZUm   the new coordinate to assign to the current Z position
  */
-void CMMCore::setAdapterOrigin(const char* label, double d) throw (CMMError)
+void CMMCore::setAdapterOrigin(const char* label, double newZUm) throw (CMMError)
 {
    boost::shared_ptr<StageInstance> pStage =
       deviceManager_->GetDeviceOfType<StageInstance>(label);
 
    mm::DeviceModuleLockGuard guard(pStage);
-   int ret = pStage->SetAdapterOriginUm(d);
+   int ret = pStage->SetAdapterOriginUm(newZUm);
    if (ret != DEVICE_OK)
    {
       logError(label, getDeviceErrorText(ret, pStage).c_str());
       throw CMMError(getDeviceErrorText(ret, pStage).c_str(), MMERR_DEVICE_GENERIC);
    }
 
-   LOG_DEBUG(coreLogger_) << "Zeroed stage " << label << " at position " <<
-      std::fixed << std::setprecision(5) << d << " um";
+   LOG_DEBUG(coreLogger_) << "Adapter-zeroed stage " << label <<
+      ", assigning coordinate " << std::fixed << std::setprecision(5) <<
+      newZUm << " um to the current position";
 }
 
 /**
- * Zero the stage at a particular position (in microns). Uses the current Z
- * positioner (focus) device.
- * @param d             the position in the old coordinate (in microns)
+ * Enable software translation of coordinates for the current focus/Z stage.
+ *
+ * The current position of the stage becomes Z = newZUm. Only some stages
+ * support this functionality; it is recommended that setOrigin() be used
+ * instead where available.
+ *
+ * @param newZUm   the new coordinate to assign to the current Z position
  */
-void CMMCore::setAdapterOrigin(double d) throw (CMMError)
+void CMMCore::setAdapterOrigin(double newZUm) throw (CMMError)
 {
-    setAdapterOrigin(getFocusDevice().c_str(), d);
+    setAdapterOrigin(getFocusDevice().c_str(), newZUm);
 }
 
 /**
- * Reset a particular x,y position to be the origin of the XY stage's coordinate system
+ * Enable software translation of coordinates for the given XY stage.
+ *
+ * The current position of the stage becomes (newXUm, newYUm). It is
+ * recommended that setOriginXY() be used instead where available.
+ *
  * @param label    the XY stage device label
- * @param x             the x position in the old coordinate system
- * @param y             the y position in the old coordinate system
+ * @param newXUm   the new coordinate to assign to the current X position
+ * @param newYUm   the new coordinate to assign to the current Y position
  */
-void CMMCore::setAdapterOriginXY(const char* label, double x, double y) throw (CMMError)
+void CMMCore::setAdapterOriginXY(const char* label,
+      double newXUm, double newYUm) throw (CMMError)
 {
    boost::shared_ptr<XYStageInstance> pXYStage =
       deviceManager_->GetDeviceOfType<XYStageInstance>(label);
 
    mm::DeviceModuleLockGuard guard(pXYStage);
-   int ret = pXYStage->SetAdapterOriginUm(x, y);
+   int ret = pXYStage->SetAdapterOriginUm(newXUm, newYUm);
    if (ret != DEVICE_OK)
    {
       logError(label, getDeviceErrorText(ret, pXYStage).c_str());
       throw CMMError(getDeviceErrorText(ret, pXYStage).c_str(), MMERR_DEVICE_GENERIC);
    }
 
-   LOG_DEBUG(coreLogger_) << "Zeroed xy stage " << label <<
-      " at position (" << std::fixed << std::setprecision(3) << x << ", " <<
-      y << ") um";
+   LOG_DEBUG(coreLogger_) << "Adapter-zeroed XY stage " << label <<
+      ", assigning coordinates (" << std::fixed << std::setprecision(3) <<
+      newXUm << ", " << newYUm << ") um to the current position";
 }
 
-
 /**
- * Reset a particular x,y position to be the origin of the XY stage's 
- * coordinate system. Uses the current XY stage device.
- * @param x             the x position in the old coordinate system
- * @param y             the y position in the old coordinate system
+ * Enable software translation of coordinates for the current XY stage.
+ *
+ * The current position of the stage becomes (newXUm, newYUm). It is
+ * recommended that setOriginXY() be used instead where available.
+ *
+ * @param newXUm   the new coordinate to assign to the current X position
+ * @param newYUm   the new coordinate to assign to the current Y position
  */
-void CMMCore::setAdapterOriginXY(double x, double y) throw (CMMError)
+void CMMCore::setAdapterOriginXY(double newXUm, double newYUm) throw (CMMError)
 {
-    setAdapterOriginXY(getXYStageDevice().c_str(), x, y);
+    setAdapterOriginXY(getXYStageDevice().c_str(), newXUm, newYUm);
 }
 
 
