@@ -1889,6 +1889,16 @@ public:
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
+   virtual int SetXOrigin()
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   virtual int SetYOrigin()
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
    virtual int GetXYStageSequenceMaxLength(long& /*nrEvents*/) const 
    {
       return DEVICE_UNSUPPORTED_COMMAND;

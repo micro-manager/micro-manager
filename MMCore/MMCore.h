@@ -494,6 +494,10 @@ public:
    void home(const char* xyStageLabel) throw (CMMError);
    void setOriginXY(const char* xyStageLabel) throw (CMMError);
    void setOriginXY() throw (CMMError);
+   void setOriginX(const char* xyStageLabel) throw (CMMError);
+   void setOriginX() throw (CMMError);
+   void setOriginY(const char* xyStageLabel) throw (CMMError);
+   void setOriginY() throw (CMMError);
    void setAdapterOriginXY(const char* xyStageLabel,
          double newXUm, double newYUm) throw (CMMError);
    void setAdapterOriginXY(double newXUm, double newYUm) throw (CMMError);

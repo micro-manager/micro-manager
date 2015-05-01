@@ -104,8 +104,8 @@ using namespace std;
  * of the public API of the Core), not just CMMCore.
  */
 const int MMCore_versionMajor = 7;
-const int MMCore_versionMinor = 0;
-const int MMCore_versionPatch = 2;
+const int MMCore_versionMinor = 1;
+const int MMCore_versionPatch = 0;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1629,6 +1629,74 @@ void CMMCore::setOriginXY(const char* label) throw (CMMError)
 void CMMCore::setOriginXY() throw (CMMError)
 {
     setOriginXY(getXYStageDevice().c_str());
+}
+
+/**
+ * Zero the given XY stage's X coordinate at the current position.
+ *
+ * The current position becomes the new X = 0.
+ *
+ * @param label    the xy stage device label
+ */
+void CMMCore::setOriginX(const char* label) throw (CMMError)
+{
+   boost::shared_ptr<XYStageInstance> pXYStage =
+      deviceManager_->GetDeviceOfType<XYStageInstance>(label);
+
+   mm::DeviceModuleLockGuard guard(pXYStage);
+   int ret = pXYStage->SetXOrigin();
+   if (ret != DEVICE_OK)
+   {
+      logError(label, getDeviceErrorText(ret, pXYStage).c_str());
+      throw CMMError(getDeviceErrorText(ret, pXYStage).c_str(), MMERR_DEVICE_GENERIC);
+   }
+
+   LOG_DEBUG(coreLogger_) << "Zeroed x coordinate of xy stage " << label <<
+      " at current position";
+}
+
+/**
+ * Zero the given XY stage's X coordinate at the current position.
+ *
+ * The current position becomes the new X = 0.
+ */
+void CMMCore::setOriginX() throw (CMMError)
+{
+   setOriginX(getXYStageDevice().c_str());
+}
+
+/**
+ * Zero the given XY stage's Y coordinate at the current position.
+ *
+ * The current position becomes the new Y = 0.
+ *
+ * @param label    the xy stage device label
+ */
+void CMMCore::setOriginY(const char* label) throw (CMMError)
+{
+   boost::shared_ptr<XYStageInstance> pXYStage =
+      deviceManager_->GetDeviceOfType<XYStageInstance>(label);
+
+   mm::DeviceModuleLockGuard guard(pXYStage);
+   int ret = pXYStage->SetYOrigin();
+   if (ret != DEVICE_OK)
+   {
+      logError(label, getDeviceErrorText(ret, pXYStage).c_str());
+      throw CMMError(getDeviceErrorText(ret, pXYStage).c_str(), MMERR_DEVICE_GENERIC);
+   }
+
+   LOG_DEBUG(coreLogger_) << "Zeroed y coordinate of xy stage " << label <<
+      " at current position";
+}
+
+/**
+ * Zero the given XY stage's Y coordinate at the current position.
+ *
+ * The current position becomes the new Y = 0.
+ */
+void CMMCore::setOriginY() throw (CMMError)
+{
+   setOriginY(getXYStageDevice().c_str());
 }
 
 /**

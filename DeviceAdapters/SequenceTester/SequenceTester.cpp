@@ -660,6 +660,10 @@ TesterXYStage::Initialize()
    stop_->SetBusySetting(GetBusySetting());
    setOrigin_ = OneShotSetting::New(GetLogger(), this, "SetOrigin");
    setOrigin_->SetBusySetting(GetBusySetting());
+   setXOrigin_ = OneShotSetting::New(GetLogger(), this, "SetXOrigin");
+   setXOrigin_->SetBusySetting(GetBusySetting());
+   setYOrigin_ = OneShotSetting::New(GetLogger(), this, "SetYOrigin");
+   setYOrigin_->SetBusySetting(GetBusySetting());
 
    return DEVICE_OK;
 }
@@ -724,6 +728,26 @@ TesterXYStage::SetOrigin()
 
    setOrigin_->MarkBusy();
    return setOrigin_->Set();
+}
+
+
+int
+TesterXYStage::SetXOrigin()
+{
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
+   setXOrigin_->MarkBusy();
+   return setXOrigin_->Set();
+}
+
+
+int
+TesterXYStage::SetYOrigin()
+{
+   TesterHub::Guard g(GetHub()->LockGlobalMutex());
+
+   setYOrigin_->MarkBusy();
+   return setYOrigin_->Set();
 }
 
 
