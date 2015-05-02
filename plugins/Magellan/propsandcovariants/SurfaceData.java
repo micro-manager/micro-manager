@@ -140,10 +140,8 @@ public class SurfaceData implements Covariant {
       //{minDistance,maxDistance, minNormalAngle, maxNormalAngle)
       double[] vals = distanceAndNormalCalc(xyPos.getFullTileCorners(), zPosition);
       double extraDistance = 0; //pretend actually deeper in LN than we are to account for blockage by curved surface
-      double angleCutoff = 90;
+      double angleCutoff = 64; //angle cutoff is maximum nalge colletred by 1.2 NA objective
       double doublingDistance = 50;
-      double minDistance = vals[0];
-      double maxDistance = vals[1];
       double angleCutoffPercent = 0; 
       if (vals[3] < angleCutoff) { //max normal angle greater than 45 
          //twice as much power if angle goes to 0
@@ -151,25 +149,11 @@ public class SurfaceData implements Covariant {
          //add extra distance to account for blockage by LN surface
           //never want to make extra distance higher than the double distance,
           //so extra power is capped at 2x
-          angleCutoffPercent = (angleCutoff - vals[3]) / angleCutoff;
+          angleCutoffPercent = Math.min(angleCutoff, vals[3]) / angleCutoff;
          extraDistance =  angleCutoffPercent * doublingDistance;
-//         extraDistance = Math.min(doublingDistance, extraDistance * )
-          
-         // extraDistance = (maxDistance - minDistance) / 100.0 * doublingDistance;
       }
       double curvatureCorrectedMin = vals[0] + extraDistance;
-      double curvatureCorrectedMax = vals[1] + extraDistance;
-      double ret = Math.min(vals[1], curvatureCorrectedMin + Math.pow(vals[0], 1.25));
-      //slowly increase curvature corrected value to the curvature corrected max distance as you go deeper
-     Log.log("  ");
-//      Log.log("min Normal: " + vals[2]);
-//      Log.log("max Normal: " + vals[3]);
-      Log.log("min distance: " + vals[0]);
-      Log.log("max distance: " + vals[1]);
-      Log.log("Curve corrected min: " + curvatureCorrectedMin);
-      Log.log("Curve corrected max: " + curvatureCorrectedMax);
-//      Log.log("Angle cutoff percent: " + angleCutoffPercent);
-//      Log.log("Distance value used: " + ret);
+      double ret = Math.min(vals[1], Math.max(curvatureCorrectedMin, Math.pow(vals[0], 1.25)));
       return ret;
    }
 

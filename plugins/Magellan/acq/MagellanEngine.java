@@ -62,7 +62,7 @@ public class MagellanEngine {
          Log.log("Error: No surface or region selected for " + settings.name_);
          throw new Exception();
       }
-      if (settings.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK && settings.fixedSurface_ == null) {
+      if (settings.spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK && settings.fixedSurface_ == null) {
          Log.log("Error: No surface selected for " + settings.name_);
          throw new Exception();
       }
@@ -71,24 +71,41 @@ public class MagellanEngine {
          Log.log("Error: No surface selected for " + settings.name_);
          throw new Exception();
       }
-      //correct coordinate devices
+      //correct coordinate devices--XY
       if ((settings.spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D || settings.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK)
-              && !settings.footprint_.getXYDeivce().equals(core_.getXYStageDevice())) {
+              && !settings.footprint_.getXYDevice().equals(core_.getXYStageDevice())) {
          Log.log("Error: XY device for surface/grid does match XY device in MM core in " + settings.name_);
          throw new Exception();
       }
-      if (settings.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK && 
-              !settings.fixedSurface_.getXYDeivce().equals(core_.getXYStageDevice())) {
+      if (settings.spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK && 
+              !settings.fixedSurface_.getXYDevice().equals(core_.getXYStageDevice())) {
          Log.log("Error: XY device for surface does match XY device in MM core in " + settings.name_);
          throw new Exception();
       }
       if (settings.spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK
-              && (!settings.topSurface_.getXYDeivce().equals(core_.getXYStageDevice()) || 
-              !settings.bottomSurface_.getXYDeivce().equals(core_.getXYStageDevice()))) {
+              && (!settings.topSurface_.getXYDevice().equals(core_.getXYStageDevice()) || 
+              !settings.bottomSurface_.getXYDevice().equals(core_.getXYStageDevice()))) {
          Log.log("Error: XY device for surface does match XY device in MM core in " + settings.name_);
          throw new Exception();
       }     
-      //channels
+      //correct coordinate device--Z
+       if (settings.spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK
+               && !settings.fixedSurface_.getZDevice().equals(core_.getFocusDevice())) {
+           Log.log("Error: Z device for surface does match Z device in MM core in " + settings.name_);
+           throw new Exception();
+       }
+       if (settings.spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK
+               && (!settings.topSurface_.getZDevice().equals(core_.getFocusDevice())
+               || !settings.bottomSurface_.getZDevice().equals(core_.getFocusDevice()))) {
+           Log.log("Error: Z device for surface does match Z device in MM core in " + settings.name_);
+           throw new Exception();
+       }
+
+       //channels
+//       if (settings.channels_.isEmpty()) {
+//           Log.log("Error: no channels selected for " + settings.name_);
+//           throw new Exception();
+//       }
       //covariants
    }
 
@@ -326,6 +343,21 @@ public class MagellanEngine {
             loopHardwareCommandRetries(new HardwareCommand() {
                 @Override
                 public void run() throws Exception {
+                    if (GlobalSettings.getInstance().isBIDCTwoPhoton()) {
+                        //hysteresis correction: move to to the left (screen) when starting
+                        //column 0 or every time on explore
+                        //left on the screen is a higher y coordinate on the gen3 stage
+                        //up on the screen is lower x coordinate
+                        //always approach from the top left
+                        double hystersisDistance = 70;
+                        if (lastEvent_ == null || 
+                                event.xyPosition_.getCenter().x  - lastEvent_.xyPosition_.getCenter().x < -hystersisDistance || //move to the left
+                                event.xyPosition_.getCenter().y - lastEvent_.xyPosition_.getCenter().y > hystersisDistance ) { //move up
+                            //70 is half a hi res field
+                            core_.setXYPosition(xyStage, event.xyPosition_.getCenter().x - hystersisDistance, 
+                                    event.xyPosition_.getCenter().y + hystersisDistance);
+                        }
+                    }
                     core_.setXYPosition(xyStage, event.xyPosition_.getCenter().x, event.xyPosition_.getCenter().y);
                 }
             }, "moving XY stage");
@@ -463,7 +495,7 @@ public class MagellanEngine {
             Color[] colors = acq.getChannelColors();
             for (int i = 0; i < numChannels; i++) {  
                chNames.put(names[i]);
-               chColors.put(colors[i]);
+               chColors.put(colors[i].getRGB());
             }
             summary.put("ChNames", chNames);
             summary.put("ChColors", chColors);

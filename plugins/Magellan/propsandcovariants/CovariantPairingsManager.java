@@ -124,7 +124,7 @@ public class CovariantPairingsManager {
          }
          fd.dispose();
       } else {
-         JFileChooser fc = new JFileChooser(GlobalSettings.getInstance().getStringInPrefs(COV_DIR));
+         JFileChooser fc = new JFileChooser(GlobalSettings.getInstance().getStringInPrefs(COV_DIR,null));
          fc.setFileFilter(new FileNameExtensionFilter("Text file", "txt", "TXT"));
          fc.setDialogTitle("Save covariant pairing values");
          int returnVal = fc.showSaveDialog(gui);

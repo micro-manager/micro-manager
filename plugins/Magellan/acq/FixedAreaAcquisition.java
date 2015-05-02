@@ -8,7 +8,6 @@ import autofocus.CrossCorrelationAutofocus;
 import coordinates.XYStagePosition;
 import ij.IJ;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -20,7 +19,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import bidc.CoreCommunicator;
 import channels.ChannelSetting;
-import misc.GlobalSettings;
 import misc.Log;
 import org.json.JSONArray;
 import org.micromanager.MMStudio;
@@ -119,6 +117,7 @@ public class FixedAreaAcquisition extends Acquisition {
        int index = 0;
        for (ChannelSetting channel : channels_) {
           if (channel.name_.equals(settings_.autofocusChannelName_)  ) {
+              Log.log("Autofocus channel index: " + index);
              return index;
           }
           index++;

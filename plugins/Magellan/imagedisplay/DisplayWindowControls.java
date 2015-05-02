@@ -7,22 +7,18 @@ package imagedisplay;
 
 import acq.Acquisition;
 import acq.ExploreAcquisition;
-import acq.FixedAreaAcquisition;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import gui.GUI;
 import java.awt.Color;
 import java.awt.Panel;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionAdapter;
-import java.awt.event.MouseMotionListener;
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.Popup;
 import javax.swing.PopupFactory;
-import javax.swing.ToolTipManager;
 import org.json.JSONObject;
 import org.micromanager.MMStudio;
 import surfacesandregions.MultiPosRegion;
@@ -366,7 +362,7 @@ public class DisplayWindowControls extends Panel {
 
         tabbedPane_.addTab("Surface", surfacePanel_);
 
-        explorePanel_.setToolTipText("\"<html>Left click or click and drag to select tiles <br>Left click again to confirm <br>Right click and drag to pan<br>+/- keys or mouse wheel to zoom in/out</html>\"");
+        explorePanel_.setToolTipText("<html>Left click or click and drag to select tiles <br>Left click again to confirm <br>Right click and drag to pan<br>+/- keys or mouse wheel to zoom in/out</html>");
 
         javax.swing.GroupLayout explorePanel_Layout = new javax.swing.GroupLayout(explorePanel_);
         explorePanel_.setLayout(explorePanel_Layout);
@@ -391,9 +387,19 @@ public class DisplayWindowControls extends Panel {
 
         abortButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/abort.png"))); // NOI18N
         abortButton_.setToolTipText("Abort acquisition");
+        abortButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                abortButton_ActionPerformed(evt);
+            }
+        });
 
         pauseButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/pause.png"))); // NOI18N
         pauseButton_.setToolTipText("Pause/resume acquisition");
+        pauseButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                pauseButton_ActionPerformed(evt);
+            }
+        });
 
         fpsLabel_.setText("Animation FPS:");
 
@@ -492,7 +498,7 @@ public class DisplayWindowControls extends Panel {
          showInstructionLabel(((JPanel)tabbedPane_.getComponentAt(2)).getToolTipText());
       } else if (tabbedPane_.getSelectedIndex() == 2) { //surface
          //make a surface if none exists
-         if (surfaceManager_.getNumberOfSurfaces() == 2) {
+         if (surfaceManager_.getNumberOfSurfaces() == 0) {
             surfaceManager_.addNewSurface();
             currentSufaceCombo_.setSelectedIndex(0);
          }
@@ -562,6 +568,17 @@ public class DisplayWindowControls extends Panel {
    private void animationFPSSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_animationFPSSpinner_StateChanged
       display_.setAnimateFPS( ((Number)animationFPSSpinner_.getValue()).doubleValue());
    }//GEN-LAST:event_animationFPSSpinner_StateChanged
+
+    private void pauseButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pauseButton_ActionPerformed
+        acq_.togglePaused();
+        pauseButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource(
+                acq_.isPaused() ? "/icons/play.png" : "/icons/pause.png")));
+        repaint();
+    }//GEN-LAST:event_pauseButton_ActionPerformed
+
+    private void abortButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_abortButton_ActionPerformed
+        acq_.abort();
+    }//GEN-LAST:event_abortButton_ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton abortButton_;

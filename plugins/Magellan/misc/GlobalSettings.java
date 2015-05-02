@@ -69,32 +69,32 @@ public class GlobalSettings {
        prefs_.putBoolean(key, value);
    }
    
-   public boolean getBooleanInPrefs(String key) {
-       return prefs_.getBoolean(key, false);
+   public boolean getBooleanInPrefs(String key, Boolean defaultVal) {
+       return prefs_.getBoolean(key, defaultVal);
    }
    
     public void storeIntInPrefs(String key, Integer value) {
        prefs_.putInt(key, value);
    }
    
-   public int getIntInPrefs(String key) {
-       return prefs_.getInt(key, Integer.MIN_VALUE);
+   public int getIntInPrefs(String key, int defualtVal) {
+       return prefs_.getInt(key, defualtVal);
    }
    
    public void storeStringInPrefs(String key, String value) {
        prefs_.put(key, value);
    }
    
-   public String getStringInPrefs(String key) {
-       return prefs_.get(key, null);
+   public String getStringInPrefs(String key, String defaultValue) {
+       return prefs_.get(key, defaultValue);
    }
    
    public void storeDoubleInPrefs(String key, double d) {
       prefs_.putDouble(key, d);
    }
    
-   public double getDoubleInPrefs(String key) {
-      return prefs_.getDouble(key, -1);
+   public double getDoubleInPrefs(String key, double defaultValue) {
+      return prefs_.getDouble(key, defaultValue);
    }
    
    public static GlobalSettings getInstance() {

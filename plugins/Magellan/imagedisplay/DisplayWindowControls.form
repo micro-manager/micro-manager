@@ -356,7 +356,7 @@
         </Container>
         <Container class="javax.swing.JPanel" name="explorePanel_">
           <Properties>
-            <Property name="toolTipText" type="java.lang.String" value="&quot;&lt;html&gt;Left click or click and drag to select tiles &lt;br&gt;Left click again to confirm &lt;br&gt;Right click and drag to pan&lt;br&gt;+/- keys or mouse wheel to zoom in/out&lt;/html&gt;&quot;"/>
+            <Property name="toolTipText" type="java.lang.String" value="&lt;html&gt;Left click or click and drag to select tiles &lt;br&gt;Left click again to confirm &lt;br&gt;Right click and drag to pan&lt;br&gt;+/- keys or mouse wheel to zoom in/out&lt;/html&gt;"/>
           </Properties>
           <Constraints>
             <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
@@ -399,6 +399,9 @@
         </Property>
         <Property name="toolTipText" type="java.lang.String" value="Abort acquisition"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="abortButton_ActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JButton" name="pauseButton_">
       <Properties>
@@ -407,6 +410,9 @@
         </Property>
         <Property name="toolTipText" type="java.lang.String" value="Pause/resume acquisition"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="pauseButton_ActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="fpsLabel_">
       <Properties>

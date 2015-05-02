@@ -24,8 +24,9 @@ public class AcquisitionEvent  {
    public String autofocusZName_;
    public double autofocusPosition_;
    
+   
    public AcquisitionEvent(Acquisition acq, int frameIndex, int channelIndex, int sliceIndex, int positionIndex, 
-           double zPos, XYStagePosition xyPos, List<CovariantPairing> covariants) {
+            double zPos, XYStagePosition xyPos, List<CovariantPairing> covariants) {
       timeIndex_ = frameIndex;
       sliceIndex_ = sliceIndex;
       channelIndex_ = channelIndex;
@@ -49,7 +50,7 @@ public class AcquisitionEvent  {
    }
    
    public static AcquisitionEvent createEngineTaskFinishedEvent() {
-      AcquisitionEvent evt = new AcquisitionEvent(null, 0, 0, 0, 0, 0, null, null);
+      AcquisitionEvent evt = new AcquisitionEvent(null, 0, 0,  0, 0, 0, null, null);
       evt.specialFlag_ = SpecialFlag.EngineTaskFinished;
       return evt;
    }
@@ -59,7 +60,7 @@ public class AcquisitionEvent  {
    }
    
    public static AcquisitionEvent createTimepointFinishedEvent(Acquisition acq) {
-      AcquisitionEvent evt = new AcquisitionEvent(acq, 0, 0, 0, 0, 0, null, null);
+      AcquisitionEvent evt = new AcquisitionEvent(acq, 0, 0,  0, 0, 0, null, null);
       evt.specialFlag_ = SpecialFlag.TimepointFinished;
       return evt;
    }

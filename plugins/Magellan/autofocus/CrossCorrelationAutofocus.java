@@ -139,7 +139,7 @@ public class CrossCorrelationAutofocus {
                 initialPosition_ = MMStudio.getInstance().getCore().getPosition(zDevice_);
                 currentPosition_ = initialPosition_;
             } catch (Exception e) {
-                ReportingUtils.showError("Couldn't get autofocus Z drive initial position");
+               Log.log("Couldn't get autofocus Z drive initial position");
             }
             //figure out which resolution level will be used for xCorr
             MultiResMultipageTiffStorage storage = acq_.getStorage();

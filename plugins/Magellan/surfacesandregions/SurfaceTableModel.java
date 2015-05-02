@@ -65,9 +65,9 @@ class SurfaceTableModel extends AbstractTableModel  {
       if (columnIndex == 0) {
          return manager_.getSurface(rowIndex).getName();
       } else if (columnIndex == 1) {
-         return manager_.getSurface(rowIndex).getXYDeviceName();
+         return manager_.getSurface(rowIndex).getXYDevice();
       } else if (columnIndex == 2) {
-         return manager_.getSurface(rowIndex).getZDeviceName();
+         return manager_.getSurface(rowIndex).getZDevice();
       } else if (columnIndex == 3) {
          return surface.getXYPadding();
       } else {

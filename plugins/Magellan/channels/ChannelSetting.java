@@ -37,15 +37,19 @@ public class ChannelSetting {
    public String name_ = ""; // Configuration setting name
    public double exposure_; // ms
    public Color color_;
-   public boolean use_ = true;
-   public String camera_ = "";
+   public boolean use_ = true;  
+   public boolean uniqueEvent_;  
    
-   public ChannelSetting(String name, double exposure, Color color, boolean use, String camera){
+   public ChannelSetting(String name, double exposure, Color color, boolean use, boolean uniqueEvent){
       color_ = color;
       name_ = name;
       exposure_ = exposure;
       use_ = use;
-      camera_ = camera;
+      uniqueEvent_ = uniqueEvent; // true for only first on multichannel camera
+   }
+   
+   public ChannelSetting copy() {
+       return new ChannelSetting(name_, exposure_, new Color(color_.getRGB()), use_, uniqueEvent_);
    }
    
    /**

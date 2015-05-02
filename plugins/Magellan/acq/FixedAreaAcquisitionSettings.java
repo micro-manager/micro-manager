@@ -83,6 +83,9 @@ public class FixedAreaAcquisitionSettings  {
       distanceAboveTopSurface_ = prefs.getDouble(PREF_PREFIX + "ZDISTABOVETOP", 0);
       spaceMode_ = prefs.getInt(PREF_PREFIX + "SPACEMODE", 0);
       tileOverlap_ = prefs.getDouble(PREF_PREFIX + "TILEOVERLAP", 5);
+      //channels
+      //TODO
+      
       //autofocus
       autofocusMaxDisplacemnet_um_ =  prefs.getDouble(PREF_PREFIX + "AFMAXDISP", 0.0);
       autofocusChannelName_ = prefs.get(PREF_PREFIX + "AFCHANNELNAME", null);

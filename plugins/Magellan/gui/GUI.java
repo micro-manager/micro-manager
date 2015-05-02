@@ -53,12 +53,16 @@ import coordinates.AffineGUI;
 import bidc.CoreCommunicator;
 import bidc.FrameIntegrationMethod;
 import channels.ChannelComboBoxModel;
+import channels.ChannelSetting;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.LinkedList;
+import javax.swing.DefaultCellEditor;
 import javax.swing.JSplitPane;
+import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import misc.GlobalSettings;
 import org.micromanager.utils.ColorEditor;
@@ -225,6 +229,13 @@ public class GUI extends javax.swing.JFrame {
              renderer.setHorizontalAlignment(SwingConstants.LEFT); // left justify
              channelsTable_.getColumnModel().getColumn(col).setCellRenderer(renderer);
           }
+          if (col == 2) {
+              //left justified editor
+              JTextField tf = new JTextField();
+              tf.setHorizontalAlignment(SwingConstants.LEFT);
+              DefaultCellEditor ed = new DefaultCellEditor(tf);
+              channelsTable_.getColumnModel().getColumn(col).setCellEditor(ed);
+          }
        }
       
         //load global settings     
@@ -237,13 +248,13 @@ public class GUI extends javax.swing.JFrame {
         populateAcqControls(multiAcqManager_.getAcquisitionSettings(0));
         enableAcquisitionComponentsAsNeeded();
 
-        int width = settings_.getIntInPrefs(PREF_SIZE_WIDTH);
-        int height = settings_.getIntInPrefs(PREF_SIZE_HEIGHT);
+        int width = settings_.getIntInPrefs(PREF_SIZE_WIDTH, Integer.MIN_VALUE);
+        int height = settings_.getIntInPrefs(PREF_SIZE_HEIGHT, Integer.MIN_VALUE);
         if (height != Integer.MIN_VALUE && width != Integer.MIN_VALUE) {
            this.setSize(width, height);
         }
         
-        int splitPane = settings_.getIntInPrefs(PREF_SPLIT_PANE);
+        int splitPane = settings_.getIntInPrefs(PREF_SPLIT_PANE,Integer.MIN_VALUE);
         if (splitPane != Integer.MIN_VALUE) {
            splitPane_.setDividerLocation(splitPane);
         }
@@ -295,6 +306,18 @@ public class GUI extends javax.swing.JFrame {
         }
         return null;
     }
+    
+    public static  GUI getInstance() {
+        return singleton_;
+    }
+    
+    public ArrayList<ChannelSetting> getCurrentChannelsCopy() {
+         ArrayList<ChannelSetting> list = new ArrayList<ChannelSetting>();
+        for (ChannelSetting c : ((SimpleChannelTableModel)channelsTable_.getModel()).getChannels() ) {
+            list.add(c.copy());
+        }
+        return list;
+    }
 
     public void selectNewCovariantPair() {
         //set bottom row selected because it was just added
@@ -319,8 +342,8 @@ public class GUI extends javax.swing.JFrame {
        l3.setForeground(checkBox3D_.isSelected() || checkBox2D_.isSelected() ? DARK_GREEN : Color.black);
        l3.setFont(acqTabbedPane_.getComponent(2).getFont().deriveFont(checkBox3D_.isSelected() || checkBox2D_.isSelected() ? Font.BOLD : Font.PLAIN));
        acqTabbedPane_.setTabComponentAt(2, l3);
-       JLabel l4 = new JLabel("Space");
-       l4.setForeground(checkBox3D_.isSelected() || checkBox2D_.isSelected() ? DARK_GREEN : Color.black);
+       JLabel l4 = new JLabel("Channels");
+       l4.setForeground(((SimpleChannelTableModel) channelsTable_.getModel()).anyChannelsActive() ? DARK_GREEN : Color.black);
        l4.setFont(acqTabbedPane_.getComponent(3).getFont().deriveFont(((SimpleChannelTableModel) channelsTable_.getModel()).anyChannelsActive()
                ? Font.BOLD : Font.PLAIN));
        acqTabbedPane_.setTabComponentAt(3, l4);
@@ -441,7 +464,9 @@ public class GUI extends javax.swing.JFrame {
             settings.spaceMode_ = FixedAreaAcquisitionSettings.NO_SPACE;
         }
         //channels
-
+       //TODO
+        
+        
         //autofocus
         settings.autofocusEnabled_ = useAutofocusCheckBox_.isSelected();
         if (settings.autofocusEnabled_) {
