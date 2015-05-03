@@ -507,7 +507,21 @@ bool CXYStage::Busy()
 int CXYStage::SetOrigin()
 {
    ostringstream command; command.str("");
-   command << "H " << axisLetterX_ << "=" << 0 << " " << axisLetterY_ << "=" << 0;
+   command << "H " << axisLetterX_ << "=0 " << axisLetterY_ << "=0";
+   return hub_->QueryCommandVerify(command.str(),":A");
+}
+
+int CXYStage::SetXOrigin()
+{
+   ostringstream command; command.str("");
+   command << "H " << axisLetterX_ << "=0 ";
+   return hub_->QueryCommandVerify(command.str(),":A");
+}
+
+int CXYStage::SetYOrigin()
+{
+   ostringstream command; command.str("");
+   command << "H " << axisLetterY_ << "=0";
    return hub_->QueryCommandVerify(command.str(),":A");
 }
 

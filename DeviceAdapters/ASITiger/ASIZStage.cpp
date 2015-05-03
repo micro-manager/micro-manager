@@ -346,7 +346,7 @@ bool CZStage::Busy()
 int CZStage::SetOrigin()
 {
    ostringstream command; command.str("");
-   command << "H " << axisLetter_ << "=" << 0;
+   command << "H " << axisLetter_ << "=0";
    return hub_->QueryCommandVerify(command.str(),":A");
 }
 

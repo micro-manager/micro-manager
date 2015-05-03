@@ -54,6 +54,8 @@ public:
    int SetRelativePositionSteps(long x, long y);
    int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax);
    int SetOrigin();
+   int SetXOrigin();
+   int SetYOrigin();
    int Home();
    int SetHome();
 
