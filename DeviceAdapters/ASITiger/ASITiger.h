@@ -320,6 +320,7 @@ const char* const g_SPIMNumSidesPropertyName = "SPIMNumSides";
 const char* const g_SPIMFirstSidePropertyName = "SPIMFirstSide";
 const char* const g_SPIMPiezoHomeEnable = "SPIMPiezoHomeEnable";
 const char* const g_SPIMScannerHomeEnable = "SPIMScannerHomeEnable";
+const char* const g_SPIMInterleaveSidesEnable = "SPIMInterleaveSidesEnable";
 const char* const g_SPIMNumRepeatsPropertyName = "SPIMNumRepeats";
 const char* const g_SPIMArmForTTLPropertyName = "SPIMArm";
 const char* const g_SPIMStatePropertyName = "SPIMState";

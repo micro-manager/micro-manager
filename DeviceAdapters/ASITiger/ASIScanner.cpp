@@ -481,6 +481,14 @@ int CScanner::Initialize()
          CreateProperty(g_SPIMNumSlicesPerPiezoPropertyName, "1", MM::Integer, true);
       }
 
+      if (FirmwareVersionAtLeast(3.09)) {  // in 3.09 added bit 4 of SPIM mode for interleaved slices
+         pAct = new CPropertyAction (this, &CScanner::OnSPIMInterleaveSidesEnable);
+         CreateProperty(g_SPIMInterleaveSidesEnable, "0", MM::String, false, pAct);
+         AddAllowedValue(g_SPIMInterleaveSidesEnable, g_YesState);
+         AddAllowedValue(g_SPIMInterleaveSidesEnable, g_NoState);
+         UpdateProperty(g_SPIMInterleaveSidesEnable);
+      }
+
    }
 
    // add ring buffer properties if supported (starting 2.81)
@@ -2735,7 +2743,7 @@ int CScanner::OnSPIMScannerHomeEnable(MM::PropertyBase* pProp, MM::ActionType eA
          tmp = 1;
       else
          return DEVICE_INVALID_PROPERTY_VALUE;
-      tmp = tmp << 2;  // right shift to get the value to bits 2
+      tmp = tmp << 2;  // right shift to get the value to bit 2
       command << addressChar_ << "NR Z?";
       long tmp2;
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
@@ -2782,12 +2790,59 @@ int CScanner::OnSPIMPiezoHomeEnable(MM::PropertyBase* pProp, MM::ActionType eAct
          tmp = 1;
       else
          return DEVICE_INVALID_PROPERTY_VALUE;
-      tmp = tmp << 3;  // right shift to get the value to bits 3
+      tmp = tmp << 3;  // right shift to get the value to bit 3
       command << addressChar_ << "NR Z?";
       long tmp2;
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp2) );
       tmp += (tmp2 & (0xF7));  // keep bit 3 from tmp, all others use current setting
+      command.str("");
+      command << addressChar_ << "NR Z=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CScanner::OnSPIMInterleaveSidesEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   bool success;
+
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NR Z?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = tmp >> 4;   // shift left to get bits 4 in position of LSB
+      tmp &= (0x01);    // mask off all but what used to be bit 4
+      switch (tmp)
+      {
+         // note that bit set high _disables_ the feature
+         case 0: success = pProp->Set(g_YesState); break;
+         case 1: success = pProp->Set(g_NoState); break;
+         default: success = 0;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_YesState) == 0)
+         tmp = 0;
+      else if (tmpstr.compare(g_NoState) == 0)
+         tmp = 1;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      tmp = tmp << 4;  // right shift to get the value to bit 4
+      command << addressChar_ << "NR Z?";
+      long tmp2;
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp2) );
+      tmp += (tmp2 & (0xEF));  // keep bit 4 from tmp, all others use current setting
       command.str("");
       command << addressChar_ << "NR Z=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
