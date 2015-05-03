@@ -34,7 +34,7 @@ public class SurfaceData implements Covariant {
    public static String  DISTANCE_BELOW_SURFACE_CENTER = "Vertical distance below at XY position center";
    public static String  DISTANCE_BELOW_SURFACE_MINIMUM = "Minimum vertical distance below at XY position";
    public static String  DISTANCE_BELOW_SURFACE_MAXIMUM = "Maximum vertical distance below at XY position";
-   public static String  DISTANCE_FOR_MIN_INCIDENT_POWER = "Lymph Node optimal distance";
+   public static String  LN_OPTIMAL_DISTANCE = "Lymph Node optimal distance";
    
    private String category_;
    private SurfaceInterpolator surface_;
@@ -54,7 +54,7 @@ public class SurfaceData implements Covariant {
    
    public static String[] enumerateDataTypes() {
       return new String[] {DISTANCE_BELOW_SURFACE_CENTER, DISTANCE_BELOW_SURFACE_MINIMUM, 
-          DISTANCE_BELOW_SURFACE_MAXIMUM, DISTANCE_FOR_MIN_INCIDENT_POWER};
+          DISTANCE_BELOW_SURFACE_MAXIMUM, LN_OPTIMAL_DISTANCE};
    }
    
    @Override
@@ -71,7 +71,7 @@ public class SurfaceData implements Covariant {
            return "Min vertical distance to " + surface_.getName();
        } else if (category_.equals(DISTANCE_BELOW_SURFACE_MAXIMUM)) {
            return "Min distance to " + surface_.getName();
-       } else if (category_.equals(DISTANCE_FOR_MIN_INCIDENT_POWER)) {
+       } else if (category_.equals(LN_OPTIMAL_DISTANCE)) {
            return "Lymph node optimal distance for " + surface_.getName();
  
        } else {
@@ -132,108 +132,31 @@ public class SurfaceData implements Covariant {
       }
    }
 
-   private double minIncidentPowerDistance(XYStagePosition xyPos, double zPosition) {
-      // a special measure for curved surfaces, which gives:
-      //-min distance at surface on flatter parts of curved surface (ie top)
-      //-increased distance up to max distance as you go deeper
-      //-higher distance at surface on side to account for curved surface blocking out some of exciation light
-      //{minDistance,maxDistance, minNormalAngle, maxNormalAngle)
-      double[] vals = distanceAndNormalCalc(xyPos.getFullTileCorners(), zPosition);
-      double extraDistance = 0; //pretend actually deeper in LN than we are to account for blockage by curved surface
-      double angleCutoff = 64; //angle cutoff is maximum nalge colletred by 1.2 NA objective
-      double doublingDistance = 50;
-      double angleCutoffPercent = 0; 
-      if (vals[3] < angleCutoff) { //max normal angle greater than 45 
-         //twice as much power if angle goes to 0
-         //doubling distance ~40-70 um when b = 0.01-0.018 i exponent
-         //add extra distance to account for blockage by LN surface
-          //never want to make extra distance higher than the double distance,
-          //so extra power is capped at 2x
-          angleCutoffPercent = Math.min(angleCutoff, vals[3]) / angleCutoff;
-         extraDistance =  angleCutoffPercent * doublingDistance;
-      }
-      double curvatureCorrectedMin = vals[0] + extraDistance;
-      double ret = Math.min(vals[1], Math.max(curvatureCorrectedMin, Math.pow(vals[0], 1.25)));
-      return ret;
-   }
+    private double lnOptimalDistance(XYStagePosition xyPos, double zPosition) {
+        // a special measure for curved surfaces, which gives:
+        //-min distance at surface on flatter parts of curved surface (ie top)
+        //-increased distance up to max distance as you go deeper
+        //-higher distance at surface on side to account for curved surface blocking out some of exciation light
+        //{minDistance,maxDistance, minNormalAngle, maxNormalAngle)
+        double[] vals = distanceAndNormalCalc(xyPos.getFullTileCorners(), zPosition);
+        double extraDistance = 0; //pretend actually deeper in LN than we are to account for blockage by curved surface
+        double angleCutoff = 64; //angle cutoff is maximum nalge colletred by 1.2 NA objective
+        double doublingDistance = 50;
+        double angleCutoffPercent = 0;
+        //twice as much power if angle goes to 0
+        //doubling distance ~40-70 um when b = 0.01-0.018 i exponent
+        //add extra distance to account for blockage by LN surface
+        //never want to make extra distance higher than the double distance,
+        //so extra power is capped at 2x
+        angleCutoffPercent = Math.min(angleCutoff, vals[3]) / angleCutoff;
+        extraDistance = angleCutoffPercent * doublingDistance;
 
-//   private double minDistanceToSurfaceWithinAngleAtPoint(double x, double y, double z) {
-//      //first test point, if it is above surface, distance is 0
-//      Double interpVal = surface_.getCurrentInterpolation().getInterpolatedValue(x, y, true);
-//      //TODO: control for z sign
-//      if (z <= interpVal) {
-//         return 0;
-//      }
-//      //generate a bunch of test angles
-//      double distTestIncrement = 5;
-//      double minDistance = Math.abs(z - interpVal);
-//      double numTestPhis = 5; //num values from 0 to angle
-//      double numTestThetas = 12; //num test angles in xy plane
-//      double phiMax = Math.PI / 4; //45 degrees in any direction
-//      for (double theta = 0; theta <2*Math.PI; theta += 2*Math.PI / numTestThetas) {
-//         for (double phi = phiMax / numTestPhis; phi <= phiMax; phi+= phiMax / numTestPhis) {
-//            //generate xyz vector
-//            double xV = Math.cos(theta);
-//            double yV = Math.sin(theta);
-//            double zV = -Math.cos(phi);
-//            //normalize
-//            double length = Math.sqrt(xV*xV + yV*yV + zV*zV);
-//            xV /= length * distTestIncrement;
-//            yV /= length * distTestIncrement;
-//            zV /= length * distTestIncrement;            
-//            double xPos = x + xV, yPos = y + yV, zPos = z + zV;
-//            while (true) {
-//               //test if above surface
-//               interpVal = surface_.getCurrentInterpolation().getInterpolatedValue(xPos, yPos, true);
-//               if (zPos < interpVal) {
-//                  break; //we're above the surface
-//               }
-//               //keep moving along vecotr
-//               xPos += xV;
-//               yPos += yV;
-//               zPos += zV;
-//            }
-//            double dist = Math.sqrt( (x - xPos)*(x - xPos) + (y - yPos)*(y - yPos) + (z - zPos)*(z - zPos) );
-//            minDistance = Math.min(dist, minDistance);
-//         }
-//      }
-//      return minDistance;      
-//   }
-//   
-//   private double minDistanceToSurfaceWithinAngle(Point2D.Double[] corners, double z) {      
-//            long start = System.currentTimeMillis();
-//
-//      //check a grid of points spanning entire position        
-//      //square is aligned with axes in pixel space, so convert to pixel space to generate test points
-//      double xSpan = corners[2].getX() - corners[0].getX();
-//      double ySpan = corners[2].getY() - corners[0].getY();
-//      Point2D.Double pixelSpan = new Point2D.Double();
-//      AffineTransform transform = AffineUtils.getAffineTransform(surface_.getPixelSizeConfig(),0, 0);
-//      try {
-//         transform.inverseTransform(new Point2D.Double(xSpan, ySpan), pixelSpan);
-//      } catch (NoninvertibleTransformException ex) {
-//         ReportingUtils.showError("Problem inverting affine transform");
-//      }
-//      double minDistance = Integer.MAX_VALUE;
-//      for (double x = 0; x <= pixelSpan.x; x += pixelSpan.x / (double) NUM_XY_TEST_POINTS_ANGLE) {
-//         for (double y = 0; y <= pixelSpan.y; y += pixelSpan.y / (double) NUM_XY_TEST_POINTS_ANGLE) {
-//            //convert these abritray pixel coordinates back to stage coordinates
-//            double[] transformMaxtrix = new double[6];
-//            transform.getMatrix(transformMaxtrix);
-//            transformMaxtrix[4] = corners[0].getX();
-//            transformMaxtrix[5] = corners[0].getY();
-//            //create new transform with translation applied
-//            transform = new AffineTransform(transformMaxtrix);
-//            Point2D.Double stageCoords = new Point2D.Double();
-//            transform.transform(new Point2D.Double(x, y), stageCoords);
-//            //test point for inclusion of position
-//            minDistance = Math.min(minDistance, minDistanceToSurfaceWithinAngleAtPoint(x, y, z));
-//         }
-//      }
-//      System.out.println("min dist calc time: " + (System.currentTimeMillis() - start));
-//      return minDistance;
-//   }
-//   
+        double curvatureCorrectedMin = vals[0] + extraDistance;
+        double ret = Math.min(vals[1], Math.max(curvatureCorrectedMin, Math.pow(vals[0], 1.25)));
+//        System.out.println(vals[3] + " \t" + extraDistance);
+        return ret;
+    }
+
    /**
     * 
     * @param corners
@@ -253,7 +176,7 @@ public class SurfaceData implements Covariant {
          ReportingUtils.showError("Problem inverting affine transform");
       }
       double minDistance = Integer.MAX_VALUE;
-      double maxDistance = Integer.MIN_VALUE;
+      double maxDistance = 0;
       double minNormalAngle = 90;
       double maxNormalAngle = 0;
       for (double x = 0; x <= pixelSpan.x; x += pixelSpan.x / (double) NUM_XY_TEST_POINTS) {
@@ -305,8 +228,8 @@ public class SurfaceData implements Covariant {
          return new CovariantValue(distanceAndNormalCalc(xyPos.getFullTileCorners(), event.zPosition_)[0]);
       } else if (category_.equals(DISTANCE_BELOW_SURFACE_MAXIMUM)) {
          return new CovariantValue(distanceAndNormalCalc(xyPos.getFullTileCorners(), event.zPosition_)[1]);
-      } else if (category_.equals(DISTANCE_FOR_MIN_INCIDENT_POWER)) {
-          return new CovariantValue(minIncidentPowerDistance(xyPos, event.zPosition_));
+      } else if (category_.equals(LN_OPTIMAL_DISTANCE)) {
+          return new CovariantValue(lnOptimalDistance(xyPos, event.zPosition_));
       } else {
          ReportingUtils.showError("Unknown Surface data type");
          throw new RuntimeException();

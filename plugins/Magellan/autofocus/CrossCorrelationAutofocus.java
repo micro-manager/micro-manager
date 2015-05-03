@@ -12,6 +12,7 @@ import ij.ImageStack;
 import ij3d.image3d.FHTImage3D;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.util.Arrays;
 import misc.Log;
 import org.apache.commons.math.ArgumentOutsideDomainException;
@@ -41,102 +42,32 @@ public class CrossCorrelationAutofocus {
    private double initialPosition_;
    private double currentPosition_;
    private FixedAreaAcquisition acq_;
-   private String zDevice_;
    private int downsampleIndex_;
    private int downsampledWidth_;
    private int downsampledHeight_;
    
    
-   public CrossCorrelationAutofocus(FixedAreaAcquisition acq, int channelIndex, double maxDisplacement, String zDevice) {
+   public CrossCorrelationAutofocus(FixedAreaAcquisition acq, int channelIndex, double maxDisplacement , double initialPosition) {
       channelIndex_ = channelIndex;
       maxDisplacement_ = maxDisplacement;
-      zDevice_ = zDevice;
       acq_ = acq;
+      initialPosition_ = initialPosition;      
    }
    
    public double getAutofocusPosition() {
       return currentPosition_;
    }
    
-//   public static void main(String[] args) {
-//      //figure out how much downsampling needed to run autofocus in a reasonable amount of time
-//      //factor of two is for z padding
-//      int width = 3780;
-//      int height = 4158;
-//      BigDecimal numPix2D = new BigDecimal(new BigInteger("" +width ).multiply(new BigInteger("" + height )));
-//      BigDecimal numXCorrSlices = new BigDecimal(180 + "");
-//      double dsFactor = //ratio of number of voxels to voxel target
-//              Math.sqrt(numPix2D.multiply(numXCorrSlices).divide(new BigDecimal((double) NUM_VOXEL_TARGET)).doubleValue());
-//      double log = Math.log(dsFactor) / Math.log(2);
-//      int downsampleIndex = (int) Math.max(0, Math.round(log));
-//      int downsampledWidth = (int) ((int) width / Math.pow(2, downsampleIndex));
-//      int downsampledHeight = (int) ((int) height / Math.pow(2, downsampleIndex));
-//      System.out.println(log + "\t" + downsampledWidth + "\t" + downsampledHeight);
-//      
-//   }
-//
-//   public static void debug() {
-////      ImagePlus tp0 = new ImagePlus("C:/Users/Henry/Desktop/SHG/tp0.tif");
-////      ImagePlus tpc = new ImagePlus("C:/Users/Henry/Desktop/SHG/tp13.tif");
-////      ImagePlus tp0 = new ImagePlus("C:/Users/Henry/Desktop/SHG/tp0_2x.tif");
-////      ImagePlus tpc = new ImagePlus("C:/Users/Henry/Desktop/SHG/tp13_2x.tif");
-////      ImagePlus tp0 = new ImagePlus("C:/Users/Henry/Desktop/SHG/tp0_4x.tif");
-////      ImagePlus tpc = new ImagePlus("C:/Users/Henry/Desktop/SHG/tp13_4x.tif");
-////      ImagePlus tp0 = new ImagePlus("C:/Users/Henry/Desktop/SHG/tp0_8x.tif");
-////      ImagePlus tpc = new ImagePlus("C:/Users/Henry/Desktop/SHG/tp13_8x.tif");
-//      ImagePlus tp0 = new ImagePlus("C:/Users/Henry/Desktop/SHG/tp0_16x.tif");
-//      ImagePlus tpc = new ImagePlus("C:/Users/Henry/Desktop/SHG/tp13_16x.tif");
-////      ImagePlus tp0 = new ImagePlus("C:/Users/Henry/Desktop/SHG/tp0_32x.tif");
-////      ImagePlus tpc = new ImagePlus("C:/Users/Henry/Desktop/SHG/tp13_32x.tif");
-//
-//      ImageStack stack1 = createAFStackFromDisk(tp0);
-//      ImageStack stack2 = createAFStackFromDisk(tpc);
-//
-//      long start = System.currentTimeMillis();
-//      double drift = calcFocusDrift(stack1, stack2, 4);
-//      long end = System.currentTimeMillis();
-//      System.out.println(drift + "\t" + (end - start));
-//   }
-//   //for debugging
-//    private static ImageStack createAFStackFromDisk(ImagePlus ip) {
-//        //pad by half of stack size in either direction so wrap around of xCorr doesnt give false values
-//        int numSlices = 2 * (ip.getNSlices());
-//        ImageStack stack = new ImageStack(ip.getWidth(), ip.getHeight());
-//        int frontPadding = (ip.getNSlices()) / 2;
-//        //get background pixel value
-//        int backgroundVal = 9;
-//        for (int slice = 0; slice < numSlices; slice++) {
-//            if (slice >= frontPadding && slice < frontPadding + ip.getNSlices()) {
-//                int dataSlice = slice - frontPadding;
-//               //add as int             
-//               byte[] pix = (byte[]) ip.getStack().getPixels(dataSlice + 1);
-//               float[] pix32 = new float[pix.length];
-//               for (int i = 0; i < pix.length; i++) {
-//                  pix32[i] = pix[i] == 0 ? backgroundVal : pix[i] & 0xff;
-//               }
-//               stack.addSlice(null,pix32);
-//            } else {
-//                //add dummy slices, which need to have backround pixels with the same 
-//                //value as the background of the actual data
-//                float[] pix = new float[ip.getWidth() * ip.getHeight()];
-//                Arrays.fill(pix, backgroundVal);
-//                stack.addSlice(null, pix);
-//            }
-//        }
-//        return stack;
-//    }
-//   
-   
-   
    /**
     * Called by acquisitions at then end of time point
     * @param timeIndex 
      */
     public void run(int timeIndex) throws Exception {
+        Log.log("________");
+        Log.log("Autofocus for acq " + acq_.getName() + "  Time point " + timeIndex);
         if (timeIndex == 0) {
             //get initial position
             try {
-                initialPosition_ = MMStudio.getInstance().getCore().getPosition(zDevice_);
                 currentPosition_ = initialPosition_;
             } catch (Exception e) {
                Log.log("Couldn't get autofocus Z drive initial position");
@@ -153,7 +84,8 @@ public class CrossCorrelationAutofocus {
             BigDecimal numPix2D = new BigDecimal(tileWidth.multiply(numCols).multiply(tileHeight).multiply(numRows));
             BigDecimal numXCorrSlices = new BigDecimal((2 * (acq_.getMaxSliceIndex() + 1)) + "");
             double dsFactor = //ratio of number of voxels to voxel target
-                    Math.sqrt(numPix2D.multiply(numXCorrSlices).divide(new BigDecimal((double) NUM_VOXEL_TARGET)).doubleValue());
+                    Math.sqrt(numPix2D.multiply(numXCorrSlices).divide(new BigDecimal((double) NUM_VOXEL_TARGET), 
+                    RoundingMode.UP).doubleValue());
             downsampleIndex_ = (int) Math.max(0, Math.round(Math.log(dsFactor) / Math.log(2)));
             downsampledWidth_ = (int) (tileWidth.multiply(numCols).longValue() / Math.pow(2, downsampleIndex_));
             downsampledHeight_ = (int) (tileHeight.multiply(numRows).longValue() / Math.pow(2, downsampleIndex_));
@@ -228,11 +160,11 @@ public class CrossCorrelationAutofocus {
    * @return double representing the focus position of current relative to original (i.e. 4 means
    * that current is focused 4 um deeper than current)
    */
-   private static double calcFocusDrift(ImageStack tp0Stack, ImageStack currentTPStack, double pixelSizeZ) {    
+   private double calcFocusDrift(ImageStack tp0Stack, ImageStack currentTPStack, double pixelSizeZ) {    
       //      long start = System.currentTimeMillis();       
-      Log.log("Autofocus: running autofocus");      
+      Log.log( acq_.getName() + " Autofocus: cross correlating");      
       ImageStack xCorrStack = FHTImage3D.crossCorrelation(tp0Stack, currentTPStack);
-      Log.log("Autofocus: finished cross correlating..calculating drift");      
+      Log.log( acq_.getName() + " Autofocus: finished cross correlating..calculating drift");      
       ImagePlus xCorr = new ImagePlus("XCorr", xCorrStack);      
 //      System.out.println("Time to generate xCorr: " + ((System.currentTimeMillis() - start)/1000) + " s");       
 //      xCorr.show();

@@ -105,11 +105,13 @@ public class FixedAreaAcquisition extends Acquisition {
       }
    }
    
-   private void createAutofocus() {
+   private void createAutofocus() throws Exception {
       if (settings_.autofocusEnabled_) {
          //convert channel name to channel index
          int cIndex = getAutofocusChannelIndex();     
-         autofocus_ = new CrossCorrelationAutofocus(this,cIndex, settings_.autofocusMaxDisplacemnet_um_, settings_.autoFocusZDevice_);
+         autofocus_ = new CrossCorrelationAutofocus(this,cIndex, settings_.autofocusMaxDisplacemnet_um_,
+                 settings_.setInitialAutofocusPosition_ ? settings_.initialAutofocusPosition_ :
+                         MMStudio.getInstance().getCore().getPosition(settings_.autoFocusZDevice_) );
       }
    }
 
@@ -274,7 +276,7 @@ public class FixedAreaAcquisition extends Acquisition {
                   //set autofocus position
                   if (settings_.autofocusEnabled_ && timeIndex > 1) { //read it from settings so that you can turn it off during acq
                      events_.put(AcquisitionEvent.createAutofocusEvent(settings_.autoFocusZDevice_, autofocus_.getAutofocusPosition()));
-                  } else if (autofocus_ != null && timeIndex <= 1 && settings_.setInitialAutofocusPosition_) {
+                  } else if (settings_.autofocusEnabled_ && timeIndex <= 1 && settings_.setInitialAutofocusPosition_) {
                      events_.put(AcquisitionEvent.createAutofocusEvent(settings_.autoFocusZDevice_, settings_.initialAutofocusPosition_));
                   }
                   //set the next time point start time
@@ -346,7 +348,6 @@ public class FixedAreaAcquisition extends Acquisition {
                   //all images finished writing--can now run autofocus
                   if (autofocus_ != null) {
                      try {
-                         Log.log(FixedAreaAcquisition.this.getName() + " Running autofocus");
                         autofocus_.run(timeIndex);
                      } catch (Exception ex) {                    
                         IJ.log("Problem running autofocus " + ex.getMessage());

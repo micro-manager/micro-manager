@@ -217,23 +217,25 @@ public class DisplayOverlayer {
                } else if (display_.getCurrentMouseLocation() != null) {
                   //draw single highlighted tile under mouse
                   Point coords = zoomableStack_.getTileIndicesFromDisplayedPixel(display_.getCurrentMouseLocation().x, display_.getCurrentMouseLocation().y);
-                  highlightTilesOnOverlay(overlay, coords.y, coords.y, coords.x, coords.x, TRANSPARENT_BLUE); //highligth single tile
-               }
-               try {
-               //always draw tiles waiting to be acquired
-                  LinkedBlockingQueue<ExploreAcquisition.ExploreTileWaitingToAcquire> tiles = 
-                          ((ExploreAcquisition) acq_).getTilesWaitingToAcquireAtSlice(display_.getVisibleSliceIndex() +
-                                  ((ExploreAcquisition) acq_).getLowestExploredSliceIndex());
-                  if (tiles != null) {
-                     for (ExploreAcquisition.ExploreTileWaitingToAcquire t : tiles) {
-                        highlightTilesOnOverlay(overlay, t.row, t.row, t.col, t.col, TRANSPARENT_GREEN);
-                     }
-                  }
-               } catch (Exception e) {
-                  e.printStackTrace();
-               }
-              
-               return overlay;
+                    highlightTilesOnOverlay(overlay, coords.y, coords.y, coords.x, coords.x, TRANSPARENT_BLUE); //highligth single tile
+                }
+                try {
+                    if (acq_ instanceof ExploreAcquisition) {
+                        //always draw tiles waiting to be acquired
+                        LinkedBlockingQueue<ExploreAcquisition.ExploreTileWaitingToAcquire> tiles =
+                                ((ExploreAcquisition) acq_).getTilesWaitingToAcquireAtSlice(display_.getVisibleSliceIndex()
+                                + ((ExploreAcquisition) acq_).getLowestExploredSliceIndex());
+                        if (tiles != null) {
+                            for (ExploreAcquisition.ExploreTileWaitingToAcquire t : tiles) {
+                                highlightTilesOnOverlay(overlay, t.row, t.row, t.col, t.col, TRANSPARENT_GREEN);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                return overlay;
             } else if (mode == DisplayPlus.NEWGRID) {
                return newGridOverlay();
             } else if (mode == DisplayPlus.NONE) {
