@@ -2820,9 +2820,8 @@ int CScanner::OnSPIMInterleaveSidesEnable(MM::PropertyBase* pProp, MM::ActionTyp
       tmp &= (0x01);    // mask off all but what used to be bit 4
       switch (tmp)
       {
-         // note that bit set high _disables_ the feature
-         case 0: success = pProp->Set(g_YesState); break;
-         case 1: success = pProp->Set(g_NoState); break;
+         case 0: success = pProp->Set(g_NoState); break;
+         case 1: success = pProp->Set(g_YesState); break;
          default: success = 0;
       }
       if (!success)
@@ -2831,9 +2830,9 @@ int CScanner::OnSPIMInterleaveSidesEnable(MM::PropertyBase* pProp, MM::ActionTyp
    else if (eAct == MM::AfterSet) {
       string tmpstr;
       pProp->Get(tmpstr);
-      if (tmpstr.compare(g_YesState) == 0)
+      if (tmpstr.compare(g_NoState) == 0)
          tmp = 0;
-      else if (tmpstr.compare(g_NoState) == 0)
+      else if (tmpstr.compare(g_YesState) == 0)
          tmp = 1;
       else
          return DEVICE_INVALID_PROPERTY_VALUE;
