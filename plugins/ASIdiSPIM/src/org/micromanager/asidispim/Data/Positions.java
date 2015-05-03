@@ -328,17 +328,12 @@ public class Positions {
          switch (dir) {
          case X:
             if (devices_.isXYStage(devKey)) {
-               // TODO fix this known issue: should controller origin and not just adapter's origin
-               // basically need to send command "H <axis>=0" (can get <axis> from device property
-               // AxisLetterX/Y for ASI XY stages, but should work with other stages too)
-               double ypos = getUpdatedPosition(devKey, Directions.Y);
-               core_.setAdapterOriginXY(mmDevice, 0.0, ypos);
+               core_.setOriginX(mmDevice);
             }
             break;
          case Y:
-            if (devices_.isXYStage(devKey)) { 
-               double xpos = getUpdatedPosition(devKey, Directions.X);
-               core_.setAdapterOriginXY(mmDevice, xpos, 0.0);
+            if (devices_.isXYStage(devKey)) {
+               core_.setOriginY(mmDevice);
             }
             break;
          case NONE:
