@@ -168,6 +168,11 @@ public class ControllerUtils {
             }
       }
       
+      if (spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED
+            && numSides != 2) {
+         MyDialogUtils.showError("Interleaved stage scan only possible for 2-sided acquisition.");
+         return false;
+      }
       
       // set up stage scan parameters if necessary
       if (spimMode == AcquisitionModes.Keys.STAGE_SCAN || spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED) {
@@ -183,13 +188,18 @@ public class ControllerUtils {
          //    slow axis stop = current Y position
          //    X motor speed = slice step size * sqrt(2) / slice duration
          //    number of scans = number of sides (1 or 2)
-         //    scan mode = serpentine
+         //    scan mode = serpentine for 2-sided non-interleaved, raster otherwise (need to revisit for 2D stage scanning)
          //    X acceleration time = use whatever current setting is
          //    scan settling time = delay before side
+         final boolean isInterleaved = (spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED);
          final Devices.Keys xyDevice = Devices.Keys.XYSTAGE;
-         double sliceDuration = computeActualSlicePeriod(sliceTiming);
+         final double sliceDuration = computeActualSlicePeriod(sliceTiming);
          
          double requestedMotorSpeed = stepSizeUm * Math.sqrt(2.) / sliceDuration / numChannels;
+         if (isInterleaved) {
+            // if alternating views need to move half speed to keep spacing same on each view 
+            requestedMotorSpeed *= 0.5;
+         }
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED, (float)requestedMotorSpeed);
          
          // we could ask for the actual speed and calculate the actual step size
@@ -197,7 +207,7 @@ public class ControllerUtils {
          // double actualMotorSpeed = props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED);
          // stepSize_.setValue(actualMotorSpeed / Math.sqrt(2.) * sliceDuration);
          
-         double scanDistance = numSlices * stepSizeUm * Math.sqrt(2.);
+         final double scanDistance = numSlices * stepSizeUm * Math.sqrt(2.);
          Point2D.Double posUm;
          try {
             posUm = core_.getXYStagePosition(devices_.getMMDevice(xyDevice));
@@ -216,13 +226,13 @@ public class ControllerUtils {
                (float)(posUm.y / 1000d));
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_NUMLINES, numSides);
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_PATTERN,
-               Properties.Values.SERPENTINE);
+               (!isInterleaved || (numSides == 2) ? Properties.Values.SERPENTINE : Properties.Values.RASTER));
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SETTLING_TIME, delayBeforeSide);
          
-         // TODO handle other multichannel modes with stage scanning
+         // TODO handle other multichannel modes with stage scanning (what does this mean??)
       }
       
-      // sets PLogic BNC3 output high to indicate acquisition is going on
+      // sets PLogic "acquisition running" flag
       props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET, 
             Properties.Values.PLOGIC_PRESET_3, true);
       
@@ -440,12 +450,9 @@ public class ControllerUtils {
          final boolean centerPiezos
          ) {
       
-      // sets BNC3 output low again
       // this only happens after images have all been received (or timeout occurred)
-      // but if using DemoCam devices then it happens too early
-      // at least part of the problem is that both DemoCam devices "acquire" at the same time
-      // instead of actually obeying the controller's triggers
-      // as a result with DemoCam the side select (BNC4) isn't correct
+
+      // clear "acquisition running" flag on PLC
       props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET, 
             Properties.Values.PLOGIC_PRESET_2, true);
       

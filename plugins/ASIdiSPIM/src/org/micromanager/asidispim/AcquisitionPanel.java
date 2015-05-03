@@ -877,6 +877,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   Properties.Keys.PLUGIN_CAMERA_MODE, 0));
    }
    
+   /**
+    * @return requested number of slices (per side and per channel)
+    */
    private int getNumSlices() {
       return (Integer) numSlices_.getValue();
    }
@@ -1001,7 +1004,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      //  from the set exposure time and thus exceed total period
             - cameraExposureDelayTime;
       
-      
       // change camera duration for overlap mode to be short trigger
       // needed because exposure time is set by difference between pulses in this mode
       if (cameraMode == CameraModes.Keys.OVERLAP) {
@@ -1062,27 +1064,26 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     */
    private double computeActualVolumeDuration() {
       double stackDuration = getNumSlices()
-              * controller_.computeActualSlicePeriod(sliceTiming_);
-      switch (getAcquisitionMode()) {
-         case STAGE_SCAN:
-         case STAGE_SCAN_INTERLEAVED:
-         // 20 ms acceleration time, and we go twice the acceleration distance
-            // which ends up being acceleration time plus half again
-            // TODO make this computation more general
-            double rampDuration = 20 * 1.5;
-            return getNumSides() * getNumChannels()
-                    * (rampDuration * 2 + stackDuration);
-         default: // piezo scan
-            double channelSwitchDelay = 0;
-            if (isMultichannel()) {
-               if (getChannelMode().equals(MultichannelModes.Keys.VOLUME)) {
-                  channelSwitchDelay = 500;   // estimate channel switching overhead time as 0.5s
-                                              // actual value will be hardware-dependent
-               }
-            }
-            return getNumSides() * getNumChannels()
-                    * (getDelayBeforeSide() + stackDuration)
-                    + (getNumChannels() - 1) * channelSwitchDelay;
+            * controller_.computeActualSlicePeriod(sliceTiming_)
+            * getNumChannels();
+      if (isStageScanning()) {
+         double rampDuration = getDelayBeforeSide() +
+               props_.getPropValueFloat(Devices.Keys.XYSTAGE,
+               Properties.Keys.STAGESCAN_MOTOR_ACCEL);
+         if (getAcquisitionMode() == AcquisitionModes.Keys.STAGE_SCAN) {
+            return (getNumSides() * ((rampDuration * 2) + stackDuration));            
+         } else {  // interleaved mode
+            return (rampDuration * 2 + stackDuration * getNumSides());
+         }
+      } else { // piezo scan
+         double channelSwitchDelay = 0;
+         if (isMultichannel() && getChannelMode() == MultichannelModes.Keys.VOLUME) {
+               channelSwitchDelay = 500;   // estimate channel switching overhead time as 0.5s
+               // actual value will be hardware-dependent
+         }
+         return getNumSides() * getNumChannels()
+               * (getDelayBeforeSide() + stackDuration)
+               + (getNumChannels() - 1) * channelSwitchDelay;
       }
    }
    
@@ -1484,6 +1485,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       boolean shutterOpen = false;  // will read later
 
       // more sanity checks
+      
+      // make sure stage scan is supported if selected
+      if (isStageScanning()) {
+         if (!devices_.isTigerDevice(Devices.Keys.XYSTAGE)
+              || !props_.hasProperty(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_NUMLINES)) {
+            MyDialogUtils.showError("Must have stage with scan-enabled firmware for stage scanning.");
+            return false;
+         }
+      }
+      
+      
       double sliceDuration = controller_.computeActualSlicePeriod(sliceTiming_);
       if (exposureTime + cameraReadoutTime > sliceDuration) {
          // only possible to mess this up using advanced timing settings

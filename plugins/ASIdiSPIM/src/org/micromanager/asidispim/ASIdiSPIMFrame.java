@@ -58,6 +58,7 @@ import org.micromanager.utils.MMFrame;
 //TODO recalculate slice timing automatically changing assigned camera
 //TODO add status bar to bottom of window (would include acquisition status, could show other messages too)
 //TODO move acquisition start/stop to shared area below tabs
+//TODO add ability of stage scan in 2nd dimension (for wide samples)
 //TODO make it easy to discard a data set
 //TODO make it easy to look through series of data sets
 //TODO hardware Z-projection

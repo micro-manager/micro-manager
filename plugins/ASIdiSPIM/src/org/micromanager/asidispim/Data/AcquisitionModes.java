@@ -53,7 +53,7 @@ public class AcquisitionModes {
       SLICE_SCAN_ONLY( "Slice scan only (beam thickness)", 2),
       NO_SCAN(         "No scan (vibration)", 3),
       STAGE_SCAN(      "Stage scan", 4),
-      STAGE_SCAN_INTERLEAVED("Stage scan interleaved", 5),  // TODO implement
+      STAGE_SCAN_INTERLEAVED("Stage scan interleaved", 5),
       NONE(            "None", 0);
       private final String text;
       private final int prefCode;
@@ -161,12 +161,8 @@ public class AcquisitionModes {
          keyList.add(Keys.PIEZO_SLICE_SCAN);
          keyList.add(Keys.SLICE_SCAN_ONLY);
          keyList.add(Keys.NO_SCAN);
-         if (devices_.isTigerDevice(Devices.Keys.XYSTAGE)
-               && props_.hasProperty(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_NUMLINES)) {
-            keyList.add(Keys.STAGE_SCAN);
-            // TODO add firmware support for this and then implement
-            // keyList.add(Keys.STAGE_SCAN_INTERLEAVED);
-         }
+         keyList.add(Keys.STAGE_SCAN);
+         keyList.add(Keys.STAGE_SCAN_INTERLEAVED);
          return keyList;
       }
 
