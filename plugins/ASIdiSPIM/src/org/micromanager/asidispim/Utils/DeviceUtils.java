@@ -52,6 +52,15 @@ public class DeviceUtils {
       props_ = props;
    }
    
+   /**
+    * Runs all device checks (for now device library and firmware version checks)
+    * @param devKey
+    */
+   public final void doDeviceChecks(Devices.Keys devKey) {
+      checkDeviceLibrary(devKey);
+      checkFirmwareVersion(devKey);
+   }
+   
 
    /**
     * checks firmware versions and gives any necessary warnings to user
@@ -220,8 +229,7 @@ public class DeviceUtils {
       
       public void actionPerformed(ActionEvent ae) {
          devices_.setMMDevice(key_, (String) box_.getSelectedItem());
-         checkDeviceLibrary(key_);
-         checkFirmwareVersion(key_);
+         doDeviceChecks(key_);
       }
    };
    
@@ -249,41 +257,6 @@ public class DeviceUtils {
       }
       deviceBox.addActionListener(new DeviceBoxListener(deviceKey, deviceBox));
       deviceBox.setSelectedItem(devices_.getMMDevice(deviceKey));  // selects whatever device was read in by prefs
-      deviceBox.setMaximumSize(new Dimension(maximumWidth, 30));
-      return deviceBox;
-   }
-   
-   /**
-    * Constructs a special JComboBox with all cameras that have more than 1 channel,
-    * which we expect to just be a single Multicamera device
-    * @param deviceName
-    * @return
-    */
-   public JComboBox makeMultiCameraDeviceBox(Devices.Keys deviceName, int maximumWidth) {
-      List<String> multiCameras = new ArrayList<String>();
-      multiCameras.add(0, "");
-      try {
-         StrVector strvDevices = core_.getLoadedDevicesOfType(mmcorej.DeviceType.CameraDevice);
-         for (int i = 0; i < strvDevices.size(); i++) {
-            // find all Multi-camera devices (usually just one)
-            String test = strvDevices.get(i);
-            if (core_.getDeviceLibrary(test).equals(Devices.Libraries.UTILITIES.toString()) &&
-                  core_.getDeviceDescription(test).equals("Combine multiple physical cameras into a single logical camera")) {
-               multiCameras.add(strvDevices.get(i));
-            }
-         }
-      } catch (Exception ex) {
-         MyDialogUtils.showError("Error detecting multi camera devices");
-      }
-      
-      JComboBox deviceBox = new JComboBox(multiCameras.toArray());
-      deviceBox.addActionListener(new DeviceBoxListener(deviceName, deviceBox));
-      // if we have one and only one multi-camera then set box to it
-      if (multiCameras.size() == 2){  // recall we added empty string as the first entry
-         deviceBox.setSelectedIndex(1);
-      } else {
-         deviceBox.setSelectedItem(devices_.getMMDevice(deviceName));  // selects whatever device was read in by prefs
-      }
       deviceBox.setMaximumSize(new Dimension(maximumWidth, 30));
       return deviceBox;
    }

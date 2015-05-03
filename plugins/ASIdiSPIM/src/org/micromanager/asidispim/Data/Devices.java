@@ -88,6 +88,7 @@ public class Devices {
       PIEZOA, PIEZOB, GALVOA, GALVOB, XYSTAGE, LOWERZDRIVE, UPPERZDRIVE,
       // SOURCE_SPIM, SOURCE_LOWER,
       PLOGIC,
+      TIGERCOMM,
       // ASGALVOA, ASGALVOB,
       // when adding new devices update Devices constructor, 
       // getDefaultDeviceData(), and Libraries enum
@@ -695,6 +696,8 @@ public class Devices {
       //   return new DeviceData(key, "Lower Light Source", Sides.NONE, true);
       case PLOGIC:
          return new DeviceData(key, "PLogic Card", Sides.NONE, true);
+      case TIGERCOMM:
+         return new DeviceData(key, "TigerComm", Sides.NONE, false);
       case CORE: // special case
          d_new = new DeviceData(key, "Core", Sides.NONE, false);
          d_new.mmDevice = "Core";
@@ -743,6 +746,7 @@ public class Devices {
       deviceInfo_.put(Keys.LOWERZDRIVE, getDefaultDeviceData(Keys.LOWERZDRIVE));
       deviceInfo_.put(Keys.UPPERZDRIVE, getDefaultDeviceData(Keys.UPPERZDRIVE));
       deviceInfo_.put(Keys.PLOGIC, getDefaultDeviceData(Keys.PLOGIC));
+      deviceInfo_.put(Keys.TIGERCOMM, getDefaultDeviceData(Keys.TIGERCOMM));
       // deviceInfo_.put(Keys.SOURCE_SPIM,  getDefaultDeviceData(Keys.SOURCE_SPIM));
       // deviceInfo_.put(Keys.SOURCE_LOWER,  getDefaultDeviceData(Keys.SOURCE_LOWER));
       // deviceInfo_.put(Keys.ASGALVOA, getDefaultDeviceData(Keys.ASGALVOA));

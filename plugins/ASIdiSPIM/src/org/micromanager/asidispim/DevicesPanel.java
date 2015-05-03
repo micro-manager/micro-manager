@@ -26,12 +26,15 @@ import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.DeviceUtils;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
+import org.micromanager.asidispim.Utils.MyDialogUtils;
 
 import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JSeparator;
 
+import mmcorej.CMMCore;
+import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.api.ScriptInterface;
@@ -45,22 +48,9 @@ import org.micromanager.api.ScriptInterface;
 @SuppressWarnings("serial")
 public class DevicesPanel extends ListeningJPanel {
    private final Devices devices_;
-   
-   private final JComboBox boxXY_;
-   private final JComboBox boxLowerZ_;
-   private final JComboBox boxUpperZ_;
-   private final JComboBox boxPLogic_;
-   private final JComboBox boxLowerCam_;
-   private final JComboBox boxMultiCam_;
-   private final JComboBox boxScannerA_;
-   private final JComboBox boxScannerB_;
-   private final JComboBox boxPiezoA_;
-   private final JComboBox boxPiezoB_;
-   private final JComboBox boxCameraA_;
-   private final JComboBox boxCameraB_;
-   
+   private final CMMCore core_;
+
    private final static int maxSelectorWidth = 110;
-   
    
    /**
     * Constructs the GUI Panel that lets the user specify which device to use
@@ -76,6 +66,7 @@ public class DevicesPanel extends ListeningJPanel {
               + maxSelectorWidth + "!]8[]8[]",
               "[]12[]"));
       devices_ = devices;
+      core_ = gui.getMMCore();
       
       DeviceUtils du = new DeviceUtils(gui, devices, props);
       
@@ -83,61 +74,56 @@ public class DevicesPanel extends ListeningJPanel {
       devices_.enableListeners(false);
 
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.XYSTAGE) + ":"));
-      boxXY_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.XYStageDevice,
+      final JComboBox boxXY_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.XYStageDevice,
             Devices.Keys.XYSTAGE, maxSelectorWidth*2); 
       add(boxXY_, "span 2, center, wrap");
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.LOWERZDRIVE) + ":"));
-      boxLowerZ_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
+      final JComboBox boxLowerZ_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
             Devices.Keys.LOWERZDRIVE, maxSelectorWidth*2);
       add(boxLowerZ_, "span 2, center, wrap");
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.UPPERZDRIVE) + ":"));
-      boxUpperZ_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
+      final JComboBox boxUpperZ_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
             Devices.Keys.UPPERZDRIVE, maxSelectorWidth*2);
       add(boxUpperZ_, "span 2, center, wrap");
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.PLOGIC) + ":"));
-      boxPLogic_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.ShutterDevice,
+      final JComboBox boxPLogic_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.ShutterDevice,
             Devices.Keys.PLOGIC, maxSelectorWidth*2);
       add(boxPLogic_, "span 2, center, wrap");
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.CAMERALOWER) + ":"));
-      boxLowerCam_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERALOWER,
+      final JComboBox boxLowerCam_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERALOWER,
             maxSelectorWidth*2);
       add(boxLowerCam_, "span 2, center, wrap");
-            
-      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.MULTICAMERA) + ":"));
-      boxMultiCam_ = du.makeMultiCameraDeviceBox(Devices.Keys.MULTICAMERA,
-            maxSelectorWidth*2);
-      add(boxMultiCam_, "span 2, center, wrap");
-
+      
       add(new JLabel("Imaging Path A"), "skip 1");
       add(new JLabel("Imaging Path B"), "wrap");
       
       JLabel label = new JLabel(devices_.getDeviceDisplayGeneric(Devices.Keys.GALVOA) + ":");
       label.setToolTipText("Should be the first two axes on the MicroMirror card, usually AB");
       add (label);
-      boxScannerA_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.GalvoDevice,
+      final JComboBox boxScannerA_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.GalvoDevice,
             Devices.Keys.GALVOA, maxSelectorWidth);
       add(boxScannerA_);
-      boxScannerB_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.GalvoDevice,
+      final JComboBox boxScannerB_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.GalvoDevice,
             Devices.Keys.GALVOB, maxSelectorWidth);
       add(boxScannerB_, "wrap");
       
       add(new JLabel(devices_.getDeviceDisplayGeneric(Devices.Keys.PIEZOA) + ":"));
-      boxPiezoA_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
+      final JComboBox boxPiezoA_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
             Devices.Keys.PIEZOA, maxSelectorWidth);
       
       add(boxPiezoA_);
-      boxPiezoB_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
+      final JComboBox boxPiezoB_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
             Devices.Keys.PIEZOB, maxSelectorWidth);
       add(boxPiezoB_, "wrap");
 
       add(new JLabel("Camera:"));
-      boxCameraA_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERAA, maxSelectorWidth);
+      final JComboBox boxCameraA_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERAA, maxSelectorWidth);
       add(boxCameraA_);
-      boxCameraB_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERAB, maxSelectorWidth);
+      final JComboBox boxCameraB_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERAB, maxSelectorWidth);
       add(boxCameraB_, "wrap");
       
       add(new JLabel("Note: plugin must be restarted for some changes to take full effect."), "span 3");
@@ -146,6 +132,42 @@ public class DevicesPanel extends ListeningJPanel {
       
       JLabel imgLabel = new JLabel(new ImageIcon(getClass().getResource("/org/micromanager/asidispim/icons/diSPIM.png")));
       add(imgLabel, "cell 4 0 1 11, growy");
+      
+      // look for devices that we don't have selectors for
+      // in this case we also don't try to read device names from preferences
+      
+      // look for multi camera device
+      devices_.setMMDevice(Devices.Keys.MULTICAMERA, "");
+      StrVector strvDevices = core_.getLoadedDevicesOfType(mmcorej.DeviceType.CameraDevice);
+      for (int i = 0; i < strvDevices.size(); i++) {
+         // find all Multi-camera devices (strange to be more than one; just grab the first)
+         String test = strvDevices.get(i);
+         try {
+            if (core_.getDeviceLibrary(test).equals(Devices.Libraries.UTILITIES.toString()) &&
+                  core_.getDeviceDescription(test).equals("Combine multiple physical cameras into a single logical camera")) {
+               devices_.setMMDevice(Devices.Keys.MULTICAMERA, test);
+            }
+         } catch (Exception e) {
+            MyDialogUtils.showError("Ran into troubles looking for multi camera.");
+         }
+      }
+      
+      // look for TigerComm device
+      devices_.setMMDevice(Devices.Keys.TIGERCOMM, "");
+      strvDevices = core_.getLoadedDevicesOfType(mmcorej.DeviceType.HubDevice);
+      for (int i = 0; i < strvDevices.size(); i++) {
+         // find all TigerComm devices (strange to be more than one, just grab the first)
+         String test = strvDevices.get(i);
+         try {
+            if (core_.getDeviceLibrary(test).equals(Devices.Libraries.ASITIGER.toString()) &&
+                  core_.getDeviceDescription(test).equals("ASI TigerComm Hub (TG-1000)")) {
+               devices_.setMMDevice(Devices.Keys.TIGERCOMM, test);
+            }
+         } catch (Exception e) {
+            MyDialogUtils.showError("Ran into troubles looking for TigerComm.");
+         }
+      }
+      
       
       // turn on listeners again
       devices_.enableListeners(true);
