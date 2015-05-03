@@ -94,7 +94,7 @@ public class AutofocusUtils {
     *                            around the imaging center set in the setup panel (false)
     * @param sliceTiming - Data structure with current device timing setting
     * @param runAsynchronously - whether or not to run the function asynchronously
-    * @return piezo position (in microns) with best focus
+    * @return galvo slice position with best focus
     *
     */
    public double runFocus(
@@ -153,10 +153,14 @@ public class AutofocusUtils {
             final float imagingCenter = prefs_.getFloat(
                     MyStrings.PanelNames.SETUP.toString() + side.toString(),
                     Properties.Keys.PLUGIN_PIEZO_CENTER_POS, 0);
-            final double piezoPosition = positions_.getUpdatedPosition(piezoDevice);
+            final double originalPiezoPosition = positions_.getUpdatedPosition(piezoDevice);
             final double originalGalvoPosition = positions_.getUpdatedPosition(galvoDevice);
-            final double piezoCenter = centerAtCurrentZ ? piezoPosition : imagingCenter;
-
+            final double piezoCenter = centerAtCurrentZ ? originalPiezoPosition : imagingCenter;
+            
+            if (!centerAtCurrentZ) {
+               positions_.setPosition(piezoDevice, piezoCenter);
+            }
+            
             posUpdater_.pauseUpdates(true);
 
             // TODO: run this on its own thread
@@ -173,7 +177,7 @@ public class AutofocusUtils {
                     false, // useTimepoints
                     AcquisitionModes.Keys.SLICE_SCAN_ONLY, // scan only the mirror
                     centerAtCurrentZ,  // center around the current Z or the middle set in the setup panel
-                    100.0f, // delay before side (can go to 0?)
+                    0.0f, // delay before side (move piezo ahead of time so 0 delay should be OK with >100ms comm time) 
                     piezoStepSize, // piezoStepSize in microns, used in SLICE_SCAN_ONLY to compute slice movement
                     sliceTiming);
 
@@ -364,9 +368,11 @@ public class AutofocusUtils {
 
                   cameras_.setSPIMCamerasForAcquisition(false);
 
-                  // let the calling panel restore appropriate settings
-                  caller.refreshSelected();
-
+                  // move piezo back to original position if needed
+                  if (!centerAtCurrentZ) {
+                     positions_.setPosition(piezoDevice, originalPiezoPosition);
+                  }
+                  
                   // move galvo to maximal focus position if we found one
                   // if for some reason we were unsuccessful then restore to original position
                   if (highestIndex >= 0) {
@@ -374,6 +380,9 @@ public class AutofocusUtils {
                   } else {
                      positions_.setPosition(galvoDevice, Directions.Y, originalGalvoPosition);
                   }
+                  
+                  // let the calling panel restore appropriate settings
+                  caller.refreshSelected();
                      
                   posUpdater_.pauseUpdates(false);
 
@@ -384,7 +393,7 @@ public class AutofocusUtils {
                   }
 
                } catch (Exception ex) {
-                  throw new ASIdiSPIMException(ex, "Error while restoring hardware state");
+                  throw new ASIdiSPIMException(ex, "Error while restoring hardware state after autofocus.");
                }
             }
             return bestGalvoPosition;
