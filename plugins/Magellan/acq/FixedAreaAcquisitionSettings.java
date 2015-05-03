@@ -2,6 +2,7 @@ package acq;
 
 import channels.ChannelSetting;
 import bidc.FrameIntegrationMethod;
+import channels.ChannelUtils;
 import propsandcovariants.CovariantPairing;
 import propsandcovariants.CovariantPairingsManager;
 import java.util.ArrayList;
@@ -49,7 +50,8 @@ public class FixedAreaAcquisitionSettings  {
    public double tileOverlap_; //stored as percent * 100, i.e. 55 => 55%
    
    //channels
-   public ArrayList<ChannelSetting> channels_ = new ArrayList<ChannelSetting>();
+   public String channelGroup_;
+   public ArrayList<ChannelSetting> channels_ ;
    
    //Covarying props
    public ArrayList<CovariantPairing> covariantPairings_ = new ArrayList<CovariantPairing>();
@@ -84,7 +86,8 @@ public class FixedAreaAcquisitionSettings  {
       spaceMode_ = prefs.getInt(PREF_PREFIX + "SPACEMODE", 0);
       tileOverlap_ = prefs.getDouble(PREF_PREFIX + "TILEOVERLAP", 5);
       //channels
-      //TODO
+      channelGroup_ = prefs.get(PREF_PREFIX + "CHANNELGROUP", "");
+      channels_ = ChannelUtils.getAvailableChannels(channelGroup_);
       
       //autofocus
       autofocusMaxDisplacemnet_um_ =  prefs.getDouble(PREF_PREFIX + "AFMAXDISP", 0.0);
@@ -159,6 +162,9 @@ public class FixedAreaAcquisitionSettings  {
       prefs.putDouble(PREF_PREFIX + "ZDISTABOVETOP", distanceAboveTopSurface_);
       prefs.putInt(PREF_PREFIX + "SPACEMODE", spaceMode_);
       prefs.putDouble(PREF_PREFIX + "TILEOVERLAP", tileOverlap_);
+      //channels
+      prefs.put(PREF_PREFIX + "CHANNELGROUP", channelGroup_);
+      
       //autofocus
       prefs.putDouble(PREF_PREFIX + "AFMAXDISP", autofocusMaxDisplacemnet_um_);
       if (autofocusChannelName_ != null) {

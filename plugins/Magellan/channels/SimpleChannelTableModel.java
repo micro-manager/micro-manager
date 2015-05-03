@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
+import misc.GlobalSettings;
 import misc.Log;
 import mmcorej.CMMCore;
 import org.micromanager.MMStudio;
@@ -58,6 +59,10 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
 
    public void setChannelGroup(String group) {
       channelGroup_ = group;
+   }
+   
+   public void setChannels(ArrayList<ChannelSetting> channels) {
+      channels_ = channels;
    }
    
    public ArrayList<ChannelSetting> getChannels() {
@@ -130,11 +135,13 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
    @Override
    public void setValueAt(Object value, int row, int columnIndex) {
       //use name exposure, color  
+      int numCamChannels = (int) (GlobalSettings.getInstance().getDemoMode() ? 6 : core_.getNumberOfCameraChannels());
+      
       if (columnIndex == 0) {                   
          channels_.get(row).use_ = (Boolean) value;
          //same for all other channels of the same camera_
-         if (core_.getNumberOfCameraChannels() > 1) {
-            for (int i = (int) (row - row % core_.getNumberOfCameraChannels()); i < (row /core_.getNumberOfCameraChannels() + 1) * core_.getNumberOfCameraChannels();i++ ) {
+         if (numCamChannels > 1) {
+            for (int i = (int) (row - row % numCamChannels); i < (row /numCamChannels + 1) * numCamChannels;i++ ) {
                channels_.get(i).use_ = (Boolean) value;
             }
             fireTableDataChanged();
@@ -144,8 +151,8 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
       } else if (columnIndex == 2) {
          channels_.get(row).exposure_ = Double.parseDouble((String) value);
          //same for all other channels of the same camera_
-         if (core_.getNumberOfCameraChannels() > 1) {
-            for (int i = (int) (row - row % core_.getNumberOfCameraChannels()); i < (row / core_.getNumberOfCameraChannels() + 1) * core_.getNumberOfCameraChannels(); i++) {
+         if (numCamChannels > 1) {
+            for (int i = (int) (row - row % numCamChannels); i < (row / numCamChannels + 1) * numCamChannels; i++) {
                channels_.get(i).exposure_ = Double.parseDouble((String) value);
             }
             fireTableDataChanged();
@@ -172,6 +179,8 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
         }
         fireTableDataChanged();
     }
+
+
 
  }
 

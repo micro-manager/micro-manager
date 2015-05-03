@@ -5,14 +5,10 @@ import acq.ExploreAcquisition;
 import acq.FixedAreaAcquisition;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import ij.CompositeImage;
-import ij.IJ;
 import ij.ImagePlus;
-import ij.ImageStack;
 import ij.gui.StackWindow;
 import ij.measure.Calibration;
 import ij.util.Java2;
-import ij.util.Tools;
 import java.awt.*;
 import java.awt.event.*;
 import java.text.DecimalFormat;
@@ -299,9 +295,11 @@ public class DisplayWindow extends StackWindow {
          nonImagePanel_.add(controlsAndContrastPanel_, BorderLayout.CENTER);
          //expnd window to accomodate non image panel, provided there is space for it
          int screenWidth = Toolkit.getDefaultToolkit().getScreenSize().width;
-         if (disp_.getHyperImage().getCanvas().getWidth() + nonImagePanel_.getPreferredSize().width < screenWidth) {
-            DisplayWindow.this.setSize(new Dimension(nonImagePanel_.getPreferredSize().width
-                    + disp_.getHyperImage().getCanvas().getWidth(), DisplayWindow.this.getHeight()));
+         if (canvasPanel_.getWidth() + controlsAndContrastPanel_.getPreferredSize().width < screenWidth) {
+            DisplayWindow.this.setSize(new Dimension(controlsAndContrastPanel_.getPreferredSize().width
+                    + DisplayWindow.this.getWidth(), DisplayWindow.this.getHeight()));
+           
+            
             //move left so whole thing fits on screen if needed
             if (this.getWidth() + this.getLocationOnScreen().x > screenWidth) {
                this.setLocation(screenWidth - this.getWidth(), this.getLocation().y);

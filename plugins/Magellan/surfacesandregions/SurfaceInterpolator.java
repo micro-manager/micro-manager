@@ -21,6 +21,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
+import misc.Log;
 import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
 import org.apache.commons.math3.geometry.euclidean.twod.PolygonsSet;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
@@ -190,15 +191,16 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    
    public SingleResolutionInterpolation waitForCurentInterpolation() throws InterruptedException {
       synchronized (interpolationLock_) {
-         while (currentInterpolation_ == null) {
-            interpolationLock_.wait();
+         if (currentInterpolation_ == null) {
+            Log.log("waiting for current interpolation");
+            while (currentInterpolation_ == null) {
+               interpolationLock_.wait();
+            }
+            Log.log("interpolation ready");
+            return currentInterpolation_;
          }
          return currentInterpolation_;
       }
-   }
-   
-   public SingleResolutionInterpolation getCurrentInterpolation() {
-      return currentInterpolation_;
    }
 
    /**
@@ -206,7 +208,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
     * 
     * @return true if every part of position is above surface, false otherwise
     */
-   public boolean isPositionCompletelyAboveSurface(XYStagePosition pos, SurfaceInterpolator surface, double zPos) {
+   public boolean isPositionCompletelyAboveSurface(XYStagePosition pos, SurfaceInterpolator surface, double zPos) throws InterruptedException {
       return testPositionRelativeToSurface(pos, surface, zPos, true);
    }
   
@@ -215,16 +217,16 @@ public abstract class SurfaceInterpolator implements XYFootprint {
     *
     * @return true if every part of position is above surface, false otherwise
     */
-   public boolean isPositionCompletelyBelowSurface(XYStagePosition pos, SurfaceInterpolator surface, double zPos ) {
+   public boolean isPositionCompletelyBelowSurface(XYStagePosition pos, SurfaceInterpolator surface, double zPos ) throws InterruptedException {
       return testPositionRelativeToSurface(pos, surface, zPos, false); //no padding for testing below
    }
    
-   public static boolean testPositionRelativeToSurface(XYStagePosition pos, SurfaceInterpolator surface, double zPos, boolean above) {
+   public static boolean testPositionRelativeToSurface(XYStagePosition pos, SurfaceInterpolator surface, double zPos, boolean above) throws InterruptedException {
       //get the corners with padding added in
       Point2D.Double[] corners = getPositionCornersWithPadding(pos, surface.xyPadding_um_);
       //First check position corners before going into a more detailed set of test points
       for (Point2D.Double point : corners) {
-         Double interpVal = surface.getCurrentInterpolation().getInterpolatedValue(point.x, point.y, true);
+         Double interpVal = surface.waitForCurentInterpolation().getInterpolatedValue(point.x, point.y, true);
          if (interpVal == null) {
             continue;
          }
@@ -265,7 +267,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
             Point2D.Double stageCoords = new Point2D.Double();
             transform.transform(new Point2D.Double(x, y), stageCoords);
             //test point for inclusion of position
-            Double interpVal = surface.getCurrentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, true);
+            Double interpVal = surface.waitForCurentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, true);
             if (interpVal == null) {
                continue;
             }

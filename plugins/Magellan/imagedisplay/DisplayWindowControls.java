@@ -66,6 +66,8 @@ public class DisplayWindowControls extends Panel {
       });
       if (acq_ instanceof ExploreAcquisition) {
          tabbedPane_.setSelectedIndex(3); //explore tab
+      } else {
+         tabbedPane_.remove(3); //remove explore tab
       }
    }
    

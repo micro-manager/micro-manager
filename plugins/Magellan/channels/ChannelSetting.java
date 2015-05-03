@@ -34,24 +34,26 @@ public class ChannelSetting {
    public static final String DEFAULT_CHANNEL_GROUP = "Channel";
    public static final double Version = 1.0;
 
+   public String group_;
    public String name_ = ""; // Configuration setting name
    public double exposure_; // ms
    public Color color_;
-   public boolean use_ = true;  
-   public boolean uniqueEvent_;  
-   
-   public ChannelSetting(String name, double exposure, Color color, boolean use, boolean uniqueEvent){
+   public boolean use_ = true;
+   public boolean uniqueEvent_;
+
+   public ChannelSetting(String group, String name, double exposure, Color color, boolean use, boolean uniqueEvent) {
+      group_ = group;
       color_ = color;
       name_ = name;
       exposure_ = exposure;
       use_ = use;
       uniqueEvent_ = uniqueEvent; // true for only first on multichannel camera
    }
-   
+
    public ChannelSetting copy() {
-       return new ChannelSetting(name_, exposure_, new Color(color_.getRGB()), use_, uniqueEvent_);
+      return new ChannelSetting(group_, name_, exposure_, new Color(color_.getRGB()), use_, uniqueEvent_);
    }
-   
+
    /**
     * Serialize to JSON encoded string
     */

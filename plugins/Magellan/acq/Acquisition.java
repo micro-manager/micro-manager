@@ -49,9 +49,7 @@ public abstract class Acquisition implements AcquisitionEventSource{
    public Acquisition(double zStep, ArrayList<ChannelSetting> channels) throws Exception {
       xyStage_ = core_.getXYStageDevice();
       zStage_ = core_.getFocusDevice();
-      //TODO: change this to the correct way
-//      channels_ = channels;
-      channels_ = GUI.getInstance().getCurrentChannelsCopy();
+      channels_ = channels;
       //"postion" is not generic name..and as of right now there is now way of getting generic z positions
       //from a z deviec in MM
       String positionName = "Position";
@@ -105,9 +103,8 @@ public abstract class Acquisition implements AcquisitionEventSource{
 
    public abstract int getSliceIndexFromZCoordinate(double z);
 
-   //TODO: change this when number of channels acutally implemented
    public int getNumChannels() {
-      return (int) MMStudio.getInstance().getCore().getNumberOfCameraChannels();
+      return channels_.size();
    }
    
    public boolean isFinished() {
@@ -188,33 +185,19 @@ public abstract class Acquisition implements AcquisitionEventSource{
 
    
    public String[] getChannelNames() {
-//      String[] names = new String[channels_.size()];
-//      for (int i = 0; i < names.length; i++) {
-//         names[i] = channels_.get(i).name_;
-//      }
-//      return names;
-       //TODO: change
-        String[] names = new String[GUI.getInstance().getCurrentChannelsCopy().size()];
+      String[] names = new String[channels_.size()];
       for (int i = 0; i < names.length; i++) {
-         names[i] = GUI.getInstance().getCurrentChannelsCopy().get(i).name_;
+         names[i] = channels_.get(i).name_;
       }
-      return names;
-       
+      return names; 
    }
    
     public Color[] getChannelColors() {
-//      Color[] colors = new Color[channels_.size()];
-//      for (int i = 0; i < colors.length; i++) {
-//         colors[i] = channels_.get(i).color_;
-//      }
-//      return colors;
-        //TODO fix
-        Color[] colors = new Color[GUI.getInstance().getCurrentChannelsCopy().size()];
-        for (int i = 0; i < colors.length; i++) {
-            colors[i] = GUI.getInstance().getCurrentChannelsCopy().get(i).color_;
-        }
-        return colors;
-
+      Color[] colors = new Color[channels_.size()];
+      for (int i = 0; i < colors.length; i++) {
+         colors[i] = channels_.get(i).color_;
+      }
+      return colors;
     }
 
 }

@@ -132,7 +132,7 @@ public class SurfaceData implements Covariant {
       }
    }
 
-    private double lnOptimalDistance(XYStagePosition xyPos, double zPosition) {
+    private double lnOptimalDistance(XYStagePosition xyPos, double zPosition) throws InterruptedException {
         // a special measure for curved surfaces, which gives:
         //-min distance at surface on flatter parts of curved surface (ie top)
         //-increased distance up to max distance as you go deeper
@@ -163,7 +163,7 @@ public class SurfaceData implements Covariant {
     * @param min true to get min, false to get max
     * @return {minDistance,maxDistance, minNormalAngle, maxNormalAngle)
     */
-   private double[] distanceAndNormalCalc(Point2D.Double[] corners, double zVal) {      
+   private double[] distanceAndNormalCalc(Point2D.Double[] corners, double zVal) throws InterruptedException {      
       //check a grid of points spanning entire position        
       //square is aligned with axes in pixel space, so convert to pixel space to generate test points
       double xSpan = corners[2].getX() - corners[0].getX();
@@ -191,13 +191,13 @@ public class SurfaceData implements Covariant {
             Point2D.Double stageCoords = new Point2D.Double();
             transform.transform(new Point2D.Double(x, y), stageCoords);
             //test point for inclusion of position
-            Double interpVal = surface_.getCurrentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, false);
-            double normalAngle = surface_.getCurrentInterpolation().getNormalAngleToVertical(stageCoords.x, stageCoords.y);
+            Double interpVal = surface_.waitForCurentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, false);
+            double normalAngle = surface_.waitForCurentInterpolation().getNormalAngleToVertical(stageCoords.x, stageCoords.y);
             if (interpVal == null) {
                //if position is outside of convex hull, assume min distance is 0
                minDistance = 0;
                //get extrapolated value for max distance
-               interpVal = surface_.getCurrentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, true);
+               interpVal = surface_.waitForCurentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, true);
                maxDistance = Math.max(zVal - interpVal, maxDistance);
                //only take actual values for normals
             } else {
@@ -211,14 +211,14 @@ public class SurfaceData implements Covariant {
       return new double[]{minDistance, maxDistance, minNormalAngle, maxNormalAngle};
    }
 
-    private Double getDistanceToSurfaceAtPositionCenter(XYStagePosition xyPos) {
+    private Double getDistanceToSurfaceAtPositionCenter(XYStagePosition xyPos) throws InterruptedException {
         Point2D.Double center = xyPos.getCenter();
-        SingleResolutionInterpolation interp = surface_.getCurrentInterpolation();
+        SingleResolutionInterpolation interp = surface_.waitForCurentInterpolation();
         return interp.getInterpolatedValue(center.x, center.y, false);
     }
    
    @Override
-   public CovariantValue getCurrentValue(AcquisitionEvent event) {
+   public CovariantValue getCurrentValue(AcquisitionEvent event) throws Exception {
       XYStagePosition xyPos = event.xyPosition_;
       if (category_.equals(DISTANCE_BELOW_SURFACE_CENTER)) {
          //if interpolation is undefined at position center, assume distance below is 0
@@ -231,7 +231,7 @@ public class SurfaceData implements Covariant {
       } else if (category_.equals(LN_OPTIMAL_DISTANCE)) {
           return new CovariantValue(lnOptimalDistance(xyPos, event.zPosition_));
       } else {
-         ReportingUtils.showError("Unknown Surface data type");
+         Log.log("Unknown Surface data type");
          throw new RuntimeException();
       }
    }  

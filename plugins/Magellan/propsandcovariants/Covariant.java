@@ -40,7 +40,7 @@ public interface Covariant {
     */
    public CovariantValue getValidValue(List<CovariantValue> vals);
 
-   public CovariantValue getCurrentValue(AcquisitionEvent evt);
+   public CovariantValue getCurrentValue(AcquisitionEvent evt) throws Exception;
 
    public void updateHardwareToValue(CovariantValue dVal) throws Exception;
    

@@ -225,7 +225,8 @@ public class FixedAreaAcquisition extends Acquisition {
     * @throws InterruptedException if acq aborted while waiting for next TP
     */
    private void pauseUntilReadyForTP() throws InterruptedException {
-         //Pause here bfore next time point starts
+      Log.log(getName() + " Pausing until ready for TP");   
+      //Pause here bfore next time point starts
          long timeUntilNext = nextTimePointStartTime_ms_ - System.currentTimeMillis();
          if (timeUntilNext > 0) {
             //wait for enough time to pass and parallel group to signal ready
@@ -251,6 +252,7 @@ public class FixedAreaAcquisition extends Acquisition {
             startNextTPLatch_.await();
             startNextTPLatch_ = new CountDownLatch(1);
          }
+         Log.log(getName() + " Pause before TP complete");
 
    }
 
@@ -260,7 +262,7 @@ public class FixedAreaAcquisition extends Acquisition {
          @Override
          public void run() {
             try {
-                     //TODO: check signs for all of these
+               //TODO: check signs for all of these
                //get highest possible z position to image, which is slice index 0
                zTop_ = getZTopCoordinate();
                nextTimePointStartTime_ms_ = 0;
@@ -274,6 +276,7 @@ public class FixedAreaAcquisition extends Acquisition {
                   }
                   
                   //set autofocus position
+                  Log.log(getName() + "Setting SF position");
                   if (settings_.autofocusEnabled_ && timeIndex > 1) { //read it from settings so that you can turn it off during acq
                      events_.put(AcquisitionEvent.createAutofocusEvent(settings_.autoFocusZDevice_, autofocus_.getAutofocusPosition()));
                   } else if (settings_.autofocusEnabled_ && timeIndex <= 1 && settings_.setInitialAutofocusPosition_) {

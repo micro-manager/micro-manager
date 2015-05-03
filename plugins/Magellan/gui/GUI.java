@@ -307,11 +307,7 @@ public class GUI extends javax.swing.JFrame {
         return null;
     }
     
-    public static  GUI getInstance() {
-        return singleton_;
-    }
-    
-    public ArrayList<ChannelSetting> getCurrentChannelsCopy() {
+    private ArrayList<ChannelSetting> getCurrentChannelsCopy() {
          ArrayList<ChannelSetting> list = new ArrayList<ChannelSetting>();
         for (ChannelSetting c : ((SimpleChannelTableModel)channelsTable_.getModel()).getChannels() ) {
             list.add(c.copy());
@@ -464,8 +460,8 @@ public class GUI extends javax.swing.JFrame {
             settings.spaceMode_ = FixedAreaAcquisitionSettings.NO_SPACE;
         }
         //channels
-       //TODO
-        
+        settings.channelGroup_ = (String) ChannelGroupCombo_.getSelectedItem();
+        settings.channels_ = getCurrentChannelsCopy();
         
         //autofocus
         settings.autofocusEnabled_ = useAutofocusCheckBox_.isSelected();
@@ -519,8 +515,12 @@ public class GUI extends javax.swing.JFrame {
         volumeBetweenFootprintCombo_.setSelectedIndex(settings.useTopOrBottomFootprint_);
         fixedDistanceSurfaceComboBox_.setSelectedItem(settings.fixedSurface_);
         footprint2DComboBox_.setSelectedItem(settings.footprint_);
+        
         //channels
-
+        ChannelGroupCombo_.setSelectedItem(settings.channelGroup_);
+        ((SimpleChannelTableModel) channelsTable_.getModel()).setChannelGroup(settings.channelGroup_);
+        ((SimpleChannelTableModel) channelsTable_.getModel()).setChannels(settings.channels_);
+        
         //autofocus
         useAutofocusCheckBox_.setSelected(settings.autofocusEnabled_);
         autofocusChannelCombo_.setSelectedItem(settings.autofocusChannelName_);
