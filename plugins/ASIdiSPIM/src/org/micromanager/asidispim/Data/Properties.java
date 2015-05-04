@@ -76,6 +76,7 @@ public class Properties {
       SPIM_NUM_REPEATS("SPIMNumRepeats"),
       SPIM_DELAY_REPEATS("SPIMDelayBeforeRepeat(ms)"),
       SPIM_NUM_SCANSPERSLICE("SPIMNumScansPerSlice"),
+      SPIM_INTERLEAVE_SIDES("SPIMInterleaveSidesEnable"),
       SPIM_NUM_SLICES_PER_PIEZO("SPIMNumSlicesPerPiezo"),
       SPIM_LINESCAN_PERIOD("SingleAxisXPeriod(ms)"),
       SPIM_DELAY_SIDE("SPIMDelayBeforeSide(ms)"),

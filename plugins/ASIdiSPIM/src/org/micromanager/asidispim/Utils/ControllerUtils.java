@@ -432,6 +432,13 @@ public class ControllerUtils {
          }
       }
       
+      // set interleaved sides flag low unless we are doing interleaved stage scan
+      if (spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED) {
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_INTERLEAVE_SIDES, Properties.Values.YES);
+      } else {
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_INTERLEAVE_SIDES, Properties.Values.NO);
+      }
+      
       return true;
    }
    
