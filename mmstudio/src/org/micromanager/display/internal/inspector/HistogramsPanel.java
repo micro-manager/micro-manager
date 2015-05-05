@@ -93,9 +93,12 @@ public final class HistogramsPanel extends InspectorPanel {
    public static final Color[] RGB_COLORS = new Color[] {
          Color.RED, Color.GREEN, Color.BLUE, Color.CYAN, Color.MAGENTA,
          Color.YELLOW, Color.WHITE};
-   public static final Color[] MGB_COLORS = new Color[] {
-         Color.MAGENTA, Color.GREEN, Color.BLUE, Color.YELLOW, Color.RED,
-         Color.CYAN, Color.WHITE};
+   // Colors adapted from table at
+   // http://www.nature.com/nmeth/journal/v8/n6/full/nmeth.1618.html
+   public static final Color[] COLORBLIND_COLORS = new Color[] {
+         new Color(0, 114, 178), new Color(230, 159, 0),
+         new Color(0, 158, 115), Color.RED, Color.CYAN, Color.YELLOW,
+         Color.WHITE};
    private static final int GRAYSCALE = 0;
    private static final int COLOR = 1;
    private static final int COMPOSITE = 2;
@@ -111,6 +114,7 @@ public final class HistogramsPanel extends InspectorPanel {
    private HashMap<DisplayWindow, ArrayList<ChannelControlPanel>> displayToPanels_;
    // The current active (displayed) set of histograms.
    private ArrayList<ChannelControlPanel> channelPanels_;
+   private Object panelLock_ = new Object();
    private Datastore store_;
    private DefaultDisplayWindow display_;
    private MMVirtualStack stack_;
@@ -135,9 +139,11 @@ public final class HistogramsPanel extends InspectorPanel {
    // datastore for events.
    private void setupDisplay(DisplayWindow display) {
       displayToPanels_.put(display, new ArrayList<ChannelControlPanel>());
-      // Check the display to see how many histograms it needs at the start.
-      for (int i = 0; i < display.getDatastore().getAxisLength(Coords.CHANNEL); ++i) {
-         addPanel((DefaultDisplayWindow) display, i);
+      synchronized(panelLock_) {
+         // Check the display to see how many histograms it needs at the start.
+         for (int i = 0; i < display.getDatastore().getAxisLength(Coords.CHANNEL); ++i) {
+            addPanel((DefaultDisplayWindow) display, i);
+         }
       }
       display.registerForEvents(this);
       display.getDatastore().registerForEvents(this);
@@ -389,9 +395,13 @@ public final class HistogramsPanel extends InspectorPanel {
          Datastore store = event.getDatastore();
          List<DisplayWindow> displays = DisplayGroupManager.getDisplaysForDatastore(store);
          for (DisplayWindow display : displays) {
+            if (display.getDatastore() != store) {
+               continue;
+            }
             ArrayList<ChannelControlPanel> panels = displayToPanels_.get(display);
-            if (display.getDatastore() == store) {
-               while (event.getImage().getCoords().getIndex("channel") >= panels.size()) {
+            synchronized(panelLock_) {
+               Coords imageCoords = event.getImage().getCoords();
+               while (imageCoords.getChannel() >= panels.size()) {
                   // Need to add a new channel histogram. Note that this will
                   // modify the "panels" object's length, incrementing the
                   // value returned by panels.size() here and ensuring the
@@ -495,11 +505,11 @@ public final class HistogramsPanel extends InspectorPanel {
             display_.setDisplaySettings(newSettings);
          }
       });
-      JCheckBoxMenuItem mgb = new JCheckBoxMenuItem("MGBYRCW");
-      mgb.addActionListener(new ActionListener() {
+      JCheckBoxMenuItem colorblind = new JCheckBoxMenuItem("Colorblind-friendly");
+      colorblind.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            DisplaySettings newSettings = settings.copy().channelColors(MGB_COLORS).build();
+            DisplaySettings newSettings = settings.copy().channelColors(COLORBLIND_COLORS).build();
             display_.setDisplaySettings(newSettings);
          }
       });
@@ -509,35 +519,35 @@ public final class HistogramsPanel extends InspectorPanel {
       Color[] channelColors = settings.getChannelColors();
       if (channelColors != null) {
          boolean isRGB = true;
-         boolean isMGB = true;
+         boolean isColorblind = true;
          for (int i = 0; i < channelColors.length; ++i) {
             if (channelColors[i] == null) {
                isRGB = false;
-               isMGB = false;
+               isColorblind = false;
                break;
             }
             if (!channelColors[i].equals(RGB_COLORS[i])) {
                isRGB = false;
             }
-            if (!channelColors[i].equals(MGB_COLORS[i])) {
-               isMGB = false;
+            if (!channelColors[i].equals(COLORBLIND_COLORS[i])) {
+               isColorblind = false;
             }
          }
          if (isRGB) {
             rgb.setState(true);
          }
-         else if (isMGB) {
-            mgb.setState(true);
+         else if (isColorblind) {
+            colorblind.setState(true);
          }
          else {
             custom.setState(true);
          }
       }
       // else TODO: if there's no colors, our defaults (per
-      // ChannelControlPanel) are the MGB set, so that option ought to be
-      // checked, but should this module really know about that?
+      // ChannelControlPanel) are the Colorblind set, so that option ought to
+      // be checked, but should this module really know about that?
       displayMode.add(rgb);
-      displayMode.add(mgb);
+      displayMode.add(colorblind);
       displayMode.add(custom);
       result.add(displayMode);
 

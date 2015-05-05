@@ -619,10 +619,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          histRangeComboBox_.setSelectedIndex(bitDepthIndices[channelIndex_]);
       }
       // HACK: use a color based on the channel index: specifically, use the
-      // MGB color set.
+      // colorblind-friendly color set.
       Color defaultColor = Color.WHITE;
-      if (channelIndex_ < HistogramsPanel.MGB_COLORS.length) {
-         defaultColor = HistogramsPanel.MGB_COLORS[channelIndex_];
+      if (channelIndex_ < HistogramsPanel.COLORBLIND_COLORS.length) {
+         defaultColor = HistogramsPanel.COLORBLIND_COLORS[channelIndex_];
       }
       ChannelSettings channelSettings = ChannelSettings.loadSettings(
             name_, store_.getSummaryMetadata().getChannelGroup(),
