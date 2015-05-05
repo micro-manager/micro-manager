@@ -741,13 +741,6 @@ ZeissScope::ZeissScope() :
 
 ZeissScope::~ZeissScope() 
 {
-   if (g_hub.monitoringThread_ != 0) {
-      g_hub.monitoringThread_->Stop();
-      g_hub.monitoringThread_->wait();
-      delete g_hub.monitoringThread_;
-      g_hub.monitoringThread_ = 0;
-   }
-   g_hub.scopeInitialized_ = false;
    Shutdown();
 }
 
@@ -810,6 +803,13 @@ int ZeissScope::Initialize()
 
 int ZeissScope::Shutdown() 
 {
+   if (g_hub.monitoringThread_ != 0) {
+      g_hub.monitoringThread_->Stop();
+      g_hub.monitoringThread_->wait();
+      delete g_hub.monitoringThread_;
+      g_hub.monitoringThread_ = 0;
+   }
+   g_hub.scopeInitialized_ = false;
    return 0;
 }
 
