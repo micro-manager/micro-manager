@@ -38,6 +38,7 @@
 #include "FloatProperty.h"
 #include "AOIProperty.h"
 #include "BooleanProperty.h"
+#include "ExposureProperty.h"
 
 #ifdef _WINDOWS
 #include "atunpacker.h"
@@ -572,8 +573,9 @@ int CAndorSDK3Camera::Initialize()
    overlap_property = new TBooleanProperty(TAndorSDK3Strings::OVERLAP, cameraDevice->GetBool(L"Overlap"),
                                            callbackManager_, false);
 
-   exposureTime_property = new TFloatProperty(MM::g_Keyword_Exposure,
+   exposureTime_property = new TExposureProperty(MM::g_Keyword_Exposure,
                                        new TAndorFloatValueMapper(cameraDevice->GetFloat(L"ExposureTime"), 1000),
+                                       cameraDevice->GetFloat(L"ReadoutTime"),
                                        callbackManager_, false, false);
    
    frameRateLimits_property = new TFloatStringProperty(TAndorSDK3Strings::FRAME_RATE_LIMITS, 

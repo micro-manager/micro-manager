@@ -170,6 +170,7 @@
     <ClCompile Include="CallBackManager.cpp" />
     <ClCompile Include="EnumProperty.cpp" />
     <ClCompile Include="EventsManager.cpp" />
+    <ClCompile Include="ExposureProperty.cpp" />
     <ClCompile Include="FloatProperty.cpp" />
     <ClCompile Include="IntegerProperty.cpp" />
     <ClCompile Include="SnapShotControl.cpp" />
@@ -184,6 +185,7 @@
     <ClInclude Include="CallBackManager.h" />
     <ClInclude Include="EnumProperty.h" />
     <ClInclude Include="EventsManager.h" />
+    <ClInclude Include="ExposureProperty.h" />
     <ClInclude Include="FloatProperty.h" />
     <ClInclude Include="IntegerProperty.h" />
     <ClInclude Include="SnapShotControl.h" />

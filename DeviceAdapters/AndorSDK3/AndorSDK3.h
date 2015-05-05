@@ -49,6 +49,7 @@ namespace andor {
 class TEnumProperty;
 class TIntegerProperty;
 class TFloatProperty;
+class TExposureProperty;
 class TFloatStringProperty;
 class TBooleanProperty;
 class TAOIProperty;
@@ -181,7 +182,7 @@ private:
    TEnumProperty* fanSpeed_property;
    TBooleanProperty* spuriousNoiseFilter_property;
    TBooleanProperty* rollingShutterGlobalClear_property;
-   TFloatProperty* exposureTime_property;
+   TExposureProperty* exposureTime_property;
    TFloatProperty* frameRate_property;
    TFloatStringProperty* frameRateLimits_property;
    TEnumProperty* auxOutSignal_property;
