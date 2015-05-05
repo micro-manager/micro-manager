@@ -29,6 +29,9 @@
 
 namespace IIDC {
 
+PixelFormat PixelFormatForLibDC1394ColorCoding(dc1394color_coding_t coding);
+
+
 class VideoMode
 {
    dc1394video_mode_t libdc1394mode_;
@@ -45,6 +48,8 @@ protected:
    { width_ = width; height_ = height; }
    void SetLibDC1394Coding(dc1394color_coding_t coding)
    { libdc1394coding_ = coding; }
+
+   virtual std::string GetColorCodingName() const;
 
 public:
    virtual ~VideoMode() {}

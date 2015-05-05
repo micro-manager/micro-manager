@@ -25,20 +25,44 @@
 namespace IIDC {
 
 PixelFormat
+PixelFormatForLibDC1394ColorCoding(dc1394color_coding_t coding)
+{
+   switch (coding)
+   {
+      case DC1394_COLOR_CODING_MONO8: return PixelFormatGray8;
+      case DC1394_COLOR_CODING_MONO16: return PixelFormatGray16;
+      case DC1394_COLOR_CODING_YUV444: return PixelFormatYUV444;
+      case DC1394_COLOR_CODING_YUV422: return PixelFormatYUV422;
+      case DC1394_COLOR_CODING_YUV411: return PixelFormatYUV411;
+      case DC1394_COLOR_CODING_RGB8: return PixelFormatRGB8;
+      default: return PixelFormatUnsupported;
+   }
+}
+
+
+std::string
+VideoMode::GetColorCodingName() const
+{
+   switch (GetLibDC1394Coding())
+   {
+      case DC1394_COLOR_CODING_MONO8: return "Mono8";
+      case DC1394_COLOR_CODING_MONO16: return "Mono16";
+      case DC1394_COLOR_CODING_YUV444: return "YUV444";
+      case DC1394_COLOR_CODING_YUV422: return "YUV422";
+      case DC1394_COLOR_CODING_YUV411: return "YUV411";
+      case DC1394_COLOR_CODING_RGB8: return "RGB8";
+      case DC1394_COLOR_CODING_RGB16: return "RGB16";
+      case DC1394_COLOR_CODING_RAW8: return "Raw8";
+      case DC1394_COLOR_CODING_RAW16: return "Raw16";
+      default: return "(unsupported)";
+   }
+}
+
+
+PixelFormat
 VideoMode::GetPixelFormat() const
 {
-   switch (libdc1394coding_)
-   {
-      case DC1394_COLOR_CODING_MONO8:
-         return PixelFormatGray8;
-         break;
-      case DC1394_COLOR_CODING_MONO16:
-         return PixelFormatGray16;
-         break;
-      default:
-         return PixelFormatUnsupported;
-         break;
-   }
+   return PixelFormatForLibDC1394ColorCoding(libdc1394coding_);
 }
 
 
@@ -52,7 +76,7 @@ ConventionalVideoMode::ConventionalVideoMode(dc1394camera_t* libdc1394camera,
    if (err != DC1394_SUCCESS)
       throw Error(err, "Cannot get image size from video mode");
    SetImageSize(width, height);
-   
+
    dc1394color_coding_t libdc1394coding;
    err = dc1394_get_color_coding_from_video_mode(libdc1394camera, libdc1394mode, &libdc1394coding);
    if (err != DC1394_SUCCESS)
@@ -104,24 +128,10 @@ ConventionalVideoMode::ToString() const
       boost::lexical_cast<std::string>(modeNr) + "]" :
       "[?-?]";
 
-   std::string colorCodingName;
-   switch (GetLibDC1394Coding())
-   {
-      case DC1394_COLOR_CODING_MONO8:
-         colorCodingName = "Mono8";
-         break;
-      case DC1394_COLOR_CODING_MONO16:
-         colorCodingName = "Mono16";
-         break;
-      default:
-         colorCodingName = "(unsupported)";
-         break;
-   }
-
    return formatModeStr + " " +
       boost::lexical_cast<std::string>(GetMaxWidth()) + "x" +
       boost::lexical_cast<std::string>(GetMaxHeight()) + " " +
-      colorCodingName;
+      GetColorCodingName();
 }
 
 
@@ -130,24 +140,10 @@ Format7VideoMode::ToString() const
 {
    int modeNr = static_cast<int>(GetLibDC1394Mode()) - DC1394_VIDEO_MODE_FORMAT7_MIN;
 
-   std::string colorCodingName;
-   switch (GetLibDC1394Coding())
-   {
-      case DC1394_COLOR_CODING_MONO8:
-         colorCodingName = "Mono8";
-         break;
-      case DC1394_COLOR_CODING_MONO16:
-         colorCodingName = "Mono16";
-         break;
-      default:
-         colorCodingName = "(unsupported)";
-         break;
-   }
-
    return "[f7-m" + boost::lexical_cast<std::string>(modeNr) + "] " +
       boost::lexical_cast<std::string>(GetMaxWidth()) + "x" +
       boost::lexical_cast<std::string>(GetMaxHeight()) + " " +
-      colorCodingName;
+      GetColorCodingName();
 }
 
 } // namespace

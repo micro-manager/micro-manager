@@ -47,6 +47,10 @@ enum PixelFormat
    PixelFormatUnsupported,
    PixelFormatGray8,
    PixelFormatGray16,
+   PixelFormatYUV444,
+   PixelFormatYUV422,
+   PixelFormatYUV411,
+   PixelFormatRGB8,
 };
 
 

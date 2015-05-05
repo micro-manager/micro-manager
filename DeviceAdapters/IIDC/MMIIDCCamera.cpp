@@ -23,6 +23,7 @@
 
 #include "MMIIDCCamera.h"
 
+#include "IIDCConvert.h"
 #include "IIDCError.h"
 #include "IIDCFeature.h"
 #include "IIDCVideoMode.h"
@@ -179,6 +180,23 @@ inline void RightShift16InPlace(uint16_t* samples, size_t count, unsigned shift)
 {
    for (size_t i = 0; i < count; ++i)
       samples[i] >>= shift;
+}
+
+
+/*
+ * Convert to Micro-Manager's idiosyncratic RGB format
+ */
+inline void RGB24To32(uint8_t* dst, const uint8_t* src, size_t count)
+{
+   for (size_t i = 0; i < count; ++i)
+   {
+      // I seem to be getting BGR from images converted from iSight YUV422
+      // format on OS X. Would be nice to confirm with other cameras and OSs.
+      dst[4 * i + 0] = src[3 * i + 2];
+      dst[4 * i + 1] = src[3 * i + 1];
+      dst[4 * i + 2] = src[3 * i + 0];
+      dst[4 * i + 3] = 0;
+   }
 }
 
 } // anonymous namespace
@@ -518,6 +536,35 @@ MMIIDCCamera::GetImageBytesPerPixel() const
             return 1;
          case IIDC::PixelFormatGray16:
             return 2;
+         case IIDC::PixelFormatYUV444:
+         case IIDC::PixelFormatYUV422:
+         case IIDC::PixelFormatYUV411:
+         case IIDC::PixelFormatRGB8:
+            return 4; // This indicates RGB_ to Micro-Manager
+         default:
+            return 0; // Unsupported format
+      }
+   }
+   CATCH_AND_LOG_ERROR
+   return 0;
+}
+
+
+unsigned
+MMIIDCCamera::GetNumberOfComponents() const
+{
+   try
+   {
+      switch (currentVideoMode_->GetPixelFormat())
+      {
+         case IIDC::PixelFormatGray8:
+         case IIDC::PixelFormatGray16:
+            return 1;
+         case IIDC::PixelFormatYUV444:
+         case IIDC::PixelFormatYUV422:
+         case IIDC::PixelFormatYUV411:
+         case IIDC::PixelFormatRGB8:
+            return 4;
          default:
             return 0; // Unsupported format
       }
@@ -945,6 +992,10 @@ MMIIDCCamera::InitializeVideoMode()
       {
          case IIDC::PixelFormatGray8:
          case IIDC::PixelFormatGray16:
+         case IIDC::PixelFormatYUV444:
+         case IIDC::PixelFormatYUV422:
+         case IIDC::PixelFormatYUV411:
+         case IIDC::PixelFormatRGB8:
             videoModes_.push_back(mode);
             LogMessage("Video mode [" + mode->ToString() + "]: supported", true);
             break;
@@ -1338,6 +1389,8 @@ void
 MMIIDCCamera::SnapCallback(const void* pixels, size_t width, size_t height, IIDC::PixelFormat format)
 {
    size_t bytesPerPixel;
+   bool isRGB = false;
+   bool doConvertColor = false;
    switch (format)
    {
       case IIDC::PixelFormatGray8:
@@ -1346,6 +1399,20 @@ MMIIDCCamera::SnapCallback(const void* pixels, size_t width, size_t height, IIDC
 
       case IIDC::PixelFormatGray16:
          bytesPerPixel = 2;
+         break;
+
+      case IIDC::PixelFormatYUV444:
+      case IIDC::PixelFormatYUV422:
+      case IIDC::PixelFormatYUV411:
+         bytesPerPixel = 4;
+         isRGB = true;
+         doConvertColor = true;
+         break;
+
+      case IIDC::PixelFormatRGB8:
+         bytesPerPixel = 4;
+         isRGB = true;
+         doConvertColor = false;
          break;
 
       default:
@@ -1355,16 +1422,53 @@ MMIIDCCamera::SnapCallback(const void* pixels, size_t width, size_t height, IIDC
    size_t bufferSize = width * height * bytesPerPixel;
    snappedPixels_.reset(new unsigned char[bufferSize]);
 
-   if (HostIsLittleEndian() && bytesPerPixel == 2)
-      ByteSwap16(reinterpret_cast<uint16_t*>(snappedPixels_.get()),
-            reinterpret_cast<const uint16_t*>(pixels), width * height);
+   if (isRGB)
+   {
+      const void* rgb24Pixels;
+      boost::scoped_array<uint8_t> converted;
+      if (doConvertColor)
+      {
+         converted.reset(new uint8_t[width * height * 3]);
+         IIDC::ConvertToRGB8(converted.get(),
+               reinterpret_cast<const uint8_t*>(pixels),
+               width, height, format);
+         rgb24Pixels = converted.get();
+      }
+      else
+      {
+         rgb24Pixels = pixels;
+      }
+      RGB24To32(snappedPixels_.get(),
+            reinterpret_cast<const uint8_t*>(rgb24Pixels), width * height);
+   }
    else
-      std::memcpy(snappedPixels_.get(), pixels, bufferSize);
+   {
+      if (HostIsLittleEndian() && bytesPerPixel == 2)
+         ByteSwap16(reinterpret_cast<uint16_t*>(snappedPixels_.get()),
+               reinterpret_cast<const uint16_t*>(pixels), width * height);
+      else
+         std::memcpy(snappedPixels_.get(), pixels, bufferSize);
+
+      /*
+       * Some cameras return 16-bit samples MSB-aligned. If the user has
+       * requested, convert to normal LSB-aligned samples.
+       */
+      bool doRightShift = (bytesPerPixel == 2);
+      {
+         boost::lock_guard<boost::mutex> g(sampleProcessingMutex_);
+         doRightShift = doRightShift && rightShift16BitSamples_;
+      }
+      if (doRightShift)
+      {
+         unsigned shift = 16 - cachedBitsPerSample_;
+         RightShift16InPlace(reinterpret_cast<uint16_t*>(snappedPixels_.get()),
+               width * height, shift);
+      }
+   }
 
    snappedWidth_ = width;
    snappedHeight_ = height;
    snappedBytesPerPixel_ = bytesPerPixel;
-   snappedPixelFormat_ = format;
 }
 
 
@@ -1372,6 +1476,8 @@ void
 MMIIDCCamera::SequenceCallback(const void* pixels, size_t width, size_t height, IIDC::PixelFormat format)
 {
    size_t bytesPerPixel;
+   bool isRGB = false;
+   bool doConvertColor = false;
    switch (format)
    {
       case IIDC::PixelFormatGray8:
@@ -1382,42 +1488,85 @@ MMIIDCCamera::SequenceCallback(const void* pixels, size_t width, size_t height, 
          bytesPerPixel = 2;
          break;
 
+      case IIDC::PixelFormatYUV444:
+      case IIDC::PixelFormatYUV422:
+      case IIDC::PixelFormatYUV411:
+         bytesPerPixel = 4;
+         isRGB = true;
+         doConvertColor = true;
+         break;
+
+      case IIDC::PixelFormatRGB8:
+         bytesPerPixel = 4;
+         isRGB = true;
+         doConvertColor = false;
+         break;
+
       default:
          BOOST_THROW_EXCEPTION(Error("Unsupported pixel format"));
    }
 
+   boost::scoped_array<uint8_t> converted;
+   boost::scoped_array<uint8_t> fourthChanAdded;
    boost::scoped_array<uint16_t> swapped;
-   if (HostIsLittleEndian() && bytesPerPixel == 2)
-   {
-      swapped.reset(new uint16_t[width * height]);
-      ByteSwap16(swapped.get(), reinterpret_cast<const uint16_t*>(pixels), width * height);
-      pixels = swapped.get();
-   }
-
-   /*
-    * Some cameras return 16-bit samples MSB-aligned. If the user has
-    * requested, convert to normal LSB-aligned samples.
-    */
    boost::scoped_array<uint16_t> shifted;
-   bool doRightShift = (bytesPerPixel == 2);
+
+   if (isRGB)
    {
-      boost::lock_guard<boost::mutex> g(sampleProcessingMutex_);
-      doRightShift = doRightShift && rightShift16BitSamples_;
-   }
-   if (doRightShift)
-   {
-      unsigned shift = 16 - cachedBitsPerSample_;
-      if (swapped) // Reuse the buffer
+      const void* rgb24Pixels;
+      if (doConvertColor)
       {
-         shifted.swap(swapped);
-         RightShift16InPlace(shifted.get(), width * height, shift);
+         converted.reset(new uint8_t[width * height * 3]);
+         IIDC::ConvertToRGB8(converted.get(),
+               reinterpret_cast<const uint8_t*>(pixels),
+               width, height, format);
+         rgb24Pixels = converted.get();
       }
       else
       {
-         shifted.reset(new uint16_t[width * height]);
-         RightShift16(shifted.get(), reinterpret_cast<const uint16_t*>(pixels), width * height, shift);
+         rgb24Pixels = pixels;
       }
-      pixels = shifted.get();
+      fourthChanAdded.reset(new uint8_t[width * height * 4]);
+      RGB24To32(fourthChanAdded.get(),
+            reinterpret_cast<const uint8_t*>(rgb24Pixels), width * height);
+      pixels = fourthChanAdded.get();
+   }
+   else
+   {
+      if (HostIsLittleEndian() && bytesPerPixel == 2)
+      {
+         swapped.reset(new uint16_t[width * height]);
+         ByteSwap16(swapped.get(), reinterpret_cast<const uint16_t*>(pixels),
+               width * height);
+         pixels = swapped.get();
+      }
+
+      /*
+       * Some cameras return 16-bit samples MSB-aligned. If the user has
+       * requested, convert to normal LSB-aligned samples.
+       */
+      bool doRightShift = (bytesPerPixel == 2);
+      {
+         boost::lock_guard<boost::mutex> g(sampleProcessingMutex_);
+         doRightShift = doRightShift && rightShift16BitSamples_;
+      }
+      if (doRightShift)
+      {
+         unsigned shift = 16 - cachedBitsPerSample_;
+         if (swapped) // Reuse the buffer
+         {
+            shifted.swap(swapped);
+            RightShift16InPlace(shifted.get(), width * height, shift);
+         }
+         else
+         {
+            shifted.reset(new uint16_t[width * height]);
+            RightShift16(shifted.get(),
+                  reinterpret_cast<const uint16_t*>(pixels),
+                  width * height, shift);
+         }
+         pixels = shifted.get();
+      }
    }
 
    /*

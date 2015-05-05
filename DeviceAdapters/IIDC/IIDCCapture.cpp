@@ -127,7 +127,7 @@ FrameRetriever::RetrieveFrame(unsigned timeoutMs, unsigned pollingIntervalMs)
       dequeuedFrame = WaitForFrame();
 
    if (dc1394_capture_is_frame_corrupt(libdc1394camera_, dequeuedFrame))
-      ; // Stip // TODO Log
+      ; // Skip // TODO Log
    else
    {
       try // In case frameCallback_ throws
@@ -239,7 +239,10 @@ ContinuousCapture::SetUp()
 
    err = dc1394_video_set_transmission(libdc1394camera_, DC1394_ON);
    if (err != DC1394_SUCCESS)
+   {
+      dc1394_capture_stop(libdc1394camera_); // Ignore errors
       BOOST_THROW_EXCEPTION(Error(err, "Cannot start continuous transmission"));
+   }
 
    dc1394switch_t flag;
    err = dc1394_video_get_transmission(libdc1394camera_, &flag);
@@ -259,15 +262,32 @@ ContinuousCapture::CleanUp()
       BOOST_THROW_EXCEPTION(Error(err, "Cannot stop continuous transmission"));
 
    dc1394switch_t flag;
-   err = dc1394_video_get_transmission(libdc1394camera_, &flag);
-   if (err != DC1394_SUCCESS)
-      BOOST_THROW_EXCEPTION(Error(err, "Cannot check if continuous transmission stopped"));
-   if (flag != DC1394_OFF)
-      BOOST_THROW_EXCEPTION(Error(err, "Continuous transmission did not stop"));
+   unsigned i = 0;
+   do
+   {
+      err = dc1394_video_get_transmission(libdc1394camera_, &flag);
+      if (err != DC1394_SUCCESS)
+         BOOST_THROW_EXCEPTION(Error(err, "Cannot check if continuous transmission stopped"));
+      boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+   } while (flag != DC1394_OFF && i++ < 5);
 
+   // Whether or not transmission stopped, we attempt to stop the capture.
    err = dc1394_capture_stop(libdc1394camera_);
    if (err != DC1394_SUCCESS)
       BOOST_THROW_EXCEPTION(Error(err, "Error while stopping capture"));
+
+   // Now try again to stop transmission.
+   i = 0;
+   do
+   {
+      err = dc1394_video_get_transmission(libdc1394camera_, &flag);
+      if (err != DC1394_SUCCESS)
+         BOOST_THROW_EXCEPTION(Error(err, "Cannot check if continuous transmission stopped"));
+      boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+   } while (flag != DC1394_OFF && i++ < 50);
+
+   if (flag != DC1394_OFF)
+      BOOST_THROW_EXCEPTION(Error(err, "Continuous transmission did not stop"));
 }
 
 

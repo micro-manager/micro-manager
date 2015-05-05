@@ -461,6 +461,10 @@ Camera::GetBitsPerSample()
    switch (mode->GetLibDC1394Coding())
    {
       case DC1394_COLOR_CODING_MONO8:
+      case DC1394_COLOR_CODING_YUV444:
+      case DC1394_COLOR_CODING_YUV422:
+      case DC1394_COLOR_CODING_YUV411:
+      case DC1394_COLOR_CODING_RGB8:
          return 8;
       case DC1394_COLOR_CODING_MONO16:
          {
@@ -744,19 +748,7 @@ Camera::RunCaptureInBackground(boost::shared_ptr<Capture> capture)
 void
 Camera::HandleCapturedFrame(dc1394video_frame_t* frame)
 {
-   PixelFormat pf = PixelFormatUnsupported;
-   switch (frame->color_coding)
-   {
-      case DC1394_COLOR_CODING_MONO8:
-         pf = PixelFormatGray8;
-         break;
-      case DC1394_COLOR_CODING_MONO16:
-         pf = PixelFormatGray16;
-         break;
-      default:
-         pf = PixelFormatUnsupported;
-         break;
-   }
+   PixelFormat pf = PixelFormatForLibDC1394ColorCoding(frame->color_coding);
    captureFrameCallback_(frame->image, frame->size[0], frame->size[1], pf);
 }
 
