@@ -104,7 +104,7 @@ using namespace std;
  * of the public API of the Core), not just CMMCore.
  */
 const int MMCore_versionMajor = 7;
-const int MMCore_versionMinor = 1;
+const int MMCore_versionMinor = 2;
 const int MMCore_versionPatch = 0;
 
 
@@ -1556,44 +1556,109 @@ double CMMCore::getYPosition() throw (CMMError)
 }
 
 /**
- * stop the XY stage motors
- * @param label    the stage device label
+ * Stop the XY or focus/Z stage motors
+ *
+ * Not all stages support this operation; check before use.
+ *
+ * @param label    the stage device label (either XY or focus/Z stage)
  */
 void CMMCore::stop(const char* label) throw (CMMError)
 {
-   boost::shared_ptr<XYStageInstance> pXYStage =
-      deviceManager_->GetDeviceOfType<XYStageInstance>(label);
+   boost::shared_ptr<DeviceInstance> stage =
+      deviceManager_->GetDevice(label);
 
-   mm::DeviceModuleLockGuard guard(pXYStage);
-   int ret = pXYStage->Stop();
-   if (ret != DEVICE_OK)
+   boost::shared_ptr<StageInstance> zStage =
+      boost::dynamic_pointer_cast<StageInstance>(stage);
+   if (zStage)
    {
-      logError(label, getDeviceErrorText(ret, pXYStage).c_str());
-      throw CMMError(getDeviceErrorText(ret, pXYStage).c_str(), MMERR_DEVICE_GENERIC);
+      LOG_DEBUG(coreLogger_) << "Will stop stage " << label;
+
+      mm::DeviceModuleLockGuard guard(zStage);
+      int ret = zStage->Stop();
+      if (ret != DEVICE_OK)
+      {
+         logError(label, getDeviceErrorText(ret, zStage).c_str());
+         throw CMMError(getDeviceErrorText(ret, zStage));
+      }
+
+      LOG_DEBUG(coreLogger_) << "Did stop stage " << label;
+      return;
    }
-   LOG_DEBUG(coreLogger_) << "Stopped xy stage " << label;
+
+   boost::shared_ptr<XYStageInstance> xyStage =
+      boost::dynamic_pointer_cast<XYStageInstance>(stage);
+   if (xyStage)
+   {
+      LOG_DEBUG(coreLogger_) << "Will stop xy stage " << label;
+
+      mm::DeviceModuleLockGuard guard(xyStage);
+      int ret = xyStage->Stop();
+      if (ret != DEVICE_OK)
+      {
+         logError(label, getDeviceErrorText(ret, xyStage).c_str());
+         throw CMMError(getDeviceErrorText(ret, xyStage));
+      }
+
+      LOG_DEBUG(coreLogger_) << "Did stop xy stage " << label;
+      return;
+   }
+
+   throw CMMError("Cannot stop " + ToQuotedString(label) +
+         ": not a stage");
 }
 
 /**
- * Calibrates and homes the XY stage.
- * @param label    the stage device label
+ * Perform a hardware homing operation for an XY or focus/Z stage.
+ *
+ * Not all stages support this operation. The user should be warned before
+ * calling this method, as it can cause large stage movements, potentially
+ * resulting in collision (e.g. with an expensive objective lens).
+ *
+ * @param label    the stage device label (either XY or focus/Z stage)
  */
 void CMMCore::home(const char* label) throw (CMMError)
 {
-   boost::shared_ptr<XYStageInstance> pXYStage =
-      deviceManager_->GetDeviceOfType<XYStageInstance>(label);
+   boost::shared_ptr<DeviceInstance> stage =
+      deviceManager_->GetDevice(label);
 
-   LOG_DEBUG(coreLogger_) << "Will home xy stage " << label;
-
-   mm::DeviceModuleLockGuard guard(pXYStage);
-   int ret = pXYStage->Home();
-   if (ret != DEVICE_OK)
+   boost::shared_ptr<StageInstance> zStage =
+      boost::dynamic_pointer_cast<StageInstance>(stage);
+   if (zStage)
    {
-      logError(label, getDeviceErrorText(ret, pXYStage).c_str());
-      throw CMMError(getDeviceErrorText(ret, pXYStage).c_str(), MMERR_DEVICE_GENERIC);
+      LOG_DEBUG(coreLogger_) << "Will home stage " << label;
+
+      mm::DeviceModuleLockGuard guard(zStage);
+      int ret = zStage->Home();
+      if (ret != DEVICE_OK)
+      {
+         logError(label, getDeviceErrorText(ret, zStage).c_str());
+         throw CMMError(getDeviceErrorText(ret, zStage));
+      }
+
+      LOG_DEBUG(coreLogger_) << "Did home stage " << label;
+      return;
    }
 
-   LOG_DEBUG(coreLogger_) << "Did home xy stage " << label;
+   boost::shared_ptr<XYStageInstance> xyStage =
+      boost::dynamic_pointer_cast<XYStageInstance>(stage);
+   if (xyStage)
+   {
+      LOG_DEBUG(coreLogger_) << "Will home xy stage " << label;
+
+      mm::DeviceModuleLockGuard guard(xyStage);
+      int ret = xyStage->Home();
+      if (ret != DEVICE_OK)
+      {
+         logError(label, getDeviceErrorText(ret, xyStage).c_str());
+         throw CMMError(getDeviceErrorText(ret, xyStage));
+      }
+
+      LOG_DEBUG(coreLogger_) << "Did home xy stage " << label;
+      return;
+   }
+
+   throw CMMError("Cannot home " + ToQuotedString(label) +
+         ": not a stage");
 }
 
 /**

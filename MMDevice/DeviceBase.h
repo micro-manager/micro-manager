@@ -1708,6 +1708,19 @@ class CStageBase : public CDeviceBase<MM::Stage, U>
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
+   virtual int Stop()
+   {
+      // Historycally, Move() has been in this interface longer than Stop(), so
+      // there is a chance that a stage implements Move() but not Stop(). In
+      // which case zero velocity is the best thing to do.
+      return Move(0.0);
+   }
+
+   virtual int Home()
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
    virtual int GetStageSequenceMaxLength(long& /*nrEvents*/) const 
    {
       return DEVICE_UNSUPPORTED_COMMAND;

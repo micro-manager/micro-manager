@@ -370,7 +370,7 @@ int Conex_AxisBase::Stop()
    return ret;
 }
 
-int Conex_AxisBase::Home()
+int Conex_AxisBase::BaseHome()
 {
    int ret;
 
@@ -434,7 +434,7 @@ void Conex_AxisBase::test()
 {
 	if ( !Referenced() ) 
 		{
-		Home();
+		BaseHome();
 		while (Moving()) ;
 	    }
 	if ( !Enabled()) Enable();
@@ -560,7 +560,7 @@ int X_Axis::GetPositionSteps(long&)
 }
 int X_Axis::SetOrigin()
 {
- return Home();
+ return BaseHome();
 }
 
 
@@ -618,7 +618,7 @@ int X_Axis::OnSearchHomeNow(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(value);
       if (value == g_SearchForHomeNowValue)
       {
-         return Home();
+         return BaseHome();
       }
    }
    return DEVICE_OK;
@@ -728,7 +728,7 @@ int Y_Axis::GetPositionSteps(long&)
 }
 int Y_Axis::SetOrigin()
 {
- return Home();
+ return BaseHome();
 }
 
 
@@ -786,7 +786,7 @@ int Y_Axis::OnSearchHomeNow(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(value);
       if (value == g_SearchForHomeNowValue)
       {
-         return Home();
+         return BaseHome();
       }
    }
    return DEVICE_OK;
@@ -895,7 +895,7 @@ int Z_Axis::GetPositionSteps(long&)
 }
 int Z_Axis::SetOrigin()
 {
- return Home();
+ return BaseHome();
 }
 
 
@@ -953,7 +953,7 @@ int Z_Axis::OnSearchHomeNow(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(value);
       if (value == g_SearchForHomeNowValue)
       {
-         return Home();
+         return BaseHome();
       }
    }
    return DEVICE_OK;

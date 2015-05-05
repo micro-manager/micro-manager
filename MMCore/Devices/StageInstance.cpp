@@ -25,6 +25,8 @@
 int StageInstance::SetPositionUm(double pos) { return GetImpl()->SetPositionUm(pos); }
 int StageInstance::SetRelativePositionUm(double d) { return GetImpl()->SetRelativePositionUm(d); }
 int StageInstance::Move(double velocity) { return GetImpl()->Move(velocity); }
+int StageInstance::Stop() { return GetImpl()->Stop(); }
+int StageInstance::Home() { return GetImpl()->Home(); }
 int StageInstance::SetAdapterOriginUm(double d) { return GetImpl()->SetAdapterOriginUm(d); }
 int StageInstance::GetPositionUm(double& pos) { return GetImpl()->GetPositionUm(pos); }
 int StageInstance::SetPositionSteps(long steps) { return GetImpl()->SetPositionSteps(steps); }

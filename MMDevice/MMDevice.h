@@ -27,7 +27,7 @@
 // Header version
 // If any of the class definitions changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 62
+#define DEVICE_INTERFACE_VERSION 63
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -608,12 +608,15 @@ namespace MM {
       virtual int SetPositionUm(double pos) = 0;
       virtual int SetRelativePositionUm(double d) = 0;
       virtual int Move(double velocity) = 0;
+      virtual int Stop() = 0;
+      virtual int Home() = 0;
       virtual int SetAdapterOriginUm(double d) = 0;
       virtual int GetPositionUm(double& pos) = 0;
       virtual int SetPositionSteps(long steps) = 0;
       virtual int GetPositionSteps(long& steps) = 0;
       virtual int SetOrigin() = 0;
       virtual int GetLimits(double& lower, double& upper) = 0;
+
       /*
        * Returns whether a stage can be sequenced (synchronized by TTLs)
        * If returning true, then a Stage class should also inherit

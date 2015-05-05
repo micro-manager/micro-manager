@@ -70,7 +70,7 @@ public:
    bool Ready();
    bool Enabled();
    int Stop();
-   int Home();
+   int BaseHome();
    int HomeCurrentPosition();
    int MoveRelative(double position);
    int MoveAbsolute( double target);

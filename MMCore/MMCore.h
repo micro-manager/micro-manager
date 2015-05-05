@@ -490,8 +490,8 @@ public:
    double getYPosition(const char* xyStageLabel) throw (CMMError);
    double getXPosition() throw (CMMError);
    double getYPosition() throw (CMMError);
-   void stop(const char* xyStageLabel) throw (CMMError);
-   void home(const char* xyStageLabel) throw (CMMError);
+   void stop(const char* xyOrZStageLabel) throw (CMMError);
+   void home(const char* xyOrZStageLabel) throw (CMMError);
    void setOriginXY(const char* xyStageLabel) throw (CMMError);
    void setOriginXY() throw (CMMError);
    void setOriginX(const char* xyStageLabel) throw (CMMError);

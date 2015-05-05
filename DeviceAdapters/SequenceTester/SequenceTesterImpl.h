@@ -206,6 +206,10 @@ Tester1DStageBase<TConcreteStage, UStepsPerMicrometer>::Initialize()
    zPositionUm_ = FloatSetting::New(Super::GetLogger(), This(),
          "ZPositionUm", 0.0, false);
    zPositionUm_->SetBusySetting(Super::GetBusySetting());
+   home_ = OneShotSetting::New(Super::GetLogger(), This(), "Home");
+   home_->SetBusySetting(Super::GetBusySetting());
+   stop_ = OneShotSetting::New(Super::GetLogger(), This(), "Stop");
+   stop_->SetBusySetting(Super::GetBusySetting());
    originSet_ = OneShotSetting::New(Super::GetLogger(), This(), "OriginSet");
    originSet_->SetBusySetting(Super::GetBusySetting());
 
@@ -253,6 +257,26 @@ Tester1DStageBase<TConcreteStage, UStepsPerMicrometer>::GetPositionSteps(long& s
       return err;
    steps = static_cast<long>(10.0 * um + 0.5);
    return DEVICE_OK;
+}
+
+
+template <class TConcreteStage, long UStepsPerMicrometer>
+int
+Tester1DStageBase<TConcreteStage, UStepsPerMicrometer>::Home()
+{
+   TesterHub::Guard g(Super::GetHub()->LockGlobalMutex());
+   home_->MarkBusy();
+   return home_->Set();
+}
+
+
+template <class TConcreteStage, long UStepsPerMicrometer>
+int
+Tester1DStageBase<TConcreteStage, UStepsPerMicrometer>::Stop()
+{
+   TesterHub::Guard g(Super::GetHub()->LockGlobalMutex());
+   stop_->MarkBusy();
+   return stop_->Set();
 }
 
 
