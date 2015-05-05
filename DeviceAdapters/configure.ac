@@ -152,14 +152,9 @@ AS_IF([test "x$want_libdc1394" != xno],
 AM_CONDITIONAL([BUILD_DC1394], [test "x$use_libdc1394" = xyes])
 
 build_IIDC=$use_libdc1394
-# IIDC Doesn't work on OS X yet.
-case $host in 
-   *apple-darwin*) build_IIDC=no ;;
-esac
 if test -z "$BOOST_CHRONO_LIB"; then
    build_IIDC=no
 fi
-# TODO BUILD_IIDC should also check for Boost libraries
 AM_CONDITIONAL([BUILD_IIDC], [test "x$build_IIDC" = xyes])
 
 

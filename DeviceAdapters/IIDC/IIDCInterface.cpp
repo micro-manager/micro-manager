@@ -44,18 +44,6 @@
 namespace IIDC {
 namespace {
 
-// Usage: boost::lexical_cast< HexTo<uint32_t> >("1234abcd")
-template <typename T>
-class HexTo
-{
-   T value;
-public:
-   operator T() const { return value; }
-   friend std::istream& operator>>(std::istream& instrm, HexTo& out)
-   { instrm >> std::hex >> out.value; return instrm; }
-};
-
-
 static std::string
 CameraIdToString(const dc1394camera_id_t* id)
 {
@@ -73,7 +61,9 @@ StringToCameraId(const std::string& idString, dc1394camera_id_t* id)
       throw Error("Invalid camera id");
    try
    {
-      id->guid = boost::lexical_cast< HexTo<uint64_t> >(idString.substr(0, dashPos));
+      std::istringstream guidSS(idString.substr(0, dashPos));
+      guidSS >> std::hex >> id->guid;
+
       id->unit = boost::lexical_cast<uint16_t>(idString.substr(dashPos + 1));
    }
    catch (const boost::bad_lexical_cast&)
