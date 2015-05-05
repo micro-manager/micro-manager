@@ -66,6 +66,9 @@ mkdir -p "$MM_DEPS_PREFIX"/downloads
 cd "$MM_DEPS_PREFIX"/downloads
 if [ "$do_download" = yes ]; then
    [ -f boost_1_55_0.tar.bz2 ] || curl -L -o boost_1_55_0.tar.bz2 http://sourceforge.net/projects/boost/files/boost/1.55.0/boost_1_55_0.tar.bz2/download
+   [ -f 6bb71fdd.patch ] || curl -LO https://github.com/boostorg/atomic/commit/6bb71fdd.patch
+   [ -f e4bde20f.patch ] || curl -LO https://github.com/boostorg/atomic/commit/e4bde20f.patch
+
    [ -f libusb-1.0.18.tar.bz2 ] || curl -LO http://sourceforge.net/projects/libusb/files/libusb-1.0/libusb-1.0.18/libusb-1.0.18.tar.bz2
    [ -f libusb-compat-0.1.5.tar.bz2 ] || curl -LO http://sourceforge.net/projects/libusb/files/libusb-compat-0.1/libusb-compat-0.1.5/libusb-compat-0.1.5.tar.bz2
    [ -f hidapi-0.8.0-rc1.tar.gz ] || curl -LO https://github.com/signal11/hidapi/archive/hidapi-0.8.0-rc1.tar.gz
@@ -74,26 +77,13 @@ if [ "$do_download" = yes ]; then
    [ -f libgphoto2-2.5.2.tar.bz2 ] || curl -L -o libgphoto2-2.5.2.tar.bz2 http://sourceforge.net/projects/gphoto/files/libgphoto/2.5.2/libgphoto2-2.5.2.tar.bz2/download
    [ -f FreeImage3154.zip ] || curl -LO http://downloads.sourceforge.net/freeimage/FreeImage3154.zip
    [ -f libdc1394-2.2.1.tar.gz ] || curl -L -o libdc1394-2.2.1.tar.gz http://sourceforge.net/projects/libdc1394/files/libdc1394-2/2.2.1/libdc1394-2.2.1.tar.gz/download
-   [ -f opencv-2.4.8.zip ] || curl -L -o opencv-2.4.8.zip http://sourceforge.net/projects/opencvlibrary/files/opencv-unix/2.4.8/opencv-2.4.8.zip/download
-
-   # Before checking SHA1, chop off the last lines from the patches downloaded
-   # from GitHub, because the Git version included there keeps changing.
-   for patchfile in 6bb71fdd.patch e4bde20f.patch; do
-      if [ -f $patchfile ]; then :; else
-         curl -LO https://github.com/boostorg/atomic/commit/$patchfile
-         # OS X head(1) does not support negative line count
-         nrlines=$(wc -l $patchfile | awk '{ print $1 }')
-         let "lines_to_keep = $nrlines - 2"
-         head -n $lines_to_keep $patchfile > $patchfile.tmp
-         mv $patchfile.tmp $patchfile
-      fi
-   done
+   [ -f opencv-2.4.9.zip ] || curl -L -o opencv-2.4.9.zip http://sourceforge.net/projects/opencvlibrary/files/opencv-unix/2.4.9/opencv-2.4.9.zip/download
 fi
 
 cat >sha1sums <<EOF
 cef9a0cc7084b1d639e06cd3bc34e4251524c840  boost_1_55_0.tar.bz2
-3715d9e73dbc796565b444f780186d4753660cfe  6bb71fdd.patch
-37ccb386d3e840531ea3913f413d3e4ec87c8ec3  e4bde20f.patch
+a0a97564a66a3329360fbd67cab4d30b19af94c5  6bb71fdd.patch
+37c8f9a17b87b8c28c35fd5ffe69468e9ada5107  e4bde20f.patch
 5f7bbf42a4d6e6b88d5e7666958c80f8455ee915  libusb-1.0.18.tar.bz2
 062319276d913c753a4b1341036e6a2e42abccc9  libusb-compat-0.1.5.tar.bz2
 5e72a4c7add8b85c8abcdd360ab8b1e1421da468  hidapi-0.8.0-rc1.tar.gz
@@ -102,7 +92,7 @@ a52219b12dbc8d33fc096468591170fda71316c0  libexif-0.6.21.tar.bz2
 6b70ff6feec62a955bef1fc9a2b16dd07f0e277a  libgphoto2-2.5.2.tar.bz2
 1d30057a127b2016cf9b4f0f8f2ba92547670f96  FreeImage3154.zip
 b92c9670b68c4e5011148f16c87532bef2e5b808  libdc1394-2.2.1.tar.gz
-7878a8c375ab3e292c8de7cb102bb3358056e01e  opencv-2.4.8.zip
+4f5166e2bd22bd6167cb56dd04f2c6ed68148b2c  opencv-2.4.9.zip
 EOF
 shasum -c sha1sums || { echo "SHA1 checksum mismatch or missing file; remove file and rerun with -d flag"; exit 1; }
 
@@ -398,8 +388,8 @@ popd
 
 ############### TODO check deployment target and sdkroot; set cflags and cxxflags (esp. -v)
 
-unzip -oq ../downloads/opencv-2.4.8.zip
-pushd opencv-2.4.8
+unzip -oq ../downloads/opencv-2.4.9.zip
+pushd opencv-2.4.9
 # OpenCV modules: highgui depends on imgproc; imgproc depends on core; OpenCVgrabber requires highgui and core
 mkdir -p build-for-mm && cd build-for-mm
 PKG_CONFIG_PATH=$MM_DEPS_PREFIX/lib/pkgconfig cmake \
