@@ -3,7 +3,7 @@
 // SYSTEM:        100X Imaging base utilities
 // AUTHOR:			Nenad Amodaj
 //
-// DESCRIPTION:	Basic implementation for the accumultor data structure (frame averaging).
+// DESCRIPTION:	Basic implementation for the accumultor data structure (frame averaging or rank filtering).
 //
 // COPYRIGHT:     100X Imaging Inc, 2009. All rigths reserved.
 //
@@ -21,13 +21,12 @@
 //
 // ImgAccumulator class
 // ~~~~~~~~~~~~~~~~~~~~
-// Variable pixel depth image buffer, with frame averaging capabilities
+// Variable pixel depth image buffer, with frame averaging/rank filtering capabilities
 //
 
 class ImgAccumulator
 {
 public:
-   ImgAccumulator(unsigned xSize, unsigned ySize, unsigned pixDepth, unsigned numFrames);
    ImgAccumulator();
    ~ImgAccumulator();
 
@@ -35,20 +34,21 @@ public:
    unsigned int Height() const {return height_;}
    unsigned int Depth() const {return pixDepth_;}
    unsigned int Length() const {return length_;}
-   void SetPixels(const void* pixArray, unsigned sourceWidth, unsigned offsetX, unsigned offsetY);
    void AddPixels(const void* pixArray, unsigned sourceWidth, unsigned offsetX, unsigned offsetY);
-   void Scale(double factor);
+   void CalculateOutputImage();
    void ResetPixels();
    const unsigned char* GetPixels() const;
 
    void Resize(unsigned xSize, unsigned ySize, unsigned pixDepth);
    void Resize(unsigned xSize, unsigned ySize);
-   void Resize(unsigned length);
-
+   void SetLength(unsigned length);
+   //Image accumulator for this channel enabled
    bool IsEnabled() const {return enabled_;}
    void SetEnable(bool s) {enabled_ = s;}
 
 private:
+	void SetupAccumulator();
+
    unsigned char* pixels_;
    std::vector<double> accumulator_;
 
@@ -56,6 +56,6 @@ private:
    unsigned int height_;
    unsigned int pixDepth_;
    unsigned int length_;
-   unsigned int numFrames_;
+   unsigned int frameIndex_;
    bool enabled_;
 };

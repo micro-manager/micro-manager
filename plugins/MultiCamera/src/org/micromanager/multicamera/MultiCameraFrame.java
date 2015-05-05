@@ -96,8 +96,6 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
       }
 
       // find the first non-multi-channel camera to test properties
-      // TODO: all non-multi-channel cameras and the cameras contained in a multi-
-      // channel camera should be tested
       String testCamera = camerasInUse_.get(0);
 
       initComponents();
@@ -115,6 +113,22 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
          cameraSelectComboBox.setEnabled(false);
       }
 
+      adjustUIToCamera(testCamera);
+
+      updateTemp();
+
+      initialized(true, true);
+
+      core_.setCameraDevice(currentCamera);
+   }
+
+   public void safePrefs() {
+      prefs_.putInt(FRAMEXPOS, this.getX());
+      prefs_.putInt(FRAMEYPOS, this.getY());
+
+   }
+   
+   private void adjustUIToCamera(String testCamera) throws Exception {
       if (!core_.hasProperty(testCamera, MODE)) {
          jLabel5.setEnabled(false);
          modeComboBox.setEnabled(false);
@@ -186,14 +200,7 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
       } else {
          updateItems(triggerComboBox, TRIGGER);
       }
-
-      updateTemp();
-
-      initialized(true, true);
-
-      core_.setCameraDevice(currentCamera);
    }
-
 
    private synchronized boolean initialized(boolean set, boolean value) {
       if (set) {
@@ -356,7 +363,7 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
       tempLabel.setText("jLabel11");
 
       jLabel1.setFont(new java.awt.Font("Lucida Sans", 0, 10)); // NOI18N
-      jLabel1.setText("v 1.0");
+      jLabel1.setText("v 1.1");
 
       javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
       getContentPane().setLayout(layout);
@@ -740,7 +747,9 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
           updateCamerasInUse(coreCamera_);
 
           String fsCamera = camerasInUse_.get(0);
-
+          
+          adjustUIToCamera(fsCamera);
+/*
           if (core_.hasProperty(fsCamera, MODE)) {
              modeComboBox.setSelectedItem(getMode());
           }
@@ -771,6 +780,7 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
           if (core_.hasProperty(fsCamera, TRIGGER)) {
              getComboSelection(triggerComboBox, TRIGGER);
           }
+        */
           updateTemp();
           initialized(true, true);
 

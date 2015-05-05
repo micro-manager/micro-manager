@@ -53,7 +53,9 @@ CXYStage::CXYStage(const char* name) :
    stepSizeYUm_(g_StageMinStepSize),    //   and doesn't change during the program
    axisLetterX_(g_EmptyAxisLetterStr),    // value determined by extended name
    axisLetterY_(g_EmptyAxisLetterStr),    // value determined by extended name
-   advancedPropsEnabled_(false)
+   advancedPropsEnabled_(false),
+   speedTruth_(false),
+   refreshOverride_(false)
 {
    if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
    {
@@ -105,23 +107,12 @@ int CXYStage::Initialize()
    CreateProperty(MM::g_Keyword_Description, command.str().c_str(), MM::String, true);
 
    // max motor speed - read only property
-   command.str("");
-   command << "S " << axisLetterX_ << "?";
-   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
-   double origSpeed;
-   RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(origSpeed) );
-   ostringstream command2; command2.str("");
-   command2 << "S " << axisLetterX_ << "=10000";
-   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command2.str(), ":A")); // set too high
-   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));  // read actual max
-   double maxSpeed;
-   RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(maxSpeed) );
-   command2.str("");
-   command2 << "S " << axisLetterX_ << "=" << origSpeed;
-   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command2.str(), ":A")); // restore
-   command2.str("");
-   command2 << maxSpeed;
-   CreateProperty(g_MaxMotorSpeedPropertyName, command2.str().c_str(), MM::Float, true);
+   double maxSpeedX = getMaxSpeed(axisLetterX_, hub_);
+   command << maxSpeedX;
+   CreateProperty(g_MaxMotorSpeedXPropertyName, command.str().c_str(), MM::Float, true);
+   double maxSpeedY = getMaxSpeed(axisLetterY_, hub_);
+   command << maxSpeedY;
+   CreateProperty(g_MaxMotorSpeedYPropertyName, command.str().c_str(), MM::Float, true);
 
    // now for properties that are read-write, mostly parameters that set aspects of stage behavior
    // our approach to parameters: read in value for X, if user changes it in MM then change for both X and Y
@@ -148,28 +139,49 @@ int CXYStage::Initialize()
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsOrig);
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsDone);
 
-   // Motor speed (S)
-   pAct = new CPropertyAction (this, &CXYStage::OnSpeed);
-   CreateProperty(g_MotorSpeedPropertyName, "1", MM::Float, false, pAct);
-   SetPropertyLimits(g_MotorSpeedPropertyName, 0, maxSpeed);
-   UpdateProperty(g_MotorSpeedPropertyName);
+   // Motor speed (S) for X and Y
+   pAct = new CPropertyAction (this, &CXYStage::OnSpeedX);
+   CreateProperty(g_MotorSpeedXPropertyName, "1", MM::Float, false, pAct);
+   SetPropertyLimits(g_MotorSpeedXPropertyName, 0, maxSpeedX);
+   UpdateProperty(g_MotorSpeedXPropertyName);
+   pAct = new CPropertyAction (this, &CXYStage::OnSpeedY);
+   CreateProperty(g_MotorSpeedYPropertyName, "1", MM::Float, false, pAct);
+   SetPropertyLimits(g_MotorSpeedYPropertyName, 0, maxSpeedY);
+   UpdateProperty(g_MotorSpeedYPropertyName);
 
-   // drift error (E)
-   pAct = new CPropertyAction (this, &CXYStage::OnDriftError);
-   CreateProperty(g_DriftErrorPropertyName, "0", MM::Float, false, pAct);
-   UpdateProperty(g_DriftErrorPropertyName);
+   // Backlash (B) for X and Y
+   pAct = new CPropertyAction (this, &CXYStage::OnBacklashX);
+   CreateProperty(g_BacklashXPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_BacklashXPropertyName);
+   pAct = new CPropertyAction (this, &CXYStage::OnBacklashY);
+   CreateProperty(g_BacklashYPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_BacklashYPropertyName);
 
-   // finish error (PC)
-   pAct = new CPropertyAction (this, &CXYStage::OnFinishError);
-   CreateProperty(g_FinishErrorPropertyName, "0", MM::Float, false, pAct);
-   UpdateProperty(g_FinishErrorPropertyName);
+   // drift error (E) for both X and Y
+   pAct = new CPropertyAction (this, &CXYStage::OnDriftErrorX);
+   CreateProperty(g_DriftErrorXPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_DriftErrorXPropertyName);
+   pAct = new CPropertyAction (this, &CXYStage::OnDriftErrorY);
+   CreateProperty(g_DriftErrorYPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_DriftErrorYPropertyName);
 
-   // acceleration (AC)
-   pAct = new CPropertyAction (this, &CXYStage::OnAcceleration);
-   CreateProperty(g_AccelerationPropertyName, "0", MM::Integer, false, pAct);
-   UpdateProperty(g_AccelerationPropertyName);
+   // finish error (PC) for X and Y
+   pAct = new CPropertyAction (this, &CXYStage::OnFinishErrorX);
+   CreateProperty(g_FinishErrorXPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_FinishErrorXPropertyName);
+   pAct = new CPropertyAction (this, &CXYStage::OnFinishErrorY);
+   CreateProperty(g_FinishErrorYPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_FinishErrorYPropertyName);
 
-   // upper and lower limits (SU and SL)
+   // acceleration (AC) for X and Y
+   pAct = new CPropertyAction (this, &CXYStage::OnAccelerationX);
+   CreateProperty(g_AccelerationXPropertyName, "0", MM::Integer, false, pAct);
+   UpdateProperty(g_AccelerationXPropertyName);
+   pAct = new CPropertyAction (this, &CXYStage::OnAccelerationY);
+   CreateProperty(g_AccelerationYPropertyName, "0", MM::Integer, false, pAct);
+   UpdateProperty(g_AccelerationYPropertyName);
+
+   // upper and lower limits (SU and SL) for X and Y
    pAct = new CPropertyAction (this, &CXYStage::OnLowerLimX);
    CreateProperty(g_LowerLimXPropertyName, "0", MM::Float, false, pAct);
    UpdateProperty(g_LowerLimXPropertyName);
@@ -183,14 +195,33 @@ int CXYStage::Initialize()
    CreateProperty(g_UpperLimYPropertyName, "0", MM::Float, false, pAct);
    UpdateProperty(g_UpperLimYPropertyName);
 
-   // maintain behavior (MA)
-   pAct = new CPropertyAction (this, &CXYStage::OnMaintainState);
-   CreateProperty(g_MaintainStatePropertyName, g_StageMaintain_0, MM::String, false, pAct);
-   AddAllowedValue(g_MaintainStatePropertyName, g_StageMaintain_0);
-   AddAllowedValue(g_MaintainStatePropertyName, g_StageMaintain_1);
-   AddAllowedValue(g_MaintainStatePropertyName, g_StageMaintain_2);
-   AddAllowedValue(g_MaintainStatePropertyName, g_StageMaintain_3);
-   UpdateProperty(g_MaintainStatePropertyName);
+   // maintain behavior (MA) for X and Y
+   pAct = new CPropertyAction (this, &CXYStage::OnMaintainStateX);
+   CreateProperty(g_MaintainStateXPropertyName, g_StageMaintain_0, MM::String, false, pAct);
+   AddAllowedValue(g_MaintainStateXPropertyName, g_StageMaintain_0);
+   AddAllowedValue(g_MaintainStateXPropertyName, g_StageMaintain_1);
+   AddAllowedValue(g_MaintainStateXPropertyName, g_StageMaintain_2);
+   AddAllowedValue(g_MaintainStateXPropertyName, g_StageMaintain_3);
+   UpdateProperty(g_MaintainStateXPropertyName);
+   pAct = new CPropertyAction (this, &CXYStage::OnMaintainStateY);
+   CreateProperty(g_MaintainStateYPropertyName, g_StageMaintain_0, MM::String, false, pAct);
+   AddAllowedValue(g_MaintainStateYPropertyName, g_StageMaintain_0);
+   AddAllowedValue(g_MaintainStateYPropertyName, g_StageMaintain_1);
+   AddAllowedValue(g_MaintainStateYPropertyName, g_StageMaintain_2);
+   AddAllowedValue(g_MaintainStateYPropertyName, g_StageMaintain_3);
+   UpdateProperty(g_MaintainStateYPropertyName);
+
+   // Motor enable/disable (MC) for X and Y
+   pAct = new CPropertyAction (this, &CXYStage::OnMotorControlX);
+   CreateProperty(g_MotorControlXPropertyName, g_OnState, MM::String, false, pAct);
+   AddAllowedValue(g_MotorControlXPropertyName, g_OnState);
+   AddAllowedValue(g_MotorControlXPropertyName, g_OffState);
+   UpdateProperty(g_MotorControlPropertyName);
+   pAct = new CPropertyAction (this, &CXYStage::OnMotorControlY);
+   CreateProperty(g_MotorControlYPropertyName, g_OnState, MM::String, false, pAct);
+   AddAllowedValue(g_MotorControlYPropertyName, g_OnState);
+   AddAllowedValue(g_MotorControlYPropertyName, g_OffState);
+   UpdateProperty(g_MotorControlYPropertyName);
 
    // Wait time, default is 0 (WT)
    pAct = new CPropertyAction (this, &CXYStage::OnWaitTime);
@@ -230,7 +261,7 @@ int CXYStage::Initialize()
    AddAllowedValue(g_JoystickEnabledPropertyName, g_YesState);
    UpdateProperty(g_JoystickEnabledPropertyName);
 
-   if (firmwareVersion_ > 2.865)  // changed behavior of JS F and T as of v2.87
+   if (FirmwareVersionAtLeast(2.87))  // changed behavior of JS F and T as of v2.87
    {
       // fast wheel speed (JS F) (per-card, not per-axis)
       pAct = new CPropertyAction (this, &CXYStage::OnWheelFastSpeed);
@@ -252,7 +283,6 @@ int CXYStage::Initialize()
       UpdateProperty(g_WheelMirrorPropertyName);
    }
 
-
    // generates a set of additional advanced properties that are rarely used
    pAct = new CPropertyAction (this, &CXYStage::OnAdvancedProperties);
    CreateProperty(g_AdvancedPropertiesPropertyName, g_NoState, MM::String, false, pAct);
@@ -270,8 +300,88 @@ int CXYStage::Initialize()
    AddAllowedValue(g_AxisPolarityY, g_AxisPolarityReversed);
    AddAllowedValue(g_AxisPolarityY, g_AxisPolarityNormal);
 
+   // get build info so we can add optional properties
+   build_info_type build;
+   RETURN_ON_MM_ERROR( hub_->GetBuildInfo(addressChar_, build) );
+   speedTruth_ = hub_->IsDefinePresent(build, "SPEED TRUTH");
+
+   // add SCAN properties if supported
+   if (build.vAxesProps[0] & BIT2)
+   {
+      pAct = new CPropertyAction (this, &CXYStage::OnScanState);
+      CreateProperty(g_ScanStatePropertyName, g_ScanStateIdle, MM::String, false, pAct);
+      AddAllowedValue(g_ScanStatePropertyName, g_ScanStateIdle);
+      AddAllowedValue(g_ScanStatePropertyName, g_ScanStateRunning);
+      UpdateProperty(g_ScanStatePropertyName);
+
+      pAct = new CPropertyAction (this, &CXYStage::OnScanFastAxis);
+      CreateProperty(g_ScanFastAxisPropertyName, g_ScanAxisX, MM::String, false, pAct);
+      AddAllowedValue(g_ScanFastAxisPropertyName, g_ScanAxisX);
+      AddAllowedValue(g_ScanFastAxisPropertyName, g_ScanAxisY);
+      UpdateProperty(g_ScanFastAxisPropertyName);
+
+      pAct = new CPropertyAction (this, &CXYStage::OnScanSlowAxis);
+      CreateProperty(g_ScanSlowAxisPropertyName, g_ScanAxisX, MM::String, false, pAct);
+      AddAllowedValue(g_ScanSlowAxisPropertyName, g_ScanAxisX);
+      AddAllowedValue(g_ScanSlowAxisPropertyName, g_ScanAxisY);
+      AddAllowedValue(g_ScanSlowAxisPropertyName, g_ScanAxisNull);
+      UpdateProperty(g_ScanSlowAxisPropertyName);
+
+      pAct = new CPropertyAction (this, &CXYStage::OnScanPattern);
+      CreateProperty(g_ScanPatternPropertyName, g_ScanPatternRaster, MM::String, false, pAct);
+      AddAllowedValue(g_ScanPatternPropertyName, g_ScanPatternRaster);
+      AddAllowedValue(g_ScanPatternPropertyName, g_ScanPatternSerpentine);
+      UpdateProperty(g_ScanPatternPropertyName);
+
+      pAct = new CPropertyAction (this, &CXYStage::OnScanFastStartPosition);
+      CreateProperty(g_ScanFastAxisStartPositionPropertyName, "0", MM::Float, false, pAct);
+      UpdateProperty(g_ScanFastAxisStartPositionPropertyName);
+
+      pAct = new CPropertyAction (this, &CXYStage::OnScanFastStopPosition);
+      CreateProperty(g_ScanFastAxisStopPositionPropertyName, "0", MM::Float, false, pAct);
+      UpdateProperty(g_ScanFastAxisStopPositionPropertyName);
+
+      pAct = new CPropertyAction (this, &CXYStage::OnScanSlowStartPosition);
+      CreateProperty(g_ScanSlowAxisStartPositionPropertyName, "0", MM::Float, false, pAct);
+      UpdateProperty(g_ScanSlowAxisStartPositionPropertyName);
+
+      pAct = new CPropertyAction (this, &CXYStage::OnScanSlowStopPosition);
+      CreateProperty(g_ScanSlowAxisStopPositionPropertyName, "0", MM::Float, false, pAct);
+      UpdateProperty(g_ScanSlowAxisStopPositionPropertyName);
+
+      pAct = new CPropertyAction (this, &CXYStage::OnScanNumLines);
+      CreateProperty(g_ScanNumLinesPropertyName, "1", MM::Integer, false, pAct);
+      SetPropertyLimits(g_ScanNumLinesPropertyName, 1, 100);  // upper limit is arbitrary, have limits to enforce > 0
+      UpdateProperty(g_ScanNumLinesPropertyName);
+
+      pAct = new CPropertyAction (this, &CXYStage::OnScanSettlingTime);
+      CreateProperty(g_ScanSettlingTimePropertyName, "1", MM::Float, false, pAct);
+      SetPropertyLimits(g_ScanSettlingTimePropertyName, 0., 500.);  // limits are arbitrary really, just give a reasonable range
+      UpdateProperty(g_ScanSettlingTimePropertyName);
+
+   }
+
    initialized_ = true;
    return DEVICE_OK;
+}
+
+double CXYStage::getMaxSpeed(string axisLetter, ASIHub *hub_)
+{
+   double maxSpeed;
+   ostringstream command;
+   command << "S " << axisLetter << "?";
+   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+   double origSpeed;
+   RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(origSpeed) );
+   ostringstream command2; command2.str("");
+   command2 << "S " << axisLetter << "=10000";
+   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command2.str(), ":A")); // set too high
+   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));  // read actual max
+   RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(maxSpeed) );
+   command2.str("");
+   command2 << "S " << axisLetter << "=" << origSpeed;
+   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command2.str(), ":A")); // restore
+   return maxSpeed;
 }
 
 int CXYStage::GetPositionSteps(long& x, long& y)
@@ -300,7 +410,18 @@ int CXYStage::SetPositionSteps(long x, long y)
 int CXYStage::SetRelativePositionSteps(long x, long y)
 {
    ostringstream command; command.str("");
-   command << "R " << axisLetterX_ << "=" << x*unitMultX_*stepSizeXUm_ << " " << axisLetterY_ << "=" << y*unitMultY_*stepSizeYUm_;
+   if ( (x == 0) && (y != 0) )
+   {
+      command << "R " << axisLetterY_ << "=" << y*unitMultY_*stepSizeYUm_;
+   }
+   else if ( (x != 0) && (y == 0) )
+   {
+      command << "R " << axisLetterX_ << "=" << x*unitMultX_*stepSizeXUm_;
+   }
+   else
+   {
+      command << "R " << axisLetterX_ << "=" << x*unitMultX_*stepSizeXUm_ << " " << axisLetterY_ << "=" << y*unitMultY_*stepSizeYUm_;
+   }
    return hub_->QueryCommandVerify(command.str(),":A");
 }
 
@@ -347,7 +468,7 @@ int CXYStage::Stop()
 bool CXYStage::Busy()
 {
    ostringstream command; command.str("");
-   if (firmwareVersion_ > 2.7) // can use more accurate RS <axis>?
+   if (FirmwareVersionAtLeast(2.7)) // can use more accurate RS <axis>?
    {
       command << "RS " << axisLetterX_ << "?";
       if (hub_->QueryCommandVerify(command.str(),":A") != DEVICE_OK)  // say we aren't busy if we can't communicate
@@ -386,7 +507,21 @@ bool CXYStage::Busy()
 int CXYStage::SetOrigin()
 {
    ostringstream command; command.str("");
-   command << "H " << axisLetterX_ << "=" << 0 << " " << axisLetterY_ << "=" << 0;
+   command << "H " << axisLetterX_ << "=0 " << axisLetterY_ << "=0";
+   return hub_->QueryCommandVerify(command.str(),":A");
+}
+
+int CXYStage::SetXOrigin()
+{
+   ostringstream command; command.str("");
+   command << "H " << axisLetterX_ << "=0 ";
+   return hub_->QueryCommandVerify(command.str(),":A");
+}
+
+int CXYStage::SetYOrigin()
+{
+   ostringstream command; command.str("");
+   command << "H " << axisLetterY_ << "=0";
    return hub_->QueryCommandVerify(command.str(),":A");
 }
 
@@ -399,7 +534,7 @@ int CXYStage::Home()
 
 int CXYStage::SetHome()
 {
-   if (firmwareVersion_ > 2.7) {
+   if (FirmwareVersionAtLeast(2.7)) {
       ostringstream command; command.str("");
       command << "HM " << axisLetterX_ << "+" << " " << axisLetterY_ << "+";
       return hub_->QueryCommandVerify(command.str(),":A");
@@ -505,11 +640,6 @@ int CXYStage::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
          CPropertyAction* pAct;
          advancedPropsEnabled_ = true;
 
-         // Backlash (B)
-         pAct = new CPropertyAction (this, &CXYStage::OnBacklash);
-         CreateProperty(g_BacklashPropertyName, "0", MM::Float, false, pAct);
-         UpdateProperty(g_BacklashPropertyName);
-
          // overshoot (OS)
          pAct = new CPropertyAction (this, &CXYStage::OnOvershoot);
          CreateProperty(g_OvershootPropertyName, "0", MM::Float, false, pAct);
@@ -541,13 +671,6 @@ int CXYStage::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
          pAct = new CPropertyAction (this, &CXYStage::OnAZeroY);
          CreateProperty(g_AZeroYPropertyName, "0", MM::String, false, pAct);
          UpdateProperty(g_AZeroYPropertyName);
-
-         // Motor enable/disable (MC)
-         pAct = new CPropertyAction (this, &CXYStage::OnMotorControl);
-         CreateProperty(g_MotorControlPropertyName, g_OnState, MM::String, false, pAct);
-         AddAllowedValue(g_MotorControlPropertyName, g_OnState);
-         AddAllowedValue(g_MotorControlPropertyName, g_OffState);
-         UpdateProperty(g_MotorControlPropertyName);
 
          // number of extra move repetitions
          pAct = new CPropertyAction (this, &CXYStage::OnNrExtraMoveReps);
@@ -582,17 +705,18 @@ int CXYStage::OnWaitTime(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int CXYStage::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CXYStage::OnSpeedGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter)
 {
    ostringstream command; command.str("");
    ostringstream response; response.str("");
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
-      if (!refreshProps_ && initialized_)
+      if (!refreshProps_ && initialized_ && !refreshOverride_)
          return DEVICE_OK;
-      command << "S " << axisLetterX_ << "?";
-      response << ":A " << axisLetterX_ << "=";
+      refreshOverride_ = false;
+      command << "S " << axisLetter << "?";
+      response << ":A " << axisLetter << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
@@ -600,13 +724,17 @@ int CXYStage::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      command << "S " << axisLetterX_ << "=" << tmp << " " << axisLetterY_ << "=" << tmp;
+      command << "S " << axisLetter << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      if (speedTruth_) {
+         refreshOverride_ = true;
+         return OnSpeedGeneric(pProp, MM::BeforeGet, axisLetter);
+      }
    }
    return DEVICE_OK;
 }
 
-int CXYStage::OnDriftError(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CXYStage::OnBacklashGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter)
 // note ASI units are in millimeters but MM units are in micrometers
 {
    ostringstream command; command.str("");
@@ -616,8 +744,8 @@ int CXYStage::OnDriftError(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << "E " << axisLetterX_ << "?";
-      response << ":" << axisLetterX_ << "=";
+      command << "B " << axisLetter << "?";
+      response << ":" << axisLetter << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       tmp = 1000*tmp;
@@ -626,13 +754,13 @@ int CXYStage::OnDriftError(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      command << "E " << axisLetterX_ << "=" << tmp/1000 << " " << axisLetterY_ << "=" << tmp/1000;
+      command << "B " << axisLetter << "=" << tmp/1000;;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }
 
-int CXYStage::OnFinishError(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CXYStage::OnDriftErrorGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter)
 // note ASI units are in millimeters but MM units are in micrometers
 {
    ostringstream command; command.str("");
@@ -642,8 +770,8 @@ int CXYStage::OnFinishError(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << "PC " << axisLetterX_ << "?";
-      response << ":A " << axisLetterX_ << "=";
+      command << "E " << axisLetter << "?";
+      response << ":" << axisLetter << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       tmp = 1000*tmp;
@@ -652,13 +780,14 @@ int CXYStage::OnFinishError(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      command << "PC " << axisLetterX_ << "=" << tmp/1000 << " " << axisLetterY_ << "=" << tmp/1000;
+      command << "E " << axisLetter << "=" << tmp/1000;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }
 
-int CXYStage::OnLowerLimX(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CXYStage::OnFinishErrorGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter)
+// note ASI units are in millimeters but MM units are in micrometers
 {
    ostringstream command; command.str("");
    ostringstream response; response.str("");
@@ -667,22 +796,23 @@ int CXYStage::OnLowerLimX(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << "SL " << axisLetterX_ << "?";
-      response << ":A " << axisLetterX_ << "=";
+      command << "PC " << axisLetter << "?";
+      response << ":A " << axisLetter << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = 1000*tmp;
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      command << "SL " << axisLetterX_ << "=" << tmp;
+      command << "PC " << axisLetter << "=" << tmp/1000;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }
 
-int CXYStage::OnLowerLimY(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CXYStage::OnLowerLimGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter)
 {
    ostringstream command; command.str("");
    ostringstream response; response.str("");
@@ -691,8 +821,8 @@ int CXYStage::OnLowerLimY(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << "SL " << axisLetterY_ << "?";
-      response << ":A " << axisLetterY_ << "=";
+      command << "SL " << axisLetter << "?";
+      response << ":A " << axisLetter << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
@@ -700,13 +830,13 @@ int CXYStage::OnLowerLimY(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      command << "SL " << axisLetterY_ << "=" << tmp;
+      command << "SL " << axisLetter << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }
 
-int CXYStage::OnUpperLimX(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CXYStage::OnUpperLimGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter)
 {
    ostringstream command; command.str("");
    ostringstream response; response.str("");
@@ -715,8 +845,8 @@ int CXYStage::OnUpperLimX(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << "SU " << axisLetterX_ << "?";
-      response << ":A " << axisLetterX_ << "=";
+      command << "SU " << axisLetter << "?";
+      response << ":A " << axisLetter << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
@@ -724,37 +854,13 @@ int CXYStage::OnUpperLimX(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      command << "SU " << axisLetterX_ << "=" << tmp;
+      command << "SU " << axisLetter << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }
 
-int CXYStage::OnUpperLimY(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   ostringstream command; command.str("");
-   ostringstream response; response.str("");
-   double tmp = 0;
-   if (eAct == MM::BeforeGet)
-   {
-      if (!refreshProps_ && initialized_)
-         return DEVICE_OK;
-      command << "SU " << axisLetterY_ << "?";
-      response << ":A " << axisLetterY_ << "=";
-      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
-      if (!pProp->Set(tmp))
-         return DEVICE_INVALID_PROPERTY_VALUE;
-   }
-   else if (eAct == MM::AfterSet) {
-      pProp->Get(tmp);
-      command << "SU " << axisLetterY_ << "=" << tmp;
-      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-   }
-   return DEVICE_OK;
-}
-
-int CXYStage::OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CXYStage::OnAccelerationGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter)
 {
    ostringstream command; command.str("");
    long tmp = 0;
@@ -762,8 +868,8 @@ int CXYStage::OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << "AC " << axisLetterX_ << "?";
-      ostringstream response; response.str(""); response << ":" << axisLetterX_ << "=";
+      command << "AC " << axisLetter << "?";
+      ostringstream response; response.str(""); response << ":" << axisLetter << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
@@ -771,13 +877,13 @@ int CXYStage::OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      command << "AC " << axisLetterX_ << "=" << tmp << " " << axisLetterY_ << "=" << tmp;
+      command << "AC " << axisLetter << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }
 
-int CXYStage::OnMaintainState(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CXYStage::OnMaintainStateGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter)
 {
    ostringstream command; command.str("");
    long tmp = 0;
@@ -785,8 +891,8 @@ int CXYStage::OnMaintainState(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << "MA " << axisLetterX_ << "?";
-      ostringstream response; response.str(""); response << ":A " << axisLetterX_ << "=";
+      command << "MA " << axisLetter << "?";
+      ostringstream response; response.str(""); response << ":A " << axisLetter << "=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       bool success = 0;
@@ -814,33 +920,7 @@ int CXYStage::OnMaintainState(MM::PropertyBase* pProp, MM::ActionType eAct)
          tmp = 3;
       else
          return DEVICE_INVALID_PROPERTY_VALUE;
-      command << "MA " << axisLetterX_ << "=" << tmp << " " << axisLetterY_ << tmp;
-      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-   }
-   return DEVICE_OK;
-}
-
-int CXYStage::OnBacklash(MM::PropertyBase* pProp, MM::ActionType eAct)
-// note ASI units are in millimeters but MM units are in micrometers
-{
-   ostringstream command; command.str("");
-   ostringstream response; response.str("");
-   double tmp = 0;
-   if (eAct == MM::BeforeGet)
-   {
-      if (!refreshProps_ && initialized_)
-         return DEVICE_OK;
-      command << "B " << axisLetterX_ << "?";
-      response << ":" << axisLetterX_ << "=";
-      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
-      tmp = 1000*tmp;
-      if (!pProp->Set(tmp))
-         return DEVICE_INVALID_PROPERTY_VALUE;
-   }
-   else if (eAct == MM::AfterSet) {
-      pProp->Get(tmp);
-      command << "B " << axisLetterX_ << "=" << tmp/1000 << " " << axisLetterY_ << "=" << tmp/1000;
+      command << "MA " << axisLetter << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
@@ -1007,7 +1087,7 @@ int CXYStage::OnAZeroY(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int CXYStage::OnMotorControl(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CXYStage::OnMotorControlGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter)
 {
    ostringstream command; command.str("");
    ostringstream response; response.str("");
@@ -1016,7 +1096,7 @@ int CXYStage::OnMotorControl(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << "MC " << axisLetterX_ << "?";
+      command << "MC " << axisLetter << "?";
       response << ":A ";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterPosition3(tmp) );
@@ -1032,9 +1112,9 @@ int CXYStage::OnMotorControl(MM::PropertyBase* pProp, MM::ActionType eAct)
       string tmpstr;
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_OffState) == 0)
-         command << "MC " << axisLetterX_ << "-" << " " << axisLetterY_ << "-";
+         command << "MC " << axisLetter << "-";
       else
-         command << "MC " << axisLetterX_ << "+" << " " << axisLetterY_ << "+";
+         command << "MC " << axisLetter << "+";
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
@@ -1408,4 +1488,319 @@ int CXYStage::OnAxisPolarityY(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CXYStage::OnScanState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "SN X?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+      bool success;
+      char c;
+      RETURN_ON_MM_ERROR( hub_->GetAnswerCharAtPosition3(c) );
+      switch ( c )
+      {
+         case g_ScanStateCodeIdle:  success = pProp->Set(g_ScanStateIdle); break;
+         default:                   success = pProp->Set(g_ScanStateRunning); break;  // a bunch of different codes are possible while running
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      char c;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_ScanStateIdle) == 0)
+      {
+         // TODO cleanup code by calling action handler with MM::BeforeGet?
+         // check status and stop if it's not idle already
+         command << addressChar_ << "SN X?";
+         RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+         RETURN_ON_MM_ERROR( hub_->GetAnswerCharAtPosition3(c) );
+         if (c!=g_ScanStateCodeIdle)
+         {
+            // this will stop state machine if it's running, if we do SN without args we run the risk of it stopping itself before we send the next command
+            // after we stop it, it will automatically go to idle state
+            command.str("");
+            command << addressChar_ << "SN X=" << (int)g_ScanStateCodeStop;
+            RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+         }
+      }
+      else if (tmpstr.compare(g_ScanStateRunning) == 0)
+      {
+         // check status and start if it's idle
+         command << addressChar_ << "SN X?";
+         RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+         RETURN_ON_MM_ERROR( hub_->GetAnswerCharAtPosition3(c) );
+         if ((c==g_SPIMStateCode_Idle))
+         {
+            // if we are idle or armed then start it
+            // assume that nothing else could have started it since our query moments ago
+            command.str("");
+            command << addressChar_ << "SN";
+            RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+         }
+      }
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   return DEVICE_OK;
+}
 
+int CXYStage::OnScanFastAxis(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "SN Y?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+      bool success;
+      char c;
+      RETURN_ON_MM_ERROR( hub_->GetAnswerCharAtPosition3(c) );
+      switch ( c )
+      {
+         case g_ScanAxisXCode:  success = pProp->Set(g_ScanAxisX); break;
+         case g_ScanAxisYCode:  success = pProp->Set(g_ScanAxisY); break;
+         default:               success = false; break;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      char c = ' ';
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_ScanAxisX) == 0) {
+         c = g_ScanAxisXCode;
+      } else if (tmpstr.compare(g_ScanAxisY) == 0) {
+         c = g_ScanAxisYCode;
+      }
+      if (c == ' ')
+      {
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      }
+      command << addressChar_ << "SN Y=" << c;
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+   }
+   return DEVICE_OK;
+}
+
+int CXYStage::OnScanSlowAxis(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "SN Z?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+      bool success;
+      char c;
+      RETURN_ON_MM_ERROR( hub_->GetAnswerCharAtPosition3(c) );
+      switch ( c )
+      {
+         case g_ScanAxisXCode:    success = pProp->Set(g_ScanAxisX); break;
+         case g_ScanAxisYCode:    success = pProp->Set(g_ScanAxisY); break;
+         case g_ScanAxisNullCode: success = pProp->Set(g_ScanAxisNull); break;
+         default:                 success = false; break;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      char c = ' ';
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_ScanAxisX) == 0) {
+         c = g_ScanAxisXCode;
+      } else if (tmpstr.compare(g_ScanAxisY) == 0) {
+         c = g_ScanAxisYCode;
+      } else if (tmpstr.compare(g_ScanAxisNull) == 0) {
+         c = g_ScanAxisNullCode;
+      }
+      if (c == ' ')
+      {
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      }
+      command << addressChar_ << "SN Z=" << c;
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+   }
+   return DEVICE_OK;
+}
+
+int CXYStage::OnScanPattern(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "SN F?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+      bool success;
+      char c;
+      RETURN_ON_MM_ERROR( hub_->GetAnswerCharAtPosition3(c) );
+      switch ( c )
+      {
+         case g_ScanPatternRasterCode:      success = pProp->Set(g_ScanPatternRaster); break;
+         case g_ScanPatternSerpentineCode:  success = pProp->Set(g_ScanPatternSerpentine); break;
+         default:               success = false; break;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      char c = ' ';
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_ScanPatternRaster) == 0) {
+         c = g_ScanPatternRasterCode;
+      } else if (tmpstr.compare(g_ScanPatternSerpentine) == 0) {
+         c = g_ScanPatternSerpentineCode;
+      }
+      if (c == ' ')
+      {
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      }
+      command << addressChar_ << "SN F=" << c;
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+   }
+   return DEVICE_OK;
+}
+
+int CXYStage::OnScanFastStartPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NR X?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "NR X=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CXYStage::OnScanFastStopPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NR Y?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Y="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "NR Y=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CXYStage::OnScanSlowStartPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NV X?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "NV X=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CXYStage::OnScanSlowStopPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NV Y?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Y="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "NV Y=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CXYStage::OnScanNumLines(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NV Z?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "NV Z=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CXYStage::OnScanSettlingTime(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NV F?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A F="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "NV F=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}

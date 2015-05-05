@@ -47,9 +47,7 @@ const char* g_PropertyDev2 = "DAC2";
 /**
  * Constructor.
  */
-VirtualShutter::VirtualShutter() :
-   initialized_(false)
-{
+VirtualShutter::VirtualShutter() : initialized_(false) {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
 
@@ -63,8 +61,7 @@ VirtualShutter::~VirtualShutter()
 /**
  * Obtains device name.
  */
-void VirtualShutter::GetName(char* name) const
-{
+void VirtualShutter::GetName(char* name) const {
    CDeviceUtils::CopyLimitedString(name, g_VShutterDeviceName);
 }
 
@@ -115,8 +112,7 @@ int VirtualShutter::Initialize()
    initialized_ = true;
    return DEVICE_OK;
 }
-int VirtualShutter::SetOpen(bool open)
-{
+int VirtualShutter::SetOpen(bool open) {
    char dev1[MM::MaxStrLength];
    GetProperty(g_PropertyDev1, dev1);
 
@@ -143,8 +139,7 @@ int VirtualShutter::SetOpen(bool open)
 }
 
 
-int VirtualShutter::GetOpen(bool& open)
-{
+int VirtualShutter::GetOpen(bool& open) {
    char dev1[MM::MaxStrLength];
    GetProperty(g_PropertyDev1, dev1);
 

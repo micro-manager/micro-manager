@@ -418,7 +418,7 @@ core.LogMessage(&device, os.str().c_str(), false);
 int CSUW1Hub::SetDiskPosition(MM::Device& device, MM::Core& core, int pos)
 {
    ostringstream os;
-   os << "DC_SLCT, " <<pos;
+   os << "DC_SLCT, " << (pos + 1);
 
    bool succeeded = false;
    int counter = 0;
@@ -465,8 +465,8 @@ int CSUW1Hub::GetDiskPosition(MM::Device& device, MM::Core& core, int& pos)
 core.LogMessage(&device, os.str().c_str(), false);
    if (strstr(rcvBuf_, "-1") != 0)
       pos = -1; // Bright Field
-   else if (strstr(rcvBuf_, "0") != 0)
-	  pos = 0;  // Disk 1
+   else if (strstr(rcvBuf_, "1") != 0)
+	   pos = 0;  // Disk 1
    else 
       pos = 1;  // Disk 2
    return DEVICE_OK;

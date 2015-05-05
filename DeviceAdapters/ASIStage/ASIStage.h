@@ -161,6 +161,7 @@ private:
    bool stopSignal_;
    bool serialOnlySendChanged_;        // if true the serial command is only sent when it has changed
    std::string manualSerialAnswer_; // last answer received when the SerialCommand property was used
+   bool post2010firmware_;      // true if compile date is 2010 or later
 };
 
 class ZStage : public CStageBase<ZStage>, public ASIBase

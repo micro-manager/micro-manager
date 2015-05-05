@@ -59,7 +59,7 @@ const unsigned char setPositionSgn = 0x64;
 const ThorlabsCommand serverAliveCmd = {0x0492, 0x00, 0x00, DEVICE_CHANNEL0, false, DEVICE_HOSTPC};
 
 // set relative position
-const ThorlabsCommand setRelPositionCmd = {0x0445, 0x06, 0x00, DEVICE_CHANNEL0, true, DEVICE_HOSTPC};
+const ThorlabsCommand setRelPositionCmd = {0x0448, 0x06, 0x00, DEVICE_CHANNEL0, true, DEVICE_HOSTPC};
 const unsigned char setRelPositionSgn = 0x64;
 
 // stop (immediate)
@@ -339,7 +339,7 @@ int MotorStage::MoveBlocking(long pos, bool relative)
 {
    unsigned char sendPacket[6];
    const unsigned short channel = 1;
-   long gotoPos = pos < 0 ? 0 : pos;
+   long gotoPos = pos < 0 && !relative ? 0 : pos;
 
    ClearPort();
    SendCommand(serverAliveCmd);

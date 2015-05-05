@@ -193,7 +193,7 @@ public final class JoystickSubPanel extends ListeningJPanel {
          else if (jkey_==Joystick.Keys.JOYSTICK) {
             JSAxisDataItems = joystick_.getStickJSAxisData(side_);
          }
-
+         
          // repopulate the combo box with items
          updatingList_ = true;  // make sure itemStateChanged isn't fired until we rebuild list
          boolean itemInNew = false;
@@ -216,19 +216,32 @@ public final class JoystickSubPanel extends ListeningJPanel {
             jc_.setSelectedItem(Joystick.Keys.NONE.toString());
          }
       }//updateStageSelections
-      
+
    }//class StageSelectionBoxListener
-   
-   
+
+
    /**
-   * Should be called when enclosing panel gets focus.
-   */
+    * Should be called when enclosing panel gets focus.
+    */
    @Override
-  public void gotSelected() {
-     joystick_.unsetAllJoysticks();
-     joystickBox_.setSelectedItem(joystickBox_.getSelectedItem());
-     rightWheelBox_.setSelectedItem(rightWheelBox_.getSelectedItem());      
-     leftWheelBox_.setSelectedItem(leftWheelBox_.getSelectedItem());
-  }
-   
+   public void gotSelected() {
+      joystickBox_.setSelectedItem(joystickBox_.getSelectedItem());
+      rightWheelBox_.setSelectedItem(rightWheelBox_.getSelectedItem());      
+      leftWheelBox_.setSelectedItem(leftWheelBox_.getSelectedItem());
+   }
+
+   /**
+    * Should be called when enclosing panel loses focus.
+    */
+   @Override
+   public void gotDeSelected() {
+      // TODO change to using joystick_.unsetJoystick() for relevant associations
+      // need to change internal representation of ComboBox to using objects instead of strings
+      // to store associations, then this will be easy
+      // also could use JSAxisDataHash_
+      // alternatively could send single long command which will unset all joysticks
+      // but then would need to keep track of all axes
+      joystick_.unsetAllJoysticks();
+   }
+
 }

@@ -1,0 +1,3 @@
+<project name="HelloWorld" default="jar">
+	<import file="../javapluginbuild.xml"/>
+</project>

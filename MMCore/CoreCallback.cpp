@@ -324,19 +324,49 @@ int CoreCallback::InsertMultiChannel(const MM::Device* caller,
 
 }
 
-int CoreCallback::AcqFinished(const MM::Device* /*caller*/, int /*statusCode*/)
+int CoreCallback::AcqFinished(const MM::Device* caller, int /*statusCode*/)
 {
+   boost::shared_ptr<DeviceInstance> camera;
+   try
+   {
+      camera = core_->deviceManager_->GetDevice(caller);
+   }
+   catch (const CMMError&)
+   {
+      LOG_ERROR(core_->coreLogger_) <<
+         "AcqFinished() called from unregistered device";
+      return DEVICE_ERR;
+   }
+
    if (core_->autoShutter_)
    {
       boost::shared_ptr<ShutterInstance> shutter =
          core_->currentShutterDevice_.lock();
       if (shutter)
       {
-         shutter->SetOpen(false);
+         // We need to lock the shutter's module for thread safety, but there's
+         // a case where deadlock would result.
+         if (camera->GetAdapterModule() == shutter->GetAdapterModule())
+         {
+            // This is a nasty hack to allow the case where the shutter and
+            // camera live in the same module. It is not safe, but this is how
+            // _all_ cases used to be implemented, and I can't immediately
+            // think of a fully safe fix that is reasonably simple.
+            shutter->SetOpen(false);
+         }
+         else
+         {
+            // If the shutter is in a different device adapter, it is safe to
+            // lock that adapter.
+            mm::DeviceModuleLockGuard g(shutter);
+            shutter->SetOpen(false);
 
-         // Don't wait for the shutter, because we typically call waitForDevice
-         // from a sequence thread and can cause a deadlock of shutter and
-         // camera are in the same module.
+            // We could wait for the shutter to close here, but the
+            // implementation has always returned without waiting. The camera
+            // doesn't care, so let's keep the behavior. Thus,
+            // stopSequenceAcquisition() does not wait for the shutter before
+            // returning.
+         }
       }
    }
    return DEVICE_OK;
@@ -350,7 +380,10 @@ int CoreCallback::PrepareForAcq(const MM::Device* /*caller*/)
          core_->currentShutterDevice_.lock();
       if (shutter)
       {
-         shutter->SetOpen(true);
+         {
+            mm::DeviceModuleLockGuard g(shutter);
+            shutter->SetOpen(true);
+         }
          core_->waitForDevice(shutter);
       }
    }

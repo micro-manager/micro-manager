@@ -179,6 +179,7 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
                superDraw();
             }
          });
+
       } catch (InterruptedException e) {
          ReportingUtils.logError(e);
       } catch (InvocationTargetException e) {

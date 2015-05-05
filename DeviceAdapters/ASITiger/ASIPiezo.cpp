@@ -161,7 +161,7 @@ int CPiezo::Initialize()
    AddAllowedValue(g_PiezoModePropertyName, g_AdeptMode_1);
    AddAllowedValue(g_PiezoModePropertyName, g_AdeptMode_2);
    AddAllowedValue(g_PiezoModePropertyName, g_AdeptMode_3);
-   if (firmwareVersion_ > 2.7) AddAllowedValue(g_PiezoModePropertyName, g_AdeptMode_4);
+   if (FirmwareVersionAtLeast(2.7)) AddAllowedValue(g_PiezoModePropertyName, g_AdeptMode_4);
    UpdateProperty(g_PiezoModePropertyName);
 
    // Motor enable/disable (MC)
@@ -200,7 +200,7 @@ int CPiezo::Initialize()
    AddAllowedValue(g_JoystickSelectPropertyName, g_JSCode_23);
    UpdateProperty(g_JoystickSelectPropertyName);
 
-   if (firmwareVersion_ > 2.865)  // changed behavior of JS F and T as of v2.87
+   if (FirmwareVersionAtLeast(2.87))  // changed behavior of JS F and T as of v2.87
    {
       // fast wheel speed (JS F) (per-card, not per-axis)
       pAct = new CPropertyAction (this, &CPiezo::OnWheelFastSpeed);
@@ -230,7 +230,7 @@ int CPiezo::Initialize()
 
 
    // end now if we are pre-2.8 firmware
-   if (firmwareVersion_ < 2.8)
+   if (!FirmwareVersionAtLeast(2.8))
    {
       initialized_ = true;
       return DEVICE_OK;
@@ -329,7 +329,7 @@ int CPiezo::Initialize()
    }
 
    // add ring buffer properties if supported (starting version 2.81)
-   if ((firmwareVersion_ > 2.8) && (build.vAxesProps[0] & BIT1))
+   if (FirmwareVersionAtLeast(2.81) && (build.vAxesProps[0] & BIT1))
    {
       ring_buffer_supported_ = true;
 
@@ -1518,7 +1518,7 @@ int CPiezo::OnSPIMState(MM::PropertyBase* pProp, MM::ActionType eAct)
          if (c!=g_SPIMStateCode_Idle)
          {
             command.str("");
-            if(firmwareVersion_ > 2.865)
+            if(FirmwareVersionAtLeast(2.87))
             {
                command << addressChar_ << "SN X=" << (int)g_PZSPIMStateCode_Stop;
             }
@@ -1545,14 +1545,16 @@ int CPiezo::OnSPIMState(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CPiezo::OnRBMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   string pseudoAxisChar = FirmwareVersionAtLeast(2.89) ? "F" : "X";
    long tmp;
    if (eAct == MM::BeforeGet)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << addressChar_ << ((firmwareVersion_ < 2.885) ? "RM X?" : "RM F?");
-      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(),
-            (firmwareVersion_ < 2.885) ? ":A X=" : ":A F="));
+      command << addressChar_ << "RM " << pseudoAxisChar << "?";
+      response << ":A " << pseudoAxisChar << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()) );
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (tmp >= 128)
       {
@@ -1581,7 +1583,7 @@ int CPiezo::OnRBMode(MM::PropertyBase* pProp, MM::ActionType eAct)
          tmp = 3;
       else
          return DEVICE_INVALID_PROPERTY_VALUE;
-      command << addressChar_ << ((firmwareVersion_ < 2.885) ? "RM X=" : "RM F=") << tmp;
+      command << addressChar_ << "RM " << pseudoAxisChar << "=" << tmp;
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
    }
    return DEVICE_OK;
@@ -1609,15 +1611,17 @@ int CPiezo::OnRBTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CPiezo::OnRBRunning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   string pseudoAxisChar = FirmwareVersionAtLeast(2.89) ? "F" : "X";
    long tmp = 0;
    static bool justSet;
    if (eAct == MM::BeforeGet)
    {
       if (!refreshProps_ && initialized_ && !justSet)
          return DEVICE_OK;
-      command << addressChar_ << ((firmwareVersion_ < 2.885) ? "RM X?" : "RM F?");
-      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(),
-            (firmwareVersion_ < 2.885) ? ":A X=" : ":A F="));
+      command << addressChar_ << "RM " << pseudoAxisChar << "?";
+      response << ":A " << pseudoAxisChar << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()) );
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       bool success;
       if (tmp >= 128)

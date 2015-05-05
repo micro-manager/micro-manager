@@ -39,6 +39,8 @@ public:
    int SetPositionUm(double pos);
    int SetRelativePositionUm(double d);
    int Move(double velocity);
+   int Stop();
+   int Home();
    int SetAdapterOriginUm(double d);
    int GetPositionUm(double& pos);
    int SetPositionSteps(long steps);

@@ -611,7 +611,7 @@ int ZeissAxis::FindHardwareStop(MM::Device& device, MM::Core& core, ZeissUByte d
 int ZeissAxis::StopMove(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissByte moveMode)
 {
    int ret;
-   const int commandLength = 11;
+   const int commandLength = 7;
    unsigned char command[commandLength];
    // Size of data block
    command[0] = 0x04;
@@ -632,6 +632,81 @@ int ZeissAxis::StopMove(MM::Device& device, MM::Core& core, ZeissUByte devId, Ze
       return ret;
 
    return DEVICE_OK;
+}
+
+/*
+ * Sets Trajectory Velocity 
+ */
+int ZeissAxis::SetTrajectoryVelocity(MM::Device& device, MM::Core& core, ZeissUByte devId, long velocity)
+{
+   int ret;
+   const int commandLength = 10;
+   unsigned char command[commandLength];
+   // Size of data block
+   command[0] = 0x07;
+   // Write command, do not expect answer:
+   command[1] = 0x1B;
+   command[2] = 0xA3; 
+   // ProcessID
+   command[3] = 0x11;
+   // SubID
+   command[4] = 0x2B;
+   // Device ID
+   command[5] = devId;
+   // position is a ZeissLong (4-byte) in big endian format...
+   ZeissLong tmp = htonl((ZeissLong) velocity);
+   memcpy(command+6, &tmp, ZeissLongSize); 
+   ret = g_hub.ExecuteCommand(device, core,  command, commandLength);
+   if (ret != DEVICE_OK)
+      return ret;
+   g_hub.SetModelBusy(devId, true);
+
+   return DEVICE_OK;
+}
+
+int ZeissAxis::HasTrajectoryVelocity(MM::Device& device, MM::Core& core, ZeissUByte devId, bool& hasTV)
+{
+   return g_hub.HasModelTrajectoryVelocity(device, core, devId, hasTV);
+}
+
+/*
+ * Sets Trajectory Acceleration
+ */
+int ZeissAxis::SetTrajectoryAcceleration(MM::Device& device, MM::Core& core, ZeissUByte devId, long acceleration)
+{
+   int ret;
+   const int commandLength = 10;
+   unsigned char command[commandLength];
+   // Size of data block
+   command[0] = 0x07;
+   // Write command, do not expect answer:
+   command[1] = 0x1B;
+   command[2] = 0xA3; 
+   // ProcessID
+   command[3] = 0x11;
+   // SubID
+   command[4] = 0x2C;
+   // Device ID
+   command[5] = devId;
+   // position is a ZeissLong (4-byte) in big endian format...
+   ZeissLong tmp = htonl((ZeissLong) acceleration);
+   memcpy(command+6, &tmp, ZeissLongSize); 
+   ret = g_hub.ExecuteCommand(device, core,  command, commandLength);
+   if (ret != DEVICE_OK)
+      return ret;
+   g_hub.SetModelBusy(devId, true);
+
+   return DEVICE_OK;
+}
+
+int ZeissAxis::GetTrajectoryVelocity(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissLong& velocity)
+{
+   return g_hub.GetModelTrajectoryVelocity(device, core, devId, velocity);
+}
+
+int ZeissAxis::GetTrajectoryAcceleration(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissLong& velocity)
+{
+   return g_hub.GetModelTrajectoryAcceleration(device, core, devId, velocity);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -666,13 +741,6 @@ ZeissScope::ZeissScope() :
 
 ZeissScope::~ZeissScope() 
 {
-   if (g_hub.monitoringThread_ != 0) {
-      g_hub.monitoringThread_->Stop();
-      g_hub.monitoringThread_->wait();
-      delete g_hub.monitoringThread_;
-      g_hub.monitoringThread_ = 0;
-   }
-   g_hub.scopeInitialized_ = false;
    Shutdown();
 }
 
@@ -735,6 +803,13 @@ int ZeissScope::Initialize()
 
 int ZeissScope::Shutdown() 
 {
+   if (g_hub.monitoringThread_ != 0) {
+      g_hub.monitoringThread_->Stop();
+      g_hub.monitoringThread_->wait();
+      delete g_hub.monitoringThread_;
+      g_hub.monitoringThread_ = 0;
+   }
+   g_hub.scopeInitialized_ = false;
    return 0;
 }
 
@@ -1382,6 +1457,7 @@ Axis::Axis (ZeissUByte devId, std::string name, std::string description):
    uni_ ("Unidirectional backlash compensation"),
    biSup_ ("Bidirectional Precision suppress small upwards"),
    biAlways_ ("Bidirectional Precision Always"),
+   default_ ("Default"),
    fast_ ("Fast"),
    smooth_ ("Smooth"),
    busyCounter_(0)
@@ -1461,6 +1537,7 @@ int Axis::Initialize()
    ret = CreateProperty("Velocity-Acceleration", fast_.c_str(), MM::String, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
+   AddAllowedValue("Velocity-Acceleration", default_.c_str());
    AddAllowedValue("Velocity-Acceleration", fast_.c_str());
    AddAllowedValue("Velocity-Acceleration", smooth_.c_str());
    
@@ -1582,8 +1659,9 @@ int Axis::OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)   {
       switch (velocity_) {
-         case 0: pProp->Set(fast_.c_str()); break;
+         case 0: pProp->Set(default_.c_str()); break;
          case 4: pProp->Set(smooth_.c_str()); break;
+         case 8: pProp->Set(fast_.c_str()); break;
          default: pProp->Set(fast_.c_str());
       }
    }
@@ -1591,10 +1669,12 @@ int Axis::OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
    {  
       string result;                                             
       pProp->Get(result);                                        
-      if (result == fast_)
+      if (result == default_)
          velocity_ = 0;
       else if (result == smooth_)
          velocity_ = 4;
+      else if (result == fast_)
+         velocity_ = 8;
    }                                                          
                                                               
    return DEVICE_OK;                                          
@@ -1613,6 +1693,7 @@ XYStage::XYStage ():
    uni_ ("Unidirectional backlash compensation"),
    biSup_ ("Bidirectional Precision suppress small upwards"),
    biAlways_ ("Bidirectional Precision Always"),
+   default_ ("Default"),
    fast_ ("Fast"),
    smooth_ ("Smooth")
 {
@@ -1682,9 +1763,26 @@ int XYStage::Initialize()
    ret = CreateProperty("Velocity-Acceleration", fast_.c_str(), MM::String, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
+   AddAllowedValue("Velocity-Acceleration", default_.c_str());
    AddAllowedValue("Velocity-Acceleration", fast_.c_str());
    AddAllowedValue("Velocity-Acceleration", smooth_.c_str());
    
+   // Trajectory Velocity and Acceleration:
+   bool hasTV = false;;
+   ret = HasTrajectoryVelocity(*this, *GetCoreCallback(), g_StageYAxis, hasTV);
+   if (ret != DEVICE_OK)
+      return ret;
+   if (hasTV) 
+   {
+      pAct = new CPropertyAction(this, &XYStage::OnTrajectoryVelocity);
+      ret = CreateProperty("Velocity (micron/s)", "0", MM::Float, false, pAct);
+      if (ret != DEVICE_OK)
+         return ret;
+      pAct = new CPropertyAction(this, &XYStage::OnTrajectoryAcceleration);
+      ret = CreateProperty("Acceleration (micron/s^2)", "0", MM::Float, false, pAct);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
 
    // Update lower and upper limits.  These values are cached, so if they change during a session, the adapter will need to be re-initialized
 /*
@@ -1839,24 +1937,72 @@ int XYStage::OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)   {
       switch (velocity_) {
-         case 0: pProp->Set(fast_.c_str()); break;
+         case 0: pProp->Set(default_.c_str()); break;
          case 4: pProp->Set(smooth_.c_str()); break;
-         default: pProp->Set(fast_.c_str());
+         case 8: pProp->Set(fast_.c_str()); break;
+         default: pProp->Set(default_.c_str());
       }
    }
    else if (eAct == MM::AfterSet)                             
    {  
       string result;                                             
       pProp->Get(result);                                        
-      if (result == fast_)
+      if (result == default_)
          velocity_ = 0;
       else if (result == smooth_)
          velocity_ = 4;
+      else if (result == fast_)
+         velocity_ = 8;
    }                                                          
                                                               
    return DEVICE_OK;                                          
 }
 
+int XYStage::OnTrajectoryVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet) {
+      // we are lazy and only check the x axis
+      long velocity;
+      int ret = ZeissAxis::GetTrajectoryVelocity(*this, *GetCoreCallback(), g_StageXAxis, (ZeissLong&) velocity);
+      if (ret != DEVICE_OK)
+         return ret;
+      pProp->Set( (float) (velocity/1000.0) );
+   } else if (eAct == MM::AfterSet) {
+      double tmp;
+      pProp->Get(tmp);
+      long velocity = (long) (tmp * 1000.0);
+      int ret = ZeissAxis::SetTrajectoryVelocity(*this, *GetCoreCallback(), g_StageXAxis, (ZeissLong) velocity);
+      if (ret != DEVICE_OK)
+         return ret;
+      ret = ZeissAxis::SetTrajectoryVelocity(*this, *GetCoreCallback(), g_StageYAxis, (ZeissLong) velocity);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+   return DEVICE_OK;
+}
+
+int XYStage::OnTrajectoryAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet) {
+      // we are lazy and only check the x axis
+      long accel;
+      int ret = ZeissAxis::GetTrajectoryAcceleration(*this, *GetCoreCallback(), g_StageXAxis, (ZeissLong&) accel);
+      if (ret != DEVICE_OK)
+         return ret;
+      pProp->Set( (float) (accel / 1000.0) );
+   } else if (eAct == MM::AfterSet) {
+      double tmp;
+      pProp->Get(tmp);
+      long accel = (long) (tmp * 1000.0);
+      int ret = ZeissAxis::SetTrajectoryAcceleration(*this, *GetCoreCallback(), g_StageXAxis, (ZeissLong) accel);
+      if (ret != DEVICE_OK)
+         return ret;
+      ret = ZeissAxis::SetTrajectoryAcceleration(*this, *GetCoreCallback(), g_StageYAxis, (ZeissLong) accel);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+   return DEVICE_OK;
+}
 
 /***********************************
  * Definite Focus

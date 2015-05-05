@@ -624,6 +624,12 @@ public class PlatePanel extends JPanel {
       return selWells;
    }
 
+   public void setSelectedWells(WellPositionList[] wal) {
+      for (WellPositionList wpl : wal) {
+         selectWell(wpl.getRow(), wpl.getColumn(), true);
+      }
+   }
+   
    void selectWell(int row, int col, boolean sel) {
       int index = wellMap_.get(getWellKey(row, col));
       wellBoxes_[index].selected = sel;

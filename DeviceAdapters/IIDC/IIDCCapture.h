@@ -116,15 +116,21 @@ private:
 
 class CaptureImpl : public Capture
 {
-   FrameRetriever retriever_;
-
 public:
    typedef FrameRetriever::FrameCallbackFunction FrameCallbackFunction;
+   typedef boost::function<void ()> FinishCallbackFunction;
 
+private:
+   FrameRetriever retriever_;
+   FinishCallbackFunction finishCallback_;
+
+public:
    CaptureImpl(dc1394camera_t* libdc1394camera,
          size_t nrFrames, size_t finiteNrFrames, unsigned firstFrameTimeoutMs,
-         FrameCallbackFunction frameHandler) :
-      retriever_(libdc1394camera, nrFrames, finiteNrFrames, firstFrameTimeoutMs, frameHandler)
+         FrameCallbackFunction frameHandler,
+         FinishCallbackFunction finishHandler) :
+      retriever_(libdc1394camera, nrFrames, finiteNrFrames, firstFrameTimeoutMs, frameHandler),
+      finishCallback_(finishHandler)
    {}
 
    virtual void Run();
@@ -135,6 +141,13 @@ private:
    // Subclasses override these to provide implementation:
    virtual void SetUp() = 0;
    virtual void CleanUp() = 0;
+
+   void Finish()
+   {
+      if (finishCallback_)
+         finishCallback_();
+      CleanUp();
+   }
 };
 
 
@@ -146,8 +159,10 @@ class ContinuousCapture : public CaptureImpl
 public:
    ContinuousCapture(dc1394camera_t* libdc1394camera,
          uint32_t nrDMABuffers, size_t nrFrames, unsigned firstFrameTimeoutMs,
-         FrameCallbackFunction frameHandler) :
-      CaptureImpl(libdc1394camera, nrFrames, 0, firstFrameTimeoutMs, frameHandler),
+         FrameCallbackFunction frameHandler,
+         FinishCallbackFunction finishHandler) :
+      CaptureImpl(libdc1394camera, nrFrames, 0, firstFrameTimeoutMs,
+            frameHandler, finishHandler),
       libdc1394camera_(libdc1394camera),
       nrDMABuffers_(nrDMABuffers)
    {}
@@ -167,8 +182,10 @@ class MultiShotCapture : public CaptureImpl
 public:
    MultiShotCapture(dc1394camera_t* libdc1394camera,
          uint32_t nrDMABuffers, uint16_t nrFrames, unsigned firstFrameTimeoutMs,
-         FrameCallbackFunction frameHandler) :
-      CaptureImpl(libdc1394camera, nrFrames, nrFrames, firstFrameTimeoutMs, frameHandler),
+         FrameCallbackFunction frameHandler,
+         FinishCallbackFunction finishHandler) :
+      CaptureImpl(libdc1394camera, nrFrames, nrFrames, firstFrameTimeoutMs,
+            frameHandler, finishHandler),
       libdc1394camera_(libdc1394camera),
       nrDMABuffers_(nrDMABuffers),
       nrFrames_(nrFrames)
@@ -188,8 +205,10 @@ class OneShotCapture : public CaptureImpl
 public:
    OneShotCapture(dc1394camera_t* libdc1394camera,
          uint32_t nrDMABuffers, unsigned timeoutMs,
-         FrameCallbackFunction frameHandler) :
-      CaptureImpl(libdc1394camera, 1, 1, timeoutMs, frameHandler),
+         FrameCallbackFunction frameHandler,
+         FinishCallbackFunction finishHandler) :
+      CaptureImpl(libdc1394camera, 1, 1, timeoutMs,
+            frameHandler, finishHandler),
       libdc1394camera_(libdc1394camera),
       nrDMABuffers_(nrDMABuffers)
    {}

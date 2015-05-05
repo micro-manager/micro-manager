@@ -74,7 +74,6 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 
 const char* ScopeLEDMSBMicroscopeIlluminator::DeviceName = "ScopeLED-G";
 const char* ScopeLEDMSBMicroscopeIlluminator::DeviceDescription = "ScopeLED Fiber Guide Illuminator";
-
 void ScopeLEDMSBMicroscopeIlluminator::ClearOpticalState()
 {
     m_state = true;
@@ -118,6 +117,8 @@ ScopeLEDMSBMicroscopeIlluminator::ScopeLEDMSBMicroscopeIlluminator()
     CreateIntegerProperty(MM::g_Keyword_State, 1, false, pAct);
     AddAllowedValue(MM::g_Keyword_State, "0"); // Closed
     AddAllowedValue(MM::g_Keyword_State, "1"); // Open
+
+
 
 #ifdef SCOPELED_DEBUGLOG
     m_LogFile << "-ScopeLEDMSBMicroscopeIlluminator::ScopeLEDMSBMicroscopeIlluminator ctor" << std::endl;
@@ -173,8 +174,8 @@ int ScopeLEDMSBMicroscopeIlluminator::Initialize()
 
     // set property list
     // -----------------
-
-    nRet = CreateIntegerProperty("Version", GetVersion(), true, NULL);
+	GetVersion();
+    nRet = CreateStringProperty("Version",J_version.c_str(), true, NULL); //20150203 Jason modify  CreateIntegerProperty => CreateStringProperty
     if (nRet != DEVICE_OK) return nRet;
 
     nRet = CreateStringProperty("SerialNumber", m_SerialNumber.c_str(), true, NULL);
@@ -254,6 +255,48 @@ int ScopeLEDMSBMicroscopeIlluminator::SetIntensity()
     return result;
 }
 
+//==================== 20140821 Jason add =================================================================
+int ScopeLEDMSBMicroscopeIlluminator::SetShutterChannel()
+{
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "+ScopeLEDMSBMicroscopeIlluminator::SetShutterChannel. Open=" << std::dec << m_state << "." << std::endl;
+#endif
+    unsigned char cmdbuf[6];
+    memset(cmdbuf, 0, sizeof(cmdbuf));
+    cmdbuf[0] = 0xA9;  // Start Byte
+    cmdbuf[1] = 3;  // Length Byte
+    cmdbuf[2] = 85;  // Command Byte
+    cmdbuf[3] = 0;  // No blinking
+    cmdbuf[5] = 0x5C;  // End Byte
+
+    unsigned char* const pChecksum = &cmdbuf[4];
+    unsigned char* const pStart = &cmdbuf[1];
+
+    //if (m_state)
+    //{
+    //    for (long i=0; i < SCOPELED_ILLUMINATOR_CHANNELS_MAX; i++)
+    //    {
+    //        cmdbuf[i+3] = (unsigned char) round((ShutterChannel[i] * (unsigned)0xFF) / 100);
+    //    }
+    //}
+    //else
+    //{
+    //    for (long i=0; i < SCOPELED_ILLUMINATOR_CHANNELS_MAX; i++)
+    //    {
+    //        cmdbuf[i+3] = 0;
+    //    }
+    //}
+
+    *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
+
+    const int result = Transact(cmdbuf, sizeof(cmdbuf));
+#ifdef SCOPELED_DEBUGLOG
+    m_LogFile << "+ScopeLEDMSBMicroscopeIlluminator::SetShutterChannel. Result=" << std::dec << result << "." << std::endl;
+#endif
+    return result;
+}
+//===============================================================================================
+
 int ScopeLEDMSBMicroscopeIlluminator::SetOpen (bool open)
 {
     m_state = open;
@@ -263,6 +306,35 @@ int ScopeLEDMSBMicroscopeIlluminator::SetOpen (bool open)
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers
 ///////////////////////////////////////////////////////////////////////////////
+//=======================  20140821 Jason add ===========================================================
+int ScopeLEDMSBMicroscopeIlluminator::OnChannelShutter(int index, MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(ShutterChannel[index]);
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        pProp->Get(ShutterChannel[index]);
+        SetShutterChannel();
+    }
+    return DEVICE_OK;
+}
+
+int ScopeLEDMSBMicroscopeIlluminator::OnShutterChannel1(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    return OnChannelShutter(0, pProp, eAct);
+}
+int ScopeLEDMSBMicroscopeIlluminator::OnShutterChannel2(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    return OnChannelShutter(1, pProp, eAct);
+}
+int ScopeLEDMSBMicroscopeIlluminator::OnShutterChannel3(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    return OnChannelShutter(2, pProp, eAct);
+}
+
+//=========================================================================================================
 
 int ScopeLEDMSBMicroscopeIlluminator::OnChannelIntensity(int index, MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -305,13 +377,12 @@ const char* const ScopeLEDMSMMicroscopeIlluminator::s_PresetModeStrings[] =
 {
     "Manual",
     "3000K",
-    "4500K",
-    "6500K",
+    "4300K",
+    "5600K",
     "Red",
     "Green",
     "Blue"
-};
-
+}; // Jason 20150203 modify 3000,4500,6500 => 3000,4300,5600
 void ScopeLEDMSMMicroscopeIlluminator::ClearOpticalState()
 {
     int i;
@@ -321,6 +392,7 @@ void ScopeLEDMSMMicroscopeIlluminator::ClearOpticalState()
         intensityRawChannelDAC[i] = 0;
 #else
         intensityRawChannel[i] = 0.0;
+		ShutterRawChannel[i] = 0.0;
 #endif
     }
     for (i=0; i < SCOPELED_ILLUMINATOR_MSM_PRESET_CHANNELS_MAX; i++)
@@ -403,8 +475,9 @@ int ScopeLEDMSMMicroscopeIlluminator::Initialize()
 
     // set property list
     // -----------------
-
-    nRet = CreateIntegerProperty("Version", GetVersion(), true, NULL);
+	
+	GetVersion();
+    nRet = CreateStringProperty("Version",J_version.c_str(), true, NULL); //20150203 Jason modify nRet = CreateIntegerProperty("Version", GetVersion(), true, NULL); => nRet = CreateStringProperty("Version", GetVersion.c_str(), true, NULL);
     if (nRet != DEVICE_OK) return nRet;
 
     nRet = CreateStringProperty("SerialNumber", m_SerialNumber.c_str(), true, NULL);
@@ -446,10 +519,11 @@ int ScopeLEDMSMMicroscopeIlluminator::Initialize()
     if (nRet != DEVICE_OK) return nRet;
     SetPropertyLimits("ManualIntensityChannel3", 0.0, 100.0);
 
-    pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnIntensityChannel4);
-    nRet = CreateFloatProperty("ManualIntensityChannel4", 0.0, false, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-    SetPropertyLimits("ManualIntensityChannel4", 0.0, 100.0);
+	//20140910 Jason modify 
+    //pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnIntensityChannel4);
+    //nRet = CreateFloatProperty("ManualIntensityChannel4", 0.0, false, pAct);
+    //if (nRet != DEVICE_OK) return nRet;
+    //SetPropertyLimits("ManualIntensityChannel4", 0.0, 100.0);
 #endif
 
     /*
@@ -468,53 +542,97 @@ int ScopeLEDMSMMicroscopeIlluminator::Initialize()
         AddAllowedValue("ActiveColor", s_PresetModeStrings[color], color);
     }
     
-    pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode1Intensity);
-    nRet = CreateFloatProperty("Intensity3000K", 0.0, false, pAct);
+	pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode1Intensity);
+    nRet = CreateFloatProperty("Intensity", 0.0, false, pAct);
     if (nRet != DEVICE_OK) return nRet;
-    SetPropertyLimits("Intensity3000K", 0.0, 100.0);
+    SetPropertyLimits("Intensity", 0.0, 100.0);
 
-    pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode2Intensity);
-    nRet = CreateFloatProperty("Intensity4500K", 0.0, false, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-    SetPropertyLimits("Intensity4500K", 0.0, 100.0);
+    //pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode1Intensity);
+    //nRet = CreateFloatProperty("Intensity3000K", 0.0, false, pAct);
+    //if (nRet != DEVICE_OK) return nRet;
+    //SetPropertyLimits("Intensity3000K", 0.0, 100.0);
 
-    pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode3Intensity);
-    nRet = CreateFloatProperty("Intensity6500K", 0.0, false, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-    SetPropertyLimits("Intensity6500K", 0.0, 100.0);
+    //pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode2Intensity);
+    //nRet = CreateFloatProperty("Intensity4500K", 0.0, false, pAct);
+    //if (nRet != DEVICE_OK) return nRet;
+    //SetPropertyLimits("Intensity4500K", 0.0, 100.0);
 
-    pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode4Intensity);
-    nRet = CreateFloatProperty("IntensityRed", 0.0, false, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-    SetPropertyLimits("IntensityRed", 0.0, 100.0);
+    //pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode3Intensity);
+    //nRet = CreateFloatProperty("Intensity6500K", 0.0, false, pAct);
+    //if (nRet != DEVICE_OK) return nRet;
+    //SetPropertyLimits("Intensity6500K", 0.0, 100.0);
 
-    pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode5Intensity);
-    nRet = CreateFloatProperty("IntensityGreen", 0.0, false, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-    SetPropertyLimits("IntensityGreen", 0.0, 100.0);
+    //pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode4Intensity);
+    //nRet = CreateFloatProperty("IntensityRed", 0.0, false, pAct);
+    //if (nRet != DEVICE_OK) return nRet;
+    //SetPropertyLimits("IntensityRed", 0.0, 100.0);
 
-    pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode6Intensity);
-    nRet = CreateFloatProperty("IntensityBlue", 0.0, false, pAct);
-    if (nRet != DEVICE_OK) return nRet;
-    SetPropertyLimits("IntensityBlue", 0.0, 100.0);
+    //pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode5Intensity);
+    //nRet = CreateFloatProperty("IntensityGreen", 0.0, false, pAct);
+    //if (nRet != DEVICE_OK) return nRet;
+    //SetPropertyLimits("IntensityGreen", 0.0, 100.0);
+
+    //pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnPresetMode6Intensity);
+    //nRet = CreateFloatProperty("IntensityBlue", 0.0, false, pAct);
+    //if (nRet != DEVICE_OK) return nRet;
+    //SetPropertyLimits("IntensityBlue", 0.0, 100.0);
 
     long mode;
     nRet = GetControlMode(mode);
     if (nRet != DEVICE_OK) return nRet;
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnControlMode);
-    nRet = CreateStringProperty("ControlMode", s_ControModeStrings[mode], false, pAct);
+	nRet = CreateStringProperty("ControlMode", b_ControModeStrings[mode], false, pAct); //20140910 Jason modify  s_ControModeStrings => b_ControModeStrings
     if (nRet != DEVICE_OK) return nRet;
-    for (mode=1; mode < MAX_CONTROL_MODE; mode++)
+    for (mode=0; mode < MAX_CONTROL_MODE; mode++) //20140910 Jason modify  mode=1 => mode=0
     {
-        AddAllowedValue("ControlMode", s_ControModeStrings[mode], mode);
+        AddAllowedValue("ControlMode", b_ControModeStrings[mode], mode); //20140910 Jason modify  s_ControModeStrings => b_ControModeStrings
     }
 
+	//================ 20150203 Jason add
+ //   pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnControlMode_b);
+	//nRet = CreateStringProperty("ControlMode-Intensity", b_ControModeStrings_Intensity[mode], false, pAct); //20140910 Jason modify  s_ControModeStrings => b_ControModeStrings
+ //   if (nRet != DEVICE_OK) return nRet;
+ //   for (mode=0; mode < MAX_CONTROL_MODE_b; mode++) //20140910 Jason modify  mode=1 => mode=0
+ //   {
+ //       AddAllowedValue("ControlMode-Intensity", b_ControModeStrings_Intensity[mode], mode); //20140910 Jason modify  s_ControModeStrings => b_ControModeStrings
+ //   }
+
+ //   pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnControlMode);
+	//nRet = CreateStringProperty("ControlMode-Shutter", b_ControModeStrings_Shutter[mode], false, pAct); //20140910 Jason modify  s_ControModeStrings => b_ControModeStrings
+ //   if (nRet != DEVICE_OK) return nRet;
+ //   for (mode=0; mode < MAX_CONTROL_MODE_b; mode++) //20140910 Jason modify  mode=1 => mode=0
+ //   {
+ //       AddAllowedValue("ControlMode-Shutter", b_ControModeStrings_Shutter[mode], mode); //20140910 Jason modify  s_ControModeStrings => b_ControModeStrings
+ //   }
+	//================
     // state
     pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnState);
     CreateIntegerProperty(MM::g_Keyword_State, 0, false, pAct);
     AddAllowedValue(MM::g_Keyword_State, "0"); // Closed
     AddAllowedValue(MM::g_Keyword_State, "1"); // Open
 
+	// ================ShutterChannel 20140821 Jason add========================================
+    pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnShutterChannel1);
+    nRet = CreateIntegerProperty("ShutterChannel1", 0, false, pAct);
+	 if (nRet != DEVICE_OK) return nRet;
+    //AddAllowedValue("ShutterChannel1", "0"); // Closed
+    //AddAllowedValue("ShutterChannel1", "1"); // Open
+	SetPropertyLimits("ShutterChannel1", 0, 1);
+
+	pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnShutterChannel2);
+    nRet = CreateIntegerProperty("ShutterChannel2", 0, false, pAct);
+	 if (nRet != DEVICE_OK) return nRet;
+    //AddAllowedValue("ShutterChannel2", "0"); // Closed
+    //AddAllowedValue("ShutterChannel2", "1"); // Open
+	SetPropertyLimits("ShutterChannel2", 0, 1);
+
+	pAct = new CPropertyAction (this, &ScopeLEDMSMMicroscopeIlluminator::OnShutterChannel3);
+    nRet = CreateIntegerProperty("ShutterChannel3", 0, false, pAct);
+	 if (nRet != DEVICE_OK) return nRet;
+    //AddAllowedValue("ShutterChannel3", "0"); // Closed
+    //AddAllowedValue("ShutterChannel3", "1"); // Open
+	SetPropertyLimits("ShutterChannel3", 0, 1);
+	// ===============================================================================
     nRet = UpdateStatus();
     return nRet;
 }
@@ -582,7 +700,32 @@ int ScopeLEDMSMMicroscopeIlluminator::SetManualColor()
     int result = Transact(cmdbuf, sizeof(cmdbuf), RxBuffer, &cbRxBuffer);
     return result;
 }
+
 #endif
+//20140821 Jason add
+int ScopeLEDMSMMicroscopeIlluminator::SetShutterChannel_Real()
+{
+	unsigned char cmdbuf[6];
+    memset(cmdbuf, 0, sizeof(cmdbuf));
+    cmdbuf[0] = 0xA9;  // Start Byte
+    cmdbuf[1] = 3;  // Length Byte
+    cmdbuf[2] = 85;  // Command Byte
+    cmdbuf[3] = 0;  // No blinking
+    cmdbuf[5] = 0x5C;  // End Byte
+
+    unsigned char* const pChecksum = &cmdbuf[4];
+    unsigned char* const pStart = &cmdbuf[1];
+	cmdbuf[3] = (unsigned char) (ShutterRawChannel[2] * 4+ ShutterRawChannel[1] *2+ShutterRawChannel[0] );
+    // for (int i=0; i < SCOPELED_ILLUMINATOR_CHANNELS_MAX; i++)
+    //{
+    //    cmdbuf[i+3] = (unsigned char) round((ShutterRawChannel[i] * (unsigned)0xFF) / 100);
+    //}
+
+    *pChecksum = g_USBCommAdapter.CalculateChecksum(pStart, *pStart);
+
+    const int result = Transact(cmdbuf, sizeof(cmdbuf));
+    return result;
+}
 
 int ScopeLEDMSMMicroscopeIlluminator::PlayPresetMode()
 {
@@ -669,6 +812,37 @@ int ScopeLEDMSMMicroscopeIlluminator::OnIntensityChannel4(MM::PropertyBase* pPro
     return SCOPELED_ILLUMINATOR_MSM_INTENSITY_COMMAND(3, pProp, eAct);
 }
 
+//================================ 20140821 Jason add ================================================
+int ScopeLEDMSMMicroscopeIlluminator::OnChannelShutter(int index, MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(ShutterRawChannel[index]);
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        pProp->Get(ShutterRawChannel[index]);
+        SetShutterChannel_Real();
+    }  
+    return DEVICE_OK;
+}
+
+
+#define SCOPELED_ILLUMINATOR_MSM_SHUTTER_COMMAND OnChannelShutter
+int ScopeLEDMSMMicroscopeIlluminator::OnShutterChannel1(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    return SCOPELED_ILLUMINATOR_MSM_SHUTTER_COMMAND(0, pProp, eAct);
+}
+int ScopeLEDMSMMicroscopeIlluminator::OnShutterChannel2(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    return SCOPELED_ILLUMINATOR_MSM_SHUTTER_COMMAND(1, pProp, eAct);
+}
+int ScopeLEDMSMMicroscopeIlluminator::OnShutterChannel3(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    return SCOPELED_ILLUMINATOR_MSM_SHUTTER_COMMAND(2, pProp, eAct);
+}
+//======================================================================================================
+
 int ScopeLEDMSMMicroscopeIlluminator::OnActiveColor(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
     int result = DEVICE_OK;
@@ -719,28 +893,29 @@ int ScopeLEDMSMMicroscopeIlluminator::OnPresetModeIntensity(int index, MM::Prope
 
 int ScopeLEDMSMMicroscopeIlluminator::OnPresetMode1Intensity(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-    return OnPresetModeIntensity(1, pProp, eAct);
+	return OnPresetModeIntensity(activePresetModeIndex, pProp, eAct);  //20150203 Jason modify 1 => activePresetModeIndex
+    //return OnPresetModeIntensity(1, pProp, eAct);
 }
-int ScopeLEDMSMMicroscopeIlluminator::OnPresetMode2Intensity(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    return OnPresetModeIntensity(2, pProp, eAct);
-}
-int ScopeLEDMSMMicroscopeIlluminator::OnPresetMode3Intensity(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    return OnPresetModeIntensity(3, pProp, eAct);
-}
-int ScopeLEDMSMMicroscopeIlluminator::OnPresetMode4Intensity(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    return OnPresetModeIntensity(4, pProp, eAct);
-}
-int ScopeLEDMSMMicroscopeIlluminator::OnPresetMode5Intensity(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    return OnPresetModeIntensity(5, pProp, eAct);
-}
-int ScopeLEDMSMMicroscopeIlluminator::OnPresetMode6Intensity(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-    return OnPresetModeIntensity(6, pProp, eAct);
-}
+//int ScopeLEDMSMMicroscopeIlluminator::OnPresetMode2Intensity(MM::PropertyBase* pProp, MM::ActionType eAct)
+//{
+//    return OnPresetModeIntensity(2, pProp, eAct);
+//}
+//int ScopeLEDMSMMicroscopeIlluminator::OnPresetMode3Intensity(MM::PropertyBase* pProp, MM::ActionType eAct)
+//{
+//    return OnPresetModeIntensity(3, pProp, eAct);
+//}
+//int ScopeLEDMSMMicroscopeIlluminator::OnPresetMode4Intensity(MM::PropertyBase* pProp, MM::ActionType eAct)
+//{
+//    return OnPresetModeIntensity(4, pProp, eAct);
+//}
+//int ScopeLEDMSMMicroscopeIlluminator::OnPresetMode5Intensity(MM::PropertyBase* pProp, MM::ActionType eAct)
+//{
+//    return OnPresetModeIntensity(5, pProp, eAct);
+//}
+//int ScopeLEDMSMMicroscopeIlluminator::OnPresetMode6Intensity(MM::PropertyBase* pProp, MM::ActionType eAct)
+//{
+//    return OnPresetModeIntensity(6, pProp, eAct);
+//}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -851,8 +1026,8 @@ int ScopeLEDFluorescenceIlluminator::Initialize()
 
     // set property list
     // -----------------
-
-    nRet = CreateIntegerProperty("Version", GetVersion(), true, NULL);
+	GetVersion();
+    nRet = CreateStringProperty("Version",J_version.c_str(), true, NULL); // 20150203 Jason modify nRet = CreateIntegerProperty("Version", GetVersion(), true, NULL); => CreateStringProperty
     if (nRet != DEVICE_OK) return nRet;
 
     nRet = CreateStringProperty("SerialNumber", m_SerialNumber.c_str(), true, NULL);

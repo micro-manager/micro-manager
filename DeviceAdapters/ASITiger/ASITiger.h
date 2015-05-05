@@ -142,9 +142,7 @@ const char* const g_AxisLetterYPropertyName = "AxisLetterY";
 const char* const g_AxisLetterPropertyName = "AxisLetter";
 const char* const g_SetHomeHerePropertyName = "SetHomeToCurrentPosition";
 const char* const g_MoveToHomePropertyName = "MoveToHome";
-const char* const g_AxisPolarity = "AxisPolarity";
-const char* const g_AxisPolarityX = "AxisPolarityX";
-const char* const g_AxisPolarityY = "AxisPolarityY";
+const char* const g_AdvancedPropertiesPropertyName = "EnableAdvancedProperties";
 
 // Hub property names
 const char* const g_HubDevicePropertyName = "HubDeviceName";
@@ -157,24 +155,39 @@ const char* const g_SerialCommandRepeatDurationPropertyName = "SerialCommandRepe
 const char* const g_SerialCommandRepeatPeriodPropertyName = "SerialCommandRepeatPeriod(ms)";
 const char* const g_SerialComPortPropertyName = "SerialComPort";
 
-// XY stage property names
+// motorized stage property names (XY and Z)
 const char* const g_StepSizeXPropertyName = "StepSizeX(um)";
 const char* const g_StepSizeYPropertyName = "StepSizeY(um)";
 const char* const g_StageWaitTimePropertyName = "WaitTime(ms)";
 const char* const g_NrExtraMoveRepsPropertyName = "ExtraMoveRepetitions";
 const char* const g_MotorSpeedPropertyName = "MotorSpeed-S(mm/s)";
+const char* const g_MotorSpeedXPropertyName = "MotorSpeedX-S(mm/s)";
+const char* const g_MotorSpeedYPropertyName = "MotorSpeedY-S(mm/s)";
 const char* const g_MaxMotorSpeedPropertyName = "MotorSpeedMaximum(mm/s)";
+const char* const g_MaxMotorSpeedXPropertyName = "MotorSpeedMaximumX(mm/s)";
+const char* const g_MaxMotorSpeedYPropertyName = "MotorSpeedMaximumY(mm/s)";
 const char* const g_BacklashPropertyName = "Backlash-B(um)";
+const char* const g_BacklashXPropertyName = "BacklashX-B(um)";
+const char* const g_BacklashYPropertyName = "BacklashY-B(um)";
 const char* const g_DriftErrorPropertyName =  "DriftError-E(um)";
+const char* const g_DriftErrorXPropertyName =  "DriftErrorX-E(um)";
+const char* const g_DriftErrorYPropertyName =  "DriftErrorY-E(um)";
 const char* const g_FinishErrorPropertyName =  "FinishError-PC(um)";
+const char* const g_FinishErrorXPropertyName =  "FinishErrorX-PC(um)";
+const char* const g_FinishErrorYPropertyName =  "FinishErrorY-PC(um)";
 const char* const g_AccelerationPropertyName = "Acceleration-AC(ms)";
+const char* const g_AccelerationXPropertyName = "AccelerationX-AC(ms)";
+const char* const g_AccelerationYPropertyName = "AccelerationY-AC(ms)";
 const char* const g_LowerLimXPropertyName =  "LowerLimX(mm)";
 const char* const g_LowerLimYPropertyName =  "LowerLimY(mm)";
 const char* const g_UpperLimXPropertyName =  "UpperLimX(mm)";
 const char* const g_UpperLimYPropertyName =  "UpperLimY(mm)";
 const char* const g_MaintainStatePropertyName = "MaintainState-MA";
-const char* const g_AdvancedPropertiesPropertyName = "EnableAdvancedProperties";
-const char* const g_CellEditingPropertyName = "EnableCellEditing";
+const char* const g_MaintainStateXPropertyName = "MaintainStateX-MA";
+const char* const g_MaintainStateYPropertyName = "MaintainStateY-MA";
+const char* const g_AxisPolarity = "AxisPolarity";
+const char* const g_AxisPolarityX = "AxisPolarityX";
+const char* const g_AxisPolarityY = "AxisPolarityY";
 const char* const g_OvershootPropertyName = "Overshoot-O(um)";
 const char* const g_KIntegralPropertyName = "ServoIntegral-KI";
 const char* const g_KProportionalPropertyName = "ServoProportional-KP";
@@ -183,6 +196,8 @@ const char* const g_AAlignPropertyName = "MotorAlign-AA";
 const char* const g_AZeroXPropertyName = "AutoZeroXResult-AZ";
 const char* const g_AZeroYPropertyName = "AutoZeroYResult-AZ";
 const char* const g_MotorControlPropertyName = "MotorOnOff";
+const char* const g_MotorControlXPropertyName = "MotorOnOffX";
+const char* const g_MotorControlYPropertyName = "MotorOnOffY";
 const char* const g_JoystickMirrorPropertyName = "JoystickReverse";
 const char* const g_JoystickRotatePropertyName = "JoystickRotate";
 const char* const g_JoystickSlowSpeedPropertyName = "JoystickSlowSpeed";
@@ -266,6 +281,18 @@ const char* const g_SATTLOutYPropertyName = "SingleAxisYTTLOut";
 const char* const g_SATTLPolYPropertyName = "SingleAxisYTTLPolarity";
 const char* const g_SAPatternModeYPropertyName = "SingleAxisYPatternByte";
 
+// SCAN firmware property names
+const char* const g_ScanStatePropertyName = "ScanState";
+const char* const g_ScanFastAxisPropertyName = "ScanFastAxis";
+const char* const g_ScanSlowAxisPropertyName = "ScanSlowAxis";
+const char* const g_ScanPatternPropertyName = "ScanPattern";
+const char* const g_ScanFastAxisStartPositionPropertyName = "ScanFastAxisStartPosition(mm)";
+const char* const g_ScanFastAxisStopPositionPropertyName = "ScanFastAxisStopPosition(mm)";
+const char* const g_ScanSlowAxisStartPositionPropertyName = "ScanSlowAxisStartPosition(mm)";
+const char* const g_ScanSlowAxisStopPositionPropertyName = "ScanSlowAxisStopPosition(mm)";
+const char* const g_ScanNumLinesPropertyName = "ScanNumLines";
+const char* const g_ScanSettlingTimePropertyName = "ScanSettlingTime(ms)";
+
 // CRISP property names
 const char* const g_CRISPWaitAfterLockPropertyName = "Wait ms after Lock";
 const char* const g_CRISPObjectiveNAPropertyName = "Objective NA";
@@ -293,6 +320,7 @@ const char* const g_SPIMNumSidesPropertyName = "SPIMNumSides";
 const char* const g_SPIMFirstSidePropertyName = "SPIMFirstSide";
 const char* const g_SPIMPiezoHomeEnable = "SPIMPiezoHomeEnable";
 const char* const g_SPIMScannerHomeEnable = "SPIMScannerHomeEnable";
+const char* const g_SPIMInterleaveSidesEnable = "SPIMInterleaveSidesEnable";
 const char* const g_SPIMNumRepeatsPropertyName = "SPIMNumRepeats";
 const char* const g_SPIMArmForTTLPropertyName = "SPIMArm";
 const char* const g_SPIMStatePropertyName = "SPIMState";
@@ -336,6 +364,7 @@ const char* const g_SetCardPresetPropertyName = "SetCardPreset";
 const char* const g_SetChannelPropertyName = "OutputChannel";
 const char* const g_CellGenericPropertyName = "Cell";
 const char* const g_TypeGenericPropertyName = "Type";
+const char* const g_CellEditingPropertyName = "EnableCellEditing";
 
 // programmable logic enums
 const char* const g_CellTypeCode0 = "0 - constant";
@@ -375,7 +404,8 @@ const char* const g_PresetCode8 = "8 - BNC8 enabled";
 const char* const g_PresetCode9 = "9 - BNC5-8 all disabled";
 const char* const g_PresetCode10 = "10 - cell 8 low";
 const char* const g_PresetCode11 = "11 - cell 8 high";
-const char* const g_PresetCode12 = "12 - cell 10 = (TTL1 OR cell 8)";
+const char* const g_PresetCode12_original = "12 - cell 10 = (TTL1 OR cell 8)";
+const char* const g_PresetCode12 = "12 - cell 10 = (TTL1 AND cell 8)";
 const char* const g_PresetCode13 = "13 - BNC4 source = (TTL3 AND (cell 10 OR cell 1))";
 const char* const g_PresetCode14 = "14 - diSPIM TTL";
 const char* const g_PresetCode15 = "15 - mod4 counter";
@@ -386,6 +416,9 @@ const char* const g_PresetCode19 = "19 - cells 9-16 on BNC1-8";
 const char* const g_PresetCode20 = "20 - cells 13-16 on BNC5-8";
 const char* const g_PresetCode21 = "21 - mod2 counter";
 const char* const g_PresetCode22 = "22 - no counter";
+const char* const g_PresetCode23 = "23 - TTL0-7 on BNC1-8";
+const char* const g_PresetCode24 = "24 - BNC3 source = cell 1";
+const char* const g_PresetCode25 = "25 - BNC3 source = cell 8";
 const char* const g_PLogicModeNone = "None";
 const char* const g_PLogicModediSPIMShutter = "diSPIM Shutter";
 const char* const g_ChannelNone = "none of outputs 5-8";
@@ -420,6 +453,26 @@ const char g_PZSPIMStateCode_Armed ='A';
 const char g_PZSPIMStateCode_Stop = 'P';
 const char g_PZSPIMStateCode_Timing='t';
 
+// SCAN state for micro-manager
+const char* const g_ScanStateIdle = "Idle";
+const char* const g_ScanStateStart = "Start";
+const char* const g_ScanStateRunning = "Running";
+// SCAN state for XY card
+const char g_ScanStateCodeIdle = 'I';
+const char g_ScanStateCodeStart = 'S';
+const char g_ScanStateCodeStop = 'P';
+// scan axes
+const char* const g_ScanAxisX = "1st axis";
+const char* const g_ScanAxisY = "2nd axis";
+const char* const g_ScanAxisNull = "Null (1D scan)";
+const char g_ScanAxisXCode = '0';
+const char g_ScanAxisYCode = '1';
+const char g_ScanAxisNullCode = '9';
+// scan pattern
+const char* const g_ScanPatternRaster = "Raster";
+const char* const g_ScanPatternSerpentine = "Serpentine";
+const char g_ScanPatternRasterCode = '0';
+const char g_ScanPatternSerpentineCode = '1';
 
 // property descriptions for enums
 // serial terminators for hub
@@ -451,6 +504,7 @@ const char* const g_OnState = "On";
 // yes/no control settings
 const char* const g_YesState = "Yes";
 const char* const g_NoState = "No";
+const char* const g_OneTimeState = "One time";
 // shutter states
 const char* const g_OpenState = "Open";
 const char* const g_ClosedState = "Closed";

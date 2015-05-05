@@ -984,8 +984,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       // update GUI contents
       // -------------------
 
-      // load window position from prefs
-      this.loadAndRestorePosition(100, 100, 521, 690);
 
       // add update event listeners
       positionsPanel_.addActionListener(new ActionListener() {
@@ -1017,6 +1015,10 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       applySettings();
 
       createToolTips();
+      
+      // load window position from prefs
+      this.loadAndRestorePosition(100, 100);
+      this.setSize(521, 690);
 
    }
 

@@ -21,6 +21,7 @@
 //
 
 import ij.IJ;
+import ij.process.ImageProcessor;
 import java.util.prefs.Preferences;
 
 import mmcorej.CMMCore;
@@ -73,8 +74,7 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
          autoFocus1_ = getPropertyValue(KEY_AUTOFOCUS1);
          autoFocus2_ = getPropertyValue(KEY_AUTOFOCUS2);
       } catch (MMException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
+         ReportingUtils.logError(e);
       }
       
    }
@@ -120,6 +120,7 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
    }
 
 
+   @Override
    public double fullFocus() {
       run("silent");
       return 0;
@@ -154,14 +155,16 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
          boolean found1 = false;
          boolean found2 = false;
          int j =0;
-         for (int i=0; i<afDevices.length; i++) {
-            if (!afDevices[i].equals(AF_DEVICE_NAME)) {
-               allowedAfDevices[j] = afDevices[i];
+         for (String afDevice : afDevices) {
+            if (!afDevice.equals(AF_DEVICE_NAME)) {
+               allowedAfDevices[j] = afDevice;
                j++;
-               if (afDevices[i].equals(autoFocus1_))
+               if (afDevice.equals(autoFocus1_)) {
                   found1 = true;
-               if (afDevices[i].equals(autoFocus2_))
+               }
+               if (afDevice.equals(autoFocus2_)) {
                   found2 = true;
+               }
             }
          }
          p1.allowed = allowedAfDevices;
@@ -180,6 +183,11 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
       return super.getProperties();
    }
       
+   @Override
+   public double computeScore(final ImageProcessor ip) {
+      return 0.0;
+   }
+   
    @Override
    public double getCurrentFocusScore() {
       // TODO Auto-generated method stub

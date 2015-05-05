@@ -217,7 +217,7 @@ public class Autofocus extends AutofocusBase implements org.micromanager.Autofoc
 
 
 
-            curSh = sharpNess(ipCurrent_);
+            curSh = computeScore(ipCurrent_);
 
             if(curSh > bestSh){
                bestSh = curSh;
@@ -251,7 +251,7 @@ public class Autofocus extends AutofocusBase implements org.micromanager.Autofoc
             snapSingleImage();
             // indx =0;    
 
-            curSh = sharpNess(ipCurrent_);
+            curSh = computeScore(ipCurrent_);
 
             if(curSh > bestSh){
                bestSh = curSh;
@@ -355,8 +355,13 @@ public class Autofocus extends AutofocusBase implements org.micromanager.Autofoc
    }
 
 
-   /*calculate the sharpness of a given image (in "impro").*/
-   private double sharpNess(ImageProcessor impro){
+   /**
+    * calculate the sharpness of a given image (in "impro").
+    * @param impro ImageJ Processor
+    * @return sharpness score
+    */
+   @Override
+   public double computeScore(final ImageProcessor impro){
 
 
       int width =  (int)(CROP_SIZE*core_.getImageWidth());

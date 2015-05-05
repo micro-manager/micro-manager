@@ -64,7 +64,6 @@ class MMIIDCCamera : public CCameraBase<MMIIDCCamera>
     */
    boost::shared_array<unsigned char> snappedPixels_;
    size_t snappedWidth_, snappedHeight_, snappedBytesPerPixel_;
-   IIDC::PixelFormat snappedPixelFormat_;
 
 public:
    MMIIDCCamera();
@@ -96,6 +95,7 @@ public:
    virtual unsigned GetImageWidth() const;
    virtual unsigned GetImageHeight() const;
    virtual unsigned GetImageBytesPerPixel() const;
+   virtual unsigned GetNumberOfComponents() const;
    virtual unsigned GetBitDepth() const;
 
    virtual int GetBinning() const { return 1; }
@@ -148,6 +148,7 @@ private:
 
    void SnapCallback(const void* pixels, size_t width, size_t height, IIDC::PixelFormat format);
    void SequenceCallback(const void* pixels, size_t width, size_t height, IIDC::PixelFormat format);
+   void SequenceFinishCallback();
 
    int AdHocErrorCode(const std::string& message);
 };

@@ -34,6 +34,8 @@ int XYStageInstance::SetRelativePositionSteps(long x, long y) { return GetImpl()
 int XYStageInstance::Home() { return GetImpl()->Home(); }
 int XYStageInstance::Stop() { return GetImpl()->Stop(); }
 int XYStageInstance::SetOrigin() { return GetImpl()->SetOrigin(); }
+int XYStageInstance::SetXOrigin() { return GetImpl()->SetXOrigin(); }
+int XYStageInstance::SetYOrigin() { return GetImpl()->SetYOrigin(); }
 int XYStageInstance::GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax) { return GetImpl()->GetStepLimits(xMin, xMax, yMin, yMax); }
 double XYStageInstance::GetStepSizeXUm() { return GetImpl()->GetStepSizeXUm(); }
 double XYStageInstance::GetStepSizeYUm() { return GetImpl()->GetStepSizeYUm(); }

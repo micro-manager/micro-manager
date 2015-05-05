@@ -59,7 +59,6 @@ class ASIBase : public TDeviceBase<UConcreteDevice>
 public:
    ASIBase(const char* name) :
       initialized_(false),
-      refreshProps_(false),
       firmwareVersion_(0.0)
    {
       this->InitializeDefaultErrorMessages();
@@ -93,10 +92,14 @@ public:
 
 protected:
    bool initialized_;      // used to signal that device properties have been read from controller
-   bool refreshProps_;     // true when property values should be read anew from controller each time
    double firmwareVersion_; // firmware version
    string firmwareDate_;    // firmware compile date
    string firmwareBuild_;   // firmware build name
+
+   bool FirmwareVersionAtLeast(double minimumFirmwareVersion)
+   {
+      return firmwareVersion_ > (minimumFirmwareVersion - 1e-6);  // 1e-6 to make sure match is counted as OK despite possible floating point arithmetic issues
+   }
 
    void InitializeASIErrorMessages()
    {

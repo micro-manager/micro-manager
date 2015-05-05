@@ -31,28 +31,17 @@
 #include "ImgAccumulator.h"
 #include <math.h>
 #include <assert.h>
+#include <algorithm>
+#include <iostream>
 using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
 // ImgAccumulator class
-//
-ImgAccumulator::ImgAccumulator(unsigned xSize, unsigned ySize, unsigned pixDepth, unsigned length) :
-   pixels_(0), width_(xSize), height_(ySize), pixDepth_(pixDepth), length_(length), enabled_(true)
-{
-   // setup image buffer
-   pixels_ = new unsigned char[xSize * ySize * pixDepth];
-   assert(pixels_);
-   memset(pixels_, 0, xSize * ySize * pixDepth);
-
-   // setup accumulator
-   accumulator_.resize(xSize * ySize, 0.0);
-   numFrames_ = 0;
-}
+// byte depth of 2 does summation
 
 ImgAccumulator::ImgAccumulator() :
-   pixels_(0), width_(0), height_(0), pixDepth_(0), length_(1)
-{
-   numFrames_ = 0;
+pixels_(0), width_(0), height_(0), pixDepth_(0), length_(1) {
+   frameIndex_ = 0;
 }
 
 ImgAccumulator::~ImgAccumulator()
@@ -65,100 +54,32 @@ const unsigned char* ImgAccumulator::GetPixels() const
    return pixels_;
 }
 
-void ImgAccumulator::SetPixels(const void* pix, unsigned sourceWidth, unsigned offsetX, unsigned offsetY)
+void ImgAccumulator::AddPixels(const void* pix, unsigned sourceWidth, unsigned, unsigned offsetY)
 {
-   long size = width_ * height_;
-   if (length_ == 0)
-   {
-      memset(pixels_, 0, width_ * height_ * pixDepth_);
-      return;
-   }
+	//pixels coming in will always be 8 bit
+	const unsigned char* pixPtr = static_cast<const unsigned char*>(pix);
 
-   numFrames_++;
-   if (numFrames_ > length_)
-      numFrames_ = length_;
-
-   double factor = (double)(numFrames_ - 1) / numFrames_;
-   double lenInv = 1.0 / numFrames_;
-
-   if (pixDepth_ == 1)
-   { 
-      const unsigned char* pixPtr = static_cast<const unsigned char*>(pix);
-      for (unsigned i=0; i<height_; i++)
-      {
-         for (unsigned j=0; j<width_; j++)
-         {
-            int idx = i*width_+j;
-            int srcIdx = (offsetY+i)*sourceWidth+j;
-            accumulator_[idx] = lenInv * pixPtr[srcIdx] + factor * accumulator_[idx];
-            pixels_[idx] = (unsigned char) min(accumulator_[idx], (double)UCHAR_MAX);
-         }
-      }
-   }
-   else if (pixDepth_ == 2)
-   {
-      const unsigned short* pixPtr = static_cast<const unsigned short*>(pix);
-      unsigned short* bufPtr = reinterpret_cast<unsigned short*>(pixels_);
-      for (unsigned i=0; i<height_; i++)
-      {
-         for (unsigned j=0; j<width_; j++)
-         {
-            int idx = i*width_+j;
-            int srcIdx = (offsetY+i)*sourceWidth+j;
-            accumulator_[idx] = lenInv * pixPtr[srcIdx] + factor * accumulator_[idx];
-            bufPtr[idx] = (unsigned short) min(accumulator_[idx], (double)USHRT_MAX);
-         }
-      }
-   }
-   else
-   {
-      // we don't know how to deal with anything else, so set pixels to 0
-         memset(pixels_, 0, width_ * height_ * pixDepth_);
-   }
-}
-
-void ImgAccumulator::AddPixels(const void* pix, unsigned sourceWidth, unsigned offsetX, unsigned offsetY)
-{
-   if (pixDepth_ == 1)
-   { 
-      const unsigned char* pixPtr = static_cast<const unsigned char*>(pix);
-      for (unsigned i=0; i<height_; i++)
-      {
-         for (unsigned j=0; j<width_; j++)
-         {
-            int idx = i*width_+j;
-            int srcIdx = (offsetY+i)*sourceWidth+j;
-            accumulator_[idx] += pixPtr[srcIdx];
-         }
-      }
-   }
-   else if (pixDepth_ == 2)
-   {
-      const unsigned short* pixPtr = static_cast<const unsigned short*>(pix);
-      for (unsigned i=0; i<height_; i++)
-      {
-         for (unsigned j=0; j<width_; j++)
-         {
-            int idx = i*width_+j;
-            int srcIdx = (offsetY+i)*sourceWidth+j;
-            accumulator_[idx] += pixPtr[srcIdx];
-         }
-      }
-   }
-   else
-      assert(false);
+	for (unsigned i=0; i<height_; i++) {
+		for (unsigned j=0; j<width_; j++) {
+			int srcIdx = (offsetY+i)*sourceWidth+j;
+			int idx = i*width_+j;
+			accumulator_[idx] += pixPtr[srcIdx];
+		}
+	}
+	frameIndex_++;
 }
 
 void ImgAccumulator::ResetPixels()
 {
-   // reset pixel buffer
-   if (pixels_)
-      memset(pixels_, 0, width_ * height_ * pixDepth_);
+	// reset pixel buffer
+	if (pixels_)
+		memset(pixels_, 0, width_ * height_ * pixDepth_);
 
-   // reset accumulator
-   accumulator_.clear();
-   accumulator_.assign(width_ * height_, 0.0);
-   numFrames_ = 0;
+	// reset accumulator
+	accumulator_.clear();
+	accumulator_.assign(width_ * height_, 0);
+
+	frameIndex_ = 0;
 }
 
 void ImgAccumulator::Resize(unsigned xSize, unsigned ySize, unsigned pixDepth)
@@ -176,8 +97,8 @@ void ImgAccumulator::Resize(unsigned xSize, unsigned ySize, unsigned pixDepth)
 
    // initialize content
    memset(pixels_, 0, width_ * height_ * pixDepth_);
-   accumulator_.resize(width_ * height_, 0.0);
-   numFrames_ = 0;
+   SetupAccumulator();
+   frameIndex_ = 0;
 }
 
 void ImgAccumulator::Resize(unsigned xSize, unsigned ySize)
@@ -194,38 +115,38 @@ void ImgAccumulator::Resize(unsigned xSize, unsigned ySize)
 
    memset(pixels_, 0, width_ * height_ * pixDepth_);
    accumulator_.resize(width_ * height_, 0.0);
-   numFrames_ = 0;
+   frameIndex_ = 0;
 }
 
-void ImgAccumulator::Resize(unsigned length)
+void ImgAccumulator::SetLength(unsigned length)
 {
    length_ = length;
+   SetupAccumulator();
 }
 
-void ImgAccumulator::Scale(double factor)
+void ImgAccumulator::SetupAccumulator() 
 {
-   long size = width_ * height_;
-   if (pixDepth_ == 1)
-   { 
-      for (long i=0; i<size; i++)
-      {
-         accumulator_[i] *= factor;
-         pixels_[i] = (unsigned char) min(accumulator_[i], (double)UCHAR_MAX);
-      }
-   }
-   else if (pixDepth_ == 2)
-   {
-      unsigned short* bufPtr = reinterpret_cast<unsigned short*>(pixels_);
-      for (long i=0; i<size; i++)
-      {
-         accumulator_[i] *= factor;
-         bufPtr[i] = (unsigned short) min(accumulator_[i], (double)USHRT_MAX);
-      }
-   }
-   else
-   {
-      // we don't know how to deal with anything else, so set pixels to 0
-      memset(pixels_, 0, width_ * height_ * pixDepth_);
-   }
+	accumulator_.resize(width_ * height_, 0);
+}
+
+void ImgAccumulator::CalculateOutputImage()
+{
+	//Do frame averaging
+	long size = width_ * height_;
+
+	if (pixDepth_ == 1) {
+		for (long i=0; i<size; i++) {
+			//divide by number of frames
+			accumulator_[i] *= (1.0/length_);
+			pixels_[i] = (unsigned char) min(accumulator_[i], (double)UCHAR_MAX);
+		}
+	} else {
+		//reinterperet as two bytes and write to pixels
+		unsigned short* bufPtr = reinterpret_cast<unsigned short*>(pixels_);
+		for (long i=0; i<size; i++)	{
+			bufPtr[i] = (unsigned short) min(accumulator_[i], (double)USHRT_MAX);
+		}
+	}
 
 }
+

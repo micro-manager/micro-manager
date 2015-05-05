@@ -18,11 +18,13 @@ import java.util.concurrent.ExecutionException;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -306,35 +308,50 @@ public class DataAnalysisPanel extends ListeningJPanel {
             throw new SaveTaskException("Can only convert Micro-Manager data set ");
          }
 
-         ImagePlus ip = dw.getImagePlus();
-         Datastore ds = dw.getDatastore();
-
          if (exportFormat_ == 0) { // mipav
-            String spimADir = targetDirectory_ + File.separator + baseName_
-                    + File.separator + "SPIMA";
-            String spimBDir = targetDirectory_ + File.separator + baseName_
-                    + File.separator + "SPIMB";
-
-            if (new File(spimADir).exists()
-                    || new File(spimBDir).exists()) {
-               throw new SaveTaskException("Output directory already exists");
+            
+            ImageProcessor iProc = ip.getProcessor();
+            if (!mmW.getSummaryMetaData().getString("NumberOfSides").equals("2")) {
+               throw new SaveTaskException("mipav export only works with two-sided data for now.");  
+            }
+            if (mmW.getNumberOfPositions() > 1) {
+               throw new SaveTaskException("mipav export does not yet work with multiple positions");  
+            }
+            
+            boolean usesChannels = mmW.getNumberOfChannels() > 2;  // if have channels besides two cameras
+            String [] channelDirArray = new String[mmW.getNumberOfChannels()];
+            if (usesChannels) {
+               for (int c = 0; c < mmW.getNumberOfChannels(); c++) {
+                  String chName = (String)mmW.getSummaryMetaData().getJSONArray("ChNames").get(c);
+                  String colorName = chName.substring(chName.indexOf("-")+1);  // matches with AcquisitionPanel naming convention
+                  channelDirArray[c] = targetDirectory_ + File.separator + baseName_ + File.separator
+                        + (((c % 2) == 0) ? "SPIMA" : "SPIMB") + File.separator + colorName;
+               }
+            } else {
+               channelDirArray[0] = targetDirectory_ + File.separator + baseName_ + 
+                     File.separator + "SPIMA";
+               channelDirArray[1] = targetDirectory_ + File.separator + baseName_ + 
+                     File.separator + "SPIMB";
             }
 
-            new File(spimADir).mkdirs();
-            new File(spimBDir).mkdir();
+            for (String dir : channelDirArray) {
+               if (new File(dir).exists()) {
+                     throw new SaveTaskException("Output directory already exists");
+               }
+            }
 
-            ImageProcessor iProc = dw.getImagePlus().getProcessor();
+            for (String dir : channelDirArray) {
+               new File(dir).mkdirs();
+            }
 
-            int totalNr = 2 * ds.getAxisLength(Coords.TIME) * 
-                    ds.getAxisLength(Coords.Z);
+            int totalNr = mmW.getNumberOfChannels() * mmW.getNumberOfFrames() * mmW.getNumberOfSlices();
             int counter = 0;
-
-            for (int c = 0; c < 2; c++) {
-               for (int t = 0; t < ds.getAxisLength(Coords.TIME); t++) {
+            
+            for (int c = 0; c < mmW.getNumberOfChannels(); c++) {  // for each channel
+               for (int t = 0; t < mmW.getNumberOfFrames(); t++) {  // for each timepoint
                   ImageStack stack = new ImageStack(iProc.getWidth(), iProc.getHeight());
                   for (int i = 0; i < ds.getAxisLength(Coords.Z); i++) {
                      ImageProcessor iProc2;
-                     // We need a replacement for this removed functionality!!!!
                      iProc2 = mmW.getImageProcessor(c, i, t, 1);
 
                      // optional transformation
@@ -348,7 +365,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
                            break;
                         }
                         case 3: {
-                           iProc2.rotate((c == 1) ? 90 : -90);
+                           iProc2.rotate(((c % 2) == 1) ? 90 : -90);
                            break;
                         }
                      }
@@ -360,25 +377,51 @@ public class DataAnalysisPanel extends ListeningJPanel {
                   }
                   ImagePlus ipN = new ImagePlus("tmp", stack);
                   ipN.setCalibration(ip.getCalibration());
-                  if (c == 0) {
-                     ij.IJ.save(ipN, spimADir + File.separator + baseName_ + "_"
-                             + "SPIMA-" + t + ".tif");
-                  } else if (c == 1) {
-                     ij.IJ.save(ipN, spimBDir + File.separator + baseName_ + "_"
-                             + "SPIMB-" + t + ".tif");
+                  ij.IJ.save(ipN, channelDirArray[c] + File.separator 
+                        + (((c % 2) == 0) ? "SPIMA" : "SPIMB")
+                        + "-" + t + ".tif");
+               }
+            }
+            
+         } else 
+         if (exportFormat_ == 1) { // Multiview reconstruction
+            String dir = targetDirectory_ + File.separator + baseName_;
+            File fd = new File(dir);
+            if (fd.exists()) {
+               if (! MyDialogUtils.getConfirmDialogResult("Directy: " + dir + 
+                       " already exists, overwrite?", 
+                       JOptionPane.OK_CANCEL_OPTION) ) {
+                  return null;
+               }
+               deleteFolder(fd);
+            }
+            if (! fd.mkdir()) {
+               MyDialogUtils.showError("Failed to create directory: " + dir);
+               return null;
+            }
+            ImageProcessor iProc = ip.getProcessor();
+            int totalNr = mmW.getNumberOfChannels() * mmW.getNumberOfFrames() * 
+                    mmW.getNumberOfSlices();
+            
+            // try to figure out if this was acquisition used one or two angles
+            int nrAngles = 1;
+            // if we had only one channel, then we used only one angle
+            if (mmW.getNumberOfChannels() > 1) {
+               JSONObject summaryMetadata = mmW.getSummaryMetaData();
+               String key = "NumberOfSides";
+               if (summaryMetadata.has(key)) {
+                  int nos = summaryMetadata.getInt(key);
+                  if (nos == 2) {
+                     nrAngles = 2;
                   }
                }
             }
-
-         } else if (exportFormat_ == 1) { // Multiview reconstruction
-            ImageProcessor iProc = ip.getProcessor();
-            int totalNr = 2 * ds.getAxisLength(Coords.TIME) * 
-                    ds.getAxisLength(Coords.Z);
+            
             int counter = 0;
 
-            // one time point per file, one angle per file
-            for (int c = 0; c < 2; c++) {
-               for (int t = 0; t < ds.getAxisLength(Coords.TIME); t++) {
+            // one time point per file, one angle per file, one channel per file
+            for (int c = 0; c < mmW.getNumberOfChannels(); c++) {
+               for (int t = 0; t < mmW.getNumberOfFrames(); t++) {
                   ImageStack stack = new ImageStack(iProc.getWidth(), iProc.getHeight());
                   for (int i = 0; i < ds.getAxisLength(Coords.Z); i++) {
                      ImageProcessor iProc2;
@@ -407,12 +450,17 @@ public class DataAnalysisPanel extends ListeningJPanel {
                   }
                   ImagePlus ipN = new ImagePlus("tmp", stack);
                   ipN.setCalibration(ip.getCalibration());
-                  if (c == 0) {
-                     ij.IJ.save(ipN, targetDirectory_ + File.separator + baseName_
-                             + "_TL" + t + "_Angle0.tif");
-                  } else if (c == 1) {
-                     ij.IJ.save(ipN, targetDirectory_ + File.separator + baseName_
-                             + "_TL" + t + "_Angle90.tif");
+                  if (2 == nrAngles) {
+                     if ((c % 2) == 0) {
+                        ij.IJ.save(ipN, dir + File.separator + baseName_
+                                + "_TL" + t + "_Angle0" + "_Ch" + (c / 2) + ".tif");
+                     } else if ((c % 2) == 1) {
+                        ij.IJ.save(ipN, dir + File.separator + baseName_
+                                + "_TL" + t + "_Angle90" + "_Ch" + (c / 2) + ".tif");
+                     }
+                  } else {
+                     ij.IJ.save(ipN, dir + File.separator + baseName_
+                             + "_TL" + t + "_Angle0" + "_Ch" + c + ".tif");
                   }
                }
             }
@@ -447,18 +495,23 @@ public class DataAnalysisPanel extends ListeningJPanel {
             imageLoader.appendChild(imageDirectory);
 
             Element filePattern = domTree.createElement("filePattern");
-            String patternText = baseName_ + "_TL{t}_Angle{a}.tif";
-            filePattern.insertBefore(domTree.createTextNode(patternText),
+            String patternText = baseName_ + "_TL{t}_Angle{a}_Ch{c}.tif";
+            filePattern.insertBefore(domTree.createTextNode(patternText), 
                     filePattern.getLastChild());
             imageLoader.appendChild(filePattern);
 
             String nrTimepoints = "" + ds.getAxisLength(Coords.TIME);
             Element layoutTimepoints = domTree.createElement("layoutTimepoints");
-            layoutTimepoints.insertBefore(domTree.createTextNode("1"), layoutTimepoints.getLastChild());
+            layoutTimepoints.insertBefore(domTree.createTextNode
+                  (nrTimepoints), layoutTimepoints.getLastChild() );
             imageLoader.appendChild(layoutTimepoints);
 
             // note, once we add channels, the file name pattern should also change
-            String nrChannels = "0";
+            int nc = mmW.getNumberOfChannels();
+            if (2 == nrAngles) {
+               nc /= 2;
+            }
+            String nrChannels = "" + nc;
             Element layoutChannels = domTree.createElement("layoutChannels");
             layoutChannels.insertBefore(domTree.createTextNode(nrChannels), layoutChannels.getLastChild());
             imageLoader.appendChild(layoutChannels);
@@ -467,12 +520,13 @@ public class DataAnalysisPanel extends ListeningJPanel {
             Element layoutIlls = domTree.createElement("layoutIlluminations");
             layoutIlls.insertBefore(domTree.createTextNode(nrIlls), layoutIlls.getLastChild());
             imageLoader.appendChild(layoutIlls);
-
-            String nrAngles = "1";
+            
+            String na = "" + nrAngles;
             Element layoutAngles = domTree.createElement("layoutAngles");
-            layoutAngles.insertBefore(domTree.createTextNode(nrAngles), layoutAngles.getLastChild());
-            imageLoader.appendChild(layoutAngles);
-
+            layoutAngles.insertBefore(domTree.createTextNode
+                  (na), layoutAngles.getLastChild() );
+            imageLoader.appendChild(layoutAngles);   
+            
             String imglibContainer = "ArrayImgFactory";
             Element imglib2Container = domTree.createElement("imglib2container");
             imglib2Container.insertBefore(domTree.createTextNode(imglibContainer),
@@ -484,16 +538,13 @@ public class DataAnalysisPanel extends ListeningJPanel {
 
             SummaryMetadata summary = ds.getSummaryMetadata();
             // workaround bug: z step is sometimes only present in per image data
-            CoordsBuilder cb = gui_.data().getCoordsBuilder();
-            Coords c = cb.channel(0).time(0).stagePosition(0).z(0).build();
-            Metadata imageTags = ds.getImage(c).getMetadata();
-            for (int angle = 0; angle < 2; angle++) {
-              
-               Element viewSetup = createViewSetup(domTree, angle,
-                       imageTags.getPixelSizeUm(),
-                       imageTags.getPixelSizeUm(),
-                       summary.getZStepUm(),
-                       "um");
+            JSONObject imageTags = mmW.getImageMetadata(0,0,0,0);
+            for (int angle = 0; angle < nrAngles; angle++) {
+               Element viewSetup = createViewSetup (domTree, angle, 
+                       MDUtils.getPixelSizeUm(summary), 
+                       MDUtils.getPixelSizeUm(summary),
+                       MDUtils.getZStepUm(imageTags),
+                      "um");
                viewSetups.appendChild(viewSetup);
             }
 
@@ -521,12 +572,11 @@ public class DataAnalysisPanel extends ListeningJPanel {
             sequenceDescription.appendChild(timePoints);
 
             Element viewRegistrations = domTree.createElement("ViewRegistrations");
-            for (int t = 0; t < ds.getAxisLength(Coords.TIME); t++) {
+            for (int t = 0; t < mmW.getNumberOfFrames(); t++) {
                for (int angle = 0; angle < 2; angle++) {
                   Element viewRegistration = getViewRegistration(domTree, t,
-                          angle, imageTags.getPixelSizeUm(),
-                          summary.getZStepUm()
-                  );
+                          angle, MDUtils.getPixelSizeUm(summary),
+                          MDUtils.getZStepUm(imageTags), true);
                   viewRegistrations.appendChild(viewRegistration);
                }
             }
@@ -538,9 +588,16 @@ public class DataAnalysisPanel extends ListeningJPanel {
             // write out the DOM to an xml file
             TransformerFactory tFactory = TransformerFactory.newInstance();
             Transformer transformer = tFactory.newTransformer();
+            //transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+            //transformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC, 
+            //        "-//W3C//DTD XHTML 1.0 Transitional//EN");
+            //transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, 
+            //        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd");
             DOMSource source = new DOMSource(domTree);
-            StreamResult result = new StreamResult(new File(targetDirectory_
-                    + File.separator + "dataset.xml"));
+            StreamResult result = new StreamResult(new File(dir +
+                    File.separator + "dataset.xml"));
             transformer.transform(source, result);
          }
          return null;
@@ -602,11 +659,27 @@ public class DataAnalysisPanel extends ListeningJPanel {
          return attr;
       }
 
-      private Element getViewRegistration(Document dom, int t, int angle,
-              double xUm, double zUm) {
+      private Element getViewRegistration(Document dom, int t, int angle, 
+              double xUm, double zUm, boolean rotateY90) {
          Element elvr = dom.createElement("ViewRegistration");
          elvr.setAttribute("timepoint", "" + t);
          elvr.setAttribute("setup", "" + angle);
+         
+         if (angle == 1 && rotateY90) {
+            Element elvt2 = dom.createElement("ViewTransform");
+            elvt2.setAttribute("type", "affine");
+            elvr.appendChild(elvt2);
+            Element name2 = dom.createElement("Name");
+            name2.insertBefore(dom.createTextNode("Manually defined transformation "
+                    + "(Rotation around y-axis by 90.0 degrees)"),
+                    name2.getLastChild());
+            elvt2.appendChild(name2);
+            Element affine2 = dom.createElement("affine");
+            String transform2 = "6.123233995736766E-17 0.0 1.0 0.0 0.0 1.0 0.0 0.0 -1.0 0.0 6.123233995736766E-17 0.0";
+            affine2.insertBefore(dom.createTextNode(transform2), affine2.getLastChild());
+            elvt2.appendChild(affine2);
+         }
+         
          Element elvt = dom.createElement("ViewTransform");
          elvt.setAttribute("type", "affine");
          elvr.appendChild(elvt);
@@ -641,6 +714,24 @@ public class DataAnalysisPanel extends ListeningJPanel {
             MyDialogUtils.showError(ex, "Interrupted while exporting data");
          }
       }
+   }
+   
+   /**
+    * Since java 1.6 does not seem to have this functionality....
+    * @param folder folder to be deleted
+    */
+   public static void deleteFolder(File folder) {
+      File[] files = folder.listFiles();
+      if (files != null) { 
+         for (File f : files) {
+            if (f.isDirectory()) {
+               deleteFolder(f);
+            } else {
+               f.delete();
+            }
+         }
+      }
+      folder.delete();
    }
 
    private void setSaveDestinationDirectory(JTextField rootField) {

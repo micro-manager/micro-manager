@@ -463,8 +463,8 @@ typedef union
 * The initial idea probably was to have all the PVCAM parameters as universal so we'd not
 * have to implement separate handlers (On**Property()) for every parameter. However due to
 * PVCAM nature it's impossible to create such universal class. The MM supports Long, String,
-* and Double parameter values, but PVCAM supports much more types, there are many parameters
-* that requires special handling (e.g. value conversion) and a change in some parameter
+* and Double parameter values, but PVCAM supports many more types, there are many parameters
+* that require special handling (e.g. value conversion) and a change in some parameter
 * requires update of other parameter.
 *
 * This class is not perfect. It can handle only some types of PVCAM parameters and it's kept here

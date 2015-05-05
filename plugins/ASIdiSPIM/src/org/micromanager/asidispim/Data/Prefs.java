@@ -70,6 +70,7 @@ public class Prefs {
       CHANNEL_USE_CHANNEL("ColorUse"),
       CHANNEL_CONFIG("ColorConfig"),
       NRCHANNELROWS("nrChannels"),
+      AUTOFOCUSFITFUNCTION("AutofocusFitFunction"),
       NONE("None");
       private final String text;
       Keys(String text) {

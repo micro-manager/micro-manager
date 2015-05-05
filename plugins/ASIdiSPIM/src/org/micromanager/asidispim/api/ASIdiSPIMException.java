@@ -38,6 +38,11 @@ public class ASIdiSPIMException  extends Exception {
        super(MSG_PREFIX + t.getMessage());
        this.cause = t;
    }
+   
+   public ASIdiSPIMException(Throwable t, String message) {
+       super(MSG_PREFIX + t.getMessage() + "-" + message);
+       this.cause = t;
+   }
 
    @Override
    public Throwable getCause() {

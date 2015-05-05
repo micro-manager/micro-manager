@@ -123,7 +123,7 @@ public final class BeamSubPanel extends ListeningJPanel {
          add(beamBBox_);
          add(sheetBBox_, "wrap");         
       } else {
-         add(new JLabel("Imaging side:"));
+         add(new JLabel("Excitation side:"));
          add(beamABox_);
          add(sheetABox_, "wrap");
          add(new JLabel("Epi side:"));

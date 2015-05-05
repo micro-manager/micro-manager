@@ -655,6 +655,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       } catch (HCSException e) {
          displayError(e.getMessage());
       }
+      
       platePanel_.setSelectedWells(selectedWells);
       platePanel_.repaint();
    }

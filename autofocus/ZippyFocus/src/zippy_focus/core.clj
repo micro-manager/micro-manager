@@ -49,7 +49,7 @@
         mean-edge (do (.findEdges proc) (.. proc getStatistics mean))]
     (/ mean-edge mean)))
 
-(defn score-image [score-type img]
+(defn computeScore [score-type img]
   (condp = score-type
     "Mean" (image-mean img)
     "StdDev" (image-std-dev img)
@@ -70,7 +70,7 @@
         trigger (make-sweep-vector current-z search-params)
         current-exposure (core getExposure)]
     (let [images (acquire-images z-drive trigger (:exposure search-params))
-          scores (map #(score-image (:score-type search-params) %) (seque images))
+          scores (map #(computeScore (:score-type search-params) %) (seque images))
           best-index (apply max-key #(nth scores %) (range (count images)))
           best-z (nth trigger best-index)]
       (core stopSequenceAcquisition)

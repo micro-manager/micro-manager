@@ -464,8 +464,8 @@ public:
    void setRelativePosition(double d) throw (CMMError);
    void setOrigin(const char* stageLabel) throw (CMMError);
    void setOrigin() throw (CMMError);
-   void setAdapterOrigin(const char* stageLabel, double d) throw (CMMError);
-   void setAdapterOrigin(double d) throw (CMMError);
+   void setAdapterOrigin(const char* stageLabel, double newZUm) throw (CMMError);
+   void setAdapterOrigin(double newZUm) throw (CMMError);
 
    bool isStageSequenceable(const char* stageLabel) throw (CMMError);
    void startStageSequence(const char* stageLabel) throw (CMMError);
@@ -490,13 +490,17 @@ public:
    double getYPosition(const char* xyStageLabel) throw (CMMError);
    double getXPosition() throw (CMMError);
    double getYPosition() throw (CMMError);
-   void stop(const char* xyStageLabel) throw (CMMError);
-   void home(const char* xyStageLabel) throw (CMMError);
+   void stop(const char* xyOrZStageLabel) throw (CMMError);
+   void home(const char* xyOrZStageLabel) throw (CMMError);
    void setOriginXY(const char* xyStageLabel) throw (CMMError);
    void setOriginXY() throw (CMMError);
+   void setOriginX(const char* xyStageLabel) throw (CMMError);
+   void setOriginX() throw (CMMError);
+   void setOriginY(const char* xyStageLabel) throw (CMMError);
+   void setOriginY() throw (CMMError);
    void setAdapterOriginXY(const char* xyStageLabel,
-         double x, double y) throw (CMMError);
-   void setAdapterOriginXY(double x, double y) throw (CMMError);
+         double newXUm, double newYUm) throw (CMMError);
+   void setAdapterOriginXY(double newXUm, double newYUm) throw (CMMError);
 
    bool isXYStageSequenceable(const char* xyStageLabel) throw (CMMError);
    void startXYStageSequence(const char* xyStageLabel) throw (CMMError);

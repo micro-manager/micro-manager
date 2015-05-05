@@ -67,8 +67,8 @@ test-reports/
 /symbols/
 
 # Testing
-/testing/gtest-*.zip
-/testing/gtest/
+/testing/gmock-*.zip
+/testing/gmock/
 
 # Generated source
 /buildscripts/launchers/micromanager

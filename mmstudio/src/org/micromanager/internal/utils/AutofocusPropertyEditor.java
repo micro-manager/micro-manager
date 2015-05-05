@@ -268,8 +268,10 @@ public class AutofocusPropertyEditor extends MMDialog {
             AutofocusPropertyEditor.class, PREF_SHOW_READONLY, 
               showReadonlyCheckBox_.isSelected());
       if (afMgr_ != null)
-         if (afMgr_.getDevice() != null)
+         if (afMgr_.getDevice() != null) {
+            afMgr_.getDevice().applySettings();
             afMgr_.getDevice().saveSettings();
+         }
    }
 
 

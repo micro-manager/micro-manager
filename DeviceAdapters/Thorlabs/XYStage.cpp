@@ -217,7 +217,15 @@ int XYStage::Initialize()
       return ret;
 
    if (stat.dwStatusBits & 0x00000400)
-      home_ = true;
+   {
+	   // x-axis homed.  Now check y
+	   ret = GetStatus(stat, Y);
+	   if (ret != DEVICE_OK)
+		  return ret;
+
+	   if (stat.dwStatusBits & 0x00000400)
+		  home_ = true;
+   }
 
    // check if axes need enabling
    if (!(stat.dwStatusBits & 0x80000000))

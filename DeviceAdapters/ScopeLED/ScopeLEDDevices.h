@@ -23,7 +23,7 @@ License along with this software.  If not, see
 
 #include "ScopeLEDBasicIlluminator.h"
 
-#define SCOPELED_ILLUMINATOR_CHANNELS_MAX 4
+#define SCOPELED_ILLUMINATOR_CHANNELS_MAX 3 //20140821 Jason modify 4=>3
 class ScopeLEDMSBMicroscopeIlluminator : public ScopeLEDBasicIlluminator<ScopeLEDMSBMicroscopeIlluminator>
 {
     bool m_state;
@@ -39,6 +39,14 @@ public:
     int SetOpen (bool open = true);
     int GetOpen(bool& open);
 
+	//================ 20140821 jason add =================================
+	int OnChannelShutter(int index, MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnShutterChannel1(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnShutterChannel2(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnShutterChannel3(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnShutterChannel4(MM::PropertyBase* pProp, MM::ActionType eAct);
+	//===================================================================//
+
     // action interface
     int OnChannelIntensity(int index, MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnIntensityChannel1(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -48,12 +56,14 @@ public:
     
     static const char* DeviceName;
     static const char* DeviceDescription;
+	 int SetShutterChannel();  //20140821 Jason add
 protected:
     void ClearOpticalState();
     int SetIntensity();
-    
+		
 private:
     double intensity[SCOPELED_ILLUMINATOR_CHANNELS_MAX];
+	double ShutterChannel[SCOPELED_ILLUMINATOR_CHANNELS_MAX]; //20140821 Jason add
 };
 
 #define SCOPELED_ILLUMINATOR_MSM_PRESET_CHANNELS_MAX 6
@@ -78,6 +88,14 @@ public:
 #else
     int OnChannelIntensity(int index, MM::PropertyBase* pProp, MM::ActionType eAct);
 #endif
+	//================ 20140821 jason add =================================
+	int OnChannelShutter(int index, MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnShutterChannel1(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnShutterChannel2(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnShutterChannel3(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnShutterChannel4(MM::PropertyBase* pProp, MM::ActionType eAct);
+	//===================================================================//
+
     int OnIntensityChannel1(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnIntensityChannel2(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnIntensityChannel3(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -99,6 +117,7 @@ protected:
     void ClearOpticalState();
 
 private:
+	double ShutterRawChannel[SCOPELED_ILLUMINATOR_CHANNELS_MAX];
 #ifdef SCOPELED_ILLUMINATOR_MSM_INTENSITY_DAC
     long intensityRawChannelDAC[SCOPELED_ILLUMINATOR_CHANNELS_MAX];
     int SetManualColorDAC();
@@ -106,8 +125,10 @@ private:
     double intensityRawChannel[SCOPELED_ILLUMINATOR_CHANNELS_MAX];
     int SetManualColor();
 #endif
+	int SetShutterChannel_Real();
     double intensityPresetMode[SCOPELED_ILLUMINATOR_MSM_PRESET_CHANNELS_MAX];
     long activePresetModeIndex;
+	long activePresetShutterndex;
     static const char* const s_PresetModeStrings[];
 
     int PlayPresetMode();

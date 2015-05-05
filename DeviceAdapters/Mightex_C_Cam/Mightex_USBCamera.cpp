@@ -6,12 +6,13 @@
 // DESCRIPTION:   The example implementation of the Mightex USB camera.
 //                Simulates generic digital camera and associated automated
 //                microscope devices and enables testing of the rest of the
-//                system without the need to connect to the actual hardware. 
-//                
-// AUTHOR:        Yihui, mightexsystem.com, 05/30/2014
+//                system without the need to connect to the actual hardware.
+//
+// AUTHOR:        Yihui, mightexsystem.com, 12/17/2014
 //
 // COPYRIGHT:     University of California, San Francisco, 2006
 //                100X Imaging Inc, 2008
+//                Mightex Systems, 2014-2015
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -23,9 +24,6 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-//
-// CVS:           $Id: Mightex_USBCamera.h 12531 2014-05-30 16:25:20Z mark $
-//
 
 #include "Mightex_USBCamera.h"
 #include <cstdio>
@@ -179,6 +177,7 @@ BUFCCDUSB_SetXYStartPtr BUFCCDUSB_SetXYStart;
 BUFCCDUSB_SetGainsPtr BUFCCDUSB_SetGains;
 BUFCCDUSB_SetGammaPtr BUFCCDUSB_SetGamma;
 BUFCCDUSB_SetBWModePtr BUFCCDUSB_SetBWMode;
+BUFCCDUSB_SetSoftTriggerPtr BUFCCDUSB_SetSoftTrigger;
 BUFCCDUSB_InstallFrameHookerPtr BUFCCDUSB_InstallFrameHooker;
 BUFCCDUSB_InstallUSBDeviceHookerPtr BUFCCDUSB_InstallUSBDeviceHooker;
 //////////////////////////////////////////////////////////////////////////
@@ -190,11 +189,12 @@ int g_frameSize_width = DEFAULT_WIDTH;
 int g_deviceColorType = 0;
 int g_InstanceCount = 0;
 long g_xStart = 0;
+HANDLE SingleFrameEvent = NULL;
 
 /////////////////////////////////////////////////////////////////////////////
 //CallBack Function
 
-void CameraFaultCallBack( int ImageType )
+void CameraFaultCallBack( int /*ImageType*/ )
 {
 	// Note: It's recommended to stop the engine and close the application
 	BUFCCDUSB_StopCameraEngine();
@@ -211,9 +211,12 @@ void FrameCallBack(TProcessedDataProperty *Attributes, unsigned char *BytePtr)
 		bool isInROI;
 		if(Attributes->Bin == 0)
 		{
+
 			if(g_frameSize_width == Attributes->Column)
 			{
 				memcpy(g_pImage, BytePtr, g_frameSize);
+				if ( Attributes->TriggerEventCount == 1 )
+                                       SetEvent( SingleFrameEvent ); 
 				return;
 			}
 
@@ -259,6 +262,8 @@ void FrameCallBack(TProcessedDataProperty *Attributes, unsigned char *BytePtr)
 			}
 			p = NULL;
 			q = NULL;
+			if ( Attributes->TriggerEventCount == 1 )
+                               SetEvent( SingleFrameEvent );
 		}
 	}
 }
@@ -290,6 +295,7 @@ int CMightex_BUF_USBCCDCamera::InitCamera()
 	BUFCCDUSB_SetGains = (BUFCCDUSB_SetGainsPtr)GetProcAddress(HDll,"BUFCCDUSB_SetGains");
 	BUFCCDUSB_SetGamma = (BUFCCDUSB_SetGammaPtr)GetProcAddress(HDll,"BUFCCDUSB_SetGamma");
 	BUFCCDUSB_SetBWMode = (BUFCCDUSB_SetBWModePtr)GetProcAddress(HDll,"BUFCCDUSB_SetBWMode");
+	BUFCCDUSB_SetSoftTrigger = (BUFCCDUSB_SetSoftTriggerPtr)GetProcAddress(HDll,"BUFCCDUSB_SetSoftTrigger");
 	BUFCCDUSB_InstallFrameHooker = (BUFCCDUSB_InstallFrameHookerPtr)GetProcAddress(HDll,"BUFCCDUSB_InstallFrameHooker");
 	BUFCCDUSB_InstallUSBDeviceHooker = (BUFCCDUSB_InstallUSBDeviceHookerPtr)GetProcAddress(HDll,"BUFCCDUSB_InstallUSBDeviceHooker");
   }
@@ -319,11 +325,15 @@ int CMightex_BUF_USBCCDCamera::InitCamera()
 	}
 
 		BUFCCDUSB_AddDeviceToWorkingSet(1);
-		BUFCCDUSB_ActiveDeviceInWorkingSet(1, 0);
+		//BUFCCDUSB_ActiveDeviceInWorkingSet(1, 0);
+		BUFCCDUSB_ActiveDeviceInWorkingSet(1, 1);
 
 	BUFCCDUSB_StartCameraEngine( NULL, 8);
 	BUFCCDUSB_InstallFrameHooker( 1, FrameCallBack );
 	BUFCCDUSB_InstallUSBDeviceHooker( CameraFaultCallBack );
+	BUFCCDUSB_SetCameraWorkMode( 1, 1 ); // TRIGGER MODE
+	BUFCCDUSB_StartFrameGrab( GRAB_FRAME_FOREVER );
+
 
 	//////////////////////////////////////////////////////////////////////////
 	// GetDeviceType
@@ -418,6 +428,8 @@ int CMightex_BUF_USBCCDCamera::InitCamera()
 	is_initCamera = true;
     LogMessage("After InitCamera CMightex_BUF_USBCCDCamera\n");
 
+	SingleFrameEvent = CreateEvent( NULL, FALSE, FALSE, "SingleFrameGrabbingEvent");
+
     return DEVICE_OK;
 }
 
@@ -436,8 +448,6 @@ int CMightex_BUF_USBCCDCamera::GetCameraBufferCount(int width, int height)
 		return CAMERA_BUFFER_BW[tmpIndex+1];	
 	else
 		return CAMERA_BUFFER_COLOR[tmpIndex+1];	
-	
-	return NORMAL_FRAMES;
 }
 
 
@@ -815,6 +825,7 @@ int CMightex_BUF_USBCCDCamera::Shutdown()
 	//	 return DEVICE_OK;
 
 	if(HDll){
+                BUFCCDUSB_StopFrameGrab();
 		BUFCCDUSB_InstallFrameHooker( 1, NULL );
 		BUFCCDUSB_InstallUSBDeviceHooker( NULL );
         //LogMessage("Before BUFCCDUSB_StopCameraEngine\n");
@@ -828,6 +839,8 @@ int CMightex_BUF_USBCCDCamera::Shutdown()
 		 FreeLibrary( HDll );
 		LogMessage("After FreeLibrary\n");
 		 //HDll = NULL;
+		if ( SingleFrameEvent != NULL )
+		        CloseHandle( SingleFrameEvent );
 	}
 
    if(!is_initCamera)
@@ -865,7 +878,10 @@ int CMightex_BUF_USBCCDCamera::SnapImage()
       exp = GetSequenceExposure();
    }
 
-   GenerateSyntheticImage(img_, exp);
+   // We assume it must be in TRIGGER mode
+   BUFCCDUSB_SetCameraWorkMode(1, 1); // Set "TriggerEventCount" to 0.
+   Sleep(20);
+   BUFCCDUSB_SetSoftTrigger(1); // Assert Once for single frame.
 
    MM::MMTime s0(0,0);
    if( s0 < startTime )
@@ -883,6 +899,9 @@ int CMightex_BUF_USBCCDCamera::SnapImage()
 
    }
    readoutStartTime_ = GetCurrentMMTime();
+
+   /* int WaitResult = */ WaitForSingleObject( SingleFrameEvent, 1000 );
+   GetImageBuffer();
 
    return DEVICE_OK;
 }
@@ -1236,8 +1255,9 @@ int CMightex_BUF_USBCCDCamera::SetAllowedBinning()
  */
 int CMightex_BUF_USBCCDCamera::StartSequenceAcquisition(double interval) {
 
-	BUFCCDUSB_ActiveDeviceInWorkingSet(1, 1);
-	BUFCCDUSB_StartFrameGrab( GRAB_FRAME_FOREVER );
+	//BUFCCDUSB_ActiveDeviceInWorkingSet(1, 1);
+	//BUFCCDUSB_StartFrameGrab( GRAB_FRAME_FOREVER );
+	BUFCCDUSB_SetCameraWorkMode(1, 0); // Set to NORMAL mode
 
    return StartSequenceAcquisition(LONG_MAX, interval, false);            
 }
@@ -1254,8 +1274,9 @@ int CMightex_BUF_USBCCDCamera::StopSequenceAcquisition()
 
   if(is_initCamera){
 	  LogMessage("before BUFCCDUSB_StopFrameGrab\n");
-	  BUFCCDUSB_StopFrameGrab();
-	  BUFCCDUSB_ActiveDeviceInWorkingSet(1, 0);
+	  //BUFCCDUSB_StopFrameGrab();
+	  //BUFCCDUSB_ActiveDeviceInWorkingSet(1, 0);
+  	  BUFCCDUSB_SetCameraWorkMode(1, 1); // Set to TRIGGER mode		
 	}
 
    if (!thd_->IsStopped()) {
@@ -1347,11 +1368,6 @@ int CMightex_BUF_USBCCDCamera::ThreadRun (MM::MMTime startTime)
       	LogMessage("trigger requested");
       	triggerDev->SetProperty("Trigger","+");
       }
-   }
-   
-   if (!fastImage_)
-   {
-      GenerateSyntheticImage(img_, GetSequenceExposure());
    }
 
    ret = InsertImage();
@@ -1930,19 +1946,6 @@ void CMightex_BUF_USBCCDCamera::GenerateEmptyImage(ImgBuffer& img)
    unsigned char* pBuf = const_cast<unsigned char*>(img.GetPixels());
    memset(pBuf, 0, img.Height()*img.Width()*img.Depth());
 }
-
-
-
-/**
-* Generate a spatial sine wave.
-*/
-void CMightex_BUF_USBCCDCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
-{ 
-  
-   MMThreadGuard g(imgPixelsLock_);
-
-}
-
 
 void CMightex_BUF_USBCCDCamera::TestResourceLocking(const bool recurse)
 {

@@ -9,6 +9,7 @@ deviceadapter_LTLIBRARIES = libmmgr_dal_IIDC.la
 libmmgr_dal_IIDC_la_SOURCES = \
 	IIDCCapture.cpp \
 	IIDCCapture.h \
+	IIDCConvert.h \
 	IIDCError.h \
 	IIDCFeature.cpp \
 	IIDCFeature.h \

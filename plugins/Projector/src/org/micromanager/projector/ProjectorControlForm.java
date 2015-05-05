@@ -104,7 +104,6 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private final CMMCore core_;
    private final Studio app_;
    private final boolean isSLM_;
-   private int numROIs_;
    private Roi[] individualRois_ = {};
    private Map<Polygon, AffineTransform> mapping_ = null;
    private String mappingNode_ = null;
@@ -115,14 +114,18 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private String targetingShutter_;
    private Boolean disposing_ = false;
 
-   // ## Simple utility methods for points
-   
-   // Add a point to an existing polygon.
+   /**
+    * Simple utility methods for points
+    *
+    * Adds a point to an existing polygon.
+    */
    private static void addVertex(Polygon polygon, Point p) {
       polygon.addPoint(p.x, p.y);
    }
    
-   // Return the vertices of the given polygon as a series of points.
+   /**
+    * Returns the vertices of the given polygon as a series of points.
+    */
    private static Point[] getVertices(Polygon polygon) {
       Point vertices[] = new Point[polygon.npoints];
       for (int i = 0; i < polygon.npoints; ++i) {
@@ -131,7 +134,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       return vertices;
    }
    
-   // Gets the vectorial mean of an array of Points.
+   /**
+    * Gets the vectorial mean of an array of Points.
+    */
    private static Point2D.Double meanPosition2D(Point[] points) {
       double xsum = 0;
       double ysum = 0;
@@ -143,13 +148,17 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       return new Point2D.Double(xsum/n, ysum/n);
    }
 
-   // Convert a Point with double values for x,y to a point
-   // with x and y rounded to the nearest integer.
+   /**
+    * Converts a Point with double values for x,y to a point
+    * with x and y rounded to the nearest integer.
+    */
    private static Point toIntPoint(Point2D.Double pt) {
       return new Point((int) (0.5 + pt.x), (int) (0.5 + pt.y));
    }
 
-   // Convert a Point with integer values to a Point with x and y doubles.
+   /**
+    * Converts a Point with integer values to a Point with x and y doubles.
+    */
    private static Point2D.Double toDoublePoint(Point pt) {
       return new Point2D.Double(pt.x, pt.y);
    }
@@ -157,8 +166,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    // ## Methods for handling targeting channel and shutter
    
    /**
-    * Read the available channels from Micro-Manager Channel Group
-    * and populate the targeting channel drop-down menu.
+    * Reads the available channels from Micro-Manager Channel Group
+    * and populates the targeting channel drop-down menu.
     */
    final void populateChannelComboBox(String initialChannel) {
       if (initialChannel == null) {
@@ -176,8 +185,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    }
 
    /**
-    * Read the available shutters from Micro-Manager and
-    * list them in the targeting shutter drop-down menu.
+    * Reads the available shutters from Micro-Manager and
+    * lists them in the targeting shutter drop-down menu.
     */
    final void populateShutterComboBox(String initialShutter) {
       if (initialShutter == null) {
@@ -224,7 +233,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       Configuration originalConfig = null;
       String channelGroup = core_.getChannelGroup();
       try {
-         if (targetingChannel_.length() > 0) {
+         if (targetingChannel_ != null && targetingChannel_.length() > 0) {
             originalConfig = core_.getConfigGroupState(channelGroup);
             if (!originalConfig.isConfigurationIncluded(core_.getConfigData(channelGroup, targetingChannel_))) {
                if (app_.compat().isAcquisitionRunning()) {
@@ -239,8 +248,11 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       return originalConfig;
    }
    
-   // Should be called with the value returned by prepareChannel.
-   // Returns Channel Group to its original settings, if needed.
+   /**
+    * Should be called with the value returned by prepareChannel.
+    * Returns Channel Group to its original settings, if needed.
+    * @param originalConfig value returned by prepareChannel
+    */
    public void returnChannel(Configuration originalConfig) {
       if (originalConfig != null) {
          try {
@@ -254,7 +266,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
    }
    
-   // Open the targeting shutter, if it has been specified.
+   /**
+    * Opens the targeting shutter, if it has been specified.
+    * @return true if it was already open
+    */
    public boolean prepareShutter() {
       try {
          if (targetingShutter_ != null && targetingShutter_.length() > 0) {
@@ -271,9 +286,11 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       return true; // by default, say it was already open
    }
 
-   // Close a targeting shutter if it exists and if
-   // it was originally closed.
-   // Should be called with the value returned by prepareShutter.
+   /**
+    * Closes a targeting shutter if it exists and if it was originally closed.
+    * Should be called with the value returned by prepareShutter.
+    * @param originallyOpen - whether or not the shutter was originally open
+    */
    public void returnShutter(boolean originallyOpen) {
       try {
          if (targetingShutter_ != null &&
@@ -289,7 +306,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    
    // ## Simple methods for device control.
      
-   // Set the exposure time for the phototargeting device.
+   /**
+    * Sets the exposure time for the phototargeting device.
+    * @param intervalUs  new exposure time in micros
+    */
    public void setExposure(double intervalUs) {
       long previousExposure = dev_.getExposure();
       long newExposure = (long) intervalUs;
@@ -298,7 +318,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
    }
    
-   // Turn the projection device on or off.
+   /** 
+    * Turns the projection device on or off.
+    * @param onState on=true
+    */
    private void setOnState(boolean onState) {
       if (onState) {
          dev_.turnOn();
@@ -307,15 +330,19 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
    }
    
-   // Illuminate a spot at position x,y.
+   /**
+    * Illuminate a spot at position x,y.
+    */
    private void displaySpot(double x, double y) {
       if (x >= 0 && x < dev_.getWidth() && y >= 0 && y < dev_.getHeight()) {
          dev_.displaySpot(x, y);
       }
    }
    
-   // Illuminate a spot at the center of the Galvo/SLM range, for
-   // the exposure time.
+   /**
+    * Illuminate a spot at the center of the Galvo/SLM range, for
+    * the exposure time.
+    */
    void displayCenterSpot() {
       double x = dev_.getWidth() / 2;
       double y = dev_.getHeight() / 2;
@@ -342,8 +369,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       return "";
    }
    
-   // Load the mapping for the current calibration node. The mapping
-   // maps each polygon cell to an AffineTransform.
+   /**
+    * Load the mapping for the current calibration node. The mapping
+    * maps each polygon cell to an AffineTransform.
+    */
    private Map<Polygon, AffineTransform> loadMapping() {
       String nodeStr = getCalibrationNode();
       if (mappingNode_ == null || !nodeStr.contentEquals(mappingNode_)) {
@@ -457,8 +486,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
    }
 
-   // Illuminate a spot at ptSLM, measure its location on the camera, and
-   // add the resulting point pair to the spotMap.
+   /**
+    * Illuminate a spot at ptSLM, measure its location on the camera, and
+    * add the resulting point pair to the spotMap.
+    */
    private void mapSpot(Map<Point2D.Double, Point2D.Double> spotMap,
          Point ptSLM) {
       Point2D.Double ptSLMDouble = new Point2D.Double(ptSLM.x, ptSLM.y);
@@ -467,8 +498,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       spotMap.put(ptCamDouble, ptSLMDouble);
    }
 
-   // Illuminate a spot at ptSLM, measure its location on the camera, and
-   // add the resulting point pair to the spotMap.
+   /**
+    * Illuminate a spot at ptSLM, measure its location on the camera, and
+    * add the resulting point pair to the spotMap.
+    */
    private void mapSpot(Map<Point2D.Double, Point2D.Double> spotMap,
          Point2D.Double ptSLM) {
       if (!stopRequested_.get()) {
@@ -476,9 +509,11 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
    }
 
-   // Illuminates and images five control points, and returns
-   // an affine transform mapping from image coordinates to
-   // phototargeter coordinates.
+   /**
+    * Illuminates and images five control points, and returns
+    * an affine transform mapping from image coordinates to
+    * phototargeter coordinates.
+    */
    private AffineTransform generateLinearMapping() {
       double x = dev_.getWidth() / 2;
       double y = dev_.getHeight() / 2;
@@ -502,14 +537,16 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
    }
 
-   // Generate a nonlinear calibration mapping for the current device settings.
-   // A rectangular lattice of points is illuminated one-by-one on the
-   // projection device, and locations in camera pixels of corresponding
-   // spots on the camera image are recorded. For each rectangular
-   // cell in the grid, we take the four point mappings (camera to projector)
-   // and generate a local AffineTransform using linear least squares.
-   // Cells with suspect measured corner positions are discarded.
-   // A mapping of cell polygon to AffineTransform is generated. 
+   /**
+    * Generate a nonlinear calibration mapping for the current device settings.
+    * A rectangular lattice of points is illuminated one-by-one on the
+    * projection device, and locations in camera pixels of corresponding
+    * spots on the camera image are recorded. For each rectangular
+    * cell in the grid, we take the four point mappings (camera to projector)
+    * and generate a local AffineTransform using linear least squares.
+    * Cells with suspect measured corner positions are discarded.
+    * A mapping of cell polygon to AffineTransform is generated. 
+    */
    private Map<Polygon, AffineTransform> generateNonlinearMapping(AffineTransform firstApprox) {
       if (firstApprox == null) {
          return null;
@@ -676,6 +713,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    // Returns true if a particular image is mirrored.
    private static boolean isImageMirrored(ImagePlus imgp) {
       if (!(imgp.getStack() instanceof MMVirtualStack)) {
+         return false;
+      } catch (NullPointerException npe) {
          return false;
       }
       Datastore store = ((MMVirtualStack) imgp.getStack()).getDatastore();
@@ -877,7 +916,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       return label;
    }
      
-   // Save a list of ROIs to a given path.
+   /**
+    * Save a list of ROIs to a given path.
+    */
    private static void saveROIs(File path, Roi[] rois) {
       try {
          ImagePlus imgp = IJ.getImage();
@@ -925,7 +966,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       return rois;
    }
    
-   // Transform the Roi polygons with the given nonlinear mapping.
+   /**
+    * Transform the Roi polygons with the given nonlinear mapping.
+    */
    private static List<FloatPolygon> transformRoiPolygons(final ImagePlus imgp, 
            Polygon[] roiPolygons, Map<Polygon, AffineTransform> mapping) {
       ArrayList<FloatPolygon> transformedROIs = new ArrayList<FloatPolygon>();
@@ -954,7 +997,13 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
        
    // ## Saving, sending, and running ROIs.
      
-   // Returns ROIs, transformed by the current mapping.
+   /**
+    * Returns ROIs, transformed by the current mapping.
+    * @param contextImagePlus ImageJ Imageplus for the image we are working with
+    * @param rois Array of ImageJ Rois to be converted
+    * @return list of Rois converted into Polygons
+    * 
+    */
    public List<FloatPolygon> transformROIs(ImagePlus contextImagePlus, Roi[] rois) {
       return transformRoiPolygons(contextImagePlus, roisAsPolygons(rois), mapping_);
    }
@@ -978,11 +1027,13 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
    }
    
-   // Upload current Window's ROIs, transformed, to the phototargeting device.
-   // BUG!!! Since Polygons store coordinates in integers whereas Galvo
-   // devices have an input as double, there is an enormous loss of precision.
-   // The Type "Polygon" should be replaced with Path2D.Double throughout the code
-   // or possible the ImageJ class FloatPolygon
+   /**
+    * Upload current Window's ROIs, transformed, to the phototargeting device.
+    * BUG!!! Since Polygons store coordinates in integers whereas Galvo
+    * devices have an input as double, there is an enormous loss of precision.
+    * The Type "Polygon" should be replaced with Path2D.Double throughout the code
+    * or possibly the ImageJ class FloatPolygon
+    */
    public void sendCurrentImageWindowRois() {
       if (mapping_ == null) {
          throw new RuntimeException("Please calibrate the phototargeting device first, using the Setup tab.");
@@ -1001,11 +1052,29 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       individualRois_ = rois;
    }
    
+
+   public void setROIs(Roi[] rois) {
+      if (mapping_ == null) {
+         throw new RuntimeException("Please calibrate the phototargeting device first, using the Setup tab.");
+      }
+      if (rois.length == 0) {
+         throw new RuntimeException("Please provide ROIs.");
+      }
+      ImageWindow window = WindowManager.getCurrentWindow();
+      if (window == null) {
+         throw new RuntimeException("No image window with ROIs is open.");
+      }
+      ImagePlus imgp = window.getImagePlus();
+      List<FloatPolygon> transformedRois = transformROIs(imgp, rois);
+      dev_.loadRois(transformedRois);
+      individualRois_ = rois;
+   }
+   
    /**
     * Illuminate the polygons ROIs that have been previously uploaded to
     * phototargeter.
     */
-   void runRois() {
+   public void runRois() {
       Configuration originalConfig = prepareChannel();
       boolean originalShutterState = prepareShutter();
       dev_.runPolygons();
@@ -1016,10 +1085,17 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
 
    // ## Attach/detach MDA
        
-   // Attaches phototargeting ROIs to a multi-dimensional acquisition, so that
-   // they will run on a particular firstFrame and, if repeat is true,
-   // thereafter again every frameRepeatInterval frames.
-   public void attachRoisToMDA(int firstFrame, boolean repeat, int frameRepeatInveral, Runnable runPolygons) {
+   /**
+    * Attaches phototargeting ROIs to a multi-dimensional acquisition, so that
+    * they will run on a particular firstFrame and, if repeat is true,
+    * thereafter again every frameRepeatInterval frames.
+    * @param firstFrame
+    * @param repeat
+    * @param frameRepeatInveral
+    * @param runPolygons
+   */
+   public void attachRoisToMDA(int firstFrame, boolean repeat, 
+           int frameRepeatInveral, Runnable runPolygons) {
       app_.compat().clearRunnables();
       if (repeat) {
          for (int i = firstFrame; i < app_.compat().getAcquisitionSettings().numFrames * 10; i += frameRepeatInveral) {
@@ -1030,7 +1106,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
    }
 
-   // Remove the attached ROIs from the multi-dimensional acquisition.
+   /**
+    * Remove the attached ROIs from the multi-dimensional acquisition.
+    */
    public void removeFromMDA() {
       app_.compat().clearRunnables();
    }
@@ -1054,7 +1132,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       return Double.parseDouble(spinner.getValue().toString());
    }
    
-   // Sets the Point and Shoot "On and Off" buttons to a given state.
+   /**
+    * Sets the Point and Shoot "On and Off" buttons to a given state.
+    * @param turnedOn true = Point and Shoot is ON
+    */
    public void updatePointAndShoot(boolean turnedOn) {
       pointAndShootOnButton.setSelected(turnedOn);
       pointAndShootOffButton.setSelected(!turnedOn);
@@ -1075,7 +1156,11 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       };
    }
    
-   // Converts a Runnable to one that runs asynchronously.
+   /**
+    * Converts a Runnable to one that runs asynchronously.
+    * @param runnable synchronous Runnable
+    * @return asynchronously running Runnable
+    */
    public static Runnable makeRunnableAsync(final Runnable runnable) { 
       return new Runnable() {
          @Override
@@ -1102,11 +1187,18 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
    }
    
-   // Runs runnable starting at firstTimeMs after this function is called, and
-   // then, if repeat is true, every intervalTimeMs thereafter until
-   // shouldContinue.call() returns false.
-   private Runnable runAtIntervals(final long firstTimeMs, final boolean repeat,
+   /**
+    * Runs runnable starting at firstTimeMs after this function is called, and
+    * then, if repeat is true, every intervalTimeMs thereafter until
+    * shouldContinue.call() returns false.
+    */
+   private Runnable runAtIntervals(final long firstTimeMs, boolean repeat,
       final long intervalTimeMs, final Runnable runnable, final Callable<Boolean> shouldContinue) {
+      // protect from actions that have bad consequences
+      if (intervalTimeMs == 0) {
+         repeat = false;
+      }
+      final boolean rep = repeat;
       return new Runnable() {
          @Override
          public void run() {
@@ -1117,7 +1209,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   sleepUntil(startTime + reps * intervalTimeMs);
                   runnable.run();
                   ++reps;
-                  if (!repeat) {
+                  if (!rep) {
                      break;
                   }
                }
@@ -1128,7 +1220,14 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       };
    }
    
-   // Update the GUI's roi settings so they reflect the user's current choices.
+   public void setNrRepetitions(int nr) {
+      roiLoopSpinner.setValue(nr);
+      updateROISettings();
+   }
+   
+   /**
+    * Update the GUI's roi settings so they reflect the user's current choices.
+    */
    public final void updateROISettings() {
       boolean roisSubmitted;
       int numROIs = individualRois_.length;
@@ -1148,6 +1247,12 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       roiLoopTimesLabel.setEnabled(!isSLM_ && roisSubmitted);
       runROIsNowButton.setEnabled(roisSubmitted);
       useInMDAcheckBox.setEnabled(roisSubmitted);
+      
+      int nrRepetitions = 0;
+      if (roiLoopSpinner.isEnabled()) {
+         nrRepetitions = getSpinnerIntegerValue(roiLoopSpinner);
+      }
+      dev_.setPolygonRepetitions(nrRepetitions);
 
       boolean useInMDA = roisSubmitted && useInMDAcheckBox.isSelected();
       attachToMdaTabbedPane.setEnabled(useInMDA);
@@ -1194,8 +1299,6 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       } else {
          removeFromMDA();
       }
-      dev_.setPolygonRepetitions(repeatCheckBox.isSelected()
-         ? getSpinnerIntegerValue(roiLoopSpinner) : 0);
    }
     
    // Set the exposure to whatever value is currently in the Exposure field.
@@ -1280,6 +1383,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       commitSpinnerOnValidEdit(pointAndShootIntervalSpinner);
       commitSpinnerOnValidEdit(startFrameSpinner);
       commitSpinnerOnValidEdit(repeatEveryFrameSpinner);
+      commitSpinnerOnValidEdit(repeatEveryIntervalSpinner);
       commitSpinnerOnValidEdit(roiLoopSpinner);
       pointAndShootIntervalSpinner.setValue(dev_.getExposure() / 1000);
       sequencingButton.setVisible(MosaicSequencingFrame.getMosaicDevices(core).size() > 0);
@@ -1320,6 +1424,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    {
       disposing_ = true;
       super.dispose();
+   }
+   
+   public ProjectionDevice getDevice() {
+      return dev_;
    }
    
    // ## Generated code
@@ -1931,6 +2039,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
    }//GEN-LAST:event_setRoiButtonActionPerformed
 
+   
    private void centerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_centerButtonActionPerformed
       offButtonActionPerformed(null);
       displayCenterSpot();

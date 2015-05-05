@@ -14,6 +14,12 @@ AC_PROG_CXX([clang++ llvm-g++ g++ c++])
 AC_PROG_CC([clang llvm-gcc gcc cc])
 
 
+# Testing (googletest, googlemock)
+# See testing/setuptesting.sh
+MM_GMOCK([$srcdir/testing/gmock], [\$(top_srcdir)/testing/gmock])
+AM_CONDITIONAL([BUILD_CPP_TESTS], [test "x$have_gmock" = xyes])
+
+
 # Boost
 # TODO Reflect results in configuration
 AX_BOOST_BASE([1.48.0])

@@ -29,7 +29,9 @@ import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 
+import org.micromanager.asidispim.Data.CameraModes.Keys;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
+import org.micromanager.asidispim.Utils.MyDialogUtils;
 
 
 /**
@@ -39,10 +41,9 @@ import org.micromanager.asidispim.Utils.DevicesListenerInterface;
  */
 public class AcquisitionModes {
    
-   private Devices devices_;   // object holding information about selected/available devices
-   @SuppressWarnings("unused") // will be used in future
-   private Properties props_;  // object handling all property read/writes
-   private Prefs prefs_;
+   private final Devices devices_;   // object holding information about selected/available devices
+   private final Properties props_;  // object handling all property read/writes
+   private final Prefs prefs_;
    
    /**
     * Enum to store the acquisition mode along with associated preference code.
@@ -50,10 +51,11 @@ public class AcquisitionModes {
     * can be easily changed. 
     */
    public static enum Keys { 
-      PIEZO_SLICE_SCAN("Synchronous piezo/slice scan (standard)", 1),
+      PIEZO_SLICE_SCAN("Synchronous piezo/slice scan", 1),
       SLICE_SCAN_ONLY( "Slice scan only (beam thickness)", 2),
-      NO_SCAN(         "No piezo or slice scan (vibration)", 3),
+      NO_SCAN(         "No scan (vibration)", 3),
       STAGE_SCAN(      "Stage scan", 4),
+      STAGE_SCAN_INTERLEAVED("Stage scan interleaved", 5),
       NONE(            "None", 0);
       private final String text;
       private final int prefCode;
@@ -77,6 +79,7 @@ public class AcquisitionModes {
    }
    
    /**
+    * @param prefCode
     * @return null if prefCode not found, or the Key if it is
     */
    public static Keys getKeyFromPrefCode(int prefCode) {
@@ -145,6 +148,13 @@ public class AcquisitionModes {
          jcb_.setModel(cbModel);
          if (origItem != null) {
             jcb_.setSelectedItem(origItem);
+         } else {
+            // if existing selection isn't valid now then write new selection to prefs
+            MyDialogUtils.showError("For preference " + Properties.Keys.PLUGIN_ACQUSITION_MODE.toString()
+                  + " the previous selection \""
+                  + getKeyFromPrefCode(origCode) + "\" is not valid.  Changing to default.");
+            prefs_.putInt(MyStrings.PanelNames.ACQUSITION.toString(),
+                  Properties.Keys.PLUGIN_ACQUSITION_MODE, ((Keys)jcb_.getSelectedItem()).getPrefCode());
          }
       }//updateSelections
 
@@ -160,6 +170,8 @@ public class AcquisitionModes {
          keyList.add(Keys.PIEZO_SLICE_SCAN);
          keyList.add(Keys.SLICE_SCAN_ONLY);
          keyList.add(Keys.NO_SCAN);
+         keyList.add(Keys.STAGE_SCAN);
+         keyList.add(Keys.STAGE_SCAN_INTERLEAVED);
          return keyList;
       }
 

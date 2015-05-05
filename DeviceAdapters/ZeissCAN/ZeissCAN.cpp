@@ -778,23 +778,32 @@ int ZeissScope::DetectInstalledDevices()
       CreateAndAddDevice(g_ZeissHalogenLamp);
 
       std::string response;
-      Query("HPCk1,0", response);
-      if (0 != response.compare("0"))
+      int ret = Query("HPCk1,0", response);
+      if (ret == DEVICE_OK && 0 != response.compare("0"))
       {
          CreateAndAddDevice(g_ZeissShutter);
       }
 
-      Query("HPCk1,0", response);
-      if (0 != response.compare("1F"))
+      ret = Query("HPCk1,0", response);
+      if (ret == DEVICE_OK && 0 != response.compare("1F"))
       {
          CreateAndAddDevice(g_ZeissFocusName);
       }
 
-      Query("HPCm1,0", response);
-      if (!(  (0 == response.compare("0"))
-              ||(0 == response.compare("55"))  ))
+      // NS 2015-04: I think this should always create an MF shutter, 
+      // but play it safe
+      ret = Query("HPCm1,0", response);
+      if (ret == DEVICE_OK && (!(  (0 == response.compare("0"))
+              ||(0 == response.compare("55"))  )) )
       {
-         CreateAndAddDevice(g_ZeissShutter);
+         if (g_hub.firmware_ == "MF")
+         {
+            CreateAndAddDevice(g_ZeissShutterMF);
+         } 
+         else 
+         {
+            CreateAndAddDevice(g_ZeissShutter);
+         }
       }
    }
 

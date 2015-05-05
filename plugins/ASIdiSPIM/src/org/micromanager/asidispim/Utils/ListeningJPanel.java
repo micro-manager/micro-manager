@@ -51,11 +51,15 @@ public class ListeningJPanel extends JPanel {
     */
    public void gotDeSelected() {};
    
-   
    /**
     * Should force the panel to write its current settings to its preferences
     */
    public void saveSettings() {};
+   
+   /**
+    * Called when the plugin window is closing
+    */
+   public void windowClosing() {};
    
    /**
     * Called when new stage positions are available in the device class
@@ -79,4 +83,11 @@ public class ListeningJPanel extends JPanel {
     * labels in Acquisition tab when channels change.
     */
    public void refreshDisplay() {};
+   
+   /**
+    * Called when the Panel loses focus but then regains it and certain
+    * tasks need to be accomplished. For example after autofocus.
+    */
+   public void refreshSelected() {};
+   
 }

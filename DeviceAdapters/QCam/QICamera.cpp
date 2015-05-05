@@ -442,15 +442,34 @@ vector<string> QIDriver::AvailableCameras()
                displayString += ConvertCameraTypeToString(cameras[i].cameraType);
             }
 
-            char serial[512];
+            
+            char serial[SER_NUM_LEN];
             memset(serial, 0, sizeof(serial));
-            err = QCam_GetSerialString(camera, serial, sizeof(serial) - 1);
-            if (err == qerrSuccess) {
-               if (strlen(serial) == 0) {
-                  strcpy(serial, "N/A");
+#ifdef _WIN32
+            if (cameras[i].cameraType == qcCameraGoBolt)
+            {
+                unsigned long serialNumber;
+                err = QCam_GetInfo(camera, qinfSerialNumber, &serialNumber);
+                if (err == qerrSuccess) {
+                   snprintf(serial, SER_NUM_LEN, "%u", serialNumber);
+                   if (strlen(serial) == 0) {
+                       strcpy(serial, "N/A");
+                 }
+                 displayString += " S/N ";
+                 displayString += serial;
                }
-               displayString += " S/N ";
-               displayString += serial;
+            }
+            else
+#endif
+            {
+               err = QCam_GetSerialString(camera, serial, sizeof(serial) -1);
+               if (err == qerrSuccess) {
+                  if (strlen(serial) == 0) {
+                     strcpy(serial, "N/A");
+                  }
+                  displayString += " S/N ";
+                  displayString += serial;
+                }
             }
 
             err = QCam_CloseCamera(camera);
@@ -594,14 +613,14 @@ int QICamera::Initialize()
 
    QCam_Err            err;
    QCam_CamListItem	   cameraList[10];
-   unsigned long	      numOfCameras;
+   unsigned long	   numOfCameras;
    char	               cameraStr[CAMERA_STRING_LENGTH];
-   char						cameraName[CAMERA_STRING_LENGTH];
+   char                cameraName[CAMERA_STRING_LENGTH];
    unsigned short	   major, minor, build;
    char	               qcamVersionStr[256];
    char	               cameraIDStr[256];
    unsigned long	      ccdType;
-   unsigned long	      cameraType;
+   unsigned long	      cameraType = qcCameraUnknown;
    int                 nRet;
 
    START_METHOD("QICamera::Initialize");
@@ -786,26 +805,33 @@ int QICamera::Initialize()
       }
 
       // CAMERA ID
-
+#ifdef _WIN32
+      if (cameraType == qcCameraGoBolt)
+      {
+          unsigned long serialNumber;
+          err = QCam_GetInfo(m_camera, qinfSerialNumber, &serialNumber);
+          if (err != qerrSuccess) {
+             REPORT_QERR(err);
+             throw DEVICE_ERR;
+          }
+          else {
+            snprintf(cameraStr, CAMERA_STRING_LENGTH, "%u", serialNumber);
+         }
+      }
+      else
+#endif
+      {
       // get the camera serial string
-      err = QCam_GetSerialString(m_camera, cameraStr, CAMERA_STRING_LENGTH);
-      if (err != qerrSuccess) {
-         REPORT_QERR(err);
-         throw DEVICE_ERR;
+         err = QCam_GetSerialString(m_camera, cameraStr, CAMERA_STRING_LENGTH);
+         if (err != qerrSuccess) {
+            REPORT_QERR(err);
+            throw DEVICE_ERR;
+         }
       }
 
       // if the string is empty, fill it with "N/A"
       if (strcmp(cameraStr, "") == 0) {
          strcpy(cameraStr, "N/A");
-      }
-      // The Bolt sends a string that is terminated with '10' rather than '0':
-      char * pCh;
-      const char ten = 10;
-      const char zero = 0;
-      pCh = strstr (cameraStr, &ten);
-      if (pCh != 0)
-      {
-         strncpy (pCh, &zero, 1);
       }
 
       sprintf(cameraIDStr, "Serial number %s", cameraStr);
@@ -2266,15 +2292,56 @@ bool QICamera::Busy()
 */
 int QICamera::SnapImage()
 {
-   QCam_Err				err;
-
+   QCam_Err  	err;
+   int          ret;
    START_METHOD("QICamera::SnapImage");
 
    if (m_sthd->IsRunning())
       return ERR_BUSY_ACQUIRING;
 
-   // NOTE: QCam_GrabFrame should work even in software trigger mode
-   err = QCam_GrabFrame(m_camera, m_frameBuffs[0]);
+   //in software trigger mode use QCam_Trigger() instead of QCam_GrabFrame() in order
+   //to not generate more than one expose out pulse on the SyncB signal
+   if (m_softwareTrigger)
+   {
+       // turn on image streaming
+       err = QCam_SetStreaming(m_camera, true);
+       if (err != qerrSuccess) {
+          REPORT_QERR(err);
+          return DEVICE_ERR;
+       }
+
+       m_frameDoneBuff = -1;
+       //mark one buffer as available and queue up a frame
+       m_frameBuffsAvail[0] = true;
+       QueueFrame(0);
+
+       //send software trigger to the camera to acquire one frame
+       Trigger();
+       ret = m_frameDoneEvent.Wait((long)m_dExposure+3000);
+       if (ret != MM_WAIT_OK) {
+          QCam_REPORT_QERR(m_pCam, ret);
+	      
+          // abort any remaining frames
+          err = QCam_Abort(m_camera);
+          if (err != qerrSuccess) {
+              QCam_REPORT_QERR(m_pCam, err);
+          }
+          return DEVICE_SNAP_IMAGE_FAILED;
+       }       
+
+       // turn off image streaming
+       err = QCam_SetStreaming(m_camera, false);
+       if (err != qerrSuccess) {
+          REPORT_QERR(err);
+          return DEVICE_ERR;
+       }
+   }
+   //in modes other than software trigger use QCam_GrabFrame()
+   else 
+   {
+       err = QCam_GrabFrame(m_camera, m_frameBuffs[0]);
+   }
+   
    if (err != qerrSuccess) {
       REPORT_QERR(err);
       return DEVICE_SNAP_IMAGE_FAILED;
@@ -3526,6 +3593,12 @@ int QICamera::OnTriggerType(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_ERR;
       }
 
+      // abort any remaining frames
+       err = QCam_Abort(m_camera);
+       if (err != qerrSuccess) {
+          QCam_REPORT_QERR(m_pCam, err);
+       }
+
       // SnapImage needs to know if we have set software triggering
       m_softwareTrigger = (typeEnum == qcTriggerSoftware);
 
@@ -3852,7 +3925,7 @@ int QICamera::QISequenceThread::svc()
 {
    int             ret;
    QCam_Err        err;
-   int             returnError;
+   int             returnError = 0;
    int             iFrameBuff;
    long            timeout;
 
@@ -3875,8 +3948,17 @@ int QICamera::QISequenceThread::svc()
       m_pCam->QueueFrame(i);
    }
 
-   returnError = 0;
-   while (!m_stop && m_captureCount < GetLength()) {
+   //in software trigger mode queueing frames is not sufficient to start an acquisition
+   //therefore call QCam_Trigger() for the first frame
+   if (m_pCam->m_softwareTrigger == true) {
+       err = QCam_Trigger(m_pCam->m_camera);
+       if (err != qerrSuccess) {
+           returnError = 1;
+           REPORT_QERR(err);
+       }
+   }
+   
+   while (!m_stop && m_captureCount < GetLength() && returnError == 0) {
       // wait for a new frame finish capturing
       ret = m_pCam->m_frameDoneEvent.Wait(timeout);
       if (ret != MM_WAIT_OK) {
@@ -3909,6 +3991,15 @@ int QICamera::QISequenceThread::svc()
                QCam_REPORT_MMERR(m_pCam, ret);
                returnError = 1;
                break;
+            }
+            //call QCam_Trigger() also for each subsequent requeued frame
+            if (m_pCam->m_softwareTrigger) {
+                err = QCam_Trigger(m_pCam->m_camera);
+                if (err != qerrSuccess) {
+                   REPORT_QERR(err);
+                   returnError = 1;
+                   break;
+                }
             }
          }
       }

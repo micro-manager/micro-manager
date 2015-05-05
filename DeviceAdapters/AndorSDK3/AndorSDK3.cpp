@@ -38,6 +38,7 @@
 #include "FloatProperty.h"
 #include "AOIProperty.h"
 #include "BooleanProperty.h"
+#include "ExposureProperty.h"
 
 #ifdef _WINDOWS
 #include "atunpacker.h"
@@ -572,8 +573,9 @@ int CAndorSDK3Camera::Initialize()
    overlap_property = new TBooleanProperty(TAndorSDK3Strings::OVERLAP, cameraDevice->GetBool(L"Overlap"),
                                            callbackManager_, false);
 
-   exposureTime_property = new TFloatProperty(MM::g_Keyword_Exposure,
+   exposureTime_property = new TExposureProperty(MM::g_Keyword_Exposure,
                                        new TAndorFloatValueMapper(cameraDevice->GetFloat(L"ExposureTime"), 1000),
+                                       cameraDevice->GetFloat(L"ReadoutTime"),
                                        callbackManager_, false, false);
    
    frameRateLimits_property = new TFloatStringProperty(TAndorSDK3Strings::FRAME_RATE_LIMITS, 
@@ -609,6 +611,10 @@ int CAndorSDK3Camera::Initialize()
 
    LSPRowReadTime_property = new TFloatProperty("LightScanPlus-RowReadTime", 
                                              cameraDevice->GetFloat(L"RowReadTime"),  
+                                             callbackManager_, false, false);
+
+   LSPExternalTriggerDelay_Property = new TFloatProperty("LightScanPlus-ExternalTriggerDelay [s]", 
+                                             cameraDevice->GetFloat(L"ExternalTriggerDelay"), 
                                              callbackManager_, false, false);
 
    char errorStr[MM::MaxStrLength];
@@ -671,6 +677,7 @@ int CAndorSDK3Camera::Shutdown()
       delete temperatureControl_property;
       delete pixelReadoutRate_property;
       delete pixelEncoding_property;
+
       delete accumulationLength_property;
       delete readTemperature_property;
       delete temperatureStatus_property;
@@ -691,7 +698,7 @@ int CAndorSDK3Camera::Shutdown()
       delete LSPScanSpeedControlEnable_property;
       delete LSPLineScanSpeed_property;
       delete LSPRowReadTime_property;
-
+      delete LSPExternalTriggerDelay_Property;
 
       delete callbackManager_;
       delete snapShotController_;

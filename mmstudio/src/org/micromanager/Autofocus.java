@@ -119,6 +119,13 @@ public interface Autofocus {
     * such as the Nikon Perfect Focus (PFS).
     */
    public boolean isContinuousFocusLocked() throws MMException;
+   
+   /**
+    * Computes a focus score for the given image
+    * @param impro
+    * @return calculated score
+    */
+   public double computeScore(final ImageProcessor impro);
 
    /**
     * OBSOLETE - do not use this method.

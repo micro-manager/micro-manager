@@ -3758,7 +3758,33 @@ int DemoGalvo::ChangePixels(ImgBuffer& img)
          //  bBox[1].x << ", " << bBox[1].y;
          //LogMessage(os.str().c_str());
       }
-      if (img.Depth() == 2)
+      if (img.Depth() == 1)
+      {
+         const unsigned char highValue = 240;
+         unsigned char* pBuf = (unsigned char*) const_cast<unsigned char*>(img.GetPixels());
+
+         // now iterate through the image pixels and set high 
+         // if they are within a bounding box
+         for (int x = 0; x < img.Width(); x++)
+         {
+            for (int y = 0; y < img.Height(); y++)
+            {
+               bool inROI = false;
+               for (int i = 0; i < bBoxes.size(); i++) 
+               {
+                  if (InBoundingBox(bBoxes[i], Point(x, y)))
+                     inROI = true;
+               }
+               if (inROI)
+               {
+                  long count = y * img.Width() + x;
+                  *(pBuf + count) = *(pBuf + count) + highValue;
+               }
+            }
+         }
+         img.SetPixels(pBuf);
+      }
+      else if (img.Depth() == 2)
       {
          const unsigned short highValue = 2048;
          unsigned short* pBuf = (unsigned short*) const_cast<unsigned char*>(img.GetPixels());
@@ -3802,6 +3828,16 @@ int DemoGalvo::ChangePixels(ImgBuffer& img)
          if (img.Depth() == 1)
          {
             unsigned char* pBuf = (unsigned char*) const_cast<unsigned char*>(img.GetPixels());
+            for (int x = 0; x < xSpotSize; x++) 
+            {
+               for (int y = 0; y < ySpotSize; y++) 
+               {
+                  int w = xPos + x;
+                  int h = yPos + y;
+                  long count = h * img.Width() + w;
+                  *(pBuf + count) = *(pBuf + count) + 5 * (unsigned char) gaussianMask_[x][y];
+               }
+            }
             img.SetPixels(pBuf);
          }
          else if (img.Depth() == 2)

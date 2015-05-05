@@ -37,6 +37,14 @@ Feature::Feature(boost::shared_ptr<Camera> camera, dc1394camera_t* libdc1394came
       isPresent_ = flag != DC1394_FALSE;
    }
 
+   if (!isPresent_)
+   {
+      hasAbsolute_ = false;
+      isReadable_ = false;
+      isSwitchable_ = false;
+      return;
+   }
+
    {
       dc1394bool_t flag;
       dc1394error_t err;

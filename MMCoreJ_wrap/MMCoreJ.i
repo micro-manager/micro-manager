@@ -798,7 +798,7 @@
     * Convenience function: returns the current XY position of the current
     * XY stage device as a Point2D.Double.
     */
-   public Point2D.Double getXYPosition() throws java.lang.Exception {
+   public Point2D.Double getXYStagePosition() throws java.lang.Exception {
       double x[] = new double[1];
       double y[] = new double[1];
       getXYPosition(x, y);

@@ -1,0 +1,4 @@
+<project name="HardwareFocusExtender" default="jar">
+	<property name="sourcefile" value="HardwareFocusExtender.java"/>
+	<import file="autofocusbuild.xml"/>
+</project>

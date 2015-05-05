@@ -9,6 +9,10 @@ fetchdeps:
 
 endif
 
+if BUILD_CPP_TESTS
+TESTING_DIR = testing
+endif
+
 if BUILD_MMCORE
 MMCORE_DIR = MMCore
 endif
@@ -119,7 +123,7 @@ CLEANFILES = $(launcher_SCRIPTS)
 # TODO: Building of DeviceAdapters could be made optional.
 SUBDIRS = \
 	$(ANTEXTENSIONS) \
-	testing \
+	$(TESTING_DIR) \
 	MMDevice \
 	$(MMCORE_DIR) \
 	$(MMCOREJ_DIR) \

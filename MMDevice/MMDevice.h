@@ -27,7 +27,7 @@
 // Header version
 // If any of the class definitions changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 61
+#define DEVICE_INTERFACE_VERSION 63
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -608,12 +608,15 @@ namespace MM {
       virtual int SetPositionUm(double pos) = 0;
       virtual int SetRelativePositionUm(double d) = 0;
       virtual int Move(double velocity) = 0;
+      virtual int Stop() = 0;
+      virtual int Home() = 0;
       virtual int SetAdapterOriginUm(double d) = 0;
       virtual int GetPositionUm(double& pos) = 0;
       virtual int SetPositionSteps(long steps) = 0;
       virtual int GetPositionSteps(long& steps) = 0;
       virtual int SetOrigin() = 0;
       virtual int GetLimits(double& lower, double& upper) = 0;
+
       /*
        * Returns whether a stage can be sequenced (synchronized by TTLs)
        * If returning true, then a Stage class should also inherit
@@ -657,11 +660,12 @@ namespace MM {
       static const DeviceType Type;
 
       // XYStage API
-      // it is recommended that device adapters implement the  "Steps" methods taking
-      // long integers but leave the default implementations (in DeviceBase.h) for
-      // the "Um" methods taking doubles.  The latter utilize directionality and origin
-      // settings set by user and operate via the "Steps" methods.  The step size is
-      // the inherent minimum distance/step and should be defined by the adapter.
+      // it is recommended that device adapters implement the  "Steps" methods
+      // taking long integers but leave the default implementations (in
+      // DeviceBase.h) for the "Um" methods taking doubles. The latter utilize
+      // directionality and origin settings set by user and operate via the
+      // "Steps" methods. The step size is the inherent minimum distance/step
+      // and should be defined by the adapter.
       virtual int SetPositionUm(double x, double y) = 0;
       virtual int SetRelativePositionUm(double dx, double dy) = 0;
       virtual int SetAdapterOriginUm(double x, double y) = 0;
@@ -674,7 +678,24 @@ namespace MM {
       virtual int SetRelativePositionSteps(long x, long y) = 0;
       virtual int Home() = 0;
       virtual int Stop() = 0;
-      virtual int SetOrigin() = 0;//jizhen, 4/12/2007
+
+      /**
+       * Define the current position as the (hardware) origin (0, 0).
+       */
+      virtual int SetOrigin() = 0;
+
+      /**
+       * Define the current position as X = 0 (in hardware if possible).
+       * Do not alter the Y coordinates.
+       */
+      virtual int SetXOrigin() = 0;
+
+      /**
+       * Define the current position as Y = 0 (in hardware if possible)
+       * Do not alter the X coordinates.
+       */
+      virtual int SetYOrigin() = 0;
+
       virtual int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax) = 0;
       virtual double GetStepSizeXUm() = 0;
       virtual double GetStepSizeYUm() = 0;

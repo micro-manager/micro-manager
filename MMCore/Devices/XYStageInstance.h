@@ -48,6 +48,8 @@ public:
    int Home();
    int Stop();
    int SetOrigin();
+   int SetXOrigin();
+   int SetYOrigin();
    int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax);
    double GetStepSizeXUm();
    double GetStepSizeYUm();

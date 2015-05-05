@@ -88,6 +88,7 @@ public class Devices {
       PIEZOA, PIEZOB, GALVOA, GALVOB, XYSTAGE, LOWERZDRIVE, UPPERZDRIVE,
       // SOURCE_SPIM, SOURCE_LOWER,
       PLOGIC,
+      TIGERCOMM,
       // ASGALVOA, ASGALVOB,
       // when adding new devices update Devices constructor, 
       // getDefaultDeviceData(), and Libraries enum
@@ -103,9 +104,7 @@ public class Devices {
    public final static Set<Devices.Keys> CAMERAS = EnumSet.of(
          Devices.Keys.CAMERAA, Devices.Keys.CAMERAB, Devices.Keys.MULTICAMERA,
          Devices.Keys.CAMERALOWER);
-//   public final static Set<Devices.Keys> SOURCES = EnumSet.of(
-//         Devices.Keys.SOURCE_SPIM, Devices.Keys.SOURCE_LOWER
-//         );
+
 
    public static enum Libraries {
       NODEVICE("NoDevice"), // if the device doesn't exist in Micro-manager
@@ -116,7 +115,7 @@ public class Devices {
       ANDORCAM("AndorSDK3"),
       DEMOCAM("DemoCamera"),
       UTILITIES("Utilities"),
-      UNKNOWN("Unknown"), // if the device is valid but not one we know about
+      UNKNOWN("Unknown") // if the device is valid but not one we know about
       ;
       private final String text;
 
@@ -478,8 +477,8 @@ public class Devices {
       case GALVOA:
       case GALVOB:
          switch (dir) {
-         case X: ret += ", sheet (X)"; break;
-         case Y: ret += ", slice (Y)"; break;
+         case X: ret += ", sheet"; break;
+         case Y: ret += ", slice"; break;
          default: break;
          }
          break;
@@ -498,6 +497,7 @@ public class Devices {
    /**
     * Returns verbose description, including axis role (but not axis letter)
     * @param key
+    * @param dir
     * @return
     */
    public String getDeviceDisplayVerbose(Devices.Keys key, Joystick.Directions dir) {
@@ -507,6 +507,10 @@ public class Devices {
    /**
     * returns device description with role for the particular side (used for joystick labels)
     * camera labels use a different mechanicsm, ideally would merge the two
+    * @param key
+    * @param dir
+    * @param side
+    * @return 
     */
    public String getDeviceDisplayWithRole(Devices.Keys key, Joystick.Directions dir, Devices.Sides side) {
       String ret;
@@ -569,6 +573,7 @@ public class Devices {
     * device.
     * 
     * @param key
+    * @param dir
     * @return
     */
    public String getDeviceDisplayWithAxisLetter1D(Devices.Keys key,
@@ -676,10 +681,10 @@ public class Devices {
       case XYSTAGE:
          return new DeviceData(key, "XY Stage", Sides.NONE, true);
       case LOWERZDRIVE:
-         return new DeviceData(key, "Lower Z Drive", Sides.NONE,
+         return new DeviceData(key, "Lower Z Height", Sides.NONE,
                true);
       case UPPERZDRIVE:
-         return new DeviceData(key, "Upper (SPIM) Z Drive",
+         return new DeviceData(key, "SPIM Head Height",
                Sides.NONE, true);
          // case ASGALVOA: return new DeviceData(Keys.ASGALVOA,
          // "Anti-striping Micromirror", Sides.A, true);
@@ -691,6 +696,8 @@ public class Devices {
       //   return new DeviceData(key, "Lower Light Source", Sides.NONE, true);
       case PLOGIC:
          return new DeviceData(key, "PLogic Card", Sides.NONE, true);
+      case TIGERCOMM:
+         return new DeviceData(key, "TigerComm", Sides.NONE, false);
       case CORE: // special case
          d_new = new DeviceData(key, "Core", Sides.NONE, false);
          d_new.mmDevice = "Core";
@@ -739,6 +746,7 @@ public class Devices {
       deviceInfo_.put(Keys.LOWERZDRIVE, getDefaultDeviceData(Keys.LOWERZDRIVE));
       deviceInfo_.put(Keys.UPPERZDRIVE, getDefaultDeviceData(Keys.UPPERZDRIVE));
       deviceInfo_.put(Keys.PLOGIC, getDefaultDeviceData(Keys.PLOGIC));
+      deviceInfo_.put(Keys.TIGERCOMM, getDefaultDeviceData(Keys.TIGERCOMM));
       // deviceInfo_.put(Keys.SOURCE_SPIM,  getDefaultDeviceData(Keys.SOURCE_SPIM));
       // deviceInfo_.put(Keys.SOURCE_LOWER,  getDefaultDeviceData(Keys.SOURCE_LOWER));
       // deviceInfo_.put(Keys.ASGALVOA, getDefaultDeviceData(Keys.ASGALVOA));
@@ -762,6 +770,7 @@ public class Devices {
 
    /**
     * Used to add classes implementing DeviceListenerInterface as listeners
+    * @param listener
     */
    public void addListener(DevicesListenerInterface listener) {
       listeners_.add(listener);
@@ -770,6 +779,7 @@ public class Devices {
    /**
     * Enable or disable listeners. When switching from disabled to enabled it
     * will perform callListeners()
+    * @param enabled
     */
    public void enableListeners(boolean enabled) {
       if (enabled && !listenersEnabled_) {

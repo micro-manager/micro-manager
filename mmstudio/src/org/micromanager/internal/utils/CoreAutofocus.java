@@ -1,5 +1,6 @@
 package org.micromanager.internal.utils;
 
+import ij.process.ImageProcessor;
 import java.util.Vector;
 
 import mmcorej.CMMCore;
@@ -242,6 +243,11 @@ public class CoreAutofocus implements Autofocus {
    public void setApp(Studio app) {
       core_ = app.getCMMCore();
       devName_ = core_.getAutoFocusDevice();      
+   }
+
+   @Override
+   public double computeScore(ImageProcessor impro) {
+      throw new UnsupportedOperationException("Not supported yet."); 
    }
 
 }

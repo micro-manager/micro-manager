@@ -240,6 +240,8 @@ public:
    virtual int Home();
    virtual int Stop();
    virtual int SetOrigin();
+   virtual int SetXOrigin();
+   virtual int SetYOrigin();
    virtual int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax);
    virtual int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax);
    virtual double GetStepSizeXUm() { return 1.0 / stepsPerUm; }
@@ -253,6 +255,8 @@ private:
    OneShotSetting::Ptr home_;
    OneShotSetting::Ptr stop_;
    OneShotSetting::Ptr setOrigin_;
+   OneShotSetting::Ptr setXOrigin_;
+   OneShotSetting::Ptr setYOrigin_;
 };
 
 
@@ -271,6 +275,8 @@ public:
    virtual int GetPositionUm(double& pos);
    virtual int SetPositionSteps(long steps);
    virtual int GetPositionSteps(long& steps);
+   virtual int Home();
+   virtual int Stop();
    virtual int SetOrigin();
    virtual int GetLimits(double& lower, double& upper);
    virtual int IsStageSequenceable(bool& isSequenceable) const
@@ -284,6 +290,8 @@ protected:
 
 private:
    FloatSetting::Ptr zPositionUm_;
+   OneShotSetting::Ptr home_;
+   OneShotSetting::Ptr stop_;
    OneShotSetting::Ptr originSet_;
 };
 

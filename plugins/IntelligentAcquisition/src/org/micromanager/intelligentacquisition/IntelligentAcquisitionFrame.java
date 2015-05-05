@@ -769,13 +769,13 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                   ResultsTable res = ij.measure.ResultsTable.getResultsTable();
                   // get results out, stick them in new window that has listeners coupling to image window 
                   if (res.getCounter() > 0) {
+                     String[] headings = res.getHeadings();
                      for (int i = 0; i < res.getCounter(); i++) {
-                        double xPos = res.getValue(Terms.X, i);
-                        double yPos = res.getValue(Terms.Y, i);
                         outTable.incrementCounter();
                         outTable.addValue(Terms.POSITION, p);
-                        outTable.addValue(Terms.X, xPos);
-                        outTable.addValue(Terms.Y, yPos);
+                        for (String header : headings) {
+                           outTable.addValue(header, res.getValue(header, i));
+                        }
                      }
                   }
                   outTable.show(outTableName);

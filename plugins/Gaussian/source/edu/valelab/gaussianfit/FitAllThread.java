@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.concurrent.LinkedBlockingQueue;
 import edu.valelab.gaussianfit.utils.ReportingUtils;
+import java.util.List;
 
 /**
  *
@@ -42,6 +43,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
    private static boolean running_ = false;
    private final FindLocalMaxima.FilterType preFilterType_;
    private final String positionString_;
+   private boolean showDataWindow_ = true;
 
    public FitAllThread(int shape, int fitMode, 
            FindLocalMaxima.FilterType preFilterType, String positions) {
@@ -58,6 +60,13 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       running_ = true;
       t_.start();
    }
+   
+   public synchronized void join(long millis) throws InterruptedException {
+      if (!running_) {
+         return;
+      }
+      t_.join(millis);
+   } 
 
    public synchronized void stop() {
       if (gfsThreads_ != null) {
@@ -75,6 +84,14 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       return running_;
    }
 
+   public synchronized List<SpotData> getResults() {
+      return resultList_;
+   }
+   
+   public synchronized void showDataWindow(boolean flag) {
+      showDataWindow_ = flag;
+   }
+   
    @Override
    public void run() {
 
@@ -148,6 +165,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
          running_ = false;
          return;
       }
+      
       DataCollectionForm dcForm = DataCollectionForm.getInstance();
 
       double zMax = resultList_.get(0).getZCenter();
@@ -188,7 +206,9 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
               DataCollectionForm.zc_.hasFitFunctions(),
               zMin, zMax);
 
-      dcForm.setVisible(true);
+      if (showDataWindow_) {
+         dcForm.setVisible(true);
+      }
 
       // report duration of analysis
       double took = (endTime - startTime) / 1E9;

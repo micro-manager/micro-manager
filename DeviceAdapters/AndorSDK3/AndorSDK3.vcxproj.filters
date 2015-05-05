@@ -42,6 +42,9 @@
     <ClCompile Include="SnapShotControl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ExposureProperty.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AndorSDK3.h">
@@ -81,6 +84,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="AOIStrings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ExposureProperty.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

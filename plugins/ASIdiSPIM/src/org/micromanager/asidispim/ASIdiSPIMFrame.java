@@ -40,29 +40,31 @@ import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.micromanager.MMListenerInterface;
-import org.micromanager.Studio;
-import org.micromanager.internal.MMStudio;
+import org.micromanager.api.MMListenerInterface;
+import org.micromanager.api.ScriptInterface;
+import org.micromanager.MMStudio;
+import org.micromanager.asidispim.Utils.AutofocusUtils;
+import org.micromanager.asidispim.Utils.ControllerUtils;
+import static org.micromanager.asidispim.Utils.MyJavaUtils.isMac;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.internal.interfaces.LiveModeListener; 
 import org.micromanager.internal.utils.MMFrame;
 
 //TODO devices tab automatically recognize default device names
 //TODO "swap sides" button (during alignment)
-//TODO setup tab have piezo/scanner go to 0 (eliminate calibration position display)
-//TODO alignment wizard that would guide through all steps
+//TODO alignment wizard that would guide through alignment steps
 //TODO easy mode that pulls most-used bits from all panels
-//TODO autofocus for finding calibration endpoints (http://dx.doi.org/10.1364/OE.16.008670, FFT method, or other)
 //TODO calibration for sheet width/offset (automatic based on image analysis?) and then optimize based on ROI
 //TODO recalculate slice timing automatically changing assigned camera
 //TODO add status bar to bottom of window (would include acquisition status, could show other messages too)
 //TODO move acquisition start/stop to shared area below tabs
+//TODO add ability of stage scan in 2nd dimension (for wide samples)
 //TODO make it easy to discard a data set
 //TODO make it easy to look through series of data sets
 //TODO hardware Z-projection
-//TODO camera control ROI panel
+//TODO camera control tab: set ROI, set separate acquisition/alignment exposure times and sweep rate, etc.
 //TODO track Z/F for sample finding
-//TODO Z/F position list
+//TODO Z/F position dropdown for often-used positions
 //TODO factor out common code for JComboBoxes like MulticolorModes, CameraModes, AcquisitionModes, etc.
 //TODO cleanup prefs vs. props... maybe add boolean support for plugin device use only?
 //TODO finish eliminating Prefs.Keys in favor of Properties.Keys with plugin values
@@ -86,6 +88,8 @@ public class ASIdiSPIMFrame extends MMFrame
    private final Joystick joystick_;
    private final Positions positions_;
    private final Cameras cameras_;
+   private final ControllerUtils controller_;
+   private final AutofocusUtils autofocus_;
    
    private final DevicesPanel devicesPanel_;
    private final AcquisitionPanel acquisitionPanel_;
@@ -94,6 +98,7 @@ public class ASIdiSPIMFrame extends MMFrame
    private final NavigationPanel navigationPanel_;
    private final SettingsPanel settingsPanel_;
    private final DataAnalysisPanel dataAnalysisPanel_;
+   private final AutofocusPanel autofocusPanel_;
    private final HelpPanel helpPanel_;
    private final StatusSubPanel statusSubPanel_;
    private final StagePositionUpdater stagePosUpdater_;
@@ -114,20 +119,29 @@ public class ASIdiSPIMFrame extends MMFrame
       positions_ = new Positions(gui, devices_);
       joystick_ = new Joystick(devices_, props_);
       cameras_ = new Cameras(gui, devices_, props_, prefs_);
+      controller_ = new ControllerUtils(gui, props_, prefs_, devices_, positions_);
       
       // create the panels themselves
       // in some cases dependencies create required ordering
       devicesPanel_ = new DevicesPanel(gui, devices_, props_);
       stagePosUpdater_ = new StagePositionUpdater(positions_, props_);  // needed for setup and navigation
+      
+      autofocus_ = new AutofocusUtils(gui, devices_, props_, prefs_,
+            cameras_, stagePosUpdater_, positions_, controller_);
+      
+      acquisitionPanel_ = new AcquisitionPanel(gui, devices_, props_, joystick_, 
+            cameras_, prefs_, stagePosUpdater_, positions_, controller_, autofocus_);
       setupPanelA_ = new SetupPanel(gui, devices_, props_, joystick_, 
-            Devices.Sides.A, positions_, cameras_, prefs_, stagePosUpdater_);
+            Devices.Sides.A, positions_, cameras_, prefs_, stagePosUpdater_,
+            autofocus_);
       setupPanelB_ = new SetupPanel(gui, devices_, props_, joystick_,
-            Devices.Sides.B, positions_, cameras_, prefs_, stagePosUpdater_);
+            Devices.Sides.B, positions_, cameras_, prefs_, stagePosUpdater_,
+            autofocus_);
       navigationPanel_ = new NavigationPanel(gui, devices_, props_, joystick_,
             positions_, prefs_, cameras_, stagePosUpdater_);
-      acquisitionPanel_ = new AcquisitionPanel(gui, devices_, props_, joystick_, 
-            cameras_, prefs_, stagePosUpdater_, positions_);
+
       dataAnalysisPanel_ = new DataAnalysisPanel(gui, prefs_);
+      autofocusPanel_ = new AutofocusPanel(gui, devices_, props_, prefs_, autofocus_);
       settingsPanel_ = new SettingsPanel(devices_, props_, prefs_, stagePosUpdater_);
       stagePosUpdater_.oneTimeUpdate();  // needed for NavigationPanel
       helpPanel_ = new HelpPanel();
@@ -137,7 +151,11 @@ public class ASIdiSPIMFrame extends MMFrame
       // all added tabs must be of type ListeningJPanel
       // only use addLTab, not addTab to guarantee this
       tabbedPane_ = new ListeningJTabbedPane();
-      tabbedPane_.setTabPlacement(JTabbedPane.LEFT);
+      if (isMac()) {
+         tabbedPane_.setTabPlacement(JTabbedPane.TOP);
+      } else {
+         tabbedPane_.setTabPlacement(JTabbedPane.LEFT);
+      }
       tabbedPane_.addLTab(navigationPanel_);  // tabIndex = 0
       tabbedPane_.addLTab(setupPanelA_);      // tabIndex = 1
       tabbedPane_.addLTab(setupPanelB_);      // tabIndex = 2
@@ -145,8 +163,9 @@ public class ASIdiSPIMFrame extends MMFrame
       tabbedPane_.addLTab(dataAnalysisPanel_);// tabIndex = 4
       tabbedPane_.addLTab(devicesPanel_);     // tabIndex = 5
       final int deviceTabIndex = tabbedPane_.getTabCount() - 1;
-      tabbedPane_.addLTab(settingsPanel_);    // tabIndex = 6
-      tabbedPane_.addLTab(helpPanel_);        // tabIndex = 7
+      tabbedPane_.addLTab(autofocusPanel_);   // tabIndex = 6
+      tabbedPane_.addLTab(settingsPanel_);    // tabIndex = 7
+      tabbedPane_.addLTab(helpPanel_);        // tabIndex = 8
       final int helpTabIndex = tabbedPane_.getTabCount() - 1;
       
 
@@ -161,7 +180,7 @@ public class ASIdiSPIMFrame extends MMFrame
       MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelA_);
       MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) navigationPanel_);
       
-      // make sure gotSelected() gets called whenever we switch tabs
+      // make sure gotDeSelected() and gotSelected() get called whenever we switch tabs
       tabbedPane_.addChangeListener(new ChangeListener() {
          int lastSelectedIndex_ = tabbedPane_.getSelectedIndex();
          @Override
@@ -174,6 +193,9 @@ public class ASIdiSPIMFrame extends MMFrame
       
       // put frame back where it was last time
       this.loadAndRestorePosition(100, 100);
+      
+      // clear any previous joystick settings
+      joystick_.unsetAllJoysticks();
     
       // gotSelected will be called because we put this after adding the ChangeListener
       tabbedPane_.setSelectedIndex(helpTabIndex);  // setSelectedIndex(0) just after initialization doesn't fire ChangeListener, so switch to help panel first
@@ -196,7 +218,6 @@ public class ASIdiSPIMFrame extends MMFrame
             "[" + this.getWidth() + "]",
             "[" + this.getHeight() + "]"));
       glassPane.add(statusSubPanel_, "dock south");
-      
    }
    
    /**
@@ -259,6 +280,7 @@ public class ASIdiSPIMFrame extends MMFrame
    public void slmExposureChanged(String cameraName, double newExposureTime) {
    }
    
+   // TODO make this automatically call all panels' method
    private void saveSettings() {
       // save selections as needed
       devices_.saveSettings();
@@ -272,11 +294,18 @@ public class ASIdiSPIMFrame extends MMFrame
       prefs_.putInt(MAIN_PREF_NODE, Prefs.Keys.TAB_INDEX, tabbedPane_.getSelectedIndex());
    }
    
+// TODO make this automatically call all panels' method
+   private void windowClosing() {
+      acquisitionPanel_.windowClosing();
+      setupPanelA_.windowClosing();
+      setupPanelB_.windowClosing();
+   }
+   
    @Override
    public void dispose() {
       stagePosUpdater_.stop();
       saveSettings();
-      acquisitionPanel_.windowClosing();
+      windowClosing();
       super.dispose();
    }
 }

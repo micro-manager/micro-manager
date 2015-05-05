@@ -160,13 +160,29 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="NotificationEntry.cpp" />
+    <ClCompile Include="NotificationThread.cpp" />
+    <ClCompile Include="PollingThread.cpp" />
+    <ClCompile Include="PpParam.cpp" />
+    <ClCompile Include="PvCircularBuffer.cpp" />
+    <ClCompile Include="PvDebayer.cpp" />
     <ClCompile Include="PVCAMAdapter.cpp" />
     <ClCompile Include="PVCAMParam.cpp" />
     <ClCompile Include="PVCAMUniversal.cpp" />
+    <ClCompile Include="PvFrameInfo.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="NotificationEntry.h" />
+    <ClInclude Include="NotificationThread.h" />
+    <ClInclude Include="PollingThread.h" />
+    <ClInclude Include="PpParam.h" />
+    <ClInclude Include="PVCAMIncludes.h" />
+    <ClInclude Include="PvCircularBuffer.h" />
+    <ClInclude Include="PvDebayer.h" />
     <ClInclude Include="PVCAMAdapter.h" />
     <ClInclude Include="PVCAMParam.h" />
+    <ClInclude Include="PvFrameInfo.h" />
+    <ClInclude Include="PvRoi.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\MMDevice\MMDevice-SharedRuntime.vcxproj">

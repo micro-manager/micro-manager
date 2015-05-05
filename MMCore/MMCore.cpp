@@ -104,8 +104,8 @@ using namespace std;
  * of the public API of the Core), not just CMMCore.
  */
 const int MMCore_versionMajor = 7;
-const int MMCore_versionMinor = 0;
-const int MMCore_versionPatch = 1;
+const int MMCore_versionMinor = 2;
+const int MMCore_versionPatch = 0;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1556,48 +1556,117 @@ double CMMCore::getYPosition() throw (CMMError)
 }
 
 /**
- * stop the XY stage motors
- * @param label    the stage device label
+ * Stop the XY or focus/Z stage motors
+ *
+ * Not all stages support this operation; check before use.
+ *
+ * @param label    the stage device label (either XY or focus/Z stage)
  */
 void CMMCore::stop(const char* label) throw (CMMError)
 {
-   boost::shared_ptr<XYStageInstance> pXYStage =
-      deviceManager_->GetDeviceOfType<XYStageInstance>(label);
+   boost::shared_ptr<DeviceInstance> stage =
+      deviceManager_->GetDevice(label);
 
-   mm::DeviceModuleLockGuard guard(pXYStage);
-   int ret = pXYStage->Stop();
-   if (ret != DEVICE_OK)
+   boost::shared_ptr<StageInstance> zStage =
+      boost::dynamic_pointer_cast<StageInstance>(stage);
+   if (zStage)
    {
-      logError(label, getDeviceErrorText(ret, pXYStage).c_str());
-      throw CMMError(getDeviceErrorText(ret, pXYStage).c_str(), MMERR_DEVICE_GENERIC);
+      LOG_DEBUG(coreLogger_) << "Will stop stage " << label;
+
+      mm::DeviceModuleLockGuard guard(zStage);
+      int ret = zStage->Stop();
+      if (ret != DEVICE_OK)
+      {
+         logError(label, getDeviceErrorText(ret, zStage).c_str());
+         throw CMMError(getDeviceErrorText(ret, zStage));
+      }
+
+      LOG_DEBUG(coreLogger_) << "Did stop stage " << label;
+      return;
    }
-   LOG_DEBUG(coreLogger_) << "Stopped xy stage " << label;
+
+   boost::shared_ptr<XYStageInstance> xyStage =
+      boost::dynamic_pointer_cast<XYStageInstance>(stage);
+   if (xyStage)
+   {
+      LOG_DEBUG(coreLogger_) << "Will stop xy stage " << label;
+
+      mm::DeviceModuleLockGuard guard(xyStage);
+      int ret = xyStage->Stop();
+      if (ret != DEVICE_OK)
+      {
+         logError(label, getDeviceErrorText(ret, xyStage).c_str());
+         throw CMMError(getDeviceErrorText(ret, xyStage));
+      }
+
+      LOG_DEBUG(coreLogger_) << "Did stop xy stage " << label;
+      return;
+   }
+
+   throw CMMError("Cannot stop " + ToQuotedString(label) +
+         ": not a stage");
 }
 
 /**
- * Calibrates and homes the XY stage.
- * @param label    the stage device label
+ * Perform a hardware homing operation for an XY or focus/Z stage.
+ *
+ * Not all stages support this operation. The user should be warned before
+ * calling this method, as it can cause large stage movements, potentially
+ * resulting in collision (e.g. with an expensive objective lens).
+ *
+ * @param label    the stage device label (either XY or focus/Z stage)
  */
 void CMMCore::home(const char* label) throw (CMMError)
 {
-   boost::shared_ptr<XYStageInstance> pXYStage =
-      deviceManager_->GetDeviceOfType<XYStageInstance>(label);
+   boost::shared_ptr<DeviceInstance> stage =
+      deviceManager_->GetDevice(label);
 
-   LOG_DEBUG(coreLogger_) << "Will home xy stage " << label;
-
-   mm::DeviceModuleLockGuard guard(pXYStage);
-   int ret = pXYStage->Home();
-   if (ret != DEVICE_OK)
+   boost::shared_ptr<StageInstance> zStage =
+      boost::dynamic_pointer_cast<StageInstance>(stage);
+   if (zStage)
    {
-      logError(label, getDeviceErrorText(ret, pXYStage).c_str());
-      throw CMMError(getDeviceErrorText(ret, pXYStage).c_str(), MMERR_DEVICE_GENERIC);
+      LOG_DEBUG(coreLogger_) << "Will home stage " << label;
+
+      mm::DeviceModuleLockGuard guard(zStage);
+      int ret = zStage->Home();
+      if (ret != DEVICE_OK)
+      {
+         logError(label, getDeviceErrorText(ret, zStage).c_str());
+         throw CMMError(getDeviceErrorText(ret, zStage));
+      }
+
+      LOG_DEBUG(coreLogger_) << "Did home stage " << label;
+      return;
    }
 
-   LOG_DEBUG(coreLogger_) << "Did home xy stage " << label;
+   boost::shared_ptr<XYStageInstance> xyStage =
+      boost::dynamic_pointer_cast<XYStageInstance>(stage);
+   if (xyStage)
+   {
+      LOG_DEBUG(coreLogger_) << "Will home xy stage " << label;
+
+      mm::DeviceModuleLockGuard guard(xyStage);
+      int ret = xyStage->Home();
+      if (ret != DEVICE_OK)
+      {
+         logError(label, getDeviceErrorText(ret, xyStage).c_str());
+         throw CMMError(getDeviceErrorText(ret, xyStage));
+      }
+
+      LOG_DEBUG(coreLogger_) << "Did home xy stage " << label;
+      return;
+   }
+
+   throw CMMError("Cannot home " + ToQuotedString(label) +
+         ": not a stage");
 }
 
 /**
- * zero the current XY position.
+ * Zero the given XY stage's coordinates at the current position.
+ *
+ * The current position becomes the new origin. Not to be confused with
+ * setAdapterOriginXY().
+ *
  * @param label    the stage device label
  */
 void CMMCore::setOriginXY(const char* label) throw (CMMError)
@@ -1617,7 +1686,10 @@ void CMMCore::setOriginXY(const char* label) throw (CMMError)
 }
 
 /**
- * zero the current XY position. Uses the current XY stage device.
+ * Zero the current XY stage's coordinates at the current position.
+ *
+ * The current position becomes the new origin. Not to be confused with
+ * setAdapterOriginXY().
  */
 void CMMCore::setOriginXY() throw (CMMError)
 {
@@ -1625,7 +1697,79 @@ void CMMCore::setOriginXY() throw (CMMError)
 }
 
 /**
- * zero the current stage position.
+ * Zero the given XY stage's X coordinate at the current position.
+ *
+ * The current position becomes the new X = 0.
+ *
+ * @param label    the xy stage device label
+ */
+void CMMCore::setOriginX(const char* label) throw (CMMError)
+{
+   boost::shared_ptr<XYStageInstance> pXYStage =
+      deviceManager_->GetDeviceOfType<XYStageInstance>(label);
+
+   mm::DeviceModuleLockGuard guard(pXYStage);
+   int ret = pXYStage->SetXOrigin();
+   if (ret != DEVICE_OK)
+   {
+      logError(label, getDeviceErrorText(ret, pXYStage).c_str());
+      throw CMMError(getDeviceErrorText(ret, pXYStage).c_str(), MMERR_DEVICE_GENERIC);
+   }
+
+   LOG_DEBUG(coreLogger_) << "Zeroed x coordinate of xy stage " << label <<
+      " at current position";
+}
+
+/**
+ * Zero the given XY stage's X coordinate at the current position.
+ *
+ * The current position becomes the new X = 0.
+ */
+void CMMCore::setOriginX() throw (CMMError)
+{
+   setOriginX(getXYStageDevice().c_str());
+}
+
+/**
+ * Zero the given XY stage's Y coordinate at the current position.
+ *
+ * The current position becomes the new Y = 0.
+ *
+ * @param label    the xy stage device label
+ */
+void CMMCore::setOriginY(const char* label) throw (CMMError)
+{
+   boost::shared_ptr<XYStageInstance> pXYStage =
+      deviceManager_->GetDeviceOfType<XYStageInstance>(label);
+
+   mm::DeviceModuleLockGuard guard(pXYStage);
+   int ret = pXYStage->SetYOrigin();
+   if (ret != DEVICE_OK)
+   {
+      logError(label, getDeviceErrorText(ret, pXYStage).c_str());
+      throw CMMError(getDeviceErrorText(ret, pXYStage).c_str(), MMERR_DEVICE_GENERIC);
+   }
+
+   LOG_DEBUG(coreLogger_) << "Zeroed y coordinate of xy stage " << label <<
+      " at current position";
+}
+
+/**
+ * Zero the given XY stage's Y coordinate at the current position.
+ *
+ * The current position becomes the new Y = 0.
+ */
+void CMMCore::setOriginY() throw (CMMError)
+{
+   setOriginY(getXYStageDevice().c_str());
+}
+
+/**
+ * Zero the given focus/Z stage's coordinates at the current position.
+ *
+ * The current position becomes the new origin (Z = 0). Not to be confused with
+ * setAdapterOrigin().
+ *
  * @param label    the stage device label
  */
 void CMMCore::setOrigin(const char* label) throw (CMMError)
@@ -1645,8 +1789,10 @@ void CMMCore::setOrigin(const char* label) throw (CMMError)
 }
 
 /**
- * zero the current stage position. Uses the current Z positioner (focus)
- * device.
+ * Zero the current focus/Z stage's coordinates at the current position.
+ *
+ * The current position becomes the new origin (Z = 0). Not to be confused with
+ * setAdapterOrigin().
  */
 void CMMCore::setOrigin() throw (CMMError)
 {
@@ -1654,59 +1800,88 @@ void CMMCore::setOrigin() throw (CMMError)
 }
 
 /**
- * Zero the stage at a particular position (in microns)
+ * Enable software translation of coordinates for the given focus/Z stage.
+ *
+ * The current position of the stage becomes Z = newZUm. Only some stages
+ * support this functionality; it is recommended that setOrigin() be used
+ * instead where available.
+ *
  * @param label    the stage device label
- * @param d             the position in the old coordinate (in microns)
+ * @param newZUm   the new coordinate to assign to the current Z position
  */
-void CMMCore::setAdapterOrigin(const char* label, double d) throw (CMMError)
+void CMMCore::setAdapterOrigin(const char* label, double newZUm) throw (CMMError)
 {
    boost::shared_ptr<StageInstance> pStage =
       deviceManager_->GetDeviceOfType<StageInstance>(label);
 
    mm::DeviceModuleLockGuard guard(pStage);
-   int ret = pStage->SetAdapterOriginUm(d);
+   int ret = pStage->SetAdapterOriginUm(newZUm);
    if (ret != DEVICE_OK)
    {
       logError(label, getDeviceErrorText(ret, pStage).c_str());
       throw CMMError(getDeviceErrorText(ret, pStage).c_str(), MMERR_DEVICE_GENERIC);
    }
 
-   LOG_DEBUG(coreLogger_) << "Zeroed stage " << label << " at position " <<
-      std::fixed << std::setprecision(5) << d << " um";
+   LOG_DEBUG(coreLogger_) << "Adapter-zeroed stage " << label <<
+      ", assigning coordinate " << std::fixed << std::setprecision(5) <<
+      newZUm << " um to the current position";
 }
 
 /**
- * Zero the stage at a particular position (in microns). Uses the current Z
- * positioner (focus) device.
- * @param d             the position in the old coordinate (in microns)
+ * Enable software translation of coordinates for the current focus/Z stage.
+ *
+ * The current position of the stage becomes Z = newZUm. Only some stages
+ * support this functionality; it is recommended that setOrigin() be used
+ * instead where available.
+ *
+ * @param newZUm   the new coordinate to assign to the current Z position
  */
-void CMMCore::setAdapterOrigin(double d) throw (CMMError)
+void CMMCore::setAdapterOrigin(double newZUm) throw (CMMError)
 {
-    setAdapterOrigin(getFocusDevice().c_str(), d);
+    setAdapterOrigin(getFocusDevice().c_str(), newZUm);
 }
 
 /**
- * Reset a particular x,y position to be the origin of the XY stage's coordinate system
+ * Enable software translation of coordinates for the given XY stage.
+ *
+ * The current position of the stage becomes (newXUm, newYUm). It is
+ * recommended that setOriginXY() be used instead where available.
+ *
  * @param label    the XY stage device label
- * @param x             the x position in the old coordinate system
- * @param y             the y position in the old coordinate system
+ * @param newXUm   the new coordinate to assign to the current X position
+ * @param newYUm   the new coordinate to assign to the current Y position
  */
-void CMMCore::setAdapterOriginXY(const char* label, double x, double y) throw (CMMError)
+void CMMCore::setAdapterOriginXY(const char* label,
+      double newXUm, double newYUm) throw (CMMError)
 {
    boost::shared_ptr<XYStageInstance> pXYStage =
       deviceManager_->GetDeviceOfType<XYStageInstance>(label);
 
    mm::DeviceModuleLockGuard guard(pXYStage);
-   int ret = pXYStage->SetAdapterOriginUm(x, y);
+   int ret = pXYStage->SetAdapterOriginUm(newXUm, newYUm);
    if (ret != DEVICE_OK)
    {
       logError(label, getDeviceErrorText(ret, pXYStage).c_str());
       throw CMMError(getDeviceErrorText(ret, pXYStage).c_str(), MMERR_DEVICE_GENERIC);
    }
 
-   LOG_DEBUG(coreLogger_) << "Zeroed xy stage " << label <<
-      " at position (" << std::fixed << std::setprecision(3) << x << ", " <<
-      y << ") um";
+   LOG_DEBUG(coreLogger_) << "Adapter-zeroed XY stage " << label <<
+      ", assigning coordinates (" << std::fixed << std::setprecision(3) <<
+      newXUm << ", " << newYUm << ") um to the current position";
+}
+
+/**
+ * Enable software translation of coordinates for the current XY stage.
+ *
+ * The current position of the stage becomes (newXUm, newYUm). It is
+ * recommended that setOriginXY() be used instead where available.
+ *
+ * @param newXUm   the new coordinate to assign to the current X position
+ * @param newYUm   the new coordinate to assign to the current Y position
+ */
+void CMMCore::setAdapterOriginXY(double newXUm, double newYUm) throw (CMMError)
+{
+    setAdapterOriginXY(getXYStageDevice().c_str(), newXUm, newYUm);
 }
 
 
