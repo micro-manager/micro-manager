@@ -68,6 +68,7 @@ public interface SummaryMetadata {
       SummaryMetadataBuilder zStepUm(Double zStepUm);
       SummaryMetadataBuilder waitInterval(Double waitInterval);
       SummaryMetadataBuilder customIntervalsMs(Double[] customIntervalsMs);
+      SummaryMetadataBuilder axisOrder(String[] axisOrder);
       SummaryMetadataBuilder intendedDimensions(Coords intendedDimensions);
 
       SummaryMetadataBuilder startDate(String startDate);
@@ -172,6 +173,17 @@ public interface SummaryMetadata {
     * @return list of wait times between timepoints
     */
    public Double[] getCustomIntervalsMs();
+
+   /**
+    * The order in which axes changed when adding images to the dataset. The
+    * first entry in this array is the first axis to have a nonzero value;
+    * the second entry is the second to have a nonzero value, etc. In other
+    * words, the entries should be ordered from changes-most-frequently to
+    * changes-least-frequently. This array will be populated automatically when
+    * images are added to the Datastore, if you decide not to set it yourself.
+    * @return Axis names in order of change rate.
+    */
+   public String[] getAxisOrder();
 
    /**
     * The expected number of images along each axis that were to be collected.

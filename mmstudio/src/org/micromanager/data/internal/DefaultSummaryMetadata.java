@@ -109,6 +109,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       private Double zStepUm_ = null;
       private Double waitInterval_ = null;
       private Double[] customIntervalsMs_ = null;
+      private String[] axisOrder_ = null;
       private Coords intendedDimensions_ = null;
       private String startDate_ = null;
       private MultiStagePosition[] stagePositions_ = null;
@@ -205,6 +206,12 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
 
       @Override
+      public SummaryMetadataBuilder axisOrder(String[] axisOrder) {
+         axisOrder_ = axisOrder;
+         return this;
+      }
+
+      @Override
       public SummaryMetadataBuilder intendedDimensions(Coords intendedDimensions) {
          intendedDimensions_ = intendedDimensions;
          return this;
@@ -244,6 +251,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    private Double zStepUm_ = null;
    private Double waitInterval_ = null;
    private Double[] customIntervalsMs_ = null;
+   private String[] axisOrder_ = null;
    private Coords intendedDimensions_ = null;
    private String startDate_ = null;
    private MultiStagePosition[] stagePositions_ = null;
@@ -266,6 +274,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       zStepUm_ = builder.zStepUm_;
       waitInterval_ = builder.waitInterval_;
       customIntervalsMs_ = builder.customIntervalsMs_;
+      axisOrder_ = builder.axisOrder_;
       intendedDimensions_ = builder.intendedDimensions_;
       startDate_ = builder.startDate_;
       stagePositions_ = builder.stagePositions_;
@@ -344,6 +353,11 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    }
 
    @Override
+   public String[] getAxisOrder() {
+      return axisOrder_;
+   }
+
+   @Override
    public Coords getIntendedDimensions() {
       return intendedDimensions_;
    }
@@ -380,6 +394,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
             .zStepUm(zStepUm_)
             .waitInterval(waitInterval_)
             .customIntervalsMs(customIntervalsMs_)
+            .axisOrder(axisOrder_)
             .intendedDimensions(intendedDimensions_)
             .startDate(startDate_)
             .stagePositions(stagePositions_)
@@ -460,7 +475,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       try {
          JSONArray names = tags.getJSONArray("ChNames");
          String[] namesArr = new String[names.length()];
-         for (int i = 0; i < namesArr.length; ++i ){
+         for (int i = 0; i < namesArr.length; ++i) {
             namesArr[i] = names.getString(i);
          }
          builder.channelNames(namesArr);
@@ -491,6 +506,18 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
       catch (java.text.ParseException e) {
          ReportingUtils.logDebugMessage("Failed to parse input string for customIntervalsMs");
+      }
+
+      try {
+         JSONArray order = tags.getJSONArray("AxisOrder");
+         String[] axisOrder = new String[order.length()];
+         for (int i = 0; i < axisOrder.length; ++i) {
+            axisOrder[i] = order.getString(i);
+         }
+         builder.axisOrder(axisOrder);
+      }
+      catch (JSONException e) {
+         ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field axisOrder");
       }
 
       // TODO: this is pretty horrible with all the try/catches, but we want
@@ -563,6 +590,13 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
                (zStepUm_ == null) ? 0 : zStepUm_);
          result.put("WaitInterval", waitInterval_);
          result.put("CustomIntervals_ms", customIntervalsMs_);
+         if (axisOrder_ != null) {
+            JSONArray order = new JSONArray();
+            for (int i = 0; i < axisOrder_.length; ++i) {
+               order.put(axisOrder_[i]);
+            }
+            result.put("AxisOrder", order);
+         }
          if (intendedDimensions_ != null) {
             MDUtils.setNumChannels(result,
                   intendedDimensions_.getChannel());
