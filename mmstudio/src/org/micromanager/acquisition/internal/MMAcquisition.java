@@ -595,8 +595,9 @@ public class MMAcquisition {
       insertImage(taggedImg, updateDisplay && show_ , true);
    }
 
-   /*
-    * This is the insertImage version that actually puts data into the acquisition
+   /**
+    * This is the insertImage version that actually puts data into the
+    * acquisition
     */
    public void insertImage(TaggedImage taggedImg,
            boolean updateDisplay,
@@ -651,10 +652,6 @@ public class MMAcquisition {
 
    public boolean isInitialized() {
       return initialized_;
-   }
-
-   public void promptToSave(boolean promptToSave) {
-      ReportingUtils.logError("TODO: Prompt to save!");
    }
 
    /**
