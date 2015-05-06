@@ -22,6 +22,47 @@
 
 package org.micromanager.internal.dialogs;
 
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.Font;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import javax.swing.AbstractCellEditor;
+import javax.swing.border.BevelBorder;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.SpringLayout;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.WindowConstants;
+
+import mmcorej.CMMCore;
+import mmcorej.Configuration;
+import mmcorej.DeviceType;
+import mmcorej.PropertyType;
+import mmcorej.StrVector;
+import mmcorej.PropertySetting;
+
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.ShowFlags;
 import org.micromanager.internal.utils.MMDialog;
@@ -29,22 +70,6 @@ import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.SliderPanel;
 import org.micromanager.internal.utils.SortFunctionObjects;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.event.*;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import javax.swing.*;
-import javax.swing.border.BevelBorder;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
-import mmcorej.*;
-import org.micromanager.Studio;
 
 /**
  * Dialog for editing of a pixel size configuration preset.

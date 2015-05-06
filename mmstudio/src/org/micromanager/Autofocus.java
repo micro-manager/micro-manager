@@ -20,6 +20,8 @@
 
 package org.micromanager;
 
+import ij.process.ImageProcessor;
+
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.PropertyItem;
 
