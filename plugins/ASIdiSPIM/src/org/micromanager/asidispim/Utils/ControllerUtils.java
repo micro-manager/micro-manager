@@ -202,12 +202,11 @@ public class ControllerUtils {
          }
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED, (float)requestedMotorSpeed);
          
-         // we could ask for the actual speed and calculate the actual step size
-         // TODO maybe want to update spinner in AcquisitionPanel and/or report actual one in metadata
-         // double actualMotorSpeed = props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED);
-         // stepSize_.setValue(actualMotorSpeed / Math.sqrt(2.) * sliceDuration);
+         // ask for the actual speed and calculate the actual step size
+         final double actualMotorSpeed = props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED);
+         final double actualStepSizeUm = actualMotorSpeed / Math.sqrt(2.) * sliceDuration * numChannels;  
          
-         final double scanDistance = numSlices * stepSizeUm * Math.sqrt(2.);
+         final double scanDistance = numSlices * actualStepSizeUm * Math.sqrt(2.);
          Point2D.Double posUm;
          try {
             posUm = core_.getXYStagePosition(devices_.getMMDevice(xyDevice));
@@ -224,9 +223,10 @@ public class ControllerUtils {
                (float)(posUm.y / 1000d));
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SLOW_STOP,
                (float)(posUm.y / 1000d));
-         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_NUMLINES, numSides);
+         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_NUMLINES, 
+               (isInterleaved ? 1 : numSides));  // assume can't have 1 side interleaved
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_PATTERN,
-               (!isInterleaved || (numSides == 2) ? Properties.Values.SERPENTINE : Properties.Values.RASTER));
+               (!isInterleaved && (numSides == 2) ? Properties.Values.SERPENTINE : Properties.Values.RASTER));
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SETTLING_TIME, delayBeforeSide);
          
          // TODO handle other multichannel modes with stage scanning (what does this mean??)
