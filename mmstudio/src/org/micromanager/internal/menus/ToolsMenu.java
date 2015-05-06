@@ -18,7 +18,7 @@ import mmcorej.CMMCore;
 import org.micromanager.internal.conf2.ConfiguratorDlg2;
 import org.micromanager.internal.dialogs.IntroDlg;
 import org.micromanager.internal.dialogs.OptionsDlg;
-import org.micromanager.internal.dialogs.stagecontrol.StageControl;
+import org.micromanager.internal.dialogs.StageControlFrame;
 import org.micromanager.internal.MainFrame;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.DefaultUserProfile;
@@ -103,7 +103,7 @@ public class ToolsMenu {
             new Runnable() {
                @Override
                public void run() {
-                  StageControl.show();
+                  StageControlFrame.showStageControl();
                }
             });
 

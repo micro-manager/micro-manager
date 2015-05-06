@@ -17,7 +17,7 @@
  *               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
  */
 
-package org.micromanager.internal.dialogs.stagecontrol;
+package org.micromanager.internal.dialogs;
 
 import java.awt.BorderLayout;
 import java.awt.LayoutManager;
@@ -43,8 +43,7 @@ import org.micromanager.internal.utils.MMFrame;
  *
  * @author nico
  */
-public class StageControlFrame extends MMFrame 
-implements MMListenerInterface {
+public class StageControlFrame extends MMFrame implements MMListenerInterface {
    private final Studio gui_;
    private final CMMCore core_;
 
@@ -73,6 +72,17 @@ implements MMListenerInterface {
    private static final String MEDIUMMOVEMENTZ = "MEDIUMMOVEMENTZ";
    private static final String CURRENTZDRIVE = "CURRENTZDRIVE";
 
+   private static StageControlFrame staticFrame_;
+
+   public static void showStageControl() {
+      Studio studio = org.micromanager.internal.MMStudio.getInstance();
+      if (staticFrame_ == null) {
+         staticFrame_ = new StageControlFrame(studio);
+         studio.compat().addMMListener(staticFrame_);
+      }
+      staticFrame_.initialize();
+      staticFrame_.setVisible(true);
+   }
 
 
    /**
