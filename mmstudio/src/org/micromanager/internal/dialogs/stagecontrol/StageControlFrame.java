@@ -17,7 +17,7 @@
  *               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
  */
 
-package org.micromanager.stagecontrol;
+package org.micromanager.internal.dialogs.stagecontrol;
 
 import java.awt.BorderLayout;
 import java.awt.LayoutManager;
@@ -288,12 +288,12 @@ implements MMListenerInterface {
          }
       });
 
-      mediumZUpButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-du.png"))); // NOI18N
+      mediumZUpButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-du.png"))); // NOI18N
       mediumZUpButton_.setBorder(null);
       mediumZUpButton_.setBorderPainted(false);
       mediumZUpButton_.setContentAreaFilled(false);
       mediumZUpButton_.setFocusPainted(false);
-      mediumZUpButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dup.png"))); // NOI18N
+      mediumZUpButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-dup.png"))); // NOI18N
       mediumZUpButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             mediumZUpButton_ActionPerformed(evt);
@@ -326,24 +326,24 @@ implements MMListenerInterface {
          }
       });
 
-      mediumZDownButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dd.png"))); // NOI18N
+      mediumZDownButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-dd.png"))); // NOI18N
       mediumZDownButton_.setBorder(null);
       mediumZDownButton_.setBorderPainted(false);
       mediumZDownButton_.setContentAreaFilled(false);
       mediumZDownButton_.setFocusPainted(false);
-      mediumZDownButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-ddp.png"))); // NOI18N
+      mediumZDownButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-ddp.png"))); // NOI18N
       mediumZDownButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             mediumZDownButton_ActionPerformed(evt);
          }
       });
 
-      smallZDownButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sd.png"))); // NOI18N
+      smallZDownButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-sd.png"))); // NOI18N
       smallZDownButton_.setBorder(null);
       smallZDownButton_.setBorderPainted(false);
       smallZDownButton_.setContentAreaFilled(false);
       smallZDownButton_.setFocusPainted(false);
-      smallZDownButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sdp.png"))); // NOI18N
+      smallZDownButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-sdp.png"))); // NOI18N
       smallZDownButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             smallZDownButton_ActionPerformed(evt);
@@ -352,36 +352,36 @@ implements MMListenerInterface {
 
       zPositionLabel_.setText("0.00");
 
-      smallZUpButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-su.png"))); // NOI18N
+      smallZUpButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-su.png"))); // NOI18N
       smallZUpButton_.setBorder(null);
       smallZUpButton_.setBorderPainted(false);
       smallZUpButton_.setContentAreaFilled(false);
       smallZUpButton_.setFocusPainted(false);
-      smallZUpButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sup.png"))); // NOI18N
+      smallZUpButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-sup.png"))); // NOI18N
       smallZUpButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             smallZUpButton_ActionPerformed(evt);
          }
       });
 
-      jButton23.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sr.png"))); // NOI18N
+      jButton23.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-sr.png"))); // NOI18N
       jButton23.setBorder(null);
       jButton23.setBorderPainted(false);
       jButton23.setContentAreaFilled(false);
       jButton23.setFocusPainted(false);
-      jButton23.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-srp.png"))); // NOI18N
+      jButton23.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-srp.png"))); // NOI18N
       jButton23.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             jButton23ActionPerformed(evt);
          }
       });
 
-      jButton24.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dr.png"))); // NOI18N
+      jButton24.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-dr.png"))); // NOI18N
       jButton24.setBorder(null);
       jButton24.setBorderPainted(false);
       jButton24.setContentAreaFilled(false);
       jButton24.setFocusPainted(false);
-      jButton24.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-drp.png"))); // NOI18N
+      jButton24.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-drp.png"))); // NOI18N
       jButton24.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             jButton24ActionPerformed(evt);
@@ -466,180 +466,180 @@ implements MMListenerInterface {
       jLabel7.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
       jLabel7.setText("XY Stage");
 
-      largeXYUpButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tu.png"))); // NOI18N
+      largeXYUpButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-tu.png"))); // NOI18N
       largeXYUpButton_.setBorder(null);
       largeXYUpButton_.setBorderPainted(false);
       largeXYUpButton_.setContentAreaFilled(false);
       largeXYUpButton_.setFocusPainted(false);
-      largeXYUpButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tup.png"))); // NOI18N
+      largeXYUpButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-tup.png"))); // NOI18N
       largeXYUpButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             largeXYUpButton_ActionPerformed(evt);
          }
       });
 
-      mediumXYUpButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-du.png"))); // NOI18N
+      mediumXYUpButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-du.png"))); // NOI18N
       mediumXYUpButton_.setBorder(null);
       mediumXYUpButton_.setBorderPainted(false);
       mediumXYUpButton_.setContentAreaFilled(false);
       mediumXYUpButton_.setFocusPainted(false);
-      mediumXYUpButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dup.png"))); // NOI18N
+      mediumXYUpButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-dup.png"))); // NOI18N
       mediumXYUpButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             mediumXYUpButton_ActionPerformed(evt);
          }
       });
 
-      smallXYUpButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-su.png"))); // NOI18N
+      smallXYUpButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-su.png"))); // NOI18N
       smallXYUpButton_.setBorder(null);
       smallXYUpButton_.setBorderPainted(false);
       smallXYUpButton_.setContentAreaFilled(false);
       smallXYUpButton_.setFocusPainted(false);
-      smallXYUpButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sup.png"))); // NOI18N
+      smallXYUpButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-sup.png"))); // NOI18N
       smallXYUpButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             smallXYUpButton_ActionPerformed(evt);
          }
       });
 
-      smallXYDownButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sd.png"))); // NOI18N
+      smallXYDownButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-sd.png"))); // NOI18N
       smallXYDownButton_.setBorder(null);
       smallXYDownButton_.setBorderPainted(false);
       smallXYDownButton_.setContentAreaFilled(false);
       smallXYDownButton_.setFocusPainted(false);
-      smallXYDownButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sdp.png"))); // NOI18N
+      smallXYDownButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-sdp.png"))); // NOI18N
       smallXYDownButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             smallXYDownButton_ActionPerformed(evt);
          }
       });
 
-      mediumXYDownButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dd.png"))); // NOI18N
+      mediumXYDownButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-dd.png"))); // NOI18N
       mediumXYDownButton_.setBorder(null);
       mediumXYDownButton_.setBorderPainted(false);
       mediumXYDownButton_.setContentAreaFilled(false);
       mediumXYDownButton_.setFocusPainted(false);
-      mediumXYDownButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-ddp.png"))); // NOI18N
+      mediumXYDownButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-ddp.png"))); // NOI18N
       mediumXYDownButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             mediumXYDownButton_ActionPerformed(evt);
          }
       });
 
-      largeXYDownButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-td.png"))); // NOI18N
+      largeXYDownButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-td.png"))); // NOI18N
       largeXYDownButton_.setBorder(null);
       largeXYDownButton_.setBorderPainted(false);
       largeXYDownButton_.setContentAreaFilled(false);
       largeXYDownButton_.setFocusPainted(false);
-      largeXYDownButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tdp.png"))); // NOI18N
+      largeXYDownButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-tdp.png"))); // NOI18N
       largeXYDownButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             largeXYDownButton_ActionPerformed(evt);
          }
       });
 
-      largeLeftButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tl.png"))); // NOI18N
+      largeLeftButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-tl.png"))); // NOI18N
       largeLeftButton_.setBorder(null);
       largeLeftButton_.setBorderPainted(false);
       largeLeftButton_.setContentAreaFilled(false);
       largeLeftButton_.setFocusPainted(false);
-      largeLeftButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tlp.png"))); // NOI18N
+      largeLeftButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-tlp.png"))); // NOI18N
       largeLeftButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             largeLeftButton_ActionPerformed(evt);
          }
       });
 
-      mediumLeftButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dl.png"))); // NOI18N
+      mediumLeftButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-dl.png"))); // NOI18N
       mediumLeftButton_.setBorder(null);
       mediumLeftButton_.setBorderPainted(false);
       mediumLeftButton_.setContentAreaFilled(false);
       mediumLeftButton_.setFocusPainted(false);
-      mediumLeftButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dlp.png"))); // NOI18N
+      mediumLeftButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-dlp.png"))); // NOI18N
       mediumLeftButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             mediumLeftButton_ActionPerformed(evt);
          }
       });
 
-      smallLeftButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sl.png"))); // NOI18N
+      smallLeftButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-sl.png"))); // NOI18N
       smallLeftButton_.setBorder(null);
       smallLeftButton_.setBorderPainted(false);
       smallLeftButton_.setContentAreaFilled(false);
       smallLeftButton_.setFocusPainted(false);
-      smallLeftButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-slp.png"))); // NOI18N
+      smallLeftButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-slp.png"))); // NOI18N
       smallLeftButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             smallLeftButton_ActionPerformed(evt);
          }
       });
 
-      smallRightButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sr.png"))); // NOI18N
+      smallRightButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-sr.png"))); // NOI18N
       smallRightButton_.setBorder(null);
       smallRightButton_.setBorderPainted(false);
       smallRightButton_.setContentAreaFilled(false);
       smallRightButton_.setFocusPainted(false);
-      smallRightButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-srp.png"))); // NOI18N
+      smallRightButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-srp.png"))); // NOI18N
       smallRightButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             smallRightButton_ActionPerformed(evt);
          }
       });
 
-      mediumRightButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dr.png"))); // NOI18N
+      mediumRightButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-dr.png"))); // NOI18N
       mediumRightButton_.setBorder(null);
       mediumRightButton_.setBorderPainted(false);
       mediumRightButton_.setContentAreaFilled(false);
       mediumRightButton_.setFocusPainted(false);
-      mediumRightButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-drp.png"))); // NOI18N
+      mediumRightButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-drp.png"))); // NOI18N
       mediumRightButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             mediumRightButton_ActionPerformed(evt);
          }
       });
 
-      largeRightButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tr.png"))); // NOI18N
+      largeRightButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-tr.png"))); // NOI18N
       largeRightButton_.setBorder(null);
       largeRightButton_.setBorderPainted(false);
       largeRightButton_.setContentAreaFilled(false);
       largeRightButton_.setFocusPainted(false);
-      largeRightButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-trp.png"))); // NOI18N
+      largeRightButton_.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-trp.png"))); // NOI18N
       largeRightButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             largeRightButton_ActionPerformed(evt);
          }
       });
 
-      jButton20.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-sr.png"))); // NOI18N
+      jButton20.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-sr.png"))); // NOI18N
       jButton20.setBorder(null);
       jButton20.setBorderPainted(false);
       jButton20.setContentAreaFilled(false);
       jButton20.setFocusPainted(false);
-      jButton20.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-srp.png"))); // NOI18N
+      jButton20.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-srp.png"))); // NOI18N
       jButton20.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             jButton20ActionPerformed(evt);
          }
       });
 
-      jButton21.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-dr.png"))); // NOI18N
+      jButton21.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-dr.png"))); // NOI18N
       jButton21.setBorder(null);
       jButton21.setBorderPainted(false);
       jButton21.setContentAreaFilled(false);
       jButton21.setFocusPainted(false);
-      jButton21.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-drp.png"))); // NOI18N
+      jButton21.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-drp.png"))); // NOI18N
       jButton21.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             jButton21ActionPerformed(evt);
          }
       });
 
-      jButton22.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-tr.png"))); // NOI18N
+      jButton22.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-tr.png"))); // NOI18N
       jButton22.setBorder(null);
       jButton22.setBorderPainted(false);
       jButton22.setContentAreaFilled(false);
       jButton22.setFocusPainted(false);
-      jButton22.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/stagecontrol/icons/arrowhead-trp.png"))); // NOI18N
+      jButton22.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/internal/icons/stagecontrol/arrowhead-trp.png"))); // NOI18N
       jButton22.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             jButton22ActionPerformed(evt);

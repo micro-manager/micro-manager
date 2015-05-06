@@ -18,6 +18,7 @@ import mmcorej.CMMCore;
 import org.micromanager.internal.conf2.ConfiguratorDlg2;
 import org.micromanager.internal.dialogs.IntroDlg;
 import org.micromanager.internal.dialogs.OptionsDlg;
+import org.micromanager.internal.dialogs.stagecontrol.StageControl;
 import org.micromanager.internal.MainFrame;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.DefaultUserProfile;
@@ -97,6 +98,15 @@ public class ToolsMenu {
       
       toolsMenu_.addSeparator();
 
+      GUIUtils.addMenuItem(toolsMenu_, "Stage Control",
+            "Control the stage position with a virtual joystick",
+            new Runnable() {
+               @Override
+               public void run() {
+                  StageControl.show();
+               }
+            });
+
       GUIUtils.addMenuItem(toolsMenu_, "Stage Position List...",
               "Open the stage position list window",
               new Runnable() {
@@ -106,16 +116,6 @@ public class ToolsMenu {
                  }
               },
               "application_view_list.png");
-
-      GUIUtils.addMenuItem(toolsMenu_, "Multi-Dimensional Acquisition...",
-              "Open multi-dimensional acquisition setup window",
-              new Runnable() {
-                 @Override
-                 public void run() {
-                    studio_.openAcqControlDialog();
-                 }
-              },
-              "film.png");
 
       centerAndDragMenuItem_ = GUIUtils.addCheckBoxMenuItem(toolsMenu_,
               "Mouse Moves Stage (Use Hand Tool)",
@@ -130,7 +130,21 @@ public class ToolsMenu {
                  }
               },
               getMouseMovesStage());
+
+      toolsMenu_.addSeparator();
+
+      GUIUtils.addMenuItem(toolsMenu_, "Multi-Dimensional Acquisition...",
+              "Open multi-dimensional acquisition setup window",
+              new Runnable() {
+                 @Override
+                 public void run() {
+                    studio_.openAcqControlDialog();
+                 }
+              },
+              "film.png");
       
+      toolsMenu_.addSeparator();
+
       GUIUtils.addMenuItem(toolsMenu_, "Pixel Size Calibration...",
               "Define size calibrations specific to each objective lens.  "
               + "When the objective in use has a calibration defined, "
@@ -142,7 +156,6 @@ public class ToolsMenu {
                     studio_.createCalibrationListDlg();
                  }
               });
-      toolsMenu_.addSeparator();
 
       GUIUtils.addMenuItem(toolsMenu_, "Hardware Configuration Wizard...",
               "Open wizard to create new hardware configuration",
