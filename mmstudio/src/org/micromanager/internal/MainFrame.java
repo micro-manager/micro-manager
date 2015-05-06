@@ -420,7 +420,20 @@ public class MainFrame extends MMFrame implements LiveModeListener {
             }
          },
          "arrow_out.png", topPanel, 40, 154, 70, 174);
-      
+
+      // Stage control
+      createLabel("Stage", true, topPanel, 100, 140, 150, 154);
+      AbstractButton listButton = GUIUtils.createButton(false,
+            "stagePositionListButton", null,
+            "Show the Stage Position List dialog",
+            new Runnable() {
+               @Override
+               public void run() {
+                  studio_.showXYPositionList();
+               }
+            },
+            "application_view_list.png", topPanel, 106, 154, 136, 174);
+
       // Autofocus
       createLabel("Autofocus", true, topPanel, 172, 140, 254, 154);
       autofocusNowButton_ = (JButton) GUIUtils.createButton(false,
