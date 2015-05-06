@@ -48,11 +48,12 @@ public interface Metadata {
       /**
        * Construct a Metadata from the MetadataBuilder. Call this once you are
        * finished setting all Metadata parameters.
+       * @return a Metadata instance based on the state of the MetadataBuilder.
        */
       Metadata build();
 
       // The following functions each set the relevant value for the Metadata.
-      // See the getter methods of Metadat, below, for information on these
+      // See the getter methods of Metadata, below, for information on these
       // properties.
       MetadataBuilder binning(Integer binning);
       MetadataBuilder bitDepth(Integer bitDepth);
@@ -89,6 +90,7 @@ public interface Metadata {
    /**
     * Generate a new MetadataBuilder whose values are initialized to be
     * the values of this Metadata.
+    * @return a MetadataBuilder based on this Metadata.
     */
    MetadataBuilder copy();
 
