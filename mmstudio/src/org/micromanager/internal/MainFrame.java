@@ -68,6 +68,7 @@ import mmcorej.StrVector;
 import org.micromanager.events.ConfigGroupChangedEvent;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.dialogs.OptionsDlg;
+import org.micromanager.internal.dialogs.StageControlFrame;
 import org.micromanager.internal.interfaces.LiveModeListener;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.DragDropUtil;
@@ -423,6 +424,16 @@ public class MainFrame extends MMFrame implements LiveModeListener {
 
       // Stage control
       createLabel("Stage", true, topPanel, 100, 140, 150, 154);
+      AbstractButton moveButton = GUIUtils.createButton(false,
+            "stageControlButton", null,
+            "Control the current stage with a virtual joystick",
+            new Runnable() {
+               @Override
+               public void run() {
+                  StageControlFrame.showStageControl();
+               }
+            },
+            "move.png", topPanel, 89, 154, 119, 174);
       AbstractButton listButton = GUIUtils.createButton(false,
             "stagePositionListButton", null,
             "Show the Stage Position List dialog",
@@ -432,7 +443,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                   studio_.showXYPositionList();
                }
             },
-            "application_view_list.png", topPanel, 106, 154, 136, 174);
+            "application_view_list.png", topPanel, 123, 154, 153, 174);
 
       // Autofocus
       createLabel("Autofocus", true, topPanel, 172, 140, 254, 154);
