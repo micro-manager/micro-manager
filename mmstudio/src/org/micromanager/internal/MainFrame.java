@@ -25,7 +25,6 @@ import com.bulenkov.iconloader.IconLoader;
 
 import com.google.common.eventbus.Subscribe;
 
-
 import java.awt.Dimension;
 import java.awt.dnd.DropTarget;
 import java.awt.event.ActionEvent;
@@ -67,6 +66,7 @@ import mmcorej.StrVector;
 
 import org.micromanager.events.ConfigGroupChangedEvent;
 import org.micromanager.events.internal.DefaultEventManager;
+import org.micromanager.events.internal.MouseMovesStageEvent;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.StageControlFrame;
 import org.micromanager.internal.interfaces.LiveModeListener;
@@ -95,6 +95,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    private JToggleButton liveButton_;
    private JCheckBox autoShutterCheckBox_;
    private JButton snapButton_;
+   private JToggleButton handMovesButton_;
    private JButton autofocusNowButton_;
    private JButton autofocusConfigureButton_;
    private JButton saveConfigButton_;
@@ -135,8 +136,6 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
       setupWindowHandlers();
 
-      DefaultEventManager.getInstance().registerForEvents(this);
-      
       // Add our own keyboard manager that handles Micro-Manager shortcuts
       MMKeyDispatcher mmKD = new MMKeyDispatcher();
       KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(mmKD);
@@ -148,6 +147,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                getClass().getResource("/org/micromanager/internal/icons/microscope.gif")));
 
       pack();
+      DefaultEventManager.getInstance().registerForEvents(this);
    }
 
    private void setupWindowHandlers() {
@@ -423,7 +423,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
          "arrow_out.png", topPanel, 40, 154, 70, 174);
 
       // Stage control
-      createLabel("Stage", true, topPanel, 100, 140, 150, 154);
+      createLabel("Stage", true, topPanel, 113, 140, 163, 154);
       AbstractButton moveButton = GUIUtils.createButton(false,
             "stageControlButton", null,
             "Control the current stage with a virtual joystick",
@@ -433,7 +433,26 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                   StageControlFrame.showStageControl();
                }
             },
+            // This icon is the public-domain icon at
+            // https://openclipart.org/detail/198011/mono-move
             "move.png", topPanel, 89, 154, 119, 174);
+
+      handMovesButton_ = (JToggleButton) GUIUtils.createButton(true,
+            "mouseMovesStageButton", null,
+            "When set, you can double-click on the Snap/Live view to move the stage. Requires pixel sizes to be set (see Pixel Calibration), and that you use the hand tool.",
+            new Runnable() {
+               @Override
+               public void run() {
+                  studio_.updateCenterAndDragListener(
+                     handMovesButton_.isSelected());
+               }
+            },
+            // This icon is based on the public-domain icons at
+            // https://openclipart.org/detail/170328/eco-green-hand-icon
+            // and
+            // https://openclipart.org/detail/198011/mono-move
+            "move_hand.png", topPanel, 123, 154, 153, 174);
+
       AbstractButton listButton = GUIUtils.createButton(false,
             "stagePositionListButton", null,
             "Show the Stage Position List dialog",
@@ -443,10 +462,10 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                   studio_.showXYPositionList();
                }
             },
-            "application_view_list.png", topPanel, 123, 154, 153, 174);
+            "application_view_list.png", topPanel, 157, 154, 187, 174);
 
       // Autofocus
-      createLabel("Autofocus", true, topPanel, 172, 140, 254, 154);
+      createLabel("Autofocus", true, topPanel, 209, 140, 291, 154);
       autofocusNowButton_ = (JButton) GUIUtils.createButton(false,
          "autofocusNowButton", null, "Autofocus now",
          new Runnable() {
@@ -455,7 +474,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                studio_.autofocusNow();
             }
          }, 
-         "find.png", topPanel, 169, 154, 199, 174);
+         "find.png", topPanel, 207, 154, 236, 174);
 
       autofocusConfigureButton_ = (JButton) GUIUtils.createButton(false,
          "autofocusConfigureButton", null,
@@ -466,7 +485,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                studio_.showAutofocusDialog();
             }
          },
-         "wrench_orange.png", topPanel, 202, 154, 232, 174);
+         "wrench_orange.png", topPanel, 239, 154, 269, 174);
    }
 
    public void updateTitle(String configFile) {
@@ -568,6 +587,11 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    @Subscribe
    public void onConfigGroupChanged(ConfigGroupChangedEvent event) {
       configPad_.refreshGroup(event.getGroupName(), event.getNewConfig());
+   }
+
+   @Subscribe
+   public void onMouseMovesStage(MouseMovesStageEvent event) {
+      handMovesButton_.setSelected(event.getIsEnabled());
    }
 
    private List<String> sortBinningItems(final List<String> items) {

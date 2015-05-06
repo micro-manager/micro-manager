@@ -30,6 +30,7 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.Roi;
+import ij.gui.Toolbar;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -73,6 +74,7 @@ import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.EventManager;
+import org.micromanager.events.internal.MouseMovesStageEvent;
 import org.micromanager.IAcquisitionEngine2010;
 import org.micromanager.LogManager;
 import org.micromanager.MMListenerInterface;
@@ -807,12 +809,15 @@ public class MMStudio implements Studio, CompatibilityInterface {
       frame_.toggleShutter();
    }
 
-   public void updateCenterAndDragListener() {
-      if (toolsMenu_.getIsCenterAndDragChecked()) {
+   public void updateCenterAndDragListener(boolean isEnabled) {
+      if (isEnabled) {
          centerAndDragListener_.start();
       } else {
          centerAndDragListener_.stop();
       }
+      IJ.setTool(Toolbar.HAND);
+      toolsMenu_.setMouseMovesStage(isEnabled);
+      events().post(new MouseMovesStageEvent(isEnabled));
    }
    
    // Ensure that the "XY list..." dialog exists.

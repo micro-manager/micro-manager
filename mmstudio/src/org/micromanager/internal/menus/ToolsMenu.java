@@ -1,8 +1,5 @@
 package org.micromanager.internal.menus;
 
-import ij.gui.Toolbar;
-import ij.IJ;
-
 import java.awt.Cursor;
 import java.io.File;
 import java.util.HashSet;
@@ -124,9 +121,8 @@ public class ToolsMenu {
               new Runnable() {
                  @Override
                  public void run() {
-                    studio_.updateCenterAndDragListener();
-                    IJ.setTool(Toolbar.HAND);
-                    setMouseMovesStage(centerAndDragMenuItem_.isSelected());
+                    studio_.updateCenterAndDragListener(
+                       centerAndDragMenuItem_.isSelected());
                  }
               },
               getMouseMovesStage());
@@ -286,10 +282,6 @@ public class ToolsMenu {
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
-   }
-
-   public boolean getIsCenterAndDragChecked() {
-      return centerAndDragMenuItem_.isSelected();
    }
 
    public void updateSwitchConfigurationMenu() {
