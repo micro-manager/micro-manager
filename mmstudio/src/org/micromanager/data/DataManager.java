@@ -39,6 +39,7 @@ public interface DataManager {
    /**
     * Generate a "blank" CoordsBuilder for use in constructing new Coords
     * instances.
+    * @return a CoordsBuilder used to construct new Coords instances.
     */
    public Coords.CoordsBuilder getCoordsBuilder();
 
@@ -47,7 +48,7 @@ public interface DataManager {
     * This Datastore will not be managed by Micro-Manager by default (see the
     * org.micromanager.api.display.DisplayManager.manage() method for more
     * information).
-    * @return an empty Datastore backed by the appropriate Storage
+    * @return an empty RAM-based Datastore.
     */
    public Datastore createRAMDatastore();
 
@@ -58,7 +59,7 @@ public interface DataManager {
     * by default (see the org.micromanager.api.display.DisplayManager.manage()
     * method for more information). Be certain to call the save() method of
     * the Datastore when you have finished adding data to it, as the Storage
-    * must finalize the dataset before it is properly completed.
+    * must finalize the dataset before it is properly saved to disk.
     *
     * Please note that the multipage TIFF storage system currently only
     * supports the time, Z, channel, and stage position axes for images.
@@ -70,7 +71,8 @@ public interface DataManager {
     *        file will be generated.
     * @param shouldSplitPositions if true, then each stage position (per
     *        Coords.STAGE_POSITION) will be in a separate file.
-    * @return an empty Datastore backed by the appropriate Storage
+    * @return an empty Datastore backed by disk in the form of one or more
+    *         TIFF files each containing multiple image planes.
     * @throws IOException if any errors occur while opening files for writing.
     */
    public Datastore createMultipageTIFFDatastore(String directory,
@@ -84,7 +86,7 @@ public interface DataManager {
     * org.micromanager.api.display.DisplayManager.manage() method for more
     * information).  Be certain to call the save() method of the Datastore when
     * you have finished adding data to it, as the Storage must finalize the
-    * dataset before it is properly completed.
+    * dataset before it is properly saved to disk.
     *
     * Please note that the single-plane TIFF series storage system currently
     * only supports the time, Z, channel, and stage position axes for images.
@@ -92,7 +94,8 @@ public interface DataManager {
     * and the image will not be added to the Datastore.
     *
     * @param directory Location on disk to store the files.
-    * @return an empty Datastore backed by the appropriate Storage
+    * @return an empty Datastore backed by disk in the form of multiple
+    *         single-plane TIFF files.
     */
    public Datastore createSinglePlaneTIFFSeriesDatastore(String directory);
 
@@ -133,6 +136,7 @@ public interface DataManager {
    /**
     * Generate a new Image with the provided pixel data, rules for interpreting
     * that pixel data, coordinates, and metadata.
+    * @param pixels A byte[] or short[] array of unsigned pixel data.
     * @param width Width of the image, in pixels
     * @param height Height of the image, in pixels
     * @param bytesPerPixel How many bytes are allocated to each pixel in the
@@ -140,6 +144,10 @@ public interface DataManager {
     * @param numComponents How many colors are encoded into each pixel.
     *        Currently only 1-component (grayscale) and 3-component (RGB)
     *        images are supported.
+    * @param coords Coordinates defining the position of the Image within a
+    *        larger dataset.
+    * @param metadata Image metadata.
+    * @return A new Image based on the input parameters.
     */
    public Image createImage(Object pixels, int width, int height,
          int bytesPerPixel, int numComponents, Coords coords,
@@ -174,17 +182,21 @@ public interface DataManager {
    /**
     * Generate a "blank" MetadataBuilder for use in constructing new
     * Metadata instances.
+    * @return a MetadataBuilder for creating new Metadata instances.
     */
    public Metadata.MetadataBuilder getMetadataBuilder();
 
    /**
     * Generate a "blank" SummaryMetadataBuilder for use in constructing new
     * SummaryMetadata instances.
+    * @return a SummaryMetadataBuilder for creating new SummaryMetadata
+    *         instances.
     */
    public SummaryMetadata.SummaryMetadataBuilder getSummaryMetadataBuilder();
 
    /**
-    * Generate a "blank" DisplaySettings.Builder with all null values.
+    * Generate a "blank" PropertyMap.Builder with all null values.
+    * @return a PropertyMapBuilder for creating new PropertyMap instances.
     */
    public PropertyMap.PropertyMapBuilder getPropertyMapBuilder();
 }
