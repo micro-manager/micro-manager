@@ -240,7 +240,7 @@ public class PlatePanel extends JPanel {
                app_.getCMMCore().setPosition(
                      gui_.getThreePointZPos(pt.x, pt.y));
             
-            xyStagePos_ = app_.getCMMCore().getXYPosition();
+            xyStagePos_ = app_.getCMMCore().getXYStagePosition();
             zStagePos_ = app_.getCMMCore().getPosition(app_.getCMMCore().getFocusDevice());
             gui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
             refreshStagePosition();
@@ -637,12 +637,6 @@ public class PlatePanel extends JPanel {
       wellBoxes_[index].draw(g);
    }
    
-   public void setSelectedWells(WellPositionList[] wal) {
-      for (WellPositionList wpl : wal) {
-         selectWell(wpl.getRow(), wpl.getColumn(), true);
-      }
-   }
-   
    void toggleWell(int row, int col) {
       int index = wellMap_.get(getWellKey(row, col));
       wellBoxes_[index].selected = !wellBoxes_[index].selected;
@@ -690,7 +684,7 @@ public class PlatePanel extends JPanel {
    public void refreshStagePosition() throws HCSException {
       if (app_ != null) {
          try {
-            xyStagePos_ = app_.getCMMCore().getXYPosition();
+            xyStagePos_ = app_.getCMMCore().getXYStagePosition();
             zStagePos_ = app_.getCMMCore().getPosition(app_.getCMMCore().getFocusDevice());
          } catch (Exception e) {
             throw new HCSException(e);

@@ -637,7 +637,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
             app_.getCMMCore().setAdapterOriginXY(
                   plate_.getFirstWellX(), plate_.getFirstWellY());
             regenerate();
-            Point2D.Double pt = app_.getCMMCore().getXYPosition();
+            Point2D.Double pt = app_.getCMMCore().getXYStagePosition();
             JOptionPane.showMessageDialog(this, "XY Stage set at position: " + pt.x + "," + pt.y);
          } catch (Exception e) {
             displayError(e.getMessage());

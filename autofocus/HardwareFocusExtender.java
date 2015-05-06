@@ -27,14 +27,14 @@ import ij.process.ImageProcessor;
 import java.text.ParseException;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
-import org.micromanager.MMStudio;
+import org.micromanager.internal.MMStudio;
 
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.Studio;
 
-import org.micromanager.utils.AutofocusBase;
-import org.micromanager.utils.MMException;
-import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.utils.AutofocusBase;
+import org.micromanager.internal.utils.MMException;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 
 
@@ -42,7 +42,7 @@ import org.micromanager.utils.ReportingUtils;
  *
  * @author nico
  */
-public class HardwareFocusExtender  extends AutofocusBase implements org.micromanager.api.Autofocus{
+public class HardwareFocusExtender extends AutofocusBase implements org.micromanager.Autofocus {
 
    private static final String AF_DEVICE_NAME = "HardwareFocusExtender";
    private static final String HARDWARE_AUTOFOCUS = "HardwareFocusDevice";
@@ -51,7 +51,7 @@ public class HardwareFocusExtender  extends AutofocusBase implements org.microma
    private static final String LOWER_LIMIT = "Lower limit (relative, um)";
    private static final String UPPER_LIMIT = "Upper limit (relative, um)";
    
-   private ScriptInterface gui_;
+   private Studio gui_;
    private boolean settingsLoaded_ = false;
    private boolean hardwareDeviceAvailable_ = true;
    private String hardwareFocusDevice_;
@@ -111,7 +111,7 @@ public class HardwareFocusExtender  extends AutofocusBase implements org.microma
    }
 
    @Override
-   public void setApp(ScriptInterface app) {
+   public void setApp(Studio app) {
       if (!hardwareDeviceAvailable_) {
          return;
       }
@@ -133,7 +133,7 @@ public class HardwareFocusExtender  extends AutofocusBase implements org.microma
          ReportingUtils.showError("Autofocus, and/or ZDrive have not been set");
          return 0.0;
       }
-      CMMCore core = gui_.getMMCore();
+      CMMCore core = gui_.getCMMCore();
       try {
          core.getDeviceType(hardwareFocusDevice_);
          core.getDeviceType(zDrive_);
@@ -183,7 +183,7 @@ public class HardwareFocusExtender  extends AutofocusBase implements org.microma
     * @return true when the device locks, false otherwise
     */
    private boolean testFocus() {
-      CMMCore core = gui_.getMMCore();
+      CMMCore core = gui_.getCMMCore();
       try {
          // specific for Nikon PFS.  Check if the PFS is within range instead of
          // trying to lock

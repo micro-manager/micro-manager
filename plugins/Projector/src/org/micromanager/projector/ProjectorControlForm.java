@@ -714,8 +714,6 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private static boolean isImageMirrored(ImagePlus imgp) {
       if (!(imgp.getStack() instanceof MMVirtualStack)) {
          return false;
-      } catch (NullPointerException npe) {
-         return false;
       }
       Datastore store = ((MMVirtualStack) imgp.getStack()).getDatastore();
       String mirrorString = store.getSummaryMetadata().getUserData().getString("ImageFlipper-Mirror");

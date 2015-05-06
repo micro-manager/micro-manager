@@ -122,12 +122,6 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
       core_.setCameraDevice(currentCamera);
    }
 
-   public void safePrefs() {
-      prefs_.putInt(FRAMEXPOS, this.getX());
-      prefs_.putInt(FRAMEYPOS, this.getY());
-
-   }
-   
    private void adjustUIToCamera(String testCamera) throws Exception {
       if (!core_.hasProperty(testCamera, MODE)) {
          jLabel5.setEnabled(false);

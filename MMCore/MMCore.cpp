@@ -1884,19 +1884,6 @@ void CMMCore::setAdapterOriginXY(double newXUm, double newYUm) throw (CMMError)
     setAdapterOriginXY(getXYStageDevice().c_str(), newXUm, newYUm);
 }
 
-
-/**
- * Reset a particular x,y position to be the origin of the XY stage's 
- * coordinate system. Uses the current XY stage device.
- * @param x             the x position in the old coordinate system
- * @param y             the y position in the old coordinate system
- */
-void CMMCore::setAdapterOriginXY(double x, double y) throw (CMMError)
-{
-    setAdapterOriginXY(getXYStageDevice().c_str(), x, y);
-}
-
-
 /**
  * Queries camera if exposure can be used in a sequence
  * @param cameraLabel    the camera device label

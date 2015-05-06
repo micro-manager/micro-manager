@@ -23,8 +23,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
-import org.micromanager.api.MMListenerInterface;
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.MMListenerInterface;
+import org.micromanager.Studio;
 //import 
 
 /**
@@ -94,14 +94,14 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
     private double GreenScale;
     private double BlueScale;
     private final String CameraLabel;
-    private final ScriptInterface gui_;
+    private final Studio gui_;
     private final CMMCore core_;
 
-    public WhiteBalance_UI(ScriptInterface gui) throws Exception {
+    public WhiteBalance_UI(Studio gui) throws Exception {
 
         gui_ = gui;
         try {
-            core_ = gui_.getMMCore();
+            core_ = gui_.getCMMCore();
         } catch (Exception ex) {
             throw new Exception("WB plugin could not get MMCore");
         }
@@ -835,20 +835,12 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
         btnRunWB.paintImmediately(btnRunWB.getVisibleRect());
 
         //stop Live mode in MM if it is currently running
-        if (gui_.isLiveModeOn()) {
-            try {
-                gui_.enableLiveMode(false);
-                Thread.sleep(500);
-            } catch (InterruptedException ex) {
-                Logger.getLogger(WhiteBalance_UI.class.getName()).log(Level.SEVERE, null, ex);
-                JOptionPane.showMessageDialog(this, "Live mode could not be stopped.", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
+        gui_.live().setSuspended(true);
 
         //disable color mode in MM before the WB algorithm
         try {
             core_.setProperty(CameraLabel, "Color", "OFF");
-            gui_.refreshGUI();
+            gui_.compat().refreshGUI();
             WBexposure = FindExposureForWB();
         } catch (Exception ex) {
             Logger.getLogger(WhiteBalance_UI.class.getName()).log(Level.SEVERE, null, ex);
@@ -875,14 +867,14 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
                 core_.setProperty(CameraLabel, GREEN_SCALE_LABEL, GreenScale);
                 core_.setProperty(CameraLabel, BLUE_SCALE_LABEL, BlueScale);
                 core_.setProperty(CameraLabel, "Color", "ON");
-                gui_.refreshGUI();
-                gui_.snapSingleImage();
+                gui_.compat().refreshGUI();
+                gui_.live().snap(true);
             } else {
                 core_.setProperty(CameraLabel, RED_SCALE_LABEL, 1.0);
                 core_.setProperty(CameraLabel, GREEN_SCALE_LABEL, 1.0);
                 core_.setProperty(CameraLabel, BLUE_SCALE_LABEL, 1.0);
                 core_.setProperty(CameraLabel, "Color", "ON");
-                gui_.refreshGUI();
+                gui_.compat().refreshGUI();
             }
         } catch (Exception ex) {
             Logger.getLogger(WhiteBalance_UI.class.getName()).log(Level.SEVERE, null, ex);
@@ -894,6 +886,7 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
         btnRunWB.setText("Run WB");
         btnRunWB.setEnabled(true);
         btnRunWB.paintImmediately(btnRunWB.getVisibleRect());
+        gui_.live().setSuspended(false);
 
     }//GEN-LAST:event_btnRunWBActionPerformed
 

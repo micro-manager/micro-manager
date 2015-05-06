@@ -31,6 +31,7 @@ import org.micromanager.Studio;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.PropertyItem;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * ImageJ plugin wrapper for uManager.
