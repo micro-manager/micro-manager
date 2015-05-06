@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -161,8 +162,14 @@ public class ScrollerPanel extends JPanel {
       // Don't prevent other components from shrinking
       setMinimumSize(new Dimension(1, 1));
 
-      ArrayList<String> axes = new ArrayList<String>(store_.getAxes());
-      Collections.sort(axes);
+      ArrayList<String> axes;
+      String[] axisOrder = store_.getSummaryMetadata().getAxisOrder();
+      if (axisOrder != null) {
+         axes = new ArrayList<String>(Arrays.asList(axisOrder));
+      }
+      else {
+         axes = new ArrayList<String>(store_.getAxes());
+      }
       for (String axis : axes) {
          // Don't bother creating scrollers for axes with a length of 1.
          if (store_.getAxisLength(axis) > 1) {
