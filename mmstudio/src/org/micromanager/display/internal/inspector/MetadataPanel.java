@@ -243,6 +243,9 @@ public class MetadataPanel extends InspectorPanel {
       }
       display_ = display;
       if (display_ == null) {
+         // Don't show stale metadata info.
+         imageMetadataModel_.setMetadata(new JSONObject(), false);
+         summaryMetadataModel_.setMetadata(new JSONObject(), false);
          return;
       }
       display_.registerForEvents(this);
