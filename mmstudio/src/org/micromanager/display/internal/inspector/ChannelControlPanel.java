@@ -20,6 +20,8 @@
 
 package org.micromanager.display.internal.inspector;
 
+import com.bulenkov.iconloader.IconLoader;
+
 import com.google.common.eventbus.Subscribe;
 
 import ij.CompositeImage;
@@ -289,8 +291,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             "11bit (0-2047)", "12bit (0-4095)", "13bit (0-8191)",
             "14bit (0-16383)", "15bit (0-32767)", "16bit (0-65535)"}));
 
-      // Looks like < but more compact.
-      zoomInButton_ = new JButton("\u2039");
+      zoomInButton_ = new JButton(IconLoader.getIcon(
+               "/org/micromanager/internal/icons/triangle_left.png"));
+      zoomInButton_.setMinimumSize(new Dimension(16, 16));
       zoomInButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -298,9 +301,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
       
-      // Looks like > but more compact.
-      zoomOutButton_ = new JButton("\u203a");
-      zoomOutButton_.setMinimumSize(new Dimension(20, 20));
+      zoomOutButton_ = new JButton(IconLoader.getIcon(
+               "/org/micromanager/internal/icons/triangle_right.png"));
+      zoomOutButton_.setMinimumSize(new Dimension(16, 16));
       zoomOutButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
