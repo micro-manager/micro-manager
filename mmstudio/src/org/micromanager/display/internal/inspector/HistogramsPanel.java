@@ -116,6 +116,7 @@ public final class HistogramsPanel extends InspectorPanel {
    private HashMap<DisplayWindow, ArrayList<ChannelControlPanel>> displayToPanels_;
    // The current active (displayed) set of histograms.
    private ArrayList<ChannelControlPanel> channelPanels_;
+   private JComboBox displayModeCombo_;
    private Object panelLock_ = new Object();
    private Datastore store_;
    private DefaultDisplayWindow display_;
@@ -193,17 +194,23 @@ public final class HistogramsPanel extends InspectorPanel {
     * mode, autostretch, and extrema% controls.
     */
    private void addStandardControls() {
+      DisplaySettings settings = display_.getDisplaySettings();
+
       add(new JLabel("Color mode: "), "split 2, flowx, gapleft 15");
-      final JComboBox displayMode = new JComboBox(
+      displayModeCombo_ = new JComboBox(
             new String[] {"Grayscale", "Color", "Composite"});
-      displayMode.setToolTipText("<html>Set the display mode for the image:<ul><li>Grayscale: single-channel grayscale<li>Color: single channel, in color<li>Composite: multi-channel color overlay</ul></html>");
-      displayMode.addActionListener(new ActionListener() {
+      displayModeCombo_.setToolTipText("<html>Set the display mode for the image:<ul><li>Grayscale: single-channel grayscale<li>Color: single channel, in color<li>Composite: multi-channel color overlay</ul></html>");
+      displayModeCombo_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            setDisplayMode(displayMode);
+            setDisplayMode(displayModeCombo_.getSelectedIndex());
          }
       });
-      add(displayMode, "align right");
+      if (settings.getChannelDisplayModeIndex() != null) {
+         displayModeCombo_.setSelectedIndex(
+               settings.getChannelDisplayModeIndex());
+      }
+      add(displayModeCombo_, "align right");
 
       boolean shouldAutostretch = true;
       if (display_.getDisplaySettings().getShouldAutostretch() != null) {
@@ -253,21 +260,20 @@ public final class HistogramsPanel extends InspectorPanel {
       });
    }
 
-   private void setDisplayMode(JComboBox displayMode) {
+   private void setDisplayMode(int selection) {
       if (!(display_.getImagePlus() instanceof CompositeImage)) {
          // Non-composite images must be in grayscale mode.
-         displayMode.setSelectedIndex(GRAYSCALE);
+         displayModeCombo_.setSelectedIndex(GRAYSCALE);
          return;
       }
       CompositeImage composite = (CompositeImage) (display_.getImagePlus());
-      int selection = displayMode.getSelectedIndex();
       DisplaySettings.DisplaySettingsBuilder builder = display_.getDisplaySettings().copy();
       if (selection == COMPOSITE) {
          if (store_.getAxisLength(Coords.CHANNEL) > 7) {
             JOptionPane.showMessageDialog(null,
                "Images with more than 7 channels cannot be displayed in Composite mode.");
             // Send them back to Color mode.
-            displayMode.setSelectedIndex(COLOR);
+            displayModeCombo_.setSelectedIndex(COLOR);
             builder.channelDisplayModeIndex(COLOR);
          }
          else {
