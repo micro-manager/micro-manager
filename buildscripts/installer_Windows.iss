@@ -155,6 +155,9 @@ Source: {#MMStageDir}\_MMCorePy.pyd; DestDir: {app}; Flags: ignoreversion
 Source: {#MMStageDir}\MMCorePy.py; DestDir: {app}; Flags: ignoreversion
 Source: {#MMStageDir}\MMCoreWrapDemo.py; DestDir: {app}; Flags: ignoreversion
 
+; MATLAB utility script
+Source: {#MMStageDir}\StartMMStudio.m DestDir: {app}; Flags: ignoreversion
+
 ; Java Runtime
 Source: {#MMStageDir}\jre\*; DestDir: {app}\jre; Flags: ignoreversion recursesubdirs createallsubdirs
 
