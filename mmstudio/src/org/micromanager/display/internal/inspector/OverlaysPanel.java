@@ -124,6 +124,7 @@ class OverlaysPanel extends InspectorPanel {
             if (inspector_ != null) {
                inspector_.relayout();
             }
+            display_.requestRedraw();
          }
       });
       container.add(closeButton, "gap 0");

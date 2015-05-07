@@ -643,6 +643,14 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       canvasThread_.addCoords(coords);
    }
 
+   /**
+    * Request a redraw of the displayed image(s).
+    */
+   @Override
+   public void requestRedraw() {
+      canvasThread_.addCoords(stack_.getCurrentImageCoords());
+   }
+
    @Override
    public void displayStatusString(String status) {
       displayBus_.post(new StatusEvent(status));

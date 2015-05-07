@@ -47,6 +47,14 @@ public interface DisplayWindow {
    public void setDisplayedImageTo(Coords coords);
 
    /**
+    * Request that the display redraw its current image. You shouldn't need
+    * to call this often; most changes that affect the display (for example,
+    * changes to the display settings) automatically cause the image to be
+    * redrawn.
+    */
+   public void requestRedraw();
+
+   /**
     * Display the specified status string.
     * @param status String to display in the window.
     */
