@@ -35,7 +35,11 @@ import javax.swing.JButton;
  * and is used for handling animation of an AxisScroller.
  */
 public class ScrollbarAnimateIcon extends JButton {
-   private static final int BUTTON_WIDTH = 30;
+   // HACK: This is intentionally wider than it "needs" to be because otherwise
+   // we sometimes end up with the text portion of the button getting
+   // "truncated" into an ellipsis, even though that's actually wider than the
+   // text would be otherwise! I don't understand operating systems sometimes.
+   private static final int BUTTON_WIDTH = 40;
    private static final int BUTTON_HEIGHT = 18;
    private static final Icon PLAY_ICON = IconLoader.getIcon(
          "/org/micromanager/internal/icons/play.png");
