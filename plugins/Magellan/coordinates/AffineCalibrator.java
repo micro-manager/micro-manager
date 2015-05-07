@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
+import misc.Log;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -24,7 +25,6 @@ import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -46,7 +46,7 @@ public class AffineCalibrator {
             try {
                computeAffine();
             } catch (Exception ex) {
-               ReportingUtils.showError("Aborting due to problem calibrating affine: " + ex.toString());
+               Log.log("Aborting due to problem calibrating affine: " + ex.toString());
             }
             affineGui_.calibrationFinished();
          }
@@ -71,7 +71,7 @@ public class AffineCalibrator {
       stagePositions[0] = new Point2D.Double(core.getXPosition(xyStage) ,core.getYPosition(xyStage) );
       TaggedImage img0 = snapAndAdd();
       nextImageLatch_ = new CountDownLatch(1);
-      ReportingUtils.showMessage("Move stage to new position with same features visible, and press Capture");
+      Log.log("Move stage to new position with same features visible, and press Capture");
       nextImageLatch_.await();
       if(abort_) {        
          return;
@@ -80,7 +80,7 @@ public class AffineCalibrator {
       stagePositions[1] = new Point2D.Double(core.getXPosition(xyStage), core.getYPosition(xyStage));
       TaggedImage img1 = snapAndAdd();
       nextImageLatch_ = new CountDownLatch(1);
-      ReportingUtils.showMessage("Move stage to new position with same features visible, and press Capture");
+      Log.log("Move stage to new position with same features visible, and press Capture");
       nextImageLatch_.await();
       if(abort_) {
          return;

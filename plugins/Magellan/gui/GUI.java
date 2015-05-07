@@ -3,6 +3,7 @@ package gui;
 import acq.MagellanEngine;
 import acq.ExploreAcqSettings;
 import acq.FixedAreaAcquisitionSettings;
+import misc.LoadedAcquisitionData;
 import acq.MultipleAcquisitionManager;
 import acq.MultipleAcquisitionTableModel;
 import autofocus.AutofocusChannelComboModel;
@@ -54,19 +55,23 @@ import bidc.CoreCommunicator;
 import bidc.FrameIntegrationMethod;
 import channels.ChannelComboBoxModel;
 import channels.ChannelSetting;
+import java.awt.FileDialog;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import misc.GlobalSettings;
 import org.micromanager.utils.ColorEditor;
 import org.micromanager.utils.ColorRenderer;
+import org.micromanager.utils.JavaUtils;
 
 /**
  *
@@ -795,6 +800,7 @@ public class GUI extends javax.swing.JFrame {
         configPropsButton_ = new javax.swing.JButton();
         jButton1 = new javax.swing.JButton();
         createdByHenryLabel_ = new javax.swing.JLabel();
+        openDatasetButton_ = new javax.swing.JButton();
 
         splitPane_.setBorder(null);
         splitPane_.setDividerLocation(200);
@@ -2146,6 +2152,13 @@ public class GUI extends javax.swing.JFrame {
         createdByHenryLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
         createdByHenryLabel_.setText("Created by Henry Pinkard at the University of California San Francisco 2014-2015");
 
+        openDatasetButton_.setText("Open dataset");
+        openDatasetButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                openDatasetButton_ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout splitPaneBottomPanel_Layout = new javax.swing.GroupLayout(splitPaneBottomPanel_);
         splitPaneBottomPanel_.setLayout(splitPaneBottomPanel_Layout);
         splitPaneBottomPanel_Layout.setHorizontalGroup(
@@ -2193,9 +2206,11 @@ public class GUI extends javax.swing.JFrame {
                     .addGroup(splitPaneBottomPanel_Layout.createSequentialGroup()
                         .addComponent(exploreSavingDirLabel_)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(globalSavingDirTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, 579, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(globalSavingDirTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, 542, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(exploreBrowseButton_))
+                        .addComponent(exploreBrowseButton_)
+                        .addGap(18, 18, 18)
+                        .addComponent(openDatasetButton_))
                     .addComponent(newExploreWindowButton_)
                     .addGroup(splitPaneBottomPanel_Layout.createSequentialGroup()
                         .addGap(313, 313, 313)
@@ -2210,7 +2225,8 @@ public class GUI extends javax.swing.JFrame {
                 .addGroup(splitPaneBottomPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(exploreSavingDirLabel_)
                     .addComponent(globalSavingDirTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(exploreBrowseButton_))
+                    .addComponent(exploreBrowseButton_)
+                    .addComponent(openDatasetButton_))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(exploreSampleLabel_)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -2627,6 +2643,41 @@ public class GUI extends javax.swing.JFrame {
        storeCurrentAcqSettings();
     }//GEN-LAST:event_frameSummationButton_ActionPerformed
 
+   private void openDatasetButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_openDatasetButton_ActionPerformed
+       File selectedFile = null;
+      if (JavaUtils.isMac()) {
+         System.setProperty("apple.awt.fileDialogForDirectories", "true");
+         FileDialog fd = new FileDialog(this, "Select Magellan dataset to load", FileDialog.LOAD);
+
+         fd.setVisible(true);
+         if (fd.getFile() != null) {
+            selectedFile = new File(fd.getDirectory() + File.separator + fd.getFile());
+            selectedFile = new File(selectedFile.getAbsolutePath());
+         }
+         fd.dispose();
+         System.setProperty("apple.awt.fileDialogForDirectories", "false");
+      } else {
+         JFileChooser fc = new JFileChooser(globalSavingDirTextField_.getText());
+         fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+         fc.setDialogTitle("Select Magellan dataset to load");
+         int returnVal = fc.showOpenDialog(this);
+         if (returnVal == JFileChooser.APPROVE_OPTION) {
+            selectedFile = fc.getSelectedFile();
+         }
+      }
+      if (selectedFile == null) {
+         return; //canceled
+      }
+      final File finalFile = selectedFile;
+      new Thread(new Runnable() {
+         @Override
+         public void run() {
+            new LoadedAcquisitionData(finalFile.toString());
+         }
+      }).start();
+      
+   }//GEN-LAST:event_openDatasetButton_ActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox ChannelGroupCombo_;
     private javax.swing.JPanel ChannelsTab_;
@@ -2735,6 +2786,7 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JLabel numTimePointsLabel_;
     private javax.swing.JSpinner numTimePointsSpinner_;
     private javax.swing.JLabel offsetsLabel_;
+    private javax.swing.JButton openDatasetButton_;
     private javax.swing.JPanel panel2D_;
     private javax.swing.JScrollPane propertyPairValuesScrollpane_;
     private javax.swing.JScrollPane propertyPairingsScrollpane_;

@@ -12,7 +12,6 @@ import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.StrVector;
 import org.micromanager.MMStudio;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -28,7 +27,7 @@ public class ChannelComboBoxModel  extends DefaultComboBoxModel {
       try {
          groups = MMStudio.getInstance().getCore().getAllowedPropertyValues("Core", "ChannelGroup");
       } catch (Exception ex) {
-         Log.log(ex.toString());
+         Log.log(ex);
          return null;
       }
       ArrayList<String> strGroups = new ArrayList<String>();
@@ -56,7 +55,7 @@ public class ChannelComboBoxModel  extends DefaultComboBoxModel {
                }
             }
          } catch (Exception ex) {
-            Log.log(ex.toString());
+            Log.log(ex);
             return false;
          }
       }

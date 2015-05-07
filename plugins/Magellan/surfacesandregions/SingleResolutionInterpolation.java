@@ -8,11 +8,10 @@ import ij.IJ;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.TreeSet;
-import org.apache.commons.math3.geometry.Point;
+import misc.Log;
 import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.apache.commons.math3.geometry.partitioning.Region;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -124,7 +123,7 @@ public class SingleResolutionInterpolation {
          IJ.log("Couldn't find 3d point with same XY as convex hull");   
       } catch (Exception e) {
          e.printStackTrace();
-         ReportingUtils.showError("Problem interpolating");
+         Log.log("Problem interpolating");
       }
       return null;
    }

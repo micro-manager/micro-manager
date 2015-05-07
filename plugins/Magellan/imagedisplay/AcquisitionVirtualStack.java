@@ -5,13 +5,13 @@ import acq.MMImageCache;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import java.awt.image.ColorModel;
+import misc.Log;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  * This stack class provides the ImagePlus with images from the MMImageCache.
@@ -119,7 +119,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
 
          return img;
       } catch (Exception e) {
-         ReportingUtils.logError(e);
+         Log.log(e);
          return null;
       }
    }
@@ -153,9 +153,9 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
             pixels = ImageUtils.singleChannelFromRGB64((short[]) image.pix, (flatIndex - 1) % 3);
          }
       } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
       } catch (MMScriptException ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
       }
 
       return pixels;

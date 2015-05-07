@@ -13,7 +13,6 @@ import java.awt.geom.Point2D;
 import java.util.Arrays;
 import java.util.List;
 import misc.Log;
-import org.micromanager.utils.ReportingUtils;
 import surfacesandregions.SingleResolutionInterpolation;
 import surfacesandregions.SurfaceInterpolator;
 
@@ -75,7 +74,7 @@ public class SurfaceData implements Covariant {
            return "Lymph node optimal distance for " + surface_.getName();
  
        } else {
-           ReportingUtils.showError("Unknown Surface data type");
+           Log.log("Unknown Surface data type");
            throw new RuntimeException();
        }
    }
@@ -173,7 +172,7 @@ public class SurfaceData implements Covariant {
       try {
          transform.inverseTransform(new Point2D.Double(xSpan, ySpan), pixelSpan);
       } catch (NoninvertibleTransformException ex) {
-         ReportingUtils.showError("Problem inverting affine transform");
+         Log.log("Problem inverting affine transform");
       }
       double minDistance = Integer.MAX_VALUE;
       double maxDistance = 0;
@@ -231,14 +230,14 @@ public class SurfaceData implements Covariant {
       } else if (category_.equals(LN_OPTIMAL_DISTANCE)) {
           return new CovariantValue(lnOptimalDistance(xyPos, event.zPosition_));
       } else {
-         Log.log("Unknown Surface data type");
+         Log.log("Unknown Surface data type",true);
          throw new RuntimeException();
       }
    }  
 
    @Override
    public void updateHardwareToValue(CovariantValue dVal) {
-      Log.log("No hardware associated with Surface data");
+      Log.log("No hardware associated with Surface data",true);
       throw new RuntimeException();
    }
 

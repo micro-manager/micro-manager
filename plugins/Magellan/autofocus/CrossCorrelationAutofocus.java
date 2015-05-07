@@ -17,7 +17,6 @@ import org.apache.commons.math.ArgumentOutsideDomainException;
 import org.apache.commons.math.analysis.interpolation.SplineInterpolator;
 import org.apache.commons.math.analysis.polynomials.PolynomialSplineFunction;
 import org.micromanager.MMStudio;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -91,14 +90,14 @@ public class CrossCorrelationAutofocus {
     * @param timeIndex 
      */
     public void run(int timeIndex) throws Exception {
-        Log.log("________");
-        Log.log("Autofocus for acq " + acq_.getName() + "  Time point " + timeIndex);
+        Log.log("________", true);
+        Log.log("Autofocus for acq " + acq_.getName() + "  Time point " + timeIndex, true);
         if (timeIndex == 0) {
             //get initial position
             try {
                 currentPosition_ = initialPosition_;
             } catch (Exception e) {
-               Log.log("Couldn't get autofocus Z drive initial position");
+               Log.log("Couldn't get autofocus Z drive initial position", true);
             }
             //figure out which resolution level will be used for xCorr
             MultiResMultipageTiffStorage storage = acq_.getStorage();
@@ -117,9 +116,9 @@ public class CrossCorrelationAutofocus {
             downsampleIndex_ = (int) Math.max(0, Math.round(Math.log(dsFactor) / Math.log(2)));
             downsampledWidth_ = (int) (tileWidth.multiply(numCols).longValue() / Math.pow(2, downsampleIndex_));
             downsampledHeight_ = (int) (tileHeight.multiply(numRows).longValue() / Math.pow(2, downsampleIndex_));
-            Log.log("Autofocus DS Index: " + downsampleIndex_);
-            Log.log("Autofocus DS Width: " + downsampledWidth_);
-            Log.log("Autofocus DS Height: " + downsampledHeight_);
+            Log.log("Autofocus DS Index: " + downsampleIndex_, true);
+            Log.log("Autofocus DS Width: " + downsampledWidth_, true);
+            Log.log("Autofocus DS Height: " + downsampledHeight_, true);
             return;
         }
 
@@ -129,11 +128,11 @@ public class CrossCorrelationAutofocus {
         double drift = calcFocusDrift(acq_.getName(), tp0Stack, currentTPStack, acq_.getZStep());
         //check if outside max displacement
         if (Math.abs(currentPosition_ - drift - initialPosition_) > maxDisplacement_) {
-            Log.log("Calculated focus drift of " + drift + " um exceeds tolerance. Leaving autofocus offset unchanged");
+            Log.log("Calculated focus drift of " + drift + " um exceeds tolerance. Leaving autofocus offset unchanged", true);
             return;
         } else {
-           Log.log(acq_.getName() + " Autofocus: calculated drift of " + drift);
-           Log.log( "New position: " + (currentPosition_ - drift));
+           Log.log(acq_.getName() + " Autofocus: calculated drift of " + drift, true);
+           Log.log( "New position: " + (currentPosition_ - drift), true);
         }
         currentPosition_ -= drift;
     }
@@ -177,9 +176,9 @@ public class CrossCorrelationAutofocus {
    * that current is focused 4 um deeper than current)
    */
    private static double calcFocusDrift(String acqName, ImageStack tp0Stack, ImageStack currentTPStack, double pixelSizeZ) {    
-      Log.log( acqName + " Autofocus: cross correlating");      
+      Log.log( acqName + " Autofocus: cross correlating", true);      
       ImageStack xCorrStack = FHTImage3D.crossCorrelation(tp0Stack, currentTPStack);
-      Log.log( acqName + " Autofocus: finished cross correlating..calculating drift");      
+      Log.log( acqName + " Autofocus: finished cross correlating..calculating drift", true);      
       ImagePlus xCorr = new ImagePlus("XCorr", xCorrStack);      
       xCorr.show();
       //find the maximum cross correlation intensity at each z slice
@@ -201,7 +200,7 @@ public class CrossCorrelationAutofocus {
                maxIndex = i;
             }
          } catch (ArgumentOutsideDomainException ex) {
-            ReportingUtils.showError("Spline value calculation outside range");
+            Log.log("Spline value calculation outside range");
          }
       }
       //get maximum value of xCorr in slice index units

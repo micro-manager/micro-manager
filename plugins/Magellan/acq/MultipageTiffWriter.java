@@ -41,6 +41,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import misc.Log;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -49,7 +50,6 @@ import org.micromanager.MMStudio;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.ReportingUtils;
 
 public class MultipageTiffWriter {
    
@@ -128,9 +128,9 @@ public class MultipageTiffWriter {
       try {
          processSummaryMD(summaryMD, splitByPositions);
       } catch (MMScriptException ex1) {
-         ReportingUtils.logError(ex1);
+         Log.log(ex1);
       } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
       }
       
       //This is an overestimate of file size because file gets truncated at end
@@ -150,7 +150,7 @@ public class MultipageTiffWriter {
                  } catch (InterruptedException ex) {}
                  MMStudio.getInstance().getAcquisitionEngine().abortRequest();
              } }).start();     
-             ReportingUtils.showError("Insufficent space on disk: no room to write data");
+             Log.log("Insufficent space on disk: no room to write data");
       }
       fileChannel_ = raFile_.getChannel();
       writingExecutor_ = masterMPTiffStorage_.getWritingExecutor();
@@ -204,7 +204,7 @@ public class MultipageTiffWriter {
                     currentImageByteBuffers_.offer(buffer);
                 }
               } catch (IOException e) {
-                ReportingUtils.logError(e);
+                Log.log(e);
               }
            }
         });
@@ -223,7 +223,7 @@ public class MultipageTiffWriter {
                     }
                 }
               } catch (IOException e) {
-                ReportingUtils.logError(e);
+                Log.log(e);
               } 
            }
         });
@@ -321,7 +321,7 @@ public class MultipageTiffWriter {
             summaryComment = comments.getString("Summary");
          }    
       } catch (Exception e) {
-         ReportingUtils.logError("Could't get acquisition summary comment from displayAndComments");
+         Log.log("Could't get acquisition summary comment from displayAndComments", true);
       }
       writeImageJMetadata( numChannels_, summaryComment);
 
@@ -337,7 +337,7 @@ public class MultipageTiffWriter {
                //extra byte of space, just to make sure nothing gets cut off
                raFile_.setLength(filePosition_ + 8);
             } catch (IOException ex) {
-               ReportingUtils.logError(ex);
+               Log.log(ex);
             }
             reader_.finishedWriting();
             //Dont close file channel and random access file becase Tiff reader still using them
@@ -381,14 +381,14 @@ public class MultipageTiffWriter {
          int attemptCount = 0;
          while (queueSize > 20) {
             if (attemptCount == 0) {
-               ReportingUtils.logMessage("Warning: writing queue behind by " + queueSize + " images.");
+               Log.log("Warning: writing queue behind by " + queueSize + " images.", false);
             }
             ++attemptCount;
             try {
                Thread.sleep(5);
                queueSize = writingExecutor_.getQueue().size();
             } catch (InterruptedException ex) {
-               ReportingUtils.logError(ex);
+               Log.log(ex);
             }
          }
       }
@@ -784,7 +784,7 @@ public class MultipageTiffWriter {
             }
          }
       } catch (JSONException ex) {
-         ReportingUtils.logError("Problem with displayAndComments: Couldn't write ImageJ display settings as a result");
+         Log.log("Problem with displayAndComments: Couldn't write ImageJ display settings as a result", true);
       }
 
       ifdCountAndValueBuffer = allocateByteBuffer(8);
@@ -862,7 +862,7 @@ public class MultipageTiffWriter {
       try {
          return s.getBytes("UTF-8");
       } catch (UnsupportedEncodingException ex) {
-         ReportingUtils.logError("Error encoding String to bytes");
+         Log.log("Error encoding String to bytes", true);
          return null;
       }
    }

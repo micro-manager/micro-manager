@@ -16,13 +16,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import misc.GlobalSettings;
+import misc.Log;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  * Means for plugin classes to access the core, to support tricky things
@@ -222,7 +222,7 @@ public class CoreCommunicator {
             return new TaggedImage(demoPix, tags);
         } catch (Exception e) {
             e.printStackTrace();
-            ReportingUtils.showError("Problem getting demo data");
+            Log.log("Problem getting demo data");
             throw new RuntimeException();
         }
 

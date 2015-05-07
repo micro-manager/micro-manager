@@ -28,7 +28,8 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.swing.SwingUtilities;
-import misc.MagelUtils;
+import misc.Log;
+import misc.MD;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -74,13 +75,6 @@ public class MMImageCache {
       return imageStorage_.isFinished();
    }
 
-   public int lastAcquiredFrame() {
-      synchronized (this) {
-         lastFrame_ = Math.max(imageStorage_.lastAcquiredFrame(), lastFrame_);
-         return lastFrame_;
-      }
-   }
-
    public String getDiskLocation() {
       return imageStorage_.getDiskLocation();
    }
@@ -100,53 +94,6 @@ public class MMImageCache {
    public void close() {
       imageStorage_.close();
       display_ = null;
-   }
-
-   public void saveAs(MultiResMultipageTiffStorage newImageFileManager) {
-      saveAs(newImageFileManager, true);
-      this.finished();
-   }
-          
-   public void saveAs(final MultiResMultipageTiffStorage newImageFileManager, final boolean useNewStorage) {
-      if (newImageFileManager == null) {
-         return;
-      }
-
-      newImageFileManager.setSummaryMetadata(imageStorage_.getSummaryMetadata());
-      newImageFileManager.setDisplayAndComments(this.getDisplayAndComments());
-
-//      final String progressBarTitle = (newImageFileManager instanceof TaggedImageStorageRamFast) ? "Loading images..." : "Saving images...";
-      final String progressBarTitle =  "Saving images...";
-      final ProgressBar progressBar = new ProgressBar(progressBarTitle, 0, 100);
-      ArrayList<String> keys = new ArrayList<String>(imageKeys());
-      final int n = keys.size();
-      progressBar.setRange(0, n);
-      progressBar.setProgress(0);
-      progressBar.setVisible(true);
-      boolean wasSuccessful = true;
-      for (int i = 0; i < n; ++i) {
-         final int i1 = i;
-         int pos[] = MagelUtils.getIndices(keys.get(i));
-         try {
-            newImageFileManager.putImage(getImage(pos[0], pos[1], pos[2], pos[3]));
-         } catch (MMException ex) {
-            ReportingUtils.logError(ex);
-         } 
-         SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-               progressBar.setProgress(i1);
-            }
-         });
-      }
-      if (wasSuccessful) {
-         // Successfully saved all images.
-         newImageFileManager.finished();
-      }
-      progressBar.setVisible(false);
-      if (useNewStorage) {
-         imageStorage_ = newImageFileManager;
-      }
    }
 
    public void putImage(final TaggedImage taggedImg) {
@@ -181,7 +128,7 @@ public class MMImageCache {
                     }
                  });
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex, true);
       }
    }
 
@@ -227,7 +174,7 @@ public class MMImageCache {
                   }
                }
             } catch (Exception e) {
-               ReportingUtils.logError(e);
+               Log.log(e);
             }
          }
       }
@@ -235,7 +182,7 @@ public class MMImageCache {
 
    private JSONObject getCommentsJSONObject() {
       if (imageStorage_ == null) {
-         ReportingUtils.logError("imageStorage_ is null in getCommentsJSONObject");
+         Log.log("imageStorage_ is null in getCommentsJSONObject", true);
          return null;
       }
 
@@ -247,7 +194,7 @@ public class MMImageCache {
          try {
             imageStorage_.getDisplayAndComments().put("Comments", comments);
          } catch (JSONException ex1) {
-            ReportingUtils.logError(ex1);
+            Log.log(ex1);
          }
       }
       return comments;
@@ -262,7 +209,7 @@ public class MMImageCache {
       try {
          comments.put("Summary", text);
       } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
       }
    }
 
@@ -272,7 +219,7 @@ public class MMImageCache {
       try {
          comments.put(label, comment);
       } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
       }
 
    }
@@ -299,7 +246,7 @@ public class MMImageCache {
 
    public JSONObject getSummaryMetadata() {
       if (imageStorage_ == null) {
-         ReportingUtils.logError("imageStorage_ is null in getSummaryMetadata");
+         Log.log("imageStorage_ is null in getSummaryMetadata", true);
          return null;
       }
       return imageStorage_.getSummaryMetadata();
@@ -307,7 +254,7 @@ public class MMImageCache {
 
    public void setSummaryMetadata(JSONObject tags) {
       if (imageStorage_ == null) {
-         ReportingUtils.logError("imageStorage_ is null in setSummaryMetadata");
+         Log.log("imageStorage_ is null in setSummaryMetadata", true);
          return;
       }
       imageStorage_.setSummaryMetadata(tags);
@@ -329,7 +276,7 @@ public class MMImageCache {
       try {
          return MDUtils.getPixelType(getSummaryMetadata());
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
          return null;
       }
    }
@@ -348,7 +295,7 @@ public class MMImageCache {
          settings.put("HistogramMax", histMax);
          settings.put("DisplayMode", displayMode);         
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
       }
    }
   
@@ -365,7 +312,7 @@ public class MMImageCache {
             return null;
          }
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
          return null;
       }
    }
@@ -374,7 +321,7 @@ public class MMImageCache {
       try {
          return imageStorage_.getSummaryMetadata().getInt("BitDepth");
       } catch (JSONException ex) {
-         ReportingUtils.logError("MMImageCache.BitDepth: no tag BitDepth found");
+         Log.log("MMImageCache.BitDepth: no tag BitDepth found", true);
       }
       return 16;
    }
@@ -398,7 +345,7 @@ public class MMImageCache {
          }
          chan.put("Color", rgb);
       } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
       }
    }
 
@@ -413,7 +360,7 @@ public class MMImageCache {
          }
          return "";
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
          return "";
       }
    }
@@ -435,7 +382,7 @@ public class MMImageCache {
             channelArray.put(channel, new JSONObject().put("Name", channelName));
          }
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
       }
 
    }

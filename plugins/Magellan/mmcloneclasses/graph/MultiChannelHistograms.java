@@ -8,10 +8,10 @@ import javax.swing.JPanel;
 import acq.MMImageCache;
 import imagedisplay.DisplayPlus;
 import imagedisplay.VirtualAcquisitionDisplay;
+import misc.Log;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.ReportingUtils;
 
 ///////////////////////////////////////////////////////////////////////////////
 //FILE:          MultiChannelHistograms.java
@@ -68,7 +68,7 @@ public final class MultiChannelHistograms extends JPanel implements Histograms {
       try {
          rgb = MDUtils.isRGB(display_.getSummaryMetadata());
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
          rgb = false;
       }
       if (rgb) {
@@ -189,7 +189,7 @@ public final class MultiChannelHistograms extends JPanel implements Histograms {
    @Override
    public void imageChanged() {
      boolean update = true;
-        if ( !((DisplayPlus) display_).getAcquisition().isFinished()  &&
+        if ( ((DisplayPlus) display_).getAcquisition() != null && !((DisplayPlus) display_).getAcquisition().isFinished()  &&
                 !((DisplayPlus) display_).getAcquisition().isPaused()) {
             if (hcs_.slowHist) {
                 long time = System.currentTimeMillis();

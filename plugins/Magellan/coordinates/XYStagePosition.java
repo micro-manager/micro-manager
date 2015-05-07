@@ -6,11 +6,11 @@ package coordinates;
 
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import misc.Log;
 import mmcorej.CMMCore;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.micromanager.MMStudio;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  * Immutable object representing single XY stage position
@@ -24,11 +24,15 @@ public class XYStagePosition {
    private final Point2D.Double[] fullTileCorners_;
    private final int gridRow_, gridCol_;
    
+   /**
+    * 
+    * @param transform -- must be centered at current stage pos 
+    */
    public XYStagePosition(Point2D.Double stagePosCenter, int displayTileWidth, int displayTileHeight, 
-           int fullTileWidth, int fullTileHeight, int row, int col, String pixelSizeConfig) {
+           int fullTileWidth, int fullTileHeight, int row, int col, AffineTransform transform) {
+      
       label_ = "Grid_" + col + "_" + row;
       center_ = stagePosCenter;
-      AffineTransform transform = AffineUtils.getAffineTransform(pixelSizeConfig, center_.x, center_.y);
       //coreners of displayed tiles (tiles - overlap)
       displayedTileCorners_ = new Point2D.Double[4];
       displayedTileCorners_[0] = new Point2D.Double();
@@ -96,7 +100,7 @@ public class XYStagePosition {
          pos.put("Label", label_);
          return pos;
       } catch (Exception e) {
-         ReportingUtils.showError("Couldn't create XY position JSONOBject");
+         Log.log("Couldn't create XY position JSONOBject");
          return null;
       }
    }

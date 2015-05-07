@@ -11,7 +11,6 @@
   </NonVisualComponents>
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
-    <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
   </SyntheticProperties>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
@@ -462,9 +461,11 @@
                           <Group type="102" alignment="0" attributes="0">
                               <Component id="exploreSavingDirLabel_" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="globalSavingDirTextField_" min="-2" pref="579" max="-2" attributes="0"/>
+                              <Component id="globalSavingDirTextField_" min="-2" pref="542" max="-2" attributes="0"/>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
                               <Component id="exploreBrowseButton_" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace type="separate" max="-2" attributes="0"/>
+                              <Component id="openDatasetButton_" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Component id="newExploreWindowButton_" alignment="0" min="-2" max="-2" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
@@ -485,6 +486,7 @@
                           <Component id="exploreSavingDirLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="globalSavingDirTextField_" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="exploreBrowseButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="openDatasetButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="exploreSampleLabel_" min="-2" max="-2" attributes="0"/>
@@ -2277,6 +2279,14 @@
                 </Property>
                 <Property name="text" type="java.lang.String" value="Created by Henry Pinkard at the University of California San Francisco 2014-2015"/>
               </Properties>
+            </Component>
+            <Component class="javax.swing.JButton" name="openDatasetButton_">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Open dataset"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="openDatasetButton_ActionPerformed"/>
+              </Events>
             </Component>
           </SubComponents>
         </Container>

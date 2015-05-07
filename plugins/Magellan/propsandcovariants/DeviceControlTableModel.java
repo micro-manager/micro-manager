@@ -5,17 +5,15 @@
 package propsandcovariants;
 
 import propsandcovariants.PropertyAndGroupUtils;
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.TreeMap;
 import java.util.prefs.Preferences;
 import javax.swing.table.AbstractTableModel;
+import misc.Log;
 import mmcorej.CMMCore;
 import org.micromanager.MMStudio;
 import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -86,7 +84,6 @@ public class DeviceControlTableModel extends AbstractTableModel implements MMLis
    }
   
    private void setValueInCore(SinglePropertyOrGroup item, Object value) {
-      ReportingUtils.logMessage(item.device + "/" + item.name + ":" + value);
       try {
          if (item.isGroup()) {
             core_.setConfig(item.name, value.toString());
@@ -102,7 +99,7 @@ public class DeviceControlTableModel extends AbstractTableModel implements MMLis
             core_.waitForDevice(item.device);
          }
       } catch (Exception e) {
-         ReportingUtils.showError(e);         
+         Log.log(e);         
       }
 
    }

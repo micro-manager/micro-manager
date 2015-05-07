@@ -95,7 +95,7 @@ public class CovariantValueCellEditor extends AbstractCellEditor implements Tabl
 //            try {
 //               slider_.setText(((CovariantValue) value).toString());
 //            } catch (ParseException ex) {
-//               ReportingUtils.logError(ex);
+//               Log.log(ex);
 //            }
 //            return slider_;
 //         } else {

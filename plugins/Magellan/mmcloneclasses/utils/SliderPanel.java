@@ -24,21 +24,25 @@
 package mmcloneclasses.utils;
 
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.text.ParseException;
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.JTextField;
+import javax.swing.SpringLayout;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import misc.Log;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.ReportingUtils;
 
 
 public class SliderPanel extends JPanel {
@@ -99,9 +103,9 @@ public class SliderPanel extends JPanel {
          // implicitly enforce limits
          setText(textField_.getText());
       } catch (ParseException ex) {
-            ReportingUtils.logError(
+            Log.log(
                     "Asked to convert an empty variable into a number in SliderPanel.java.  " 
-                    + "This indicates a faulty Device Adapter.");
+                    + "This indicates a faulty Device Adapter.",true);
       }
       return textField_.getText();
    }
@@ -236,7 +240,7 @@ public class SliderPanel extends JPanel {
    }
 
    private void handleException (Exception e) {
-      ReportingUtils.showError(e);
+      Log.log(e);
    }
 
 }

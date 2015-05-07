@@ -9,7 +9,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.micromanager.utils.ReportingUtils;
+import misc.Log;
 
 /**
  * Class to encapsulate several FixedAreaAcquisitions that are run in parallel
@@ -39,14 +39,14 @@ public class ParallelAcquisitionGroup implements AcquisitionEventSource {
             try {
                 acqs_.add(new FixedAreaAcquisition(settingsList.get(i), ParallelAcquisitionGroup.this));
             } catch (Exception ex) {
-                ReportingUtils.showError("Couldn't create acqusition: " + settingsList.get(i).name_);
+                Log.log("Couldn't create acqusition: " + settingsList.get(i).name_);
             }
         }
         try {
             //start first
             acqs_.get(0).signalReadyForNextTP();
         } catch (Exception ex) {
-            ReportingUtils.showError("Couldn't start acq group");
+            Log.log("Couldn't start acq group");
             throw new RuntimeException();
         }
         //now that first one is started, return so that multi acquisition manager has a reference to the group for aborting purposes
@@ -95,7 +95,7 @@ public class ParallelAcquisitionGroup implements AcquisitionEventSource {
                 //dont return until acqusition is marked as finished
                 acq.imageSink_.waitToDie();
             } catch (InterruptedException ex) {
-                ReportingUtils.showError("Unexpected exception while propogating finishing event");
+                Log.log("Unexpected exception while propogating finishing event");
             }
         }
 

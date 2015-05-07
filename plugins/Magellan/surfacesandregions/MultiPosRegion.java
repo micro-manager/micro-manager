@@ -12,8 +12,8 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import bidc.CoreCommunicator;
+import misc.Log;
 import org.micromanager.MMStudio;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -36,7 +36,7 @@ public class MultiPosRegion implements XYFootprint{
       try {
          pixelSizeConfig_ = MMStudio.getInstance().getCore().getCurrentPixelSizeConfig();
       } catch (Exception ex) {
-         ReportingUtils.showError("couldnt get pixel size config");
+         Log.log("couldnt get pixel size config");
       }
       updateParams(r, c);
    }
@@ -102,13 +102,14 @@ public class MultiPosRegion implements XYFootprint{
                Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
                Point2D.Double stagePos = new Point2D.Double();
                transform.transform(pixelPos, stagePos);
+               AffineTransform posTransform = AffineUtils.getAffineTransform(pixelSizeConfig_, stagePos.x, stagePos.y);
                positions.add(new XYStagePosition(stagePos, tileWidthMinusOverlap, tileHeightMinusOverlap,
-                       fullTileWidth, fullTileHeight, row, col, pixelSizeConfig_));
+                       fullTileWidth, fullTileHeight, row, col, posTransform));
             }
          }
          return positions;
       } catch (Exception ex) {
-         ReportingUtils.showError("Couldn't get affine transform");
+         Log.log("Couldn't get affine transform");
          throw new RuntimeException();
       }
    }

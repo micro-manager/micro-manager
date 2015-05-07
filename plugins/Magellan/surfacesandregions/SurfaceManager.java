@@ -1,13 +1,10 @@
 package surfacesandregions;
 
-import propsandcovariants.SurfaceData;
-import clojure.test.junit$suite_attrs;
 import imagedisplay.DisplayPlus;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import org.micromanager.MMStudio;
-import org.micromanager.utils.ReportingUtils;
 import propsandcovariants.CovariantPairingsManager;
+import propsandcovariants.SurfaceData;
 
 /**
  *

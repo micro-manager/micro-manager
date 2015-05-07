@@ -4,10 +4,7 @@
  */
 package acq;
 
-import channels.ChannelSetting;
 import gui.GUI;
-import java.awt.Color;
-import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -17,7 +14,6 @@ import misc.Log;
 import mmcorej.CMMCore;
 import org.json.JSONArray;
 import org.micromanager.MMStudio;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  * A single time point acquisition that can dynamically expand in X,Y, and Z
@@ -44,7 +40,7 @@ public class ExploreAcquisition extends Acquisition {
          zOrigin_ = zTop_;
          zBottom_ = core_.getPosition(zStage_);
       } catch (Exception ex) {
-         Log.log("Couldn't get focus device position");
+         Log.log("Couldn't get focus device position",true);
          throw new RuntimeException();
       }
       imageFilterType_ = settings.filterType_;
@@ -66,7 +62,7 @@ public class ExploreAcquisition extends Acquisition {
          //wait for it to exit
          while (!eventAdderExecutor_.awaitTermination(5, TimeUnit.MILLISECONDS)) {}
       } catch (InterruptedException ex) {
-         ReportingUtils.showError("Unexpected interrupt whil trying to abort acquisition");
+         Log.log("Unexpected interrupt while trying to abort acquisition",true);
          //shouldn't happen
       }
       //abort all pending events
@@ -78,7 +74,7 @@ public class ExploreAcquisition extends Acquisition {
          events_.put(AcquisitionEvent.createAcquisitionFinishedEvent(this));         
          events_.put(AcquisitionEvent.createEngineTaskFinishedEvent());
       } catch (InterruptedException ex) {
-         ReportingUtils.showError("Unexpected interrupted exception while trying to abort"); //shouldnt happen
+         Log.log("Unexpected interrupted exception while trying to abort",true); //shouldnt happen
       }
       imageSink_.waitToDie();
       //image sink will call finish when it completes
@@ -136,10 +132,10 @@ public class ExploreAcquisition extends Acquisition {
                      newPositionCols[i] = c;
                   }
                }
-               posIndices = getPositionManager().getPositionIndices(newPositionRows, newPositionCols);
+               posIndices = imageStorage_.getPositionIndices(newPositionRows, newPositionCols);
             } catch (Exception e) {
                e.printStackTrace();
-               ReportingUtils.showError("Problem with position metadata: couldn't add tile");
+               Log.log("Problem with position metadata: couldn't add tile",true);
                return;
             }
 
@@ -159,14 +155,14 @@ public class ExploreAcquisition extends Acquisition {
                         queuedTileEvents_.put(sliceIndex, new LinkedBlockingQueue<ExploreTileWaitingToAcquire>());
                      }
                      
-                     ExploreTileWaitingToAcquire tile = new ExploreTileWaitingToAcquire(posManager_.getXYPosition(posIndices[i]).getGridRow(), 
-                             posManager_.getXYPosition(posIndices[i]).getGridCol(), sliceIndex);
+                     ExploreTileWaitingToAcquire tile = new ExploreTileWaitingToAcquire(imageStorage_.getXYPosition(posIndices[i]).getGridRow(), 
+                             imageStorage_.getXYPosition(posIndices[i]).getGridCol(), sliceIndex);
                      if (queuedTileEvents_.get(sliceIndex).contains(tile)) {
                         continue; //ignor commands for duplicates
                      }
                      queuedTileEvents_.get(sliceIndex).put(tile);
                      events_.put(new AcquisitionEvent(ExploreAcquisition.this, 0, 0, sliceIndex, posIndices[i], getZCoordinate(sliceIndex), 
-                             posManager_.getXYPosition(posIndices[i]), null));
+                             imageStorage_.getXYPosition(posIndices[i]), null));
                   } catch (InterruptedException ex) {
                      //aborted acqusition
                      return;
@@ -257,7 +253,7 @@ public class ExploreAcquisition extends Acquisition {
          JSONArray pList = new JSONArray();
          return pList;
       } catch (Exception e) {
-         ReportingUtils.showError("Couldn't create initial position list");
+         Log.log("Couldn't create initial position list",true);
          return null;
       }
    }

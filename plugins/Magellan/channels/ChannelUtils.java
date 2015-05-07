@@ -7,8 +7,6 @@ package channels;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import misc.GlobalSettings;
 import misc.Log;
 import mmcorej.StrVector;
@@ -52,7 +50,7 @@ public class ChannelUtils {
       try {
          exposure = MMStudio.getInstance().getCore().getExposure();
       } catch (Exception ex) {
-         Log.log("Couldnt get camera exposure form core");
+         Log.log("Couldnt get camera exposure form core", true);
       }
       if (numCamChannels <= 1) {
          for (String name : getChannelNames(channelGroup)) {

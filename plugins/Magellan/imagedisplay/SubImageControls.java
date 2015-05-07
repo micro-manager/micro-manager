@@ -28,11 +28,11 @@ import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import misc.Log;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -60,10 +60,32 @@ public class SubImageControls extends Panel {
       display_ = disp;
       bus_.register(this);
       acq_ = acq;
-      zStep_ = acq_.getZStep();
+      zStep_ = acq != null ? acq_.getZStep() : 0;
       initComponents();
    }
    
+   /**
+    * used for forcing scrollbars to show when opening dataset on disk
+    */  
+   public void makeScrollersAppear(int numChannels, int numSlices, int numFrames) {
+      for (AxisScroller s : scrollerPanel_.scrollers_) {
+         if (numChannels > 1 && s.getAxis().equals("channel")) {
+            s.setVisible(true);
+            s.setMaximum(numChannels);
+            scrollerPanel_.add(s, "wrap 0px, align center, growx");
+         } else if (numFrames > 1 && s.getAxis().equals("time")) {
+            s.setVisible(true);
+            s.setMaximum(numFrames);
+            scrollerPanel_.add(s, "wrap 0px, align center, growx");
+         } else if (numSlices > 1 && s.getAxis().equals("z")) {
+            s.setVisible(true);
+            s.setMaximum(numSlices);
+            scrollerPanel_.add(s, "wrap 0px, align center, growx");
+         }
+      }
+      bus_.post(new ScrollerPanel.LayoutChangedEvent());
+   }
+
    public void unlockAllScrollers() {
       scrollerPanel_.unlockAllScrollers();
    }
@@ -207,7 +229,7 @@ public class SubImageControls extends Panel {
             }
             controlsPanel.add(sliderPanel_, "span, growx, align center, wrap");
          } catch (Exception e) {
-            ReportingUtils.showError("Couldn't create z sliders");
+            Log.log("Couldn't create z sliders");
          }
       }
 
@@ -304,7 +326,7 @@ public class SubImageControls extends Panel {
          try {
             JavaUtils.setRestrictedFieldValue(win, StackWindow.class, "nSlices", ((MMCompositeImage) display_.getHyperImage()).getNSlicesUnverified());
          } catch (NoSuchFieldException ex) {
-            ReportingUtils.showError("Couldn't set number of slices in ImageJ stack window");
+            Log.log("Couldn't set number of slices in ImageJ stack window");
          }
       }
       //set the imageJ scrollbar positions here. We don't rely on exactly the same
@@ -316,7 +338,7 @@ public class SubImageControls extends Panel {
          JavaUtils.setRestrictedFieldValue(win, StackWindow.class, "z", slice);
          JavaUtils.setRestrictedFieldValue(win, StackWindow.class, "c", channel);
       } catch (NoSuchFieldException e) {
-         ReportingUtils.showError("Unexpected exception when trying to set image position");
+         Log.log("Unexpected exception when trying to set image position");
       }
       
       synchronized (this) {

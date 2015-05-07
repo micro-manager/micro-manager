@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.Set;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import misc.Log;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -41,7 +42,6 @@ import org.micromanager.imagedisplay.DisplaySettings;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.ProgressBar;
-import org.micromanager.utils.ReportingUtils;
 
 
 public class MultipageTiffReader {
@@ -67,7 +67,6 @@ public class MultipageTiffReader {
    private int byteDepth_ = 0;;
    private boolean rgb_;
    private boolean writingFinished_;
-   public static boolean fixIndexMapWithoutPrompt_ = false;
    
    private HashMap<String,Long> indexMap_;
    
@@ -99,7 +98,7 @@ public class MultipageTiffReader {
       try {
          createFileChannel();
       } catch (Exception ex) {
-         ReportingUtils.showError("Can't successfully open file: " +  file_.getName());
+         Log.log("Can't successfully open file: " +  file_.getName());
       }
       writingFinished_ = true;
       long firstIFD = readHeader();
@@ -107,17 +106,13 @@ public class MultipageTiffReader {
       try {
          readIndexMap();
       } catch (Exception e) {
-         try {
-            fixIndexMap(firstIFD, file.getName());
-         } catch (JSONException ex) {
-            ReportingUtils.showError("Fixing of dataset unsuccessful for file: " + file_.getName());
-         }
+         Log.log(e);
       }
       try {
          displayAndComments_.put("Channels", readDisplaySettings());
          displayAndComments_.put("Comments", readComments());
       } catch (Exception ex) {
-         ReportingUtils.logError("Problem with JSON Representation of DisplayAndComments");
+         Log.log("Problem with JSON Representation of DisplayAndComments", true);
       }
 
       if (summaryMetadata_ != null) {
@@ -150,7 +145,7 @@ public class MultipageTiffReader {
       try {
          ra = new RandomAccessFile(testFile,"r");
       } catch (FileNotFoundException ex) {
-        ReportingUtils.logError(ex);
+        Log.log(ex);
         return false;
       }
       FileChannel channel = ra.getChannel();
@@ -191,7 +186,7 @@ public class MultipageTiffReader {
                byteDepth_ = 2;
             }
       } catch (Exception ex) {
-         ReportingUtils.showError(ex);
+         Log.log(ex);
       }
    }
 
@@ -206,7 +201,7 @@ public class MultipageTiffReader {
    public TaggedImage readImage(String label) {
       if (indexMap_.containsKey(label)) {
          if (fileChannel_ == null) {
-            ReportingUtils.logError("Attempted to read image on FileChannel that is null");
+            Log.log("Attempted to read image on FileChannel that is null", true);
             return null;
          }
          try {
@@ -215,7 +210,7 @@ public class MultipageTiffReader {
             IFDData data = readIFD(byteOffset);
             return readTaggedImage(data);
          } catch (IOException ex) {
-            ReportingUtils.logError(ex);
+            Log.log(ex);
             return null;
          }
          
@@ -239,7 +234,7 @@ public class MultipageTiffReader {
          int length = mdInfo.getInt(4);
          
          if (header != MultipageTiffWriter.SUMMARY_MD_HEADER) {
-            ReportingUtils.logError("Summary Metadata Header Incorrect");
+            Log.log("Summary Metadata Header Incorrect", true);
             return null;
          }
 
@@ -255,7 +250,7 @@ public class MultipageTiffReader {
          }
          return summaryMD;
       } catch (Exception ex) {
-         ReportingUtils.showError("Couldn't read summary Metadata from file: " + file_.getName());
+         Log.log("Couldn't read summary Metadata from file: " + file_.getName());
          return null;
       }
    }
@@ -265,13 +260,13 @@ public class MultipageTiffReader {
          long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.COMMENTS_OFFSET_HEADER, 24);
          ByteBuffer header = readIntoBuffer(offset, 8);
          if (header.getInt(0) != MultipageTiffWriter.COMMENTS_HEADER) {
-            ReportingUtils.logError("Can't find image comments in file: " + file_.getName());
+            Log.log("Can't find image comments in file: " + file_.getName(), true);
             return null;
          }
          ByteBuffer buffer = readIntoBuffer(offset + 8, header.getInt(4));
          return new JSONObject(getString(buffer));
       } catch (Exception ex) {
-         ReportingUtils.logError("Can't find image comments in file: " + file_.getName());
+         Log.log("Can't find image comments in file: " + file_.getName(), true);
             return null;
       }
    }
@@ -309,13 +304,13 @@ public class MultipageTiffReader {
          long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.DISPLAY_SETTINGS_OFFSET_HEADER,16);
           ByteBuffer header = readIntoBuffer(offset, 8);
           if (header.getInt(0) != MultipageTiffWriter.DISPLAY_SETTINGS_HEADER) {
-             ReportingUtils.logError("Can't find display settings in file: " + file_.getName());
+             Log.log("Can't find display settings in file: " + file_.getName(), true);
              return null;
           }
           ByteBuffer buffer = readIntoBuffer(offset + 8, header.getInt(4));
          return new JSONArray(getString(buffer));
       } catch (Exception ex) {
-         ReportingUtils.logError("Can't find display settings in file: " + file_.getName());
+         Log.log("Can't find display settings in file: " + file_.getName(), true);
          return null;
       }
    }
@@ -385,7 +380,7 @@ public class MultipageTiffReader {
       try {
          return new String(buffer.array(), "UTF-8");
       } catch (UnsupportedEncodingException ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
          return "";
       }
    }
@@ -399,7 +394,7 @@ public class MultipageTiffReader {
       try {
          md = new JSONObject(getString(mdBuffer));
       } catch (JSONException ex) {
-         ReportingUtils.logError("Error reading image metadata from file");
+         Log.log("Error reading image metadata from file", true);
       }
       
       if ( byteDepth_ == 0) {
@@ -482,7 +477,7 @@ public class MultipageTiffReader {
       try {
          return s.getBytes("UTF-8");
       } catch (UnsupportedEncodingException ex) {
-         ReportingUtils.logError("Error encoding String to bytes");
+         Log.log("Error encoding String to bytes", true);
          return null;
       }
    }
@@ -509,92 +504,6 @@ public class MultipageTiffReader {
          val += BIGGEST_INT_BIT;
       }
       return val;
-   }
-   
-   // This code is intended for use in the scenario in which a datset
-   // terminates before properly closing, thereby preventing the multipage tiff
-   // writer from putting in the index map, comments, channels, and OME XML in
-   // the ImageDescription tag location 
-   private void fixIndexMap(long firstIFD, String fileName) throws IOException, JSONException {  
-      if (!fixIndexMapWithoutPrompt_) {
-         ReportingUtils.showError("Can't read index map in file: " + file_.getName());
-         int choice = JOptionPane.showConfirmDialog(null, "This file cannot be opened bcause it appears to have \n"
-                 + "been improperly saved.  Would you like Micro-Manger to attempt to fix it?", "Micro-Manager", JOptionPane.YES_NO_OPTION);
-         if (choice == JOptionPane.NO_OPTION) {
-            return;
-         }
-      }
-      fixIndexMapWithoutPrompt_ = true;
-      long filePosition = firstIFD;
-      indexMap_ = new HashMap<String, Long>();
-      long progBarMax = (fileChannel_.size() / 2L);
-      final ProgressBar progressBar = new ProgressBar("Fixing " + fileName, 0, 
-              progBarMax >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) progBarMax);
-      progressBar.setRange(0, progBarMax >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) progBarMax);
-      progressBar.setProgress(0);
-      progressBar.setVisible(true);
-      long nextIFDOffsetLocation = 0;
-      IFDData data;
-      while (filePosition > 0) {
-         try {
-            data = readIFD(filePosition);
-            if (data.nextIFD == 0) {
-               break;
-            }
-            TaggedImage ti = readTaggedImage(data);
-            if (ti.tags == null || ti.tags.length() == 0) {  //Blank placeholder image, dont add to index map
-               filePosition = data.nextIFD;
-               nextIFDOffsetLocation = data.nextIFDOffsetLocation;
-               continue;
-            }
-            String label;
-            label = MDUtils.getLabel(ti.tags);
-            if (label == null ) {
-               break;
-            }          
-            indexMap_.put(label, filePosition);
-            
-            final int progress = (int) (filePosition/2L);
-            SwingUtilities.invokeLater(new Runnable() {
-               @Override
-               public void run() {
-                  progressBar.setProgress(progress);
-               }
-            });
-            
-            if (data.nextIFD <= filePosition || data.nextIFDOffsetLocation <= nextIFDOffsetLocation ) {
-               break; //so no recoverable data is ever lost
-            }
-            filePosition = data.nextIFD;
-            nextIFDOffsetLocation = data.nextIFDOffsetLocation;
-         } catch (Exception e) {
-            break;
-         }
-      }
-      progressBar.setVisible(false);
-     
-      filePosition += writeIndexMap(filePosition);
-      
-      ByteBuffer buffer = ByteBuffer.allocate(4).order(byteOrder_);
-      buffer.putInt(0, 0);
-      fileChannel_.write(buffer, nextIFDOffsetLocation); 
-      
-      JSONArray settings = null;
-      try {
-         settings = DisplaySettings.getDisplaySettingsFromSummary(
-               summaryMetadata_).getJSONArray("Channels");
-      } catch (Exception ex) {
-         ReportingUtils.showError(ex, "Problem saving file.  PLease test to make sure file can be opened");
-      }
-      filePosition += writeDisplaySettings(settings, filePosition);
-      
-      
-//      raFile_.setLength(filePosition + 8);
-      
-      fileChannel_.close();
-      raFile_.close();
-      //reopen
-      createFileChannel();
    }
    
    private int writeDisplaySettings(JSONArray settings, long filePosition) throws IOException {

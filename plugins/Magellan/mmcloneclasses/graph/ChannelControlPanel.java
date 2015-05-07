@@ -36,6 +36,7 @@ import imagedisplay.MMCompositeImage;
 import imagedisplay.ContrastMetadataPanel;
 import imagedisplay.DisplayPlus;
 import imagedisplay.VirtualAcquisitionDisplay;
+import misc.Log;
 import mmcorej.CMMCore;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -600,7 +601,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             try {
                JavaUtils.setRestrictedFieldValue(img_, CompositeImage.class, "currentChannel", -1);
             } catch (NoSuchFieldException ex) {
-               ReportingUtils.logError(ex);
+               Log.log(ex);
             }
 
             if (img_.getChannel() == channelIndex_ + 1) {

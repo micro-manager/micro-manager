@@ -61,7 +61,7 @@ public class GraphFrame extends MMFrame {
          GraphFrame frame = new GraphFrame();
          frame.setVisible(true);
       } catch (Exception e) {
-         ReportingUtils.showError(e);
+         Log.log(e);
       }
    }
    */

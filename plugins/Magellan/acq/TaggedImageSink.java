@@ -1,9 +1,9 @@
 package acq;
 
 import java.util.concurrent.BlockingQueue;
+import misc.Log;
 import mmcorej.TaggedImage;
 import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  * Dequeue tagged images and append to image cache
@@ -63,14 +63,14 @@ public class TaggedImageSink  {
                      try {
                         imageCache_.putImage(image);
                      } catch (Exception ex) {
-                        ReportingUtils.showError("Couldn't add image to storage");
+                        Log.log("Couldn't add image to storage");
                      }
                      lastImageLabel_ = MDUtils.getLabel(image.tags);
                   }
                } 
             }
             long t2 = System.currentTimeMillis();
-            ReportingUtils.logMessage(imageCount + " images stored in " + (t2 - t1) + " ms.");
+            Log.log(imageCount + " images stored in " + (t2 - t1) + " ms.", false);
             acq_.markAsFinished();
             imageCache_.finished();
             if (acq_ instanceof FixedAreaAcquisition) {

@@ -16,7 +16,7 @@ import javax.swing.JComboBox;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.TableCellEditor;
-import org.micromanager.utils.ReportingUtils;
+import misc.Log;
 import propsandcovariants.DeviceControlTableModel;
 import propsandcovariants.SinglePropertyOrGroup;
 
@@ -100,7 +100,7 @@ public class PropertyValueCellEditor extends AbstractCellEditor implements Table
             try {
                slider_.setText((String) value);
             } catch (ParseException ex) {
-               ReportingUtils.logError(ex);
+               Log.log(ex);
             }
             return slider_;
          } else {

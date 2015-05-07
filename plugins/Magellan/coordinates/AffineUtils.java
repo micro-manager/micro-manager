@@ -7,9 +7,9 @@ package coordinates;
 import java.awt.geom.AffineTransform;
 import java.util.TreeMap;
 import java.util.prefs.Preferences;
+import misc.Log;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -18,6 +18,22 @@ import org.micromanager.utils.ReportingUtils;
 public class AffineUtils {
    
    private static TreeMap<String, AffineTransform> affineTransforms_ = new TreeMap<String,AffineTransform>();
+   
+   public static String transformToString(AffineTransform transform) {
+      double[] matrix = new double[4];
+      transform.getMatrix(matrix);
+      return matrix[0] +"-"+matrix[1]+"-"+matrix[2]+"-"+matrix[3];
+   }
+   
+   public static AffineTransform stringToTransform(String s) {
+      double[] mat = new double[4];
+      String[] vals = s.split("-");
+      for (int i = 0; i < 4; i ++) {
+         mat[i] = Double.parseDouble(vals[i]);
+      }
+      return new AffineTransform(mat);
+   }
+   
    
    //called when an affine transform is updated
    public static void transformUpdated(String pixelSizeConfig, AffineTransform transform) {
@@ -47,8 +63,8 @@ public class AffineUtils {
          matrix[5] = yCenter;
          return new AffineTransform(matrix);
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-         ReportingUtils.showError("Couldnt get affine transform");
+         Log.log(ex);
+         Log.log("Couldnt get affine transform");
          return null;
       }
    }

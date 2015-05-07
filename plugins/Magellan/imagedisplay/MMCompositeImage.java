@@ -14,7 +14,6 @@ import misc.Log;
 import org.micromanager.utils.CanvasPaintPending;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.ReportingUtils;
 
 public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
    private ImagePlus hyperImage_;
@@ -136,7 +135,7 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
                           ContrastAdjuster.class, "instance");
                   JavaUtils.setRestrictedFieldValue(null, ContrastAdjuster.class, "instance", null);
                } catch (NoSuchFieldException e) {
-                  ReportingUtils.logError(e, "ImageJ ContrastAdjuster doesn't have field named instance");
+                  Log.log("ImageJ ContrastAdjuster doesn't have field named instance",true);
                }
 
                MMCompositeImage.super.updateImage();
@@ -148,7 +147,7 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
                   JavaUtils.setRestrictedFieldValue(null, ContrastAdjuster.class,
                           "instance", curVal);
                } catch (NoSuchFieldException e) {
-                  ReportingUtils.logError(e, "Couldn't restore ImageJ ContrastAdjuster instance.");
+                  Log.log( "Couldn't restore ImageJ ContrastAdjuster instance.",true);
 
                }
 
@@ -156,7 +155,7 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
                exx.printStackTrace();
                //swallow null pointer exception that happens at startup of acq and breaks everything
                //exception is because rgbPixels gets set to null while CompositeImage.updateImage is running
-               Log.log("Null RGB pixels");
+               Log.log("Null RGB pixels",true);
             }
          }
       };
@@ -192,7 +191,7 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
        try {
            superUpdateImage();
        } catch (ArrayIndexOutOfBoundsException aex) {
-           ReportingUtils.logError(aex);
+           Log.log(aex);
            CanvasPaintPending.removePaintPending(super.getCanvas(), this);
            return;
        }
@@ -212,9 +211,9 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
             }
          });
       } catch (InterruptedException e) {
-         ReportingUtils.logError(e);
+         Log.log(e);
       } catch (InvocationTargetException e) {
-         ReportingUtils.logError(e);
+         Log.log(e);
       }
    }
 

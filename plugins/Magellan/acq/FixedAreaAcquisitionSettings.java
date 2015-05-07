@@ -1,16 +1,13 @@
 package acq;
 
 import channels.ChannelSetting;
-import bidc.FrameIntegrationMethod;
 import channels.ChannelUtils;
 import propsandcovariants.CovariantPairing;
 import propsandcovariants.CovariantPairingsManager;
 import java.util.ArrayList;
 import java.util.prefs.Preferences;
-import javax.swing.filechooser.FileSystemView;
 import main.Magellan;
 import misc.Log;
-import org.micromanager.utils.ReportingUtils;
 import surfacesandregions.SurfaceInterpolator;
 import surfacesandregions.XYFootprint;
 
@@ -120,11 +117,11 @@ public class FixedAreaAcquisitionSettings  {
    
    public void addPropPairing(CovariantPairing pair) {
       if (covariantPairings_.contains(pair)) {
-         Log.log("Tried to add property pair that was already present");
+         Log.log("Tried to add property pair that was already present", true);
          return;
       }
       if (checkForRedundantPairing(pair)) {
-         ReportingUtils.showMessage("Must delete existing pairing between same two properties first before a new"
+         Log.log("Must delete existing pairing between same two properties first before a new"
                  + "one can be added");
          return;
       }

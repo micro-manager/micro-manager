@@ -27,7 +27,6 @@ import misc.Log;
 import misc.LongPoint;
 import mmcloneclasses.graph.ContrastPanel;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
-import org.micromanager.utils.ReportingUtils;
 import surfacesandregions.SingleResolutionInterpolation;
 import surfacesandregions.MultiPosRegion;
 import surfacesandregions.Point3d;
@@ -74,14 +73,14 @@ public class DisplayOverlayer {
 
          @Override
          public Thread newThread(Runnable r) {
-            return new Thread(r, acq_.getName() + " overalyer task thread");
+            return new Thread(r, display_.getTitle() + " overalyer task thread");
          }
       });
       overlayMakerExecutor_ = Executors.newSingleThreadExecutor(new ThreadFactory() {
 
          @Override
          public Thread newThread(Runnable r) {
-            return new Thread(r, acq_.getName() + " overaly maker thread");
+            return new Thread(r, display_.getTitle() + " overaly maker thread");
          }
       });
    }
@@ -184,8 +183,8 @@ public class DisplayOverlayer {
          return;
       } catch (ExecutionException ex) {
          //sholdn't ever happen because createBaseOverlay throw exceptions
-         Log.log("Exception when creating base overlay");
-         Log.log(ex.toString());
+         Log.log("Exception when creating base overlay", true);
+         Log.log(ex);
          ex.printStackTrace();
       }
    }
@@ -251,11 +250,11 @@ public class DisplayOverlayer {
                   addInterpPoints(display_.getCurrentSurface(), overlay);
                   return overlay;
                } else {
-                  Log.log("Unkonwn display mode");
+                  Log.log("Unkonwn display mode", true);
                   throw new RuntimeException();
                }
             } catch (NullPointerException npe) {
-               Log.log("Null pointer exception while creating overlay. written to stack ");
+               Log.log("Null pointer exception while creating overlay. written to stack ", true);
                npe.printStackTrace();
                return null;
             }
@@ -279,7 +278,7 @@ public class DisplayOverlayer {
          sizeBar.addToOverlay(overlay);
       }
 
-      if (display_.getAcquisition() instanceof FixedAreaAcquisition) {
+      if (display_.getAcquisition() instanceof FixedAreaAcquisition || display_.getAcquisition() == null) {
          drawZoomIndicator(overlay);
       }
       return overlay;
@@ -502,8 +501,8 @@ public class DisplayOverlayer {
    private void drawZoomIndicator(Overlay overlay) {
       LongPoint zoomPos = zoomableStack_.getZoomLocation();
       int outerWidth = 100;
-      int fullResHeight = display_.getAcquisition().getPositionManager().getNumRows() * display_.getAcquisition().getStorage().getTileHeight();
-      int fullResWidth = display_.getAcquisition().getPositionManager().getNumCols() * display_.getAcquisition().getStorage().getTileWidth();
+      long fullResHeight = display_.getStorage().getNumRows() * display_.getStorage().getTileHeight();
+      long fullResWidth = display_.getStorage().getNumCols() * display_.getStorage().getTileWidth();
       int dsFactor = display_.getZoomableStack().getDownsampleFactor();
       Dimension displayImageSize = display_.getZoomableStack().getDisplayImageSize();
 //      System.out.println(fullResHeight + "\t" + fullResWidth + "\t" + dsFactor + "\t" + displayImageSize.width + "\t" + displayImageSize.height);      

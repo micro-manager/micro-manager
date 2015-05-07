@@ -16,17 +16,16 @@ import java.util.concurrent.ThreadFactory;
 import javax.swing.JOptionPane;
 import bidc.CoreCommunicator;
 import bidc.FrameIntegrationMethod;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import coordinates.AffineUtils;
+import java.awt.geom.AffineTransform;
 import misc.GlobalSettings;
 import misc.Log;
+import misc.MD;
 import mmcorej.CMMCore;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudio;
-import org.micromanager.api.MMTags;
-import org.micromanager.utils.ReportingUtils;
 import propsandcovariants.CovariantPairing;
 
 /**
@@ -59,45 +58,45 @@ public class MagellanEngine {
       //non null surface
       if ((settings.spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D || settings.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK)
               && settings.footprint_ == null) {
-         Log.log("Error: No surface or region selected for " + settings.name_);
+         Log.log("Error: No surface or region selected for " + settings.name_, true);
          throw new Exception();
       }
       if (settings.spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK && settings.fixedSurface_ == null) {
-         Log.log("Error: No surface selected for " + settings.name_);
+         Log.log("Error: No surface selected for " + settings.name_, true);
          throw new Exception();
       }
       if (settings.spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK
               && (settings.topSurface_ == null || settings.bottomSurface_ == null)) {
-         Log.log("Error: No surface selected for " + settings.name_);
+         Log.log("Error: No surface selected for " + settings.name_, true);
          throw new Exception();
       }
       //correct coordinate devices--XY
       if ((settings.spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D || settings.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK)
               && !settings.footprint_.getXYDevice().equals(core_.getXYStageDevice())) {
-         Log.log("Error: XY device for surface/grid does match XY device in MM core in " + settings.name_);
+         Log.log("Error: XY device for surface/grid does match XY device in MM core in " + settings.name_, true);
          throw new Exception();
       }
       if (settings.spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK && 
               !settings.fixedSurface_.getXYDevice().equals(core_.getXYStageDevice())) {
-         Log.log("Error: XY device for surface does match XY device in MM core in " + settings.name_);
+         Log.log("Error: XY device for surface does match XY device in MM core in " + settings.name_, true);
          throw new Exception();
       }
       if (settings.spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK
               && (!settings.topSurface_.getXYDevice().equals(core_.getXYStageDevice()) || 
               !settings.bottomSurface_.getXYDevice().equals(core_.getXYStageDevice()))) {
-         Log.log("Error: XY device for surface does match XY device in MM core in " + settings.name_);
+         Log.log("Error: XY device for surface does match XY device in MM core in " + settings.name_, true);
          throw new Exception();
       }     
       //correct coordinate device--Z
        if (settings.spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK
                && !settings.fixedSurface_.getZDevice().equals(core_.getFocusDevice())) {
-           Log.log("Error: Z device for surface does match Z device in MM core in " + settings.name_);
+           Log.log("Error: Z device for surface does match Z device in MM core in " + settings.name_, true);
            throw new Exception();
        }
        if (settings.spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK
                && (!settings.topSurface_.getZDevice().equals(core_.getFocusDevice())
                || !settings.bottomSurface_.getZDevice().equals(core_.getFocusDevice()))) {
-           Log.log("Error: Z device for surface does match Z device in MM core in " + settings.name_);
+           Log.log("Error: Z device for surface does match Z device in MM core in " + settings.name_, true);
            throw new Exception();
        }
 
@@ -116,7 +115,7 @@ public class MagellanEngine {
       try {
          runInterleavedAcquisitions(Arrays.asList(new FixedAreaAcquisitionSettings[]{settings}), false);
       } catch (Exception ex) {
-        Log.log(ex.toString());
+        Log.log(ex);
       }
     }
 
@@ -147,7 +146,7 @@ public class MagellanEngine {
                 //that it can be returned to after
                 currentExploreAcq_.events_.put(AcquisitionEvent.createEngineTaskFinishedEvent());
             } catch (InterruptedException ex) {
-                ReportingUtils.showError("Unexpected interrupt when trying to switch acquisition tasks");
+                Log.log("Unexpected interrupt when trying to switch acquisition tasks");
             }
         }
 
@@ -183,7 +182,7 @@ public class MagellanEngine {
             currentExploreAcq_ = new ExploreAcquisition(settings);
         } catch (Exception ex) {
            ex.printStackTrace();
-           Log.log("Couldn't initialize explore acquisiton");
+           Log.log("Couldn't initialize explore acquisiton", true);
             return;
         }
         runAcq(currentExploreAcq_);
@@ -204,7 +203,7 @@ public class MagellanEngine {
                         }
                         executeAcquisitionEvent(event);
                     } catch (InterruptedException ex) {
-                        ReportingUtils.showError("Unexpected interrupt to acquisiton engine thread");
+                        Log.log("Unexpected interrupt to acquisiton engine thread");
                         return;
                     }
                 }
@@ -377,7 +376,7 @@ public class MagellanEngine {
 //         try {
 //            core_.setConfig("Channel", event.channelIndex_ == 0 ? "DAPI" : "FITC");
 //         } catch (Exception ex) {
-//            ReportingUtils.showError("Couldn't change channel group");
+//            Log.log("Couldn't change channel group");
 //         }
 //      }
 
@@ -405,11 +404,11 @@ public class MagellanEngine {
                 return;
             } catch (Exception e) {
                 e.printStackTrace();
-                Log.log(getCurrentDateAndTime() + ": Problem " + commandName + "\n Retry #" + i + " in " + DELWAY_BETWEEN_RETRIES_MS + " ms");
+                Log.log(getCurrentDateAndTime() + ": Problem " + commandName + "\n Retry #" + i + " in " + DELWAY_BETWEEN_RETRIES_MS + " ms", true);
                 Thread.sleep(DELWAY_BETWEEN_RETRIES_MS);
             }
         }
-        Log.log(commandName + "unsuccessful");
+        Log.log(commandName + "unsuccessful", true);
     }
 
     private String getCurrentDateAndTime() {
@@ -422,18 +421,18 @@ public class MagellanEngine {
             int numCamChannels, int camChannel, long elapsed_ms,int exposure) {
         try {
             //add tags
-            long gridRow = event.acquisition_.getPositionManager().getGridRow(event.positionIndex_, 0);
-            long gridCol = event.acquisition_.getPositionManager().getGridCol(event.positionIndex_, 0);
-            tags.put(MMTags.Image.POS_NAME, "Grid_" + gridRow + "_" + gridCol);
-            tags.put(MMTags.Image.POS_INDEX, event.positionIndex_);
-            tags.put(MMTags.Image.SLICE_INDEX, event.sliceIndex_);
-            tags.put(MMTags.Image.SLICE, event.sliceIndex_);
-            tags.put(MMTags.Image.FRAME_INDEX, event.timeIndex_);
-            tags.put(MMTags.Image.FRAME, event.timeIndex_);
-            tags.put(MMTags.Image.CHANNEL_INDEX, event.channelIndex_ * numCamChannels + camChannel);
-            tags.put(MMTags.Image.ZUM, event.zPosition_);
-            tags.put(MMTags.Image.ELAPSED_TIME_MS, elapsed_ms);
-            tags.put(MMTags.Image.TIME, (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss -")).format(Calendar.getInstance().getTime()));
+            long gridRow = event.acquisition_.getStorage().getGridRow(event.positionIndex_, 0);
+            long gridCol = event.acquisition_.getStorage().getGridCol(event.positionIndex_, 0);
+            tags.put(MD.POS_NAME, "Grid_" + gridRow + "_" + gridCol);
+            tags.put(MD.POS_INDEX, event.positionIndex_);
+            tags.put(MD.SLICE_INDEX, event.sliceIndex_);
+            tags.put(MD.SLICE, event.sliceIndex_);
+            tags.put(MD.FRAME_INDEX, event.timeIndex_);
+            tags.put(MD.FRAME, event.timeIndex_);
+            tags.put(MD.CHANNEL_INDEX, event.channelIndex_ * numCamChannels + camChannel);
+            tags.put(MD.ZUM, event.zPosition_);
+            tags.put(MD.ELAPSED_TIME_MS, elapsed_ms);
+            tags.put(MD.TIME, (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss -")).format(Calendar.getInstance().getTime()));
             //Magellan specific tags
             if (GlobalSettings.getInstance().isBIDCTwoPhoton()) {
               tags.put("ExposureRawFrames", exposure);
@@ -443,8 +442,8 @@ public class MagellanEngine {
             tags.put("StagePositionX", event.xyPosition_.getCenter().x);
             tags.put("StagePositionY", event.xyPosition_.getCenter().y);
         } catch (JSONException e) {
-            Log.log("Problem adding image tags");
-            Log.log(e.toString());
+            Log.log("Problem adding image tags", true);
+            Log.log(e);
             e.printStackTrace();
         }
     }
@@ -455,40 +454,33 @@ public class MagellanEngine {
             //num channels is camera channels * acquisitionChannels
             int numChannels = GlobalSettings.getInstance().getDemoMode() ? 6 : acq.getNumChannels();
 
-            /////////////////////////////////////////////////////////////////
-            ////Summary metadata equivalent to normal MM metadata////////////
-            /////////////////////////////////////////////////////////////////
             CMMCore core = MMStudio.getInstance().getCore();
             JSONObject summary = new JSONObject();
-            summary.put("Channels", numChannels);
-            summary.put("Frames", 1);
-            summary.put("SlicesFirst", true);
-            summary.put("TimeFirst", false);
-            summary.put("PixelType", GlobalSettings.getInstance().isBIDCTwoPhoton() ? 
+            summary.put(MD.NUM_CHANNELS, numChannels);
+            summary.put(MD.ZC_ORDER, false);
+            summary.put(MD.PIX_TYPE, GlobalSettings.getInstance().isBIDCTwoPhoton() ? 
                     (acq.getFilterType() == FrameIntegrationMethod.FRAME_SUMMATION ? "GRAY16" : "GRAY8") :
             core_.getImageBitDepth() > 8 ? "GRAY16" : "GRAY8");
-            summary.put("BitDepth", GlobalSettings.getInstance().isBIDCTwoPhoton() ? 
+            summary.put(MD.BIT_DEPTH, GlobalSettings.getInstance().isBIDCTwoPhoton() ? 
                     (acq.getFilterType() == FrameIntegrationMethod.FRAME_SUMMATION ? 16 : 8) :
                     core_.getImageBitDepth() );
-            summary.put("Width", CoreCommunicator.getInstance().getImageWidth());
-            summary.put("Height", CoreCommunicator.getInstance().getImageHeight());
-            summary.put("Prefix", prefix);
+            summary.put(MD.WIDTH, CoreCommunicator.getInstance().getImageWidth());
+            summary.put(MD.HEIGHT, CoreCommunicator.getInstance().getImageHeight());
+            summary.put(MD.SAVING_PREFIX, prefix);
             JSONArray initialPosList = acq.createInitialPositionList();
-            summary.put("InitialPositionList", initialPosList);
-            summary.put("Positions", initialPosList.length());
-            summary.put(MMTags.Summary.PIXSIZE, core.getPixelSizeUm());
-            summary.put("z-step_um", acq.getZStep());
-            summary.put("Interval_ms", acq instanceof FixedAreaAcquisition ? ((FixedAreaAcquisition) acq).getTimeInterval_ms() : 0);
-
-            /////////////////////////////////////////////////////////////////
-            ////Summary metadata specific to Magellan///////////////////////
-            /////////////////////////////////////////////////////////////////
-
+            summary.put(MD.INITIAL_POS_LIST, initialPosList);
+            summary.put(MD.PIX_SIZE, core.getPixelSizeUm());
+            summary.put(MD.Z_STEP_UM, acq.getZStep());
+            summary.put(MD.TIMELAPSE_INTERVAL, acq instanceof FixedAreaAcquisition ? ((FixedAreaAcquisition) acq).getTimeInterval_ms() : 0);
             //write pixel overlap into metadata
-            summary.put("GridPixelOverlapX", acq.getOverlapX());
-            summary.put("GridPixelOverlapY", acq.getOverlapY());
-            summary.put("MagellanExploreAcquisition", acq instanceof ExploreAcquisition);
+            summary.put(MD.OVERLAP_X, acq.getOverlapX());
+            summary.put(MD.OVERLAP_Y, acq.getOverlapY());
+            summary.put(MD.EXPLORE_ACQ, acq instanceof ExploreAcquisition);
 
+            //affine transform
+            AffineTransform at = AffineUtils.getAffineTransform(core.getCurrentPixelSizeConfig(), 0, 0);
+            summary.put(MD.AFFINE_TRANSFORM, AffineUtils.transformToString(at));
+            
             JSONArray chNames = new JSONArray();
             JSONArray chColors = new JSONArray();
             String[] names = acq.getChannelNames();   
@@ -497,12 +489,12 @@ public class MagellanEngine {
                chNames.put(names[i]);
                chColors.put(colors[i].getRGB());
             }
-            summary.put("ChNames", chNames);
-            summary.put("ChColors", chColors);
+            summary.put(MD.CHANNEL_NAMES, chNames);
+            summary.put(MD.CHANNEL_COLORS, chColors);
 
             return summary;
         } catch (Exception ex) {
-            ReportingUtils.showError("couldnt make summary metadata");
+            Log.log("couldnt make summary metadata");
             ex.printStackTrace();
         }
         return null;

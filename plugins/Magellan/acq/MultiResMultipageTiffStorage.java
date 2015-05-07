@@ -4,11 +4,14 @@
  */
 package acq;
 
+import coordinates.AffineUtils;
 import coordinates.PositionManager;
+import coordinates.XYStagePosition;
 import java.awt.Point;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -18,14 +21,14 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import misc.Log;
-import misc.MagelUtils;
+import misc.LongPoint;
+import misc.MD;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  * This class manages multiple multipage Tiff datasets, averaging multiple 2x2
@@ -35,7 +38,7 @@ import org.micromanager.utils.ReportingUtils;
  * downsample factor without truncation
  *
  */
-public class MultiResMultipageTiffStorage  {
+public class MultiResMultipageTiffStorage {
 
    private final double BACKGROUND_PIXEL_PERCENTILE = 0.1; // assume background pixels are at 10th percentile of histogram
    private static final String FULL_RES_SUFFIX = "Full resolution";
@@ -53,59 +56,105 @@ public class MultiResMultipageTiffStorage  {
    private int byteDepth_;
    private TreeMap<Integer, Integer> backgroundPix_ = new TreeMap<Integer, Integer>(); //map of channel index to background pixel value
    private final boolean estimateBackground_;
+   private int maxSliceIndex_ = 0;
+   private double pixelSizeXY_, pixelSizeZ_;
+   private AffineTransform affine_;
    
-   public MultiResMultipageTiffStorage(String dir, boolean newDataSet, JSONObject summaryMetadata,
-           int overlapX, int overlapY, String pixelSizeConfig, boolean estimateBackground) {
+   /**
+    * Constructor to load existing storage from disk
+    * dir --top level saving directory
+    */
+   public MultiResMultipageTiffStorage(String dir) throws IOException {
+      directory_ = dir;
+      estimateBackground_ = false;
+      String fullResDir = dir + (dir.endsWith(File.separator) ? "" : File.separator) + FULL_RES_SUFFIX;
+      //create fullResStorage
+      fullResStorage_ = new TaggedImageStorageMultipageTiff(fullResDir, false, null);
+      summaryMD_ = fullResStorage_.getSummaryMetadata();
+      readSummaryMetadata();
+      lowResStorages_ = new TreeMap<Integer, TaggedImageStorageMultipageTiff>();
+      //create low res storages
+      int resIndex = 1;
+      while (true) {
+         String dsDir = directory_ + (directory_.endsWith(File.separator) ? "" : File.separator) + 
+              DOWNSAMPLE_SUFFIX + (int) Math.pow(2, resIndex);
+         if (!new File(dsDir).exists() ) {
+            break;
+         }
+         lowResStorages_.put(resIndex, new TaggedImageStorageMultipageTiff(dsDir, false, null));
+         resIndex++;         
+      }
+         
+      //create position manager
+      //TODO: more is needed for explore acqs since positions wonr be present in initial position list
+      try {
+         posManager_ = new PositionManager(affine_, summaryMD_, tileWidth_, tileHeight_,
+                 fullResTileWidthIncludingOverlap_, fullResTileHeightIncludingOverlap_, xOverlap_, yOverlap_);
+      } catch (Exception e) {
+         Log.log("Couldn't create position manager",true );
+      }
+   }
+
+   /**
+    * Constructor for creating new storage prior to acquisition
+    */
+   public MultiResMultipageTiffStorage(String dir, JSONObject summaryMetadata, boolean estimateBackground) {
       estimateBackground_ = estimateBackground;
       try {
-         xOverlap_ = overlapX;
-         yOverlap_ = overlapY;
-         if (summaryMetadata != null) {
-            try {
-               byteDepth_ = MDUtils.getBytesPerPixel(summaryMetadata);
-               fullResTileWidthIncludingOverlap_ = MDUtils.getWidth(summaryMetadata);
-               fullResTileHeightIncludingOverlap_ = MDUtils.getHeight(summaryMetadata);
-               tileWidth_ = fullResTileWidthIncludingOverlap_ - xOverlap_;
-               tileHeight_ = fullResTileHeightIncludingOverlap_ - yOverlap_;
-            } catch (Exception e) {
-               ReportingUtils.showError("Problem with Image tags");
-            }
-         }
+         //make a copy in case tag changes are needed later
+         summaryMD_ = new JSONObject(summaryMetadata.toString());
+      } catch (JSONException ex) {
+         Log.log("Couldnt copy summary metadata", true);
+      }
+      readSummaryMetadata();
 
-         lowResStorages_ = new TreeMap<Integer, TaggedImageStorageMultipageTiff>();
+      //prefix is provided by summary metadata
+      try {
+         String baseName = summaryMetadata.getString("Prefix");
+         uniqueAcqName_ = getUniqueAcqDirName(dir, baseName);
+         //create acqusition directory for actual data
+         directory_ = dir + (dir.endsWith(File.separator) ? "" : File.separator) + uniqueAcqName_;
+      } catch (Exception e) {
+         Log.log("Couldn't make acquisition directory");
+      }
 
-         //prefix is provided by summary metadata
-         try {
-            if (!summaryMetadata.has("Prefix")) {
-               ReportingUtils.showError("Acquisition name prefix not found in summary MD");
-            }
-            String baseName = summaryMetadata.getString("Prefix");
-            uniqueAcqName_ = getUniqueAcqDirName(dir, baseName);
-            //create acqusition directory for actual data
-            directory_ = dir + (dir.endsWith(File.separator) ? "" : File.separator) + uniqueAcqName_;
-         } catch (Exception e) {
-            ReportingUtils.showError("Couldn't make acquisition directory");
-         }
+      //create directory for full res data
+      String fullResDir = directory_ + (dir.endsWith(File.separator) ? "" : File.separator) + FULL_RES_SUFFIX;
+      try {
+         JavaUtils.createDirectory(fullResDir);
+      } catch (Exception ex) {
+         Log.log("couldn't create saving directory", true);
+      }
 
-         //create directory for full res data
-         String fullResDir = directory_ + (dir.endsWith(File.separator) ? "" : File.separator) + FULL_RES_SUFFIX;
-         try {
-            JavaUtils.createDirectory(fullResDir);
-         } catch (Exception ex) {
-            ReportingUtils.showError("copuldnt create directory");
-         }
-         try {
-            //make a copy in case tag changes are needed later
-            summaryMD_ = new JSONObject(summaryMetadata.toString());
-            posManager_ = new PositionManager(pixelSizeConfig, summaryMD_, tileWidth_, tileHeight_, 
-                    fullResTileWidthIncludingOverlap_, fullResTileHeightIncludingOverlap_, xOverlap_, yOverlap_);
-         } catch (JSONException ex) {
-            ReportingUtils.showError("Couldnt copy summary metadata");
-         }
+      try {
+         posManager_ = new PositionManager(affine_, summaryMD_, tileWidth_, tileHeight_,
+                 fullResTileWidthIncludingOverlap_, fullResTileHeightIncludingOverlap_, xOverlap_, yOverlap_);
+      } catch (Exception e) {
+         Log.log("Couldn't create position manaher", true);
+      }
+      try {
          //Create full Res storage
-         fullResStorage_ = new TaggedImageStorageMultipageTiff(fullResDir, newDataSet, summaryMetadata, false, true, true);
-      } catch (IOException e) {
-         ReportingUtils.showError(e.toString());
+         fullResStorage_ = new TaggedImageStorageMultipageTiff(fullResDir, true, summaryMetadata);
+      } catch (IOException ex) {
+         Log.log("couldn't create Full res storage", true);
+      }
+      lowResStorages_ = new TreeMap<Integer, TaggedImageStorageMultipageTiff>();
+   }
+
+   private void readSummaryMetadata( ) {
+      try {
+         xOverlap_ = summaryMD_.getInt(MD.OVERLAP_X);
+         yOverlap_ = summaryMD_.getInt(MD.OVERLAP_Y);
+         byteDepth_ = MDUtils.getBytesPerPixel(summaryMD_);
+         fullResTileWidthIncludingOverlap_ = MDUtils.getWidth(summaryMD_);
+         fullResTileHeightIncludingOverlap_ = MDUtils.getHeight(summaryMD_);
+         tileWidth_ = fullResTileWidthIncludingOverlap_ - xOverlap_;
+         tileHeight_ = fullResTileHeightIncludingOverlap_ - yOverlap_;
+         pixelSizeZ_ = summaryMD_.getDouble(MD.Z_STEP_UM);
+         pixelSizeXY_ = summaryMD_.getDouble(MD.PIX_SIZE);
+         affine_ = AffineUtils.stringToTransform(summaryMD_.getString(MD.AFFINE_TRANSFORM));
+      } catch (Exception e) {
+         Log.log("Problem with Image tags", true);
       }
    }
    
@@ -113,6 +162,14 @@ public class MultiResMultipageTiffStorage  {
       return uniqueAcqName_;
    }
 
+   public double getPixelSizeZ() {
+      return pixelSizeZ_;
+   }
+   
+   public double getPixelSizeXY() {
+      return pixelSizeXY_;
+   }
+   
    public int getNumResLevels() {
       return 1 + lowResStorages_.keySet().size();
    }
@@ -124,11 +181,53 @@ public class MultiResMultipageTiffStorage  {
    public int getTileHeight() {
       return tileHeight_;
    }
-
-   public PositionManager getPositionManager() {
-      return posManager_;
+   
+   public long getNumRows() {
+      return posManager_.getNumRows();
+   }
+   
+   public long getNumCols() {
+      return posManager_.getNumCols();
+   }
+   
+   public long getGridRow(int fullResPosIndex, int resIndex) {
+      return posManager_.getGridRow(fullResPosIndex, resIndex);
+   }
+   
+   public long getGridCol(int fullResPosIndex, int resIndex) {
+      return posManager_.getGridCol(fullResPosIndex, resIndex);
+   }
+   
+   public XYStagePosition getXYPosition(int index) {
+      return posManager_.getXYPosition(index);
+   }
+   
+   public  int[] getPositionIndices(int[] rows, int[] cols) {
+      return posManager_.getPositionIndices(rows, cols);
    }
 
+   public int getMaxSliceIndex() {
+      return maxSliceIndex_;
+   }
+   
+   /* 
+    * @param stageCoords x and y coordinates of image in stage space
+    * @return absolute, full resolution pixel coordinate of given stage posiiton
+    */
+   public LongPoint getPixelCoordsFromStageCoords(double x, double y) {
+      return posManager_.getPixelCoordsFromStageCoords(x, y);
+   }
+
+   /**
+    *
+    * @param xAbsolute x coordinate in the full Res stitched image
+    * @param yAbsolute y coordinate in the full res stitched image
+    * @return stage coordinates of the given pixel position
+    */
+   public Point2D.Double getStageCoordsFromPixelCoords(long xAbsolute, long yAbsolute) {
+      return posManager_.getStageCoordsFromPixelCoords(xAbsolute, yAbsolute);
+   }
+   
    /*
     * It doesnt matter what resolution level the pixel is at since tiles
     * are the same size at every level
@@ -276,7 +375,7 @@ public class MultiResMultipageTiffStorage  {
                   }
                } catch (Exception e) {
                   e.printStackTrace();
-                  ReportingUtils.showError("Problem copying pixels");
+                  Log.log("Problem copying pixels");
                }
             }
             yOffset += lineHeights.get((int)(row - rowStart));
@@ -316,7 +415,7 @@ public class MultiResMultipageTiffStorage  {
          //update position manager to reflect addition of new resolution level
          posManager_.updateLowerResolutionNodes(lowResStorages_.keySet().size());
          String aLabel = fullResStorage_.imageKeys().iterator().next();
-         int[] indices = MagelUtils.getIndices(aLabel);
+         int[] indices = MD.getIndices(aLabel);
          TaggedImage anImage = fullResStorage_.getImage(indices[0], indices[1], indices[2], indices[3]);         
          addToLowResStorage(anImage, 0, indices[3]);
          return true;
@@ -331,7 +430,7 @@ public class MultiResMultipageTiffStorage  {
          slice = MDUtils.getSliceIndex(img.tags);
          frame = MDUtils.getFrameIndex(img.tags);
       } catch (JSONException e) {
-         ReportingUtils.showError("Couldn't find tags");
+         Log.log("Couldn't find tags");
       }
       if (estimateBackground_) {
          readBackgroundPixelValue(channel, img); //find a background pixel value in the first image
@@ -455,7 +554,7 @@ public class MultiResMultipageTiffStorage  {
                      ((short[])currentLevelPix)[index] = (short) (sum / count);
                   }
                } catch (Exception e) {
-                  ReportingUtils.showError("Couldn't copy pixels to lower resolution");
+                  Log.log("Couldn't copy pixels to lower resolution");
                   e.printStackTrace();
                   return;
                }
@@ -483,7 +582,7 @@ public class MultiResMultipageTiffStorage  {
             }
          } catch (Exception e) {
             e.printStackTrace();
-            ReportingUtils.showError("Couldnt modify tags for lower resolution level");
+            Log.log("Couldnt modify tags for lower resolution level");
          }
 
          //go on to next level of downsampling
@@ -498,7 +597,7 @@ public class MultiResMultipageTiffStorage  {
       try {
          JavaUtils.createDirectory(dsDir);
       } catch (Exception ex) {
-         ReportingUtils.showError("copuldnt create directory");
+         Log.log("copuldnt create directory");
       }
       try {
          JSONObject smd = new JSONObject(summaryMD_.toString());
@@ -508,21 +607,23 @@ public class MultiResMultipageTiffStorage  {
          TaggedImageStorageMultipageTiff storage = new TaggedImageStorageMultipageTiff(dsDir, true, smd);
          lowResStorages_.put(resIndex, storage);
       } catch (Exception ex) {
-         ReportingUtils.showError("Couldnt create downsampled storage");
+         Log.log("Couldnt create downsampled storage");
       }
    }
 
    public void putImage(TaggedImage taggedImage) throws MMException {
       try {
          synchronized (this) {
+            maxSliceIndex_ = Math.max( MDUtils.getSliceIndex(taggedImage.tags), maxSliceIndex_);
+            
             //write to full res storage as normal (i.e. with overlap pixels present)
             fullResStorage_.putImage(taggedImage);
             addToLowResStorage(taggedImage, 0, MDUtils.getPositionIndex(taggedImage.tags));
          }
       } catch (IOException ex) {
-         ReportingUtils.showError(ex.toString());
+         Log.log(ex.toString());
       } catch (JSONException ex) {
-         ReportingUtils.showError("Position index missing from tags");
+         Log.log("Position index missing from tags");
       }
    }
 
@@ -596,9 +697,17 @@ public class MultiResMultipageTiffStorage  {
       //For display purposes
       return directory_;
    }
+   
+   public int getNumChannels() {
+      return fullResStorage_.getNumChannels();
+   }
 
-   public int lastAcquiredFrame() {
-      return fullResStorage_.lastAcquiredFrame();
+   public int getNumFrames() {
+      return fullResStorage_.getMaxFrameIndexOpenedDataset() + 1;
+   }
+   
+   public int getNumSlices() {
+      return fullResStorage_.getMaxSliceIndexOpenedDataset() + 1;
    }
 
    public long getDataSetSize() {
@@ -664,7 +773,7 @@ public class MultiResMultipageTiffStorage  {
       } );
       Set<String> keys = imageKeys();
       for (String s : keys) {
-            int[] indices = MagelUtils.getIndices(s);
+            int[] indices = MD.getIndices(s);
             if (indices[1] == slice) {
                exploredTiles.add(new Point((int) posManager_.getGridCol(indices[3], 0), (int) posManager_.getGridRow(indices[3], 0)));
             }

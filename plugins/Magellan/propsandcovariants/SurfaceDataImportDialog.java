@@ -48,7 +48,7 @@ public class SurfaceDataImportDialog extends javax.swing.JDialog {
    public String[] getSurfaceNames() {      
       String[] names = new String[surfaceList_.getSelectedIndices().length];
       for (int i = 0; i < names.length; i++) {
-         names[i] = SurfaceManager.getInstance().getSurface(i).toString();
+         names[i] = SurfaceManager.getInstance().getSurface(surfaceList_.getSelectedIndices()[i]).toString();
       }
       return names;
    } 

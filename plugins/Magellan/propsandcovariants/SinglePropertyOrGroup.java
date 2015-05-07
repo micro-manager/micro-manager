@@ -2,19 +2,14 @@ package propsandcovariants;
 
 import acq.AcquisitionEvent;
 import java.text.ParseException;
-import propsandcovariants.Covariant;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
+import misc.Log;
 import mmcorej.CMMCore;
-import mmcorej.Configuration;
 import mmcorej.PropertyType;
 import mmcorej.StrVector;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.SortFunctionObjects;
 
 /**
@@ -72,7 +67,7 @@ public class SinglePropertyOrGroup implements Covariant{
 		   else
 			   return coreValue;
 	   } catch (Exception e) {
-         ReportingUtils.logError(e);
+         Log.log(e);
 		   return coreValue;
 	   }
    }
@@ -87,7 +82,7 @@ public class SinglePropertyOrGroup implements Covariant{
             return val;
          }
       } catch (Exception e) {
-         ReportingUtils.logError(e);
+         Log.log(e);
          return null;
       }
    }
@@ -127,7 +122,7 @@ public class SinglePropertyOrGroup implements Covariant{
          }
          value = setValueFromCoreString(coreVal);
       } catch (Exception e) {
-         ReportingUtils.logError(e);
+         Log.log(e);
       }
    }
 
@@ -165,7 +160,7 @@ public class SinglePropertyOrGroup implements Covariant{
             }
          }
       } catch(Exception e){
-         ReportingUtils.logMessage("error sorting " + toString());
+         Log.log(e);
       }
    }
 
@@ -198,7 +193,7 @@ public class SinglePropertyOrGroup implements Covariant{
          return new CovariantValue(val);
       }
      } catch (ParseException e ) {
-        ReportingUtils.showError("Problem parsing property value");
+        Log.log("Problem parsing property value");
         throw new RuntimeException();
      }
    }
@@ -363,7 +358,7 @@ public class SinglePropertyOrGroup implements Covariant{
          coreVal = core.getProperty(device, name);
          return convertValueToCovariantValue(coreVal);
       } catch (Exception ex) {
-         ReportingUtils.showError("Couldn't get " + name + " from core");
+         Log.log("Couldn't get " + name + " from core");
          throw new RuntimeException();
       }
    }

@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import acq.MMImageCache;
+import misc.Log;
 import mmcloneclasses.graph.HistogramSettings;
 import mmcloneclasses.graph.MultiChannelHistograms;
 import mmcloneclasses.graph.Histograms;
@@ -119,12 +120,16 @@ public abstract class VirtualAcquisitionDisplay{
          int numChannels = Math.max(summaryMD.getInt("Channels"), 1);
          numGrayChannels_ = numComponents_ * numChannels;
       } catch (Exception ex) {
-         ReportingUtils.showError("Couldn't read summary md");
+         Log.log("Couldn't read summary md");
       }
       title_ = name;
       imageCache_ = imageCache;
       setupEventBus();
       setupDisplayThread();
+   }
+   
+   public String getTitle() {
+      return title_;
    }
    
    public void setCMCPanel(ContrastMetadataPanel panel) {
@@ -241,12 +246,12 @@ public abstract class VirtualAcquisitionDisplay{
          } else {
             imageChannelIndex = -1;
          }
-         numFrames = Math.max(summaryMetadata.getInt("Frames"), 1);
+         numFrames = 1;
 
          numChannels = Math.max(1 + imageChannelIndex,
                  Math.max(summaryMetadata.getInt("Channels"), 1));
       } catch (JSONException e) {
-         ReportingUtils.showError(e);
+         Log.log(e);
       } 
       numGrayChannels = numComponents_ * numChannels;
 
@@ -255,7 +260,7 @@ public abstract class VirtualAcquisitionDisplay{
          try {
             imageCache_.setDisplayAndComments(DisplaySettings.getDisplaySettingsFromSummary(summaryMetadata));
          } catch (Exception ex) {
-            ReportingUtils.logError(ex, "Problem setting display and Comments");
+            Log.log(ex);
          }
       }
 
@@ -267,9 +272,9 @@ public abstract class VirtualAcquisitionDisplay{
             type = MDUtils.getSingleChannelType(summaryMetadata);
          }
       } catch (JSONException ex) {
-         ReportingUtils.showError(ex, "Unable to determine acquisition type.");
+         Log.log("Unable to determine acquisition type.");
       } catch (MMScriptException ex) {
-         ReportingUtils.showError(ex, "Unable to determine acquisition type.");
+         Log.log("Unable to determine acquisition type.");
       }
          
       virtualStack_ = virtualStack;
@@ -338,7 +343,7 @@ public abstract class VirtualAcquisitionDisplay{
       catch (IllegalStateException e) {
          // The queue was full. This should never happen as the queue has
          // MAXINT size. 
-         ReportingUtils.logError("Ran out of space in the imageQueue! Inconceivable!");
+         Log.log("Ran out of space in the imageQueue! Inconceivable!",true);
       }
    }
 
@@ -349,10 +354,10 @@ public abstract class VirtualAcquisitionDisplay{
          }
          return channelIndex;
       } catch (MMScriptException ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
          return 0;
       } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
          return 0;
       }
    }
@@ -367,10 +372,10 @@ public abstract class VirtualAcquisitionDisplay{
          }
          return grayIndex;
       } catch (MMScriptException ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
          return 0;
       } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
          return 0;
       }
    }
@@ -472,7 +477,7 @@ public abstract class VirtualAcquisitionDisplay{
          axisToPosition.put("z", slice);
          bus_.post(new NewImageEvent(axisToPosition));
       } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
       }
 
       //make sure pixels get properly set
@@ -513,7 +518,7 @@ public abstract class VirtualAcquisitionDisplay{
          try {
             channelGroup_ = MDUtils.getChannelGroup(tags);
          } catch (JSONException ex) {
-            ReportingUtils.logError("Couldn't find Core-ChannelGroup in image metadata");
+            Log.log("Couldn't find Core-ChannelGroup in image metadata", true);
          }
          firstImage_ = false;
       }
@@ -634,7 +639,7 @@ public abstract class VirtualAcquisitionDisplay{
       }
       catch (InterruptedException e) {
          // Wait, what? This should never happen.
-         ReportingUtils.logError(e, "Display thread interrupted while waiting for it to finish on its own");
+         Log.log(e);
       }
       // Remove us from the CanvasPaintPending system; prevents a memory leak.
       // We could equivalently do this in the display thread, but it has
@@ -690,7 +695,7 @@ public abstract class VirtualAcquisitionDisplay{
       try {
          getSummaryMetadata().put("Comment", comment);
       } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
       }
    }
 
@@ -711,7 +716,7 @@ public abstract class VirtualAcquisitionDisplay{
                Runtime.getRuntime().exec("open " + location.getAbsolutePath());
             }
          } catch (IOException ex) {
-            ReportingUtils.logError(ex);
+            Log.log(ex);
          }
       }
    }

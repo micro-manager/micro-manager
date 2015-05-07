@@ -19,10 +19,11 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import bidc.CoreCommunicator;
 import channels.ChannelSetting;
+import coordinates.AffineUtils;
+import java.awt.geom.Point2D;
 import misc.Log;
 import org.json.JSONArray;
 import org.micromanager.MMStudio;
-import org.micromanager.utils.ReportingUtils;
 import surfacesandregions.Point3d;
 
 /**
@@ -95,12 +96,13 @@ public class FixedAreaAcquisition extends Acquisition {
             int fullTileHeight = (int) CoreCommunicator.getInstance().getImageHeight();
             int tileWidthMinusOverlap = fullTileWidth - this.getOverlapX();
             int tileHeightMinusOverlap = fullTileHeight - this.getOverlapY();
-            positions_.add(new XYStagePosition(MMStudio.getInstance().getCore().getXYStagePosition(xyStage_),
-                    tileWidthMinusOverlap, tileHeightMinusOverlap, fullTileWidth, fullTileHeight, 0, 0,
-                    MMStudio.getInstance().getCore().getCurrentPixelSizeConfig()));
+            Point2D.Double currentStagePos = MMStudio.getInstance().getCore().getXYStagePosition(xyStage_);  
+            positions_.add(new XYStagePosition( currentStagePos, tileWidthMinusOverlap, tileHeightMinusOverlap, fullTileWidth, fullTileHeight, 0, 0,
+                    AffineUtils.getAffineTransform(MMStudio.getInstance().getCore().getCurrentPixelSizeConfig(), 
+                    currentStagePos.x, currentStagePos.y)));
          }
       } catch (Exception e) {
-         ReportingUtils.showError("Problem with Acquisition's XY positions. Check acquisition settings");
+         Log.log("Problem with Acquisition's XY positions. Check acquisition settings");
          throw new RuntimeException();
       }
    }
@@ -119,12 +121,12 @@ public class FixedAreaAcquisition extends Acquisition {
        int index = 0;
        for (ChannelSetting channel : channels_) {
           if (channel.name_.equals(settings_.autofocusChannelName_)  ) {
-              Log.log("Autofocus channel index: " + index);
+              Log.log("Autofocus channel index: " + index,true);
              return index;
           }
           index++;
        }
-       Log.log("Warning: couldn't find autofocus channel index");
+       Log.log("Warning: couldn't find autofocus channel index",true);
        return index;
    }
    
@@ -194,7 +196,7 @@ public class FixedAreaAcquisition extends Acquisition {
          //make sure engine doesnt get stuck
          
       } catch (InterruptedException ex) {
-         ReportingUtils.showError("Unexpected interrupted exception while trying to abort"); //shouldnt happen
+         Log.log("Unexpected interrupted exception while trying to abort"); //shouldnt happen
       }
 
         
@@ -225,7 +227,7 @@ public class FixedAreaAcquisition extends Acquisition {
     * @throws InterruptedException if acq aborted while waiting for next TP
     */
    private void pauseUntilReadyForTP() throws InterruptedException {
-      Log.log(getName() + " Pausing until ready for TP");   
+      Log.log(getName() + " Pausing until ready for TP",true);   
       //Pause here bfore next time point starts
          long timeUntilNext = nextTimePointStartTime_ms_ - System.currentTimeMillis();
          if (timeUntilNext > 0) {
@@ -252,7 +254,7 @@ public class FixedAreaAcquisition extends Acquisition {
             startNextTPLatch_.await();
             startNextTPLatch_ = new CountDownLatch(1);
          }
-         Log.log(getName() + " Pause before TP complete");
+         Log.log(getName() + " Pause before TP complete",true);
 
    }
 
@@ -276,10 +278,11 @@ public class FixedAreaAcquisition extends Acquisition {
                   }
                   
                   //set autofocus position
-                  Log.log(getName() + "Setting SF position");
-                  if (settings_.autofocusEnabled_ && timeIndex > 1) { //read it from settings so that you can turn it off during acq
+                  if (settings_.autofocusEnabled_ && timeIndex > 1) { //read it from settings so that you can turn it off during acq                    
+                     Log.log(getName() + "Setting AF position",true);
                      events_.put(AcquisitionEvent.createAutofocusEvent(settings_.autoFocusZDevice_, autofocus_.getAutofocusPosition()));
-                  } else if (settings_.autofocusEnabled_ && timeIndex <= 1 && settings_.setInitialAutofocusPosition_) {
+                  } else if (settings_.autofocusEnabled_ && timeIndex <= 1 && settings_.setInitialAutofocusPosition_) {                     
+                     Log.log(getName() + "Setting AF position",true);
                      events_.put(AcquisitionEvent.createAutofocusEvent(settings_.autoFocusZDevice_, settings_.initialAutofocusPosition_));
                   }
                   //set the next time point start time
@@ -423,7 +426,7 @@ public class FixedAreaAcquisition extends Acquisition {
             //region2D or no region
             return core_.getPosition(zStage_);
          } catch (Exception ex) {
-            Log.log("couldn't get z position");
+            Log.log("couldn't get z position",true);
             throw new RuntimeException();
          }
       }

@@ -7,7 +7,7 @@ import java.text.ParseException;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
-import org.micromanager.utils.ReportingUtils;
+import misc.Log;
 import propsandcovariants.DeviceControlTableModel;
 import propsandcovariants.SinglePropertyOrGroup;
 
@@ -50,7 +50,7 @@ public class PropertyValueCellRenderer implements TableCellRenderer {
          try {
             slider.setText((String) value);
          } catch (ParseException ex) {
-            ReportingUtils.logError(ex);
+            Log.log(ex);
          }
          slider.setToolTipText(item_.value);
          comp = slider;

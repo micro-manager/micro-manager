@@ -4,16 +4,12 @@
  */
 package acq;
 
-import autofocus.CrossCorrelationAutofocus;
 import gui.GUI;
-import ij.IJ;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.CyclicBarrier;
 import javax.swing.JOptionPane;
-import misc.GlobalSettings;
-import org.micromanager.MMStudio;
-import org.micromanager.utils.ReportingUtils;
+import misc.Log;
 
 /**
  *
@@ -303,7 +299,7 @@ public class MultipleAcquisitionManager {
          } //otherwise it was aborted, so nothing to do        
       } catch (Exception ex) {
          //exceptions should never happen because this is always the second await to be called
-         ReportingUtils.showError("Unexpected exception: multi acq manager interrupted or barrier broken");
+         Log.log("Unexpected exception: multi acq manager interrupted or barrier broken");
          ex.printStackTrace();
          throw new RuntimeException();
       }

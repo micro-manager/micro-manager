@@ -9,7 +9,6 @@ import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
-import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.SliderPanel;
 import propsandcovariants.DeviceControlTableModel;
 
@@ -45,7 +44,7 @@ public class CovariantValueCellRenderer implements TableCellRenderer {
 //         try {
 //            slider.setText(((CovariantValue) value).toString());
 //         } catch (ParseException ex) {
-//            ReportingUtils.logError(ex);
+//            Log.log(ex);
 //         }
 //         slider.setToolTipText(data.getPairing().getValue(colIndex, rowIndex).toString());
 //         comp = slider;

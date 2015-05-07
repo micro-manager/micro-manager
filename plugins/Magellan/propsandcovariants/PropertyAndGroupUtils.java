@@ -8,11 +8,11 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.TreeMap;
 import java.util.prefs.Preferences;
+import misc.Log;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -124,7 +124,7 @@ public class PropertyAndGroupUtils {
          }
          mmapi.enableLiveMode(liveMode);
       } catch (Exception e) {
-         ReportingUtils.showError("Problem reading properties from core");
+         Log.log("Problem reading properties from core");
       }
       return props;
    }

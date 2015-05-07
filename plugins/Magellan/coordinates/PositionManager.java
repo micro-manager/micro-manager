@@ -12,13 +12,13 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import bidc.CoreCommunicator;
 import misc.Log;
+import misc.LongPoint;
 import mmcorej.CMMCore;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.ReportingUtils;
 
 
 /*
@@ -34,7 +34,7 @@ public class PositionManager {
    private static final String MULTI_RES_NODE_KEY = "MultiResPositionNode";
    
    
-   private final String pixelSizeConfig_;
+   private final AffineTransform affine_;
    private JSONArray positionList_; //all access to positionlist in synchronized methods for thread safety
    private int minRow_, maxRow_, minCol_, maxCol_; //For the lowest resolution level
    private String xyStageName_ = MMStudio.getInstance().getCore().getXYStageDevice();
@@ -44,9 +44,9 @@ public class PositionManager {
    private final int fullTileWidth_, fullTileHeight_;
    private final int overlapX_, overlapY_;
    
-   public PositionManager(String pixelSizeConfig, JSONObject summaryMD, int displayTileWidth, int displayTileHeight,
+   public PositionManager(AffineTransform transform, JSONObject summaryMD, int displayTileWidth, int displayTileHeight,
            int fullTileWidth, int fullTileHeight, int overlapX, int overlapY) {
-      pixelSizeConfig_ = pixelSizeConfig;
+      affine_ = transform;
       positionNodes_ = new TreeMap<Integer,TreeSet<MultiResPositionNode>>();
       readRowsAndColsFromPositionList(summaryMD);
       displayTileWidth_ = displayTileWidth;
@@ -70,10 +70,12 @@ public class PositionManager {
          JSONArray jsonPos = positionList_.getJSONObject(index).getJSONObject("DeviceCoordinatesUm").getJSONArray(xyStageName_);
          Point2D.Double posCenter = new Point2D.Double(jsonPos.getDouble(0), jsonPos.getDouble(1));
          //Full 
+         AffineTransform positionTransform = (AffineTransform) affine_.clone();
+         positionTransform.translate(posCenter.x, posCenter.y);
          return new XYStagePosition(posCenter, displayTileWidth_, displayTileHeight_,
-                 fullTileWidth_, fullTileHeight_, (int) getGridRow(index, 0), (int) getGridCol(index, 0), pixelSizeConfig_);
+                 fullTileWidth_, fullTileHeight_, (int) getGridRow(index, 0), (int) getGridCol(index, 0), positionTransform);
       } catch (JSONException ex) {
-         ReportingUtils.showError("problem with position metadata");
+         Log.log("problem with position metadata");
          throw new RuntimeException();
       }
    }
@@ -112,7 +114,7 @@ public class PositionManager {
             return node.positionIndex;
          }
       }
-      ReportingUtils.showError("Could't find full resolution child of node");
+      Log.log("Could't find full resolution child of node");
       return -1;
    }
 
@@ -125,7 +127,7 @@ public class PositionManager {
          return node.positionIndex;
       } catch (Exception e) {
          e.printStackTrace();
-         Log.log("Couldnt read position list correctly");
+         Log.log("Couldnt read position list correctly", true);
          return 0;
       }
    }
@@ -139,7 +141,7 @@ public class PositionManager {
          return node.gridRow;
       } catch (JSONException e) {
          e.printStackTrace();
-         Log.log("Couldnt read position list correctly");
+         Log.log("Couldnt read position list correctly", true);
          return 0;
       }
    }
@@ -153,7 +155,7 @@ public class PositionManager {
          return node.gridCol;
       } catch (JSONException e) {
          e.printStackTrace();
-         Log.log("Couldnt read position list correctly");
+         Log.log("Couldnt read position list correctly", true);
          return 0;
       }
    }
@@ -211,7 +213,7 @@ public class PositionManager {
          updateLowerResolutionNodes();
          return posIndices;
       } catch (JSONException e) {
-         ReportingUtils.showError("Problem with position metadata");
+         Log.log("Problem with position metadata");
          return null;
       }
    }
@@ -238,7 +240,7 @@ public class PositionManager {
             positionList_ = new JSONArray();
          }
       } catch (JSONException e) {
-         ReportingUtils.showError("Couldn't read initial position list");
+         Log.log("Couldn't read initial position list");
       }
    }
 
@@ -259,7 +261,7 @@ public class PositionManager {
 
          return pos;
       } catch (Exception e) {
-         ReportingUtils.showError("Couldn't create XY position");
+         Log.log("Couldn't create XY position");
          return null;
       }
    }
@@ -302,7 +304,7 @@ public class PositionManager {
             linkToParentNodes(node, lowestResLevel);
          }
       } catch (JSONException e) {
-         ReportingUtils.showError("Problem reading position metadata");
+         Log.log("Problem reading position metadata");
       }
    }
 
@@ -360,7 +362,7 @@ public class PositionManager {
     * @param stageCoords x and y coordinates of image in stage space
     * @return absolute, full resolution pixel coordinate of given stage posiiton
     */
-   public synchronized Point getPixelCoordsFromStageCoords(double stageX, double stageY) {
+   public synchronized LongPoint getPixelCoordsFromStageCoords(double stageX, double stageY) {
       try {
           JSONObject existingPosition = positionList_.getJSONObject(0);
          double exisitngX = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(0);
@@ -371,19 +373,19 @@ public class PositionManager {
          //get stage displacement from center of the tile we have coordinates for
          double dx = stageX - exisitngX;
          double dy = stageY - exisitngY;
-         AffineTransform transform = AffineUtils.getAffineTransform(pixelSizeConfig_,0, 0);
+         AffineTransform transform = (AffineTransform) affine_.clone();
          Point2D.Double pixelOffset = new Point2D.Double(); // offset in number of pixels from the center of this tile
          transform.inverseTransform(new Point2D.Double(dx,dy), pixelOffset);                     
          //Add pixel offset to pixel center of this tile to get absolute pixel position
-         int xPixel = (int) ((existingColumn + 0.5) * displayTileWidth_  + pixelOffset.x);
-         int yPixel = (int) ((existingRow + 0.5) * displayTileHeight_  + pixelOffset.y);
-         return new Point(xPixel,yPixel);
+         long xPixel = (int) ((existingColumn + 0.5) * displayTileWidth_  + pixelOffset.x);
+         long yPixel = (int) ((existingRow + 0.5) * displayTileHeight_  + pixelOffset.y);
+         return new LongPoint(xPixel,yPixel);
       } catch (JSONException ex) {
         ex.printStackTrace();
-         Log.log("Problem with current position metadata");
+         Log.log("Problem with current position metadata", true);
          return null;
       } catch (NoninvertibleTransformException e) {
-         ReportingUtils.showError("Problem using affine transform to convert stage coordinates to pixel coordinates");
+         Log.log("Problem using affine transform to convert stage coordinates to pixel coordinates");
          return null;
       }
    }
@@ -404,13 +406,15 @@ public class PositionManager {
          //get pixel displacement from center of the tile we have coordinates for
          long dxPix = (long) (xAbsolute - (existingColumn + 0.5) * displayTileWidth_);
          long dyPix = (long) (yAbsolute - (existingRow + 0.5) * displayTileHeight_);
-         AffineTransform transform = AffineUtils.getAffineTransform(pixelSizeConfig_,exisitngX, exisitngY);
+         
+         AffineTransform transform = (AffineTransform) affine_.clone();
+         transform.translate(exisitngX, exisitngY);
          Point2D.Double stagePos = new Point2D.Double();
          transform.transform(new Point2D.Double(dxPix, dyPix), stagePos);  
          return stagePos;
       } catch (JSONException ex) {
         ex.printStackTrace();;
-         Log.log("Problem with current position metadata");
+         Log.log("Problem with current position metadata", true);
          return null;
 }
       
@@ -434,7 +438,7 @@ public class PositionManager {
                //create position 0 based on current XY stage position
                return new Point2D.Double(core.getXPosition(core.getXYStageDevice()), core.getYPosition(core.getXYStageDevice()));
             } catch (Exception ex) {
-               ReportingUtils.showError("Couldn't create position 0");
+               Log.log("Couldn't create position 0");
                return null;
             }
          } else {
@@ -448,15 +452,16 @@ public class PositionManager {
             double xPixelOffset = (col - existingColumn) * (CoreCommunicator.getInstance().getImageWidth() - pixelOverlapX);
             double yPixelOffset = (row - existingRow) * (CoreCommunicator.getInstance().getImageHeight() - pixelOverlapY);
 
-            AffineTransform transform = AffineUtils.getAffineTransform(pixelSizeConfig_, exisitngX, exisitngY);
             Point2D.Double stagePos = new Point2D.Double();
+            AffineTransform transform = (AffineTransform) affine_.clone();
+            transform.translate(exisitngX, exisitngY);
             transform.transform(new Point2D.Double(xPixelOffset, yPixelOffset), stagePos);
             return stagePos;
          }
 
       } catch (JSONException ex) {
          ex.printStackTrace();
-         Log.log("Problem with current position metadata");
+         Log.log("Problem with current position metadata", true);
          return null;
       }
    }

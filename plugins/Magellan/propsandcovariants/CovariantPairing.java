@@ -11,10 +11,10 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.TreeMap;
+import misc.Log;
 import org.apache.commons.math3.analysis.interpolation.LinearInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  * Class that encapsulates and independent and a dependent covariant, and a set of covaried values between the two
@@ -139,13 +139,13 @@ public class CovariantPairing {
             }
          }
          if (newPairingIndependentValue == null) {
-            ReportingUtils.showMessage("All independent values of covariant already taken. Must delete existing value to add new one");
+            Log.log("All independent values of covariant already taken. Must delete existing value to add new one");
             return;
          }
       } else {
          newPairingIndependentValue = independent_.getValidValue(independentValues_);
          if (newPairingIndependentValue == null) {
-            ReportingUtils.showMessage("All independent values of covariant already taken. Must delete existing value to add new one");
+            Log.log("All independent values of covariant already taken. Must delete existing value to add new one");
             return;
          }
       }
@@ -183,7 +183,7 @@ public class CovariantPairing {
          Collections.sort(independentValues_);
          updateInterpolant();
       } else {
-         ReportingUtils.showMessage(independentValue + " and " + dependentValue + " are not a valid pairing for "
+         Log.log(independentValue + " and " + dependentValue + " are not a valid pairing for "
                  + independent_.getName() + " and " + dependent_.getName());
       }
    }
@@ -199,7 +199,7 @@ public class CovariantPairing {
          value.restrainWithinLimits(independent_);
          //new independent, exisiting dependent 
          if (!independent_.isValid(value)) {
-            ReportingUtils.showMessage("Invalid value");
+            Log.log("Invalid value");
             throw new RuntimeException();
          }
          valueMap_.put(value, valueMap_.remove(independentValues_.get(rowIndex)));
@@ -210,7 +210,7 @@ public class CovariantPairing {
          //new dependent, existiing independent 
          value.restrainWithinLimits(dependent_);
          if (!dependent_.isValid(value)) {
-            ReportingUtils.showMessage("Invalid value");
+            Log.log("Invalid value");
             throw new RuntimeException();
          }
          valueMap_.put(independentValues_.get(rowIndex), value);
@@ -233,7 +233,7 @@ public class CovariantPairing {
             return new CovariantValue(NumberUtils.displayStringToDouble(s));
          }
       } catch (ParseException e) {
-         ReportingUtils.showError("Invalid value");
+         Log.log("Invalid value");
          return null;
       }
    }

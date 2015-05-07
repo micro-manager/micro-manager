@@ -31,7 +31,7 @@ import java.util.prefs.Preferences;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.micromanager.utils.ReportingUtils;
+import misc.Log;
 
 /**
  *
@@ -437,7 +437,7 @@ public class ContrastPanel extends JPanel {
          try {
             SwingUtilities.invokeAndWait(runnable);
          } catch (Exception ex) {
-            ReportingUtils.showError("Couldn't initialize display mode");
+            Log.log("Couldn't initialize display mode");
          }
       }
    }

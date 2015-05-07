@@ -30,7 +30,6 @@ import org.apache.commons.math3.geometry.euclidean.twod.hull.MonotoneChain;
 import org.apache.commons.math3.geometry.partitioning.Region;
 import org.apache.commons.math3.geometry.partitioning.RegionFactory;
 import org.micromanager.MMStudio;
-import org.micromanager.utils.ReportingUtils;
 import propsandcovariants.CovariantPairingsManager;
 import propsandcovariants.SurfaceData;
 
@@ -72,7 +71,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       try {
          pixelSizeConfig_ = MMStudio.getInstance().getCore().getCurrentPixelSizeConfig();
       } catch (Exception ex) {
-         ReportingUtils.showError("couldnt get pixel size config");
+         Log.log("couldnt get pixel size config");
       }
       //store points sorted by z coordinate to easily find the top, for generating slice index 0 position
       points_ = new TreeSet<Point3d>(new Comparator<Point3d>() {
@@ -192,11 +191,11 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    public SingleResolutionInterpolation waitForCurentInterpolation() throws InterruptedException {
       synchronized (interpolationLock_) {
          if (currentInterpolation_ == null) {
-            Log.log("waiting for current interpolation");
+            Log.log("waiting for current interpolation",true);
             while (currentInterpolation_ == null) {
                interpolationLock_.wait();
             }
-            Log.log("interpolation ready");
+            Log.log("interpolation ready",true);
             return currentInterpolation_;
          }
          return currentInterpolation_;
@@ -252,7 +251,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       try {
          transform.inverseTransform(new Point2D.Double(xSpan, ySpan), pixelSpan);
       } catch (NoninvertibleTransformException ex) {
-         ReportingUtils.showError("Problem inverting affine transform");
+         Log.log("Problem inverting affine transform");
       }
       outerloop:
       for (double x = 0; x <= pixelSpan.x; x += pixelSpan.x / (double) NUM_XY_TEST_POINTS) {
@@ -398,7 +397,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
          try {
             transform.inverseTransform(new Point2D.Double(dx, dy), pixelOffset);
          } catch (NoninvertibleTransformException ex) {
-            ReportingUtils.showError("Problem inverting affine transform");
+            Log.log("Problem inverting affine transform");
          }
          boundYPixelMin_ = (int) Math.min(boundYPixelMin_, pixelOffset.y);
          boundYPixelMax_ = (int) Math.max(boundYPixelMax_, pixelOffset.y);
@@ -448,8 +447,9 @@ public abstract class SurfaceInterpolator implements XYFootprint {
             Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
             Point2D.Double stagePos = new Point2D.Double();
             transform.transform(pixelPos, stagePos);
+            AffineTransform posTransform = AffineUtils.getAffineTransform(pixelSizeConfig_, stagePos.x, stagePos.y);
             positions.add(new XYStagePosition(stagePos, tileWidthMinusOverlap, tileHeightMinusOverlap,
-                    fullTileWidth, fullTileHeight, row, col, pixelSizeConfig_));
+                    fullTileWidth, fullTileHeight, row, col, posTransform));
          }
       }
       //delete positions squares (+padding) that do not overlap convex hull

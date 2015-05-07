@@ -1,14 +1,11 @@
 package acq;
 
-import coordinates.PositionManager;
-import gui.SettingsDialog;
 import ij.IJ;
 import imagedisplay.DisplayPlus;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import bidc.CoreCommunicator;
 import channels.ChannelSetting;
-import gui.GUI;
 import java.awt.Color;
 import java.util.ArrayList;
 import mmcorej.CMMCore;
@@ -16,7 +13,6 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.micromanager.MMStudio;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  * Abstract class that manages a generic acquisition. Subclassed into specific
@@ -33,14 +29,12 @@ public abstract class Acquisition implements AcquisitionEventSource{
    protected String xyStage_, zStage_;
    protected boolean zStageHasLimits_ = false;
    protected double zStageLowerLimit_, zStageUpperLimit_;
-   protected PositionManager posManager_;
    protected BlockingQueue<AcquisitionEvent> events_;
    protected TaggedImageSink imageSink_;
-   protected String pixelSizeConfig_;
    protected volatile boolean finished_ = false;
    private String name_;
    private long startTime_ms_ = -1;
-   private MultiResMultipageTiffStorage imageStorage_;
+   protected MultiResMultipageTiffStorage imageStorage_;
    private int overlapX_, overlapY_;
    private volatile boolean pause_ = false;
    private Object pauseLock_ = new Object();
@@ -62,7 +56,6 @@ public abstract class Acquisition implements AcquisitionEventSource{
        }
       zStep_ = zStep;
       events_ = new LinkedBlockingQueue<AcquisitionEvent>(getAcqEventQueueCap());
-      pixelSizeConfig_ = core_.getCurrentPixelSizeConfig();
    }
    
    public AcquisitionEvent getNextEvent() throws InterruptedException {
@@ -138,13 +131,12 @@ public abstract class Acquisition implements AcquisitionEventSource{
       overlapX_ = (int) (CoreCommunicator.getInstance().getImageWidth() * overlapPercent / 100);
       overlapY_ = (int) (CoreCommunicator.getInstance().getImageHeight() * overlapPercent / 100);
       JSONObject summaryMetadata = MagellanEngine.makeSummaryMD(this, name);
-      imageStorage_ = new MultiResMultipageTiffStorage(dir, true, summaryMetadata, overlapX_, overlapY_, pixelSizeConfig_,
+      imageStorage_ = new MultiResMultipageTiffStorage(dir, summaryMetadata,
               (this instanceof FixedAreaAcquisition)); //estimatye background pixel values for fixed acqs but not explore
       //storage class has determined unique acq name, so it can now be stored
       name_ = imageStorage_.getUniqueAcqName();
       MMImageCache imageCache = new MMImageCache(imageStorage_);
       imageCache.setSummaryMetadata(summaryMetadata);
-      posManager_ = imageStorage_.getPositionManager();      
       new DisplayPlus(imageCache, this, summaryMetadata, imageStorage_);         
       imageSink_ = new TaggedImageSink(engineOutputQueue_, imageCache, this);
       imageSink_.start();
@@ -156,10 +148,6 @@ public abstract class Acquisition implements AcquisitionEventSource{
 
    public double getZStep() {
       return zStep_;
-   }
-
-   public PositionManager getPositionManager() {
-      return posManager_;
    }
 
    public void addImage(TaggedImage img) {
