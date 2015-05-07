@@ -400,7 +400,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
             for (int i = 0; i < maxesArr.length; ++i) {
                maxesArr[i] = maxes.getInt(i);
             }
-            builder.channelContrastMins(maxesArr);
+            builder.channelContrastMaxes(maxesArr);
          }
          if (tags.has("magnification")) {
             builder.magnification(tags.getDouble("magnification"));
