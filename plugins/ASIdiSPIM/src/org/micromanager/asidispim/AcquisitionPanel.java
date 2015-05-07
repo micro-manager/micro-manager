@@ -926,7 +926,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       if (cameraMode == CameraModes.Keys.EDGE) {
          // for now simply recover "overhead time" in computeCameraResetTime()
          // if readout/reset calculations change then this may need to be more sophisticated
-         cameraExposureDelayTime = cameraResetTime - cameraReadoutTime;         
+         cameraExposureDelayTime = cameraResetTime - cameraReadoutTime;
+         ReportingUtils.logMessage("Exposure delay time is " + cameraExposureDelayTime); 
       }
       
       final float desiredPeriod = minSlicePeriodCB_.isSelected() ? 0 :
@@ -1498,10 +1499,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       double sliceDuration = controller_.computeActualSlicePeriod(sliceTiming_);
       if (exposureTime + cameraReadoutTime > sliceDuration) {
-         // only possible to mess this up using advanced timing settings
-         MyDialogUtils.showError("Exposure time is longer than time needed for a line scan.\n" +
-                 "This will result in dropped frames.\n" +
-                 "Please change input");
+         // should only only possible to mess this up using advanced timing settings
+         // or if there are errors in our own calculations
+         MyDialogUtils.showError("Exposure time of " + exposureTime +
+               " is longer than time needed for a line scan with " +
+               " readout time of " + cameraReadoutTime + "\n" + 
+               "This will result in dropped frames. " +
+               "Please change input");
          return false;
       }
       double volumeDuration = computeActualVolumeDuration();
