@@ -67,6 +67,16 @@ public class MetadataPanel extends InspectorPanel {
    private DisplayWindow display_;
    private Timer updateTimer_;
 
+   /** This class makes smaller JTables, since the default size is absurd. */
+   private class SmallerJTable extends JTable {
+      @Override
+      public Dimension getPreferredScrollableViewportSize() {
+         Dimension defSize = super.getPreferredScrollableViewportSize();
+         return new Dimension(Math.min(defSize.width, 325),
+               Math.min(defSize.height, 150));
+      }
+   }
+
    /** Creates new form MetadataPanel */
    public MetadataPanel() {
       imageMetadataModel_ = new MetadataTableModel();
@@ -80,12 +90,12 @@ public class MetadataPanel extends InspectorPanel {
       JSplitPane metadataSplitPane = new JSplitPane();
       JPanel imageMetadataScrollPane = new JPanel();
       JScrollPane imageMetadataTableScrollPane = new JScrollPane();
-      imageMetadataTable_ = new JTable();
+      imageMetadataTable_ = new SmallerJTable();
       showUnchangingPropertiesCheckbox_ = new JCheckBox();
       JLabel jLabel2 = new JLabel();
       JPanel summaryMetadataPanel = new JPanel();
       JScrollPane summaryMetadataScrollPane = new JScrollPane();
-      summaryMetadataTable_ = new JTable();
+      summaryMetadataTable_ = new SmallerJTable();
       JLabel jLabel3 = new JLabel();
 
       metadataSplitPane.setBorder(null);
