@@ -95,8 +95,10 @@ public final class HistogramsPanel extends InspectorPanel {
          Color.YELLOW, Color.WHITE};
    // Colors adapted from table at
    // http://www.nature.com/nmeth/journal/v8/n6/full/nmeth.1618.html
+   // Selection of the first three colors based on recommendations from
+   // Ankur Jain at the Vale lab.
    public static final Color[] COLORBLIND_COLORS = new Color[] {
-         new Color(0, 114, 178), new Color(230, 159, 0),
+         new Color(0, 114, 178), new Color(213, 94, 0),
          new Color(0, 158, 115), Color.RED, Color.CYAN, Color.YELLOW,
          Color.WHITE};
    private static final int GRAYSCALE = 0;
