@@ -27,6 +27,7 @@ import ij.gui.ImageWindow;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -247,6 +248,13 @@ public class MetadataPanel extends InspectorPanel {
          imageMetadataModel_.setMetadata(new JSONObject(), false);
          summaryMetadataModel_.setMetadata(new JSONObject(), false);
          return;
+      }
+      else {
+         // Show metadata for the displayed images, if any.
+         List<Image> images = display_.getDisplayedImages();
+         if (images.size() > 0) {
+            imageChangedUpdate(display_.getDisplayedImages().get(0));
+         }
       }
       display_.registerForEvents(this);
       store_ = display.getDatastore();
