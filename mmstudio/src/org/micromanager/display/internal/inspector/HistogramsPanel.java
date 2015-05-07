@@ -129,6 +129,7 @@ public final class HistogramsPanel extends InspectorPanel {
    private MMVirtualStack stack_;
    private ImagePlus ijImage_;
    private Timer histogramUpdateTimer_;
+   private boolean isFirstDrawEvent_ = true;
    private long lastUpdateTime_ = 0;
    private boolean updatingCombos_ = false;
 
@@ -322,8 +323,11 @@ public final class HistogramsPanel extends InspectorPanel {
             display.getImagePlus());
       displayToPanels_.get(display).add(panel);
       if (display == display_) {
-         // Also add the panel to our contents.
+         // Also add the panel to our contents, and tell our inspector frame
+         // to relayout.
          add(panel, "grow, gap 0");
+         revalidate();
+         inspector_.relayout();
       }
    }
 
@@ -440,6 +444,13 @@ public final class HistogramsPanel extends InspectorPanel {
    public void onPixelsSet(PixelsSetEvent event) {
       if (event.getDisplay() == display_) {
          calcAndDisplayHistAndStats();
+         // HACK: the inspector window can have the incorrect size (somewhat
+         // too small) if sized prior to histograms having been drawn. So we
+         // force a relayout the first time we receive this event.
+         if (isFirstDrawEvent_) {
+            inspector_.relayout();
+            isFirstDrawEvent_ = false;
+         }
       }
    }
 
@@ -656,6 +667,8 @@ public final class HistogramsPanel extends InspectorPanel {
       stack_ = display_.getStack();
       ijImage_ = display_.getImagePlus();
       setupChannelControls();
+      revalidate();
+      inspector_.relayout();
    }
 
    @Override
