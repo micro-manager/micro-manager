@@ -676,6 +676,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          autostretch();
       }
 
+      // Eye buttons are only enabled when in composite mode.
+      isEnabledButton_.setEnabled(
+            settings.getChannelDisplayModeIndex() == HistogramsPanel.COMPOSITE);
+
       saveChannelSettings();
       updateHistogram();
       calcAndDisplayHistAndStats(true);

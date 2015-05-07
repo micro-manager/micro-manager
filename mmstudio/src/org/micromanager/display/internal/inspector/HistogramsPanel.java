@@ -101,9 +101,9 @@ public final class HistogramsPanel extends InspectorPanel {
          new Color(0, 114, 178), new Color(213, 94, 0),
          new Color(0, 158, 115), Color.RED, Color.CYAN, Color.YELLOW,
          Color.WHITE};
-   private static final int GRAYSCALE = 0;
-   private static final int COLOR = 1;
-   private static final int COMPOSITE = 2;
+   public static final int GRAYSCALE = 0;
+   public static final int COLOR = 1;
+   public static final int COMPOSITE = 2;
 
    private Inspector inspector_;
 
