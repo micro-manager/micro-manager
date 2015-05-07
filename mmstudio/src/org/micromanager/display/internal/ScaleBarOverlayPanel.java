@@ -190,7 +190,7 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
          // No pixel size info available. Log an error message, once, and then
          // do not proceed.
          if (!haveLoggedError_) {
-            ReportingUtils.logError("Unable to display scale bar: pixel size information not available.");
+            ReportingUtils.showError("Unable to display scale bar: pixel size information not available.");
             haveLoggedError_ = true;
          }
          return;
