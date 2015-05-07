@@ -250,6 +250,9 @@ public class InspectorFrame extends MMFrame implements Inspector {
       final JLabel label = new JLabel(title,
                UIManager.getIcon("Tree.collapsedIcon"),
                SwingConstants.LEFT);
+      // Ignore day/night settings for the label text, since the background
+      // (i.e. the header panel we're in) also ignores day/night settings.
+      label.setForeground(new Color(50, 50, 50));
       header.add(label, "growx");
 
       final JPopupMenu gearMenu = panel.getGearMenu();

@@ -183,7 +183,6 @@ public class IntroDlg extends JDialog {
       welcomeTextArea_.setFont(new Font("Arial", Font.PLAIN, 10));
       welcomeTextArea_.setFocusable(false);
       welcomeTextArea_.setEditable(false);
-      welcomeTextArea_.setBackground(Color.WHITE);
       welcomeTextArea_.setBounds(10, 324, 356, 205);
       getContentPane().add(welcomeTextArea_);
 

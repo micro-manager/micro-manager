@@ -66,6 +66,17 @@ public class DaytimeNighttime {
          "RadioButtonMenuItem"
    };
 
+   // Improve text legibility against dark backgrounds. These will have
+   // ".foreground" appended to them later.
+   private static final String[] ENABLED_TEXT_COLOR_KEYS = new String[] {
+         "CheckBox", "ColorChooser",
+         "InternalFrame", "Label", "List",
+         "OptionPane", "Panel", "ProgressBar",
+         "RadioButton", "ScrollPane", "Slider", "Spinner",
+         "SplitPane", "TabbedPane", "Table", "TextArea", "TextField",
+         "TollBar", "Tree", "Viewport"
+   };
+
    // As above, but for disabled text; each of these keys will have
    // ".disabledText" appended to it later.
    private static final String[] DISABLED_TEXT_COLOR_KEYS = new String[] {
@@ -83,6 +94,8 @@ public class DaytimeNighttime {
    private static HashMap<String, ColorUIResource> lightBackground_;
    // background color of pads in the UI
    private static HashMap<String, ColorUIResource> padBackground_;
+   // Color of enabled text.
+   private static HashMap<String, ColorUIResource> enabledTextColor_;
    // Color of disabled text.
    private static HashMap<String, ColorUIResource> disabledTextColor_;
 
@@ -108,11 +121,17 @@ public class DaytimeNighttime {
       padBackground_.put(CompatibilityInterface.NIGHT,
             new ColorUIResource(java.awt.SystemColor.control));
 
+      enabledTextColor_ = new HashMap<String, ColorUIResource>();
+      enabledTextColor_.put(CompatibilityInterface.DAY,
+            new ColorUIResource(20, 20, 20));
+      enabledTextColor_.put(CompatibilityInterface.NIGHT,
+            new ColorUIResource(200, 200, 200));
+
       disabledTextColor_ = new HashMap<String, ColorUIResource>();
       disabledTextColor_.put(CompatibilityInterface.DAY,
             new ColorUIResource(100, 100, 100));
       disabledTextColor_.put(CompatibilityInterface.NIGHT,
-            new ColorUIResource(200, 200, 200));
+            new ColorUIResource(60, 60, 60));
    }
 
    public static void setMode(String mode) {
@@ -133,7 +152,10 @@ public class DaytimeNighttime {
       for (String key : MANUAL_BACKGROUND_COLOR_KEYS) {
          UIManager.put(key, background_.get(mode));
       }
-      // Ensure disabled text is still legible.
+      for (String key : ENABLED_TEXT_COLOR_KEYS) {
+         UIManager.put(key + ".foreground", enabledTextColor_.get(mode));
+      }
+      // Improve contrast of disabled text against backgrounds.
       for (String key : DISABLED_TEXT_COLOR_KEYS) {
          UIManager.put(key + ".disabledText", disabledTextColor_.get(mode));
       }
