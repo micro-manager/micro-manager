@@ -58,6 +58,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.NewImageEvent;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.NewDisplaySettingsEvent;
 import org.micromanager.display.NewImagePlusEvent;
 
 import org.micromanager.display.Inspector;
@@ -117,6 +118,11 @@ public final class HistogramsPanel extends InspectorPanel {
    // The current active (displayed) set of histograms.
    private ArrayList<ChannelControlPanel> channelPanels_;
    private JComboBox displayModeCombo_;
+   private JCheckBox shouldAutostretch_;
+   private JLabel extremaLabel_;
+   private JSpinner extrema_;
+   private JLabel percentLabel_;
+
    private Object panelLock_ = new Object();
    private Datastore store_;
    private DefaultDisplayWindow display_;
@@ -193,8 +199,17 @@ public final class HistogramsPanel extends InspectorPanel {
     * Set up the controls that are standard across all histograms: the display
     * mode, autostretch, and extrema% controls.
     */
-   private void addStandardControls() {
+   private synchronized void addStandardControls() {
       DisplaySettings settings = display_.getDisplaySettings();
+
+      // HACK: we set these labels manually to null now, so that if the
+      // display settings change while making controls (e.g. because we need
+      // to set the initial color display mode), we can recognize that they're
+      // invalid in the NewDisplaySettingsEvent handler.
+      shouldAutostretch_ = null;
+      extremaLabel_ = null;
+      extrema_ = null;
+      percentLabel_ = null;
 
       add(new JLabel("Color mode: "), "split 2, flowx, gapleft 15");
       displayModeCombo_ = new JComboBox(
@@ -212,50 +227,47 @@ public final class HistogramsPanel extends InspectorPanel {
       }
       add(displayModeCombo_, "align right");
 
-      boolean shouldAutostretch = true;
+      boolean shouldAutostretchSetting = true;
       if (display_.getDisplaySettings().getShouldAutostretch() != null) {
-         shouldAutostretch = display_.getDisplaySettings().getShouldAutostretch();
+         shouldAutostretchSetting = display_.getDisplaySettings().getShouldAutostretch();
       }
-      final JCheckBox autostretch = new JCheckBox("Autostretch");
-      autostretch.setSelected(shouldAutostretch);
-      autostretch.setToolTipText("Automatically rescale the histograms every time a new image is displayed.");
-      add(autostretch, "split 4, flowx, gapleft 10");
-      final JLabel extremaLabel = new JLabel("(Ignore");
-      extremaLabel.setEnabled(shouldAutostretch);
-      add(extremaLabel);
-      final JSpinner extrema = new JSpinner();
-      extrema.setToolTipText("Ignore the top and bottom percentage of the image when autostretching.");
+      shouldAutostretch_ = new JCheckBox("Autostretch");
+      shouldAutostretch_.setSelected(shouldAutostretchSetting);
+      shouldAutostretch_.setToolTipText("Automatically rescale the histograms every time a new image is displayed.");
+      add(shouldAutostretch_, "split 4, flowx, gapleft 10");
+      extremaLabel_ = new JLabel("(Ignore");
+      extremaLabel_.setEnabled(shouldAutostretchSetting);
+      add(extremaLabel_);
+      extrema_ = new JSpinner();
+      extrema_.setToolTipText("Ignore the top and bottom percentage of the image when autostretching.");
       // Going to 50% would mean the entire image is ignored.
-      extrema.setModel(new SpinnerNumberModel(0.0, 0.0, 49.999, 0.1));
-      extrema.addChangeListener(new ChangeListener() {
+      extrema_.setModel(new SpinnerNumberModel(0.0, 0.0, 49.999, 0.1));
+      extrema_.addChangeListener(new ChangeListener() {
          @Override
          public void stateChanged(ChangeEvent e) {
-            setExtremaPercentage(extrema);
+            setExtremaPercentage(extrema_);
          }
       });
-      extrema.addKeyListener(new KeyAdapter() {
+      extrema_.addKeyListener(new KeyAdapter() {
          @Override
          public void keyPressed(KeyEvent e) {
-            setExtremaPercentage(extrema);
+            setExtremaPercentage(extrema_);
          }
       });
-      extrema.setEnabled(shouldAutostretch);
-      add(extrema);
-      final JLabel percentLabel = new JLabel("%)");
-      percentLabel.setEnabled(shouldAutostretch);
-      add(percentLabel);
+      extrema_.setEnabled(shouldAutostretchSetting);
+      add(extrema_);
+      percentLabel_ = new JLabel("%)");
+      percentLabel_.setEnabled(shouldAutostretchSetting);
+      add(percentLabel_);
 
-      autostretch.addActionListener(new ActionListener() {
+      shouldAutostretch_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            boolean newVal = autostretch.isSelected();
+            boolean newVal = shouldAutostretch_.isSelected();
             DisplaySettings newSettings = display_.getDisplaySettings()
                   .copy().shouldAutostretch(newVal).build();
             DefaultDisplaySettings.setStandardSettings(newSettings);
             display_.setDisplaySettings(newSettings);
-            extremaLabel.setEnabled(newVal);
-            extrema.setEnabled(newVal);
-            percentLabel.setEnabled(newVal);
          }
       });
    }
@@ -428,6 +440,31 @@ public final class HistogramsPanel extends InspectorPanel {
    public void onPixelsSet(PixelsSetEvent event) {
       if (event.getDisplay() == display_) {
          calcAndDisplayHistAndStats();
+      }
+   }
+
+   @Subscribe
+   public synchronized void onNewDisplaySettings(NewDisplaySettingsEvent event) {
+      try {
+         if (event.getDisplay() == display_) {
+            // Check if autostretch is modified.
+            DisplaySettings settings = event.getDisplaySettings();
+            Boolean stretchSetting = settings.getShouldAutostretch();
+            // This method may be called as a side-effect of us creating
+            // our controls, so make certain the things we need to modify
+            // actually exist at this point.
+            if (stretchSetting != null && shouldAutostretch_ != null &&
+                  extremaLabel_ != null && extrema_ != null &&
+                  percentLabel_ != null) {
+               shouldAutostretch_.setSelected(stretchSetting);
+               extremaLabel_.setEnabled(stretchSetting);
+               extrema_.setEnabled(stretchSetting);
+               percentLabel_.setEnabled(stretchSetting);
+            }
+         }
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error on new display settings");
       }
    }
 
