@@ -2798,6 +2798,11 @@ public class MMStudio implements ScriptInterface {
    public void registerForEvents(Object obj) {
       EventManager.register(obj);
    }
+   
+   @Override
+   public void unregisterForEvents(Object obj) {
+      EventManager.unregister(obj);
+   }
 
    @Override
    public void setROI(Rectangle r) throws MMScriptException {

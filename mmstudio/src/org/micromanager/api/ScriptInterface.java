@@ -854,6 +854,11 @@ public interface ScriptInterface {
     public void registerForEvents(Object obj);
 
    /**
+    * Unregister the given object from EventBus notfications
+    */
+   public void unregisterForEvents(Object obj);
+
+   /**
     * Autostretch each histogram for the currently-active window, as if the
     * "Auto" button had been clicked for each one.
     */
