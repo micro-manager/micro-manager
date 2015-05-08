@@ -630,7 +630,7 @@ Camera::StartContinuousCapture(uint32_t nrDMABuffers, size_t nrFrames,
    boost::shared_ptr<Capture> capture =
       boost::make_shared<ContinuousCapture>(libdc1394camera_,
             nrDMABuffers, nrFrames, firstFrameTimeoutMs,
-            boost::bind<void>(&Camera::HandleCapturedFrame, this, _1),
+            boost::bind(&Camera::HandleCapturedFrame, this, _1),
             finishCallback);
    RunCaptureInBackground(capture);
 }
@@ -650,7 +650,7 @@ Camera::StartMultiShotCapture(uint32_t nrDMABuffers, uint16_t nrFrames,
    boost::shared_ptr<Capture> capture =
       boost::make_shared<MultiShotCapture>(libdc1394camera_,
             nrDMABuffers, nrFrames, firstFrameTimeoutMs,
-            boost::bind<void>(&Camera::HandleCapturedFrame, this, _1),
+            boost::bind(&Camera::HandleCapturedFrame, this, _1),
             finishCallback);
    RunCaptureInBackground(capture);
 }
@@ -670,7 +670,7 @@ Camera::StartOneShotCapture(uint32_t nrDMABuffers, unsigned timeoutMs,
    boost::shared_ptr<Capture> capture =
       boost::make_shared<OneShotCapture>(libdc1394camera_,
             nrDMABuffers, timeoutMs,
-            boost::bind<void>(&Camera::HandleCapturedFrame, this, _1),
+            boost::bind(&Camera::HandleCapturedFrame, this, _1),
             finishCallback);
    RunCaptureInBackground(capture);
 }

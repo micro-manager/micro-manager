@@ -89,7 +89,7 @@ public:
       // Loggers hold a shared pointer to the LoggingCore, so that they are
       // guaranteed to be safe to call at any time.
       return internal::GenericLogger<EntryDataType>(
-            boost::bind<void>(&GenericLoggingCore::SendEntryToShared,
+            boost::bind(&GenericLoggingCore::SendEntryToShared,
                this->shared_from_this(), metadata, _1, _2));
    }
 
@@ -300,8 +300,7 @@ private:
    void StartAsyncReceiveLoop()
    {
       asyncQueue_.RunReceiveLoop(
-            boost::bind<void>(&GenericLoggingCore::RunAsynchronousSinks,
-               this, _1));
+            boost::bind(&GenericLoggingCore::RunAsynchronousSinks, this, _1));
    }
 
    void StopAsyncReceiveLoop()

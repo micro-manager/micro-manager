@@ -38,12 +38,12 @@ TriggerInput::Initialize(InterDevice::Ptr device,
    triggerSourceDevice_ = StringSetting::New(device_->GetLogger(),
          device_.get(), settingNamePrefix_ + "TriggerSourceDevice");
    triggerSourceDevice_->GetPostSetSignal().connect(
-         boost::bind<void>(&TriggerInput::UpdateTriggerConnection, this));
+         boost::bind(&TriggerInput::UpdateTriggerConnection, this));
 
    triggerSourcePort_ = StringSetting::New(device_->GetLogger(),
          device_.get(), settingNamePrefix_ + "TriggerSourcePort");
    triggerSourcePort_->GetPostSetSignal().connect(
-         boost::bind<void>(&TriggerInput::UpdateTriggerConnection, this));
+         boost::bind(&TriggerInput::UpdateTriggerConnection, this));
 
    sequenceMaxLength_ = IntegerSetting::New(device_->GetLogger(),
          device_.get(), settingNamePrefix_ + "TriggerSequenceMaxLength",

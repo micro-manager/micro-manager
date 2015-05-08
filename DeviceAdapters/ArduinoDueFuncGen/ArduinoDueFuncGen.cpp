@@ -164,17 +164,17 @@ int DueFunctionGenerator::Shutdown()
 int DueFunctionGenerator::OnPort(PropertyBase* pProp, ActionType eAct)
 {
    return StringPropertyActionImpl(pProp, eAct,
-         boost::bind<std::string>(&Self::GetPort, this),
-         boost::bind<void>(&Self::SetPort, this, _1));
+         boost::bind(&Self::GetPort, this),
+         boost::bind(&Self::SetPort, this, _1));
 }
 
 
 int DueFunctionGenerator::OnAllowInterruption(PropertyBase* pProp, ActionType eAct)
 {
    return ConvertedStringPropertyActionImpl<bool>(pProp, eAct,
-         boost::bind<bool>(&Self::GetAllowInterruption, this),
+         boost::bind(&Self::GetAllowInterruption, this),
          &Self::BoolToYesNo,
-         boost::bind<void>(&Self::SetAllowInterruption, this, _1),
+         boost::bind(&Self::SetAllowInterruption, this, _1),
          &Self::YesNoToBool);
 }
 
@@ -182,9 +182,9 @@ int DueFunctionGenerator::OnAllowInterruption(PropertyBase* pProp, ActionType eA
 int DueFunctionGenerator::OnReturnToStationaryPoint(PropertyBase* pProp, ActionType eAct)
 {
    return ConvertedStringPropertyActionImpl<bool>(pProp, eAct,
-         boost::bind<bool>(&Self::GetReturnToStationaryPoint, this),
+         boost::bind(&Self::GetReturnToStationaryPoint, this),
          &Self::BoolToYesNo,
-         boost::bind<void>(&Self::SetReturnToStationaryPoint, this, _1),
+         boost::bind(&Self::SetReturnToStationaryPoint, this, _1),
          &Self::YesNoToBool);
 }
 
@@ -192,17 +192,17 @@ int DueFunctionGenerator::OnReturnToStationaryPoint(PropertyBase* pProp, ActionT
 int DueFunctionGenerator::OnBank(PropertyBase* pProp, ActionType eAct)
 {
    return PropertyActionImpl<long, unsigned>(pProp, eAct,
-         boost::bind<unsigned>(&Self::GetBank, this),
-         boost::bind<void>(&Self::SetBank, this, _1));
+         boost::bind(&Self::GetBank, this),
+         boost::bind(&Self::SetBank, this, _1));
 }
 
 
 int DueFunctionGenerator::OnWaveformGenerationActive(PropertyBase* pProp, ActionType eAct)
 {
    return ConvertedStringPropertyActionImpl<bool>(pProp, eAct,
-         boost::bind<bool>(&Self::GetWaveformGenerationActive, this),
+         boost::bind(&Self::GetWaveformGenerationActive, this),
          &Self::BoolToOnOff,
-         boost::bind<void>(&Self::SetWaveformGenerationActive, this, _1, false),
+         boost::bind(&Self::SetWaveformGenerationActive, this, _1, false),
          &Self::OnOffToBool);
 }
 
@@ -210,9 +210,9 @@ int DueFunctionGenerator::OnWaveformGenerationActive(PropertyBase* pProp, Action
 int DueFunctionGenerator::OnDACsEnabled(PropertyBase* pProp, ActionType eAct)
 {
    return ConvertedStringPropertyActionImpl<bool>(pProp, eAct,
-         boost::bind<bool>(&Self::GetDACsEnabled, this),
+         boost::bind(&Self::GetDACsEnabled, this),
          &Self::BoolToYesNo,
-         boost::bind<void>(&Self::SetDACsEnabled, this, _1),
+         boost::bind(&Self::SetDACsEnabled, this, _1),
          &Self::YesNoToBool);
 }
 
@@ -220,40 +220,40 @@ int DueFunctionGenerator::OnDACsEnabled(PropertyBase* pProp, ActionType eAct)
 int DueFunctionGenerator::OnSamplingFrequency(PropertyBase* pProp, ActionType eAct)
 {
    return PropertyActionImpl<double, double>(pProp, eAct,
-         boost::bind<double>(&Self::GetSamplingFrequency, this),
-         boost::bind<void>(&Self::SetSamplingFrequency, this, _1));
+         boost::bind(&Self::GetSamplingFrequency, this),
+         boost::bind(&Self::SetSamplingFrequency, this, _1));
 }
 
 
 int DueFunctionGenerator::OnWaveformTableLength(PropertyBase* pProp, ActionType eAct)
 {
    return PropertyActionImpl<long, size_t>(pProp, eAct,
-         boost::bind<size_t>(&Self::GetWaveformTableLength, this),
-         boost::bind<void>(&Self::SetWaveformTableLength, this, _1));
+         boost::bind(&Self::GetWaveformTableLength, this),
+         boost::bind(&Self::SetWaveformTableLength, this, _1));
 }
 
 
 int DueFunctionGenerator::OnWaveformFrequency(PropertyBase* pProp, ActionType eAct)
 {
    return PropertyActionImpl<double, double>(pProp, eAct,
-         boost::bind<double>(&Self::GetWaveformFrequency, this));
+         boost::bind(&Self::GetWaveformFrequency, this));
 }
 
 
 int DueFunctionGenerator::OnStationaryVoltageImpl(unsigned chan, PropertyBase* pProp, ActionType eAct)
 {
    return PropertyActionImpl<double, double>(pProp, eAct,
-         boost::bind<double>(&Self::GetStationaryVoltage, this, chan),
-         boost::bind<void>(&Self::SetStationaryVoltage, this, chan, _1, false));
+         boost::bind(&Self::GetStationaryVoltage, this, chan),
+         boost::bind(&Self::SetStationaryVoltage, this, chan, _1, false));
 }
 
 
 int DueFunctionGenerator::OnWaveformImpl(unsigned bank, unsigned chan, PropertyBase* pProp, ActionType eAct)
 {
    return ConvertedStringPropertyActionImpl<Waveform>(pProp, eAct,
-         boost::bind<Waveform>(&Self::GetWaveform, this, bank, chan),
+         boost::bind(&Self::GetWaveform, this, bank, chan),
          &Self::WaveformToString,
-         boost::bind<void>(&Self::SetWaveform, this, bank, chan, _1),
+         boost::bind(&Self::SetWaveform, this, bank, chan, _1),
          &Self::StringToWaveform);
 }
 
@@ -261,31 +261,31 @@ int DueFunctionGenerator::OnWaveformImpl(unsigned bank, unsigned chan, PropertyB
 int DueFunctionGenerator::OnAmplitudeImpl(unsigned bank, unsigned chan, PropertyBase* pProp, ActionType eAct)
 {
    return PropertyActionImpl<double, double>(pProp, eAct,
-         boost::bind<double>(&Self::GetAmplitude, this, bank, chan),
-         boost::bind<void>(&Self::SetAmplitude, this, bank, chan, _1));
+         boost::bind(&Self::GetAmplitude, this, bank, chan),
+         boost::bind(&Self::SetAmplitude, this, bank, chan, _1));
 }
 
 
 int DueFunctionGenerator::OnBiasImpl(unsigned bank, unsigned chan, PropertyBase* pProp, ActionType eAct)
 {
    return PropertyActionImpl<double, double>(pProp, eAct,
-         boost::bind<double>(&Self::GetBias, this, bank, chan),
-         boost::bind<void>(&Self::SetBias, this, bank, chan, _1));
+         boost::bind(&Self::GetBias, this, bank, chan),
+         boost::bind(&Self::SetBias, this, bank, chan, _1));
 }
 
 
 int DueFunctionGenerator::OnPhaseOffsetImpl(unsigned chan, PropertyBase* pProp, ActionType eAct)
 {
    return PropertyActionImpl<long, long>(pProp, eAct,
-         boost::bind<long>(&Self::GetPhaseOffset, this, chan),
-         boost::bind<void>(&Self::SetPhaseOffset, this, chan, _1));
+         boost::bind(&Self::GetPhaseOffset, this, chan),
+         boost::bind(&Self::SetPhaseOffset, this, chan, _1));
 }
 
 
 int DueFunctionGenerator::OnPhaseDegreesImpl(unsigned chan, PropertyBase* pProp, ActionType eAct)
 {
    return PropertyActionImpl<double, double>(pProp, eAct,
-            boost::bind<double>(&Self::GetPhaseOffsetDegrees, this, chan));
+            boost::bind(&Self::GetPhaseOffsetDegrees, this, chan));
 }
 
 

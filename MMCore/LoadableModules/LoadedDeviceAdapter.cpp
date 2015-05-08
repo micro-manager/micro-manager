@@ -153,7 +153,7 @@ LoadedDeviceAdapter::LoadDevice(CMMCore* core, const std::string& name,
       expectedType = actualType;
 
    boost::shared_ptr<LoadedDeviceAdapter> shared_this(shared_from_this());
-   DeleteDeviceFunction deleter = boost::bind<void>(&LoadedDeviceAdapter::DeleteDevice, this, _1);
+   DeleteDeviceFunction deleter = boost::bind(&LoadedDeviceAdapter::DeleteDevice, this, _1);
 
    switch (expectedType)
    {
