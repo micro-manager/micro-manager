@@ -135,6 +135,7 @@ public class Properties {
       STAGESCAN_SETTLING_TIME("ScanSettlingTime(ms)"),
       STAGESCAN_MOTOR_SPEED("MotorSpeedX-S(mm/s)"),
       STAGESCAN_MOTOR_ACCEL("AccelerationX-AC(ms)"),
+      BINNING("Binning"),
       TRIGGER_SOURCE("TRIGGER SOURCE"),   // for Hamamatsu
       TRIGGER_POLARITY("TriggerPolarity"),// for Hamamatsu
       TRIGGER_ACTIVE("TRIGGER ACTIVE"),   // for Hamamatsu
@@ -149,6 +150,8 @@ public class Properties {
       PIXEL_READOUT_RATE("PixelReadoutRate"),  // for Andor Zyla
       ANDOR_OVERLAP("Overlap"),                // for Andor Zyla
       PIXEL_TYPE("PixelType"),            // for DemoCam
+      CAMERA_SIZE_X("OnCameraCCDXSize"),  // for DemoCam
+      CAMERA_SIZE_Y("OnCameraCCDYSize"),  // for DemoCam
       FIRMWARE_VERSION("FirmwareVersion"),
       CAMERA("Camera"),
       PLUGIN_POSITION_REFRESH_INTERVAL("PositionRefreshInterval(s)"),

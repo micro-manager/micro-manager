@@ -69,7 +69,7 @@ import org.micromanager.utils.MMFrame;
 //TODO cleanup prefs vs. props... maybe add boolean support for plugin device use only?
 //TODO finish eliminating Prefs.Keys in favor of Properties.Keys with plugin values
 //TODO save/load plugin settings from file instead of from registry (nice to also include controller settings)
-//TODO handle camera binning
+//TODO improve efficiency of camera code by pre-calculating key factors and updating when needed instead of calculating every time
 //TODO add check for correct Hamamatsu model
 
 
