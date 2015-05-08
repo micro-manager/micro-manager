@@ -168,11 +168,20 @@ public class ControllerUtils {
             }
       }
       
-      if (spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED
-            && numSides != 2) {
-         MyDialogUtils.showError("Interleaved stage scan only possible for 2-sided acquisition.");
-         return false;
+      if (spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED) {
+            if (numSides != 2) {
+               MyDialogUtils.showError("Interleaved stage scan only possible for 2-sided acquisition.");
+               return false;
+            }
+            CameraModes.Keys cameraMode = CameraModes.getKeyFromPrefCode(
+                  prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
+                        Properties.Keys.PLUGIN_CAMERA_MODE, 0));
+            if (cameraMode == CameraModes.Keys.OVERLAP) {
+               MyDialogUtils.showError("Interleaved stage scan not compatible with overlap camera mode");
+               return false;
+            }
       }
+      
       
       // set up stage scan parameters if necessary
       if (spimMode == AcquisitionModes.Keys.STAGE_SCAN || spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED) {
