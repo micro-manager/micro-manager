@@ -884,6 +884,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       return (Integer) numSlices_.getValue();
    }
    
+   /**
+    * @return number of camera pulses sent
+    */
+   private int getNumCameraTriggers() {
+      int numSlices = getNumSlices();
+      CameraModes.Keys camMode = getSPIMCameraMode();
+      if (camMode == CameraModes.Keys.OVERLAP) {
+         return numSlices + 1;
+      } else {
+         return numSlices;
+      }
+         
+   }
+   
    private float getStepSizeUm() {
       return PanelUtils.getSpinnerFloatValue(stepSize_);
    }
@@ -1064,9 +1078,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @return duration in ms
     */
    private double computeActualVolumeDuration() {
-      double stackDuration = getNumSlices()
+      double stackDuration = getNumCameraTriggers()
             * controller_.computeActualSlicePeriod(sliceTiming_)
-            * getNumChannels();
+            * getNumChannels();  // per side
       if (isStageScanning()) {
          double rampDuration = getDelayBeforeSide() +
                props_.getPropValueFloat(Devices.Keys.XYSTAGE,
