@@ -37,14 +37,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import acq.MMImageCache;
+import misc.JavaUtils;
 import misc.Log;
+import misc.MD;
 import mmcloneclasses.graph.HistogramSettings;
 import mmcloneclasses.graph.MultiChannelHistograms;
 import mmcloneclasses.graph.Histograms;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.utils.*;
 
 public abstract class VirtualAcquisitionDisplay{
 
@@ -116,7 +117,7 @@ public abstract class VirtualAcquisitionDisplay{
     */
    public VirtualAcquisitionDisplay(MMImageCache imageCache, String name, JSONObject summaryMD) {
       try {
-         numComponents_ = Math.max(MDUtils.getNumberOfComponents(summaryMD), 1);
+         numComponents_ = Math.max(MD.getNumberOfComponents(summaryMD), 1);
          int numChannels = Math.max(summaryMD.getInt("Channels"), 1);
          numGrayChannels_ = numComponents_ * numChannels;
       } catch (Exception ex) {
@@ -239,7 +240,7 @@ public abstract class VirtualAcquisitionDisplay{
          int imageChannelIndex;
          if (firstImageMetadata != null) {
             try {
-               imageChannelIndex = MDUtils.getChannelIndex(firstImageMetadata);
+               imageChannelIndex = MD.getChannelIndex(firstImageMetadata);
             } catch (JSONException e) {
                imageChannelIndex = -1;
             }
@@ -262,19 +263,6 @@ public abstract class VirtualAcquisitionDisplay{
          } catch (Exception ex) {
             Log.log(ex);
          }
-      }
-
-      int type = 0;
-      try {
-         if (firstImageMetadata != null) {
-            type = MDUtils.getSingleChannelType(firstImageMetadata);
-         } else {
-            type = MDUtils.getSingleChannelType(summaryMetadata);
-         }
-      } catch (JSONException ex) {
-         Log.log("Unable to determine acquisition type.");
-      } catch (MMScriptException ex) {
-         Log.log("Unable to determine acquisition type.");
       }
          
       virtualStack_ = virtualStack;
@@ -349,13 +337,10 @@ public abstract class VirtualAcquisitionDisplay{
 
    public int rgbToGrayChannel(int channelIndex) {
       try {
-         if (MDUtils.getNumberOfComponents(imageCache_.getSummaryMetadata()) == 3) {
+         if (MD.getNumberOfComponents(imageCache_.getSummaryMetadata()) == 3) {
             return channelIndex * 3;
          }
          return channelIndex;
-      } catch (MMScriptException ex) {
-         Log.log(ex);
-         return 0;
       } catch (JSONException ex) {
          Log.log(ex);
          return 0;
@@ -366,14 +351,11 @@ public abstract class VirtualAcquisitionDisplay{
       try {
          if (imageCache_ != null) {
             if (imageCache_.getSummaryMetadata() != null)
-            if (MDUtils.getNumberOfComponents(imageCache_.getSummaryMetadata()) == 3) {
+            if (MD.getNumberOfComponents(imageCache_.getSummaryMetadata()) == 3) {
                return grayIndex / 3;
             }
          }
          return grayIndex;
-      } catch (MMScriptException ex) {
-         Log.log(ex);
-         return 0;
       } catch (JSONException ex) {
          Log.log(ex);
          return 0;
@@ -464,10 +446,10 @@ public abstract class VirtualAcquisitionDisplay{
 
       int channel = 0, frame = 0, slice = 0, position = 0;
       try {
-         frame = MDUtils.getFrameIndex(tags);
-         slice = MDUtils.getSliceIndex(tags);
-         channel = MDUtils.getChannelIndex(tags);
-         position = MDUtils.getPositionIndex(tags);
+         frame = MD.getFrameIndex(tags);
+         slice = MD.getSliceIndex(tags);
+         channel = MD.getChannelIndex(tags);
+         position = MD.getPositionIndex(tags);
          // Construct a mapping of axis to position so we can post an 
          // event informing others of the new image.
          HashMap<String, Integer> axisToPosition = new HashMap<String, Integer>();
@@ -516,7 +498,7 @@ public abstract class VirtualAcquisitionDisplay{
       //get channelgroup name for use in loading contrast setttings
       if (firstImage_) {
          try {
-            channelGroup_ = MDUtils.getChannelGroup(tags);
+            channelGroup_ = MD.getChannelGroup(tags);
          } catch (JSONException ex) {
             Log.log("Couldn't find Core-ChannelGroup in image metadata", true);
          }
@@ -680,7 +662,7 @@ public abstract class VirtualAcquisitionDisplay{
    }
 
    public int getNumPositions() throws JSONException {
-      return MDUtils.getNumPositions(imageCache_.getSummaryMetadata());
+      return MD.getNumPositions(imageCache_.getSummaryMetadata());
    }
 
    public ImagePlus getImagePlus() {
@@ -689,14 +671,6 @@ public abstract class VirtualAcquisitionDisplay{
 
    public MMImageCache getImageCache() {
       return imageCache_;
-   }
-
-   public void setComment(String comment) throws MMScriptException {
-      try {
-         getSummaryMetadata().put("Comment", comment);
-      } catch (JSONException ex) {
-         Log.log(ex);
-      }
    }
 
    public final JSONObject getSummaryMetadata() {

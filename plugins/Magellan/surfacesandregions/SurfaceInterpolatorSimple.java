@@ -8,12 +8,12 @@ import delaunay_triangulation.Delaunay_Triangulation;
 import delaunay_triangulation.Point_dt;
 import delaunay_triangulation.Triangle_dt;
 import java.util.LinkedList;
+import main.Magellan;
 import org.apache.commons.math3.geometry.euclidean.threed.Line;
 import org.apache.commons.math3.geometry.euclidean.threed.Plane;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.apache.commons.math3.geometry.partitioning.Region;
-import org.micromanager.MMStudio;
 
 /**
  * Subclass that implements a particular interpolation method This one creates a
@@ -30,7 +30,7 @@ public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
 
    protected void interpolateSurface(LinkedList<Point3d> points) throws InterruptedException {
 
-      double pixSize = MMStudio.getInstance().getCore().getPixelSizeUm();
+      double pixSize = Magellan.getCore().getPixelSizeUm();
       //provide interpolator with current list of data points
       Point_dt triangulationPoints[] = new Point_dt[points.size()];
       for (int i = 0; i < points.size(); i++) {

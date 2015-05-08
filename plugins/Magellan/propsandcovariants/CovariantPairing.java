@@ -12,9 +12,9 @@ import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.TreeMap;
 import misc.Log;
+import misc.NumberUtils;
 import org.apache.commons.math3.analysis.interpolation.LinearInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
-import org.micromanager.utils.NumberUtils;
 
 /**
  * Class that encapsulates and independent and a dependent covariant, and a set of covaried values between the two

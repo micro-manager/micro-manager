@@ -35,13 +35,14 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
 import acq.MMImageCache;
 import misc.Log;
+import misc.MD;
 import mmcloneclasses.graph.ContrastPanel;
 import mmcloneclasses.graph.MultiChannelHistograms;
 import mmcloneclasses.graph.SingleChannelHistogram;
 import mmcloneclasses.graph.Histograms;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.utils.MDUtils;
+
 
 
 public class ContrastMetadataPanel extends Panel  {
@@ -287,7 +288,7 @@ public class ContrastMetadataPanel extends Panel  {
       public synchronized void setMetadata(JSONObject md) {
          clear();
          if (md != null) {
-            String[] keys = MDUtils.getKeys(md);
+            String[] keys = MD.getKeys(md);
             Arrays.sort(keys);
             for (String key : keys) {
                Vector<String> rowData = new Vector<String>();

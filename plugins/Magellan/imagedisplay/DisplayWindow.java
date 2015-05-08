@@ -17,8 +17,6 @@ import java.util.prefs.Preferences;
 import javax.swing.*;
 import misc.Log;
 import mmcloneclasses.graph.ContrastPanel;
-import org.micromanager.MMStudio;
-import org.micromanager.utils.CanvasPaintPending;
 
 /**
  * This class is the Frame that handles image viewing: it contains the canvas
@@ -108,9 +106,7 @@ public class DisplayWindow extends StackWindow {
          }
       }
       setLocation(posX, posY);
-
-      MMStudio.getInstance().addMMBackgroundListener(this);
-      setBackground(MMStudio.getInstance().getBackgroundColor());
+    
       bus_.register(this);
 
       // HACK: hide ImageJ's native scrollbars; we provide our own.
@@ -178,8 +174,6 @@ public class DisplayWindow extends StackWindow {
       canvasPanel_ = new JPanel();
       canvasPanel_.setBorder(BorderFactory.createEmptyBorder(CANVAS_PIXEL_BORDER,
               CANVAS_PIXEL_BORDER, CANVAS_PIXEL_BORDER, CANVAS_PIXEL_BORDER));
-      MMStudio.getInstance().addMMBackgroundListener(canvasPanel_);
-      canvasPanel_.setBackground(MMStudio.getInstance().getBackgroundColor());
 
 //      use this layout with no constraints to center canvas in the canvas panel
       canvasPanel_.setLayout(new GridBagLayout());
@@ -581,8 +575,6 @@ public class DisplayWindow extends StackWindow {
       } catch (NullPointerException ex) {
          Log.log("Null pointer error in ImageJ code while closing window");
       }
-      MMStudio.getInstance().removeMMBackgroundListener(this);
-      MMStudio.getInstance().removeMMBackgroundListener(canvasPanel_);
       bus_.unregister(this); 
       cmcPanel_.prepareForClose();        
       dwControls_.prepareForClose();

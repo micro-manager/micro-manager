@@ -22,8 +22,7 @@
 package mmcloneclasses.graph;
 
 import acq.MMImageCache;
-import mmcloneclasses.graph.ContrastPanel;
-import org.micromanager.utils.ContrastSettings;
+
 
 /**
  * Interface for histograms, which control Image contrast and can optionally
@@ -70,12 +69,6 @@ public interface Histograms  {
     */
    public void autostretch();
       
-   /*
-    * Returns the contrastSettings associated with the channel of the current image
-    * @param channel - index of the channel to get settigns from
-    */
-   public ContrastSettings getChannelContrastSettings(int channel);
-
    /*
     * sets the histogram display range fropdown box to the option corresponding to the
     * value histMax or to the "Camera Depth" automatic option if histMax is equal to -1

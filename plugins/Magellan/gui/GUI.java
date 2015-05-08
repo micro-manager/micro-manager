@@ -34,8 +34,6 @@ import javax.swing.table.TableColumn;
 import mmcloneclasses.utils.PropertyValueCellEditor;
 import mmcloneclasses.utils.PropertyValueCellRenderer;
 import mmcorej.StrVector;
-import org.micromanager.MMStudio;
-import org.micromanager.api.ScriptInterface;
 import propsandcovariants.DeviceControlTableModel;
 import propsandcovariants.CovariantPairValuesTableModel;
 import propsandcovariants.CovariantPairing;
@@ -51,27 +49,27 @@ import surfacesandregions.XYFootprint;
 import misc.ExactlyOneRowSelectionModel;
 import channels.SimpleChannelTableModel;
 import coordinates.AffineGUI;
-import bidc.CoreCommunicator;
+import bidc.JavaLayerImageConstructor;
 import bidc.FrameIntegrationMethod;
 import channels.ChannelComboBoxModel;
 import channels.ChannelSetting;
+import channels.ColorEditor;
+import channels.ColorRenderer;
 import java.awt.FileDialog;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
-import javax.swing.filechooser.FileNameExtensionFilter;
+import main.Magellan;
 import misc.GlobalSettings;
-import org.micromanager.utils.ColorEditor;
-import org.micromanager.utils.ColorRenderer;
-import org.micromanager.utils.JavaUtils;
+import misc.JavaUtils;
+
 
 /**
  *
@@ -83,7 +81,6 @@ public class GUI extends javax.swing.JFrame {
    private static final String PREF_SIZE_HEIGHT = "Magellan gui size height";
    private static final String PREF_SPLIT_PANE = "split pane location";
     private static final Color DARK_GREEN = new Color(0, 128, 0);
-    private ScriptInterface mmAPI_;
     private MagellanEngine eng_;
     private Preferences prefs_;
     private RegionManager regionManager_ = new RegionManager();
@@ -96,14 +93,13 @@ public class GUI extends javax.swing.JFrame {
     private LinkedList<JSpinner> offsetSpinners_ = new LinkedList<JSpinner>();
     private static GUI singleton_;
 
-    public GUI(Preferences prefs, ScriptInterface mmapi, String version) {
+    public GUI(Preferences prefs, String version) {
         singleton_ = this;
         prefs_ = prefs;
         settings_ = new GlobalSettings(prefs_, this);
-        new CoreCommunicator();
-        mmAPI_ = mmapi;
+        new JavaLayerImageConstructor();
         this.setTitle("Micro-Magellan " + version);
-        eng_ = new MagellanEngine(mmAPI_.getMMCore());
+        eng_ = new MagellanEngine(Magellan.getCore());
         multiAcqManager_ = new MultipleAcquisitionManager(this, eng_);
         covariantPairManager_ = new CovariantPairingsManager(this, multiAcqManager_);
         initComponents();
@@ -1820,7 +1816,7 @@ public class GUI extends javax.swing.JFrame {
 
         autofocusZLabel_.setText("Autofocus Z device: ");
 
-        StrVector zVec = MMStudio.getInstance().getCore().getLoadedDevicesOfType(mmcorej.DeviceType.StageDevice);
+        StrVector zVec = Magellan.getCore().getLoadedDevicesOfType(mmcorej.DeviceType.StageDevice);
         String[] zNames = new String[(int)zVec.size()];
         for (int i = 0; i < zNames.length; i++) {
             zNames[i] = zVec.get(i);

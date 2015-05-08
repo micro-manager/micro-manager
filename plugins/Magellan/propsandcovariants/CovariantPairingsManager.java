@@ -18,10 +18,10 @@ import java.util.Arrays;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import main.Magellan;
 import misc.GlobalSettings;
+import misc.JavaUtils;
 import misc.Log;
-import org.micromanager.MMStudio;
-import org.micromanager.utils.JavaUtils;
 import surfacesandregions.SurfaceInterpolator;
 import surfacesandregions.SurfaceManager;
 
@@ -220,7 +220,7 @@ private Covariant initCovariantFromString(String covariantName) throws Exception
          cov = new SinglePropertyOrGroup();
          String groupName = covariantName.substring(SinglePropertyOrGroup.GROUP_PREFIX.length());
          //check that group exists
-         if (!Arrays.asList(MMStudio.getInstance().getCore().getAvailableConfigGroups().toArray()).contains(groupName)) {
+         if (!Arrays.asList(Magellan.getCore().getAvailableConfigGroups().toArray()).contains(groupName)) {
             JOptionPane.showMessageDialog(null, "Group: \"" + groupName + "\"is not present in current config and will not be loaded");
             throw new Exception();
          }
@@ -233,7 +233,7 @@ private Covariant initCovariantFromString(String covariantName) throws Exception
          cov = new SinglePropertyOrGroup();
          String device = covariantName.split("-")[0];
          String propName = covariantName.split("-")[1];
-         if (!MMStudio.getInstance().getCore().hasProperty(device, propName)) {
+         if (!Magellan.getCore().hasProperty(device, propName)) {
             JOptionPane.showMessageDialog(null, "Cannot locate property: \"" + covariantName + "\". Skipping covariant pairing");
             throw new Exception();
          }

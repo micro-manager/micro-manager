@@ -17,13 +17,13 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import bidc.CoreCommunicator;
+import bidc.JavaLayerImageConstructor;
 import channels.ChannelSetting;
 import coordinates.AffineUtils;
 import java.awt.geom.Point2D;
+import main.Magellan;
 import misc.Log;
 import org.json.JSONArray;
-import org.micromanager.MMStudio;
 import surfacesandregions.Point3d;
 
 /**
@@ -92,13 +92,13 @@ public class FixedAreaAcquisition extends Acquisition {
          } else {
             //no space mode, use current stage positon
             positions_ = new ArrayList<XYStagePosition>();
-            int fullTileWidth = (int) CoreCommunicator.getInstance().getImageWidth();
-            int fullTileHeight = (int) CoreCommunicator.getInstance().getImageHeight();
+            int fullTileWidth = (int) JavaLayerImageConstructor.getInstance().getImageWidth();
+            int fullTileHeight = (int) JavaLayerImageConstructor.getInstance().getImageHeight();
             int tileWidthMinusOverlap = fullTileWidth - this.getOverlapX();
             int tileHeightMinusOverlap = fullTileHeight - this.getOverlapY();
-            Point2D.Double currentStagePos = MMStudio.getInstance().getCore().getXYStagePosition(xyStage_);  
+            Point2D.Double currentStagePos = Magellan.getCore().getXYStagePosition(xyStage_);  
             positions_.add(new XYStagePosition( currentStagePos, tileWidthMinusOverlap, tileHeightMinusOverlap, fullTileWidth, fullTileHeight, 0, 0,
-                    AffineUtils.getAffineTransform(MMStudio.getInstance().getCore().getCurrentPixelSizeConfig(), 
+                    AffineUtils.getAffineTransform(Magellan.getCore().getCurrentPixelSizeConfig(), 
                     currentStagePos.x, currentStagePos.y)));
          }
       } catch (Exception e) {
@@ -113,7 +113,7 @@ public class FixedAreaAcquisition extends Acquisition {
          int cIndex = getAutofocusChannelIndex();     
          autofocus_ = new CrossCorrelationAutofocus(this,cIndex, settings_.autofocusMaxDisplacemnet_um_,
                  settings_.setInitialAutofocusPosition_ ? settings_.initialAutofocusPosition_ :
-                         MMStudio.getInstance().getCore().getPosition(settings_.autoFocusZDevice_) );
+                        Magellan.getCore().getPosition(settings_.autoFocusZDevice_) );
       }
    }
 
@@ -424,7 +424,7 @@ public class FixedAreaAcquisition extends Acquisition {
       } else {
          try {
             //region2D or no region
-            return core_.getPosition(zStage_);
+            return Magellan.getCore().getPosition(zStage_);
          } catch (Exception ex) {
             Log.log("couldn't get z position",true);
             throw new RuntimeException();

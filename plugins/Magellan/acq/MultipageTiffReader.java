@@ -31,17 +31,12 @@ import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.HashMap;
 import java.util.Set;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import misc.Log;
+import misc.MD;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.imagedisplay.DisplaySettings;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.MMException;
-import org.micromanager.utils.ProgressBar;
 
 
 public class MultipageTiffReader {
@@ -177,7 +172,7 @@ public class MultipageTiffReader {
 
    private void getRGBAndByteDepth(JSONObject md) {
       try {
-         String pixelType = MDUtils.getPixelType(md);
+         String pixelType = MD.getPixelType(md);
          rgb_ = pixelType.startsWith("RGB");
          
             if (pixelType.equals("RGB32") || pixelType.equals("GRAY8")) {
@@ -330,11 +325,11 @@ public class MultipageTiffReader {
       return unsignInt(buffer1.getInt(4));     
    }
 
-   private void readIndexMap() throws IOException, MMException {
+   private void readIndexMap() throws IOException {
       long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.INDEX_MAP_OFFSET_HEADER, 8);
       ByteBuffer header = readIntoBuffer(offset, 8);
       if (header.getInt(0) != MultipageTiffWriter.INDEX_MAP_HEADER) {
-         throw new MMException("Error reading index map header");
+         throw new RuntimeException("Error reading index map header");
       }
       int numMappings = header.getInt(4);
       indexMap_ = new HashMap<String, Long>();
@@ -350,7 +345,7 @@ public class MultipageTiffReader {
          }
          //If a duplicate label is read, forget about the previous one
          //if data has been intentionally overwritten, this gives the most current version
-         indexMap_.put(MDUtils.generateLabel(channel, slice, frame, position), imageOffset);
+         indexMap_.put(MD.generateLabel(channel, slice, frame, position), imageOffset);
       }
    }
 

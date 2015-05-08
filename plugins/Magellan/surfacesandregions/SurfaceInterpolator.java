@@ -5,7 +5,7 @@
 package surfacesandregions;
 
 import acq.FixedAreaAcquisitionSettings;
-import bidc.CoreCommunicator;
+import bidc.JavaLayerImageConstructor;
 import coordinates.AffineUtils;
 import coordinates.XYStagePosition;
 import java.awt.geom.AffineTransform;
@@ -21,6 +21,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
+import main.Magellan;
 import misc.Log;
 import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
 import org.apache.commons.math3.geometry.euclidean.twod.PolygonsSet;
@@ -29,7 +30,6 @@ import org.apache.commons.math3.geometry.euclidean.twod.hull.ConvexHull2D;
 import org.apache.commons.math3.geometry.euclidean.twod.hull.MonotoneChain;
 import org.apache.commons.math3.geometry.partitioning.Region;
 import org.apache.commons.math3.geometry.partitioning.RegionFactory;
-import org.micromanager.MMStudio;
 import propsandcovariants.CovariantPairingsManager;
 import propsandcovariants.SurfaceData;
 
@@ -69,7 +69,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       zDeviceName_ = zDevice;
       manager_ = manager;
       try {
-         pixelSizeConfig_ = MMStudio.getInstance().getCore().getCurrentPixelSizeConfig();
+         pixelSizeConfig_ = Magellan.getCore().getCurrentPixelSizeConfig();
       } catch (Exception ex) {
          Log.log("couldnt get pixel size config");
       }
@@ -297,10 +297,10 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    public ArrayList<XYStagePosition> getXYPositonsAtSlice(double zPos, boolean above) throws InterruptedException {
       SingleResolutionInterpolation interp = waitForCurentInterpolation();
       double overlapPercent = FixedAreaAcquisitionSettings.getStoredTileOverlapPercentage() / 100;
-      int overlapX = (int) (CoreCommunicator.getInstance().getImageWidth() * overlapPercent);
-      int overlapY = (int) (CoreCommunicator.getInstance().getImageHeight() * overlapPercent);
-      int tileWidth = (int) CoreCommunicator.getInstance().getImageWidth() - overlapX;
-      int tileHeight = (int) CoreCommunicator.getInstance().getImageHeight() - overlapY;
+      int overlapX = (int) (JavaLayerImageConstructor.getInstance().getImageWidth() * overlapPercent);
+      int overlapY = (int) (JavaLayerImageConstructor.getInstance().getImageHeight() * overlapPercent);
+      int tileWidth = (int) JavaLayerImageConstructor.getInstance().getImageWidth() - overlapX;
+      int tileHeight = (int) JavaLayerImageConstructor.getInstance().getImageHeight() - overlapY;
       while (interp.getPixelsPerInterpPoint() >= Math.max(tileWidth,tileHeight) / NUM_XY_TEST_POINTS ) {
          synchronized (interpolationLock_) {
             interpolationLock_.wait();
@@ -409,13 +409,13 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    protected abstract void interpolateSurface(LinkedList<Point3d> points) throws InterruptedException;
 
    private void fitXYPositionsToConvexHull(double overlap) throws InterruptedException {
-      int fullTileWidth = (int) CoreCommunicator.getInstance().getImageWidth();
-      int fullTileHeight = (int) CoreCommunicator.getInstance().getImageHeight();
-      int overlapX = (int) (CoreCommunicator.getInstance().getImageWidth() * overlap / 100);
-      int overlapY = (int) (CoreCommunicator.getInstance().getImageHeight() * overlap / 100);
+      int fullTileWidth = (int) JavaLayerImageConstructor.getInstance().getImageWidth();
+      int fullTileHeight = (int) JavaLayerImageConstructor.getInstance().getImageHeight();
+      int overlapX = (int) (JavaLayerImageConstructor.getInstance().getImageWidth() * overlap / 100);
+      int overlapY = (int) (JavaLayerImageConstructor.getInstance().getImageHeight() * overlap / 100);
       int tileWidthMinusOverlap = fullTileWidth - overlapX;
       int tileHeightMinusOverlap =  fullTileHeight - overlapY;
-      int pixelPadding = (int) (xyPadding_um_ / MMStudio.getInstance().getCore().getPixelSizeUm());
+      int pixelPadding = (int) (xyPadding_um_ / Magellan.getCore().getPixelSizeUm());
       numRows_ = (int) Math.ceil( (boundYPixelMax_ - boundYPixelMin_ + pixelPadding) / (double) tileHeightMinusOverlap );
       numCols_ = (int) Math.ceil( (boundXPixelMax_ - boundXPixelMin_ + pixelPadding) / (double) tileWidthMinusOverlap );    
       

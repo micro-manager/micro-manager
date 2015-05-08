@@ -15,16 +15,17 @@ import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
+import main.Magellan;
+import misc.GlobalSettings;
 import misc.Log;
+import misc.MD;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.micromanager.MMStudio;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.MDUtils;
+
 
 /**
  *
@@ -64,7 +65,7 @@ public class AffineCalibrator {
    }
    
    public void computeAffine() throws Exception {
-      CMMCore core = MMStudio.getInstance().getCore();
+      CMMCore core = Magellan.getCore();
       String xyStage = core.getXYStageDevice();
       Point2D.Double[] stagePositions = new Point2D.Double[3], pixPositions = new Point2D.Double[3];
 
@@ -105,7 +106,7 @@ public class AffineCalibrator {
       if (result == JOptionPane.YES_OPTION) {
          //store affine
          Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
-         JavaUtils.putObjectInPrefs(prefs, "affine_transform_" + core.getCurrentPixelSizeConfig(), transform);
+         GlobalSettings.putObjectInPrefs(prefs, "affine_transform_" + core.getCurrentPixelSizeConfig(), transform);
          //mark as updated
          AffineUtils.transformUpdated(core.getCurrentPixelSizeConfig(), transform);
       }
@@ -113,8 +114,8 @@ public class AffineCalibrator {
 
    private Point2D.Double crossCorrelate(TaggedImage img1, TaggedImage img2) throws Exception {    
       //double the width of iamges used for xCorr to support offsets bigger than half the iage size
-       int width = 2 * MDUtils.getWidth(img1.tags);
-       int height = 2 * MDUtils.getHeight(img1.tags);
+       int width = 2 * MD.getWidth(img1.tags);
+       int height = 2 * MD.getHeight(img1.tags);
        ImageStack stack1 = new ImageStack(width, height);
        ImageStack stack2 = new ImageStack(width, height);
        byte[] newPix1 = new byte[width * height];
@@ -165,14 +166,12 @@ public class AffineCalibrator {
     * @throws Exception 
     */
    private TaggedImage snapAndAdd() throws Exception {
-      ScriptInterface gui = MMStudio.getInstance();
-      CMMCore core = gui.getMMCore();
-      boolean liveOn = gui.isLiveModeOn();
-      gui.enableLiveMode(false);
-      core.snapImage();  
-      TaggedImage image = core.getTaggedImage();
-      gui.addToAlbum(image);
-      gui.enableLiveMode(liveOn);
+      boolean liveOn = Magellan.getScriptInterface().isLiveModeOn();
+      Magellan.getScriptInterface().enableLiveMode(false);
+      Magellan.getCore().snapImage();  
+      TaggedImage image = Magellan.getCore().getTaggedImage();
+      Magellan.getScriptInterface().addToAlbum(image);
+      Magellan.getScriptInterface().enableLiveMode(liveOn);
       return image;
    }
 

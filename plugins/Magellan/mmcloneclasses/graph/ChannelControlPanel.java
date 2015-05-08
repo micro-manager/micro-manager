@@ -33,16 +33,17 @@ import javax.swing.*;
 import acq.MMImageCache;
 import mmcloneclasses.graph.HistogramPanel.CursorListener;
 import imagedisplay.MMCompositeImage;
-import imagedisplay.ContrastMetadataPanel;
 import imagedisplay.DisplayPlus;
 import imagedisplay.VirtualAcquisitionDisplay;
+import main.Magellan;
+import misc.GlobalSettings;
+import misc.HistogramUtils;
+import misc.JavaUtils;
 import misc.Log;
+import misc.MD;
 import mmcorej.CMMCore;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.micromanager.MMStudio;
-import org.micromanager.dialogs.AcqControlDlg;
-import org.micromanager.utils.*;
 
 /**
  * Draws one histogram of the Multi-Channel control panel
@@ -208,11 +209,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                  "12bit (0-4095)", "13bit (0-8191)", "14bit (0-16383)", "15bit (0-32767)", "16bit (0-65535)"}));
 
       zoomInButton_ = new JButton();
-      zoomInButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
-            "/org/micromanager/icons/zoom_in.png"));
+      zoomInButton_.setIcon(SwingResourceManager.getIcon( "/icons/zoom_in.png"));
       zoomOutButton_ = new JButton();
-      zoomOutButton_.setIcon(SwingResourceManager.getIcon(MMStudio.class,
-            "/org/micromanager/icons/zoom_out.png"));   
+      zoomOutButton_.setIcon(SwingResourceManager.getIcon("/icons/zoom_out.png"));   
       zoomInButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -425,7 +424,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     * checks to error on the side of not saving the preference
     */
    private void saveColorPreference(MMImageCache cache, int color) {
-      CMMCore core = MMStudio.getInstance().getCore();
+      CMMCore core = Magellan.getCore();
       JSONObject summary = cache.getSummaryMetadata();
       if (core == null || summary == null) {
          return;
@@ -435,7 +434,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       JSONArray dataNames;
       String[] cameraNames = new String[numMultiCamChannels];
       try {
-         numDataChannels = MDUtils.getNumChannels(summary);
+         numDataChannels = MD.getNumChannels(summary);
          dataNames = summary.getJSONArray("ChNames");
          for (int i = 0; i < numMultiCamChannels; i++) {
             cameraNames[i] = core.getCameraChannelName(i);
@@ -448,9 +447,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                   return;
                }
             }
-            Preferences root = Preferences.userNodeForPackage(AcqControlDlg.class);
-            Preferences colorPrefs = root.node(root.absolutePath() + "/" + AcqControlDlg.COLOR_SETTINGS_NODE);
-            colorPrefs.putInt("Color_Camera_" + cameraNames[channelIndex_], color);
+            GlobalSettings.getInstance().storeIntInPrefs("Color_Camera_" + cameraNames[channelIndex_], color);
          }
       } catch (Exception ex) {
          
@@ -590,7 +587,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             }
             Color color = cache_.getChannelColor(channelIndex_);
 
-            LUT lut = ImageUtils.makeLUT(color, gamma_);
+            LUT lut = makeLUT(color, gamma_);
             lut.min = contrastMin_;
             lut.max = contrastMax_;
             //uses lut.min and lut.max to set min and max of precessor
@@ -605,7 +602,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             }
 
             if (img_.getChannel() == channelIndex_ + 1) {
-               LUT grayLut = ImageUtils.makeLUT(Color.white, gamma_);
+               LUT grayLut = makeLUT(Color.white, gamma_);
                ImageProcessor processor = img_.getProcessor();
                if (processor != null) {
                   processor.setColorModel(grayLut);
@@ -750,8 +747,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          hp_.setAutoScale();
          hp_.repaint();
 
-         minMaxLabel_.setText("Min: " + NumberUtils.intToDisplayString( pixelMin_) + "   "
-                 + "Max: " + NumberUtils.intToDisplayString( pixelMax_));
+         minMaxLabel_.setText("Min: " + pixelMin_ + "   " + "Max: " + pixelMax_);
       } else {
           hp_.setVisible(false);        
       }
@@ -831,5 +827,27 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          mcHistograms_.applyLUTToImage();
          display_.drawWithoutUpdate();
       }
+   }
+   
+      public static LUT makeLUT(Color color, double gamma) {
+      int r = color.getRed();
+      int g = color.getGreen();
+      int b = color.getBlue();
+
+      int size = 256;
+      byte [] rs = new byte[size];
+      byte [] gs = new byte[size];
+      byte [] bs = new byte[size];
+
+      double xn;
+      double yn;
+      for (int x=0;x<size;++x) {
+         xn = x / (double) (size-1);
+         yn = Math.pow(xn, gamma);
+         rs[x] = (byte) (yn * r);
+         gs[x] = (byte) (yn * g);
+         bs[x] = (byte) (yn * b);
+      }
+      return new LUT(8,size,rs,gs,bs);
    }
 }

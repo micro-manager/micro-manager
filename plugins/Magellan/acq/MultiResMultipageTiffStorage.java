@@ -20,15 +20,13 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import misc.JavaUtils;
 import misc.Log;
 import misc.LongPoint;
 import misc.MD;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.MMException;
 
 /**
  * This class manages multiple multipage Tiff datasets, averaging multiple 2x2
@@ -145,9 +143,9 @@ public class MultiResMultipageTiffStorage {
       try {
          xOverlap_ = summaryMD_.getInt(MD.OVERLAP_X);
          yOverlap_ = summaryMD_.getInt(MD.OVERLAP_Y);
-         byteDepth_ = MDUtils.getBytesPerPixel(summaryMD_);
-         fullResTileWidthIncludingOverlap_ = MDUtils.getWidth(summaryMD_);
-         fullResTileHeightIncludingOverlap_ = MDUtils.getHeight(summaryMD_);
+         byteDepth_ = MD.getBytesPerPixel(summaryMD_);
+         fullResTileWidthIncludingOverlap_ = MD.getWidth(summaryMD_);
+         fullResTileHeightIncludingOverlap_ = MD.getHeight(summaryMD_);
          tileWidth_ = fullResTileWidthIncludingOverlap_ - xOverlap_;
          tileHeight_ = fullResTileHeightIncludingOverlap_ - yOverlap_;
          pixelSizeZ_ = summaryMD_.getDouble(MD.Z_STEP_UM);
@@ -426,9 +424,9 @@ public class MultiResMultipageTiffStorage {
       //Read indices
       int channel = 0, slice = 0, frame = 0;
       try {
-         channel = MDUtils.getChannelIndex(img.tags);
-         slice = MDUtils.getSliceIndex(img.tags);
-         frame = MDUtils.getFrameIndex(img.tags);
+         channel = MD.getChannelIndex(img.tags);
+         slice = MD.getSliceIndex(img.tags);
+         frame = MD.getFrameIndex(img.tags);
       } catch (JSONException e) {
          Log.log("Couldn't find tags");
       }
@@ -568,12 +566,12 @@ public class MultiResMultipageTiffStorage {
                // while waiting for being written to disk
                JSONObject tags = new JSONObject(img.tags.toString());
                //modify tags to reflect image size, and correct position index
-               MDUtils.setWidth(tags, tileWidth_);
-               MDUtils.setHeight(tags, tileHeight_);
+               MD.setWidth(tags, tileWidth_);
+               MD.setHeight(tags, tileHeight_);
                long gridRow = posManager_.getGridRow(fullResPositionIndex, resolutionIndex);
                long gridCol = posManager_.getGridCol(fullResPositionIndex, resolutionIndex);
-               MDUtils.setPositionName(tags, "Grid_" + gridRow + "_" + gridCol);
-               MDUtils.setPositionIndex(tags, posManager_.getLowResPositionIndex(fullResPositionIndex, resolutionIndex));  
+               MD.setPositionName(tags, "Grid_" + gridRow + "_" + gridCol);
+               MD.setPositionIndex(tags, posManager_.getLowResPositionIndex(fullResPositionIndex, resolutionIndex));  
                lowResStorages_.get(resolutionIndex).putImage(new TaggedImage(currentLevelPix, tags));
             } else {
                //Image already exists, only overwrite pixels to include new tiles
@@ -602,8 +600,8 @@ public class MultiResMultipageTiffStorage {
       try {
          JSONObject smd = new JSONObject(summaryMD_.toString());
          //reset dimensions so that overlap not included
-         MDUtils.setWidth(smd, tileWidth_);
-         MDUtils.setHeight(smd, tileHeight_);
+         MD.setWidth(smd, tileWidth_);
+         MD.setHeight(smd, tileHeight_);
          TaggedImageStorageMultipageTiff storage = new TaggedImageStorageMultipageTiff(dsDir, true, smd);
          lowResStorages_.put(resIndex, storage);
       } catch (Exception ex) {
@@ -611,14 +609,14 @@ public class MultiResMultipageTiffStorage {
       }
    }
 
-   public void putImage(TaggedImage taggedImage) throws MMException {
+   public void putImage(TaggedImage taggedImage)  {
       try {
          synchronized (this) {
-            maxSliceIndex_ = Math.max( MDUtils.getSliceIndex(taggedImage.tags), maxSliceIndex_);
+            maxSliceIndex_ = Math.max( MD.getSliceIndex(taggedImage.tags), maxSliceIndex_);
             
             //write to full res storage as normal (i.e. with overlap pixels present)
             fullResStorage_.putImage(taggedImage);
-            addToLowResStorage(taggedImage, 0, MDUtils.getPositionIndex(taggedImage.tags));
+            addToLowResStorage(taggedImage, 0, MD.getPositionIndex(taggedImage.tags));
          }
       } catch (IOException ex) {
          Log.log(ex.toString());

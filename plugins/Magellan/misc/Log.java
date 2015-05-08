@@ -5,7 +5,7 @@
 package misc;
 
 import ij.IJ;
-import org.micromanager.MMStudio;
+import main.Magellan;
 
 /**
  *
@@ -18,7 +18,7 @@ public class Log {
    }
 
    public static void log(String message, boolean show) {
-      MMStudio.getInstance().getCore().logMessage(message);
+      Magellan.getCore().logMessage(message);
        if (show) {
           IJ.log(message);
        }
@@ -29,8 +29,8 @@ public class Log {
    }
 
    public static void log(Exception e, boolean show) {
-      MMStudio.getInstance().getCore().logMessage(getStackTraceAsString(e));
-      MMStudio.getInstance().getCore().logMessage(e.getMessage());
+      Magellan.getCore().logMessage(getStackTraceAsString(e));
+      Magellan.getCore().logMessage(e.getMessage());
       if (show) {
          IJ.log(getStackTraceAsString(e));
       }

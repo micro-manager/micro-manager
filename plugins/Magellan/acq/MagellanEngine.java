@@ -14,10 +14,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import javax.swing.JOptionPane;
-import bidc.CoreCommunicator;
+import bidc.JavaLayerImageConstructor;
 import bidc.FrameIntegrationMethod;
 import coordinates.AffineUtils;
 import java.awt.geom.AffineTransform;
+import main.Magellan;
 import misc.GlobalSettings;
 import misc.Log;
 import misc.MD;
@@ -25,7 +26,6 @@ import mmcorej.CMMCore;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.MMStudio;
 import propsandcovariants.CovariantPairing;
 
 /**
@@ -216,10 +216,10 @@ public class MagellanEngine {
             //nothing to do, just a dummy event to get of blocking call when switching between parallel acquisitions
         } else if (event.isAcquisitionFinishedEvent()) {
             //signal to TaggedImageSink to finish saving thread and mark acquisition as finished
-           CoreCommunicator.getInstance().addSignalTaggedImage(event, new SignalTaggedImage(SignalTaggedImage.AcqSingal.AcqusitionFinsihed));
+           JavaLayerImageConstructor.getInstance().addSignalTaggedImage(event, new SignalTaggedImage(SignalTaggedImage.AcqSingal.AcqusitionFinsihed));
         } else if (event.isTimepointFinishedEvent()) {
             //signal to TaggedImageSink to let acqusition know that saving for the current time point has completed  
-            CoreCommunicator.getInstance().addSignalTaggedImage(event, new SignalTaggedImage(SignalTaggedImage.AcqSingal.TimepointFinished));
+            JavaLayerImageConstructor.getInstance().addSignalTaggedImage(event, new SignalTaggedImage(SignalTaggedImage.AcqSingal.TimepointFinished));
         } else if (event.isAutofocusAdjustmentEvent()) {
             setAutofocusPosition(event.autofocusZName_, event.autofocusPosition_);
         } else {
@@ -235,7 +235,7 @@ public class MagellanEngine {
         loopHardwareCommandRetries(new HardwareCommand() {
             @Override
             public void run() throws Exception {
-                CoreCommunicator.getInstance().snapImage();
+                JavaLayerImageConstructor.getInstance().snapImage();
             }
         }, "snapping image");
 
@@ -250,7 +250,7 @@ public class MagellanEngine {
         loopHardwareCommandRetries(new HardwareCommand() {
             @Override
             public void run() throws Exception {
-                CoreCommunicator.getInstance().getTaggedImagesAndAddToAcq(event, currentTime);
+                JavaLayerImageConstructor.getInstance().getTaggedImagesAndAddToAcq(event, currentTime);
             }
         }, "getting tagged image");
 
@@ -454,18 +454,18 @@ public class MagellanEngine {
             //num channels is camera channels * acquisitionChannels
             int numChannels = GlobalSettings.getInstance().getDemoMode() ? 6 : acq.getNumChannels();
 
-            CMMCore core = MMStudio.getInstance().getCore();
+            CMMCore core = Magellan.getCore();
             JSONObject summary = new JSONObject();
             summary.put(MD.NUM_CHANNELS, numChannels);
             summary.put(MD.ZC_ORDER, false);
             summary.put(MD.PIX_TYPE, GlobalSettings.getInstance().isBIDCTwoPhoton() ? 
-                    (acq.getFilterType() == FrameIntegrationMethod.FRAME_SUMMATION ? "GRAY16" : "GRAY8") :
-            core_.getImageBitDepth() > 8 ? "GRAY16" : "GRAY8");
+                    (acq.getFilterType() == FrameIntegrationMethod.FRAME_SUMMATION ? MD.PIX_TYPE_GRAY16 : MD.PIX_TYPE_GRAY8) :
+            core_.getImageBitDepth() > 8 ? MD.PIX_TYPE_GRAY16 : MD.PIX_TYPE_GRAY8);
             summary.put(MD.BIT_DEPTH, GlobalSettings.getInstance().isBIDCTwoPhoton() ? 
                     (acq.getFilterType() == FrameIntegrationMethod.FRAME_SUMMATION ? 16 : 8) :
                     core_.getImageBitDepth() );
-            summary.put(MD.WIDTH, CoreCommunicator.getInstance().getImageWidth());
-            summary.put(MD.HEIGHT, CoreCommunicator.getInstance().getImageHeight());
+            summary.put(MD.WIDTH, JavaLayerImageConstructor.getInstance().getImageWidth());
+            summary.put(MD.HEIGHT, JavaLayerImageConstructor.getInstance().getImageHeight());
             summary.put(MD.SAVING_PREFIX, prefix);
             JSONArray initialPosList = acq.createInitialPositionList();
             summary.put(MD.INITIAL_POS_LIST, initialPosList);

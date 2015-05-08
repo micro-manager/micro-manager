@@ -1,12 +1,11 @@
 package imagedisplay;
 
 import java.awt.Color;
+import misc.MD;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import org.micromanager.utils.MDUtils;
 
 public class DisplaySettings {
 
@@ -27,24 +26,24 @@ public class DisplaySettings {
       int numDisplayChannels;
       JSONArray chColors = null, chMaxes = null, chMins = null, chNames = null;
       if (summaryMetadata.has("ChNames")) {
-         chNames = MDUtils.getJSONArrayMember(summaryMetadata, "ChNames");
+         chNames = MD.getJSONArrayMember(summaryMetadata, "ChNames");
          // HACK: derive the number of channels from the number of channel
          // names. 
          numDisplayChannels = chNames.length();
       } else {
-         numDisplayChannels = MDUtils.getNumChannels(summaryMetadata);
-         if (MDUtils.isRGB(summaryMetadata)) {
+         numDisplayChannels = MD.getNumChannels(summaryMetadata);
+         if (MD.isRGB(summaryMetadata)) {
             numDisplayChannels *= 3;
          }
       }
       if (summaryMetadata.has("ChColors")) {
-          chColors = MDUtils.getJSONArrayMember(summaryMetadata, "ChColors");
+          chColors = MD.getJSONArrayMember(summaryMetadata, "ChColors");
       } 
       if (summaryMetadata.has("ChContrastMin")) {
-         chMins = MDUtils.getJSONArrayMember(summaryMetadata, "ChContrastMin");
+         chMins = MD.getJSONArrayMember(summaryMetadata, "ChContrastMin");
       } 
       if ( summaryMetadata.has("ChContrastMax")) {
-         chMaxes = MDUtils.getJSONArrayMember(summaryMetadata, "ChContrastMax");
+         chMaxes = MD.getJSONArrayMember(summaryMetadata, "ChContrastMax");
       }      
       
       for (int k = 0; k < numDisplayChannels; ++k) {
@@ -54,9 +53,9 @@ public class DisplaySettings {
          int min = (chMins != null && chMins.length() > k) ? chMins.getInt(k) : 0;
          int bitDepth = 16;
          if (summaryMetadata.has("BitDepth")) {
-            bitDepth = MDUtils.getBitDepth(summaryMetadata);
+            bitDepth = MD.getBitDepth(summaryMetadata);
          } else if (summaryMetadata.has("PixelType")) {
-            if (MDUtils.isGRAY8(summaryMetadata) || MDUtils.isRGB32(summaryMetadata)) {
+            if (MD.isGRAY8(summaryMetadata) || MD.isRGB32(summaryMetadata)) {
                bitDepth = 8;
             }
          }

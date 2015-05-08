@@ -8,35 +8,32 @@ import acq.AcquisitionEvent;
 import acq.MagellanEngine;
 import acq.SignalTaggedImage;
 import demo.DemoModeImageData;
-import gui.SettingsDialog;
 import ij.IJ;
 import java.awt.geom.Point2D;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
+import main.Magellan;
 import misc.GlobalSettings;
 import misc.Log;
+import misc.MD;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.MMStudio;
-import org.micromanager.utils.MDUtils;
 
-/**
- * Means for plugin classes to access the core, to support tricky things
- */
-public class CoreCommunicator {
+
+public class JavaLayerImageConstructor {
 
     private static final int IMAGE_CONSTRUCTION_QUEUE_SIZE = 200;
-    private static CoreCommunicator singleton_;
-   private static CMMCore core_ = MMStudio.getInstance().getCore();
+    private static JavaLayerImageConstructor singleton_;
+   private static CMMCore core_ = Magellan.getCore();
    private LinkedBlockingQueue<ImageAndInfo> imageConstructionQueue_ = new LinkedBlockingQueue<ImageAndInfo>(IMAGE_CONSTRUCTION_QUEUE_SIZE);
    private ExecutorService imageConstructionExecutor_;
    private boolean javaLayerConstruction_ = false;
 
-   public CoreCommunicator() {
+   public JavaLayerImageConstructor() {
       singleton_ = this;
       
       //start up image construction thread
@@ -72,13 +69,13 @@ public class CoreCommunicator {
                      FrameIntegrationMethod integrator;
                      if (firstIAI.event_.acquisition_.getFilterType() == FrameIntegrationMethod.FRAME_AVERAGE) {
                         integrator = new FrameAverageWrapper(GlobalSettings.getInstance().getChannelOffset(firstIAI.camChannelIndex_),
-                                MDUtils.getWidth(firstIAI.img_.tags), firstIAI.numFrames_);
+                                MD.getWidth(firstIAI.img_.tags), firstIAI.numFrames_);
                      } else if (firstIAI.event_.acquisition_.getFilterType() == FrameIntegrationMethod.RANK_FILTER) {
                         integrator = new RankFilterWrapper(GlobalSettings.getInstance().getChannelOffset(firstIAI.camChannelIndex_),
-                                MDUtils.getWidth(firstIAI.img_.tags), firstIAI.numFrames_, firstIAI.event_.acquisition_.getRank());
+                                MD.getWidth(firstIAI.img_.tags), firstIAI.numFrames_, firstIAI.event_.acquisition_.getRank());
                      } else { //frame summation
                         integrator = new FrameSummationWrapper(GlobalSettings.getInstance().getChannelOffset(firstIAI.camChannelIndex_),
-                                MDUtils.getWidth(firstIAI.img_.tags), firstIAI.numFrames_);
+                                MD.getWidth(firstIAI.img_.tags), firstIAI.numFrames_);
                      }
 
                      //add first frame
@@ -94,10 +91,10 @@ public class CoreCommunicator {
                         }
                         integrator.addBuffer((byte[]) nextIAI.img_.pix);
                      }
-                     MDUtils.setWidth(firstIAI.img_.tags, integrator.getConstructedImageWidth());
-                     MDUtils.setHeight(firstIAI.img_.tags, integrator.getConstructedImageHeight());
+                     MD.setWidth(firstIAI.img_.tags, integrator.getConstructedImageWidth());
+                     MD.setHeight(firstIAI.img_.tags, integrator.getConstructedImageHeight());
                      if (integrator instanceof FrameSummationWrapper) {
-                        MDUtils.setPixelTypeFromByteDepth(firstIAI.img_.tags, 2);
+                        MD.setPixelTypeFromByteDepth(firstIAI.img_.tags, 2);
                      }
 
                      //construct image
@@ -128,7 +125,7 @@ public class CoreCommunicator {
       }
    }
 
-    public static CoreCommunicator getInstance() {
+    public static JavaLayerImageConstructor getInstance() {
         return singleton_;
     }
     
@@ -214,10 +211,10 @@ public class CoreCommunicator {
         try {
             if (core_.getBytesPerPixel() == 1) {
                 demoPix = DemoModeImageData.getBytePixelData(camChannelIndex, (int) position.x,
-                        (int) position.y, (int) zPos, MDUtils.getWidth(tags), MDUtils.getHeight(tags));
+                        (int) position.y, (int) zPos, MD.getWidth(tags), MD.getHeight(tags));
             } else {
                 demoPix = DemoModeImageData.getShortPixelData(camChannelIndex, (int) position.x,
-                        (int) position.y, (int) zPos, MDUtils.getWidth(tags), MDUtils.getHeight(tags));
+                        (int) position.y, (int) zPos, MD.getWidth(tags), MD.getHeight(tags));
             }
             return new TaggedImage(demoPix, tags);
         } catch (Exception e) {

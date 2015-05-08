@@ -7,10 +7,10 @@ package channels;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
+import main.Magellan;
 import misc.GlobalSettings;
 import misc.Log;
 import mmcorej.StrVector;
-import org.micromanager.MMStudio;
 
 /**
  *
@@ -27,7 +27,7 @@ public class ChannelUtils {
       if (channelGroup == null || channelGroup.equals("")) {
          return new String[0];
       }
-      StrVector configs = MMStudio.getInstance().getCore().getAvailableConfigs(channelGroup);
+      StrVector configs = Magellan.getCore().getAvailableConfigs(channelGroup);
       String[] names = new String[(int) configs.size()];
       for (int i = 0; i < names.length; i++) {
          names[i] = configs.get(i);
@@ -44,11 +44,11 @@ public class ChannelUtils {
    }
 
    public static ArrayList<ChannelSetting> getAvailableChannels(String channelGroup) {
-      int numCamChannels = (int) (GlobalSettings.getInstance().getDemoMode() ? 6 : MMStudio.getInstance().getCore().getNumberOfCameraChannels());
+      int numCamChannels = (int) (GlobalSettings.getInstance().getDemoMode() ? 6 : Magellan.getCore().getNumberOfCameraChannels());
       ArrayList<ChannelSetting> channels = new ArrayList<ChannelSetting>();
       double exposure = 10;
       try {
-         exposure = MMStudio.getInstance().getCore().getExposure();
+         exposure = Magellan.getCore().getExposure();
       } catch (Exception ex) {
          Log.log("Couldnt get camera exposure form core", true);
       }
@@ -63,7 +63,7 @@ public class ChannelUtils {
          for (int i = 0; i < numCamChannels; i++) {
             String cameraChannelName = GlobalSettings.getInstance().getDemoMode() ?
                     new String[]{"Violet","Blue","Green","Yellow","Red","FarRed"}[i]
-                    : MMStudio.getInstance().getCore().getCameraChannelName(i);
+                    : Magellan.getCore().getCameraChannelName(i);
             if (getChannelNames(channelGroup).length == 0) {
                Color color = new Color(GlobalSettings.getInstance().getIntInPrefs(PREF_COLOR + cameraChannelName,
                        DEFAULT_COLORS[i].getRGB()));

@@ -9,9 +9,7 @@ import acq.MMImageCache;
 import imagedisplay.DisplayPlus;
 import imagedisplay.VirtualAcquisitionDisplay;
 import misc.Log;
-import org.micromanager.MMStudio;
-import org.micromanager.utils.ContrastSettings;
-import org.micromanager.utils.MDUtils;
+import misc.MD;
 
 ///////////////////////////////////////////////////////////////////////////////
 //FILE:          MultiChannelHistograms.java
@@ -66,7 +64,7 @@ public final class MultiChannelHistograms extends JPanel implements Histograms {
       final int nChannels;
       boolean rgb;
       try {
-         rgb = MDUtils.isRGB(display_.getSummaryMetadata());
+         rgb = MD.isRGB(display_.getSummaryMetadata());
       } catch (Exception ex) {
          Log.log(ex);
          rgb = false;
@@ -122,15 +120,6 @@ public final class MultiChannelHistograms extends JPanel implements Histograms {
       }
       applyLUTToImage();
       display_.drawWithoutUpdate();
-   }
-
-   @Override
-   public ContrastSettings getChannelContrastSettings(int channel) {
-      if (ccpList_ == null || ccpList_.size() - 1 > channel) {
-         return null;
-      }
-      return new ContrastSettings(ccpList_.get(channel).getContrastMin(),
-              ccpList_.get(channel).getContrastMax(), ccpList_.get(channel).getContrastGamma());
    }
 
    public void updateOtherDisplayCombos(int selectedIndex) {

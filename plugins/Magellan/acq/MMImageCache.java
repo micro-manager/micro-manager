@@ -34,9 +34,6 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.api.ImageCache;
-import org.micromanager.api.ImageCacheListener;
-import org.micromanager.utils.*;
 
 /**
  * MMImageCache: central repository of Images
@@ -103,18 +100,18 @@ public class MMImageCache {
          imageStorage_.putImage(taggedImg);
          
            synchronized (this) {
-            lastFrame_ = Math.max(lastFrame_, MDUtils.getFrameIndex(taggedImg.tags));
+            lastFrame_ = Math.max(lastFrame_, MD.getFrameIndex(taggedImg.tags));
             lastTags_ = taggedImg.tags;
          }
          JSONObject displayAndComments = imageStorage_.getDisplayAndComments();
          if (displayAndComments.length() > 0) {
             JSONArray channelSettings = imageStorage_.getDisplayAndComments().getJSONArray("Channels");
             JSONObject imageTags = taggedImg.tags;
-            int chanIndex = MDUtils.getChannelIndex(imageTags);
+            int chanIndex = MD.getChannelIndex(imageTags);
             if (chanIndex >= channelSettings.length()) {
                JSONObject newChanObject = new JSONObject();
-               MDUtils.setChannelName(newChanObject, MDUtils.getChannelName(imageTags));
-               MDUtils.setChannelColor(newChanObject, MDUtils.getChannelColor(imageTags));
+               MD.setChannelName(newChanObject, MD.getChannelName(imageTags));
+               MD.setChannelColor(newChanObject, MD.getChannelColor(imageTags));
                channelSettings.put(chanIndex, newChanObject);
             }
          }
@@ -150,7 +147,7 @@ public class MMImageCache {
    }
 
    public JSONObject getImageTags(int channel, int slice, int frame, int position) {
-      String label = MDUtils.generateLabel(channel, slice, frame, position);
+      String label = MD.generateLabel(channel, slice, frame, position);
       JSONObject tags = null;
       if (tags == null) {
          tags = imageStorage_.getImageTags(channel, slice, frame, position);
@@ -215,7 +212,7 @@ public class MMImageCache {
 
    public void setImageComment(String comment, JSONObject tags) {
       JSONObject comments = getCommentsJSONObject();
-      String label = MDUtils.getLabel(tags);
+      String label = MD.getLabel(tags);
       try {
          comments.put(label, comment);
       } catch (JSONException ex) {
@@ -229,7 +226,7 @@ public class MMImageCache {
          return "";
       }
       try {
-         String label = MDUtils.getLabel(tags);
+         String label = MD.getLabel(tags);
          return getCommentsJSONObject().getString(label);
       } catch (Exception ex) {
          return "";
@@ -268,13 +265,13 @@ public class MMImageCache {
      return imageStorage_.imageKeys();
    }
 
-   private boolean isRGB() throws JSONException, MMScriptException {
-      return MDUtils.isRGB(getSummaryMetadata());
+   private boolean isRGB() throws JSONException {
+      return MD.isRGB(getSummaryMetadata());
    }
 
    public String getPixelType() {
       try {
-         return MDUtils.getPixelType(getSummaryMetadata());
+         return MD.getPixelType(getSummaryMetadata());
       } catch (Exception ex) {
          Log.log(ex);
          return null;

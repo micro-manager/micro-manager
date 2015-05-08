@@ -33,7 +33,7 @@ import java.awt.geom.Point2D.Float;
 import java.util.ArrayList;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
-import org.micromanager.utils.JavaUtils;
+import misc.JavaUtils;
 
 /**
  * Histogram view. 

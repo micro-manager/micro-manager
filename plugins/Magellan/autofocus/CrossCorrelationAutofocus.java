@@ -12,11 +12,11 @@ import ij3d.image3d.FHTImage3D;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import main.Magellan;
 import misc.Log;
 import org.apache.commons.math.ArgumentOutsideDomainException;
 import org.apache.commons.math.analysis.interpolation.SplineInterpolator;
 import org.apache.commons.math.analysis.polynomials.PolynomialSplineFunction;
-import org.micromanager.MMStudio;
 
 /**
  *
@@ -149,7 +149,7 @@ public class CrossCorrelationAutofocus {
       for (int slice = 0; slice < acq.getMaxSliceIndex() + 1; slice++) {
          //add as int
          float[] pix32;
-         if (MMStudio.getInstance().getCore().getBytesPerPixel() == 1) {
+         if (Magellan.getCore().getBytesPerPixel() == 1) {
             byte[] pix = (byte[]) acq.getStorage().getImageForDisplay(channelIndex, slice, timeIndex, dsIndex, 0, 0, width, height).pix;
             pix32 = new float[pix.length];
             for (int i = 0; i < pix.length; i++) {

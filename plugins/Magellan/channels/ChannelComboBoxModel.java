@@ -7,11 +7,11 @@ package channels;
 
 import java.util.ArrayList;
 import javax.swing.DefaultComboBoxModel;
+import main.Magellan;
 import misc.Log;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.StrVector;
-import org.micromanager.MMStudio;
 
 /**
  *
@@ -25,7 +25,7 @@ public class ChannelComboBoxModel  extends DefaultComboBoxModel {
 
       StrVector groups;
       try {
-         groups = MMStudio.getInstance().getCore().getAllowedPropertyValues("Core", "ChannelGroup");
+         groups = Magellan.getCore().getAllowedPropertyValues("Core", "ChannelGroup");
       } catch (Exception ex) {
          Log.log(ex);
          return null;
@@ -41,16 +41,16 @@ public class ChannelComboBoxModel  extends DefaultComboBoxModel {
    }
 
    private boolean groupIsEligibleChannel(String group) {
-      StrVector cfgs = MMStudio.getInstance().getCore().getAvailableConfigs(group);
+      StrVector cfgs = Magellan.getCore().getAvailableConfigs(group);
       if (cfgs.size() == 1) {
          Configuration presetData;
          try {
-            presetData = MMStudio.getInstance().getCore().getConfigData(group, cfgs.get(0));
+            presetData = Magellan.getCore().getConfigData(group, cfgs.get(0));
             if (presetData.size() == 1) {
                PropertySetting setting = presetData.getSetting(0);
                String devLabel = setting.getDeviceLabel();
                String propName = setting.getPropertyName();
-               if (MMStudio.getInstance().getCore().hasPropertyLimits(devLabel, propName)) {
+               if (Magellan.getCore().hasPropertyLimits(devLabel, propName)) {
                   return false;
                }
             }

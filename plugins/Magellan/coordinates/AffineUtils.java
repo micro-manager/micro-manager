@@ -7,9 +7,9 @@ package coordinates;
 import java.awt.geom.AffineTransform;
 import java.util.TreeMap;
 import java.util.prefs.Preferences;
+import misc.JavaUtils;
 import misc.Log;
 import org.micromanager.MMStudio;
-import org.micromanager.utils.JavaUtils;
 
 /**
  *

@@ -40,9 +40,9 @@ import javax.swing.JTextField;
 import javax.swing.SpringLayout;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import misc.JavaUtils;
 import misc.Log;
-import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.NumberUtils;
+import misc.NumberUtils;
 
 
 public class SliderPanel extends JPanel {

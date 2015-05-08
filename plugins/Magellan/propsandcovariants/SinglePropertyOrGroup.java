@@ -4,13 +4,13 @@ import acq.AcquisitionEvent;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
+import main.Magellan;
 import misc.Log;
+import misc.NumberUtils;
+import misc.SortFunctionObjects;
 import mmcorej.CMMCore;
 import mmcorej.PropertyType;
 import mmcorej.StrVector;
-import org.micromanager.MMStudio;
-import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.SortFunctionObjects;
 
 /**
  * Adapted form MM class PropertyItem
@@ -88,7 +88,7 @@ public class SinglePropertyOrGroup implements Covariant{
    }
 
    public void readGroupValuesFromConfig(String groupName) {
-      CMMCore core = MMStudio.getInstance().getCore();
+      CMMCore core = Magellan.getCore();
       name = groupName;
       type = PropertyType.String;
       allowed = core.getAvailableConfigs(groupName).toArray();
@@ -96,7 +96,7 @@ public class SinglePropertyOrGroup implements Covariant{
 
    public void readFromCore(String deviceName, String propertyName,
            boolean cached) {
-      CMMCore core = MMStudio.getInstance().getCore();
+      CMMCore core = Magellan.getCore();
       device = deviceName;
       name = propertyName;
       try {
@@ -350,7 +350,7 @@ public class SinglePropertyOrGroup implements Covariant{
    @Override
    public CovariantValue getCurrentValue(AcquisitionEvent evt) {
       try {
-         CMMCore core = MMStudio.getInstance().getCore();
+         CMMCore core = Magellan.getCore();
          if (isGroup()) {
             return new CovariantValue(core.getCurrentConfig(name));
          }
@@ -365,7 +365,7 @@ public class SinglePropertyOrGroup implements Covariant{
 
    @Override
     public void updateHardwareToValue(CovariantValue dVal) throws Exception {
-        CMMCore core = MMStudio.getInstance().getCore();
+        CMMCore core = Magellan.getCore();
         if (isGroup()) {
             core.setConfig(name, dVal.stringValue());
         } else {

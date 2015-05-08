@@ -21,6 +21,7 @@
 //
 package acq;
 
+import imagedisplay.DisplaySettings;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -35,15 +36,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import misc.JavaUtils;
 import misc.Log;
+import misc.MD;
+import misc.ProgressBar;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.imagedisplay.DisplaySettings;
-import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.MMException;
-import org.micromanager.utils.ProgressBar;
 
 
 public final class TaggedImageStorageMultipageTiff   {
@@ -101,7 +100,7 @@ public final class TaggedImageStorageMultipageTiff   {
       }
       if (newDataSet_) {
          try {
-            numChannels_ = MDUtils.getNumChannels(summaryMetadata_);
+            numChannels_ = MD.getNumChannels(summaryMetadata_);
          } catch (Exception ex) {
             Log.log("Error estimating total number of image planes", true);
          }
@@ -173,7 +172,7 @@ public final class TaggedImageStorageMultipageTiff   {
    }
    
    public TaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
-      String label = MDUtils.generateLabel(channelIndex, sliceIndex, frameIndex, positionIndex);
+      String label = MD.generateLabel(channelIndex, sliceIndex, frameIndex, positionIndex);
 
       TaggedImage image = writePendingImages_.get(label);
       if (image != null) {
@@ -206,8 +205,8 @@ public final class TaggedImageStorageMultipageTiff   {
       fileSets_.get(position).overwritePixels(pix, channel, slice, frame, position); 
    }
 
-   public void putImage(TaggedImage taggedImage) throws MMException, IOException {
-      final String label = MDUtils.getLabel(taggedImage.tags);
+   public void putImage(TaggedImage taggedImage) throws IOException {
+      final String label = MD.getLabel(taggedImage.tags);
       startWritingTask(label, taggedImage);
 
       // Now, we must hold on to taggedImage, so that we can return it if
@@ -235,11 +234,11 @@ public final class TaggedImageStorageMultipageTiff   {
     * way, ends up submitting the writing task to writingExecutor_.
     */
    private void startWritingTask(String label, TaggedImage taggedImage)
-      throws MMException, IOException
+      throws IOException
    {
       if (!newDataSet_) {
          Log.log("Tried to write image to a finished data set");
-         throw new MMException("This ImageFileManager is read-only.");
+         throw new RuntimeException("This ImageFileManager is read-only.");
       }
       //initialize writing executor
       if (fastStorageMode_ && writingExecutor_ == null) {
@@ -251,7 +250,7 @@ public final class TaggedImageStorageMultipageTiff   {
       int fileSetIndex = 0;
       if (splitByXYPosition_) {
          try {
-            fileSetIndex = MDUtils.getPositionIndex(taggedImage.tags);
+            fileSetIndex = MD.getPositionIndex(taggedImage.tags);
          } catch (JSONException ex) {
             Log.log(ex);
          }
@@ -512,7 +511,7 @@ public final class TaggedImageStorageMultipageTiff   {
       
       public void overwritePixels(Object pixels, int channel, int slice, int frame, int position) throws IOException {
          for (MultipageTiffWriter w : tiffWriters_) {
-            if (w.getIndexMap().containsKey(MDUtils.generateLabel(channel, slice, frame, position))) {
+            if (w.getIndexMap().containsKey(MD.generateLabel(channel, slice, frame, position))) {
                w.overwritePixels(pixels, channel, slice, frame, position);
             }
          }
@@ -546,12 +545,12 @@ public final class TaggedImageStorageMultipageTiff   {
          tiffWriters_.getLast().writeImage(img);  
           
          try {
-            int frame = MDUtils.getFrameIndex(img.tags);            
+            int frame = MD.getFrameIndex(img.tags);            
          } catch (JSONException ex) {
             Log.log("Couldn't find frame index in image tags");
          }   
          try {
-            int pos = MDUtils.getPositionIndex(img.tags);
+            int pos = MD.getPositionIndex(img.tags);
             lastAcquiredPosition_ = Math.max(pos, lastAcquiredPosition_);
          } catch (JSONException ex) {
             Log.log("Couldn't find position index in image tags");
@@ -570,8 +569,8 @@ public final class TaggedImageStorageMultipageTiff   {
 
       private void writeToMetadataFile(JSONObject md) throws JSONException {
          try {
-            mdWriter_.write(",\n\"FrameKey-" + MDUtils.getFrameIndex(md)
-                    + "-" + MDUtils.getChannelIndex(md) + "-" + MDUtils.getSliceIndex(md) + "\": ");
+            mdWriter_.write(",\n\"FrameKey-" + MD.getFrameIndex(md)
+                    + "-" + MD.getChannelIndex(md) + "-" + MD.getSliceIndex(md) + "\": ");
             mdWriter_.write(md.toString(2));
          } catch (IOException ex) {
             Log.log("Problem writing to metadata.txt file", true);
@@ -615,11 +614,11 @@ public final class TaggedImageStorageMultipageTiff   {
 
          if (splitByXYPosition_) {
             try {
-               if (MDUtils.hasPositionName(firstImageTags)) {
-                  baseFilename += "_" + MDUtils.getPositionName(firstImageTags);
+               if (MD.hasPositionName(firstImageTags)) {
+                  baseFilename += "_" + MD.getPositionName(firstImageTags);
                }
                else {
-                  baseFilename += "_" + "Pos" + MDUtils.getPositionIndex(firstImageTags);
+                  baseFilename += "_" + "Pos" + MD.getPositionIndex(firstImageTags);
                }
             } catch (JSONException ex) {
                Log.log("No position name or index in metadata");

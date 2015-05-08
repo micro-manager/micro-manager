@@ -19,8 +19,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.Popup;
 import javax.swing.PopupFactory;
+import main.Magellan;
 import org.json.JSONObject;
-import org.micromanager.MMStudio;
 import surfacesandregions.MultiPosRegion;
 import surfacesandregions.RegionManager;
 import surfacesandregions.SurfaceManager;
@@ -100,7 +100,7 @@ public class DisplayWindowControls extends Panel {
    private MultiPosRegion createNewGrid() {
       int imageWidth = display_.getImagePlus().getWidth();
       int imageHeight = display_.getImagePlus().getHeight();
-      return new MultiPosRegion(regionManager_, MMStudio.getInstance().getMMCore().getXYStageDevice(),
+      return new MultiPosRegion(regionManager_, Magellan.getCore().getXYStageDevice(),
               (Integer) gridRowsSpinner_.getValue(), (Integer) gridColsSpinner_.getValue(),
               display_.stageCoordFromImageCoords(imageWidth / 2, imageHeight / 2));
    }

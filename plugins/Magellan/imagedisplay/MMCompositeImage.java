@@ -2,18 +2,14 @@ package imagedisplay;
 
 import com.google.common.eventbus.EventBus;
 import ij.CompositeImage;
-import ij.IJ;
 import ij.ImagePlus;
 import ij.plugin.frame.ContrastAdjuster;
 import ij.process.LUT;
 import java.lang.reflect.InvocationTargetException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
+import misc.JavaUtils;
 import misc.Log;
-import org.micromanager.utils.CanvasPaintPending;
-import org.micromanager.utils.GUIUtils;
-import org.micromanager.utils.JavaUtils;
+
 
 public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
    private ImagePlus hyperImage_;
@@ -190,14 +186,24 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
 
        try {
            superUpdateImage();
-       } catch (ArrayIndexOutOfBoundsException aex) {
-           Log.log(aex);
-           CanvasPaintPending.removePaintPending(super.getCanvas(), this);
-           return;
-       }
-       bus_.post(new DrawEvent());
-       try {
-         GUIUtils.invokeLater(new Runnable() {
+      } catch (ArrayIndexOutOfBoundsException aex) {
+         Log.log(aex);
+         CanvasPaintPending.removePaintPending(super.getCanvas(), this);
+         return;
+      }
+      bus_.post(new DrawEvent());
+      if (SwingUtilities.isEventDispatchThread()) {
+         try {
+            JavaUtils.invokeRestrictedMethod(this, ImagePlus.class, "notifyListeners", 2);
+         } catch (NoSuchMethodException ex) {
+         } catch (IllegalAccessException ex) {
+         } catch (IllegalArgumentException ex) {
+         } catch (InvocationTargetException ex) {
+         }
+         superDraw();
+      } else {
+         SwingUtilities.invokeLater(new Runnable() {
+
             @Override
             public void run() {
                try {
@@ -210,10 +216,6 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
                superDraw();
             }
          });
-      } catch (InterruptedException e) {
-         Log.log(e);
-      } catch (InvocationTargetException e) {
-         Log.log(e);
       }
    }
 

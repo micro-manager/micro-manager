@@ -40,16 +40,12 @@ import java.util.LinkedList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import misc.Log;
+import misc.MD;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.MMStudio;
-import org.micromanager.utils.ImageUtils;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.MMScriptException;
 
 public class MultipageTiffWriter {
    
@@ -127,8 +123,6 @@ public class MultipageTiffWriter {
       
       try {
          processSummaryMD(summaryMD, splitByPositions);
-      } catch (MMScriptException ex1) {
-         Log.log(ex1);
       } catch (JSONException ex) {
          Log.log(ex);
       }
@@ -136,21 +130,23 @@ public class MultipageTiffWriter {
       //This is an overestimate of file size because file gets truncated at end
       long fileSize = Math.min(MAX_FILE_SIZE, summaryMD.toString().length() + 2000000
               + numFrames_ * numChannels_ * numSlices_ * ((long) bytesPerImagePixels_ + 2000));
-      
+
       f.createNewFile();
       raFile_ = new RandomAccessFile(f, "rw");
       try {
          raFile_.setLength(fileSize);
-      } catch (IOException e) {       
-       new Thread(new Runnable() {
-             @Override
-             public void run() {
-                 try {
-                     Thread.sleep(1000);
-                 } catch (InterruptedException ex) {}
-                 MMStudio.getInstance().getAcquisitionEngine().abortRequest();
-             } }).start();     
-             Log.log("Insufficent space on disk: no room to write data");
+      } catch (IOException e) {
+         new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+               try {
+                  Thread.sleep(1000);
+               } catch (InterruptedException ex) {
+               }
+            }
+         }).start();
+         Log.log("Insufficent space on disk: no room to write data");
       }
       fileChannel_ = raFile_.getChannel();
       writingExecutor_ = masterMPTiffStorage_.getWritingExecutor();
@@ -394,7 +390,7 @@ public class MultipageTiffWriter {
       }
       long offset = filePosition_;
       writeIFD(img);
-      addToIndexMap(MDUtils.getLabel(img.tags), offset);
+      addToIndexMap(MD.getLabel(img.tags), offset);
       writeBuffers();
       //wait until image has finished writing to return
 //      int size = writingExecutor_.getQueue().size();
@@ -434,7 +430,7 @@ public class MultipageTiffWriter {
    }
    
    public void overwritePixels(Object pixels, int channel, int slice, int frame, int position) throws IOException {
-      long byteOffset = indexMap_.get(MDUtils.generateLabel(channel, slice, frame, position));      
+      long byteOffset = indexMap_.get(MD.generateLabel(channel, slice, frame, position));      
       ByteBuffer buffer = ByteBuffer.allocate(2).order(BYTE_ORDER);
       fileChannel_.read(buffer, byteOffset);
       int numEntries = buffer.getChar(0);
@@ -626,14 +622,14 @@ public class MultipageTiffWriter {
       }
    }
 
-   private void processSummaryMD(JSONObject summaryMD, boolean splitByPosition) throws MMScriptException, JSONException {
-      rgb_ = MDUtils.isRGB(summaryMD);
-      numChannels_ = MDUtils.getNumChannels(summaryMD);
-      numFrames_ = MDUtils.getNumFrames(summaryMD);
-      numSlices_ = MDUtils.getNumSlices(summaryMD);
-      imageWidth_ = MDUtils.getWidth(summaryMD);
-      imageHeight_ = MDUtils.getHeight(summaryMD);
-      String pixelType = MDUtils.getPixelType(summaryMD);
+   private void processSummaryMD(JSONObject summaryMD, boolean splitByPosition) throws JSONException {
+      rgb_ = MD.isRGB(summaryMD);
+      numChannels_ = MD.getNumChannels(summaryMD);
+      numFrames_ = MD.getNumFrames(summaryMD);
+      numSlices_ = MD.getNumSlices(summaryMD);
+      imageWidth_ = MD.getWidth(summaryMD);
+      imageHeight_ = MD.getHeight(summaryMD);
+      String pixelType = MD.getPixelType(summaryMD);
       if (pixelType.equals("GRAY8") || pixelType.equals("RGB32") || pixelType.equals("RGB24")) {
          byteDepth_ = 1;
       } else if (pixelType.equals("GRAY16") || pixelType.equals("RGB64")) {
@@ -777,7 +773,7 @@ public class MultipageTiffWriter {
          //LUTs
          for (int i = 0; i < numChannels; i++) {
             channelSetting = channels.getJSONObject(i);
-            LUT lut = ImageUtils.makeLUT(new Color(channelSetting.getInt("Color")), channelSetting.getDouble("Gamma"));
+            LUT lut = makeLUT(new Color(channelSetting.getInt("Color")), channelSetting.getDouble("Gamma"));
             for (byte b : lut.getBytes()) {
                mdBuffer.put(bufferPosition, b);
                bufferPosition++;
@@ -917,5 +913,26 @@ public class MultipageTiffWriter {
       fileChannelWrite(offsetHeader, 16);
       filePosition_ += numReservedBytes + 8;
    }
-  
+
+   public static LUT makeLUT(Color color, double gamma) {
+      int r = color.getRed();
+      int g = color.getGreen();
+      int b = color.getBlue();
+
+      int size = 256;
+      byte[] rs = new byte[size];
+      byte[] gs = new byte[size];
+      byte[] bs = new byte[size];
+
+      double xn;
+      double yn;
+      for (int x = 0; x < size;++x) {
+         xn = x / (double) (size-1);
+         yn = Math.pow(xn, gamma);
+         rs[x] = (byte) (yn * r);
+         gs[x] = (byte) (yn * g);
+         bs[x] = (byte) (yn * b);
+      }
+      return new LUT(8,size,rs,gs,bs);
+   }
 }

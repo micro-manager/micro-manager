@@ -4,15 +4,15 @@ import ij.IJ;
 import imagedisplay.DisplayPlus;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import bidc.CoreCommunicator;
+import bidc.JavaLayerImageConstructor;
 import channels.ChannelSetting;
 import java.awt.Color;
 import java.util.ArrayList;
+import main.Magellan;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.micromanager.MMStudio;
 
 /**
  * Abstract class that manages a generic acquisition. Subclassed into specific
@@ -25,7 +25,6 @@ public abstract class Acquisition implements AcquisitionEventSource{
    
    protected final double zStep_;
    private BlockingQueue<TaggedImage> engineOutputQueue_;
-   protected CMMCore core_ = MMStudio.getInstance().getCore();
    protected String xyStage_, zStage_;
    protected boolean zStageHasLimits_ = false;
    protected double zStageLowerLimit_, zStageUpperLimit_;
@@ -41,17 +40,17 @@ public abstract class Acquisition implements AcquisitionEventSource{
    protected ArrayList<ChannelSetting> channels_ = new ArrayList<ChannelSetting>();
 
    public Acquisition(double zStep, ArrayList<ChannelSetting> channels) throws Exception {
-      xyStage_ = core_.getXYStageDevice();
-      zStage_ = core_.getFocusDevice();
+      xyStage_ = Magellan.getCore().getXYStageDevice();
+      zStage_ = Magellan.getCore().getFocusDevice();
       channels_ = channels;
       //"postion" is not generic name..and as of right now there is now way of getting generic z positions
       //from a z deviec in MM
       String positionName = "Position";
-       if (core_.hasProperty(zStage_, positionName)) {
-           zStageHasLimits_ = core_.hasPropertyLimits(zStage_, positionName);
+       if (Magellan.getCore().hasProperty(zStage_, positionName)) {
+           zStageHasLimits_ = Magellan.getCore().hasPropertyLimits(zStage_, positionName);
            if (zStageHasLimits_) {
-               zStageLowerLimit_ = core_.getPropertyLowerLimit(zStage_, positionName);
-               zStageUpperLimit_ = core_.getPropertyUpperLimit(zStage_, positionName);
+               zStageLowerLimit_ = Magellan.getCore().getPropertyLowerLimit(zStage_, positionName);
+               zStageUpperLimit_ = Magellan.getCore().getPropertyUpperLimit(zStage_, positionName);
            }
        }
       zStep_ = zStep;
@@ -128,8 +127,8 @@ public abstract class Acquisition implements AcquisitionEventSource{
    
    protected void initialize(String dir, String name, double overlapPercent) {
       engineOutputQueue_ = new LinkedBlockingQueue<TaggedImage>(OUTPUT_QUEUE_SIZE);
-      overlapX_ = (int) (CoreCommunicator.getInstance().getImageWidth() * overlapPercent / 100);
-      overlapY_ = (int) (CoreCommunicator.getInstance().getImageHeight() * overlapPercent / 100);
+      overlapX_ = (int) (JavaLayerImageConstructor.getInstance().getImageWidth() * overlapPercent / 100);
+      overlapY_ = (int) (JavaLayerImageConstructor.getInstance().getImageHeight() * overlapPercent / 100);
       JSONObject summaryMetadata = MagellanEngine.makeSummaryMD(this, name);
       imageStorage_ = new MultiResMultipageTiffStorage(dir, summaryMetadata,
               (this instanceof FixedAreaAcquisition)); //estimatye background pixel values for fixed acqs but not explore

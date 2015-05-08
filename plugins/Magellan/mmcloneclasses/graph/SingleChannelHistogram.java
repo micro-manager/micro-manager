@@ -47,11 +47,9 @@ import acq.MMImageCache;
 import imagedisplay.DisplayPlus;
 import mmcloneclasses.graph.HistogramPanel.CursorListener;
 import imagedisplay.VirtualAcquisitionDisplay;
-import org.micromanager.MMStudio;
-import org.micromanager.api.ImageCache;
-import org.micromanager.utils.ContrastSettings;
-import org.micromanager.utils.HistogramUtils;
-import org.micromanager.utils.NumberUtils;
+import misc.HistogramUtils;
+import misc.NumberUtils;
+
 
 /**
  * A single histogram and a few controls for manipulating image contrast 
@@ -227,11 +225,9 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
 
 
       JButton zoomInButton = new JButton();
-      zoomInButton.setIcon(SwingResourceManager.getIcon(MMStudio.class,
-              "/org/micromanager/icons/zoom_in.png"));
+      zoomInButton.setIcon(SwingResourceManager.getIcon("/icons/zoom_in.png"));
       JButton zoomOutButton = new JButton();
-      zoomOutButton.setIcon(SwingResourceManager.getIcon(MMStudio.class,
-              "/org/micromanager/icons/zoom_out.png"));
+      zoomOutButton.setIcon(SwingResourceManager.getIcon( "/icons/zoom_out.png"));
       zoomInButton.addActionListener(new ActionListener() {
 
          @Override
@@ -843,14 +839,6 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
          applyLUTToImage();
          display_.drawWithoutUpdate();
       }
-   }
-
-   @Override
-   public ContrastSettings getChannelContrastSettings(int channel) {
-      if (channel != 0) {
-         return null;
-      }
-      return new ContrastSettings(contrastMin_, contrastMax_, gamma_);
    }
 
    @Override

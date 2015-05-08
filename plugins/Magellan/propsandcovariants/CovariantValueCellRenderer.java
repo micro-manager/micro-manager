@@ -1,16 +1,12 @@
 package propsandcovariants;
 
-import propsandcovariants.SinglePropertyOrGroup;
 import java.awt.Color;
 import java.awt.Component;
-import java.text.ParseException;
-
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
-import org.micromanager.utils.SliderPanel;
-import propsandcovariants.DeviceControlTableModel;
+
 
 public class CovariantValueCellRenderer implements TableCellRenderer {
    // This method is called each time a cell in a column

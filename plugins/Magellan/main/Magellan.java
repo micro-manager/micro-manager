@@ -7,6 +7,7 @@ package main;
 import autofocus.CrossCorrelationAutofocus;
 import gui.GUI;
 import java.util.prefs.Preferences;
+import mmcorej.CMMCore;
 import org.micromanager.MMStudio;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
@@ -25,11 +26,15 @@ public class Magellan implements MMPlugin{
    private static Preferences prefs_;
    private static ScriptInterface mmAPI_;
    private static GUI gui_;
+
+   public static String getConfigFilename() {
+      throw new UnsupportedOperationException("Not yet implemented");
+   }
    
    public Magellan() {
       if (gui_ == null) {
          prefs_ = Preferences.userNodeForPackage(Magellan.class);
-         gui_ = new GUI(prefs_, MMStudio.getInstance(), VERSION);
+         gui_ = new GUI(prefs_, VERSION);
       }
    }
    
@@ -70,4 +75,23 @@ public class Magellan implements MMPlugin{
    public String getCopyright() {
       return "Henry Pinkard UCSF 2014";
    }
+   
+   //methods for communicating with MM APIs
+   public static CMMCore getCore() {
+      return MMStudio.getInstance().getCore();
+   }
+   
+   public static ScriptInterface getScriptInterface() {
+      return (ScriptInterface) MMStudio.getInstance();
+   }
+   
+   public static String getConfigFileName() {
+      try {
+         return MMStudio.getInstance().getSysConfigFile();
+      } catch (Exception e) {
+         //since this is not an API method
+         return "";
+      }    
+   }
+   
 }

@@ -7,11 +7,9 @@ package demo;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
-import ij.macro.Interpreter;
 import java.awt.Frame;
-import java.util.Arrays;
-import org.micromanager.MMStudio;
-import org.micromanager.utils.JavaUtils;
+import main.Magellan;
+import misc.JavaUtils;
 
 /**
  *
@@ -25,7 +23,7 @@ public class DemoModeImageData {
 //      Interpreter.batchMode = true; //batch mode makes everything ridiculously slow for some reason
       
       String name = "Navigator demo LN" + 
-              (MMStudio.getInstance().getCore().getBytesPerPixel() > 1 ? "16Bit" : "")+ ".tif";
+              (Magellan.getCore().getBytesPerPixel() > 1 ? "16Bit" : "")+ ".tif";
       if (JavaUtils.isMac()) {
          //Laptop         
          IJ.runMacro("run(\"TIFF Virtual Stack...\", \"open=[/Applications/Micro-Manager1.4/Navigator demo LN.tif]\");");

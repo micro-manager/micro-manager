@@ -34,8 +34,7 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
 import javax.swing.border.LineBorder;
-import org.micromanager.MMStudio;
-import org.micromanager.utils.MMFrame;
+import misc.MMFrame;
 
 /**
  * XY Graph window.
@@ -217,7 +216,7 @@ public class GraphFrame extends MMFrame {
       btnRefresh.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            MMStudio.getInstance().updateLineProfile();
+//            MMStudio.getInstance().updateLineProfile();
          }
       });
       btnRefresh.setText("Refresh");

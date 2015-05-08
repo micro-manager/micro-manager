@@ -6,11 +6,11 @@ package coordinates;
 
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import main.Magellan;
 import misc.Log;
 import mmcorej.CMMCore;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.micromanager.MMStudio;
 
 /**
  * Immutable object representing single XY stage position
@@ -85,7 +85,7 @@ public class XYStagePosition {
    public JSONObject getMMPosition() {
       try {
          //make intitial position list, with current position and 0,0 as coordinates
-         CMMCore core = MMStudio.getInstance().getCore();
+         CMMCore core = Magellan.getCore();
 
          JSONObject coordinates = new JSONObject();
          JSONArray xy = new JSONArray();

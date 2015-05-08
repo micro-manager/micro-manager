@@ -2,8 +2,8 @@ package acq;
 
 import java.util.concurrent.BlockingQueue;
 import misc.Log;
+import misc.MD;
 import mmcorej.TaggedImage;
-import org.micromanager.utils.MDUtils;
 
 /**
  * Dequeue tagged images and append to image cache
@@ -65,7 +65,7 @@ public class TaggedImageSink  {
                      } catch (Exception ex) {
                         Log.log("Couldn't add image to storage");
                      }
-                     lastImageLabel_ = MDUtils.getLabel(image.tags);
+                     lastImageLabel_ = MD.getLabel(image.tags);
                   }
                } 
             }

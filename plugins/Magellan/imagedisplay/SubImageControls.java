@@ -28,11 +28,11 @@ import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import main.Magellan;
+import misc.JavaUtils;
 import misc.Log;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.MMStudio;
-import org.micromanager.utils.JavaUtils;
 
 /**
  *
@@ -172,7 +172,7 @@ public class SubImageControls extends Panel {
          sliderPanel_ = new JPanel(new MigLayout("insets 0", "[][][grow]", ""));
          //TODO: what if no z device enabled?
          try {
-            CMMCore core = MMStudio.getInstance().getCore();
+            CMMCore core = Magellan.getCore();
             String z = core.getFocusDevice();
             zOrigin_ = core.getPosition(z);
             //Initialize z to current position with space to move one above or below           

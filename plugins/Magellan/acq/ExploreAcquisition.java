@@ -10,10 +10,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import main.Magellan;
 import misc.Log;
 import mmcorej.CMMCore;
 import org.json.JSONArray;
-import org.micromanager.MMStudio;
 
 /**
  * A single time point acquisition that can dynamically expand in X,Y, and Z
@@ -36,9 +36,9 @@ public class ExploreAcquisition extends Acquisition {
       super(settings.zStep_, settings.channels_);
       try {
          //start at current z position
-         zTop_ = core_.getPosition(zStage_);
+         zTop_ = Magellan.getCore().getPosition(zStage_);
          zOrigin_ = zTop_;
-         zBottom_ = core_.getPosition(zStage_);
+         zBottom_ = Magellan.getCore().getPosition(zStage_);
       } catch (Exception ex) {
          Log.log("Couldn't get focus device position",true);
          throw new RuntimeException();
@@ -249,7 +249,7 @@ public class ExploreAcquisition extends Acquisition {
    protected JSONArray createInitialPositionList() {
       try {
          //create empty position list that gets filled in as tiles are explored
-         CMMCore core = MMStudio.getInstance().getCore();
+         CMMCore core = Magellan.getCore();
          JSONArray pList = new JSONArray();
          return pList;
       } catch (Exception e) {

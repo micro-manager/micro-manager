@@ -10,15 +10,15 @@ import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import bidc.CoreCommunicator;
+import bidc.JavaLayerImageConstructor;
+import main.Magellan;
 import misc.Log;
 import misc.LongPoint;
 import mmcorej.CMMCore;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.MMStudio;
-import org.micromanager.api.ScriptInterface;
+
 
 
 /*
@@ -37,7 +37,7 @@ public class PositionManager {
    private final AffineTransform affine_;
    private JSONArray positionList_; //all access to positionlist in synchronized methods for thread safety
    private int minRow_, maxRow_, minCol_, maxCol_; //For the lowest resolution level
-   private String xyStageName_ = MMStudio.getInstance().getCore().getXYStageDevice();
+   private String xyStageName_ = Magellan.getCore().getXYStageDevice();
    //Map of Res level to set of nodes
    private TreeMap<Integer,TreeSet<MultiResPositionNode>> positionNodes_; 
    private final int displayTileWidth_, displayTileHeight_;
@@ -252,7 +252,7 @@ public class PositionManager {
          JSONObject coords = new JSONObject();
          xy.put(stageCoords.x);
          xy.put(stageCoords.y);
-         coords.put(MMStudio.getInstance().getCore().getXYStageDevice(), xy);
+         coords.put(Magellan.getCore().getXYStageDevice(), xy);
          JSONObject pos = new JSONObject();
          pos.put(COORDINATES_KEY, coords);
          pos.put(COL_KEY, col);
@@ -431,8 +431,7 @@ public class PositionManager {
     */
    private synchronized Point2D.Double getStagePositionCoordinates(int row, int col, int pixelOverlapX, int pixelOverlapY) {
       try {
-         ScriptInterface app = MMStudio.getInstance();
-         CMMCore core = app.getMMCore();
+         CMMCore core = Magellan.getCore();
          if ( positionList_.length() == 0) {
             try {
                //create position 0 based on current XY stage position
@@ -449,8 +448,8 @@ public class PositionManager {
             int existingRow = existingPosition.getInt(ROW_KEY);
             int existingColumn = existingPosition.getInt(COL_KEY);
 
-            double xPixelOffset = (col - existingColumn) * (CoreCommunicator.getInstance().getImageWidth() - pixelOverlapX);
-            double yPixelOffset = (row - existingRow) * (CoreCommunicator.getInstance().getImageHeight() - pixelOverlapY);
+            double xPixelOffset = (col - existingColumn) * (JavaLayerImageConstructor.getInstance().getImageWidth() - pixelOverlapX);
+            double yPixelOffset = (row - existingRow) * (JavaLayerImageConstructor.getInstance().getImageHeight() - pixelOverlapY);
 
             Point2D.Double stagePos = new Point2D.Double();
             AffineTransform transform = (AffineTransform) affine_.clone();

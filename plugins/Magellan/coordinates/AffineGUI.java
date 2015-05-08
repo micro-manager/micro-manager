@@ -7,11 +7,10 @@ package coordinates;
 import ij.IJ;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
+import main.Magellan;
+import misc.JavaUtils;
 import org.micromanager.MMStudio;
-import org.micromanager.utils.JavaUtils;
 
 /**
  * 
@@ -30,13 +29,13 @@ public class AffineGUI extends javax.swing.JFrame {
       initComponents();
       this.setLocationRelativeTo(null);
        try {
-           pixelSizeConfig_ = MMStudio.getInstance().getMMCore().getCurrentPixelSizeConfig();
+           pixelSizeConfig_ = Magellan.getCore().getCurrentPixelSizeConfig();
        } catch (Exception ex) {
            IJ.log("No pixel size found for current config!");
            throw new RuntimeException();
        }
       pixelCalLabel_.setText("Pixel size Calibration: " + pixelSizeConfig_);
-      pixelSize_ = MMStudio.getInstance().getMMCore().getPixelSizeUm();
+      pixelSize_ = Magellan.getCore().getPixelSizeUm();
       setVisible(true);
        try {
            populateValues(AffineUtils.getAffineTransform(pixelSizeConfig_, 0, 0));

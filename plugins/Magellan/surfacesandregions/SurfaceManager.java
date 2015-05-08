@@ -2,7 +2,7 @@ package surfacesandregions;
 
 import imagedisplay.DisplayPlus;
 import java.util.ArrayList;
-import org.micromanager.MMStudio;
+import main.Magellan;
 import propsandcovariants.CovariantPairingsManager;
 import propsandcovariants.SurfaceData;
 
@@ -86,7 +86,7 @@ public class SurfaceManager {
    
    public void addNewSurface() {
 //      surfaces_.add(new SurfaceInterpolatorSibson(this));
-      surfaces_.add(new SurfaceInterpolatorSimple(this, MMStudio.getInstance().getCore().getXYStageDevice(), MMStudio.getInstance().getCore().getFocusDevice()));
+      surfaces_.add(new SurfaceInterpolatorSimple(this, Magellan.getCore().getXYStageDevice(), Magellan.getCore().getFocusDevice()));
       updateSurfaceTableAndCombos();
    }
    

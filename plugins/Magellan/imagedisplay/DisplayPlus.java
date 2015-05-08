@@ -32,13 +32,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import misc.JavaUtils;
 import misc.Log;
 import misc.LongPoint;
 import misc.MD;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.MDUtils;
 import surfacesandregions.MultiPosRegion;
 import surfacesandregions.SurfaceInterpolator;
 
@@ -93,7 +92,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       //add in customized zoomable acquisition virtual stack
       try {
          //looks like nSlicess only really matters during display startup
-         int nSlices = MDUtils.getNumChannels(summaryMD) * MDUtils.getNumFrames(summaryMD) * MDUtils.getNumSlices(summaryMD);
+         int nSlices = MD.getNumChannels(summaryMD) * MD.getNumFrames(summaryMD) * MD.getNumSlices(summaryMD);
 
 
          if (exploreAcq_) {
@@ -106,7 +105,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
          //zoomable stack dimensions don't matter because they get changed on window startup
          //But making it at least 200 is good, because smaller than this causes a weird smaller canvas 
          //panel that screws up the autolayout
-         zoomableStack_ = new ZoomableVirtualStack(MDUtils.getIJType(summaryMD), 200, 200,
+         zoomableStack_ = new ZoomableVirtualStack(MD.getIJType(summaryMD), 200, 200,
                  stitchedCache, nSlices, this, multiResStorage, acq_);
 
 

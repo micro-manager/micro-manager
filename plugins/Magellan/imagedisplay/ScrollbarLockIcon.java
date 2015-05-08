@@ -5,7 +5,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import javax.swing.JComponent;
 import javax.swing.event.MouseInputAdapter;
-import org.micromanager.utils.TooltipTextMaker;
 
 /**
  *
@@ -54,8 +53,7 @@ public class ScrollbarLockIcon extends JComponent   {
       axis_ = axis;
       bus_ = bus;
       setSize(WIDTH, HEIGHT);
-      this.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(
-              "Lock the scrollbar to its current postion"));
+      this.setToolTipText("Lock the scrollbar to its current postion");
       this.addMouseListener(new MouseInputAdapter() {
          @Override
          public void mouseClicked(MouseEvent e) {

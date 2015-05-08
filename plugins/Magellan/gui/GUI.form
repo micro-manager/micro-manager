@@ -1894,7 +1894,7 @@
                             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="autofocusZDeviceComboBox_ActionPerformed"/>
                           </Events>
                           <AuxValues>
-                            <AuxValue name="JavaCodeGenerator_InitCodePre" type="java.lang.String" value="StrVector zVec = MMStudio.getInstance().getCore().getLoadedDevicesOfType(mmcorej.DeviceType.StageDevice);&#xd;&#xa;String[] zNames = new String[(int)zVec.size()];&#xd;&#xa;for (int i = 0; i &lt; zNames.length; i++) {&#xd;&#xa;   zNames[i] = zVec.get(i);&#xd;&#xa;}&#xd;&#xa;ComboBoxModel afzModel = new DefaultComboBoxModel(zNames);"/>
+                            <AuxValue name="JavaCodeGenerator_InitCodePre" type="java.lang.String" value="StrVector zVec = Magellan.getCore().getLoadedDevicesOfType(mmcorej.DeviceType.StageDevice);&#xd;&#xa;String[] zNames = new String[(int)zVec.size()];&#xd;&#xa;for (int i = 0; i &lt; zNames.length; i++) {&#xd;&#xa;   zNames[i] = zVec.get(i);&#xd;&#xa;}&#xd;&#xa;ComboBoxModel afzModel = new DefaultComboBoxModel(zNames);"/>
                           </AuxValues>
                         </Component>
                         <Component class="javax.swing.JLabel" name="autofocusMaxDisplacementLabel_">

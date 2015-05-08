@@ -8,11 +8,10 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.TreeMap;
 import java.util.prefs.Preferences;
+import main.Magellan;
 import misc.Log;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
-import org.micromanager.MMStudio;
-import org.micromanager.api.ScriptInterface;
 
 /**
  *
@@ -88,10 +87,9 @@ public class PropertyAndGroupUtils {
    
    private static ArrayList<SinglePropertyOrGroup> readConfigGroups() {
       ArrayList<SinglePropertyOrGroup> groups = new ArrayList<SinglePropertyOrGroup>();
-      ScriptInterface mmapi = MMStudio.getInstance();
-      CMMCore core = mmapi.getMMCore();
-      boolean liveMode = mmapi.isLiveModeOn();
-         mmapi.enableLiveMode(false);
+      CMMCore core = Magellan.getCore();
+      boolean liveMode = Magellan.getScriptInterface().isLiveModeOn();
+         Magellan.getScriptInterface().enableLiveMode(false);
                   
          StrVector groupNames = core.getAvailableConfigGroups();   
       for (String group : groupNames) {
@@ -99,18 +97,17 @@ public class PropertyAndGroupUtils {
          pg.readGroupValuesFromConfig(group);
          groups.add(pg);
       }
-      mmapi.enableLiveMode(liveMode);
+      Magellan.getScriptInterface().enableLiveMode(liveMode);
       return groups;
    }
 
    private static ArrayList<SinglePropertyOrGroup> readAllProperties(boolean includeReadOnly) {
-      ScriptInterface mmapi = MMStudio.getInstance();
-      CMMCore core = mmapi.getMMCore();
+      CMMCore core = Magellan.getCore();
       ArrayList<SinglePropertyOrGroup> props = new ArrayList<SinglePropertyOrGroup>();
       try {
          StrVector devices = core.getLoadedDevices();
-         boolean liveMode = mmapi.isLiveModeOn();
-         mmapi.enableLiveMode(false);
+         boolean liveMode = Magellan.getScriptInterface().isLiveModeOn();
+         Magellan.getScriptInterface().enableLiveMode(false);
 
          for (int i = 0; i < devices.size(); i++) {
             StrVector properties = core.getDevicePropertyNames(devices.get(i));
@@ -122,7 +119,7 @@ public class PropertyAndGroupUtils {
                }
             }
          }
-         mmapi.enableLiveMode(liveMode);
+         Magellan.getScriptInterface().enableLiveMode(liveMode);
       } catch (Exception e) {
          Log.log("Problem reading properties from core");
       }

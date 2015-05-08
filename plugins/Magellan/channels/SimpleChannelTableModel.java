@@ -10,14 +10,10 @@ import java.util.ArrayList;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
+import main.Magellan;
 import misc.GlobalSettings;
-import misc.Log;
 import mmcorej.CMMCore;
-import org.micromanager.MMStudio;
-import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.events.ExposureChangedEvent;
-import org.micromanager.api.events.SystemConfigurationLoadedEvent;
-import org.micromanager.events.EventManager;
 
 /**
  *
@@ -39,13 +35,10 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
 
    public SimpleChannelTableModel(boolean exploreTable) {
       exploreTable_ = exploreTable;
-      core_ = MMStudio.getInstance().getCore();
+      core_ = Magellan.getCore();
       refreshChannels();
-      EventManager.getBus().register(this);
-   }
-   
-   public void shutdown() {
-       EventManager.getBus().unregister(this);
+      //TODOL:
+      Magellan.getScriptInterface().registerForEvents(this);
    }
    
    public boolean anyChannelsActive() {
