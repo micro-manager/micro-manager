@@ -43,7 +43,7 @@ public class GlobalSettings {
 
       //Demo mode 
       try {
-         String s = Magellan.getConfigFilename();
+         String s = Magellan.getConfigFileName();
          if (s.endsWith("NavDemo.cfg") || s.endsWith("NavDemo16Bit.cfg")) {
             demoMode_ = true;
             new DemoModeImageData();

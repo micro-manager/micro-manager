@@ -37,8 +37,11 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
       exploreTable_ = exploreTable;
       core_ = Magellan.getCore();
       refreshChannels();
-      //TODOL:
       Magellan.getScriptInterface().registerForEvents(this);
+   }
+   
+   public void shutdown() {
+      Magellan.getScriptInterface().unregisterForEvents(this);
    }
    
    public boolean anyChannelsActive() {

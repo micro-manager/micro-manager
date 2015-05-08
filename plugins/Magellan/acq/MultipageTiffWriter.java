@@ -103,13 +103,11 @@ public class MultipageTiffWriter {
    private double zStepUm_ = 1;
    private LinkedList<ByteBuffer> buffers_;
    private boolean firstIFD_ = true;
-   private long omeDescriptionTagPosition_;
    private long ijDescriptionTagPosition_;
    private long ijMetadataCountsTagPosition_;
    private long ijMetadataTagPosition_;
    //Reader associated with this file
    private MultipageTiffReader reader_;
-   private long blankPixelsOffset_ = -1;
    private String summaryMDString_;
    private boolean fastStorageMode_;
    
@@ -121,11 +119,7 @@ public class MultipageTiffWriter {
       reader_ = new MultipageTiffReader(summaryMD);
       File f = new File(directory + "/" + filename); 
       
-      try {
-         processSummaryMD(summaryMD, splitByPositions);
-      } catch (JSONException ex) {
-         Log.log(ex);
-      }
+      processSummaryMD(summaryMD);
       
       //This is an overestimate of file size because file gets truncated at end
       long fileSize = Math.min(MAX_FILE_SIZE, summaryMD.toString().length() + 2000000
@@ -498,7 +492,6 @@ public class MultipageTiffWriter {
       writeIFDEntry(ifdBuffer,charView,PHOTOMETRIC_INTERPRETATION,(char)3,1,rgb_?2:1);
       
       if (firstIFD_ ) {
-         omeDescriptionTagPosition_ = filePosition_ + bufferPosition_;
          writeIFDEntry(ifdBuffer, charView, IMAGE_DESCRIPTION, (char) 2, 0, 0);
          ijDescriptionTagPosition_ = filePosition_ + bufferPosition_;
          writeIFDEntry(ifdBuffer, charView, IMAGE_DESCRIPTION, (char) 2, 0, 0);
@@ -622,7 +615,7 @@ public class MultipageTiffWriter {
       }
    }
 
-   private void processSummaryMD(JSONObject summaryMD, boolean splitByPosition) throws JSONException {
+   private void processSummaryMD(JSONObject summaryMD )   {
       rgb_ = MD.isRGB(summaryMD);
       numChannels_ = MD.getNumChannels(summaryMD);
       numFrames_ = MD.getNumFrames(summaryMD);
@@ -661,10 +654,7 @@ public class MultipageTiffWriter {
          resNumerator_ = (long) (1 / cmPerPixel);
          resDenomenator_ = 1;
       }
-      
-       if (summaryMD.has("z-step_um") && !summaryMD.isNull("z-step_um")) {
-            zStepUm_ = summaryMD.getDouble("z-step_um");
-       }
+      zStepUm_ = MD.getZStepUm(summaryMD);
    }
 
    /**
@@ -871,12 +861,7 @@ public class MultipageTiffWriter {
 
    private void writeComments() throws IOException {
       //Write 4 byte header, 4 byte number of bytes
-      JSONObject comments;
-      try {
-         comments = masterMPTiffStorage_.getDisplayAndComments().getJSONObject("Comments");
-      } catch (JSONException ex) {
-         comments = new JSONObject();
-      }
+      JSONObject comments = new JSONObject();    
       byte[] commentsBytes = getBytesFromString(comments.toString());
       ByteBuffer header = allocateByteBuffer(8);
       header.putInt(0, COMMENTS_HEADER);

@@ -141,8 +141,8 @@ public final class TaggedImageStorageMultipageTiff   {
                for (String label : labels) {
                   tiffReadersByLabel_.put(label, reader);
                   maxChannelIndex_ = Math.max(maxChannelIndex_, Integer.parseInt(label.split("_")[0]));
-                  maxSliceIndex_ = Math.max(maxChannelIndex_, Integer.parseInt(label.split("_")[1]));
-                  maxFrameIndex_ = Math.max(maxChannelIndex_, Integer.parseInt(label.split("_")[2]));                 
+                  maxSliceIndex_ = Math.max(maxSliceIndex_, Integer.parseInt(label.split("_")[1]));
+                  maxFrameIndex_ = Math.max(maxFrameIndex_, Integer.parseInt(label.split("_")[2]));                 
                }
             } catch (IOException ex) {
                Log.log("Couldn't open file: " + f.toString());
@@ -249,11 +249,7 @@ public final class TaggedImageStorageMultipageTiff   {
       }
       int fileSetIndex = 0;
       if (splitByXYPosition_) {
-         try {
-            fileSetIndex = MD.getPositionIndex(taggedImage.tags);
-         } catch (JSONException ex) {
-            Log.log(ex);
-         }
+         fileSetIndex = MD.getPositionIndex(taggedImage.tags);
       }
       if (fileSets_ == null) {
          try {
@@ -397,7 +393,6 @@ public final class TaggedImageStorageMultipageTiff   {
       for (MultipageTiffReader r : new HashSet<MultipageTiffReader>(tiffReadersByLabel_.values())) {
          try {
             r.rewriteDisplaySettings(displayAndComments_.getJSONArray("Channels"));
-            r.rewriteComments(displayAndComments_.getJSONObject("Comments"));
          } catch (JSONException ex) {
             Log.log("Error writing display settings", true);
          } catch (IOException ex) {
@@ -542,21 +537,13 @@ public final class TaggedImageStorageMultipageTiff   {
          }
 
          //write image
-         tiffWriters_.getLast().writeImage(img);  
-          
-         try {
-            int frame = MD.getFrameIndex(img.tags);            
-         } catch (JSONException ex) {
-            Log.log("Couldn't find frame index in image tags");
-         }   
-         try {
-            int pos = MD.getPositionIndex(img.tags);
-            lastAcquiredPosition_ = Math.max(pos, lastAcquiredPosition_);
-         } catch (JSONException ex) {
-            Log.log("Couldn't find position index in image tags");
-         }  
-         
-         
+         tiffWriters_.getLast().writeImage(img);
+
+         int frame = MD.getFrameIndex(img.tags);
+         int pos = MD.getPositionIndex(img.tags);
+         lastAcquiredPosition_ = Math.max(pos, lastAcquiredPosition_);
+
+
          try {
             if (separateMetadataFile_) {
                writeToMetadataFile(img.tags);
@@ -613,16 +600,7 @@ public final class TaggedImageStorageMultipageTiff   {
          }
 
          if (splitByXYPosition_) {
-            try {
-               if (MD.hasPositionName(firstImageTags)) {
-                  baseFilename += "_" + MD.getPositionName(firstImageTags);
-               }
-               else {
-                  baseFilename += "_" + "Pos" + MD.getPositionIndex(firstImageTags);
-               }
-            } catch (JSONException ex) {
-               Log.log("No position name or index in metadata");
-            }
+            baseFilename += "_" + MD.getPositionName(firstImageTags);
          }
          return baseFilename;
       }

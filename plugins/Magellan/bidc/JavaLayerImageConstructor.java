@@ -116,9 +116,7 @@ public class JavaLayerImageConstructor {
                      firstIAI.event_.acquisition_.addImage(constructedImage);
                   } catch (InterruptedException ex) {
                      IJ.log("Unexpected interrupt of image construction thread! Ignoring...");
-                  } catch (JSONException e) {
-                     IJ.log(e.toString());
-                  }
+                  } 
                }
             }
          });
@@ -129,12 +127,12 @@ public class JavaLayerImageConstructor {
         return singleton_;
     }
     
-    public long getImageWidth() {       
-        return javaLayerConstruction_ ? RawBufferWrapper.getWidth() : core_.getImageWidth();
+    public int getImageWidth() {       
+        return (int) (javaLayerConstruction_ ? RawBufferWrapper.getWidth() : core_.getImageWidth());
     }
 
-    public long getImageHeight() {
-        return javaLayerConstruction_ ? RawBufferWrapper.getHeight() : core_.getImageHeight();
+    public int getImageHeight() {
+        return (int) (javaLayerConstruction_ ? RawBufferWrapper.getHeight() : core_.getImageHeight());
     }
 
     public void snapImage() throws Exception {

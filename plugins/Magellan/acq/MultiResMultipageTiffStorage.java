@@ -139,21 +139,17 @@ public class MultiResMultipageTiffStorage {
       lowResStorages_ = new TreeMap<Integer, TaggedImageStorageMultipageTiff>();
    }
 
-   private void readSummaryMetadata( ) {
-      try {
-         xOverlap_ = summaryMD_.getInt(MD.OVERLAP_X);
-         yOverlap_ = summaryMD_.getInt(MD.OVERLAP_Y);
-         byteDepth_ = MD.getBytesPerPixel(summaryMD_);
-         fullResTileWidthIncludingOverlap_ = MD.getWidth(summaryMD_);
-         fullResTileHeightIncludingOverlap_ = MD.getHeight(summaryMD_);
-         tileWidth_ = fullResTileWidthIncludingOverlap_ - xOverlap_;
-         tileHeight_ = fullResTileHeightIncludingOverlap_ - yOverlap_;
-         pixelSizeZ_ = summaryMD_.getDouble(MD.Z_STEP_UM);
-         pixelSizeXY_ = summaryMD_.getDouble(MD.PIX_SIZE);
-         affine_ = AffineUtils.stringToTransform(summaryMD_.getString(MD.AFFINE_TRANSFORM));
-      } catch (Exception e) {
-         Log.log("Problem with Image tags", true);
-      }
+   private void readSummaryMetadata() {
+      xOverlap_ = MD.getPixelOverlapX(summaryMD_);
+      yOverlap_ = MD.getPixelOverlapY(summaryMD_);
+      byteDepth_ = MD.getBytesPerPixel(summaryMD_);
+      fullResTileWidthIncludingOverlap_ = MD.getWidth(summaryMD_);
+      fullResTileHeightIncludingOverlap_ = MD.getHeight(summaryMD_);
+      tileWidth_ = fullResTileWidthIncludingOverlap_ - xOverlap_;
+      tileHeight_ = fullResTileHeightIncludingOverlap_ - yOverlap_;
+      pixelSizeZ_ = MD.getZStepUm(summaryMD_);
+      pixelSizeXY_ = MD.getPixelSizeUm(summaryMD_);
+      affine_ = AffineUtils.stringToTransform(MD.getAffineTransformString(summaryMD_));
    }
    
    public String getUniqueAcqName() {
@@ -422,14 +418,10 @@ public class MultiResMultipageTiffStorage {
    
    private void addToLowResStorage(TaggedImage img, int previousResIndex, int fullResPositionIndex) {
       //Read indices
-      int channel = 0, slice = 0, frame = 0;
-      try {
-         channel = MD.getChannelIndex(img.tags);
-         slice = MD.getSliceIndex(img.tags);
-         frame = MD.getFrameIndex(img.tags);
-      } catch (JSONException e) {
-         Log.log("Couldn't find tags");
-      }
+      int channel = MD.getChannelIndex(img.tags);
+      int slice = MD.getSliceIndex(img.tags);
+      int frame = MD.getFrameIndex(img.tags);
+
       if (estimateBackground_) {
          readBackgroundPixelValue(channel, img); //find a background pixel value in the first image
       }
@@ -620,9 +612,7 @@ public class MultiResMultipageTiffStorage {
          }
       } catch (IOException ex) {
          Log.log(ex.toString());
-      } catch (JSONException ex) {
-         Log.log("Position index missing from tags");
-      }
+      } 
    }
 
    public TaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {

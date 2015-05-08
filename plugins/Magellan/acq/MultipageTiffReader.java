@@ -266,18 +266,6 @@ public class MultipageTiffReader {
       }
    }
    
-   public void rewriteComments(JSONObject comments) throws IOException, JSONException {
-      if (writingFinished_) {
-         byte[] bytes = getBytesFromString(comments.toString());
-         ByteBuffer byteCount = ByteBuffer.wrap(new byte[4]).order(byteOrder_).putInt(0,bytes.length);
-         ByteBuffer buffer = ByteBuffer.wrap(bytes);
-         long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.COMMENTS_OFFSET_HEADER, 24);
-         fileChannel_.write(byteCount,offset + 4);
-         fileChannel_.write(buffer, offset +8);
-      }
-      displayAndComments_.put("Comments", comments);
-   }
-
    public void rewriteDisplaySettings(JSONArray settings) throws IOException, JSONException {
       if (writingFinished_) {
          long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.DISPLAY_SETTINGS_OFFSET_HEADER, 16);        

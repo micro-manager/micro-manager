@@ -466,4 +466,31 @@ public class FixedAreaAcquisition extends Acquisition {
         return EVENT_QUEUE_CAP;
     }
 
+    //these two used for setting inital file size for speed purposes
+   @Override
+   public int getInitialNumFrames() {
+      return Math.max(1, settings_.numTimePoints_);
+   }
+
+   @Override
+   public int getInitialNumSlicesEstimate() {
+      //TODO: check signs
+      if (spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
+         Point3d[] interpPoints = settings_.fixedSurface_.getPoints();
+         double top = interpPoints[0].z - settings_.distanceAboveFixedSurface_;
+         double bottom = interpPoints[interpPoints.length - 1].z - settings_.distanceBelowFixedSurface_;
+         return (int) Math.ceil(Math.abs(top - bottom) / zStep_);
+      } else if (spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
+         Point3d[] interpPoints = settings_.topSurface_.getPoints();
+         double top = interpPoints[0].z - settings_.distanceAboveTopSurface_;
+         double bottom = interpPoints[interpPoints.length - 1].z - settings_.distanceBelowFixedSurface_;
+         return (int) Math.ceil(Math.abs(top - bottom) / zStep_);
+      } else if (spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
+         return (int) Math.ceil(Math.abs(settings_.zStart_ - settings_.zEnd_) / zStep_);
+      } else {
+         //region2D or no region
+         return 1;
+      }
+   }
+
 }

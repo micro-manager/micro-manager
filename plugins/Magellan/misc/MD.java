@@ -7,6 +7,8 @@ package misc;
 import ij.ImagePlus;
 import java.awt.Rectangle;
 import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -16,41 +18,46 @@ import org.json.JSONObject;
  */
 public class MD {
    
-   public static final String WIDTH = "Width";
-   public static final String HEIGHT = "Height";
-   public static final String PIX_SIZE = "PixelSize_um";
-   public static final String POS_NAME = "PositionName";
-   public static final String POS_INDEX = "PositionIndex";
-   public static final String XUM = "XPositionUm";
-   public static final String YUM = "YPositionUm";
-   public static final String ZUM = "ZPositionUm";
-   public static final String SLICE = "Slice";
-   public static final String FRAME = "Frame";
-   public static final String CHANNEL_INDEX = "ChannelIndex";
-   public static final String SLICE_INDEX = "SliceIndex";
-   public static final String FRAME_INDEX = "FrameIndex";
-   public static final String NUM_CHANNELS = "Channels";
-   public static final String CHANNEL_NAME = "Channel";
-   public static final String CHANNEL_NAMES = "ChNames";
-   public static final String CHANNEL_COLORS = "ChColors";
-   public static final String ZC_ORDER = "SlicesFirst";
-   public static final String TIME = "Time";
-   public static final String SAVING_PREFIX = "Prefix";
-   public static final String INITIAL_POS_LIST = "InitialPositionList";
-   public static final String TIMELAPSE_INTERVAL = "Interval_ms";
-   public static final String PIX_TYPE = "PixelType";
-   public static final String BIT_DEPTH = "BitDepth";
-   public static final String ELAPSED_TIME_MS = "ElapsedTime-ms";
-   public static final String Z_STEP_UM = "z-step_um";
-   public static final String OVERLAP_X = "GridPixelOverlapX";
-   public static final String OVERLAP_Y = "GridPixelOverlapY";
-   public static final String AFFINE_TRANSFORM = "AffineTransform";
-   public static final String EXPLORE_ACQ = "MagellanExploreAcquisition";
-   public static final String PIX_TYPE_GRAY8 = "GRAY8";
-   public static final String PIX_TYPE_GRAY16 = "GRAY16";
+   private static final String WIDTH = "Width";
+   private static final String HEIGHT = "Height";
+   private static final String PIX_SIZE = "PixelSize_um";
+   private static final String POS_NAME = "PositionName";
+   private static final String POS_INDEX = "PositionIndex";
+   private static final String XUM = "XPositionUm";
+   private static final String YUM = "YPositionUm";
+   private static final String ZUM = "ZPositionUm";
+   private static final String SLICE = "Slice";
+   private static final String FRAME = "Frame";
+   private static final String CHANNEL_INDEX = "ChannelIndex";
+   private static final String SLICE_INDEX = "SliceIndex";
+   private static final String FRAME_INDEX = "FrameIndex";
+   private static final String NUM_FRAMES = "Frames";
+   private static final String NUM_SLICES = "Slices";
+   private static final String NUM_CHANNELS = "Channels";
+   private static final String CHANNEL_NAME = "Channel";
+   private static final String CHANNEL_NAMES = "ChNames";
+   private static final String CHANNEL_COLORS = "ChColors";
+   private static final String ZC_ORDER = "SlicesFirst";
+   private static final String TIME = "Time";
+   private static final String SAVING_PREFIX = "Prefix";
+   private static final String INITIAL_POS_LIST = "InitialPositionList";
+   private static final String TIMELAPSE_INTERVAL = "Interval_ms";
+   private static final String PIX_TYPE = "PixelType";
+   private static final String BIT_DEPTH = "BitDepth";
+   private static final String ELAPSED_TIME_MS = "ElapsedTime-ms";
+   private static final String Z_STEP_UM = "z-step_um";
+   private static final String OVERLAP_X = "GridPixelOverlapX";
+   private static final String OVERLAP_Y = "GridPixelOverlapY";
+   private static final String GRID_COL = "GridColumnIndex";
+   private static final String GRID_ROW = "GridRowIndex";
+   private static final String AFFINE_TRANSFORM = "AffineTransform";
+   private static final String EXPLORE_ACQ = "MagellanExploreAcquisition";
+   private static final String PIX_TYPE_GRAY8 = "GRAY8";
+   private static final String PIX_TYPE_GRAY16 = "GRAY16";
+   private static final String IJ_TYPE = "IJType";
    
    
-
+   //TODO replace Strings below with static variables above
    public static int[] getIndices(String imageLabel) {
       int[] ind = new int[4];
       String[] s = imageLabel.split("_");
@@ -60,13 +67,6 @@ public class MD {
       return ind;
    }
 
-     /**
-    * Helper function to test if a given key exists and has a non-null value.
-    */
-   private static boolean isValid(JSONObject map, String key) {
-      return (map.has(key) && !map.isNull(key));
-   }
-
    public static JSONObject copy(JSONObject map) {
       try {
          return new JSONObject(map.toString());
@@ -74,149 +74,200 @@ public class MD {
          return null;
       }
    }
-   
-   public static int getPositionIndex(JSONObject map) throws JSONException {
-      return map.getInt("PositionIndex");
-   }
 
-   public static void setPositionIndex(JSONObject map, int positionIndex) throws JSONException {
-      map.put("PositionIndex", positionIndex);
-   }
-
-   public static boolean hasBitDepth(JSONObject map) {
-      return isValid(map, "BitDepth");
-   }
-
-   public static int getBitDepth(JSONObject map) throws JSONException {
-      if (map.has("Summary"))
-         return map.getJSONObject("Summary").getInt("BitDepth");
-      return map.getInt("BitDepth");
-   }
-
-   public static int getWidth(JSONObject map) throws JSONException {
-      return map.getInt("Width");
-   }
-
-   public static void setWidth(JSONObject map, int width) throws JSONException {
-      map.put("Width", width);
-   }
-
-   public static int getHeight(JSONObject map) throws JSONException {
-      return map.getInt("Height");
-   }
-
-   public static void setHeight(JSONObject map, int height) throws JSONException {
-      map.put("Height", height);
-   }
-
-   public static int getSliceIndex(JSONObject map) throws JSONException {
-      if (map.has("SliceIndex")) {
-         return map.getInt("SliceIndex");
-      } else {
-         return map.getInt("Slice");
-      }
-   }
-
-   public static void setSliceIndex(JSONObject map, int sliceIndex) throws JSONException {
-      map.put("SliceIndex", sliceIndex);
-      map.put("Slice", sliceIndex);
-   }
-   
-
-   public static int getChannelIndex(JSONObject map) throws JSONException {
-      return map.getInt("ChannelIndex");
-   }
-
-   public static void setChannelIndex(JSONObject map, int channelIndex) throws JSONException {
-      map.put("ChannelIndex", channelIndex);
-   }
-
-   public static int getFrameIndex(JSONObject map) throws JSONException {
-      if (map.has("Frame")) {
-         return map.getInt("Frame");
-      } else {
-         return map.getInt("FrameIndex");
-      }
-   }
-
-   public static void setFrameIndex(JSONObject map, int frameIndex) throws JSONException {
-      map.put("Frame", frameIndex);
-      map.put("FrameIndex", frameIndex);
-   }
-   
-   public static int getNumPositions(JSONObject map) throws JSONException {
-      if (map.has("Positions"))
-         return map.getInt("Positions");
-      throw new JSONException("Positions tag not found in summary metadata");
-   }
-
-   public static boolean hasPositionName(JSONObject map) {
-      return isValid(map, "PositionName");
-   }
-   public static String getPositionName(JSONObject map) throws JSONException {
-      if (isValid(map, "PositionName")) {
-         return map.getString("PositionName");
-      } else if (map.has("PositionIndex")) {
-         return "Pos" + map.getString("PositionIndex");
-      } else {
-         return null;
-      }
-   }
-
-   public static void setPositionName(JSONObject map, String positionName) throws JSONException {
-      map.put("PositionName", positionName);
-   }
-
-   public static String getChannelName(JSONObject map) throws JSONException {
-      if (isValid(map, "Channel")) {
-         return map.getString("Channel");
-      } else {
-         return "";
-      }
-   }
-
-   public static void setChannelName(JSONObject map, String channel) throws JSONException {
-      map.put("Channel", channel);
-   }
-
-   public static int getChannelColor(JSONObject map) throws JSONException {
-      if (isValid(map, "ChColor")) {
-         return map.getInt("ChColor");
-      } else {
-         return -1;
-      }
-   }
-
-   public static void setChannelColor(JSONObject map, int color) throws JSONException {
-      map.put("ChColor", color);
-   }
-
-   public static String getFileName(JSONObject map) throws JSONException {
-      if (map.has("FileName")) {
-         return map.getString("FileName");
-      } else {
-         return null;
-      }
-   }
-
-   public static void setFileName(JSONObject map, String filename) throws JSONException {
-      map.put("FileName", filename);
-   }
-
-   public static int getIJType(JSONObject map) throws JSONException {
+   public static int getPositionIndex(JSONObject map) {
       try {
-         return map.getInt("IJType");
+         return map.getInt(POS_INDEX);
+      } catch (JSONException ex) {
+         Log.log("Missing posotion index tag");
+         throw new RuntimeException();
+      }
+   }
+
+   public static void setPositionIndex(JSONObject map, int positionIndex)  {
+      try {
+         map.put(POS_INDEX, positionIndex);
+      } catch (JSONException ex) {
+         Log.log("Couldn't set position index");
+         throw new RuntimeException();
+      }
+   }
+   
+      public static void setBitDepth(JSONObject map, int bitDepth)  {
+      try {
+         map.put(BIT_DEPTH, bitDepth);
+      } catch (JSONException ex) {
+         Log.log("Couldn't set bit depth");
+         throw new RuntimeException();
+      }
+   }
+
+   public static int getBitDepth(JSONObject map) {
+      try {
+         return map.getInt(BIT_DEPTH);
+      } catch (JSONException ex) {
+         Log.log("Missing bit depth tag");
+         throw new RuntimeException();
+      }
+   }
+
+   public static int getWidth(JSONObject map) {
+      try {
+         return map.getInt(WIDTH);
+      } catch (JSONException ex) {
+         Log.log("Image width tag missing");
+         throw new RuntimeException();
+      }
+   }
+
+   public static void setWidth(JSONObject map, int width) {
+      try {
+         map.put(WIDTH, width);
+      } catch (JSONException ex) {
+         Log.log("Couldn set image width");
+      }
+   }
+   
+      public static void setInitialPositionList(JSONObject map, JSONArray initialPositionList) {
+      try {
+         map.put(INITIAL_POS_LIST, initialPositionList);
+      } catch (JSONException ex) {
+         Log.log("Couldn set Initial position list");
+      }
+   }
+   
+    public static String getSavingPrefix(JSONObject map) {
+      try {
+         return map.getString(SAVING_PREFIX);
+      } catch (JSONException ex) {
+         Log.log("saving prefix tag missing");
+         throw new RuntimeException();
+      }
+   }
+
+   public static void setSavingPrefix(JSONObject map, String prefix) {
+      try {
+         map.put(SAVING_PREFIX, prefix);
+      } catch (JSONException ex) {
+         Log.log("Couldn set saving prefix");
+      }
+   }
+
+   public static int getHeight(JSONObject map)  {
+      try {
+         return map.getInt(HEIGHT);
+      } catch (JSONException ex) {
+         Log.log("Height missing from image tags");
+         throw new RuntimeException();
+      }
+   }
+
+   public static void setHeight(JSONObject map, int height)   {
+      try {
+         map.put(HEIGHT, height);
+      } catch (JSONException ex) {
+         Log.log("Couldnt set image height");
+         throw new RuntimeException();
+      }
+   }
+
+   public static int getSliceIndex(JSONObject map) {
+      try {
+         if (map.has(SLICE_INDEX)) {
+            return map.getInt(SLICE_INDEX);
+         } else {
+            return map.getInt(SLICE);
+         }
+      } catch (JSONException e) {
+         Log.log("Missing slice index tag");
+         throw new RuntimeException();
+      }
+   }
+
+   public static void setSliceIndex(JSONObject map, int sliceIndex)  {
+      try {
+         map.put(SLICE_INDEX, sliceIndex);
+         map.put(SLICE, sliceIndex);
+      } catch (JSONException ex) {
+                 Log.log("Couldn't set slice index");
+         throw new RuntimeException();
+      }
+   }
+   
+
+   public static int getChannelIndex(JSONObject map)  {
+      try {
+         return map.getInt(CHANNEL_INDEX);
+      } catch (JSONException ex) {
+                  Log.log("Missing channel index tag");
+         throw new RuntimeException();
+      }
+   }
+
+   public static void setChannelIndex(JSONObject map, int channelIndex)  {
+      try {
+         map.put(CHANNEL_INDEX, channelIndex);
+      } catch (JSONException ex) {
+                  Log.log("Couldn't set channel index");
+         throw new RuntimeException();
+      }
+   }
+
+   public static int getFrameIndex(JSONObject map) {
+      try {
+         if (map.has(FRAME)) {
+            return map.getInt(FRAME);
+         } else {
+            return map.getInt(FRAME_INDEX);
+         }
+      } catch (Exception e) {
+         Log.log("Frame index tag missing");
+         throw new RuntimeException();
+      }
+   }
+
+   public static void setFrameIndex(JSONObject map, int frameIndex)  {
+      try {
+         map.put(FRAME, frameIndex);
+         map.put(FRAME_INDEX, frameIndex);
+      } catch (JSONException ex) {
+                  Log.log("Couldn't set frame index");
+         throw new RuntimeException();
+      }
+   }
+   
+   public static String getPositionName(JSONObject map) {
+      try {
+         return map.getString(POS_NAME);
+      } catch (JSONException ex) {
+         Log.log("Missing position name tag");
+         throw new RuntimeException();
+      }
+   }
+
+   public static void setPositionName(JSONObject map, String positionName) {
+      try {
+         map.put(POS_NAME, positionName);
+      } catch (JSONException ex) {
+                  Log.log("Couldn't set position name");
+         throw new RuntimeException();
+      }
+   }
+
+   public static int getIJType(JSONObject map)  {
+      try {
+         return map.getInt(IJ_TYPE);
       } catch (JSONException e) {
          try {
-            String pixelType = map.getString("PixelType");
-            if (pixelType.contentEquals("GRAY8")) {
+            String pixelType = map.getString(PIX_TYPE);
+            if (pixelType.contentEquals(PIX_TYPE_GRAY8)) {
                return ImagePlus.GRAY8;
-            } else if (pixelType.contentEquals("GRAY16")) {
+            } else if (pixelType.contentEquals(PIX_TYPE_GRAY16)) {
                return ImagePlus.GRAY16;
-            } else if (pixelType.contentEquals("GRAY32")) {
-               return ImagePlus.GRAY32;
-            } else if (pixelType.contentEquals("RGB32")) {
-               return ImagePlus.COLOR_RGB;
+//            } else if (pixelType.contentEquals("GRAY32")) {
+//               return ImagePlus.GRAY32;
+//            } else if (pixelType.contentEquals("RGB32")) {
+//               return ImagePlus.COLOR_RGB;
             } else {
                throw new RuntimeException();
             }
@@ -226,25 +277,25 @@ public class MD {
       }
    }
 
-   public static String getPixelType(JSONObject map)  throws JSONException {
+   public static String getPixelType(JSONObject map)   {
       try {
          if (map != null)
-            return map.getString("PixelType");
+            return map.getString(PIX_TYPE);
       } catch (JSONException e) {
          try {
-            int ijType = map.getInt("IJType");
+            int ijType = map.getInt(IJ_TYPE);
             if (ijType == ImagePlus.GRAY8) {
-               return "GRAY8";
+               return PIX_TYPE_GRAY8;
             }
             else if (ijType == ImagePlus.GRAY16) {
-               return "GRAY16";
+               return PIX_TYPE_GRAY16;
             }
-            else if (ijType == ImagePlus.GRAY32) {
-               return "GRAY32";
-            }
-            else if (ijType == ImagePlus.COLOR_RGB) {
-               return "RGB32";
-            }
+//            else if (ijType == ImagePlus.GRAY32) {
+//               return "GRAY32";
+//            }
+//            else if (ijType == ImagePlus.COLOR_RGB) {
+//               return "RGB32";
+//            }
             else {
                throw new RuntimeException();
             }
@@ -257,95 +308,101 @@ public class MD {
       return "";
    }
 
-   public static void setPixelTypeFromString(JSONObject map, String type) throws JSONException {
-      map.put("PixelType", type);
-   }
-
-      public static void setPixelTypeFromByteDepth(JSONObject map, int depth) throws JSONException {
-      switch (depth) {
-         case 1:
-            map.put("PixelType", "GRAY8");
-         break;
-         case 2:
-            map.put("PixelType", "GRAY16");
-         break;
-         case 4:
-            map.put("PixelType", "RGB32");
-         break;
-         case 8:
-            map.put("PixelType", "RGB64");
-         break;
+   public static void setPixelTypeFromString(JSONObject map, String type)  {
+      try {
+         map.put(PIX_TYPE, type);
+      } catch (JSONException ex) {
+                  Log.log("Couldn't set pixel type");
+         throw new RuntimeException();
       }
    }
+
+      public static void setPixelTypeFromByteDepth(JSONObject map, int depth)  {
+         try {
+         switch (depth) {
+         case 1:
+            map.put(PIX_TYPE, PIX_TYPE_GRAY8);
+         break;
+         case 2:
+            map.put(PIX_TYPE, PIX_TYPE_GRAY16);
+         break;
+//         case 4:
+//            map.put(PIX_TYPE, "RGB32");
+//         break;
+//         case 8:
+//            map.put(PIX_TYPE, "RGB64");
+//         break;
+      }
+         } catch (JSONException e) {
+                     Log.log("Couldn't set pixel type");
+         throw new RuntimeException();
+         }
+   }
       
-   public static int getBytesPerPixel(JSONObject map) throws JSONException {
+   public static int getBytesPerPixel(JSONObject map)  {
        if (isGRAY8(map)) return 1;
        if (isGRAY16(map)) return 2;
-       if (isGRAY32(map)) return 4;
-       if (isRGB32(map)) return 4;
-       if (isRGB64(map)) return 8;
+//       if (isGRAY32(map)) return 4;
+//       if (isRGB32(map)) return 4;
+//       if (isRGB64(map)) return 8;
        return 0;
    }
 
-   public static int getNumberOfComponents(JSONObject map) throws JSONException {
+   public static int getNumberOfComponents(JSONObject map)  {
       String pixelType = getPixelType(map);
-      if (pixelType.contentEquals("GRAY8"))
+      if (pixelType.contentEquals(PIX_TYPE_GRAY8))
            return 1;
-      else if (pixelType.contentEquals("GRAY16"))
+      else if (pixelType.contentEquals(PIX_TYPE_GRAY16))
            return 1;
-      else if (pixelType.contentEquals("GRAY32"))
-         return 1;
-      else if (pixelType.contentEquals("RGB32"))
-           return 3;
-      else if (pixelType.contentEquals("RGB64"))
-           return 3;
+//      else if (pixelType.contentEquals("GRAY32"))
+//         return 1;
+//      else if (pixelType.contentEquals("RGB32"))
+//           return 3;
+//      else if (pixelType.contentEquals("RGB64"))
+//           return 3;
       else {
          throw new RuntimeException();
       }
    }
 
-   public static boolean isGRAY8(JSONObject map) throws JSONException {
-      return getPixelType(map).contentEquals("GRAY8");
+   public static boolean isGRAY8(JSONObject map) {
+         return getPixelType(map).contentEquals(PIX_TYPE_GRAY8);
    }
 
-   public static boolean isGRAY16(JSONObject map) throws JSONException {
-      return getPixelType(map).contentEquals("GRAY16");
+   public static boolean isGRAY16(JSONObject map) {
+         return getPixelType(map).contentEquals(PIX_TYPE_GRAY16);
    }
    
-   public static boolean isGRAY32(JSONObject map) throws JSONException {
-      return getPixelType(map).contentEquals("GRAY32");
+//   public static boolean isGRAY32(JSONObject map) throws JSONException {
+//      return getPixelType(map).contentEquals("GRAY32");
+//   }
+//
+//   public static boolean isRGB32(JSONObject map) throws JSONException {
+//      return getPixelType(map).contentEquals("RGB32");
+//   }
+
+//   public static boolean isRGB64(JSONObject map) throws JSONException {
+//      return getPixelType(map).contentEquals("RGB64");
+//   }
+
+   public static boolean isGRAY(JSONObject map)  {
+      return (isGRAY8(map) || isGRAY16(map) );
    }
 
-   public static boolean isRGB32(JSONObject map) throws JSONException {
-      return getPixelType(map).contentEquals("RGB32");
-   }
-
-   public static boolean isRGB64(JSONObject map) throws JSONException {
-      return getPixelType(map).contentEquals("RGB64");
-   }
-
-   public static boolean isGRAY(JSONObject map) throws JSONException {
-      return (isGRAY8(map) || isGRAY16(map) || isGRAY32(map));
-   }
-
-   public static boolean isRGB(JSONObject map) throws JSONException {
-      return (isRGB32(map) || isRGB64(map));
+   public static boolean isRGB(JSONObject map)   {
+//      return (isRGB32(map) || isRGB64(map));
+      return false;
    }
 
    public static String getLabel(JSONObject md) {
-      try {
-         return generateLabel(getChannelIndex(md),
-                              getSliceIndex(md),
-                              getFrameIndex(md),
-                              getPositionIndex(md));
-      } catch (JSONException ex) {
-         Log.log(ex);
-         return null;
-      }
+      return generateLabel(getChannelIndex(md),
+              getSliceIndex(md),
+              getFrameIndex(md),
+              getPositionIndex(md));
    }
 
    public static String generateLabel(int channel, int slice, int frame, int position) {
-      return channel +"-"+slice+"-"+frame+"-"+position;
+      return channel +"_"+slice+"_"+frame+"_"+position;
    }
 
    public static String[] getKeys(JSONObject md) {
@@ -358,28 +415,35 @@ public class MD {
       return keyArray;
    }
 
-
-   public static JSONArray getJSONArrayMember(JSONObject obj, String key) throws JSONException {
+   public static JSONArray getJSONArrayMember(JSONObject obj, String key) {
       JSONArray theArray;
       try {
-         theArray = obj.getJSONArray(key);
-      } catch (JSONException e) {
-         theArray = new JSONArray(obj.getString(key));
+         return obj.getJSONArray(key);
+      } catch (JSONException ex) {
+         Log.log("Missing JSONArray member");
+         throw new RuntimeException();
       }
-      return theArray;
    }
 
-   public static boolean hasImageTime(JSONObject map) {
-      return isValid(map, "Time");
-   }
-   public static String getImageTime(JSONObject map) throws JSONException {
-      return map.getString("Time");
-   }
-   public static void setImageTime(JSONObject map, String time) throws JSONException {
-      map.put("Time", time);
+   public static String getImageTime(JSONObject map)  {
+      try {
+         return map.getString(TIME);
+      } catch (JSONException ex) {
+                  Log.log("Missing image time tag");
+         throw new RuntimeException();
+      }
    }
 
-   public static int getDepth(JSONObject tags) throws JSONException {
+   public static void setImageTime(JSONObject map, String time) {
+      try {
+         map.put(TIME, time);
+      } catch (JSONException ex) {
+         Log.log("Couldn't set image time");
+         throw new RuntimeException();
+      }
+   }
+
+   public static int getDepth(JSONObject tags) {
       String pixelType = getPixelType(tags);
       if (pixelType.contains(PIX_TYPE_GRAY8))
          return 1;
@@ -392,165 +456,278 @@ public class MD {
       else
          return 0;
    }
-   
-   public static int getNumFrames(JSONObject tags) throws JSONException {
-      if (tags.has("Summary")) {
-         JSONObject summary = tags.getJSONObject("Summary");
-         if (summary.has("Frames"))
-            return Math.max(1,summary.getInt("Frames"));
+
+   public static int getNumFrames(JSONObject tags) {
+      try {
+         return Math.max(1, tags.getInt(NUM_FRAMES));
+      } catch (JSONException ex) {
+         Log.log("Missing numframes tag");
+         throw new RuntimeException();
       }
-      if (tags.has("Frames"))
-         return Math.max(1,tags.getInt("Frames"));
-      return 1;
-   }  
+   }
    
-   public static int getNumSlices(JSONObject tags) throws JSONException {
-      if (tags.has("Summary")) {
-         JSONObject summary = tags.getJSONObject("Summary");
-         if (summary.has("Slices"))
-            return Math.max(1, summary.getInt("Slices"));
+   public static void setNumFrames(JSONObject tags, int numFrames) {
+      try {
+         tags.put(NUM_FRAMES, numFrames);
+      } catch (JSONException ex) {
+         Log.log("couldnt set numFrames");
+         throw new RuntimeException();
       }
-      if (tags.has("Slices"))
-         return Math.max(1, tags.getInt("Slices"));
-      return 1;
    }
-   
-   public static int getNumChannels(JSONObject tags) throws JSONException {
-      if (tags.has("Summary")) {
-         JSONObject summary = tags.getJSONObject("Summary");
-         if (summary.has("Channels"))
-            return Math.max(1, summary.getInt("Channels"));
+
+   public static int getNumSlices(JSONObject tags) {
+      try {
+         return Math.max(1, tags.getInt(NUM_SLICES));
+      } catch (JSONException ex) {
+         Log.log("Missing numslices tag");
+         throw new RuntimeException();
       }
-      if (tags.has("Channels"))
-         return Math.max(1, tags.getInt("Channels"));
-      return 1;
    }
 
-   public static void setNumChannels(JSONObject tags, int numChannels) throws JSONException {
-      tags.put("Channels", numChannels);
-   }
-
-   public static boolean hasPixelSizeUm(JSONObject map) {
-      return (isValid(map, "PixelSize_um") || isValid(map, "PixelSizeUm"));
-   }
-   public static double getPixelSizeUm(JSONObject map) throws JSONException {
-      if (isValid(map, "PixelSize_um")) {
-         return map.getDouble("PixelSize_um");
+   public static void setNumSlices(JSONObject tags, int numSlices) {
+      try {
+         tags.put(NUM_SLICES, numSlices);
+      } catch (JSONException ex) {
+         Log.log("couldnt set numSlices");
+         throw new RuntimeException();
       }
-      return map.getDouble("PixelSizeUm");
    }
-   public static void setPixelSizeUm(JSONObject map, double val) throws JSONException {
-      map.put("PixelSize_um", val);
+
+   public static int getNumChannels(JSONObject tags)   {
+      try {
+         return Math.max(1, tags.getInt(NUM_CHANNELS));
+      } catch (JSONException ex) {
+        Log.log("Num channels tag missiing");
+        throw new RuntimeException();
+      }
    }
    
-   public static boolean hasZStepUm(JSONObject map) {
-      return (isValid(map, "z-step_um"));
+   public static void setNumChannels(JSONObject tags, int numC) {
+      try {
+         tags.put(NUM_CHANNELS, numC);
+      } catch (JSONException ex) {
+         Log.log("couldnt set numChannels");
+      }
    }
-   public static double getZStepUm(JSONObject map) throws JSONException {
-      return map.getDouble("z-step_um");
+
+   public static double getPixelSizeUm(JSONObject map)  {
+      try {
+         return map.getDouble(PIX_SIZE);
+      } catch (JSONException ex) {
+         Log.log("Pixel size missing in metadata");
+         throw new RuntimeException();
+      }
    }
-   public static void setZStepUm(JSONObject map, double val) throws JSONException {
-      map.put("z-step_um", val);
+
+   public static void setPixelSizeUm(JSONObject map, double val) {
+      try {
+         map.put(PIX_SIZE, val);
+      } catch (JSONException ex) {
+         Log.log("Missing pixel size tag");
+         throw new RuntimeException();
+      }
+   }
+
+   public static double getZStepUm(JSONObject map)  {
+      try {
+         return map.getDouble(Z_STEP_UM);
+      } catch (JSONException ex) {
+         Log.log("Z step metadta field missing");
+         return 0;
+      }
    }
    
-   public static boolean hasExposureMs(JSONObject map) {
-      return (isValid(map, "Exposure-ms"));
+   public static void setZStepUm(JSONObject map, double val)  {
+      try {
+         map.put(Z_STEP_UM, val);
+      } catch (JSONException ex) {
+                  Log.log("Couldn't set z step tag");
+         throw new RuntimeException();
+      }
    }
-   public static double getExposureMs(JSONObject map) throws JSONException {
-      return map.getDouble("Exposure-ms");
-   }
-   public static void setExposureMs(JSONObject map, double val) throws JSONException {
-      map.put("Exposure-ms", val);
+
+   public static double getZPositionUm(JSONObject map) {
+      try {
+         return map.getDouble(ZUM);
+      } catch (JSONException ex) {
+         Log.log("Missing Z position tag");
+         throw new RuntimeException();
+      }
    }
    
-   public static boolean hasXPositionUm(JSONObject map) {
-      return (isValid(map, "XPositionUm"));
-   }
-   public static double getXPositionUm(JSONObject map) throws JSONException {
-      return map.getDouble("XPositionUm");
-   }
-   public static void setXPositionUm(JSONObject map, double val) throws JSONException {
-      map.put("XPositionUm", val);
-   }
-
-   public static boolean hasYPositionUm(JSONObject map) {
-      return (isValid(map, "YPositionUm"));
-   }
-   public static double getYPositionUm(JSONObject map) throws JSONException {
-      return map.getDouble("YPositionUm");
-   }
-   public static void setYPositionUm(JSONObject map, double val) throws JSONException {
-      map.put("YPositionUm", val);
+   public static void setZPositionUm(JSONObject map, double val) {
+      try {
+         map.put(ZUM, val);
+      } catch (JSONException ex) {
+         Log.log("Couldn't set z position");
+         throw new RuntimeException();
+      }
    }
 
-   public static boolean hasZPositionUm(JSONObject map) {
-      return (isValid(map, "ZPositionUm"));
+   public static double getElapsedTimeMs(JSONObject map) {
+      try {
+         return map.getDouble(ELAPSED_TIME_MS);
+      } catch (JSONException ex) {
+                  Log.log("missing elapsed time tag");
+         throw new RuntimeException();
+      }
    }
-   public static double getZPositionUm(JSONObject map) throws JSONException {
-      return map.getDouble("ZPositionUm");
-   }
-   public static void setZPositionUm(JSONObject map, double val) throws JSONException {
-      map.put("ZPositionUm", val);
-   }
-
-   public static boolean hasElapsedTimeMs(JSONObject map) {
-      return (isValid(map, "ElapsedTime-ms"));
-   }
-   public static double getElapsedTimeMs(JSONObject map) throws JSONException {
-      return map.getDouble("ElapsedTime-ms");
-   }
-   public static void setElapsedTimeMs(JSONObject map, double val) throws JSONException {
-      map.put("ElapsedTime-ms", val);
-   }
-
-   public static boolean hasCoreCamera(JSONObject map) {
-      return (isValid(map, "Core-Camera"));
-   }
-   public static String getCoreCamera(JSONObject map) throws JSONException {
-      return map.getString("Core-Camera");
-   }
-   public static void setCoreCamera(JSONObject map, String val) throws JSONException {
-      map.put("Core-Camera", val);
+   public static void setElapsedTimeMs(JSONObject map, double val) {
+      try {
+         map.put(ELAPSED_TIME_MS, val);
+      } catch (JSONException ex) {
+                 Log.log("Couldn't set elapsed time");
+         throw new RuntimeException();
+      }
    }
    
-   public static double getIntervalMs(JSONObject map) throws JSONException {
-      return map.getDouble("Interval_ms");
+   public static double getIntervalMs(JSONObject map) {
+      try {
+         return map.getDouble(TIMELAPSE_INTERVAL);
+      } catch (JSONException ex) {
+         Log.log("Time interval missing from summary metadata");
+         return 0;
+      }
    }
-   public static void setIntervalMs(JSONObject map, double val) throws JSONException {
-      map.put("Interval_ms", val);
-   }
-   public static boolean hasIntervalMs(JSONObject map) throws JSONException {
-      return (isValid(map, "Interval_ms"));
+   public static void setIntervalMs(JSONObject map, double val) {
+      try {
+         map.put(TIMELAPSE_INTERVAL, val);
+      } catch (JSONException ex) {
+         Log.log("coulndt set time interval metadta field");
+      }
    }
 
-   public static String getChannelGroup(JSONObject map) throws JSONException {
-      return map.getString("Core-ChannelGroup");
+   public static boolean getZCTOrder(JSONObject map)  {
+      try {
+         return map.getBoolean(ZC_ORDER);
+      } catch (JSONException ex) {
+                  Log.log("Missing ZCT Tag");
+         throw new RuntimeException();
+      }
+   }
+   public static void setZCTOrder(JSONObject map, boolean val)  {
+      try {
+         map.put(ZC_ORDER, val);
+      } catch (JSONException ex) {
+                  Log.log("Couldn't set ZCT Order");
+         throw new RuntimeException();
+      }
    }
 
-   public static boolean hasSlicesFirst(JSONObject map) {
-      return (isValid(map, "SlicesFirst"));
-   }
-   public static boolean getSlicesFirst(JSONObject map) throws JSONException {
-      return map.getBoolean("SlicesFirst");
-   }
-   public static void setSlicesFirst(JSONObject map, boolean val) throws JSONException {
-      map.put("SlicesFirst", val);
+   public static void setAffineTransformString(JSONObject summaryMD, String affine) {
+      try {
+         summaryMD.put(AFFINE_TRANSFORM, affine);
+      } catch (JSONException ex) {
+        Log.log("Couldn't set affine transform");
+        throw new RuntimeException();
+      }
    }
    
-   public static boolean hasTimeFirst(JSONObject map) {
-      return (isValid(map, "TimeFirst"));
-   }
-   public static boolean getTimeFirst(JSONObject map) throws JSONException {
-      return map.getBoolean("TimeFirst");
-   }
-   public static void setTimeFirst(JSONObject map, boolean val) throws JSONException {
-      map.put("TimeFirst", val);
+   public static String getAffineTransformString(JSONObject summaryMD) {
+      try {
+         return summaryMD.getString(AFFINE_TRANSFORM);
+      } catch (JSONException ex) {
+        Log.log("Affine transform missing from summary metadata");
+        return "";
+      }
    }
 
-   public static JSONObject getSummary(JSONObject map) throws JSONException {
-      return map.getJSONObject("Summary");
+   public static void setExploreAcq(JSONObject smd, boolean explore) {
+      try {
+         smd.put(EXPLORE_ACQ, explore);
+      } catch (JSONException ex) {
+         Log.log("Couldnt set pixel overlap tag");
+         throw new RuntimeException();
+      }
    }
-   public static void setSummary(JSONObject map, JSONObject summary) throws JSONException {
-      map.put("Summary", summary);
+
+   public static void setPixelOverlapX(JSONObject smd, int overlap) {
+      try {
+         smd.put(OVERLAP_X, overlap);
+      } catch (JSONException ex) {
+         Log.log("Couldnt set pixel overlap tag");
+         throw new RuntimeException();
+      }
+   }
+
+   public static void setPixelOverlapY(JSONObject smd, int overlap) {
+      try {
+         smd.put(OVERLAP_Y, overlap);
+      } catch (JSONException ex) {
+         Log.log("Couldnt set pixel overlap tag");
+         throw new RuntimeException();
+      }
+   }
+   
+   public static int getPixelOverlapX(JSONObject summaryMD) {
+      try {
+         return summaryMD.getInt(OVERLAP_X);
+      } catch (JSONException ex) {
+         Log.log("Couldnt find pixel overlap in image tags");
+         return 0;
+      }
+   }
+   
+   public static int getPixelOverlapY(JSONObject summaryMD) {
+      try {
+         return summaryMD.getInt(OVERLAP_Y);
+      } catch (JSONException ex) {
+         Log.log("Couldnt find pixel overlap in image tags");
+         return 0;
+      }
+   }
+   
+   public static void setChannelNames(JSONObject smd, JSONArray channelNames) {
+      try {
+         smd.put(CHANNEL_NAMES, channelNames);
+      } catch (JSONException ex) {
+         Log.log("Couldnt set channel names");
+         throw new RuntimeException();
+      }
+   }
+   
+   public static void setChannelColors(JSONObject smd, JSONArray channelColors) {
+      try {
+         smd.put(CHANNEL_COLORS, channelColors);
+      } catch (JSONException ex) {
+         Log.log("Couldnt set channel colors");
+         throw new RuntimeException();
+      }
+   }
+   
+   public static void setGridRow(JSONObject smd, long gridRow) {
+      try {
+         smd.put(GRID_ROW, gridRow);
+      } catch (JSONException ex) {
+         Log.log("Couldnt set grid row");
+         throw new RuntimeException();
+      }
+   }
+
+   public static void setGridCol(JSONObject smd, long gridCol) {
+      try {
+         smd.put(GRID_COL, gridCol);
+      } catch (JSONException ex) {
+         Log.log("Couldnt set grid row");
+         throw new RuntimeException();
+      }
+   }
+   
+   public static void setStageX(JSONObject smd, double x) {
+      try {
+         smd.put(XUM, x);
+      } catch (JSONException ex) {
+         Log.log("Couldnt set stage x");
+         throw new RuntimeException();
+      }
+   }
+
+   public static void setStageY(JSONObject smd, double y) {
+      try {
+         smd.put(YUM, y);
+      } catch (JSONException ex) {
+         Log.log("Couldnt set stage y");
+         throw new RuntimeException();
+      }
    }
 }

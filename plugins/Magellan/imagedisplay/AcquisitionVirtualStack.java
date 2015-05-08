@@ -141,23 +141,19 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    @Override
    public Object getPixels(int flatIndex) {
       Object pixels = null;
-      try {
-         TaggedImage image = getTaggedImage(flatIndex);
-         if (image == null || image.pix == null) {
-            pixels = makeProcessor(type_, width_, height_).getPixels();
-         } else if (image != null && image.tags == null) {
-             pixels = image.pix;
-         } else if (MD.isGRAY(image.tags)) {
-            pixels = image.pix;
-         }
+      TaggedImage image = getTaggedImage(flatIndex);
+      if (image == null || image.pix == null) {
+         pixels = makeProcessor(type_, width_, height_).getPixels();
+      } else if (image != null && image.tags == null) {
+         pixels = image.pix;
+      } else if (MD.isGRAY(image.tags)) {
+         pixels = image.pix;
+      }
 //         else if (MD.isRGB32(image)) {
 //            pixels = ImageUtils.singleChannelFromRGB32((byte[]) image.pix, (flatIndex - 1) % 3);
 //         } else if (MD.isRGB64(image)) {
 //            pixels = ImageUtils.singleChannelFromRGB64((short[]) image.pix, (flatIndex - 1) % 3);
 //         }
-      } catch (JSONException ex) {
-         Log.log(ex);
-      } 
 
       return pixels;
    }

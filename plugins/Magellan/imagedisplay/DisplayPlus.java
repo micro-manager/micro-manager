@@ -36,7 +36,6 @@ import misc.JavaUtils;
 import misc.Log;
 import misc.LongPoint;
 import misc.MD;
-import org.json.JSONException;
 import org.json.JSONObject;
 import surfacesandregions.MultiPosRegion;
 import surfacesandregions.SurfaceInterpolator;
@@ -92,7 +91,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       //add in customized zoomable acquisition virtual stack
       try {
          //looks like nSlicess only really matters during display startup
-         int nSlices = MD.getNumChannels(summaryMD) * MD.getNumFrames(summaryMD) * MD.getNumSlices(summaryMD);
+         int nSlices = MD.getNumChannels(summaryMD);
 
 
          if (exploreAcq_) {
@@ -154,45 +153,35 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
    }
 
    protected void applyPixelSizeCalibration() {
+      JSONObject summary = getSummaryMetadata();
+      double pixSizeUm;
       try {
-         JSONObject summary = getSummaryMetadata();
-         double pixSizeUm;
-         if (summary != null && summary.has(MD.PIX_SIZE)) {
-            pixSizeUm = summary.getDouble(MD.PIX_SIZE);
-         } else {
-            Log.log("pixel size tag missing from summary metadata");
-            return;
-         }
-         //multiply by zoom factor
-         pixSizeUm *= zoomableStack_.getDownsampleFactor();
+         pixSizeUm = MD.getPixelSizeUm(summary);
+      } catch (Exception e) {
+         Log.log("Summary metadta null or pixel size tag missing from summary metadata");
+         return;
+      }
+      //multiply by zoom factor
+      pixSizeUm *= zoomableStack_.getDownsampleFactor();
 
-         if (pixSizeUm > 0) {
-            Calibration cal = new Calibration();
-            if (pixSizeUm < 10) {
-               cal.setUnit("um");
-               cal.pixelWidth = pixSizeUm;
-               cal.pixelHeight = pixSizeUm;
-            } else if (pixSizeUm < 1000) {
-               cal.setUnit("mm");
-               cal.pixelWidth = pixSizeUm / 1000;
-               cal.pixelHeight = pixSizeUm / 1000;
-            } else {
-               cal.setUnit("cm");
-               cal.pixelWidth = pixSizeUm / 10000;
-               cal.pixelHeight = pixSizeUm / 10000;
-            }
-            String intMs = "Interval_ms";
-            if (summary.has(intMs)) {
-               cal.frameInterval = summary.getDouble(intMs) / 1000.0;
-            }
-            String zStepUm = "z-step_um";
-            if (summary.has(zStepUm)) {
-               cal.pixelDepth = summary.getDouble(zStepUm);
-            }
-            this.getHyperImage().setCalibration(cal);
+      if (pixSizeUm > 0) {
+         Calibration cal = new Calibration();
+         if (pixSizeUm < 10) {
+            cal.setUnit("um");
+            cal.pixelWidth = pixSizeUm;
+            cal.pixelHeight = pixSizeUm;
+         } else if (pixSizeUm < 1000) {
+            cal.setUnit("mm");
+            cal.pixelWidth = pixSizeUm / 1000;
+            cal.pixelHeight = pixSizeUm / 1000;
+         } else {
+            cal.setUnit("cm");
+            cal.pixelWidth = pixSizeUm / 10000;
+            cal.pixelHeight = pixSizeUm / 10000;
          }
-      } catch (JSONException ex) {
-         // no pixelsize defined.  Nothing to do
+         cal.frameInterval =  MD.getIntervalMs(summary) / 1000.0;        
+         cal.pixelDepth = MD.getZStepUm(summary);      
+         this.getHyperImage().setCalibration(cal);
       }
    }
 

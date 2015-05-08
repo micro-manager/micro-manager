@@ -238,12 +238,8 @@ public abstract class VirtualAcquisitionDisplay{
  
       try {
          int imageChannelIndex;
-         if (firstImageMetadata != null) {
-            try {
-               imageChannelIndex = MD.getChannelIndex(firstImageMetadata);
-            } catch (JSONException e) {
-               imageChannelIndex = -1;
-            }
+         if (firstImageMetadata != null) {          
+            imageChannelIndex = MD.getChannelIndex(firstImageMetadata);
          } else {
             imageChannelIndex = -1;
          }
@@ -336,30 +332,21 @@ public abstract class VirtualAcquisitionDisplay{
    }
 
    public int rgbToGrayChannel(int channelIndex) {
-      try {
-         if (MD.getNumberOfComponents(imageCache_.getSummaryMetadata()) == 3) {
-            return channelIndex * 3;
-         }
-         return channelIndex;
-      } catch (JSONException ex) {
-         Log.log(ex);
-         return 0;
+      if (MD.getNumberOfComponents(imageCache_.getSummaryMetadata()) == 3) {
+         return channelIndex * 3;
       }
+      return channelIndex;
    }
 
    public int grayToRGBChannel(int grayIndex) {
-      try {
-         if (imageCache_ != null) {
-            if (imageCache_.getSummaryMetadata() != null)
+      if (imageCache_ != null) {
+         if (imageCache_.getSummaryMetadata() != null) {
             if (MD.getNumberOfComponents(imageCache_.getSummaryMetadata()) == 3) {
                return grayIndex / 3;
             }
          }
-         return grayIndex;
-      } catch (JSONException ex) {
-         Log.log(ex);
-         return 0;
       }
+      return grayIndex;
    }
 
    protected abstract void applyPixelSizeCalibration();
@@ -444,23 +431,18 @@ public abstract class VirtualAcquisitionDisplay{
          startup(tags, null);
       }
 
-      int channel = 0, frame = 0, slice = 0, position = 0;
-      try {
-         frame = MD.getFrameIndex(tags);
-         slice = MD.getSliceIndex(tags);
-         channel = MD.getChannelIndex(tags);
-         position = MD.getPositionIndex(tags);
-         // Construct a mapping of axis to position so we can post an 
-         // event informing others of the new image.
-         HashMap<String, Integer> axisToPosition = new HashMap<String, Integer>();
-         axisToPosition.put("channel", channel);
-         axisToPosition.put("position", position);
-         axisToPosition.put("time", frame);
-         axisToPosition.put("z", slice);
-         bus_.post(new NewImageEvent(axisToPosition));
-      } catch (JSONException ex) {
-         Log.log(ex);
-      }
+      int frame = MD.getFrameIndex(tags);
+      int slice = MD.getSliceIndex(tags);
+      int channel = MD.getChannelIndex(tags);
+      int position = MD.getPositionIndex(tags);
+      // Construct a mapping of axis to position so we can post an 
+      // event informing others of the new image.
+      HashMap<String, Integer> axisToPosition = new HashMap<String, Integer>();
+      axisToPosition.put("channel", channel);
+      axisToPosition.put("position", position);
+      axisToPosition.put("time", frame);
+      axisToPosition.put("z", slice);
+      bus_.post(new NewImageEvent(axisToPosition));
 
       //make sure pixels get properly set
       if (hyperImage_ != null && hyperImage_.getProcessor() != null && 
@@ -493,16 +475,6 @@ public abstract class VirtualAcquisitionDisplay{
          if (immi.getNChannelsUnverified() <= channel + 1) {
             immi.setNChannelsUnverified(channel + 1);
          }
-      }
-
-      //get channelgroup name for use in loading contrast setttings
-      if (firstImage_) {
-         try {
-            channelGroup_ = MD.getChannelGroup(tags);
-         } catch (JSONException ex) {
-            Log.log("Couldn't find Core-ChannelGroup in image metadata", true);
-         }
-         firstImage_ = false;
       }
 
       if (frame == 0) {
@@ -659,10 +631,6 @@ public abstract class VirtualAcquisitionDisplay{
 
    public int getNumFrames() {
       return ((IMMImagePlus) hyperImage_).getNFramesUnverified();
-   }
-
-   public int getNumPositions() throws JSONException {
-      return MD.getNumPositions(imageCache_.getSummaryMetadata());
    }
 
    public ImagePlus getImagePlus() {

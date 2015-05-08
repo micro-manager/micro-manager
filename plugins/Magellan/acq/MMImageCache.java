@@ -107,13 +107,13 @@ public class MMImageCache {
          if (displayAndComments.length() > 0) {
             JSONArray channelSettings = imageStorage_.getDisplayAndComments().getJSONArray("Channels");
             JSONObject imageTags = taggedImg.tags;
-            int chanIndex = MD.getChannelIndex(imageTags);
-            if (chanIndex >= channelSettings.length()) {
-               JSONObject newChanObject = new JSONObject();
-               MD.setChannelName(newChanObject, MD.getChannelName(imageTags));
-               MD.setChannelColor(newChanObject, MD.getChannelColor(imageTags));
-               channelSettings.put(chanIndex, newChanObject);
-            }
+//            int chanIndex = MD.getChannelIndex(imageTags);
+//            if (chanIndex >= channelSettings.length()) {
+//               JSONObject newChanObject = new JSONObject();
+//               MD.setChannelName(newChanObject, MD.getChannelName(imageTags));
+//               MD.setChannelColor(newChanObject, MD.getChannelColor(imageTags));
+//               channelSettings.put(chanIndex, newChanObject);
+//            }
          }
 
          listenerExecutor_.submit(
@@ -177,68 +177,8 @@ public class MMImageCache {
       }
    }
 
-   private JSONObject getCommentsJSONObject() {
-      if (imageStorage_ == null) {
-         Log.log("imageStorage_ is null in getCommentsJSONObject", true);
-         return null;
-      }
-
-      JSONObject comments;
-      try {
-         comments = imageStorage_.getDisplayAndComments().getJSONObject("Comments");
-      } catch (JSONException ex) {
-         comments = new JSONObject();
-         try {
-            imageStorage_.getDisplayAndComments().put("Comments", comments);
-         } catch (JSONException ex1) {
-            Log.log(ex1);
-         }
-      }
-      return comments;
-   }
-
    public boolean getIsOpen() {
       return (getDisplayAndComments() != null);
-   }
-
-   public void setComment(String text) {
-      JSONObject comments = getCommentsJSONObject();
-      try {
-         comments.put("Summary", text);
-      } catch (JSONException ex) {
-         Log.log(ex);
-      }
-   }
-
-   public void setImageComment(String comment, JSONObject tags) {
-      JSONObject comments = getCommentsJSONObject();
-      String label = MD.getLabel(tags);
-      try {
-         comments.put(label, comment);
-      } catch (JSONException ex) {
-         Log.log(ex);
-      }
-
-   }
-
-   public String getImageComment(JSONObject tags) {
-      if (tags == null) {
-         return "";
-      }
-      try {
-         String label = MD.getLabel(tags);
-         return getCommentsJSONObject().getString(label);
-      } catch (Exception ex) {
-         return "";
-      }
-   }
-
-   public String getComment() {
-      try {
-         return getCommentsJSONObject().getString("Summary");
-      } catch (Exception ex) {
-         return "";
-      }
    }
 
    public JSONObject getSummaryMetadata() {

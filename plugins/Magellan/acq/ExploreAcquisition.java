@@ -273,6 +273,17 @@ public class ExploreAcquisition extends Acquisition {
     public int getAcqEventQueueCap() {
         return EXPLORE_EVENT_QUEUE_CAP;
     }
+
+   @Override
+   public int getInitialNumFrames() {
+      return 1;
+   }
+
+   @Override
+   public int getInitialNumSlicesEstimate() {
+      //Who knows??
+      return 1;
+   }
    
    //slice and row/col index of an acquisition event in the queue
    public class ExploreTileWaitingToAcquire {

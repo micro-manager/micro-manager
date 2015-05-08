@@ -99,6 +99,14 @@ public abstract class Acquisition implements AcquisitionEventSource{
       return channels_.size();
    }
    
+   /**
+    * Get initial number of frames (but this can change during acq)
+    * @return 
+    */
+   public abstract int getInitialNumFrames();
+   
+   public abstract int getInitialNumSlicesEstimate();
+   
    public boolean isFinished() {
       return finished_;
    }

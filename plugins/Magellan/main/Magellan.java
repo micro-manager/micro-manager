@@ -26,10 +26,6 @@ public class Magellan implements MMPlugin{
    private static Preferences prefs_;
    private static ScriptInterface mmAPI_;
    private static GUI gui_;
-
-   public static String getConfigFilename() {
-      throw new UnsupportedOperationException("Not yet implemented");
-   }
    
    public Magellan() {
       if (gui_ == null) {

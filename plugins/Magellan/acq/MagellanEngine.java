@@ -417,88 +417,74 @@ public class MagellanEngine {
         return df.format(calobj.getTime());
     }
 
-    public static void addImageMetadata(JSONObject tags, AcquisitionEvent event,
-            int numCamChannels, int camChannel, long elapsed_ms,int exposure) {
-        try {
-            //add tags
-            long gridRow = event.acquisition_.getStorage().getGridRow(event.positionIndex_, 0);
-            long gridCol = event.acquisition_.getStorage().getGridCol(event.positionIndex_, 0);
-            tags.put(MD.POS_NAME, "Grid_" + gridRow + "_" + gridCol);
-            tags.put(MD.POS_INDEX, event.positionIndex_);
-            tags.put(MD.SLICE_INDEX, event.sliceIndex_);
-            tags.put(MD.SLICE, event.sliceIndex_);
-            tags.put(MD.FRAME_INDEX, event.timeIndex_);
-            tags.put(MD.FRAME, event.timeIndex_);
-            tags.put(MD.CHANNEL_INDEX, event.channelIndex_ * numCamChannels + camChannel);
-            tags.put(MD.ZUM, event.zPosition_);
-            tags.put(MD.ELAPSED_TIME_MS, elapsed_ms);
-            tags.put(MD.TIME, (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss -")).format(Calendar.getInstance().getTime()));
-            //Magellan specific tags
-            if (GlobalSettings.getInstance().isBIDCTwoPhoton()) {
-              tags.put("ExposureRawFrames", exposure);
-           }
-            tags.put("GridColumnIndex", gridCol);
-            tags.put("GridRowIndex", gridRow);
-            tags.put("StagePositionX", event.xyPosition_.getCenter().x);
-            tags.put("StagePositionY", event.xyPosition_.getCenter().y);
-        } catch (JSONException e) {
-            Log.log("Problem adding image tags", true);
-            Log.log(e);
-            e.printStackTrace();
-        }
-    }
+   public static void addImageMetadata(JSONObject tags, AcquisitionEvent event,
+           int numCamChannels, int camChannel, long elapsed_ms, int exposure) {
+      //add tags
+      long gridRow = event.acquisition_.getStorage().getGridRow(event.positionIndex_, 0);
+      long gridCol = event.acquisition_.getStorage().getGridCol(event.positionIndex_, 0);
+      MD.setPositionName(tags, "Grid_" + gridRow + "_" + gridCol);
+      MD.setPositionIndex(tags, event.positionIndex_);
+      MD.setSliceIndex(tags, event.sliceIndex_);
+      MD.setFrameIndex(tags, event.timeIndex_);
+      MD.setChannelIndex(tags, event.channelIndex_ * numCamChannels + camChannel);
+      MD.setZPositionUm(tags, event.zPosition_);
+      MD.setElapsedTimeMs(tags, elapsed_ms);
+      MD.setImageTime(tags, (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss -")).format(Calendar.getInstance().getTime()));
+      MD.setGridRow(tags, gridRow);
+      MD.setGridCol(tags, gridCol);
+      MD.setStageX(tags, event.xyPosition_.getCenter().x);
+      MD.setStageY(tags, event.xyPosition_.getCenter().y);
+   }
 
-    public static JSONObject makeSummaryMD(Acquisition acq, String prefix) {
-        try {
+   public static JSONObject makeSummaryMD(Acquisition acq, String prefix) {
+      //num channels is camera channels * acquisitionChannels
+      int numChannels = GlobalSettings.getInstance().getDemoMode() ? 6 : acq.getNumChannels();
 
-            //num channels is camera channels * acquisitionChannels
-            int numChannels = GlobalSettings.getInstance().getDemoMode() ? 6 : acq.getNumChannels();
-
-            CMMCore core = Magellan.getCore();
-            JSONObject summary = new JSONObject();
-            summary.put(MD.NUM_CHANNELS, numChannels);
-            summary.put(MD.ZC_ORDER, false);
-            summary.put(MD.PIX_TYPE, GlobalSettings.getInstance().isBIDCTwoPhoton() ? 
-                    (acq.getFilterType() == FrameIntegrationMethod.FRAME_SUMMATION ? MD.PIX_TYPE_GRAY16 : MD.PIX_TYPE_GRAY8) :
-            core_.getImageBitDepth() > 8 ? MD.PIX_TYPE_GRAY16 : MD.PIX_TYPE_GRAY8);
-            summary.put(MD.BIT_DEPTH, GlobalSettings.getInstance().isBIDCTwoPhoton() ? 
-                    (acq.getFilterType() == FrameIntegrationMethod.FRAME_SUMMATION ? 16 : 8) :
-                    core_.getImageBitDepth() );
-            summary.put(MD.WIDTH, JavaLayerImageConstructor.getInstance().getImageWidth());
-            summary.put(MD.HEIGHT, JavaLayerImageConstructor.getInstance().getImageHeight());
-            summary.put(MD.SAVING_PREFIX, prefix);
-            JSONArray initialPosList = acq.createInitialPositionList();
-            summary.put(MD.INITIAL_POS_LIST, initialPosList);
-            summary.put(MD.PIX_SIZE, core.getPixelSizeUm());
-            summary.put(MD.Z_STEP_UM, acq.getZStep());
-            summary.put(MD.TIMELAPSE_INTERVAL, acq instanceof FixedAreaAcquisition ? ((FixedAreaAcquisition) acq).getTimeInterval_ms() : 0);
-            //write pixel overlap into metadata
-            summary.put(MD.OVERLAP_X, acq.getOverlapX());
-            summary.put(MD.OVERLAP_Y, acq.getOverlapY());
-            summary.put(MD.EXPLORE_ACQ, acq instanceof ExploreAcquisition);
-
-            //affine transform
-            AffineTransform at = AffineUtils.getAffineTransform(core.getCurrentPixelSizeConfig(), 0, 0);
-            summary.put(MD.AFFINE_TRANSFORM, AffineUtils.transformToString(at));
-            
-            JSONArray chNames = new JSONArray();
-            JSONArray chColors = new JSONArray();
-            String[] names = acq.getChannelNames();   
-            Color[] colors = acq.getChannelColors();
-            for (int i = 0; i < numChannels; i++) {  
-               chNames.put(names[i]);
-               chColors.put(colors[i].getRGB());
-            }
-            summary.put(MD.CHANNEL_NAMES, chNames);
-            summary.put(MD.CHANNEL_COLORS, chColors);
-
-            return summary;
-        } catch (Exception ex) {
-            Log.log("couldnt make summary metadata");
-            ex.printStackTrace();
-        }
-        return null;
-    }
+      CMMCore core = Magellan.getCore();
+      JSONObject summary = new JSONObject();
+      //Actual number of channels is equal or less than this field
+      MD.setNumChannels(summary, numChannels);
+      //neither numchannels or numnumslices is guaranteeed to be accurate. Just initial estimates
+      MD.setNumFrames(summary, acq.getInitialNumFrames());
+      MD.setNumSlices(summary, acq.getInitialNumSlicesEstimate());
+      MD.setZCTOrder(summary, false);
+      MD.setPixelTypeFromByteDepth(summary, GlobalSettings.getInstance().isBIDCTwoPhoton()
+              ? (acq.getFilterType() == FrameIntegrationMethod.FRAME_SUMMATION ? 2 : 1)
+              : core_.getImageBitDepth() > 8 ? 2 : 1);
+      MD.setBitDepth(summary, GlobalSettings.getInstance().isBIDCTwoPhoton()
+              ? (acq.getFilterType() == FrameIntegrationMethod.FRAME_SUMMATION ? 16 : 8)
+              : (int) core_.getImageBitDepth());
+      MD.setWidth(summary, JavaLayerImageConstructor.getInstance().getImageWidth());
+      MD.setHeight(summary, JavaLayerImageConstructor.getInstance().getImageHeight());
+      MD.setSavingPrefix(summary, prefix);
+      JSONArray initialPosList = acq.createInitialPositionList();
+      MD.setInitialPositionList(summary, initialPosList);
+      MD.setPixelSizeUm(summary, core.getPixelSizeUm());
+      MD.setZStepUm(summary, acq.getZStep());
+      MD.setIntervalMs(summary, acq instanceof FixedAreaAcquisition ? ((FixedAreaAcquisition) acq).getTimeInterval_ms() : 0);
+      MD.setPixelOverlapX(summary, acq.getOverlapX());
+      MD.setPixelOverlapY(summary, acq.getOverlapY());
+      MD.setExploreAcq(summary, acq instanceof ExploreAcquisition);
+      //affine transform
+      try {
+         AffineTransform at = AffineUtils.getAffineTransform(core.getCurrentPixelSizeConfig(), 0, 0);
+         MD.setAffineTransformString(summary, AffineUtils.transformToString(at));
+      } catch (Exception e) {
+         Log.log("couldn't get pixel size config");
+         throw new RuntimeException();
+      }
+      JSONArray chNames = new JSONArray();
+      JSONArray chColors = new JSONArray();
+      String[] names = acq.getChannelNames();
+      Color[] colors = acq.getChannelColors();
+      for (int i = 0; i < numChannels; i++) {
+         chNames.put(names[i]);
+         chColors.put(colors[i].getRGB());
+      }
+      MD.setChannelNames(summary, chNames);
+      MD.setChannelColors(summary, chColors);
+      return summary;
+   }
 
     private interface HardwareCommand {
 
