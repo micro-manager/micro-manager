@@ -23,6 +23,7 @@ package org.micromanager.data.internal;
 import java.awt.Rectangle;
 import java.util.UUID;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -565,6 +566,19 @@ public class DefaultMetadata implements Metadata {
 
          MDUtils.setPositionName(result, getPositionName());
          MDUtils.setComments(result, getComments());
+         if (scopeData_ != null) {
+            JSONArray keys = new JSONArray();
+            for (String key : scopeData_.getKeys()) {
+               keys.put(key);
+            }
+            // Scope data properties are stored "flat" in the result JSON,
+            // to maintain backwards compatibility with MM1.4.
+            result.put("scopeDataKeys", keys);
+            JSONObject scopeJSON = scopeData_.toJSON();
+            for (String key : MDUtils.getKeys(scopeJSON)) {
+               result.put(key, scopeJSON.get(key));
+            }
+         }
          if (userData_ != null) {
             result.put("userData", userData_.toJSON());
          }
@@ -752,6 +766,23 @@ public class DefaultMetadata implements Metadata {
          ReportingUtils.logDebugMessage("Metadata failed to extract field pixelAspect");
       }
 
+      if (tags.has("scopeDataKeys")) {
+         try {
+            // Generate a separated JSONObject out of the "flat" scope data
+            // fields
+            JSONArray scopeKeys = tags.getJSONArray("scopeDataKeys");
+            JSONObject tmp = new JSONObject();
+            for (int i = 0; i < scopeKeys.length(); ++i) {
+               String key = scopeKeys.getString(i);
+               tmp.put(key, tags.getJSONObject(key));
+            }
+            builder.scopeData(DefaultPropertyMap.fromJSON(tmp));
+         }
+         catch (JSONException e) {
+            ReportingUtils.logError("Metadata failed to reconstruct field scopeData that we expected to be able to recover");
+         }
+      }
+
       try {
          builder.userData(DefaultPropertyMap.fromJSON(
                   tags.getJSONObject("userData")));
@@ -854,6 +885,10 @@ public class DefaultMetadata implements Metadata {
 
       if (pixelAspect_ != null) {
          result += "\n  pixelAspect: " + pixelAspect_.toString();
+      }
+
+      if (scopeData_ != null) {
+         result += "\n  scopeData: " + scopeData_.toString();
       }
 
       if (userData_ != null) {
