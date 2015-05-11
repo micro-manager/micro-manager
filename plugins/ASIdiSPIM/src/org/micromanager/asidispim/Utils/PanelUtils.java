@@ -755,6 +755,31 @@ public class PanelUtils {
    }
    
    /**
+    * takes a JComboBox and adds a listener that is guaranteed to be called 
+    * after the other listeners.
+    * Modifies the JComboBox!!
+    * @param jcb - combo box to which listener will be added
+    * @param lastListener - listener that will be added at the end
+    */
+   public void addListenerLast(JComboBox jcb, final ActionListener lastListener) {
+      final ActionListener [] origListeners = jcb.getActionListeners();
+      for (ActionListener list : origListeners) {
+         jcb.removeActionListener(list);
+      }
+
+      ActionListener newListener = new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            for (ActionListener list : origListeners) {
+               list.actionPerformed(e);
+            }
+            lastListener.actionPerformed(e);
+         }
+      };
+      jcb.addActionListener(newListener);
+   }
+   
+   /**
     * makes border with centered title text
     * @param title
     * @return

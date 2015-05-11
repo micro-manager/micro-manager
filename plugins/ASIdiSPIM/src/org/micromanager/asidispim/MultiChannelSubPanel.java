@@ -142,10 +142,20 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       prefs_ = prefs;
       panels_ = new ArrayList<ListeningJPanel>();
       
-      // added listener where we should re-calculate the displayed durations
+      // added to spinner controls where we should re-calculate the displayed
+      // slice period, volume duration, and time lapse duration
       ChangeListener recalculateTimingDisplayCL = new ChangeListener() {
          @Override
          public void stateChanged(ChangeEvent e) {
+            updateDurationLabels();
+         }
+      };
+      
+      // added to combobox controls where we should re-calculate the displayed
+      // slice period, volume duration, and time lapse duration
+      ActionListener recalculateTimingDisplayAL = new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
             updateDurationLabels();
          }
       };
@@ -254,6 +264,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICHANNEL_MODE,
             MultichannelModes.Keys.VOLUME);
       channelMode = channelModes.getComboBox();
+      pu.addListenerLast(channelMode, recalculateTimingDisplayAL);
       this.add(channelMode, "wrap");
       
       // enable/disable panel elements depending on checkbox state

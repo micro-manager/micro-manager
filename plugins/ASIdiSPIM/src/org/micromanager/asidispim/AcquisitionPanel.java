@@ -1078,27 +1078,44 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @return duration in ms
     */
    private double computeActualVolumeDuration() {
-      double stackDuration = getNumCameraTriggers()
-            * controller_.computeActualSlicePeriod(sliceTiming_)
-            * getNumChannels();  // per side
+      final MultichannelModes.Keys channelMode = getChannelMode();
+      final int numChannels = getNumChannels();
+      final int numSides = getNumSides();
+      final float delayBeforeSide = getDelayBeforeSide();
+      // stackDuration is per-side, per-channel
+      final double stackDuration = getNumCameraTriggers()
+            * controller_.computeActualSlicePeriod(sliceTiming_);
       if (isStageScanning()) {
-         double rampDuration = getDelayBeforeSide() +
+         final double rampDuration = getDelayBeforeSide() +
                props_.getPropValueFloat(Devices.Keys.XYSTAGE,
                Properties.Keys.STAGESCAN_MOTOR_ACCEL);
+         // TODO double-check these calculations below, at least they are better than before ;-)
          if (getAcquisitionMode() == AcquisitionModes.Keys.STAGE_SCAN) {
-            return (getNumSides() * ((rampDuration * 2) + stackDuration));            
+            if (channelMode == MultichannelModes.Keys.SLICE_HW) {
+               return (numSides * ((rampDuration * 2) + (stackDuration * numChannels)));
+            } else {
+               return (numSides * ((rampDuration * 2) + stackDuration) * numChannels);
+            }
          } else {  // interleaved mode
-            return (rampDuration * 2 + stackDuration * getNumSides());
+            if (channelMode == MultichannelModes.Keys.SLICE_HW) {
+               return (rampDuration * 2 + stackDuration * numSides * numChannels);
+            } else {
+               return ((rampDuration * 2 + stackDuration * numSides) * numChannels);
+            }
          }
       } else { // piezo scan
          double channelSwitchDelay = 0;
-         if (isMultichannel() && getChannelMode() == MultichannelModes.Keys.VOLUME) {
+         if (channelMode == MultichannelModes.Keys.VOLUME) {
                channelSwitchDelay = 500;   // estimate channel switching overhead time as 0.5s
                // actual value will be hardware-dependent
          }
-         return getNumSides() * getNumChannels()
-               * (getDelayBeforeSide() + stackDuration)
-               + (getNumChannels() - 1) * channelSwitchDelay;
+         if (channelMode == MultichannelModes.Keys.SLICE_HW) {
+            return numSides * (delayBeforeSide + stackDuration * numChannels);  // channelSwitchDelay = 0
+         } else {
+            return numSides * numChannels
+                  * (delayBeforeSide + stackDuration)
+                  + (numChannels - 1) * channelSwitchDelay;
+         }
       }
    }
    
@@ -1509,7 +1526,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             return false;
          }
       }
-      
       
       double sliceDuration = controller_.computeActualSlicePeriod(sliceTiming_);
       if (exposureTime + cameraReadoutTime > sliceDuration) {
