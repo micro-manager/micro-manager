@@ -135,7 +135,9 @@ public class DefaultDatastore implements Datastore {
       // Check for validity of axes.
       Coords coords = image.getCoords();
       List<String> ourAxes = getAxes();
-      if (ourAxes.size() > 0) {
+      // Can get null axes if we have no storage yet, which we should handle
+      // gracefully.
+      if (ourAxes != null && ourAxes.size() > 0) {
          for (String axis : coords.getAxes()) {
             if (!ourAxes.contains(axis)) {
                throw new IllegalArgumentException("Invalid image coordinate axis " + axis + "; allowed axes are " + ourAxes);
@@ -147,7 +149,7 @@ public class DefaultDatastore implements Datastore {
       SummaryMetadata summary = getSummaryMetadata();
       ArrayList<String> axisOrderList = null;
       if (summary != null) {
-         String[] axisOrder = getSummaryMetadata().getAxisOrder();
+         String[] axisOrder = summary.getAxisOrder();
          if (axisOrder == null) {
             axisOrderList = new ArrayList<String>();
          }
