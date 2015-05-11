@@ -418,9 +418,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             if (canvasSize.width < panelSize.width ||
                canvasSize.height < panelSize.height) {
                canvasPanel_.setSize(canvasSize);
-               pack();
             }
-            doLayout();
          }
       });
 
@@ -1089,7 +1087,10 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       // HACK: for some reason, we're off by 2 in width and 10 in height.
       int spareWidth = ourSize.width + widthDelta - 2;
       int spareHeight = ourSize.height + heightDelta - controlsSize.height - 10;
-      canvasPanel_.setSize(spareWidth, spareHeight);
+      Dimension panelSize = canvasPanel_.getSize();
+      if (panelSize.width != spareWidth || panelSize.height != spareHeight) {
+         canvasPanel_.setSize(spareWidth, spareHeight);
+      }
       // Don't adjust the window size when in fullscreen mode.
       if (isFullScreen) {
          // HACK: override preferred size of contents panel so that
