@@ -762,9 +762,8 @@ public class MDUtils {
    }
 
    /**
-    * Helper method for extractCoreProperties and
-    * extractDeviceAdapterProperties, to add a single property to the map by
-    * inspecting the property's type.
+    * Helper method for extractScopeProperties, to add a single property to the
+    * map by inspecting the property's type.
     * TODO: this currently only supports scalar values (i.e. no arrays).
     */
    private static DefaultPropertyMap.Builder putProperty(
