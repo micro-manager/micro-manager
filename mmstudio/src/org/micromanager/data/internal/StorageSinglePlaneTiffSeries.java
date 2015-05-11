@@ -79,7 +79,6 @@ public class StorageSinglePlaneTiffSeries implements Storage {
    private boolean isDatasetWritable_;
    private SummaryMetadata summaryMetadata_;
    private HashMap<Coords, String> coordsToFilename_;
-   private HashMap<Coords, Dimension> coordsToImageDims_;
    private HashMap<Integer, String> positionIndexToName_;
    private Coords maxIndices_;
 
@@ -93,7 +92,6 @@ public class StorageSinglePlaneTiffSeries implements Storage {
       store_.registerForEvents(this, 0);
       coordsToFilename_ = new HashMap<Coords, String>();
       metadataStreams_ = new HashMap<Integer, Writer>();
-      coordsToImageDims_ = new HashMap<Coords, Dimension>();
       positionIndexToName_ = new HashMap<Integer, String>();
       maxIndices_ = new DefaultCoords.Builder().build();
       amLoading_ = false;
@@ -131,6 +129,11 @@ public class StorageSinglePlaneTiffSeries implements Storage {
       // stuff to disk should not run; we only need to update our internal
       // records.
       String fileName = createFileName(image.getCoords());
+      if (image.getMetadata() != null &&
+            image.getMetadata().getPositionName() != null) {
+         // File is in a subdirectory.
+         fileName = image.getMetadata().getPositionName() + "/" + fileName;
+      }
       if (!amLoading_) {
          int imagePos = Math.max(0, image.getCoords().getStagePosition());
          if (!metadataStreams_.containsKey(imagePos)) {
@@ -188,7 +191,8 @@ public class StorageSinglePlaneTiffSeries implements Storage {
          // We don't have that image.
          return null;
       }
-      ImagePlus imp = new Opener().openImage(dir_ + "/" + coordsToFilename_.get(coords));
+      String path = dir_ + "/" + coordsToFilename_.get(coords);
+      ImagePlus imp = new Opener().openImage(path);
       if (imp == null) {
          // Loading failed.
          return null;
@@ -500,7 +504,12 @@ public class StorageSinglePlaneTiffSeries implements Storage {
       ArrayList<String> positions = new ArrayList<String>();
       if (metadataFile.exists()) {
          positions.add("");
-      } else {
+      }
+      else {
+         // Generate a list of position names by assuming all directories
+         // in this directory are for specific positions.
+         // TODO: the order of names in this list could easily not match the
+         // order of acquisition of the original data.
          for (File f : new File(dir_).listFiles()) {
             if (f.isDirectory()) {
                positions.add(f.getName());
@@ -508,8 +517,8 @@ public class StorageSinglePlaneTiffSeries implements Storage {
          }
       }
 
-      for (int positionIndex = 0; positionIndex < positions.size(); ++positionIndex) {
-         ReportingUtils.logError("Loading files for position " + positionIndex);
+      for (int positionIndex = 0; positionIndex < positions.size();
+            ++positionIndex) {
          String position = positions.get(positionIndex);
          JSONObject data = readJSONMetadata(position);
          if (data == null) {
@@ -534,7 +543,6 @@ public class StorageSinglePlaneTiffSeries implements Storage {
 
                   // Reconstruct the filename from the coordinates.
                   DefaultCoords coords = builder.build();
-                  ReportingUtils.logError("Should be an image at " + coords);
                   String fileName = createFileName(coords);
                   if (position.length() > 0) {
                      // File is in a subdirectory.
@@ -543,7 +551,8 @@ public class StorageSinglePlaneTiffSeries implements Storage {
                   // This will update our internal records without touching
                   // the disk, as amLoading_ is true.
                   coordsToFilename_.put(coords, fileName);
-                  store_.putImage(getImage(coords));
+                  Image image = getImage(coords);
+                  addImage(image);
                } catch (Exception ex) {
                   ReportingUtils.showError(ex);
                }
