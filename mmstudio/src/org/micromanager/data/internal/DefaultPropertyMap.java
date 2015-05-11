@@ -236,7 +236,7 @@ public class DefaultPropertyMap implements PropertyMap {
                result.put(VALUE, tmp);
             }
             else {
-               throw new RuntimeException("Unexpected property value type " + type_);
+               throw new PropertyMap.TypeMismatchException("Unexpected property value type " + type_);
             }
          }
          catch (JSONException e) {
@@ -583,7 +583,7 @@ public class DefaultPropertyMap implements PropertyMap {
                builder.putBooleanArray(key, valArr);
             }
             else {
-               throw new IllegalArgumentException(
+               throw new PropertyMap.TypeMismatchException(
                      "Illegal property type " + type + " for property " +
                      property);
             }
