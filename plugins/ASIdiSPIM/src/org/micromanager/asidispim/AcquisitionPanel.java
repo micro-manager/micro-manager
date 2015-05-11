@@ -715,7 +715,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       leftColumnPanel_.add(timepointPanel_, "wrap, growx");
       leftColumnPanel_.add(savePanel_, "wrap");
       leftColumnPanel_.add(new JLabel("Acquisition mode: "), "split 2, left");
-      AcquisitionModes acqModes = new AcquisitionModes(devices_, props_, prefs_);
+      AcquisitionModes acqModes = new AcquisitionModes(devices_, prefs_);
       spimMode_ = acqModes.getComboBox(); 
       leftColumnPanel_.add(spimMode_, "wrap");
       leftColumnPanel_.add(buttonStart_, "split 2, left");
