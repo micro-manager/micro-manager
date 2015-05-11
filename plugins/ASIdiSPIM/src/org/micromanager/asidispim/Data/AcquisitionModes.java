@@ -29,7 +29,6 @@ import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 
-import org.micromanager.asidispim.Data.CameraModes.Keys;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 
