@@ -90,45 +90,7 @@ public class DefaultImage implements Image {
          throws JSONException, MMScriptException {
       JSONObject tags = tagged.tags;
       if (metadata == null) {
-         DefaultMetadata.Builder builder = new DefaultMetadata.Builder();
-         try {
-            builder.camera(MDUtils.getChannelName(tags));
-         }
-         catch (JSONException e) {}
-         try {
-            builder.ROI(MDUtils.getROI(tags));
-         }
-         catch (JSONException e) {}
-         try {
-            builder.binning(MDUtils.getBinning(tags));
-         }
-         catch (JSONException e) {}
-         try {
-            builder.bitDepth(MDUtils.getBitDepth(tags));
-         }
-         catch (JSONException e) {}
-         try {
-            builder.pixelSizeUm(MDUtils.getPixelSizeUm(tags));
-         }
-         catch (JSONException e) {}
-         try {
-            builder.uuid(MDUtils.getUUID(tags));
-         }
-         catch (JSONException e) {}
-         try {
-            builder.elapsedTimeMs(MDUtils.getElapsedTimeMs(tags));
-         }
-         catch (JSONException e) {}
-         try {
-            builder.comments(MDUtils.getComments(tags));
-         }
-         catch (JSONException e) {}
-         try {
-            builder.imageNumber(MDUtils.getSequenceNumber(tags));
-         }
-         catch (JSONException e) {}
-         builder.scopeData(MDUtils.extractScopeProperties(tags));
-         metadata = builder.build();
+         metadata = DefaultMetadata.legacyFromJSON(tags);
       }
       metadata_ = (DefaultMetadata) metadata;
 
