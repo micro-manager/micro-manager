@@ -174,8 +174,9 @@ public final class DefaultDisplayManager implements DisplayManager {
             result.add(tmp);
          }
       }
-      else {
-         // Just create a blank new display.
+      if (result.size() == 0) {
+         // No path, or no display settings at the path.  Just create a blank
+         // new display.
          result.add(createDisplay(store));
       }
       return result;
