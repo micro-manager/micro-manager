@@ -55,9 +55,11 @@ public class MD {
    private static final String PIX_TYPE_GRAY8 = "GRAY8";
    private static final String PIX_TYPE_GRAY16 = "GRAY16";
    private static final String IJ_TYPE = "IJType";
+   private static final String CORE_XYSTAGE = "Core-XYStage";
+   private static final String CORE_FOCUS = "Core-Focus";
    
    
-   //TODO replace Strings below with static variables above
+   
    public static int[] getIndices(String imageLabel) {
       int[] ind = new int[4];
       String[] s = imageLabel.split("_");
@@ -72,6 +74,42 @@ public class MD {
          return new JSONObject(map.toString());
       } catch (JSONException e) {
          return null;
+      }
+   }
+   
+   public static void setCoreXY(JSONObject map, String xyName) {
+      try {
+         map.put(CORE_XYSTAGE, xyName);
+      } catch (JSONException ex) {
+         Log.log("couldnt set core xy");
+         throw new RuntimeException();
+      }
+   }
+
+   public static String getCoreXY(JSONObject map) {
+      try {
+         return map.getString(CORE_XYSTAGE);
+      } catch (JSONException ex) {
+         Log.log("Missing core xy stage tag");
+         throw new RuntimeException();
+      }
+   }
+
+   public static void setCoreFocus(JSONObject map, String zName) {
+      try {
+         map.put(CORE_FOCUS, zName);
+      } catch (JSONException ex) {
+         Log.log("couldnt set core focus tag");
+         throw new RuntimeException();
+      }
+   }
+
+   public static String getCoreFocus(JSONObject map) {
+      try {
+         return map.getString(CORE_FOCUS);
+      } catch (JSONException ex) {
+         Log.log("Missing core focus tag");
+         throw new RuntimeException();
       }
    }
 

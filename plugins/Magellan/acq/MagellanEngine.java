@@ -483,6 +483,12 @@ public class MagellanEngine {
       }
       MD.setChannelNames(summary, chNames);
       MD.setChannelColors(summary, chColors);
+      try {
+         MD.setCoreXY(summary, Magellan.getCore().getXYStageDevice());
+         MD.setCoreFocus(summary, Magellan.getCore().getFocusDevice());
+      } catch (Exception e) {
+         Log.log("couldn't get XY or Z stage from core");
+      }
       return summary;
    }
 

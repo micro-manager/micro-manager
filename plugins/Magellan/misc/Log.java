@@ -30,7 +30,7 @@ public class Log {
 
    public static void log(Exception e, boolean show) {
       Magellan.getCore().logMessage(getStackTraceAsString(e));
-      Magellan.getCore().logMessage(e.getMessage());
+      Magellan.getCore().logMessage(e.getMessage() == null ? e.toString() : e.getMessage());
       if (show) {
          IJ.log(getStackTraceAsString(e));
       }

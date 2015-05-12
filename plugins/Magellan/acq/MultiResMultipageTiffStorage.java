@@ -18,6 +18,8 @@ import java.util.LinkedList;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import misc.JavaUtils;
@@ -54,9 +56,10 @@ public class MultiResMultipageTiffStorage {
    private int byteDepth_;
    private TreeMap<Integer, Integer> backgroundPix_ = new TreeMap<Integer, Integer>(); //map of channel index to background pixel value
    private final boolean estimateBackground_;
-   private int maxSliceIndex_ = 0;
    private double pixelSizeXY_, pixelSizeZ_;
    private AffineTransform affine_;
+   private BDVXMLWriter bdvXML_;
+   private int currentTP_ = -1;
    
    /**
     * Constructor to load existing storage from disk
@@ -137,6 +140,11 @@ public class MultiResMultipageTiffStorage {
          Log.log("couldn't create Full res storage", true);
       }
       lowResStorages_ = new TreeMap<Integer, TaggedImageStorageMultipageTiff>();
+      try {
+         bdvXML_ = new BDVXMLWriter(new File(directory_), fullResStorage_.getNumChannels());
+      } catch (IOException ex) {
+         Log.log("Couldn't create BigDataViewer XML file");
+      }
    }
 
    private void readSummaryMetadata() {
@@ -200,10 +208,6 @@ public class MultiResMultipageTiffStorage {
       return posManager_.getPositionIndices(rows, cols);
    }
 
-   public int getMaxSliceIndex() {
-      return maxSliceIndex_;
-   }
-   
    /* 
     * @param stageCoords x and y coordinates of image in stage space
     * @return absolute, full resolution pixel coordinate of given stage posiiton
@@ -603,12 +607,14 @@ public class MultiResMultipageTiffStorage {
 
    public void putImage(TaggedImage taggedImage)  {
       try {
-         synchronized (this) {
-            maxSliceIndex_ = Math.max( MD.getSliceIndex(taggedImage.tags), maxSliceIndex_);
-            
+         synchronized (this) {            
             //write to full res storage as normal (i.e. with overlap pixels present)
             fullResStorage_.putImage(taggedImage);
             addToLowResStorage(taggedImage, 0, MD.getPositionIndex(taggedImage.tags));
+            if (currentTP_ < MD.getFrameIndex(taggedImage.tags)) {
+               bdvXML_.addTP();
+               currentTP_ = MD.getFrameIndex(taggedImage.tags);
+            }
          }
       } catch (IOException ex) {
          Log.log(ex.toString());
@@ -629,6 +635,11 @@ public class MultiResMultipageTiffStorage {
    }
 
    public void finished() {
+      try {
+         bdvXML_.close();
+      } catch (IOException ex) {
+         Log.log("Couldn't close BDV XML");
+      }
       fullResStorage_.finished();
       for (TaggedImageStorageMultipageTiff s : lowResStorages_.values()) {
          if (s != null) {

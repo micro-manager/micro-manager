@@ -4,7 +4,6 @@
  */
 package coordinates;
 
-import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
@@ -14,7 +13,6 @@ import bidc.JavaLayerImageConstructor;
 import main.Magellan;
 import misc.Log;
 import misc.LongPoint;
-import mmcorej.CMMCore;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -37,7 +35,7 @@ public class PositionManager {
    private final AffineTransform affine_;
    private JSONArray positionList_; //all access to positionlist in synchronized methods for thread safety
    private int minRow_, maxRow_, minCol_, maxCol_; //For the lowest resolution level
-   private String xyStageName_ = Magellan.getCore().getXYStageDevice();
+   private final String xyStageName_;
    //Map of Res level to set of nodes
    private TreeMap<Integer,TreeSet<MultiResPositionNode>> positionNodes_; 
    private final int displayTileWidth_, displayTileHeight_;
@@ -46,6 +44,11 @@ public class PositionManager {
    
    public PositionManager(AffineTransform transform, JSONObject summaryMD, int displayTileWidth, int displayTileHeight,
            int fullTileWidth, int fullTileHeight, int overlapX, int overlapY) {
+      try {
+         xyStageName_ = summaryMD.getString("Core-XYStage");
+      } catch (JSONException ex) {
+         throw new RuntimeException("No XY stage name in summary metadata");
+      }
       affine_ = transform;
       positionNodes_ = new TreeMap<Integer,TreeSet<MultiResPositionNode>>();
       readRowsAndColsFromPositionList(summaryMD);
@@ -252,7 +255,7 @@ public class PositionManager {
          JSONObject coords = new JSONObject();
          xy.put(stageCoords.x);
          xy.put(stageCoords.y);
-         coords.put(Magellan.getCore().getXYStageDevice(), xy);
+         coords.put(xyStageName_, xy);
          JSONObject pos = new JSONObject();
          pos.put(COORDINATES_KEY, coords);
          pos.put(COL_KEY, col);
@@ -431,11 +434,10 @@ public class PositionManager {
     */
    private synchronized Point2D.Double getStagePositionCoordinates(int row, int col, int pixelOverlapX, int pixelOverlapY) {
       try {
-         CMMCore core = Magellan.getCore();
          if ( positionList_.length() == 0) {
             try {
-               //create position 0 based on current XY stage position
-               return new Point2D.Double(core.getXPosition(core.getXYStageDevice()), core.getYPosition(core.getXYStageDevice()));
+               //create position 0 based on current XY stage position--happens at start of explore acquisition
+               return new Point2D.Double(Magellan.getCore().getXPosition(xyStageName_), Magellan.getCore().getYPosition(xyStageName_));
             } catch (Exception ex) {
                Log.log("Couldn't create position 0");
                return null;
