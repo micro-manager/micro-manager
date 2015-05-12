@@ -189,12 +189,14 @@ public class StorageSinglePlaneTiffSeries implements Storage {
    public Image getImage(Coords coords) {
       if (coordsToFilename_.get(coords) == null) {
          // We don't have that image.
+         ReportingUtils.logError("Asked for image at " + coords + " that we don't know about");
          return null;
       }
       String path = dir_ + "/" + coordsToFilename_.get(coords);
       ImagePlus imp = new Opener().openImage(path);
       if (imp == null) {
          // Loading failed.
+         ReportingUtils.logError("Unable to load image at " + path);
          return null;
       }
       try {
@@ -526,36 +528,60 @@ public class StorageSinglePlaneTiffSeries implements Storage {
             continue;
          }
          try {
-            summaryMetadata_ = DefaultSummaryMetadata.legacyFromJSON(
-                  data.getJSONObject("Summary"));
-            ReportingUtils.logError("Made summary metadata " + summaryMetadata_);
+            if (data.has("Summary")) {
+               summaryMetadata_ = DefaultSummaryMetadata.legacyFromJSON(
+                     data.getJSONObject("Summary"));
+            }
+            DefaultCoords.Builder builder = new DefaultCoords.Builder();
+            // We have two methods to recover the image coordinates from the
+            // metadata. The old 1.4 method uses a "FrameKey" key that holds
+            // the time, channel, and Z indices specifically, and stows all
+            // image metadata within that structure. The 2.0 method stores
+            // image coordinate info in a mapping specific to the filename the
+            // image is stored in. Naturally we have to be able to load both
+            // methods. The 1.4 method requires a different technique for
+            // reconstructing the SummaryMetadata too, since all that's in the
+            // "data" variable directly is a bunch of FrameKeys -- the summary
+            // metadata is duplicated within each JSONObject the FrameKeys
+            // point to.
             for (String key : makeJsonIterableKeys(data)) {
-               if (!key.contains("Coords-")) {
-                  continue;
-               }
-               JSONObject chunk = data.getJSONObject(key);
-               try {
-                  DefaultCoords.Builder builder = new DefaultCoords.Builder();
+               if (key.contains("Coords-")) {
+                  // 2.0 method. SummaryMetadata is already valid.
+                  JSONObject chunk = data.getJSONObject(key);
                   for (String axis : makeJsonIterableKeys(chunk)) {
                      builder.index(axis, chunk.getInt(axis));
                   }
-                  // TODO: omitting pixel type information.
-
-                  // Reconstruct the filename from the coordinates.
-                  DefaultCoords coords = builder.build();
-                  String fileName = createFileName(coords);
-                  if (position.length() > 0) {
-                     // File is in a subdirectory.
-                     fileName = position + "/" + fileName;
-                  }
-                  // This will update our internal records without touching
-                  // the disk, as amLoading_ is true.
-                  coordsToFilename_.put(coords, fileName);
-                  Image image = getImage(coords);
-                  addImage(image);
-               } catch (Exception ex) {
-                  ReportingUtils.showError(ex);
                }
+               else if (key.contains("FrameKey-")) {
+                  // 1.4 method. SummaryMetadata must be reconstructed.
+                  String[] items = key.split("-");
+                  builder.time(new Integer(items[1]));
+                  builder.channel(new Integer(items[2]));
+                  builder.z(new Integer(items[3]));
+                  JSONObject innerMetadata = data.getJSONObject(key);
+                  summaryMetadata_ = DefaultSummaryMetadata.legacyFromJSON(
+                        innerMetadata);
+                  builder.stagePosition(
+                        MDUtils.getPositionIndex(innerMetadata));
+               }
+            }
+            try {
+               // TODO: omitting pixel type information.
+               // Reconstruct the filename from the coordinates.
+               DefaultCoords coords = builder.build();
+               String fileName = createFileName(coords);
+               if (position.length() > 0) {
+                  // File is in a subdirectory.
+                  fileName = position + "/" + fileName;
+               }
+               // This will update our internal records without touching
+               // the disk, as amLoading_ is true.
+               ReportingUtils.logError("Expect to find image with coords " + coords + " at file " + fileName);
+               coordsToFilename_.put(coords, fileName);
+               Image image = getImage(coords);
+               addImage(image);
+            } catch (Exception ex) {
+               ReportingUtils.showError(ex);
             }
          } catch (JSONException ex) {
             ReportingUtils.showError(ex);
