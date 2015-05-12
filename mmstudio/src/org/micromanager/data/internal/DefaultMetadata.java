@@ -637,7 +637,7 @@ public class DefaultMetadata implements Metadata {
          ReportingUtils.logDebugMessage("Metadata failed to extract field bitDepth");
       }
       try {
-         builder.ijType(tags.getInt("ijType"));
+         builder.ijType(tags.getInt("IJType"));
       }
       catch (JSONException e) {
          ReportingUtils.logDebugMessage("Metadata failed to extract field ijType");
