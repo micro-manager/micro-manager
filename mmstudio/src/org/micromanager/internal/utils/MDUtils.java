@@ -5,9 +5,11 @@ import ij.ImagePlus;
 import java.awt.Rectangle;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.UUID;
 
 import mmcorej.Configuration;
@@ -479,12 +481,18 @@ public class MDUtils {
 
    public static String[] getKeys(JSONObject md) {
       int n = md.length();
-      String [] keyArray = new String[n];
+      ArrayList<String> result = new ArrayList<String>();
+      String[] keyArray = new String[n];
       Iterator<String> keys = md.keys();
       for (int i=0; i<n; ++i) {
-         keyArray[i] = keys.next();
+         String key = keys.next();
+         // Can't provide a key that points to null, as actually trying to
+         // use it will provoke a JSONException!
+         if (!md.isNull(key)) {
+            result.add(key);
+         }
       }
-      return keyArray;
+      return result.toArray(new String[] {});
    }
 
 
@@ -629,7 +637,7 @@ public class MDUtils {
    public static void setExposureMs(JSONObject map, double val) throws JSONException {
       map.put("Exposure-ms", val);
    }
-   
+
    public static boolean hasXPositionUm(JSONObject map) {
       return (isValid(map, "XPositionUm"));
    }
@@ -679,7 +687,7 @@ public class MDUtils {
    public static void setCoreCamera(JSONObject map, String val) throws JSONException {
       map.put("Core-Camera", val);
    }
-   
+
    public static double getIntervalMs(JSONObject map) throws JSONException {
       return map.getDouble("Interval_ms");
    }
@@ -703,7 +711,7 @@ public class MDUtils {
    public static void setSlicesFirst(JSONObject map, boolean val) throws JSONException {
       map.put("SlicesFirst", val);
    }
-   
+
    public static boolean hasTimeFirst(JSONObject map) {
       return (isValid(map, "TimeFirst"));
    }
@@ -733,7 +741,7 @@ public class MDUtils {
     * properties that start with the name of a device adapter, and convert the
     * lot into a PropertyMap.
     */
-   public static PropertyMap extractScopeProperties(JSONObject tags) {
+   public static PropertyMap extractScopeData(JSONObject tags) {
       HashSet<String> devices = new HashSet<String>();
       for (String device : MMStudio.getInstance().getCore().getLoadedDevices()) {
          devices.add(device + "-");
@@ -755,6 +763,78 @@ public class MDUtils {
             catch (JSONException e) {
                // This should never happen.
                ReportingUtils.logError(e, "Error extracting key " + key + " from JSON tags");
+            }
+         }
+      }
+      return builder.build();
+   }
+
+   /**
+    * Set of keys that are known to not be user-data metadata properties. See
+    * extractUserData, below.
+    */
+   static HashSet<String> IGNORED_KEYS = new HashSet<String>();
+   static {
+      IGNORED_KEYS.add("Binning");
+      IGNORED_KEYS.add("BitDepth");
+      IGNORED_KEYS.add("Camera");
+      IGNORED_KEYS.add("CameraChannelIndex");
+      IGNORED_KEYS.add("Channel");
+      IGNORED_KEYS.add("channelName");
+      IGNORED_KEYS.add("ChannelIndex");
+      IGNORED_KEYS.add("Comments");
+      IGNORED_KEYS.add("ElapsedTime-ms");
+      IGNORED_KEYS.add("emissionLabel");
+      IGNORED_KEYS.add("excitationLabel");
+      IGNORED_KEYS.add("Exposure-ms");
+      IGNORED_KEYS.add("Frame");
+      IGNORED_KEYS.add("FrameIndex");
+      IGNORED_KEYS.add("gridColumn");
+      IGNORED_KEYS.add("gridRow");
+      IGNORED_KEYS.add("Height");
+      IGNORED_KEYS.add("IJType");
+      IGNORED_KEYS.add("ImageNumber");
+      IGNORED_KEYS.add("keepShutterOpenChannels");
+      IGNORED_KEYS.add("keepShutterOpenSlices");
+      IGNORED_KEYS.add("NextFrame");
+      IGNORED_KEYS.add("pixelAspect");
+      IGNORED_KEYS.add("PixelSizeUm");
+      IGNORED_KEYS.add("PixelType");
+      IGNORED_KEYS.add("Position");
+      IGNORED_KEYS.add("PositionIndex");
+      IGNORED_KEYS.add("PositionName");
+      IGNORED_KEYS.add("receivedTime");
+      IGNORED_KEYS.add("ROI");
+      IGNORED_KEYS.add("Slice");
+      IGNORED_KEYS.add("SliceIndex");
+      IGNORED_KEYS.add("SlicePosition");
+      IGNORED_KEYS.add("Source");
+      IGNORED_KEYS.add("startTimeMs");
+      IGNORED_KEYS.add("Summary");
+      IGNORED_KEYS.add("Time");
+      IGNORED_KEYS.add("userData");
+      IGNORED_KEYS.add("UUID");
+      IGNORED_KEYS.add("Width");
+      IGNORED_KEYS.add("XPositionUm");
+      IGNORED_KEYS.add("YPositionUm");
+      IGNORED_KEYS.add("ZPositionUm");
+   }
+
+   /**
+    * Given a JSONObject that is a TaggedImage's tags, and a set of strings of
+    * keys we are to ignore, import all non-Metadata, non-ignored keys into
+    * a new PropertyMap.
+    */
+   public static PropertyMap extractUserData(JSONObject tags,
+         Set<String> ignoredKeys) {
+      DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();
+      for (String key : getKeys(tags)) {
+         if (!ignoredKeys.contains(key) && !IGNORED_KEYS.contains(key)) {
+            try {
+               putProperty(builder, key, tags.get(key));
+            }
+            catch (JSONException e) {
+               ReportingUtils.logError(e, "Error extracting user-data property with key " + key);
             }
          }
       }
