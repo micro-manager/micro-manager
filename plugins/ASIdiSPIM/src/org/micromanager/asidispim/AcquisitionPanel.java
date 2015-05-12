@@ -1450,7 +1450,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                     useChannels,
                     nrChannels,
                     multiChannelPanel_.getUsedChannels(),
-                    multiChannelPanel_.getChannelGroup() )) {
+                    multiChannelPanel_.getChannelGroup(),
+                    firstSideA)) {
                return false;
             }
             nrChannelsSoftware = 1;

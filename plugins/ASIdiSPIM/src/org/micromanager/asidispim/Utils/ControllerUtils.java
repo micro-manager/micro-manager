@@ -534,12 +534,13 @@ public class ControllerUtils {
          final boolean isMultiChannel,
          final int numChannels,
          final ChannelSpec[] channels, 
-         final String channelGroup
+         final String channelGroup,
+         final boolean firstSideA
          ) {
       
       final int counterLSBAddress = 3;
       final int counterMSBAddress = 4;
-      final int laserTriggerAddress = 10;  // this should be (42 || 8) = (TTL1 || manual laser on)
+      final int laserTriggerAddress = 10;  // this should be set to (42 || 8) = (TTL1 || manual laser on)
       final int invertAddress = 64;
       
       if (!devices_.isValidMMDevice(Devices.Keys.PLOGIC)) {
@@ -547,16 +548,29 @@ public class ControllerUtils {
          return false;
       }
       
-      // set up clock for counters
       MultichannelModes.Keys channelMode = getChannelMode(isMultiChannel);
+      
+      if ((numChannels > 4) &&
+            ((channelMode == MultichannelModes.Keys.SLICE_HW) || 
+            (channelMode == MultichannelModes.Keys.VOLUME_HW)) ) {
+         MyDialogUtils.showError("PLogic card cannot handle more than 4 channels for hardware switching.");
+         return false;
+      }
+      
+      // set up clock for counters
       switch (channelMode) {
       case SLICE_HW:
          props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
                Properties.Values.PLOGIC_PRESET_CLOCK_LASER);
          break;
       case VOLUME_HW:
-         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
-               Properties.Values.PLOGIC_PRESET_CLOCK_SIDE);
+         if (firstSideA) {
+            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+                  Properties.Values.PLOGIC_PRESET_CLOCK_SIDE_AFIRST);
+         } else {
+            props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+                  Properties.Values.PLOGIC_PRESET_CLOCK_SIDE_BFIRST);
+         }
          break;
       default:
          MyDialogUtils.showError("Unknown multichannel mode for hardware switching");
@@ -600,7 +614,7 @@ public class ControllerUtils {
       
       // identify BNC from the preset and set counter inputs for 13-16 appropriately 
       boolean[] hardwareChannelUsed = new boolean[4]; // initialized to all false
-      for (int channelNum = 0; channelNum < channels.length; channelNum++) {
+      for (int channelNum = 0; channelNum < numChannels; channelNum++) {
          // we already know there are between 1 and 4 channels
          int outputNum = getPLogicOutputFromChannel(channels[channelNum], channelGroup);
          if (outputNum<5) {  // check for error in getPLogicOutputFromChannel()
@@ -619,11 +633,17 @@ public class ControllerUtils {
          }
          props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_POINTER_POSITION, outputNum + 8);
          props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_1, invertAddress);  // enable this AND4
+         // if we are doing per-volume switching with side B first then counter will start at 1 instead of 0
+         // the following lines account for this by incrementing the channel number "match" by 1 in this special case 
+         int adjustedChannelNum = channelNum;
+         if (channelMode == MultichannelModes.Keys.VOLUME_HW && !firstSideA) {
+            adjustedChannelNum = (channelNum+1) % numChannels;
+         }
          // map the channel number to the equivalent addresses for the AND4
          // inputs should be either 3 (for LSB high) or 67 (for LSB low)
          //                     and 4 (for MSB high) or 68 (for MSB low)
-         int in3 = (channelNum & 0x01) > 0 ? counterLSBAddress : counterLSBAddress + invertAddress;
-         int in4 = (channelNum & 0x02) > 0 ? counterMSBAddress : counterMSBAddress + invertAddress; 
+         final int in3 = (adjustedChannelNum & 0x01) > 0 ? counterLSBAddress : counterLSBAddress + invertAddress;
+         final int in4 = (adjustedChannelNum & 0x02) > 0 ? counterMSBAddress : counterMSBAddress + invertAddress; 
          props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_3, in3);
          props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_INPUT_4, in4);
       }
@@ -738,6 +758,7 @@ public class ControllerUtils {
     * Compute the volume duration in ms based on controller's timing settings.
     * @return duration in ms
     */
+   // TODO should use function in AcquisitionPanel instead of this one or else refactor
    private double computeActualVolumeDuration(
            final int numChannels, 
            final int numSlices, 
@@ -765,6 +786,7 @@ public class ControllerUtils {
     * Compute slice period in ms based on controller's timing settings.
     * @return period in ms
     */
+   // TODO should use function in AcquisitionPanel instead of this one or else refactor
    private double computeActualSlicePeriod(
          final float delayScanValue,
          final int lineScanPeriod,
