@@ -395,6 +395,11 @@ public class ScrollerPanel extends JPanel {
     */
    private void runUpdateThread() {
       while(!shouldStopUpdates_.get()) {
+         try {
+            // Limit ourselves to about 30FPS.
+            Thread.sleep(1000/30);
+         }
+         catch (InterruptedException e) {} // Ignore it.
          Coords coords = null;
          // Chew through the queue and take only the last item.
          while (!updateQueue_.isEmpty()) {
@@ -413,11 +418,6 @@ public class ScrollerPanel extends JPanel {
             }
             shouldPostEvents_ = true;
          }
-         try {
-            // In any case limit ourselves to about 30FPS.
-            Thread.sleep(1000/30);
-         }
-         catch (InterruptedException e) {} // Ignore it.
       }
    }
 
