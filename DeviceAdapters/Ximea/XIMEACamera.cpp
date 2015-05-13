@@ -802,15 +802,29 @@ int XIMEACamera::SnapImage()
 	}
 	
 	ret = xiGetImage( handle, (DWORD)acqTout_, &image);
+	if (ret == XI_OK)
+	{
+
+		if (image.padding_x == 0)
+			img_->SetPixels(image.bp);
+		else
+			img_->SetPixelsPadded(image.bp, image.padding_x);
+
+		readoutStartTime_.sec_ = image.tsSec;
+		readoutStartTime_.uSec_ = image.tsUSec;
+	}
+	else
+	{
+		char buff[MAX_PATH] = "";
+		sprintf_s(buff, "XIMEACamera xiGetImage failed with error %d", ret);
+		LogMessage(buff);
+	}
 
 	if (!isAcqRunning)
 	{
 		if (xiStopAcquisition(handle) != XI_OK)
 			return DEVICE_ERR;
 	}	
-
-	readoutStartTime_.sec_ = image.tsSec;
-	readoutStartTime_.uSec_ = image.tsUSec;
 
 	// use time of first successfully captured frame for sequence start
 	if (sequenceStartTime_.sec_ == 0 && sequenceStartTime_.uSec_ == 0)
@@ -833,10 +847,6 @@ int XIMEACamera::SnapImage()
 */
 const unsigned char* XIMEACamera::GetImageBuffer()
 {
-	if(image.padding_x == 0)
-		img_->SetPixels(image.bp);
-	else
-		img_->SetPixelsPadded(image.bp, image.padding_x);
 	return const_cast<unsigned char*>(img_->GetPixels());
 }
 
