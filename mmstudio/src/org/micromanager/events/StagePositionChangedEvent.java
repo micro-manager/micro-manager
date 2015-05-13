@@ -20,10 +20,12 @@
 
 package org.micromanager.events;
 
-// This class signals when a single-axis drive has moved. 
+/**
+ * This class signals when a single-axis drive has moved. 
+ */
 public class StagePositionChangedEvent {
-   private String deviceName_;
-   private double pos_;
+   private final String deviceName_;
+   private final double pos_;
 
    public StagePositionChangedEvent(String deviceName, double pos) {
       deviceName_ = deviceName;

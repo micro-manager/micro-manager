@@ -109,6 +109,7 @@ public final class MultiStagePosition {
    
    /**
     * Add one stage position point
+    * @param sp Stageposition to be added
     */
    public void add(StagePosition sp) {
       stagePosList_.add(sp);
@@ -119,7 +120,8 @@ public final class MultiStagePosition {
    }
    
    /**
-    * Number of stages.
+    * Number of stages
+    * @return number of stages in this MultiStagePosition object
     */
    public int size() {
       return stagePosList_.size();
@@ -136,6 +138,8 @@ public final class MultiStagePosition {
    
    /**
     * Add a generalized property-value par to the position.
+    * @param key
+    * @param value
     */
    public void setProperty(String key, String value) {
       properties_.put(key, value);
@@ -143,6 +147,7 @@ public final class MultiStagePosition {
 
    /**
     * Return the array of property keys (names) associated with this position
+    * @return array with property names
     */
    public String[] getPropertyNames() {
       String keys[] = new String[properties_.size()];
@@ -154,6 +159,8 @@ public final class MultiStagePosition {
    
    /**
     * Checks if the position has a particular property
+    * @param key
+    * @return true if the position has this key
     */
    public boolean hasProperty(String key) {
       return properties_.containsKey(key);
@@ -161,6 +168,8 @@ public final class MultiStagePosition {
    
    /**
     * Returns property value for a given key (name) 
+    * @param key
+    * @return value associated with the key
     */
    public String getProperty(String key) {
       if (properties_.containsKey(key))
@@ -171,10 +180,11 @@ public final class MultiStagePosition {
    
    /**
     * Returns position for a specific stage.
+    * @param stageName 
+    * @return position of the specified stage
     */
    public StagePosition get(String stageName) {
-      for (int i=0; i<stagePosList_.size(); i++) {
-         StagePosition sp = stagePosList_.get(i);
+      for (StagePosition sp : stagePosList_) {
          if (sp.stageName.compareTo(stageName) == 0)
             return sp;
       }
@@ -183,6 +193,7 @@ public final class MultiStagePosition {
    
    /**
     * Returns position label.
+    * @return label associated with this MultiStagePosition
     */
    public String getLabel() {
       return label_;
@@ -190,6 +201,7 @@ public final class MultiStagePosition {
 
    /**
     * Sets position label (such as well name, etc.)
+    * @param lab new MultiStagePosition Label
     */
    public void setLabel(String lab) {
       label_ = lab;
@@ -197,6 +209,7 @@ public final class MultiStagePosition {
    
    /**
     * Defines which stage serves as focus control
+    * @param stage new focus stage
     */
    public void setDefaultZStage(String stage) {
       defaultZStage_ = stage;
@@ -212,6 +225,7 @@ public final class MultiStagePosition {
    
    /**
     * Defines which stage serves as the XY motion control device
+    * @param stage new default XY stage
     */
    public void setDefaultXYStage(String stage) {
       defaultXYStage_ = stage;
@@ -219,6 +233,7 @@ public final class MultiStagePosition {
 
    /**
     * Moves all stages to the specified positions.
+    * @param msp position to move to
     * @param core_ - microscope API
     * @throws Exception
     */
@@ -248,11 +263,11 @@ public final class MultiStagePosition {
 
    /**
     * Returns "X" coordinate of the position.
+    * @return X position of the default XY stage
     */
    public double getX() {
       // TODO: implement more efficient position calculation
-      for (int i=0; i<stagePosList_.size(); i++) {
-         StagePosition sp = stagePosList_.get(i);
+      for (StagePosition sp : stagePosList_) {
          if (sp.numAxes == 2 && sp.stageName.compareTo(defaultXYStage_) == 0) {
             return sp.x;
          }
@@ -262,10 +277,10 @@ public final class MultiStagePosition {
    
    /**
     * Returns "Y" coordinate of the position.
+    * @return Y position of the default XY stage
     */
   public double getY() {
-      for (int i=0; i<stagePosList_.size(); i++) {
-         StagePosition sp = stagePosList_.get(i);
+      for (StagePosition sp : stagePosList_) {
          if (sp.numAxes == 2 && sp.stageName.compareTo(defaultXYStage_) == 0) {
             return sp.y;
          }
@@ -275,10 +290,10 @@ public final class MultiStagePosition {
    
   /**
    * Returns "Z" - focus coordinate of the position.
+    * @return Position of the default Focus stage
    */
    public double getZ() {
-      for (int i=0; i<stagePosList_.size(); i++) {
-         StagePosition sp = stagePosList_.get(i);
+      for (StagePosition sp : stagePosList_) {
          if (sp.numAxes == 1 && sp.stageName.compareTo(defaultZStage_) == 0) {
             return sp.x;
          }

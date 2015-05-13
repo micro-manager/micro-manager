@@ -82,6 +82,7 @@ public interface SnapLiveManager {
     * in any open Snap/Live DisplayWindows. If no displays are open or if the
     * image dimensions don't match those of the previously-displayed images,
     * then a new display will be created.
+    * @param image Image to be displayed
     */
    public void displayImage(Image image);
 
@@ -90,6 +91,7 @@ public interface SnapLiveManager {
     * display has been closed. Snap/live mode only "knows about" the display
     * it itself created -- thus, if the user duplicates that display and then
     * closes the original, you will get null when you call this method.
+    * @return DisplayWindow used for snap/live mode
     */
    public DisplayWindow getDisplay();
 }

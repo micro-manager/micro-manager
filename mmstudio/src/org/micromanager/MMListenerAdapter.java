@@ -22,7 +22,7 @@
 package org.micromanager;
 
 /**
- * As with MMListenerInterface, however this class implements stubs of
+ * As MMListenerInterface, however this class implements stubs of
  * all methods, so if you only care about certain callbacks, you don't have
  * to implement your own stubs.
  */

@@ -22,7 +22,6 @@ package org.micromanager.display;
 
 import java.awt.Color;
 
-import org.micromanager.data.Coords;
 import org.micromanager.PropertyMap;
 
 /**
@@ -45,6 +44,7 @@ public interface DisplaySettings {
       /**
        * Construct a DisplaySettings from the DisplaySettingsBuilder. Call 
        * this once you are finished setting all DisplaySettings parameters.
+       * @return Build object
        */
       DisplaySettings build();
 
@@ -71,46 +71,108 @@ public interface DisplaySettings {
    /**
     * Generate a new DisplaySettingsBuilder whose values are initialized to be
     * the values of this DisplaySettings.
+    * @return Copy of the DisplaySettingsBuilder
     */
    DisplaySettingsBuilder copy();
 
-   /** The colors of each channel in the image display window */
+   /** 
+    * The colors of each channel in the image display window 
+    * @return Channel colors
+    */
    public Color[] getChannelColors();
-   /** The value that is treated as "black" in the display window */
+   
+   /** 
+    * The value that is treated as "black" in the display window 
+    * @return Highest values that are shown as black in the display window
+    */
    public Integer[] getChannelContrastMins();
-   /** The value that is treated as "white" (or equivalent max intensity for
-     * colored displays) in the display window */
+   
+   /** 
+    * The value that is treated as "white" (or equivalent max intensity for
+     * colored displays) in the display window
+    * @return Lowest values that are shown as white in the display window 
+    */
    public Integer[] getChannelContrastMaxes();
-   /** The gamma curve modifier for each channel */
+   
+   /** 
+    * The gamma curve modifier for each channel 
+    * @return Gamma for each channel
+    */
    public Double[] getChannelGammas();
-   /** The magnification level of the canvas */
+   
+   /** 
+    * The magnification level of the canvas 
+    * @return magnification level of the canvas 
+    */
    public Double getMagnification();
-   /** How quickly to animate, when animation of the display is turned on */
+   
+   /** 
+    * Animation speed, when animation of the display is turned on 
+    * @return Animation speed in frames per second
+    */
    public Integer getAnimationFPS();
-   /** The index into the "Display mode" control; 0 = Color, 1 = Grayscale,
-     * 2 = Composite */
+   
+   /** 
+    * The index into the "Display mode" control; 0 = Color, 1 = Grayscale,
+    * 2 = Composite 
+    * @return index into the "Display mode" control
+    */
    public Integer getChannelDisplayModeIndex();
-   /** How much time to allow to pass between updates to the histogram, in
-     * seconds (set to 0 for continuous update, or any negative value to
-     * disable updates altogether) */
+   
+   /** 
+    * How much time to allow to pass between updates to the histogram, in
+    * seconds (set to 0 for continuous update, or any negative value to
+    * disable updates altogether) 
+    * @return Minimum time between histogram updates in seconds
+    */
    public Double getHistogramUpdateRate();
-   /** Whether histogram settings should be synced across channels */
+   
+   /** 
+    * Whether histogram settings should be synced across channels 
+    * @return True if histograms should sync between channels
+    */
    public Boolean getShouldSyncChannels();
-   /** Whether each newly-displayed image should be autostretched */
+   
+   /** 
+    * Whether each newly-displayed image should be autostretched 
+    * @return True if new images should be auto-stretched
+    */
    public Boolean getShouldAutostretch();
-   /** The percentage of values off the top and bottom of the image's value
-     * range that get ignored when autostretching */
+   
+   /** 
+    * The percentage of values off the top and bottom of the image's value
+    * range that get ignored when autostretching 
+    * @return Number used in Autostretch mode to determine where to set the 
+    * white and black points.  Expressed as percentage.
+    */
    public Double getExtremaPercentage();
-   /** The indices into the bit depth dropdown for controlling the X scale of
-     * the histogram, for each channel. */
+   
+   /** 
+    * The indices into the bit depth drop-down for controlling the X scale of
+    * the histogram, for each channel. 
+    * @return Index into dropdown menu
+    */
    public Integer[] getBitDepthIndices();
-   /** Whether to display the histograms using a logarithmic scale */
+   
+   /** 
+    * Whether or not to display the histograms using a logarithmic scale 
+    * @return True if log scale should be used
+    */
    public Boolean getShouldUseLogScale();
-   /** Any additional user-supplied data */
+   
+   /** 
+    * Any additional user-supplied data
+    * @return User data
+    */
    public PropertyMap getUserData();
 
    public static final String FILENAME = "displaySettings.txt";
-   /** Save the DisplaySettings to a file in the specified folder. If the file
-    * already exists, then the settings will be appended to it. */
+   
+   /** 
+    * Save the DisplaySettings to a file in the specified folder. If the file
+    * already exists, then the settings will be appended to it. 
+    * @param path Full path to directory in which the DisplaySettings file should
+    * be saved
+    */
    public void save(String path);
 }

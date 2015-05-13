@@ -144,6 +144,7 @@ public interface DisplayManager {
    /**
     * Return all associated DisplayWindows for the Datastore. Returns null if
     * the Datastore is not managed.
+    * @param store Datastore of interest to the caller
     * @return A list of all DisplayWindows Micro-Manager knows are associated
     *         with the specified Datastore, or null.
     */
@@ -179,6 +180,7 @@ public interface DisplayManager {
     * Given a Datastore, close any open DisplayWindows for that Datastore.
     * If the Datastore is managed, then the user may receive a prompt to
     * save their data, which they have the option to cancel.
+    * @param store Datastore for which displays should be closed
     * @return True if all windows were closed; false otherwise (e.g. because
     *         the user cancelled saving).
     */
