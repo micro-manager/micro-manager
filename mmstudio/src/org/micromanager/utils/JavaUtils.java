@@ -251,6 +251,8 @@ public class JavaUtils {
          prefs.flush();
       } catch (BackingStoreException e) {
          return false;
+      } catch (java.lang.SecurityException e) {
+         return false;
       }
       return true;
    }
