@@ -107,7 +107,7 @@ public class SnapLiveManager {
                callLiveModeListeners(true);
             }
             catch (Exception e) {
-               ReportingUtils.logError(e, "Couldn't restart live mode after changing exposure time.");
+               ReportingUtils.logError(e, "Couldn't start live mode.");
                liveModeTimer_.stop();
                callLiveModeListeners(false);
             }
