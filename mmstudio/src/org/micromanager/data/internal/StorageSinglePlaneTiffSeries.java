@@ -39,10 +39,13 @@ import java.io.Writer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -80,6 +83,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
    private SummaryMetadata summaryMetadata_;
    private HashMap<Coords, String> coordsToFilename_;
    private HashMap<Integer, String> positionIndexToName_;
+   private ArrayList<String> orderedChannelNames_;
    private Coords maxIndices_;
 
    public StorageSinglePlaneTiffSeries(DefaultDatastore store,
@@ -93,6 +97,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
       coordsToFilename_ = new HashMap<Coords, String>();
       metadataStreams_ = new HashMap<Integer, Writer>();
       positionIndexToName_ = new HashMap<Integer, String>();
+      orderedChannelNames_ = new ArrayList<String>();
       maxIndices_ = new DefaultCoords.Builder().build();
       amLoading_ = false;
 
@@ -128,11 +133,19 @@ public class StorageSinglePlaneTiffSeries implements Storage {
       // If we're in the middle of loading a file, then the code that writes
       // stuff to disk should not run; we only need to update our internal
       // records.
-      String fileName = createFileName(image.getCoords());
+      String positionPrefix = "";
       if (image.getMetadata() != null &&
             image.getMetadata().getPositionName() != null) {
          // File is in a subdirectory.
-         fileName = image.getMetadata().getPositionName() + "/" + fileName;
+         positionPrefix = image.getMetadata().getPositionName() + "/";
+      }
+      String fileName = positionPrefix + createFileName(image.getCoords());
+      if (!(new File(fileName).exists())) {
+         // Try the 1.4 format instead. Since we may not have access to the
+         // channel name property, we just have to arbitrarily assign an
+         // ordering to the channel names that we find.
+         assignChannelsToIndices(positionPrefix);
+         fileName = positionPrefix + create14FileName(image.getCoords());
       }
       if (!amLoading_) {
          int imagePos = Math.max(0, image.getCoords().getStagePosition());
@@ -320,6 +333,45 @@ public class StorageSinglePlaneTiffSeries implements Storage {
       return filename + ".tif";
    }
 
+   /**
+    * Generate a filename based on image coordinates and the metadata from
+    * a 1.4-era JSON metadata.
+    */
+   private String create14FileName(Coords coords) {
+      int channelIndex = coords.getChannel();
+      String channel = "";
+      if (channelIndex < 0 || channelIndex >= orderedChannelNames_.size()) {
+         ReportingUtils.logError("Invalid channel index " + channelIndex + " into channel list " + orderedChannelNames_);
+      }
+      else {
+         channel = orderedChannelNames_.get(coords.getChannel());
+      }
+      return String.format("img_%09d_%s_%03d.tif",
+            coords.getTime(), channel, coords.getZ());
+   }
+
+   private static final Pattern FILENAME_PATTERN_14 = Pattern.compile(
+         "img_(\\d+)_(.*)_(\\d+).tif");
+   /**
+    * Examine the files in the given directory off of dir_, use regexes to
+    * pull out the channel names from files, sort the channel names, and assign
+    * indices to each one. Only relevant for loading 1.4-style files.
+    */
+   private void assignChannelsToIndices(String position) {
+      if (orderedChannelNames_.size() > 0) {
+         // Assume we're already done.
+         return;
+      }
+      File directory = new File(dir_ + "/" + position);
+      for (File file : directory.listFiles()) {
+         Matcher matcher = FILENAME_PATTERN_14.matcher(file.getName());
+         if (matcher.matches()) {
+            orderedChannelNames_.add(matcher.group(2));
+         }
+      }
+      Collections.sort(orderedChannelNames_);
+   }
+
    private void writeFrameMetadata(Image image) {
       try {
          String title = "Coords-" + createFileName(image.getCoords());
@@ -432,7 +484,6 @@ public class StorageSinglePlaneTiffSeries implements Storage {
          imageJSON.put("Width", image.getWidth());
          imageJSON.put("Height", image.getHeight());
          imp.setProperty("Info", imageJSON.toString(2));
-         ReportingUtils.logError("Setting metadata\n" + imageJSON.toString(2));
       } catch (JSONException ex) {
          ReportingUtils.logError(ex);
       }
@@ -544,6 +595,8 @@ public class StorageSinglePlaneTiffSeries implements Storage {
             // "data" variable directly is a bunch of FrameKeys -- the summary
             // metadata is duplicated within each JSONObject the FrameKeys
             // point to.
+            String fileName = null;
+            DefaultCoords coords = null;
             for (String key : makeJsonIterableKeys(data)) {
                if (key.contains("Coords-")) {
                   // 2.0 method. SummaryMetadata is already valid.
@@ -551,6 +604,8 @@ public class StorageSinglePlaneTiffSeries implements Storage {
                   for (String axis : makeJsonIterableKeys(chunk)) {
                      builder.index(axis, chunk.getInt(axis));
                   }
+                  coords = builder.build();
+                  fileName = createFileName(coords);
                }
                else if (key.contains("FrameKey-")) {
                   // 1.4 method. SummaryMetadata must be reconstructed.
@@ -563,13 +618,14 @@ public class StorageSinglePlaneTiffSeries implements Storage {
                         innerMetadata);
                   builder.stagePosition(
                         MDUtils.getPositionIndex(innerMetadata));
+                  coords = builder.build();
+                  assignChannelsToIndices(position);
+                  fileName = create14FileName(coords);
                }
             }
             try {
                // TODO: omitting pixel type information.
                // Reconstruct the filename from the coordinates.
-               DefaultCoords coords = builder.build();
-               String fileName = createFileName(coords);
                if (position.length() > 0) {
                   // File is in a subdirectory.
                   fileName = position + "/" + fileName;
