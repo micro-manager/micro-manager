@@ -21,7 +21,7 @@
 package org.micromanager.events;
 
 public class PixelSizeChangedEvent {
-   private double newPixelSizeUm_;
+   private final double newPixelSizeUm_;
    public PixelSizeChangedEvent(double newPixelSizeUm) {
       newPixelSizeUm_ = newPixelSizeUm;
    }

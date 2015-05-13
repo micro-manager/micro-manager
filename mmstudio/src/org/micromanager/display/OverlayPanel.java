@@ -27,7 +27,6 @@ import java.awt.Graphics;
 import javax.swing.JPanel;
 
 import org.micromanager.data.Image;
-import org.micromanager.display.DisplayWindow;
 
 /**
  * An OverlayPanel provides a GUI for configuring how to draw an overlay

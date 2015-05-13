@@ -96,37 +96,94 @@ public interface Metadata {
 
    Boolean getKeepShutterOpenChannels();
    Boolean getKeepShutterOpenSlices();
-   /** The time at which Micro-Manager received this image, in milliseconds.
-     * There can be substantial jitter in this value; as a rule of thumb it
-     * should not be assumed to be accurate to better than 20ms or so. */
+   
+   /** 
+    * The time at which Micro-Manager received this image, in milliseconds.
+    * There can be substantial jitter in this value; as a rule of thumb it
+    * should not be assumed to be accurate to better than 20ms or so.
+    * @return Milliseconds since the start of the acquisition up to the moment
+    * this image was received by Micro-Manager
+    */
    Double getElapsedTimeMs();
-   /** How long of an exposure was used to collect this image */
+   
+   /** 
+    * How long of an exposure was used to collect this image 
+    * @return Camera exposure (in ms) of this image
+    */
    Double getExposureMs();
-   /** The aspect ratio of the pixels in this image.
-     * TODO: is this X/Y or Y/X? */
+   
+   /** 
+    * The aspect ratio of the pixels in this image.
+    * TODO: is this X/Y or Y/X?
+    * @return  Pixels aspect ratio
+    */
    Double getPixelAspect();
-   /** How much of the sample, in microns, a single pixel of the camera sees */
+   
+   /** 
+    * How much of the sample, in microns, a single pixel of the camera sees
+    * @return Sample pixel size in microns 
+    */
    Double getPixelSizeUm();
-   /** TODO: what is this? */
+   
+   /** 
+    * TODO: what is this? 
+    * @return 
+    */
    Double getStartTimeMs();
-   /** The X stage position of the sample for this image */
+   
+   /** 
+    * The X stage position of the sample for this image 
+    * @return X position of the default XY stage for this image
+    */
    Double getXPositionUm();
-   /** The Y stage position of the sample for this image */
+   
+   /** 
+    * The Y stage position of the sample for this image
+    * @return Y position of the default XY stage for this image
+    */
    Double getYPositionUm();
-   /** The Z stage position of the sample for this image */
+   
+   /** 
+    * The Z stage position of the sample for this image 
+    * @return Position of the default focus stage for this image
+    */
    Double getZPositionUm();
-   /** The binning mode of the camera for this image */
+   
+   /** 
+    * The binning mode of the camera for this image 
+    * @return binning mode of the camera for this image 
+    */
    Integer getBinning();
-   /** The number of bits used to represent each pixel (e.g. 12-bit means that
-     * pixel values range from 0 to 4095) */
+   
+   /** 
+    * The number of bits used to represent each pixel (e.g. 12-bit means that
+     * pixel values range from 0 to 4095) 
+    * @return Number of bits used to represent each pixel
+     */
    Integer getBitDepth();
-   /** When acquiring a grid of stage positions, the X position in the grid */
+   
+   /** 
+    * When acquiring a grid of stage positions, the Y position in the grid 
+    * @return Y position in the grid
+    */
    Integer getGridColumn();
-   /** When acquiring a grid of stage positions, the Y position in the grid */
+   
+   /** 
+    * When acquiring a grid of stage positions, the X position in the grid 
+    * @return X position in the grid
+    */
    Integer getGridRow();
-   /** The ImageJ pixel type, e.g. ImagePlus.GRAY8, ImagePlus.RGB32 */
+   
+   /** 
+    * The ImageJ pixel type, e.g. ImagePlus.GRAY8, ImagePlus.RGB32 
+    * @return ImageJ pixel type
+    */
    Integer getIjType();
-   /** The sequence number of this image, for sequence acquisitions */
+   
+   /** 
+    * The sequence number of this image, for sequence acquisitions 
+    * @return sequence number of this image
+    */
    Long getImageNumber();
 
    /**
@@ -141,35 +198,87 @@ public interface Metadata {
     */
    public PropertyMap getScopeData();
 
-   /** Arbitrary additional metadata added by third-party code */
+   /** 
+    * Arbitrary additional metadata added by third-party code 
+    * @return rbitrary additional metadata added by third-party code 
+    */
    PropertyMap getUserData();
-   /** List of stage positions at the start of the acquisition (e.g. not taking
-     * into account changes caused by autofocus). TODO: should be part of
-     * SummaryMetadata?
-     */
+   
+   /** 
+    * List of stage positions at the start of the acquisition (e.g. not taking
+    * into account changes caused by autofocus). TODO: should be part of
+    * SummaryMetadata?
+    * @return stage positions at the start of the acquisition
+    */
    MultiStagePosition getInitialPositionList();
-   /** The ROI of the camera when acquiring this image */
+   
+   /** 
+    * The ROI of the camera when acquiring this image 
+    * @return Camera ROI
+    */
    Rectangle getROI();
-   /** The name of the camera for this image */
+   
+   /** 
+    * The name of the camera for this image 
+    * @return Camera name
+    */
    String getCamera();
-   /** The name of the channel for this image (e.g. DAPI or GFP) */
+   
+   /** 
+    * The name of the channel for this image (e.g. DAPI or GFP) 
+    * @return Channel name
+    */
    String getChannelName();
-   /** Any user-supplied comments for this specific image */
+   
+   /** 
+    * Any user-supplied comments for this specific image 
+    * @return user-supplied image comments
+    */
    String getComments();
-   /** The emission filter for this image */
+   
+   /** 
+    * The emission filter for this image
+    * TODO: Is this used? Remove?
+    * @return  Emission Label
+    */
    String getEmissionLabel();
-   /** The excitation filter for this image */
+   
+   /** 
+    * The excitation filter for this image 
+    * TODO: Is this used? Remove?
+    * @return Excitation label
+    */
    String getExcitationLabel();
-   /** Seems to be a string version of the "IjType" field (TODO: remove?) */
+   
+   /** 
+    * Seems to be a string version of the "IjType" field (TODO: remove?) 
+    * @return string version of the "IjType" field
+    */
    String getPixelType();
-   /** Any name attached to the stage position at which this image was
-     * acquired */
+   
+   /** 
+    * Any name attached to the stage position at which this image was
+    * acquired 
+    * @return Name of the position at which this image was acquired
+    */
    String getPositionName();
-   /** The time at which this image was received by Micro-Manager (TODO:
-     * difference from ElapsedTimeMs?) */
+   
+   /** 
+    * The time at which this image was received by Micro-Manager (TODO:
+    * difference from ElapsedTimeMs?) 
+    * @return Time at which this image was received by Micro-Manager
+    */
    String getReceivedTime();
-   /** TODO: what is this? */
+   
+   /** 
+    * TODO: what is this? 
+    * @return ???
+    */
    String getSource();
-   /** A unique identifier for this specific image */
+   
+   /** 
+    * A unique identifier for this specific image
+    * @return Unique identifier 
+    */
    UUID getUUID();
 }
