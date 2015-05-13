@@ -20,10 +20,12 @@
 
 package org.micromanager.events;
 
-// This class signals when the exposure time for a given camera has changed.
+/**
+ * This class signals when the exposure time for a given camera has changed.
+ */
 public class SLMExposureChangedEvent {
-   private String deviceName_;
-   private double newExposureTime_;
+   private final String deviceName_;
+   private final double newExposureTime_;
 
    public SLMExposureChangedEvent(String deviceName, double newExposureTime) {
       deviceName_ = deviceName;

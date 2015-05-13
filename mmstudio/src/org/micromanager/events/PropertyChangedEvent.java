@@ -20,11 +20,13 @@
 
 package org.micromanager.events;
 
-// This class provides information when a specific property changes.
+/**
+ * This class provides information when a specific property changes.
+ */
 public class PropertyChangedEvent {
-   private String device_;
-   private String property_;
-   private String value_;
+   private final String device_;
+   private final String property_;
+   private final String value_;
    public PropertyChangedEvent(String device, String property, String value) {
       device_ = device;
       property_ = property;

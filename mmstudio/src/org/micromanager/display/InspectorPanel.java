@@ -23,8 +23,6 @@ package org.micromanager.display;
 import javax.swing.JPopupMenu;
 import javax.swing.JPanel;
 
-import org.micromanager.display.DisplayWindow;
-
 /**
  * An InspectorPanel is a single component in the inspector window. 
  */
@@ -38,6 +36,7 @@ public abstract class InspectorPanel extends JPanel {
     * button is clicked, the method is called again, in case you need to
     * re-generate your menu based on context (e.g. changes in display
     * settings).
+    * @return GearMenu
     */
    public JPopupMenu getGearMenu() {
       return null;

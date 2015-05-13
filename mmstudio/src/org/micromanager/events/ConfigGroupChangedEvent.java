@@ -20,10 +20,12 @@
 
 package org.micromanager.events;
 
-// This class signifies when a new value is added to a config group.
+/**
+ * This class signifies when a new value is added to a config group.
+ */
 public class ConfigGroupChangedEvent {
-   private String groupName_;
-   private String newConfig_;
+   private final String groupName_;
+   private final String newConfig_;
 
    public ConfigGroupChangedEvent(String groupName, String newConfig) {
       groupName_ = groupName;

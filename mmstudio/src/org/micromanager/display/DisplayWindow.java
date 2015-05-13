@@ -25,7 +25,6 @@ import com.google.common.eventbus.EventBus;
 import ij.gui.ImageWindow;
 import ij.ImagePlus;
 
-import java.awt.Component;
 import java.awt.GraphicsConfiguration;
 import java.awt.Window;
 import java.util.List;
