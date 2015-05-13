@@ -30,7 +30,6 @@ import java.util.List;
 import mmcorej.TaggedImage;
 
 import org.micromanager.data.Datastore;
-import org.micromanager.display.OverlayPanel;
 
 // These ought not be part of the public API and methods that refer to them are
 // deprecated.

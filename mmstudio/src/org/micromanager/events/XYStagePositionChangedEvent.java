@@ -20,11 +20,13 @@
 
 package org.micromanager.events;
 
-// This class signals when any XY stage is moved.
+/**
+ * This class signals when any XY stage is moved.
+ */
 public class XYStagePositionChangedEvent {
-   private String deviceName_;
-   private double xPos_;
-   private double yPos_;
+   private final String deviceName_;
+   private final double xPos_;
+   private final double yPos_;
 
    public XYStagePositionChangedEvent(String deviceName, 
          double xPos, double yPos) {

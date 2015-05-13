@@ -47,7 +47,7 @@ public interface PropertyMap {
        * @param key a string identifying this property. If there is already
        *        a property with this key in the builder, that property will
        *        be overwritten.
-       * @param value the value to associate with the key.
+       * @param values values to associate with the key.
        * @return The PropertyMapBuilder, so that puts can be chained together
        */
       PropertyMapBuilder putStringArray(String key, String[] values);
@@ -66,7 +66,7 @@ public interface PropertyMap {
        * @param key a string identifying this property. If there is already
        *        a property with this key in the builder, that property will
        *        be overwritten.
-       * @param value the value to associate with the key.
+       * @param values values to associate with the key.
        * @return The PropertyMapBuilder, so that puts can be chained together
        */
       PropertyMapBuilder putIntArray(String key, Integer[] values);
@@ -85,7 +85,7 @@ public interface PropertyMap {
        * @param key a string identifying this property. If there is already
        *        a property with this key in the builder, that property will
        *        be overwritten.
-       * @param value the value to associate with the key.
+       * @param values values to associate with the key.
        * @return The PropertyMapBuilder, so that puts can be chained together
        */
       PropertyMapBuilder putLongArray(String key, Long[] values);
@@ -104,7 +104,7 @@ public interface PropertyMap {
        * @param key a string identifying this property. If there is already
        *        a property with this key in the builder, that property will
        *        be overwritten.
-       * @param value the value to associate with the key.
+       * @param values values to associate with the key.
        * @return The PropertyMapBuilder, so that puts can be chained together
        */
       PropertyMapBuilder putDoubleArray(String key, Double[] values);
@@ -123,7 +123,7 @@ public interface PropertyMap {
        * @param key a string identifying this property. If there is already
        *        a property with this key in the builder, that property will
        *        be overwritten.
-       * @param value the value to associate with the key.
+       * @param values values to associate with the key.
        * @return The PropertyMapBuilder, so that puts can be chained together
        */
       PropertyMapBuilder putBooleanArray(String key, Boolean[] values);
@@ -141,6 +141,7 @@ public interface PropertyMap {
     * Retrieve a String value from the mapping. Will return null if the key is
     * not found. If the mapped value is not a String, a TypeMismatchException
     * will be thrown.
+    * @param key
     * @return the String corresponding to the specified key.
     */
    public String getString(String key);
@@ -148,6 +149,7 @@ public interface PropertyMap {
     * Retrieve a String value from the mapping. If the key is not found, then
     * the provided default value will be returned. If the mapped value is not a
     * String, a TypeMismatchException will be thrown.
+    * @param key
     * @param defaultVal the default value to use if the key is not found.
     * @return the String corresponding to the specified key, or defaultVal
     *         if the key is not found.
@@ -157,6 +159,7 @@ public interface PropertyMap {
     * Retrieve a String array from the mapping. Will return null if the key is
     * not found. If the mapped value is not a String[], a TypeMismatchException
     * will be thrown.
+    * @param key
     * @return the String array corresponding to the specified key.
     */
    public String[] getStringArray(String key);
@@ -164,6 +167,7 @@ public interface PropertyMap {
     * Retrieve a String array from the mapping. If the key is not found, then
     * the provided default value will be returned. If the mapped value is not a
     * String[], a TypeMismatchException will be thrown.
+    * @param key
     * @param defaultVal the default value to use if the key is not found.
     * @return the String array corresponding to the specified key, or
     *         defaultVal if the key is not found.
@@ -174,6 +178,7 @@ public interface PropertyMap {
     * Retrieve an Integer value from the mapping. Will return null if the key
     * is not found. If the mapped value is not an Integer, a
     * TypeMismatchException will be thrown.
+    * @param key
     * @return The Integer corresponding to the provided key.
     */
    public Integer getInt(String key);
@@ -181,6 +186,7 @@ public interface PropertyMap {
     * Retrieve an Integer value from the mapping. If the key is not found, then
     * the provided default value will be returned. If the mapped value is
     * not an Integer, a TypeMismatchException will be thrown.
+    * @param key
     * @param defaultVal the default value to use if the key is not found.
     * @return The Integer corresponding to the provided key, or defaultVal
     *         if the key is not found.
@@ -190,6 +196,7 @@ public interface PropertyMap {
     * Retrieve an Integer array from the mapping. Will return null if the key
     * is not found. If the mapped value is not an Integer[], a
     * TypeMismatchException will be thrown.
+    * @param key
     * @return The Integer[] corresponding to the provided key.
     */
    public Integer[] getIntArray(String key);
@@ -197,6 +204,7 @@ public interface PropertyMap {
     * Retrieve an Integer array from the mapping. If the key is not found, then
     * the provided default value will be returned. If the mapped value is
     * not an Integer[], a TypeMismatchException will be thrown.
+    * @param key
     * @param defaultVal the default value to use if the key is not found.
     * @return The Integer[] corresponding to the provided key, or defaultVal
     *         if the key is not found.
@@ -207,6 +215,7 @@ public interface PropertyMap {
     * Retrieve a Long value from the mapping. Will return null if the key
     * is not found. If the mapped value is not an Long, a TypeMismatchException
     * will be thrown.
+    * @param key
     * @return The Long corresponding to the provided key.
     */
    public Long getLong(String key);
@@ -214,6 +223,7 @@ public interface PropertyMap {
     * Retrieve a Long value from the mapping. If the key is not found, then
     * the provided default value will be returned. If the mapped value is
     * not an Long, a TypeMismatchException will be thrown.
+    * @param key
     * @param defaultVal the default value to use if the key is not found.
     * @return The Long corresponding to the provided key, or defaultVal
     *         if the key is not found.
@@ -223,6 +233,7 @@ public interface PropertyMap {
     * Retrieve a Long array from the mapping. Will return null if the key
     * is not found. If the mapped value is not an Long, a TypeMismatchException
     * will be thrown.
+    * @param key
     * @return The Long[] corresponding to the provided key.
     */
    public Long[] getLongArray(String key);
@@ -230,6 +241,7 @@ public interface PropertyMap {
     * Retrieve a Long array from the mapping. If the key is not found, then
     * the provided default value will be returned. If the mapped value is
     * not an Long, a TypeMismatchException will be thrown.
+    * @param key
     * @param defaultVal the default value to use if the key is not found.
     * @return The Long[] corresponding to the provided key, or defaultVal
     *         if the key is not found.
@@ -240,6 +252,7 @@ public interface PropertyMap {
     * Retrieve a Double value from the mapping. Will return null if the key
     * is not found. If the mapped value is not a Double, a
     * TypeMismatchException will be thrown.
+    * @param key
     * @return The Double corresponding to the provided key.
     */
    public Double getDouble(String key);
@@ -247,6 +260,7 @@ public interface PropertyMap {
     * Retrieve a Double value from the mapping. If the key is not found, then
     * the provided default value will be returned. If the mapped value is
     * not a Double, a TypeMismatchException will be thrown.
+    * @param key
     * @param defaultVal the default value to use if the key is not found.
     * @return The Double corresponding to the provided key, or defaultVal
     *         if the key is not found.
@@ -256,6 +270,7 @@ public interface PropertyMap {
     * Retrieve a Double array from the mapping. Will return null if the key
     * is not found. If the mapped value is not an Double, a
     * TypeMismatchException will be thrown.
+    * @param key
     * @return The Double[] corresponding to the provided key.
     */
    public Double[] getDoubleArray(String key);
@@ -263,6 +278,7 @@ public interface PropertyMap {
     * Retrieve a Double array from the mapping. If the key is not found, then
     * the provided default value will be returned. If the mapped value is
     * not an Double, a TypeMismatchException will be thrown.
+    * @param key
     * @param defaultVal the default value to use if the key is not found.
     * @return The Double[] corresponding to the provided key, or defaultVal
     *         if the key is not found.
@@ -273,6 +289,7 @@ public interface PropertyMap {
     * Retrieve a Boolean value from the mapping. Will return null if the key
     * is not found. If the mapped value is not a Boolean, a
     * TypeMismatchException will be thrown.
+    * @param key
     * @return The Boolean corresponding to the provided key.
     */
    public Boolean getBoolean(String key);
@@ -280,6 +297,7 @@ public interface PropertyMap {
     * Retrieve a Boolean value from the mapping. If the key is not found, then
     * the provided default value will be returned. If the mapped value is
     * not a Boolean, a TypeMismatchException will be thrown.
+    * @param key
     * @param defaultVal the default value to use if the key is not found.
     * @return The Boolean corresponding to the provided key, or defaultVal
     *         if the key is not found.
@@ -289,6 +307,7 @@ public interface PropertyMap {
     * Retrieve a Boolean array from the mapping. Will return null if the key
     * is not found. If the mapped value is not an Boolean, a
     * TypeMismatchException will be thrown.
+    * @param key
     * @return The Boolean[] corresponding to the provided key.
     */
    public Boolean[] getBooleanArray(String key);
@@ -296,6 +315,7 @@ public interface PropertyMap {
     * Retrieve a Boolean array from the mapping. If the key is not found, then
     * the provided default value will be returned. If the mapped value is
     * not an Boolean, a TypeMismatchException will be thrown.
+    * @param key
     * @param defaultVal the default value to use if the key is not found.
     * @return The Boolean[] corresponding to the provided key, or defaultVal
     *         if the key is not found.
@@ -307,6 +327,7 @@ public interface PropertyMap {
     * from the provided PropertyMap. In other words, all keys that are in the
     * provided PropertyMap will replace keys in this PropertyMap in the result
     * object.
+    * @param alt
     * @return A PropertyMap that is the combination of this map and the
     *         provided one.
     */

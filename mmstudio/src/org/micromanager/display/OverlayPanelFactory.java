@@ -20,8 +20,6 @@
 
 package org.micromanager.display;
 
-import org.micromanager.display.DisplayWindow;
-
 /**
  * An OverlayPanelFactory is a class which can create OverlayPanels. As it is
  * possible to have multiple inspector windows with their own overlay controls,
