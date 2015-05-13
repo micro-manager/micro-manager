@@ -595,13 +595,13 @@ public class StorageSinglePlaneTiffSeries implements Storage {
             // "data" variable directly is a bunch of FrameKeys -- the summary
             // metadata is duplicated within each JSONObject the FrameKeys
             // point to.
-            String fileName = null;
-            DefaultCoords coords = null;
-            for (String key : makeJsonIterableKeys(data)) {
+            for (String key : MDUtils.getKeys(data)) {
+               String fileName = null;
+               DefaultCoords coords = null;
                if (key.contains("Coords-")) {
                   // 2.0 method. SummaryMetadata is already valid.
                   JSONObject chunk = data.getJSONObject(key);
-                  for (String axis : makeJsonIterableKeys(chunk)) {
+                  for (String axis : MDUtils.getKeys(chunk)) {
                      builder.index(axis, chunk.getInt(axis));
                   }
                   coords = builder.build();
@@ -622,22 +622,25 @@ public class StorageSinglePlaneTiffSeries implements Storage {
                   assignChannelsToIndices(position);
                   fileName = create14FileName(coords);
                }
-            }
-            try {
-               // TODO: omitting pixel type information.
-               // Reconstruct the filename from the coordinates.
-               if (position.length() > 0) {
-                  // File is in a subdirectory.
-                  fileName = position + "/" + fileName;
+               else {
+                  // Not a key we can extract useful information from.
+                  continue;
                }
-               // This will update our internal records without touching
-               // the disk, as amLoading_ is true.
-               ReportingUtils.logError("Expect to find image with coords " + coords + " at file " + fileName);
-               coordsToFilename_.put(coords, fileName);
-               Image image = getImage(coords);
-               addImage(image);
-            } catch (Exception ex) {
-               ReportingUtils.showError(ex);
+               try {
+                  // TODO: omitting pixel type information.
+                  // Reconstruct the filename from the coordinates.
+                  if (position.length() > 0) {
+                     // File is in a subdirectory.
+                     fileName = position + "/" + fileName;
+                  }
+                  // This will update our internal records without touching
+                  // the disk, as amLoading_ is true.
+                  coordsToFilename_.put(coords, fileName);
+                  Image image = getImage(coords);
+                  addImage(image);
+               } catch (Exception ex) {
+                  ReportingUtils.showError(ex);
+               }
             }
          } catch (JSONException ex) {
             ReportingUtils.showError(ex);
@@ -656,15 +659,6 @@ public class StorageSinglePlaneTiffSeries implements Storage {
          result = 0;
       }
       return result;
-   }
-
-   private Iterable<String> makeJsonIterableKeys(final JSONObject data) {
-      return new Iterable<String>() {
-            @Override
-            public Iterator<String> iterator() {
-               return data.keys();
-            }
-         };
    }
 
    private JSONObject readJSONMetadata(String pos) {
