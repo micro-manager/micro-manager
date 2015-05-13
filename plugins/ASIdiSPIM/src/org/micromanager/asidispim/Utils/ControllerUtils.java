@@ -443,9 +443,11 @@ public class ControllerUtils {
       
       // set interleaved sides flag low unless we are doing interleaved stage scan
       if (spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED) {
-         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_INTERLEAVE_SIDES, Properties.Values.YES);
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_INTERLEAVE_SIDES,
+               Properties.Values.YES, false); // make sure to check for errors
       } else {
-         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_INTERLEAVE_SIDES, Properties.Values.NO);
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_INTERLEAVE_SIDES,
+               Properties.Values.NO, true);  // ignore errors b/c older firmware won't have it
       }
       
       return true;
