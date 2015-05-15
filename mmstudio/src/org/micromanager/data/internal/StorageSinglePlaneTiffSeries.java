@@ -222,6 +222,8 @@ public class StorageSinglePlaneTiffSeries implements Storage {
             try {
                JSONObject jsonMeta = new JSONObject((String) imp.getProperty("Info"));
                metadata = DefaultMetadata.legacyFromJSON(jsonMeta);
+               metadata = metadata.copy().userData(
+                     MDUtils.extractUserData(jsonMeta, null)).build();
                width = MDUtils.getWidth(jsonMeta);
                height = MDUtils.getHeight(jsonMeta);
             }

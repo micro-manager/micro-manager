@@ -251,6 +251,8 @@ public class MultipageTiffReader {
             // this istance of the program is running, which has ramifications
             // for the scope data properties.
             Metadata metadata = DefaultMetadata.legacyFromJSON(tagged.tags);
+            metadata = metadata.copy().userData(
+                  MDUtils.extractUserData(tagged.tags, null)).build();
             return new DefaultImage(tagged, null, metadata);
          } catch (IOException ex) {
             ReportingUtils.logError(ex);
