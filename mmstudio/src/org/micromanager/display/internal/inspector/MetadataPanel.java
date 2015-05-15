@@ -55,6 +55,7 @@ import org.micromanager.display.Inspector;
 import org.micromanager.display.InspectorPanel;
 import org.micromanager.display.PixelsSetEvent;
 
+import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
@@ -205,14 +206,22 @@ public class MetadataPanel extends InspectorPanel {
                // we need to "flatten" them a bit -- their keys and values
                // have been serialized into the JSON using PropertyMap
                // serialization rules, which create a JSONObject for each
-               // property.
+               // property. userData additionally is stored within its own
+               // distinct JSONObject while scopeData is stored within the
+               // metadata as a whole.
+               // TODO: this is awfully tightly-bound to the hacks we've put in
+               // to maintain backwards compatibility with our file formats.
                if (data.getScopeData() != null) {
                   DefaultPropertyMap scopeData = (DefaultPropertyMap) data.getScopeData();
                   scopeData.flattenJSONSerialization(metadata);
                }
                if (data.getUserData() != null) {
                   DefaultPropertyMap userData = (DefaultPropertyMap) data.getUserData();
-                  userData.flattenJSONSerialization(metadata);
+                  JSONObject userJSON = metadata.getJSONObject("userData");
+                  userData.flattenJSONSerialization(userJSON);
+                  for (String key : MDUtils.getKeys(userJSON)) {
+                     metadata.put(key, userJSON.get(key));
+                  }
                }
                // Enhance this structure with information about basic image
                // properties.
