@@ -43,9 +43,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.micromanager.data.Coords;
+import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultImage;
+import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
@@ -243,7 +245,13 @@ public class MultipageTiffReader {
             // fields from the summary JSON, or else we won't be able to
             // construct a DefaultImage from it.
             augmentWithSummaryMetadata(tagged.tags);
-            return new DefaultImage(tagged);
+            // Manually create new Metadata for the image we're about to
+            // create. Just passing the bare TaggedImage in would make
+            // Micro-Manager assume that the image was created by the scope
+            // this istance of the program is running, which has ramifications
+            // for the scope data properties.
+            Metadata metadata = DefaultMetadata.legacyFromJSON(tagged.tags);
+            return new DefaultImage(tagged, null, metadata);
          } catch (IOException ex) {
             ReportingUtils.logError(ex);
          }
