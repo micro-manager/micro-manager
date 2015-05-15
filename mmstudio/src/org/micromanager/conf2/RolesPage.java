@@ -243,7 +243,7 @@ public class RolesPage extends PagePanel {
       focusDirectionPanel_.add(focusDirectionLabel, "wrap");
       if (stages != null) {
          try {
-            //model_.loadFocusDirectionsFromHardware(core_);
+            model_.loadFocusDirectionsFromHardware(core_);
          }
          catch (Exception e) {
             ReportingUtils.logError(e);
