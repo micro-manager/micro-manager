@@ -104,8 +104,8 @@ using namespace std;
  * of the public API of the Core), not just CMMCore.
  */
 const int MMCore_versionMajor = 7;
-const int MMCore_versionMinor = 2;
-const int MMCore_versionPatch = 1;
+const int MMCore_versionMinor = 3;
+const int MMCore_versionPatch = 0;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1882,6 +1882,60 @@ void CMMCore::setAdapterOriginXY(const char* label,
 void CMMCore::setAdapterOriginXY(double newXUm, double newYUm) throw (CMMError)
 {
     setAdapterOriginXY(getXYStageDevice().c_str(), newXUm, newYUm);
+}
+
+
+/**
+ * \brief Get the focus direction of a stage.
+ *
+ * Returns +1 if increasing position brings objective closer to sample, -1 if
+ * increasing position moves objective away from sample, or 0 if unknown. (Make
+ * sure to check for zero!)
+ *
+ * The returned value is determined by the most recent call to
+ * setFocusDirection() for the stage, or defaults to what the stage device
+ * adapter declares (often 0, for unknown).
+ *
+ * An exception is thrown if the direction has not been set and the device
+ * encounters an error when determining the default direction.
+ */
+int CMMCore::getFocusDirection(const char* stageLabel) throw (CMMError)
+{
+   boost::shared_ptr<StageInstance> stage =
+      deviceManager_->GetDeviceOfType<StageInstance>(stageLabel);
+
+   mm::DeviceModuleLockGuard guard(stage);
+   switch (stage->GetFocusDirection()) {
+      case MM::FocusDirectionTowardSample: return +1;
+      case MM::FocusDirectionAwayFromSample: return -1;
+      default: return 0;
+   }
+}
+
+
+/**
+ * \brief Set the focus direction of a stage.
+ *
+ * The sign should be +1 (or any positive value), zero, or -1 (or any negative
+ * value), and is interpreted in the same way as the return value of
+ * getFocusDirection().
+ *
+ * Once this method is called, getFocusDirection() for the stage will always
+ * return the set value.
+ */
+void CMMCore::setFocusDirection(const char* stageLabel, int sign)
+{
+   MM::FocusDirection direction = MM::FocusDirectionUnknown;
+   if (sign > 0)
+      direction = MM::FocusDirectionTowardSample;
+   if (sign < 0)
+      direction = MM::FocusDirectionAwayFromSample;
+
+   boost::shared_ptr<StageInstance> stage =
+      deviceManager_->GetDeviceOfType<StageInstance>(stageLabel);
+
+   mm::DeviceModuleLockGuard guard(stage);
+   stage->SetFocusDirection(direction);
 }
 
 

@@ -24,6 +24,9 @@
 
 class StageInstance : public DeviceInstanceBase<MM::Stage>
 {
+   MM::FocusDirection focusDirection_;
+   bool focusDirectionHasBeenSet_;
+
 public:
    StageInstance(CMMCore* core,
          boost::shared_ptr<LoadedDeviceAdapter> adapter,
@@ -47,6 +50,8 @@ public:
    int GetPositionSteps(long& steps);
    int SetOrigin();
    int GetLimits(double& lower, double& upper);
+   MM::FocusDirection GetFocusDirection();
+   void SetFocusDirection(MM::FocusDirection direction);
    int IsStageSequenceable(bool& isSequenceable) const;
    bool IsContinuousFocusDrive() const;
    int GetStageSequenceMaxLength(long& nrEvents) const;

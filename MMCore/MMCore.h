@@ -467,6 +467,9 @@ public:
    void setAdapterOrigin(const char* stageLabel, double newZUm) throw (CMMError);
    void setAdapterOrigin(double newZUm) throw (CMMError);
 
+   void setFocusDirection(const char* stageLabel, int sign);
+   int getFocusDirection(const char* stageLabel) throw (CMMError);
+
    bool isStageSequenceable(const char* stageLabel) throw (CMMError);
    void startStageSequence(const char* stageLabel) throw (CMMError);
    void stopStageSequence(const char* stageLabel) throw (CMMError);

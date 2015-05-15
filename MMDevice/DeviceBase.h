@@ -1721,6 +1721,15 @@ class CStageBase : public CDeviceBase<MM::Stage, U>
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
+   virtual int GetFocusDirection(MM::FocusDirection& direction)
+   {
+      // FocusDirectionUnknown is a safe default for all stages. Override this
+      // only if direction is known for sure (i.e. does not depend on how the
+      // hardware is installed).
+      direction = MM::FocusDirectionUnknown;
+      return DEVICE_OK;
+   }
+
    virtual int GetStageSequenceMaxLength(long& /*nrEvents*/) const 
    {
       return DEVICE_UNSUPPORTED_COMMAND;

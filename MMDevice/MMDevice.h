@@ -27,7 +27,7 @@
 // Header version
 // If any of the class definitions changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 63
+#define DEVICE_INTERFACE_VERSION 64
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -616,6 +616,21 @@ namespace MM {
       virtual int GetPositionSteps(long& steps) = 0;
       virtual int SetOrigin() = 0;
       virtual int GetLimits(double& lower, double& upper) = 0;
+
+      /**
+       * \brief Return the focus direction.
+       *
+       * Indicates whether increasing position corresponds to movement in the
+       * direction that brings the objective and sample closer together.
+       *
+       * Unless the direction is known for sure (does not depend on e.g. how
+       * the hardware is installed), this function must return
+       * FocusDirectionUnknown (the application can allow the user to specify
+       * the direction as needed).
+       *
+       * Non-focus single-axis stages must also return FocusDirectionUnknown.
+       */
+      virtual int GetFocusDirection(FocusDirection& direction) = 0;
 
       /*
        * Returns whether a stage can be sequenced (synchronized by TTLs)

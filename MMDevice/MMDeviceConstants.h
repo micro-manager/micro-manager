@@ -240,6 +240,12 @@ namespace MM {
       HIDPort
    };
 
+   enum FocusDirection {
+      FocusDirectionUnknown,
+      FocusDirectionTowardSample,
+      FocusDirectionAwayFromSample,
+   };
+
    //////////////////////////////////////////////////////////////////////////////
    // Notification constants
    //
