@@ -824,12 +824,14 @@ public class MDUtils {
     * Given a JSONObject that is a TaggedImage's tags, and a set of strings of
     * keys we are to ignore, import all non-Metadata, non-ignored keys into
     * a new PropertyMap.
+    * @param ignoredKeys Keys of properties we don't care about. May be null.
     */
    public static PropertyMap extractUserData(JSONObject tags,
          Set<String> ignoredKeys) {
       DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();
       for (String key : getKeys(tags)) {
-         if (!ignoredKeys.contains(key) && !IGNORED_KEYS.contains(key)) {
+         if ((ignoredKeys == null || !ignoredKeys.contains(key)) &&
+               !IGNORED_KEYS.contains(key)) {
             try {
                putProperty(builder, key, tags.get(key));
             }
