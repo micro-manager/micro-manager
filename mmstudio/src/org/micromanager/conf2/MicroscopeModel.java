@@ -703,6 +703,16 @@ public class MicroscopeModel {
                   dev.setDelay(Double.parseDouble(tokens[2]));
 
                }
+            }
+            else if (tokens[0].equals(MMCoreJ.getG_CFGCommand_FocusDirection())) {
+               if (tokens.length != 3) {
+                  throw new MMConfigFileException(
+                        "Invalid number of parameters (3 required):\n" + line);
+               }
+               Device dev = findDevice(tokens[1]);
+               if (dev != null) {
+                  dev.setFocusDirection(Integer.parseInt(tokens[2]));
+               }
             } else if (tokens[0].contentEquals(new StringBuffer().append(MMCoreJ.getG_CFGCommand_ParentID()))) {
                if (tokens.length != 3) {
                   throw new MMConfigFileException("Invalid number of parameters (3 required):\n" + line); 
@@ -919,6 +929,18 @@ public class MicroscopeModel {
             if (dev.getDelay() > 0.0) {
                out.write(MMCoreJ.getG_CFGCommand_Delay() + "," + dev.getName()
                      + "," + dev.getDelay());
+               out.newLine();
+            }
+         }
+         out.newLine();
+
+         // stage focus directions
+         out.write("# Focus directions");
+         out.newLine();
+         for (Device dev : devices_) {
+            if (dev.isStage()) {
+               int direction = dev.getFocusDirection();
+               out.write(MMCoreJ.getG_CFGCommand_FocusDirection() + "," + dev.getName() + "," + direction);
                out.newLine();
             }
          }

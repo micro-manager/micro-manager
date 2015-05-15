@@ -163,6 +163,7 @@ namespace MM {
    const char* const g_CFGCommand_ConfigPixelSize = "ConfigPixelSize";
    const char* const g_CFGCommand_PixelSize_um = "PixelSize_um";
    const char* const g_CFGCommand_ParentID = "Parent";
+   const char* const g_CFGCommand_FocusDirection = "FocusDirection";
 
    // configuration groups
    const char* const g_CFGGroup_System = "System";

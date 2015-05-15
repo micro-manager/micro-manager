@@ -103,8 +103,8 @@ using namespace std;
  * This applies to all classes exposed through the SWIG layer (i.e. the whole
  * of the public API of the Core), not just CMMCore.
  */
-const int MMCore_versionMajor = 7;
-const int MMCore_versionMinor = 3;
+const int MMCore_versionMajor = 8;
+const int MMCore_versionMinor = 0;
 const int MMCore_versionPatch = 0;
 
 
@@ -5965,6 +5965,21 @@ void CMMCore::saveSystemConfiguration(const char* fileName) throw (CMMError)
          os << MM::g_CFGCommand_Delay << "," << *it << "," << pDev->GetDelayMs() << endl; 
    }
 
+   // save focus directions
+   os << "# Stage focus directions\n";
+   std::vector<std::string> stageLabels =
+      deviceManager_->GetDeviceList(MM::StageDevice);
+   for (std::vector<std::string>::const_iterator it = stageLabels.begin(),
+         end = stageLabels.end(); it != end; ++it)
+   {
+      boost::shared_ptr<StageInstance> stage =
+         deviceManager_->GetDeviceOfType<StageInstance>(*it);
+      mm::DeviceModuleLockGuard guard(stage);
+      int direction = getFocusDirection(it->c_str());
+      os << MM::g_CFGCommand_FocusDirection << ','
+         << *it << ',' << direction << '\n';
+   }
+
    // save labels
    os << "# Labels" << endl;
    vector<string> deviceLabels = deviceManager_->GetDeviceList(MM::StateDevice);
@@ -6171,6 +6186,16 @@ void CMMCore::loadSystemConfigurationImpl(const char* fileName) throw (CMMError)
                         ToQuotedString(line) + ")",
                         MMERR_InvalidCFGEntry);
                setDeviceDelayMs(tokens[1].c_str(), atof(tokens[2].c_str()));
+            }
+            else if(tokens[0].compare(MM::g_CFGCommand_FocusDirection) == 0)
+            {
+               // set focus direction command
+               // ---------------------------
+               if (tokens.size() != 3)
+                  throw CMMError(getCoreErrorText(MMERR_InvalidCFGEntry) + " (" +
+                        ToQuotedString(line) + ")",
+                        MMERR_InvalidCFGEntry);
+               setFocusDirection(tokens[1].c_str(), atol(tokens[2].c_str()));
             }
             else if(tokens[0].compare(MM::g_CFGCommand_Label) == 0)
             {
