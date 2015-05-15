@@ -55,25 +55,17 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
    private double zStagePos_;
    private final Point2D.Double cursorPos_;
    private String stageWell_;
-   private String stageSite_;
    private String cursorWell_;
-   private String cursorSite_;
    PositionList threePtList_;
    AFPlane focusPlane_;
    private final String PLATE_FORMAT_ID = "plate_format_id";
    private final String SITE_SPACING = "site_spacing_x";
    private final String SITE_ROWS = "site_rows";
    private final String SITE_COLS = "site_cols";
-   private final String LOCK_ASPECT = "lock_aspect";
-   private final String POINTER_MOVE = "Move";
-   private final String POINTER_SELECT = "Select";
-   private final String ROOT_DIR = "root";
-   private final String PLATE_DIR = "plate";
-   private final String INCREMENTAL_AF = "incremental_af";
+
    public static final String menuName = "HCS Site Generator";
    public static final String tooltipDescription =
            "Generate position list for multi-well plates";
-   //private JCheckBox lockAspectCheckBox_;
    private final JLabel statusLabel_;
    static private final String VERSION_INFO = "1.4.1";
    static private final String COPYRIGHT_NOTICE = "Copyright by UCSF, 2013";
@@ -84,18 +76,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
    private JRadioButton rdbtnSelectWells_;
    private JRadioButton rdbtnMoveStage_;
 
-   /*
-   public static void main(String args[]) {
-      try {
-         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-         SiteGenerator dlg = new SiteGenerator();
-         dlg.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-         dlg.setVisible(true);
-      } catch (Exception e) {
-         app_.logError(e);
-      }
-   }
-   */
 
    /**
     * Create the frame
@@ -122,8 +102,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 
       stageWell_ = "undef";
       cursorWell_ = "undef";
-      stageSite_ = "undef";
-      cursorSite_ = "undef";
 
       threePtList_ = null;
       focusPlane_ = null;
@@ -235,6 +213,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       springLayout.putConstraint(SpringLayout.EAST, refreshButton, -4, SpringLayout.EAST, getContentPane());
       refreshButton.setIcon(SwingResourceManager.getIcon(SiteGenerator.class, "/org/micromanager/icons/arrow_refresh.png"));
       refreshButton.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(final ActionEvent e) {
             regenerate();
          }
@@ -283,72 +262,12 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       statusLabel_.setBorder(new LineBorder(new Color(0, 0, 0)));
       getContentPane().add(statusLabel_);
 
-//		lockAspectCheckBox_ = new JCheckBox();
-//		springLayout.putConstraint(SpringLayout.NORTH, plateFormatLabel, 6, SpringLayout.SOUTH, lockAspectCheckBox_);
-//		springLayout.putConstraint(SpringLayout.SOUTH, plateFormatLabel, 20, SpringLayout.SOUTH, lockAspectCheckBox_);
-//		lockAspectCheckBox_.addActionListener(new ActionListener() {
-//			public void actionPerformed(final ActionEvent e) {
-//				platePanel_.setLockAspect(lockAspectCheckBox_.isSelected());
-//				platePanel_.repaint();
-//			}
-//		});
-//		lockAspectCheckBox_.setText("Lock aspect");
-//		getContentPane().add(lockAspectCheckBox_);
-//		lockAspectCheckBox_.setSelected(true);
-//		springLayout.putConstraint(SpringLayout.SOUTH, lockAspectCheckBox_, 73, SpringLayout.NORTH, getContentPane());
-//		springLayout.putConstraint(SpringLayout.NORTH, lockAspectCheckBox_, 50, SpringLayout.NORTH, getContentPane());
-//		springLayout.putConstraint(SpringLayout.EAST, lockAspectCheckBox_, -14, SpringLayout.EAST, getContentPane());
-//		springLayout.putConstraint(SpringLayout.WEST, lockAspectCheckBox_, -115, SpringLayout.EAST, getContentPane());
-
-//		rootDirField_ = new JTextField();
-//		getContentPane().add(rootDirField_);
-//		springLayout.putConstraint(SpringLayout.EAST, rootDirField_, -189, SpringLayout.EAST, getContentPane());
-//		springLayout.putConstraint(SpringLayout.WEST, rootDirField_, 5, SpringLayout.WEST, getContentPane());
-//		springLayout.putConstraint(SpringLayout.SOUTH, rootDirField_, -29, SpringLayout.SOUTH, getContentPane());
-//		springLayout.putConstraint(SpringLayout.NORTH, rootDirField_, -49, SpringLayout.SOUTH, getContentPane());
-
-//		plateNameField_ = new JTextField();
-//		getContentPane().add(plateNameField_);
-//		springLayout.putConstraint(SpringLayout.EAST, plateNameField_, -4, SpringLayout.EAST, getContentPane());
-//		springLayout.putConstraint(SpringLayout.WEST, plateNameField_, -131, SpringLayout.EAST, getContentPane());
-//		springLayout.putConstraint(SpringLayout.SOUTH, plateNameField_, -29, SpringLayout.SOUTH, getContentPane());
-//		springLayout.putConstraint(SpringLayout.NORTH, plateNameField_, -49, SpringLayout.SOUTH, getContentPane());
-
-//		final JLabel rootDirectoryLabel = new JLabel();
-//		rootDirectoryLabel.setText("Root directory");
-//		getContentPane().add(rootDirectoryLabel);
-//		springLayout.putConstraint(SpringLayout.EAST, rootDirectoryLabel, 110, SpringLayout.WEST, getContentPane());
-//		springLayout.putConstraint(SpringLayout.WEST, rootDirectoryLabel, 10, SpringLayout.WEST, getContentPane());
-//		springLayout.putConstraint(SpringLayout.SOUTH, rootDirectoryLabel, -52, SpringLayout.SOUTH, getContentPane());
-//		springLayout.putConstraint(SpringLayout.NORTH, rootDirectoryLabel, -66, SpringLayout.SOUTH, getContentPane());
-
-//		final JLabel plateNameLabel = new JLabel();
-//		plateNameLabel.setText("Plate name");
-//		getContentPane().add(plateNameLabel);
-//		springLayout.putConstraint(SpringLayout.EAST, plateNameLabel, -4, SpringLayout.EAST, getContentPane());
-//		springLayout.putConstraint(SpringLayout.WEST, plateNameLabel, -131, SpringLayout.EAST, getContentPane());
-//		springLayout.putConstraint(SpringLayout.SOUTH, plateNameLabel, -52, SpringLayout.SOUTH, getContentPane());
-//		springLayout.putConstraint(SpringLayout.NORTH, plateNameLabel, -66, SpringLayout.SOUTH, getContentPane());
-//
-//		final JButton button = new JButton();
-//		button.addActionListener(new ActionListener() {
-//			public void actionPerformed(final ActionEvent e) {
-//				setRootDirectory();
-//			}
-//		});
-//		button.setToolTipText("browse root directory");
-//		button.setText("...");
-//		getContentPane().add(button);
-//		springLayout.putConstraint(SpringLayout.SOUTH, button, -27, SpringLayout.SOUTH, getContentPane());
-//		springLayout.putConstraint(SpringLayout.NORTH, button, -50, SpringLayout.SOUTH, getContentPane());
-//		springLayout.putConstraint(SpringLayout.EAST, button, -136, SpringLayout.EAST, getContentPane());
-//		springLayout.putConstraint(SpringLayout.WEST, button, -184, SpringLayout.EAST, getContentPane());
-
       chckbxThreePt_ = new JCheckBox("Use 3-Point AF");
       springLayout.putConstraint(SpringLayout.NORTH, chckbxThreePt_, 419, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, chckbxThreePt_, 6, SpringLayout.EAST, platePanel_);
       springLayout.putConstraint(SpringLayout.EAST, chckbxThreePt_, -4, SpringLayout.EAST, getContentPane());
       chckbxThreePt_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent e) {
             platePanel_.repaint();
          }
@@ -387,6 +306,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 
       rdbtnSelectWells_ = new JRadioButton("Select Wells");
       rdbtnSelectWells_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             if (rdbtnSelectWells_.isSelected()) {
                platePanel_.setTool(PlatePanel.Tool.SELECT);
@@ -430,8 +350,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       springLayout.putConstraint(SpringLayout.EAST, btnAbout, 0, SpringLayout.EAST, plateIDCombo_);
       getContentPane().add(btnAbout);
 
-      //
-
       loadSettings();
 
       PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()),
@@ -451,9 +369,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       prefs.put(SITE_SPACING, spacingField_.getText());
       prefs.put(SITE_ROWS, rowsField_.getText());
       prefs.put(SITE_COLS, columnsField_.getText());
-      //prefs.putBoolean(LOCK_ASPECT, lockAspectCheckBox_.isSelected());
-      //prefs.put(PLATE_DIR, plateNameField_.getText());
-      //prefs.put(ROOT_DIR, rootDirField_.getText());
    }
 
    protected final void loadSettings() {
@@ -462,28 +377,21 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       spacingField_.setText(prefs.get(SITE_SPACING, "200"));
       rowsField_.setText(prefs.get(SITE_ROWS, "1"));
       columnsField_.setText(prefs.get(SITE_COLS, "1"));
-      //lockAspectCheckBox_.setSelected(prefs.getBoolean(LOCK_ASPECT, true));
-      //platePanel_.setLockAspect(lockAspectCheckBox_.isSelected());
-      //plateNameField_.setText(prefs.get(PLATE_DIR, "plate"));
-      //rootDirField_.setText(prefs.get(ROOT_DIR, "C:/ScreeningData"));
-      boolean incaf = prefs.getBoolean(INCREMENTAL_AF, false);
    }
 
    private void setPositionList() {
       WellPositionList[] wpl = platePanel_.getSelectedWellPositions();
       PositionList platePl = new PositionList();
-      for (int i = 0; i < wpl.length; i++) {
-         PositionList pl = PositionList.newInstance(wpl[i].getSitePositions());
+      for (WellPositionList wpl1 : wpl) {
+         PositionList pl = PositionList.newInstance(wpl1.getSitePositions());
          for (int j = 0; j < pl.getNumberOfPositions(); j++) {
             MultiStagePosition mpl = pl.getPosition(j);
-
             // make label unique
-            mpl.setLabel(wpl[i].getLabel() + "-" + mpl.getLabel());
+            mpl.setLabel(wpl1.getLabel() + "-" + mpl.getLabel());
             if (app_ != null) {
                mpl.setDefaultXYStage(app_.getXYStageName());
                mpl.setDefaultZStage(app_.getMMCore().getFocusDevice());
             }
-
             // set the proper XYstage name
             for (int k = 0; k < mpl.size(); k++) {
                StagePosition sp = mpl.get(k);
@@ -491,7 +399,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
                   sp.stageName = mpl.getDefaultXYStage();
                }
             }
-
             // add Z position if 3-point focus is enabled
             if (useThreePtAF()) {
                if (focusPlane_ == null) {
@@ -505,7 +412,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
                sp.stageName = mpl.getDefaultZStage();
                mpl.add(sp);
             }
-
             platePl.addPosition(pl.getPosition(j));
          }
       }
@@ -580,11 +486,11 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
    }
 
    @Override
-   public void updatePointerXYPosition(double x, double y, String wellLabel, String siteLabel) {
+   public void updatePointerXYPosition(double x, double y, String wellLabel, 
+           String siteLabel) {
       cursorPos_.x = x;
       cursorPos_.y = y;
       cursorWell_ = wellLabel;
-      cursorSite_ = siteLabel;
 
       displayStatus();
    }
@@ -602,12 +508,12 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
    }
 
    @Override
-   public void updateStagePositions(double x, double y, double z, String wellLabel, String siteLabel) {
+   public void updateStagePositions(double x, double y, double z, String wellLabel, 
+           String siteLabel) {
       xyStagePos_.x = x;
       xyStagePos_.y = y;
       zStagePos_ = z;
       stageWell_ = wellLabel;
-      stageSite_ = siteLabel;
 
       displayStatus();
    }
@@ -621,17 +527,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       }
    }
 
-   /*
-    private void setRootDirectory() {
-    JFileChooser fc = new JFileChooser();
-    fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-    fc.setCurrentDirectory(new File(rootDirField_.getText()));
-    int retVal = fc.showOpenDialog(this);
-    if (retVal == JFileChooser.APPROVE_OPTION) {
-    rootDirField_.setText(fc.getSelectedFile().getAbsolutePath());
-    }
-    }
-    */
    @Override
    public void displayError(String txt) {
       app_.showError(txt, this);
@@ -671,6 +566,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       platePanel_.repaint();
    }
 
+   @Override
    public void setApp(ScriptInterface app) {
       app_ = app;
       try {
