@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          TaggedImageStorageMultipageTiff.java
+//FILE:          MagellanTaggedImageStorageMultipageTiff.java
 //PROJECT:       Micro-Manager
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
@@ -36,13 +36,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import json.JSONException;
+import json.JSONObject;
 import misc.JavaUtils;
 import misc.Log;
 import misc.MD;
 import misc.ProgressBar;
-import mmcorej.TaggedImage;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 
 public final class TaggedImageStorageMultipageTiff   {
@@ -64,8 +63,8 @@ public final class TaggedImageStorageMultipageTiff   {
    // returned upon request via getImage()). The data structure must be
    // synchronized because the write completion is detected on a background
    // thread.
-   private ConcurrentHashMap<String, TaggedImage> writePendingImages_ =
-      new ConcurrentHashMap<String, TaggedImage>();
+   private ConcurrentHashMap<String, MagellanTaggedImage> writePendingImages_ =
+      new ConcurrentHashMap<String, MagellanTaggedImage>();
 
    //map of position indices to objects associated with each
    private HashMap<Integer, FileSet> fileSets_;
@@ -171,10 +170,10 @@ public final class TaggedImageStorageMultipageTiff   {
       return maxSliceIndex_;
    }
    
-   public TaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
+   public MagellanTaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
       String label = MD.generateLabel(channelIndex, sliceIndex, frameIndex, positionIndex);
 
-      TaggedImage image = writePendingImages_.get(label);
+      MagellanTaggedImage image = writePendingImages_.get(label);
       if (image != null) {
          return image;
       }
@@ -187,7 +186,7 @@ public final class TaggedImageStorageMultipageTiff   {
    }
 
    public JSONObject getImageTags(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
-      TaggedImage image = getImage(channelIndex, sliceIndex, frameIndex, positionIndex);
+      MagellanTaggedImage image = getImage(channelIndex, sliceIndex, frameIndex, positionIndex);
       if (image == null) {
          return null;
       }
@@ -197,7 +196,7 @@ public final class TaggedImageStorageMultipageTiff   {
    /*
     * Method that allows overwrting of pixels but not MD or TIFF tags
     * so that low res stitched images can be written tile by tile
-    * Not used by the TaggedImageStorage API, but can be useful for special applicaitons
+    * Not used by the MagellanTaggedImageStorage API, but can be useful for special applicaitons
     * of this class (e.g. Navigator plugin)
     */
    public void overwritePixels(Object pix, int channel, int slice, int frame, int position) throws IOException {
@@ -205,13 +204,13 @@ public final class TaggedImageStorageMultipageTiff   {
       fileSets_.get(position).overwritePixels(pix, channel, slice, frame, position); 
    }
 
-   public void putImage(TaggedImage taggedImage) throws IOException {
-      final String label = MD.getLabel(taggedImage.tags);
-      startWritingTask(label, taggedImage);
+   public void putImage(MagellanTaggedImage MagellanTaggedImage) throws IOException {
+      final String label = MD.getLabel(MagellanTaggedImage.tags);
+      startWritingTask(label, MagellanTaggedImage);
 
-      // Now, we must hold on to taggedImage, so that we can return it if
+      // Now, we must hold on to MagellanTaggedImage, so that we can return it if
       // somebody calls getImage() before the writing is finished.
-      // There is a data race if the taggedImage is modified by other code, but
+      // There is a data race if the MagellanTaggedImage is modified by other code, but
       // that would be a bad thing to do anyway (will break the writer) and is
       // considered forbidden.
 
@@ -221,7 +220,7 @@ public final class TaggedImageStorageMultipageTiff   {
       // ListenableFuture.
       // Also note that the image will be dropped if the writing fails due to
       // any error. This is acceptable for disk-backed storage.
-      writePendingImages_.put(label, taggedImage);
+      writePendingImages_.put(label, MagellanTaggedImage);
       writingExecutor_.submit(new Runnable() {
          @Override public void run() {
             writePendingImages_.remove(label);
@@ -233,7 +232,7 @@ public final class TaggedImageStorageMultipageTiff   {
     * Sets up and kicks off the writing of a new image. This, in an indirect
     * way, ends up submitting the writing task to writingExecutor_.
     */
-   private void startWritingTask(String label, TaggedImage taggedImage)
+   private void startWritingTask(String label, MagellanTaggedImage MagellanTaggedImage)
       throws IOException
    {
       if (!newDataSet_) {
@@ -249,7 +248,7 @@ public final class TaggedImageStorageMultipageTiff   {
       }
       int fileSetIndex = 0;
       if (splitByXYPosition_) {
-         fileSetIndex = MD.getPositionIndex(taggedImage.tags);
+         fileSetIndex = MD.getPositionIndex(MagellanTaggedImage.tags);
       }
       if (fileSets_ == null) {
          try {
@@ -261,11 +260,11 @@ public final class TaggedImageStorageMultipageTiff   {
       }
             
       if (fileSets_.get(fileSetIndex) == null) {
-         fileSets_.put(fileSetIndex, new FileSet(taggedImage.tags, this));
+         fileSets_.put(fileSetIndex, new FileSet(MagellanTaggedImage.tags, this));
       }
       FileSet set = fileSets_.get(fileSetIndex);
       try {
-         set.writeImage(taggedImage);
+         set.writeImage(MagellanTaggedImage);
          tiffReadersByLabel_.put(label, set.getCurrentReader());
       } catch (IOException ex) {
         Log.log("problem writing image to file");
@@ -516,7 +515,7 @@ public final class TaggedImageStorageMultipageTiff   {
          return currentFrame_;
       }
       
-      public void writeImage(TaggedImage img) throws IOException {
+      public void writeImage(MagellanTaggedImage img) throws IOException {
          //check if current writer is out of space, if so, make a new one
          if (!tiffWriters_.getLast().hasSpaceToWrite(img)) {
             //write index map here but still need to call close() at end of acq

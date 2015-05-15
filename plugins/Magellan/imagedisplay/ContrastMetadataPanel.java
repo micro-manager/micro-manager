@@ -34,14 +34,14 @@ import javax.swing.event.ChangeListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
 import acq.MMImageCache;
+import json.JSONException;
+import json.JSONObject;
 import misc.Log;
 import misc.MD;
 import mmcloneclasses.graph.ContrastPanel;
 import mmcloneclasses.graph.MultiChannelHistograms;
 import mmcloneclasses.graph.SingleChannelHistogram;
 import mmcloneclasses.graph.Histograms;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 
 

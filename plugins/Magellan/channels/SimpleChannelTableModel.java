@@ -32,9 +32,17 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
          "Exposure",
           "Color"
    };
+      
+      
+   public SimpleChannelTableModel(ArrayList<ChannelSetting> channels) {
+      exploreTable_ = true;
+      core_ = Magellan.getCore();   
+      channels_ = channels;
+      Magellan.getScriptInterface().registerForEvents(this);
+   }
 
-   public SimpleChannelTableModel(boolean exploreTable) {
-      exploreTable_ = exploreTable;
+   public SimpleChannelTableModel() {
+      exploreTable_ = false;
       core_ = Magellan.getCore();
       refreshChannels();
       Magellan.getScriptInterface().registerForEvents(this);
@@ -143,7 +151,7 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
             fireTableDataChanged();
          }       
       } else if (columnIndex == 1) {       
-         channels_.get(row).name_ = (String) value;
+         //cant edit channel name
       } else if (columnIndex == 2) {
          channels_.get(row).exposure_ = Double.parseDouble((String) value);
          //same for all other channels of the same camera_

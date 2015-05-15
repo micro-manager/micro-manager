@@ -4,16 +4,18 @@
  */
 package acq;
 
+import channels.ChannelSetting;
 import gui.GUI;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import json.JSONArray;
 import main.Magellan;
 import misc.Log;
 import mmcorej.CMMCore;
-import org.json.JSONArray;
 
 /**
  * A single time point acquisition that can dynamically expand in X,Y, and Z
@@ -31,9 +33,11 @@ public class ExploreAcquisition extends Acquisition {
    private int imageFilterType_;
    private ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>> queuedTileEvents_ = new ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>>();
    private double zOrigin_; 
+   private ArrayList<ChannelSetting> channels_;
 
    public ExploreAcquisition(ExploreAcqSettings settings) throws Exception {
       super(settings.zStep_, settings.channels_);
+      channels_ = settings.channels_;
       try {
          //start at current z position
          zTop_ = Magellan.getCore().getPosition(zStage_);
@@ -145,27 +149,33 @@ public class ExploreAcquisition extends Acquisition {
                updateLowestAndHighestSlices();
                //Add events for each channel, slice            
                for (int sliceIndex = getMinSliceIndex(); sliceIndex <= getMaxSliceIndex(); sliceIndex++) {
-                  try {
-                     //in case interupt occurs in between blocking calls of a really big loop
-                     if (Thread.interrupted()){
-                        throw new InterruptedException();
+                  for (int channelIndex = 0; channelIndex < channels_.size(); channelIndex++) {
+                     if (!channels_.get(channelIndex).uniqueEvent_ || !channels_.get(channelIndex).use_) {
+                        continue;
                      }
-                     //add tile tile to list waiting to acquire for drawing purposes
-                     if (!queuedTileEvents_.containsKey(sliceIndex)) {
-                        queuedTileEvents_.put(sliceIndex, new LinkedBlockingQueue<ExploreTileWaitingToAcquire>());
+                     try {
+                        //in case interupt occurs in between blocking calls of a really big loop
+                        if (Thread.interrupted()) {
+                           throw new InterruptedException();
+                        }
+                        //add tile tile to list waiting to acquire for drawing purposes
+                        if (!queuedTileEvents_.containsKey(sliceIndex)) {
+                           queuedTileEvents_.put(sliceIndex, new LinkedBlockingQueue<ExploreTileWaitingToAcquire>());
+                        }
+
+                        ExploreTileWaitingToAcquire tile = new ExploreTileWaitingToAcquire(imageStorage_.getXYPosition(posIndices[i]).getGridRow(),
+                                imageStorage_.getXYPosition(posIndices[i]).getGridCol(), sliceIndex);
+                        if (queuedTileEvents_.get(sliceIndex).contains(tile)) {
+                           continue; //ignor commands for duplicates
+                        }
+                        queuedTileEvents_.get(sliceIndex).put(tile);
+
+                        events_.put(new AcquisitionEvent(ExploreAcquisition.this, 0, channelIndex, sliceIndex, posIndices[i], getZCoordinate(sliceIndex),
+                                imageStorage_.getXYPosition(posIndices[i]), null));
+                     } catch (InterruptedException ex) {
+                        //aborted acqusition
+                        return;
                      }
-                     
-                     ExploreTileWaitingToAcquire tile = new ExploreTileWaitingToAcquire(imageStorage_.getXYPosition(posIndices[i]).getGridRow(), 
-                             imageStorage_.getXYPosition(posIndices[i]).getGridCol(), sliceIndex);
-                     if (queuedTileEvents_.get(sliceIndex).contains(tile)) {
-                        continue; //ignor commands for duplicates
-                     }
-                     queuedTileEvents_.get(sliceIndex).put(tile);
-                     events_.put(new AcquisitionEvent(ExploreAcquisition.this, 0, 0, sliceIndex, posIndices[i], getZCoordinate(sliceIndex), 
-                             imageStorage_.getXYPosition(posIndices[i]), null));
-                  } catch (InterruptedException ex) {
-                     //aborted acqusition
-                     return;
                   }
                }
             }

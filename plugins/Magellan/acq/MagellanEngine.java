@@ -16,16 +16,16 @@ import java.util.concurrent.ThreadFactory;
 import javax.swing.JOptionPane;
 import bidc.JavaLayerImageConstructor;
 import bidc.FrameIntegrationMethod;
+import channels.ChannelSetting;
 import coordinates.AffineUtils;
 import java.awt.geom.AffineTransform;
+import json.JSONArray;
+import json.JSONObject;
 import main.Magellan;
 import misc.GlobalSettings;
 import misc.Log;
 import misc.MD;
 import mmcorej.CMMCore;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import propsandcovariants.CovariantPairing;
 
 /**
@@ -215,11 +215,11 @@ public class MagellanEngine {
        if (event.isReQueryEvent()) {
             //nothing to do, just a dummy event to get of blocking call when switching between parallel acquisitions
         } else if (event.isAcquisitionFinishedEvent()) {
-            //signal to TaggedImageSink to finish saving thread and mark acquisition as finished
-           JavaLayerImageConstructor.getInstance().addSignalTaggedImage(event, new SignalTaggedImage(SignalTaggedImage.AcqSingal.AcqusitionFinsihed));
+            //signal to MagellanTaggedImageSink to finish saving thread and mark acquisition as finished
+           JavaLayerImageConstructor.getInstance().addSignalMagellanTaggedImage(event, new SignalTaggedImage(SignalTaggedImage.AcqSingal.AcqusitionFinsihed));
         } else if (event.isTimepointFinishedEvent()) {
-            //signal to TaggedImageSink to let acqusition know that saving for the current time point has completed  
-            JavaLayerImageConstructor.getInstance().addSignalTaggedImage(event, new SignalTaggedImage(SignalTaggedImage.AcqSingal.TimepointFinished));
+            //signal to MagellanTaggedImageSink to let acqusition know that saving for the current time point has completed  
+            JavaLayerImageConstructor.getInstance().addSignalMagellanTaggedImage(event, new SignalTaggedImage(SignalTaggedImage.AcqSingal.TimepointFinished));
         } else if (event.isAutofocusAdjustmentEvent()) {
             setAutofocusPosition(event.autofocusZName_, event.autofocusPosition_);
         } else {
@@ -250,7 +250,7 @@ public class MagellanEngine {
         loopHardwareCommandRetries(new HardwareCommand() {
             @Override
             public void run() throws Exception {
-                JavaLayerImageConstructor.getInstance().getTaggedImagesAndAddToAcq(event, currentTime);
+                JavaLayerImageConstructor.getInstance().getMagellanTaggedImagesAndAddToAcq(event, currentTime);
             }
         }, "getting tagged image");
 
@@ -372,13 +372,22 @@ public class MagellanEngine {
         }
 
         /////////////////////////////Channels/////////////////////////////
-//      if (lastEvent_ == null || event.channelIndex_ != lastEvent_.channelIndex_) {
-//         try {
-//            core_.setConfig("Channel", event.channelIndex_ == 0 ? "DAPI" : "FITC");
-//         } catch (Exception ex) {
-//            Log.log("Couldn't change channel group");
-//         }
-//      }
+      if (lastEvent_ == null || event.channelIndex_ != lastEvent_.channelIndex_) {
+         try {
+            final ChannelSetting setting = event.acquisition_.channels_.get(event.channelIndex_);
+            if (setting.use_ && setting.config_ != null) {
+               loopHardwareCommandRetries(new HardwareCommand() {
+                  @Override
+                  public void run() throws Exception {
+                     core_.setConfig(setting.group_, setting.config_);
+                  }
+               }, "Set channel group");
+            }
+            
+         } catch (Exception ex) {
+            Log.log("Couldn't change channel group");
+         }
+      }
 
         /////////////////////////////Covariants/////////////////////////////
         if (event.covariants_ != null) {
@@ -418,22 +427,27 @@ public class MagellanEngine {
     }
 
    public static void addImageMetadata(JSONObject tags, AcquisitionEvent event,
-           int numCamChannels, int camChannel, long elapsed_ms, int exposure) {
+           int camChannelIndex, long elapsed_ms, int exposure) {
       //add tags
-      long gridRow = event.acquisition_.getStorage().getGridRow(event.positionIndex_, 0);
-      long gridCol = event.acquisition_.getStorage().getGridCol(event.positionIndex_, 0);
-      MD.setPositionName(tags, "Grid_" + gridRow + "_" + gridCol);
-      MD.setPositionIndex(tags, event.positionIndex_);
-      MD.setSliceIndex(tags, event.sliceIndex_);
-      MD.setFrameIndex(tags, event.timeIndex_);
-      MD.setChannelIndex(tags, event.channelIndex_ * numCamChannels + camChannel);
-      MD.setZPositionUm(tags, event.zPosition_);
-      MD.setElapsedTimeMs(tags, elapsed_ms);
-      MD.setImageTime(tags, (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss -")).format(Calendar.getInstance().getTime()));
-      MD.setGridRow(tags, gridRow);
-      MD.setGridCol(tags, gridCol);
-      MD.setStageX(tags, event.xyPosition_.getCenter().x);
-      MD.setStageY(tags, event.xyPosition_.getCenter().y);
+      try {
+         long gridRow = event.acquisition_.getStorage().getGridRow(event.positionIndex_, 0);
+         long gridCol = event.acquisition_.getStorage().getGridCol(event.positionIndex_, 0);
+         MD.setPositionName(tags, "Grid_" + gridRow + "_" + gridCol);
+         MD.setPositionIndex(tags, event.positionIndex_);
+         MD.setSliceIndex(tags, event.sliceIndex_);
+         MD.setFrameIndex(tags, event.timeIndex_);
+         MD.setChannelIndex(tags, event.channelIndex_ + camChannelIndex);
+         MD.setZPositionUm(tags, event.zPosition_);
+         MD.setElapsedTimeMs(tags, elapsed_ms - event.acquisition_.getStartTime_ms());
+         MD.setImageTime(tags, (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss -")).format(Calendar.getInstance().getTime()));
+         MD.setGridRow(tags, gridRow);
+         MD.setGridCol(tags, gridCol);
+         MD.setStageX(tags, event.xyPosition_.getCenter().x);
+         MD.setStageY(tags, event.xyPosition_.getCenter().y);
+      } catch (Exception e) {
+         Log.log("Problem adding image metadata");
+         throw new RuntimeException();
+      }
    }
 
    public static JSONObject makeSummaryMD(Acquisition acq, String prefix) {

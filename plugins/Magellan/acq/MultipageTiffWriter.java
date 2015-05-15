@@ -40,12 +40,11 @@ import java.util.LinkedList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
+import json.JSONArray;
+import json.JSONException;
+import json.JSONObject;
 import misc.Log;
 import misc.MD;
-import mmcorej.TaggedImage;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 public class MultipageTiffWriter {
    
@@ -347,7 +346,7 @@ public class MultipageTiffWriter {
       return true;
    }
    
-   public boolean hasSpaceToWrite(TaggedImage img) {
+   public boolean hasSpaceToWrite(MagellanTaggedImage img) {
       int mdLength = img.tags.toString().length();
       int IFDSize = ENTRIES_PER_IFD*12 + 4 + 16;
       //5 MB extra padding...just to be safe...
@@ -365,7 +364,7 @@ public class MultipageTiffWriter {
       return raFile_ == null;
    }
         
-   public void writeImage(TaggedImage img) throws IOException {
+   public void writeImage(MagellanTaggedImage img) throws IOException {
       if (writingExecutor_ != null) {
          int queueSize = writingExecutor_.getQueue().size();
          int attemptCount = 0;
@@ -460,7 +459,7 @@ public class MultipageTiffWriter {
       fileChannelWrite(pixBuff, pixelOffset); 
    }
 
-   private void writeIFD(TaggedImage img) throws IOException {
+   private void writeIFD(MagellanTaggedImage img) throws IOException {
       char numEntries = ((firstIFD_  ? ENTRIES_PER_IFD + 4 : ENTRIES_PER_IFD));
       if (img.tags.has("Summary")) {
          img.tags.remove("Summary");

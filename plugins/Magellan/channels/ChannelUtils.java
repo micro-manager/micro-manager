@@ -23,7 +23,7 @@ public class ChannelUtils {
    private static final String PREF_USE = "USE";
    private static final Color[] DEFAULT_COLORS = {new Color(160, 32, 240), Color.blue, Color.green, Color.yellow, Color.red, Color.pink};
 
-   private static String[] getChannelNames(String channelGroup) {
+   private static String[] getChannelConfigs(String channelGroup) {
       if (channelGroup == null || channelGroup.equals("")) {
          return new String[0];
       }
@@ -53,28 +53,28 @@ public class ChannelUtils {
          Log.log("Couldnt get camera exposure form core", true);
       }
       if (numCamChannels <= 1) {
-         for (String name : getChannelNames(channelGroup)) {
-            Color color = new Color(GlobalSettings.getInstance().getIntInPrefs(PREF_COLOR + name,
-                    DEFAULT_COLORS[Arrays.asList(getChannelNames(channelGroup)).indexOf(name)].getRGB()));
-            boolean use = GlobalSettings.getInstance().getBooleanInPrefs(PREF_USE + name, true);
-            channels.add(new ChannelSetting(channelGroup, name, exposure, color, use, true));
+         for (String config : getChannelConfigs(channelGroup)) {
+            Color color = new Color(GlobalSettings.getInstance().getIntInPrefs(PREF_COLOR + config,
+                    DEFAULT_COLORS[Arrays.asList(getChannelConfigs(channelGroup)).indexOf(config)].getRGB()));
+            boolean use = GlobalSettings.getInstance().getBooleanInPrefs(PREF_USE + config, true);
+            channels.add(new ChannelSetting(channelGroup, config, config, exposure, color, use, true));
          }
-      } else {
+      } else { //multichannel camera
          for (int i = 0; i < numCamChannels; i++) {
             String cameraChannelName = GlobalSettings.getInstance().getDemoMode() ?
                     new String[]{"Violet","Blue","Green","Yellow","Red","FarRed"}[i]
                     : Magellan.getCore().getCameraChannelName(i);
-            if (getChannelNames(channelGroup).length == 0) {
+            if (getChannelConfigs(channelGroup).length == 0) {
                Color color = new Color(GlobalSettings.getInstance().getIntInPrefs(PREF_COLOR + cameraChannelName,
                        DEFAULT_COLORS[i].getRGB()));
                boolean use = GlobalSettings.getInstance().getBooleanInPrefs(PREF_USE + cameraChannelName, true);
-               channels.add(new ChannelSetting(channelGroup, cameraChannelName, exposure, color, use, i == 0));
+               channels.add(new ChannelSetting(channelGroup, null, cameraChannelName, exposure, color, use, i == 0));
             } else {
-               for (String name : getChannelNames(channelGroup)) {
-                  Color color = new Color(GlobalSettings.getInstance().getIntInPrefs(PREF_COLOR + cameraChannelName + "-" + name,
+               for (String config : getChannelConfigs(channelGroup)) {
+                  Color color = new Color(GlobalSettings.getInstance().getIntInPrefs(PREF_COLOR + cameraChannelName + "-" + config,
                           DEFAULT_COLORS[i].getRGB()));
-                  boolean use = GlobalSettings.getInstance().getBooleanInPrefs(PREF_USE + cameraChannelName + "-" + name, true);
-                  channels.add(new ChannelSetting(channelGroup, cameraChannelName + "-" + name, exposure, color, use, i == 0));
+                  boolean use = GlobalSettings.getInstance().getBooleanInPrefs(PREF_USE + cameraChannelName + "-" + config, true);
+                  channels.add(new ChannelSetting(channelGroup, config, cameraChannelName + "-" + config, exposure, color, use, i == 0));
                }
             }
          }

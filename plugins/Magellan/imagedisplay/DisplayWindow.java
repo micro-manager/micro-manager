@@ -216,7 +216,6 @@ public class DisplayWindow extends StackWindow {
             }
             initWindow();
 
-
             // Activate dynamic resizing
             DisplayWindow.this.addComponentListener(new ComponentAdapter() {
 
@@ -226,9 +225,37 @@ public class DisplayWindow extends StackWindow {
                }
             });
             dwControls_.showStartupHints();
+            setupPopupHintsHiding();
          }
       });
 
+   }
+   
+   private void setupPopupHintsHiding() {
+      this.addComponentListener(new ComponentAdapter() {
+
+         @Override
+         public void componentResized(ComponentEvent e) {
+            dwControls_.hideInstructionsPopup();
+         }
+ 
+         @Override
+         public void componentMoved(ComponentEvent e) {
+            dwControls_.hideInstructionsPopup();
+         }
+      });
+      
+      this.addWindowFocusListener(new WindowFocusListener() {
+
+         @Override
+         public void windowGainedFocus(WindowEvent e) {
+         }
+
+         @Override
+         public void windowLostFocus(WindowEvent e) {
+           dwControls_.hideInstructionsPopup();
+         }
+      });
    }
 
    /**

@@ -1650,7 +1650,7 @@ public class GUI extends javax.swing.JFrame {
 
         acqTabbedPane_.addTab("Space", spaceTab_);
 
-        channelsTable_.setModel(new SimpleChannelTableModel(false));
+        channelsTable_.setModel(new SimpleChannelTableModel());
         jScrollPane1.setViewportView(channelsTable_);
 
         jLabel3.setText("Channel group:");

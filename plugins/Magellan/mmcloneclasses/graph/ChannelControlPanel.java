@@ -35,6 +35,8 @@ import mmcloneclasses.graph.HistogramPanel.CursorListener;
 import imagedisplay.MMCompositeImage;
 import imagedisplay.DisplayPlus;
 import imagedisplay.VirtualAcquisitionDisplay;
+import json.JSONArray;
+import json.JSONObject;
 import main.Magellan;
 import misc.GlobalSettings;
 import misc.HistogramUtils;
@@ -42,8 +44,6 @@ import misc.JavaUtils;
 import misc.Log;
 import misc.MD;
 import mmcorej.CMMCore;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 /**
  * Draws one histogram of the Multi-Channel control panel
@@ -682,7 +682,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          return;  //Blank pixels 
       }
       if (histControlState_.ignoreOutliers) {
-         // todo handle negative values
          maxAfterRejectingOutliers_ = rawHistogram.length;
          // specified percent of pixels are ignored in the automatic contrast setting
          int totalPoints = imgHeight * imgWidth;

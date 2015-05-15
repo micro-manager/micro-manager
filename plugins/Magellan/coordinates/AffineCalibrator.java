@@ -114,8 +114,8 @@ public class AffineCalibrator {
 
    private Point2D.Double crossCorrelate(TaggedImage img1, TaggedImage img2) throws Exception {    
       //double the width of iamges used for xCorr to support offsets bigger than half the iage size
-       int width = 2 * MD.getWidth(img1.tags);
-       int height = 2 * MD.getHeight(img1.tags);
+       int width = 2 *img1.tags.getInt("Width");
+       int height = 2 * img1.tags.getInt("Height");
        ImageStack stack1 = new ImageStack(width, height);
        ImageStack stack2 = new ImageStack(width, height);
        byte[] newPix1 = new byte[width * height];
@@ -193,5 +193,5 @@ public class AffineCalibrator {
       return transform;
    }
 
-   
+  
 }

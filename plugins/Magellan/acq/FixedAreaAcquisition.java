@@ -21,9 +21,9 @@ import bidc.JavaLayerImageConstructor;
 import channels.ChannelSetting;
 import coordinates.AffineUtils;
 import java.awt.geom.Point2D;
+import json.JSONArray;
 import main.Magellan;
 import misc.Log;
-import org.json.JSONArray;
 import surfacesandregions.Point3d;
 
 /**
@@ -293,8 +293,6 @@ public class FixedAreaAcquisition extends Acquisition {
                      //add events for all slices/channels at this position
                      XYStagePosition position = positions_.get(positionIndex);
 
-                     int channelIndex = 0; //TODO: channels
-
                      int sliceIndex = -1;
                      while (true) {
                         sliceIndex++;
@@ -314,15 +312,20 @@ public class FixedAreaAcquisition extends Acquisition {
                               break;
                            }
                         }
-                        AcquisitionEvent event = new AcquisitionEvent(FixedAreaAcquisition.this, timeIndex, channelIndex, sliceIndex,
-                                positionIndex, zPos, position, settings_.covariantPairings_);                        
-                        if (eventGenerator_.isShutdown()) {
-                           throw new InterruptedException();
+                        for (int channelIndex = 0; channelIndex < settings_.channels_.size(); channelIndex++) {
+                           if (!settings_.channels_.get(channelIndex).uniqueEvent_ || !settings_.channels_.get(channelIndex).use_) {
+                              continue;
+                           }
+                           AcquisitionEvent event = new AcquisitionEvent(FixedAreaAcquisition.this, timeIndex, channelIndex, sliceIndex,
+                                   positionIndex, zPos, position, settings_.covariantPairings_);
+                           if (eventGenerator_.isShutdown()) {
+                              throw new InterruptedException();
+                           }
+                           //keep track of biggest slice index
+                           maxSliceIndex_ = Math.max(maxSliceIndex_, event.sliceIndex_);
+                           events_.put(event); //event generator will block if event queue is full
                         }
-                        //keep track of biggest slice index
-                        maxSliceIndex_ = Math.max(maxSliceIndex_, event.sliceIndex_);
-                        events_.put(event); //event generator will block if event queueu is full
-                     }
+                     } //slice loop finish
                   } //position loop finished
 
                   if (timeIndex == (settings_.timeEnabled_ ? settings_.numTimePoints_ : 1) - 1) {

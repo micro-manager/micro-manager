@@ -10,12 +10,12 @@ import java.awt.geom.Point2D;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import bidc.JavaLayerImageConstructor;
+import json.JSONArray;
+import json.JSONException;
+import json.JSONObject;
 import main.Magellan;
 import misc.Log;
 import misc.LongPoint;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 
 
@@ -486,9 +486,7 @@ class MultiResPositionNode  implements Comparable<MultiResPositionNode> {
       gridRow = gRow;
       gridCol = gCol;
    }
-   
-   //TODO: serialize so this can be written to disk?
-   
+      
    @Override
    public int compareTo(MultiResPositionNode n) {
       if (this.resLevel != n.resLevel) {

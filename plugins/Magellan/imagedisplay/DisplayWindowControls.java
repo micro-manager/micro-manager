@@ -7,20 +7,32 @@ package imagedisplay;
 
 import acq.Acquisition;
 import acq.ExploreAcquisition;
+import channels.SimpleChannelTableModel;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import gui.GUI;
 import java.awt.Color;
 import java.awt.Panel;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.util.concurrent.TimeUnit;
 import javax.swing.BorderFactory;
+import javax.swing.DefaultCellEditor;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.Popup;
 import javax.swing.PopupFactory;
+import javax.swing.SwingConstants;
+import javax.swing.table.DefaultTableCellRenderer;
+import json.JSONObject;
 import main.Magellan;
-import org.json.JSONObject;
+import misc.MD;
 import surfacesandregions.MultiPosRegion;
 import surfacesandregions.RegionManager;
 import surfacesandregions.SurfaceManager;
@@ -53,22 +65,42 @@ public class DisplayWindowControls extends Panel {
       initComponents();
       //initially disable surface and grid
       tabbedPane_.setEnabledAt(1, false);
-      tabbedPane_.setEnabledAt(2, false);
+      tabbedPane_.setEnabledAt(2, false);      
+      
+      if (acq_ instanceof ExploreAcquisition) {
+         //left justified editor
+         JTextField tf = new JTextField();
+         tf.setHorizontalAlignment(SwingConstants.LEFT);
+         DefaultCellEditor ed = new DefaultCellEditor(tf);
+         channelsTable_.getColumnModel().getColumn(2).setCellEditor(ed);
+         //and renderer
+         DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
+         renderer.setHorizontalAlignment(SwingConstants.LEFT); // left justify
+         channelsTable_.getColumnModel().getColumn(2).setCellRenderer(renderer);
+         //start showing explore index
+         tabbedPane_.setSelectedIndex(3); 
+      } else {
+         tabbedPane_.remove(3); //remove explore tab
+      }
+   }
+   
+   public void hideInstructionsPopup() {
+      if (instructionsPopup_ != null ) {
+         instructionsPopup_.hide();
+         instructionsPopup_ = null;
+         DisplayWindowControls.this.repaint();
+      }
+   }
+
+   private void setupPopupHints() {
       //make custom instruction popups disappear
       tabbedPane_.addMouseMotionListener(new MouseMotionAdapter() {
          @Override
          public void mouseMoved(MouseEvent e) {
-            if (instructionsPopup_ != null) {
-               instructionsPopup_.hide();
-               DisplayWindowControls.this.repaint();
-            }
-         }
+            hideInstructionsPopup();
+         }        
       });
-      if (acq_ instanceof ExploreAcquisition) {
-         tabbedPane_.setSelectedIndex(3); //explore tab
-      } else {
-         tabbedPane_.remove(3); //remove explore tab
-      }
+      
    }
    
    public void showStartupHints() {
@@ -78,6 +110,7 @@ public class DisplayWindowControls extends Panel {
       } else {
          showInstructionLabel("<html>Right click and drag to pan<br>+/- keys or mouse wheel to zoom in/out</html>");
       }
+      setupPopupHints();
    }
 
    @Subscribe
@@ -89,12 +122,33 @@ public class DisplayWindowControls extends Panel {
       //now that there's an image, surfaces and grids can be made
       tabbedPane_.setEnabledAt(1, true);
       tabbedPane_.setEnabledAt(2, true);
+      //update status panel
+      long sizeBytes = acq_.getStorage().getDataSetSize();
+      if (sizeBytes < 1024) {
+         datasetSizeLabel_.setText(sizeBytes + "  Bytes");
+      } else if (sizeBytes < 1024 * 1024) {
+         datasetSizeLabel_.setText(sizeBytes / 1024 + "  KB");
+      } else if (sizeBytes < 1024 * 1024 * 1024) {
+         datasetSizeLabel_.setText(sizeBytes / 1024 / 1024 + "  MB");
+      } else if (sizeBytes < 1024 * 1024 * 1024 * 1024) {
+         datasetSizeLabel_.setText(sizeBytes / 1024 / 1024 / 1024 + "  GB");
+      } else {
+         datasetSizeLabel_.setText(sizeBytes / 1024 / 1024 / 1024 / 1024 + "  TB");
+      }
+      long elapsed = MD.getElapsedTimeMs(tags);
+      long days = elapsed / 60/60/24/1000, hours = elapsed/60/60/1000, minutes = elapsed/60/1000, seconds = elapsed/1000;
+      elapsedTimeLabel_.setText(String.format("%d:%d:%d:%d",
+              days, hours - 24*days, minutes - 24*60*days - 60*hours, seconds - 24*60*60*days - 60*60*hours - 60*minutes));
+      zPosLabel_.setText(MD.getZPositionUm(tags) + "um");
    }
 
    public void prepareForClose() {
       bus_.unregister(this);
       surfaceManager_.removeFromModelList((SurfaceRegionComboBoxModel) currentSufaceCombo_.getModel());
       regionManager_.removeFromModelList((SurfaceRegionComboBoxModel) currentGridCombo_.getModel());
+      if (acq_ instanceof ExploreAcquisition) {
+         ((SimpleChannelTableModel)channelsTable_.getModel()).shutdown();
+      }
    }
 
    private MultiPosRegion createNewGrid() {
@@ -140,6 +194,11 @@ public class DisplayWindowControls extends Panel {
         tabbedPane_ = new javax.swing.JTabbedPane();
         statusPanel_ = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
+        datasetSizeLabel_ = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        elapsedTimeLabel_ = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        zPosLabel_ = new javax.swing.JLabel();
         gridPanel_ = new javax.swing.JPanel();
         newGridButton_ = new javax.swing.JButton();
         currentGridsLabel_ = new javax.swing.JLabel();
@@ -157,6 +216,8 @@ public class DisplayWindowControls extends Panel {
         showStagePositionsCheckBox_ = new javax.swing.JCheckBox();
         aboveBelowSurfaceCombo_ = new javax.swing.JComboBox();
         explorePanel_ = new javax.swing.JPanel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        channelsTable_ = new javax.swing.JTable();
         showInFolderButton_ = new javax.swing.JButton();
         abortButton_ = new javax.swing.JButton();
         pauseButton_ = new javax.swing.JButton();
@@ -171,7 +232,17 @@ public class DisplayWindowControls extends Panel {
             }
         });
 
-        jLabel1.setText("X MB on disk");
+        jLabel1.setText("Dataset size: ");
+
+        datasetSizeLabel_.setText("jLabel2");
+
+        jLabel2.setText("Elapsed time: ");
+
+        elapsedTimeLabel_.setText("jLabel3");
+
+        jLabel3.setText("Z position: ");
+
+        zPosLabel_.setText("jLabel4");
 
         javax.swing.GroupLayout statusPanel_Layout = new javax.swing.GroupLayout(statusPanel_);
         statusPanel_.setLayout(statusPanel_Layout);
@@ -179,15 +250,37 @@ public class DisplayWindowControls extends Panel {
             statusPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(statusPanel_Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel1)
-                .addContainerGap(640, Short.MAX_VALUE))
+                .addGroup(statusPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(statusPanel_Layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(datasetSizeLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(statusPanel_Layout.createSequentialGroup()
+                        .addComponent(jLabel2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(elapsedTimeLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(statusPanel_Layout.createSequentialGroup()
+                        .addComponent(jLabel3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(zPosLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(476, Short.MAX_VALUE))
         );
         statusPanel_Layout.setVerticalGroup(
             statusPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(statusPanel_Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel1)
-                .addContainerGap(78, Short.MAX_VALUE))
+                .addGroup(statusPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1)
+                    .addComponent(datasetSizeLabel_))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(statusPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
+                    .addComponent(elapsedTimeLabel_))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(statusPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel3)
+                    .addComponent(zPosLabel_))
+                .addContainerGap(41, Short.MAX_VALUE))
         );
 
         tabbedPane_.addTab("Status", statusPanel_);
@@ -268,7 +361,7 @@ public class DisplayWindowControls extends Panel {
                     .addGroup(gridPanel_Layout.createSequentialGroup()
                         .addGap(24, 24, 24)
                         .addComponent(newGridButton_)))
-                .addContainerGap(46, Short.MAX_VALUE))
+                .addContainerGap(49, Short.MAX_VALUE))
         );
 
         tabbedPane_.addTab("Grid", gridPanel_);
@@ -359,22 +452,25 @@ public class DisplayWindowControls extends Panel {
                     .addComponent(showInterpCheckBox_)
                     .addComponent(showStagePositionsCheckBox_)
                     .addComponent(aboveBelowSurfaceCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(47, Short.MAX_VALUE))
+                .addContainerGap(50, Short.MAX_VALUE))
         );
 
         tabbedPane_.addTab("Surface", surfacePanel_);
 
         explorePanel_.setToolTipText("<html>Left click or click and drag to select tiles <br>Left click again to confirm <br>Right click and drag to pan<br>+/- keys or mouse wheel to zoom in/out</html>");
 
+        channelsTable_.setModel(new SimpleChannelTableModel(acq_.getChannels()));
+        jScrollPane1.setViewportView(channelsTable_);
+
         javax.swing.GroupLayout explorePanel_Layout = new javax.swing.GroupLayout(explorePanel_);
         explorePanel_.setLayout(explorePanel_Layout);
         explorePanel_Layout.setHorizontalGroup(
             explorePanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 709, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 709, Short.MAX_VALUE)
         );
         explorePanel_Layout.setVerticalGroup(
             explorePanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 103, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 106, Short.MAX_VALUE)
         );
 
         tabbedPane_.addTab("Explore", explorePanel_);
@@ -438,12 +534,12 @@ public class DisplayWindowControls extends Panel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(showNewImagesCheckBox_)
                 .addGap(0, 0, Short.MAX_VALUE))
-            .addComponent(tabbedPane_)
+            .addComponent(tabbedPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 714, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(showInFolderButton_)
@@ -453,8 +549,8 @@ public class DisplayWindowControls extends Panel {
                         .addComponent(fpsLabel_)
                         .addComponent(animationFPSSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(showNewImagesCheckBox_)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(tabbedPane_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(tabbedPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 134, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         tabbedPane_.getAccessibleContext().setAccessibleName("Status");
@@ -586,10 +682,13 @@ public class DisplayWindowControls extends Panel {
     private javax.swing.JButton abortButton_;
     private javax.swing.JComboBox aboveBelowSurfaceCombo_;
     private javax.swing.JSpinner animationFPSSpinner_;
+    private javax.swing.JTable channelsTable_;
     private javax.swing.JComboBox currentGridCombo_;
     private javax.swing.JLabel currentGridsLabel_;
     private javax.swing.JComboBox currentSufaceCombo_;
     private javax.swing.JLabel currentSurfaceLabel_;
+    private javax.swing.JLabel datasetSizeLabel_;
+    private javax.swing.JLabel elapsedTimeLabel_;
     private javax.swing.JPanel explorePanel_;
     private javax.swing.JLabel fpsLabel_;
     private javax.swing.JLabel gridColsLabel_;
@@ -598,6 +697,9 @@ public class DisplayWindowControls extends Panel {
     private javax.swing.JLabel gridRowsLabel_;
     private javax.swing.JSpinner gridRowsSpinner_;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JButton newGridButton_;
     private javax.swing.JButton newSurfaceButton_;
     private javax.swing.JButton pauseButton_;
@@ -609,5 +711,6 @@ public class DisplayWindowControls extends Panel {
     private javax.swing.JPanel statusPanel_;
     private javax.swing.JPanel surfacePanel_;
     private javax.swing.JTabbedPane tabbedPane_;
+    private javax.swing.JLabel zPosLabel_;
     // End of variables declaration//GEN-END:variables
 }

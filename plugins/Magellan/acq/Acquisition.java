@@ -8,11 +8,9 @@ import bidc.JavaLayerImageConstructor;
 import channels.ChannelSetting;
 import java.awt.Color;
 import java.util.ArrayList;
+import json.JSONArray;
+import json.JSONObject;
 import main.Magellan;
-import mmcorej.CMMCore;
-import mmcorej.TaggedImage;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 /**
  * Abstract class that manages a generic acquisition. Subclassed into specific
@@ -24,7 +22,7 @@ public abstract class Acquisition implements AcquisitionEventSource{
    private static final int OUTPUT_QUEUE_SIZE = 40;
    
    protected final double zStep_;
-   private BlockingQueue<TaggedImage> engineOutputQueue_;
+   private BlockingQueue<MagellanTaggedImage> engineOutputQueue_;
    protected String xyStage_, zStage_;
    protected boolean zStageHasLimits_ = false;
    protected double zStageLowerLimit_, zStageUpperLimit_;
@@ -95,8 +93,16 @@ public abstract class Acquisition implements AcquisitionEventSource{
 
    public abstract int getSliceIndexFromZCoordinate(double z);
 
+   /**
+    * Return the maximum number of possible channels for the acquisition, not all of which are neccessarily active
+    * @return 
+    */
    public int getNumChannels() {
       return channels_.size();
+   }
+   
+   public ArrayList<ChannelSetting> getChannels() {
+      return channels_;
    }
    
    /**
@@ -134,7 +140,7 @@ public abstract class Acquisition implements AcquisitionEventSource{
    }
    
    protected void initialize(String dir, String name, double overlapPercent) {
-      engineOutputQueue_ = new LinkedBlockingQueue<TaggedImage>(OUTPUT_QUEUE_SIZE);
+      engineOutputQueue_ = new LinkedBlockingQueue<MagellanTaggedImage>(OUTPUT_QUEUE_SIZE);
       overlapX_ = (int) (JavaLayerImageConstructor.getInstance().getImageWidth() * overlapPercent / 100);
       overlapY_ = (int) (JavaLayerImageConstructor.getInstance().getImageHeight() * overlapPercent / 100);
       JSONObject summaryMetadata = MagellanEngine.makeSummaryMD(this, name);
@@ -157,7 +163,7 @@ public abstract class Acquisition implements AcquisitionEventSource{
       return zStep_;
    }
 
-   public void addImage(TaggedImage img) {
+   public void addImage(MagellanTaggedImage img) {
       try {
          engineOutputQueue_.put(img);
       } catch (InterruptedException ex) {

@@ -3,22 +3,21 @@ package acq;
 import java.util.concurrent.BlockingQueue;
 import misc.Log;
 import misc.MD;
-import mmcorej.TaggedImage;
 
 /**
  * Dequeue tagged images and append to image cache
  *
- * copied from MM DefaultTaggedImageQueue
+ * copied from MM DefaultMagellanTaggedImageQueue
  */
 public class TaggedImageSink  {
 
-   private final BlockingQueue<TaggedImage> imageProducingQueue_;
+   private final BlockingQueue<MagellanTaggedImage> imageProducingQueue_;
    private MMImageCache imageCache_ = null;
    private volatile String lastImageLabel_;
    private Thread savingThread_;
    private Acquisition acq_;
    
-   public TaggedImageSink(BlockingQueue<TaggedImage> imageProducingQueue,
+   public TaggedImageSink(BlockingQueue<MagellanTaggedImage> imageProducingQueue,
            MMImageCache imageCache, Acquisition acq) {
       imageProducingQueue_ = imageProducingQueue;
       imageCache_ = imageCache;
@@ -45,7 +44,7 @@ public class TaggedImageSink  {
             long t1 = System.currentTimeMillis();
             int imageCount = 0;
             while (true) {
-               TaggedImage image;
+               MagellanTaggedImage image;
                try {
                   image = imageProducingQueue_.take();
                } catch (InterruptedException ex) {

@@ -5,13 +5,12 @@
 package misc;
 
 import ij.ImagePlus;
-import java.awt.Rectangle;
 import java.util.Iterator;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import json.JSONArray;
+import json.JSONException;
+import json.JSONObject;
+
+
 
 /**
  * List of metadata tags
@@ -602,15 +601,15 @@ public class MD {
       }
    }
 
-   public static double getElapsedTimeMs(JSONObject map) {
+   public static long getElapsedTimeMs(JSONObject map) {
       try {
-         return map.getDouble(ELAPSED_TIME_MS);
+         return map.getLong(ELAPSED_TIME_MS);
       } catch (JSONException ex) {
                   Log.log("missing elapsed time tag");
          throw new RuntimeException();
       }
    }
-   public static void setElapsedTimeMs(JSONObject map, double val) {
+   public static void setElapsedTimeMs(JSONObject map, long val) {
       try {
          map.put(ELAPSED_TIME_MS, val);
       } catch (JSONException ex) {

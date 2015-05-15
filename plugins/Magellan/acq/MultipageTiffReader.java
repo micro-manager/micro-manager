@@ -31,12 +31,11 @@ import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.HashMap;
 import java.util.Set;
+import json.JSONArray;
+import json.JSONException;
+import json.JSONObject;
 import misc.Log;
 import misc.MD;
-import mmcorej.TaggedImage;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 
 public class MultipageTiffReader {
@@ -193,7 +192,7 @@ public class MultipageTiffReader {
       return displayAndComments_;
    }
    
-   public TaggedImage readImage(String label) {
+   public MagellanTaggedImage readImage(String label) {
       if (indexMap_.containsKey(label)) {
          if (fileChannel_ == null) {
             Log.log("Attempted to read image on FileChannel that is null", true);
@@ -203,7 +202,7 @@ public class MultipageTiffReader {
             long byteOffset = indexMap_.get(label);
             
             IFDData data = readIFD(byteOffset);
-            return readTaggedImage(data);
+            return readMagellanTaggedImage(data);
          } catch (IOException ex) {
             Log.log(ex);
             return null;
@@ -368,7 +367,7 @@ public class MultipageTiffReader {
       }
    }
    
-   private TaggedImage readTaggedImage(IFDData data) throws IOException {
+   private MagellanTaggedImage readMagellanTaggedImage(IFDData data) throws IOException {
       ByteBuffer pixelBuffer = ByteBuffer.allocate( (int) data.bytesPerImage).order(byteOrder_);
       ByteBuffer mdBuffer = ByteBuffer.allocate((int) data.mdLength).order(byteOrder_);
       fileChannel_.read(pixelBuffer, data.pixelOffset);
@@ -396,7 +395,7 @@ public class MultipageTiffReader {
                   i++;
                }
             }
-            return new TaggedImage(pixels, md);
+            return new MagellanTaggedImage(pixels, md);
          } else {
              short[] pixels = new short[(int) (2 * (data.bytesPerImage/3))];
             int i = 0;           
@@ -408,17 +407,17 @@ public class MultipageTiffReader {
                   i++;
                }
             }
-            return new TaggedImage(pixels, md);
+            return new MagellanTaggedImage(pixels, md);
          }
       } else {
          if (byteDepth_ == 1) {
-            return new TaggedImage(pixelBuffer.array(), md);
+            return new MagellanTaggedImage(pixelBuffer.array(), md);
          } else {
             short[] pix = new short[pixelBuffer.capacity()/2];
             for (int i = 0; i < pix.length; i++ ) {
                pix[i] = pixelBuffer.getShort(i*2);
             }
-            return new TaggedImage(pix, md);
+            return new MagellanTaggedImage(pix, md);
          }
       }
    }

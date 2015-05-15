@@ -37,15 +37,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import acq.MMImageCache;
+import acq.MagellanTaggedImage;
+import json.JSONException;
+import json.JSONObject;
 import misc.JavaUtils;
 import misc.Log;
 import misc.MD;
 import mmcloneclasses.graph.HistogramSettings;
 import mmcloneclasses.graph.MultiChannelHistograms;
 import mmcloneclasses.graph.Histograms;
-import mmcorej.TaggedImage;
-import org.json.JSONException;
-import org.json.JSONObject;
+
 
 public abstract class VirtualAcquisitionDisplay{
 
@@ -287,10 +288,10 @@ public abstract class VirtualAcquisitionDisplay{
 
    /**
     * required by ImageCacheListener
-    * @param taggedImage 
+    * @param MagellanTaggedImage 
     */
-   public void imageReceived(final TaggedImage taggedImage) {
-      updateDisplay(taggedImage);
+   public void imageReceived(final MagellanTaggedImage MagellanTaggedImage) {
+      updateDisplay(MagellanTaggedImage);
    }
 
    /**
@@ -309,13 +310,13 @@ public abstract class VirtualAcquisitionDisplay{
    /**
     * A new image has arrived; toss it onto our queue for display.
     */
-   public void updateDisplay(TaggedImage taggedImage) {
+   public void updateDisplay(MagellanTaggedImage MagellanTaggedImage) {
       JSONObject tags;
-      if (taggedImage == null || taggedImage.tags == null) {
+      if (MagellanTaggedImage == null || MagellanTaggedImage.tags == null) {
          tags = imageCache_.getLastImageTags();
       }
       else {
-         tags = taggedImage.tags;
+         tags = MagellanTaggedImage.tags;
       }
       if (tags == null) {
          // No valid tags, ergo no valid image, ergo give up.
@@ -532,7 +533,6 @@ public abstract class VirtualAcquisitionDisplay{
     * @param c 
     */
    public void setChannel(int c) {
-      //TODO: make this respond to checkboxes in channel control panels
 //      for (AxisScroller scroller : scrollers_) {
 //         String axis = scroller.getAxis();
 //         Integer position = scroller.getPosition();

@@ -8,12 +8,12 @@ import acq.Acquisition;
 import acq.ExploreAcquisition;
 import acq.FixedAreaAcquisition;
 import acq.MMImageCache;
+import acq.MagellanTaggedImage;
 import acq.MultiResMultipageTiffStorage;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.util.Set;
 import misc.LongPoint;
-import mmcorej.TaggedImage;
 
 /**
  * This class acts as an intermediary between display and multiresolution
@@ -337,7 +337,7 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
    //this method is called to get the tagged image for display purposes only
    //return the zoomed or downsampled image here for fast performance
    @Override
-   protected TaggedImage getTaggedImage(int channel, int slice, int frame) {
+   protected MagellanTaggedImage getMagellanTaggedImage(int channel, int slice, int frame) {
       //tags and images ultimately get split apart from this function, so it is okay
       //to alter image size and not change tags to reflect that
       

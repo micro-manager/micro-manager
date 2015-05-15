@@ -47,15 +47,11 @@ public class GlobalSettings {
          if (s.endsWith("NavDemo.cfg") || s.endsWith("NavDemo16Bit.cfg")) {
             demoMode_ = true;
             new DemoModeImageData();
-         } else if (s.contains("BIDC") && s.contains("Gen")) {
-            bidc2P_ = true;
-            
-         } else {
-            //no secret features :(
-//           autofocusBetweenSerialAcqsCheckBox_.setVisible(false);
-         }
+         } 
+         bidc2P_ = Magellan.getCore().getCameraDevice().equals("BitflowCamera") || Magellan.getCore().getCameraDevice().equals("BitflowCamera2x");
       } catch (Exception e) {
       }
+      
       
       //load channel offsets
         try {

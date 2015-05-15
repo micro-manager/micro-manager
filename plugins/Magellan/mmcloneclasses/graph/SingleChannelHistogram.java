@@ -692,7 +692,6 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
       int imgWidth = img_.getWidth();
       int imgHeight = img_.getHeight();
       if (cp_.getHistogramControlsState().ignoreOutliers) {
-         // todo handle negative values
          maxAfterRejectingOutliers_ = rawHistogram.length;
          // specified percent of pixels are ignored in the automatic contrast setting
          int totalPoints = imgHeight * imgWidth;

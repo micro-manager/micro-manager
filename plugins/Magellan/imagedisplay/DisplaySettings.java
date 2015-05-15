@@ -1,11 +1,10 @@
 package imagedisplay;
 
 import java.awt.Color;
+import json.JSONArray;
+import json.JSONObject;
 import misc.MD;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 public class DisplaySettings {
 

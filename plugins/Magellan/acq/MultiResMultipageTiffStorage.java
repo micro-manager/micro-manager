@@ -22,13 +22,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import json.JSONException;
+import json.JSONObject;
 import misc.JavaUtils;
 import misc.Log;
 import misc.LongPoint;
 import misc.MD;
-import mmcorej.TaggedImage;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 /**
  * This class manages multiple multipage Tiff datasets, averaging multiple 2x2
@@ -243,7 +242,7 @@ public class MultiResMultipageTiffStorage {
       return backgroundPix_.containsKey(channelIndex) ? backgroundPix_.get(channelIndex) : 0;
    }
 
-   private void readBackgroundPixelValue(int channel, TaggedImage img) {
+   private void readBackgroundPixelValue(int channel, MagellanTaggedImage img) {
        if (!estimateBackground_ || backgroundPix_.containsKey(channel)) {
            return;
        }
@@ -278,7 +277,7 @@ public class MultiResMultipageTiffStorage {
     * @return Tagged image or taggeded image with background pixels and null tags if no
     * pixel data is present
     */
-   public TaggedImage getImageForDisplay(int channel, int slice, int frame, int dsIndex, long x, long y, 
+   public MagellanTaggedImage getImageForDisplay(int channel, int slice, int frame, int dsIndex, long x, long y, 
            int width, int height) {
       Object pixels;
       if (byteDepth_ == 1) {
@@ -328,7 +327,7 @@ public class MultiResMultipageTiffStorage {
       for (long col = colStart; col < colStart + lineWidths.size(); col++) {
          int yOffset = 0;
          for (long row = rowStart; row < rowStart + lineHeights.size(); row++) {
-            TaggedImage tile = null;          
+            MagellanTaggedImage tile = null;          
             if (dsIndex == 0) {
                tile = fullResStorage_.getImage(channel, slice, frame, posManager_.getPositionIndexFromTilePosition(dsIndex, row, col));
             } else {               
@@ -381,7 +380,7 @@ public class MultiResMultipageTiffStorage {
          }
          xOffset += lineWidths.get((int)(col - colStart));
       }
-      return new TaggedImage(pixels, topLeftMD);
+      return new MagellanTaggedImage(pixels, topLeftMD);
    }
    
    /**
@@ -414,13 +413,13 @@ public class MultiResMultipageTiffStorage {
          posManager_.updateLowerResolutionNodes(lowResStorages_.keySet().size());
          String aLabel = fullResStorage_.imageKeys().iterator().next();
          int[] indices = MD.getIndices(aLabel);
-         TaggedImage anImage = fullResStorage_.getImage(indices[0], indices[1], indices[2], indices[3]);         
+         MagellanTaggedImage anImage = fullResStorage_.getImage(indices[0], indices[1], indices[2], indices[3]);         
          addToLowResStorage(anImage, 0, indices[3]);
          return true;
       }
    }
    
-   private void addToLowResStorage(TaggedImage img, int previousResIndex, int fullResPositionIndex) {
+   private void addToLowResStorage(MagellanTaggedImage img, int previousResIndex, int fullResPositionIndex) {
       //Read indices
       int channel = MD.getChannelIndex(img.tags);
       int slice = MD.getSliceIndex(img.tags);
@@ -450,7 +449,7 @@ public class MultiResMultipageTiffStorage {
             Set<String> imageKeys = previousLevelStorage.imageKeys();
             for (String key : imageKeys) {
                String[] indices = key.split("_");
-               TaggedImage ti = previousLevelStorage.getImage(Integer.parseInt(indices[0]), Integer.parseInt(indices[1]),
+               MagellanTaggedImage ti = previousLevelStorage.getImage(Integer.parseInt(indices[0]), Integer.parseInt(indices[1]),
                        Integer.parseInt(indices[2]), Integer.parseInt(indices[3]));
                addToLowResStorage(ti, resolutionIndex - 1, posManager_.getFullResPositionIndex(Integer.parseInt(indices[3]), resolutionIndex - 1)); 
             }
@@ -458,7 +457,7 @@ public class MultiResMultipageTiffStorage {
             //not worry about having to add it again
          }
          //Create pixels or get appropriate pixels to add to
-         TaggedImage existingImage = lowResStorages_.get(resolutionIndex).getImage(channel, slice, frame,
+         MagellanTaggedImage existingImage = lowResStorages_.get(resolutionIndex).getImage(channel, slice, frame,
                  posManager_.getLowResPositionIndex(fullResPositionIndex, resolutionIndex));
          Object currentLevelPix;
          if (existingImage == null) {
@@ -568,7 +567,7 @@ public class MultiResMultipageTiffStorage {
                long gridCol = posManager_.getGridCol(fullResPositionIndex, resolutionIndex);
                MD.setPositionName(tags, "Grid_" + gridRow + "_" + gridCol);
                MD.setPositionIndex(tags, posManager_.getLowResPositionIndex(fullResPositionIndex, resolutionIndex));  
-               lowResStorages_.get(resolutionIndex).putImage(new TaggedImage(currentLevelPix, tags));
+               lowResStorages_.get(resolutionIndex).putImage(new MagellanTaggedImage(currentLevelPix, tags));
             } else {
                //Image already exists, only overwrite pixels to include new tiles
                lowResStorages_.get(resolutionIndex).overwritePixels(currentLevelPix,
@@ -605,15 +604,15 @@ public class MultiResMultipageTiffStorage {
       }
    }
 
-   public void putImage(TaggedImage taggedImage)  {
+   public void putImage(MagellanTaggedImage MagellanTaggedImage)  {
       try {
          synchronized (this) {            
             //write to full res storage as normal (i.e. with overlap pixels present)
-            fullResStorage_.putImage(taggedImage);
-            addToLowResStorage(taggedImage, 0, MD.getPositionIndex(taggedImage.tags));
-            if (currentTP_ < MD.getFrameIndex(taggedImage.tags)) {
+            fullResStorage_.putImage(MagellanTaggedImage);
+            addToLowResStorage(MagellanTaggedImage, 0, MD.getPositionIndex(MagellanTaggedImage.tags));
+            if (currentTP_ < MD.getFrameIndex(MagellanTaggedImage.tags)) {
                bdvXML_.addTP();
-               currentTP_ = MD.getFrameIndex(taggedImage.tags);
+               currentTP_ = MD.getFrameIndex(MagellanTaggedImage.tags);
             }
          }
       } catch (IOException ex) {
@@ -621,7 +620,7 @@ public class MultiResMultipageTiffStorage {
       } 
    }
 
-   public TaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
+   public MagellanTaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
       //return a single tile from the full res image
       return fullResStorage_.getImage(channelIndex, sliceIndex, frameIndex, positionIndex);
    }

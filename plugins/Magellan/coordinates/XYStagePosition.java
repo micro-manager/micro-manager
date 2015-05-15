@@ -6,11 +6,11 @@ package coordinates;
 
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import json.JSONArray;
+import json.JSONObject;
 import main.Magellan;
 import misc.Log;
 import mmcorej.CMMCore;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 /**
  * Immutable object representing single XY stage position

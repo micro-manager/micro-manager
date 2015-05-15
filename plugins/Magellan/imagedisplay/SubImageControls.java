@@ -170,7 +170,6 @@ public class SubImageControls extends Panel {
 
       if (acq_ instanceof ExploreAcquisition) {
          sliderPanel_ = new JPanel(new MigLayout("insets 0", "[][][grow]", ""));
-         //TODO: what if no z device enabled?
          try {
             CMMCore core = Magellan.getCore();
             String z = core.getFocusDevice();

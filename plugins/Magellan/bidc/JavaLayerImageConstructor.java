@@ -6,7 +6,7 @@ package bidc;
 
 import acq.AcquisitionEvent;
 import acq.MagellanEngine;
-import acq.SignalTaggedImage;
+import acq.MagellanTaggedImage;
 import demo.DemoModeImageData;
 import ij.IJ;
 import java.awt.geom.Point2D;
@@ -14,14 +14,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
+import json.JSONException;
+import json.JSONObject;
 import main.Magellan;
 import misc.GlobalSettings;
 import misc.Log;
 import misc.MD;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
-import org.json.JSONException;
-import org.json.JSONObject;
+
 
 
 public class JavaLayerImageConstructor {
@@ -58,7 +59,7 @@ public class JavaLayerImageConstructor {
                      ImageAndInfo firstIAI = imageConstructionQueue_.take();
 
 
-                     if (firstIAI.img_ instanceof SignalTaggedImage) {
+                     if (firstIAI.img_ instanceof MagellanTaggedImage) {
                         //if its a signal, send it to the loop
                         firstIAI.event_.acquisition_.addImage(firstIAI.img_);
                         continue;
@@ -84,7 +85,7 @@ public class JavaLayerImageConstructor {
                      for (int i = 1; i < firstIAI.numFrames_; i++) {
 
                         ImageAndInfo nextIAI = imageConstructionQueue_.take();
-                        if (nextIAI.img_ instanceof SignalTaggedImage) {
+                        if (nextIAI.img_ instanceof MagellanTaggedImage) {
                            //bypass construction
                            nextIAI.event_.acquisition_.addImage(nextIAI.img_);
                            continue;
@@ -98,9 +99,9 @@ public class JavaLayerImageConstructor {
                      }
 
                      //construct image
-                     TaggedImage constructedImage;
+                     MagellanTaggedImage constructedImage;
                      try {
-                        constructedImage = new TaggedImage(integrator.constructImage(), firstIAI.img_.tags);
+                        constructedImage = new MagellanTaggedImage(integrator.constructImage(), firstIAI.img_.tags);
                      } catch (Exception e) {
                         e.printStackTrace();
                         IJ.log("Couldn't construct image: " + e.toString());
@@ -108,8 +109,8 @@ public class JavaLayerImageConstructor {
                      }
 
                      //add metadata 
-                     MagellanEngine.addImageMetadata(constructedImage.tags, firstIAI.event_, firstIAI.numCamChannels_,
-                             firstIAI.camChannelIndex_, firstIAI.currentTime_ - firstIAI.event_.acquisition_.getStartTime_ms(),
+                     MagellanEngine.addImageMetadata(constructedImage.tags, firstIAI.event_, firstIAI.camChannelIndex_,
+                             firstIAI.currentTime_ - firstIAI.event_.acquisition_.getStartTime_ms(),
                              firstIAI.numFrames_);
 
                      //add to acq for display/saving 
@@ -148,7 +149,7 @@ public class JavaLayerImageConstructor {
      * need to do this through core communicator so it occurs on the same thread
      * as image construction
      */
-   public void addSignalTaggedImage(AcquisitionEvent evt, TaggedImage img) throws InterruptedException {
+   public void addSignalMagellanTaggedImage(AcquisitionEvent evt, MagellanTaggedImage img) throws InterruptedException {
       if (javaLayerConstruction_) {
          imageConstructionQueue_.put(new ImageAndInfo(img, evt, 0, 0, 0, 0));
       } else {
@@ -164,7 +165,7 @@ public class JavaLayerImageConstructor {
      * doesnt try to go way faster than images can be constructed
 
     */
-   public void getTaggedImagesAndAddToAcq(AcquisitionEvent event, final long currentTime) throws Exception {
+   public void getMagellanTaggedImagesAndAddToAcq(AcquisitionEvent event, final long currentTime) throws Exception {
       if (javaLayerConstruction_) {
          //Images go into circular buffer one channel at a time followed by succsessive frames
          //want to change the order to all frames of a channel at a time
@@ -180,7 +181,7 @@ public class JavaLayerImageConstructor {
             for (int framesBack = numFrames - 1; framesBack >= 0; framesBack--) {
                //channel 0 is farthest back
                int backIndex = framesBack * numCamChannels + (numCamChannels - 1 - c);
-               TaggedImage img = core_.getNBeforeLastTaggedImage(backIndex);
+               MagellanTaggedImage img = convertTaggedImage(core_.getNBeforeLastTaggedImage(backIndex));
                imageConstructionQueue_.put(new ImageAndInfo(img, event, numCamChannels, c, currentTime, numFrames));
                
             }
@@ -189,22 +190,22 @@ public class JavaLayerImageConstructor {
          if (GlobalSettings.getInstance().getDemoMode()) {
              //add demo image
             for (int c = 0; c < 6; c++) {
-               JSONObject tags = core_.getTaggedImage().tags;         
-               MagellanEngine.addImageMetadata(tags, event, 6, c, currentTime, 1);
+               JSONObject tags = convertTaggedImage(core_.getTaggedImage()).tags;    
+               MD.setChannelIndex(tags, c);
+               MagellanEngine.addImageMetadata(tags, event, c, currentTime, 1);
                event.acquisition_.addImage(makeDemoImage(c, event.xyPosition_.getCenter(), event.zPosition_, tags));
             }
          } else {
             for (int c = 0; c < core_.getNumberOfCameraChannels(); c++) {
-               TaggedImage img = core_.getTaggedImage(c);
-               MagellanEngine.addImageMetadata(img.tags, event, (int) core_.getNumberOfCameraChannels(),
-                       c, currentTime, 1);
+               MagellanTaggedImage img = convertTaggedImage(core_.getTaggedImage(c));
+               MagellanEngine.addImageMetadata(img.tags, event, c, currentTime, 1);
                event.acquisition_.addImage(img);
             }
          }
       }
    }
 
-    private TaggedImage makeDemoImage(int camChannelIndex, Point2D.Double position, double zPos, JSONObject tags  ) {
+    private MagellanTaggedImage makeDemoImage(int camChannelIndex, Point2D.Double position, double zPos, JSONObject tags  ) {
         Object demoPix;
         try {
             if (core_.getBytesPerPixel() == 1) {
@@ -214,7 +215,7 @@ public class JavaLayerImageConstructor {
                 demoPix = DemoModeImageData.getShortPixelData(camChannelIndex, (int) position.x,
                         (int) position.y, (int) zPos, MD.getWidth(tags), MD.getHeight(tags));
             }
-            return new TaggedImage(demoPix, tags);
+            return new MagellanTaggedImage(demoPix, tags);
         } catch (Exception e) {
             e.printStackTrace();
             Log.log("Problem getting demo data");
@@ -222,17 +223,26 @@ public class JavaLayerImageConstructor {
         }
 
     }
+    
+    public static MagellanTaggedImage convertTaggedImage(TaggedImage img) {
+      try {
+         return new MagellanTaggedImage(img.pix, new JSONObject(img.tags.toString()));
+      } catch (JSONException ex) {
+         Log.log("Couldn't convert JSON metadata");
+         throw new RuntimeException();
+      }
+    }
 
     class ImageAndInfo {
 
-        TaggedImage img_;
+        MagellanTaggedImage img_;
         AcquisitionEvent event_;
         int numCamChannels_;
         int camChannelIndex_;
         long currentTime_;
         int numFrames_;
 
-        public ImageAndInfo(TaggedImage img, AcquisitionEvent e, int numCamChannels, int cameraChannelIndex, long currentTime,
+        public ImageAndInfo(MagellanTaggedImage img, AcquisitionEvent e, int numCamChannels, int cameraChannelIndex, long currentTime,
                 int numFrames) {
             img_ = img;
             event_ = e;

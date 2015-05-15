@@ -67,7 +67,6 @@ public class MMFrame extends JFrame {
     * If not then it sets the prefs to the values specified.
     * Accounts for screen size changes between invocations or if screen
     * is removed (e.g. had 2 monitors and go to 1).
-    * TODO: this code is duplicated between here and MMDialog.
     * @param x new WINDOW_X position if current value isn't valid
     * @param y new WINDOW_Y position if current value isn't valid
     */

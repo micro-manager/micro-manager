@@ -28,12 +28,11 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.swing.SwingUtilities;
+import json.JSONArray;
+import json.JSONException;
+import json.JSONObject;
 import misc.Log;
 import misc.MD;
-import mmcorej.TaggedImage;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 /**
  * MMImageCache: central repository of Images
@@ -93,7 +92,7 @@ public class MMImageCache {
       display_ = null;
    }
 
-   public void putImage(final TaggedImage taggedImg) {
+   public void putImage(final MagellanTaggedImage taggedImg) {
       try {
          
          checkForChangingTags(taggedImg);
@@ -135,8 +134,8 @@ public class MMImageCache {
       }
    }
 
-   public TaggedImage getImage(int channel, int slice, int frame, int position) {
-      TaggedImage taggedImg = null;
+   public MagellanTaggedImage getImage(int channel, int slice, int frame, int position) {
+      MagellanTaggedImage taggedImg = null;
       if (taggedImg == null) {
          taggedImg = imageStorage_.getImage(channel, slice, frame, position);
          if (taggedImg != null) {
@@ -155,7 +154,7 @@ public class MMImageCache {
       return tags;
    }
 
-   private void checkForChangingTags(TaggedImage taggedImg) {
+   private void checkForChangingTags(MagellanTaggedImage taggedImg) {
       if (firstTags_ == null) {
          firstTags_ = taggedImg.tags;
       } else {
