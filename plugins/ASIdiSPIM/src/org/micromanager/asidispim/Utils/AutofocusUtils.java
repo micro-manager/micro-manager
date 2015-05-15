@@ -286,7 +286,12 @@ public class AutofocusUtils {
                         ip.setRoi(roi);
                         ip = ip.crop();
                      }
-                     focusScores[counter] = gui_.getAutofocus().computeScore(ip);
+                     try {
+                        focusScores[counter] = gui_.getAutofocus().computeScore(ip);
+                     } catch (Exception ex) {
+                        done = true;
+                        throw new ASIdiSPIMException("Selected autofocus device didn't return a focus score.");
+                     }
                      imageStore[counter] = timg;
                      ReportingUtils.logDebugMessage("Autofocus, image: " + counter
                              + ", score: " + focusScores[counter]);
