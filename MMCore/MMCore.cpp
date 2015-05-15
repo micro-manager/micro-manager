@@ -105,7 +105,7 @@ using namespace std;
  */
 const int MMCore_versionMajor = 7;
 const int MMCore_versionMinor = 2;
-const int MMCore_versionPatch = 0;
+const int MMCore_versionPatch = 1;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -5867,6 +5867,8 @@ void CMMCore::saveSystemConfiguration(const char* fileName) throw (CMMError)
    for (size_t i=0; i<config.size(); i++)
    {
       PropertySetting s = config.getSetting(i);
+      if (s.getDeviceLabel() == MM::g_Keyword_CoreDevice)
+         continue;
 
       // check if the property must be set before initialization
       boost::shared_ptr<DeviceInstance> pDevice = deviceManager_->GetDevice(s.getDeviceLabel());
@@ -5891,7 +5893,7 @@ void CMMCore::saveSystemConfiguration(const char* fileName) throw (CMMError)
       std::string parentID = device->GetParentID();
       if (!parentID.empty())
       {
-         os << MM::g_CFGCommand_Property << ',' << device->GetLabel() << ',' << parentID << endl;
+         os << MM::g_CFGCommand_ParentID << ',' << device->GetLabel() << ',' << parentID << endl;
       }
    }
 
@@ -5920,7 +5922,20 @@ void CMMCore::saveSystemConfiguration(const char* fileName) throw (CMMError)
       unsigned numPos = pSD->GetNumberOfPositions();
       for (unsigned long j=0; j<numPos; j++)
       {
-         os << MM::g_CFGCommand_Label << ',' << deviceLabels[i] << ',' << j << ',' << pSD->GetPositionLabel(j) << endl;
+         std::string stateLabel;
+         try
+         {
+            stateLabel = pSD->GetPositionLabel(j);
+         }
+         catch (const CMMError&)
+         {
+            // Label not defined, just skip
+            continue;
+         }
+         if (!stateLabel.empty())
+         {
+            os << MM::g_CFGCommand_Label << ',' << deviceLabels[i] << ',' << j << ',' << stateLabel << endl;
+         }
       }
    }
 
