@@ -545,6 +545,7 @@ public class DefaultMetadata implements Metadata {
          MDUtils.setBitDepth(result, getBitDepth());
          MDUtils.setPixelSizeUm(result, getPixelSizeUm());
          MDUtils.setPixelTypeFromString(result, getPixelType());
+         result.put("Source", getSource());
          MDUtils.setUUID(result, getUUID());
          // If we don't do these manual conversions, we get null pointer
          // exceptions because the argument type for MDUtils here is a
@@ -597,13 +598,13 @@ public class DefaultMetadata implements Metadata {
    public static Metadata legacyFromJSON(JSONObject tags) {
       Builder builder = new Builder();
       try {
-         builder.uuid(UUID.fromString(tags.getString("uuid")));
+         builder.uuid(MDUtils.getUUID(tags));
       }
       catch (JSONException e) {
          ReportingUtils.logDebugMessage("Metadata failed to extract field uuid");
       }
       try {
-         builder.source(tags.getString("source"));
+         builder.source(tags.getString("Source"));
       }
       catch (JSONException e) {
          ReportingUtils.logDebugMessage("Metadata failed to extract field source");
@@ -797,7 +798,7 @@ public class DefaultMetadata implements Metadata {
    public String toString() {
       String result = "<Metadata:";
       if (uuid_ != null) {
-         result += "\n  uuid: " + uuid_.toString();
+         result += "\n  UUID: " + uuid_.toString();
       }
       if (source_ != null) {
          result += "\n  source: " + source_.toString();
