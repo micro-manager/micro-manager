@@ -541,6 +541,10 @@ public class DefaultPropertyMap implements PropertyMap {
 
    public static DefaultPropertyMap fromJSON(JSONObject map) throws JSONException {
       Builder builder = new Builder();
+      if (map.length() == 0) {
+         // Nothing here!
+         return (DefaultPropertyMap) builder.build();
+      }
       JSONArray keys = map.names();
       for (int i = 0; i < keys.length(); ++i) {
          String key = keys.getString(i);
