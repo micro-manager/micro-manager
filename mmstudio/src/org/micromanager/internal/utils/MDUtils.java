@@ -866,7 +866,7 @@ public class MDUtils {
          builder.putDouble(key, (Double) val);
       }
       else {
-         ReportingUtils.logError("Unrecognized object type for key " + key + ": " + val);
+         ReportingUtils.logDebugMessage("Unrecognized object type for key " + key + ": " + val);
       }
       return builder;
    }

@@ -32,6 +32,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.swing.JOptionPane;
@@ -48,6 +49,7 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultMetadata;
+import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
@@ -248,11 +250,22 @@ public class MultipageTiffReader {
             // Manually create new Metadata for the image we're about to
             // create. Just passing the bare TaggedImage in would make
             // Micro-Manager assume that the image was created by the scope
-            // this istance of the program is running, which has ramifications
+            // this instance of the program is running, which has ramifications
             // for the scope data properties.
             Metadata metadata = DefaultMetadata.legacyFromJSON(tagged.tags);
+            // All keys that are part of the scope data cannot be part of
+            // the user data.
+            // TODO: assumes knowledge of how DefaultMetadata serializes
+            // scope data.
+            HashSet<String> blockedKeys = new HashSet<String>();
+            if (metadata.getScopeData() != null) {
+               blockedKeys.add("scopeDataKeys");
+               for (String key : ((DefaultPropertyMap) metadata.getScopeData()).getKeys()) {
+                  blockedKeys.add(key);
+               }
+            }
             metadata = metadata.copy().userData(
-                  MDUtils.extractUserData(tagged.tags, null)).build();
+                  MDUtils.extractUserData(tagged.tags, blockedKeys)).build();
             return new DefaultImage(tagged, null, metadata);
          } catch (IOException ex) {
             ReportingUtils.logError(ex);
