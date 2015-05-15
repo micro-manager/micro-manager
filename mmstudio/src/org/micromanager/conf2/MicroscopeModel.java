@@ -182,6 +182,14 @@ public class MicroscopeModel {
       }
    }
 
+   public void loadFocusDirectionsFromHardware(CMMCore core) throws Exception {
+      for (Device dev : devices_) {
+         if (dev.isStage()) {
+            dev.getFocusDirectionFromHardware(core);
+         }
+      }
+   }
+
    /**
     * Inspects the Micro-manager software and gathers information about all
     * available devices.
@@ -1504,6 +1512,12 @@ public class MicroscopeModel {
 
          loadDeviceDataFromHardware(c);
          removeDuplicateComPorts();
+
+         for (Device dev : devs) {
+            if (dev.isStage()) {
+               c.setFocusDirection(dev.getName(), dev.getFocusDirection());
+            }
+         }
 
       } catch (Exception e) {
          ReportingUtils.showError(e);

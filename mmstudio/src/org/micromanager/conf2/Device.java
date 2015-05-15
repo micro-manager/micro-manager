@@ -249,6 +249,12 @@ import org.micromanager.utils.ReportingUtils;
       setupLabels_.put(new Integer(lab.state_), lab);
    }
 
+   public void getFocusDirectionFromHardware(CMMCore core) throws Exception {
+      if (type_ == DeviceType.StageDevice) {
+         focusDirection_ = core.getFocusDirection(name_);
+      }
+   }
+
    public void getSetupLabelsFromHardware(CMMCore core) throws Exception {
       // we can only add the state labels after initialization of the device!!
       if (type_ == DeviceType.StateDevice)  {

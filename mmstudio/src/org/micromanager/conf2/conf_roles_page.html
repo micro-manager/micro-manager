@@ -1,18 +1,34 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
-  <title>Roles Page</title>
+<title>Roles Page</title>
 </head>
-
-
 <body>
+<h2>Default Device Roles</h2>
+<ul>
+  <li>Micro-Manager treats one camera, shutter and focus stage as
+    defaults for the main control window.</li>
+  <li>Here you can choose the defaults for Micro-Manager startup.</li>
+  <li>These default roles can be changed at any time while
+    Micro-Manager is running through the Device Property Browser (as
+    properties of the Core).</li>
+</ul>
 
+<h2>Autoshutter</h2>
+<ul>
+  <li>Choose whether or not the shutter, by default, should automatically open
+    and close when acquiring images.</li>
+  <li>This setting can be changed in the main control window at any time.</li>
+</ul>
 
-   <h2>Default Device Roles</h2> 
-       <ul>
-           <li>Micro-Manager treats one camera, shutter and focus stage as "defaults" for the main control window.</li>
-           <li>Here you can choose the defaults for Micro-Manager startup.</li>
-           <li>These default roles can be changed at any time while Micro-Manager is running
-               through the Device Property Browser (as properties of the Core).</li>
-       </ul>
+<h2>Stage Focus Directions</h2>
+<ul>
+   <li>Some functionality requires knowing whether increasing the Z position
+     corresponds to moving the objective lens toward the sample or away from
+     the sample.</li>
+   <li>You can leave these "Unknown" for now if you are not sure which way your
+     focus device moves. Also leave "Unknown" any stage devices that do not
+     control the focus axis.</li>
+</ul>
+</body>
 </html>
