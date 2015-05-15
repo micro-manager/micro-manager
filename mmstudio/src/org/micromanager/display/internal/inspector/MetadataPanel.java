@@ -48,6 +48,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.internal.DefaultMetadata;
+import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.Inspector;
@@ -199,9 +200,22 @@ public class MetadataPanel extends InspectorPanel {
          public void run() {
             Metadata data = image.getMetadata();
             JSONObject metadata = ((DefaultMetadata) data).toJSON();
-            // Enhance this structure with information about basic image
-            // properties.
             try {
+               // If the "userData" and/or "scopeData" properties are present,
+               // we need to "flatten" them a bit -- their keys and values
+               // have been serialized into the JSON using PropertyMap
+               // serialization rules, which create a JSONObject for each
+               // property.
+               if (data.getScopeData() != null) {
+                  DefaultPropertyMap scopeData = (DefaultPropertyMap) data.getScopeData();
+                  scopeData.flattenJSONSerialization(metadata);
+               }
+               if (data.getUserData() != null) {
+                  DefaultPropertyMap userData = (DefaultPropertyMap) data.getUserData();
+                  userData.flattenJSONSerialization(metadata);
+               }
+               // Enhance this structure with information about basic image
+               // properties.
                metadata.put("Width", image.getWidth());
                metadata.put("Height", image.getHeight());
                if (image.getCoords() != null) {

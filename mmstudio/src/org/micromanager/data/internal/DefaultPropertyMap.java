@@ -512,6 +512,33 @@ public class DefaultPropertyMap implements PropertyMap {
       return result;
    }
 
+   /**
+    * A convenience function mostly for the MetadataPanel that discards all
+    * of the typing information in a serialization of our contents. As a
+    * result, our serialization will look more like this:
+    * {
+    *    "key1": value1,
+    *    ...
+    * }
+    * instead of this:
+    * {
+    *    "key1": {"PropType": "String", "PropVal": "value1"}
+    *    ...
+    * }
+    */
+   public void flattenJSONSerialization(JSONObject serialization) {
+      for (String key : getKeys()) {
+         try {
+            serialization.put(key,
+                  serialization.getJSONObject(key).get(VALUE));
+         }
+         catch (JSONException e) {
+            ReportingUtils.logError(e,
+                  "Error in flattening PropertyMap serialization");
+         }
+      }
+   }
+
    public static DefaultPropertyMap fromJSON(JSONObject map) throws JSONException {
       Builder builder = new Builder();
       JSONArray keys = map.names();
