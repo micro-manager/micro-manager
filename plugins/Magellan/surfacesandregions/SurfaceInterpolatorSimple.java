@@ -54,8 +54,9 @@ public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
          double dx = (boundXMax_ - boundXMin_) / (numInterpPointsX - 1);
          double dy = (boundYMax_ - boundYMin_) / (numInterpPointsY - 1);
 
-         Double[][] interpVals = new Double[numInterpPointsY][numInterpPointsX];
-         double[][] interpNormals = new double[numInterpPointsY][numInterpPointsX];
+         float[][] interpVals = new float[numInterpPointsY][numInterpPointsX];
+         float[][] interpNormals = new float[numInterpPointsY][numInterpPointsX];
+         boolean[][] interpDefined = new boolean[numInterpPointsY][numInterpPointsX];
          for (int yInd = 0; yInd < interpVals.length; yInd++) {
             for (int xInd = 0; xInd < interpVals[0].length; xInd++) {
                if (Thread.interrupted()) {
@@ -73,13 +74,13 @@ public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
                   Plane plane = new Plane(v1, v2, v3, TOLERANCE);
                   //intersetion of vertical line at these x+y values with plane gives point in plane
                   Vector3D pointInPlane = (Vector3D) plane.intersection(new Line(new Vector3D(xVal, yVal, 0), new Vector3D(xVal, yVal, 1),TOLERANCE)); 
-                  double zVal = (double) pointInPlane.getZ();                  
+                  float zVal =  (float) pointInPlane.getZ();                  
                   interpVals[yInd][xInd] = zVal;
-                  double angle = Vector3D.angle(plane.getNormal(),new Vector3D(0, 0, 1)) / Math.PI * 180.0;
+                  float angle = (float) (Vector3D.angle(plane.getNormal(),new Vector3D(0, 0, 1)) / Math.PI * 180.0);
                   interpNormals[yInd][xInd] = angle;
+                  interpDefined[yInd][xInd] = true;
                } else {
-                  interpVals[yInd][xInd] = null;
-                  interpNormals[yInd][xInd] = 0;
+                  interpDefined[yInd][xInd] = false;
                }
             }
          }
@@ -87,7 +88,8 @@ public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
             throw new InterruptedException();
          }
          synchronized (interpolationLock_) {
-            currentInterpolation_ = new SingleResolutionInterpolation(pixelsPerInterpPoint, interpVals, interpNormals, boundXMin_, boundXMax_, boundYMin_, boundYMax_,
+            currentInterpolation_ = new SingleResolutionInterpolation(pixelsPerInterpPoint, interpDefined, interpVals, interpNormals, 
+            boundXMin_, boundXMax_, boundYMin_, boundYMax_,
                     convexHullRegion_, convexHullVertices_, getPoints());
             interpolationLock_.notifyAll();
          }

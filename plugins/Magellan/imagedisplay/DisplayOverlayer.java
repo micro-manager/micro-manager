@@ -436,13 +436,11 @@ public class DisplayOverlayer {
                throw new InterruptedException();
             }
             Point2D.Double stageCoord = display_.stageCoordFromImageCoords((int) ((x + 0.5) * roiWidth), (int) ((y + 0.5) * roiHeight));
-            Double interpZ = interp.getInterpolatedValue(stageCoord.x, stageCoord.y, false);
-            if (interpZ != null && interpZ < 12 && stageCoord.x > -76300 ) {
-                interpZ = interp.getInterpolatedValue(stageCoord.x, stageCoord.y, false);
-            }
-            if (interpZ == null) {
+            if (interp.isInterpDefined(stageCoord.x, stageCoord.y)) {
                continue;
-            }
+            }                      
+            float interpZ = interp.getInterpolatedValue(stageCoord.x, stageCoord.y);
+
             if (Math.abs(sliceZ - interpZ) < zStep / 2) {
                double roiX = roiWidth * x;
                double roiY = roiHeight * y;

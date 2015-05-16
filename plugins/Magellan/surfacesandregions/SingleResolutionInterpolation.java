@@ -20,17 +20,19 @@ import org.apache.commons.math3.geometry.partitioning.Region;
 public class SingleResolutionInterpolation {
    
    private final int pixPerInterpPoint_;
-   private final Double[][] interpolation_;
-   private final double[][] normals_; //stored in degrees
+   private final boolean[][] interpDefined_;
+   private final float[][] interpolation_;
+   private final float[][] normals_; //stored in degrees
    private final double boundXMin_, boundXMax_, boundYMin_, boundYMax_;
    private Region<Euclidean2D> convexHullRegion_;
    //for extrapolation
    private TreeSet<Vector2D> convexHullVertices_;
    private Point3d[] allPoints_;
    
-   public SingleResolutionInterpolation(int pixPerPoint, Double[][] interp, double[][] normals, double boundXMin, double boundXMax, double boundYMin, double boundYMax, 
+   public SingleResolutionInterpolation(int pixPerPoint, boolean[][] defined, float[][] interp, float[][] normals, double boundXMin, double boundXMax, double boundYMin, double boundYMax, 
            Region<Euclidean2D> ch, Vector2D[] convexHullVertices, Point3d[] allPoints ) {
       pixPerInterpPoint_ = pixPerPoint;
+      interpDefined_ = defined;
       interpolation_ = interp;      
       normals_ = normals;
       boundXMax_ = boundXMax;
@@ -67,7 +69,7 @@ public class SingleResolutionInterpolation {
     * @param y
     * @return 
     */
-   public double getNormalAngleToVertical(double x, double y) {
+   public float getNormalAngleToVertical(double x, double y) {
       if (!isInsideConvexHull(x, y)) {
          return 0;
       }
@@ -81,52 +83,55 @@ public class SingleResolutionInterpolation {
       return 0;
    }
 
-   /**
-    *
-    * @param x
-    * @param y
-    * @return null if not inside
-    */
-   public Double getInterpolatedValue(double x, double y, boolean extrapolate) {
-      try {
-         if (!isInsideConvexHull(x, y) && !extrapolate) {
-            return null; //if not extrapolating, everything outside convex hull is null
-         }
+      public boolean isInterpDefined(double x, double y) {
+      if (!isInsideConvexHull(x, y)) {
+         return false;
+      }
+      //try to get the value from the calulated interpolation
+      int numInterpPointsX = interpolation_[0].length;
+      int numInterpPointsY = interpolation_.length;
+      int xIndex = (int) Math.round(((x - boundXMin_) / (boundXMax_ - boundXMin_)) * (numInterpPointsX - 1));
+      int yIndex = (int) Math.round(((y - boundYMin_) / (boundYMax_ - boundYMin_)) * (numInterpPointsY - 1));
+      if (xIndex >= 0 && yIndex >= 0 && xIndex < interpolation_[0].length && yIndex < interpolation_.length) {
+         return interpDefined_[yIndex][xIndex];
+
+      }
+      return false;
+   }
+   
+   public float getInterpolatedValue(double x, double y) {
          //try to get the value from the calulated interpolation
          int numInterpPointsX = interpolation_[0].length;
          int numInterpPointsY = interpolation_.length;
          int xIndex = (int) Math.round(((x - boundXMin_) / (boundXMax_ - boundXMin_)) * (numInterpPointsX - 1));
          int yIndex = (int) Math.round(((y - boundYMin_) / (boundYMax_ - boundYMin_)) * (numInterpPointsY - 1));
-         if (xIndex >= 0 && yIndex >= 0 && xIndex < interpolation_[0].length && yIndex < interpolation_.length ){
-             if (interpolation_[yIndex][xIndex] != null || !extrapolate) {
-                 return interpolation_[yIndex][xIndex];
-             }       
+//         if (xIndex >= 0 && yIndex >= 0 && xIndex < interpolation_[0].length && yIndex < interpolation_.length ){
+            return interpolation_[yIndex][xIndex];               
+//         }
+   }
+      
+      
+
+   public float getExtrapolatedValue(double x, double y) {
+      //find closest convex hull vertex
+      Vector2D closest = null;
+      double minDistance = Integer.MAX_VALUE;
+      for (Vector2D vertex : convexHullVertices_) {
+         double distance = vertex.distance(new Vector2D(x, y));
+         if (distance < minDistance) {
+            minDistance = distance;
+            closest = vertex;
          }
-         //if interpolation is null, its either outside convex hull, or just inside and not calculated due
-         //to sampling artifacts. Either way, setting value equal to closest convex hull point should do just fine   
-         //find closest convex hull vertex
-         Vector2D closest = null;
-         double minDistance = Integer.MAX_VALUE;
-         for (Vector2D vertex : convexHullVertices_) {
-            double distance = vertex.distance(new Vector2D(x, y));
-            if (distance < minDistance) {
-               minDistance = distance;
-               closest = vertex;
-            }
-         }
-         //find 3d point with same xy as convex hull vertex and use its z coordinate
-         for (Point3d p : allPoints_) {
-            if (closest.equals(new Vector2D(p.x, p.y))) {
-               return (double) p.z;
-            }
-         }
-         //if I ever get this error, either the two lists are out of sync or creating vecotrs causes some loss of precision
-         IJ.log("Couldn't find 3d point with same XY as convex hull");   
-      } catch (Exception e) {
-         e.printStackTrace();
-         Log.log("Problem interpolating");
       }
-      return null;
+      //find 3d point with same xy as convex hull vertex and use its z coordinate
+      for (Point3d p : allPoints_) {
+         if (closest.equals(new Vector2D(p.x, p.y))) {
+            return (float) p.z;
+         }
+      }
+      //if I ever get this error, either the two lists are out of sync or creating vecotrs causes some loss of precision
+      IJ.log("Couldn't find 3d point with same XY as convex hull");
+      throw new RuntimeException();
    }
 
    private boolean isInsideConvexHull(double x, double y) {

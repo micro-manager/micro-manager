@@ -190,16 +190,16 @@ public class SurfaceData implements Covariant {
             Point2D.Double stageCoords = new Point2D.Double();
             transform.transform(new Point2D.Double(x, y), stageCoords);
             //test point for inclusion of position
-            Double interpVal = surface_.waitForCurentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, false);
-            double normalAngle = surface_.waitForCurentInterpolation().getNormalAngleToVertical(stageCoords.x, stageCoords.y);
-            if (interpVal == null) {
+              if (!surface_.waitForCurentInterpolation().isInterpDefined(stageCoords.x, stageCoords.y)) {
                //if position is outside of convex hull, assume min distance is 0
                minDistance = 0;
                //get extrapolated value for max distance
-               interpVal = surface_.waitForCurentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, true);
+               float interpVal = surface_.waitForCurentInterpolation().getExtrapolatedValue(stageCoords.x, stageCoords.y);
                maxDistance = Math.max(zVal - interpVal, maxDistance);
                //only take actual values for normals
             } else {
+                   float interpVal = surface_.waitForCurentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y);
+            float normalAngle = surface_.waitForCurentInterpolation().getNormalAngleToVertical(stageCoords.x, stageCoords.y);
                minDistance = Math.min(Math.max(0,zVal - interpVal), minDistance);
                maxDistance = Math.max(zVal - interpVal, maxDistance);
                minNormalAngle = Math.min(minNormalAngle, normalAngle);
@@ -210,19 +210,20 @@ public class SurfaceData implements Covariant {
       return new double[]{minDistance, maxDistance, minNormalAngle, maxNormalAngle};
    }
 
-    private Double getDistanceToSurfaceAtPositionCenter(XYStagePosition xyPos) throws InterruptedException {
-        Point2D.Double center = xyPos.getCenter();
-        SingleResolutionInterpolation interp = surface_.waitForCurentInterpolation();
-        return interp.getInterpolatedValue(center.x, center.y, false);
-    }
+ 
    
    @Override
    public CovariantValue getCurrentValue(AcquisitionEvent event) throws Exception {
       XYStagePosition xyPos = event.xyPosition_;
       if (category_.equals(DISTANCE_BELOW_SURFACE_CENTER)) {
          //if interpolation is undefined at position center, assume distance below is 0
-         Double interpValue = getDistanceToSurfaceAtPositionCenter(xyPos);
-         return new CovariantValue((interpValue == null ? 0 : event.zPosition_ - interpValue) );
+         Point2D.Double center = xyPos.getCenter();
+        SingleResolutionInterpolation interp = surface_.waitForCurentInterpolation();
+        if (interp.isInterpDefined(center.x, center.y)) {
+           return new CovariantValue( event.zPosition_ - interp.getInterpolatedValue(center.x, center.y)); 
+        }
+        return new CovariantValue(0.0);
+
       } else if (category_.equals(DISTANCE_BELOW_SURFACE_MINIMUM)) {
          return new CovariantValue(distanceAndNormalCalc(xyPos.getFullTileCorners(), event.zPosition_)[0]);
       } else if (category_.equals(DISTANCE_BELOW_SURFACE_MAXIMUM)) {

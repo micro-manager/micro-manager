@@ -191,11 +191,9 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    public SingleResolutionInterpolation waitForCurentInterpolation() throws InterruptedException {
       synchronized (interpolationLock_) {
          if (currentInterpolation_ == null) {
-            Log.log("waiting for current interpolation",true);
             while (currentInterpolation_ == null) {
                interpolationLock_.wait();
             }
-            Log.log("interpolation ready",true);
             return currentInterpolation_;
          }
          return currentInterpolation_;
@@ -226,10 +224,11 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       Point2D.Double[] corners = getPositionCornersWithPadding(pos, surface.xyPadding_um_);
       //First check position corners before going into a more detailed set of test points
       for (Point2D.Double point : corners) {
-         Double interpVal = surface.waitForCurentInterpolation().getInterpolatedValue(point.x, point.y, false);
-         if (interpVal == null) {
-            continue;
-         }
+           if (!surface.waitForCurentInterpolation().isInterpDefined(point.x, point.y)) {
+               continue;
+            }
+            float interpVal = surface.waitForCurentInterpolation().getInterpolatedValue(point.x, point.y);
+
          
          if (above) { //test if point lies bleow surface + padding
             if (zPos >=  interpVal ) {   //TODO: account for different signs of Z
@@ -267,10 +266,11 @@ public abstract class SurfaceInterpolator implements XYFootprint {
             Point2D.Double stageCoords = new Point2D.Double();
             transform.transform(new Point2D.Double(x, y), stageCoords);
             //test point for inclusion of position
-            Double interpVal = surface.waitForCurentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, false);
-            if (interpVal == null) {
+            if (!surface.waitForCurentInterpolation().isInterpDefined(stageCoords.x, stageCoords.y)) {
                continue;
             }
+            float interpVal = surface.waitForCurentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y);
+
             if (above) { //test if point lies bleow surface + padding
                if (zPos >= interpVal ) {   //TODO: account for different signs of Z                 
                    return false;
