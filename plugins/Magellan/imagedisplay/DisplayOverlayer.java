@@ -437,6 +437,9 @@ public class DisplayOverlayer {
             }
             Point2D.Double stageCoord = display_.stageCoordFromImageCoords((int) ((x + 0.5) * roiWidth), (int) ((y + 0.5) * roiHeight));
             Double interpZ = interp.getInterpolatedValue(stageCoord.x, stageCoord.y, false);
+            if (interpZ != null && interpZ < 12 && stageCoord.x > -76300 ) {
+                interpZ = interp.getInterpolatedValue(stageCoord.x, stageCoord.y, false);
+            }
             if (interpZ == null) {
                continue;
             }

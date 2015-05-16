@@ -28,7 +28,8 @@ public class DeviceControlTableModel extends AbstractTableModel   {
 
    
    public DeviceControlTableModel(Preferences prefs) {
-      storedGroupsAndProps_ = PropertyAndGroupUtils.readStoredGroupsAndProperties(prefs);
+      core_ = Magellan.getCore();
+       storedGroupsAndProps_ = PropertyAndGroupUtils.readStoredGroupsAndProperties(prefs);
       prefs_ = prefs;
    }
    

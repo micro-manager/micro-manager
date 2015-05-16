@@ -22,7 +22,7 @@ import org.apache.commons.math3.geometry.partitioning.Region;
  */
 public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
 
-   private static final double TOLERANCE = 0.1;
+   private static final double TOLERANCE = 0.01;
    
    public SurfaceInterpolatorSimple(SurfaceManager manager, String xyName, String zName) {
       super(manager, xyName, zName);
@@ -72,8 +72,8 @@ public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
                   Vector3D v3 = new Vector3D(tri.p3().x(), tri.p3().y(), tri.p3().z());
                   Plane plane = new Plane(v1, v2, v3, TOLERANCE);
                   //intersetion of vertical line at these x+y values with plane gives point in plane
-                  Vector3D pointInPlane = (Vector3D) plane.intersection(new Line(new Vector3D(xVal, yVal, 0), new Vector3D(xVal, yVal, 1),TOLERANCE));
-                  double zVal = (double) pointInPlane.getZ();
+                  Vector3D pointInPlane = (Vector3D) plane.intersection(new Line(new Vector3D(xVal, yVal, 0), new Vector3D(xVal, yVal, 1),TOLERANCE)); 
+                  double zVal = (double) pointInPlane.getZ();                  
                   interpVals[yInd][xInd] = zVal;
                   double angle = Vector3D.angle(plane.getNormal(),new Vector3D(0, 0, 1)) / Math.PI * 180.0;
                   interpNormals[yInd][xInd] = angle;
@@ -91,6 +91,7 @@ public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
                     convexHullRegion_, convexHullVertices_, getPoints());
             interpolationLock_.notifyAll();
          }
+//         System.gc();
          pixelsPerInterpPoint /= 2;
       }
    }

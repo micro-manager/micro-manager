@@ -71,14 +71,15 @@ public class PositionManager {
    public synchronized XYStagePosition getXYPosition(int index) {
       try {
          JSONArray jsonPos = positionList_.getJSONObject(index).getJSONObject("DeviceCoordinatesUm").getJSONArray(xyStageName_);
-         Point2D.Double posCenter = new Point2D.Double(jsonPos.getDouble(0), jsonPos.getDouble(1));
-         //Full 
-         AffineTransform positionTransform = (AffineTransform) affine_.clone();
-         positionTransform.translate(posCenter.x, posCenter.y);
-         return new XYStagePosition(posCenter, displayTileWidth_, displayTileHeight_,
-                 fullTileWidth_, fullTileHeight_, (int) getGridRow(index, 0), (int) getGridCol(index, 0), positionTransform);
+          Point2D.Double posCenter = new Point2D.Double(jsonPos.getDouble(0), jsonPos.getDouble(1));
+          //Full 
+          double[] mat = new double[4];
+          affine_.getMatrix(mat);
+          AffineTransform transform = new AffineTransform(mat[0], mat[1], mat[2], mat[3], posCenter.x, posCenter.y);
+          return new XYStagePosition(posCenter, displayTileWidth_, displayTileHeight_,
+                  fullTileWidth_, fullTileHeight_, (int) getGridRow(index, 0), (int) getGridCol(index, 0), transform);
       } catch (JSONException ex) {
-         Log.log("problem with position metadata");
+          Log.log("problem with position metadata");
          throw new RuntimeException();
       }
    }
@@ -410,11 +411,13 @@ public class PositionManager {
          long dxPix = (long) (xAbsolute - (existingColumn + 0.5) * displayTileWidth_);
          long dyPix = (long) (yAbsolute - (existingRow + 0.5) * displayTileHeight_);
          
-         AffineTransform transform = (AffineTransform) affine_.clone();
-         transform.translate(exisitngX, exisitngY);
-         Point2D.Double stagePos = new Point2D.Double();
-         transform.transform(new Point2D.Double(dxPix, dyPix), stagePos);  
-         return stagePos;
+
+          Point2D.Double stagePos = new Point2D.Double();
+          double[] mat = new double[4];
+          affine_.getMatrix(mat);
+          AffineTransform transform = new AffineTransform(mat[0], mat[1], mat[2], mat[3], exisitngX, exisitngY);
+          transform.transform(new Point2D.Double(dxPix, dyPix), stagePos);
+          return stagePos;
       } catch (JSONException ex) {
         ex.printStackTrace();;
          Log.log("Problem with current position metadata", true);
@@ -454,8 +457,9 @@ public class PositionManager {
             double yPixelOffset = (row - existingRow) * (JavaLayerImageConstructor.getInstance().getImageHeight() - pixelOverlapY);
 
             Point2D.Double stagePos = new Point2D.Double();
-            AffineTransform transform = (AffineTransform) affine_.clone();
-            transform.translate(exisitngX, exisitngY);
+            double[] mat = new double[4];
+            affine_.getMatrix(mat);
+            AffineTransform transform = new AffineTransform(mat[0], mat[1], mat[2], mat[3], exisitngX, exisitngY);                   
             transform.transform(new Point2D.Double(xPixelOffset, yPixelOffset), stagePos);
             return stagePos;
          }

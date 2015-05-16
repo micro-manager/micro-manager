@@ -22,12 +22,12 @@ public class AffineUtils {
    public static String transformToString(AffineTransform transform) {
       double[] matrix = new double[4];
       transform.getMatrix(matrix);
-      return matrix[0] +"-"+matrix[1]+"-"+matrix[2]+"-"+matrix[3];
+      return matrix[0] +"_"+matrix[1]+"_"+matrix[2]+"_"+matrix[3];
    }
    
    public static AffineTransform stringToTransform(String s) {
       double[] mat = new double[4];
-      String[] vals = s.split("-");
+      String[] vals = s.split("_");
       for (int i = 0; i < 4; i ++) {
          mat[i] = Double.parseDouble(vals[i]);
       }

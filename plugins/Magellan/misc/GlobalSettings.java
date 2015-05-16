@@ -48,7 +48,7 @@ public class GlobalSettings {
             demoMode_ = true;
             new DemoModeImageData();
          } 
-         bidc2P_ = Magellan.getCore().getCameraDevice().equals("BitflowCamera") || Magellan.getCore().getCameraDevice().equals("BitflowCamera2x");
+         bidc2P_ = Magellan.getCore().getCameraDevice().equals("BitFlowCamera") || Magellan.getCore().getCameraDevice().equals("BitFlowCameraX2");
       } catch (Exception e) {
       }
       

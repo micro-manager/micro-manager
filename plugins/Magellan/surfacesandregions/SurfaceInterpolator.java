@@ -222,10 +222,11 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    
    public static boolean testPositionRelativeToSurface(XYStagePosition pos, SurfaceInterpolator surface, double zPos, boolean above) throws InterruptedException {
       //get the corners with padding added in
+//       System.out.println(pos.getGridRow() + " \t" + pos.getGridCol());
       Point2D.Double[] corners = getPositionCornersWithPadding(pos, surface.xyPadding_um_);
       //First check position corners before going into a more detailed set of test points
       for (Point2D.Double point : corners) {
-         Double interpVal = surface.waitForCurentInterpolation().getInterpolatedValue(point.x, point.y, true);
+         Double interpVal = surface.waitForCurentInterpolation().getInterpolatedValue(point.x, point.y, false);
          if (interpVal == null) {
             continue;
          }
@@ -266,13 +267,13 @@ public abstract class SurfaceInterpolator implements XYFootprint {
             Point2D.Double stageCoords = new Point2D.Double();
             transform.transform(new Point2D.Double(x, y), stageCoords);
             //test point for inclusion of position
-            Double interpVal = surface.waitForCurentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, true);
+            Double interpVal = surface.waitForCurentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y, false);
             if (interpVal == null) {
                continue;
             }
             if (above) { //test if point lies bleow surface + padding
-               if (zPos >= interpVal ) {   //TODO: account for different signs of Z
-                  return false;
+               if (zPos >= interpVal ) {   //TODO: account for different signs of Z                 
+                   return false;
                }
             } else {
                //test if point lies below surface + padding
@@ -523,6 +524,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       points_.add(new Point3d(x,y,z)); //for interpolation
       updateConvexHullAndInterpolate(); 
       manager_.drawSurfaceOverlay(this);
+     
    }
    
    

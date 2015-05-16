@@ -426,7 +426,7 @@ public class MagellanEngine {
         return df.format(calobj.getTime());
     }
 
-   public static void addImageMetadata(JSONObject tags, AcquisitionEvent event,
+   public static void addImageMetadata(JSONObject tags, AcquisitionEvent event, int timeIndex,
            int camChannelIndex, long elapsed_ms, int exposure) {
       //add tags
       try {
@@ -435,7 +435,7 @@ public class MagellanEngine {
          MD.setPositionName(tags, "Grid_" + gridRow + "_" + gridCol);
          MD.setPositionIndex(tags, event.positionIndex_);
          MD.setSliceIndex(tags, event.sliceIndex_);
-         MD.setFrameIndex(tags, event.timeIndex_);
+         MD.setFrameIndex(tags, timeIndex);
          MD.setChannelIndex(tags, event.channelIndex_ + camChannelIndex);
          MD.setZPositionUm(tags, event.zPosition_);
          MD.setElapsedTimeMs(tags, elapsed_ms - event.acquisition_.getStartTime_ms());

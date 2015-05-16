@@ -5,6 +5,7 @@
 package acq;
 
 import autofocus.CrossCorrelationAutofocus;
+import bidc.FrameIntegrationMethod;
 import coordinates.XYStagePosition;
 import ij.IJ;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import coordinates.AffineUtils;
 import java.awt.geom.Point2D;
 import json.JSONArray;
 import main.Magellan;
+import misc.GlobalSettings;
 import misc.Log;
 import surfacesandregions.Point3d;
 
@@ -50,7 +52,8 @@ public class FixedAreaAcquisition extends Acquisition {
    private ExecutorService eventGenerator_;
    private CrossCorrelationAutofocus autofocus_;
    private int maxSliceIndex_ = 0;
-   private  double zTop_;
+   private double zTop_;
+   private final boolean burstMode_;
 
    /**
     * Acquisition with fixed XY positions (although they can potentially all be
@@ -59,22 +62,35 @@ public class FixedAreaAcquisition extends Acquisition {
     *
     * Acquisition engine manages a thread that reads events, fixed area
     * acquisition has another thread that generates events
-    */
-   public FixedAreaAcquisition(FixedAreaAcquisitionSettings settings, ParallelAcquisitionGroup acqGroup) throws Exception {
-      super(settings.zStep_, settings.channels_);
-      acqGroup_ = acqGroup;
-      settings_ = settings;
-      spaceMode_ = settings.spaceMode_;
-      eventGenerator_ = Executors.newSingleThreadExecutor(new ThreadFactory() {
-         @Override
-         public Thread newThread(Runnable r) {
-            return new Thread(r, settings_.name_ + ": Event generator");
-         }
-      });
-      setupXYPositions();
-      initialize(settings.dir_, settings.name_, settings.tileOverlap_);
-      createEventGenerator();
-      createAutofocus();
+ 
+     */
+    public FixedAreaAcquisition(FixedAreaAcquisitionSettings settings, ParallelAcquisitionGroup acqGroup) throws Exception {
+        super(settings.zStep_, settings.channels_);
+        acqGroup_ = acqGroup;
+        settings_ = settings;
+        spaceMode_ = settings.spaceMode_;
+        eventGenerator_ = Executors.newSingleThreadExecutor(new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable r) {
+                return new Thread(r, settings_.name_ + ": Event generator");
+            }
+        });
+        setupXYPositions();
+        initialize(settings.dir_, settings.name_, settings.tileOverlap_);
+        createEventGenerator();
+        createAutofocus();
+        //if a 2D, single xy position, no covariants, no autofocus: activate burst mode
+        burstMode_ = positions_.size() == 1 && settings.covariantPairings_.isEmpty() && !settings.autofocusEnabled_
+                && (spaceMode_ == FixedAreaAcquisitionSettings.NO_SPACE || spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D)
+                && !settings.timeEnabled_ && GlobalSettings.getInstance().isBIDCTwoPhoton()
+                && getFilterType() == FrameIntegrationMethod.FRAME_AVERAGE;
+        if (burstMode_) {
+            Log.log("Burst mode activated");
+        }
+    }
+
+   public boolean burstModeActive() {
+       return burstMode_;
    }
 
    private void setupXYPositions() {
@@ -361,6 +377,10 @@ public class FixedAreaAcquisition extends Acquisition {
                      } catch (Exception ex) {                    
                         IJ.log("Problem running autofocus " + ex.getMessage());
                      }
+                  }
+                  if (burstMode_) {
+                      break;
+                      //only one time point in burst mode
                   }
                }
                //acqusiition has generated all of its events

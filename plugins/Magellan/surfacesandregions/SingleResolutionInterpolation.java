@@ -97,9 +97,10 @@ public class SingleResolutionInterpolation {
          int numInterpPointsY = interpolation_.length;
          int xIndex = (int) Math.round(((x - boundXMin_) / (boundXMax_ - boundXMin_)) * (numInterpPointsX - 1));
          int yIndex = (int) Math.round(((y - boundYMin_) / (boundYMax_ - boundYMin_)) * (numInterpPointsY - 1));
-         if (xIndex >= 0 && yIndex >= 0 && xIndex < interpolation_[0].length && yIndex < interpolation_.length &&
-                 interpolation_[yIndex][xIndex] != null) {
-            return interpolation_[yIndex][xIndex];
+         if (xIndex >= 0 && yIndex >= 0 && xIndex < interpolation_[0].length && yIndex < interpolation_.length ){
+             if (interpolation_[yIndex][xIndex] != null || !extrapolate) {
+                 return interpolation_[yIndex][xIndex];
+             }       
          }
          //if interpolation is null, its either outside convex hull, or just inside and not calculated due
          //to sampling artifacts. Either way, setting value equal to closest convex hull point should do just fine   
