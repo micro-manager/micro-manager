@@ -455,7 +455,13 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       PositionList sites = new PositionList();
       System.out.println("# Rows : " + rows + ", # Cols : " + cols + " ,spacing = " + spacing);
       for (int i = 0; i < rows; i++) {
-         for (int j = 0; j < cols; j++) {
+         // create snake-like pattern inside the well:
+         boolean isEven = i % 2 == 0;
+         int start = isEven ? 0 : cols - 1;
+         int end = isEven ? cols : - 1;
+         int j = start;
+         // instead of using a for loop, cycle backwards on odd rows
+         while ( (isEven && j < end) || (!isEven && j > end)  ) {
             double x;
             double y;
             if (cols > 1) {
@@ -479,6 +485,12 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 
             mps.add(sp);
             sites.addPosition(mps);
+            if (isEven) {
+               j++;
+            } else {
+               j--;
+            }
+
          }
       }
 
