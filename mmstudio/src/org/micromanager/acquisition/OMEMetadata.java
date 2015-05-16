@@ -260,11 +260,7 @@ public class OMEMetadata {
          int slice = MDUtils.getSliceIndex(tags);
          int frame = MDUtils.getFrameIndex(tags);
          int channel = MDUtils.getChannelIndex(tags);
-         //TODO: fix this
-         if (slice <0) {
-            return;
-         }
-         
+             
          // ifdCount is 0 when a new file started, tiff data plane count is 0 at a new position
          metadata_.setTiffDataFirstZ(new NonNegativeInteger(slice), position, indices.tiffDataIndex_);         
          metadata_.setTiffDataFirstC(new NonNegativeInteger(channel), position, indices.tiffDataIndex_);
@@ -281,7 +277,6 @@ public class OMEMetadata {
       } catch (JSONException ex) {
          ReportingUtils.showError("Image Metadata missing ChannelIndex, SliceIndex, or FrameIndex");
       } catch (Exception e) {
-         e.printStackTrace();
          ReportingUtils.logError("Couldn't add to OME metadata");
       }
 
