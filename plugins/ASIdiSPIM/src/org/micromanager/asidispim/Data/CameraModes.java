@@ -151,8 +151,10 @@ public class CameraModes {
             MyDialogUtils.showError("For preference " + Properties.Keys.PLUGIN_CAMERA_MODE.toString()
                   + " the previous selection \""
                   + getKeyFromPrefCode(origCode) + "\" is not valid.  Changing to default.");
-            prefs_.putInt(MyStrings.PanelNames.SETTINGS.toString(),
-                  Properties.Keys.PLUGIN_CAMERA_MODE, ((Keys) jcb_.getSelectedItem()).getPrefCode());
+            if (jcb_.getSelectedItem() != null) {
+               prefs_.putInt(MyStrings.PanelNames.SETTINGS.toString(),
+                  Properties.Keys.PLUGIN_CAMERA_MODE, ((Keys) jcb_.getSelectedItem()).getPrefCode());     
+            }
          }
       }//updateSelections
       
