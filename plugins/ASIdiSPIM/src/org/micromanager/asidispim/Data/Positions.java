@@ -39,13 +39,15 @@ import org.micromanager.utils.ReportingUtils;
  * @author Jon
  */
 public class Positions {
-   private HashMap<Devices.Keys, Double> oneAxisDrivePositions_;
-   private HashMap<Devices.Keys, Point2D.Double> twoAxisDrivePositions_;
+   private final HashMap<Devices.Keys, Double> oneAxisDrivePositions_;
+   private final HashMap<Devices.Keys, Point2D.Double> twoAxisDrivePositions_;
    private final Devices devices_;
    private final CMMCore core_;
    
    /**
     * Constructor
+    * @param gui Micro-Manager scriptinterface
+    * @param devices ASIdiSPIM class that holds information about the devices
     */
    public Positions(ScriptInterface gui, Devices devices) {
       devices_ = devices;
@@ -94,7 +96,7 @@ public class Positions {
       if (devices_.is1DStage(devKey)) {
          Double pos = getOneAxisStagePosition(devKey);
          if (pos != null) {
-            return pos.doubleValue();
+            return pos;
          }
       }
       if (devices_.isGalvo(devKey) || devices_.isXYStage(devKey)) {
@@ -169,7 +171,7 @@ public class Positions {
       if (devices_.is1DStage(devKey) || dir==Directions.NONE) {
          Double pt = getOneAxisStagePosition(devKey);
          if (pt != null) {
-            return posToDisplayStringUm(pt.doubleValue());
+            return posToDisplayStringUm(pt);
          }
       }
       if (devices_.isXYStage(devKey)) {
@@ -219,9 +221,9 @@ public class Positions {
    /**
     * Sets the position of specified stage to the specified value using appropriate core calls
     * @param devKey
-    * @param dir
     * @param pos new position of the stage
     * @param ignoreErrors true will return without any errors (or any action) if device is missing
+    * @return true on success, false on failure
     */
    public boolean setPosition(Devices.Keys devKey, double pos, boolean ignoreErrors) {
       return setPosition(devKey, Directions.NONE, pos, ignoreErrors);
@@ -229,9 +231,10 @@ public class Positions {
    
    /**
     * Sets the position of specified stage to the specified value using appropriate core calls
-    * @param devKey
-    * @param dir
+    * @param devKey device as we know it in this plugin
+    * @param dir X, Y, or none
     * @param pos new position of the stage
+    * @return true on success, false on failure
     */
    public boolean setPosition(Devices.Keys devKey, Directions dir, double pos) {
       return setPosition(devKey, dir, pos, false);
@@ -243,6 +246,7 @@ public class Positions {
     * @param dir
     * @param pos new position of the stage
     * @param ignoreErrors true will return without any errors (or any action) if device is missing
+    * @return true on success, false on failure
     */
    public boolean setPosition(Devices.Keys devKey, Directions dir, double pos, boolean ignoreErrors) {
       try {
@@ -282,9 +286,9 @@ public class Positions {
    
    /**
     * Sets the relative position of specified stage to the specified value using appropriate core calls
-    * @param devKey
-    * @param dir
-    * @param pos new position of the stage
+    * @param devKey device as we know it in the plugin
+    * @param dir X, Y, or none
+    * @param delta distance to be traveled
     */
    public void setPositionRelative(Devices.Keys devKey, Directions dir, double delta) {
       try {
@@ -318,9 +322,8 @@ public class Positions {
    
    /**
     * Sets the current position to be the origin.
-    * @param devKey
-    * @param dir
-    * @param pos
+    * @param devKey device as we know it in this plugin
+    * @param dir X, Y, or none
     */
    public void setOrigin(Devices.Keys devKey, Directions dir) {
       try {

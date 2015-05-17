@@ -200,7 +200,10 @@ public class Properties {
       PLUGIN_AUTOFOCUS_WINDOWPOSX("AutofocusWindowPosx"),
       PLUGIN_AUTOFOCUS_WINDOWPOSY("AutofocusWindowPosy"),
       PLUGIN_AUTOFOCUS_WINDOW_WIDTH("AutofocusWindowWidth"),
-      PLUGIN_AUTOFOCUS_WINDOW_HEIGHT("AutofocusWIndowHeight")
+      PLUGIN_AUTOFOCUS_WINDOW_HEIGHT("AutofocusWIndowHeight"),
+      PLUGIN_AUTOFOCUS_ACQBEFORESTART("AutofocusDoBeforeACQStart"),
+      PLUGIN_AUTOFOCUS_EACHNIMAGES("AutofocusEachNTimePoints"),
+      PLUGIN_AUTOFOCUS_CHANNEL("AutofocusChannel")
       ;
       private final String text;
       private final boolean hasPattern;  // true if string has substitution pattern
@@ -314,8 +317,7 @@ public class Properties {
    /**
     * sees if property exists in given device
     * @param device enum key for device 
-    * @param name enum key for property 
-    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    * @param name enum key for property
     * @param propNameSubstitute string to substitute for pattern in property name, or null if not used
     * @return
     */
@@ -633,7 +635,7 @@ public class Properties {
     */
    private String getPropValue(Devices.Keys device, Properties.Keys name,
          String propNameSubstitute) {
-      String val = "";
+      String val;
       if (device == Devices.Keys.PLUGIN) {
          val = prefs_.getString(PLUGIN_PREF_NODE, name, "");
       } else {
