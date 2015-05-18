@@ -53,6 +53,7 @@ import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.asidispim.fit.Fitter;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
+import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -332,6 +333,7 @@ public class AutofocusUtils {
                highestIndex = Fitter.getIndex(scoresToPlot[0], bestGalvoPosition);
                scoresToPlot[1] = Fitter.getFittedSeries(scoresToPlot[0], 
                        function, fitParms);
+               double r2 = Fitter.getRSquare(scoresToPlot[0], function, fitParms);
                
                // display the best scoring image in the debug stack if it exists
                // or if not then in the snap/live window if it exists
@@ -350,8 +352,12 @@ public class AutofocusUtils {
                if (debug) {
                   PlotUtils plotter = new PlotUtils(prefs_, "AutofocusUtils");
                   boolean[] showSymbols = {true, false};
-                  plotter.plotDataN("Focus curve for piezo " + side, 
-                        scoresToPlot, "Galvo position [\u00B0]", "Focus Score", showSymbols);
+                  plotter.plotDataN("Focus curve", 
+                        scoresToPlot, 
+                        "Galvo position [\u00B0]", 
+                        "Focus Score", 
+                        showSymbols, 
+                        "R^2 = " + NumberUtils.doubleToDisplayString(r2));
                   // TODO add annotations with piezo position, bestGalvoPosition, etc.
                }
 

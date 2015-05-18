@@ -242,6 +242,86 @@ public class Fitter {
       return Math.sqrt(diff * diff);
    }
    
+   /**
+    * Calculates a measure for the goodness of fit as defined here:
+    * http://en.wikipedia.org/wiki/Coefficient_of_determination
+    * R^2 = 1 - (SSres/SStot)
+    * where
+    *    SSres = SUM(i) (yi - fi)^2
+    * end
+    *    SStot = SUM(i) (yi - yavg)^2
+    * 
+    * @param data input data (raw data that were fitted
+    * @param type function type used for fitting
+    * @param parms function parameters derived in the fit
+    * @return 
+    */
+   public static double getRSquare(XYSeries data, FunctionType type, 
+           double[] parms) {
+      
+      // calculate SStot
+      double yAvg = getYAvg(data);
+      double ssTot = 0.0;
+      for (int i = 0; i < data.getItemCount(); i++) {
+         double y = data.getY(i).doubleValue();
+         ssTot += (y - yAvg) * (y - yAvg);
+      }
+      
+      // calculate SSres
+      double ssRes = 0.0;
+      for (int i = 0; i < data.getItemCount(); i++) {
+         double y = data.getY(i).doubleValue();
+         double f = getFunctionValue(data.getX(i).doubleValue(), type, parms);
+         ssRes += (y - f) * (y - f);
+         
+      }
+      
+      return 1.0 - (ssRes/ssTot);
+   }
+
+   /**
+    * Returns the average of the ys in a XYSeries
+    * @param data input data
+    * @return y average
+    */
+   public static double getYAvg(XYSeries data) {
+      double avg = 0;
+      for (int i = 0; i < data.getItemCount(); i++) {
+         avg += data.getY(i).doubleValue();
+      }
+      avg = avg / data.getItemCount();
+      return avg;
+   }
+   
+   /**
+    * Calculate the y value for a given function and x value
+    * Throws an IllegalArgumentException if the pars do not match the function
+    * @param xValue xValue to be used in the function
+    * @param type function type
+    * @param parms function parameters (for instance, as return from the fit function
+    * @return 
+    */
+   public static double getFunctionValue(double xValue, FunctionType type,
+           double[] parms) {
+      switch (type) {
+         case NoFit: {
+            return xValue;
+         }
+         case Pol1:
+         case Pol2:
+         case Pol3:
+            checkParms(type, parms);
+            PolynomialFunction polFunction = new PolynomialFunction(parms);
+
+            return polFunction.value(xValue);
+         case Gaussian:
+            checkParms(type, parms);
+            Gaussian.Parametric gf = new Gaussian.Parametric();
+            return gf.value(xValue, parms);
+      }
+      return 0.0;
+   }
+   
    private static void checkParms(FunctionType type, double[] parms) {
       switch (type) {
          case Pol1:

@@ -37,6 +37,8 @@ import java.util.logging.Logger;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.annotations.XYAnnotation;
+import org.jfree.chart.annotations.XYTextAnnotation;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
@@ -114,16 +116,16 @@ public class PlotUtils {
     * Create a frame with a plot of the data given in XYSeries overwrite any
     * previously created frame with the same title
     *
-    * @param title
-    * @param data
-    * @param xTitle
-    * @param yTitle
-    * @param showShapes
-    * @param logLog
+    * @param title shown in the top of the plot
+    * @param data array with data series to be plotted
+    * @param xTitle Title of the X axis
+    * @param yTitle Title of the Y axis
+    * @param showShapes whether or not to draw shapes at the data points
+    * @param annotation to be shown in ploy
     * @return Frame that displays the data
     */
    public Frame plotDataN(String title, XYSeries[] data, String xTitle,
-           String yTitle, boolean[] showShapes) {
+           String yTitle, boolean[] showShapes, String annotation) {
 
       // if we already have a plot open with this title, close it, but remember
       // its position
@@ -204,6 +206,9 @@ public class PlotUtils {
             renderer.setSeriesShapesVisible(i, false);
          }
       }
+      
+      XYAnnotation an = new XYTextAnnotation(annotation, 20, 20);
+      plot.addAnnotation(an);
 
       renderer.setUseFillPaint(true);
 
