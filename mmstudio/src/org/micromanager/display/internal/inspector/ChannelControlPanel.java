@@ -330,9 +330,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       linkButton_.setMinimumSize(new Dimension(linkButton_.getWidth(),
                smallButtonSize.height));
       firstColumn.add(linkButton_, "aligny center");
-      // HACK: tweak padding to remove a gap between the two buttons.
-      firstColumn.add(fullButton_, "alignx center, width 70!, pad 0 0 0 0");
-      firstColumn.add(autoButton_, "alignx center, width 70!, pad -4 0 -4 0");
+      firstColumn.add(fullButton_, "alignx center, width 70!");
+      firstColumn.add(autoButton_, "alignx center, width 70!");
 
       add(firstColumn, "growx 0");
 
