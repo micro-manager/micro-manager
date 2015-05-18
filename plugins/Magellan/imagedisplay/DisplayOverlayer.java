@@ -364,7 +364,7 @@ public class DisplayOverlayer {
 
    private void renderSurfaceOverlay() throws InterruptedException {
       //start out with 10 interpolation points across the whole image 
-      int pixPerInterpPoint = Math.max(display_.getImagePlus().getWidth(), display_.getImagePlus().getHeight()) / INITIAL_NUM_INTERPOLATION_DIVISIONS;
+      int displayPixPerInterpPoint = Math.max(display_.getImagePlus().getWidth(), display_.getImagePlus().getHeight()) / INITIAL_NUM_INTERPOLATION_DIVISIONS;
       //keep redrawing until surface full interpolated  
       final Overlay startingOverlay = createBackgroundOverlay();
       addInterpPoints(display_.getCurrentSurface(), startingOverlay);
@@ -383,7 +383,7 @@ public class DisplayOverlayer {
          }
          SingleResolutionInterpolation interp = display_.getCurrentSurface().waitForCurentInterpolation();
          //wait until surface is interpolated at sufficent resolution to draw
-         while (pixPerInterpPoint < interp.getPixelsPerInterpPoint()) {
+         while (displayPixPerInterpPoint * zoomableStack_.getDownsampleFactor() < interp.getPixelsPerInterpPoint()) {
             if (Thread.interrupted()) {
                throw new InterruptedException();
             }
@@ -395,7 +395,7 @@ public class DisplayOverlayer {
             addStagePositions(surfOverlay, showStagePositionsAbove_);
          }
          //add surface interpolation
-         addSurfaceInterpolation(surfOverlay, interp, pixPerInterpPoint);
+         addSurfaceInterpolation(surfOverlay, interp, displayPixPerInterpPoint);
          if (Thread.interrupted()) {
             throw new InterruptedException();
          }
@@ -407,17 +407,19 @@ public class DisplayOverlayer {
             }
          });
 
-         if (pixPerInterpPoint <= SurfaceInterpolator.MIN_PIXELS_PER_INTERP_POINT) {
+         if (displayPixPerInterpPoint == 1 || 
+                 displayPixPerInterpPoint * zoomableStack_.getDownsampleFactor() <= SurfaceInterpolator.MIN_PIXELS_PER_INTERP_POINT) {
             //finished  
             return;
          }
-         pixPerInterpPoint /= 2;
+         displayPixPerInterpPoint /= 2;
       }
 
    }
 
    //draw the surface itself by interpolating a grid over viewable area
-   private void addSurfaceInterpolation(Overlay overlay, SingleResolutionInterpolation interp, int pixPerInterpPoint) throws InterruptedException {
+   private void addSurfaceInterpolation(Overlay overlay, SingleResolutionInterpolation interp, 
+           int displayPixPerInterpTile) throws InterruptedException {
       int width = display_.getImagePlus().getWidth();
       int height = display_.getImagePlus().getHeight();
       ZoomableVirtualStack zStack = (ZoomableVirtualStack) display_.virtualStack_;
@@ -425,8 +427,8 @@ public class DisplayOverlayer {
       double zStep = acq_.getZStep();
 
       //Make numTestPoints a factor of image size for clean display of surface
-      int numTestPointsX = width / pixPerInterpPoint;
-      int numTestPointsY = height / pixPerInterpPoint;
+      int numTestPointsX = width / displayPixPerInterpTile;
+      int numTestPointsY = height / displayPixPerInterpTile;
       double roiWidth = width / (double) numTestPointsX;
       double roiHeight = height / (double) numTestPointsY;
 
@@ -436,7 +438,7 @@ public class DisplayOverlayer {
                throw new InterruptedException();
             }
             Point2D.Double stageCoord = display_.stageCoordFromImageCoords((int) ((x + 0.5) * roiWidth), (int) ((y + 0.5) * roiHeight));
-            if (interp.isInterpDefined(stageCoord.x, stageCoord.y)) {
+            if (!interp.isInterpDefined(stageCoord.x, stageCoord.y)) {
                continue;
             }                      
             float interpZ = interp.getInterpolatedValue(stageCoord.x, stageCoord.y);

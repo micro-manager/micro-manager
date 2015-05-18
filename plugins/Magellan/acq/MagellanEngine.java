@@ -438,7 +438,7 @@ public class MagellanEngine {
          MD.setFrameIndex(tags, timeIndex);
          MD.setChannelIndex(tags, event.channelIndex_ + camChannelIndex);
          MD.setZPositionUm(tags, event.zPosition_);
-         MD.setElapsedTimeMs(tags, elapsed_ms - event.acquisition_.getStartTime_ms());
+         MD.setElapsedTimeMs(tags, elapsed_ms);
          MD.setImageTime(tags, (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss -")).format(Calendar.getInstance().getTime()));
          MD.setGridRow(tags, gridRow);
          MD.setGridCol(tags, gridCol);

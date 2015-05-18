@@ -319,14 +319,15 @@ public class FixedAreaAcquisition extends Acquisition {
                               break;
                            }
                         } else {
+                            if (isZBelowImagingVolume(position, zPos) || (zStageHasLimits_ && zPos > zStageUpperLimit_)) {
+                              //position is below z stack or limit of focus device, z stack finished
+                              break;
+                           }                            
                            //3D region
                            if (isZAboveImagingVolume(position, zPos) || (zStageHasLimits_ && zPos < zStageLowerLimit_)) {
                               continue; //position is above imaging volume or range of focus device
                            }
-                           if (isZBelowImagingVolume(position, zPos) || (zStageHasLimits_ && zPos > zStageUpperLimit_)) {
-                              //position is below z stack or limit of focus device, z stack finished
-                              break;
-                           }
+                           
                         }
                         for (int channelIndex = 0; channelIndex < settings_.channels_.size(); channelIndex++) {
                            if (!settings_.channels_.get(channelIndex).uniqueEvent_ || !settings_.channels_.get(channelIndex).use_) {

@@ -128,9 +128,9 @@ public class DisplayWindowControls extends Panel {
          datasetSizeLabel_.setText(sizeBytes + "  Bytes");
       } else if (sizeBytes < 1024 * 1024) {
          datasetSizeLabel_.setText(sizeBytes / 1024 + "  KB");
-      } else if (sizeBytes < 1024 * 1024 * 1024) {
+      } else if (sizeBytes < 1024l * 1024 * 1024) {
          datasetSizeLabel_.setText(sizeBytes / 1024 / 1024 + "  MB");
-      } else if (sizeBytes < 1024 * 1024 * 1024 * 1024) {
+      } else if (sizeBytes < 1024l * 1024 * 1024 * 1024) {
          datasetSizeLabel_.setText(sizeBytes / 1024 / 1024 / 1024 + "  GB");
       } else {
          datasetSizeLabel_.setText(sizeBytes / 1024 / 1024 / 1024 / 1024 + "  TB");

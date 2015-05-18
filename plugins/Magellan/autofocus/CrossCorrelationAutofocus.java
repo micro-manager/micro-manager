@@ -31,7 +31,7 @@ public class CrossCorrelationAutofocus {
    //4e7--92 s
    //1e8--92 s
    //8e8--682 s
-   private static final int NUM_VOXEL_TARGET = 60000000; //this target shuld take 1-2 min to calculate, while maintaining images of a resonable size
+   private static final int NUM_VOXEL_TARGET = 20000000; //this target shuld take 1-2 min to calculate, while maintaining images of a resonable size
    
    
    private final int channelIndex_;
