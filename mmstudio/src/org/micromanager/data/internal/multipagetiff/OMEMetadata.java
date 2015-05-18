@@ -108,7 +108,8 @@ public class OMEMetadata {
             mptStorage_.slicesFirst() ? "XYZCT" : "XYCZT",
             "uint" + repImage.getBytesPerPixel() * 8,
             repImage.getWidth(), repImage.getHeight(),
-            numSlices_, numChannels_, mptStorage_.getIntendedSize("time"), 1);
+            numSlices_, numChannels_,
+            mptStorage_.getIntendedSize(Coords.TIME), 1);
 
       Metadata repMetadata = repImage.getMetadata();
       if (repMetadata.getPixelSizeUm() != null) {
@@ -183,16 +184,15 @@ public class OMEMetadata {
             //to a a preveious IFD
             Integer tiffDataIndex =  tiffDataIndexMap_.get(MDUtils.generateLabel(channel, slice, frame, position));
             if (tiffDataIndex == null) {
-               //this plane was never added, so link to another IFD
-               //find substitute channel, frame, slice
+               // this plane was never added, so link to another IFD
+               // find substitute channel, frame, slice
                int s = slice;
                int backIndex = slice - 1, forwardIndex = slice + 1;
                int frameSearchIndex = frame;
-               //If some but not all channels have z stacks, find the closest slice for the given
-               //channel that has an image.  Also if time point missing, go back until image is found
+               // If some but not all channels have z stacks, find the closest
+               // slice for the given channel that has an image.  Also if time
+               // point missing, go back until image is found
                while (tiffDataIndex == null) {
-                  
-                              
                   tiffDataIndex = tiffDataIndexMap_.get(MDUtils.generateLabel(channel, s, frameSearchIndex, position));
                   if (tiffDataIndex != null) {
                      break;

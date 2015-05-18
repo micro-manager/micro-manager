@@ -293,7 +293,28 @@ public class DefaultDatastore implements Datastore {
          }
          duplicate.setStorage(saver);
          duplicate.setSummaryMetadata(summary);
+         // HACK HACK HACK HACK HACK
+         // Copy images into the duplicate ordered by stage position index.
+         // Doing otherwise causes errors when trying to write the OMEMetadata
+         // (we get an ArrayIndexOutOfBoundsException when calling
+         // MetadataTools.populateMetadata() in
+         // org.micromanager.data.internal.multipagetiff.OMEMetadata).
+         // Ideally we'd fix the OME metadata writer to be able to handle
+         // images in arbitrary order, but that would require understanding
+         // that code...
+         ArrayList<Coords> tmp = new ArrayList<Coords>();
          for (Coords coords : getUnorderedImageCoords()) {
+            tmp.add(coords);
+         }
+         java.util.Collections.sort(tmp, new java.util.Comparator<Coords>() {
+            @Override
+            public int compare(Coords a, Coords b) {
+               int p1 = a.getIndex(Coords.STAGE_POSITION);
+               int p2 = b.getIndex(Coords.STAGE_POSITION);
+               return (p1 < p2) ? -1 : 1;
+            }
+         });
+         for (Coords coords : tmp) {
             duplicate.putImage(getImage(coords));
          }
          setSavePath(path);
