@@ -140,7 +140,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
          positionPrefix = image.getMetadata().getPositionName() + "/";
       }
       String fileName = positionPrefix + createFileName(image.getCoords());
-      if (!(new File(fileName).exists())) {
+      if (amLoading_ && !(new File(dir_ + "/" + fileName).exists())) {
          // Try the 1.4 format instead. Since we may not have access to the
          // channel name property, we just have to arbitrarily assign an
          // ordering to the channel names that we find.
@@ -169,7 +169,6 @@ public class StorageSinglePlaneTiffSeries implements Storage {
             catch (Exception e) {
                ReportingUtils.showError("Unable to create save directory " + dirName);
             }
-            fileName = posName + "/" + fileName;
          }
 
          File saveFile = new File(dir_, fileName);

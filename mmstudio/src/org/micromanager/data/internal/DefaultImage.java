@@ -361,6 +361,7 @@ public class DefaultImage implements Image {
          for (String axis : coords_.getAxes()) {
             fullCoords.put(axis, coords_.getIndex(axis));
          }
+         // TODO: currently nothing actually consumes this information.
          tags.put("completeCoords", fullCoords);
       }
       catch (JSONException e) {
