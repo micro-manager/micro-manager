@@ -297,9 +297,9 @@ public class ExploreAcquisition extends Acquisition {
    
    //slice and row/col index of an acquisition event in the queue
    public class ExploreTileWaitingToAcquire {
-      public int row, col, sliceIndex;
+      public long row, col, sliceIndex;
       
-      public ExploreTileWaitingToAcquire(int r, int c, int z) {
+      public ExploreTileWaitingToAcquire(long r, long c, int z) {
          row = r;
          col = c;
          sliceIndex = z;

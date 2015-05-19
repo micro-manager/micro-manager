@@ -10,12 +10,15 @@ import java.awt.geom.Point2D;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import bidc.JavaLayerImageConstructor;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import json.JSONArray;
 import json.JSONException;
 import json.JSONObject;
 import main.Magellan;
 import misc.Log;
 import misc.LongPoint;
+import misc.MD;
 
 
 
@@ -26,8 +29,6 @@ import misc.LongPoint;
 public class PositionManager {
 
    private static final String COORDINATES_KEY = "DeviceCoordinatesUm";
-   private static final String ROW_KEY = "GridRowIndex";
-   private static final String COL_KEY = "GridColumnIndex";
    private static final String PROPERTIES_KEY = "Properties";
    private static final String MULTI_RES_NODE_KEY = "MultiResPositionNode";
    
@@ -41,6 +42,29 @@ public class PositionManager {
    private final int displayTileWidth_, displayTileHeight_;
    private final int fullTileWidth_, fullTileHeight_;
    private final int overlapX_, overlapY_;
+   
+    public PositionManager(AffineTransform transform, JSONObject summaryMD, int displayTileWidth, int displayTileHeight,
+           int fullTileWidth, int fullTileHeight, int overlapX, int overlapY, JSONArray initialPosList) {
+      try {
+         xyStageName_ = summaryMD.getString("Core-XYStage");
+      } catch (JSONException ex) {
+         throw new RuntimeException("No XY stage name in summary metadata");
+      }
+      affine_ = transform;
+      positionNodes_ = new TreeMap<Integer,TreeSet<MultiResPositionNode>>();
+      minRow_ = 0; maxRow_ = 0;
+       minCol_ = 0;
+       maxRow_ = 0;
+       positionList_ = initialPosList;
+       updateMinAndMaxRowsAndCols();
+       updateLowerResolutionNodes(); //make sure nodes created for all preexisiting positions
+       displayTileWidth_ = displayTileWidth;
+       displayTileHeight_ = displayTileHeight;
+      fullTileWidth_ = fullTileWidth;
+      fullTileHeight_ = fullTileHeight;
+      overlapX_ = overlapX; 
+      overlapY_ = overlapY;
+   }
    
    public PositionManager(AffineTransform transform, JSONObject summaryMD, int displayTileWidth, int displayTileHeight,
            int fullTileWidth, int fullTileHeight, int overlapX, int overlapY) {
@@ -195,8 +219,8 @@ public class PositionManager {
          for (int h = 0; h < posIndices.length; h++) {
             //check if position is already present in list, and if so, return its index
             for (int i = 0; i < positionList_.length(); i++) {
-               if (positionList_.getJSONObject(i).getLong(ROW_KEY) == rows[h]
-                       && positionList_.getJSONObject(i).getLong(COL_KEY) == cols[h]) {
+               if (MD.getGridRow(positionList_.getJSONObject(i)) == rows[h]
+                       && MD.getGridCol(positionList_.getJSONObject(i)) == cols[h]) {
                   //we already have position, so return its index
                   posIndices[h] = i;
                   continue outerloop;
@@ -222,14 +246,20 @@ public class PositionManager {
       }
    }
    
-   private synchronized void updateMinAndMaxRowsAndCols() throws JSONException {
+   private synchronized void updateMinAndMaxRowsAndCols() {
       //Go through all positions to update numRows and numCols
       for (int i = 0; i < positionList_.length(); i++) {
-         JSONObject pos = positionList_.getJSONObject(i);
-         minRow_ = (int) Math.min(pos.getLong(ROW_KEY), minRow_);
-         minCol_ = (int) Math.min(pos.getLong(COL_KEY), minCol_);
-         maxRow_ = (int) Math.max(pos.getLong(ROW_KEY), maxRow_);
-         maxCol_ = (int) Math.max(pos.getLong(COL_KEY), maxCol_);
+         JSONObject pos;
+         try {
+            pos = positionList_.getJSONObject(i);
+         } catch (JSONException ex) {
+            Log.log("Unexpected error reading positio list");
+            throw new RuntimeException();
+         }
+         minRow_ = (int) Math.min(MD.getGridRow(pos), minRow_);
+         minCol_ = (int) Math.min(MD.getGridCol(pos), minCol_);
+         maxRow_ = (int) Math.max(MD.getGridRow(pos), maxRow_); 
+         maxCol_ = (int) Math.max(MD.getGridCol(pos), maxCol_);
       }
    }
 
@@ -259,8 +289,8 @@ public class PositionManager {
          coords.put(xyStageName_, xy);
          JSONObject pos = new JSONObject();
          pos.put(COORDINATES_KEY, coords);
-         pos.put(COL_KEY, col);
-         pos.put(ROW_KEY, row);
+         MD.setGridCol(pos, col);
+         MD.setGridRow(pos, row);
          pos.put(PROPERTIES_KEY, new JSONObject());
 
          return pos;
@@ -281,7 +311,7 @@ public class PositionManager {
                positionNodes_.put(0, new TreeSet<MultiResPositionNode>());
             }
             //add node in case its a new position
-            MultiResPositionNode n = new MultiResPositionNode(0,position.getLong(ROW_KEY),position.getLong(COL_KEY));
+            MultiResPositionNode n = new MultiResPositionNode(0,MD.getGridRow(position),MD.getGridCol(position));
             positionNodes_.get(0).add(n);
             n.positionIndex = i;
             position.getJSONObject(PROPERTIES_KEY).put(MULTI_RES_NODE_KEY, n);
@@ -371,8 +401,8 @@ public class PositionManager {
           JSONObject existingPosition = positionList_.getJSONObject(0);
          double exisitngX = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(0);
          double exisitngY = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(1);
-         int existingRow = existingPosition.getInt(ROW_KEY);
-         int existingColumn = existingPosition.getInt(COL_KEY);
+         long existingRow = MD.getGridRow(existingPosition);
+         long existingColumn = MD.getGridCol(existingPosition);
   
          //get stage displacement from center of the tile we have coordinates for
          double dx = stageX - exisitngX;
@@ -404,9 +434,9 @@ public class PositionManager {
       try {
          JSONObject existingPosition = positionList_.getJSONObject(0);
          double exisitngX = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(0);
-         double exisitngY = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(1);
-         long existingRow = existingPosition.getInt(ROW_KEY);
-         long existingColumn = existingPosition.getInt(COL_KEY);
+         double exisitngY = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(1);        
+         long existingRow = MD.getGridRow(existingPosition);
+         long existingColumn = MD.getGridCol(existingPosition);
          //get pixel displacement from center of the tile we have coordinates for
          long dxPix = (long) (xAbsolute - (existingColumn + 0.5) * displayTileWidth_);
          long dyPix = (long) (yAbsolute - (existingRow + 0.5) * displayTileHeight_);
@@ -449,9 +479,9 @@ public class PositionManager {
             JSONObject existingPosition = positionList_.getJSONObject(0);
 
             double exisitngX = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(0);
-            double exisitngY = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(1);
-            int existingRow = existingPosition.getInt(ROW_KEY);
-            int existingColumn = existingPosition.getInt(COL_KEY);
+            double exisitngY = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(1);   
+            long existingRow = MD.getGridRow(existingPosition);
+            long existingColumn = MD.getGridCol(existingPosition);
 
             double xPixelOffset = (col - existingColumn) * (JavaLayerImageConstructor.getInstance().getImageWidth() - pixelOverlapX);
             double yPixelOffset = (row - existingRow) * (JavaLayerImageConstructor.getInstance().getImageHeight() - pixelOverlapY);

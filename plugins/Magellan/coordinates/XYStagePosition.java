@@ -22,14 +22,26 @@ public class XYStagePosition {
    private final Point2D.Double center_;
    private final Point2D.Double[] displayedTileCorners_;
    private final Point2D.Double[] fullTileCorners_;
-   private final int gridRow_, gridCol_;
+   private final long gridRow_, gridCol_;
    
+   /**
+    * for opening prevously acquired data
+    */
+   public XYStagePosition(Point2D.Double stagePosCenter, long row, long col) {
+      label_ = "Grid_" + col + "_" + row;
+      center_ = stagePosCenter;
+      gridCol_ = col;
+      gridRow_ = row;
+      displayedTileCorners_ = null;
+      fullTileCorners_ = null;
+   }
+
    /**
     * 
     * @param transform -- must be centered at current stage pos 
     */
    public XYStagePosition(Point2D.Double stagePosCenter, int displayTileWidth, int displayTileHeight, 
-           int fullTileWidth, int fullTileHeight, int row, int col, AffineTransform transform) {
+           int fullTileWidth, int fullTileHeight, long row, long col, AffineTransform transform) {
       
       label_ = "Grid_" + col + "_" + row;
       center_ = stagePosCenter;
@@ -58,11 +70,11 @@ public class XYStagePosition {
       gridRow_ = row;
    }
    
-   public int getGridRow() {
+   public long getGridRow() {
       return gridRow_;
    }
    
-   public int getGridCol() {
+   public long getGridCol() {
       return gridCol_;
    }
    

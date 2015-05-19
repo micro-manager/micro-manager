@@ -22,6 +22,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import json.JSONArray;
 import json.JSONException;
 import json.JSONObject;
 import misc.JavaUtils;
@@ -88,10 +89,28 @@ public class MultiResMultipageTiffStorage {
       //create position manager
       //TODO: more is needed for explore acqs since positions wonr be present in initial position list
       try {
-         posManager_ = new PositionManager(affine_, summaryMD_, tileWidth_, tileHeight_,
-                 fullResTileWidthIncludingOverlap_, fullResTileHeightIncludingOverlap_, xOverlap_, yOverlap_);
+         if (MD.isExploreAcq(summaryMD_)) {
+            TreeMap<Integer, XYStagePosition> positions = new TreeMap<Integer, XYStagePosition>();
+            for (String key : fullResStorage_.imageKeys()) {
+               int[] indices = MD.getIndices(key);
+               int posIndex = indices[3];
+               if (!positions.containsKey(posIndex) ) {
+                  JSONObject md = fullResStorage_.getImageTags(indices[0], indices[1], indices[2], indices[3]);
+                  positions.put(posIndex, new XYStagePosition(new Point2D.Double(MD.getStageX(md),MD.getStageY(md)), 
+                          MD.getGridRow(md), MD.getGridCol(md)));
+               }
+            }
+            JSONArray pList = new JSONArray();
+            for (XYStagePosition xyPos : positions.values()) {
+               pList.put(xyPos.getMMPosition());
+            }
+            posManager_ = new PositionManager(affine_, summaryMD_, tileWidth_, tileHeight_, tileWidth_, tileHeight_, xOverlap_, xOverlap_, pList);
+         } else {
+            posManager_ = new PositionManager(affine_, summaryMD_, tileWidth_, tileHeight_,
+                    fullResTileWidthIncludingOverlap_, fullResTileHeightIncludingOverlap_, xOverlap_, yOverlap_);
+         }
       } catch (Exception e) {
-         Log.log("Couldn't create position manager",true );
+         Log.log("Couldn't create position manager", true);
       }
    }
 

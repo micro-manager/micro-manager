@@ -669,6 +669,15 @@ public class MD {
       }
    }
 
+   public static boolean isExploreAcq(JSONObject smd) {
+      try {
+         return smd.getBoolean(EXPLORE_ACQ);
+      } catch (JSONException ex) {
+         Log.log("find exploreAcq tag");
+         throw new RuntimeException();
+      }
+   }
+   
    public static void setExploreAcq(JSONObject smd, boolean explore) {
       try {
          smd.put(EXPLORE_ACQ, explore);
@@ -750,6 +759,24 @@ public class MD {
       }
    }
    
+   public static long getGridRow(JSONObject smd) {
+      try {
+         return smd.getLong(GRID_ROW);
+      } catch (JSONException ex) {
+         Log.log("Couldnt set grid row");
+         throw new RuntimeException();
+      }
+   }
+
+   public static long getGridCol(JSONObject smd) {
+      try {
+         return smd.getLong(GRID_COL);
+      } catch (JSONException ex) {
+         Log.log("Couldnt set grid row");
+         throw new RuntimeException();
+      }
+   }
+   
    public static void setStageX(JSONObject smd, double x) {
       try {
          smd.put(XUM, x);
@@ -764,6 +791,24 @@ public class MD {
          smd.put(YUM, y);
       } catch (JSONException ex) {
          Log.log("Couldnt set stage y");
+         throw new RuntimeException();
+      }
+   }
+      
+   public static double getStageX(JSONObject smd) {
+      try {
+         return smd.getDouble(XUM);
+      } catch (JSONException ex) {
+         Log.log("Couldnt get stage x");
+         throw new RuntimeException();
+      }
+   }
+
+   public static double getStageY(JSONObject smd) {
+      try {
+         return smd.getDouble(YUM);
+      } catch (JSONException ex) {
+         Log.log("Couldnt get stage y");
          throw new RuntimeException();
       }
    }
