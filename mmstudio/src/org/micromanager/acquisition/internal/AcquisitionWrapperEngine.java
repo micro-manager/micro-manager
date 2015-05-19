@@ -59,7 +59,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private String dirName_;
    private int numFrames_;
    private double interval_;
-   private double minZStepUm_;
    private String comment_;
    private boolean saveFiles_;
    private int acqOrderMode_;
@@ -715,12 +714,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    public void setFrames(int numFrames, double interval) {
       numFrames_ = numFrames;
       interval_ = interval;
-   }
-
-   @Override
-   @Deprecated
-   public double getMinZStepUm() {
-      return minZStepUm_;
    }
 
    @Override

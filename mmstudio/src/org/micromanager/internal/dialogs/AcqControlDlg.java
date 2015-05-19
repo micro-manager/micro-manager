@@ -1165,10 +1165,9 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
       double bottom = profile.getDouble(this.getClass(), ACQ_ZBOTTOM, 0.0);
       double top = profile.getDouble(this.getClass(), ACQ_ZTOP, 0.0);
+      // TODO: ideally we would be able to check this value against the
+      // physical resolution of the Z positioner.
       double step = profile.getDouble(this.getClass(), ACQ_ZSTEP, 1.0);
-      if (Math.abs(step) < Math.abs(acqEng_.getMinZStepUm())) {
-         step = acqEng_.getMinZStepUm();
-      }
       zVals_ = profile.getInt(this.getClass(), ACQ_Z_VALUES, 0);
       acqEng_.setSlices(bottom, top, step, (zVals_ != 0));
       acqEng_.enableZSliceSetting(profile.getBoolean(this.getClass(), ACQ_ENABLE_SLICE_SETTINGS, acqEng_.isZSliceSettingEnabled()));
@@ -1765,10 +1764,9 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       }
 
       try {
+         // TODO: ideally we would be able to check this value against the
+         // physical resolution of the Z positioner.
          double zStep = NumberUtils.displayStringToDouble(zStep_.getText());
-         if (Math.abs(zStep) < acqEng_.getMinZStepUm()) {
-            zStep = acqEng_.getMinZStepUm();
-         }
          acqEng_.setSlices(NumberUtils.displayStringToDouble(zBottom_.getText()), NumberUtils.displayStringToDouble(zTop_.getText()), zStep, (zVals_ != 0));
          acqEng_.enableZSliceSetting(slicesPanel_.isSelected());
          acqEng_.enableMultiPosition(positionsPanel_.isSelected());

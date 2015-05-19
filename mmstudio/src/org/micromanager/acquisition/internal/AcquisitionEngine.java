@@ -212,13 +212,6 @@ public interface AcquisitionEngine {
    public void setFrames(int numFrames, double interval);
 
    /*
-    * This value is not used.
-    * @deprecated
-    */
-   @Deprecated
-   public double getMinZStepUm();
-
-   /*
     * Sets up a z-stack of equally-spaced slices.
     * @param bottom - The first slice position, in microns.
     * @param top - The last slice position, in microns.
