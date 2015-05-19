@@ -153,9 +153,8 @@ public interface DisplayWindow {
    /**
     * Turn fullscreen mode on or off. Note that, because of how Java's GUI
     * systems work, turning on fullscreen mode actually creates a new
-    * DisplayWindow that takes over the monitor that this DisplayWindow is in,
-    * and turning off fullscreen mode dismisses the new DisplayWindow.
-    * TODO: effects of calling this on the wrong DisplayWindow are uncertain.
+    * JFrame that takes over the monitor that this DisplayWindow is in,
+    * and turning off fullscreen mode dismisses that JFrame.
     */
    public void toggleFullScreen();
 
