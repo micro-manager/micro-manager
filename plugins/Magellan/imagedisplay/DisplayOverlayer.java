@@ -512,13 +512,12 @@ public class DisplayOverlayer {
       long fullResWidth = display_.getStorage().getNumCols() * display_.getStorage().getTileWidth();
       int dsFactor = display_.getZoomableStack().getDownsampleFactor();
       Dimension displayImageSize = display_.getZoomableStack().getDisplayImageSize();
-//      System.out.println(fullResHeight + "\t" + fullResWidth + "\t" + dsFactor + "\t" + displayImageSize.width + "\t" + displayImageSize.height);      
       int outerHeight = (int) ((double) fullResHeight / (double) fullResWidth * outerWidth);
       //draw outer rectangle representing full image
       Roi outerRect = new Roi(10, 10, outerWidth, outerHeight);
       outerRect.setStrokeColor(new Color(255, 0, 255)); //magenta
-      int innerX = (int) Math.round(((double) outerWidth / (double) fullResWidth) * zoomPos.x_ * dsFactor);
-      int innerY = (int) Math.round(((double) outerHeight / (double) fullResHeight) * zoomPos.y_ * dsFactor);
+      int innerX = (int) Math.round(((double) outerWidth / (double) fullResWidth) * (zoomPos.x_ * dsFactor - zoomableStack_.getTopLeftPixel().x_));
+      int innerY = (int) Math.round(((double) outerHeight / (double) fullResHeight) * (zoomPos.y_ * dsFactor - zoomableStack_.getTopLeftPixel().y_ ));
       //outer width * percentage of width of full images that is shown
       int innerWidth = (int) (outerWidth * ((double) displayImageSize.width / (fullResWidth / dsFactor)));
       int innerHeight = (int) (outerHeight * ((double) displayImageSize.height / (fullResHeight / dsFactor)));

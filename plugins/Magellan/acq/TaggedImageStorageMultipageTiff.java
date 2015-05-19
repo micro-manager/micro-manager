@@ -57,7 +57,7 @@ public final class TaggedImageStorageMultipageTiff   {
    private final boolean fastStorageMode_;
    private int lastAcquiredPosition_ = 0;
    private ThreadPoolExecutor writingExecutor_;
-   private int maxSliceIndex_ = 0, maxFrameIndex_ = 0, maxChannelIndex_ = 0;
+   private int maxSliceIndex_ = 0, maxFrameIndex_ = 0, maxChannelIndex_ = 0, minSliceIndex_ = 0;
 
    // Images currently being written (need to keep around so that they can be
    // returned upon request via getImage()). The data structure must be
@@ -141,6 +141,7 @@ public final class TaggedImageStorageMultipageTiff   {
                   tiffReadersByLabel_.put(label, reader);
                   maxChannelIndex_ = Math.max(maxChannelIndex_, Integer.parseInt(label.split("_")[0]));
                   maxSliceIndex_ = Math.max(maxSliceIndex_, Integer.parseInt(label.split("_")[1]));
+                  minSliceIndex_ = Math.min(minSliceIndex_, Integer.parseInt(label.split("_")[1]));
                   maxFrameIndex_ = Math.max(maxFrameIndex_, Integer.parseInt(label.split("_")[2]));                 
                }
             } catch (IOException ex) {
@@ -168,6 +169,10 @@ public final class TaggedImageStorageMultipageTiff   {
    
    public int getMaxSliceIndexOpenedDataset() {
       return maxSliceIndex_;
+   }
+   
+   public int getMinSliceIndexOpenedDataset() {
+      return minSliceIndex_;
    }
    
    public MagellanTaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {

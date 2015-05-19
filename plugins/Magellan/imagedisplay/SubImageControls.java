@@ -266,16 +266,7 @@ public class SubImageControls extends Panel {
 
          @Override
          public void onNewImageEvent(NewImageEvent event) {
-            //duplicate new image event and edit as needed
-            HashMap<String, Integer> axisToPosition = new HashMap<String, Integer>();
-            axisToPosition.put("channel", event.getPositionForAxis("channel"));
-            axisToPosition.put("time", event.getPositionForAxis("time"));
-            axisToPosition.put("z", event.getPositionForAxis("z"));
-            if (acq_ instanceof ExploreAcquisition) {
-               //intercept event and edit slice index
-               int z = event.getPositionForAxis("z");
-               //make slice index >= 0 for viewer   
-               z -= ((ExploreAcquisition) acq_).getLowestExploredSliceIndex();
+            if (acq_ instanceof ExploreAcquisition) {               
                // show/expand z scroll bar if needed
                if (((ExploreAcquisition) acq_).getHighestExploredSliceIndex() - ((ExploreAcquisition) acq_).getLowestExploredSliceIndex() + 1 > scrollerPanel_.getMaxPosition("z")) {
                   for (AxisScroller scroller : scrollers_) {
@@ -290,10 +281,8 @@ public class SubImageControls extends Panel {
                   //tell the imageplus about new number of slices so everything works properly
                   ((IMMImagePlus) display_.getHyperImage()).setNSlicesUnverified(scrollerPanel_.getMaxPosition("z"));
                }
-               axisToPosition.put("z", z);
-            }
-            //pass along the edited new image event
-            super.onNewImageEvent(new NewImageEvent(axisToPosition));
+            } 
+            super.onNewImageEvent(event);
          }
       };
    }

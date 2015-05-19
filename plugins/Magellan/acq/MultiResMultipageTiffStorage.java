@@ -87,7 +87,6 @@ public class MultiResMultipageTiffStorage {
       }
          
       //create position manager
-      //TODO: more is needed for explore acqs since positions wonr be present in initial position list
       try {
          if (MD.isExploreAcq(summaryMD_)) {
             TreeMap<Integer, XYStagePosition> positions = new TreeMap<Integer, XYStagePosition>();
@@ -726,7 +725,11 @@ public class MultiResMultipageTiffStorage {
    }
    
    public int getNumSlices() {
-      return fullResStorage_.getMaxSliceIndexOpenedDataset() + 1;
+      return fullResStorage_.getMaxSliceIndexOpenedDataset() - fullResStorage_.getMinSliceIndexOpenedDataset() + 1;
+   }
+   
+   public int getMinSliceIndexOpenedDataset() {
+      return fullResStorage_.getMinSliceIndexOpenedDataset();
    }
 
    public long getDataSetSize() {
@@ -800,4 +803,14 @@ public class MultiResMultipageTiffStorage {
       }
       return exploredTiles;
    }
+   
+   public long getMinRow() {
+      return posManager_.getMinRow();
+   }
+   
+   
+   public long getMinCol() {
+      return posManager_.getMinCol();
+   }
+   
 }

@@ -278,20 +278,20 @@ public class DisplayWindow extends StackWindow {
             int maxResIndex = (int) Math.ceil(Math.log((Math.min(disp_.getFullResWidth(), disp_.getFullResHeight())
                     / MINIMUM_CANVAS_DIMENSION)) / Math.log(2));
             ((ZoomableVirtualStack) disp_.getHyperImage().getStack()).initializeUpToRes(viewResIndex, maxResIndex);
+            //resize to the biggest it can be in current window with correct aspect ration                
+            int dsFactor = ((ZoomableVirtualStack) disp_.getHyperImage().getStack()).getDownsampleFactor();
+            ZoomableVirtualStack newStack = new ZoomableVirtualStack((ZoomableVirtualStack) plus_.getStack(),
+                    (int) (disp_.getFullResWidth() / dsFactor), (int) (disp_.getFullResHeight() / dsFactor));
+            disp_.changeStack(newStack);
+            this.validate();
+            //fit window around correctly sized canvas, but don't save the window size
+            saveWindowResize_ = false;
+            shrinkWindowToFitCanvas();
          } else {
             //explore acq opened on disk
             ((ZoomableVirtualStack) disp_.getHyperImage().getStack()).setInitialResolutionIndex(disp_.getStorage().getNumResLevels());
+            onWindowResize();
          }
-         
-         //resize to the biggest it can be in current window with correct aspect ration                
-         int dsFactor = ((ZoomableVirtualStack) disp_.getHyperImage().getStack()).getDownsampleFactor();
-         ZoomableVirtualStack newStack = new ZoomableVirtualStack((ZoomableVirtualStack) plus_.getStack(),
-                 (int)(disp_.getFullResWidth() / dsFactor), (int)(disp_.getFullResHeight() / dsFactor));
-         disp_.changeStack(newStack);
-         this.validate();
-         //fit window around correctly sized canvas, but don't save the window size
-         saveWindowResize_ = false;
-         shrinkWindowToFitCanvas();
       }
    }
 
