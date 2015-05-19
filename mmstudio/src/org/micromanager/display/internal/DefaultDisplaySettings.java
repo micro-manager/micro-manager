@@ -35,8 +35,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.display.DisplaySettings;
-
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -55,7 +55,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       DefaultUserProfile profile = DefaultUserProfile.getInstance();
       Builder builder = new Builder();
       // We have to convert colors to/from int arrays.
-      // TODO: assuming RGB tuples in the colors array.
+      // Note we assume RGB tuples in the colors array.
       // Seven colors because ImageJ only supports 7 channels; put yellow/cyan
       // first for colorblind-friendliness.
       Color[] defaultColors = new Color[] {Color.YELLOW, Color.CYAN,
@@ -78,7 +78,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
             DefaultDisplaySettings.class, "bitDepthIndices", null));
       builder.shouldUseLogScale(profile.getBoolean(
             DefaultDisplaySettings.class, "shouldUseLogScale", false));
-      // TODO: should we store user data in the display prefs?
+      // Note we don't store user data in the prefs explicitly; let third-party
+      // code manually access the prefs if they want.
       return builder.build();
    }
 
@@ -431,7 +432,9 @@ public class DefaultDisplaySettings implements DisplaySettings {
          if (tags.has("shouldUseLogScale")) {
             builder.shouldUseLogScale(tags.getBoolean("shouldUseLogScale"));
          }
-         // TODO: not restoring user data at this time.
+         if (tags.has("userData")) {
+            builder.userData(DefaultPropertyMap.fromJSON(tags.getJSONObject("userData")));
+         }
 
          return builder.build();
       }
@@ -542,7 +545,9 @@ public class DefaultDisplaySettings implements DisplaySettings {
             result.put("bitDepthIndices", indices);
          }
          result.put("shouldUseLogScale", shouldUseLogScale_);
-         // TODO: not storing user data at this time.
+         if (userData_ != null) {
+            result.put("userData", ((DefaultPropertyMap) userData_).toJSON());
+         }
          return result;
       }
       catch (JSONException e) {
