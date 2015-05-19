@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
@@ -115,15 +114,10 @@ public class FileMenu {
                isVirtual ? "Virtual" : "RAM"));
 
       String[] history = getRecentFiles();
-      // history is from oldest to newest; we want to display in
-      // alphabetical order.
       ArrayList<String> files = new ArrayList<String>(Arrays.asList(history));
-      Collections.sort(files, new Comparator<String>() {
-         @Override
-         public int compare(String a, String b) {
-            return new File(a).compareTo(new File(b));
-         }
-      });
+      // History is from oldest to newest; we want newest to oldest so new
+      // files are on top.
+      Collections.reverse(files);
       for (final String path : files) {
          JMenuItem item = new JMenuItem(new File(path).getName());
          item.addActionListener(new ActionListener() {
