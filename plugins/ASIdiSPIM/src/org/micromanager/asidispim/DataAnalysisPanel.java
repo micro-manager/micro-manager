@@ -19,21 +19,13 @@ import java.util.concurrent.ExecutionException;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.SwingWorker;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.json.JSONObject;
 import org.micromanager.api.MMWindow;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.MyStrings;
@@ -43,9 +35,7 @@ import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.utils.FileDialogs;
-import org.micromanager.utils.MDUtils;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
+
 
 /**
  * Panel in ASIdiSPIM plugin specifically for data analysis/processing
