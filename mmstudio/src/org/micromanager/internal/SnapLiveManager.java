@@ -9,6 +9,7 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.Insets;
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -380,12 +381,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
                newImage.getBytesPerPixel() != lastImage.getBytesPerPixel()) {
             // Format changing and/or we have no display; we need to recreate
             // everything.
-            if (display_ != null) {
-               display_.forceClosed();
-            }
-            createDatastore();
-            createDisplay();
-            channelToLastImage_.clear();
+            reset();
          }
          else if (display_ == null || display_.getIsClosed()) {
             createDisplay();
@@ -397,8 +393,29 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          newImage.splitMultiComponentIntoStore(store_);
       }
       catch (DatastoreFrozenException e) {
-         ReportingUtils.showError(e, "Snap/Live display datastore locked.");
+         // Datastore has been frozen (presumably the user saved a snapped
+         // image); replace it.
+         reset();
+         displayImage(image);
       }
+   }
+
+   /**
+    * Reset our display and datastore.
+    */
+   private void reset() {
+      // Remember the position of the window.
+      Point displayLoc = null;
+      if (display_ != null) {
+         displayLoc = display_.getAsWindow().getLocation();
+         display_.forceClosed();
+      }
+      createDatastore();
+      createDisplay();
+      if (displayLoc != null) {
+         display_.getAsWindow().setLocation(displayLoc);
+      }
+      channelToLastImage_.clear();
    }
 
    /**
