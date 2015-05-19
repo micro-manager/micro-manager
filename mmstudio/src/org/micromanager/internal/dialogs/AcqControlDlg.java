@@ -152,7 +152,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    private static final String CUSTOM_INTERVAL_PREFIX = "customInterval";
    private static final String ACQ_ENABLE_CUSTOM_INTERVALS = "enableCustomIntervals";
    private static final FileType ACQ_SETTINGS_FILE = new FileType("ACQ_SETTINGS_FILE", "Acquisition settings",
-           System.getProperty("user.home") + "/AcqSettings.xml",
+           System.getProperty("user.home") + "/AcqSettings.txt",
            true, "xml");
    private int columnWidth_[];
    private int columnOrder_[];
