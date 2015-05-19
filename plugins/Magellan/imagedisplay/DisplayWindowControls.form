@@ -443,7 +443,7 @@
                 <Component class="javax.swing.JTable" name="channelsTable_">
                   <Properties>
                     <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-                      <Connection code="new SimpleChannelTableModel(acq_.getChannels())" type="code"/>
+                      <Connection code="acq_ != null ? new SimpleChannelTableModel(acq_.getChannels()) : new DefaultTableModel()" type="code"/>
                     </Property>
                   </Properties>
                 </Component>

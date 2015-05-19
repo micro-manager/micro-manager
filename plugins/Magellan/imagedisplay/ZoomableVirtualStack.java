@@ -111,6 +111,14 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
       multiResStorage_.initializeToLevel(maxResIndex);
    }
 
+   /**
+    * called when opening explore acqs on disk
+    * @param resIndex 
+    */
+   public void setInitialResolutionIndex(int resIndex) {
+      resolutionIndex_ = resIndex;
+   }
+   
    public int getResolutionIndex() {
       return resolutionIndex_;
    }
@@ -297,7 +305,7 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
     * @param col
     * @return
     */
-   public LongPoint getDisplayedPixel(int row, int col) {
+   public LongPoint getDisplayedPixel(long row, long col) {
       long x = Math.round((col * tileWidth_) / (double)getDownsampleFactor()) - xView_;
       long y = Math.round((row * tileHeight_) / (double)getDownsampleFactor()) - yView_;
       return new LongPoint(x, y);

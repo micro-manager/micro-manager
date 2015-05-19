@@ -64,8 +64,7 @@ public class DisplayOverlayer {
       acq_ = acq;
       canvas_ = display.getImagePlus().getCanvas();
       zoomableStack_ = stack;
-      createExecutors();
-
+      createExecutors();  
    }
 
    private void createExecutors() {
@@ -495,7 +494,7 @@ public class DisplayOverlayer {
       return overlay;
    }
 
-   private void highlightTilesOnOverlay(Overlay base, int row1, int row2, int col1, int col2, Color color) {
+   private void highlightTilesOnOverlay(Overlay base, long row1, long row2, long col1, long col2, Color color) {
       LongPoint topLeft = zoomableStack_.getDisplayedPixel(row1, col1);
       int width = (int) (Math.round(tileWidth_ / (double) zoomableStack_.getDownsampleFactor() * (col2 + 1))
               - Math.round(tileWidth_ / (double) zoomableStack_.getDownsampleFactor() * (col1)));

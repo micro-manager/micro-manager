@@ -654,7 +654,9 @@ public class MultiResMultipageTiffStorage {
 
    public void finished() {
       try {
-         bdvXML_.close();
+         if (bdvXML_ != null) { //if its not an oened dataset
+            bdvXML_.close();
+         }
       } catch (IOException ex) {
          Log.log("Couldn't close BDV XML");
       }
