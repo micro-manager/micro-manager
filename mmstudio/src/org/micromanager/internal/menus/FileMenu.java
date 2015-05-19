@@ -1,13 +1,23 @@
 package org.micromanager.internal.menus;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 
 import org.micromanager.data.Datastore;
-
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -17,6 +27,8 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Handles setting up the File menu and its actions.
  */
 public class FileMenu {
+   private static final String FILE_HISTORY = "list of recently-viewed files";
+   private static final int MAX_HISTORY_SIZE = 15;
    private MMStudio studio_;
 
    public FileMenu(MMStudio studio) {
@@ -24,57 +36,49 @@ public class FileMenu {
    }
 
    public void initializeFileMenu(JMenuBar menuBar) {
-      JMenu fileMenu = GUIUtils.createMenuInMenuBar(menuBar, "File");
+      // We generate the menu contents on the fly, as the "open recent"
+      // menu items are dynamically-generated.
+      final JMenu fileMenu = GUIUtils.createMenuInMenuBar(menuBar, "File");
+      fileMenu.addMenuListener(new MenuListener() {
+         @Override
+         public void menuSelected(MenuEvent e) {
+            fileMenu.removeAll();
+            populateMenu(fileMenu);
+            fileMenu.revalidate();
+            fileMenu.repaint();
+         }
 
+         public void menuDeselected(MenuEvent e) {
+         }
+         public void menuCanceled(MenuEvent e) {
+         }
+      });
+   }
+
+   /**
+    * Fill in the contents of the menu, including the "open recent" dynamic
+    * menus.
+    */
+   private void populateMenu(JMenu fileMenu) {
       GUIUtils.addMenuItem(fileMenu, "Open (Virtual)...", null,
          new Runnable() {
             @Override
             public void run() {
-               new Thread() {
-                  @Override
-                  public void run() {
-                     try {
-                        // TODO: this (and the RAM load below) should recreate
-                        // displays from saved DisplaySettings, when available.
-                        Datastore store = 
-                           studio_.data().promptForDataToLoad(
-                           MMStudio.getInstance().getFrame(), true);
-                        if (store != null) {
-                           studio_.displays().loadDisplays(store);
-                        }
-                     }
-                     catch (IOException e) {
-                        ReportingUtils.showError(e, "There was an error when opening data");
-                     }
-                  }
-               }.start();
+               promptToOpenFile(true);
             }
-         }
-      );
+      });
+
+      fileMenu.add(makeOpenRecentMenu(true));
 
       GUIUtils.addMenuItem(fileMenu, "Open (RAM)...", null,
          new Runnable() {
             @Override
             public void run() {
-               new Thread() {
-                  @Override
-                  public void run() {
-                     try {
-                        Datastore store = 
-                           studio_.data().promptForDataToLoad(
-                           MMStudio.getInstance().getFrame(), false);
-                        if (store != null) {
-                           studio_.displays().loadDisplays(store);
-                        }
-                     }
-                     catch (IOException e) {
-                        ReportingUtils.showError(e, "There was an error when opening data");
-                     }
-                  }
-               }.start();
+               promptToOpenFile(false);
             }
-         }
-      );
+      });
+
+      fileMenu.add(makeOpenRecentMenu(false));
 
       fileMenu.addSeparator();
 
@@ -85,5 +89,95 @@ public class FileMenu {
             }
          }
       );
+   }
+
+   private void promptToOpenFile(final boolean isVirtual) {
+      new Thread() {
+         @Override
+         public void run() {
+            try {
+               Datastore store = studio_.data().promptForDataToLoad(
+                     MMStudio.getInstance().getFrame(), isVirtual);
+               if (store != null) {
+                  studio_.displays().loadDisplays(store);
+               }
+               updateFileHistory(store.getSavePath());
+            }
+            catch (IOException e) {
+               ReportingUtils.showError(e, "There was an error when opening data");
+            }
+         }
+      }.start();
+   }
+
+   private JMenu makeOpenRecentMenu(final boolean isVirtual) {
+      JMenu result = new JMenu(String.format("Open Recent (%s)",
+               isVirtual ? "Virtual" : "RAM"));
+
+      String[] history = getRecentFiles();
+      // history is from oldest to newest; we want to display in
+      // alphabetical order.
+      ArrayList<String> files = new ArrayList<String>(Arrays.asList(history));
+      Collections.sort(files, new Comparator<String>() {
+         @Override
+         public int compare(String a, String b) {
+            return new File(a).compareTo(new File(b));
+         }
+      });
+      for (final String path : files) {
+         JMenuItem item = new JMenuItem(new File(path).getName());
+         item.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               new Thread(new Runnable() {
+                  @Override
+                  public void run() {
+                     try {
+                        Datastore store = studio_.data().loadData(path,
+                           isVirtual);
+                        if (store != null) {
+                           studio_.displays().loadDisplays(store);
+                        }
+                        updateFileHistory(path);
+                     }
+                     catch (IOException ex) {
+                        ReportingUtils.showError(ex, "There was an error when opening data");
+                     }
+                  }
+               }).start();
+            }
+         });
+         result.add(item);
+      }
+      return result;
+   }
+
+   /**
+    * Whenever a file is opened, add it to our history of recently-opened
+    * files.
+    */
+   public void updateFileHistory(String newFile) {
+      String[] fileHistory = getRecentFiles();
+      ArrayList<String> files = new ArrayList<String>(Arrays.asList(fileHistory));
+      if (files.contains(newFile)) {
+         // It needs to go on the end; remove it from the middle.
+         files.remove(newFile);
+      }
+      // Max length is 15; oldest at the front. Truncate the array as needed.
+      while (files.size() > MAX_HISTORY_SIZE - 1) {
+         files.remove(files.get(0));
+      }
+      files.add(newFile);
+      setRecentFiles(files.toArray(fileHistory));
+   }
+
+   private static String[] getRecentFiles() {
+      return DefaultUserProfile.getInstance().getStringArray(
+            FileMenu.class, FILE_HISTORY, new String[] {});
+   }
+
+   private static void setRecentFiles(String[] files) {
+      DefaultUserProfile.getInstance().setStringArray(
+            FileMenu.class, FILE_HISTORY, files);
    }
 }
