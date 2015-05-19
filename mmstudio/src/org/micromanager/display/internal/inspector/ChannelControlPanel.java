@@ -476,14 +476,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          // Update the display settings.
          Color[] newColors = channelColors;
          if (newColors == null) {
-            // Create a new array and fill it in with white.
-            // TODO: use differentiated colors instead of white everywhere.
-            newColors = new Color[channelIndex_ + 1];
-            for (int i = 0; i < newColors.length; ++i) {
-               newColors[i] = Color.WHITE;
-            }
+            // Create a new empty array, which will be filled in below.
+            newColors = new Color[] {};
          }
-         else if (newColors.length <= channelIndex_) {
+         if (newColors.length <= channelIndex_) {
             // Expand the array and fill the new entries with white.
             // TODO: use differentiated colors instead of white everywhere.
             newColors = new Color[channelIndex_ + 1];
