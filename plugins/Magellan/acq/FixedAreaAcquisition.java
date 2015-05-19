@@ -313,22 +313,21 @@ public class FixedAreaAcquisition extends Acquisition {
                      while (true) {
                         sliceIndex++;
                         double zPos = zTop_ + sliceIndex * zStep_;
-                        if (spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D || spaceMode_ == FixedAreaAcquisitionSettings.NO_SPACE) {
-                           //2D region
-                           if (sliceIndex > 0) {
-                              break;
-                           }
-                        } else {
-                            if (isZBelowImagingVolume(position, zPos) || (zStageHasLimits_ && zPos > zStageUpperLimit_)) {
-                              //position is below z stack or limit of focus device, z stack finished
-                              break;
-                           }                            
-                           //3D region
-                           if (isZAboveImagingVolume(position, zPos) || (zStageHasLimits_ && zPos < zStageLowerLimit_)) {
-                              continue; //position is above imaging volume or range of focus device
-                           }
-                           
+                        if ((spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D || spaceMode_ == FixedAreaAcquisitionSettings.NO_SPACE)
+                                && sliceIndex > 0) {
+                           break; //2D regions only have 1 slice
                         }
+
+                        if (isZBelowImagingVolume(position, zPos) || (zStageHasLimits_ && zPos > zStageUpperLimit_)) {
+                           //position is below z stack or limit of focus device, z stack finished
+                           break;
+                        }
+                        //3D region
+                        if (isZAboveImagingVolume(position, zPos) || (zStageHasLimits_ && zPos < zStageLowerLimit_)) {
+                           continue; //position is above imaging volume or range of focus device
+                        }
+
+
                         for (int channelIndex = 0; channelIndex < settings_.channels_.size(); channelIndex++) {
                            if (!settings_.channels_.get(channelIndex).uniqueEvent_ || !settings_.channels_.get(channelIndex).use_) {
                               continue;

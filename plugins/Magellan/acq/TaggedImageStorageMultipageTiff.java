@@ -387,18 +387,6 @@ public final class TaggedImageStorageMultipageTiff   {
    public void setDisplayAndComments(JSONObject settings) {
       displayAndComments_ = settings;
    }
-          
-   public void writeDisplaySettings() {
-      for (MultipageTiffReader r : new HashSet<MultipageTiffReader>(tiffReadersByLabel_.values())) {
-         try {
-            r.rewriteDisplaySettings(displayAndComments_.getJSONArray("Channels"));
-         } catch (JSONException ex) {
-            Log.log("Error writing display settings", true);
-         } catch (IOException ex) {
-            Log.log(ex);
-         }
-      }
-   }
 
    public String getDiskLocation() {
       return directory_;

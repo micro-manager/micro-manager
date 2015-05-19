@@ -104,7 +104,7 @@ public class MultipageTiffReader {
       }
       try {
          displayAndComments_.put("Channels", readDisplaySettings());
-         displayAndComments_.put("Comments", readComments());
+         displayAndComments_.put("Comments", new JSONObject());
       } catch (Exception ex) {
          Log.log("Problem with JSON Representation of DisplayAndComments", true);
       }
@@ -247,38 +247,6 @@ public class MultipageTiffReader {
          Log.log("Couldn't read summary Metadata from file: " + file_.getName());
          return null;
       }
-   }
-   
-   private JSONObject readComments()  {
-      try {
-         long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.COMMENTS_OFFSET_HEADER, 24);
-         ByteBuffer header = readIntoBuffer(offset, 8);
-         if (header.getInt(0) != MultipageTiffWriter.COMMENTS_HEADER) {
-            Log.log("Can't find image comments in file: " + file_.getName(), true);
-            return null;
-         }
-         ByteBuffer buffer = readIntoBuffer(offset + 8, header.getInt(4));
-         return new JSONObject(getString(buffer));
-      } catch (Exception ex) {
-         Log.log("Can't find image comments in file: " + file_.getName(), true);
-            return null;
-      }
-   }
-   
-   public void rewriteDisplaySettings(JSONArray settings) throws IOException, JSONException {
-      if (writingFinished_) {
-         long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.DISPLAY_SETTINGS_OFFSET_HEADER, 16);        
-         int numReservedBytes = readIntoBuffer(offset + 4, 4).getInt(0);
-         byte[] blank = new byte[numReservedBytes];
-         for (int i = 0; i < blank.length; i++) {
-            blank[i] = 0;
-         }
-         fileChannel_.write(ByteBuffer.wrap(blank), offset+8);
-         byte[] bytes = getBytesFromString(settings.toString());
-         ByteBuffer buffer = ByteBuffer.wrap(bytes);
-         fileChannel_.write(buffer, offset+8);
-      }
-      displayAndComments_.put("Channels", settings);
    }
 
    private JSONArray readDisplaySettings() {
@@ -465,7 +433,7 @@ public class MultipageTiffReader {
    }
    
    private void createFileChannel() throws FileNotFoundException, IOException {      
-      raFile_ = new RandomAccessFile(file_,"rw");
+      raFile_ = new RandomAccessFile(file_,"r");
       fileChannel_ = raFile_.getChannel();
    }
    
@@ -488,47 +456,6 @@ public class MultipageTiffReader {
       return val;
    }
    
-   private int writeDisplaySettings(JSONArray settings, long filePosition) throws IOException {
-      int numReservedBytes = settings.length() * MultipageTiffWriter.DISPLAY_SETTINGS_BYTES_PER_CHANNEL;
-      ByteBuffer header = ByteBuffer.allocate(8).order(MultipageTiffWriter.BYTE_ORDER);
-      ByteBuffer buffer = ByteBuffer.wrap(getBytesFromString(settings.toString()));
-      header.putInt(0, MultipageTiffWriter.DISPLAY_SETTINGS_HEADER);
-      header.putInt(4, numReservedBytes);
-       fileChannel_.write(header, filePosition);
-       fileChannel_.write(buffer, filePosition + 8);
-
-      ByteBuffer offsetHeader = ByteBuffer.allocate(8).order(MultipageTiffWriter.BYTE_ORDER);
-      offsetHeader.putInt(0, MultipageTiffWriter.DISPLAY_SETTINGS_OFFSET_HEADER);
-      offsetHeader.putInt(4, (int) filePosition);
-      fileChannel_.write(offsetHeader, 16);
-      return numReservedBytes + 8;
-   }
-   
-   private int writeIndexMap(long filePosition) throws IOException {
-      //Write 4 byte header, 4 byte number of entries, and 20 bytes for each entry
-      int numMappings = indexMap_.size();
-      ByteBuffer buffer = ByteBuffer.allocate(8 + 20 * numMappings).order(byteOrder_);
-      buffer.putInt(0, MultipageTiffWriter.INDEX_MAP_HEADER);
-      buffer.putInt(4, numMappings);
-      int position = 2;
-      for (String label : indexMap_.keySet()) {
-         String[] indecies = label.split("_");
-         for (String index : indecies) {
-            buffer.putInt(4 * position, Integer.parseInt(index));
-            position++;
-         }
-         buffer.putInt(4 * position, indexMap_.get(label).intValue());
-         position++;
-      }
-      fileChannel_.write(buffer, filePosition);
-
-      ByteBuffer header = ByteBuffer.allocate(8).order(byteOrder_);
-      header.putInt(0, MultipageTiffWriter.INDEX_MAP_OFFSET_HEADER);
-      header.putInt(4, (int) filePosition);
-      fileChannel_.write(header, 8);
-      return buffer.capacity();
-   }
-
    private class IFDData {
       public long pixelOffset;
       public long bytesPerImage;

@@ -41,6 +41,10 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    
    public static final int MIN_PIXELS_PER_INTERP_POINT = 4;
    public static final int NUM_XY_TEST_POINTS = 8;
+  
+   private static final int ABOVE_SURFACE = 0;
+   private static final int BELOW_SURFACE = 1;
+   private static final int UNDEFINED_RELATIVE_TO_SURFACE = 1;
    
    private String name_;
    //surface coordinates are neccessarily associated with the coordinate space of particular xy and z devices
@@ -206,7 +210,8 @@ public abstract class SurfaceInterpolator implements XYFootprint {
     * @return true if every part of position is above surface, false otherwise
     */
    public boolean isPositionCompletelyAboveSurface(XYStagePosition pos, SurfaceInterpolator surface, double zPos) throws InterruptedException {
-      return testPositionRelativeToSurface(pos, surface, zPos, true);
+//      int relativeToSurf = testPositionRelativeToSurface(pos, surface, zPos);
+      return false;
    }
   
    /**
@@ -215,77 +220,77 @@ public abstract class SurfaceInterpolator implements XYFootprint {
     * @return true if every part of position is above surface, false otherwise
     */
    public boolean isPositionCompletelyBelowSurface(XYStagePosition pos, SurfaceInterpolator surface, double zPos ) throws InterruptedException {
-      return testPositionRelativeToSurface(pos, surface, zPos, false); //no padding for testing below
+//      int relativeToSurf = testPositionRelativeToSurface(pos, surface, zPos);
+      return false;
    }
    
-   public static boolean testPositionRelativeToSurface(XYStagePosition pos, SurfaceInterpolator surface, double zPos, boolean above) throws InterruptedException {
-      //get the corners with padding added in
-//       System.out.println(pos.getGridRow() + " \t" + pos.getGridCol());
-      Point2D.Double[] corners = getPositionCornersWithPadding(pos, surface.xyPadding_um_);
-      //First check position corners before going into a more detailed set of test points
-      for (Point2D.Double point : corners) {
-           if (!surface.waitForCurentInterpolation().isInterpDefined(point.x, point.y)) {
-               continue;
-            }
-            float interpVal = surface.waitForCurentInterpolation().getInterpolatedValue(point.x, point.y);
-
-         
-         if (above) { //test if point lies bleow surface + padding
-            if (zPos >=  interpVal ) {   //TODO: account for different signs of Z
-                return false;
-            }
-         } else {
-            //test if point lies below surface + padding
-            if (zPos <= interpVal ) {   //TODO: account for different signs of Z
-               return false;
-            }
-         }
-      }
-      //then check a grid of points spanning entire position        
-      //9x9 square of points to check for each position
-      //square is aligned with axes in pixel space, so convert to pixel space to generate test points
-      double xSpan = corners[2].getX() - corners[0].getX();
-      double ySpan = corners[2].getY() - corners[0].getY();
-      Point2D.Double pixelSpan = new Point2D.Double();
-      AffineTransform transform = AffineUtils.getAffineTransform(surface.pixelSizeConfig_,0, 0);
-      try {
-         transform.inverseTransform(new Point2D.Double(xSpan, ySpan), pixelSpan);
-      } catch (NoninvertibleTransformException ex) {
-         Log.log("Problem inverting affine transform");
-      }
-      outerloop:
-      for (double x = 0; x <= pixelSpan.x; x += pixelSpan.x / (double) NUM_XY_TEST_POINTS) {
-         for (double y = 0; y <= pixelSpan.y; y += pixelSpan.y / (double) NUM_XY_TEST_POINTS) {
-            //convert these abritray pixel coordinates back to stage coordinates
-             double[] transformMaxtrix = new double[6];
-             transform.getMatrix(transformMaxtrix);
-             transformMaxtrix[4] = corners[0].getX();
-             transformMaxtrix[5] = corners[0].getY();
-             //create new transform with translation applied
-             transform = new AffineTransform(transformMaxtrix);
-            Point2D.Double stageCoords = new Point2D.Double();
-            transform.transform(new Point2D.Double(x, y), stageCoords);
-            //test point for inclusion of position
-            if (!surface.waitForCurentInterpolation().isInterpDefined(stageCoords.x, stageCoords.y)) {
-               continue;
-            }
-            float interpVal = surface.waitForCurentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y);
-
-            if (above) { //test if point lies bleow surface + padding
-               if (zPos >= interpVal ) {   //TODO: account for different signs of Z                 
-                   return false;
-               }
-            } else {
-               //test if point lies below surface + padding
-               if (zPos <= interpVal ) {   //TODO: account for different signs of Z
-                  return false;
-               }
-            }
-
-         }
-      }
-      return true;
-   }
+//   public static int testPositionRelativeToSurface(XYStagePosition pos, SurfaceInterpolator surface, double zPos) throws InterruptedException {
+//      //get the corners with padding added in
+//      Point2D.Double[] corners = getPositionCornersWithPadding(pos, surface.xyPadding_um_);
+//      //First check position corners before going into a more detailed set of test points
+//      for (Point2D.Double point : corners) {
+//           if (!surface.waitForCurentInterpolation().isInterpDefined(point.x, point.y)) {
+//               continue;
+//            }
+//            float interpVal = surface.waitForCurentInterpolation().getInterpolatedValue(point.x, point.y);
+//
+//         
+//         if (above) { //test if point lies bleow surface + padding
+//            if (zPos >=  interpVal ) {   //TODO: account for different signs of Z
+//                return false;
+//            }
+//         } else {
+//            //test if point lies below surface + padding
+//            if (zPos <= interpVal ) {   //TODO: account for different signs of Z
+//               return false;
+//            }
+//         }
+//      }
+//      //then check a grid of points spanning entire position        
+//      //9x9 square of points to check for each position
+//      //square is aligned with axes in pixel space, so convert to pixel space to generate test points
+//      double xSpan = corners[2].getX() - corners[0].getX();
+//      double ySpan = corners[2].getY() - corners[0].getY();
+//      Point2D.Double pixelSpan = new Point2D.Double();
+//      AffineTransform transform = AffineUtils.getAffineTransform(surface.pixelSizeConfig_,0, 0);
+//      try {
+//         transform.inverseTransform(new Point2D.Double(xSpan, ySpan), pixelSpan);
+//      } catch (NoninvertibleTransformException ex) {
+//         Log.log("Problem inverting affine transform");
+//      }
+//      outerloop:
+//      for (double x = 0; x <= pixelSpan.x; x += pixelSpan.x / (double) NUM_XY_TEST_POINTS) {
+//         for (double y = 0; y <= pixelSpan.y; y += pixelSpan.y / (double) NUM_XY_TEST_POINTS) {
+//            //convert these abritray pixel coordinates back to stage coordinates
+//             double[] transformMaxtrix = new double[6];
+//             transform.getMatrix(transformMaxtrix);
+//             transformMaxtrix[4] = corners[0].getX();
+//             transformMaxtrix[5] = corners[0].getY();
+//             //create new transform with translation applied
+//             transform = new AffineTransform(transformMaxtrix);
+//            Point2D.Double stageCoords = new Point2D.Double();
+//            transform.transform(new Point2D.Double(x, y), stageCoords);
+//            //test point for inclusion of position
+//            if (!surface.waitForCurentInterpolation().isInterpDefined(stageCoords.x, stageCoords.y)) {
+//               continue;
+//            }
+//            float interpVal = surface.waitForCurentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y);
+//
+//            if (above) { //test if point lies bleow surface + padding
+//               if (zPos >= interpVal ) {   //TODO: account for different signs of Z                 
+//                   return false;
+//               }
+//            } else {
+//               //test if point lies below surface + padding
+//               if (zPos <= interpVal ) {   //TODO: account for different signs of Z
+//                  return false;
+//               }
+//            }
+//
+//         }
+//      }
+//      return true;
+//   }
    
    
    

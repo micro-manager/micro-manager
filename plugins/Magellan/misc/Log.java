@@ -18,7 +18,11 @@ public class Log {
    }
 
    public static void log(String message, boolean show) {
+     try {
       Magellan.getCore().logMessage(message);
+     } catch (NoClassDefFoundError e) {
+        //running outside of MM, ignore
+     }
        if (show) {
           IJ.log(message);
        }
@@ -29,8 +33,12 @@ public class Log {
    }
 
    public static void log(Exception e, boolean show) {
-      Magellan.getCore().logMessage(getStackTraceAsString(e));
-      Magellan.getCore().logMessage(e.getMessage() == null ? e.toString() : e.getMessage());
+      try {
+         Magellan.getCore().logMessage(getStackTraceAsString(e));
+         Magellan.getCore().logMessage(e.getMessage() == null ? e.toString() : e.getMessage());
+      } catch (NoClassDefFoundError ex) {
+         //running outside of MM, ignore
+      }
       if (show) {
          IJ.log(getStackTraceAsString(e));
       }
