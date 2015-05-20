@@ -1,7 +1,7 @@
 <project name="MMCoreJ" basedir="." default="jar">
 	<include file="../buildscripts/buildprops.xml"/>
 	<property name="srcdir" value="${mm.swig.javasrcdir}"/>
-	<property name="json.srcdir" value="${mm.basedir}/mmstudio/src"/>
+	<property name="json.srcdir" value="${mm.basedir}/mmstudio/src/main/java"/>
 	<property name="package" value="mmcorej"/>
 
 	<import file="../buildscripts/javabuild.xml"/>
