@@ -12,8 +12,9 @@
 	     (intdir and scratchdir must not be shared with other projects)
 	     -->
 	<property name="product" value="${ant.project.name}"/>
-	<property name="srcdir" value="src"/>
-	<property name="testdir" value="test"/>
+	<property name="srcdir" value="src/main/java"/>
+	<property name="testdir" value="src/test/java"/>
+	<property name="rscdir" value="src/main/resources"/>
 	<if>
 		<isset property="mm.platform.is.windows"/>
 		<then>
