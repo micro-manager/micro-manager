@@ -45,6 +45,8 @@ import surfacesandregions.SurfaceRegionComboBoxModel;
  */
 public class DisplayWindowControls extends Panel {
 
+   private static final Color LIGHT_GREEN = new Color(200, 255, 200);
+   
    private EventBus bus_;
    private DisplayPlus display_;
    private RegionManager regionManager_;
@@ -174,7 +176,7 @@ public class DisplayWindowControls extends Panel {
 
       JPanel background = new JPanel();
       background.setBorder(BorderFactory.createLineBorder(Color.black));
-      background.setBackground(new Color(200, 255, 200)); //light green
+      background.setBackground(LIGHT_GREEN); //light green
       JLabel message = new JLabel(text);
       background.add(message);
       x += tabbedPane_.getSelectedComponent().getWidth() / 2 - background.getPreferredSize().width / 2;

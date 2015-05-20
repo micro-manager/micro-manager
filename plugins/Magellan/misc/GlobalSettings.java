@@ -39,6 +39,7 @@ public class GlobalSettings {
 
    
    private static final String SAVING_DIR = "SAVING DIRECTORY";
+   private static final String FIRST_OPENING = "FIRST_OPEN";
    private static final String CHANNEL_OFFSET_PREFIX = "CHANNEL_OFFSET_";
    
    private static GlobalSettings singleton_;
@@ -75,6 +76,12 @@ public class GlobalSettings {
             Log.log("couldnt get pixel size config",true);
         }
     }
+   
+   public boolean firstMagellanOpening() {
+      boolean first = prefs_.getBoolean(FIRST_OPENING, true);
+      prefs_.putBoolean(FIRST_OPENING, false);
+      return first;
+   }
  
    public void storeBooleanInPrefs(String key, Boolean value) {
        prefs_.putBoolean(key, value);
