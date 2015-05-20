@@ -919,9 +919,14 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     */
    @Subscribe
    public void onDatastoreSaved(DatastoreSavedEvent event) {
-      String path = event.getPath();
-      displaySettings_.save(path);
-      resetTitle();
+      try {
+         String path = event.getPath();
+         displaySettings_.save(path);
+         resetTitle();
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Failed to respond to datastore saved event");
+      }
    }
 
    /**

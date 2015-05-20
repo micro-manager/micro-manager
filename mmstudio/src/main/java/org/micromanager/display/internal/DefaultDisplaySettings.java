@@ -510,10 +510,14 @@ public class DefaultDisplaySettings implements DisplaySettings {
          // "ChColor" tag (via setChannelColor()), and a method that preserves
          // all channel colors.
          if (channelColors_ != null && channelColors_.length > 0) {
-            MDUtils.setChannelColor(result, channelColors_[0].getRGB());
+            if (channelColors_[0] != null) {
+               MDUtils.setChannelColor(result, channelColors_[0].getRGB());
+            }
             JSONArray colors = new JSONArray();
             for (Color color : channelColors_) {
-               colors.put(color.getRGB());
+               if (color != null) {
+                  colors.put(color.getRGB());
+               }
             }
             result.put("ChColors", colors);
          }
