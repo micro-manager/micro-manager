@@ -4,6 +4,8 @@
 
 	<!-- The importing buildfile must define the 'namespace' property -->
 
+    <property name="srcdir" value="src/main/clj"/>
+    <property name="testdir" value="src/test/clj"/>
 	<import file="javabuild.xml"/>
 
 	<!-- Override just the 'compile' target -->
