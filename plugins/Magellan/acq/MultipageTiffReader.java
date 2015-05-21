@@ -345,6 +345,7 @@ public class MultipageTiffReader {
          md = new JSONObject(getString(mdBuffer));
       } catch (JSONException ex) {
          Log.log("Error reading image metadata from file", true);
+         System.out.println(getString(mdBuffer));
       }
       
       if ( byteDepth_ == 0) {

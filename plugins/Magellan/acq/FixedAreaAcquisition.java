@@ -410,11 +410,7 @@ public class FixedAreaAcquisition extends Acquisition {
                         autofocus_.run(timeIndex);
                      } catch (Exception ex) {
                         IJ.log("Problem running autofocus " + ex.getMessage());
-                     }
-                  }
-                  if (burstMode_) {
-                     break;
-                     //only one time point in burst mode
+                     }  
                   }
                }
                //acqusiition has generated all of its events
