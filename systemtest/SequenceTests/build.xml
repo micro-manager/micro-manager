@@ -2,21 +2,9 @@
 	<import file="../../buildscripts/javabuild.xml"/>
 
 	<path id="project.classpath">
-		<!-- Keep alphabetical, please -->
+		<path refid="mm.compile.classpath"/>
 		<pathelement location="${mm.java.lib.acq-engine}"/>
-		<pathelement location="${mm.java.lib.beanshell}"/>
-		<pathelement location="${mm.java.lib.imagej}"/>
 		<pathelement location="${mm.java.lib.mmcorej}"/>
 		<pathelement location="${mm.java.lib.mmstudio}"/>
-	</path>
-
-	<path id="project.test.classpath">
-		<path refid="mm.test.classpath"/>
-		<pathelement location="${mm.java.lib.clojure}"/>
-
-		<!-- TODO Get this more directly from Ivy -->
-		<pathelement location="${mm.basedir}/dependencies/builddeps/javassist-3.18.1-GA.jar"/>
-		<pathelement location="${mm.basedir}/dependencies/builddeps/json-simple-1.1.1.jar"/>
-		<pathelement location="${mm.basedir}/dependencies/builddeps/msgpack-0.6.11.jar"/>
 	</path>
 </project>
