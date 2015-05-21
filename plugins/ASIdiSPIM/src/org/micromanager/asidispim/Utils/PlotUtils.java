@@ -116,12 +116,13 @@ public class PlotUtils {
     * Create a frame with a plot of the data given in XYSeries overwrite any
     * previously created frame with the same title
     *
+
     * @param title shown in the top of the plot
     * @param data array with data series to be plotted
     * @param xTitle Title of the X axis
     * @param yTitle Title of the Y axis
     * @param showShapes whether or not to draw shapes at the data points
-    * @param annotation to be shown in ploy
+    * @param annotation to be shown in plot
     * @return Frame that displays the data
     */
    public Frame plotDataN(String title, XYSeries[] data, String xTitle,
@@ -207,7 +208,7 @@ public class PlotUtils {
          }
       }
       
-      XYAnnotation an = new XYTextAnnotation(annotation, 20, 20);
+      XYAnnotation an = new XYTextAnnotation(annotation, maxX - 0.01, maxY);
       plot.addAnnotation(an);
 
       renderer.setUseFillPaint(true);

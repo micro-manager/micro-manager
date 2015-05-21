@@ -317,7 +317,9 @@ public class Fitter {
          case Gaussian:
             checkParms(type, parms);
             Gaussian.Parametric gf = new Gaussian.Parametric();
-            return gf.value(xValue, parms);
+            double[] parms2 = new double[3];
+            System.arraycopy(parms, 0, parms2, 0, 3);
+            return gf.value(xValue, parms2) + parms[3];
       }
       return 0.0;
    }
