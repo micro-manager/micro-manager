@@ -33,7 +33,7 @@
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="splitPane_" alignment="0" max="32767" attributes="0"/>
+          <Component id="splitPane_" alignment="0" pref="651" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
   </Layout>
@@ -75,7 +75,7 @@
                 </DimensionLayout>
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="deviceControlScrollPane_" alignment="0" pref="75" max="32767" attributes="0"/>
+                      <Component id="deviceControlScrollPane_" alignment="0" pref="172" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
               </Layout>
@@ -125,7 +125,7 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="1" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="multipleAcqScrollPane_" pref="27" max="32767" attributes="0"/>
+                          <Component id="multipleAcqScrollPane_" pref="121" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
                       </Group>
@@ -282,7 +282,7 @@
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
-                          <Component id="jScrollPane2" pref="39" max="32767" attributes="0"/>
+                          <Component id="jScrollPane2" pref="143" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="deleteSelectedRegionButton_" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -355,7 +355,7 @@
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
-                          <Component id="jScrollPane3" pref="39" max="32767" attributes="0"/>
+                          <Component id="jScrollPane3" pref="143" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="deleteAllSurfacesButton_" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -1981,12 +1981,14 @@
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="ch5OffsetSpinner_" min="-2" pref="46" max="-2" attributes="0"/>
                                   </Group>
-                                  <Group type="102" attributes="0">
-                                      <Component id="ch4OffsetLabel_" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="ch4OffsetSpinner_" min="-2" pref="46" max="-2" attributes="0"/>
-                                  </Group>
                                   <Group type="103" alignment="1" groupAlignment="0" max="-2" attributes="0">
+                                      <Group type="102" attributes="0">
+                                          <Component id="burstModeButton_" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace max="32767" attributes="0"/>
+                                          <Component id="ch4OffsetLabel_" min="-2" max="-2" attributes="0"/>
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Component id="ch4OffsetSpinner_" min="-2" pref="46" max="-2" attributes="0"/>
+                                      </Group>
                                       <Group type="102" attributes="0">
                                           <Component id="frameSummationButton_" min="-2" max="-2" attributes="0"/>
                                           <EmptySpace max="32767" attributes="0"/>
@@ -2074,6 +2076,7 @@
                               <Group type="103" groupAlignment="3" attributes="0">
                                   <Component id="ch4OffsetSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="ch4OffsetLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="burstModeButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
@@ -2252,6 +2255,14 @@
                       <Events>
                         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="frameSummationButton_ActionPerformed"/>
                       </Events>
+                    </Component>
+                    <Component class="javax.swing.JRadioButton" name="burstModeButton_">
+                      <Properties>
+                        <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
+                          <ComponentRef name="filterMethodButtonGroup_"/>
+                        </Property>
+                        <Property name="text" type="java.lang.String" value="Burst mode"/>
+                      </Properties>
                     </Component>
                   </SubComponents>
                 </Container>

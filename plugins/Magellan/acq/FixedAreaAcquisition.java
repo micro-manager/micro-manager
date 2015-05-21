@@ -94,10 +94,7 @@ public class FixedAreaAcquisition extends Acquisition {
         createEventGenerator();
         createAutofocus();
         //if a 2D, single xy position, no covariants, no autofocus: activate burst mode
-        burstMode_ = positions_.size() == 1 && settings.covariantPairings_.isEmpty() && !settings.autofocusEnabled_
-                && (spaceMode_ == FixedAreaAcquisitionSettings.NO_SPACE || spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D)
-                && !settings.timeEnabled_ && GlobalSettings.getInstance().isBIDCTwoPhoton()
-                && getFilterType() == FrameIntegrationMethod.FRAME_AVERAGE;
+        burstMode_ = getFilterType() == FrameIntegrationMethod.BURST_MODE;
         if (burstMode_) {
             Log.log("Burst mode activated");
         }

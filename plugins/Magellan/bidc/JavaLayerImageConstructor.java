@@ -79,11 +79,13 @@ public class JavaLayerImageConstructor {
                             FrameIntegrationMethod integrator;
                             if (firstIAI.event_.acquisition_.getFilterType() == FrameIntegrationMethod.FRAME_AVERAGE) {
                                 integrator = new FrameAverageWrapper(GlobalSettings.getInstance().getChannelOffset(firstIAI.camChannelIndex_),
-                                        MD.getWidth(firstIAI.img_.tags), firstIAI.event_.acquisition_ instanceof FixedAreaAcquisition &&
-                                        ((FixedAreaAcquisition) firstIAI.event_.acquisition_).burstModeActive() ? 1 : firstIAI.numFrames_);
+                                        MD.getWidth(firstIAI.img_.tags), firstIAI.numFrames_);
                             } else if (firstIAI.event_.acquisition_.getFilterType() == FrameIntegrationMethod.RANK_FILTER) {
                                 integrator = new RankFilterWrapper(GlobalSettings.getInstance().getChannelOffset(firstIAI.camChannelIndex_),
                                         MD.getWidth(firstIAI.img_.tags), firstIAI.numFrames_, firstIAI.event_.acquisition_.getRank());
+                            } else if (firstIAI.event_.acquisition_.getFilterType() == FrameIntegrationMethod.BURST_MODE){
+                                integrator = new FrameAverageWrapper(GlobalSettings.getInstance().getChannelOffset(firstIAI.camChannelIndex_),
+                                        MD.getWidth(firstIAI.img_.tags), 1);
                             } else { //frame summation
                                 integrator = new FrameSummationWrapper(GlobalSettings.getInstance().getChannelOffset(firstIAI.camChannelIndex_),
                                         MD.getWidth(firstIAI.img_.tags), firstIAI.numFrames_);
@@ -126,7 +128,8 @@ public class JavaLayerImageConstructor {
                             if (firstIAI.event_.acquisition_ instanceof FixedAreaAcquisition
                                     && ((FixedAreaAcquisition) firstIAI.event_.acquisition_).burstModeActive()) {
                                 //burst mode
-                                MagellanEngine.addImageMetadata(constructedImage.tags, firstIAI.event_, firstIAI.frameNumber_,
+                                MagellanEngine.addImageMetadata(constructedImage.tags, firstIAI.event_, 
+                                        firstIAI.event_.timeIndex_ * firstIAI.numFrames_ + firstIAI.frameNumber_,
                                         firstIAI.camChannelIndex_, firstIAI.currentTime_ - firstIAI.event_.acquisition_.getStartTime_ms(),
                                         firstIAI.numFrames_);
                             } else {
