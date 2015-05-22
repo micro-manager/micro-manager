@@ -203,7 +203,8 @@ public class Properties {
       PLUGIN_AUTOFOCUS_WINDOW_HEIGHT("AutofocusWIndowHeight"),
       PLUGIN_AUTOFOCUS_ACQBEFORESTART("AutofocusDoBeforeACQStart"),
       PLUGIN_AUTOFOCUS_EACHNIMAGES("AutofocusEachNTimePoints"),
-      PLUGIN_AUTOFOCUS_CHANNEL("AutofocusChannel")
+      PLUGIN_AUTOFOCUS_CHANNEL("AutofocusChannel"),
+      PLUGIN_AUTOFOCUS_MINIMUMR2("AutofocusMinimumR2")
       ;
       private final String text;
       private final boolean hasPattern;  // true if string has substitution pattern

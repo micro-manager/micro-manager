@@ -169,6 +169,11 @@ public class AutofocusPanel extends ListeningJPanel{
       acqOptionsPanel_.add(new JLabel("Autofocus Channel: "));
       acqOptionsPanel_.add(channelSelect);
       
+      acqOptionsPanel_.add(new JLabel("Minimum R²:"));
+      final JSpinner minimumR2Spinner = pu.makeSpinnerFloat(0.0, 1.0, 0.01,
+              Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_AUTOFOCUS_MINIMUMR2, 0.75);
+      acqOptionsPanel_.add(minimumR2Spinner);
+      
       // construct the main panel
       add(optionsPanel_);
       add (acqOptionsPanel_);
