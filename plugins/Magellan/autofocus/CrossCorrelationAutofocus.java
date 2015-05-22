@@ -193,7 +193,6 @@ public class CrossCorrelationAutofocus {
       ImageStack xCorrStack = FHTImage3D.crossCorrelation(tp0Stack, currentTPStack);
       Log.log( acqName + " Autofocus: finished cross correlating..calculating drift", true);      
       ImagePlus xCorr = new ImagePlus("XCorr", xCorrStack);      
-      xCorr.show();
       //find the maximum cross correlation intensity at each z slice
       double[] ccIntensity = new double[xCorr.getNSlices()], interpolatedCCMax = new double[xCorr.getNSlices()];
       for (int i = 1; i <= ccIntensity.length; i++) {

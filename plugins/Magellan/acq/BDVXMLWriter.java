@@ -41,12 +41,12 @@ public class BDVXMLWriter {
 //      xml.close();
 //   }
    
-   public BDVXMLWriter(File dir, int numChannels) throws IOException {
+   public BDVXMLWriter(File dir, int numChannels, int byteDepth) throws IOException {
       numChannels_ = numChannels;
       File xmlFile = new File(dir.getAbsolutePath() + File.separator+ "FIJI_BigDataViewer_Metadata.xml");      
       raFile_ = new RandomAccessFile(xmlFile, "rw");
       raFile_.writeBytes("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<SpimData version=\"0.2\">\n <BasePath type=\"relative\">.</BasePath>\n"
-              + "<SequenceDescription>\n<ImageLoader format=\"micromagellan\">\n</ImageLoader>\n<ViewSetups>\n");
+              + "<SequenceDescription>\n<ImageLoader format=\"micromagellan"+ (byteDepth == 1?8:16)+"bit\">\n</ImageLoader>\n<ViewSetups>\n");
       for (int c = 0; c < numChannels; c++) {
          raFile_.writeBytes("<ViewSetup>\n<id>" + c + "</id>\n</ViewSetup>\n");
       }

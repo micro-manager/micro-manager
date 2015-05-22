@@ -20,22 +20,24 @@ package bdv;
 import acq.MultiResMultipageTiffStorage;
 import java.io.File;
 import java.io.IOException;
+import misc.MD;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.generic.sequence.ImgLoaderIo;
 import mpicbg.spim.data.generic.sequence.XmlIoBasicImgLoader;
 
-@ImgLoaderIo( format = "micromagellan", type = MagellanImgLoader.class)
-public class XMLIOMagellanImageLoader implements XmlIoBasicImgLoader<MagellanImgLoader> {
+@ImgLoaderIo( format = "micromagellan8bit", type = MagellanImgLoader8Bit.class)
+public class XMLIOMagellanImageLoader8Bit implements XmlIoBasicImgLoader<MagellanImgLoader8Bit> {
 
    @Override
-   public org.jdom2.Element toXml(MagellanImgLoader loader, File basePath) {
+   public org.jdom2.Element toXml(MagellanImgLoader8Bit loader, File basePath) {
       throw new UnsupportedOperationException("not implmented");      
    }
 
    @Override
-   public MagellanImgLoader fromXml(org.jdom2.Element elmnt, File file, AbstractSequenceDescription<?, ?, ?> asd) {     
+   public MagellanImgLoader8Bit fromXml(org.jdom2.Element elmnt, File file, AbstractSequenceDescription<?, ?, ?> asd) {     
       try {
-         return new MagellanImgLoader(new MultiResMultipageTiffStorage(file.getParent()));
+         MultiResMultipageTiffStorage storage = new MultiResMultipageTiffStorage(file.getParent());
+         return new MagellanImgLoader8Bit(storage);
       } catch (IOException ex) {
          throw new RuntimeException(ex.getMessage());
       }

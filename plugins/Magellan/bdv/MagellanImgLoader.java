@@ -20,35 +20,44 @@ package bdv;
 import acq.MultiResMultipageTiffStorage;
 import bdv.AbstractViewerImgLoader;
 import bdv.img.cache.Cache;
+import bdv.img.cache.CacheArrayLoader;
 import bdv.img.cache.CacheHints;
 import bdv.img.cache.CachedCellImg;
 import bdv.img.cache.LoadingStrategy;
 import bdv.img.cache.VolatileGlobalCellCache;
 import bdv.img.cache.VolatileImgCells;
 import bdv.img.cache.VolatileImgCells.CellCache;
+import misc.MD;
 import mpicbg.spim.data.sequence.ViewId;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.Volatile;
+import net.imglib2.img.basictypeaccess.volatiles.VolatileAccess;
 import net.imglib2.img.basictypeaccess.volatiles.array.VolatileByteArray;
+import net.imglib2.img.basictypeaccess.volatiles.array.VolatileShortArray;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.volatiles.VolatileUnsignedByteType;
+import net.imglib2.type.volatiles.VolatileUnsignedShortType;
 import net.imglib2.util.Fraction;
 
 /**
  *
  * @author Henry
  */
-public class MagellanImgLoader extends AbstractViewerImgLoader<UnsignedByteType, VolatileUnsignedByteType> {
+public abstract class MagellanImgLoader< T extends NativeType< T >, V extends Volatile< T > & NativeType< V >, A extends VolatileAccess >
+		extends AbstractViewerImgLoader< T, V > {
 
-   private final VolatileGlobalCellCache< VolatileByteArray > bdvCache_;
+   private final VolatileGlobalCellCache< A > bdvCache_;
    private MultiResMultipageTiffStorage tiffStorage_;
    private final double[][] mipmapResolutions_;
    private final long[][] imageDimensions_;
    private final AffineTransform3D[] mipmapTransforms_;
 
-   public MagellanImgLoader(MultiResMultipageTiffStorage tiffStorage) {
-     super(new UnsignedByteType(), new VolatileUnsignedByteType());
+   
+   protected MagellanImgLoader(MultiResMultipageTiffStorage tiffStorage,  final CacheArrayLoader< A > loader, final T type, final V volatileType) {
+     super(type, volatileType);
       tiffStorage_ = tiffStorage;
       //CacheArrayLoader<A> loader, 
       //int maxNumTimepoints
@@ -59,8 +68,7 @@ public class MagellanImgLoader extends AbstractViewerImgLoader<UnsignedByteType,
       long fullResHeight = tiffStorage_.getTileHeight() * tiffStorage_.getNumRows();
       long fullResWidth = tiffStorage_.getTileWidth() * tiffStorage_.getNumCols();
       
-      bdvCache_ = new VolatileGlobalCellCache<VolatileByteArray>(
-              new MultiResMPTiffVolatileByteArrayLoader(tiffStorage),
+      bdvCache_ = new VolatileGlobalCellCache<A>(loader,
               tiffStorage.getNumFrames(), tiffStorage.getNumChannels(), numResLevels, 10);
       
       mipmapResolutions_ = new double[numResLevels][]; //esentially x, y z pixel sizes, specific to resolution level
@@ -92,32 +100,16 @@ public class MagellanImgLoader extends AbstractViewerImgLoader<UnsignedByteType,
       }
    }
 
-   private < T extends NativeType<T>> CachedCellImg< T, VolatileByteArray> prepareCachedImage(final ViewId view, final int resLevelIndex, final LoadingStrategy loadingStrategy) {
+   private < T extends NativeType<T>> CachedCellImg< T, A> prepareCachedImage(final ViewId view, final int resLevelIndex, final LoadingStrategy loadingStrategy) {
       final long[] dimensions = imageDimensions_[resLevelIndex];
       //the only “shape” of block that your CacheArrayLoader needs to be able to load (plus they will be aligned at multiples of tileWidth, tileHeight, 
       final int[] cellDimensions = new int[]{tiffStorage_.getTileWidth(), tiffStorage_.getTileHeight(), 1}; 
 
       final int priority = tiffStorage_.getNumResLevels() - 1 - resLevelIndex;
       final CacheHints cacheHints = new CacheHints(loadingStrategy, priority, false);
-      final CellCache< VolatileByteArray> c = bdvCache_.new VolatileCellCache(view.getTimePointId(), view.getViewSetupId(), resLevelIndex, cacheHints);
-      final VolatileImgCells< VolatileByteArray> cells = new VolatileImgCells< VolatileByteArray>(c, new Fraction(), dimensions, cellDimensions);
-      final CachedCellImg< T, VolatileByteArray> img = new CachedCellImg< T, VolatileByteArray>(cells);
-      return img;
-   }
-
-   @Override
-   public RandomAccessibleInterval<UnsignedByteType> getImage(final ViewId view, final int level) {
-      final CachedCellImg< UnsignedByteType, VolatileByteArray> img = prepareCachedImage(view, level, LoadingStrategy.BLOCKING);
-      final UnsignedByteType linkedType = new UnsignedByteType(img);
-      img.setLinkedType(linkedType);
-      return img;
-   }
-
-   @Override
-   public RandomAccessibleInterval<VolatileUnsignedByteType> getVolatileImage(final ViewId view, final int level) {
-      final CachedCellImg< VolatileUnsignedByteType, VolatileByteArray> img = prepareCachedImage(view, level, LoadingStrategy.VOLATILE);
-      final VolatileUnsignedByteType linkedType = new VolatileUnsignedByteType(img);
-      img.setLinkedType(linkedType);
+      final CellCache< A> c = bdvCache_.new VolatileCellCache(view.getTimePointId(), view.getViewSetupId(), resLevelIndex, cacheHints);
+      final VolatileImgCells< A> cells = new VolatileImgCells< A>(c, new Fraction(), dimensions, cellDimensions);
+      final CachedCellImg< T, A> img = new CachedCellImg< T, A>(cells);
       return img;
    }
 
@@ -141,4 +133,22 @@ public class MagellanImgLoader extends AbstractViewerImgLoader<UnsignedByteType,
       return bdvCache_;
    }
 
+   protected abstract void linkType(CachedCellImg< T, A> img) ;
+
+   protected abstract void linkVolatileType(CachedCellImg< V, A> img) ;
+
+   @Override
+   public RandomAccessibleInterval< T> getImage(final ViewId view, final int level) {
+      final CachedCellImg< T, A> img = prepareCachedImage(view, level, LoadingStrategy.BLOCKING);
+      linkType(img);
+      return img;
+   }
+
+   @Override
+   public RandomAccessibleInterval< V> getVolatileImage(final ViewId view, final int level) {
+      final CachedCellImg< V, A> img = prepareCachedImage(view, level, LoadingStrategy.VOLATILE);
+      linkVolatileType(img);
+      return img;
+   }
+   
 }

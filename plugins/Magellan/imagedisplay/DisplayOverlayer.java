@@ -228,11 +228,12 @@ public class DisplayOverlayer {
                              Math.max(display_.getExploreEndTile().x, display_.getExploreStartTile().x), TRANSPARENT_MAGENTA);
                   } else if (display_.getMouseDragStartPointLeft() != null) {
                      //highlight multiple tiles when mouse dragging    
-                        Point p2Tiles = zoomableStack_.getTileIndicesFromDisplayedPixel(display_.getCurrentMouseLocation().x, display_.getCurrentMouseLocation().y),
-                                p1Tiles = zoomableStack_.getTileIndicesFromDisplayedPixel(display_.getMouseDragStartPointLeft().x, display_.getMouseDragStartPointLeft().y);
-                        highlightTilesOnOverlay(overlay, Math.min(p1Tiles.y, p2Tiles.y), Math.max(p1Tiles.y, p2Tiles.y),
-                                Math.min(p1Tiles.x, p2Tiles.x), Math.max(p1Tiles.x, p2Tiles.x), TRANSPARENT_BLUE);
-                     
+                     Point mouseLoc = display_.getCurrentMouseLocation();
+                     Point dragStart = display_.getMouseDragStartPointLeft();
+                     Point p2Tiles = zoomableStack_.getTileIndicesFromDisplayedPixel(mouseLoc.x, mouseLoc.y),
+                             p1Tiles = zoomableStack_.getTileIndicesFromDisplayedPixel(dragStart.x, dragStart.y);
+                     highlightTilesOnOverlay(overlay, Math.min(p1Tiles.y, p2Tiles.y), Math.max(p1Tiles.y, p2Tiles.y),
+                             Math.min(p1Tiles.x, p2Tiles.x), Math.max(p1Tiles.x, p2Tiles.x), TRANSPARENT_BLUE);
                   } else if (display_.getCurrentMouseLocation() != null) {
                      //draw single highlighted tile under mouse
                         Point coords = zoomableStack_.getTileIndicesFromDisplayedPixel(display_.getCurrentMouseLocation().x, display_.getCurrentMouseLocation().y);

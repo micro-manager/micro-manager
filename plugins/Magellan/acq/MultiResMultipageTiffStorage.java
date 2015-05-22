@@ -171,7 +171,7 @@ public class MultiResMultipageTiffStorage {
       }
       lowResStorages_ = new TreeMap<Integer, TaggedImageStorageMultipageTiff>();
       try {
-         bdvXML_ = new BDVXMLWriter(new File(directory_), fullResStorage_.getNumChannels());
+         bdvXML_ = new BDVXMLWriter(new File(directory_), fullResStorage_.getNumChannels(), MD.getBytesPerPixel(summaryMD_));
       } catch (IOException ex) {
          Log.log("Couldn't create BigDataViewer XML file");
       }
