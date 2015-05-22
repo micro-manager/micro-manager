@@ -1262,7 +1262,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          break;
       case WAITING:
          text = "Next timepoint ("
-               + NumberUtils.intToDisplayString(numTimePointsDone_) + 1
+               + NumberUtils.intToDisplayString(numTimePointsDone_+1)
                + " of "
                + NumberUtils.intToDisplayString(getNumTimepoints())
                + ") in "
