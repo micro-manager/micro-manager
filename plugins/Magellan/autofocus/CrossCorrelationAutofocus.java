@@ -25,6 +25,16 @@ import ij3d.image3d.FHTImage3D;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import main.Magellan;
 import misc.Log;
 import org.apache.commons.math.ArgumentOutsideDomainException;
@@ -45,7 +55,7 @@ public class CrossCorrelationAutofocus {
    //1e8--92 s
    //8e8--682 s
    private static final int NUM_VOXEL_TARGET = 20000000; //this target shuld take 1-2 min to calculate, while maintaining images of a resonable size
-   
+   private static final int AF_TIMEOUT_MIN = 30;
    
    private final int channelIndex_;
    private final double maxDisplacement_;
@@ -55,10 +65,17 @@ public class CrossCorrelationAutofocus {
    private int downsampleIndex_;
    private int downsampledWidth_;
    private int downsampledHeight_;
+   private ExecutorService afExecutor_;
+           
    
-   
-   public CrossCorrelationAutofocus(FixedAreaAcquisition acq, int channelIndex, double maxDisplacement , double initialPosition) {
-      channelIndex_ = channelIndex;
+   public CrossCorrelationAutofocus(final FixedAreaAcquisition acq, int channelIndex, double maxDisplacement , double initialPosition) {
+      afExecutor_ = Executors.newSingleThreadExecutor(new ThreadFactory() {
+          @Override
+          public Thread newThread(Runnable r) {
+              return new Thread(r, acq.getName() + " Autofocusexecutor");
+          }
+      });
+       channelIndex_ = channelIndex;
       maxDisplacement_ = maxDisplacement;
       acq_ = acq;
       initialPosition_ = initialPosition;      
@@ -96,6 +113,10 @@ public class CrossCorrelationAutofocus {
 
    public double getAutofocusPosition() {
       return currentPosition_;
+   }
+   
+   public void close() {
+       afExecutor_.shutdownNow();
    }
    
    /**
@@ -188,9 +209,30 @@ public class CrossCorrelationAutofocus {
    * @return double representing the focus position of current relative to original (i.e. 4 means
    * that current is focused 4 um deeper than current)
    */
-   private static double calcFocusDrift(String acqName, ImageStack tp0Stack, ImageStack currentTPStack, double pixelSizeZ) {    
-      Log.log( acqName + " Autofocus: cross correlating", true);      
-      ImageStack xCorrStack = FHTImage3D.crossCorrelation(tp0Stack, currentTPStack);
+   private double calcFocusDrift(String acqName, final ImageStack tp0Stack, final ImageStack currentTPStack, double pixelSizeZ) throws Exception {    
+      Log.log( acqName + " Autofocus: cross correlating", true);    
+      //do actual autofocusing on a seperate thread so a bug in it won't crash everything
+      Future<ImageStack> f = afExecutor_.submit(new Callable<ImageStack>() {
+          @Override
+          public ImageStack call() throws Exception {
+              return FHTImage3D.crossCorrelation(tp0Stack, currentTPStack);
+          }
+      });
+      ImageStack xCorrStack;
+       try {
+           xCorrStack = f.get(AF_TIMEOUT_MIN, TimeUnit.MINUTES);
+       } catch (InterruptedException ex) {
+           Log.log("autofocus aborted");
+           throw new Exception();
+       } catch (ExecutionException ex) {
+           Log.log("Exception while running autofocus");
+           Log.log(ex);
+           throw new Exception();
+       } catch (TimeoutException ex) {
+           Log.log("Autofocus timeout for acquisition: " + acqName);
+           throw new Exception();
+       }
+      
       Log.log( acqName + " Autofocus: finished cross correlating..calculating drift", true);      
       ImagePlus xCorr = new ImagePlus("XCorr", xCorrStack);      
       //find the maximum cross correlation intensity at each z slice

@@ -118,7 +118,10 @@ public class DisplayWindowControls extends Panel {
 
    @Subscribe
    public void onNewImageEvent(NewImageEvent event) {
-      JSONObject tags = display_.getCurrentMetadata();
+       if(display_.isClosing()) {
+           return;
+       }
+       JSONObject tags = display_.getCurrentMetadata();
       if (tags == null) {
          return;
       }

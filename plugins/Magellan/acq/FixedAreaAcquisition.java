@@ -50,20 +50,20 @@ public class FixedAreaAcquisition extends Acquisition {
     private static final int EVENT_QUEUE_CAP = 10; // so that surfaces can be dynamically changed during acq
     
    private final int spaceMode_;
-   private FixedAreaAcquisitionSettings settings_;
+   final private FixedAreaAcquisitionSettings settings_;
    private List<XYStagePosition> positions_;
    private long nextTimePointStartTime_ms_;
    private ParallelAcquisitionGroup acqGroup_;
    //barrier to wait for event generation at successive time points
    //signals come from 1) event genreating thread 2) Parallel acq group
-   private CountDownLatch startNextTPLatch_ = new CountDownLatch(1);
+   private volatile CountDownLatch startNextTPLatch_ = new CountDownLatch(1);
    //barrier to wait for all images to be written before starting nex time point stuff
    //signals come from 1) event generating thread 2) tagged iamge sink
-   private CountDownLatch tpImagesFinishedWritingLatch_ = new CountDownLatch(1);
+   private volatile CountDownLatch tpImagesFinishedWritingLatch_ = new CountDownLatch(1);
    //executor service to wait for next execution
-   private ScheduledExecutorService waitForNextTPSerivice_ = Executors.newScheduledThreadPool(1);
-   private ExecutorService eventGenerator_;
-   private CrossCorrelationAutofocus autofocus_;
+   final private ScheduledExecutorService waitForNextTPSerivice_ = Executors.newScheduledThreadPool(1);
+   final private ExecutorService eventGenerator_;
+   final private CrossCorrelationAutofocus autofocus_;
    private int maxSliceIndex_ = 0;
    private double zTop_;
    private final boolean burstMode_;
@@ -76,13 +76,26 @@ public class FixedAreaAcquisition extends Acquisition {
     *
     * Acquisition engine manages a thread that reads events, fixed area
     * acquisition has another thread that generates events
- 
+   
      */
     public FixedAreaAcquisition(FixedAreaAcquisitionSettings settings, ParallelAcquisitionGroup acqGroup) throws Exception {
         super(settings.zStep_, settings.channels_);
         acqGroup_ = acqGroup;
         settings_ = settings;
         spaceMode_ = settings.spaceMode_;
+        try {
+            int dir = Magellan.getCore().getFocusDirection(zStage_);
+            if (dir > 0) {
+                towardsSampleIsPositive_ = true;
+            } else if (dir < 0) {
+                towardsSampleIsPositive_ = false;
+            } else {
+                throw new Exception();
+            }
+        } catch (Exception e) {
+            Log.log("Couldn't get focus direction of Z drive. Configre using Tools--Hardware Configuration Wizard");
+            throw new RuntimeException();
+        }
         eventGenerator_ = Executors.newSingleThreadExecutor(new ThreadFactory() {
             @Override
             public Thread newThread(Runnable r) {
@@ -92,25 +105,20 @@ public class FixedAreaAcquisition extends Acquisition {
         setupXYPositions();
         initialize(settings.dir_, settings.name_, settings.tileOverlap_);
         createEventGenerator();
-        createAutofocus();
+        if (settings_.autofocusEnabled_) {
+            //convert channel name to channel index
+            int cIndex = getAutofocusChannelIndex();
+            autofocus_ = new CrossCorrelationAutofocus(this, cIndex, settings_.autofocusMaxDisplacemnet_um_,
+                    settings_.setInitialAutofocusPosition_ ? settings_.initialAutofocusPosition_
+                    : Magellan.getCore().getPosition(settings_.autoFocusZDevice_));
+        } else {
+            autofocus_ = null;
+        }
         //if a 2D, single xy position, no covariants, no autofocus: activate burst mode
         burstMode_ = getFilterType() == FrameIntegrationMethod.BURST_MODE;
         if (burstMode_) {
             Log.log("Burst mode activated");
         }
-       try {
-          int dir = Magellan.getCore().getFocusDirection(zStage_);
-          if (dir > 0) {
-             towardsSampleIsPositive_ = true;
-          } else if (dir < 0) {
-             towardsSampleIsPositive_ = false;
-          } else {
-             throw new Exception();
-         }
-      } catch (Exception e) {
-         Log.log("Couldn't get focus direction of Z drive. Configre using Tools--Hardware Configuration Wizard");
-         throw new RuntimeException();
-      }
     }
 
    public boolean burstModeActive() {
@@ -147,17 +155,7 @@ public class FixedAreaAcquisition extends Acquisition {
       }
    }
    
-   private void createAutofocus() throws Exception {
-      if (settings_.autofocusEnabled_) {
-         //convert channel name to channel index
-         int cIndex = getAutofocusChannelIndex();     
-         autofocus_ = new CrossCorrelationAutofocus(this,cIndex, settings_.autofocusMaxDisplacemnet_um_,
-                 settings_.setInitialAutofocusPosition_ ? settings_.initialAutofocusPosition_ :
-                        Magellan.getCore().getPosition(settings_.autoFocusZDevice_) );
-      }
-   }
-
-   public int getAutofocusChannelIndex() {
+   private int getAutofocusChannelIndex() {
        int index = 0;
        for (ChannelSetting channel : channels_) {
           if (channel.name_.equals(settings_.autofocusChannelName_)  ) {
@@ -271,17 +269,21 @@ public class FixedAreaAcquisition extends Acquisition {
     * @throws InterruptedException if acq aborted while waiting for next TP
     */
    private void pauseUntilReadyForTP() throws InterruptedException {
-      Log.log(getName() + " Pausing until ready for TP",true);   
       //Pause here bfore next time point starts
+       Log.log(getName() + " pausing before TP", false);
          long timeUntilNext = nextTimePointStartTime_ms_ - System.currentTimeMillis();
          if (timeUntilNext > 0) {
-            //wait for enough time to pass and parallel group to signal ready
+             Log.log(getName() + " time before next greater than 0", false);
+             //wait for enough time to pass and parallel group to signal ready
+             Log.log(getName() + " scheduling wiat for next TP", false);
             ScheduledFuture future = waitForNextTPSerivice_.schedule(new Runnable() {
 
                @Override
                public void run() {
                   try {
+                      Log.log(getName() + " awaiting next TP latch", false);
                      startNextTPLatch_.await();
+                     Log.log(getName() + " finished awaiting TP latch", false);
                      startNextTPLatch_ = new CountDownLatch(1);
                   } catch (InterruptedException ex) {
                      throw new RuntimeException(); //propogate interrupt due to abort
@@ -295,21 +297,22 @@ public class FixedAreaAcquisition extends Acquisition {
             }
          } else {
             //already enough time passed, just wait for go-ahead from parallel group
+             Log.log(getName() + " already enought time passed for TP, awaiting next TP singal", false);
             startNextTPLatch_.await();
             startNextTPLatch_ = new CountDownLatch(1);
          }
-         Log.log(getName() + " Pause before TP complete",true);
-
    }
 
    private void createEventGenerator() {
+       Log.log("Create event generator started", false);
       eventGenerator_.submit(new Runnable() {
          //check interupt status before any blocking call is entered
          @Override
          public void run() {
+             Log.log("event generation beignning", false);
             try {
                //get highest possible z position to image, which is slice index 0
-               zTop_ = getZTopCoordinate();
+               zTop_ = getZTopCoordinate();               
                nextTimePointStartTime_ms_ = 0;
                for (int timeIndex = 0; timeIndex < (settings_.timeEnabled_ ? settings_.numTimePoints_ : 1); timeIndex++) {
                   if (eventGenerator_.isShutdown()) {
@@ -426,6 +429,9 @@ public class FixedAreaAcquisition extends Acquisition {
    private void eventGeneratorShutdown() {
       eventGenerator_.shutdown();
       waitForNextTPSerivice_.shutdown();
+      if (autofocus_ != null) {
+          autofocus_.close();
+      }
    }
 
    private boolean isImagingVolumeUndefinedAtPosition(XYStagePosition position) {
@@ -473,12 +479,12 @@ public class FixedAreaAcquisition extends Acquisition {
    }
 
    private double getZTopCoordinate() {
-      if (spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
+      if (spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {          
          Point3d[] interpPoints = settings_.fixedSurface_.getPoints();
          if (towardsSampleIsPositive_ ) {
              double top = interpPoints[0].z - settings_.distanceAboveFixedSurface_;
             return zStageHasLimits_ ? Math.max(zStageLowerLimit_, top) : top;
-         } else {
+         } else {            
             double top = interpPoints[interpPoints.length - 1].z + settings_.distanceAboveFixedSurface_;
             return zStageHasLimits_ ? Math.max(zStageUpperLimit_, top) : top;
          } 

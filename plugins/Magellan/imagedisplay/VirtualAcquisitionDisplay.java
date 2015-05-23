@@ -492,7 +492,7 @@ public abstract class VirtualAcquisitionDisplay{
          initializeContrast();
       }
 
-      updateAndDraw(true);
+      updateAndDraw(true);      
       ((DisplayPlus) this).drawOverlay();
       hyperImage_.getWindow().repaint();
    }
@@ -589,6 +589,10 @@ public abstract class VirtualAcquisitionDisplay{
       subImageControls_ = win.getSubImageControls();
       imageChangedUpdate();
    }
+   
+   public boolean isClosing() {
+       return amClosing_;
+   }
 
    @Subscribe
    public void onWindowClose(DisplayWindow.RequestToCloseEvent event) {    
@@ -612,7 +616,7 @@ public abstract class VirtualAcquisitionDisplay{
       CanvasPaintPending.removeAllPaintPending(hyperImage_.getCanvas());
       bus_.unregister(this);
       imageCache_.finished();
-
+      
       // Shut down our controls.
       subImageControls_.prepareForClose();
 

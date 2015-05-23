@@ -155,6 +155,10 @@ public abstract class Acquisition implements AcquisitionEventSource{
       return overlapY_;
    }
    
+   public void waitUntilClosed() {
+       imageSink_.waitToDie();
+   }
+   
    protected void initialize(String dir, String name, double overlapPercent) {
       engineOutputQueue_ = new LinkedBlockingQueue<MagellanTaggedImage>(OUTPUT_QUEUE_SIZE);
       overlapX_ = (int) (JavaLayerImageConstructor.getInstance().getImageWidth() * overlapPercent / 100);

@@ -2263,6 +2263,9 @@
                         </Property>
                         <Property name="text" type="java.lang.String" value="Burst mode"/>
                       </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="burstModeButton_ActionPerformed"/>
+                      </Events>
                     </Component>
                   </SubComponents>
                 </Container>

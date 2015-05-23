@@ -2054,6 +2054,11 @@ public class GUI extends javax.swing.JFrame {
 
         filterMethodButtonGroup_.add(burstModeButton_);
         burstModeButton_.setText("Burst mode");
+        burstModeButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                burstModeButton_ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout imageFilteringTab_Layout = new javax.swing.GroupLayout(imageFilteringTab_);
         imageFilteringTab_.setLayout(imageFilteringTab_Layout);
@@ -2719,6 +2724,10 @@ public class GUI extends javax.swing.JFrame {
    private void helpButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_helpButton_ActionPerformed
       new StartupHelpWindow();
    }//GEN-LAST:event_helpButton_ActionPerformed
+
+    private void burstModeButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_burstModeButton_ActionPerformed
+        storeCurrentAcqSettings();
+    }//GEN-LAST:event_burstModeButton_ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox ChannelGroupCombo_;

@@ -53,6 +53,7 @@ import misc.JavaUtils;
 import misc.Log;
 import misc.LongPoint;
 import misc.MD;
+import misc.ProgressBar;
 import surfacesandregions.MultiPosRegion;
 import surfacesandregions.SurfaceInterpolator;
 
@@ -256,7 +257,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
    }
 
    @Subscribe
-   public void onWindowClose(DisplayWindow.RequestToCloseEvent event) {
+   public synchronized void onWindowClose(DisplayWindow.RequestToCloseEvent event) {
       //make sure user wants to close if it involves aborting acq
       if (acq_ != null && !acq_.isFinished()) {
          int result = JOptionPane.showConfirmDialog(null, "Finish acquisition?", "Finish Current Acquisition", JOptionPane.OK_CANCEL_OPTION);
@@ -271,11 +272,16 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
             return;
          }
       }
+      ProgressBar bar = new ProgressBar("Closing dataset", 0, 1);
+      bar.setVisible(true);
+      
       overlayer_.shutdown();
       activeDisplays_.remove(this);
       redrawPixelsExecutor_.shutdownNow();
-
+      //make sure acquisition is done before allowing imagestorage to close
+      acq_.waitUntilClosed(); 
       super.onWindowClose(event);
+      bar.setVisible(false);
    }
 
    public void setSurfaceDisplaySettings(boolean convexHull, boolean stagePosAbove, boolean stagePosBelow, boolean surf) {
