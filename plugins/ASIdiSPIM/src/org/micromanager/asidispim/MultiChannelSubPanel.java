@@ -354,18 +354,26 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    }
    
    /**
+    * Moves the hardware to the state defined in the channel
+    * @param channel should be a channel in the current channel group
+    */
+   public void selectChannel(String channel) {
+       try {
+         core_.setConfig(channelGroup_.getSelectedItem().toString(), channel);
+         core_.waitForConfig(channelGroup_.getSelectedItem().toString(), channel);
+      } catch (Exception e) {
+         MyDialogUtils.showError(e, "Couldn't select preset " + channel +
+               "of channel group " + channelGroup_.getSelectedItem().toString());
+      }
+   }
+   
+   /**
     * Takes care of actually selecting next channel in table.
     * Called by acquisition code.  Blocks until devices ready.
     */
    public void selectNextChannel() {
       ChannelSpec channel = usedChannels_[nextChannelIndex_];
-      try {
-         core_.setConfig(channelGroup_.getSelectedItem().toString(), channel.config_);
-         core_.waitForConfig(channelGroup_.getSelectedItem().toString(), channel.config_);
-      } catch (Exception e) {
-         MyDialogUtils.showError(e, "Couldn't select preset " + channel.config_ +
-               "of channel group " + channelGroup_.getSelectedItem().toString());
-      }
+      selectChannel(channel.config_);
       nextChannelIndex_++;
       if (nextChannelIndex_ == usedChannels_.length) {
          nextChannelIndex_ = 0;

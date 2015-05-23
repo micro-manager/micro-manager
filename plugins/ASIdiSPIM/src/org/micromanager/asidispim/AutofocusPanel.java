@@ -135,7 +135,13 @@ public class AutofocusPanel extends ListeningJPanel{
                     (String) fitFunctionSelection.getSelectedItem());
          }
       });
-      optionsPanel_.add(fitFunctionSelection);
+      optionsPanel_.add(fitFunctionSelection, "wrap");
+            
+      optionsPanel_.add(new JLabel("Minimum R²:"));
+      final JSpinner minimumR2Spinner = pu.makeSpinnerFloat(0.0, 1.0, 0.01,
+              Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_AUTOFOCUS_MINIMUMR2, 0.75);
+      optionsPanel_.add(minimumR2Spinner);
+      
       // end options subpanel
       
       // start acquisiion optoinspanel
@@ -144,15 +150,15 @@ public class AutofocusPanel extends ListeningJPanel{
             "[right]16[center]",
             "[]8[]"));
       acqOptionsPanel_.setBorder(PanelUtils.makeTitledBorder(
-              "Acquisition AF Options"));
+              "Autofocus Options during Acquisition"));
       
       // whether or not to run autofocus at the start of the acquisition
-      final JCheckBox beforeStartCheckBox = pu.makeCheckBox("Run AF before starting acuiqistion",
+      final JCheckBox beforeStartCheckBox = pu.makeCheckBox("Autofocus before starting acquisition",
               Properties.Keys.PLUGIN_AUTOFOCUS_ACQBEFORESTART, panelName_, false);     
       acqOptionsPanel_.add(beforeStartCheckBox, "center, span 3, wrap");
       
       // autofocus every nth image
-      acqOptionsPanel_.add(new JLabel("Use every "));
+      acqOptionsPanel_.add(new JLabel("Autofocus every "));
       final JSpinner eachNTimePointsSpinner = pu.makeSpinnerInteger(1, 1000,
             Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_AUTOFOCUS_EACHNIMAGES, 10);
@@ -167,12 +173,8 @@ public class AutofocusPanel extends ListeningJPanel{
       final JComboBox channelSelect = pu.makeDropDownBox(channels.toArray(), 
               Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_AUTOFOCUS_CHANNEL, "");
       acqOptionsPanel_.add(new JLabel("Autofocus Channel: "));
-      acqOptionsPanel_.add(channelSelect);
-      
-      acqOptionsPanel_.add(new JLabel("Minimum R²:"));
-      final JSpinner minimumR2Spinner = pu.makeSpinnerFloat(0.0, 1.0, 0.01,
-              Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_AUTOFOCUS_MINIMUMR2, 0.75);
-      acqOptionsPanel_.add(minimumR2Spinner);
+      acqOptionsPanel_.add(channelSelect, "wrap");
+
       
       // construct the main panel
       add(optionsPanel_);

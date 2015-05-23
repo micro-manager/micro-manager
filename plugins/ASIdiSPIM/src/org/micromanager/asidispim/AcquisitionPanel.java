@@ -105,6 +105,7 @@ import java.awt.geom.Point2D;
 import javax.swing.BorderFactory;
 
 import org.micromanager.asidispim.Data.ChannelSpec;
+import org.micromanager.asidispim.Data.Devices.Sides;
 import org.micromanager.asidispim.Utils.ControllerUtils;
 import org.micromanager.asidispim.Utils.AutofocusUtils;
 
@@ -171,6 +172,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JCheckBox usePositionsCB_;
    private final JSpinner positionDelay_;
    private final JCheckBox useTimepointsCB_;
+   private final JCheckBox useAutofocusCB_;
    private final JPanel leftColumnPanel_;
    private final JPanel centerColumnPanel_;
    private final MMFrame sliceFrameAdvanced_;
@@ -701,6 +703,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       });
       
+      // checkbox to signal that autofocus should be used during acquisition
+      // another orphan UI element
+      useAutofocusCB_ = new JCheckBox("Autofocus");
+      useAutofocusCB_.setSelected(prefs_.getBoolean(panelName_, 
+              Properties.Keys.PLUGIN_ACQUSITION_USE_AUTOFOCUS, false));
+      useAutofocusCB_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            prefs_.putBoolean(panelName_, 
+                    Properties.Keys.PLUGIN_ACQUSITION_USE_AUTOFOCUS, 
+                    useAutofocusCB_.isSelected());
+           }
+      });
+      
       
       // set up tabbed panels for GUI
       // make 3 columns as own JPanels to get vertical space right
@@ -730,6 +746,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       centerColumnPanel_.add(positionPanel, "growx, wrap");
       centerColumnPanel_.add(multiChannelPanel_, "wrap");
       centerColumnPanel_.add(navigationJoysticksCB_, "wrap");
+      centerColumnPanel_.add(useAutofocusCB_, "wrap");
       
       // add the column panels to the main panel
       this.add(leftColumnPanel_);
@@ -739,8 +756,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // properly initialize the advanced slice timing
       advancedSliceTimingCB_.addItemListener(sliceTimingDisableGUIInputs);
       sliceTimingDisableGUIInputs.itemStateChanged(null);
-      //advancedSliceTimingCB_.doClick();
-      //advancedSliceTimingCB_.doClick();
       advancedSliceTimingCB_.addActionListener(showAdvancedTimingFrame);
       
       updateDurationLabels();
@@ -1590,6 +1605,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return false;
       }
       
+      // Autofocus settings
+      boolean useAutofocus = useAutofocusCB_.isSelected();
+      boolean autofocusAtT0 = prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(), 
+              Properties.Keys.PLUGIN_AUTOFOCUS_ACQBEFORESTART, false);
+      int autofocusEachNFrames = prefs_.getInt(MyStrings.PanelNames.AUTOFOCUS.toString(), 
+              Properties.Keys.PLUGIN_AUTOFOCUS_EACHNIMAGES, 10);
+      String autofocusChannel = props_.getPropValueString(Devices.Keys.PLUGIN,
+            Properties.Keys.PLUGIN_AUTOFOCUS_CHANNEL);
+      
+      
       // it appears the circular buffer, which is used by both cameras, can only have one 
       // image size setting => we require same image height and width for second camera if two-sided
       if (twoSided) {
@@ -1684,7 +1709,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                core_.setExposure(secondCamera, exposureTime);
             }
             
-            // Use this to build metadata for MVR plugin
+            // Use this to build metadata for MultiViewRegistration plugin
             String viewString = "";
             final String SEPARATOR = "_";
             // set up channels (side A/B is treated as channel too)
@@ -1742,7 +1767,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                     actualVolumeDurationLabel_.getText());
             gui_.setAcquisitionProperty(acqName, "SPIMmode", spimMode.toString()); 
             // Multi-page TIFF saving code wants this one:
-            // TODO: support other types than GRAY16
+            // TODO: support other types than GRAY16  (NS: Why?? Cameras are all 16-bits, so not much reason for anything else
             gui_.setAcquisitionProperty(acqName, "PixelType", "GRAY16");
             gui_.setAcquisitionProperty(acqName, "z-step_um",  
                   NumberUtils.doubleToDisplayString(getStepSizeUm()) );
@@ -1769,7 +1794,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             sink.start();
 
             // Loop over all the times we trigger the controller's acquisition
-            // For hardware-timed timepoints then we only trigger the controller once
+            // For hardware-timed timepoints we only trigger the controller once
             long acqStart = System.currentTimeMillis();
             for (int timePoint = 0; timePoint < nrFrames; timePoint++) {
                
@@ -1787,6 +1812,33 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                // check for stop button before each time point
                if (cancelAcquisition_.get()) {
                   throw new IllegalMonitorStateException("User stopped the acquisition");
+               }
+               
+               // this is where we autofocus if requested
+               if (useAutofocus) {
+                  // Note that we will not autofocus as expected when using hardware
+                  // timing.  Seems OK, since hardware timing will result in short
+                  // acquisition times that do not need autofocus
+                  if ( (autofocusAtT0 && timePoint == 0) || ( (timePoint > 0) && 
+                          (timePoint % autofocusEachNFrames == 0 ) ) ) {
+                     multiChannelPanel_.selectChannel(autofocusChannel);
+                     if (twoSided) {
+                        double score = autofocus_.runFocus(this, Devices.Sides.A, false,
+                                sliceTiming_, false);
+                        // TODO: apply new slice setting!
+                        score = autofocus_.runFocus(this, Devices.Sides.B, false,
+                                sliceTiming_, false);
+                     } else {
+                        Sides side = Devices.Sides.B;
+                        if (firstSideA) {
+                           side = Devices.Sides.A;
+                        }
+                        double score = autofocus_.runFocus(this, side, false,
+                                sliceTiming_, false);
+                     }
+                     // Restore settings of the controller
+                     prepareControllerForAquisition(hardwareTimepoints);
+                  }
                }
 
                numTimePointsDone_++;

@@ -44,6 +44,7 @@ public class StagePositionUpdater {
    private final AtomicBoolean updatingNow_ = new AtomicBoolean(false);  // true iff in middle of update right now, use to skip updates if last one is running instead of letting them pile up
    private final AtomicBoolean pauseUpdates_ = new AtomicBoolean(false);  // true iff updates temporarily disabled (e.g. running acquisition)
    private boolean timerRunning; // whether we are set to update positions currently
+   private int pauseCounter_ = 0;
    
    /**
     * Utility class for stage position timer.
@@ -140,13 +141,28 @@ public class StagePositionUpdater {
    
    /**
     * Call this with true to temporarily turn off updates.
-    * Be sure to call it again with false.
-    * @param pause true disables updates temporarily, false goes back to normal
+    * Be sure to call it again with false. Keeps an internal counter
+    * so that the calling code does not need to know whether other code
+    * also called the pauseUpdate function.
+    * @param pause true disables updates temporarily, and increases the pause 
+    * counter.  false decreases the pause counter.  When the counter returns to 
+    * 0, unpauses the updater
     */
    public void pauseUpdates(boolean pause) {
-      pauseUpdates_.set(pause);
-      for (ListeningJPanel panel : panels_) {
-         panel.stoppedStagePositions();
+      if (pause) {
+         pauseCounter_++;
+      } else {
+         pauseCounter_--;
+         // protect against the counter going negative:
+         if (pauseCounter_ < 0) {
+            pauseCounter_ = 0;
+         }
+      }
+      if (pauseCounter_ < 2) {
+         pauseUpdates_.set(pause);
+         for (ListeningJPanel panel : panels_) {
+            panel.stoppedStagePositions();
+         }
       }
    }
    

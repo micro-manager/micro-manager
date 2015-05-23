@@ -184,6 +184,7 @@ public class Properties {
       PLUGIN_DESIRED_SLICE_PERIOD("DesiredSlicePeriod"),
       PREFS_MINIMIZE_SLICE_PERIOD("MinimizeSlicePeriod"),
       PLUGIN_ACQUSITION_MODE("AcquisitionMode"),
+      PLUGIN_ACQUSITION_USE_AUTOFOCUS("UseAutofocusInAcquisition"),
       PLUGIN_CAMERA_MODE("CameraMode"),
       PREFS_ENABLE_POSITION_UPDATES("EnablePositionUpdates"),
       PREFS_ENABLE_ILLUM_PIEZO_HOME("EnableIllumPiezoHome"),

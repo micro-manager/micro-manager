@@ -86,8 +86,10 @@ public class AutofocusUtils {
    /**
     * Acquires image stack by scanning the mirror, calculates focus scores
     * Acquires around the current piezo position. As a side effect, will
-    * temporarily set the center position to the current position (but restore
-    * the center position on exit).
+    * temporarily set the center position to the current position.  If the 
+    * autofocus is successful (based on the goodness of fit of the focus curve),
+    * the scanner slice position will  be set to the in-focus position, otherwise
+    * it will be returned to the original position
     *
     * @param caller - calling panel, used to restore settings after focusing
     * @param side - A or B
@@ -95,7 +97,7 @@ public class AutofocusUtils {
     *                            around the imaging center set in the setup panel (false)
     * @param sliceTiming - Data structure with current device timing setting
     * @param runAsynchronously - whether or not to run the function asynchronously
-    * @return galvo slice position with best focus
+    * @return R-square for Gaussian fit to the focus data
     *
     */
    public double runFocus(
@@ -111,6 +113,8 @@ public class AutofocusUtils {
          protected Double doInBackground() throws Exception {
 
             double bestGalvoPosition = 0;
+            
+            double r2 = 0;
 
             if (gui_.getAutofocus() == null) {
                throw new ASIdiSPIMException("Please define an autofocus methods first");
@@ -154,6 +158,8 @@ public class AutofocusUtils {
             final float imagingCenter = prefs_.getFloat(
                     MyStrings.PanelNames.SETUP.toString() + side.toString(),
                     Properties.Keys.PLUGIN_PIEZO_CENTER_POS, 0);
+            final float minimumRSquare =  props_.getPropValueFloat(Devices.Keys.PLUGIN,
+                     Properties.Keys.PLUGIN_AUTOFOCUS_MINIMUMR2, null);
             final double originalPiezoPosition = positions_.getUpdatedPosition(piezoDevice);
             final double originalGalvoPosition = positions_.getUpdatedPosition(galvoDevice);
             final double piezoCenter = centerAtCurrentZ ? originalPiezoPosition : imagingCenter;
@@ -333,7 +339,7 @@ public class AutofocusUtils {
                highestIndex = Fitter.getIndex(scoresToPlot[0], bestGalvoPosition);
                scoresToPlot[1] = Fitter.getFittedSeries(scoresToPlot[0], 
                        function, fitParms);
-               double r2 = Fitter.getRSquare(scoresToPlot[0], function, fitParms);
+               r2 = Fitter.getRSquare(scoresToPlot[0], function, fitParms);
                
                // display the best scoring image in the debug stack if it exists
                // or if not then in the snap/live window if it exists
@@ -386,7 +392,8 @@ public class AutofocusUtils {
                   
                   // move galvo to maximal focus position if we found one
                   // if for some reason we were unsuccessful then restore to original position
-                  if (highestIndex >= 0) {
+                  // TODO: 
+                  if (highestIndex >= 0 && r2 > minimumRSquare) {
                      positions_.setPosition(galvoDevice, Directions.Y, bestGalvoPosition);
                   } else {
                      positions_.setPosition(galvoDevice, Directions.Y, originalGalvoPosition);
@@ -407,7 +414,7 @@ public class AutofocusUtils {
                   throw new ASIdiSPIMException(ex, "Error while restoring hardware state after autofocus.");
                }
             }
-            return bestGalvoPosition;
+            return r2;
          }
 
          @Override
