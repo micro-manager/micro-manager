@@ -241,13 +241,15 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       try {
          if (this.getHyperImage() instanceof MMCompositeImage) {
             JavaUtils.setRestrictedFieldValue(super.getHyperImage(), CompositeImage.class, "rgbPixels", null);
+            JavaUtils.setRestrictedFieldValue(super.getHyperImage(), CompositeImage.class, "rgbSampleModel", null);
          }
-         super.getHyperImage().setStack(newStack);
          //account for border in image drawing
          JavaUtils.setRestrictedFieldValue(canvas_, ImageCanvas.class, "imageWidth",
                  canvas_.getWidth() - 2 * DisplayWindow.CANVAS_PIXEL_BORDER);
          JavaUtils.setRestrictedFieldValue(canvas_, ImageCanvas.class, "imageHeight",
                  canvas_.getHeight() - 2 * DisplayWindow.CANVAS_PIXEL_BORDER);
+
+         super.getHyperImage().setStack(newStack);
       } catch (NoSuchFieldException ex) {
          Log.log("Couldn't change ImageCanvas width");
       } catch (NullPointerException exc) {

@@ -164,8 +164,7 @@ public class SurfaceData implements Covariant {
         extraDistance = angleCutoffPercent * doublingDistance;
 
         double curvatureCorrectedMin = vals[0] + extraDistance;
-        double ret = Math.min(vals[1], Math.max(curvatureCorrectedMin, Math.pow(vals[0], 1.25)));
-//        System.out.println(vals[3] + " \t" + extraDistance);
+        double ret = Math.min(vals[1], Math.max(curvatureCorrectedMin, Math.pow(vals[0], 1.2)));
         return ret;
     }
 

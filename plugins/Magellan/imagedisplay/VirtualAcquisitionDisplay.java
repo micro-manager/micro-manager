@@ -422,7 +422,6 @@ public abstract class VirtualAcquisitionDisplay{
          // Time to stop.
          return;
       }
-      
       updateWindowTitleAndStatus();
 
       if (tags == null) {

@@ -52,7 +52,7 @@ import propsandcovariants.SurfaceData;
  */
 public abstract class SurfaceInterpolator implements XYFootprint {
    
-   public static final int MIN_PIXELS_PER_INTERP_POINT = 4;
+   public static final int MIN_PIXELS_PER_INTERP_POINT = 8;
    public static final int NUM_XY_TEST_POINTS = 8;
   
    private static final int ABOVE_SURFACE = 0;
