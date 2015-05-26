@@ -1,3 +1,9 @@
+/**
+ * This script is intended to be used in conjunction with the CameraLabs.bsh
+ * script. See https://micro-manager.org/wiki/Measuring_camera_specifications
+ * for more information.
+ */
+
 import org.jfree.data.xy.XYSeries;
 import ij.measure.ResultsTable;
 
@@ -32,3 +38,4 @@ for (int i=0; i <stack.getSize()/2; i++) {
 t = "Photon Transfer Data -" + img.getTitle();
 rt.show(t);
 plotData("Photon Transfer Curve -" + img.getTitle(), data, "Signal (DN)", "Noise (DN)", 100, 100, true, true);
+

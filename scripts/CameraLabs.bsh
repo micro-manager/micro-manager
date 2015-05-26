@@ -1,7 +1,9 @@
 /*
  * This script will take a number of exposures with increasing 
  * exposure time.  It is useful, for instance, when measuring 
- * the photon conversion factor of your camera
+ * the photon conversion factor of your camera.
+ * See https://micro-manager.org/wiki/Measuring_camera_specifications
+ * for more information.
  *
  * Edit the first three variable (nrExpsures, startExposure, and 
  * finalExposure) to your liking.
