@@ -13,6 +13,8 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.Scanner;
@@ -768,6 +770,46 @@ public class DefaultUserProfile implements UserProfile {
             ReportingUtils.logError(e, "Unable to set whether default user should be used");
          }
          profile.setCurrentProfile(curProfile);
+      }
+   }
+
+   /**
+    * For backwards compatibility with 1.4, sometimes some bit of code needs
+    * to be able to access the old Preferences that 1.4 attached to the
+    * org.micromanager.MMStudio class. This method accesses the user prefs
+    * under that class's old namespace (since it's in a different location in
+    * 2.0). Will be null if the relevant node doesn't exist.
+    */
+   public static Preferences getLegacyUserPreferences14() {
+      return getLegacyPreferences14(Preferences.userRoot());
+   }
+
+   /**
+    * For backwards compatibility with 1.4, sometimes some bit of code needs
+    * to be able to access the old Preferences that 1.4 attached to the
+    * org.micromanager.MMStudio class. This method accesses the system prefs
+    * under that class's old namespace (since it's in a different location in
+    * 2.0). Will be null if the relevant node doesn't exist.
+    */
+   public static Preferences getLegacySystemPreferences14() {
+      return getLegacyPreferences14(Preferences.systemRoot());
+   }
+
+   public static Preferences getLegacyPreferences14(Preferences root) {
+      // Ensure the necessary nodes exist.
+      try {
+         if (!root.nodeExists("org")) {
+            return null;
+         }
+         root = root.node("org");
+         if (!root.nodeExists("micromanager")) {
+            return null;
+         }
+         return root.node("micromanager");
+      }
+      catch (BackingStoreException e) {
+         ReportingUtils.logError(e, "Error accessing old user preferences");
+         return null;
       }
    }
 }

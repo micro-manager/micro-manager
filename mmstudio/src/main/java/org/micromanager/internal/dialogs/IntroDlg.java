@@ -381,18 +381,12 @@ public class IntroDlg extends JDialog {
     * tree.
     */
    private static String[] loadRecentlyUsedConfigsFromPreferences() {
-      Preferences root = Preferences.userRoot();
+      Preferences root = DefaultUserProfile.getLegacyPreferences14();
+      if (root == null) {
+         return null;
+      }
       HashSet<String> keys;
-      // Ensure the necessary nodes exist.
       try {
-         if (!root.nodeExists("org")) {
-            return null;
-         }
-         root = root.node("org");
-         if (!root.nodeExists("micromanager")) {
-            return null;
-         }
-         root = root.node("micromanager");
          keys = new HashSet<String>(Arrays.asList(root.keys()));
       }
       catch (BackingStoreException e) {

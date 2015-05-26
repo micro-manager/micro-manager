@@ -36,6 +36,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -235,8 +236,36 @@ public class RegistrationDlg extends JDialog {
    }
    
    public static boolean getHaveRegistered() {
-      return DefaultUserProfile.getInstance().getBoolean(
-            RegistrationDlg.class, HAVE_REGISTERED, false);
+      // HACK: if there's no entry, we also check the 1.4 Preferences.
+      Boolean result = DefaultUserProfile.getInstance().getBoolean(
+            RegistrationDlg.class, HAVE_REGISTERED, null);
+      if (result != null) {
+         return result;
+      }
+      Preferences user = DefaultUserProfile.getLegacyUserPreferences14();
+      Preferences system = DefaultUserProfile.getLegacySystemPreferences14();
+      if (user != null) {
+         if (user.getBoolean("registered", false)) {
+            setHaveRegistered(true);
+            return true;
+         }
+         else if (user.getBoolean("reg_never", false)) {
+            setShouldNeverRegister(true);
+            return true;
+         }
+      }
+      if (system != null) {
+         if (system.getBoolean("registered", false)) {
+            setHaveRegistered(true);
+            return true;
+         }
+         else if (system.getBoolean("reg_never", false)) {
+            setShouldNeverRegister(true);
+            return true;
+         }
+      }
+      // User hasn't registered or opted out of registering.
+      return false;
    }
 
    public static void setHaveRegistered(boolean haveRegistered) {
