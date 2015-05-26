@@ -782,7 +782,7 @@ void BOImplementationThread::QueryCameraCurrentFormat()
            (void**)&aImgFormat, &nImgFormat);
       if (fxRet != CE_SUCCESS)
       {
-         LLogMessage(("Cannot get IMGFORMATS: " + GetSDKErrorMessage(fxReg)).c_str());
+         LLogMessage(("Cannot get IMGFORMATS: " + GetSDKErrorMessage(fxRet)).c_str());
          LLogMessage("Cannot get image size; further problems expected");
          nImgFormat = 0;
       }
