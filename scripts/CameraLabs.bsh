@@ -79,7 +79,9 @@ double exposure = startExposure;
 for (int i = 0; i < nrExposures; ++i) {
    mmc.setExposure(exposure);
    Image image = mm.live().snap(false).get(0);
-   image = image.copyAtCoords(builder.time(i).build());
+   image = image.copyAtCoords(builder.time(i * 2).build());
+   image = mm.live().snap(false).get(0);
+   image = image.copyAtCoords(builder.time(i * 2 + 1).build());
    store.putImage(image);
    exposure = factor * exposure;
 }
