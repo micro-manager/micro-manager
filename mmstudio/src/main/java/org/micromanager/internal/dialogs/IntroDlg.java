@@ -38,6 +38,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
@@ -349,16 +351,69 @@ public class IntroDlg extends JDialog {
    /**
     * Return the array of recently-used config files for the current user.
     * They are sorted based on how recently they were used, from oldest to
-    * newest.
+    * newest. As a special case, if we are unable to find any config files
+    * and we're on the "default user", then we look in the Java Preferences
+    * to see if we can import old config files used by a 1.4 version of
+    * Micro-Manager.
     */
    public static String[] getRecentlyUsedConfigs() {
       // If there are no recently-used configs, supply the demo file.
       String[] result = DefaultUserProfile.getInstance().getStringArray(
             IntroDlg.class, RECENTLY_USED_CONFIGS, null);
       if (result == null) {
-         result = new String[] {new File(DEMO_CONFIG_FILE_NAME).getAbsolutePath()};
+         if (DefaultUserProfile.getInstance().getIsDefaultUser()) {
+            ReportingUtils.logDebugMessage("Attempting to load recently-used config files from 1.4 Preferences");
+            result = loadRecentlyUsedConfigsFromPreferences();
+         }
+         if (result == null) {
+            // No good; just use the demo config.
+            result = new String[] {new File(DEMO_CONFIG_FILE_NAME).getAbsolutePath()};
+         }
       }
       return result;
+   }
+
+   /**
+    * Look up recently-used configs in the Preferences. This is a little
+    * aggravating as we must use specifically org.micromanager.MMStudio as
+    * the class for the Preferences, and that class no longer exists.
+    * Consequently we are required to manually traverse the Preferences
+    * tree.
+    */
+   private static String[] loadRecentlyUsedConfigsFromPreferences() {
+      Preferences root = Preferences.userRoot();
+      HashSet<String> keys;
+      // Ensure the necessary nodes exist.
+      try {
+         if (!root.nodeExists("org")) {
+            return null;
+         }
+         root = root.node("org");
+         if (!root.nodeExists("micromanager")) {
+            return null;
+         }
+         root = root.node("micromanager");
+         keys = new HashSet<String>(Arrays.asList(root.keys()));
+      }
+      catch (BackingStoreException e) {
+         ReportingUtils.logError(e, "Error accessing old user preferences");
+         return null;
+      }
+      // The actual config file names are stored with procedurally-generated
+      // keys, as Preferences is unable to store String arrays.
+      ArrayList<String> result = new ArrayList<String>();
+      for (Integer i = 0; i < 5; ++i) { // 5 is old hardcoded max
+         String key = "CFGFileEntry" + i.toString();
+         if (keys.contains(key)) {
+            result.add(root.get(key, ""));
+         }
+      }
+      // 1.4 stored configs in the opposite order from how we store them now.
+      Collections.reverse(result);
+      if (result.size() > 0) {
+         return result.toArray(new String[] {});
+      }
+      return null;
    }
 
    /**
