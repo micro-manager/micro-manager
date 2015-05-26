@@ -578,14 +578,14 @@ public class DisplayWindowControls extends Panel {
    private void tabbedPane_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabbedPane_StateChanged
       if (tabbedPane_.getSelectedIndex() == 0) { //status
          display_.setMode(DisplayPlus.NONE);
-      }   else if (tabbedPane_.getSelectedIndex() == 1) { // gid
+      }   else if (tabbedPane_.getSelectedIndex() == 1) { // grid
          //make a grid if none exists"
          if (regionManager_.getNumberOfRegions() == 0) {
             regionManager_.addNewRegion(createNewGrid());
             currentGridCombo_.setSelectedIndex(0);
          }    
          display_.setMode(DisplayPlus.NEWGRID);
-         showInstructionLabel(((JPanel)tabbedPane_.getComponentAt(2)).getToolTipText());
+         showInstructionLabel(((JPanel)tabbedPane_.getComponentAt(1)).getToolTipText());
       } else if (tabbedPane_.getSelectedIndex() == 2) { //surface
          //make a surface if none exists
          if (surfaceManager_.getNumberOfSurfaces() == 0) {
@@ -595,7 +595,7 @@ public class DisplayWindowControls extends Panel {
          //show surface creation controls           
          display_.setMode(DisplayPlus.SURFACE);
          //show tooltip
-         showInstructionLabel(((JPanel) tabbedPane_.getComponentAt(1)).getToolTipText());
+         showInstructionLabel(((JPanel) tabbedPane_.getComponentAt(2)).getToolTipText());
       } else if (tabbedPane_.getSelectedIndex() == 3) { //explore
          display_.setMode(DisplayPlus.EXPLORE);
          showInstructionLabel(((JPanel) tabbedPane_.getComponentAt(3)).getToolTipText());
