@@ -780,6 +780,12 @@ void BOImplementationThread::QueryCameraCurrentFormat()
    {
       fxRet = FX_GetCapability(gCameraId[0], BCAM_QUERYCAP_IMGFORMATS, 0/*UNUSED*/,
            (void**)&aImgFormat, &nImgFormat);
+      if (fxRet != CE_SUCCESS)
+      {
+         LLogMessage(("Cannot get IMGFORMATS: " + GetSDKErrorMessage(fxReg)).c_str());
+         LLogMessage("Cannot get image size; further problems expected");
+         nImgFormat = 0;
+      }
       for(int i = 0; i < nImgFormat; i++)
       {
          if (dcBoStatus.eCurImgFormat == aImgFormat[i]->iFormat)
