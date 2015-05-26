@@ -697,6 +697,10 @@ public class DefaultUserProfile implements UserProfile {
       return profileName_;
    }
 
+   public boolean getIsDefaultUser() {
+      return profileName_.equals(DEFAULT_USER);
+   }
+
    @Override
    public void clearProfileSubset(Class<?> c) {
       // Make a copy of the map that contains everything except the keys for
