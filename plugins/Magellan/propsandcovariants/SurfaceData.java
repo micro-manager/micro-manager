@@ -180,7 +180,7 @@ public class SurfaceData implements Covariant {
       double xSpan = corners[2].getX() - corners[0].getX();
       double ySpan = corners[2].getY() - corners[0].getY();
       Point2D.Double pixelSpan = new Point2D.Double();
-      AffineTransform transform = AffineUtils.getAffineTransform(surface_.getPixelSizeConfig(),0, 0);
+      AffineTransform transform = AffineUtils.getAffineTransform(surface_.getCurrentPixelSizeConfig(),0, 0);
       try {
          transform.inverseTransform(new Point2D.Double(xSpan, ySpan), pixelSpan);
       } catch (NoninvertibleTransformException ex) {

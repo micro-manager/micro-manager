@@ -806,7 +806,7 @@ public class MultiResMultipageTiffStorage {
            return 0;
          }
       } );
-      Set<String> keys = imageKeys();
+      Set<String> keys = new TreeSet<String>(imageKeys());
       for (String s : keys) {
             int[] indices = MD.getIndices(s);
             if (indices[1] == slice) {

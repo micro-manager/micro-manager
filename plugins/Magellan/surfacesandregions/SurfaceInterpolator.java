@@ -65,7 +65,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    private final boolean towardsSampleIsPositive_;
    private volatile TreeSet<Point3d> points_;
    private MonotoneChain mChain_;
-   private RegionFactory<Euclidean2D> regionFacotry_ = new RegionFactory<Euclidean2D>();
+   private final RegionFactory<Euclidean2D> regionFacotry_ = new RegionFactory<Euclidean2D>();
    protected volatile Vector2D[] convexHullVertices_;
    protected volatile Region<Euclidean2D> convexHullRegion_;
    private volatile int numRows_, numCols_;
@@ -77,21 +77,15 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    protected volatile SingleResolutionInterpolation currentInterpolation_;
    private SurfaceManager manager_;
    private Future currentInterpolationTask_;
-   private String pixelSizeConfig_;
    //Objects for wait/notify sync of calcualtions
    protected Object xyPositionLock_ = new Object(), interpolationLock_ = new Object(), convexHullLock_ = new Object();
  
    
-   public SurfaceInterpolator(SurfaceManager manager, String xyDevice, String zDevice) {
-      name_ = manager.getNewName();
+   public SurfaceInterpolator(String xyDevice, String zDevice) {    
+      manager_ = SurfaceManager.getInstance();
+      name_ = manager_.getNewName();
       xyDeviceName_ = xyDevice;
       zDeviceName_ = zDevice;
-      manager_ = manager;
-      try {
-         pixelSizeConfig_ = Magellan.getCore().getCurrentPixelSizeConfig();
-      } catch (Exception ex) {
-         Log.log("couldnt get pixel size config");
-      }
       //store points sorted by z coordinate to easily find the top, for generating slice index 0 position
       points_ = new TreeSet<Point3d>(new Comparator<Point3d>() {
          @Override
@@ -149,8 +143,13 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       return zDeviceName_;
    }
      
-   public String getPixelSizeConfig() {
-      return pixelSizeConfig_;
+   public String getCurrentPixelSizeConfig() {   
+      try {
+         return Magellan.getCore().getCurrentPixelSizeConfig();
+      } catch (Exception ex) {
+         Log.log("couldnt get pixel size config");
+         throw new RuntimeException();
+      }
    }
    
    public void delete() {
@@ -289,7 +288,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       double xSpan = corners[2].getX() - corners[0].getX();
       double ySpan = corners[2].getY() - corners[0].getY();
       Point2D.Double pixelSpan = new Point2D.Double();
-      AffineTransform transform = AffineUtils.getAffineTransform(surface.pixelSizeConfig_,0, 0);
+      AffineTransform transform = AffineUtils.getAffineTransform(getCurrentPixelSizeConfig(), 0, 0);
       try {
          transform.inverseTransform(new Point2D.Double(xSpan, ySpan), pixelSpan);
       } catch (NoninvertibleTransformException ex) {
@@ -411,7 +410,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
 
    private void calculateConvexHullBounds() {
       //convert convex hull vertices to pixel offsets in an arbitrary pixel space
-      AffineTransform transform = AffineUtils.getAffineTransform(pixelSizeConfig_,0, 0);
+      AffineTransform transform = AffineUtils.getAffineTransform(getCurrentPixelSizeConfig(),0, 0);
       boundYPixelMin_ = Integer.MAX_VALUE;
       boundYPixelMax_ = Integer.MIN_VALUE; 
       boundXPixelMin_ = Integer.MAX_VALUE;
@@ -460,7 +459,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       int pixelCenterX = boundXPixelMin_ + (boundXPixelMax_ - boundXPixelMin_) / 2;
       int pixelCenterY = boundYPixelMin_ + (boundYPixelMax_ - boundYPixelMin_) / 2;
 
-      AffineTransform transform = AffineUtils.getAffineTransform(pixelSizeConfig_, 0, 0);
+      AffineTransform transform = AffineUtils.getAffineTransform(getCurrentPixelSizeConfig(), 0, 0);
       ArrayList<XYStagePosition> positions = new ArrayList<XYStagePosition>();     
       Point2D.Double gridCenterStageCoords = new Point2D.Double();
       transform.transform(new Point2D.Double(pixelCenterX, pixelCenterY), gridCenterStageCoords);
@@ -484,7 +483,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
             Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
             Point2D.Double stagePos = new Point2D.Double();
             transform.transform(pixelPos, stagePos);
-            AffineTransform posTransform = AffineUtils.getAffineTransform(pixelSizeConfig_, stagePos.x, stagePos.y);
+            AffineTransform posTransform = AffineUtils.getAffineTransform(getCurrentPixelSizeConfig(), stagePos.x, stagePos.y);
             positions.add(new XYStagePosition(stagePos, tileWidthMinusOverlap, tileHeightMinusOverlap,
                     fullTileWidth, fullTileHeight, row, col, posTransform));
          }
@@ -516,6 +515,11 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       manager_.updateSurfaceTableAndCombos();
    }
 
+      
+   public synchronized void deleteAllPoints() {
+      points_.clear();
+   }
+   
    public synchronized void deletePointsWithinZRange(double zMin, double zMax) {
       ArrayList<Point3d> toRemove = new ArrayList<Point3d>();
       for (Point3d point : points_) {
@@ -678,4 +682,5 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       return list;
    }
 
+   
 }

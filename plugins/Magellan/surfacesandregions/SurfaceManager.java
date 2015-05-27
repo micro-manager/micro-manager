@@ -16,9 +16,23 @@
 //
 package surfacesandregions;
 
+import gui.GUI;
 import imagedisplay.DisplayPlus;
+import java.awt.FileDialog;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.ArrayList;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import main.Magellan;
+import misc.JavaUtils;
+import misc.Log;
+import propsandcovariants.CovariantPairing;
 import propsandcovariants.CovariantPairingsManager;
 import propsandcovariants.SurfaceData;
 
@@ -101,8 +115,7 @@ public class SurfaceManager {
    }
    
    public void addNewSurface() {
-//      surfaces_.add(new SurfaceInterpolatorSibson(this));
-      surfaces_.add(new SurfaceInterpolatorSimple(this, Magellan.getCore().getXYStageDevice(), Magellan.getCore().getFocusDevice()));
+      surfaces_.add(new SurfaceInterpolatorSimple(Magellan.getCore().getXYStageDevice(), Magellan.getCore().getFocusDevice()));
       updateSurfaceTableAndCombos();
    }
    
@@ -168,4 +181,140 @@ public class SurfaceManager {
       //update covariants that use this surface
       CovariantPairingsManager.getInstance().updatePairingNames();
    }
+  
+   public void saveSurfaces(GUI gui) {
+      File selectedFile = null;
+      if (JavaUtils.isMac()) {
+         FileDialog fd = new FileDialog(gui, "Save all surfaces", FileDialog.SAVE);
+         fd.setVisible(true);
+         if (fd.getFile() != null) {
+            selectedFile = new File(fd.getDirectory() + File.separator + fd.getFile());
+            selectedFile = new File(selectedFile.getAbsolutePath() + ".txt");
+         }
+         fd.dispose();
+      } else {
+         JFileChooser fc = new JFileChooser();
+         fc.setDialogTitle("Save all surfaces");
+         int returnVal = fc.showSaveDialog(gui);
+         if (returnVal == JFileChooser.APPROVE_OPTION) {
+            selectedFile = fc.getSelectedFile();
+         }
+      }
+
+      if (selectedFile == null) {
+         return; //canceled
+      }
+      String name = selectedFile.getName();
+      if (!name.endsWith(".txt")) {
+         name += ".txt";
+      }
+      selectedFile = new File(new File(selectedFile.getParent()).getPath() + File.separator + name);
+      if (selectedFile.exists()) {
+         int reply = JOptionPane.showConfirmDialog(null, "OVerwrite exisitng file?", "Confirm overwrite", JOptionPane.YES_NO_OPTION);
+         if (reply == JOptionPane.NO_OPTION) {
+            return;
+         }
+         selectedFile.delete();
+      }
+
+      try {
+         selectedFile.createNewFile();
+         FileWriter writer = new FileWriter(selectedFile);
+         for (SurfaceInterpolator surface : surfaces_) {
+            writer.write(surface.getName() + "\t" + surface.getXYDevice() + "\t" + surface.getZDevice() + "\n");
+            for (Point3d p : surface.getPoints()) {
+               writer.write( p.x + "\t" + p.y + "\t" + p.z + "\n");
+            }
+            writer.write("\n\n");
+         }
+         writer.flush();
+         writer.close();
+      } catch (IOException ex) {
+         Log.log("Couldn't write file");
+         return;
+      }
+   
+   }
+
+   public void loadSurfaces(GUI gui) {
+        File selectedFile = null;
+      if (JavaUtils.isMac()) {
+         FileDialog fd = new FileDialog(gui, "Save covariant pairing values", FileDialog.LOAD);
+         fd.setFilenameFilter(new FilenameFilter() {
+
+            @Override
+            public boolean accept(File dir, String name) {
+               return name.endsWith(".txt") || name.endsWith(".TXT");
+            }
+         });
+         fd.setVisible(true);
+         if (fd.getFile() != null) {
+            selectedFile = new File(fd.getDirectory() + File.separator + fd.getFile());
+            selectedFile = new File(selectedFile.getAbsolutePath());
+         }
+         fd.dispose();
+      } else {
+         JFileChooser fc = new JFileChooser();
+         fc.setFileFilter(new FileNameExtensionFilter("Text file", "txt", "TXT"));
+         fc.setDialogTitle("Save covariant pairing values");
+         int returnVal = fc.showSaveDialog(gui);
+         if (returnVal == JFileChooser.APPROVE_OPTION) {
+            selectedFile = fc.getSelectedFile();
+         }
+      }
+      if (selectedFile == null) {
+         return; //canceled
+      }
+
+      String fileContents = "";
+      FileReader reader;
+      try {
+         reader = new FileReader(selectedFile);
+      } catch (IOException ex) {
+         Log.log("Problem opening file");
+         return;
+      }
+      BufferedReader br = new BufferedReader(reader);
+      try {
+         StringBuilder sb = new StringBuilder();
+         String line = br.readLine();
+         while (line != null) {
+            sb.append(line);
+            sb.append("\n");
+            line = br.readLine();
+         }
+         fileContents = sb.toString();
+         br.close();
+      } catch (IOException e) {
+         Log.log("Problem reading file",true);
+      }
+      //Read file and reconstruct surfaces
+      for (String surfaceString : fileContents.split("\n\n")) { //for each surface
+         String[] lines = surfaceString.split("\n");
+         String name = lines[0].split("\t")[0];
+         String xy = lines[0].split("\t")[1];
+         String z = lines[0].split("\t")[2];
+         //if there's already one with this name, replace its points
+         //so that other parts of the software with references to it stay working
+         SurfaceInterpolator surface = null;
+         for (SurfaceInterpolator s : surfaces_) {
+            if (s.getName().equals(name)) {
+               surface = s;
+            }
+         }   
+         if (surface != null) {
+            //remove all points and add these ones
+            surface.deleteAllPoints();
+         } else {
+            surface = new SurfaceInterpolatorSimple(xy, z);
+            surface.rename(name);
+         }
+         for (int i = 1; i < lines.length; i++) {
+            String[] xyz = lines[i].split("\t");
+            surface.addPoint(Double.parseDouble(xyz[0]), Double.parseDouble(xyz[1]), Double.parseDouble(xyz[2]));
+         }
+      }
+
+   }
+
 }

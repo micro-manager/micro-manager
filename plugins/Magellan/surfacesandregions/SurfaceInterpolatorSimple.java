@@ -37,8 +37,8 @@ public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
 
    private static final double TOLERANCE = 0.01;
    
-   public SurfaceInterpolatorSimple(SurfaceManager manager, String xyName, String zName) {
-      super(manager, xyName, zName);
+   public SurfaceInterpolatorSimple(String xyName, String zName) {
+      super(xyName, zName);
    }
 
    protected void interpolateSurface(LinkedList<Point3d> points) throws InterruptedException {
