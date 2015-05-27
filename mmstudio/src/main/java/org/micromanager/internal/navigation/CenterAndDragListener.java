@@ -100,25 +100,13 @@ public class CenterAndDragListener implements MouseListener,
          }
          try {
             String tmp = core_.getProperty(camera, "TransposeCorrection");
-            if (tmp.equals("0")) 
-               correction_ = false;
-            else 
-               correction_ = true;
+            correction_ = !(tmp.equals("0"));
             tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorX());
-            if (tmp.equals("0")) 
-               mirrorX_ = false;
-            else 
-               mirrorX_ = true;
+            mirrorX_ = !(tmp.equals("0"));
             tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorY());
-            if (tmp.equals("0")) 
-               mirrorY_ = false;
-            else 
-               mirrorY_ = true;
+            mirrorY_ = !(tmp.equals("0"));
             tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY());
-            if (tmp.equals("0")) 
-               transposeXY_ = false;
-            else 
-               transposeXY_ = true;
+            transposeXY_ = !(tmp.equals("0"));
          } catch(Exception exc) {
             ReportingUtils.showError(exc);
          }
