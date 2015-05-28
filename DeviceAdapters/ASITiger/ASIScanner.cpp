@@ -841,6 +841,15 @@ int CScanner::RunSequence()
    }
 }
 
+int CScanner::PointAndFire(double x, double y, double time_us)
+{
+   SetIlluminationState(false);
+   SetPosition(x, y);
+   SetIlluminationState(true);
+   CDeviceUtils::SleepMs((long)(time_us/1000));
+   SetIlluminationState(false);
+   return DEVICE_OK;
+}
 
 ////////////////
 // action handlers

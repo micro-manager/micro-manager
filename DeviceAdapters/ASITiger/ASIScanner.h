@@ -44,8 +44,10 @@ public:
    // -----------
    int SetPosition(double x, double y);
    int GetPosition(double& x, double& y);
-   double GetXRange() { return upperLimitX_; }  // this is only positive limit, on power-up limits are +/- this value
-   double GetYRange() { return upperLimitY_; }  // this is only positive limit, on power-up limits are +/- this value
+   double GetXRange() { return (upperLimitX_ - lowerLimitX_); }  // this is only positive limit, on power-up limits are +/- this value
+   double GetYRange() { return (upperLimitY_ - lowerLimitY_); }  // this is only positive limit, on power-up limits are +/- this value
+   double GetXMinimum() { return lowerLimitX_; }
+   double GetYMinimum() { return lowerLimitY_; }
    int AddPolygonVertex(int polygonIndex, double x, double y);
    int DeletePolygons();
    int LoadPolygons();
@@ -55,7 +57,7 @@ public:
    int StopSequence() { return DEVICE_UNSUPPORTED_COMMAND; }  // doesn't appear to be used in MMCore.cpp anyway
 
    // below aren't really implemented but we do the closest thing we can with our hardware
-   int PointAndFire(double x, double y, double /*time_us*/) { return SetPosition(x, y); }  // we can't control beam time but go to location
+   int PointAndFire(double x, double y, double time_us);
    int SetSpotInterval(double /*pulseInterval_us*/) { return DEVICE_OK; }  // we can't actual control beam time so just ignore
    int SetIlluminationState(bool on);  // we can't turn off beam but we can steer beam to corner where hopefully it is blocked internally
    int GetChannel(char* channelName);
