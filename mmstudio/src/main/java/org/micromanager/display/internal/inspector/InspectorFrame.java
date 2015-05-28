@@ -29,6 +29,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.GraphicsConfiguration;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -62,6 +63,7 @@ import org.micromanager.display.internal.events.DisplayActivatedEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.events.DisplayAboutToShowEvent;
 import org.micromanager.events.internal.DefaultEventManager;
+import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -182,7 +184,10 @@ public class InspectorFrame extends MMFrame implements Inspector {
          setDisplay(display);
       }
 
-      loadAndRestorePosition(0, 0);
+      // We want to be in the upper-right corner of the primary display.
+      GraphicsConfiguration config = GUIUtils.getGraphicsConfigurationContaining(1, 1);
+      // HACK: don't know our width; just choose a vaguely-correct offset.
+      loadAndRestorePosition(config.getBounds().width - 350, 0);
 
       DefaultEventManager.getInstance().registerForEvents(this);
       addWindowListener(new WindowAdapter() {
