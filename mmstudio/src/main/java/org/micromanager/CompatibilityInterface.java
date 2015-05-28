@@ -23,8 +23,8 @@
 package org.micromanager;
 
 
+import java.awt.geom.AffineTransform;
 import java.awt.Rectangle;
-
 import java.util.List;
 
 import mmcorej.TaggedImage;
@@ -364,17 +364,37 @@ public interface CompatibilityInterface {
     * Return current acquisition settings
     * @return acquisition settings instance
     */ 
-    SequenceSettings getAcquisitionSettings();
+   SequenceSettings getAcquisitionSettings();
     
    /**
     * Apply new acquisition settings
     * @param settings acquisition settings
     */ 
-    public void setAcquisitionSettings(SequenceSettings settings);
+   public void setAcquisitionSettings(SequenceSettings settings);
  
    /**
     * Autostretch each histogram for the currently-active window, as if the
     * "Auto" button had been clicked for each one.
     */
-    public void autostretchCurrentWindow();
+   public void autostretchCurrentWindow();
+
+   /**
+    * Retrieve the affine transform describing how the camera image maps to
+    * stage coordinates, for a given pixel size config. This method will pull
+    * information from the profile if available, and failing that will look in
+    * the Java Preferences. Will return null if no transform is found.
+    * @param config The configuration (per core.getCurrentPixelSizeConfig())
+    *        to find the affine transform for.
+    * @return The transform describing how the camera maps to the stage.
+    */
+   public AffineTransform getCameraTransform(String config);
+
+   /**
+    * Set a new affine transform for describing how the camera image maps to
+    * the stage coordinates. The value will be stored in the user's profile.
+    * @param transform The new transform to use.
+    * @param config The configuration (per core.getCurrentPixelSizeConfig())
+    *        to set the affine transform for.
+    */
+   public void setCameraTransform(AffineTransform transform, String config);
 }

@@ -34,6 +34,7 @@ import ij.gui.Toolbar;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.geom.AffineTransform;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
@@ -145,6 +146,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
    private static final String SHOULD_DELETE_OLD_CORE_LOGS = "whether or not to delete old MMCore log files";
    private static final String CORE_LOG_LIFETIME_DAYS = "how many days to keep MMCore log files, before they get deleted";
    private static final String CIRCULAR_BUFFER_SIZE = "size, in megabytes of the circular buffer used to temporarily store images before they are written to disk";
+   private static final String AFFINE_TRANSFORM = "affine transform for mapping camera coordinates to stage coordinates for a specific pixel size config: ";
 
    // cfg file saving
    private static final String CFGFILE_ENTRY_BASE = "CFGFileEntry";
@@ -1862,6 +1864,36 @@ public class MMStudio implements Studio, CompatibilityInterface {
    @Override
    public EventManager getEventManager() {
       return events();
+   }
+
+   @Override
+   public AffineTransform getCameraTransform(String config) {
+      // Look in the profile first.
+      try {
+         AffineTransform result = (AffineTransform)
+            (DefaultUserProfile.getInstance().getObject(
+               MMStudio.class, AFFINE_TRANSFORM + config, null));
+         if (result != null) {
+            return result;
+         }
+      }
+      catch (IOException e) {
+         ReportingUtils.logError(e, "Error retrieving camera transform");
+      }
+      // For backwards compatibility, try retrieving it from the 1.4
+      // Preferences instead.
+      return org.micromanager.internal.utils.UnpleasantLegacyCode.legacyRetrieveTransformFromPrefs("affine_transform_" + config);
+   }
+
+   @Override
+   public void setCameraTransform(AffineTransform transform, String config) {
+      try {
+         DefaultUserProfile.getInstance().setObject(MMStudio.class,
+               AFFINE_TRANSFORM + config, transform);
+      }
+      catch (IOException e) {
+         ReportingUtils.logError(e, "Error setting camera transform");
+      }
    }
 
    public static boolean getShouldDeleteOldCoreLogs() {
