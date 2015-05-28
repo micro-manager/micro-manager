@@ -106,7 +106,7 @@ using namespace std;
  * (Keep the 3 numbers on one line to make it easier to look at diffs when
  * merging/rebasing.)
  */
-const int MMCore_versionMajor = 8, MMCore_versionMinor = 0, MMCore_versionPatch = 0;
+const int MMCore_versionMajor = 8, MMCore_versionMinor = 1, MMCore_versionPatch = 0;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -5617,6 +5617,18 @@ double CMMCore::getGalvoXRange(const char* deviceLabel) throw (CMMError)
 }
 
 /**
+ * Get the Galvo x minimum 
+ */
+double CMMCore::getGalvoXMinimum(const char* deviceLabel) throw (CMMError)
+{
+   boost::shared_ptr<GalvoInstance> pGalvo =
+      deviceManager_->GetDeviceOfType<GalvoInstance>(deviceLabel);
+
+   mm::DeviceModuleLockGuard guard(pGalvo);
+   return pGalvo->GetXMinimum();
+}
+
+/**
  * Get the Galvo y range
  */
 double CMMCore::getGalvoYRange(const char* deviceLabel) throw (CMMError)
@@ -5628,6 +5640,17 @@ double CMMCore::getGalvoYRange(const char* deviceLabel) throw (CMMError)
    return pGalvo->GetYRange();
 }
 
+/**
+ * Get the Galvo y minimum 
+ */
+double CMMCore::getGalvoYMinimum(const char* deviceLabel) throw (CMMError)
+{
+   boost::shared_ptr<GalvoInstance> pGalvo =
+      deviceManager_->GetDeviceOfType<GalvoInstance>(deviceLabel);
+
+   mm::DeviceModuleLockGuard guard(pGalvo);
+   return pGalvo->GetYMinimum();
+}
 
 /**
  * Add a vertex to a galvo polygon.

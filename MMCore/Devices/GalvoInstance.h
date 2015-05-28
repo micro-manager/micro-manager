@@ -42,7 +42,9 @@ public:
    int GetPosition(double& x, double& y);
    int SetIlluminationState(bool on);
    double GetXRange();
+   double GetXMinimum();
    double GetYRange();
+   double GetYMinimum();
    int AddPolygonVertex(int polygonIndex, double x, double y);
    int DeletePolygons();
    int RunSequence();

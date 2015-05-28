@@ -28,7 +28,9 @@ int GalvoInstance::SetPosition(double x, double y) { return GetImpl()->SetPositi
 int GalvoInstance::GetPosition(double& x, double& y) { return GetImpl()->GetPosition(x, y); }
 int GalvoInstance::SetIlluminationState(bool on) { return GetImpl()->SetIlluminationState(on); }
 double GalvoInstance::GetXRange() { return GetImpl()->GetXRange(); }
+double GalvoInstance::GetXMinimum() { return GetImpl()->GetXMinimum(); }
 double GalvoInstance::GetYRange() { return GetImpl()->GetYRange(); }
+double GalvoInstance::GetYMinimum() { return GetImpl()->GetYMinimum(); }
 int GalvoInstance::AddPolygonVertex(int polygonIndex, double x, double y) { return GetImpl()->AddPolygonVertex(polygonIndex, x, y); }
 int GalvoInstance::DeletePolygons() { return GetImpl()->DeletePolygons(); }
 int GalvoInstance::RunSequence() { return GetImpl()->RunSequence(); }
