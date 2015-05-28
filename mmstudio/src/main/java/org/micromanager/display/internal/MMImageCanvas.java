@@ -217,4 +217,15 @@ class MMImageCanvas extends ImageCanvas {
    public void onDisplayDestroyed(DisplayDestroyedEvent event) {
       display_.unregisterForEvents(this);
    }
+
+   @Override
+   public Dimension getPreferredSize() {
+      Dimension superDim = super.getPreferredSize();
+      // We cap our size at the min of superDim or the max displayable size of
+      // our image at the current zoom level.
+      // HACK: Add 1 to ensure we don't get slightly cropped.
+      return new Dimension(
+            (int) Math.min(superDim.width, ijImage_.getWidth() * this.magnification) + 1,
+            (int) Math.min(superDim.height, ijImage_.getHeight() * this.magnification) + 1);
+   }
 }

@@ -347,6 +347,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       // Must set this before we call resetTitle(), which checks it.
       haveCreatedGUI_ = true;
       resetTitle();
+
       setWindowSize();
 
       DefaultEventManager.getInstance().post(new DefaultDisplayAboutToShowEvent(this));
@@ -399,6 +400,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       // HACK: set the minimum size. If we don't do this, then the canvas
       // doesn't shrink properly when the window size is reduced. Why?!
       canvas_.setMinimumSize(new Dimension(16, 16));
+      Double mag = displaySettings_.getMagnification();
+      canvas_.setMagnification(mag != null ? mag : 1);
       // Wrap the canvas in a subpanel so that we can get events when it
       // resizes.
       canvasPanel_ = new JPanel(new MigLayout("insets 0, fill"));
@@ -476,11 +479,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             ijImage_.setStack(getName(), stack_);
          }
       }
-   }
-
-   @Override
-   public void adjustZoom(double factor) {
-      setMagnification(getMagnification() * factor);
    }
 
    /**
@@ -610,8 +608,13 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     */         
    @Subscribe
    public void onLayoutChanged(LayoutChangedEvent event) {
-      validate();
-      pack();
+      try {
+         validate();
+         pack();
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error processing layout-changed event");
+      }
    }
 
    /**
@@ -652,6 +655,11 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    @Override
    public void displayStatusString(String status) {
       displayBus_.post(new StatusEvent(status));
+   }
+
+   @Override
+   public void adjustZoom(double factor) {
+      setMagnification(getMagnification() * factor);
    }
 
    @Override
@@ -752,6 +760,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          // Only ever call this method once.
          return;
       }
+      savePosition();
       displayBus_.post(new DisplayDestroyedEvent(this));
       DefaultEventManager.getInstance().unregisterForEvents(this);
       store_.unregisterForEvents(this);
@@ -1037,6 +1046,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       Dimension imageSize = new Dimension(
             (int) Math.ceil(image.getWidth() * canvas_.getMagnification()),
             (int) Math.ceil(image.getHeight() * canvas_.getMagnification()));
+      // HACK: account for changes in the zoom that change the desired size
+      // of the image canvas.
+      canvas_.setDrawingSize(imageSize.width, imageSize.height);
       Insets insets = contentsPanel_.getInsets();
       Dimension screenSize = getScreenConfig().getBounds().getSize();
       // TODO: if we don't apply some padding here then we end up with the
@@ -1072,6 +1084,10 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     */
    @Override
    public synchronized void pack() {
+      if (!haveCreatedGUI_) {
+         // No point doing this until GUI creation is complete.
+         return;
+      }
       Dimension controlsSize = controlsPanel_.getPreferredSize();
       Dimension ourSize = contentsPanel_.getSize();
       Dimension screenSize = getScreenConfig().getBounds().getSize();
