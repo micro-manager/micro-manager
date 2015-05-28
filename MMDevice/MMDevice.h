@@ -255,7 +255,8 @@ namespace MM {
       virtual int GetPropertyType(const char* name, MM::PropertyType& pt) const = 0;
       virtual unsigned GetNumberOfPropertyValues(const char* propertyName) const = 0;
       virtual bool GetPropertyValueAt(const char* propertyName, unsigned index, char* value) const = 0;
-      /* Sequences can be used for fast acquisitions, sycnchronized by TTLs rather than
+      /**
+       * Sequences can be used for fast acquisitions, sycnchronized by TTLs rather than
        * computer commands. 
        * Sequences of states can be uploaded to the device.  The device will cycle through
        * the uploaded list of states (triggered by an external trigger - most often coming 
@@ -263,27 +264,27 @@ namespace MM {
        * be true
        */
       virtual int IsPropertySequenceable(const char* name, bool& isSequenceable) const = 0;
-      /*
+      /**
        * The largest sequence that can be stored in the device
        */
       virtual int GetPropertySequenceMaxLength(const char* propertyName, long& nrEvents) const = 0;
-      /* 
+      /** 
        * Starts execution of the sequence
        */
       virtual int StartPropertySequence(const char* propertyName) = 0;
-      /*
+      /**
        * Stops execution of the device
        */
       virtual int StopPropertySequence(const char* propertyName) = 0;
-      /*
+      /**
        * remove previously added sequence
        */
       virtual int ClearPropertySequence(const char* propertyName) = 0;
-      /*
+      /**
        * Add one value to the sequence
        */
       virtual int AddToPropertySequence(const char* propertyName, const char* value) = 0;
-      /*
+      /**
        * Signal that we are done sending sequence values so that the adapter can send the whole sequence to the device
        */
       virtual int SendPropertySequence(const char* propertyName) = 0; 
@@ -294,7 +295,7 @@ namespace MM {
       virtual void SetDelayMs(double delay) = 0;
       virtual bool UsesDelay() = 0;
 
-      /*
+      /**
        * library handle management (for use only in the client code)
        */
       // TODO Get/SetModuleHandle() is no longer used; can remove at a
@@ -542,7 +543,7 @@ namespace MM {
        */
       virtual void RemoveTag(const char* key) = 0;
 
-      /*
+      /**
        * Returns whether a camera's exposure time can be sequenced.
        * If returning true, then a Camera adapter class should also inherit
        * the SequenceableExposure class and implement its methods.
@@ -632,7 +633,7 @@ namespace MM {
        */
       virtual int GetFocusDirection(FocusDirection& direction) = 0;
 
-      /*
+      /**
        * Returns whether a stage can be sequenced (synchronized by TTLs)
        * If returning true, then a Stage class should also inherit
        * the SequenceableStage class and implement its methods.
@@ -653,11 +654,18 @@ namespace MM {
       virtual int GetStageSequenceMaxLength(long& nrEvents) const = 0;
       virtual int StartStageSequence() = 0;
       virtual int StopStageSequence() = 0;
-      // Remove all values in the sequence
+      /**
+       * Remove all values in the sequence
+       */
       virtual int ClearStageSequence() = 0;
-      // Add one value to the sequence
+      /** 
+       * Add one value to the sequence
+       */
       virtual int AddToStageSequence(double position) = 0;
-      // Signal that we are done sending sequence values so that the adapter can send the whole sequence to the device
+      /**
+       * Signal that we are done sending sequence values so that the adapter 
+       * can send the whole sequence to the device
+       */
       virtual int SendStageSequence() = 0;
    };
 
@@ -714,7 +722,7 @@ namespace MM {
       virtual int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax) = 0;
       virtual double GetStepSizeXUm() = 0;
       virtual double GetStepSizeYUm() = 0;
-       /*
+      /**
        * Returns whether a stage can be sequenced (synchronized by TTLs)
        * If returning true, then an XYStage class should also inherit
        * the SequenceableXYStage class and implement its methods.
@@ -731,11 +739,18 @@ namespace MM {
       virtual int GetXYStageSequenceMaxLength(long& nrEvents) const = 0;
       virtual int StartXYStageSequence() = 0;
       virtual int StopXYStageSequence() = 0;
-      // Remove all values in the sequence
+      /**
+       * Remove all values in the sequence
+       */
       virtual int ClearXYStageSequence() = 0;
-      // Add one value to the sequence
+      /**
+       * Add one value to the sequence
+       */
       virtual int AddToXYStageSequence(double positionX, double positionY) = 0;
-      // Signal that we are done sending sequence values so that the adapter can send the whole sequence to the device
+      /**
+       * Signal that we are done sending sequence values so that the adapter 
+       * can send the whole sequence to the device
+       */
       virtual int SendXYStageSequence() = 0;
 
    };
@@ -952,9 +967,9 @@ namespace MM {
        */
       virtual int SetImage(unsigned char * pixels) = 0;
 
-     /**
-       * Load a 32-bit image into the SLM device adapter.
-       */
+      /**
+      * Load a 32-bit image into the SLM device adapter.
+      */
       virtual int SetImage(unsigned int * pixels) = 0;
 
       /**
@@ -1095,30 +1110,31 @@ namespace MM {
       static const DeviceType Type;
       
    //Galvo API:
-   /*
-    * Moves the galvo devices to the requested position, activates the light
-    * source, waits for the specified amount of time (in microseconds), and
-    * deactivates the light source
-    */
+  
+      /**
+       * Moves the galvo devices to the requested position, activates the light
+       * source, waits for the specified amount of time (in microseconds), and
+       * deactivates the light source
+       */
       virtual int PointAndFire(double x, double y, double time_us) = 0;
       virtual int SetSpotInterval(double pulseInterval_us) = 0;
       virtual int SetPosition(double x, double y) = 0;
       virtual int GetPosition(double& x, double& y) = 0;
       virtual int SetIlluminationState(bool on) = 0;
-      /*
+      /**
        * X range of the device in native units
        */
       virtual double GetXRange() = 0;
-      /*
+      /**
        * Minimum X value for the device in native units
        * Must be implemented if it is not 0.0
        */
       virtual double GetXMinimum() = 0;
-      /*
+      /**
        * Y range of the device in native units
        */
       virtual double GetYRange() = 0;
-      /*
+      /**
        * Minimum Y value for the device in native units
        * Must be implemented if it is not 0.0
        */
