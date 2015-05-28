@@ -6,20 +6,11 @@
 	<import file="../buildscripts/javabuild.xml"/>
 
 	<path id="project.classpath">
-		<!-- Keep alphabetical, please -->
-		<pathelement location="${mm.java.lib.beanshell}"/>
-		<pathelement location="${mm.java.lib.commons-math}"/>
-		<pathelement location="${mm.java.lib.gson}"/>
-		<pathelement location="${mm.java.lib.guava}"/>
-		<pathelement location="${mm.java.lib.imagej}"/>
-		<pathelement location="${mm.java.lib.miglayout}"/>
+		<path refid="mm.compile.classpath"/>
 		<pathelement location="${mm.java.lib.mmcorej}"/>
-		<pathelement location="${mm.java.lib.rsyntaxtextarea}"/>
-		<pathelement location="${mm.java.lib.scifio}"/>
 	</path>
 
 	<path id="project.linked.jars">
-		<pathelement location="${mm.java.lib.imagej}"/>
 		<pathelement location="${mm.java.lib.mmcorej}"/>
 	</path>
 

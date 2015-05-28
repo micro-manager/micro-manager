@@ -38,12 +38,20 @@
 	<property name="jarfilename" value="${product}.jar"/>
 	<property name="jarfile" value="${outdir}/${product}.jar"/>
 
+	<!-- Global default classpath -->
+	<path id="mm.compile.classpath">
+		<fileset dir="${mm.ivy.lib.dir}/compile" includes="*.jar"/>
+		<fileset dir="${mm.ivy.lib.dir}/imagej" includes="*.jar"/>
+	</path>
+
 	<!-- Default classpath (override after the 'import' element) -->
-	<path id="project.classpath"/>
+	<path id="project.classpath">
+		<path refid="mm.compile.classpath"/>
+	</path>
 
 	<!-- Default classpath for unit tests -->
 	<path id="mm.test.classpath">
-		<path refid="mm.junit.classpath"/>
+		<fileset dir="${mm.ivy.lib.dir}/test" includes="*.jar"/>
 		<path refid="project.classpath"/>
 		<pathelement location="${jarfile}"/>
 		<pathelement location="${test.intdir}"/>

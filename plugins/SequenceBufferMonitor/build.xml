@@ -2,7 +2,4 @@
 	<property name="plugin.path" value="Developer_Tools"/>
 
 	<import file="../javapluginbuild.xml"/>
-	<path id="plugin.classpath">
-		<pathelement location="${mm.java.lib.miglayout}"/>
-	</path>
 </project>

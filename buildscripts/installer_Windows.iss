@@ -79,6 +79,36 @@ Filename: "{app}\vcredist_{#MMArch_x86x64}_2010SP1.exe"; Parameters: "/q"; Descr
 ;;
 
 [InstallDelete]
+; Remove JARs that are no longer used or have been renamed
+Type: files; Name: "{app}\plugins\Micro-Manager\AbsoluteLayout.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\TSFProto.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\bsh-2.0b4.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\clojure.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\clooj.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\commons-math-2.0.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\commons-math3-3.4.1.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\core.cache.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\core.memoize.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\data.json.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\gproto.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\gson-2.2.4.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\guava-17.0.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\iconloader.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\ij.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\jcommon-1.0.16.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\jfreechart-1.0.13.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\loci-common.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\lwm.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\miglayout-4.0-swing.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\ome-xml.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\rsyntaxtextarea.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\scifio.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\slf4j-api-1.7.1.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\substance.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\swing-layout-1.0.4.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\swingx-0.9.5.jar"
+Type: files; Name: "{app}\plugins\Micro-Manager\trident.jar"
+
 ; Remove plugins from toplevel, where they used to reside; at least some of
 ; them will now be installed in subdirectories of mmplugins.
 Type: files; Name: "{app}\mmplugins\ASIdiSPIM.jar"

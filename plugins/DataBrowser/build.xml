@@ -4,7 +4,5 @@
 
 	<path id="plugin.classpath">
 		<pathelement location="${mm.java.lib.acq-engine}"/>
-		<pathelement location="${mm.java.lib.beanshell}"/>
-		<pathelement location="${mm.clojure.lib.data-json}"/>
 	</path>
 </project>

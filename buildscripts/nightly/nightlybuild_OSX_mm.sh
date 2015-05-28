@@ -123,7 +123,7 @@ $EVAL ./configure \
    $MM_CONFIGUREFLAGS \
    "JAVA_HOME=\"/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Home\"" \
    "JNI_CPPFLAGS=\"-I$MM_MACOSX_SDKROOT/System/Library/Frameworks/JavaVM.framework/Versions/A/Headers\"" \
-   "JAVACFLAGS=\"-Xlint:all,-serial -source 1.6 -target 1.6\"" \
+   "JAVACFLAGS=\"-Xlint:all,-path,-serial -source 1.6 -target 1.6\"" \
    "OPENCV_LDFLAGS=\"-framework Cocoa -framework QTKit -framework QuartzCore -framework AppKit\"" \
    "OPENCV_LIBS=\"$MM_DEPS_PREFIX/lib/libopencv_highgui.a $MM_DEPS_PREFIX/lib/libopencv_imgproc.a $MM_DEPS_PREFIX/lib/libopencv_core.a -lz $MM_DEPS_PREFIX/lib/libdc1394.la\"" \
    PKG_CONFIG=$MM_DEPS_PREFIX/bin/pkg-config \
@@ -193,8 +193,8 @@ buildscripts/nightly/mkportableapp_OSX/mkportableapp.py \
 
 
 # Stage third-party JARs.
-cp $MM_SRCDIR/../3rdpartypublic/classext/*.jar $MM_JARDIR
-mv $MM_JARDIR/ij.jar $MM_STAGEDIR
+cp $MM_SRCDIR/dependencies/artifacts/{compile,runtime}/*.jar $MM_JARDIR
+cp $MM_SRCDIR/dependencies/artifacts/imagej/ij-*.jar $MM_STAGEDIR/ij.jar
 
 # Ensure no SVN data gets into the installer (e.g. when copying from bindist/)
 find $MM_STAGEDIR -name .svn -prune -exec rm -rf {} +

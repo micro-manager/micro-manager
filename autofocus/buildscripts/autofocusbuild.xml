@@ -20,14 +20,12 @@
 	<import file="../../buildscripts/javabuild.xml"/>
 
 	<path id="project.classpath">
-		<pathelement location="${mm.java.lib.commons-math}"/>
-		<pathelement location="${mm.java.lib.imagej}"/>
+        <path refid="mm.compile.classpath"/>
 		<pathelement location="${mm.java.lib.mmcorej}"/>
 		<pathelement location="${mm.java.lib.mmstudio}"/>
 	</path>
 
 	<path id="project.linked.jars">
-		<pathelement location="${mm.java.lib.imagej}"/>
 		<pathelement location="${mm.java.lib.mmcorej}"/>
 		<pathelement location="${mm.java.lib.mmstudio}"/>
 	</path>

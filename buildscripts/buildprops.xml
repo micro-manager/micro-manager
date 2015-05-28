@@ -2,26 +2,25 @@
 	<!-- Path of repository root, from the project basedir -->
 	<dirname property="mm.basedir" file="${ant.file.mm.props}/.."/>
 
+	<!-- Get classpaths of retrieved JARs -->
+	<include file="fetchdeps.xml"/>
+
 	<!-- Extra tasks from ant-contrib -->
-	<property name="mm.build.java.lib.ant-contrib" location="${mm.basedir}/dependencies/builddeps/ant-contrib-1.0b3.jar"/>
-	<condition property="mm.build.ant-contrib-available">
-		<resourceexists>
-			<file file="${mm.build.java.lib.ant-contrib}"/>
-		</resourceexists>
-	</condition>
-	<fail unless="mm.build.ant-contrib-available"
-		message="Please run 'ant -f buildscripts/fetchdeps.xml' first. (If you get errors, try deleting the 'dependencies' directory and starting over.)"/>
+	<!-- Detect the case where the user has never run fetchdeps -->
+	<fail message="Please run 'ant -f buildscripts/fetchdeps.xml' first. (If you get errors, try deleting the 'dependencies' directory and starting over.)">
+		<condition>
+			<not>
+				<resourceexists>
+					<file file="${mm.ivy.lib.dir}/build/ant-contrib-1.0b3.jar"/>
+				</resourceexists>
+			</not>
+		</condition>
+	</fail>
 	<taskdef resource="net/sf/antcontrib/antcontrib.properties">
 		<classpath>
-			<pathelement location="${mm.build.java.lib.ant-contrib}"/>
+			<fileset dir="${mm.ivy.lib.dir}/build" includes="*.jar"/>
 		</classpath>
 	</taskdef>
-
-	<path id="mm.junit.classpath">
-		<!-- TODO Get this list from Ivy -->
-		<pathelement location="${mm.basedir}/dependencies/builddeps/junit-4.11.jar"/>
-		<pathelement location="${mm.basedir}/dependencies/builddeps/hamcrest-core-1.3.jar"/>
-	</path>
 
 	<!-- Global definitions for building Micro-Manager -->
 
@@ -59,17 +58,6 @@
 	<!-- Items not in source tree but at fixed location -->
 	<property name="mm.thirdpartypublic" location="${mm.basedir}/../3rdpartypublic"/>
 
-	<!-- Third-party lib paths -->
-	<include file="javalibs.xml"/>
-
-	<!-- Packages available by default from plugins -->
-	<path id="mm.java.plugin.defaultclasspath">
-		<pathelement location="${mm.java.lib.commons-math}"/>
-		<pathelement location="${mm.java.lib.imagej}"/>
-		<pathelement location="${mm.java.lib.mmcorej}"/>
-		<pathelement location="${mm.java.lib.mmstudio}"/>
-	</path>
-
 	<!-- Compiling Java -->
 	<presetdef name="mm-ant-javac">
 		<javac debug="on" debuglevel="lines,vars,source"
@@ -83,7 +71,7 @@
 		<javac debug="on" debuglevel="lines,vars,source"
 			optimize="on" deprecation="on"
 			source="1.6" target="1.6" includeAntRuntime="false">
-			<compilerarg value="-Xlint:all,-serial"/>
+			<compilerarg value="-Xlint:all,-path,-serial"/>
 			<compilerarg line="${mm.javacflags}"/>
 		</javac>
 	</presetdef>
@@ -134,7 +122,7 @@
 						<classpath>
 							<pathelement location="@{destdir}"/>
 							<pathelement location="@{srcdir}"/>
-							<pathelement location="${mm.java.lib.clojure}"/>
+							<fileset dir="${mm.ivy.lib.dir}/compile" includes="clojure-*.jar"/>
 							<clj-classpath/>
 						</classpath>
 					</java>

@@ -98,13 +98,18 @@
 			<then></then>
 			<else>
 				<copy todir="${mm.installdir}" file="${mm.thirdpartypublic}/JavaLauncher/ImageJ.exe"/>
+
+				<!-- Rename ij-*.jar to ij.jar and copy -->
+				<copy todir="${mm.installdir}" flatten="true">
+					<mapper type="regexp" from="ij-.*\.jar" to="ij.jar"/>
+					<fileset dir="${mm.ivy.lib.dir}/imagej" includes="ij-*.jar"/>
+				</copy>
 			</else>
 		</if>
-		<copy todir="${mm.installdir}" file="${mm.java.lib.imagej}"/>
 		<copy todir="${mm.java.installdir}">
-			<!-- XXX Should limit to the Jars that are actually
-			     used. Use Ivy? -->
-			<fileset dir="${mm.java.libs}" includes="*.jar" excludes="ij.jar"/>
+			<!-- Copy all JARs except for ij.jar -->
+			<fileset dir="${mm.ivy.lib.dir}/compile" includes="*.jar"/>
+			<fileset dir="${mm.ivy.lib.dir}/runtime" includes="*.jar"/>
 		</copy>
 
 		<if>

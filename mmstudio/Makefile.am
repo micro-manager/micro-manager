@@ -21,7 +21,7 @@ javadoc:
 	-rm -rf doc
 	$(MKDIR_P) doc
 	javadoc -public \
-		-classpath ../MMCoreJ_wrap/MMCoreJ.jar:MMJ_.jar:$(IJJARPATH):$(CLASSEXT)/"*" \
+		-classpath ../MMCoreJ_wrap/MMCoreJ.jar:MMJ_.jar:../dependencies/artifacts/compile/"*":../dependencies/artifacts/imagej/"*" \
 		-d doc \
 		-sourcepath $(srcdir)/src \
 		-subpackages org.micromanager.api
