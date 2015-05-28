@@ -119,7 +119,7 @@ public class PropertyEditor extends MMFrame {
       flags_.load(PropertyEditor.class);
       
       setIconImage(Toolkit.getDefaultToolkit().getImage(
-              getClass().getResource("icons/microscope.gif") ) );
+              getClass().getResource("/org/micromanager/icons/microscope.gif") ) );
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
       setSize(551, 514);
