@@ -381,7 +381,7 @@ public class IntroDlg extends JDialog {
     * tree.
     */
    private static String[] loadRecentlyUsedConfigsFromPreferences() {
-      Preferences root = DefaultUserProfile.getLegacyPreferences14();
+      Preferences root = DefaultUserProfile.getLegacyUserPreferences14();
       if (root == null) {
          return null;
       }
