@@ -225,7 +225,7 @@ public class SurfaceManager {
             for (Point3d p : surface.getPoints()) {
                writer.write( p.x + "\t" + p.y + "\t" + p.z + "\n");
             }
-            writer.write("\n\n");
+            writer.write("\n");
          }
          writer.flush();
          writer.close();
@@ -308,13 +308,14 @@ public class SurfaceManager {
          } else {
             surface = new SurfaceInterpolatorSimple(xy, z);
             surface.rename(name);
+            surfaces_.add(surface);
          }
          for (int i = 1; i < lines.length; i++) {
             String[] xyz = lines[i].split("\t");
             surface.addPoint(Double.parseDouble(xyz[0]), Double.parseDouble(xyz[1]), Double.parseDouble(xyz[2]));
          }
       }
-
+      updateSurfaceTableAndCombos();
    }
 
 }
