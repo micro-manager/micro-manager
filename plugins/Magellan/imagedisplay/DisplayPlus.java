@@ -564,6 +564,17 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       window.removeKeyListener(this.getImagePlus().getWindow().getKeyListeners()[0]);
       canvas_.removeKeyListener(canvas_.getKeyListeners()[0]);
 
+      window.addFocusListener(new FocusListener() {
+
+         @Override
+         public void focusGained(FocusEvent e) {
+            canvas_.requestFocus(); //give focus to canvas so keylistener active
+         }
+
+         @Override
+         public void focusLost(FocusEvent e) {
+         }
+      });
       KeyListener kl = new KeyListener() {
 
          @Override
