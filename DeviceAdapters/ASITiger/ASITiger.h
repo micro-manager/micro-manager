@@ -419,6 +419,7 @@ const char* const g_PresetCode22 = "22 - no counter";
 const char* const g_PresetCode23 = "23 - TTL0-7 on BNC1-8";
 const char* const g_PresetCode24 = "24 - BNC3 source = cell 1";
 const char* const g_PresetCode25 = "25 - BNC3 source = cell 8";
+const char* const g_PresetCode26 = "26 - counter clock = rising TTL3";
 const char* const g_PLogicModeNone = "None";
 const char* const g_PLogicModediSPIMShutter = "diSPIM Shutter";
 const char* const g_ChannelNone = "none of outputs 5-8";
