@@ -223,9 +223,10 @@ class MMImageCanvas extends ImageCanvas {
       Dimension superDim = super.getPreferredSize();
       // We cap our size at the min of superDim or the max displayable size of
       // our image at the current zoom level.
-      // HACK: Add 1 to ensure we don't get slightly cropped.
       return new Dimension(
-            (int) Math.min(superDim.width, ijImage_.getWidth() * this.magnification) + 1,
-            (int) Math.min(superDim.height, ijImage_.getHeight() * this.magnification) + 1);
+            (int) Math.min(superDim.width,
+               Math.ceil(ijImage_.getWidth() * this.magnification)),
+            (int) Math.min(superDim.height,
+               Math.ceil(ijImage_.getHeight() * this.magnification)));
    }
 }
