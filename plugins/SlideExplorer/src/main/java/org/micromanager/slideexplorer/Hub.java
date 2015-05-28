@@ -102,11 +102,11 @@ public class Hub {
 
       AffineTransform transform = null;
       try {
-         String key = "affine_transform_" + core.getCurrentPixelSizeConfig();
-         Double[] affValues = MMStudio.getInstance().profile().getDoubleArray(
-                 MMStudio.class, key, null);
-         transform = new AffineTransform(JavaUtils.doubleArrayToPrimitive(affValues));
-      } catch (Exception ex) {
+         transform = MMStudio.getInstance().compat().getCameraTransform(
+            core.getCurrentPixelSizeConfig());
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error getting pixel size config");
       }
 
       if (transform == null) {

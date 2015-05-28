@@ -414,10 +414,9 @@ public class DisplayPlus implements ImageCacheListener {
 
             //use affine transform to convert to stage coordinate of center of new grid
             AffineTransform transform = null;
-            Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
             try {
-                transform = (AffineTransform) JavaUtils.getObjectFromPrefs(prefs, "affine_transform_"
-                        + MMStudio.getInstance().getCore().getCurrentPixelSizeConfig(), null);
+               transform = MMStudio.getInstance().compat().getCameraTransform(
+                     MMStudio.getInstance().getCore().getCurrentPixelSizeConfig());
                 //set map origin to current stage position
                 double[] matrix = new double[6];
                 transform.getMatrix(matrix);

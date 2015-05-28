@@ -589,11 +589,11 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
             
             AffineTransform af = null;
             try {
-               Double[] affValues = gui_.profile().getDoubleArray(
-                           MMStudio.class, "affine_transform_" +
-                           core_.getCurrentPixelSizeConfig(), null);
-               af = new AffineTransform(JavaUtils.doubleArrayToPrimitive(affValues));
-            } catch (Exception ex) {
+               af = gui_.compat().getCameraTransform(
+                  core_.getCurrentPixelSizeConfig());
+            }
+            catch (Exception ex) {
+               gui_.logs().logError(ex, "Error getting pixel size config");
             }
             if (af == null) {
                gui_.logs().logError("No pixel calibration data found, please run the Pixel Calibrator");

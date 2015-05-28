@@ -53,11 +53,11 @@ public class Util {
    public static void createGrid(double xCenter, double yCenter, int xSize, int ySize, int pixelOverlapX, int pixelOverlapY) {      
       Studio app = MMStudio.getInstance();
       //Get affine transform
-      Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
 
       AffineTransform transform = null;
       try {
-         transform = (AffineTransform) JavaUtils.getObjectFromPrefs(prefs, "affine_transform_" + app.getCMMCore().getCurrentPixelSizeConfig(), null);
+         transform = app.compat().getCameraTransform(
+               app.getCMMCore().getCurrentPixelSizeConfig());
          //set map origin to current stage position
          double[] matrix = new double[6];
          transform.getMatrix(matrix);

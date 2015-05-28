@@ -138,15 +138,12 @@ public class PixelCalibratorPlugin implements MMPlugin {
       CalibrationListDlg calDialog = app_.getCalibrationListDlg();
       calDialog.updateCalibrations();
       calDialog.setVisible(true);
-      
-      double[] affValues = null;
-      result.getMatrix(affValues);
+
       try {
-         app_.profile().setDoubleArray(MMStudio.class, "affine_transform_" +
-                 core_.getCurrentPixelSizeConfig(),
-                 JavaUtils.doubleArrayToClass(affValues));
-      } catch (Exception ex) {
-         app_.logs().logError(ex);
+         app_.compat().setCameraTransform(result, core_.getCurrentPixelSizeConfig());
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error saving camera transform");
       }
 
       int response = JOptionPane.showConfirmDialog(null,
