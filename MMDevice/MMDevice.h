@@ -27,7 +27,7 @@
 // Header version
 // If any of the class definitions changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 64
+#define DEVICE_INTERFACE_VERSION 65
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -1095,13 +1095,34 @@ namespace MM {
       static const DeviceType Type;
       
    //Galvo API:
+   /*
+    * Moves the galvo devices to the requested position, activates the light
+    * source, waits for the specified amount of time (in microseconds), and
+    * deactivates the light source
+    */
       virtual int PointAndFire(double x, double y, double time_us) = 0;
       virtual int SetSpotInterval(double pulseInterval_us) = 0;
       virtual int SetPosition(double x, double y) = 0;
       virtual int GetPosition(double& x, double& y) = 0;
       virtual int SetIlluminationState(bool on) = 0;
+      /*
+       * X range of the device in native units
+       */
       virtual double GetXRange() = 0;
+      /*
+       * Minimum X value for the device in native units
+       * Must be implemented if it is not 0.0
+       */
+      virtual double GetXMinimum() = 0;
+      /*
+       * Y range of the device in native units
+       */
       virtual double GetYRange() = 0;
+      /*
+       * Minimum Y value for the device in native units
+       * Must be implemented if it is not 0.0
+       */
+      virtual double GetYMinimum() = 0;
       virtual int AddPolygonVertex(int polygonIndex, double x, double y) = 0;
       virtual int DeletePolygons() = 0;
       virtual int RunSequence() = 0;

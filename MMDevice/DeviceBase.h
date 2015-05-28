@@ -2105,7 +2105,8 @@ class CSLMBase : public CDeviceBase<MM::SLM, U>
 template <class U>
 class CGalvoBase : public CDeviceBase<MM::Galvo, U>
 {
-
+   double GetXMinimum() { return 0.0;};
+   double GetYMinimum() { return 0.0;};
 };
 
 /**
