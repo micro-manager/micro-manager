@@ -35,6 +35,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
 import org.micromanager.internal.conf2.DevicesPage.DeviceTable_TableModel;
+import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -142,7 +143,7 @@ public class DelayPage extends PagePanel {
       scrollPane.setBounds(22, 21, 517, 337);
       add(scrollPane);
 
-      deviceTable_ = new JTable();
+      deviceTable_ = new DaytimeNighttime.Table();
       deviceTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       InputMap im = deviceTable_.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
       im.put( KeyStroke.getKeyStroke( KeyEvent.VK_ENTER, 0 ), "none" );

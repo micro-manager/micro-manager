@@ -34,7 +34,9 @@ import java.io.IOException;
 import java.util.Hashtable;
 import java.util.Vector;
 
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
@@ -54,9 +56,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 import mmcorej.MMCoreJ;
 
+import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.ReportingUtils;
-import javax.swing.JComboBox;
-import javax.swing.DefaultComboBoxModel;
 
 /**
  * Wizard page to add or remove devices.
@@ -240,7 +241,7 @@ private JComboBox byLibCombo_;
       installedScrollPane_.setBounds(10, 21, 431, 241);
       add(installedScrollPane_);
 
-      deviceTable_ = new JTable();
+      deviceTable_ = new DaytimeNighttime.Table();
       deviceTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       installedScrollPane_.setViewportView(deviceTable_);
       deviceTable_.getSelectionModel().addListSelectionListener(this);

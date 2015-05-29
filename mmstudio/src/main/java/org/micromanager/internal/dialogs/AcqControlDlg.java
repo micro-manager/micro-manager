@@ -50,6 +50,7 @@ import org.micromanager.internal.utils.ChannelSpec;
 import org.micromanager.internal.utils.ColorEditor;
 import org.micromanager.internal.utils.ColorRenderer;
 import org.micromanager.internal.utils.ContrastSettings;
+import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
@@ -178,7 +179,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       model_ = new ChannelTableModel(studio_, acqEng_);
       model_.addTableModelListener(model_);
 
-      channelTable_ = new JTable() {
+      channelTable_ = new DaytimeNighttime.Table() {
          @Override
          @SuppressWarnings("serial")
          protected JTableHeader createDefaultTableHeader() {          

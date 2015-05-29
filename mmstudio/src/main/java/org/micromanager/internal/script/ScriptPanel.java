@@ -87,6 +87,7 @@ import org.fife.ui.rtextarea.SearchResult;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.ScriptController;
 import org.micromanager.Studio;
+import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.internal.utils.FileDialogs;
@@ -540,7 +541,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       
       // ----- Pane with script buttons -------//
       
-      scriptTable_ = new JTable();
+      scriptTable_ = new DaytimeNighttime.Table();
       scriptTable_.setFont(new Font("", Font.PLAIN, 12));
       model_ = new ScriptTableModel();
       scriptTable_.setModel(model_);

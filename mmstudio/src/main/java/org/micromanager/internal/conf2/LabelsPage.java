@@ -39,6 +39,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
+import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -211,7 +212,7 @@ public class LabelsPage extends PagePanel {
       labelsScrollPane.setBounds(182, 30, 269, 482);
       add(labelsScrollPane);
 
-      labelTable_ = new JTable();
+      labelTable_ = new DaytimeNighttime.Table();
       labelTable_.setModel(new LabelTableModel());
       labelTable_.setAutoCreateColumnsFromModel(false);
       labelTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -225,7 +226,7 @@ public class LabelsPage extends PagePanel {
       devScrollPane.setBounds(10, 30, 162, 482);
       add(devScrollPane);
 
-      devTable_ = new JTable();
+      devTable_ = new DaytimeNighttime.Table();
       DevTableModel m = new DevTableModel();
       devTable_.setModel(m);
       devTable_.getSelectionModel().addListSelectionListener(new SelectionListener(devTable_));

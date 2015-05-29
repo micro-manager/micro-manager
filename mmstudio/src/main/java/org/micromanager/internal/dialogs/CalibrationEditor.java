@@ -63,6 +63,7 @@ import mmcorej.StrVector;
 import mmcorej.PropertySetting;
 
 import org.micromanager.Studio;
+import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.ShowFlags;
 import org.micromanager.internal.utils.MMDialog;
@@ -147,7 +148,7 @@ public class CalibrationEditor extends MMDialog {
       springLayout.putConstraint(SpringLayout.EAST, scrollPane_, -5, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, scrollPane_, 5, SpringLayout.WEST, getContentPane());
 
-      table_ = new JTable();
+      table_ = new DaytimeNighttime.Table();
       table_.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
       table_.setAutoCreateColumnsFromModel(false);
       scrollPane_.setViewportView(table_);
@@ -366,7 +367,7 @@ public class CalibrationEditor extends MMDialog {
 
    public void setCore(CMMCore core){
       data_ = new PropertyTableData(core, flags_);
-      table_ = new JTable();
+      table_ = new DaytimeNighttime.Table();
       table_.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
       table_.setAutoCreateColumnsFromModel(false);
       scrollPane_.setViewportView(table_);

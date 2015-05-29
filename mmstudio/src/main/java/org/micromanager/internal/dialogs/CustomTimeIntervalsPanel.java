@@ -40,6 +40,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.Studio;
+import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.TooltipTextMaker;
 
@@ -84,7 +85,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
     
     private void createTable() {
         intervalTableModel_ = new TimeIntervalTableModel();
-        timeIntervalTable_ = new JTable(intervalTableModel_);
+        timeIntervalTable_ = new DaytimeNighttime.Table(intervalTableModel_);
         timeIntervalTable_.setDefaultRenderer(Object.class, new IntervalTableCellRenderer());
         scrollPane_ = new JScrollPane(timeIntervalTable_);
     }

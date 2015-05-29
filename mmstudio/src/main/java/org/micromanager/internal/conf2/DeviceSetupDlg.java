@@ -29,6 +29,7 @@ import mmcorej.DeviceType;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 
+import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.PropertyNameCellRenderer;
@@ -121,7 +122,7 @@ public class DeviceSetupDlg extends MMDialog {
       scrollPaneProp.setBounds(10, 64, 442, 164);
       contentPanel.add(scrollPaneProp);
       
-      propTable = new JTable();
+      propTable = new DaytimeNighttime.Table();
       propTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       propTable.setAutoCreateColumnsFromModel(false);
       scrollPaneProp.setViewportView(propTable);
@@ -157,7 +158,7 @@ public class DeviceSetupDlg extends MMDialog {
       scrollPaneCOM.setBounds(10, 281, 442, 169);
       contentPanel.add(scrollPaneCOM);
       
-      comTable = new JTable();
+      comTable = new DaytimeNighttime.Table();
       scrollPaneCOM.setViewportView(comTable);
       comTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       comTable.setAutoCreateColumnsFromModel(false);

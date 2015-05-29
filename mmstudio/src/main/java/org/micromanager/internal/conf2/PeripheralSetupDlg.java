@@ -21,6 +21,7 @@ import javax.swing.table.AbstractTableModel;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 
+import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.MMDialog;
 
 public class PeripheralSetupDlg extends MMDialog {
@@ -169,7 +170,7 @@ public class PeripheralSetupDlg extends MMDialog {
       scrollPane_.setBounds(10, 36, 453, 236);
       contentPanel.add(scrollPane_);
 
-      deviceTable_ = new JTable();
+      deviceTable_ = new DaytimeNighttime.Table();
       deviceTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       scrollPane_.setViewportView(deviceTable_);
       

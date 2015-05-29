@@ -33,6 +33,7 @@ import mmcorej.Configuration;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.Calibration;
 import org.micromanager.internal.utils.CalibrationList;
+import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -156,7 +157,7 @@ public class CalibrationListDlg extends MMDialog {
       calibrationList_.getCalibrationsFromCore();
 
       // Create table with tooltip to show what is in the pixel size configurtaion
-      calTable_ = new JTable() {
+      calTable_ = new DaytimeNighttime.Table() {
          private static final long serialVersionUID = -5870707914970187465L;
 
          @Override

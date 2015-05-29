@@ -44,6 +44,7 @@ import mmcorej.StrVector;
 
 import org.micromanager.Studio;
 import org.micromanager.internal.dialogs.PresetEditor;
+import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.DefaultUserProfile;
 
 
@@ -51,7 +52,7 @@ import org.micromanager.internal.utils.DefaultUserProfile;
  * Preset panel.
  * Displays a list of groups and lets the user select a preset.
  */
-public class ConfigGroupPad extends JScrollPane{
+public class ConfigGroupPad extends JScrollPane {
 
    private static final long serialVersionUID = 1L;
    private JTable table_;
@@ -71,7 +72,7 @@ public class ConfigGroupPad extends JScrollPane{
    }
 
    public void setCore(CMMCore core){
-      table_ = new JTable();
+      table_ = new DaytimeNighttime.Table();
       table_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       table_.setAutoCreateColumnsFromModel(false);
       table_.setRowSelectionAllowed(true);

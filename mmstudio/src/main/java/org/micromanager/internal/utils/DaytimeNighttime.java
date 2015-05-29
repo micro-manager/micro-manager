@@ -23,13 +23,16 @@
 package org.micromanager.internal.utils;
 
 import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.Window;
 import java.util.HashMap;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JTable;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.SwingUtilities;
+import javax.swing.table.TableModel;
 import javax.swing.UIManager;
 
 import org.micromanager.CompatibilityInterface;
@@ -73,7 +76,7 @@ public class DaytimeNighttime {
          "InternalFrame", "Label", "List",
          "OptionPane", "Panel", "ProgressBar",
          "RadioButton", "ScrollPane", "Slider", "Spinner",
-         "SplitPane", "TabbedPane", "Table", "TextArea", "TextField",
+         "SplitPane", "TabbedPane", "TextArea", "TextField",
          "TollBar", "Tree", "Viewport"
    };
 
@@ -184,5 +187,38 @@ public class DaytimeNighttime {
    public static String getBackgroundMode() {
       return DefaultUserProfile.getInstance().getString(DaytimeNighttime.class,
             BACKGROUND_MODE, CompatibilityInterface.DAY);
+   }
+
+   /**
+    * Because tables don't obey look and feel color commands, we have this
+    * custom table that picks up its background based on the current mode.
+    */
+   public static class Table extends JTable {
+      public Table() {
+         super();
+         validateBackground();
+      }
+
+      public Table(TableModel model) {
+         super(model);
+         validateBackground();
+      }
+
+      private void validateBackground() {
+         Color background = getBackground();
+         Color targetBackground = UIManager.getColor("Table.background");
+         if (!background.equals(targetBackground)) {
+            setBackground(targetBackground);
+         }
+      }
+
+      /**
+       * Before painting, ensure our color is correct.
+       */
+      @Override
+      public void paint(Graphics g) {
+         validateBackground();
+         super.paint(g);
+      }
    }
 }

@@ -66,6 +66,7 @@ import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.events.internal.DefaultEventManager;
+import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
@@ -171,7 +172,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       add(axisPane, "growx, wrap");
 
       final TableCellRenderer firstRowRenderer = new FirstRowRenderer(arialSmallFont_);
-      posTable_ = new JTable() {
+      posTable_ = new DaytimeNighttime.Table() {
          private static final long serialVersionUID = -3873504142761785021L;
 
          @Override
@@ -198,7 +199,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       posTable_.getColumnModel().getColumn(0).setPreferredWidth(posCol0Width);
       posTable_.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
       
-      axisTable_ = new JTable();
+      axisTable_ = new DaytimeNighttime.Table();
       axisTable_.setFont(arialSmallFont_);
       axisList_ = new AxisList(core_);
       axisModel_ = new AxisTableModel(axisList_, axisTable_, bus_);

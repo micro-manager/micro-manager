@@ -51,6 +51,7 @@ import mmcorej.StrVector;
 
 import org.micromanager.Studio;
 import org.micromanager.MMListenerAdapter;
+import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.PropertyValueCellEditor;
@@ -152,7 +153,7 @@ public class PropertyEditor extends MMFrame {
       springLayout.putConstraint(SpringLayout.EAST, scrollPane_, -5, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, scrollPane_, 5, SpringLayout.WEST, getContentPane());
       
-      table_ = new JTable();
+      table_ = new DaytimeNighttime.Table();
       table_.setAutoCreateColumnsFromModel(false);
       
       final JButton refreshButton = new JButton();
@@ -295,7 +296,7 @@ public class PropertyEditor extends MMFrame {
         data_.showUnused_ = true;
         data_.setColumnNames("Property", "Value", "");
 
-        table_ = new JTable();
+        table_ = new DaytimeNighttime.Table();
         table_.setAutoCreateColumnsFromModel(false);
         table_.setModel(data_);
         scrollPane_.setViewportView(table_);

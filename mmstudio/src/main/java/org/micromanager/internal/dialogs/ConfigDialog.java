@@ -23,6 +23,7 @@
 
 package org.micromanager.internal.dialogs;
 
+import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.ShowFlags;
 import org.micromanager.internal.utils.PropertyUsageCellRenderer;
 import org.micromanager.internal.utils.PropertyValueCellEditor;
@@ -271,7 +272,7 @@ public class ConfigDialog extends MMDialog {
         springLayout_.putConstraint(SpringLayout.EAST, scrollPane_, -5, SpringLayout.EAST, getContentPane());
         springLayout_.putConstraint(SpringLayout.WEST, scrollPane_, 5, SpringLayout.WEST, getContentPane());
 
-        table_ = new JTable();
+        table_ = new DaytimeNighttime.Table();
         table_.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         table_.setAutoCreateColumnsFromModel(false);
         scrollPane_.setViewportView(table_);

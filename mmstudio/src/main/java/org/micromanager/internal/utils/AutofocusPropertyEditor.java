@@ -55,6 +55,8 @@ import javax.swing.table.TableColumn;
 import java.text.ParseException;
 import javax.swing.ImageIcon;
 
+import org.micromanager.internal.utils.DaytimeNighttime;
+
 /**
  * JFrame based component for generic manipulation of device properties.
  * Represents the entire system state as a list of triplets:
@@ -80,7 +82,7 @@ public class AutofocusPropertyEditor extends MMDialog {
       afMgr_ = afmgr;
       setModal(false);
       data_ = new PropertyTableData();
-      table_ = new JTable();
+      table_ = new DaytimeNighttime.Table();
       table_.setAutoCreateColumnsFromModel(false);
       table_.setModel(data_);
      
@@ -127,7 +129,7 @@ public class AutofocusPropertyEditor extends MMDialog {
       
       scrollPane_.setViewportView(table_);
       
-      table_ = new JTable();
+      table_ = new DaytimeNighttime.Table();
       table_.setAutoCreateColumnsFromModel(false);
       
       final JButton refreshButton = new JButton();
