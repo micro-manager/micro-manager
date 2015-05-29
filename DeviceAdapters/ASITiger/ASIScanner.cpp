@@ -627,7 +627,6 @@ int CScanner::SetPosition(double x, double y)
       // except don't do anything if we are setting position to blanking position
       // this way we can update just one of the two cached positions by passing
       // the other axis as the corresponding blanking position
-      hub_->QueryCommand(command.str());
       if (double_cmp(x, shutterX_) != 0
             && double_cmp(x, upperLimitX_) < 0
             && double_cmp(x, lowerLimitX_) > 0) {
