@@ -404,7 +404,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    
    /**
     * Display a spot using the projection device, and return its current
-    * location on the camera.
+    * location on the camera.  Does not do sub-pixel localization.
    */
    private Point measureSpotOnCamera(Point2D.Double projectionPoint) {
       if (stopRequested_.get()) {
@@ -429,7 +429,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          core_.snapImage();
          // NS: just make sure to wait until the spot is no longer displayed
          Thread.sleep(500);
-         // JonD: this line seem completely irrelevant, commenting out
+         // JonD: this line seems completely irrelevant, commenting out
          // dev_.setExposure(originalExposure);
          TaggedImage taggedImage2 = core_.getTaggedImage();
          ImageProcessor proc2 = ImageUtils.makeMonochromeProcessor(taggedImage2);
@@ -458,9 +458,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    }
 
    /**
-    * Illuminates and images five control points, and returns
-    * an affine transform mapping from image coordinates to
-    * phototargeter coordinates.
+    * Illuminates and images five control points near the center,
+    * and return an affine transform mapping from image coordinates
+    * to phototargeter coordinates.
     */
    private AffineTransform generateLinearMapping() {
       double centerX = dev_.getXRange() / 2 + dev_.getXMinimum();
@@ -494,40 +494,46 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * Cells with suspect measured corner positions are discarded.
     * A mapping of cell polygon to AffineTransform is generated. 
     */
-   private Map<Polygon, AffineTransform> generateNonlinearMapping(AffineTransform firstApprox) {
-      if (firstApprox == null) {
-         return null;
-      }
-      // TODO subtracting 1 from range makes it depend on devices' unit scale factor, smells fishy!!
-      int devWidth = (int) dev_.getXRange() - 1;
-      int devHeight = (int) dev_.getYRange() - 1;
+   private Map<Polygon, AffineTransform> generateNonlinearMapping() {
       
-      // estimate the camera corner positions in SLM/galvo device
-      Point2D.Double camCorner1 = (Point2D.Double) firstApprox.transform(new Point2D.Double(0, 0), null);
-      Point2D.Double camCorner2 = (Point2D.Double) firstApprox.transform(new Point2D.Double((int) core_.getImageWidth(), (int) core_.getImageHeight()), null);
-      
-      int camLeft = Math.min((int) camCorner1.x, (int) camCorner2.x);
-      int camRight = Math.max((int) camCorner1.x, (int) camCorner2.x);
-      int camTop = Math.min((int) camCorner1.y, (int) camCorner2.y);
-      int camBottom = Math.max((int) camCorner1.y, (int) camCorner2.y);
-      
-      
-      int left = Math.max(camLeft, 0);
-      int right = Math.min(camRight, devWidth);
-      int top = Math.max(camTop, 0);
-      int bottom = Math.min(camBottom, devHeight);
-      int width = right - left;
-      int height = bottom - top;
+      // get the affine transform near the center spot
+      // then use it to estimate what SLM coordinates correspond to 
+      // the image's corner positions 
+      final AffineTransform firstApproxAffine = generateLinearMapping();
+      final Point2D.Double camCorner1 = (Point2D.Double) firstApproxAffine.transform(new Point2D.Double(0, 0), null);
+      final Point2D.Double camCorner2 = (Point2D.Double) firstApproxAffine.transform(new Point2D.Double((int) core_.getImageWidth(), (int) core_.getImageHeight()), null);
 
+      // these are camera's bounds in SLM coordinates
+      final double camLeft = Math.min((int) camCorner1.x, (int) camCorner2.x);
+      final double camRight = Math.max((int) camCorner1.x, (int) camCorner2.x);
+      final double camTop = Math.min((int) camCorner1.y, (int) camCorner2.y);
+      final double camBottom = Math.max((int) camCorner1.y, (int) camCorner2.y);
+      
+      // these are the SLM's bounds
+      final double slmLeft = dev_.getXMinimum();
+      final double slmRight = dev_.getXRange() + dev_.getXMinimum();
+      final double slmTop = dev_.getYMinimum();
+      final double slmBottom = dev_.getYRange() + dev_.getYMinimum();
+      
+      // figure out the boundary where both the camera and SLM
+      // can "see"; these are still in SLM coordinates 
+      final double left = Math.max(camLeft, slmLeft);
+      final double right = Math.min(camRight, slmRight);
+      final double top = Math.max(camTop, slmTop);
+      final double bottom = Math.min(camBottom, slmBottom);
+      final double width = right - left;
+      final double height = bottom - top;
+
+      // compute a grid of points inside the boundary we just computed
       final int nGrid = 7;
-      Point2D.Double dmdPoint[][] = new Point2D.Double[1 + nGrid][1 + nGrid];
+      Point2D.Double slmPoint[][] = new Point2D.Double[1 + nGrid][1 + nGrid];
       Point2D.Double camPoint[][] = new Point2D.Double[1 + nGrid][1 + nGrid];
       for (int i = 0; i <= nGrid; ++i) {
          for (int j = 0; j <= nGrid; ++j) {
             int xoffset = (int) ((i + 0.5) * width / (nGrid + 1.0));
             int yoffset = (int) ((j + 0.5) * height / (nGrid + 1.0));
-            dmdPoint[i][j] = new Point2D.Double(left + xoffset, top + yoffset);
-            Point spot = measureSpotOnCamera(dmdPoint[i][j]);
+            slmPoint[i][j] = new Point2D.Double(left + xoffset, top + yoffset);
+            Point spot = measureSpotOnCamera(slmPoint[i][j]);
             if (spot != null) {
                camPoint[i][j] = toDoublePoint(spot);
             }
@@ -550,10 +556,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
 
             Map<Point2D.Double, Point2D.Double> map
                   = new HashMap<Point2D.Double, Point2D.Double>();
-            map.put(camPoint[i][j], dmdPoint[i][j]);
-            map.put(camPoint[i][j + 1], dmdPoint[i][j + 1]);
-            map.put(camPoint[i + 1][j], dmdPoint[i + 1][j]);
-            map.put(camPoint[i + 1][j + 1], dmdPoint[i + 1][j + 1]);
+            map.put(camPoint[i][j], slmPoint[i][j]);
+            map.put(camPoint[i][j + 1], slmPoint[i][j + 1]);
+            map.put(camPoint[i + 1][j], slmPoint[i + 1][j]);
+            map.put(camPoint[i + 1][j + 1], slmPoint[i + 1][j + 1]);
             double srcDX = Math.abs((camPoint[i+1][j].x - camPoint[i][j].x))/4; 
             double srcDY = Math.abs((camPoint[i][j+1].y - camPoint[i][j].y))/4;
             double srcTol = Math.max(srcDX, srcDY);
@@ -588,9 +594,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   Roi originalROI = IJ.getImage().getRoi();
                   app_.snapSingleImage();
 
-                  AffineTransform firstApproxAffine = generateLinearMapping();
-
-                  HashMap<Polygon, AffineTransform> mapping = (HashMap<Polygon, AffineTransform>) generateNonlinearMapping(firstApproxAffine);
+                  HashMap<Polygon, AffineTransform> mapping = (HashMap<Polygon, AffineTransform>) generateNonlinearMapping();
                   dev_.turnOff();
                   try {
                      Thread.sleep(500);
