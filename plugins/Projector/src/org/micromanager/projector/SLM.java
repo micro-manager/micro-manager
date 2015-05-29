@@ -66,14 +66,24 @@ public class SLM implements ProjectionDevice {
 
    // Returns the SLM's width in pixels.
    @Override
-   public double getWidth() {
+   public double getXRange() {
       return this.slmWidth_;
    }
 
    // Returns the SLM's height in pixels.
    @Override
-   public double getHeight() {
+   public double getYRange() {
       return this.slmHeight_;
+   }
+   
+   @Override
+   public double getXMinimum() {
+      return 0;
+   }
+   
+   @Override
+   public double getYMinimum() {
+      return 0;
    }
 
    // TODO: Looks like a stub. Do we need to implement this method?

@@ -23,8 +23,10 @@ public interface ProjectionDevice {
    // Properties of device.
    public String getName();
    public String getChannel();
-    public double getHeight();
-   public double getWidth();
+   public double getXRange();
+   public double getYRange();
+   public double getXMinimum();
+   public double getYMinimum();
  
    // ## Alert when something has changed.
    public void addOnStateListener(OnStateListener listener);

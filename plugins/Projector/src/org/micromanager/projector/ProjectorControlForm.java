@@ -332,7 +332,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * Illuminate a spot at position x,y.
     */
    private void displaySpot(double x, double y) {
-      if (x >= 0 && x < dev_.getWidth() && y >= 0 && y < dev_.getHeight()) {
+      if (x >= dev_.getXMinimum() && x < (dev_.getXRange() + dev_.getXMinimum())
+            && y >= dev_.getYMinimum() && y < (dev_.getYRange() + dev_.getYMinimum())) {
          dev_.displaySpot(x, y);
       }
    }
@@ -342,8 +343,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * the exposure time.
     */
    void displayCenterSpot() {
-      double x = dev_.getWidth() / 2;
-      double y = dev_.getHeight() / 2;
+      double x = dev_.getXRange() / 2 + dev_.getXMinimum();
+      double y = dev_.getYRange() / 2 + dev_.getYMinimum();
       dev_.displaySpot(x, y);
    }
    
@@ -405,7 +406,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * Display a spot using the projection device, and return its current
     * location on the camera.
    */
-   private Point measureSpot(Point projectionPoint) {
+   private Point measureSpotOnCamera(Point2D.Double projectionPoint) {
       if (stopRequested_.get()) {
          return null;
       }
@@ -415,25 +416,26 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          core_.snapImage();
          TaggedImage image = core_.getTaggedImage();
          ImageProcessor proc1 = ImageUtils.makeMonochromeProcessor(image);
-         long originalExposure = dev_.getExposure();
-         dev_.setExposure(500000);
+         // JonD: following two lines seem completely irrelevant, commenting out
+         // long originalExposure = dev_.getExposure();
+         // dev_.setExposure(500000);
          displaySpot(projectionPoint.x, projectionPoint.y);
-         // NS: Timimg between displaySPot and snapImage is critical
+         // NS: Timing between displaySpot and snapImage is critical
          // we have no idea how fast the device will respond
-         // if we add "dev_.waitForDevie(), then the RAPP UGA-40 will already have ended
+         // if we add "dev_.waitForDevice(), then the RAPP UGA-40 will already have ended
          // its exposure before returning control
          // For now, wait for a user specified delay
          Thread.sleep(Integer.parseInt(delayField_.getText()));
          core_.snapImage();
          // NS: just make sure to wait until the spot is no longer displayed
          Thread.sleep(500);
-         dev_.setExposure(originalExposure);
+         // JonD: this line seem completely irrelevant, commenting out
+         // dev_.setExposure(originalExposure);
          TaggedImage taggedImage2 = core_.getTaggedImage();
          ImageProcessor proc2 = ImageUtils.makeMonochromeProcessor(taggedImage2);
          app_.displayImage(taggedImage2);
          ImageProcessor diffImage = ImageUtils.subtractImageProcessors(proc2.convertToFloatProcessor(), proc1.convertToFloatProcessor());
-         Point peak = findPeak(diffImage);
-         Point maxPt = peak;
+         Point maxPt = findPeak(diffImage);
          IJ.getImage().setRoi(new PointRoi(maxPt.x, maxPt.y));
          // NS: what is this second sleep good for????
          core_.sleep(500);
@@ -448,23 +450,11 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * Illuminate a spot at ptSLM, measure its location on the camera, and
     * add the resulting point pair to the spotMap.
     */
-   private void mapSpot(Map<Point2D.Double, Point2D.Double> spotMap,
-         Point ptSLM) {
-      Point2D.Double ptSLMDouble = new Point2D.Double(ptSLM.x, ptSLM.y);
-      Point ptCam = measureSpot(ptSLM);
-      Point2D.Double ptCamDouble = new Point2D.Double(ptCam.x, ptCam.y);
-      spotMap.put(ptCamDouble, ptSLMDouble);
-   }
-
-   /**
-    * Illuminate a spot at ptSLM, measure its location on the camera, and
-    * add the resulting point pair to the spotMap.
-    */
-   private void mapSpot(Map<Point2D.Double, Point2D.Double> spotMap,
+   private void measureAndAddToSpotMap(Map<Point2D.Double, Point2D.Double> spotMap,
          Point2D.Double ptSLM) {
-      if (!stopRequested_.get()) {
-         mapSpot(spotMap, new Point((int) ptSLM.x, (int) ptSLM.y));
-      }
+      Point ptCam = measureSpotOnCamera(ptSLM);
+      Point2D.Double ptCamDouble = new Point2D.Double(ptCam.x, ptCam.y);
+      spotMap.put(ptCamDouble, ptSLM);
    }
 
    /**
@@ -473,23 +463,22 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * phototargeter coordinates.
     */
    private AffineTransform generateLinearMapping() {
-      double x = dev_.getWidth() / 2;
-      double y = dev_.getHeight() / 2;
-
-      double s = dev_.getWidth() / 10;
+      double centerX = dev_.getXRange() / 2 + dev_.getXMinimum();
+      double centerY = dev_.getYRange() / 2 + dev_.getYMinimum();
+      double spacing = Math.min(dev_.getXRange(), dev_.getYRange()) / 10;
       Map<Point2D.Double, Point2D.Double> spotMap
             = new HashMap<Point2D.Double, Point2D.Double>();
 
-      mapSpot(spotMap, new Point2D.Double(x, y));
-      mapSpot(spotMap, new Point2D.Double(x, y + s));
-      mapSpot(spotMap, new Point2D.Double(x + s, y));
-      mapSpot(spotMap, new Point2D.Double(x, y - s));
-      mapSpot(spotMap, new Point2D.Double(x - s, y));
+      measureAndAddToSpotMap(spotMap, new Point2D.Double(centerX, centerY));
+      measureAndAddToSpotMap(spotMap, new Point2D.Double(centerX, centerY + spacing));
+      measureAndAddToSpotMap(spotMap, new Point2D.Double(centerX + spacing, centerY));
+      measureAndAddToSpotMap(spotMap, new Point2D.Double(centerX, centerY - spacing));
+      measureAndAddToSpotMap(spotMap, new Point2D.Double(centerX - spacing, centerY));
       if (stopRequested_.get()) {
          return null;
       }
       try {
-         return MathFunctions.generateAffineTransformFromPointPairs(spotMap, s, Double.MAX_VALUE);
+         return MathFunctions.generateAffineTransformFromPointPairs(spotMap, spacing, Double.MAX_VALUE);
       } catch (Exception e) {
          throw new RuntimeException("Spots aren't detected as expected. Is DMD in focus and roughly centered in camera's field of view?");
       }
@@ -509,14 +498,20 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       if (firstApprox == null) {
          return null;
       }
-      int devWidth = (int) dev_.getWidth() - 1;
-      int devHeight = (int) dev_.getHeight() - 1;
+      // TODO subtracting 1 from range makes it depend on devices' unit scale factor, smells fishy!!
+      int devWidth = (int) dev_.getXRange() - 1;
+      int devHeight = (int) dev_.getYRange() - 1;
+      
+      // estimate the camera corner positions in SLM/galvo device
       Point2D.Double camCorner1 = (Point2D.Double) firstApprox.transform(new Point2D.Double(0, 0), null);
       Point2D.Double camCorner2 = (Point2D.Double) firstApprox.transform(new Point2D.Double((int) core_.getImageWidth(), (int) core_.getImageHeight()), null);
+      
       int camLeft = Math.min((int) camCorner1.x, (int) camCorner2.x);
       int camRight = Math.max((int) camCorner1.x, (int) camCorner2.x);
       int camTop = Math.min((int) camCorner1.y, (int) camCorner2.y);
       int camBottom = Math.max((int) camCorner1.y, (int) camCorner2.y);
+      
+      
       int left = Math.max(camLeft, 0);
       int right = Math.min(camRight, devWidth);
       int top = Math.max(camTop, 0);
@@ -524,17 +519,17 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       int width = right - left;
       int height = bottom - top;
 
-      int n = 7;
-      Point2D.Double dmdPoint[][] = new Point2D.Double[1 + n][1 + n];
-      Point2D.Double resultPoint[][] = new Point2D.Double[1 + n][1 + n];
-      for (int i = 0; i <= n; ++i) {
-         for (int j = 0; j <= n; ++j) {
-            int xoffset = (int) ((i + 0.5) * width / (n + 1.0));
-            int yoffset = (int) ((j + 0.5) * height / (n + 1.0));
+      final int nGrid = 7;
+      Point2D.Double dmdPoint[][] = new Point2D.Double[1 + nGrid][1 + nGrid];
+      Point2D.Double camPoint[][] = new Point2D.Double[1 + nGrid][1 + nGrid];
+      for (int i = 0; i <= nGrid; ++i) {
+         for (int j = 0; j <= nGrid; ++j) {
+            int xoffset = (int) ((i + 0.5) * width / (nGrid + 1.0));
+            int yoffset = (int) ((j + 0.5) * height / (nGrid + 1.0));
             dmdPoint[i][j] = new Point2D.Double(left + xoffset, top + yoffset);
-            Point spot = measureSpot(toIntPoint(dmdPoint[i][j]));
+            Point spot = measureSpotOnCamera(dmdPoint[i][j]);
             if (spot != null) {
-               resultPoint[i][j] = toDoublePoint(spot);
+               camPoint[i][j] = toDoublePoint(spot);
             }
          }
       }
@@ -545,22 +540,22 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
 
       Map<Polygon, AffineTransform> bigMap
             = new HashMap<Polygon, AffineTransform>();
-      for (int i = 0; i <= n - 1; ++i) {
-         for (int j = 0; j <= n - 1; ++j) {
+      for (int i = 0; i <= nGrid - 1; ++i) {
+         for (int j = 0; j <= nGrid - 1; ++j) {
             Polygon poly = new Polygon();
-            addVertex(poly, toIntPoint(resultPoint[i][j]));
-            addVertex(poly, toIntPoint(resultPoint[i][j + 1]));
-            addVertex(poly, toIntPoint(resultPoint[i + 1][j + 1]));
-            addVertex(poly, toIntPoint(resultPoint[i + 1][j]));
+            addVertex(poly, toIntPoint(camPoint[i][j]));
+            addVertex(poly, toIntPoint(camPoint[i][j + 1]));
+            addVertex(poly, toIntPoint(camPoint[i + 1][j + 1]));
+            addVertex(poly, toIntPoint(camPoint[i + 1][j]));
 
             Map<Point2D.Double, Point2D.Double> map
                   = new HashMap<Point2D.Double, Point2D.Double>();
-            map.put(resultPoint[i][j], dmdPoint[i][j]);
-            map.put(resultPoint[i][j + 1], dmdPoint[i][j + 1]);
-            map.put(resultPoint[i + 1][j], dmdPoint[i + 1][j]);
-            map.put(resultPoint[i + 1][j + 1], dmdPoint[i + 1][j + 1]);
-            double srcDX = Math.abs((resultPoint[i+1][j].x - resultPoint[i][j].x))/4; 
-            double srcDY = Math.abs((resultPoint[i][j+1].y - resultPoint[i][j].y))/4;
+            map.put(camPoint[i][j], dmdPoint[i][j]);
+            map.put(camPoint[i][j + 1], dmdPoint[i][j + 1]);
+            map.put(camPoint[i + 1][j], dmdPoint[i + 1][j]);
+            map.put(camPoint[i + 1][j + 1], dmdPoint[i + 1][j + 1]);
+            double srcDX = Math.abs((camPoint[i+1][j].x - camPoint[i][j].x))/4; 
+            double srcDY = Math.abs((camPoint[i][j+1].y - camPoint[i][j].y))/4;
             double srcTol = Math.max(srcDX, srcDY);
 
             try {
