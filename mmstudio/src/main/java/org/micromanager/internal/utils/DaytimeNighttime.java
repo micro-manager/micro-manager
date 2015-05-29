@@ -69,7 +69,7 @@ public class DaytimeNighttime {
    // Improve text legibility against dark backgrounds. These will have
    // ".foreground" appended to them later.
    private static final String[] ENABLED_TEXT_COLOR_KEYS = new String[] {
-         "CheckBox", "ColorChooser",
+         "CheckBox", "ColorChooser", "FormattedTextField",
          "InternalFrame", "Label", "List",
          "OptionPane", "Panel", "ProgressBar",
          "RadioButton", "ScrollPane", "Slider", "Spinner",
