@@ -21,7 +21,8 @@
 //
 package org.micromanager.data.internal.multipagetiff;
 
-import java.awt.Color;
+// Note: java.awt.Color and ome.xml.model.primitives.Color used with
+// fully-qualified class names
 import java.nio.ByteOrder;
 import java.util.TreeMap;
 import loci.common.DateTools;
@@ -29,7 +30,13 @@ import loci.common.services.ServiceFactory;
 import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;
 import loci.formats.services.OMEXMLService;
-import ome.xml.model.primitives.*;
+import ome.units.UNITS;
+import ome.units.quantity.Length;
+import ome.units.quantity.Time;
+import ome.xml.model.primitives.NonNegativeInteger;
+import ome.xml.model.primitives.PositiveInteger;
+import ome.xml.model.primitives.Timestamp;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.data.Coords;
@@ -116,9 +123,9 @@ public class OMEMetadata {
          double pixelSize = repMetadata.getPixelSizeUm();
          if (pixelSize > 0) {
             metadata_.setPixelsPhysicalSizeX(
-                  new PositiveFloat(pixelSize), seriesIndex);
+                  new Length(pixelSize, UNITS.MICROM), seriesIndex);
             metadata_.setPixelsPhysicalSizeY(
-                  new PositiveFloat(pixelSize), seriesIndex);
+                  new Length(pixelSize, UNITS.MICROM), seriesIndex);
          }
       }
 
@@ -127,14 +134,14 @@ public class OMEMetadata {
          double zStep = summaryMD.getZStepUm();
          if (zStep != 0) {
             metadata_.setPixelsPhysicalSizeZ(
-                  new PositiveFloat(Math.abs(zStep)), seriesIndex);
+                  new Length(Math.abs(zStep), UNITS.MICROM), seriesIndex);
          }
       }
 
       if (summaryMD.getWaitInterval() != null) {
          double interval = summaryMD.getWaitInterval();
          if (interval > 0) { //don't write it for burst mode because it won't be true
-            metadata_.setPixelsTimeIncrement(interval / 1000.0, seriesIndex);
+            metadata_.setPixelsTimeIncrement(new Time(interval, UNITS.MS), seriesIndex);
          }
       }
 
@@ -158,11 +165,11 @@ public class OMEMetadata {
       // viewing data in Micro-Manager.
       DisplaySettings displaySettings = DefaultDisplaySettings.getStandardSettings();
       String[] names = mptStorage_.getSummaryMetadata().getChannelNames();
-      Color[] colors = displaySettings.getChannelColors();
+      java.awt.Color[] colors = displaySettings.getChannelColors();
       for (int channel = 0; channel < mptStorage_.getIntendedSize(Coords.CHANNEL);
             channel++) {
          if (colors != null && colors.length > channel) {
-            Color color = colors[channel];
+            java.awt.Color color = colors[channel];
             metadata_.setChannelColor(new ome.xml.model.primitives.Color(
                      color.getRed(), color.getGreen(), color.getBlue(), 1),
                   seriesIndex, channel);
@@ -309,29 +316,36 @@ public class OMEMetadata {
       try {
 
          if (MDUtils.hasExposureMs(tags)) {
-            metadata_.setPlaneExposureTime(MDUtils.getExposureMs(tags) / 1000.0,
+            metadata_.setPlaneExposureTime(
+                  new Time(MDUtils.getExposureMs(tags), UNITS.MS),
                   position, indices.planeIndex_);
          }
          if (MDUtils.hasXPositionUm(tags)) {
-            metadata_.setPlanePositionX(MDUtils.getXPositionUm(tags), 
-                  position, indices.planeIndex_);
+            final Length xPosition =
+                  new Length(MDUtils.getXPositionUm(tags), UNITS.MICROM);
+            metadata_.setPlanePositionX(xPosition, position,
+                  indices.planeIndex_);
             if (indices.planeIndex_ == 0) { //should be set at start, but dont have position coordinates then
-               metadata_.setStageLabelX(MDUtils.getXPositionUm(tags), position);
+               metadata_.setStageLabelX(xPosition, position);
             }
          }
          if (MDUtils.hasYPositionUm(tags)) {
-            metadata_.setPlanePositionY(MDUtils.getYPositionUm(tags), 
-                  position, indices.planeIndex_);
+            final Length yPosition =
+                  new Length(MDUtils.getYPositionUm(tags), UNITS.MICROM);
+            metadata_.setPlanePositionY(yPosition, position,
+                  indices.planeIndex_);
             if (indices.planeIndex_ == 0) {
-               metadata_.setStageLabelY(MDUtils.getYPositionUm(tags), position);
+               metadata_.setStageLabelY(yPosition, position);
             }
          }
          if (MDUtils.hasZPositionUm(tags)) {
-            metadata_.setPlanePositionZ(MDUtils.getZPositionUm(tags), 
+            metadata_.setPlanePositionZ(
+                  new Length(MDUtils.getZPositionUm(tags), UNITS.MICROM),
                   position, indices.planeIndex_);
          }
          if (MDUtils.hasElapsedTimeMs(tags)) {
-            metadata_.setPlaneDeltaT(MDUtils.getElapsedTimeMs(tags) / 1000.0, 
+            metadata_.setPlaneDeltaT(
+                  new Time(MDUtils.getElapsedTimeMs(tags), UNITS.MS),
                   position, indices.planeIndex_);
          }
 

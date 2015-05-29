@@ -6,9 +6,6 @@
 
 	<path id="plugin.classpath">
 		<pathelement location="${mm.java.lib.acq-engine}"/>
-		<pathelement location="${mm.java.lib.beanshell}"/>
-		<pathelement location="${mm.clojure.lib.core-cache}"/>
-		<pathelement location="${mm.clojure.lib.core-memoize}"/>
 		<pathelement location="${plugin.outdir}/PixelCalibrator.jar"/>
 	</path>
 

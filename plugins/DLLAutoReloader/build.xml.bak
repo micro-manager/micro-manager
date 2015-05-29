@@ -4,6 +4,5 @@
 	<import file="../clojurepluginbuild.xml"/>
 	<path id="plugin.classpath">
 		<pathelement location="${mm.java.lib.acq-engine}"/>
-		<pathelement location="${mm.java.lib.beanshell}"/>
 	</path>
 </project>

@@ -1,7 +1,8 @@
 <project xmlns:ivy="antlib:org.apache.ivy.ant" name="mm.fetchdeps" default="resolve">
 	<dirname property="mm.basedir" file="${ant.file.mm.fetchdeps}/.."/>
-	<property name="ivy.dep.file" location="${mm.basedir}/buildscripts/ivy-builddeps.xml"/>
-	<property name="ivy.lib.dir" location="${mm.basedir}/dependencies/builddeps"/>
+
+	<!-- Where to put retrieved dependency JARs -->
+	<property name="mm.ivy.lib.dir" location="${mm.basedir}/dependencies/artifacts"/>
 
 	<target name="download-ivy" unless="offline">
 		<property name="ivy.install.version" value="2.3.0"/>
@@ -33,6 +34,15 @@
 	</target>
 
 	<target name="resolve" depends="init-ivy">
-		<ivy:retrieve />
+		<property name="ivy.dep.file"
+			location="${mm.basedir}/buildscripts/ivy.xml"/>
+
+		<fail unless="mm.ivy.lib.dir"/>
+		<property name="ivy.lib.dir" location="${mm.ivy.lib.dir}"/>
+
+		<ivy:configure file="${mm.basedir}/buildscripts/ivysettings.xml"/>
+		<ivy:retrieve
+			pattern="${ivy.lib.dir}/[conf]/[artifact]-[revision].[ext]"
+			sync="true"/>
 	</target>
 </project>

@@ -4,10 +4,9 @@
 	<import file="../buildscripts/clojurebuild.xml"/>
 
 	<path id="project.classpath">
-		<pathelement location="${mm.java.lib.imagej}"/>
+		<path refid="mm.compile.classpath"/>
 		<pathelement location="${mm.java.lib.mmcorej}"/>
 		<pathelement location="${mm.java.lib.mmstudio}"/>
-		<pathelement location="${mm.java.lib.beanshell}"/>
 	</path>
 
 	<path id="project.linked.jars">

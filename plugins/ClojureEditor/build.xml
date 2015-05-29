@@ -1,9 +1,4 @@
 <project name="ClojureEditor" default="jar">
 	<property name="plugin.path" value="Developer_Tools"/>
 	<import file="../javapluginbuild.xml"/>
-
-	<path id="plugin.classpath">
-		<pathelement location="${mm.java.lib.clojure}"/>
-		<pathelement location="${mm.clojure.lib.clooj}"/>
-	</path>
 </project>

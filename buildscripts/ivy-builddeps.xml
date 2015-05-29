@@ -1,8 +1,0 @@
-<ivy-module version="2.0">
-	<info organisation="org.micromanager" module="micromanager"/>
-	<dependencies>
-		<dependency org="ant-contrib" name="ant-contrib" rev="1.0b3"/>
-		<dependency org="junit" name="junit" rev="4.11"/>
-		<dependency org="org.msgpack" name="msgpack" rev="0.6.11"/>
-	</dependencies>
-</ivy-module>

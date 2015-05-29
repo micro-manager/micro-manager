@@ -266,7 +266,7 @@ MM_INSTALL_DIRS
 # Allow user to override location of ij.jar (whether or not we are building as
 # ImageJ plugin). If we are building as ImageJ plugin, default to the ij.jar in
 # the target ImageJ directory. Otherwise do not set imagejjar, and use the copy
-# in CLASSEXT.
+# fetched by Ivy.
 AC_ARG_WITH([ij-jar],
    [AS_HELP_STRING([--with-ij-jar=FILE],
       [Use specified ImageJ ij.jar for building and running])],
@@ -303,45 +303,7 @@ fi
 AC_SUBST([imagejjar])
 
 
-# Java dependencies. These should be checked for and their location should be
-# configurable (CLASSPATH for each library). For now, hard-coded to
-# 3rdpartypublic.
-if test "x$build_java_app" = xyes; then
-   # TODO This path should be configurable. And we should have an automated way
-   # to fetch dependencies, but that is a future project.
-   CLASSEXT="\$(top_srcdir)/../3rdpartypublic/classext"
-
-   # For now, just use hard-coded locations for dependency JARs. Ideally, we
-   # would just use a user-provided classpath and check for classes, not JARs.
-   # (In addition to that, there should be a way to fetch dependencies using
-   # Ivy.)
-
-   # Note: imagejjar is the location of an installed ij.jar (part of the
-   # system). IJJARPATH is the ij.jar to use for the build, which may not be
-   # installed.
-   if test -n "$imagejjar"; then
-      IJJARPATH="$imagejjar"
-   else
-      IJJARPATH="$CLASSEXT/ij.jar"
-   fi
-   BSHJARPATH="$CLASSEXT/bsh-2.0b4.jar"
-   SWINGXJARPATH="$CLASSEXT/swingx-0.9.5.jar"
-   COMMONSMATHJARPATH="$CLASSEXT/commons-math-2.0.jar"
-   ABSOLUTEJARPATH="$CLASSEXT/AbsoluteLayout.jar"
-   JFREECHARTJARPATH="$CLASSEXT/jfreechart-1.0.13.jar:$CLASSEXT/jcommon-1.0.16.jar"
-   # TODO This list is incomplete, and various Makefile.am's are using CLASSEXT
-   # with the JAR name.
-fi
-
-AC_SUBST(CLASSEXT)
-AC_SUBST(BSHJARPATH)
-AC_SUBST(SWINGXJARPATH)
-AC_SUBST(COMMONSMATHJARPATH)
-AC_SUBST(ABSOLUTEJARPATH)
-AC_SUBST(JFREECHARTJARPATH)
-AC_SUBST(IJJARPATH)
-
-
+# Java dependencies.
 AC_ARG_ENABLE([install-dependency-jars],
    [AS_HELP_STRING([--disable-install-dependency-jars],
       [Do not install third-party library JARs])],

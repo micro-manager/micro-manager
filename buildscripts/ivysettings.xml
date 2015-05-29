@@ -1,0 +1,18 @@
+<ivysettings>
+	<settings defaultResolver="resolver-chain"/>
+
+	<resolvers>
+		<ibiblio name="central" m2compatible="true"/>
+		<ibiblio name="imagej-net" m2compatible="true" root="http://maven.imagej.net/content/groups/public"/>
+
+		<filesystem name="thirdpartypublic">
+			<artifact pattern="${ivy.settings.dir}/../../3rdpartypublic/classext/[artifact].[ext]"/>
+		</filesystem>
+
+		<chain name="resolver-chain">
+			<resolver ref="central"/>
+			<resolver ref="imagej-net"/>
+			<resolver ref="thirdpartypublic"/>
+		</chain>
+	</resolvers>
+</ivysettings>
