@@ -56,6 +56,7 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
    private static final int SPACE_FOR_PARTIAL_OME_MD = 2000; //this should be more than enough
    
    private JSONObject summaryMetadata_;
+   private String summaryMetadataString_ = null;
    private JSONObject displayAndComments_;
    private boolean newDataSet_;
    private int lastFrameOpenedDataSet_ = -1;
@@ -447,29 +448,27 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
    
    private void setSummaryMetadata(JSONObject md, boolean showProgress) {
       summaryMetadata_ = md;
+      summaryMetadataString_ = null;
       if (summaryMetadata_ != null) {
-         // try {
-            boolean slicesFirst = summaryMetadata_.optBoolean("SlicesFirst", true);
-            boolean timeFirst = summaryMetadata_.optBoolean("TimeFirst", false);
-            TreeMap<String, MultipageTiffReader> oldImageMap = tiffReadersByLabel_;
-            tiffReadersByLabel_ = new TreeMap<String, MultipageTiffReader>(new ImageLabelComparator(slicesFirst, timeFirst));
-            if (showProgress) {
-               ProgressBar progressBar = new ProgressBar("Building image location map", 0, oldImageMap.keySet().size());
-               progressBar.setProgress(0);
-               progressBar.setVisible(true);
-               int i = 1;
-               for (String label : oldImageMap.keySet()) {
-                  tiffReadersByLabel_.put(label, oldImageMap.get(label));
-                  progressBar.setProgress(i);
-                  i++;
-               }
-               progressBar.setVisible(false);
-            } else {
-               tiffReadersByLabel_.putAll(oldImageMap);
+         summaryMetadataString_ = md.toString();
+         boolean slicesFirst = summaryMetadata_.optBoolean("SlicesFirst", true);
+         boolean timeFirst = summaryMetadata_.optBoolean("TimeFirst", false);
+         TreeMap<String, MultipageTiffReader> oldImageMap = tiffReadersByLabel_;
+         tiffReadersByLabel_ = new TreeMap<String, MultipageTiffReader>(new ImageLabelComparator(slicesFirst, timeFirst));
+         if (showProgress) {
+            ProgressBar progressBar = new ProgressBar("Building image location map", 0, oldImageMap.keySet().size());
+            progressBar.setProgress(0);
+            progressBar.setVisible(true);
+            int i = 1;
+            for (String label : oldImageMap.keySet()) {
+               tiffReadersByLabel_.put(label, oldImageMap.get(label));
+               progressBar.setProgress(i);
+               i++;
             }
-        //  } catch (JSONException ex) {
-        //    ReportingUtils.logError(ex, "Couldn't find SlicesFirst or TimeFirst in summary metadata");
-        //  }
+            progressBar.setVisible(false);
+         } else {
+            tiffReadersByLabel_.putAll(oldImageMap);
+         }
          if (summaryMetadata_ != null && summaryMetadata_.length() > 0) {
             processSummaryMD();
          }
@@ -480,7 +479,11 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
    public JSONObject getSummaryMetadata() {
       return summaryMetadata_;
    }
-   
+
+   public String getSummaryMetadataString() {
+      return summaryMetadataString_;
+   }
+
    @Override
    public JSONObject getDisplayAndComments() {
       return displayAndComments_;
