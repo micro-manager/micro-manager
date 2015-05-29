@@ -190,6 +190,20 @@ public class DaytimeNighttime {
    }
 
    /**
+    * Return the current background color.
+    */
+   public static Color getBackgroundColor() {
+      return background_.get(getBackgroundMode());
+   }
+
+   /**
+    * Return the current color for enabled text.
+    */
+   public static Color getEnabledTextColor() {
+      return enabledTextColor_.get(getBackgroundMode());
+   }
+
+   /**
     * Because tables don't obey look and feel color commands, we have this
     * custom table that picks up its background based on the current mode.
     */

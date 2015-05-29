@@ -45,8 +45,11 @@ public class StateGroupCellRenderer extends PropertyValueCellRenderer {
         
         if (isSelected) {
             comp.setBackground(Color.LIGHT_GRAY);
+            comp.setForeground(Color.BLACK);
         } else {
-            comp.setBackground(Color.WHITE);
+            // HACK: manually set the colors.
+            comp.setBackground(DaytimeNighttime.getBackgroundColor());
+            comp.setForeground(DaytimeNighttime.getEnabledTextColor());
         }
 
         return comp;
