@@ -1143,6 +1143,11 @@ int CPCOCam::Initialize()
     m_nRoiYMin = m_pCamera->strCam.strSensor.wRoiY0;
     m_nRoiXMax = m_pCamera->strCam.strSensor.wRoiX1;
     m_nRoiYMax = m_pCamera->strCam.strSensor.wRoiY1;
+    if(m_nTrig == 1)                   // Switch trigger mode to auto in case of internal SW trigger
+    {
+      m_nTrig = 0;
+      m_pCamera->strCam.strTiming.wTriggerMode = 0;
+    }
   }
   if(m_pCamera->iCamClass == 2)
   {
