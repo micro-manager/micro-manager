@@ -175,32 +175,6 @@ public class GUIUtils {
    }
 
    /**
-    * Return the maximum size of a window that contains the specified XY
-    * screen location.
-    * @param x
-    * @param y
-    * @return 
-    */
-   public static Rectangle getMaxWindowSizeForPoint(int x, int y) {
-      // First we try to accomplish this with the given coordinates. Then,
-      // if that fails, we try replacing negative coordinates with zero --
-      // this can happen if the coordinates are to the left of the primary
-      // display and there is no secondary display there.
-      GraphicsConfiguration config = getGraphicsConfigurationContaining(x, y);
-      if (config == null) {
-         x = Math.max(x, 0);
-         y = Math.max(y, 0);
-         // This should always succeed as the primary display contains (0, 0).
-         config = getGraphicsConfigurationContaining(x, y);
-      }
-      if (config == null) {
-         ReportingUtils.logError("Couldn't find a display containing the point (" + x + ", " + y + ")");
-         return null;
-      }
-      return getFullScreenBounds(config);
-   }
-
-   /**
     * Get the usable screen area (minus taskbars, etc.) for the specified
     * monitor.
     * Adapted from http://stackoverflow.com/questions/10123735/get-effective-screen-size-from-java
