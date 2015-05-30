@@ -404,7 +404,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    
    /**
     * Display a spot using the projection device, and return its current
-    * location on the camera.  Does not do sub-pixel localization.
+    * location on the camera.  Does not do sub-pixel localization, but could
+    * (just would change its return type, most other code would be OK with this)
    */
    private Point measureSpotOnCamera(Point2D.Double projectionPoint) {
       if (stopRequested_.get()) {
@@ -412,11 +413,14 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
       try {
          dev_.turnOff();
+         // JonD: wait to make sure the device gets turned off
          Thread.sleep(300);
          core_.snapImage();
          TaggedImage image = core_.getTaggedImage();
          ImageProcessor proc1 = ImageUtils.makeMonochromeProcessor(image);
-         // JonD: following two lines seem completely irrelevant, commenting out
+         // JonD: should use the exposure that the user has set; if the user
+         // wants a different exposure time for calibration he should just specify that!
+         // => commenting out next two lines
          // long originalExposure = dev_.getExposure();
          // dev_.setExposure(500000);
          displaySpot(projectionPoint.x, projectionPoint.y);
@@ -425,20 +429,24 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          // if we add "dev_.waitForDevice(), then the RAPP UGA-40 will already have ended
          // its exposure before returning control
          // For now, wait for a user specified delay
-         Thread.sleep(Integer.parseInt(delayField_.getText()));
+         int delayMs = Integer.parseInt(delayField_.getText());
+         Thread.sleep(delayMs);
          core_.snapImage();
          // NS: just make sure to wait until the spot is no longer displayed
-         Thread.sleep(500);
-         // JonD: this line seems completely irrelevant, commenting out
+         // JonD: time to wait is simply the exposure time
+         Thread.sleep((int) (dev_.getExposure()/1000) - delayMs);
+         // JonD: see earlier comment => commenting out next line
          // dev_.setExposure(originalExposure);
          TaggedImage taggedImage2 = core_.getTaggedImage();
          ImageProcessor proc2 = ImageUtils.makeMonochromeProcessor(taggedImage2);
          app_.displayImage(taggedImage2);
+         // saving images to album is useful for debugging, TODO add debug mode where this happens
+         // app_.addToAlbum(taggedImage2);
          ImageProcessor diffImage = ImageUtils.subtractImageProcessors(proc2.convertToFloatProcessor(), proc1.convertToFloatProcessor());
          Point maxPt = findPeak(diffImage);
          IJ.getImage().setRoi(new PointRoi(maxPt.x, maxPt.y));
          // NS: what is this second sleep good for????
-         core_.sleep(500);
+         // core_.sleep(500);
          return maxPt;
       } catch (Exception e) {
          ReportingUtils.showError(e);
@@ -502,12 +510,17 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       final AffineTransform firstApproxAffine = generateLinearMapping();
       final Point2D.Double camCorner1 = (Point2D.Double) firstApproxAffine.transform(new Point2D.Double(0, 0), null);
       final Point2D.Double camCorner2 = (Point2D.Double) firstApproxAffine.transform(new Point2D.Double((int) core_.getImageWidth(), (int) core_.getImageHeight()), null);
+      final Point2D.Double camCorner3 = (Point2D.Double) firstApproxAffine.transform(new Point2D.Double(0, (int) core_.getImageHeight()), null);
+      final Point2D.Double camCorner4 = (Point2D.Double) firstApproxAffine.transform(new Point2D.Double((int) core_.getImageWidth(), 0), null);
 
       // these are camera's bounds in SLM coordinates
-      final double camLeft = Math.min((int) camCorner1.x, (int) camCorner2.x);
-      final double camRight = Math.max((int) camCorner1.x, (int) camCorner2.x);
-      final double camTop = Math.min((int) camCorner1.y, (int) camCorner2.y);
-      final double camBottom = Math.max((int) camCorner1.y, (int) camCorner2.y);
+      // min/max because we don't know the relative orientation of the camera and SLM
+      // do some extra checking in case camera/SLM aren't at exactly 90 degrees from each other, 
+      // but still better that they are at 0, 90, 180, or 270 degrees from each other
+      final double camLeft = Math.min(Math.min(Math.min(camCorner1.x, camCorner2.x), camCorner3.x), camCorner4.x);
+      final double camRight = Math.max(Math.max(Math.max(camCorner1.x, camCorner2.x), camCorner3.x), camCorner4.x);
+      final double camTop = Math.min(Math.min(Math.min(camCorner1.y, camCorner2.y), camCorner3.y), camCorner4.y);
+      final double camBottom = Math.max(Math.max(Math.max(camCorner1.y, camCorner2.y), camCorner3.y), camCorner4.y);
       
       // these are the SLM's bounds
       final double slmLeft = dev_.getXMinimum();
@@ -515,8 +528,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       final double slmTop = dev_.getYMinimum();
       final double slmBottom = dev_.getYRange() + dev_.getYMinimum();
       
-      // figure out the boundary where both the camera and SLM
-      // can "see"; these are still in SLM coordinates 
+      // figure out the "overlap region" where both the camera and SLM
+      // can "see", expressed in SLM coordinates
       final double left = Math.max(camLeft, slmLeft);
       final double right = Math.min(camRight, slmRight);
       final double top = Math.max(camTop, slmTop);
@@ -524,14 +537,19 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       final double width = right - left;
       final double height = bottom - top;
 
-      // compute a grid of points inside the boundary we just computed
+      // compute a grid of SLM points inside the "overlap region"
+      // nGrid is how many polygons in both X and Y
+      // require (nGrid + 1)^2 spot measurements to get nGrid^2 squares
+      // TODO allow user to change nGrid
       final int nGrid = 7;
       Point2D.Double slmPoint[][] = new Point2D.Double[1 + nGrid][1 + nGrid];
       Point2D.Double camPoint[][] = new Point2D.Double[1 + nGrid][1 + nGrid];
+
+      // tabulate the camera spot at each of SLM grid points
       for (int i = 0; i <= nGrid; ++i) {
          for (int j = 0; j <= nGrid; ++j) {
-            int xoffset = (int) ((i + 0.5) * width / (nGrid + 1.0));
-            int yoffset = (int) ((j + 0.5) * height / (nGrid + 1.0));
+            double xoffset = ((i + 0.5) * width / (nGrid + 1.0));
+            double yoffset = ((j + 0.5) * height / (nGrid + 1.0));
             slmPoint[i][j] = new Point2D.Double(left + xoffset, top + yoffset);
             Point spot = measureSpotOnCamera(slmPoint[i][j]);
             if (spot != null) {
@@ -544,6 +562,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          return null;
       }
 
+      // now make a grid of (square) polygons (in camera's coordinate system)
+      // and generate an affine transform for each of these square regions
       Map<Polygon, AffineTransform> bigMap
             = new HashMap<Polygon, AffineTransform>();
       for (int i = 0; i <= nGrid - 1; ++i) {
@@ -577,8 +597,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
 
    /**
     * Runs the full calibration. First
-    * generates a linear mapping (a first approximation) and then runs
-    * a second, non-linear, mapping using the first mapping as a guide. Saves
+    * generates a linear mapping (a first approximation) and then generates
+    * a second piece-wise "non-linear" mapping of affine transforms. Saves
     * the mapping to Java Preferences.
     */
    public void runCalibration() {
@@ -594,16 +614,21 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   Roi originalROI = IJ.getImage().getRoi();
                   app_.snapSingleImage();
 
+                  // do the heavy lifting of generating the local affine transform map
                   HashMap<Polygon, AffineTransform> mapping = (HashMap<Polygon, AffineTransform>) generateNonlinearMapping();
+                  
                   dev_.turnOff();
                   try {
                      Thread.sleep(500);
                   } catch (InterruptedException ex) {
                      ReportingUtils.logError(ex);
                   }
+                  
+                  // save local affine transform map to preferences
                   if (!stopRequested_.get()) {
                      saveMapping(mapping);
                   }
+                  
                   app_.enableLiveMode(liveModeRunning);
                   JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration "
                         + (!stopRequested_.get() ? "finished." : "canceled."));

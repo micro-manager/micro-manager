@@ -338,7 +338,7 @@ public class Galvo implements ProjectionDevice {
       }
    }
    
-      // Reads the exposure time.
+      // Reads the exposure time in us
    @Override
    public long getExposure() {
       return interval_us_;
