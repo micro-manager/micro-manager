@@ -271,7 +271,6 @@ public class SurfaceData implements Covariant {
 
    public static void main (String[] args) {
       System.out.println();
-      LN_DISTANCES_CHAM[15][33]
    }
    
    private static final double[][] LN_DISTANCES_CHAM = new double[][]
