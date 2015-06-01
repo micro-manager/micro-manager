@@ -58,7 +58,7 @@ public:
 
    // below aren't really implemented but we do the closest thing we can with our hardware
    int PointAndFire(double x, double y, double time_us);
-   int SetSpotInterval(double /*pulseInterval_us*/) { return DEVICE_OK; }  // we can't actual control beam time so just ignore
+   int SetSpotInterval(double pulseInterval_us);
    int SetIlluminationState(bool on);  // we can't turn off beam but we can steer beam to corner where hopefully it is blocked internally
    int GetChannel(char* channelName);
 
@@ -167,6 +167,7 @@ private:
    // for polygons
    vector< pair<double,double> > polygons_;
    long polygonRepetitions_;
+   long sequenceIntervalMs_;
    bool ring_buffer_supported_;
 
    unsigned char laser_side_;  // code for corresponding laser line: 0 for none, 1 for side0, 2 for side1

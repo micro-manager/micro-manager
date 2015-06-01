@@ -63,6 +63,7 @@ CScanner::CScanner(const char* name) :
    saStateX_(),
    saStateY_(),
    polygonRepetitions_(0),
+   sequenceIntervalMs_(10),
    ring_buffer_supported_(false),
    laser_side_(0),   // will be set to 1 or 2 if used
    laserTTLenabled_(false),
@@ -644,6 +645,7 @@ int CScanner::SetPosition(double x, double y)
 int CScanner::GetPosition(double& x, double& y)
 {
 //   // read from card instead of using cached values directly, could be slight mismatch
+   // TODO implement as single serial command for speed (know that X axis always before Y on card)
    ostringstream command; command.str("");
    command << "W " << axisLetterX_;
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
@@ -697,6 +699,8 @@ int CScanner::SetIlluminationStateHelper(bool on)
    if(!laserTTLenabled_)
       return DEVICE_OK;
    // need to know whether other scanner device is turned on => must query it anyway
+   // would be nice if there was some way this information could be stored in hub object
+   // and cut down on serial communication
    command << addressChar_ << "LED X?";
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),"X=") );
    RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
@@ -786,6 +790,11 @@ int CScanner::LoadPolygons()
                << " " << axisLetterY_ << "=" << polygons_[i].second*unitMultY_;
          RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
       }
+      // make the last point the home/shutter position
+      command.str("");
+      command << "LD " << axisLetterX_ << "=" << shutterX_*unitMultX_
+            << " " << axisLetterY_ << "=" << shutterY_*unitMultY_;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    else
    {
@@ -804,18 +813,48 @@ int CScanner::RunPolygons()
 {
    if (ring_buffer_supported_)
    {
+      RETURN_ON_MM_ERROR ( SetProperty(g_RB_ModePropertyName, g_RB_PlayOnce_2) );
+
+      // essentially like SetIlluminationState(true) but no caching
+      illuminationState_ = true;
+      RETURN_ON_MM_ERROR ( SetIlluminationStateHelper(true) );
+
       ostringstream command; command.str("");
       command << addressChar_ << "RM";
-      return hub_->QueryCommandVerify(command.str(), ":A");
+
+      // trigger ring buffer requested number of times, sleeping until done
+      // TODO support specified # of repeats in firmware directly
+      for (int j=0; j<polygonRepetitions_; ++j) {
+         hub_->QueryCommandVerify(command.str(), ":A");
+         bool done = false;
+         do {
+            char propValue[MM::MaxStrLength];
+            refreshOverride_ = true;
+            // check flag to see if we are still playing
+            // flag goes low as soon as last point is moved to, which we have as home/shutter
+            // so will be briefly shuttered and then start up again
+            RETURN_ON_MM_ERROR ( GetProperty(g_RB_AutoplayRunningPropertyName, propValue) );
+            if (strcmp(propValue, g_YesState) == 0) {
+               CDeviceUtils::SleepMs(100);
+            } else {
+               done = true;
+            }
+         } while (!done);
+      }
+
+      // essentially like SetIlluminationState(false) but no caching
+      // we have already turned the beam off by setting last ring buffer location to home
+      illuminationState_ = false;
+      RETURN_ON_MM_ERROR ( SetIlluminationStateHelper(false) );
    }
    else
    {
-      // no HW support => have to repeatedly call SetPosition
+      // no HW support via ring buffer => have to repeatedly call PointAndFire
       for (int j=0; j<polygonRepetitions_; ++j)
          for (int i=0; i< (int) polygons_.size(); ++i)
-            SetPosition(polygons_[i].first,polygons_[i].second);
-      return DEVICE_OK;
+            PointAndFire(polygons_[i].first,polygons_[i].second, sequenceIntervalMs_*1000);
    }
+   return DEVICE_OK;
 }
 
 int CScanner::GetChannel(char* channelName)
@@ -840,8 +879,23 @@ int CScanner::RunSequence()
    }
 }
 
+int CScanner::SetSpotInterval(double pulseInterval_us)    // time between points in sequence, like "time_us" in PointAndFire
+{
+   sequenceIntervalMs_ = int (pulseInterval_us/1000 + 0.5);
+   ostringstream command; command.str("");
+   command << sequenceIntervalMs_;
+   char propValue[MM::MaxStrLength];
+   CDeviceUtils::CopyLimitedString(propValue, command.str().c_str());
+   RETURN_ON_MM_ERROR ( SetProperty(g_RB_DelayPropertyName, propValue) );
+   return DEVICE_OK;
+}
+
 int CScanner::PointAndFire(double x, double y, double time_us)
 {
+   // TODO add ability for hardware timing this (ideally without using ring buffer)
+   // currently lots of timing uncertainty because of all serial communication
+   // TODO add firmware method of turning on laser only when we have reached position
+   // and not while we are moving (nor between ring buffer points)
    SetIlluminationState(false);
    SetPosition(x, y);
    SetIlluminationState(true);
