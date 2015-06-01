@@ -517,6 +517,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       // min/max because we don't know the relative orientation of the camera and SLM
       // do some extra checking in case camera/SLM aren't at exactly 90 degrees from each other, 
       // but still better that they are at 0, 90, 180, or 270 degrees from each other
+      // TODO can create grid along camera location instead of SLM's if camera is the limiting factor; this will make arbitrary rotation possible
       final double camLeft = Math.min(Math.min(Math.min(camCorner1.x, camCorner2.x), camCorner3.x), camCorner4.x);
       final double camRight = Math.max(Math.max(Math.max(camCorner1.x, camCorner2.x), camCorner3.x), camCorner4.x);
       final double camTop = Math.min(Math.min(Math.min(camCorner1.y, camCorner2.y), camCorner3.y), camCorner4.y);
@@ -625,6 +626,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   }
                   
                   // save local affine transform map to preferences
+                  // TODO allow different mappings to be stored for different channels (e.g. objective magnification)
                   if (!stopRequested_.get()) {
                      saveMapping(mapping);
                   }
