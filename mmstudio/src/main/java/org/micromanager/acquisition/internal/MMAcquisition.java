@@ -42,6 +42,7 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JToggleButton;
@@ -65,6 +66,8 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
+
+import org.micromanager.events.internal.DefaultEventManager;
 
 import org.micromanager.internal.dialogs.AcqControlDlg;
 
@@ -411,6 +414,40 @@ public class MMAcquisition {
    }
 
    /**
+    * A simple little subclass of JButton that listens for certain events.
+    * It listens for AcquisitionEndedEvent and disables itself when that
+    * event occurs; it also listens for DisplayDestroyedEvent and unregisters
+    * itself from event buses at that time.
+    */
+   private static class SubscribedButton extends JButton {
+      /**
+       * Create a SubscribedButton and subscribe it to the relevant event
+       * buses.
+       */
+      public static SubscribedButton makeButton(ImageIcon icon, DisplayWindow display) {
+         SubscribedButton result = new SubscribedButton(icon);
+         DefaultEventManager.getInstance().registerForEvents(result);
+         display.registerForEvents(result);
+         return result;
+      }
+
+      public SubscribedButton(ImageIcon icon) {
+         super(icon);
+      }
+
+      @Subscribe
+      public void onDisplayDestroyed(DisplayDestroyedEvent e) {
+         DefaultEventManager.getInstance().unregisterForEvents(this);
+         e.getDisplay().unregisterForEvents(this);
+      }
+
+      @Subscribe
+      public void onAcquisitionEnded(AcquisitionEndedEvent e) {
+         setEnabled(false);
+      }
+   }
+
+   /**
     * Generate the abort and pause buttons. These are only used for display
     * windows for ongoing acquisitions (i.e. not for opening files from
     * disk).
@@ -420,10 +457,11 @@ public class MMAcquisition {
    private ControlsFactory makeControlsFactory() {
       return new ControlsFactory() {
          @Override
-         public List<Component> makeControls(DisplayWindow display) {
+         public List<Component> makeControls(final DisplayWindow display) {
             ArrayList<Component> result = new ArrayList<Component>();
-            JButton abortButton = new JButton(new ImageIcon(
-                     getClass().getResource("/org/micromanager/icons/cancel.png")));
+            JButton abortButton = SubscribedButton.makeButton(new ImageIcon(
+                     getClass().getResource("/org/micromanager/icons/cancel.png")),
+                  display);
             abortButton.setBackground(new Color(255, 255, 255));
             abortButton.setToolTipText("Halt data acquisition");
             abortButton.setFocusable(false);
@@ -438,12 +476,12 @@ public class MMAcquisition {
             });
             result.add(abortButton);
 
-            JToggleButton pauseButton = new JToggleButton(new ImageIcon(
-                     getClass().getResource("/org/micromanager/icons/control_pause.png")));
-            ImageIcon icon = new ImageIcon(getClass().getResource(
+            final ImageIcon pauseIcon = new ImageIcon(getClass().getResource(
+                  "/org/micromanager/icons/control_pause.png"));
+            final ImageIcon playIcon = new ImageIcon(getClass().getResource(
                   "/org/micromanager/icons/resultset_next.png"));
-            pauseButton.setPressedIcon(icon);
-            pauseButton.setSelectedIcon(icon);
+            final JButton pauseButton = SubscribedButton.makeButton(
+                  pauseIcon, display);
             pauseButton.setToolTipText("Pause data acquisition");
             pauseButton.setFocusable(false);
             pauseButton.setMaximumSize(new Dimension(30, 28));
@@ -453,6 +491,14 @@ public class MMAcquisition {
                @Override
                public void actionPerformed(ActionEvent e) {
                   eng_.setPause(!eng_.isPaused());
+                  // Switch the icon depending on if the acquisition is paused.
+                  Icon icon = pauseButton.getIcon();
+                  if (icon == pauseIcon) {
+                     pauseButton.setIcon(playIcon);
+                  }
+                  else {
+                     pauseButton.setIcon(pauseIcon);
+                  }
                }
             });
             result.add(pauseButton);

@@ -7,10 +7,14 @@ import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.internal.DefaultImage;
+import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
- * Dequeue tagged images and append to image cache
+ * This object spawns a new thread that receives images from the acquisition
+ * engine and sticks them into a Datastore. It's also responsible for posting
+ * the AcquisitionEndedEvent, which it recognizes when it receives the
+ * TaggedImageQueue.POISON object.
  *
  * @author arthur
  */
@@ -43,6 +47,9 @@ public class DefaultTaggedImageSink  {
                   TaggedImage tagged = imageProducingQueue_.poll(1, TimeUnit.SECONDS);
                   if (tagged != null) {
                      if (TaggedImageQueue.isPoison(tagged)) {
+                        // Acquisition has ended.
+                        DefaultEventManager.getInstance().post(
+                              new AcquisitionEndedEvent());
                         break;
                      }
                      ++imageCount;
