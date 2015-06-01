@@ -75,6 +75,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    private final JButton afButton_;
    private JSpinner afSkipInterval_;
    private final JComboBox acqOrderBox_;
+   private final JLabel acquisitionOrderText_;
    private static final String SHOULD_SYNC_EXPOSURE = "should sync exposure times between main window and Acquire dialog";
    private static final String SHOULD_HIDE_DISPLAY = "should hide image display windows for multi-dimensional acquisitions";
    private JComboBox channelGroupCombo_;
@@ -258,10 +259,10 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       positionsPanel_ = (CheckBoxPanel) createPanel("Multiple positions (XY)", 5, 93, 220, 154, true);
       slicesPanel_ = (CheckBoxPanel) createPanel("Z-stacks (slices)", 5, 156, 220, 306, true);
 
-      acquisitionOrderPanel_ = createPanel("Acquisition order", 226, 5, 427, 63);
+      acquisitionOrderPanel_ = createPanel("Acquisition order", 226, 5, 427, 93);
 
-      summaryPanel_ = createPanel("Summary", 226, 156, 427, 306);
-      afPanel_ = (CheckBoxPanel) createPanel("Autofocus", 226, 65, 427, 154, true);
+      summaryPanel_ = createPanel("Summary", 226, 176, 427, 306);
+      afPanel_ = (CheckBoxPanel) createPanel("Autofocus", 226, 95, 427, 174, true);
 
       channelsPanel_ = (CheckBoxPanel) createPanel("Channels", 5, 308, 510, 451, true);
       savePanel_ = (CheckBoxPanel) createPanel("Save images", 5, 453, 510, 560, true);
@@ -273,27 +274,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       framesPanel_.setToolTipText("Acquire images over a repeating time interval");
       positionsPanel_.setToolTipText("Acquire images from a series of positions in the XY plane");
       slicesPanel_.setToolTipText("Acquire images from a series of Z positions");
-
-      String imageName = getClass().getResource(
-              "/org/micromanager/icons/acq_order_figure.png").toString();
-
-      String acqOrderToolTip =
-              "<html>Lets you select the order of image acquisition when some combination of multiple dimensions<br>"
-              + "(i.e. time points, XY positions, Z-slices, or Channels)  is selected.  During image acquisition, the<br>"
-              + "values of each dimension are iterated in the reverse order of their listing here.  \"Time\" and \"Position\" <br>"
-              + "always precede \"Slice\" and \"Channel\" <br><br>"
-              + "For example, suppose there are are two time points, two XY positions, and two Z slices, and Acquisition<br>"
-              + "order is set to \"Time, Position, Slice\".  The microscope will acquire images in the following order: <br> "
-              + "Time point 1, XY position 1, Z-slice 1 <br>"
-              + "Time point 1, XY position 1, Z-slice 2 <br>"
-              + "Time point 1, XY position 2, Z-slice 1 <br>"
-              + "Time point 1, XY position 2, Z-slice 2 <br>"
-              + "Time point 2, XY position 1, Z-slice 1 <br>"
-              + "etc. <br><br>"
-              + "<img src=" + imageName + "></html>";
-      acquisitionOrderPanel_.setToolTipText(acqOrderToolTip);
-      acqOrderBox_.setToolTipText(acqOrderToolTip);
-
 
       afPanel_.setToolTipText("Toggle autofocus on/off");
       channelsPanel_.setToolTipText("Lets you acquire images in multiple channels (groups of "
@@ -307,6 +287,17 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
               + "check the 'Conserve RAM' option (Tools | Options)"));
 
 
+   }
+
+   /**
+    * Update the example text describing how the acquisition will proceed.
+    */
+   private void updateAcquisitionOrderText() {
+      if (acquisitionOrderText_ != null && acqOrderBox_ != null &&
+            acqOrderBox_.getSelectedItem() != null) {
+         acquisitionOrderText_.setText(
+               ((AcqOrderMode) (acqOrderBox_.getSelectedItem())).getExample());
+      }
    }
 
    /**
@@ -569,6 +560,10 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       acqOrderBox_.setFont(new Font("", Font.PLAIN, 10));
       acqOrderBox_.setBounds(2, 26, 195, 22);
       acquisitionOrderPanel_.add(acqOrderBox_);
+      acquisitionOrderText_ = new JLabel(" ");
+      acquisitionOrderText_.setFont(new Font("", Font.PLAIN, 9));
+      acquisitionOrderText_.setBounds(5, 32, 195, 60);
+      acquisitionOrderPanel_.add(acquisitionOrderText_);
 
       acqOrderModes_ = new AcqOrderMode[4];
       acqOrderModes_[0] = new AcqOrderMode(AcqOrderMode.TIME_POS_SLICE_CHANNEL);
@@ -615,7 +610,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
               "/org/micromanager/icons/wrench_orange.png")));
       afButton_.setMargin(new Insets(2, 5, 2, 5));
       afButton_.setFont(new Font("Dialog", Font.PLAIN, 10));
-      afButton_.setBounds(50, 21, 100, 28);
+      afButton_.setBounds(50, 26, 100, 28);
       afPanel_.add(afButton_);
 
 
@@ -995,9 +990,9 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
          }
       });
       acqOrderBox_.addActionListener(new ActionListener() {
-
          @Override
          public void actionPerformed(ActionEvent e) {
+            updateAcquisitionOrderText();
             applySettings();
          }
       });
