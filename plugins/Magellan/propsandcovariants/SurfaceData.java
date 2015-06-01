@@ -86,6 +86,8 @@ public class SurfaceData implements Covariant {
            return "Min distance to " + surface_.getName();
        } else if (category_.equals(LN_OPTIMAL_DISTANCE_MT)) {
            return "Maitai Lymph node optimal distance for " + surface_.getName();
+                  } else if (category_.equals(LN_OPTIMAL_DISTANCE_CHAM)) {
+           return "Chameleon Lymph node optimal distance for " + surface_.getName();
  
        } else {
            Log.log("Unknown Surface data type");
@@ -253,9 +255,9 @@ public class SurfaceData implements Covariant {
          return new CovariantValue(distanceAndNormalCalc(xyPos.getFullTileCorners(), event.zPosition_)[0]);
       } else if (category_.equals(DISTANCE_BELOW_SURFACE_MAXIMUM)) {
          return new CovariantValue(distanceAndNormalCalc(xyPos.getFullTileCorners(), event.zPosition_)[1]);
-      } else if (category_.equals(LN_DISTANCES_MT)) {
+      } else if (category_.equals(LN_OPTIMAL_DISTANCE_MT)) {
           return new CovariantValue(lnOptimalDistance(xyPos, event.zPosition_, true));
-          } else if (category_.equals(LN_DISTANCES_CHAM)) {
+      } else if (category_.equals(LN_OPTIMAL_DISTANCE_CHAM)) {
           return new CovariantValue(lnOptimalDistance(xyPos, event.zPosition_, false));
       } else {
          Log.log("Unknown Surface data type",true);
