@@ -279,17 +279,12 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       framesPanel_.setToolTipText("Acquire images over a repeating time interval");
       positionsPanel_.setToolTipText("Acquire images from a series of positions in the XY plane");
       slicesPanel_.setToolTipText("Acquire images from a series of Z positions");
+      acquisitionOrderPanel_.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip("Determine the precedence of different acquisition axes (time, slice, channel, and stage position). The rightmost axis will be cycled through most quickly, so e.g. \"Time, Channel\" means \"Collect all channels for each timepoint before going to the next timepoint\"."));
 
       afPanel_.setToolTipText("Toggle autofocus on/off");
       channelsPanel_.setToolTipText("Lets you acquire images in multiple channels (groups of "
               + "properties with multiple preset values");
-      savePanel_.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip("If the Save images option is selected, "
-              + "images will be saved to disk continuously during the acquisition. If this option is not selected, images "
-              + "are accumulated only in the 5D-Image window, and once the acquisition is finished, image data can be saved"
-              + " to disk. However, saving files automatically during acquisition secures the acquired data against an "
-              + "unexpected computer failure or accidental closing of image window. Even when saving to disk, some of the"
-              + " acquired images are still kept in memory, facilitating fast playback. If such behavior is not desired, "
-              + "check the 'Conserve RAM' option (Tools | Options)"));
+      savePanel_.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip("Save images continuously to disk as the acquisition proceeds. If not enabled, then images will be stored in RAM and may be saved later."));
 
 
    }
