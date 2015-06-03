@@ -639,6 +639,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                } catch (HeadlessException e) {
                   ReportingUtils.showError(e);
                   calibrateButton_.setText("Calibrate");
+               } catch (RuntimeException e) {
+                  ReportingUtils.showError(e);
+                  calibrateButton_.setText("Calibrate");
                } finally {
                   isRunning_.set(false);
                   stopRequested_.set(false);
@@ -766,6 +769,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    // Turn on/off point and shoot mode.
    public void enablePointAndShootMode(boolean on) {
       if (on && (mapping_ == null)) {
+         ReportingUtils.showError("Please calibrate the phototargeting device first, using the Setup tab.");
          throw new RuntimeException("Please calibrate the phototargeting device first, using the Setup tab.");
       }
       pointAndShooteModeOn_.set(on);
@@ -1018,6 +1022,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    
    /**
     * Upload current Window's ROIs, transformed, to the phototargeting device.
+    * TODO fix bug mentioned here:
     * BUG!!! Since Polygons store coordinates in integers whereas Galvo
     * devices have an input as double, there is an enormous loss of precision.
     * The Type "Polygon" should be replaced with Path2D.Double throughout the code
