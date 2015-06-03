@@ -30,7 +30,9 @@ public class AcqOrderMode {
          name.append(item + ", ");
       }
       // Remove the trailing comma and whitespace.
-      name.delete(name.length() - 2, name.length());
+      if (name.length() > 2) {
+         name.delete(name.length() - 2, name.length());
+      }
       return name.toString();
    }
    
@@ -53,6 +55,10 @@ public class AcqOrderMode {
          }
       }
       ordering = tmp;
+
+      if (ordering.size() == 0) {
+         return "";
+      }
 
       StringBuffer result = new StringBuffer("<html><body>");
       // Provide one entry per changing axis, in which that axis' index is 2,
