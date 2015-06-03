@@ -66,24 +66,19 @@ public class AcqOrderMode {
       // 1 to 2.
       String lastAxis = ordering.get(ordering.size() - 1);
       for (int i = ordering.size() - 1; i >= 0; i--) {
+         result.append("(");
          for (String axis : ordering) {
             // Note using ==/!= here is safe as lastAxis is an element from the
             // ordering array.
             int index = (axis != lastAxis && axis == ordering.get(i)) ? 2 : 1;
             result.append(axis + index);
-            if (axis != lastAxis) {
-               result.append(",");
-            }
          }
-         result.append("; ");
+         result.append(") (");
          for (String axis : ordering) {
             int index = (axis == lastAxis || axis == ordering.get(i)) ? 2 : 1;
             result.append(axis + index);
-            if (axis != lastAxis) {
-               result.append(",");
-            }
          }
-         result.append("; ...; ");
+         result.append(") ... ");
       }
       result.append("</body></html>");
       return result.toString();
