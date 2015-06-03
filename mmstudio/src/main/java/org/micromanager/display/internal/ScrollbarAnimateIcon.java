@@ -23,8 +23,12 @@ package org.micromanager.display.internal;
 
 import com.bulenkov.iconloader.IconLoader;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.MouseEvent;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.Icon;
@@ -45,15 +49,17 @@ public class ScrollbarAnimateIcon extends JButton {
          "/org/micromanager/icons/play.png");
    private static final Icon PAUSE_ICON = IconLoader.getIcon(
          "/org/micromanager/icons/pause.png");
+   private static final Font LABEL_FONT = new Font("Arial", Font.PLAIN, 10);
    private final String label_;
    private boolean isAnimated_;
+   private Icon curIcon_;
 
    public ScrollbarAnimateIcon(final String axis, final ScrollerPanel parent) {
-      super(PLAY_ICON);
+      super();
+      curIcon_ = PLAY_ICON;
       setSize(BUTTON_WIDTH, BUTTON_HEIGHT);
       // Only use the first letter of the axis.
       label_ = axis.substring(0, 1);
-      setText(label_);
       isAnimated_ = false;
       setToolTipText("Toggle animation of the " + axis + " axis.");
       addMouseListener(new MouseInputAdapter() {
@@ -65,9 +71,32 @@ public class ScrollbarAnimateIcon extends JButton {
       });
    }
 
+   /**
+    * HACK: override the paint() method and manually paint our label, because
+    * otherwise Windows has a tendency to "truncate" our label down to an
+    * ellipsis (even though the ellipsis is wider than the original label).
+    */
+   @Override
+   public void paint(Graphics g) {
+      // Paint the normal button decorations.
+      super.paint(g);
+
+      // Paint the icon. We do this instead of using setIcon() and having
+      // Swing paint it because we want the icon to be left-justified.
+      Graphics2D g2d = (Graphics2D) g;
+      int yOffset = (BUTTON_HEIGHT - curIcon_.getIconHeight()) / 2;
+      curIcon_.paintIcon(this, g2d, 5, yOffset);
+
+      // Paint the label.
+      g2d.setFont(LABEL_FONT);
+      g2d.setColor(Color.BLACK);
+      // HACK: manually-derived decent-looking offsets.
+      g2d.drawString(label_, 20, 13);
+   }
+
    public void setIsAnimated(boolean isAnimated) {
       isAnimated_ = isAnimated;
-      setIcon(isAnimated_ ? PAUSE_ICON : PLAY_ICON);
+      curIcon_ = isAnimated_ ? PAUSE_ICON : PLAY_ICON;
    }
 
    public boolean getIsAnimated() {
