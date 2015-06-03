@@ -212,18 +212,23 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
          if (colIndex < 0) {
             colIndex = k;
          }
+         TableColumn column;
          if (colIndex == model_.getColumnCount() - 1) {
+            // The color selection column has different properties.
             ColorRenderer cr = new ColorRenderer(true);
             ColorEditor ce = new ColorEditor(model_, model_.getColumnCount() - 1);
-            TableColumn column = new TableColumn(model_.getColumnCount() - 1, 200, cr, ce);
+            column = new TableColumn(model_.getColumnCount() - 1, 200, cr, ce);
             column.setPreferredWidth(columnWidth_[model_.getColumnCount() - 1]);
-            channelTable_.addColumn(column);
 
          } else {
-            TableColumn column = new TableColumn(colIndex, 200, cellRenderer, cellEditor);
+            column = new TableColumn(colIndex, 200, cellRenderer, cellEditor);
             column.setPreferredWidth(columnWidth_[colIndex]);
-            channelTable_.addColumn(column);
+            // HACK: the "Configuration" tab should be wider than the others.
+            if (colIndex == 1) {
+               column.setMinWidth((int) (ACQ_DEFAULT_COLUMN_WIDTH * 1.25));
+            }
          }
+         channelTable_.addColumn(column);
       }
 
       channelTablePane_.setViewportView(channelTable_);
