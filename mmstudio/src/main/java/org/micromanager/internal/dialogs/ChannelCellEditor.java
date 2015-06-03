@@ -6,6 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import javax.swing.AbstractCellEditor;
 import javax.swing.JCheckBox;
@@ -79,15 +80,25 @@ public class ChannelCellEditor extends AbstractCellEditor implements TableCellEd
          combo_.removeAllItems();
 
          // remove old listeners
-         ActionListener[] l = combo_.getActionListeners();
-         for (int i = 0; i < l.length; i++) {
-            combo_.removeActionListener(l[i]);
+         ActionListener[] listeners = combo_.getActionListeners();
+         for (int i = 0; i < listeners.length; i++) {
+            combo_.removeActionListener(listeners[i]);
          }
          combo_.removeAllItems();
 
+         // Only allow channels that aren't already selected in a different
+         // row.
+         HashSet<String> usedChannels = new HashSet<String>();
+         for (int i = 0; i < model.getChannels().size(); ++i) {
+            if (i != editRow_) {
+               usedChannels.add((String) model.getValueAt(i, 1));
+            }
+         }
          String configs[] = model.getAvailableChannels();
          for (int i = 0; i < configs.length; i++) {
-            combo_.addItem(configs[i]);
+            if (!usedChannels.contains(configs[i])) {
+               combo_.addItem(configs[i]);
+            }
          }
          combo_.setSelectedItem(channel.config);
          
