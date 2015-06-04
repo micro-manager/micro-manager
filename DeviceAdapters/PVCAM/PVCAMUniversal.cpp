@@ -955,28 +955,22 @@ int Universal::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::AfterSet)
    {
       pProp->Get(bin);
-      if (!IsCapturing())
-      {
-         // If not capturing then change the bin immediately so it gets
-         // reflected in the UI.
-         binSize_ = bin;
-         // Setting the symmetric bin resets the assymetric bin
-         binXSize_= bin;
-         binYSize_= bin;
-         SetROI( 0, 0, camSerSize_, camParSize_ );
-      }
-      // If we are in the live mode, we just store the new values
-      // and resize the buffer once the acquisition is started again.
-      // (this fixes a crash that occured when switching binning during live mode)
       newBinSize_ = bin;
+      // Setting the symmetric bin resets the asymetric bin
       newBinXSize_ = bin;
       newBinYSize_ = bin;
+      if (!IsCapturing())
+         SetROI( roi_.newX*roi_.binXSize/binXSize_, roi_.newY*roi_.binYSize/binYSize_, roi_.newXSize*roi_.binXSize/binXSize_, roi_.newYSize*roi_.binYSize/binYSize_ );
+
       sequenceModeReady_ = false;
       singleFrameModeReady_ = false;
    }
    else if (eAct == MM::BeforeGet)
    {
-      pProp->Set((long)binSize_);
+      if (!IsCapturing())
+         pProp->Set((long)newBinSize_);
+      else
+         pProp->Set((long)binSize_);
    }
    return DEVICE_OK;
 }
@@ -999,24 +993,25 @@ int Universal::OnBinningX(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(binX);
       if (binX < 1)
       {
-         LogMMError( 0, __LINE__, "Value of BinningX cannot be negative" );
+         LogMMError( 0, __LINE__, "Value of BinningX has to be positive" );
          ret = DEVICE_INVALID_PROPERTY_VALUE;
       }
       else
       {
-         if (!IsCapturing())
-         {
-            binXSize_= binX;
-            SetROI( 0, 0, camSerSize_, camParSize_ );
-         }
          newBinXSize_ = binX;
+         if (!IsCapturing())
+            SetROI( roi_.newX*roi_.binXSize/binXSize_, roi_.newY*roi_.binYSize/binYSize_, roi_.newXSize*roi_.binXSize/binXSize_, roi_.newYSize*roi_.binYSize/binYSize_ );
+
          sequenceModeReady_ = false;
          singleFrameModeReady_ = false;
       }
    }
    else if (eAct == MM::BeforeGet)
    {
-      pProp->Set((long)binXSize_);
+      if (!IsCapturing())
+         pProp->Set((long)newBinXSize_);
+      else
+         pProp->Set((long)binXSize_);
    }
    return ret;
 }
@@ -1038,24 +1033,25 @@ int Universal::OnBinningY(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(binY);
       if (binY < 1)
       {
-         LogMMError( 0, __LINE__, "Value of BinningY cannot be negative" );
+         LogMMError( 0, __LINE__, "Value of BinningY has to be positive" );
          ret = DEVICE_INVALID_PROPERTY_VALUE;
       }
       else
       {
-         if (!IsCapturing())
-         {
-            binYSize_= binY;
-            SetROI( 0, 0, camSerSize_, camParSize_ );
-         }
          newBinYSize_ = binY;
+         if (!IsCapturing())
+            SetROI( roi_.newX*roi_.binXSize/binXSize_, roi_.newY*roi_.binYSize/binYSize_, roi_.newXSize*roi_.binXSize/binXSize_, roi_.newYSize*roi_.binYSize/binYSize_ );
+
          sequenceModeReady_ = false;
          singleFrameModeReady_ = false;
       }
    }
    else if (eAct == MM::BeforeGet)
    {
-      pProp->Set((long)binYSize_);
+      if (!IsCapturing())
+         pProp->Set((long)newBinYSize_);
+      else
+         pProp->Set((long)binYSize_);
    }
    return ret;
 }
@@ -2007,6 +2003,23 @@ int Universal::SnapImage()
       MM::MMTime mid = GetCurrentMMTime();
       LogTimeDiff(start, mid, "Exposure took 1: ", true);
 
+      if ( binSize_ != newBinSize_ || binXSize_ != newBinXSize_ || binYSize_ != newBinYSize_ )
+      {
+         // Binning has changed so we need to update the ROI
+         // SetROI also reallocates image buffer, call here roi_.PVCAMRegion only,
+         // the buffer will be reallocated in ResizeImageBufferSingle
+         //SetROI( roi_.newX*roi_.binXSize/binXSize_, roi_.newY*roi_.binYSize/binYSize_, roi_.newXSize*roi_.binXSize/binXSize_, roi_.newYSize*roi_.binYSize/binYSize_ );
+         roi_.PVCAMRegion( (uns16)(roi_.newX*roi_.binXSize), (uns16)(roi_.newY*roi_.binYSize),
+                           (uns16)(roi_.newXSize*roi_.binXSize), (uns16)(roi_.newYSize*roi_.binYSize),
+                           (uns16)newBinXSize_, (uns16)newBinYSize_, camRegion_ );
+         // Update properties
+         binSize_ = newBinSize_;
+         binXSize_ = newBinXSize_;
+         binYSize_ = newBinYSize_;
+         // TODO: Should we enforce prop. browser UI update or wait until user clicks the Refresh button?
+         //GetCoreCallback()->OnPropertiesChanged(this); // Notify the MM UI to update
+      }
+
       if (rgbaColor_ != newRgbaColor_)
       {
          rgbaColor_ = newRgbaColor_;
@@ -2273,14 +2286,15 @@ int Universal::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
    // This might be a bug in the adapter code that makes the MM behave this way but I haven't found where.
    if ( x == 0 && y == 0 && xSize == camSerSize_ && ySize == camParSize_ )
    {
-      roi_.PVCAMRegion( (uns16)x, (uns16)y, (uns16)xSize, (uns16)ySize,
-                        (uns16)binXSize_, (uns16)binYSize_, camRegion_ );
+      roi_.PVCAMRegion( (uns16)x, (uns16)y,
+                        (uns16)xSize, (uns16)ySize,
+                        (uns16)newBinXSize_, (uns16)newBinYSize_, camRegion_ );
    }
    else
    {
       roi_.PVCAMRegion( (uns16)(x*binXSize_), (uns16)(y*binYSize_),
                         (uns16)(xSize*binXSize_), (uns16)(ySize*binYSize_),
-                        (uns16)binXSize_, (uns16)binYSize_, camRegion_ );
+                        (uns16)newBinXSize_, (uns16)newBinYSize_, camRegion_ );
    }
 
    // after a parameter is set, micromanager checks the size of the image,
@@ -2866,12 +2880,18 @@ int Universal::PrepareSequenceAcqusition()
    {
       if ( binSize_ != newBinSize_ || binXSize_ != newBinXSize_ || binYSize_ != newBinYSize_ )
       {
-         // Binning has changed so we need to reset the ROI
-         roi_.PVCAMRegion( 0, 0, camSerSize_, camParSize_, (uns16)newBinXSize_,(uns16)newBinYSize_, camRegion_ );
+         // Binning has changed so we need to update the ROI
+         // SetROI also reallocates image buffer, call here roi_.PVCAMRegion only,
+         // the buffer will be reallocated in ResizeImageBufferContinuous
+         //SetROI( roi_.newX*roi_.binXSize/binXSize_, roi_.newY*roi_.binYSize/binYSize_, roi_.newXSize*roi_.binXSize/binXSize_, roi_.newYSize*roi_.binYSize/binYSize_ );
+         roi_.PVCAMRegion( (uns16)(roi_.newX*roi_.binXSize), (uns16)(roi_.newY*roi_.binYSize),
+                           (uns16)(roi_.newXSize*roi_.binXSize), (uns16)(roi_.newYSize*roi_.binYSize),
+                           (uns16)newBinXSize_, (uns16)newBinYSize_, camRegion_ );
+         // Update properties
+         binSize_ = newBinSize_;
+         binXSize_ = newBinXSize_;
+         binYSize_ = newBinYSize_;
       }
-      binSize_ = newBinSize_;
-      binXSize_ = newBinXSize_;
-      binYSize_ = newBinYSize_;
 
       if (rgbaColor_ != newRgbaColor_)
       {
@@ -2882,7 +2902,7 @@ int Universal::PrepareSequenceAcqusition()
       int nRet = ResizeImageBufferContinuous();
       if ( nRet != DEVICE_OK )
       {
-          return nRet;
+         return nRet;
       }
       GetCoreCallback()->InitializeImageBuffer( 1, 1, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel() );
       GetCoreCallback()->PrepareForAcq(this);
@@ -3192,7 +3212,7 @@ int Universal::PushImageToMmCore(const unsigned char* pPixBuffer, Metadata* pMd 
          GetImageWidth(),
          GetImageHeight(),
          GetImageBytesPerPixel(),
-         pMd);
+         pMd); // Inserting the md causes crash in debug builds
    }
 
    return nRet;
