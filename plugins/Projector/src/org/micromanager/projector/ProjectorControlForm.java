@@ -418,8 +418,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          core_.snapImage();
          TaggedImage image = core_.getTaggedImage();
          ImageProcessor proc1 = ImageUtils.makeMonochromeProcessor(image);
-         // JonD: should use the exposure that the user has set; if the user
-         // wants a different exposure time for calibration he should just specify that!
+         // JonD: should use the exposure that the user has set to avoid hardcoding a value;
+         // if the user wants a different exposure time for calibration than for use it's easy to specify
          // => commenting out next two lines
          // long originalExposure = dev_.getExposure();
          // dev_.setExposure(500000);
@@ -616,7 +616,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   app_.snapSingleImage();
 
                   // do the heavy lifting of generating the local affine transform map
-                  HashMap<Polygon, AffineTransform> mapping = (HashMap<Polygon, AffineTransform>) generateNonlinearMapping();
+                  HashMap<Polygon, AffineTransform> mapping = 
+                        (HashMap<Polygon, AffineTransform>) generateNonlinearMapping();
                   
                   dev_.turnOff();
                   try {
@@ -1022,11 +1023,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    
    /**
     * Upload current Window's ROIs, transformed, to the phototargeting device.
-    * TODO fix bug mentioned here:
-    * BUG!!! Since Polygons store coordinates in integers whereas Galvo
-    * devices have an input as double, there is an enormous loss of precision.
-    * The Type "Polygon" should be replaced with Path2D.Double throughout the code
-    * or possibly the ImageJ class FloatPolygon
+    * Polygons store camera coordinates in integers, and we use 
+    * the ImageJ class FloatPolygon for corresponding scanner coordinates
     */
    public void sendCurrentImageWindowRois() {
       if (mapping_ == null) {
