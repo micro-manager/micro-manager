@@ -93,6 +93,8 @@ public class DaytimeNighttime {
 
    // background color of the UI
    private static HashMap<String, ColorUIResource> background_;
+   // background color of disabled UI elements.
+   private static HashMap<String, ColorUIResource> disabledBackground_;
    // Lighter background colors, for certain elements.
    private static HashMap<String, ColorUIResource> lightBackground_;
    // background color of pads in the UI
@@ -109,6 +111,12 @@ public class DaytimeNighttime {
             new ColorUIResource(java.awt.SystemColor.control));
       background_.put(CompatibilityInterface.NIGHT,
             new ColorUIResource(new Color(64, 64, 64)));
+
+      disabledBackground_ = new HashMap<String, ColorUIResource>();
+      disabledBackground_.put(CompatibilityInterface.DAY,
+            new ColorUIResource(Color.LIGHT_GRAY));
+      disabledBackground_.put(CompatibilityInterface.NIGHT,
+            new ColorUIResource(new Color(248, 248, 248)));
 
       lightBackground_ = new HashMap<String, ColorUIResource>();
       lightBackground_.put(CompatibilityInterface.DAY,
@@ -197,10 +205,24 @@ public class DaytimeNighttime {
    }
 
    /**
+    * Return a proper "disabled" background color based on the current mode.
+    */
+   public static Color getDisabledBackgroundColor() {
+      return disabledBackground_.get(getBackgroundMode());
+   }
+
+   /**
     * Return the current color for enabled text.
     */
    public static Color getEnabledTextColor() {
       return enabledTextColor_.get(getBackgroundMode());
+   }
+
+   /**
+    * Return the current color for disabled text.
+    */
+   public static Color getDisabledTextColor() {
+      return disabledTextColor_.get(getBackgroundMode());
    }
 
    /**
