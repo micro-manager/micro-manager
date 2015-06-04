@@ -529,11 +529,11 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
 
       // Set up styles for the messagePane
       sc_ = new StyleContext();
-      Style blackStyle_ = messagePane_.getLogicalStyle();
-      blackStyle_ = sc_.addStyle(blackStyleName_, blackStyle_);
-      StyleConstants.setForeground(blackStyle_, Color.black);
-      Style redStyle_ = sc_.addStyle(redStyleName_, null);
-      StyleConstants.setForeground(redStyle_, Color.red);
+      Style blackStyle = messagePane_.getLogicalStyle();
+      blackStyle = sc_.addStyle(blackStyleName_, blackStyle);
+      StyleConstants.setForeground(blackStyle, Color.black);
+      Style redStyle = sc_.addStyle(redStyleName_, null);
+      StyleConstants.setForeground(redStyle, Color.red);
 
       // disable user input to the messagePane
       messagePane_.setKeymap(null);
@@ -1239,7 +1239,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
           ReportingUtils.logError(e);
         promptStr = "bsh % ";
       } 
-     cons_.print("\n"+promptStr,java.awt.Color.darkGray);  
+     cons_.print("\n"+promptStr, DaytimeNighttime.getEnabledTextColor());
    }
    
    /**
@@ -1452,7 +1452,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       messagePane_.setCharacterAttributes(
          sc_.getStyle(blackStyleName_), false);
       messagePane_.replaceSelection(text + "\n");
-      cons_.print("\n" + text, java.awt.Color.black);
+      cons_.print("\n" + text, DaytimeNighttime.getEnabledTextColor());
       showPrompt();
    }
 
