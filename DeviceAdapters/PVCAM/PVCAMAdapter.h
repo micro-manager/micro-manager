@@ -309,6 +309,7 @@ private:
    int selectedCFAmask_;
    int selectedInterpolationAlgorithm_;
    bool rgbaColor_;
+   bool newRgbaColor_; // Cached values, used when changing color mode during live mode
 
 #ifdef PVCAM_SMART_STREAMING_SUPPORTED
    double          smartStreamValuesDouble_[SMART_STREAM_MAX_EXPOSURES];

@@ -209,6 +209,7 @@ blueScale_(1.0),
 selectedCFAmask_(CFA_RGGB),
 selectedInterpolationAlgorithm_(ALG_REPLICATION),
 rgbaColor_(false),
+newRgbaColor_(false),
 #ifdef PVCAM_SMART_STREAMING_SUPPORTED
 smartStreamEntries_(4),
 ssWasOn_(false),
@@ -2006,6 +2007,11 @@ int Universal::SnapImage()
       MM::MMTime mid = GetCurrentMMTime();
       LogTimeDiff(start, mid, "Exposure took 1: ", true);
 
+      if (rgbaColor_ != newRgbaColor_)
+      {
+         rgbaColor_ = newRgbaColor_;
+      }
+
       nRet = ResizeImageBufferSingle();
       if (nRet != DEVICE_OK) 
          return LogMMError(nRet, __LINE__);
@@ -2866,6 +2872,12 @@ int Universal::PrepareSequenceAcqusition()
       binSize_ = newBinSize_;
       binXSize_ = newBinXSize_;
       binYSize_ = newBinYSize_;
+
+      if (rgbaColor_ != newRgbaColor_)
+      {
+         rgbaColor_ = newRgbaColor_;
+      }
+
       // reconfigure anything that has to do with pl_exp_setup_cont
       int nRet = ResizeImageBufferContinuous();
       if ( nRet != DEVICE_OK )
@@ -3327,20 +3339,22 @@ void Universal::LogMMMessage(int lineNr, std::string message, bool debug) const 
 int Universal::OnColorMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    START_ONPROPERTY("Universal::OnColorMode", eAct);
-   int nRet = DEVICE_OK;
    if (eAct == MM::AfterSet)
    {
        string val;
        pProp->Get(val);
-       val.compare(g_Keyword_ON) == 0 ? rgbaColor_ = true : rgbaColor_ = false;
+       newRgbaColor_ = (val == g_Keyword_ON); // std::string compare
        sequenceModeReady_ = false;
        singleFrameModeReady_ = false;
    }
    else if (eAct == MM::BeforeGet)
    {
-      pProp->Set(rgbaColor_ ? g_Keyword_ON : g_Keyword_OFF);
+      if (!IsCapturing())
+        pProp->Set(newRgbaColor_ ? g_Keyword_ON : g_Keyword_OFF);
+      else
+        pProp->Set(rgbaColor_ ? g_Keyword_ON : g_Keyword_OFF);
    }
-   return nRet;
+   return DEVICE_OK;
 }
 
 int Universal::OnRedScale(MM::PropertyBase* pProp, MM::ActionType eAct)
