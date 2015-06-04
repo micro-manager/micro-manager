@@ -815,7 +815,14 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    @Override
    public GraphicsConfiguration getScreenConfig() {
       Point p = getLocation();
-      return GUIUtils.getGraphicsConfigurationContaining(p.x, p.y);
+      GraphicsConfiguration result = GUIUtils.getGraphicsConfigurationContaining(p.x, p.y);
+      // HACK: if our corner is invalid, try using our center point.
+      if (result == null) {
+         Dimension dims = getSize();
+         result = GUIUtils.getGraphicsConfigurationContaining(
+               p.x + dims.width / 2, p.y + dims.height / 2);
+      }
+      return result;
    }
 
    @Override
