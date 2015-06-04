@@ -243,18 +243,6 @@ prmColorMode_(0)
    // frames away earlier because those old frames could soon get overwritten.
    notificationThd_ = new NotificationThread(this);
    notificationThd_->activate();
-
-   prmTemp_           = NULL;
-   prmTempSetpoint_   = NULL;
-   prmGainIndex_      = NULL;
-   prmGainMultFactor_ = NULL;
-   prmExpResIndex_    = NULL;
-   prmExpRes_         = NULL;
-   prmTriggerMode_    = NULL;
-   prmExposeOutMode_  = NULL;
-   prmClearCycles_    = NULL;
-   prmReadoutPort_    = NULL;
-   prmColorMode_      = NULL;
 }
 
 
