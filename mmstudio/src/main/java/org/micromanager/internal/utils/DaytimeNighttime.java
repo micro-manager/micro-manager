@@ -116,7 +116,7 @@ public class DaytimeNighttime {
       disabledBackground_.put(CompatibilityInterface.DAY,
             new ColorUIResource(Color.LIGHT_GRAY));
       disabledBackground_.put(CompatibilityInterface.NIGHT,
-            new ColorUIResource(new Color(248, 248, 248)));
+            new ColorUIResource(new Color(32, 32, 32)));
 
       lightBackground_ = new HashMap<String, ColorUIResource>();
       lightBackground_.put(CompatibilityInterface.DAY,
