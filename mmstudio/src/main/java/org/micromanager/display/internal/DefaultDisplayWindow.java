@@ -816,11 +816,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    public GraphicsConfiguration getScreenConfig() {
       Point p = getLocation();
       GraphicsConfiguration result = GUIUtils.getGraphicsConfigurationContaining(p.x, p.y);
-      // HACK: if our corner is invalid, try using our center point.
+      // HACK: if our corner is invalid, find the one with the greatest overlap 
       if (result == null) {
-         Dimension dims = getSize();
-         result = GUIUtils.getGraphicsConfigurationContaining(
-               p.x + dims.width / 2, p.y + dims.height / 2);
+         result = GUIUtils.getGraphicsConfigurationBestMatching(getBounds());
       }
       return result;
    }

@@ -37,6 +37,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.Font;
+import java.awt.geom.Rectangle2D;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.GraphicsConfiguration;
@@ -47,6 +48,7 @@ import java.awt.Toolkit;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Vector;
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
@@ -192,20 +194,53 @@ public class GUIUtils {
 
    public static GraphicsConfiguration getGraphicsConfigurationContaining(
          int x, int y) {
+      for (GraphicsConfiguration config : getConfigs()) {
+         Rectangle bounds = config.getBounds();
+         if (bounds.contains(x, y)) {
+            return config;
+         }
+      }
+      return null;
+   }
+
+   /**
+    * If a window's top-left corner is off the screen, then
+    * getGraphicsConfigurationContaining will return null. This method in
+    * contrast will find the GraphicsConfiguration that shows the greatest
+    * portion of the provided rectangle; thus it should always return a
+    * GraphicsConfiguration so long as any part of the rect is visible.
+    */
+   public static GraphicsConfiguration getGraphicsConfigurationBestMatching(
+         Rectangle rect) {
+      GraphicsConfiguration best = null;
+      double bestArea = -1;
+      for (GraphicsConfiguration config : getConfigs()) {
+         Rectangle2D intersect = rect.createIntersection(config.getBounds());
+         if (intersect != null &&
+               intersect.getWidth() * intersect.getHeight() > bestArea) {
+            bestArea = intersect.getWidth() * intersect.getHeight();
+            best = config;
+         }
+      }
+      return best;
+   }
+
+   /**
+    * Convenience method to iterate over all graphics configurations.
+    */
+   private static ArrayList<GraphicsConfiguration> getConfigs() {
+      ArrayList<GraphicsConfiguration> result = new ArrayList<GraphicsConfiguration>();
       GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
       GraphicsDevice[] devices = env.getScreenDevices();
       for (GraphicsDevice device : devices) {
          GraphicsConfiguration[] configs = device.getConfigurations();
          for (GraphicsConfiguration config : configs) {
-            Rectangle bounds = config.getBounds();
-            if (bounds.contains(x, y)) {
-               return config;
-            }
+            result.add(config);
          }
       }
-      return null;
+      return result;
    }
-   
+
    public static void registerImageFocusListener(final ImageFocusListener listener) {
       AWTEventListener awtEventListener = new AWTEventListener() {
          private ImageWindow currentImageWindow_ = null;
