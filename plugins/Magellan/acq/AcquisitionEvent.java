@@ -20,6 +20,7 @@ package acq;
 import coordinates.XYStagePosition;
 import java.util.List;
 import propsandcovariants.CovariantPairing;
+import propsandcovariants.CovariantValue;
 
 /**
  * Information about the acquisition of a single image

@@ -364,7 +364,7 @@ public class SinglePropertyOrGroup implements Covariant{
    }
 
    @Override
-   public CovariantValue getCurrentValue(AcquisitionEvent evt) {
+   public CovariantValue getCurrentValue(AcquisitionEvent evt, CovariantPairing pair) {
       try {
          CMMCore core = Magellan.getCore();
          if (isGroup()) {
