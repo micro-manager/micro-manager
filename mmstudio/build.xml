@@ -28,7 +28,7 @@
 			<fileset dir="${rscdir}/org/micromanager/conf2" includes="*.html"/>
 		</copy>
 		<copy todir="${int.pkgroot}/internal/scriptpanel">
-			<fileset dir="${src.pkgroot}/internal/scriptpanel" includes="*.bsh"/>
+			<fileset dir="${scriptdir}/org/micromanager" includes="*.bsh"/>
 		</copy>
 		<copy tofile="${intdir}/plugins.config" file="bin/plugins_mmstudio.config"/>
 	</target>
