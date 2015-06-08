@@ -6513,7 +6513,7 @@ void CMMCore::InitializeErrorMessages()
    errorText_[MMERR_DuplicateConfigGroup] = "Group name already in use.";
    errorText_[MMERR_CameraBufferReadFailed] = "Camera image buffer read failed.";
    errorText_[MMERR_CircularBufferFailedToInitialize] =
-      "Failed to initialize circular buffer - memory requirements not adequate.";
+      "Failed to allocate RAM for sequence buffer; please check your memory settings.";
    errorText_[MMERR_CircularBufferEmpty] = "Circular buffer is empty.";
    errorText_[MMERR_ContFocusNotAvailable] = "Auto-focus focus device not defined.";
    errorText_[MMERR_BadConfigName] = "Configuration name contains illegale characters (/\\*!')";
