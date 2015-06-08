@@ -34,8 +34,10 @@ import ij.WindowManager;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ComponentAdapter;
@@ -348,7 +350,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       haveCreatedGUI_ = true;
       resetTitle();
 
-      setWindowSize();
+      constrainWindowShape();
 
       DefaultEventManager.getInstance().post(new DefaultDisplayAboutToShowEvent(this));
    }
@@ -413,15 +415,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          public void componentResized(ComponentEvent e) {
             Dimension panelSize = canvasPanel_.getSize();
             canvas_.updateSize(panelSize);
-            Dimension canvasSize = canvas_.getSize();
-            // The canvas may now be smaller than the panel containing it (e.g.
-            // if the panel is a rectangle containing a square canvas); shrink
-            // the panel to suit so we don't blow the window as a whole
-            // out-of-size.
-            if (canvasSize.width < panelSize.width ||
-               canvasSize.height < panelSize.height) {
-               canvasPanel_.setSize(canvasSize);
-            }
          }
       });
 
@@ -482,31 +475,35 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    }
 
    /**
-    * Set our canvas' magnification based on the preferred window magnification.
+    * Set our canvas' magnification based on the preferred window
+    * magnification.
     */
    public void zoomToPreferredSize() {
       Point location = getLocation();
 
-      double mag = displaySettings_.getMagnification();
-
       // Use approximation here because ImageJ has fixed allowed magnification
       // levels and we want to be able to be a bit more approximate and snap
-      // to the closest allowed magnification. 
+      // to the closest allowed magnification.
+      double mag = displaySettings_.getMagnification();
       if (mag < canvas_.getMagnification()) {
+         // Shrink the canvas (zoom out).
          while (mag < canvas_.getMagnification() &&
                Math.abs(mag - canvas_.getMagnification()) > .01) {
             canvas_.zoomOut(canvas_.getWidth() / 2, canvas_.getHeight() / 2);
          }
       } else if (mag > canvas_.getMagnification()) {
+         // Grow the canvas (zoom in).
          while (mag > canvas_.getMagnification() &&
                Math.abs(mag - canvas_.getMagnification()) > .01) {
             canvas_.zoomIn(canvas_.getWidth() / 2, canvas_.getHeight() / 2);
          }
       }
 
+      constrainWindowShape();
+
       //Make sure the window is fully on the screen
       Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-      Point newLocation = new Point(location.x,location.y);
+      Point newLocation = new Point(location.x, location.y);
       if (newLocation.x + getWidth() > screenSize.width && getWidth() < screenSize.width) {
           newLocation.x = screenSize.width - getWidth();
       }
@@ -515,6 +512,37 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       }
 
       setLocation(newLocation);
+   }
+
+   /**
+    * Ensure the entirety of the window is on-screen and not underneath any
+    * important OS components like taskbars, menubars, etc.
+    */
+   private void constrainWindowShape() {
+      if (fullScreenFrame_ != null) {
+         // Do nothing for now since we aren't visible anyway.
+         return;
+      }
+      Point location = getLocation();
+      GraphicsConfiguration config = getScreenConfig();
+      Rectangle maxBounds = config.getBounds();
+      // Adjust for insets (e.g. taskbars, menubars on OSX, etc.)
+      Insets screenInsets = Toolkit.getDefaultToolkit().getScreenInsets(config);
+      maxBounds.x += screenInsets.left;
+      maxBounds.width -= screenInsets.left + screenInsets.right;
+      maxBounds.y += screenInsets.top;
+      maxBounds.height -= screenInsets.top + screenInsets.bottom;
+      // These are the max dimensions we can achieve without changing our
+      // location on-screen.
+      int maxWidth = maxBounds.x + maxBounds.width - location.x;
+      int maxHeight = maxBounds.y + maxBounds.height - location.y;
+      // Derive the available size for the image display by subtracting off
+      // the size of our insets and controls.
+      Insets insets = getInsets();
+      maxWidth -= insets.left + insets.right;
+      maxHeight -= insets.top + insets.bottom + controlsPanel_.getHeight();
+      canvas_.updateSize(new Dimension(maxWidth, maxHeight));
+      pack();
    }
 
    /**
@@ -701,7 +729,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          if (magChanged) {
             // Ensure that any changes in the canvas size (and thus in our
             // window size) properly adjust other elements.
-            setWindowSize();
+            constrainWindowShape();
          }
          // Assume any change in display settings will necessitate a redraw.
          displayBus_.post(new DefaultRequestToDrawEvent(null));
@@ -791,7 +819,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          add(contentsPanel_);
          fullScreenFrame_.dispose();
          fullScreenFrame_ = null;
-         setWindowSize();
+         constrainWindowShape();
          setVisible(true);
       }
       else {
@@ -1028,43 +1056,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    // Implemented to help out DummyImageWindow.
    public MMImageCanvas getCanvas() {
       return canvas_;
-   }
-
-   /**
-    * Set our window size so that it precisely holds all components, or, if
-    * there's not enough room to hold the entire canvas, expand to as large as
-    * possible. This is conceptually similar to the override of the pack()
-    * method, below, but in the opposite direction.
-    */
-   private synchronized void setWindowSize() {
-      if (fullScreenFrame_ != null) {
-         // Do nothing for now since we aren't visible anyway.
-         return;
-      }
-      Dimension controlsSize = controlsPanel_.getPreferredSize();
-      Image image = store_.getAnyImage();
-      if (image == null || canvas_ == null) {
-         // Nothing we can do here.
-         ReportingUtils.logError("No image/canvas available with which to set window size (" + image + " and " + canvas_ + ")");
-         return;
-      }
-      Dimension imageSize = new Dimension(
-            (int) Math.ceil(image.getWidth() * canvas_.getMagnification()),
-            (int) Math.ceil(image.getHeight() * canvas_.getMagnification()));
-      // HACK: account for changes in the zoom that change the desired size
-      // of the image canvas.
-      canvas_.setDrawingSize(imageSize.width, imageSize.height);
-      Insets insets = contentsPanel_.getInsets();
-      Dimension screenSize = getScreenConfig().getBounds().getSize();
-      // TODO: if we don't apply some padding here then we end up with the
-      // canvas being a bit too small; no idea why.
-      // The extra size ought to go away when we pack, anyway.
-      int maxWidth = Math.min(screenSize.width,
-            imageSize.width + insets.left + insets.right);
-      int maxHeight = Math.min(screenSize.height,
-            imageSize.height + controlsSize.height + insets.top + insets.bottom + 10);
-      contentsPanel_.setSize(new Dimension(maxWidth, maxHeight));
-      pack();
    }
 
    /**
