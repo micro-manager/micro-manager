@@ -19,7 +19,7 @@
 	<property name="int.pkgroot" location="${intdir}/org/micromanager"/>
 	<target name="copy-files" depends="mm.javabuild.copy-files">
         <copy todir="${int.pkgroot}/icons">
-            <fileset dir="${rscdir}/icons">
+            <fileset dir="${rscdir}/org/micromanager/icons">
 				<include name="**/*.png"/>
 				<include name="**/*.gif"/>
 			</fileset>
