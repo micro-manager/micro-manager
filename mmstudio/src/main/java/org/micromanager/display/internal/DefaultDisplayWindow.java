@@ -516,22 +516,12 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
 
    /**
     * Ensure the entirety of the window is on-screen and not underneath any
-    * important OS components like taskbars, menubars, etc.
+    * important OS components like taskbars, menubars, etc. This mostly
+    * involves ensuring that our canvas is the right size.
     */
    private void constrainWindowShape() {
-      if (fullScreenFrame_ != null) {
-         // Do nothing for now since we aren't visible anyway.
-         return;
-      }
       Point location = getLocation();
-      GraphicsConfiguration config = getScreenConfig();
-      Rectangle maxBounds = config.getBounds();
-      // Adjust for insets (e.g. taskbars, menubars on OSX, etc.)
-      Insets screenInsets = Toolkit.getDefaultToolkit().getScreenInsets(config);
-      maxBounds.x += screenInsets.left;
-      maxBounds.width -= screenInsets.left + screenInsets.right;
-      maxBounds.y += screenInsets.top;
-      maxBounds.height -= screenInsets.top + screenInsets.bottom;
+      Rectangle maxBounds = getSafeBounds();
       // These are the max dimensions we can achieve without changing our
       // location on-screen.
       int maxWidth = maxBounds.x + maxBounds.width - location.x;
@@ -833,6 +823,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          fullScreenFrame_.setResizable(false);
          fullScreenFrame_.add(contentsPanel_);
          fullScreenFrame_.setVisible(true);
+         constrainWindowShape();
       }
       canvasThread_ = new CanvasUpdateThread(store_, stack_, ijImage_, this);
       canvasThread_.start();
@@ -849,6 +840,21 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          result = GUIUtils.getGraphicsConfigurationBestMatching(getBounds());
       }
       return result;
+   }
+
+   /**
+    * This retrieves the boundaries of the current screen that are not taken
+    * over by OS components like taskbars and menubars.
+    */
+   public Rectangle getSafeBounds() {
+      GraphicsConfiguration config = getScreenConfig();
+      Rectangle bounds = config.getBounds();
+      Insets screenInsets = Toolkit.getDefaultToolkit().getScreenInsets(config);
+      bounds.x += screenInsets.left;
+      bounds.width -= screenInsets.left + screenInsets.right;
+      bounds.y += screenInsets.top;
+      bounds.height -= screenInsets.top + screenInsets.bottom;
+      return bounds;
    }
 
    @Override
