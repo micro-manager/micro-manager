@@ -125,7 +125,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       snapLiveManager_.addLiveModeListener(this);
 
       setTitle(MICRO_MANAGER_TITLE + " " + MMVersion.VERSION_STRING);
-      setMinimumSize(new Dimension(605, 235));
+      setMinimumSize(new Dimension(605, 250));
 
       JPanel contents = new JPanel();
       contents.setLayout(new SpringLayout());
