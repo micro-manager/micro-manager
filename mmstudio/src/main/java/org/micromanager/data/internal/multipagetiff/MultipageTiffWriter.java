@@ -122,7 +122,6 @@ public class MultipageTiffWriter {
    //Reader associated with this file
    private MultipageTiffReader reader_;
    private long blankPixelsOffset_ = -1;
-   private String summaryMDString_;
    
    public MultipageTiffWriter(StorageMultipageTiff masterStorage,
          JSONObject firstImageTags, String filename)
@@ -183,11 +182,6 @@ public class MultipageTiffWriter {
       buffers_ = new LinkedList<ByteBuffer>();
       
       writeMMHeaderAndSummaryMD(summaryJSON);
-      try {
-         summaryMDString_ = summaryJSON.toString(2);
-      } catch (JSONException ex) {
-         summaryMDString_ = "";
-      }
    }
 
    /**
@@ -704,9 +698,9 @@ public class MultipageTiffWriter {
     * expanded to write ROIs, file info, slice labels, and overlays
     */
    private void writeImageJMetadata(int numChannels, String summaryComment) throws IOException {
-      String infoString = summaryMDString_;
+      String infoString = masterStorage_.getSummaryMetadataString();
       if (summaryComment != null && summaryComment.length() > 0) {
-         infoString = "Acquisition comments: \n" + summaryComment + "\n\n\n" + summaryMDString_;
+         infoString = "Acquisition comments: \n" + summaryComment + "\n\n\n" + infoString;
       }
       char[] infoChars = infoString.toCharArray();
       int infoSize = 2 * infoChars.length;

@@ -78,6 +78,7 @@ public final class StorageMultipageTiff implements Storage {
          Arrays.asList(Coords.CHANNEL, Coords.TIME, Coords.Z,
             Coords.STAGE_POSITION));
    private DefaultSummaryMetadata summaryMetadata_;
+   private String summaryMetadataString_ = null;
    private boolean amInWriteMode_;
    private int lastFrameOpenedDataSet_ = -1;
    private String directory_;
@@ -487,6 +488,7 @@ public final class StorageMultipageTiff implements Storage {
       summaryMetadata_ = summary;
       JSONObject summaryJSON = summary.toJSON();
       if (summaryJSON != null) {
+         summaryMetadataString_ = summaryJSON.toString();
          boolean slicesFirst = summaryJSON.optBoolean("SlicesFirst", true);
          boolean timeFirst = summaryJSON.optBoolean("TimeFirst", false);
          TreeMap<Coords, MultipageTiffReader> oldImageMap = coordsToReader_;
@@ -514,6 +516,10 @@ public final class StorageMultipageTiff implements Storage {
    @Override
    public SummaryMetadata getSummaryMetadata() {
       return summaryMetadata_;
+   }
+
+   public String getSummaryMetadataString() {
+      return summaryMetadataString_;
    }
 
    public boolean getSplitByStagePosition() {
