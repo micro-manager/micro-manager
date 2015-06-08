@@ -1,6 +1,6 @@
 <project name="mmstudio" basedir="." default="jar">
 	<!-- Not sure how it got the name "MMJ_", but we'd need significant
-	     planning to change it -->
+		 planning to change it -->
 	<property name="product" value="MMJ_"/>
 
 	<import file="../buildscripts/javabuild.xml"/>
@@ -18,17 +18,17 @@
 	<property name="src.pkgroot" location="${srcdir}/org/micromanager"/>
 	<property name="int.pkgroot" location="${intdir}/org/micromanager"/>
 	<target name="copy-files" depends="mm.javabuild.copy-files">
-        <copy todir="${int.pkgroot}/icons">
-            <fileset dir="${rscdir}/org/micromanager/icons">
+		<copy todir="${int.pkgroot}/icons">
+			<fileset dir="${rscdir}/org/micromanager/icons">
 				<include name="**/*.png"/>
 				<include name="**/*.gif"/>
 			</fileset>
 		</copy>
 		<copy todir="${int.pkgroot}/internal/conf2">
-			<fileset dir="${src.pkgroot}/internal/conf2" includes="*.html"/>
+			<fileset dir="${rscdir}/org/micromanager/conf2" includes="*.html"/>
 		</copy>
-        <copy todir="${int.pkgroot}/internal/scriptpanel">
-            <fileset dir="${src.pkgroot}/internal/scriptpanel" includes="*.bsh"/>
+		<copy todir="${int.pkgroot}/internal/scriptpanel">
+			<fileset dir="${src.pkgroot}/internal/scriptpanel" includes="*.bsh"/>
 		</copy>
 		<copy tofile="${intdir}/plugins.config" file="bin/plugins_mmstudio.config"/>
 	</target>
