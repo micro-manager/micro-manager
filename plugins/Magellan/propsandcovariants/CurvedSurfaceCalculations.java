@@ -29,10 +29,10 @@ import misc.Log;
 public class CurvedSurfaceCalculations {
 
    //mean free paths for which vals have been calculated
-   private static int[] MEAN_FREE_PATHS = new int[]{30, 90};
-   private static int[] RADII_OF_CURVATURE = new int[]{600};
+   private static Integer[] MEAN_FREE_PATHS = new Integer[]{30, 90};
+   private static Integer[] RADII_OF_CURVATURE = new Integer[]{600};
    //ponts at which relative power has been calculated
-   private static double[] VERTICAL_DISTANCE_POINTS = {0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300};
+   private static double[] VERTICAL_DISTANCE_POINTS = {0, 20, 40, 60, 80, 100, 120, 140, 160,  180,  200,  220, 240,  260, 280, 300};
    private static double[] NORMAL_POINTS = {0, 10, 20, 30, 40, 50, 60, 70, 80, 90};
    //[radius of curvature][mean free path][normal][vertical distance]
    private static final double[][][][] RELATIVE_POWERS = new double[][][][]{
@@ -65,7 +65,7 @@ public class CurvedSurfaceCalculations {
    private static double normalIncrement_ = NORMAL_POINTS[1] - NORMAL_POINTS[0];
 
    public static double getRelativePower(int meanFreePath, double vertDistance, double normal, int radiusOfCurvature) {
-      int mfpIndex = Arrays.asList(MEAN_FREE_PATHS).indexOf(meanFreePath);
+       int mfpIndex = Arrays.asList(MEAN_FREE_PATHS).indexOf(meanFreePath);
       int radiusIndex = Arrays.asList(RADII_OF_CURVATURE).indexOf(radiusOfCurvature);
       if (mfpIndex == -1) {
          Log.log("Couldn't find mean free path in precalculated values");

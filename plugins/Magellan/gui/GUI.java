@@ -500,11 +500,11 @@ public class GUI extends javax.swing.JFrame {
                 (frameSummationButton_.isSelected() ? FrameIntegrationMethod.FRAME_SUMMATION : FrameIntegrationMethod.BURST_MODE));
         settings.rank_ = ((Number) rankSpinner_.getValue()).doubleValue();
         //curved surface excitation
-        settings.laser1MeanFreePath_ = (Integer) mfpComboMaitai_.getSelectedItem();
-        settings.laser2MeanFreePath_ = (Integer) mfpComboChameleon_.getSelectedItem();
+        settings.laser1MeanFreePath_ = Integer.parseInt(mfpComboMaitai_.getSelectedItem().toString());
+        settings.laser2MeanFreePath_ = Integer.parseInt( mfpComboChameleon_.getSelectedItem().toString());
         settings.laser1BasePower_ = (Double) basePowerSpinnerMaitai_.getValue();
         settings.laser2BasePower_ = (Double) basePowerSpinnerChameleon_.getValue();
-        settings.radiusOfCurvature_ = (Integer) radiusOfCurvatureCombo_.getSelectedItem();
+        settings.radiusOfCurvature_ = Integer.parseInt( radiusOfCurvatureCombo_.getSelectedItem().toString());
         
         settings.storePreferedValues();
         multipleAcqTable_.repaint();
@@ -563,11 +563,11 @@ public class GUI extends javax.swing.JFrame {
         frameSummationButton_.setSelected(settings.imageFilterType_ == FrameIntegrationMethod.FRAME_SUMMATION);
         rankSpinner_.setValue(settings.rank_);
        //curved surface excitation
-       mfpComboMaitai_.setSelectedItem( settings.laser1MeanFreePath_);
-       mfpComboChameleon_.setSelectedItem(settings.laser2MeanFreePath_);
+       mfpComboMaitai_.getModel().setSelectedItem(settings.laser1MeanFreePath_);
+       mfpComboChameleon_.getModel().setSelectedItem(settings.laser2MeanFreePath_);
        basePowerSpinnerMaitai_.setValue(settings.laser1BasePower_);
        basePowerSpinnerChameleon_.setValue(settings.laser2BasePower_);
-       radiusOfCurvatureCombo_.setSelectedItem(settings.radiusOfCurvature_);
+       radiusOfCurvatureCombo_.getModel().setSelectedItem(settings.radiusOfCurvature_);
 
         enableAcquisitionComponentsAsNeeded();
 

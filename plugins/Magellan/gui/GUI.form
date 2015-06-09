@@ -16,6 +16,7 @@
   </NonVisualComponents>
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
+    <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
   </SyntheticProperties>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
@@ -2067,19 +2068,14 @@
                                               </Group>
                                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                               <Group type="103" groupAlignment="0" attributes="0">
-                                                  <Group type="102" attributes="0">
-                                                      <Group type="103" groupAlignment="0" attributes="0">
-                                                          <Component id="ch1OffsetSpinner_" alignment="0" min="-2" pref="46" max="-2" attributes="0"/>
-                                                          <Component id="ch2OffsetSpinner_" alignment="0" min="-2" pref="46" max="-2" attributes="0"/>
-                                                          <Component id="ch3OffsetSpinner_" alignment="0" min="-2" pref="46" max="-2" attributes="0"/>
-                                                      </Group>
-                                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
-                                                  </Group>
+                                                  <Component id="ch1OffsetSpinner_" alignment="0" min="-2" pref="46" max="-2" attributes="0"/>
+                                                  <Component id="ch2OffsetSpinner_" alignment="0" min="-2" pref="46" max="-2" attributes="0"/>
+                                                  <Component id="ch3OffsetSpinner_" alignment="0" min="-2" pref="46" max="-2" attributes="0"/>
                                                   <Component id="ch5OffsetSpinner_" alignment="0" min="-2" pref="46" max="-2" attributes="0"/>
                                                   <Component id="ch4OffsetSpinner_" alignment="0" min="-2" pref="46" max="-2" attributes="0"/>
                                                   <Component id="ch0OffsetSpinner_" alignment="0" min="-2" pref="46" max="-2" attributes="0"/>
                                               </Group>
-                                              <EmptySpace min="-2" pref="204" max="-2" attributes="0"/>
+                                              <EmptySpace min="204" max="32767" attributes="0"/>
                                               <Component id="jLabel15" min="-2" max="-2" attributes="0"/>
                                               <EmptySpace min="-2" pref="68" max="-2" attributes="0"/>
                                               <Component id="jLabel16" min="-2" max="-2" attributes="0"/>
