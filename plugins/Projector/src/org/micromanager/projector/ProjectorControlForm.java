@@ -646,8 +646,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   IJ.getImage().setRoi(originalROI);
                } catch (HeadlessException e) {
                   ReportingUtils.showError(e);
-//               } catch (RuntimeException e) {
-//                  ReportingUtils.showError(e);
+               } catch (RuntimeException e) {
+                  ReportingUtils.showError(e);
                } finally {
                   isRunning_.set(false);
                   stopRequested_.set(false);
