@@ -432,9 +432,12 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          int delayMs = Integer.parseInt(delayField_.getText());
          Thread.sleep(delayMs);
          core_.snapImage();
+         // JonD: added line below to short-circuit exposure time
+         dev_.turnOff();
          // NS: just make sure to wait until the spot is no longer displayed
          // JonD: time to wait is simply the exposure time
-         Thread.sleep((int) (dev_.getExposure()/1000) - delayMs);
+         // JonD: no longer needed now that we turn the device off after taking our image
+         // Thread.sleep((int) (dev_.getExposure()/1000) - delayMs);
          // JonD: see earlier comment => commenting out next line
          // dev_.setExposure(originalExposure);
          TaggedImage taggedImage2 = core_.getTaggedImage();
@@ -473,7 +476,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private AffineTransform generateLinearMapping() {
       double centerX = dev_.getXRange() / 2 + dev_.getXMinimum();
       double centerY = dev_.getYRange() / 2 + dev_.getYMinimum();
-      double spacing = Math.min(dev_.getXRange(), dev_.getYRange()) / 10;
+      double spacing = Math.min(dev_.getXRange(), dev_.getYRange()) / 10;  // user 10% of galvo/SLM range
       Map<Point2D.Double, Point2D.Double> spotMap
             = new HashMap<Point2D.Double, Point2D.Double>();
 
@@ -486,7 +489,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          return null;
       }
       try {
-         return MathFunctions.generateAffineTransformFromPointPairs(spotMap, spacing, Double.MAX_VALUE);
+         // require that the RMS value between the mapped points and the measured points be less than 5% of image size
+         final long imageSize = Math.min(core_.getImageWidth(), core_.getImageHeight()); 
+         return MathFunctions.generateAffineTransformFromPointPairs(spotMap, imageSize*0.05, Double.MAX_VALUE);
       } catch (Exception e) {
          throw new RuntimeException("Spots aren't detected as expected. Is DMD in focus and roughly centered in camera's field of view?");
       }
@@ -505,15 +510,16 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private Map<Polygon, AffineTransform> generateNonlinearMapping() {
       
       // get the affine transform near the center spot
-      // then use it to estimate what SLM coordinates correspond to 
-      // the image's corner positions 
       final AffineTransform firstApproxAffine = generateLinearMapping();
+      
+      // then use this single transform to estimate what SLM coordinates 
+      // correspond to the image's corner positions 
       final Point2D.Double camCorner1 = (Point2D.Double) firstApproxAffine.transform(new Point2D.Double(0, 0), null);
       final Point2D.Double camCorner2 = (Point2D.Double) firstApproxAffine.transform(new Point2D.Double((int) core_.getImageWidth(), (int) core_.getImageHeight()), null);
       final Point2D.Double camCorner3 = (Point2D.Double) firstApproxAffine.transform(new Point2D.Double(0, (int) core_.getImageHeight()), null);
       final Point2D.Double camCorner4 = (Point2D.Double) firstApproxAffine.transform(new Point2D.Double((int) core_.getImageWidth(), 0), null);
 
-      // these are camera's bounds in SLM coordinates
+      // figure out camera's bounds in SLM coordinates
       // min/max because we don't know the relative orientation of the camera and SLM
       // do some extra checking in case camera/SLM aren't at exactly 90 degrees from each other, 
       // but still better that they are at 0, 90, 180, or 270 degrees from each other
@@ -613,7 +619,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                try {
                   isRunning_.set(true);
                   Roi originalROI = IJ.getImage().getRoi();
-                  app_.snapSingleImage();
+                  
+                  // JonD: don't understand why we do this
+                  // app_.snapSingleImage();
 
                   // do the heavy lifting of generating the local affine transform map
                   HashMap<Polygon, AffineTransform> mapping = 
@@ -636,16 +644,14 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration "
                         + (!stopRequested_.get() ? "finished." : "canceled."));
                   IJ.getImage().setRoi(originalROI);
-                  calibrateButton_.setText("Calibrate");
                } catch (HeadlessException e) {
                   ReportingUtils.showError(e);
-                  calibrateButton_.setText("Calibrate");
-               } catch (RuntimeException e) {
-                  ReportingUtils.showError(e);
-                  calibrateButton_.setText("Calibrate");
+//               } catch (RuntimeException e) {
+//                  ReportingUtils.showError(e);
                } finally {
                   isRunning_.set(false);
                   stopRequested_.set(false);
+                  calibrateButton_.setText("Calibrate");
                }
             }
          };
