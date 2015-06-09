@@ -43,8 +43,8 @@ const char* g_ControllerName = "Sapphire";
 const char* g_Keyword_PowerSetpoint = "PowerSetpoint";
 const char* g_Keyword_PowerReadback = "PowerReadback";
 
-const char * carriage_return = "\r";
-const char * line_feed = "\n";
+const char * COMMAND_TERM = "\r\n";
+const char * RESPONSE_TERM = "\r\n";
 
 
 
@@ -620,12 +620,7 @@ int Sapphire::HandleErrors()
 
 void Sapphire::Send(string cmd)
 {
-
-	std::ostringstream messs;
-	messs << "Sapphire::Send           " << cmd;
-	LogMessage( messs.str().c_str(), true);
-
-   int ret = SendSerialCommand(port_.c_str(), cmd.c_str(), carriage_return);
+   int ret = SendSerialCommand(port_.c_str(), cmd.c_str(), COMMAND_TERM);
    if (ret!=DEVICE_OK)
       error_ = DEVICE_SERIAL_COMMAND_FAILED;
 }
@@ -633,14 +628,10 @@ void Sapphire::Send(string cmd)
 
 int Sapphire::ReceiveOneLine()
 {
-   buf_string_ = "";
-   int ret = GetSerialAnswer(port_.c_str(), line_feed, buf_string_);
+   buf_string_.clear();
+   int ret = GetSerialAnswer(port_.c_str(), RESPONSE_TERM, buf_string_);
    if (ret != DEVICE_OK)
       return ret;
-	std::ostringstream messs;
-	messs << "Sapphire::ReceiveOneLine " << buf_string_;
-	LogMessage( messs.str().c_str(), true);
-
    return DEVICE_OK;
 }
 
