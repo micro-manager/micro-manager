@@ -1,4 +1,4 @@
-package org.micromanager.utils;
+package org.micromanager.internal.utils;
 
 import org.junit.Before;
 import org.junit.Test;
