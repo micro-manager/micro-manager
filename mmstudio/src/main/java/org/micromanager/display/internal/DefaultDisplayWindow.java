@@ -360,8 +360,15 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     * etc.
     */
    private void makeWindowControls() {
+      // If this is not our first time through, try to keep the same window
+      // boundaries and canvas size.
+      Rectangle origBounds = null;
       if (contentsPanel_ == null) {
          contentsPanel_ = new JPanel();
+      }
+      else {
+         // Have pre-existing components to get sizes from.
+         origBounds = getBounds();
       }
       contentsPanel_.removeAll();
       contentsPanel_.setLayout(new MigLayout("insets 1, fillx, filly",
@@ -390,6 +397,12 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       setMinimumSize(new Dimension(
             insets.left + insets.right + size.width,
             insets.top + insets.bottom + size.height));
+      if (origBounds == null) {
+         setSize(getMaxSafeSizeFromHere());
+      }
+      else {
+         setBounds(origBounds);
+      }
       pack();
    }
 
@@ -398,12 +411,11 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     */
    private void recreateCanvas() {
       canvas_ = new MMImageCanvas(ijImage_, this);
-      
+
       // HACK: set the minimum size. If we don't do this, then the canvas
       // doesn't shrink properly when the window size is reduced. Why?!
       canvas_.setMinimumSize(new Dimension(16, 16));
       Double mag = displaySettings_.getMagnification();
-      canvas_.setMagnification(mag != null ? mag : 1);
       // Wrap the canvas in a subpanel so that we can get events when it
       // resizes.
       canvasPanel_ = new JPanel(new MigLayout("insets 0, fill"));
@@ -532,6 +544,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       maxWidth -= insets.left + insets.right;
       maxHeight -= insets.top + insets.bottom + controlsPanel_.getHeight();
       canvas_.updateSize(new Dimension(maxWidth, maxHeight));
+      setSize(getMaxSafeSizeFromHere());
       pack();
    }
 
@@ -857,6 +870,30 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       return bounds;
    }
 
+   /**
+    * As above, but assumes the window does not move from its current position.
+    */
+   public Dimension getMaxSafeSizeFromHere() {
+      Rectangle bounds = getSafeBounds();
+      Point loc = getLocation();
+      return new Dimension(bounds.width - loc.x, bounds.height - loc.y);
+   }
+
+   /**
+    * Provided so our canvas can know what its preferred size should be; this
+    * method returns the available space for the canvas.
+    */
+   public Dimension getMaxCanvasSize() {
+      Dimension ourSize = getSize();
+      Insets insets = getInsets();
+      Dimension controlsSize = controlsPanel_.getSize();
+      // Leave some padding in for safety.
+      Dimension result = new Dimension(
+            ourSize.width - insets.left - insets.right - 4,
+            ourSize.height - insets.top - insets.bottom - controlsSize.height - 4);
+      return result;
+   }
+
    @Override
    public ImageWindow getImageWindow() {
       return dummyWindow_;
@@ -892,7 +929,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     * ImageJ object if necessary.
     */
    @Subscribe
-   public void onNewImage(final NewImageEvent event) {
+   public synchronized void onNewImage(final NewImageEvent event) {
       try {
          if (!haveCreatedGUI_) {
             // Time to make our components, but we should only do so in the EDT.
@@ -1062,78 +1099,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    // Implemented to help out DummyImageWindow.
    public MMImageCanvas getCanvas() {
       return canvas_;
-   }
-
-   /**
-    * HACK HACK HACK etc you get the idea.
-    * Manually derive the size of components based on our own size. We have
-    * a layout that looks roughly like this:
-    * +---------+
-    * |         |
-    * |  canvas |
-    * |         |
-    * |         |
-    * |         |
-    * +---------+
-    * |         |
-    * | controls|
-    * +---------+
-    * The size of the controls can only grow vertically; the canvas can grow in
-    * both dimensions, and should absorb all remaining extra space.
-    * Unfortunately, canvas sizing is complicated by the fact that the canvas
-    * has a "zoom mode" for when there isn't enough room to display the entire
-    * image at the current zoom level.
-    */
-   @Override
-   public synchronized void pack() {
-      if (!haveCreatedGUI_) {
-         // No point doing this until GUI creation is complete.
-         return;
-      }
-      Dimension controlsSize = controlsPanel_.getPreferredSize();
-      Dimension ourSize = contentsPanel_.getSize();
-      Dimension screenSize = getScreenConfig().getBounds().getSize();
-      // HACK: coerce our size to not exceed that of the screen we are in. No
-      // idea how this happens in the first place, but it does with very large
-      // images (e.g. 2.5k x 2.5k).
-      ourSize = new Dimension(Math.min(ourSize.width, screenSize.width),
-            Math.min(ourSize.height, screenSize.height));
-      boolean isFullScreen = (fullScreenFrame_ != null);
-      if (isFullScreen) {
-         // Substitute the size of the monitor our contents are in.
-         ourSize = GUIUtils.getFullScreenBounds(getScreenConfig()).getSize();
-      }
-      // Determine if a given component is growing (we need to increase our
-      // own size) or shrinking (we need to shrink).
-      int widthDelta = 0;
-      int heightDelta = 0;
-      if (prevControlsSize_ != null) {
-         heightDelta += controlsSize.height - prevControlsSize_.height;
-      }
-      prevControlsSize_ = controlsSize;
-
-      // Resize the canvas to use available spare space.
-      // HACK: for some reason, we're off by 2 in width and 10 in height.
-      int spareWidth = ourSize.width + widthDelta - 2;
-      int spareHeight = ourSize.height + heightDelta - controlsSize.height - 10;
-      Dimension panelSize = canvasPanel_.getSize();
-      if (panelSize.width != spareWidth || panelSize.height != spareHeight) {
-         canvasPanel_.setSize(spareWidth, spareHeight);
-      }
-      // Don't adjust the window size when in fullscreen mode.
-      if (isFullScreen) {
-         // HACK: override preferred size of contents panel so that
-         // frame doesn't shrink when we repack it.
-         contentsPanel_.setPreferredSize(ourSize);
-         fullScreenFrame_.pack();
-      }
-      else {
-         // Undo damage to contentsPanel_'s preferred size in the other branch.
-         contentsPanel_.setPreferredSize(null);
-         setSize(ourSize.width + widthDelta,
-               ourSize.height + heightDelta);
-         super.pack();
-      }
    }
 
    @Override

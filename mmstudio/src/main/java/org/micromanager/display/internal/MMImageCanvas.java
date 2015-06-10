@@ -36,7 +36,6 @@ import java.awt.Rectangle;
 
 
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.NewDisplaySettingsEvent;
 import org.micromanager.display.internal.events.CanvasDrawEvent;
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
@@ -49,9 +48,9 @@ import org.micromanager.display.internal.events.MouseMovedEvent;
  */
 class MMImageCanvas extends ImageCanvas {
    ImagePlus ijImage_;
-   DisplayWindow display_;
+   DefaultDisplayWindow display_;
    
-   public MMImageCanvas(ImagePlus ijImage, DisplayWindow display) {
+   public MMImageCanvas(ImagePlus ijImage, DefaultDisplayWindow display) {
       super(ijImage);
       ijImage_ = ijImage;
       display_ = display;
@@ -218,15 +217,14 @@ class MMImageCanvas extends ImageCanvas {
       display_.unregisterForEvents(this);
    }
 
+   /**
+    * Our preferred size is dictated for us by our window, because it depends
+    * on how much available space there is.
+    */
    @Override
    public Dimension getPreferredSize() {
-      Dimension superDim = super.getPreferredSize();
-      // We cap our size at the min of superDim or the max displayable size of
-      // our image at the current zoom level.
-      return new Dimension(
-            (int) Math.min(superDim.width,
-               Math.ceil(ijImage_.getWidth() * this.magnification)),
-            (int) Math.min(superDim.height,
-               Math.ceil(ijImage_.getHeight() * this.magnification)));
+      Dimension maxSize = display_.getMaxCanvasSize();
+      updateSize(maxSize);
+      return getSize();
    }
 }
