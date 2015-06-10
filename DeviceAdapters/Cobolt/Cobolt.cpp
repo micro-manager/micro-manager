@@ -14,6 +14,9 @@
 
 const char* g_DeviceCoboltName = "Cobolt";
 
+const char* g_SendTerm = "\r";
+const char* g_RecvTerm = "\r\n";
+
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
 ///////////////////////////////////////////////////////////////////////////////
@@ -189,9 +192,9 @@ int Cobolt::LaserOnOff(int onoff)
         command << "l1";
         laserOn_ = "On";
     }
-    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), g_SendTerm);
     if (ret != DEVICE_OK) return ret;
-    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+    ret = GetSerialAnswer(port_.c_str(), g_RecvTerm, answer);
     if (ret != DEVICE_OK) return ret;
     
     return DEVICE_OK;
@@ -203,9 +206,9 @@ int Cobolt::GetState(int &value)
     std::string answer;
     
     command << "l? ";
-    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), g_SendTerm);
     if (ret != DEVICE_OK) return ret;
-    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+    ret = GetSerialAnswer(port_.c_str(), g_RecvTerm, answer);
     if (ret != DEVICE_OK) return ret;
     
     if (answer.at(0) == '0')
@@ -291,9 +294,9 @@ int Cobolt::OnPowerStatus(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
     std::ostringstream command;
     
     command << "pa? ";
-    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), g_SendTerm);
     if (ret != DEVICE_OK) return ret;
-    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+    ret = GetSerialAnswer(port_.c_str(), g_RecvTerm, answer);
     if (ret != DEVICE_OK) return ret;
     pProp->Set(atof(answer.c_str()));
     
@@ -305,9 +308,9 @@ int Cobolt::OnHours(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
     std::ostringstream command;
     
     command << "hrs? ";
-    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), g_SendTerm);
     if (ret != DEVICE_OK) return ret;
-    ret = GetSerialAnswer(port_.c_str(), "\r", hours_);
+    ret = GetSerialAnswer(port_.c_str(), g_RecvTerm, hours_);
     if (ret != DEVICE_OK) return ret;
     
     pProp->Set(hours_.c_str());
@@ -320,9 +323,9 @@ int Cobolt::OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
     std::ostringstream command;
     
     command << "sn? ";
-    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), g_SendTerm);
     if (ret != DEVICE_OK) return ret;
-    ret = GetSerialAnswer(port_.c_str(), "\r", serialNumber_);
+    ret = GetSerialAnswer(port_.c_str(), g_RecvTerm, serialNumber_);
     if (ret != DEVICE_OK) return ret;
     
     pProp->Set(serialNumber_.c_str());
@@ -335,9 +338,9 @@ int Cobolt::OnVersion(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
     std::ostringstream command;
     
     command << "ver? ";
-    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), g_SendTerm);
     if (ret != DEVICE_OK) return ret;
-    ret = GetSerialAnswer(port_.c_str(), "\r", version_);
+    ret = GetSerialAnswer(port_.c_str(), g_RecvTerm, version_);
     if (ret != DEVICE_OK) return ret;
      
     pProp->Set(version_.c_str());
@@ -352,9 +355,9 @@ int Cobolt::OnCurrent(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
     std::ostringstream command;
     
     command << "i? ";
-    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), g_SendTerm);
     if (ret != DEVICE_OK) return ret;
-    ret = GetSerialAnswer(port_.c_str(), "\r", current_);
+    ret = GetSerialAnswer(port_.c_str(), g_RecvTerm, current_);
     if (ret != DEVICE_OK) return ret;
     
     pProp->Set(current_.c_str());
@@ -369,9 +372,9 @@ int Cobolt::OnInterlock(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
     std::string answer;
     
     command << "ilk? ";
-    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), g_SendTerm);
     if (ret != DEVICE_OK) return ret;
-    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+    ret = GetSerialAnswer(port_.c_str(), g_RecvTerm, answer);
     if (ret != DEVICE_OK) return ret;
     
     if (answer.at(0) == '0')
@@ -391,9 +394,9 @@ int Cobolt::OnFault(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
     std::string answer;
     
     command << "f? ";
-    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), g_SendTerm);
     if (ret != DEVICE_OK) return ret;
-    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+    ret = GetSerialAnswer(port_.c_str(), g_RecvTerm, answer);
     if (ret != DEVICE_OK) return ret;
     
     if (answer.at(0) == '0')
@@ -418,9 +421,9 @@ int Cobolt::OnLaserStatus(MM::PropertyBase* pProp, MM::ActionType /* eAct */)
     std::string answer;
     
     command << "l? ";
-    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), g_SendTerm);
     if (ret != DEVICE_OK) return ret;
-    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+    ret = GetSerialAnswer(port_.c_str(), g_RecvTerm, answer);
     if (ret != DEVICE_OK) return ret;
     
     if (answer.at(0) == '0')
@@ -441,9 +444,9 @@ int Cobolt::OnLaserOnOff(MM::PropertyBase* pProp, MM::ActionType eAct)
     if (eAct == MM::BeforeGet)
     {
         command << "l? ";
-        int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+        int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), g_SendTerm);
         if (ret != DEVICE_OK) return ret;
-        ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+        ret = GetSerialAnswer(port_.c_str(), g_RecvTerm, answer);
         if (ret != DEVICE_OK) return ret;
         //fprintf(stderr,"Cobolt::LaserOnOff() %s\n",answer.c_str());
         
@@ -486,9 +489,9 @@ int Cobolt::SetPowerSetpoint(double requestedPowerSetpoint)
 	}
 	setpointString << requestedPowerSetpoint;
 	command << "p " <<setpointString.str();
-    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), g_SendTerm);
     if (ret != DEVICE_OK) return ret;
-    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+    ret = GetSerialAnswer(port_.c_str(), g_RecvTerm, answer);
     if (ret != DEVICE_OK) return ret;
     
     return DEVICE_OK;
@@ -501,9 +504,9 @@ int Cobolt::GetPowerSetpoint(double& value)
     std::string answer;
     
     command << "p? ";
-    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), g_SendTerm);
     if (ret != DEVICE_OK) return ret;
-    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+    ret = GetSerialAnswer(port_.c_str(), g_RecvTerm, answer);
     if (ret != DEVICE_OK) return ret;
     value = atof(answer.c_str());
     
