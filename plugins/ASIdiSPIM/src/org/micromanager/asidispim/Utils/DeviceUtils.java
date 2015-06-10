@@ -102,7 +102,7 @@ public class DeviceUtils {
             }
             break;
          case PLOGIC:
-            if (firmwareVersion < 3.069) {
+            if (firmwareVersion < 3.089) {
                MyDialogUtils.showError("Device " + devices_.getMMDevice(key)
                      + ": PLogic firmware is old; some features may not work."
                      + " Contact ASI for updated firmware.");
