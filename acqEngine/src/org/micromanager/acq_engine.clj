@@ -105,7 +105,6 @@
 
 (defn generate-metadata [event state]
   (merge
-    (state :system-state)
     (:metadata event)
     (let [[x y] (let [xy-stage (state :default-xy-stage)]
                   (when-not (empty? xy-stage)
