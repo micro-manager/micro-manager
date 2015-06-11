@@ -43,7 +43,7 @@
 
 	<target name="build" depends="set-version,build-cpp,build-java" description="Build all components"/>
 
-	<target name="stage-deviceadapters" unless="mm.build.stage.demo.only">
+	<target name="stage-deviceadapters">
 		<if>
 			<istrue value="${mm.build.stage.demo.only}"/>
 			<then>
