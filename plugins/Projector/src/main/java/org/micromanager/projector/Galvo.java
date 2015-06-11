@@ -149,14 +149,14 @@ public class Galvo implements ProjectionDevice {
             }
          }).get();
          if (result == 0) {
-            ReportingUtils.logError("Unable to get galvo X minimum");
+            app_.logs().logError("Unable to get galvo X minimum");
          }
          return result;
       } catch (InterruptedException ex) {
-         ReportingUtils.logError("Unable to get galvo X minimum");
+         app_.logs().logError("Unable to get galvo X minimum");
          return 0;
       } catch (ExecutionException ex) {
-         ReportingUtils.logError("Unable to get galvo X minimum");
+         app_.logs().logError("Unable to get galvo X minimum");
          return 0;
       }
    }
@@ -176,14 +176,14 @@ public class Galvo implements ProjectionDevice {
             }
          }).get();
          if (result == 0) {
-            ReportingUtils.logError("Unable to get galvo Y minimum");
+            app_.logs().logError("Unable to get galvo Y minimum");
          }
          return result;
       } catch (InterruptedException ex) {
-         ReportingUtils.logError("Unable to get galvo Y minimum");
+         app_.logs().logError("Unable to get galvo Y minimum");
          return 0;
       } catch (ExecutionException ex) {
-         ReportingUtils.logError("Unable to get galvo Y minimum");
+         app_.logs().logError("Unable to get galvo Y minimum");
          return 0;
       }
    }

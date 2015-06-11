@@ -48,7 +48,7 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
    
    private static final String AF_DEVICE_NAME = "Duo";
 
-   private ScriptInterface app_;
+   private Studio app_;
    private CMMCore core_;
 
    private boolean verbose_ = true; // displaying debug info or not
@@ -91,7 +91,7 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
 
       if (core_ == null) {
          // if core object is not set attempt to get its global handle
-         core_ = app_.getMMCore();
+         core_ = app_.getCMMCore();
       }
 
       if (core_ == null) {
@@ -208,9 +208,9 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
    }
    
    @Override
-   public void setApp(ScriptInterface app) {
+   public void setApp(Studio app) {
       app_ = app;
-      core_ = app.getMMCore();
+      core_ = app.getCMMCore();
    }
 
 }   

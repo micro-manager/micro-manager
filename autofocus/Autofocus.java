@@ -70,7 +70,7 @@ public class Autofocus extends AutofocusBase implements org.micromanager.Autofoc
    
    private static final String AF_DEVICE_NAME = "JAF(H&P)";
 
-   private ScriptInterface app_;
+   private Studio app_;
    private CMMCore core_;
    private ImageProcessor ipCurrent_ = null;
 
@@ -149,7 +149,7 @@ public class Autofocus extends AutofocusBase implements org.micromanager.Autofoc
 
       if (core_ == null) {
          // if core object is not set attempt to get its global handle
-         core_ = app_.getMMCore();
+         core_ = app_.getCMMCore();
       }
 
       if (core_ == null) {
@@ -534,8 +534,8 @@ public class Autofocus extends AutofocusBase implements org.micromanager.Autofoc
       return AF_DEVICE_NAME;
    }
 
-   public void setApp(ScriptInterface app) {
+   public void setApp(Studio app) {
       app_ = app;
-      core_ = app.getMMCore();
+      core_ = app.getCMMCore();
    }
 }   
