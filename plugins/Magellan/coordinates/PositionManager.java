@@ -1,24 +1,38 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+///////////////////////////////////////////////////////////////////////////////
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
+
 package coordinates;
 
-import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import bidc.CoreCommunicator;
+import bidc.JavaLayerImageConstructor;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import json.JSONArray;
+import json.JSONException;
+import json.JSONObject;
+import main.Magellan;
 import misc.Log;
-import mmcorej.CMMCore;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.micromanager.internal.MMStudio;
-import org.micromanager.Studio;
-import org.micromanager.internal.utils.ReportingUtils;
+import misc.LongPoint;
+import misc.MD;
+
 
 
 /*
@@ -28,25 +42,51 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class PositionManager {
 
    private static final String COORDINATES_KEY = "DeviceCoordinatesUm";
-   private static final String ROW_KEY = "GridRowIndex";
-   private static final String COL_KEY = "GridColumnIndex";
    private static final String PROPERTIES_KEY = "Properties";
    private static final String MULTI_RES_NODE_KEY = "MultiResPositionNode";
    
    
-   private final String pixelSizeConfig_;
+   private final AffineTransform affine_;
    private JSONArray positionList_; //all access to positionlist in synchronized methods for thread safety
    private int minRow_, maxRow_, minCol_, maxCol_; //For the lowest resolution level
-   private String xyStageName_ = MMStudio.getInstance().getCore().getXYStageDevice();
+   private final String xyStageName_;
    //Map of Res level to set of nodes
    private TreeMap<Integer,TreeSet<MultiResPositionNode>> positionNodes_; 
    private final int displayTileWidth_, displayTileHeight_;
    private final int fullTileWidth_, fullTileHeight_;
    private final int overlapX_, overlapY_;
    
-   public PositionManager(String pixelSizeConfig, JSONObject summaryMD, int displayTileWidth, int displayTileHeight,
+    public PositionManager(AffineTransform transform, JSONObject summaryMD, int displayTileWidth, int displayTileHeight,
+           int fullTileWidth, int fullTileHeight, int overlapX, int overlapY, JSONArray initialPosList) {
+      try {
+         xyStageName_ = summaryMD.getString("Core-XYStage");
+      } catch (JSONException ex) {
+         throw new RuntimeException("No XY stage name in summary metadata");
+      }
+      affine_ = transform;
+      positionNodes_ = new TreeMap<Integer,TreeSet<MultiResPositionNode>>();
+      minRow_ = 0; maxRow_ = 0;
+       minCol_ = 0;
+       maxRow_ = 0;
+       positionList_ = initialPosList;
+       updateMinAndMaxRowsAndCols();
+       updateLowerResolutionNodes(); //make sure nodes created for all preexisiting positions
+       displayTileWidth_ = displayTileWidth;
+       displayTileHeight_ = displayTileHeight;
+      fullTileWidth_ = fullTileWidth;
+      fullTileHeight_ = fullTileHeight;
+      overlapX_ = overlapX; 
+      overlapY_ = overlapY;
+   }
+   
+   public PositionManager(AffineTransform transform, JSONObject summaryMD, int displayTileWidth, int displayTileHeight,
            int fullTileWidth, int fullTileHeight, int overlapX, int overlapY) {
-      pixelSizeConfig_ = pixelSizeConfig;
+      try {
+         xyStageName_ = summaryMD.getString("Core-XYStage");
+      } catch (JSONException ex) {
+         throw new RuntimeException("No XY stage name in summary metadata");
+      }
+      affine_ = transform;
       positionNodes_ = new TreeMap<Integer,TreeSet<MultiResPositionNode>>();
       readRowsAndColsFromPositionList(summaryMD);
       displayTileWidth_ = displayTileWidth;
@@ -68,12 +108,15 @@ public class PositionManager {
    public synchronized XYStagePosition getXYPosition(int index) {
       try {
          JSONArray jsonPos = positionList_.getJSONObject(index).getJSONObject("DeviceCoordinatesUm").getJSONArray(xyStageName_);
-         Point2D.Double posCenter = new Point2D.Double(jsonPos.getDouble(0), jsonPos.getDouble(1));
-         //Full 
-         return new XYStagePosition(posCenter, displayTileWidth_, displayTileHeight_,
-                 fullTileWidth_, fullTileHeight_, (int) getGridRow(index, 0), (int) getGridCol(index, 0), pixelSizeConfig_);
+          Point2D.Double posCenter = new Point2D.Double(jsonPos.getDouble(0), jsonPos.getDouble(1));
+          //Full 
+          double[] mat = new double[4];
+          affine_.getMatrix(mat);
+          AffineTransform transform = new AffineTransform(mat[0], mat[1], mat[2], mat[3], posCenter.x, posCenter.y);
+          return new XYStagePosition(posCenter, displayTileWidth_, displayTileHeight_,
+                  fullTileWidth_, fullTileHeight_, (int) getGridRow(index, 0), (int) getGridCol(index, 0), transform);
       } catch (JSONException ex) {
-         ReportingUtils.showError("problem with position metadata");
+          Log.log("problem with position metadata");
          throw new RuntimeException();
       }
    }
@@ -112,7 +155,7 @@ public class PositionManager {
             return node.positionIndex;
          }
       }
-      ReportingUtils.showError("Could't find full resolution child of node");
+      Log.log("Could't find full resolution child of node");
       return -1;
    }
 
@@ -125,7 +168,7 @@ public class PositionManager {
          return node.positionIndex;
       } catch (Exception e) {
          e.printStackTrace();
-         Log.log("Couldnt read position list correctly");
+         Log.log("Couldnt read position list correctly", true);
          return 0;
       }
    }
@@ -139,7 +182,7 @@ public class PositionManager {
          return node.gridRow;
       } catch (JSONException e) {
          e.printStackTrace();
-         Log.log("Couldnt read position list correctly");
+         Log.log("Couldnt read position list correctly", true);
          return 0;
       }
    }
@@ -153,7 +196,7 @@ public class PositionManager {
          return node.gridCol;
       } catch (JSONException e) {
          e.printStackTrace();
-         Log.log("Couldnt read position list correctly");
+         Log.log("Couldnt read position list correctly", true);
          return 0;
       }
    }
@@ -189,8 +232,8 @@ public class PositionManager {
          for (int h = 0; h < posIndices.length; h++) {
             //check if position is already present in list, and if so, return its index
             for (int i = 0; i < positionList_.length(); i++) {
-               if (positionList_.getJSONObject(i).getLong(ROW_KEY) == rows[h]
-                       && positionList_.getJSONObject(i).getLong(COL_KEY) == cols[h]) {
+               if (MD.getGridRow(positionList_.getJSONObject(i)) == rows[h]
+                       && MD.getGridCol(positionList_.getJSONObject(i)) == cols[h]) {
                   //we already have position, so return its index
                   posIndices[h] = i;
                   continue outerloop;
@@ -211,19 +254,25 @@ public class PositionManager {
          updateLowerResolutionNodes();
          return posIndices;
       } catch (JSONException e) {
-         ReportingUtils.showError("Problem with position metadata");
+         Log.log("Problem with position metadata");
          return null;
       }
    }
    
-   private synchronized void updateMinAndMaxRowsAndCols() throws JSONException {
+   private synchronized void updateMinAndMaxRowsAndCols() {
       //Go through all positions to update numRows and numCols
       for (int i = 0; i < positionList_.length(); i++) {
-         JSONObject pos = positionList_.getJSONObject(i);
-         minRow_ = (int) Math.min(pos.getLong(ROW_KEY), minRow_);
-         minCol_ = (int) Math.min(pos.getLong(COL_KEY), minCol_);
-         maxRow_ = (int) Math.max(pos.getLong(ROW_KEY), maxRow_);
-         maxCol_ = (int) Math.max(pos.getLong(COL_KEY), maxCol_);
+         JSONObject pos;
+         try {
+            pos = positionList_.getJSONObject(i);
+         } catch (JSONException ex) {
+            Log.log("Unexpected error reading positio list");
+            throw new RuntimeException();
+         }
+         minRow_ = (int) Math.min(MD.getGridRow(pos), minRow_);
+         minCol_ = (int) Math.min(MD.getGridCol(pos), minCol_);
+         maxRow_ = (int) Math.max(MD.getGridRow(pos), maxRow_); 
+         maxCol_ = (int) Math.max(MD.getGridCol(pos), maxCol_);
       }
    }
 
@@ -238,7 +287,7 @@ public class PositionManager {
             positionList_ = new JSONArray();
          }
       } catch (JSONException e) {
-         ReportingUtils.showError("Couldn't read initial position list");
+         Log.log("Couldn't read initial position list");
       }
    }
 
@@ -250,16 +299,16 @@ public class PositionManager {
          JSONObject coords = new JSONObject();
          xy.put(stageCoords.x);
          xy.put(stageCoords.y);
-         coords.put(MMStudio.getInstance().getCore().getXYStageDevice(), xy);
+         coords.put(xyStageName_, xy);
          JSONObject pos = new JSONObject();
          pos.put(COORDINATES_KEY, coords);
-         pos.put(COL_KEY, col);
-         pos.put(ROW_KEY, row);
+         MD.setGridCol(pos, col);
+         MD.setGridRow(pos, row);
          pos.put(PROPERTIES_KEY, new JSONObject());
 
          return pos;
       } catch (Exception e) {
-         ReportingUtils.showError("Couldn't create XY position");
+         Log.log("Couldn't create XY position");
          return null;
       }
    }
@@ -275,7 +324,7 @@ public class PositionManager {
                positionNodes_.put(0, new TreeSet<MultiResPositionNode>());
             }
             //add node in case its a new position
-            MultiResPositionNode n = new MultiResPositionNode(0,position.getLong(ROW_KEY),position.getLong(COL_KEY));
+            MultiResPositionNode n = new MultiResPositionNode(0,MD.getGridRow(position),MD.getGridCol(position));
             positionNodes_.get(0).add(n);
             n.positionIndex = i;
             position.getJSONObject(PROPERTIES_KEY).put(MULTI_RES_NODE_KEY, n);
@@ -302,7 +351,7 @@ public class PositionManager {
             linkToParentNodes(node, lowestResLevel);
          }
       } catch (JSONException e) {
-         ReportingUtils.showError("Problem reading position metadata");
+         Log.log("Problem reading position metadata");
       }
    }
 
@@ -360,30 +409,30 @@ public class PositionManager {
     * @param stageCoords x and y coordinates of image in stage space
     * @return absolute, full resolution pixel coordinate of given stage posiiton
     */
-   public synchronized Point getPixelCoordsFromStageCoords(double stageX, double stageY) {
+   public synchronized LongPoint getPixelCoordsFromStageCoords(double stageX, double stageY) {
       try {
           JSONObject existingPosition = positionList_.getJSONObject(0);
          double exisitngX = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(0);
          double exisitngY = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(1);
-         int existingRow = existingPosition.getInt(ROW_KEY);
-         int existingColumn = existingPosition.getInt(COL_KEY);
+         long existingRow = MD.getGridRow(existingPosition);
+         long existingColumn = MD.getGridCol(existingPosition);
   
          //get stage displacement from center of the tile we have coordinates for
          double dx = stageX - exisitngX;
          double dy = stageY - exisitngY;
-         AffineTransform transform = AffineUtils.getAffineTransform(pixelSizeConfig_,0, 0);
+         AffineTransform transform = (AffineTransform) affine_.clone();
          Point2D.Double pixelOffset = new Point2D.Double(); // offset in number of pixels from the center of this tile
          transform.inverseTransform(new Point2D.Double(dx,dy), pixelOffset);                     
          //Add pixel offset to pixel center of this tile to get absolute pixel position
-         int xPixel = (int) ((existingColumn + 0.5) * displayTileWidth_  + pixelOffset.x);
-         int yPixel = (int) ((existingRow + 0.5) * displayTileHeight_  + pixelOffset.y);
-         return new Point(xPixel,yPixel);
+         long xPixel = (int) ((existingColumn + 0.5) * displayTileWidth_  + pixelOffset.x);
+         long yPixel = (int) ((existingRow + 0.5) * displayTileHeight_  + pixelOffset.y);
+         return new LongPoint(xPixel,yPixel);
       } catch (JSONException ex) {
         ex.printStackTrace();
-         Log.log("Problem with current position metadata");
+         Log.log("Problem with current position metadata", true);
          return null;
       } catch (NoninvertibleTransformException e) {
-         ReportingUtils.showError("Problem using affine transform to convert stage coordinates to pixel coordinates");
+         Log.log("Problem using affine transform to convert stage coordinates to pixel coordinates");
          return null;
       }
    }
@@ -398,19 +447,23 @@ public class PositionManager {
       try {
          JSONObject existingPosition = positionList_.getJSONObject(0);
          double exisitngX = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(0);
-         double exisitngY = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(1);
-         long existingRow = existingPosition.getInt(ROW_KEY);
-         long existingColumn = existingPosition.getInt(COL_KEY);
+         double exisitngY = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(1);        
+         long existingRow = MD.getGridRow(existingPosition);
+         long existingColumn = MD.getGridCol(existingPosition);
          //get pixel displacement from center of the tile we have coordinates for
          long dxPix = (long) (xAbsolute - (existingColumn + 0.5) * displayTileWidth_);
          long dyPix = (long) (yAbsolute - (existingRow + 0.5) * displayTileHeight_);
-         AffineTransform transform = AffineUtils.getAffineTransform(pixelSizeConfig_,exisitngX, exisitngY);
-         Point2D.Double stagePos = new Point2D.Double();
-         transform.transform(new Point2D.Double(dxPix, dyPix), stagePos);  
-         return stagePos;
+         
+
+          Point2D.Double stagePos = new Point2D.Double();
+          double[] mat = new double[4];
+          affine_.getMatrix(mat);
+          AffineTransform transform = new AffineTransform(mat[0], mat[1], mat[2], mat[3], exisitngX, exisitngY);
+          transform.transform(new Point2D.Double(dxPix, dyPix), stagePos);
+          return stagePos;
       } catch (JSONException ex) {
         ex.printStackTrace();;
-         Log.log("Problem with current position metadata");
+         Log.log("Problem with current position metadata", true);
          return null;
 }
       
@@ -427,36 +480,36 @@ public class PositionManager {
     */
    private synchronized Point2D.Double getStagePositionCoordinates(int row, int col, int pixelOverlapX, int pixelOverlapY) {
       try {
-         ScriptInterface app = MMStudio.getInstance();
-         CMMCore core = app.getMMCore();
          if ( positionList_.length() == 0) {
             try {
-               //create position 0 based on current XY stage position
-               return new Point2D.Double(core.getXPosition(core.getXYStageDevice()), core.getYPosition(core.getXYStageDevice()));
+               //create position 0 based on current XY stage position--happens at start of explore acquisition
+               return new Point2D.Double(Magellan.getCore().getXPosition(xyStageName_), Magellan.getCore().getYPosition(xyStageName_));
             } catch (Exception ex) {
-               ReportingUtils.showError("Couldn't create position 0");
+               Log.log("Couldn't create position 0");
                return null;
             }
          } else {
             JSONObject existingPosition = positionList_.getJSONObject(0);
 
             double exisitngX = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(0);
-            double exisitngY = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(1);
-            int existingRow = existingPosition.getInt(ROW_KEY);
-            int existingColumn = existingPosition.getInt(COL_KEY);
+            double exisitngY = existingPosition.getJSONObject(COORDINATES_KEY).getJSONArray(xyStageName_).getDouble(1);   
+            long existingRow = MD.getGridRow(existingPosition);
+            long existingColumn = MD.getGridCol(existingPosition);
 
-            double xPixelOffset = (col - existingColumn) * (CoreCommunicator.getInstance().getImageWidth() - pixelOverlapX);
-            double yPixelOffset = (row - existingRow) * (CoreCommunicator.getInstance().getImageHeight() - pixelOverlapY);
+            double xPixelOffset = (col - existingColumn) * (JavaLayerImageConstructor.getInstance().getImageWidth() - pixelOverlapX);
+            double yPixelOffset = (row - existingRow) * (JavaLayerImageConstructor.getInstance().getImageHeight() - pixelOverlapY);
 
-            AffineTransform transform = AffineUtils.getAffineTransform(pixelSizeConfig_, exisitngX, exisitngY);
             Point2D.Double stagePos = new Point2D.Double();
+            double[] mat = new double[4];
+            affine_.getMatrix(mat);
+            AffineTransform transform = new AffineTransform(mat[0], mat[1], mat[2], mat[3], exisitngX, exisitngY);                   
             transform.transform(new Point2D.Double(xPixelOffset, yPixelOffset), stagePos);
             return stagePos;
          }
 
       } catch (JSONException ex) {
          ex.printStackTrace();
-         Log.log("Problem with current position metadata");
+         Log.log("Problem with current position metadata", true);
          return null;
       }
    }
@@ -480,9 +533,7 @@ class MultiResPositionNode  implements Comparable<MultiResPositionNode> {
       gridRow = gRow;
       gridCol = gCol;
    }
-   
-   //TODO: serialize so this can be written to disk?
-   
+      
    @Override
    public int compareTo(MultiResPositionNode n) {
       if (this.resLevel != n.resLevel) {

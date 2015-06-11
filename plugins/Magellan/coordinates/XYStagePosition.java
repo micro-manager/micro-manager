@@ -1,16 +1,29 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+///////////////////////////////////////////////////////////////////////////////
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
+
 package coordinates;
 
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import json.JSONArray;
+import json.JSONObject;
+import main.Magellan;
+import misc.Log;
 import mmcorej.CMMCore;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.micromanager.MMStudio;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  * Immutable object representing single XY stage position
@@ -22,13 +35,29 @@ public class XYStagePosition {
    private final Point2D.Double center_;
    private final Point2D.Double[] displayedTileCorners_;
    private final Point2D.Double[] fullTileCorners_;
-   private final int gridRow_, gridCol_;
+   private final long gridRow_, gridCol_;
    
-   public XYStagePosition(Point2D.Double stagePosCenter, int displayTileWidth, int displayTileHeight, 
-           int fullTileWidth, int fullTileHeight, int row, int col, String pixelSizeConfig) {
+   /**
+    * for opening prevously acquired data
+    */
+   public XYStagePosition(Point2D.Double stagePosCenter, long row, long col) {
       label_ = "Grid_" + col + "_" + row;
       center_ = stagePosCenter;
-      AffineTransform transform = AffineUtils.getAffineTransform(pixelSizeConfig, center_.x, center_.y);
+      gridCol_ = col;
+      gridRow_ = row;
+      displayedTileCorners_ = null;
+      fullTileCorners_ = null;
+   }
+
+   /**
+    * 
+    * @param transform -- must be centered at current stage pos 
+    */
+   public XYStagePosition(Point2D.Double stagePosCenter, int displayTileWidth, int displayTileHeight, 
+           int fullTileWidth, int fullTileHeight, long row, long col, AffineTransform transform) {
+      
+      label_ = "Grid_" + col + "_" + row;
+      center_ = stagePosCenter;
       //coreners of displayed tiles (tiles - overlap)
       displayedTileCorners_ = new Point2D.Double[4];
       displayedTileCorners_[0] = new Point2D.Double();
@@ -54,11 +83,11 @@ public class XYStagePosition {
       gridRow_ = row;
    }
    
-   public int getGridRow() {
+   public long getGridRow() {
       return gridRow_;
    }
    
-   public int getGridCol() {
+   public long getGridCol() {
       return gridCol_;
    }
    
@@ -81,7 +110,7 @@ public class XYStagePosition {
    public JSONObject getMMPosition() {
       try {
          //make intitial position list, with current position and 0,0 as coordinates
-         CMMCore core = MMStudio.getInstance().getCore();
+         CMMCore core = Magellan.getCore();
 
          JSONObject coordinates = new JSONObject();
          JSONArray xy = new JSONArray();
@@ -96,7 +125,7 @@ public class XYStagePosition {
          pos.put("Label", label_);
          return pos;
       } catch (Exception e) {
-         ReportingUtils.showError("Couldn't create XY position JSONOBject");
+         Log.log("Couldn't create XY position JSONOBject");
          return null;
       }
    }

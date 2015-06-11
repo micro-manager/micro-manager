@@ -31,19 +31,19 @@ import com.google.gson.GsonBuilder;
  * Channel acquisition protocol. 
  */
 public class ChannelSetting {
-   public static final String DEFAULT_CHANNEL_GROUP = "Channel";
-   public static final double Version = 1.0;
 
-   public String group_;
-   public String name_ = ""; // Configuration setting name
+   final public String group_;
+   final public String config_; // Configuration setting name
+   final public String name_; 
    public double exposure_; // ms
    public Color color_;
    public boolean use_ = true;
-   public boolean uniqueEvent_;
+   final public boolean uniqueEvent_;
 
-   public ChannelSetting(String group, String name, double exposure, Color color, boolean use, boolean uniqueEvent) {
+   public ChannelSetting(String group, String config, String name, double exposure, Color color, boolean use, boolean uniqueEvent) {
       group_ = group;
       color_ = color;
+      config_ = config;
       name_ = name;
       exposure_ = exposure;
       use_ = use;
@@ -51,7 +51,7 @@ public class ChannelSetting {
    }
 
    public ChannelSetting copy() {
-      return new ChannelSetting(group_, name_, exposure_, new Color(color_.getRGB()), use_, uniqueEvent_);
+      return new ChannelSetting(group_, config_, name_, exposure_, new Color(color_.getRGB()), use_, uniqueEvent_);
    }
 
    /**

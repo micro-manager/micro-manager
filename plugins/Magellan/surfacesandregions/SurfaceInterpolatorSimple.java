@@ -1,19 +1,32 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+///////////////////////////////////////////////////////////////////////////////
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
+
 package surfacesandregions;
 
 import delaunay_triangulation.Delaunay_Triangulation;
 import delaunay_triangulation.Point_dt;
 import delaunay_triangulation.Triangle_dt;
 import java.util.LinkedList;
+import main.Magellan;
 import org.apache.commons.math3.geometry.euclidean.threed.Line;
 import org.apache.commons.math3.geometry.euclidean.threed.Plane;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.apache.commons.math3.geometry.partitioning.Region;
-import org.micromanager.MMStudio;
 
 /**
  * Subclass that implements a particular interpolation method This one creates a
@@ -22,15 +35,15 @@ import org.micromanager.MMStudio;
  */
 public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
 
-   private static final double TOLERANCE = 0.1;
+   private static final double TOLERANCE = 0.01;
    
-   public SurfaceInterpolatorSimple(SurfaceManager manager, String xyName, String zName) {
-      super(manager, xyName, zName);
+   public SurfaceInterpolatorSimple(String xyName, String zName) {
+      super(xyName, zName);
    }
 
    protected void interpolateSurface(LinkedList<Point3d> points) throws InterruptedException {
 
-      double pixSize = MMStudio.getInstance().getCore().getPixelSizeUm();
+      double pixSize = Magellan.getCore().getPixelSizeUm();
       //provide interpolator with current list of data points
       Point_dt triangulationPoints[] = new Point_dt[points.size()];
       for (int i = 0; i < points.size(); i++) {
@@ -54,8 +67,9 @@ public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
          double dx = (boundXMax_ - boundXMin_) / (numInterpPointsX - 1);
          double dy = (boundYMax_ - boundYMin_) / (numInterpPointsY - 1);
 
-         Double[][] interpVals = new Double[numInterpPointsY][numInterpPointsX];
-         double[][] interpNormals = new double[numInterpPointsY][numInterpPointsX];
+         float[][] interpVals = new float[numInterpPointsY][numInterpPointsX];
+         float[][] interpNormals = new float[numInterpPointsY][numInterpPointsX];
+         boolean[][] interpDefined = new boolean[numInterpPointsY][numInterpPointsX];
          for (int yInd = 0; yInd < interpVals.length; yInd++) {
             for (int xInd = 0; xInd < interpVals[0].length; xInd++) {
                if (Thread.interrupted()) {
@@ -72,14 +86,14 @@ public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
                   Vector3D v3 = new Vector3D(tri.p3().x(), tri.p3().y(), tri.p3().z());
                   Plane plane = new Plane(v1, v2, v3, TOLERANCE);
                   //intersetion of vertical line at these x+y values with plane gives point in plane
-                  Vector3D pointInPlane = (Vector3D) plane.intersection(new Line(new Vector3D(xVal, yVal, 0), new Vector3D(xVal, yVal, 1),TOLERANCE));
-                  double zVal = (double) pointInPlane.getZ();
+                  Vector3D pointInPlane = (Vector3D) plane.intersection(new Line(new Vector3D(xVal, yVal, 0), new Vector3D(xVal, yVal, 1),TOLERANCE)); 
+                  float zVal =  (float) pointInPlane.getZ();                  
                   interpVals[yInd][xInd] = zVal;
-                  double angle = Vector3D.angle(plane.getNormal(),new Vector3D(0, 0, 1)) / Math.PI * 180.0;
+                  float angle = (float) (Vector3D.angle(plane.getNormal(),new Vector3D(0, 0, 1)) / Math.PI * 180.0);
                   interpNormals[yInd][xInd] = angle;
+                  interpDefined[yInd][xInd] = true;
                } else {
-                  interpVals[yInd][xInd] = null;
-                  interpNormals[yInd][xInd] = 0;
+                  interpDefined[yInd][xInd] = false;
                }
             }
          }
@@ -87,10 +101,12 @@ public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
             throw new InterruptedException();
          }
          synchronized (interpolationLock_) {
-            currentInterpolation_ = new SingleResolutionInterpolation(pixelsPerInterpPoint, interpVals, interpNormals, boundXMin_, boundXMax_, boundYMin_, boundYMax_,
+            currentInterpolation_ = new SingleResolutionInterpolation(pixelsPerInterpPoint, interpDefined, interpVals, interpNormals, 
+            boundXMin_, boundXMax_, boundYMin_, boundYMax_,
                     convexHullRegion_, convexHullVertices_, getPoints());
             interpolationLock_.notifyAll();
          }
+//         System.gc();
          pixelsPerInterpPoint /= 2;
       }
    }

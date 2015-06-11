@@ -1,18 +1,30 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+///////////////////////////////////////////////////////////////////////////////
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
+
 package propsandcovariants;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.TreeMap;
 import java.util.prefs.Preferences;
+import main.Magellan;
+import misc.Log;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
-import org.micromanager.MMStudio;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -88,10 +100,9 @@ public class PropertyAndGroupUtils {
    
    private static ArrayList<SinglePropertyOrGroup> readConfigGroups() {
       ArrayList<SinglePropertyOrGroup> groups = new ArrayList<SinglePropertyOrGroup>();
-      ScriptInterface mmapi = MMStudio.getInstance();
-      CMMCore core = mmapi.getMMCore();
-      boolean liveMode = mmapi.isLiveModeOn();
-         mmapi.enableLiveMode(false);
+      CMMCore core = Magellan.getCore();
+      boolean liveMode = Magellan.getScriptInterface().isLiveModeOn();
+         Magellan.getScriptInterface().enableLiveMode(false);
                   
          StrVector groupNames = core.getAvailableConfigGroups();   
       for (String group : groupNames) {
@@ -99,18 +110,17 @@ public class PropertyAndGroupUtils {
          pg.readGroupValuesFromConfig(group);
          groups.add(pg);
       }
-      mmapi.enableLiveMode(liveMode);
+      Magellan.getScriptInterface().enableLiveMode(liveMode);
       return groups;
    }
 
    private static ArrayList<SinglePropertyOrGroup> readAllProperties(boolean includeReadOnly) {
-      ScriptInterface mmapi = MMStudio.getInstance();
-      CMMCore core = mmapi.getMMCore();
+      CMMCore core = Magellan.getCore();
       ArrayList<SinglePropertyOrGroup> props = new ArrayList<SinglePropertyOrGroup>();
       try {
          StrVector devices = core.getLoadedDevices();
-         boolean liveMode = mmapi.isLiveModeOn();
-         mmapi.enableLiveMode(false);
+         boolean liveMode = Magellan.getScriptInterface().isLiveModeOn();
+         Magellan.getScriptInterface().enableLiveMode(false);
 
          for (int i = 0; i < devices.size(); i++) {
             StrVector properties = core.getDevicePropertyNames(devices.get(i));
@@ -122,9 +132,9 @@ public class PropertyAndGroupUtils {
                }
             }
          }
-         mmapi.enableLiveMode(liveMode);
+         Magellan.getScriptInterface().enableLiveMode(liveMode);
       } catch (Exception e) {
-         ReportingUtils.showError("Problem reading properties from core");
+         Log.log("Problem reading properties from core");
       }
       return props;
    }

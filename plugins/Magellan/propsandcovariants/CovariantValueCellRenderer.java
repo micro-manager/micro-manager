@@ -1,17 +1,28 @@
+///////////////////////////////////////////////////////////////////////////////
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
 package propsandcovariants;
 
-import propsandcovariants.SinglePropertyOrGroup;
 import java.awt.Color;
 import java.awt.Component;
-import java.text.ParseException;
-
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
-import org.micromanager.utils.ReportingUtils;
-import org.micromanager.utils.SliderPanel;
-import propsandcovariants.DeviceControlTableModel;
+
 
 public class CovariantValueCellRenderer implements TableCellRenderer {
    // This method is called each time a cell in a column
@@ -45,7 +56,7 @@ public class CovariantValueCellRenderer implements TableCellRenderer {
 //         try {
 //            slider.setText(((CovariantValue) value).toString());
 //         } catch (ParseException ex) {
-//            ReportingUtils.logError(ex);
+//            Log.log(ex);
 //         }
 //         slider.setToolTipText(data.getPairing().getValue(colIndex, rowIndex).toString());
 //         comp = slider;
@@ -86,3 +97,4 @@ public class CovariantValueCellRenderer implements TableCellRenderer {
    public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {
    }
 }
+

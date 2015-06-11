@@ -33,6 +33,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
+import mmcorej.StrVector;
 
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.api.ScriptInterface;
@@ -56,20 +57,21 @@ public class AutofocusPanel extends ListeningJPanel{
    final private Properties props_;
    final private Prefs prefs_;
    final private Devices devices_;
-   final private AutofocusUtils autofocus_;
    
    private final JPanel optionsPanel_;
+   private final JPanel acqOptionsPanel_;
    
-   public AutofocusPanel(ScriptInterface gui, Devices devices, Properties props, 
-           Prefs prefs, AutofocusUtils autofocus) {
-            super(MyStrings.PanelNames.AUTOFOCUS.toString(),
+   public AutofocusPanel(final ScriptInterface gui, final Devices devices, 
+           final Properties props, final Prefs prefs, 
+           final AutofocusUtils autofocus) {
+      
+      super(MyStrings.PanelNames.AUTOFOCUS.toString(),
               new MigLayout(
               "",
               "[center]8[center]",
               "[]16[]16[]"));
-            gui_ = gui;
+      gui_ = gui;
       prefs_ = prefs;
-      autofocus_ = autofocus;
       props_ = props;
       devices_ = devices;
       
@@ -133,14 +135,53 @@ public class AutofocusPanel extends ListeningJPanel{
                     (String) fitFunctionSelection.getSelectedItem());
          }
       });
-      optionsPanel_.add(fitFunctionSelection);
-
+      optionsPanel_.add(fitFunctionSelection, "wrap");
+            
+      optionsPanel_.add(new JLabel("Minimum R²:"));
+      final JSpinner minimumR2Spinner = pu.makeSpinnerFloat(0.0, 1.0, 0.01,
+              Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_AUTOFOCUS_MINIMUMR2, 0.75);
+      optionsPanel_.add(minimumR2Spinner);
       
       // end options subpanel
       
+      // start acquisiion optoinspanel
+      acqOptionsPanel_ = new JPanel(new MigLayout(
+            "",
+            "[right]16[center]",
+            "[]8[]"));
+      acqOptionsPanel_.setBorder(PanelUtils.makeTitledBorder(
+              "Autofocus Options during Acquisition"));
+      
+      // whether or not to run autofocus at the start of the acquisition
+      final JCheckBox beforeStartCheckBox = pu.makeCheckBox("Autofocus before starting acquisition",
+              Properties.Keys.PLUGIN_AUTOFOCUS_ACQBEFORESTART, panelName_, false);     
+      acqOptionsPanel_.add(beforeStartCheckBox, "center, span 3, wrap");
+      
+      // autofocus every nth image
+      acqOptionsPanel_.add(new JLabel("Autofocus every "));
+      final JSpinner eachNTimePointsSpinner = pu.makeSpinnerInteger(1, 1000,
+            Devices.Keys.PLUGIN,
+            Properties.Keys.PLUGIN_AUTOFOCUS_EACHNIMAGES, 10);
+      acqOptionsPanel_.add(eachNTimePointsSpinner);
+      acqOptionsPanel_.add(new JLabel( "Time points"), "wrap");
+      
+      // autofocus using this channel
+      // TODO: need to update when the channel group changes
+      String channelGroup_  = props_.getPropValueString(Devices.Keys.PLUGIN,
+            Properties.Keys.PLUGIN_MULTICHANNEL_GROUP);
+      StrVector channels = gui.getMMCore().getAvailableConfigs(channelGroup_);
+      final JComboBox channelSelect = pu.makeDropDownBox(channels.toArray(), 
+              Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_AUTOFOCUS_CHANNEL, "");
+      acqOptionsPanel_.add(new JLabel("Autofocus Channel: "));
+      acqOptionsPanel_.add(channelSelect, "wrap");
+
+      
       // construct the main panel
       add(optionsPanel_);
+      add (acqOptionsPanel_);
        
+      
+      
    }
    
 }

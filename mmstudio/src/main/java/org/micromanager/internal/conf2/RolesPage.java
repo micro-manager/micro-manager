@@ -24,14 +24,21 @@ package org.micromanager.internal.conf2;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.prefs.Preferences;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
 import mmcorej.DeviceType;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
+import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -45,6 +52,7 @@ public class RolesPage extends PagePanel {
    private JComboBox shutterComboBox_;
    private JComboBox cameraComboBox_;
    private JCheckBox autoshutterCheckBox_;
+   private final JPanel focusDirectionPanel_;
    private static final String HELP_FILE_NAME = "conf_roles_page.html";
    
    /**
@@ -133,7 +141,11 @@ public class RolesPage extends PagePanel {
       autoshutterCheckBox_.setText("Auto-shutter");
       autoshutterCheckBox_.setBounds(21, 192, 141, 23);
       add(autoshutterCheckBox_);
-      //
+
+      focusDirectionPanel_ = new JPanel(new MigLayout());
+      JScrollPane scrollPane = new JScrollPane(focusDirectionPanel_);
+      scrollPane.setBounds(21, 232, 512, 300);
+      add(scrollPane);
    }
 
    public boolean enterPage(boolean next) {
@@ -221,7 +233,46 @@ public class RolesPage extends PagePanel {
      } catch (MMConfigFileException e) {
          ReportingUtils.showError(e);
       }
-      
+
+      // Remove anything left in the focus direction panel, and reconstruct it
+      // Note that the panel is constructed with a MigLayout
+      focusDirectionPanel_.removeAll();
+      JLabel focusDirectionLabel = new JLabel("Stage focus directions");
+      focusDirectionPanel_.add(focusDirectionLabel, "wrap");
+      if (stages != null) {
+         try {
+            model_.loadFocusDirectionsFromHardware(core_);
+         }
+         catch (Exception e) {
+            ReportingUtils.logError(e);
+         }
+         for (final String stageLabel : Arrays.asList(stages.toArray())) {
+            final Device stage = model_.findDevice(stageLabel);
+            if (stage == null) {
+               continue;
+            }
+            int direction = stage.getFocusDirection();
+            final JComboBox comboBox = new JComboBox(new String[] {
+               "Unknown",
+               "Positive Toward Sample",
+               "Positive Away From Sample",
+            });
+            comboBox.setSelectedIndex(direction < 0 ? 2 : direction);
+            comboBox.addActionListener(new ActionListener() {
+               @Override public void actionPerformed(ActionEvent e) {
+                  int i = comboBox.getSelectedIndex();
+                  if (i == 2) {
+                     i = -1;
+                  }
+                  stage.setFocusDirection(i);
+                  core_.setFocusDirection(stageLabel, i);
+               }
+            });
+            focusDirectionPanel_.add(new JLabel(stageLabel + ":"));
+            focusDirectionPanel_.add(comboBox, "wrap");
+         }
+      }
+
       return true;
   }
 

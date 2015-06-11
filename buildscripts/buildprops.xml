@@ -10,11 +10,11 @@
 	<fail message="Please run 'ant -f buildscripts/fetchdeps.xml' first. (If you get errors, try deleting the 'dependencies' directory and starting over.)">
 		<condition>
 			<not>
-		<resourceexists>
+				<resourceexists>
 					<file file="${mm.ivy.lib.dir}/build/ant-contrib-1.0b3.jar"/>
-		</resourceexists>
+				</resourceexists>
 			</not>
-	</condition>
+		</condition>
 	</fail>
 	<taskdef resource="net/sf/antcontrib/antcontrib.properties">
 		<classpath>

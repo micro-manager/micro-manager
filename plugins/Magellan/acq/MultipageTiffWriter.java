@@ -40,16 +40,11 @@ import java.util.LinkedList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import mmcorej.TaggedImage;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.micromanager.MMStudio;
-import org.micromanager.utils.ImageUtils;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.ReportingUtils;
+import json.JSONArray;
+import json.JSONException;
+import json.JSONObject;
+import misc.Log;
+import misc.MD;
 
 public class MultipageTiffWriter {
    
@@ -107,13 +102,11 @@ public class MultipageTiffWriter {
    private double zStepUm_ = 1;
    private LinkedList<ByteBuffer> buffers_;
    private boolean firstIFD_ = true;
-   private long omeDescriptionTagPosition_;
    private long ijDescriptionTagPosition_;
    private long ijMetadataCountsTagPosition_;
    private long ijMetadataTagPosition_;
    //Reader associated with this file
    private MultipageTiffReader reader_;
-   private long blankPixelsOffset_ = -1;
    private String summaryMDString_;
    private boolean fastStorageMode_;
    
@@ -125,32 +118,28 @@ public class MultipageTiffWriter {
       reader_ = new MultipageTiffReader(summaryMD);
       File f = new File(directory + "/" + filename); 
       
-      try {
-         processSummaryMD(summaryMD, splitByPositions);
-      } catch (MMScriptException ex1) {
-         ReportingUtils.logError(ex1);
-      } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
-      }
+      processSummaryMD(summaryMD);
       
       //This is an overestimate of file size because file gets truncated at end
       long fileSize = Math.min(MAX_FILE_SIZE, summaryMD.toString().length() + 2000000
               + numFrames_ * numChannels_ * numSlices_ * ((long) bytesPerImagePixels_ + 2000));
-      
+
       f.createNewFile();
       raFile_ = new RandomAccessFile(f, "rw");
       try {
          raFile_.setLength(fileSize);
-      } catch (IOException e) {       
-       new Thread(new Runnable() {
-             @Override
-             public void run() {
-                 try {
-                     Thread.sleep(1000);
-                 } catch (InterruptedException ex) {}
-                 MMStudio.getInstance().getAcquisitionEngine().abortRequest();
-             } }).start();     
-             ReportingUtils.showError("Insufficent space on disk: no room to write data");
+      } catch (IOException e) {
+         new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+               try {
+                  Thread.sleep(1000);
+               } catch (InterruptedException ex) {
+               }
+            }
+         }).start();
+         Log.log("Insufficent space on disk: no room to write data");
       }
       fileChannel_ = raFile_.getChannel();
       writingExecutor_ = masterMPTiffStorage_.getWritingExecutor();
@@ -204,7 +193,7 @@ public class MultipageTiffWriter {
                     currentImageByteBuffers_.offer(buffer);
                 }
               } catch (IOException e) {
-                ReportingUtils.logError(e);
+                Log.log(e);
               }
            }
         });
@@ -223,7 +212,7 @@ public class MultipageTiffWriter {
                     }
                 }
               } catch (IOException e) {
-                ReportingUtils.logError(e);
+                Log.log(e);
               } 
            }
         });
@@ -321,7 +310,7 @@ public class MultipageTiffWriter {
             summaryComment = comments.getString("Summary");
          }    
       } catch (Exception e) {
-         ReportingUtils.logError("Could't get acquisition summary comment from displayAndComments");
+         Log.log("Could't get acquisition summary comment from displayAndComments", true);
       }
       writeImageJMetadata( numChannels_, summaryComment);
 
@@ -337,7 +326,7 @@ public class MultipageTiffWriter {
                //extra byte of space, just to make sure nothing gets cut off
                raFile_.setLength(filePosition_ + 8);
             } catch (IOException ex) {
-               ReportingUtils.logError(ex);
+               Log.log(ex);
             }
             reader_.finishedWriting();
             //Dont close file channel and random access file becase Tiff reader still using them
@@ -357,7 +346,7 @@ public class MultipageTiffWriter {
       return true;
    }
    
-   public boolean hasSpaceToWrite(TaggedImage img) {
+   public boolean hasSpaceToWrite(MagellanTaggedImage img) {
       int mdLength = img.tags.toString().length();
       int IFDSize = ENTRIES_PER_IFD*12 + 4 + 16;
       //5 MB extra padding...just to be safe...
@@ -375,26 +364,26 @@ public class MultipageTiffWriter {
       return raFile_ == null;
    }
         
-   public void writeImage(TaggedImage img) throws IOException {
+   public void writeImage(MagellanTaggedImage img) throws IOException {
       if (writingExecutor_ != null) {
          int queueSize = writingExecutor_.getQueue().size();
          int attemptCount = 0;
          while (queueSize > 20) {
             if (attemptCount == 0) {
-               ReportingUtils.logMessage("Warning: writing queue behind by " + queueSize + " images.");
+               Log.log("Warning: writing queue behind by " + queueSize + " images.", false);
             }
             ++attemptCount;
             try {
                Thread.sleep(5);
                queueSize = writingExecutor_.getQueue().size();
             } catch (InterruptedException ex) {
-               ReportingUtils.logError(ex);
+               Log.log(ex);
             }
          }
       }
       long offset = filePosition_;
       writeIFD(img);
-      addToIndexMap(MDUtils.getLabel(img.tags), offset);
+      addToIndexMap(MD.getLabel(img.tags), offset);
       writeBuffers();
       //wait until image has finished writing to return
 //      int size = writingExecutor_.getQueue().size();
@@ -434,7 +423,7 @@ public class MultipageTiffWriter {
    }
    
    public void overwritePixels(Object pixels, int channel, int slice, int frame, int position) throws IOException {
-      long byteOffset = indexMap_.get(MDUtils.generateLabel(channel, slice, frame, position));      
+      long byteOffset = indexMap_.get(MD.generateLabel(channel, slice, frame, position));      
       ByteBuffer buffer = ByteBuffer.allocate(2).order(BYTE_ORDER);
       fileChannel_.read(buffer, byteOffset);
       int numEntries = buffer.getChar(0);
@@ -470,7 +459,7 @@ public class MultipageTiffWriter {
       fileChannelWrite(pixBuff, pixelOffset); 
    }
 
-   private void writeIFD(TaggedImage img) throws IOException {
+   private void writeIFD(MagellanTaggedImage img) throws IOException {
       char numEntries = ((firstIFD_  ? ENTRIES_PER_IFD + 4 : ENTRIES_PER_IFD));
       if (img.tags.has("Summary")) {
          img.tags.remove("Summary");
@@ -502,7 +491,6 @@ public class MultipageTiffWriter {
       writeIFDEntry(ifdBuffer,charView,PHOTOMETRIC_INTERPRETATION,(char)3,1,rgb_?2:1);
       
       if (firstIFD_ ) {
-         omeDescriptionTagPosition_ = filePosition_ + bufferPosition_;
          writeIFDEntry(ifdBuffer, charView, IMAGE_DESCRIPTION, (char) 2, 0, 0);
          ijDescriptionTagPosition_ = filePosition_ + bufferPosition_;
          writeIFDEntry(ifdBuffer, charView, IMAGE_DESCRIPTION, (char) 2, 0, 0);
@@ -626,14 +614,14 @@ public class MultipageTiffWriter {
       }
    }
 
-   private void processSummaryMD(JSONObject summaryMD, boolean splitByPosition) throws MMScriptException, JSONException {
-      rgb_ = MDUtils.isRGB(summaryMD);
-      numChannels_ = MDUtils.getNumChannels(summaryMD);
-      numFrames_ = MDUtils.getNumFrames(summaryMD);
-      numSlices_ = MDUtils.getNumSlices(summaryMD);
-      imageWidth_ = MDUtils.getWidth(summaryMD);
-      imageHeight_ = MDUtils.getHeight(summaryMD);
-      String pixelType = MDUtils.getPixelType(summaryMD);
+   private void processSummaryMD(JSONObject summaryMD )   {
+      rgb_ = MD.isRGB(summaryMD);
+      numChannels_ = MD.getNumChannels(summaryMD);
+      numFrames_ = MD.getNumFrames(summaryMD);
+      numSlices_ = MD.getNumSlices(summaryMD);
+      imageWidth_ = MD.getWidth(summaryMD);
+      imageHeight_ = MD.getHeight(summaryMD);
+      String pixelType = MD.getPixelType(summaryMD);
       if (pixelType.equals("GRAY8") || pixelType.equals("RGB32") || pixelType.equals("RGB24")) {
          byteDepth_ = 1;
       } else if (pixelType.equals("GRAY16") || pixelType.equals("RGB64")) {
@@ -665,10 +653,7 @@ public class MultipageTiffWriter {
          resNumerator_ = (long) (1 / cmPerPixel);
          resDenomenator_ = 1;
       }
-      
-       if (summaryMD.has("z-step_um") && !summaryMD.isNull("z-step_um")) {
-            zStepUm_ = summaryMD.getDouble("z-step_um");
-       }
+      zStepUm_ = MD.getZStepUm(summaryMD);
    }
 
    /**
@@ -777,14 +762,14 @@ public class MultipageTiffWriter {
          //LUTs
          for (int i = 0; i < numChannels; i++) {
             channelSetting = channels.getJSONObject(i);
-            LUT lut = ImageUtils.makeLUT(new Color(channelSetting.getInt("Color")), channelSetting.getDouble("Gamma"));
+            LUT lut = makeLUT(new Color(channelSetting.getInt("Color")), channelSetting.getDouble("Gamma"));
             for (byte b : lut.getBytes()) {
                mdBuffer.put(bufferPosition, b);
                bufferPosition++;
             }
          }
       } catch (JSONException ex) {
-         ReportingUtils.logError("Problem with displayAndComments: Couldn't write ImageJ display settings as a result");
+         Log.log("Problem with displayAndComments: Couldn't write ImageJ display settings as a result", true);
       }
 
       ifdCountAndValueBuffer = allocateByteBuffer(8);
@@ -862,7 +847,7 @@ public class MultipageTiffWriter {
       try {
          return s.getBytes("UTF-8");
       } catch (UnsupportedEncodingException ex) {
-         ReportingUtils.logError("Error encoding String to bytes");
+         Log.log("Error encoding String to bytes", true);
          return null;
       }
    }
@@ -875,12 +860,7 @@ public class MultipageTiffWriter {
 
    private void writeComments() throws IOException {
       //Write 4 byte header, 4 byte number of bytes
-      JSONObject comments;
-      try {
-         comments = masterMPTiffStorage_.getDisplayAndComments().getJSONObject("Comments");
-      } catch (JSONException ex) {
-         comments = new JSONObject();
-      }
+      JSONObject comments = new JSONObject();    
       byte[] commentsBytes = getBytesFromString(comments.toString());
       ByteBuffer header = allocateByteBuffer(8);
       header.putInt(0, COMMENTS_HEADER);
@@ -917,5 +897,26 @@ public class MultipageTiffWriter {
       fileChannelWrite(offsetHeader, 16);
       filePosition_ += numReservedBytes + 8;
    }
-  
+
+   public static LUT makeLUT(Color color, double gamma) {
+      int r = color.getRed();
+      int g = color.getGreen();
+      int b = color.getBlue();
+
+      int size = 256;
+      byte[] rs = new byte[size];
+      byte[] gs = new byte[size];
+      byte[] bs = new byte[size];
+
+      double xn;
+      double yn;
+      for (int x = 0; x < size;++x) {
+         xn = x / (double) (size-1);
+         yn = Math.pow(xn, gamma);
+         rs[x] = (byte) (yn * r);
+         gs[x] = (byte) (yn * g);
+         bs[x] = (byte) (yn * b);
+      }
+      return new LUT(8,size,rs,gs,bs);
+   }
 }

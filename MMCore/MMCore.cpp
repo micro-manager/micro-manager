@@ -102,10 +102,11 @@ using namespace std;
  *
  * This applies to all classes exposed through the SWIG layer (i.e. the whole
  * of the public API of the Core), not just CMMCore.
+ *
+ * (Keep the 3 numbers on one line to make it easier to look at diffs when
+ * merging/rebasing.)
  */
-const int MMCore_versionMajor = 7;
-const int MMCore_versionMinor = 2;
-const int MMCore_versionPatch = 0;
+const int MMCore_versionMajor = 8, MMCore_versionMinor = 1, MMCore_versionPatch = 0;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1883,6 +1884,60 @@ void CMMCore::setAdapterOriginXY(double newXUm, double newYUm) throw (CMMError)
 {
     setAdapterOriginXY(getXYStageDevice().c_str(), newXUm, newYUm);
 }
+
+/**
+ * \brief Get the focus direction of a stage.
+ *
+ * Returns +1 if increasing position brings objective closer to sample, -1 if
+ * increasing position moves objective away from sample, or 0 if unknown. (Make
+ * sure to check for zero!)
+ *
+ * The returned value is determined by the most recent call to
+ * setFocusDirection() for the stage, or defaults to what the stage device
+ * adapter declares (often 0, for unknown).
+ *
+ * An exception is thrown if the direction has not been set and the device
+ * encounters an error when determining the default direction.
+ */
+int CMMCore::getFocusDirection(const char* stageLabel) throw (CMMError)
+{
+   boost::shared_ptr<StageInstance> stage =
+      deviceManager_->GetDeviceOfType<StageInstance>(stageLabel);
+
+   mm::DeviceModuleLockGuard guard(stage);
+   switch (stage->GetFocusDirection()) {
+      case MM::FocusDirectionTowardSample: return +1;
+      case MM::FocusDirectionAwayFromSample: return -1;
+      default: return 0;
+   }
+}
+
+
+/**
+ * \brief Set the focus direction of a stage.
+ *
+ * The sign should be +1 (or any positive value), zero, or -1 (or any negative
+ * value), and is interpreted in the same way as the return value of
+ * getFocusDirection().
+ *
+ * Once this method is called, getFocusDirection() for the stage will always
+ * return the set value.
+ */
+void CMMCore::setFocusDirection(const char* stageLabel, int sign)
+{
+   MM::FocusDirection direction = MM::FocusDirectionUnknown;
+   if (sign > 0)
+      direction = MM::FocusDirectionTowardSample;
+   if (sign < 0)
+      direction = MM::FocusDirectionAwayFromSample;
+
+   boost::shared_ptr<StageInstance> stage =
+      deviceManager_->GetDeviceOfType<StageInstance>(stageLabel);
+
+   mm::DeviceModuleLockGuard guard(stage);
+   stage->SetFocusDirection(direction);
+}
+
 
 /**
  * Queries camera if exposure can be used in a sequence
@@ -5561,6 +5616,18 @@ double CMMCore::getGalvoXRange(const char* deviceLabel) throw (CMMError)
 }
 
 /**
+ * Get the Galvo x minimum 
+ */
+double CMMCore::getGalvoXMinimum(const char* deviceLabel) throw (CMMError)
+{
+   boost::shared_ptr<GalvoInstance> pGalvo =
+      deviceManager_->GetDeviceOfType<GalvoInstance>(deviceLabel);
+
+   mm::DeviceModuleLockGuard guard(pGalvo);
+   return pGalvo->GetXMinimum();
+}
+
+/**
  * Get the Galvo y range
  */
 double CMMCore::getGalvoYRange(const char* deviceLabel) throw (CMMError)
@@ -5572,6 +5639,17 @@ double CMMCore::getGalvoYRange(const char* deviceLabel) throw (CMMError)
    return pGalvo->GetYRange();
 }
 
+/**
+ * Get the Galvo y minimum 
+ */
+double CMMCore::getGalvoYMinimum(const char* deviceLabel) throw (CMMError)
+{
+   boost::shared_ptr<GalvoInstance> pGalvo =
+      deviceManager_->GetDeviceOfType<GalvoInstance>(deviceLabel);
+
+   mm::DeviceModuleLockGuard guard(pGalvo);
+   return pGalvo->GetYMinimum();
+}
 
 /**
  * Add a vertex to a galvo polygon.
@@ -5866,6 +5944,8 @@ void CMMCore::saveSystemConfiguration(const char* fileName) throw (CMMError)
    for (size_t i=0; i<config.size(); i++)
    {
       PropertySetting s = config.getSetting(i);
+      if (s.getDeviceLabel() == MM::g_Keyword_CoreDevice)
+         continue;
 
       // check if the property must be set before initialization
       boost::shared_ptr<DeviceInstance> pDevice = deviceManager_->GetDevice(s.getDeviceLabel());
@@ -5890,7 +5970,7 @@ void CMMCore::saveSystemConfiguration(const char* fileName) throw (CMMError)
       std::string parentID = device->GetParentID();
       if (!parentID.empty())
       {
-         os << MM::g_CFGCommand_Property << ',' << device->GetLabel() << ',' << parentID << endl;
+         os << MM::g_CFGCommand_ParentID << ',' << device->GetLabel() << ',' << parentID << endl;
       }
    }
 
@@ -5908,6 +5988,21 @@ void CMMCore::saveSystemConfiguration(const char* fileName) throw (CMMError)
          os << MM::g_CFGCommand_Delay << "," << *it << "," << pDev->GetDelayMs() << endl; 
    }
 
+   // save focus directions
+   os << "# Stage focus directions\n";
+   std::vector<std::string> stageLabels =
+      deviceManager_->GetDeviceList(MM::StageDevice);
+   for (std::vector<std::string>::const_iterator it = stageLabels.begin(),
+         end = stageLabels.end(); it != end; ++it)
+   {
+      boost::shared_ptr<StageInstance> stage =
+         deviceManager_->GetDeviceOfType<StageInstance>(*it);
+      mm::DeviceModuleLockGuard guard(stage);
+      int direction = getFocusDirection(it->c_str());
+      os << MM::g_CFGCommand_FocusDirection << ','
+         << *it << ',' << direction << '\n';
+   }
+
    // save labels
    os << "# Labels" << endl;
    vector<string> deviceLabels = deviceManager_->GetDeviceList(MM::StateDevice);
@@ -5919,7 +6014,20 @@ void CMMCore::saveSystemConfiguration(const char* fileName) throw (CMMError)
       unsigned numPos = pSD->GetNumberOfPositions();
       for (unsigned long j=0; j<numPos; j++)
       {
-         os << MM::g_CFGCommand_Label << ',' << deviceLabels[i] << ',' << j << ',' << pSD->GetPositionLabel(j) << endl;
+         std::string stateLabel;
+         try
+         {
+            stateLabel = pSD->GetPositionLabel(j);
+         }
+         catch (const CMMError&)
+         {
+            // Label not defined, just skip
+            continue;
+         }
+         if (!stateLabel.empty())
+         {
+            os << MM::g_CFGCommand_Label << ',' << deviceLabels[i] << ',' << j << ',' << stateLabel << endl;
+         }
       }
    }
 
@@ -6101,6 +6209,16 @@ void CMMCore::loadSystemConfigurationImpl(const char* fileName) throw (CMMError)
                         ToQuotedString(line) + ")",
                         MMERR_InvalidCFGEntry);
                setDeviceDelayMs(tokens[1].c_str(), atof(tokens[2].c_str()));
+            }
+            else if(tokens[0].compare(MM::g_CFGCommand_FocusDirection) == 0)
+            {
+               // set focus direction command
+               // ---------------------------
+               if (tokens.size() != 3)
+                  throw CMMError(getCoreErrorText(MMERR_InvalidCFGEntry) + " (" +
+                        ToQuotedString(line) + ")",
+                        MMERR_InvalidCFGEntry);
+               setFocusDirection(tokens[1].c_str(), atol(tokens[2].c_str()));
             }
             else if(tokens[0].compare(MM::g_CFGCommand_Label) == 0)
             {

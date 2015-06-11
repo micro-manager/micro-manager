@@ -1,3 +1,19 @@
+///////////////////////////////////////////////////////////////////////////////
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
 package coordinates;
 
 /*
@@ -7,14 +23,9 @@ package coordinates;
 import java.awt.geom.AffineTransform;
 import java.util.TreeMap;
 import java.util.prefs.Preferences;
-import org.micromanager.internal.MMStudio;
-import org.micromanager.MultiStagePosition;
-import org.micromanager.PositionList;
-import org.micromanager.Studio;
-import org.micromanager.StagePosition;
-import org.micromanager.internal.utils.JavaUtils;
-import org.micromanager.internal.utils.MMScriptException;
-import org.micromanager.internal.utils.ReportingUtils;
+import misc.JavaUtils;
+import misc.Log;
+import org.micromanager.MMStudio;
 
 /**
  *
@@ -23,6 +34,22 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class AffineUtils {
    
    private static TreeMap<String, AffineTransform> affineTransforms_ = new TreeMap<String,AffineTransform>();
+   
+   public static String transformToString(AffineTransform transform) {
+      double[] matrix = new double[4];
+      transform.getMatrix(matrix);
+      return matrix[0] +"_"+matrix[1]+"_"+matrix[2]+"_"+matrix[3];
+   }
+   
+   public static AffineTransform stringToTransform(String s) {
+      double[] mat = new double[4];
+      String[] vals = s.split("_");
+      for (int i = 0; i < 4; i ++) {
+         mat[i] = Double.parseDouble(vals[i]);
+      }
+      return new AffineTransform(mat);
+   }
+   
    
    //called when an affine transform is updated
    public static void transformUpdated(String pixelSizeConfig, AffineTransform transform) {
@@ -52,8 +79,8 @@ public class AffineUtils {
          matrix[5] = yCenter;
          return new AffineTransform(matrix);
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-         ReportingUtils.showError("Couldnt get affine transform");
+         Log.log(ex);
+         Log.log("Couldnt get affine transform");
          return null;
       }
    }

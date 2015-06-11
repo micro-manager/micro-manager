@@ -143,10 +143,20 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       prefs_ = prefs;
       panels_ = new ArrayList<ListeningJPanel>();
       
-      // added listener where we should re-calculate the displayed durations
+      // added to spinner controls where we should re-calculate the displayed
+      // slice period, volume duration, and time lapse duration
       ChangeListener recalculateTimingDisplayCL = new ChangeListener() {
          @Override
          public void stateChanged(ChangeEvent e) {
+            updateDurationLabels();
+         }
+      };
+      
+      // added to combobox controls where we should re-calculate the displayed
+      // slice period, volume duration, and time lapse duration
+      ActionListener recalculateTimingDisplayAL = new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
             updateDurationLabels();
          }
       };
@@ -255,6 +265,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICHANNEL_MODE,
             MultichannelModes.Keys.VOLUME);
       channelMode = channelModes.getComboBox();
+      pu.addListenerLast(channelMode, recalculateTimingDisplayAL);
       this.add(channelMode, "wrap");
       
       // enable/disable panel elements depending on checkbox state
@@ -344,18 +355,26 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    }
    
    /**
+    * Moves the hardware to the state defined in the channel
+    * @param channel should be a channel in the current channel group
+    */
+   public void selectChannel(String channel) {
+       try {
+         core_.setConfig(channelGroup_.getSelectedItem().toString(), channel);
+         core_.waitForConfig(channelGroup_.getSelectedItem().toString(), channel);
+      } catch (Exception e) {
+         MyDialogUtils.showError(e, "Couldn't select preset " + channel +
+               "of channel group " + channelGroup_.getSelectedItem().toString());
+      }
+   }
+   
+   /**
     * Takes care of actually selecting next channel in table.
     * Called by acquisition code.  Blocks until devices ready.
     */
    public void selectNextChannel() {
       ChannelSpec channel = usedChannels_[nextChannelIndex_];
-      try {
-         core_.setConfig(channelGroup_.getSelectedItem().toString(), channel.config_);
-         core_.waitForConfig(channelGroup_.getSelectedItem().toString(), channel.config_);
-      } catch (Exception e) {
-         MyDialogUtils.showError(e, "Couldn't select preset " + channel.config_ +
-               "of channel group " + channelGroup_.getSelectedItem().toString());
-      }
+      selectChannel(channel.config_);
       nextChannelIndex_++;
       if (nextChannelIndex_ == usedChannels_.length) {
          nextChannelIndex_ = 0;

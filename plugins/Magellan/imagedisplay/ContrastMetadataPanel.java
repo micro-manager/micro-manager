@@ -24,8 +24,6 @@ package imagedisplay;
 import ij.ImagePlus;
 import java.awt.Font;
 import java.awt.Panel;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -33,19 +31,18 @@ import java.util.Vector;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
 import acq.MMImageCache;
+import json.JSONException;
+import json.JSONObject;
+import misc.Log;
+import misc.MD;
 import mmcloneclasses.graph.ContrastPanel;
 import mmcloneclasses.graph.MultiChannelHistograms;
 import mmcloneclasses.graph.SingleChannelHistogram;
 import mmcloneclasses.graph.Histograms;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.ReportingUtils;
+
 
 
 public class ContrastMetadataPanel extends Panel  {
@@ -291,7 +288,7 @@ public class ContrastMetadataPanel extends Panel  {
       public synchronized void setMetadata(JSONObject md) {
          clear();
          if (md != null) {
-            String[] keys = MDUtils.getKeys(md);
+            String[] keys = MD.getKeys(md);
             Arrays.sort(keys);
             for (String key : keys) {
                Vector<String> rowData = new Vector<String>();
@@ -299,7 +296,7 @@ public class ContrastMetadataPanel extends Panel  {
                try {
                   rowData.add(md.getString(key));
                } catch (JSONException ex) {
-                  //ReportingUtils.logError(ex);
+                  //Log.log(ex);
                }
                addRow(rowData);
             }
@@ -319,9 +316,9 @@ public class ContrastMetadataPanel extends Panel  {
                } catch (JSONException ex) {
                   try {
                      mdChanging.put(key, "");
-                     //ReportingUtils.logError(ex);
+                     //Log.log(ex);
                   } catch (JSONException ex1) {
-                     ReportingUtils.logError(ex1);
+                     Log.log(ex1);
                   }
                }
             }

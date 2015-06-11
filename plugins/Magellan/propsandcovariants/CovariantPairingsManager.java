@@ -1,7 +1,20 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+///////////////////////////////////////////////////////////////////////////////
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
+
 package propsandcovariants;
 
 import acq.MultipleAcquisitionManager;
@@ -15,16 +28,13 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import main.Magellan;
 import misc.GlobalSettings;
+import misc.JavaUtils;
 import misc.Log;
-import org.micromanager.MMStudio;
-import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.ReportingUtils;
 import surfacesandregions.SurfaceInterpolator;
 import surfacesandregions.SurfaceManager;
 
@@ -143,7 +153,7 @@ public class CovariantPairingsManager {
       try {
          reader = new FileReader(selectedFile);
       } catch (IOException ex) {
-         ReportingUtils.showError("Problem opening file");
+         Log.log("Problem opening file");
          return;
       }
       BufferedReader br = new BufferedReader(reader);
@@ -158,7 +168,7 @@ public class CovariantPairingsManager {
          fileContents = sb.toString();
          br.close();
       } catch (IOException e) {
-         ReportingUtils.logError("Problem reading file");
+         Log.log("Problem reading file",true);
       }
       //Read file and reconstruct covariants
       for (String pairingText : fileContents.split("\n\n")) { //for each pairing
@@ -179,14 +189,14 @@ public class CovariantPairingsManager {
 
                SurfaceInterpolator surface = SurfaceManager.getInstance().getSurfaceNamed(name);
                if (surface == null) {
-                  Log.log("Expected surface null");
+                  Log.log("Expected surface null",true);
                   throw new RuntimeException();
                }
                try {
                   Covariant ind = new SurfaceData(surface, type);
                   createCovariantAndAddValues(ind, dependentName, lines);
                } catch (Exception e) {
-                  Log.log("Expected type wrong");
+                  Log.log("Expected type wrong",true);
                   throw new RuntimeException();
                }
             }
@@ -223,7 +233,7 @@ private Covariant initCovariantFromString(String covariantName) throws Exception
          cov = new SinglePropertyOrGroup();
          String groupName = covariantName.substring(SinglePropertyOrGroup.GROUP_PREFIX.length());
          //check that group exists
-         if (!Arrays.asList(MMStudio.getInstance().getCore().getAvailableConfigGroups().toArray()).contains(groupName)) {
+         if (!Arrays.asList(Magellan.getCore().getAvailableConfigGroups().toArray()).contains(groupName)) {
             JOptionPane.showMessageDialog(null, "Group: \"" + groupName + "\"is not present in current config and will not be loaded");
             throw new Exception();
          }
@@ -236,7 +246,7 @@ private Covariant initCovariantFromString(String covariantName) throws Exception
          cov = new SinglePropertyOrGroup();
          String device = covariantName.split("-")[0];
          String propName = covariantName.split("-")[1];
-         if (!MMStudio.getInstance().getCore().hasProperty(device, propName)) {
+         if (!Magellan.getCore().hasProperty(device, propName)) {
             JOptionPane.showMessageDialog(null, "Cannot locate property: \"" + covariantName + "\". Skipping covariant pairing");
             throw new Exception();
          }
@@ -294,7 +304,7 @@ private Covariant initCovariantFromString(String covariantName) throws Exception
          writer.flush();
          writer.close();
       } catch (IOException ex) {
-         ReportingUtils.showError("Couldn't write file");
+         Log.log("Couldn't write file");
          return;
       }
    }

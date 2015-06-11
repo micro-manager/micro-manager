@@ -1,7 +1,20 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+///////////////////////////////////////////////////////////////////////////////
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
+
 package propsandcovariants;
 
 import propsandcovariants.PropertyAndGroupUtils;
@@ -10,9 +23,8 @@ import java.util.LinkedList;
 import java.util.TreeMap;
 import java.util.prefs.Preferences;
 import javax.swing.table.AbstractTableModel;
+import main.Magellan;
 import mmcorej.CMMCore;
-import org.micromanager.MMStudio;
-import org.micromanager.api.ScriptInterface;
 
 /**
  * Model for table that allows selection of properties
@@ -26,14 +38,10 @@ public class DeviceControlChooserTableModel  extends AbstractTableModel {
    private LinkedList<SinglePropertyOrGroup> storedGroupsAndProps_;
    private TreeMap<String, String> propLabels_;
    
-   private CMMCore core_;
-   private ScriptInterface mmAPI_;
    private Preferences prefs_;
 
    
    public DeviceControlChooserTableModel(Preferences prefs) {
-      mmAPI_ = MMStudio.getInstance();
-      core_ = mmAPI_.getMMCore();
       allGroupsAndProps_ = PropertyAndGroupUtils.readConfigGroupsAndProperties(true);
       storedGroupsAndProps_ = PropertyAndGroupUtils.readStoredGroupsAndProperties(prefs);
       propLabels_ = new TreeMap<String, String>();

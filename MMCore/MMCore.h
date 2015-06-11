@@ -467,6 +467,9 @@ public:
    void setAdapterOrigin(const char* stageLabel, double newZUm) throw (CMMError);
    void setAdapterOrigin(double newZUm) throw (CMMError);
 
+   void setFocusDirection(const char* stageLabel, int sign);
+   int getFocusDirection(const char* stageLabel) throw (CMMError);
+
    bool isStageSequenceable(const char* stageLabel) throw (CMMError);
    void startStageSequence(const char* stageLabel) throw (CMMError);
    void stopStageSequence(const char* stageLabel) throw (CMMError);
@@ -577,7 +580,9 @@ public:
    void setGalvoIlluminationState(const char* galvoLabel, bool on)
       throw (CMMError);
    double getGalvoXRange(const char* galvoLabel) throw (CMMError);
+   double getGalvoXMinimum(const char* galvoLabel) throw (CMMError);
    double getGalvoYRange(const char* galvoLabel) throw (CMMError);
+   double getGalvoYMinimum(const char* galvoLabel) throw (CMMError);
    void addGalvoPolygonVertex(const char* galvoLabel, int polygonIndex,
          double x, double y) throw (CMMError);
    void deleteGalvoPolygons(const char* galvoLabel) throw (CMMError);

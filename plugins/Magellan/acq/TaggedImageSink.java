@@ -1,24 +1,39 @@
+///////////////////////////////////////////////////////////////////////////////
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
 package acq;
 
 import java.util.concurrent.BlockingQueue;
-import mmcorej.TaggedImage;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.ReportingUtils;
+import misc.Log;
+import misc.MD;
 
 /**
  * Dequeue tagged images and append to image cache
  *
- * copied from MM DefaultTaggedImageQueue
+ * copied from MM DefaultMagellanTaggedImageQueue
  */
 public class TaggedImageSink  {
 
-   private final BlockingQueue<TaggedImage> imageProducingQueue_;
+   private final BlockingQueue<MagellanTaggedImage> imageProducingQueue_;
    private MMImageCache imageCache_ = null;
    private volatile String lastImageLabel_;
    private Thread savingThread_;
    private Acquisition acq_;
    
-   public TaggedImageSink(BlockingQueue<TaggedImage> imageProducingQueue,
+   public TaggedImageSink(BlockingQueue<MagellanTaggedImage> imageProducingQueue,
            MMImageCache imageCache, Acquisition acq) {
       imageProducingQueue_ = imageProducingQueue;
       imageCache_ = imageCache;
@@ -45,7 +60,7 @@ public class TaggedImageSink  {
             long t1 = System.currentTimeMillis();
             int imageCount = 0;
             while (true) {
-               TaggedImage image;
+               MagellanTaggedImage image;
                try {
                   image = imageProducingQueue_.take();
                } catch (InterruptedException ex) {
@@ -63,14 +78,14 @@ public class TaggedImageSink  {
                      try {
                         imageCache_.putImage(image);
                      } catch (Exception ex) {
-                        ReportingUtils.showError("Couldn't add image to storage");
+                        Log.log("Couldn't add image to storage");
                      }
-                     lastImageLabel_ = MDUtils.getLabel(image.tags);
+                     lastImageLabel_ = MD.getLabel(image.tags);
                   }
                } 
             }
             long t2 = System.currentTimeMillis();
-            ReportingUtils.logMessage(imageCount + " images stored in " + (t2 - t1) + " ms.");
+            Log.log(imageCount + " images stored in " + (t2 - t1) + " ms.", false);
             acq_.markAsFinished();
             imageCache_.finished();
             if (acq_ instanceof FixedAreaAcquisition) {

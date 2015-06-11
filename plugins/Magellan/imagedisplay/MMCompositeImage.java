@@ -1,20 +1,31 @@
+///////////////////////////////////////////////////////////////////////////////
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
 package imagedisplay;
 
 import com.google.common.eventbus.EventBus;
 import ij.CompositeImage;
-import ij.IJ;
 import ij.ImagePlus;
 import ij.plugin.frame.ContrastAdjuster;
 import ij.process.LUT;
 import java.lang.reflect.InvocationTargetException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
+import misc.JavaUtils;
 import misc.Log;
-import org.micromanager.utils.CanvasPaintPending;
-import org.micromanager.utils.GUIUtils;
-import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.ReportingUtils;
+
 
 public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
    private ImagePlus hyperImage_;
@@ -136,7 +147,7 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
                           ContrastAdjuster.class, "instance");
                   JavaUtils.setRestrictedFieldValue(null, ContrastAdjuster.class, "instance", null);
                } catch (NoSuchFieldException e) {
-                  ReportingUtils.logError(e, "ImageJ ContrastAdjuster doesn't have field named instance");
+                  Log.log("ImageJ ContrastAdjuster doesn't have field named instance",true);
                }
 
                MMCompositeImage.super.updateImage();
@@ -148,7 +159,7 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
                   JavaUtils.setRestrictedFieldValue(null, ContrastAdjuster.class,
                           "instance", curVal);
                } catch (NoSuchFieldException e) {
-                  ReportingUtils.logError(e, "Couldn't restore ImageJ ContrastAdjuster instance.");
+                  Log.log( "Couldn't restore ImageJ ContrastAdjuster instance.",true);
 
                }
 
@@ -156,7 +167,7 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
                exx.printStackTrace();
                //swallow null pointer exception that happens at startup of acq and breaks everything
                //exception is because rgbPixels gets set to null while CompositeImage.updateImage is running
-               Log.log("Null RGB pixels");
+               Log.log("Null RGB pixels",true);
             }
          }
       };
@@ -191,14 +202,24 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
 
        try {
            superUpdateImage();
-       } catch (ArrayIndexOutOfBoundsException aex) {
-           ReportingUtils.logError(aex);
-           CanvasPaintPending.removePaintPending(super.getCanvas(), this);
-           return;
-       }
-       bus_.post(new DrawEvent());
-       try {
-         GUIUtils.invokeLater(new Runnable() {
+      } catch (ArrayIndexOutOfBoundsException aex) {
+         Log.log(aex);
+         CanvasPaintPending.removePaintPending(super.getCanvas(), this);
+         return;
+      }
+      bus_.post(new DrawEvent());
+      if (SwingUtilities.isEventDispatchThread()) {
+         try {
+            JavaUtils.invokeRestrictedMethod(this, ImagePlus.class, "notifyListeners", 2);
+         } catch (NoSuchMethodException ex) {
+         } catch (IllegalAccessException ex) {
+         } catch (IllegalArgumentException ex) {
+         } catch (InvocationTargetException ex) {
+         }
+         superDraw();
+      } else {
+         SwingUtilities.invokeLater(new Runnable() {
+
             @Override
             public void run() {
                try {
@@ -211,10 +232,6 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
                superDraw();
             }
          });
-      } catch (InterruptedException e) {
-         ReportingUtils.logError(e);
-      } catch (InvocationTargetException e) {
-         ReportingUtils.logError(e);
       }
    }
 
@@ -253,4 +270,5 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
       return super.getPixel(x, y);
    }
 }
+
 

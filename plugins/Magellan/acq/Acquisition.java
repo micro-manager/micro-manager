@@ -1,22 +1,32 @@
+///////////////////////////////////////////////////////////////////////////////
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
 package acq;
 
-import coordinates.PositionManager;
-import gui.SettingsDialog;
 import ij.IJ;
 import imagedisplay.DisplayPlus;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import bidc.CoreCommunicator;
+import bidc.JavaLayerImageConstructor;
 import channels.ChannelSetting;
-import gui.GUI;
 import java.awt.Color;
 import java.util.ArrayList;
-import mmcorej.CMMCore;
-import mmcorej.TaggedImage;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.micromanager.MMStudio;
-import org.micromanager.utils.ReportingUtils;
+import json.JSONArray;
+import json.JSONObject;
+import main.Magellan;
 
 /**
  * Abstract class that manages a generic acquisition. Subclassed into specific
@@ -28,41 +38,37 @@ public abstract class Acquisition implements AcquisitionEventSource{
    private static final int OUTPUT_QUEUE_SIZE = 40;
    
    protected final double zStep_;
-   private BlockingQueue<TaggedImage> engineOutputQueue_;
-   protected CMMCore core_ = MMStudio.getInstance().getCore();
+   private BlockingQueue<MagellanTaggedImage> engineOutputQueue_;
    protected String xyStage_, zStage_;
    protected boolean zStageHasLimits_ = false;
    protected double zStageLowerLimit_, zStageUpperLimit_;
-   protected PositionManager posManager_;
    protected BlockingQueue<AcquisitionEvent> events_;
    protected TaggedImageSink imageSink_;
-   protected String pixelSizeConfig_;
    protected volatile boolean finished_ = false;
    private String name_;
    private long startTime_ms_ = -1;
-   private MultiResMultipageTiffStorage imageStorage_;
+   protected MultiResMultipageTiffStorage imageStorage_;
    private int overlapX_, overlapY_;
    private volatile boolean pause_ = false;
    private Object pauseLock_ = new Object();
    protected ArrayList<ChannelSetting> channels_ = new ArrayList<ChannelSetting>();
 
    public Acquisition(double zStep, ArrayList<ChannelSetting> channels) throws Exception {
-      xyStage_ = core_.getXYStageDevice();
-      zStage_ = core_.getFocusDevice();
+      xyStage_ = Magellan.getCore().getXYStageDevice();
+      zStage_ = Magellan.getCore().getFocusDevice();
       channels_ = channels;
       //"postion" is not generic name..and as of right now there is now way of getting generic z positions
       //from a z deviec in MM
       String positionName = "Position";
-       if (core_.hasProperty(zStage_, positionName)) {
-           zStageHasLimits_ = core_.hasPropertyLimits(zStage_, positionName);
+       if (Magellan.getCore().hasProperty(zStage_, positionName)) {
+           zStageHasLimits_ = Magellan.getCore().hasPropertyLimits(zStage_, positionName);
            if (zStageHasLimits_) {
-               zStageLowerLimit_ = core_.getPropertyLowerLimit(zStage_, positionName);
-               zStageUpperLimit_ = core_.getPropertyUpperLimit(zStage_, positionName);
+               zStageLowerLimit_ = Magellan.getCore().getPropertyLowerLimit(zStage_, positionName);
+               zStageUpperLimit_ = Magellan.getCore().getPropertyUpperLimit(zStage_, positionName);
            }
        }
       zStep_ = zStep;
       events_ = new LinkedBlockingQueue<AcquisitionEvent>(getAcqEventQueueCap());
-      pixelSizeConfig_ = core_.getCurrentPixelSizeConfig();
    }
    
    public AcquisitionEvent getNextEvent() throws InterruptedException {
@@ -103,9 +109,25 @@ public abstract class Acquisition implements AcquisitionEventSource{
 
    public abstract int getSliceIndexFromZCoordinate(double z);
 
+   /**
+    * Return the maximum number of possible channels for the acquisition, not all of which are neccessarily active
+    * @return 
+    */
    public int getNumChannels() {
       return channels_.size();
    }
+   
+   public ArrayList<ChannelSetting> getChannels() {
+      return channels_;
+   }
+   
+   /**
+    * Get initial number of frames (but this can change during acq)
+    * @return 
+    */
+   public abstract int getInitialNumFrames();
+   
+   public abstract int getInitialNumSlicesEstimate();
    
    public boolean isFinished() {
       return finished_;
@@ -133,18 +155,21 @@ public abstract class Acquisition implements AcquisitionEventSource{
       return overlapY_;
    }
    
+   public void waitUntilClosed() {
+       imageSink_.waitToDie();
+   }
+   
    protected void initialize(String dir, String name, double overlapPercent) {
-      engineOutputQueue_ = new LinkedBlockingQueue<TaggedImage>(OUTPUT_QUEUE_SIZE);
-      overlapX_ = (int) (CoreCommunicator.getInstance().getImageWidth() * overlapPercent / 100);
-      overlapY_ = (int) (CoreCommunicator.getInstance().getImageHeight() * overlapPercent / 100);
+      engineOutputQueue_ = new LinkedBlockingQueue<MagellanTaggedImage>(OUTPUT_QUEUE_SIZE);
+      overlapX_ = (int) (JavaLayerImageConstructor.getInstance().getImageWidth() * overlapPercent / 100);
+      overlapY_ = (int) (JavaLayerImageConstructor.getInstance().getImageHeight() * overlapPercent / 100);
       JSONObject summaryMetadata = MagellanEngine.makeSummaryMD(this, name);
-      imageStorage_ = new MultiResMultipageTiffStorage(dir, true, summaryMetadata, overlapX_, overlapY_, pixelSizeConfig_,
+      imageStorage_ = new MultiResMultipageTiffStorage(dir, summaryMetadata,
               (this instanceof FixedAreaAcquisition)); //estimatye background pixel values for fixed acqs but not explore
       //storage class has determined unique acq name, so it can now be stored
       name_ = imageStorage_.getUniqueAcqName();
       MMImageCache imageCache = new MMImageCache(imageStorage_);
       imageCache.setSummaryMetadata(summaryMetadata);
-      posManager_ = imageStorage_.getPositionManager();      
       new DisplayPlus(imageCache, this, summaryMetadata, imageStorage_);         
       imageSink_ = new TaggedImageSink(engineOutputQueue_, imageCache, this);
       imageSink_.start();
@@ -158,11 +183,7 @@ public abstract class Acquisition implements AcquisitionEventSource{
       return zStep_;
    }
 
-   public PositionManager getPositionManager() {
-      return posManager_;
-   }
-
-   public void addImage(TaggedImage img) {
+   public void addImage(MagellanTaggedImage img) {
       try {
          engineOutputQueue_.put(img);
       } catch (InterruptedException ex) {

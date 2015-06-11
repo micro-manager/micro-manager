@@ -221,9 +221,9 @@ public class Positions {
    /**
     * Sets the position of specified stage to the specified value using appropriate core calls
     * @param devKey
-    * @param dir
     * @param pos new position of the stage
     * @param ignoreErrors true will return without any errors (or any action) if device is missing
+    * @return true on success, false on failure
     */
    public boolean setPosition(Devices.Keys devKey, double pos, boolean ignoreErrors) {
       return setPosition(devKey, Directions.NONE, pos, ignoreErrors);
@@ -231,9 +231,10 @@ public class Positions {
    
    /**
     * Sets the position of specified stage to the specified value using appropriate core calls
-    * @param devKey
-    * @param dir
+    * @param devKey device as we know it in this plugin
+    * @param dir X, Y, or none
     * @param pos new position of the stage
+    * @return true on success, false on failure
     */
    public boolean setPosition(Devices.Keys devKey, Directions dir, double pos) {
       return setPosition(devKey, dir, pos, false);
@@ -245,6 +246,7 @@ public class Positions {
     * @param dir
     * @param pos new position of the stage
     * @param ignoreErrors true will return without any errors (or any action) if device is missing
+    * @return true on success, false on failure
     */
    public boolean setPosition(Devices.Keys devKey, Directions dir, double pos, boolean ignoreErrors) {
       try {
@@ -283,11 +285,10 @@ public class Positions {
    }
    
    /**
-    * Sets the relative position of specified stage to the specified value 
-    * using appropriate core calls
-    * @param devKey
-    * @param dir
-    * @param delta desired change in position (in microns)
+    * Sets the relative position of specified stage to the specified value using appropriate core calls
+    * @param devKey device as we know it in the plugin
+    * @param dir X, Y, or none
+    * @param delta distance to be traveled
     */
    public void setPositionRelative(Devices.Keys devKey, Directions dir, double delta) {
       try {
@@ -321,8 +322,8 @@ public class Positions {
    
    /**
     * Sets the current position to be the origin.
-    * @param devKey
-    * @param dir
+    * @param devKey device as we know it in this plugin
+    * @param dir X, Y, or none
     */
    public void setOrigin(Devices.Keys devKey, Directions dir) {
       try {

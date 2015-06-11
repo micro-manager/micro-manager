@@ -79,7 +79,7 @@ public:
          loopThread_.join();
       }
 
-      boost::thread t(boost::bind<void>(&GenericPacketQueue::ReceiveLoop,
+      boost::thread t(boost::bind(&GenericPacketQueue::ReceiveLoop,
                this, consume));
       boost::swap(loopThread_, t);
    }

@@ -1,23 +1,34 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+///////////////////////////////////////////////////////////////////////////////
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
+
 package acq;
 
 import channels.ChannelSetting;
 import gui.GUI;
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import json.JSONArray;
+import main.Magellan;
 import misc.Log;
 import mmcorej.CMMCore;
-import org.json.JSONArray;
-import org.micromanager.MMStudio;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  * A single time point acquisition that can dynamically expand in X,Y, and Z
@@ -35,16 +46,18 @@ public class ExploreAcquisition extends Acquisition {
    private int imageFilterType_;
    private ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>> queuedTileEvents_ = new ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>>();
    private double zOrigin_; 
+   private ArrayList<ChannelSetting> channels_;
 
    public ExploreAcquisition(ExploreAcqSettings settings) throws Exception {
       super(settings.zStep_, settings.channels_);
+      channels_ = settings.channels_;
       try {
          //start at current z position
-         zTop_ = core_.getPosition(zStage_);
+         zTop_ = Magellan.getCore().getPosition(zStage_);
          zOrigin_ = zTop_;
-         zBottom_ = core_.getPosition(zStage_);
+         zBottom_ = Magellan.getCore().getPosition(zStage_);
       } catch (Exception ex) {
-         Log.log("Couldn't get focus device position");
+         Log.log("Couldn't get focus device position",true);
          throw new RuntimeException();
       }
       imageFilterType_ = settings.filterType_;
@@ -66,7 +79,7 @@ public class ExploreAcquisition extends Acquisition {
          //wait for it to exit
          while (!eventAdderExecutor_.awaitTermination(5, TimeUnit.MILLISECONDS)) {}
       } catch (InterruptedException ex) {
-         ReportingUtils.showError("Unexpected interrupt whil trying to abort acquisition");
+         Log.log("Unexpected interrupt while trying to abort acquisition",true);
          //shouldn't happen
       }
       //abort all pending events
@@ -78,7 +91,7 @@ public class ExploreAcquisition extends Acquisition {
          events_.put(AcquisitionEvent.createAcquisitionFinishedEvent(this));         
          events_.put(AcquisitionEvent.createEngineTaskFinishedEvent());
       } catch (InterruptedException ex) {
-         ReportingUtils.showError("Unexpected interrupted exception while trying to abort"); //shouldnt happen
+         Log.log("Unexpected interrupted exception while trying to abort",true); //shouldnt happen
       }
       imageSink_.waitToDie();
       //image sink will call finish when it completes
@@ -136,10 +149,10 @@ public class ExploreAcquisition extends Acquisition {
                      newPositionCols[i] = c;
                   }
                }
-               posIndices = getPositionManager().getPositionIndices(newPositionRows, newPositionCols);
+               posIndices = imageStorage_.getPositionIndices(newPositionRows, newPositionCols);
             } catch (Exception e) {
                e.printStackTrace();
-               ReportingUtils.showError("Problem with position metadata: couldn't add tile");
+               Log.log("Problem with position metadata: couldn't add tile",true);
                return;
             }
 
@@ -149,27 +162,33 @@ public class ExploreAcquisition extends Acquisition {
                updateLowestAndHighestSlices();
                //Add events for each channel, slice            
                for (int sliceIndex = getMinSliceIndex(); sliceIndex <= getMaxSliceIndex(); sliceIndex++) {
-                  try {
-                     //in case interupt occurs in between blocking calls of a really big loop
-                     if (Thread.interrupted()){
-                        throw new InterruptedException();
+                  for (int channelIndex = 0; channelIndex < channels_.size(); channelIndex++) {
+                     if (!channels_.get(channelIndex).uniqueEvent_ || !channels_.get(channelIndex).use_) {
+                        continue;
                      }
-                     //add tile tile to list waiting to acquire for drawing purposes
-                     if (!queuedTileEvents_.containsKey(sliceIndex)) {
-                        queuedTileEvents_.put(sliceIndex, new LinkedBlockingQueue<ExploreTileWaitingToAcquire>());
+                     try {
+                        //in case interupt occurs in between blocking calls of a really big loop
+                        if (Thread.interrupted()) {
+                           throw new InterruptedException();
+                        }
+                        //add tile tile to list waiting to acquire for drawing purposes
+                        if (!queuedTileEvents_.containsKey(sliceIndex)) {
+                           queuedTileEvents_.put(sliceIndex, new LinkedBlockingQueue<ExploreTileWaitingToAcquire>());
+                        }
+
+                        ExploreTileWaitingToAcquire tile = new ExploreTileWaitingToAcquire(imageStorage_.getXYPosition(posIndices[i]).getGridRow(),
+                                imageStorage_.getXYPosition(posIndices[i]).getGridCol(), sliceIndex);
+                        if (queuedTileEvents_.get(sliceIndex).contains(tile)) {
+                           continue; //ignor commands for duplicates
+                        }
+                        queuedTileEvents_.get(sliceIndex).put(tile);
+
+                        events_.put(new AcquisitionEvent(ExploreAcquisition.this, 0, channelIndex, sliceIndex, posIndices[i], getZCoordinate(sliceIndex),
+                                imageStorage_.getXYPosition(posIndices[i]), null));
+                     } catch (InterruptedException ex) {
+                        //aborted acqusition
+                        return;
                      }
-                     
-                     ExploreTileWaitingToAcquire tile = new ExploreTileWaitingToAcquire(posManager_.getXYPosition(posIndices[i]).getGridRow(), 
-                             posManager_.getXYPosition(posIndices[i]).getGridCol(), sliceIndex);
-                     if (queuedTileEvents_.get(sliceIndex).contains(tile)) {
-                        continue; //ignor commands for duplicates
-                     }
-                     queuedTileEvents_.get(sliceIndex).put(tile);
-                     events_.put(new AcquisitionEvent(ExploreAcquisition.this, 0, 0, sliceIndex, posIndices[i], getZCoordinate(sliceIndex), 
-                             posManager_.getXYPosition(posIndices[i]), null));
-                  } catch (InterruptedException ex) {
-                     //aborted acqusition
-                     return;
                   }
                }
             }
@@ -253,11 +272,11 @@ public class ExploreAcquisition extends Acquisition {
    protected JSONArray createInitialPositionList() {
       try {
          //create empty position list that gets filled in as tiles are explored
-         CMMCore core = MMStudio.getInstance().getCore();
+         CMMCore core = Magellan.getCore();
          JSONArray pList = new JSONArray();
          return pList;
       } catch (Exception e) {
-         ReportingUtils.showError("Couldn't create initial position list");
+         Log.log("Couldn't create initial position list",true);
          return null;
       }
    }
@@ -277,12 +296,23 @@ public class ExploreAcquisition extends Acquisition {
     public int getAcqEventQueueCap() {
         return EXPLORE_EVENT_QUEUE_CAP;
     }
+
+   @Override
+   public int getInitialNumFrames() {
+      return 1;
+   }
+
+   @Override
+   public int getInitialNumSlicesEstimate() {
+      //Who knows??
+      return 1;
+   }
    
    //slice and row/col index of an acquisition event in the queue
    public class ExploreTileWaitingToAcquire {
-      public int row, col, sliceIndex;
+      public long row, col, sliceIndex;
       
-      public ExploreTileWaitingToAcquire(int r, int c, int z) {
+      public ExploreTileWaitingToAcquire(long r, long c, int z) {
          row = r;
          col = c;
          sliceIndex = z;

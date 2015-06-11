@@ -1,3 +1,19 @@
+///////////////////////////////////////////////////////////////////////////////
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
 package acq;
 
 /*
@@ -14,19 +30,18 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import javax.swing.JOptionPane;
-import bidc.CoreCommunicator;
+import bidc.JavaLayerImageConstructor;
 import bidc.FrameIntegrationMethod;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import channels.ChannelSetting;
+import coordinates.AffineUtils;
+import java.awt.geom.AffineTransform;
+import json.JSONArray;
+import json.JSONObject;
+import main.Magellan;
 import misc.GlobalSettings;
 import misc.Log;
+import misc.MD;
 import mmcorej.CMMCore;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.micromanager.MMStudio;
-import org.micromanager.api.MMTags;
-import org.micromanager.utils.ReportingUtils;
 import propsandcovariants.CovariantPairing;
 
 /**
@@ -59,45 +74,45 @@ public class MagellanEngine {
       //non null surface
       if ((settings.spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D || settings.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK)
               && settings.footprint_ == null) {
-         Log.log("Error: No surface or region selected for " + settings.name_);
+         Log.log("Error: No surface or region selected for " + settings.name_, true);
          throw new Exception();
       }
       if (settings.spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK && settings.fixedSurface_ == null) {
-         Log.log("Error: No surface selected for " + settings.name_);
+         Log.log("Error: No surface selected for " + settings.name_, true);
          throw new Exception();
       }
       if (settings.spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK
               && (settings.topSurface_ == null || settings.bottomSurface_ == null)) {
-         Log.log("Error: No surface selected for " + settings.name_);
+         Log.log("Error: No surface selected for " + settings.name_, true);
          throw new Exception();
       }
       //correct coordinate devices--XY
       if ((settings.spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D || settings.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK)
               && !settings.footprint_.getXYDevice().equals(core_.getXYStageDevice())) {
-         Log.log("Error: XY device for surface/grid does match XY device in MM core in " + settings.name_);
+         Log.log("Error: XY device for surface/grid does match XY device in MM core in " + settings.name_, true);
          throw new Exception();
       }
       if (settings.spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK && 
               !settings.fixedSurface_.getXYDevice().equals(core_.getXYStageDevice())) {
-         Log.log("Error: XY device for surface does match XY device in MM core in " + settings.name_);
+         Log.log("Error: XY device for surface does match XY device in MM core in " + settings.name_, true);
          throw new Exception();
       }
       if (settings.spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK
               && (!settings.topSurface_.getXYDevice().equals(core_.getXYStageDevice()) || 
               !settings.bottomSurface_.getXYDevice().equals(core_.getXYStageDevice()))) {
-         Log.log("Error: XY device for surface does match XY device in MM core in " + settings.name_);
+         Log.log("Error: XY device for surface does match XY device in MM core in " + settings.name_, true);
          throw new Exception();
       }     
       //correct coordinate device--Z
        if (settings.spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK
                && !settings.fixedSurface_.getZDevice().equals(core_.getFocusDevice())) {
-           Log.log("Error: Z device for surface does match Z device in MM core in " + settings.name_);
+           Log.log("Error: Z device for surface does match Z device in MM core in " + settings.name_, true);
            throw new Exception();
        }
        if (settings.spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK
                && (!settings.topSurface_.getZDevice().equals(core_.getFocusDevice())
                || !settings.bottomSurface_.getZDevice().equals(core_.getFocusDevice()))) {
-           Log.log("Error: Z device for surface does match Z device in MM core in " + settings.name_);
+           Log.log("Error: Z device for surface does match Z device in MM core in " + settings.name_, true);
            throw new Exception();
        }
 
@@ -116,7 +131,7 @@ public class MagellanEngine {
       try {
          runInterleavedAcquisitions(Arrays.asList(new FixedAreaAcquisitionSettings[]{settings}), false);
       } catch (Exception ex) {
-        Log.log(ex.toString());
+        Log.log(ex);
       }
     }
 
@@ -147,7 +162,7 @@ public class MagellanEngine {
                 //that it can be returned to after
                 currentExploreAcq_.events_.put(AcquisitionEvent.createEngineTaskFinishedEvent());
             } catch (InterruptedException ex) {
-                ReportingUtils.showError("Unexpected interrupt when trying to switch acquisition tasks");
+                Log.log("Unexpected interrupt when trying to switch acquisition tasks");
             }
         }
 
@@ -183,7 +198,7 @@ public class MagellanEngine {
             currentExploreAcq_ = new ExploreAcquisition(settings);
         } catch (Exception ex) {
            ex.printStackTrace();
-           Log.log("Couldn't initialize explore acquisiton");
+           Log.log("Couldn't initialize explore acquisiton", true);
             return;
         }
         runAcq(currentExploreAcq_);
@@ -204,7 +219,7 @@ public class MagellanEngine {
                         }
                         executeAcquisitionEvent(event);
                     } catch (InterruptedException ex) {
-                        ReportingUtils.showError("Unexpected interrupt to acquisiton engine thread");
+                        Log.log("Unexpected interrupt to acquisiton engine thread");
                         return;
                     }
                 }
@@ -216,11 +231,11 @@ public class MagellanEngine {
        if (event.isReQueryEvent()) {
             //nothing to do, just a dummy event to get of blocking call when switching between parallel acquisitions
         } else if (event.isAcquisitionFinishedEvent()) {
-            //signal to TaggedImageSink to finish saving thread and mark acquisition as finished
-           CoreCommunicator.getInstance().addSignalTaggedImage(event, new SignalTaggedImage(SignalTaggedImage.AcqSingal.AcqusitionFinsihed));
+            //signal to MagellanTaggedImageSink to finish saving thread and mark acquisition as finished
+           JavaLayerImageConstructor.getInstance().addSignalMagellanTaggedImage(event, new SignalTaggedImage(SignalTaggedImage.AcqSingal.AcqusitionFinsihed));
         } else if (event.isTimepointFinishedEvent()) {
-            //signal to TaggedImageSink to let acqusition know that saving for the current time point has completed  
-            CoreCommunicator.getInstance().addSignalTaggedImage(event, new SignalTaggedImage(SignalTaggedImage.AcqSingal.TimepointFinished));
+            //signal to MagellanTaggedImageSink to let acqusition know that saving for the current time point has completed  
+            JavaLayerImageConstructor.getInstance().addSignalMagellanTaggedImage(event, new SignalTaggedImage(SignalTaggedImage.AcqSingal.TimepointFinished));
         } else if (event.isAutofocusAdjustmentEvent()) {
             setAutofocusPosition(event.autofocusZName_, event.autofocusPosition_);
         } else {
@@ -236,7 +251,7 @@ public class MagellanEngine {
         loopHardwareCommandRetries(new HardwareCommand() {
             @Override
             public void run() throws Exception {
-                CoreCommunicator.getInstance().snapImage();
+                JavaLayerImageConstructor.getInstance().snapImage();
             }
         }, "snapping image");
 
@@ -251,7 +266,7 @@ public class MagellanEngine {
         loopHardwareCommandRetries(new HardwareCommand() {
             @Override
             public void run() throws Exception {
-                CoreCommunicator.getInstance().getTaggedImagesAndAddToAcq(event, currentTime);
+                JavaLayerImageConstructor.getInstance().getMagellanTaggedImagesAndAddToAcq(event, currentTime);
             }
         }, "getting tagged image");
 
@@ -373,13 +388,22 @@ public class MagellanEngine {
         }
 
         /////////////////////////////Channels/////////////////////////////
-//      if (lastEvent_ == null || event.channelIndex_ != lastEvent_.channelIndex_) {
-//         try {
-//            core_.setConfig("Channel", event.channelIndex_ == 0 ? "DAPI" : "FITC");
-//         } catch (Exception ex) {
-//            ReportingUtils.showError("Couldn't change channel group");
-//         }
-//      }
+      if (lastEvent_ == null || event.channelIndex_ != lastEvent_.channelIndex_) {
+         try {
+            final ChannelSetting setting = event.acquisition_.channels_.get(event.channelIndex_);
+            if (setting.use_ && setting.config_ != null) {
+               loopHardwareCommandRetries(new HardwareCommand() {
+                  @Override
+                  public void run() throws Exception {
+                     core_.setConfig(setting.group_, setting.config_);
+                  }
+               }, "Set channel group");
+            }
+            
+         } catch (Exception ex) {
+            Log.log("Couldn't change channel group");
+         }
+      }
 
         /////////////////////////////Covariants/////////////////////////////
         if (event.covariants_ != null) {
@@ -405,11 +429,11 @@ public class MagellanEngine {
                 return;
             } catch (Exception e) {
                 e.printStackTrace();
-                Log.log(getCurrentDateAndTime() + ": Problem " + commandName + "\n Retry #" + i + " in " + DELWAY_BETWEEN_RETRIES_MS + " ms");
+                Log.log(getCurrentDateAndTime() + ": Problem " + commandName + "\n Retry #" + i + " in " + DELWAY_BETWEEN_RETRIES_MS + " ms", true);
                 Thread.sleep(DELWAY_BETWEEN_RETRIES_MS);
             }
         }
-        Log.log(commandName + "unsuccessful");
+        Log.log(commandName + "unsuccessful", true);
     }
 
     private String getCurrentDateAndTime() {
@@ -418,95 +442,85 @@ public class MagellanEngine {
         return df.format(calobj.getTime());
     }
 
-    public static void addImageMetadata(JSONObject tags, AcquisitionEvent event,
-            int numCamChannels, int camChannel, long elapsed_ms,int exposure) {
-        try {
-            //add tags
-            long gridRow = event.acquisition_.getPositionManager().getGridRow(event.positionIndex_, 0);
-            long gridCol = event.acquisition_.getPositionManager().getGridCol(event.positionIndex_, 0);
-            tags.put(MMTags.Image.POS_NAME, "Grid_" + gridRow + "_" + gridCol);
-            tags.put(MMTags.Image.POS_INDEX, event.positionIndex_);
-            tags.put(MMTags.Image.SLICE_INDEX, event.sliceIndex_);
-            tags.put(MMTags.Image.SLICE, event.sliceIndex_);
-            tags.put(MMTags.Image.FRAME_INDEX, event.timeIndex_);
-            tags.put(MMTags.Image.FRAME, event.timeIndex_);
-            tags.put(MMTags.Image.CHANNEL_INDEX, event.channelIndex_ * numCamChannels + camChannel);
-            tags.put(MMTags.Image.ZUM, event.zPosition_);
-            tags.put(MMTags.Image.ELAPSED_TIME_MS, elapsed_ms);
-            tags.put(MMTags.Image.TIME, (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss -")).format(Calendar.getInstance().getTime()));
-            //Magellan specific tags
-            if (GlobalSettings.getInstance().isBIDCTwoPhoton()) {
-              tags.put("ExposureRawFrames", exposure);
-           }
-            tags.put("GridColumnIndex", gridCol);
-            tags.put("GridRowIndex", gridRow);
-            tags.put("StagePositionX", event.xyPosition_.getCenter().x);
-            tags.put("StagePositionY", event.xyPosition_.getCenter().y);
-        } catch (JSONException e) {
-            Log.log("Problem adding image tags");
-            Log.log(e.toString());
-            e.printStackTrace();
-        }
-    }
+   public static void addImageMetadata(JSONObject tags, AcquisitionEvent event, int timeIndex,
+           int camChannelIndex, long elapsed_ms, int exposure) {
+      //add tags
+      try {
+         long gridRow = event.acquisition_.getStorage().getGridRow(event.positionIndex_, 0);
+         long gridCol = event.acquisition_.getStorage().getGridCol(event.positionIndex_, 0);
+         MD.setPositionName(tags, "Grid_" + gridRow + "_" + gridCol);
+         MD.setPositionIndex(tags, event.positionIndex_);
+         MD.setSliceIndex(tags, event.sliceIndex_);
+         MD.setFrameIndex(tags, timeIndex);
+         MD.setChannelIndex(tags, event.channelIndex_ + camChannelIndex);
+         MD.setZPositionUm(tags, event.zPosition_);
+         MD.setElapsedTimeMs(tags, elapsed_ms);
+         MD.setImageTime(tags, (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss -")).format(Calendar.getInstance().getTime()));
+         MD.setGridRow(tags, gridRow);
+         MD.setGridCol(tags, gridCol);
+         MD.setStageX(tags, event.xyPosition_.getCenter().x);
+         MD.setStageY(tags, event.xyPosition_.getCenter().y);
+      } catch (Exception e) {
+         Log.log("Problem adding image metadata");
+         throw new RuntimeException();
+      }
+   }
 
-    public static JSONObject makeSummaryMD(Acquisition acq, String prefix) {
-        try {
+   public static JSONObject makeSummaryMD(Acquisition acq, String prefix) {
+      //num channels is camera channels * acquisitionChannels
+      int numChannels = GlobalSettings.getInstance().getDemoMode() ? 6 : acq.getNumChannels();
 
-            //num channels is camera channels * acquisitionChannels
-            int numChannels = GlobalSettings.getInstance().getDemoMode() ? 6 : acq.getNumChannels();
-
-            /////////////////////////////////////////////////////////////////
-            ////Summary metadata equivalent to normal MM metadata////////////
-            /////////////////////////////////////////////////////////////////
-            CMMCore core = MMStudio.getInstance().getCore();
-            JSONObject summary = new JSONObject();
-            summary.put("Channels", numChannels);
-            summary.put("Frames", 1);
-            summary.put("SlicesFirst", true);
-            summary.put("TimeFirst", false);
-            summary.put("PixelType", GlobalSettings.getInstance().isBIDCTwoPhoton() ? 
-                    (acq.getFilterType() == FrameIntegrationMethod.FRAME_SUMMATION ? "GRAY16" : "GRAY8") :
-            core_.getImageBitDepth() > 8 ? "GRAY16" : "GRAY8");
-            summary.put("BitDepth", GlobalSettings.getInstance().isBIDCTwoPhoton() ? 
-                    (acq.getFilterType() == FrameIntegrationMethod.FRAME_SUMMATION ? 16 : 8) :
-                    core_.getImageBitDepth() );
-            summary.put("Width", CoreCommunicator.getInstance().getImageWidth());
-            summary.put("Height", CoreCommunicator.getInstance().getImageHeight());
-            summary.put("Prefix", prefix);
-            JSONArray initialPosList = acq.createInitialPositionList();
-            summary.put("InitialPositionList", initialPosList);
-            summary.put("Positions", initialPosList.length());
-            summary.put(MMTags.Summary.PIXSIZE, core.getPixelSizeUm());
-            summary.put("z-step_um", acq.getZStep());
-            summary.put("Interval_ms", acq instanceof FixedAreaAcquisition ? ((FixedAreaAcquisition) acq).getTimeInterval_ms() : 0);
-
-            /////////////////////////////////////////////////////////////////
-            ////Summary metadata specific to Magellan///////////////////////
-            /////////////////////////////////////////////////////////////////
-
-            //write pixel overlap into metadata
-            summary.put("GridPixelOverlapX", acq.getOverlapX());
-            summary.put("GridPixelOverlapY", acq.getOverlapY());
-            summary.put("MagellanExploreAcquisition", acq instanceof ExploreAcquisition);
-
-            JSONArray chNames = new JSONArray();
-            JSONArray chColors = new JSONArray();
-            String[] names = acq.getChannelNames();   
-            Color[] colors = acq.getChannelColors();
-            for (int i = 0; i < numChannels; i++) {  
-               chNames.put(names[i]);
-               chColors.put(colors[i].getRGB());
-            }
-            summary.put("ChNames", chNames);
-            summary.put("ChColors", chColors);
-
-            return summary;
-        } catch (Exception ex) {
-            ReportingUtils.showError("couldnt make summary metadata");
-            ex.printStackTrace();
-        }
-        return null;
-    }
+      CMMCore core = Magellan.getCore();
+      JSONObject summary = new JSONObject();
+      //Actual number of channels is equal or less than this field
+      MD.setNumChannels(summary, numChannels);
+      //neither numchannels or numnumslices is guaranteeed to be accurate. Just initial estimates
+      MD.setNumFrames(summary, acq.getInitialNumFrames());
+      MD.setNumSlices(summary, acq.getInitialNumSlicesEstimate());
+      MD.setZCTOrder(summary, false);
+      MD.setPixelTypeFromByteDepth(summary, GlobalSettings.getInstance().isBIDCTwoPhoton()
+              ? (acq.getFilterType() == FrameIntegrationMethod.FRAME_SUMMATION ? 2 : 1)
+              : core_.getImageBitDepth() > 8 ? 2 : 1);
+      MD.setBitDepth(summary, GlobalSettings.getInstance().isBIDCTwoPhoton()
+              ? (acq.getFilterType() == FrameIntegrationMethod.FRAME_SUMMATION ? 16 : 8)
+              : (int) core_.getImageBitDepth());
+      MD.setWidth(summary, JavaLayerImageConstructor.getInstance().getImageWidth());
+      MD.setHeight(summary, JavaLayerImageConstructor.getInstance().getImageHeight());
+      MD.setSavingPrefix(summary, prefix);
+      JSONArray initialPosList = acq.createInitialPositionList();
+      MD.setInitialPositionList(summary, initialPosList);
+      MD.setPixelSizeUm(summary, core.getPixelSizeUm());
+      MD.setZStepUm(summary, acq.getZStep());
+      MD.setIntervalMs(summary, acq instanceof FixedAreaAcquisition ? ((FixedAreaAcquisition) acq).getTimeInterval_ms() : 0);
+      MD.setPixelOverlapX(summary, acq.getOverlapX());
+      MD.setPixelOverlapY(summary, acq.getOverlapY());
+      MD.setExploreAcq(summary, acq instanceof ExploreAcquisition);
+      //affine transform
+      try {
+         AffineTransform at = AffineUtils.getAffineTransform(core.getCurrentPixelSizeConfig(), 0, 0);
+         MD.setAffineTransformString(summary, AffineUtils.transformToString(at));
+      } catch (Exception e) {
+         Log.log("couldn't get pixel size config");
+         throw new RuntimeException();
+      }
+      JSONArray chNames = new JSONArray();
+      JSONArray chColors = new JSONArray();
+      String[] names = acq.getChannelNames();
+      Color[] colors = acq.getChannelColors();
+      for (int i = 0; i < numChannels; i++) {
+         chNames.put(names[i]);
+         chColors.put(colors[i].getRGB());
+      }
+      MD.setChannelNames(summary, chNames);
+      MD.setChannelColors(summary, chColors);
+      try {
+         MD.setCoreXY(summary, Magellan.getCore().getXYStageDevice());
+         MD.setCoreFocus(summary, Magellan.getCore().getFocusDevice());
+      } catch (Exception e) {
+         Log.log("couldn't get XY or Z stage from core");
+      }
+      return summary;
+   }
 
     private interface HardwareCommand {
 
@@ -517,3 +531,4 @@ public class MagellanEngine {
         multiAcqManager_ = multiAcqManager;
     }
 }
+

@@ -5,9 +5,7 @@
  */
 package bidc;
 
-import ij.ImagePlus;
-import ij.ImageStack;
-import org.micromanager.MMStudio;
+import main.Magellan;
 
 /**
  * Class that wraps raw, double wide, warped buffer to support fast access
@@ -86,7 +84,7 @@ public class RawBufferWrapper {
    
    public static int getHeight() {
       //twice the raw image height
-      return (int) (MMStudio.getInstance().getCore().getImageHeight() * 2);
+      return (int) (Magellan.getCore().getImageHeight() * 2);
    }
    
    /**

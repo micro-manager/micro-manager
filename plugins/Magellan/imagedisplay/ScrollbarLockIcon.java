@@ -1,3 +1,19 @@
+///////////////////////////////////////////////////////////////////////////////
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
 package imagedisplay;
 
 import com.google.common.eventbus.EventBus;
@@ -5,7 +21,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import javax.swing.JComponent;
 import javax.swing.event.MouseInputAdapter;
-import org.micromanager.utils.TooltipTextMaker;
 
 /**
  *
@@ -54,8 +69,7 @@ public class ScrollbarLockIcon extends JComponent   {
       axis_ = axis;
       bus_ = bus;
       setSize(WIDTH, HEIGHT);
-      this.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(
-              "Lock the scrollbar to its current postion"));
+      this.setToolTipText("Lock the scrollbar to its current postion");
       this.addMouseListener(new MouseInputAdapter() {
          @Override
          public void mouseClicked(MouseEvent e) {
@@ -160,3 +174,4 @@ public class ScrollbarLockIcon extends JComponent   {
       g.fillArc(4, 3, 4, 4, 0, 180);
    }
 }
+

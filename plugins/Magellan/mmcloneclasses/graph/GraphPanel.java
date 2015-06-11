@@ -36,7 +36,6 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.text.DecimalFormat;
 import javax.swing.JPanel;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  * XY graph view. 
@@ -220,7 +219,6 @@ public class GraphPanel extends JPanel {
     */
    private void drawGrid(Graphics2D g, Rectangle box) {
       if (data_.getSize() < 2) {
-         ReportingUtils.logMessage("Invalid size " + data_.getSize());
          return;
       }
       

@@ -22,6 +22,7 @@
 //
 package imagedisplay;
 
+import acq.ExploreAcquisition;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import ij.ImagePlus;
@@ -37,13 +38,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import acq.MMImageCache;
+import acq.MagellanTaggedImage;
+import json.JSONException;
+import json.JSONObject;
+import misc.JavaUtils;
+import misc.Log;
+import misc.MD;
 import mmcloneclasses.graph.HistogramSettings;
 import mmcloneclasses.graph.MultiChannelHistograms;
 import mmcloneclasses.graph.Histograms;
-import mmcorej.TaggedImage;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.micromanager.utils.*;
+
 
 public abstract class VirtualAcquisitionDisplay{
 
@@ -115,16 +119,20 @@ public abstract class VirtualAcquisitionDisplay{
     */
    public VirtualAcquisitionDisplay(MMImageCache imageCache, String name, JSONObject summaryMD) {
       try {
-         numComponents_ = Math.max(MDUtils.getNumberOfComponents(summaryMD), 1);
+         numComponents_ = Math.max(MD.getNumberOfComponents(summaryMD), 1);
          int numChannels = Math.max(summaryMD.getInt("Channels"), 1);
          numGrayChannels_ = numComponents_ * numChannels;
       } catch (Exception ex) {
-         ReportingUtils.showError("Couldn't read summary md");
+         Log.log("Couldn't read summary md");
       }
       title_ = name;
       imageCache_ = imageCache;
       setupEventBus();
       setupDisplayThread();
+   }
+   
+   public String getTitle() {
+      return title_;
    }
    
    public void setCMCPanel(ContrastMetadataPanel panel) {
@@ -232,21 +240,17 @@ public abstract class VirtualAcquisitionDisplay{
  
       try {
          int imageChannelIndex;
-         if (firstImageMetadata != null) {
-            try {
-               imageChannelIndex = MDUtils.getChannelIndex(firstImageMetadata);
-            } catch (JSONException e) {
-               imageChannelIndex = -1;
-            }
+         if (firstImageMetadata != null) {          
+            imageChannelIndex = MD.getChannelIndex(firstImageMetadata);
          } else {
             imageChannelIndex = -1;
          }
-         numFrames = Math.max(summaryMetadata.getInt("Frames"), 1);
+         numFrames = 1;
 
          numChannels = Math.max(1 + imageChannelIndex,
                  Math.max(summaryMetadata.getInt("Channels"), 1));
       } catch (JSONException e) {
-         ReportingUtils.showError(e);
+         Log.log(e);
       } 
       numGrayChannels = numComponents_ * numChannels;
 
@@ -255,21 +259,8 @@ public abstract class VirtualAcquisitionDisplay{
          try {
             imageCache_.setDisplayAndComments(DisplaySettings.getDisplaySettingsFromSummary(summaryMetadata));
          } catch (Exception ex) {
-            ReportingUtils.logError(ex, "Problem setting display and Comments");
+            Log.log(ex);
          }
-      }
-
-      int type = 0;
-      try {
-         if (firstImageMetadata != null) {
-            type = MDUtils.getSingleChannelType(firstImageMetadata);
-         } else {
-            type = MDUtils.getSingleChannelType(summaryMetadata);
-         }
-      } catch (JSONException ex) {
-         ReportingUtils.showError(ex, "Unable to determine acquisition type.");
-      } catch (MMScriptException ex) {
-         ReportingUtils.showError(ex, "Unable to determine acquisition type.");
       }
          
       virtualStack_ = virtualStack;
@@ -298,10 +289,10 @@ public abstract class VirtualAcquisitionDisplay{
 
    /**
     * required by ImageCacheListener
-    * @param taggedImage 
+    * @param MagellanTaggedImage 
     */
-   public void imageReceived(final TaggedImage taggedImage) {
-      updateDisplay(taggedImage);
+   public void imageReceived(final MagellanTaggedImage MagellanTaggedImage) {
+      updateDisplay(MagellanTaggedImage);
    }
 
    /**
@@ -320,13 +311,13 @@ public abstract class VirtualAcquisitionDisplay{
    /**
     * A new image has arrived; toss it onto our queue for display.
     */
-   public void updateDisplay(TaggedImage taggedImage) {
+   public void updateDisplay(MagellanTaggedImage MagellanTaggedImage) {
       JSONObject tags;
-      if (taggedImage == null || taggedImage.tags == null) {
+      if (MagellanTaggedImage == null || MagellanTaggedImage.tags == null) {
          tags = imageCache_.getLastImageTags();
       }
       else {
-         tags = taggedImage.tags;
+         tags = MagellanTaggedImage.tags;
       }
       if (tags == null) {
          // No valid tags, ergo no valid image, ergo give up.
@@ -338,41 +329,26 @@ public abstract class VirtualAcquisitionDisplay{
       catch (IllegalStateException e) {
          // The queue was full. This should never happen as the queue has
          // MAXINT size. 
-         ReportingUtils.logError("Ran out of space in the imageQueue! Inconceivable!");
+         Log.log("Ran out of space in the imageQueue! Inconceivable!",true);
       }
    }
 
    public int rgbToGrayChannel(int channelIndex) {
-      try {
-         if (MDUtils.getNumberOfComponents(imageCache_.getSummaryMetadata()) == 3) {
-            return channelIndex * 3;
-         }
-         return channelIndex;
-      } catch (MMScriptException ex) {
-         ReportingUtils.logError(ex);
-         return 0;
-      } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
-         return 0;
+      if (MD.getNumberOfComponents(imageCache_.getSummaryMetadata()) == 3) {
+         return channelIndex * 3;
       }
+      return channelIndex;
    }
 
    public int grayToRGBChannel(int grayIndex) {
-      try {
-         if (imageCache_ != null) {
-            if (imageCache_.getSummaryMetadata() != null)
-            if (MDUtils.getNumberOfComponents(imageCache_.getSummaryMetadata()) == 3) {
+      if (imageCache_ != null) {
+         if (imageCache_.getSummaryMetadata() != null) {
+            if (MD.getNumberOfComponents(imageCache_.getSummaryMetadata()) == 3) {
                return grayIndex / 3;
             }
          }
-         return grayIndex;
-      } catch (MMScriptException ex) {
-         ReportingUtils.logError(ex);
-         return 0;
-      } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
-         return 0;
       }
+      return grayIndex;
    }
 
    protected abstract void applyPixelSizeCalibration();
@@ -446,7 +422,6 @@ public abstract class VirtualAcquisitionDisplay{
          // Time to stop.
          return;
       }
-      
       updateWindowTitleAndStatus();
 
       if (tags == null) {
@@ -457,23 +432,27 @@ public abstract class VirtualAcquisitionDisplay{
          startup(tags, null);
       }
 
-      int channel = 0, frame = 0, slice = 0, position = 0;
-      try {
-         frame = MDUtils.getFrameIndex(tags);
-         slice = MDUtils.getSliceIndex(tags);
-         channel = MDUtils.getChannelIndex(tags);
-         position = MDUtils.getPositionIndex(tags);
-         // Construct a mapping of axis to position so we can post an 
-         // event informing others of the new image.
-         HashMap<String, Integer> axisToPosition = new HashMap<String, Integer>();
-         axisToPosition.put("channel", channel);
-         axisToPosition.put("position", position);
-         axisToPosition.put("time", frame);
+      int frame = MD.getFrameIndex(tags);
+      int slice = MD.getSliceIndex(tags);
+      int channel = MD.getChannelIndex(tags);
+      int position = MD.getPositionIndex(tags);
+      // Construct a mapping of axis to position so we can post an 
+      // event informing others of the new image.
+      HashMap<String, Integer> axisToPosition = new HashMap<String, Integer>();
+      axisToPosition.put("channel", channel);
+      axisToPosition.put("position", position);
+      axisToPosition.put("time", frame);
+      if (((DisplayPlus) this).getAcquisition() instanceof ExploreAcquisition) {
+         //intercept event and edit slice index
+         //make slice index >= 0 for viewer   
+         axisToPosition.put("z", slice - ((ExploreAcquisition)((DisplayPlus) this).getAcquisition()).getLowestExploredSliceIndex());
+      } else if (((DisplayPlus) this).getAcquisition() == null) {
+         axisToPosition.put("z", slice - ((DisplayPlus) this).getStorage().getMinSliceIndexOpenedDataset());
+      } else {
          axisToPosition.put("z", slice);
-         bus_.post(new NewImageEvent(axisToPosition));
-      } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
       }
+      
+      bus_.post(new NewImageEvent(axisToPosition));
 
       //make sure pixels get properly set
       if (hyperImage_ != null && hyperImage_.getProcessor() != null && 
@@ -508,21 +487,11 @@ public abstract class VirtualAcquisitionDisplay{
          }
       }
 
-      //get channelgroup name for use in loading contrast setttings
-      if (firstImage_) {
-         try {
-            channelGroup_ = MDUtils.getChannelGroup(tags);
-         } catch (JSONException ex) {
-            ReportingUtils.logError("Couldn't find Core-ChannelGroup in image metadata");
-         }
-         firstImage_ = false;
-      }
-
       if (frame == 0) {
          initializeContrast();
       }
 
-      updateAndDraw(true);
+      updateAndDraw(true);      
       ((DisplayPlus) this).drawOverlay();
       hyperImage_.getWindow().repaint();
    }
@@ -573,7 +542,6 @@ public abstract class VirtualAcquisitionDisplay{
     * @param c 
     */
    public void setChannel(int c) {
-      //TODO: make this respond to checkboxes in channel control panels
 //      for (AxisScroller scroller : scrollers_) {
 //         String axis = scroller.getAxis();
 //         Integer position = scroller.getPosition();
@@ -620,6 +588,10 @@ public abstract class VirtualAcquisitionDisplay{
       subImageControls_ = win.getSubImageControls();
       imageChangedUpdate();
    }
+   
+   public boolean isClosing() {
+       return amClosing_;
+   }
 
    @Subscribe
    public void onWindowClose(DisplayWindow.RequestToCloseEvent event) {    
@@ -634,7 +606,7 @@ public abstract class VirtualAcquisitionDisplay{
       }
       catch (InterruptedException e) {
          // Wait, what? This should never happen.
-         ReportingUtils.logError(e, "Display thread interrupted while waiting for it to finish on its own");
+         Log.log(e);
       }
       // Remove us from the CanvasPaintPending system; prevents a memory leak.
       // We could equivalently do this in the display thread, but it has
@@ -643,7 +615,7 @@ public abstract class VirtualAcquisitionDisplay{
       CanvasPaintPending.removeAllPaintPending(hyperImage_.getCanvas());
       bus_.unregister(this);
       imageCache_.finished();
-
+      
       // Shut down our controls.
       subImageControls_.prepareForClose();
 
@@ -674,24 +646,12 @@ public abstract class VirtualAcquisitionDisplay{
       return ((IMMImagePlus) hyperImage_).getNFramesUnverified();
    }
 
-   public int getNumPositions() throws JSONException {
-      return MDUtils.getNumPositions(imageCache_.getSummaryMetadata());
-   }
-
    public ImagePlus getImagePlus() {
       return hyperImage_;
    }
 
    public MMImageCache getImageCache() {
       return imageCache_;
-   }
-
-   public void setComment(String comment) throws MMScriptException {
-      try {
-         getSummaryMetadata().put("Comment", comment);
-      } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
-      }
    }
 
    public final JSONObject getSummaryMetadata() {
@@ -711,7 +671,7 @@ public abstract class VirtualAcquisitionDisplay{
                Runtime.getRuntime().exec("open " + location.getAbsolutePath());
             }
          } catch (IOException ex) {
-            ReportingUtils.logError(ex);
+            Log.log(ex);
          }
       }
    }

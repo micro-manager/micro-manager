@@ -70,6 +70,7 @@ public class Autofocus extends AutofocusBase implements org.micromanager.Autofoc
    
    private static final String AF_DEVICE_NAME = "JAF(H&P)";
 
+   private ScriptInterface app_;
    private CMMCore core_;
    private ImageProcessor ipCurrent_ = null;
 
@@ -143,12 +144,12 @@ public class Autofocus extends AutofocusBase implements org.micromanager.Autofoc
       verbose_ = arg.compareTo("silent") != 0;
 
       if (arg.compareTo("options") == 0){
-         MMStudioPlugin.getAutofocusManager().showOptionsDialog();
-      }  
+         app_.getAutofocusManager().showOptionsDialog();
+      }
 
       if (core_ == null) {
          // if core object is not set attempt to get its global handle
-         core_ = MMStudioPlugin.getCMMCoreInstance();
+         core_ = app_.getMMCore();
       }
 
       if (core_ == null) {
@@ -533,8 +534,8 @@ public class Autofocus extends AutofocusBase implements org.micromanager.Autofoc
       return AF_DEVICE_NAME;
    }
 
-   @Override
-   public void setApp(Studio app) {
-      core_ = app.getCMMCore();
+   public void setApp(ScriptInterface app) {
+      app_ = app;
+      core_ = app.getMMCore();
    }
 }   

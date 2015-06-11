@@ -896,7 +896,7 @@ TesterAutofocus::Initialize()
 
    linkedZStage_ = StringSetting::New(GetLogger(), this, "LinkedZStage");
    linkedZStage_->GetPostSetSignal().connect(
-         boost::bind<void>(&Self::UpdateZStageLink, this));
+         boost::bind(&Self::UpdateZStageLink, this));
    CreateStringProperty("LinkedZStage", linkedZStage_);
 
    setZDisablesContinuousFocus_ = BoolSetting::New(GetLogger(), this,
@@ -1021,7 +1021,7 @@ TesterAutofocus::UpdateZStageLink()
       return;
 
    zStageConnection_ = zPosUm->GetPostSetSignal().connect(
-         boost::bind<void>(&Self::HandleLinkedZStageSetPosition, this));
+         boost::bind(&Self::HandleLinkedZStageSetPosition, this));
 }
 
 

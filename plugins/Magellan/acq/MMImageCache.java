@@ -28,14 +28,11 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.swing.SwingUtilities;
-import misc.MagelUtils;
-import mmcorej.TaggedImage;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.micromanager.api.ImageCache;
-import org.micromanager.api.ImageCacheListener;
-import org.micromanager.utils.*;
+import json.JSONArray;
+import json.JSONException;
+import json.JSONObject;
+import misc.Log;
+import misc.MD;
 
 /**
  * MMImageCache: central repository of Images
@@ -74,13 +71,6 @@ public class MMImageCache {
       return imageStorage_.isFinished();
    }
 
-   public int lastAcquiredFrame() {
-      synchronized (this) {
-         lastFrame_ = Math.max(imageStorage_.lastAcquiredFrame(), lastFrame_);
-         return lastFrame_;
-      }
-   }
-
    public String getDiskLocation() {
       return imageStorage_.getDiskLocation();
    }
@@ -102,74 +92,27 @@ public class MMImageCache {
       display_ = null;
    }
 
-   public void saveAs(MultiResMultipageTiffStorage newImageFileManager) {
-      saveAs(newImageFileManager, true);
-      this.finished();
-   }
-          
-   public void saveAs(final MultiResMultipageTiffStorage newImageFileManager, final boolean useNewStorage) {
-      if (newImageFileManager == null) {
-         return;
-      }
-
-      newImageFileManager.setSummaryMetadata(imageStorage_.getSummaryMetadata());
-      newImageFileManager.setDisplayAndComments(this.getDisplayAndComments());
-
-//      final String progressBarTitle = (newImageFileManager instanceof TaggedImageStorageRamFast) ? "Loading images..." : "Saving images...";
-      final String progressBarTitle =  "Saving images...";
-      final ProgressBar progressBar = new ProgressBar(progressBarTitle, 0, 100);
-      ArrayList<String> keys = new ArrayList<String>(imageKeys());
-      final int n = keys.size();
-      progressBar.setRange(0, n);
-      progressBar.setProgress(0);
-      progressBar.setVisible(true);
-      boolean wasSuccessful = true;
-      for (int i = 0; i < n; ++i) {
-         final int i1 = i;
-         int pos[] = MagelUtils.getIndices(keys.get(i));
-         try {
-            newImageFileManager.putImage(getImage(pos[0], pos[1], pos[2], pos[3]));
-         } catch (MMException ex) {
-            ReportingUtils.logError(ex);
-         } 
-         SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-               progressBar.setProgress(i1);
-            }
-         });
-      }
-      if (wasSuccessful) {
-         // Successfully saved all images.
-         newImageFileManager.finished();
-      }
-      progressBar.setVisible(false);
-      if (useNewStorage) {
-         imageStorage_ = newImageFileManager;
-      }
-   }
-
-   public void putImage(final TaggedImage taggedImg) {
+   public void putImage(final MagellanTaggedImage taggedImg) {
       try {
          
          checkForChangingTags(taggedImg);
          imageStorage_.putImage(taggedImg);
          
            synchronized (this) {
-            lastFrame_ = Math.max(lastFrame_, MDUtils.getFrameIndex(taggedImg.tags));
+            lastFrame_ = Math.max(lastFrame_, MD.getFrameIndex(taggedImg.tags));
             lastTags_ = taggedImg.tags;
          }
          JSONObject displayAndComments = imageStorage_.getDisplayAndComments();
          if (displayAndComments.length() > 0) {
             JSONArray channelSettings = imageStorage_.getDisplayAndComments().getJSONArray("Channels");
             JSONObject imageTags = taggedImg.tags;
-            int chanIndex = MDUtils.getChannelIndex(imageTags);
-            if (chanIndex >= channelSettings.length()) {
-               JSONObject newChanObject = new JSONObject();
-               MDUtils.setChannelName(newChanObject, MDUtils.getChannelName(imageTags));
-               MDUtils.setChannelColor(newChanObject, MDUtils.getChannelColor(imageTags));
-               channelSettings.put(chanIndex, newChanObject);
-            }
+//            int chanIndex = MD.getChannelIndex(imageTags);
+//            if (chanIndex >= channelSettings.length()) {
+//               JSONObject newChanObject = new JSONObject();
+//               MD.setChannelName(newChanObject, MD.getChannelName(imageTags));
+//               MD.setChannelColor(newChanObject, MD.getChannelColor(imageTags));
+//               channelSettings.put(chanIndex, newChanObject);
+//            }
          }
 
          listenerExecutor_.submit(
@@ -181,7 +124,7 @@ public class MMImageCache {
                     }
                  });
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex, true);
       }
    }
 
@@ -191,8 +134,8 @@ public class MMImageCache {
       }
    }
 
-   public TaggedImage getImage(int channel, int slice, int frame, int position) {
-      TaggedImage taggedImg = null;
+   public MagellanTaggedImage getImage(int channel, int slice, int frame, int position) {
+      MagellanTaggedImage taggedImg = null;
       if (taggedImg == null) {
          taggedImg = imageStorage_.getImage(channel, slice, frame, position);
          if (taggedImg != null) {
@@ -203,7 +146,7 @@ public class MMImageCache {
    }
 
    public JSONObject getImageTags(int channel, int slice, int frame, int position) {
-      String label = MDUtils.generateLabel(channel, slice, frame, position);
+      String label = MD.generateLabel(channel, slice, frame, position);
       JSONObject tags = null;
       if (tags == null) {
          tags = imageStorage_.getImageTags(channel, slice, frame, position);
@@ -211,7 +154,7 @@ public class MMImageCache {
       return tags;
    }
 
-   private void checkForChangingTags(TaggedImage taggedImg) {
+   private void checkForChangingTags(MagellanTaggedImage taggedImg) {
       if (firstTags_ == null) {
          firstTags_ = taggedImg.tags;
       } else {
@@ -227,79 +170,19 @@ public class MMImageCache {
                   }
                }
             } catch (Exception e) {
-               ReportingUtils.logError(e);
+               Log.log(e);
             }
          }
       }
-   }
-
-   private JSONObject getCommentsJSONObject() {
-      if (imageStorage_ == null) {
-         ReportingUtils.logError("imageStorage_ is null in getCommentsJSONObject");
-         return null;
-      }
-
-      JSONObject comments;
-      try {
-         comments = imageStorage_.getDisplayAndComments().getJSONObject("Comments");
-      } catch (JSONException ex) {
-         comments = new JSONObject();
-         try {
-            imageStorage_.getDisplayAndComments().put("Comments", comments);
-         } catch (JSONException ex1) {
-            ReportingUtils.logError(ex1);
-         }
-      }
-      return comments;
    }
 
    public boolean getIsOpen() {
       return (getDisplayAndComments() != null);
    }
 
-   public void setComment(String text) {
-      JSONObject comments = getCommentsJSONObject();
-      try {
-         comments.put("Summary", text);
-      } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
-      }
-   }
-
-   public void setImageComment(String comment, JSONObject tags) {
-      JSONObject comments = getCommentsJSONObject();
-      String label = MDUtils.getLabel(tags);
-      try {
-         comments.put(label, comment);
-      } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
-      }
-
-   }
-
-   public String getImageComment(JSONObject tags) {
-      if (tags == null) {
-         return "";
-      }
-      try {
-         String label = MDUtils.getLabel(tags);
-         return getCommentsJSONObject().getString(label);
-      } catch (Exception ex) {
-         return "";
-      }
-   }
-
-   public String getComment() {
-      try {
-         return getCommentsJSONObject().getString("Summary");
-      } catch (Exception ex) {
-         return "";
-      }
-   }
-
    public JSONObject getSummaryMetadata() {
       if (imageStorage_ == null) {
-         ReportingUtils.logError("imageStorage_ is null in getSummaryMetadata");
+         Log.log("imageStorage_ is null in getSummaryMetadata", true);
          return null;
       }
       return imageStorage_.getSummaryMetadata();
@@ -307,7 +190,7 @@ public class MMImageCache {
 
    public void setSummaryMetadata(JSONObject tags) {
       if (imageStorage_ == null) {
-         ReportingUtils.logError("imageStorage_ is null in setSummaryMetadata");
+         Log.log("imageStorage_ is null in setSummaryMetadata", true);
          return;
       }
       imageStorage_.setSummaryMetadata(tags);
@@ -321,15 +204,15 @@ public class MMImageCache {
      return imageStorage_.imageKeys();
    }
 
-   private boolean isRGB() throws JSONException, MMScriptException {
-      return MDUtils.isRGB(getSummaryMetadata());
+   private boolean isRGB() throws JSONException {
+      return MD.isRGB(getSummaryMetadata());
    }
 
    public String getPixelType() {
       try {
-         return MDUtils.getPixelType(getSummaryMetadata());
+         return MD.getPixelType(getSummaryMetadata());
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
          return null;
       }
    }
@@ -348,7 +231,7 @@ public class MMImageCache {
          settings.put("HistogramMax", histMax);
          settings.put("DisplayMode", displayMode);         
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
       }
    }
   
@@ -365,7 +248,7 @@ public class MMImageCache {
             return null;
          }
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
          return null;
       }
    }
@@ -374,7 +257,7 @@ public class MMImageCache {
       try {
          return imageStorage_.getSummaryMetadata().getInt("BitDepth");
       } catch (JSONException ex) {
-         ReportingUtils.logError("MMImageCache.BitDepth: no tag BitDepth found");
+         Log.log("MMImageCache.BitDepth: no tag BitDepth found", true);
       }
       return 16;
    }
@@ -398,7 +281,7 @@ public class MMImageCache {
          }
          chan.put("Color", rgb);
       } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
       }
    }
 
@@ -413,7 +296,7 @@ public class MMImageCache {
          }
          return "";
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
          return "";
       }
    }
@@ -435,7 +318,7 @@ public class MMImageCache {
             channelArray.put(channel, new JSONObject().put("Name", channelName));
          }
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
       }
 
    }

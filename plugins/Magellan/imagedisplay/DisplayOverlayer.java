@@ -1,3 +1,19 @@
+///////////////////////////////////////////////////////////////////////////////
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
 package imagedisplay;
 
 import acq.Acquisition;
@@ -27,7 +43,6 @@ import misc.Log;
 import misc.LongPoint;
 import mmcloneclasses.graph.ContrastPanel;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
-import org.micromanager.utils.ReportingUtils;
 import surfacesandregions.SingleResolutionInterpolation;
 import surfacesandregions.MultiPosRegion;
 import surfacesandregions.Point3d;
@@ -49,7 +64,7 @@ public class DisplayOverlayer {
    private static final Color TRANSPARENT_BLUE = new Color(0, 0, 255, 100);
    private static final Color TRANSPARENT_GREEN = new Color(0, 255, 0, 100);
    private static final Color TRANSPARENT_MAGENTA = new Color(255, 0, 255, 100);
-   private DisplayPlus display_;
+   private final DisplayPlus display_;
    private Acquisition acq_;
    private volatile boolean showSurface_ = true, showConvexHull_ = true, showStagePositionsBelow_ = true, showStagePositionsAbove_ = false;
    private ZoomableVirtualStack zoomableStack_;
@@ -65,8 +80,7 @@ public class DisplayOverlayer {
       acq_ = acq;
       canvas_ = display.getImagePlus().getCanvas();
       zoomableStack_ = stack;
-      createExecutors();
-
+      createExecutors();  
    }
 
    private void createExecutors() {
@@ -74,14 +88,14 @@ public class DisplayOverlayer {
 
          @Override
          public Thread newThread(Runnable r) {
-            return new Thread(r, acq_.getName() + " overalyer task thread");
+            return new Thread(r, display_.getTitle() + " overalyer task thread");
          }
       });
       overlayMakerExecutor_ = Executors.newSingleThreadExecutor(new ThreadFactory() {
 
          @Override
          public Thread newThread(Runnable r) {
-            return new Thread(r, acq_.getName() + " overaly maker thread");
+            return new Thread(r, display_.getTitle() + " overaly maker thread");
          }
       });
    }
@@ -184,8 +198,8 @@ public class DisplayOverlayer {
          return;
       } catch (ExecutionException ex) {
          //sholdn't ever happen because createBaseOverlay throw exceptions
-         Log.log("Exception when creating base overlay");
-         Log.log(ex.toString());
+         Log.log("Exception when creating base overlay", true);
+         Log.log(ex);
          ex.printStackTrace();
       }
    }
@@ -213,15 +227,18 @@ public class DisplayOverlayer {
                              Math.min(display_.getExploreEndTile().x, display_.getExploreStartTile().x),
                              Math.max(display_.getExploreEndTile().x, display_.getExploreStartTile().x), TRANSPARENT_MAGENTA);
                   } else if (display_.getMouseDragStartPointLeft() != null) {
-                     //highlight multiple tiles when mouse dragging      
-                     Point p2Tiles = zoomableStack_.getTileIndicesFromDisplayedPixel(display_.getCurrentMouseLocation().x, display_.getCurrentMouseLocation().y),
-                             p1Tiles = zoomableStack_.getTileIndicesFromDisplayedPixel(display_.getMouseDragStartPointLeft().x, display_.getMouseDragStartPointLeft().y);
+                     //highlight multiple tiles when mouse dragging    
+                     Point mouseLoc = display_.getCurrentMouseLocation();
+                     Point dragStart = display_.getMouseDragStartPointLeft();
+                     Point p2Tiles = zoomableStack_.getTileIndicesFromDisplayedPixel(mouseLoc.x, mouseLoc.y),
+                             p1Tiles = zoomableStack_.getTileIndicesFromDisplayedPixel(dragStart.x, dragStart.y);
                      highlightTilesOnOverlay(overlay, Math.min(p1Tiles.y, p2Tiles.y), Math.max(p1Tiles.y, p2Tiles.y),
                              Math.min(p1Tiles.x, p2Tiles.x), Math.max(p1Tiles.x, p2Tiles.x), TRANSPARENT_BLUE);
                   } else if (display_.getCurrentMouseLocation() != null) {
                      //draw single highlighted tile under mouse
-                     Point coords = zoomableStack_.getTileIndicesFromDisplayedPixel(display_.getCurrentMouseLocation().x, display_.getCurrentMouseLocation().y);
-                     highlightTilesOnOverlay(overlay, coords.y, coords.y, coords.x, coords.x, TRANSPARENT_BLUE); //highligth single tile
+                        Point coords = zoomableStack_.getTileIndicesFromDisplayedPixel(display_.getCurrentMouseLocation().x, display_.getCurrentMouseLocation().y);
+                        highlightTilesOnOverlay(overlay, coords.y, coords.y, coords.x, coords.x, TRANSPARENT_BLUE); //highligth single tile
+                     
                   }
                   try {
                      if (acq_ instanceof ExploreAcquisition) {
@@ -251,11 +268,11 @@ public class DisplayOverlayer {
                   addInterpPoints(display_.getCurrentSurface(), overlay);
                   return overlay;
                } else {
-                  Log.log("Unkonwn display mode");
+                  Log.log("Unkonwn display mode", true);
                   throw new RuntimeException();
                }
             } catch (NullPointerException npe) {
-               Log.log("Null pointer exception while creating overlay. written to stack ");
+               Log.log("Null pointer exception while creating overlay. written to stack ", true);
                npe.printStackTrace();
                return null;
             }
@@ -279,7 +296,7 @@ public class DisplayOverlayer {
          sizeBar.addToOverlay(overlay);
       }
 
-      if (display_.getAcquisition() instanceof FixedAreaAcquisition) {
+      if (display_.getAcquisition() instanceof FixedAreaAcquisition || display_.getAcquisition() == null) {
          drawZoomIndicator(overlay);
       }
       return overlay;
@@ -291,7 +308,9 @@ public class DisplayOverlayer {
       }
       for (Point3d point : newSurface.getPoints()) {
          LongPoint displayLocation = display_.imageCoordsFromStageCoords(point.x, point.y);
-         int slice = zoomableStack_.getSliceIndexFromZCoordinate(point.z);
+         int slice;
+            slice = zoomableStack_.getSliceIndexFromZCoordinate(point.z);
+         
          if (slice != display_.getVisibleSliceIndex()) {
             continue;
          }
@@ -330,7 +349,8 @@ public class DisplayOverlayer {
    }
 
    private void addStagePositions(Overlay overlay, boolean above) throws InterruptedException {
-      double zPosition = zoomableStack_.getZCoordinateOfDisplayedSlice(display_.getVisibleSliceIndex());
+      double zPosition  = zoomableStack_.getZCoordinateOfDisplayedSlice(display_.getVisibleSliceIndex());
+      
       //this will block until interpolation detailed enough to show stage positions
       ArrayList<XYStagePosition> positionsAtSlice = display_.getCurrentSurface().getXYPositonsAtSlice(zPosition, above);
       for (XYStagePosition pos : positionsAtSlice) {
@@ -360,7 +380,7 @@ public class DisplayOverlayer {
 
    private void renderSurfaceOverlay() throws InterruptedException {
       //start out with 10 interpolation points across the whole image 
-      int pixPerInterpPoint = Math.max(display_.getImagePlus().getWidth(), display_.getImagePlus().getHeight()) / INITIAL_NUM_INTERPOLATION_DIVISIONS;
+      int displayPixPerInterpPoint = Math.max(display_.getImagePlus().getWidth(), display_.getImagePlus().getHeight()) / INITIAL_NUM_INTERPOLATION_DIVISIONS;
       //keep redrawing until surface full interpolated  
       final Overlay startingOverlay = createBackgroundOverlay();
       addInterpPoints(display_.getCurrentSurface(), startingOverlay);
@@ -379,7 +399,7 @@ public class DisplayOverlayer {
          }
          SingleResolutionInterpolation interp = display_.getCurrentSurface().waitForCurentInterpolation();
          //wait until surface is interpolated at sufficent resolution to draw
-         while (pixPerInterpPoint < interp.getPixelsPerInterpPoint()) {
+         while (displayPixPerInterpPoint * zoomableStack_.getDownsampleFactor() < interp.getPixelsPerInterpPoint()) {
             if (Thread.interrupted()) {
                throw new InterruptedException();
             }
@@ -391,7 +411,7 @@ public class DisplayOverlayer {
             addStagePositions(surfOverlay, showStagePositionsAbove_);
          }
          //add surface interpolation
-         addSurfaceInterpolation(surfOverlay, interp, pixPerInterpPoint);
+         addSurfaceInterpolation(surfOverlay, interp, displayPixPerInterpPoint);
          if (Thread.interrupted()) {
             throw new InterruptedException();
          }
@@ -403,17 +423,19 @@ public class DisplayOverlayer {
             }
          });
 
-         if (pixPerInterpPoint <= SurfaceInterpolator.MIN_PIXELS_PER_INTERP_POINT) {
+         if (displayPixPerInterpPoint == 1 || 
+                 displayPixPerInterpPoint * zoomableStack_.getDownsampleFactor() <= SurfaceInterpolator.MIN_PIXELS_PER_INTERP_POINT) {
             //finished  
             return;
          }
-         pixPerInterpPoint /= 2;
+         displayPixPerInterpPoint /= 2;
       }
 
    }
 
    //draw the surface itself by interpolating a grid over viewable area
-   private void addSurfaceInterpolation(Overlay overlay, SingleResolutionInterpolation interp, int pixPerInterpPoint) throws InterruptedException {
+   private void addSurfaceInterpolation(Overlay overlay, SingleResolutionInterpolation interp, 
+           int displayPixPerInterpTile) throws InterruptedException {
       int width = display_.getImagePlus().getWidth();
       int height = display_.getImagePlus().getHeight();
       ZoomableVirtualStack zStack = (ZoomableVirtualStack) display_.virtualStack_;
@@ -421,8 +443,8 @@ public class DisplayOverlayer {
       double zStep = acq_.getZStep();
 
       //Make numTestPoints a factor of image size for clean display of surface
-      int numTestPointsX = width / pixPerInterpPoint;
-      int numTestPointsY = height / pixPerInterpPoint;
+      int numTestPointsX = width / displayPixPerInterpTile;
+      int numTestPointsY = height / displayPixPerInterpTile;
       double roiWidth = width / (double) numTestPointsX;
       double roiHeight = height / (double) numTestPointsY;
 
@@ -432,10 +454,11 @@ public class DisplayOverlayer {
                throw new InterruptedException();
             }
             Point2D.Double stageCoord = display_.stageCoordFromImageCoords((int) ((x + 0.5) * roiWidth), (int) ((y + 0.5) * roiHeight));
-            Double interpZ = interp.getInterpolatedValue(stageCoord.x, stageCoord.y, false);
-            if (interpZ == null) {
+            if (!interp.isInterpDefined(stageCoord.x, stageCoord.y)) {
                continue;
-            }
+            }                      
+            float interpZ = interp.getInterpolatedValue(stageCoord.x, stageCoord.y);
+
             if (Math.abs(sliceZ - interpZ) < zStep / 2) {
                double roiX = roiWidth * x;
                double roiY = roiHeight * y;
@@ -455,9 +478,9 @@ public class DisplayOverlayer {
 
    private Overlay newGridOverlay() {
       Overlay overlay = createBackgroundOverlay();
-
-      double dsTileWidth = tileWidth_ / (double) zoomableStack_.getDownsampleFactor();
-      double dsTileHeight = tileHeight_ / (double) zoomableStack_.getDownsampleFactor();
+      double dsTileWidth, dsTileHeight;
+      dsTileWidth = tileWidth_ / (double) zoomableStack_.getDownsampleFactor();
+      dsTileHeight = tileHeight_ / (double) zoomableStack_.getDownsampleFactor();
       MultiPosRegion newGrid = display_.getCurrentRegion();
       if (newGrid == null) {
          return overlay;
@@ -488,7 +511,7 @@ public class DisplayOverlayer {
       return overlay;
    }
 
-   private void highlightTilesOnOverlay(Overlay base, int row1, int row2, int col1, int col2, Color color) {
+   private void highlightTilesOnOverlay(Overlay base, long row1, long row2, long col1, long col2, Color color) {
       LongPoint topLeft = zoomableStack_.getDisplayedPixel(row1, col1);
       int width = (int) (Math.round(tileWidth_ / (double) zoomableStack_.getDownsampleFactor() * (col2 + 1))
               - Math.round(tileWidth_ / (double) zoomableStack_.getDownsampleFactor() * (col1)));
@@ -502,17 +525,16 @@ public class DisplayOverlayer {
    private void drawZoomIndicator(Overlay overlay) {
       LongPoint zoomPos = zoomableStack_.getZoomLocation();
       int outerWidth = 100;
-      int fullResHeight = display_.getAcquisition().getPositionManager().getNumRows() * display_.getAcquisition().getStorage().getTileHeight();
-      int fullResWidth = display_.getAcquisition().getPositionManager().getNumCols() * display_.getAcquisition().getStorage().getTileWidth();
+      long fullResHeight = display_.getStorage().getNumRows() * display_.getStorage().getTileHeight();
+      long fullResWidth = display_.getStorage().getNumCols() * display_.getStorage().getTileWidth();
       int dsFactor = display_.getZoomableStack().getDownsampleFactor();
       Dimension displayImageSize = display_.getZoomableStack().getDisplayImageSize();
-//      System.out.println(fullResHeight + "\t" + fullResWidth + "\t" + dsFactor + "\t" + displayImageSize.width + "\t" + displayImageSize.height);      
       int outerHeight = (int) ((double) fullResHeight / (double) fullResWidth * outerWidth);
       //draw outer rectangle representing full image
       Roi outerRect = new Roi(10, 10, outerWidth, outerHeight);
       outerRect.setStrokeColor(new Color(255, 0, 255)); //magenta
-      int innerX = (int) Math.round(((double) outerWidth / (double) fullResWidth) * zoomPos.x_ * dsFactor);
-      int innerY = (int) Math.round(((double) outerHeight / (double) fullResHeight) * zoomPos.y_ * dsFactor);
+      int innerX = (int) Math.round(((double) outerWidth / (double) fullResWidth) * (zoomPos.x_ * dsFactor - zoomableStack_.getTopLeftPixel().x_));
+      int innerY = (int) Math.round(((double) outerHeight / (double) fullResHeight) * (zoomPos.y_ * dsFactor - zoomableStack_.getTopLeftPixel().y_ ));
       //outer width * percentage of width of full images that is shown
       int innerWidth = (int) (outerWidth * ((double) displayImageSize.width / (fullResWidth / dsFactor)));
       int innerHeight = (int) (outerHeight * ((double) displayImageSize.height / (fullResHeight / dsFactor)));

@@ -1,17 +1,34 @@
+///////////////////////////////////////////////////////////////////////////////
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
 
 package imagedisplay;
 
 import acq.MMImageCache;
+import acq.MagellanTaggedImage;
 import ij.ImagePlus;
+import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
+import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 import java.awt.image.ColorModel;
-import mmcorej.TaggedImage;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.micromanager.utils.ImageUtils;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.ReportingUtils;
+import json.JSONObject;
+import misc.Log;
+import misc.MD;
 
 /**
  * This stack class provides the ImagePlus with images from the MMImageCache.
@@ -51,13 +68,13 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    }
 
    
-   private TaggedImage getTaggedImage(int flatIndex) {
+   private MagellanTaggedImage getMagellanTaggedImage(int flatIndex) {
       int[] pos;
       // If we don't have the ImagePlus yet, then we need to assume
       // we are on the very first image.
       ImagePlus imagePlus = vad_.getImagePlus();
       if (imagePlus == null) {
-         return getTaggedImage(0,0,0);
+         return getMagellanTaggedImage(0,0,0);
       } else {
          pos = imagePlus.convertIndexToPosition(flatIndex);
       }
@@ -65,13 +82,13 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       int frame = pos[2] - 1;
       int slice = pos[1] - 1;
 
-      return getTaggedImage(chanIndex, slice, frame);
+      return getMagellanTaggedImage(chanIndex, slice, frame);
    }
 
    //This method is the ultimate source of tagged images/metadata to update the display, but has no
    //relevance to image data on disk. It is protected so that this class can be overriden and a differnet image
    //used for display compared to the the underlying data
-   protected TaggedImage getTaggedImage(int chanIndex, int slice, int frame) {
+   protected MagellanTaggedImage getMagellanTaggedImage(int chanIndex, int slice, int frame) {
       int nSlices;
       ImagePlus imagePlus = vad_.getImagePlus();
       if (imagePlus == null) {
@@ -80,7 +97,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
          nSlices = imagePlus.getNSlices();
       }
       try {
-         TaggedImage img;
+         MagellanTaggedImage img;
          img = imageCache_.getImage(chanIndex, slice, frame, positionIndex_);
          int backIndex = slice - 1, forwardIndex = slice + 1;
          int frameSearchIndex = frame;
@@ -119,7 +136,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
 
          return img;
       } catch (Exception e) {
-         ReportingUtils.logError(e);
+         Log.log(e);
          return null;
       }
    }
@@ -128,7 +145,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    //since alternate images are filled in when some are missing (for example, when a z stack is not collecte din one channel
    //or when frames are skipped)
    public JSONObject getImageTags(int flatIndex) {
-      TaggedImage img = getTaggedImage(flatIndex);
+      MagellanTaggedImage img = getMagellanTaggedImage(flatIndex);
       if (img == null) {
          return null;
       }
@@ -139,31 +156,26 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    @Override
    public Object getPixels(int flatIndex) {
       Object pixels = null;
-      try {
-         TaggedImage image = getTaggedImage(flatIndex);
-         if (image == null || image.pix == null) {
-            pixels = ImageUtils.makeProcessor(type_, width_, height_).getPixels();
-         } else if (image != null && image.tags == null) {
-             pixels = image.pix;
-         } else if (MDUtils.isGRAY(image)) {
-            pixels = image.pix;
-         } else if (MDUtils.isRGB32(image)) {
-            pixels = ImageUtils.singleChannelFromRGB32((byte[]) image.pix, (flatIndex - 1) % 3);
-         } else if (MDUtils.isRGB64(image)) {
-            pixels = ImageUtils.singleChannelFromRGB64((short[]) image.pix, (flatIndex - 1) % 3);
-         }
-      } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
-      } catch (MMScriptException ex) {
-         ReportingUtils.logError(ex);
+      MagellanTaggedImage image = getMagellanTaggedImage(flatIndex);
+      if (image == null || image.pix == null) {
+         pixels = makeProcessor(type_, width_, height_).getPixels();
+      } else if (image != null && image.tags == null) {
+         pixels = image.pix;
+      } else if (MD.isGRAY(image.tags)) {
+         pixels = image.pix;
       }
+//         else if (MD.isRGB32(image)) {
+//            pixels = ImageUtils.singleChannelFromRGB32((byte[]) image.pix, (flatIndex - 1) % 3);
+//         } else if (MD.isRGB64(image)) {
+//            pixels = ImageUtils.singleChannelFromRGB64((short[]) image.pix, (flatIndex - 1) % 3);
+//         }
 
       return pixels;
    }
 
    @Override
    public ImageProcessor getProcessor(int flatIndex) {
-      return ImageUtils.makeProcessor(type_, width_, height_, getPixels(flatIndex));
+      return makeProcessor(type_, width_, height_, getPixels(flatIndex));
    }
 
    @Override
@@ -180,16 +192,65 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
 
    @Override
    public String getSliceLabel(int n) {
-      TaggedImage img = getTaggedImage(n);
+      MagellanTaggedImage img = getMagellanTaggedImage(n);
       if (img == null) {
          return "";
       }
       JSONObject md = img.tags;
       try {
          return md.get("Acquisition-PixelSizeUm") + " um/px";
-         //return MDUtils.getChannelName(md) + ", " + md.get("Acquisition-ZPositionUm") + " um(z), " + md.get("Acquisition-TimeMs") + " s";
+         //return MD.getChannelName(md) + ", " + md.get("Acquisition-ZPositionUm") + " um(z), " + md.get("Acquisition-TimeMs") + " s";
       } catch (Exception ex) {
          return "";
       }
    }
+   
+   public static ImageProcessor makeProcessor(int type, int w, int h, Object imgArray) {
+      if (imgArray == null) {
+         return makeProcessor(type, w, h);
+      } else {
+         switch (type) {
+            case ImagePlus.GRAY8:
+               return new ByteProcessor(w, h, (byte[]) imgArray, null);
+            case ImagePlus.GRAY16:
+               return new ShortProcessor(w, h, (short[]) imgArray, null);
+            case ImagePlus.GRAY32:
+               return new FloatProcessor(w,h, (float[]) imgArray, null);
+            case ImagePlus.COLOR_RGB:
+               // Micro-Manager RGB32 images are generally composed of byte
+               // arrays, but ImageJ only takes int arrays.
+               if (imgArray instanceof byte[]) {
+                  imgArray = convertRGB32BytesToInt((byte[]) imgArray);
+               }
+               return new ColorProcessor(w, h, (int[]) imgArray);
+            default:
+               return null;
+         }
+      }
+   }
+   
+   public static ImageProcessor makeProcessor(int type, int w, int h) {
+      if (type == ImagePlus.GRAY8) {
+         return new ByteProcessor(w, h);
+      } else if (type == ImagePlus.GRAY16) {
+         return new ShortProcessor(w, h);
+      } else if (type == ImagePlus.GRAY32) {
+         return new FloatProcessor(w,h);
+      } else if (type == ImagePlus.COLOR_RGB) {
+         return new ColorProcessor(w, h);
+      } else {
+         return null;
+      }
+   }
+
+   public static int[] convertRGB32BytesToInt(byte[] pixels) {
+      int[] ints = new int[pixels.length / 4];
+      for (int i = 0; i < ints.length; ++i) {
+         ints[i] = pixels[4 * i]
+                 + (pixels[4 * i + 1] << 8)
+                 + (pixels[4 * i + 2] << 16);
+      }
+      return ints;
+   }
 }
+

@@ -1,19 +1,28 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+///////////////////////////////////////////////////////////////////////////////
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
+
 package acq;
 
-import autofocus.CrossCorrelationAutofocus;
 import gui.GUI;
-import ij.IJ;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.CyclicBarrier;
 import javax.swing.JOptionPane;
-import misc.GlobalSettings;
-import org.micromanager.MMStudio;
-import org.micromanager.utils.ReportingUtils;
+import misc.Log;
 
 /**
  *
@@ -303,7 +312,7 @@ public class MultipleAcquisitionManager {
          } //otherwise it was aborted, so nothing to do        
       } catch (Exception ex) {
          //exceptions should never happen because this is always the second await to be called
-         ReportingUtils.showError("Unexpected exception: multi acq manager interrupted or barrier broken");
+         Log.log("Unexpected exception: multi acq manager interrupted or barrier broken");
          ex.printStackTrace();
          throw new RuntimeException();
       }

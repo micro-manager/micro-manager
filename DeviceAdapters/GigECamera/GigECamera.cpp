@@ -376,7 +376,13 @@ int CGigECamera::Initialize()
 			nRet = CreateProperty( g_Keyword_Image_Width, CDeviceUtils::ConvertToString( (long) dim ), MM::Integer, !nodes->isWritable( WIDTH ), pAct );
 			if( nRet != DEVICE_OK )
 				return nRet;
-			nRet = SetPropertyLimits( g_Keyword_Image_Width, (double) low, (double) high );
+			if ( low < high )
+				nRet = SetPropertyLimits( g_Keyword_Image_Width, (double) low, (double) high );
+			else
+			{
+				ClearAllowedValues( g_Keyword_Image_Width );
+				nRet = AddAllowedValue( g_Keyword_Image_Width, boost::lexical_cast<std::string>(low).c_str() );
+			}
 			if( nRet != DEVICE_OK )
 				return nRet;
 		}
@@ -391,7 +397,13 @@ int CGigECamera::Initialize()
 			nRet = CreateProperty( g_Keyword_Image_Height, CDeviceUtils::ConvertToString( (long) dim ), MM::Integer, !nodes->isWritable( HEIGHT ), pAct );
 			if( nRet != DEVICE_OK )
 				return nRet;
-			nRet = SetPropertyLimits( g_Keyword_Image_Height, (double) low, (double) high );
+			if ( low < high )
+				nRet = SetPropertyLimits( g_Keyword_Image_Height, (double) low, (double) high );
+			else
+			{
+				ClearAllowedValues( g_Keyword_Image_Height );
+				nRet = AddAllowedValue( g_Keyword_Image_Height, boost::lexical_cast<std::string>(low).c_str() );
+			}
 			if( nRet != DEVICE_OK )
 				return nRet;
 		}

@@ -56,9 +56,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
    private double zStagePos_;
    private final Point2D.Double cursorPos_;
    private String stageWell_;
-   private String stageSite_;
    private String cursorWell_;
-   private String cursorSite_;
    PositionList threePtList_;
    AFPlane focusPlane_;
    private final String PLATE_FORMAT_ID = "plate_format_id";
@@ -73,7 +71,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
    public static final String menuName = "HCS Site Generator";
    public static final String tooltipDescription =
            "Generate position list for multi-well plates";
-   //private JCheckBox lockAspectCheckBox_;
    private final JLabel statusLabel_;
    static private final String VERSION_INFO = "1.4.1";
    static private final String COPYRIGHT_NOTICE = "Copyright by UCSF, 2013";
@@ -110,8 +107,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 
       stageWell_ = "undef";
       cursorWell_ = "undef";
-      stageSite_ = "undef";
-      cursorSite_ = "undef";
 
       threePtList_ = null;
       focusPlane_ = null;
@@ -284,67 +279,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       statusLabel_.setBorder(new LineBorder(new Color(0, 0, 0)));
       getContentPane().add(statusLabel_);
 
-//		lockAspectCheckBox_ = new JCheckBox();
-//		springLayout.putConstraint(SpringLayout.NORTH, plateFormatLabel, 6, SpringLayout.SOUTH, lockAspectCheckBox_);
-//		springLayout.putConstraint(SpringLayout.SOUTH, plateFormatLabel, 20, SpringLayout.SOUTH, lockAspectCheckBox_);
-//		lockAspectCheckBox_.addActionListener(new ActionListener() {
-//			public void actionPerformed(final ActionEvent e) {
-//				platePanel_.setLockAspect(lockAspectCheckBox_.isSelected());
-//				platePanel_.repaint();
-//			}
-//		});
-//		lockAspectCheckBox_.setText("Lock aspect");
-//		getContentPane().add(lockAspectCheckBox_);
-//		lockAspectCheckBox_.setSelected(true);
-//		springLayout.putConstraint(SpringLayout.SOUTH, lockAspectCheckBox_, 73, SpringLayout.NORTH, getContentPane());
-//		springLayout.putConstraint(SpringLayout.NORTH, lockAspectCheckBox_, 50, SpringLayout.NORTH, getContentPane());
-//		springLayout.putConstraint(SpringLayout.EAST, lockAspectCheckBox_, -14, SpringLayout.EAST, getContentPane());
-//		springLayout.putConstraint(SpringLayout.WEST, lockAspectCheckBox_, -115, SpringLayout.EAST, getContentPane());
-
-//		rootDirField_ = new JTextField();
-//		getContentPane().add(rootDirField_);
-//		springLayout.putConstraint(SpringLayout.EAST, rootDirField_, -189, SpringLayout.EAST, getContentPane());
-//		springLayout.putConstraint(SpringLayout.WEST, rootDirField_, 5, SpringLayout.WEST, getContentPane());
-//		springLayout.putConstraint(SpringLayout.SOUTH, rootDirField_, -29, SpringLayout.SOUTH, getContentPane());
-//		springLayout.putConstraint(SpringLayout.NORTH, rootDirField_, -49, SpringLayout.SOUTH, getContentPane());
-
-//		plateNameField_ = new JTextField();
-//		getContentPane().add(plateNameField_);
-//		springLayout.putConstraint(SpringLayout.EAST, plateNameField_, -4, SpringLayout.EAST, getContentPane());
-//		springLayout.putConstraint(SpringLayout.WEST, plateNameField_, -131, SpringLayout.EAST, getContentPane());
-//		springLayout.putConstraint(SpringLayout.SOUTH, plateNameField_, -29, SpringLayout.SOUTH, getContentPane());
-//		springLayout.putConstraint(SpringLayout.NORTH, plateNameField_, -49, SpringLayout.SOUTH, getContentPane());
-
-//		final JLabel rootDirectoryLabel = new JLabel();
-//		rootDirectoryLabel.setText("Root directory");
-//		getContentPane().add(rootDirectoryLabel);
-//		springLayout.putConstraint(SpringLayout.EAST, rootDirectoryLabel, 110, SpringLayout.WEST, getContentPane());
-//		springLayout.putConstraint(SpringLayout.WEST, rootDirectoryLabel, 10, SpringLayout.WEST, getContentPane());
-//		springLayout.putConstraint(SpringLayout.SOUTH, rootDirectoryLabel, -52, SpringLayout.SOUTH, getContentPane());
-//		springLayout.putConstraint(SpringLayout.NORTH, rootDirectoryLabel, -66, SpringLayout.SOUTH, getContentPane());
-
-//		final JLabel plateNameLabel = new JLabel();
-//		plateNameLabel.setText("Plate name");
-//		getContentPane().add(plateNameLabel);
-//		springLayout.putConstraint(SpringLayout.EAST, plateNameLabel, -4, SpringLayout.EAST, getContentPane());
-//		springLayout.putConstraint(SpringLayout.WEST, plateNameLabel, -131, SpringLayout.EAST, getContentPane());
-//		springLayout.putConstraint(SpringLayout.SOUTH, plateNameLabel, -52, SpringLayout.SOUTH, getContentPane());
-//		springLayout.putConstraint(SpringLayout.NORTH, plateNameLabel, -66, SpringLayout.SOUTH, getContentPane());
-//
-//		final JButton button = new JButton();
-//		button.addActionListener(new ActionListener() {
-//			public void actionPerformed(final ActionEvent e) {
-//				setRootDirectory();
-//			}
-//		});
-//		button.setToolTipText("browse root directory");
-//		button.setText("...");
-//		getContentPane().add(button);
-//		springLayout.putConstraint(SpringLayout.SOUTH, button, -27, SpringLayout.SOUTH, getContentPane());
-//		springLayout.putConstraint(SpringLayout.NORTH, button, -50, SpringLayout.SOUTH, getContentPane());
-//		springLayout.putConstraint(SpringLayout.EAST, button, -136, SpringLayout.EAST, getContentPane());
-//		springLayout.putConstraint(SpringLayout.WEST, button, -184, SpringLayout.EAST, getContentPane());
-
       chckbxThreePt_ = new JCheckBox("Use 3-Point AF");
       springLayout.putConstraint(SpringLayout.NORTH, chckbxThreePt_, 419, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, chckbxThreePt_, 6, SpringLayout.EAST, platePanel_);
@@ -433,6 +367,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       springLayout.putConstraint(SpringLayout.EAST, btnAbout, 0, SpringLayout.EAST, plateIDCombo_);
       getContentPane().add(btnAbout);
 
+      loadSettings();
 
       PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()),
               Double.parseDouble(spacingField_.getText()));
@@ -544,7 +479,13 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       PositionList sites = new PositionList();
       System.out.println("# Rows : " + rows + ", # Cols : " + cols + " ,spacing = " + spacing);
       for (int i = 0; i < rows; i++) {
-         for (int j = 0; j < cols; j++) {
+         // create snake-like pattern inside the well:
+         boolean isEven = i % 2 == 0;
+         int start = isEven ? 0 : cols - 1;
+         int end = isEven ? cols : - 1;
+         int j = start;
+         // instead of using a for loop, cycle backwards on odd rows
+         while ( (isEven && j < end) || (!isEven && j > end)  ) {
             double x;
             double y;
             if (cols > 1) {
@@ -568,6 +509,12 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 
             mps.add(sp);
             sites.addPosition(mps);
+            if (isEven) {
+               j++;
+            } else {
+               j--;
+            }
+
          }
       }
 
@@ -580,7 +527,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       cursorPos_.x = x;
       cursorPos_.y = y;
       cursorWell_ = wellLabel;
-      cursorSite_ = siteLabel;
 
       displayStatus();
    }
@@ -598,12 +544,12 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
    }
 
    @Override
-   public void updateStagePositions(double x, double y, double z, String wellLabel, String siteLabel) {
+   public void updateStagePositions(double x, double y, double z, String wellLabel, 
+           String siteLabel) {
       xyStagePos_.x = x;
       xyStagePos_.y = y;
       zStagePos_ = z;
       stageWell_ = wellLabel;
-      stageSite_ = siteLabel;
 
       displayStatus();
    }
@@ -616,7 +562,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
          return SBSPlate.DEFAULT_XYSTAGE_NAME;
       }
    }
-
 
    @Override
    public void displayError(String txt) {

@@ -1,7 +1,20 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+///////////////////////////////////////////////////////////////////////////////
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
+
 package channels;
 
 import com.google.common.eventbus.Subscribe;
@@ -10,14 +23,10 @@ import java.util.ArrayList;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
+import main.Magellan;
 import misc.GlobalSettings;
-import misc.Log;
 import mmcorej.CMMCore;
-import org.micromanager.MMStudio;
-import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.events.ExposureChangedEvent;
-import org.micromanager.api.events.SystemConfigurationLoadedEvent;
-import org.micromanager.events.EventManager;
 
 /**
  *
@@ -36,16 +45,24 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
          "Exposure",
           "Color"
    };
+      
+      
+   public SimpleChannelTableModel(ArrayList<ChannelSetting> channels) {
+      exploreTable_ = true;
+      core_ = Magellan.getCore();   
+      channels_ = channels;
+      Magellan.getScriptInterface().registerForEvents(this);
+   }
 
-   public SimpleChannelTableModel(boolean exploreTable) {
-      exploreTable_ = exploreTable;
-      core_ = MMStudio.getInstance().getCore();
+   public SimpleChannelTableModel() {
+      exploreTable_ = false;
+      core_ = Magellan.getCore();
       refreshChannels();
-      EventManager.getBus().register(this);
+      Magellan.getScriptInterface().registerForEvents(this);
    }
    
    public void shutdown() {
-       EventManager.getBus().unregister(this);
+      Magellan.getScriptInterface().unregisterForEvents(this);
    }
    
    public boolean anyChannelsActive() {
@@ -147,7 +164,7 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
             fireTableDataChanged();
          }       
       } else if (columnIndex == 1) {       
-         channels_.get(row).name_ = (String) value;
+         //cant edit channel name
       } else if (columnIndex == 2) {
          channels_.get(row).exposure_ = Double.parseDouble((String) value);
          //same for all other channels of the same camera_

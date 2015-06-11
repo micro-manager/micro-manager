@@ -286,7 +286,7 @@ public class Cameras {
     * @return
     */
    private int roiVerticalOffset(Rectangle roi, Rectangle sensor) {
-      return (roi.y + roi.height / 2) - (sensor.y + sensor.height / 2);
+      return (roi.y + roi.height / 2) - (sensor.height / 2);
    }
    
    /**
@@ -297,7 +297,9 @@ public class Cameras {
     * @return
     */
    private int roiReadoutRowsSplitReadout(Rectangle roi, Rectangle sensor) {
-      return Math.abs(roiVerticalOffset(roi, sensor)) + roi.height / 2;
+      return Math.min(
+            Math.abs(roiVerticalOffset(roi, sensor)) + roi.height / 2,  // if ROI overlaps sensor mid-line
+            roi.height);                                                // if ROI does not overlap mid-line
    }
    
    /**
@@ -344,34 +346,67 @@ public class Cameras {
       return false;
    }
    
+   /**
+    * Tries to figure out binning by looking at first character of the camera's binning property
+    * of the camera.  There is not a uniform binning representation but hopefully this works.
+    * @return binning of the selected camera (usually 1, 2, or 4)
+    */
+   private int getBinningFactor(Devices.Keys camKey) {
+      String propVal = props_.getPropValueString(camKey, Properties.Keys.BINNING);
+      int factor = Integer.parseInt(propVal.substring(0, 1));
+      if (factor < 1) {
+         MyDialogUtils.showError("Was not able to get camera binning factor");
+         return 1;
+      }
+      return factor;
+   }
+   
+   /**
+    * @return dimension/resolution of sensor with binning accounted for
+    *          (i.e. return value will change if binning changes).
+    *          Origin (rectangle's "x" and "y") is always (0, 0).
+    */
    private Rectangle getSensorSize(Devices.Keys camKey) {
+      int x = 0;
+      int y = 0;
       switch(devices_.getMMDeviceLibrary(camKey)) {
       case HAMCAM:
-         return new Rectangle(0, 0, 2048, 2048);
+         x = 2048;
+         y = 2048;
+         break;
       case PCOCAM:
          if (isEdge55(camKey)) {
-            return new Rectangle(0, 0, 2560, 2160);
-         } else {
-            return new Rectangle(0, 0, 2060, 2048);
+            x = 2560;
+            y = 2160;
+         } else { // 4.2
+            x = 2060;
+            y = 2048;
          }
+         break;
       case ANDORCAM:
          if (isZyla55(camKey)) {
-            return new Rectangle(0, 0, 2560, 2160);
-         } else {
-            return new Rectangle(0, 0, 2048, 2048);
+            x = 2560;
+            y = 2160;
+         } else { // 4.2
+            x = 2048;
+            y = 2048;
          }
+         break;
       case DEMOCAM:
-         return new Rectangle(0, 0, 512, 512);
-         // TODO get from properties
+         x = props_.getPropValueInteger(camKey, Properties.Keys.CAMERA_SIZE_X);
+         y = props_.getPropValueInteger(camKey, Properties.Keys.CAMERA_SIZE_Y);
+         break;
       default:
          break;
       }
-      MyDialogUtils.showError(
-            "Was not able to get sensor size of camera " 
-            + devices_.getMMDevice(camKey));
-      return new Rectangle(0, 0, 0, 0);
+      int binningFactor = getBinningFactor(camKey);
+      if (x==0 || y==0){
+         MyDialogUtils.showError(
+               "Was not able to get sensor size of camera " 
+                     + devices_.getMMDevice(camKey));
+      }
+      return new Rectangle(0, 0, x/binningFactor, y/binningFactor);
    }
-   
    
    /**
     * Gets the per-row readout time of the camera in ms.
@@ -470,7 +505,7 @@ public class Cameras {
             " for camera " + devices_.getMMDevice(camKey));
       return resetTimeMs;  // assume 10ms readout if not otherwise possible to calculate
    }
-
+   
    /**
     * Gets an estimate of a specific camera's readout time based on ROI and 
     * other settings.  If overlap mode is selected then readout time is 0
@@ -481,6 +516,9 @@ public class Cameras {
     * @return readout time in ms
     */
    public float computeCameraReadoutTime(Devices.Keys camKey, boolean isOverlap) {
+
+      // TODO restructure code so that we don't keep calling this function over and over
+      //      (e.g. could cache some values or something)
       
       if (isOverlap) {
          return computeCameraReadoutTimeOverlap(camKey);
@@ -498,6 +536,8 @@ public class Cameras {
       } catch (Exception e) {
          MyDialogUtils.showError(e);
       }
+      
+      Rectangle sensorSize = getSensorSize(camKey);
 
       switch (devices_.getMMDeviceLibrary(camKey)) {
       case HAMCAM:
@@ -508,23 +548,23 @@ public class Cameras {
                .equals(Properties.Values.PROGRESSIVE.toString())) {
             numReadoutRows = roi.height;
          } else {
-            numReadoutRows = roiReadoutRowsSplitReadout(roi, getSensorSize(camKey));
+            numReadoutRows = roiReadoutRowsSplitReadout(roi, sensorSize);
          }
          readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
          break;
       case PCOCAM:
-         numReadoutRows = roiReadoutRowsSplitReadout(roi, getSensorSize(camKey));
+         numReadoutRows = roiReadoutRowsSplitReadout(roi, sensorSize);
          if (isEdge55(camKey)) {
             numReadoutRows = numReadoutRows + 2; // 2 rows overhead for 5.5, none for 4.2
          }
          readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
          break;
       case ANDORCAM:
-         numReadoutRows = roiReadoutRowsSplitReadout(roi, getSensorSize(camKey));
+         numReadoutRows = roiReadoutRowsSplitReadout(roi, sensorSize);
          readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
          break;
       case DEMOCAM:
-         numReadoutRows = roi.height;
+         numReadoutRows = roiReadoutRowsSplitReadout(roi, sensorSize);
          readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
          break;
       default:

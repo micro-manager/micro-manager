@@ -1,7 +1,20 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+///////////////////////////////////////////////////////////////////////////////
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
+
 package bidc;
 
 import java.util.ArrayList;
@@ -12,7 +25,7 @@ import java.util.ArrayList;
  */
 public abstract class FrameIntegrationMethod {
 
-   public static final int FRAME_AVERAGE = 0, RANK_FILTER = 1, FRAME_SUMMATION = 2;
+   public static final int FRAME_AVERAGE = 0, RANK_FILTER = 1, FRAME_SUMMATION = 2, BURST_MODE = 3;;
    protected int width_, height_;
    protected ArrayList<RawBufferWrapper> rawBuffers_;
    protected int doubleWidth_, numFrames_;

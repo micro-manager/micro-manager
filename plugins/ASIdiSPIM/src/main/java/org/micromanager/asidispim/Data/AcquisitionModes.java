@@ -29,7 +29,6 @@ import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 
-import org.micromanager.asidispim.Data.CameraModes.Keys;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 
@@ -42,7 +41,6 @@ import org.micromanager.asidispim.Utils.MyDialogUtils;
 public class AcquisitionModes {
    
    private final Devices devices_;   // object holding information about selected/available devices
-   private final Properties props_;  // object handling all property read/writes
    private final Prefs prefs_;
    
    /**
@@ -72,9 +70,8 @@ public class AcquisitionModes {
       }
    };
    
-   public AcquisitionModes(Devices devices, Properties props, Prefs prefs) {
+   public AcquisitionModes(Devices devices, Prefs prefs) {
       devices_ = devices;
-      props_ = props;
       prefs_ = prefs;
    }
    
@@ -161,8 +158,9 @@ public class AcquisitionModes {
 
       /**
        * Returns whatever acquisition modes are available based on devices
-       * and installed firmware.  Will need to be expanded in the future
-       * (will use devices_ and props_)
+       * and installed firmware.  Can be expanded.
+       * Decided to show all options and decide later whether they are doable with the
+       * existing firmware/hardware, that way the end user at least knows such features exist 
        * @return
        */
       private List<Keys> getValidModeKeys() {

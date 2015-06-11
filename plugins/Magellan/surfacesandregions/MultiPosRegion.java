@@ -1,24 +1,31 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+///////////////////////////////////////////////////////////////////////////////
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
+
 package surfacesandregions;
 
 import acq.FixedAreaAcquisitionSettings;
+import bidc.JavaLayerImageConstructor;
 import coordinates.AffineUtils;
 import coordinates.XYStagePosition;
-import gui.SettingsDialog;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
-import bidc.CoreCommunicator;
-import org.micromanager.MMStudio;
-import org.micromanager.utils.ReportingUtils;
-=======
-import gui.SettingsDialog;
-import java.awt.Point;
-import org.micromanager.internal.MMStudio;
->>>>>>> [Plugins] Update plugins to build again.
+import main.Magellan;
+import misc.Log;
 
 /**
  *
@@ -40,9 +47,9 @@ public class MultiPosRegion implements XYFootprint{
       center_ = center;
       XYDevice_ = xyDevice;
       try {
-         pixelSizeConfig_ = MMStudio.getInstance().getCore().getCurrentPixelSizeConfig();
+         pixelSizeConfig_ = Magellan.getCore().getCurrentPixelSizeConfig();
       } catch (Exception ex) {
-         ReportingUtils.showError("couldnt get pixel size config");
+         Log.log("couldnt get pixel size config");
       }
       updateParams(r, c);
    }
@@ -66,14 +73,14 @@ public class MultiPosRegion implements XYFootprint{
    }
 
    public double getWidth_um() {
-      double pixelSize = MMStudio.getInstance().getCore().getPixelSizeUm();
-      int pixelWidth = (int) (cols_ * (CoreCommunicator.getInstance().getImageWidth() - overlapX_) + overlapX_);
+      double pixelSize = Magellan.getCore().getPixelSizeUm();
+      int pixelWidth = (int) (cols_ * (JavaLayerImageConstructor.getInstance().getImageWidth() - overlapX_) + overlapX_);
       return pixelSize * pixelWidth;
    }
 
    public double getHeight_um() {
-      double pixelSize = MMStudio.getInstance().getCore().getPixelSizeUm();
-      int imageHeight = (int) MMStudio.getInstance().getCore().getImageHeight();
+      double pixelSize = Magellan.getCore().getPixelSizeUm();
+      int imageHeight = (int) Magellan.getCore().getImageHeight();
       int pixelHeight = rows_ * (imageHeight - overlapY_) + overlapY_;
       return pixelSize * pixelHeight;
    }
@@ -87,17 +94,17 @@ public class MultiPosRegion implements XYFootprint{
    }
    
    private void updateOverlap(double overlapPercent) {
-      overlapX_ = (int) (CoreCommunicator.getInstance().getImageWidth() * overlapPercent);
-      overlapY_ = (int) (CoreCommunicator.getInstance().getImageHeight() * overlapPercent);
+      overlapX_ = (int) (JavaLayerImageConstructor.getInstance().getImageWidth() * overlapPercent);
+      overlapY_ = (int) (JavaLayerImageConstructor.getInstance().getImageHeight() * overlapPercent);
    }
 
    @Override
    public ArrayList<XYStagePosition> getXYPositions(double tileOverlapPercent) {
       try {
-         AffineTransform transform = AffineUtils.getAffineTransform(MMStudio.getInstance().getCore().getCurrentPixelSizeConfig(), center_.x, center_.y);
+         AffineTransform transform = AffineUtils.getAffineTransform(Magellan.getCore().getCurrentPixelSizeConfig(), center_.x, center_.y);
          ArrayList<XYStagePosition> positions = new ArrayList<XYStagePosition>();
-         int fullTileWidth = (int) CoreCommunicator.getInstance().getImageWidth();
-         int fullTileHeight = (int) CoreCommunicator.getInstance().getImageHeight();
+         int fullTileWidth = (int) JavaLayerImageConstructor.getInstance().getImageWidth();
+         int fullTileHeight = (int) JavaLayerImageConstructor.getInstance().getImageHeight();
          updateOverlap(tileOverlapPercent / 100);
          int tileWidthMinusOverlap = fullTileWidth - overlapX_;
          int tileHeightMinusOverlap = fullTileHeight - overlapY_;
@@ -108,13 +115,14 @@ public class MultiPosRegion implements XYFootprint{
                Point2D.Double pixelPos = new Point2D.Double(xPixelOffset, yPixelOffset);
                Point2D.Double stagePos = new Point2D.Double();
                transform.transform(pixelPos, stagePos);
+               AffineTransform posTransform = AffineUtils.getAffineTransform(pixelSizeConfig_, stagePos.x, stagePos.y);
                positions.add(new XYStagePosition(stagePos, tileWidthMinusOverlap, tileHeightMinusOverlap,
-                       fullTileWidth, fullTileHeight, row, col, pixelSizeConfig_));
+                       fullTileWidth, fullTileHeight, row, col, posTransform));
             }
          }
          return positions;
       } catch (Exception ex) {
-         ReportingUtils.showError("Couldn't get affine transform");
+         Log.log("Couldn't get affine transform");
          throw new RuntimeException();
       }
    }

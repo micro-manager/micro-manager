@@ -1,0 +1,43 @@
+<project name="json" basedir="." default="help">
+    <property name="src.dir" value="src"/>
+    <property name="class.dir" value="classes"/>
+    <property name="lib.dir" value="lib"/>
+    <property name="version.number" value="2.0"/>
+
+    <target name="help">
+        <echo>
+        Usage: ant [arg], where arg can take one of the following values:
+
+        help     : displays this help message. This is the default action when no argument is specified.
+        compile  : compiles all Java source files and places the resulting class files in a separate directory.
+        jar      : zips all class files into a jar file in a separate directory.
+        clean    : deletes all class files, jar files and their directories.
+        self-zip : creates a zip file containing only Java source files and an Ant build file.
+        </echo>
+    </target>
+
+    <target name = "init"/>
+
+    <target name="compile" depends="init">
+        <mkdir dir="${class.dir}"/>
+        <javac srcdir="${src.dir}" destdir="${class.dir}"/>
+    </target>
+
+    <target name="jar" depends="compile">
+        <mkdir dir="${lib.dir}"/>
+        <jar destfile="${lib.dir}/json.jar" basedir="${class.dir}"/>
+    </target>
+
+    <target name="clean">
+        <delete dir="${class.dir}"/>
+        <delete dir="${lib.dir}"/>
+    </target>
+
+    <target name="self-zip" depends="clean">
+        <zip destfile="../json-${version.number}.zip">
+            <zipfileset dir="." prefix="json-${version.number}"/>
+        </zip>
+    </target>
+</project>
+
+

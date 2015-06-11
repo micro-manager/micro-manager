@@ -41,6 +41,9 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Part of the MicroscopeModel. 
  *
  */public class Device {
+      // This class behaves simultaneously as any device type, so it has the
+      // information for all device types. Not sure why subclasses were not
+      // used....
       private String name_;
       private String adapterName_;
       private String library_;
@@ -51,6 +54,7 @@ import org.micromanager.internal.utils.ReportingUtils;
       private Hashtable<Integer, Label> setupLabels_;
       private double delayMs_;
       private boolean usesDelay_;
+      private int focusDirection_ = 0;
       private int numPos_ = 0;
       private String parentHub_;
       private String childDevices_[];
@@ -244,6 +248,12 @@ import org.micromanager.internal.utils.ReportingUtils;
       setupLabels_.put(new Integer(lab.state_), lab);
    }
 
+   public void getFocusDirectionFromHardware(CMMCore core) throws Exception {
+      if (type_ == DeviceType.StageDevice) {
+         focusDirection_ = core.getFocusDirection(name_);
+      }
+   }
+
    public void getSetupLabelsFromHardware(CMMCore core) throws Exception {
       // we can only add the state labels after initialization of the device!!
       if (type_ == DeviceType.StateDevice)  {
@@ -309,7 +319,11 @@ import org.micromanager.internal.utils.ReportingUtils;
    public boolean isStateDevice() {
       return type_ == DeviceType.StateDevice;
    }
-   
+
+   public boolean isStage() {
+      return type_ == DeviceType.StageDevice;
+   }
+
    public boolean isSerialPort() {      
       return type_ == DeviceType.SerialDevice;
    }
@@ -376,7 +390,23 @@ import org.micromanager.internal.utils.ReportingUtils;
    public boolean usesDelay() {
       return usesDelay_;
    }
-   
+
+   public void setFocusDirection(int direction) {
+      if (direction > 0) {
+         focusDirection_ = +1;
+      }
+      else if (direction < 0) {
+         focusDirection_ = -1;
+      }
+      else {
+         focusDirection_ = 0;
+      }
+   }
+
+   public int getFocusDirection() {
+      return focusDirection_;
+   }
+
    public int getNumberOfStates() {
       return numPos_;
    }

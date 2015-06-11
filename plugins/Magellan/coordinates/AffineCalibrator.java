@@ -1,7 +1,20 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+///////////////////////////////////////////////////////////////////////////////
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
+
 package coordinates;
 
 import ij.ImagePlus;
@@ -15,16 +28,17 @@ import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
+import main.Magellan;
+import misc.GlobalSettings;
+import misc.Log;
+import misc.MD;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.micromanager.MMStudio;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.ReportingUtils;
+
 
 /**
  *
@@ -46,7 +60,7 @@ public class AffineCalibrator {
             try {
                computeAffine();
             } catch (Exception ex) {
-               ReportingUtils.showError("Aborting due to problem calibrating affine: " + ex.toString());
+               Log.log("Aborting due to problem calibrating affine: " + ex.toString());
             }
             affineGui_.calibrationFinished();
          }
@@ -64,14 +78,14 @@ public class AffineCalibrator {
    }
    
    public void computeAffine() throws Exception {
-      CMMCore core = MMStudio.getInstance().getCore();
+      CMMCore core = Magellan.getCore();
       String xyStage = core.getXYStageDevice();
       Point2D.Double[] stagePositions = new Point2D.Double[3], pixPositions = new Point2D.Double[3];
 
       stagePositions[0] = new Point2D.Double(core.getXPosition(xyStage) ,core.getYPosition(xyStage) );
       TaggedImage img0 = snapAndAdd();
       nextImageLatch_ = new CountDownLatch(1);
-      ReportingUtils.showMessage("Move stage to new position with same features visible, and press Capture");
+      Log.log("Move stage to new position with same features visible, and press Capture");
       nextImageLatch_.await();
       if(abort_) {        
          return;
@@ -80,7 +94,7 @@ public class AffineCalibrator {
       stagePositions[1] = new Point2D.Double(core.getXPosition(xyStage), core.getYPosition(xyStage));
       TaggedImage img1 = snapAndAdd();
       nextImageLatch_ = new CountDownLatch(1);
-      ReportingUtils.showMessage("Move stage to new position with same features visible, and press Capture");
+      Log.log("Move stage to new position with same features visible, and press Capture");
       nextImageLatch_.await();
       if(abort_) {
          return;
@@ -105,7 +119,7 @@ public class AffineCalibrator {
       if (result == JOptionPane.YES_OPTION) {
          //store affine
          Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
-         JavaUtils.putObjectInPrefs(prefs, "affine_transform_" + core.getCurrentPixelSizeConfig(), transform);
+         GlobalSettings.putObjectInPrefs(prefs, "affine_transform_" + core.getCurrentPixelSizeConfig(), transform);
          //mark as updated
          AffineUtils.transformUpdated(core.getCurrentPixelSizeConfig(), transform);
       }
@@ -113,8 +127,8 @@ public class AffineCalibrator {
 
    private Point2D.Double crossCorrelate(TaggedImage img1, TaggedImage img2) throws Exception {    
       //double the width of iamges used for xCorr to support offsets bigger than half the iage size
-       int width = 2 * MDUtils.getWidth(img1.tags);
-       int height = 2 * MDUtils.getHeight(img1.tags);
+       int width = 2 *img1.tags.getInt("Width");
+       int height = 2 * img1.tags.getInt("Height");
        ImageStack stack1 = new ImageStack(width, height);
        ImageStack stack2 = new ImageStack(width, height);
        byte[] newPix1 = new byte[width * height];
@@ -165,14 +179,12 @@ public class AffineCalibrator {
     * @throws Exception 
     */
    private TaggedImage snapAndAdd() throws Exception {
-      ScriptInterface gui = MMStudio.getInstance();
-      CMMCore core = gui.getMMCore();
-      boolean liveOn = gui.isLiveModeOn();
-      gui.enableLiveMode(false);
-      core.snapImage();  
-      TaggedImage image = core.getTaggedImage();
-      gui.addToAlbum(image);
-      gui.enableLiveMode(liveOn);
+      boolean liveOn = Magellan.getScriptInterface().isLiveModeOn();
+      Magellan.getScriptInterface().enableLiveMode(false);
+      Magellan.getCore().snapImage();  
+      TaggedImage image = Magellan.getCore().getTaggedImage();
+      Magellan.getScriptInterface().addToAlbum(image);
+      Magellan.getScriptInterface().enableLiveMode(liveOn);
       return image;
    }
 
@@ -194,5 +206,5 @@ public class AffineCalibrator {
       return transform;
    }
 
-   
+  
 }

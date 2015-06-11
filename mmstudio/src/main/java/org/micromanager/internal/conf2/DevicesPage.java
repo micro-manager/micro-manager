@@ -520,6 +520,9 @@ private JComboBox byLibCombo_;
              if (d.getParentHub().length() == 0) {
                 String parentID = core_.getParentLabel(d.getName());
                 d.setParentHub(parentID);
+                if (d.isStage()) {
+                   d.setFocusDirection(core_.getFocusDirection(d.getName()));
+                }
              }
          } catch (Exception e) {
             ReportingUtils.logError(e);

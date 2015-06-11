@@ -81,7 +81,7 @@ public class Galvo implements ProjectionDevice {
    }
 
    @Override
-   public double getWidth() {
+   public double getXRange() {
       try {
          Double result = galvoExecutor_.submit(new Callable<Double>() {
 
@@ -106,9 +106,9 @@ public class Galvo implements ProjectionDevice {
          return 0;
       }
    }
-
+   
    @Override
-   public double getHeight() {
+   public double getYRange() {
       try {
          Double result = galvoExecutor_.submit(new Callable<Double>() {
 
@@ -122,14 +122,68 @@ public class Galvo implements ProjectionDevice {
             }
          }).get();
          if (result == 0) {
-            app_.logs().logError("Unable to get galvo width");
+            app_.logs().logError("Unable to get galvo height");
          }
          return result;
       } catch (InterruptedException ex) {
-         app_.logs().logError("Unable to get galvo width");
+         app_.logs().logError("Unable to get galvo height");
          return 0;
       } catch (ExecutionException ex) {
-         app_.logs().logError("Unable to get galvo width");
+         app_.logs().logError("Unable to get galvo height");
+         return 0;
+      }
+   }
+   
+   @Override
+   public double getXMinimum() {
+      try {
+         Double result = galvoExecutor_.submit(new Callable<Double>() {
+
+            @Override
+            public Double call() {
+               try {
+                  return mmc_.getGalvoXMinimum(galvo_);
+               } catch (Exception ex) {
+                  return 0.0;
+               }
+            }
+         }).get();
+         if (result == 0) {
+            ReportingUtils.logError("Unable to get galvo X minimum");
+         }
+         return result;
+      } catch (InterruptedException ex) {
+         ReportingUtils.logError("Unable to get galvo X minimum");
+         return 0;
+      } catch (ExecutionException ex) {
+         ReportingUtils.logError("Unable to get galvo X minimum");
+         return 0;
+      }
+   }
+   
+   @Override
+   public double getYMinimum() {
+      try {
+         Double result = galvoExecutor_.submit(new Callable<Double>() {
+
+            @Override
+            public Double call() {
+               try {
+                  return mmc_.getGalvoYMinimum(galvo_);
+               } catch (Exception ex) {
+                  return 0.0;
+               }
+            }
+         }).get();
+         if (result == 0) {
+            ReportingUtils.logError("Unable to get galvo Y minimum");
+         }
+         return result;
+      } catch (InterruptedException ex) {
+         ReportingUtils.logError("Unable to get galvo Y minimum");
+         return 0;
+      } catch (ExecutionException ex) {
+         ReportingUtils.logError("Unable to get galvo Y minimum");
          return 0;
       }
    }
@@ -285,7 +339,7 @@ public class Galvo implements ProjectionDevice {
       }
    }
    
-      // Reads the exposure time.
+      // Reads the exposure time in us
    @Override
    public long getExposure() {
       return interval_us_;

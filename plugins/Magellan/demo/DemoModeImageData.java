@@ -1,17 +1,28 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+///////////////////////////////////////////////////////////////////////////////
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
+
 package demo;
 
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
-import ij.macro.Interpreter;
 import java.awt.Frame;
-import java.util.Arrays;
-import org.micromanager.MMStudio;
-import org.micromanager.utils.JavaUtils;
+import main.Magellan;
+import misc.JavaUtils;
 
 /**
  *
@@ -25,7 +36,7 @@ public class DemoModeImageData {
 //      Interpreter.batchMode = true; //batch mode makes everything ridiculously slow for some reason
       
       String name = "Navigator demo LN" + 
-              (MMStudio.getInstance().getCore().getBytesPerPixel() > 1 ? "16Bit" : "")+ ".tif";
+              (Magellan.getCore().getBytesPerPixel() > 1 ? "16Bit" : "")+ ".tif";
       if (JavaUtils.isMac()) {
          //Laptop         
          IJ.runMacro("run(\"TIFF Virtual Stack...\", \"open=[/Applications/Micro-Manager1.4/Navigator demo LN.tif]\");");

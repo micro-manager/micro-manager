@@ -33,6 +33,30 @@ int StageInstance::SetPositionSteps(long steps) { return GetImpl()->SetPositionS
 int StageInstance::GetPositionSteps(long& steps) { return GetImpl()->GetPositionSteps(steps); }
 int StageInstance::SetOrigin() { return GetImpl()->SetOrigin(); }
 int StageInstance::GetLimits(double& lower, double& upper) { return GetImpl()->GetLimits(lower, upper); }
+
+MM::FocusDirection
+StageInstance::GetFocusDirection()
+{
+   // Default to what the device adapter says.
+   if (!focusDirectionHasBeenSet_)
+   {
+      MM::FocusDirection direction;
+      int err = GetImpl()->GetFocusDirection(direction);
+      ThrowIfError(err, "Cannot get focus direction");
+
+      focusDirection_ = direction;
+      focusDirectionHasBeenSet_ = true;
+   }
+   return focusDirection_;
+}
+
+void
+StageInstance::SetFocusDirection(MM::FocusDirection direction)
+{
+   focusDirection_ = direction;
+   focusDirectionHasBeenSet_ = true;
+}
+
 int StageInstance::IsStageSequenceable(bool& isSequenceable) const { return GetImpl()->IsStageSequenceable(isSequenceable); }
 bool StageInstance::IsContinuousFocusDrive() const { return GetImpl()->IsContinuousFocusDrive(); }
 int StageInstance::GetStageSequenceMaxLength(long& nrEvents) const { return GetImpl()->GetStageSequenceMaxLength(nrEvents); }

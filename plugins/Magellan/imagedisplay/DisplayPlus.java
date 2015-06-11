@@ -1,3 +1,19 @@
+///////////////////////////////////////////////////////////////////////////////
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
 package imagedisplay;
 
 /*
@@ -6,10 +22,8 @@ package imagedisplay;
  */
 import acq.Acquisition;
 import acq.ExploreAcquisition;
-import acq.FixedAreaAcquisition;
 import acq.MultiResMultipageTiffStorage;
 import com.google.common.eventbus.Subscribe;
-import coordinates.PositionManager;
 import ij.CompositeImage;
 import ij.IJ;
 import ij.gui.ImageCanvas;
@@ -26,6 +40,7 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import acq.MMImageCache;
 import ij.measure.Calibration;
+import java.io.File;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -33,14 +48,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import json.JSONObject;
+import misc.JavaUtils;
 import misc.Log;
 import misc.LongPoint;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.micromanager.api.MMTags;
-import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.ReportingUtils;
+import misc.MD;
+import misc.ProgressBar;
 import surfacesandregions.MultiPosRegion;
 import surfacesandregions.SurfaceInterpolator;
 
@@ -56,8 +69,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
    private volatile Point exploreStartTile_, exploreEndTile_;
    private long lastMouseWheelZoomTime_ = 0;
    private ZoomableVirtualStack zoomableStack_;
-   private final boolean exploreAcq_;
-   private PositionManager posManager_;
+   private boolean exploreAcq_ = false;
    private volatile int mode_ = NONE;
    private boolean mouseDragging_ = false;
    private DisplayOverlayer overlayer_;
@@ -65,16 +77,17 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
    private volatile MultiPosRegion currentRegion_;
    private ExecutorService redrawPixelsExecutor_;
    private Future previousPixelDrawTask_;
-   private int fullResPixelWidth_ = -1, fullResPixelHeight_ = -1; //used for scaling in fixed area acqs
+   private long fullResPixelWidth_ = -1, fullResPixelHeight_ = -1; //used for scaling in fixed area acqs
    private int tileWidth_, tileHeight_;
+   private MultiResMultipageTiffStorage multiResStorage_;
 
    public DisplayPlus(final MMImageCache stitchedCache, final Acquisition acq, JSONObject summaryMD,
            MultiResMultipageTiffStorage multiResStorage) {
-      super(stitchedCache, acq.getName(), summaryMD);
+      super(stitchedCache, acq != null ? acq.getName() : new File(multiResStorage.getDiskLocation()).getName(), summaryMD);
       tileWidth_ = multiResStorage.getTileWidth();
       tileHeight_ = multiResStorage.getTileHeight();
+      multiResStorage_ = multiResStorage;
 
-      posManager_ = multiResStorage.getPositionManager();
       exploreAcq_ = acq instanceof ExploreAcquisition;
 
       //create redraw pixels executor
@@ -82,7 +95,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
 
          @Override
          public Thread newThread(Runnable r) {
-            return new Thread(r, acq.getName() + ": Pixel update thread ");
+            return new Thread(r, DisplayPlus.this.getTitle() + ": Pixel update thread ");
          }
       });
 
@@ -95,26 +108,26 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       //add in customized zoomable acquisition virtual stack
       try {
          //looks like nSlicess only really matters during display startup
-         int nSlices = MDUtils.getNumChannels(summaryMD) * MDUtils.getNumFrames(summaryMD) * MDUtils.getNumSlices(summaryMD);
+         int nSlices = MD.getNumChannels(summaryMD);
 
 
          if (exploreAcq_) {
             mode_ = EXPLORE;
          } else {
-            fullResPixelWidth_ = ((FixedAreaAcquisition) acq_).getNumColumns() * multiResStorage.getTileWidth();
-            fullResPixelHeight_ = ((FixedAreaAcquisition) acq_).getNumRows() * multiResStorage.getTileHeight();
+            fullResPixelWidth_ = multiResStorage.getNumCols() * multiResStorage.getTileWidth();
+            fullResPixelHeight_ = multiResStorage.getNumRows() * multiResStorage.getTileHeight();
          }
 
          //zoomable stack dimensions don't matter because they get changed on window startup
          //But making it at least 200 is good, because smaller than this causes a weird smaller canvas 
          //panel that screws up the autolayout
-         zoomableStack_ = new ZoomableVirtualStack(MDUtils.getIJType(summaryMD), 200, 200,
+         zoomableStack_ = new ZoomableVirtualStack(MD.getIJType(summaryMD), 200, 200,
                  stitchedCache, nSlices, this, multiResStorage, acq_);
 
 
       } catch (Exception e) {
          e.printStackTrace();
-         ReportingUtils.showError("Problem with initialization due to missing summary metadata tags");
+         Log.log("Problem with initialization due to missing summary metadata tags");
          return;
       }
 
@@ -126,6 +139,17 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       stitchedCache.setDisplay(this);
       canvas_.requestFocus();
       activeDisplays_.add(this);
+      SwingUtilities.invokeLater(new Runnable() {
+         @Override
+         public void run() {
+            drawOverlay();
+         }
+      });
+
+   }
+   
+   public MultiResMultipageTiffStorage getStorage() {
+      return multiResStorage_;
    }
 
    //Thread safe calls for getting displayed indices
@@ -146,51 +170,43 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
    }
 
    protected void applyPixelSizeCalibration() {
+      JSONObject summary = getSummaryMetadata();
+      double pixSizeUm;
       try {
-         JSONObject summary = getSummaryMetadata();
-         double pixSizeUm;
-         if (summary != null && summary.has(MMTags.Summary.PIXSIZE)) {
-            pixSizeUm = summary.getDouble(MMTags.Summary.PIXSIZE);
-         } else {
-            ReportingUtils.showError("pixel size tag missing from summary metadata");
-            return;
-         }
-         //multiply by zoom factor
-         pixSizeUm *= zoomableStack_.getDownsampleFactor();
+         pixSizeUm = MD.getPixelSizeUm(summary);
+      } catch (Exception e) {
+         Log.log("Summary metadta null or pixel size tag missing from summary metadata");
+         return;
+      }
+      //multiply by zoom factor
+      pixSizeUm *= zoomableStack_.getDownsampleFactor();
 
-         if (pixSizeUm > 0) {
-            Calibration cal = new Calibration();
-            if (pixSizeUm < 10) {
-               cal.setUnit("um");
-               cal.pixelWidth = pixSizeUm;
-               cal.pixelHeight = pixSizeUm;
-            } else if (pixSizeUm < 1000) {
-               cal.setUnit("mm");
-               cal.pixelWidth = pixSizeUm / 1000;
-               cal.pixelHeight = pixSizeUm / 1000;
-            } else {
-               cal.setUnit("cm");
-               cal.pixelWidth = pixSizeUm / 10000;
-               cal.pixelHeight = pixSizeUm / 10000;
-            }
-            String intMs = "Interval_ms";
-            if (summary.has(intMs)) {
-               cal.frameInterval = summary.getDouble(intMs) / 1000.0;
-            }
-            String zStepUm = "z-step_um";
-            if (summary.has(zStepUm)) {
-               cal.pixelDepth = summary.getDouble(zStepUm);
-            }
-            this.getHyperImage().setCalibration(cal);
+      if (pixSizeUm > 0) {
+         Calibration cal = new Calibration();
+         if (pixSizeUm < 10) {
+            cal.setUnit("um");
+            cal.pixelWidth = pixSizeUm;
+            cal.pixelHeight = pixSizeUm;
+         } else if (pixSizeUm < 1000) {
+            cal.setUnit("mm");
+            cal.pixelWidth = pixSizeUm / 1000;
+            cal.pixelHeight = pixSizeUm / 1000;
+         } else {
+            cal.setUnit("cm");
+            cal.pixelWidth = pixSizeUm / 10000;
+            cal.pixelHeight = pixSizeUm / 10000;
          }
-      } catch (JSONException ex) {
-         // no pixelsize defined.  Nothing to do
+         cal.frameInterval =  MD.getIntervalMs(summary) / 1000.0;        
+         cal.pixelDepth = MD.getZStepUm(summary);      
+         this.getHyperImage().setCalibration(cal);
       }
    }
 
    protected void updateWindowTitleAndStatus() {
       String name = title_ + " ";
-      name += acq_.isFinished() ? "(Finished)" : "(Running)";
+      if (acq_ != null) {
+         name += acq_.isFinished() ? "(Finished)" : "(Running)";
+      }
       this.getHyperImage().getWindow().setTitle(name);
    }
 
@@ -201,11 +217,11 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       ((DisplayWindow) this.getHyperImage().getWindow()).getContrastPanel().setOverlayer(overlayer_);
    }
 
-   public int getFullResWidth() {
+   public long getFullResWidth() {
       return fullResPixelWidth_;
    }
 
-   public int getFullResHeight() {
+   public long getFullResHeight() {
       return fullResPixelHeight_;
    }
 
@@ -225,15 +241,17 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       try {
          if (this.getHyperImage() instanceof MMCompositeImage) {
             JavaUtils.setRestrictedFieldValue(super.getHyperImage(), CompositeImage.class, "rgbPixels", null);
+            JavaUtils.setRestrictedFieldValue(super.getHyperImage(), CompositeImage.class, "rgbSampleModel", null);
          }
-         super.getHyperImage().setStack(newStack);
          //account for border in image drawing
          JavaUtils.setRestrictedFieldValue(canvas_, ImageCanvas.class, "imageWidth",
                  canvas_.getWidth() - 2 * DisplayWindow.CANVAS_PIXEL_BORDER);
          JavaUtils.setRestrictedFieldValue(canvas_, ImageCanvas.class, "imageHeight",
                  canvas_.getHeight() - 2 * DisplayWindow.CANVAS_PIXEL_BORDER);
+
+         super.getHyperImage().setStack(newStack);
       } catch (NoSuchFieldException ex) {
-         ReportingUtils.showError("Couldn't change ImageCanvas width");
+         Log.log("Couldn't change ImageCanvas width");
       } catch (NullPointerException exc) {
          exc.printStackTrace();
       }
@@ -241,26 +259,31 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
    }
 
    @Subscribe
-   public void onWindowClose(DisplayWindow.RequestToCloseEvent event) {
+   public synchronized void onWindowClose(DisplayWindow.RequestToCloseEvent event) {
       //make sure user wants to close if it involves aborting acq
-      if (!acq_.isFinished()) {
+      if (acq_ != null && !acq_.isFinished()) {
          int result = JOptionPane.showConfirmDialog(null, "Finish acquisition?", "Finish Current Acquisition", JOptionPane.OK_CANCEL_OPTION);
          if (result == JOptionPane.OK_OPTION) {
             try {
                acq_.abort();
             } catch (Exception e) {
-               ReportingUtils.showError("Couldn't successfully abort acq");
+               Log.log("Couldn't successfully abort acq");
                e.printStackTrace();
             }
          } else {
             return;
          }
       }
+      ProgressBar bar = new ProgressBar("Closing dataset", 0, 1);
+      bar.setVisible(true);
+      
       overlayer_.shutdown();
       activeDisplays_.remove(this);
       redrawPixelsExecutor_.shutdownNow();
-
+      //make sure acquisition is done before allowing imagestorage to close
+      acq_.waitUntilClosed(); 
       super.onWindowClose(event);
+      bar.setVisible(false);
    }
 
    public void setSurfaceDisplaySettings(boolean convexHull, boolean stagePosAbove, boolean stagePosBelow, boolean surf) {
@@ -365,7 +388,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
             Point2D.Double stagePos = stageCoordFromImageCoords(e.getPoint().x, e.getPoint().y);
             double z = zoomableStack_.getZCoordinateOfDisplayedSlice(this.getVisibleSliceIndex());
             if (currentSurface_ == null) {
-               Log.log("Can't add point--No surface selected");
+               Log.log("Can't add point--No surface selected", true);
             } else {
                currentSurface_.addPoint(stagePos.x, stagePos.y, z);
             }
@@ -404,14 +427,14 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
 
    public LongPoint imageCoordsFromStageCoords(double x, double y) {
       //convert back to pixel coordinates
-      Point xy = posManager_.getPixelCoordsFromStageCoords(x, y);
+      LongPoint xy = multiResStorage_.getPixelCoordsFromStageCoords(x, y);
       //convert ful res pixel coordinates to coordinates of the viewed image
       return zoomableStack_.getDisplayImageCoordsFromFullImageCoords(xy);
    }
 
    public Point2D.Double stageCoordFromImageCoords(long x, long y) {
       LongPoint fullResPix = zoomableStack_.getAbsoluteFullResPixelCoordinate(x, y);
-      return posManager_.getStageCoordsFromPixelCoords(fullResPix.x_, fullResPix.y_);
+      return multiResStorage_.getStageCoordsFromPixelCoords(fullResPix.x_, fullResPix.y_);
    }
 
    /**
@@ -541,6 +564,17 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       window.removeKeyListener(this.getImagePlus().getWindow().getKeyListeners()[0]);
       canvas_.removeKeyListener(canvas_.getKeyListeners()[0]);
 
+      window.addFocusListener(new FocusListener() {
+
+         @Override
+         public void focusGained(FocusEvent e) {
+            canvas_.requestFocus(); //give focus to canvas so keylistener active
+         }
+
+         @Override
+         public void focusLost(FocusEvent e) {
+         }
+      });
       KeyListener kl = new KeyListener() {
 
          @Override
@@ -577,10 +611,6 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
 
    public boolean acquisitionFinished() {
       return acq_.isFinished();
-   }
-
-   public long getNextWakeTime() {
-      return ((FixedAreaAcquisition) acq_).getNextWakeTime_ms();
    }
 
    @Override

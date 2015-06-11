@@ -8,10 +8,8 @@ import javax.swing.JPanel;
 import acq.MMImageCache;
 import imagedisplay.DisplayPlus;
 import imagedisplay.VirtualAcquisitionDisplay;
-import org.micromanager.MMStudio;
-import org.micromanager.utils.ContrastSettings;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.ReportingUtils;
+import misc.Log;
+import misc.MD;
 
 ///////////////////////////////////////////////////////////////////////////////
 //FILE:          MultiChannelHistograms.java
@@ -66,9 +64,9 @@ public final class MultiChannelHistograms extends JPanel implements Histograms {
       final int nChannels;
       boolean rgb;
       try {
-         rgb = MDUtils.isRGB(display_.getSummaryMetadata());
+         rgb = MD.isRGB(display_.getSummaryMetadata());
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         Log.log(ex);
          rgb = false;
       }
       if (rgb) {
@@ -122,15 +120,6 @@ public final class MultiChannelHistograms extends JPanel implements Histograms {
       }
       applyLUTToImage();
       display_.drawWithoutUpdate();
-   }
-
-   @Override
-   public ContrastSettings getChannelContrastSettings(int channel) {
-      if (ccpList_ == null || ccpList_.size() - 1 > channel) {
-         return null;
-      }
-      return new ContrastSettings(ccpList_.get(channel).getContrastMin(),
-              ccpList_.get(channel).getContrastMax(), ccpList_.get(channel).getContrastGamma());
    }
 
    public void updateOtherDisplayCombos(int selectedIndex) {
@@ -189,7 +178,7 @@ public final class MultiChannelHistograms extends JPanel implements Histograms {
    @Override
    public void imageChanged() {
      boolean update = true;
-        if ( !((DisplayPlus) display_).getAcquisition().isFinished()  &&
+        if ( ((DisplayPlus) display_).getAcquisition() != null && !((DisplayPlus) display_).getAcquisition().isFinished()  &&
                 !((DisplayPlus) display_).getAcquisition().isPaused()) {
             if (hcs_.slowHist) {
                 long time = System.currentTimeMillis();

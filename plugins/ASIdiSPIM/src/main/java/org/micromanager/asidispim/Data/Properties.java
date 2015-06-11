@@ -135,6 +135,7 @@ public class Properties {
       STAGESCAN_SETTLING_TIME("ScanSettlingTime(ms)"),
       STAGESCAN_MOTOR_SPEED("MotorSpeedX-S(mm/s)"),
       STAGESCAN_MOTOR_ACCEL("AccelerationX-AC(ms)"),
+      BINNING("Binning"),
       TRIGGER_SOURCE("TRIGGER SOURCE"),   // for Hamamatsu
       TRIGGER_POLARITY("TriggerPolarity"),// for Hamamatsu
       TRIGGER_ACTIVE("TRIGGER ACTIVE"),   // for Hamamatsu
@@ -149,6 +150,8 @@ public class Properties {
       PIXEL_READOUT_RATE("PixelReadoutRate"),  // for Andor Zyla
       ANDOR_OVERLAP("Overlap"),                // for Andor Zyla
       PIXEL_TYPE("PixelType"),            // for DemoCam
+      CAMERA_SIZE_X("OnCameraCCDXSize"),  // for DemoCam
+      CAMERA_SIZE_Y("OnCameraCCDYSize"),  // for DemoCam
       FIRMWARE_VERSION("FirmwareVersion"),
       CAMERA("Camera"),
       PLUGIN_POSITION_REFRESH_INTERVAL("PositionRefreshInterval(s)"),
@@ -181,6 +184,7 @@ public class Properties {
       PLUGIN_DESIRED_SLICE_PERIOD("DesiredSlicePeriod"),
       PREFS_MINIMIZE_SLICE_PERIOD("MinimizeSlicePeriod"),
       PLUGIN_ACQUSITION_MODE("AcquisitionMode"),
+      PLUGIN_ACQUSITION_USE_AUTOFOCUS("UseAutofocusInAcquisition"),
       PLUGIN_CAMERA_MODE("CameraMode"),
       PREFS_ENABLE_POSITION_UPDATES("EnablePositionUpdates"),
       PREFS_ENABLE_ILLUM_PIEZO_HOME("EnableIllumPiezoHome"),
@@ -197,7 +201,11 @@ public class Properties {
       PLUGIN_AUTOFOCUS_WINDOWPOSX("AutofocusWindowPosx"),
       PLUGIN_AUTOFOCUS_WINDOWPOSY("AutofocusWindowPosy"),
       PLUGIN_AUTOFOCUS_WINDOW_WIDTH("AutofocusWindowWidth"),
-      PLUGIN_AUTOFOCUS_WINDOW_HEIGHT("AutofocusWIndowHeight")
+      PLUGIN_AUTOFOCUS_WINDOW_HEIGHT("AutofocusWIndowHeight"),
+      PLUGIN_AUTOFOCUS_ACQBEFORESTART("AutofocusDoBeforeACQStart"),
+      PLUGIN_AUTOFOCUS_EACHNIMAGES("AutofocusEachNTimePoints"),
+      PLUGIN_AUTOFOCUS_CHANNEL("AutofocusChannel"),
+      PLUGIN_AUTOFOCUS_MINIMUMR2("AutofocusMinimumR2")
       ;
       private final String text;
       private final boolean hasPattern;  // true if string has substitution pattern
@@ -252,7 +260,8 @@ public class Properties {
       PLOGIC_PRESET_COUNT_3("16 - mod3 counter"),
       PLOGIC_PRESET_COUNT_4("15 - mod4 counter"),
       PLOGIC_PRESET_CLOCK_LASER("17 - counter clock = falling TTL1"),
-      PLOGIC_PRESET_CLOCK_SIDE("18 - counter clock = falling TTL3"),
+      PLOGIC_PRESET_CLOCK_SIDE_AFIRST("18 - counter clock = falling TTL3"),
+      PLOGIC_PRESET_CLOCK_SIDE_BFIRST("26 - counter clock = rising TTL3"),
       PLOGIC_PRESET_BNC5_8_ON_13_16("20 - cells 13-16 on BNC5-8"),
       PLOGIC_CHANNEL_BNC5("output 5 only"),
       PLOGIC_CHANNEL_BNC6("output 6 only"),

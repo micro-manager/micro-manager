@@ -87,7 +87,13 @@ int CGigECamera::OnBinningV( MM::PropertyBase* pProp, MM::ActionType eAct )
 						// Assuming getMin(), getMax() won't fail if they worked previously
 						nodes->getMax( HEIGHT, high );
 						nodes->getMin( HEIGHT, low );
-						SetPropertyLimits( g_Keyword_Image_Height, (double) low, (double) high );
+						if ( low < high )
+							SetPropertyLimits( g_Keyword_Image_Height, (double) low, (double) high );
+						else
+						{
+							ClearAllowedValues( g_Keyword_Image_Height );
+							AddAllowedValue( g_Keyword_Image_Height, boost::lexical_cast<std::string>(low).c_str() );
+						}
 
 						// new height
 						int64_t dim;
@@ -165,7 +171,13 @@ int CGigECamera::OnBinningH( MM::PropertyBase* pProp, MM::ActionType eAct )
 						// Assuming getMin(), getMax() won't fail if they worked previously
 						nodes->getMax( WIDTH, high );
 						nodes->getMin( WIDTH, low );
-						SetPropertyLimits( g_Keyword_Image_Width, (double) low, (double) high );
+						if ( low < high )
+							SetPropertyLimits( g_Keyword_Image_Width, (double) low, (double) high );
+						else
+						{
+							ClearAllowedValues( g_Keyword_Image_Width );
+							AddAllowedValue( g_Keyword_Image_Width, boost::lexical_cast<std::string>(low).c_str() );
+						}
 
 						int64_t dim;
 						nodes->get( dim, WIDTH );
@@ -174,7 +186,13 @@ int CGigECamera::OnBinningH( MM::PropertyBase* pProp, MM::ActionType eAct )
 							dim = dim * oldBin / binFactor;
 						}
 						SetProperty( g_Keyword_Image_Width, CDeviceUtils::ConvertToString( (long) dim ) );
-						SetPropertyLimits( g_Keyword_Image_Width, (double) low, (double) high );
+						if ( low < high )
+							SetPropertyLimits( g_Keyword_Image_Width, (double) low, (double) high );
+						else
+						{
+							ClearAllowedValues( g_Keyword_Image_Width );
+							AddAllowedValue( g_Keyword_Image_Width, boost::lexical_cast<std::string>(low).c_str() );
+						}
 						UpdateProperty( g_Keyword_Image_Width );
 						LogMessage( (std::string) "setting h bin to " + boost::lexical_cast<std::string>( binFactor ) 
 									+ " and width to " + boost::lexical_cast<std::string>( dim ) 

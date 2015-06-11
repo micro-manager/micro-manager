@@ -470,11 +470,11 @@ MMIIDCCamera::SnapImage()
    {
       if (iidcCamera_->IsOneShotCapable())
          iidcCamera_->StartOneShotCapture(3, timeoutMs,
-               boost::bind<void>(&MMIIDCCamera::SnapCallback, this, _1, _2, _3, _4),
+               boost::bind(&MMIIDCCamera::SnapCallback, this, _1, _2, _3, _4),
                boost::function<void ()>());
       else
          iidcCamera_->StartContinuousCapture(3, 1, timeoutMs,
-               boost::bind<void>(&MMIIDCCamera::SnapCallback, this, _1, _2, _3, _4),
+               boost::bind(&MMIIDCCamera::SnapCallback, this, _1, _2, _3, _4),
                boost::function<void ()>());
       iidcCamera_->WaitForCapture();
    }
@@ -647,15 +647,15 @@ MMIIDCCamera::StartSequenceAcquisition(long count, double /*intervalMs*/, bool s
       if (iidcCamera_->IsMultiShotCapable() && count < 65536)
       {
          iidcCamera_->StartMultiShotCapture(16, static_cast<uint16_t>(count), timeoutMs,
-               boost::bind<void>(&MMIIDCCamera::SequenceCallback, this, _1, _2, _3, _4),
-               boost::bind<void>(&MMIIDCCamera::SequenceFinishCallback, this));
+               boost::bind(&MMIIDCCamera::SequenceCallback, this, _1, _2, _3, _4),
+               boost::bind(&MMIIDCCamera::SequenceFinishCallback, this));
       }
       else
       {
          size_t nrFrames = (count == LONG_MAX) ? static_cast<size_t>(count) : 0;
          iidcCamera_->StartContinuousCapture(16, nrFrames, timeoutMs,
-               boost::bind<void>(&MMIIDCCamera::SequenceCallback, this, _1, _2, _3, _4),
-               boost::bind<void>(&MMIIDCCamera::SequenceFinishCallback, this));
+               boost::bind(&MMIIDCCamera::SequenceCallback, this, _1, _2, _3, _4),
+               boost::bind(&MMIIDCCamera::SequenceFinishCallback, this));
       }
    }
    CATCH_AND_RETURN_ERROR

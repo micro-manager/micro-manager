@@ -1,15 +1,27 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+///////////////////////////////////////////////////////////////////////////////
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
+
 package acq;
 
-import mmcorej.TaggedImage;
 
 /**
  * Class used for signaling to image saving thread
  */
-public class SignalTaggedImage extends TaggedImage {
+public class SignalTaggedImage extends MagellanTaggedImage {
    
    public enum AcqSingal {AcqusitionFinsihed, TimepointFinished};
    
@@ -20,11 +32,11 @@ public class SignalTaggedImage extends TaggedImage {
       signal_ = s;
    }
    
-   public static boolean isTimepointFinishedSignal(TaggedImage img) {
+   public static boolean isTimepointFinishedSignal(MagellanTaggedImage img) {
       return (img instanceof SignalTaggedImage && ((SignalTaggedImage) img).signal_ == AcqSingal.TimepointFinished);
    }
    
-   public static boolean isAcquisitionFinsihedSignal(TaggedImage img) {
+   public static boolean isAcquisitionFinsihedSignal(MagellanTaggedImage img) {
       return (img instanceof SignalTaggedImage && ((SignalTaggedImage) img).signal_ == AcqSingal.AcqusitionFinsihed);
    }
 }
