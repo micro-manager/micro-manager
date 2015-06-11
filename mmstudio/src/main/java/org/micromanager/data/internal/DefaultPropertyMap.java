@@ -168,6 +168,9 @@ public class DefaultPropertyMap implements PropertyMap {
       }
 
       public JSONObject serialize() {
+         if (val_ == null) {
+            return null;
+         }
          JSONObject result = new JSONObject();
          try {
             if (type_ == String.class) {
@@ -503,7 +506,10 @@ public class DefaultPropertyMap implements PropertyMap {
       JSONObject result = new JSONObject();
       for (String key : propMap_.keySet()) {
          try {
-            result.put(key, propMap_.get(key).serialize());
+            JSONObject val = propMap_.get(key).serialize();
+            if (val != null) {
+               result.put(key, val);
+            }
          }
          catch (JSONException e) {
             ReportingUtils.logError(e, "Couldn't add property [" + key + "] to JSONified map");
