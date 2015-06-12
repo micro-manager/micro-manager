@@ -302,7 +302,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       File tmpFile = null;
       try {
          java.io.InputStream input = getClass().
-            getResourceAsStream("/org/micromanager/scriptpanel/scriptpanel_startup.bsh");
+            getResourceAsStream("/org/micromanager/scriptpanel_startup.bsh");
          if (input != null) {
             tmpFile = File.createTempFile("mm_scriptpanel_startup", ".bsh");
             java.io.OutputStream output = new java.io.FileOutputStream(tmpFile);
@@ -313,6 +313,9 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
             }
             output.close();
             tmpFile.deleteOnExit();
+         }
+         else {
+            ReportingUtils.logError("Failed to find Script Panel Beanshell startup script");
          }
       } catch (IOException e) {
          ReportingUtils.showError("Failed to read Script Panel BeanShell startup script", this);
