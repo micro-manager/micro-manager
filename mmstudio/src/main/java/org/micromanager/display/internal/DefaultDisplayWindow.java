@@ -533,6 +533,11 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     */
    private void constrainWindowShape() {
       Point location = getLocation();
+      Insets insets = getInsets();
+      if (fullScreenFrame_ != null) {
+         location = fullScreenFrame_.getLocation();
+         insets = fullScreenFrame_.getInsets();
+      }
       Rectangle maxBounds = getSafeBounds();
       // These are the max dimensions we can achieve without changing our
       // location on-screen.
@@ -540,7 +545,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       int maxHeight = maxBounds.y + maxBounds.height - location.y;
       // Derive the available size for the image display by subtracting off
       // the size of our insets and controls.
-      Insets insets = getInsets();
       maxWidth -= insets.left + insets.right;
       maxHeight -= insets.top + insets.bottom + controlsPanel_.getHeight();
       canvas_.updateSize(new Dimension(maxWidth, maxHeight));
@@ -886,6 +890,10 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    public Dimension getMaxCanvasSize() {
       Dimension ourSize = getSize();
       Insets insets = getInsets();
+      if (fullScreenFrame_ != null) {
+         ourSize = fullScreenFrame_.getSize();
+         insets = fullScreenFrame_.getInsets();
+      }
       Dimension controlsSize = controlsPanel_.getSize();
       // Leave some padding in for safety.
       Dimension result = new Dimension(
@@ -1104,5 +1112,21 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    @Override
    public String toString() {
       return String.format("<DefaultDisplayWindow named %s with unique ID %s>", getName(), hashCode());
+   }
+
+   /**
+    * HACK: we call pack() at various points to ensure our layout is sensible,
+    * but when we're in fullscreen mode, we don't want to re-pack the
+    * full-screen window (which would make it not fullscreen), so separate
+    * behavior is needed.
+    */
+   @Override
+   public void pack() {
+      if (fullScreenFrame_ != null) {
+         contentsPanel_.revalidate();
+      }
+      else {
+         super.pack();
+      }
    }
 }
