@@ -56,6 +56,7 @@ public class SurfaceData implements Covariant {
    //used for curved surface calculations
    private int radiusOfCurvature_, meanFreePath_;
    private double basePower_;
+   private int curvedSurfaceMode_;
    
    public SurfaceData(SurfaceInterpolator surface, String type) throws Exception {
       category_ = type;
@@ -76,6 +77,7 @@ public class SurfaceData implements Covariant {
          radiusOfCurvature_ = creator.getRadiusOfCurvature();
          meanFreePath_ = creator.getMFP();
          basePower_ = creator.getBasePower();
+         curvedSurfaceMode_ = creator.getMode();
       }
    }
 
@@ -167,6 +169,7 @@ public class SurfaceData implements Covariant {
       double minDist = vals[0];
       double maxDist = vals[1];
       double maxNormal = vals[3];
+      if (curvedSurfaceMode_ == CurvedSurfaceCovariantCreationDialog.SURFACE_CONSERVATIVE_POWER_MODE) {
       //Non-exploding exciation scheme: 
       // Min distance < 30 um -- use surface minimum distance
       // Next 100 um -- increase from minimum distance to maximum distance
@@ -183,6 +186,21 @@ public class SurfaceData implements Covariant {
       double relPower = CurvedSurfaceCalculations.getRelativePower(meanFreePath_, dist, maxNormal, radiusOfCurvature_);
       //relative power is fold increase needed from base power
       return basePower_ * relPower;
+     } else {
+           //if interpolation is undefined at position center, assume distance below is 0
+           double centerDistance = 0;
+           //likewise, take biggest defined normal
+           double normal = maxNormal;
+           Point2D.Double center = xyPos.getCenter();
+           SingleResolutionInterpolation interp = surface_.waitForCurentInterpolation();
+           if (interp.isInterpDefined(center.x, center.y)) {
+              centerDistance = zPosition - interp.getInterpolatedValue(center.x, center.y);
+              normal = surface_.waitForCurentInterpolation().getNormalAngleToVertical(center.x, center.y);
+           }
+           double relPower = CurvedSurfaceCalculations.getRelativePower(meanFreePath_, centerDistance, maxNormal, radiusOfCurvature_);
+           //relative power is fold increase needed from base power
+           return basePower_ * relPower;
+        }
      }
 
    /**
