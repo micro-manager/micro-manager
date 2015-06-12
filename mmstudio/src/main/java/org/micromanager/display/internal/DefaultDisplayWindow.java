@@ -929,7 +929,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     * ImageJ object if necessary.
     */
    @Subscribe
-   public synchronized void onNewImage(final NewImageEvent event) {
+   public void onNewImage(final NewImageEvent event) {
       try {
          if (!haveCreatedGUI_) {
             // Time to make our components, but we should only do so in the EDT.
