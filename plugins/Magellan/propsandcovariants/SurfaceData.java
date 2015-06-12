@@ -164,7 +164,8 @@ public class SurfaceData implements Covariant {
       }
    }
    
-     private double curvedSurfacePower(XYStagePosition xyPos, double zPosition) throws InterruptedException {
+     private double curvedSurfacePower(XYStagePosition xyPos, double zPosition)   {
+        try{
       double[] vals = distanceAndNormalCalc(xyPos.getFullTileCorners(), zPosition);
       double minDist = vals[0];
       double maxDist = vals[1];
@@ -200,6 +201,10 @@ public class SurfaceData implements Covariant {
            double relPower = CurvedSurfaceCalculations.getRelativePower(meanFreePath_, centerDistance, maxNormal, radiusOfCurvature_);
            //relative power is fold increase needed from base power
            return basePower_ * relPower;
+        }
+        } catch (Exception e) {
+           Log.log("Couldn't calculate curved surface power");
+           Log.log(e);
         }
      }
 
