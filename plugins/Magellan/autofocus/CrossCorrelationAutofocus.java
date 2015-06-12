@@ -156,10 +156,10 @@ public class CrossCorrelationAutofocus {
             return;
         }
 
-        ImageStack tp0Stack = createAFStack(acq_, 0, channelIndex_, downsampledWidth_, downsampledHeight_, downsampleIndex_);
+        ImageStack lastTPStack = createAFStack(acq_, timeIndex - 1, channelIndex_, downsampledWidth_, downsampledHeight_, downsampleIndex_);
         ImageStack currentTPStack = createAFStack(acq_, timeIndex, channelIndex_, downsampledWidth_, downsampledHeight_, downsampleIndex_);
         //run autofocus
-        double drift = calcFocusDrift(acq_.getName(), tp0Stack, currentTPStack, acq_.getZStep());
+        double drift = calcFocusDrift(acq_.getName(), lastTPStack, currentTPStack, acq_.getZStep());
         //check if outside max displacement
         if (Math.abs(currentPosition_ - drift - initialPosition_) > maxDisplacement_) {
             Log.log("Calculated focus drift of " + drift + " um exceeds tolerance. Leaving autofocus offset unchanged", true);
