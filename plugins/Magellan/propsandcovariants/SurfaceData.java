@@ -27,6 +27,7 @@ import java.awt.geom.Point2D;
 import java.util.Arrays;
 import java.util.List;
 import misc.Log;
+import surfacesandregions.CurvedSurfaceCovariantCreationDialog;
 import surfacesandregions.SingleResolutionInterpolation;
 import surfacesandregions.SurfaceInterpolator;
 
@@ -52,6 +53,10 @@ public class SurfaceData implements Covariant {
    private String category_;
    private SurfaceInterpolator surface_;
    
+   //used for curved surface calculations
+   private int radiusOfCurvature_, meanFreePath_;
+   private double basePower_;
+   
    public SurfaceData(SurfaceInterpolator surface, String type) throws Exception {
       category_ = type;
       surface_ = surface;
@@ -60,7 +65,20 @@ public class SurfaceData implements Covariant {
          throw new Exception();
       }
    }
-   
+ 
+   public void initializeCurvedSurfaceData() throws Exception {
+      if (category_.equals(CURVED_SURFACE_RELATIVE_POWER)) {
+         CurvedSurfaceCovariantCreationDialog creator = new CurvedSurfaceCovariantCreationDialog();
+         creator.waitForCreationOrCancel();
+         if (creator.wasCanceled()) {
+            throw new Exception("Surface data canceled");
+         }
+         radiusOfCurvature_ = creator.getRadiusOfCurvature();
+         meanFreePath_ = creator.getMFP();
+         basePower_ = creator.getBasePower();
+      }
+   }
+
    public SurfaceInterpolator getSurface() {
       return surface_;
    }
@@ -85,7 +103,7 @@ public class SurfaceData implements Covariant {
        } else if (category_.equals(DISTANCE_BELOW_SURFACE_MAXIMUM)) {
            return "Min distance to " + surface_.getName();
        } else if (category_.equals(CURVED_SURFACE_RELATIVE_POWER)) {
-           return "Curved surface relative power for " + surface_.getName();
+           return "Relative power for " + surface_.getName() + " R"+radiusOfCurvature_+" MFP"+meanFreePath_+" Base"+basePower_;
        } else {
            Log.log("Unknown Surface data type");
            throw new RuntimeException();
@@ -144,8 +162,7 @@ public class SurfaceData implements Covariant {
       }
    }
    
-     private double curvedSurfacePower(XYStagePosition xyPos, double zPosition, int meanFreePath, int radius, 
-             double basePower) throws InterruptedException {
+     private double curvedSurfacePower(XYStagePosition xyPos, double zPosition) throws InterruptedException {
       double[] vals = distanceAndNormalCalc(xyPos.getFullTileCorners(), zPosition);
       double minDist = vals[0];
       double maxDist = vals[1];
@@ -163,9 +180,9 @@ public class SurfaceData implements Covariant {
       } else {
          dist = maxDist;
       }    
-      double relPower = CurvedSurfaceCalculations.getRelativePower(meanFreePath, dist, maxNormal, radius);
+      double relPower = CurvedSurfaceCalculations.getRelativePower(meanFreePath_, dist, maxNormal, radiusOfCurvature_);
       //relative power is fold increase needed from base power
-      return basePower * relPower;
+      return basePower_ * relPower;
      }
 
    /**
@@ -225,7 +242,7 @@ public class SurfaceData implements Covariant {
  
    
    @Override
-   public CovariantValue getCurrentValue(AcquisitionEvent event, CovariantPairing pair) throws Exception {
+   public CovariantValue getCurrentValue(AcquisitionEvent event) throws Exception {
       XYStagePosition xyPos = event.xyPosition_;
       if (category_.equals(DISTANCE_BELOW_SURFACE_CENTER)) {
          //if interpolation is undefined at position center, assume distance below is 0
@@ -241,10 +258,7 @@ public class SurfaceData implements Covariant {
       } else if (category_.equals(DISTANCE_BELOW_SURFACE_MAXIMUM)) {
          return new CovariantValue(distanceAndNormalCalc(xyPos.getFullTileCorners(), event.zPosition_)[1]);
       } else if (category_.equals(CURVED_SURFACE_RELATIVE_POWER)) {
-         int laserIndex = pair.getDependentCovariant().getName().contains("EOM2") ? 1 : 0;
-         return new CovariantValue(curvedSurfacePower(xyPos, event.zPosition_,((FixedAreaAcquisition) event.acquisition_).
-                 getMeanFreePath(laserIndex), ((FixedAreaAcquisition) event.acquisition_).getRadiusOfCurvature(),
-                 ((FixedAreaAcquisition) event.acquisition_).getBasePower(laserIndex) ));
+         return new CovariantValue(curvedSurfacePower(xyPos, event.zPosition_));
       } else {
          Log.log("Unknown Surface data type",true);
          throw new RuntimeException();

@@ -53,7 +53,7 @@ public interface Covariant {
     */
    public CovariantValue getValidValue(List<CovariantValue> vals);
 
-   public CovariantValue getCurrentValue(AcquisitionEvent evt, CovariantPairing pair) throws Exception;
+   public CovariantValue getCurrentValue(AcquisitionEvent evt) throws Exception;
 
    public void updateHardwareToValue(CovariantValue dVal) throws Exception;
    

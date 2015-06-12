@@ -124,18 +124,6 @@ public class FixedAreaAcquisition extends Acquisition {
    public boolean burstModeActive() {
        return burstMode_;
    }
-  
-   public double getBasePower(int laserIndex) {
-      return laserIndex == 0 ? settings_.laser1BasePower_ : settings_.laser2BasePower_;
-   }
-   
-   public int getMeanFreePath(int laserIndex) {      
-      return laserIndex == 0 ? settings_.laser1MeanFreePath_ : settings_.laser2MeanFreePath_;
-   }
-   
-   public int getRadiusOfCurvature() {
-      return settings_.radiusOfCurvature_;
-   }
 
    private void setupXYPositions() {
       try {

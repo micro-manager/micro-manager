@@ -499,13 +499,7 @@ public class GUI extends javax.swing.JFrame {
                 (rankFilterRadioButton_.isSelected() ? FrameIntegrationMethod.RANK_FILTER : 
                 (frameSummationButton_.isSelected() ? FrameIntegrationMethod.FRAME_SUMMATION : FrameIntegrationMethod.BURST_MODE));
         settings.rank_ = ((Number) rankSpinner_.getValue()).doubleValue();
-        //curved surface excitation
-        settings.laser1MeanFreePath_ = Integer.parseInt(mfpComboMaitai_.getSelectedItem().toString());
-        settings.laser2MeanFreePath_ = Integer.parseInt( mfpComboChameleon_.getSelectedItem().toString());
-        settings.laser1BasePower_ = (Double) basePowerSpinnerMaitai_.getValue();
-        settings.laser2BasePower_ = (Double) basePowerSpinnerChameleon_.getValue();
-        settings.radiusOfCurvature_ = Integer.parseInt( radiusOfCurvatureCombo_.getSelectedItem().toString());
-        
+
         settings.storePreferedValues();
         multipleAcqTable_.repaint();
 
@@ -562,12 +556,6 @@ public class GUI extends javax.swing.JFrame {
         rankFilterRadioButton_.setSelected(settings.imageFilterType_ == FrameIntegrationMethod.RANK_FILTER);
         frameSummationButton_.setSelected(settings.imageFilterType_ == FrameIntegrationMethod.FRAME_SUMMATION);
         rankSpinner_.setValue(settings.rank_);
-       //curved surface excitation
-       mfpComboMaitai_.getModel().setSelectedItem(settings.laser1MeanFreePath_);
-       mfpComboChameleon_.getModel().setSelectedItem(settings.laser2MeanFreePath_);
-       basePowerSpinnerMaitai_.setValue(settings.laser1BasePower_);
-       basePowerSpinnerChameleon_.setValue(settings.laser2BasePower_);
-       radiusOfCurvatureCombo_.getModel().setSelectedItem(settings.radiusOfCurvature_);
 
         enableAcquisitionComponentsAsNeeded();
 
@@ -829,17 +817,6 @@ public class GUI extends javax.swing.JFrame {
         ch5OffsetSpinner_ = new javax.swing.JSpinner();
         frameSummationButton_ = new javax.swing.JRadioButton();
         burstModeButton_ = new javax.swing.JRadioButton();
-        jLabel12 = new javax.swing.JLabel();
-        jLabel13 = new javax.swing.JLabel();
-        jLabel14 = new javax.swing.JLabel();
-        basePowerSpinnerMaitai_ = new javax.swing.JSpinner();
-        mfpComboMaitai_ = new javax.swing.JComboBox();
-        jLabel15 = new javax.swing.JLabel();
-        jLabel16 = new javax.swing.JLabel();
-        basePowerSpinnerChameleon_ = new javax.swing.JSpinner();
-        mfpComboChameleon_ = new javax.swing.JComboBox();
-        jLabel17 = new javax.swing.JLabel();
-        radiusOfCurvatureCombo_ = new javax.swing.JComboBox();
         runAcqButton_ = new javax.swing.JButton();
         configPropsButton_ = new javax.swing.JButton();
         jButton1 = new javax.swing.JButton();
@@ -2111,54 +2088,6 @@ public class GUI extends javax.swing.JFrame {
             }
         });
 
-        jLabel12.setFont(new java.awt.Font("Tahoma", 1, 11)); // NOI18N
-        jLabel12.setText("Curved surface power scaling");
-
-        jLabel13.setText("Base power (0-1):");
-
-        jLabel14.setText("Mean free path:");
-
-        basePowerSpinnerMaitai_.setModel(new javax.swing.SpinnerNumberModel(0.05d, 1.0E-5d, 1.0d, 0.01d));
-        basePowerSpinnerMaitai_.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                basePowerSpinnerMaitai_StateChanged(evt);
-            }
-        });
-
-        mfpComboMaitai_.setModel(new DefaultComboBoxModel(CurvedSurfaceCalculations.getAvailableMeanFreePathLengths()));
-        mfpComboMaitai_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mfpComboMaitai_ActionPerformed(evt);
-            }
-        });
-
-        jLabel15.setText("Maitai");
-
-        jLabel16.setText("Chameleon");
-
-        basePowerSpinnerChameleon_.setModel(new javax.swing.SpinnerNumberModel(0.05d, 1.0E-5d, 1.0d, 0.01d));
-        basePowerSpinnerChameleon_.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                basePowerSpinnerChameleon_StateChanged(evt);
-            }
-        });
-
-        mfpComboChameleon_.setModel(new DefaultComboBoxModel(CurvedSurfaceCalculations.getAvailableMeanFreePathLengths()));
-        mfpComboChameleon_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                mfpComboChameleon_ActionPerformed(evt);
-            }
-        });
-
-        jLabel17.setText("Radius of curvature:");
-
-        radiusOfCurvatureCombo_.setModel(new DefaultComboBoxModel(CurvedSurfaceCalculations.getAvailableRadiiOfCurvature()));
-        radiusOfCurvatureCombo_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                radiusOfCurvatureCombo_ActionPerformed(evt);
-            }
-        });
-
         javax.swing.GroupLayout imageFilteringTab_Layout = new javax.swing.GroupLayout(imageFilteringTab_);
         imageFilteringTab_.setLayout(imageFilteringTab_Layout);
         imageFilteringTab_Layout.setHorizontalGroup(
@@ -2171,10 +2100,7 @@ public class GUI extends javax.swing.JFrame {
                             .addComponent(frameAverageRadioButton_)
                             .addComponent(burstModeButton_)
                             .addComponent(frameSummationButton_))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(basePowerSpinnerChameleon_, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(mfpComboChameleon_, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(imageFilteringTab_Layout.createSequentialGroup()
                         .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel10)
@@ -2188,22 +2114,6 @@ public class GUI extends javax.swing.JFrame {
                             .addGroup(imageFilteringTab_Layout.createSequentialGroup()
                                 .addGap(71, 71, 71)
                                 .addComponent(offsetsLabel_)
-                                .addGap(108, 108, 108)
-                                .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel12)
-                                    .addGroup(imageFilteringTab_Layout.createSequentialGroup()
-                                        .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                            .addComponent(jLabel17)
-                                            .addGroup(imageFilteringTab_Layout.createSequentialGroup()
-                                                .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                                    .addComponent(jLabel13)
-                                                    .addComponent(jLabel14))
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                                .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                                    .addComponent(mfpComboMaitai_, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                    .addComponent(basePowerSpinnerMaitai_, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(radiusOfCurvatureCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)))
                                 .addGap(0, 0, Short.MAX_VALUE))
                             .addGroup(imageFilteringTab_Layout.createSequentialGroup()
                                 .addGap(55, 55, 55)
@@ -2217,84 +2127,53 @@ public class GUI extends javax.swing.JFrame {
                                     .addComponent(ch3OffsetLabel_))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(imageFilteringTab_Layout.createSequentialGroup()
-                                        .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(ch1OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(ch2OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(ch3OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                        .addGap(0, 0, Short.MAX_VALUE))
+                                    .addComponent(ch1OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(ch2OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(ch3OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(ch5OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(ch4OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(ch0OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(204, 204, 204)
-                                .addComponent(jLabel15)
-                                .addGap(68, 68, 68)
-                                .addComponent(jLabel16)
-                                .addGap(13, 13, 13)))))
+                                .addGap(13, 366, Short.MAX_VALUE)))))
                 .addGap(174, 174, 174))
         );
         imageFilteringTab_Layout.setVerticalGroup(
             imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(imageFilteringTab_Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(imageFilteringTab_Layout.createSequentialGroup()
-                        .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel10)
-                            .addComponent(offsetsLabel_)
-                            .addComponent(jLabel12))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(frameAverageRadioButton_)
-                                .addComponent(ch0OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(ch0OffsetLabel_))
-                            .addComponent(jLabel15, javax.swing.GroupLayout.Alignment.TRAILING)))
-                    .addComponent(jLabel16))
-                .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(imageFilteringTab_Layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(rankFilterRadioButton_)
-                            .addComponent(ch1OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(ch1OffsetLabel_)
-                            .addComponent(jLabel13)
-                            .addComponent(basePowerSpinnerMaitai_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(basePowerSpinnerChameleon_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(rankSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel9)
-                            .addComponent(ch2OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(ch2OffsetLabel_))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(ch3OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(ch3OffsetLabel_)
-                            .addComponent(frameSummationButton_)))
-                    .addGroup(imageFilteringTab_Layout.createSequentialGroup()
-                        .addGap(46, 46, 46)
-                        .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel14)
-                            .addComponent(mfpComboMaitai_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(mfpComboChameleon_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(imageFilteringTab_Layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(ch4OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(ch4OffsetLabel_)
-                            .addComponent(burstModeButton_))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(ch5OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(ch5OffsetLabel_)))
-                    .addGroup(imageFilteringTab_Layout.createSequentialGroup()
-                        .addGap(14, 14, 14)
-                        .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(radiusOfCurvatureCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel17))))
-                .addContainerGap(65, Short.MAX_VALUE))
+                .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel10)
+                    .addComponent(offsetsLabel_))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(frameAverageRadioButton_)
+                    .addComponent(ch0OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(ch0OffsetLabel_))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(rankFilterRadioButton_)
+                    .addComponent(ch1OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(ch1OffsetLabel_))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(rankSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel9)
+                    .addComponent(ch2OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(ch2OffsetLabel_))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(ch3OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(ch3OffsetLabel_)
+                    .addComponent(frameSummationButton_))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(ch4OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(ch4OffsetLabel_)
+                    .addComponent(burstModeButton_))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(ch5OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(ch5OffsetLabel_))
+                .addContainerGap(69, Short.MAX_VALUE))
         );
 
         acqTabbedPane_.addTab("2Photon settings", imageFilteringTab_);
@@ -2879,26 +2758,6 @@ public class GUI extends javax.swing.JFrame {
       surfaceManager_.loadSurfaces(this);
    }//GEN-LAST:event_loadSurfacesButton_ActionPerformed
 
-   private void mfpComboMaitai_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mfpComboMaitai_ActionPerformed
-      storeCurrentAcqSettings();
-   }//GEN-LAST:event_mfpComboMaitai_ActionPerformed
-
-   private void basePowerSpinnerMaitai_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_basePowerSpinnerMaitai_StateChanged
-      storeCurrentAcqSettings();
-   }//GEN-LAST:event_basePowerSpinnerMaitai_StateChanged
-
-   private void basePowerSpinnerChameleon_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_basePowerSpinnerChameleon_StateChanged
-      storeCurrentAcqSettings();
-   }//GEN-LAST:event_basePowerSpinnerChameleon_StateChanged
-
-   private void mfpComboChameleon_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mfpComboChameleon_ActionPerformed
-      storeCurrentAcqSettings();
-   }//GEN-LAST:event_mfpComboChameleon_ActionPerformed
-
-   private void radiusOfCurvatureCombo_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_radiusOfCurvatureCombo_ActionPerformed
-      storeCurrentAcqSettings();
-   }//GEN-LAST:event_radiusOfCurvatureCombo_ActionPerformed
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox ChannelGroupCombo_;
     private javax.swing.JPanel ChannelsTab_;
@@ -2916,8 +2775,6 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JPanel autofocusTab_l;
     private javax.swing.JComboBox autofocusZDeviceComboBox_;
     private javax.swing.JLabel autofocusZLabel_;
-    private javax.swing.JSpinner basePowerSpinnerChameleon_;
-    private javax.swing.JSpinner basePowerSpinnerMaitai_;
     private javax.swing.JComboBox bottomSurfaceCombo_;
     private javax.swing.JLabel bottomSurfaceLabel_;
     private javax.swing.JRadioButton burstModeButton_;
@@ -2989,12 +2846,6 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
-    private javax.swing.JLabel jLabel12;
-    private javax.swing.JLabel jLabel13;
-    private javax.swing.JLabel jLabel14;
-    private javax.swing.JLabel jLabel15;
-    private javax.swing.JLabel jLabel16;
-    private javax.swing.JLabel jLabel17;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -3009,8 +2860,6 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JButton loadPairingsButton_;
     private javax.swing.JButton loadSurfacesButton_;
-    private javax.swing.JComboBox mfpComboChameleon_;
-    private javax.swing.JComboBox mfpComboMaitai_;
     private javax.swing.JButton moveAcqDownButton_;
     private javax.swing.JButton moveAcqUpButton_;
     private javax.swing.JScrollPane multipleAcqScrollPane_;
@@ -3025,7 +2874,6 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JPanel panel2D_;
     private javax.swing.JScrollPane propertyPairValuesScrollpane_;
     private javax.swing.JScrollPane propertyPairingsScrollpane_;
-    private javax.swing.JComboBox radiusOfCurvatureCombo_;
     private javax.swing.JRadioButton rankFilterRadioButton_;
     private javax.swing.JSpinner rankSpinner_;
     private javax.swing.JButton removeAcqButton_;

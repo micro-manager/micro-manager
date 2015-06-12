@@ -18,7 +18,6 @@ package propsandcovariants;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.TreeMap;
 import misc.Log;
 
 /**
@@ -30,15 +29,24 @@ public class CurvedSurfaceCalculations {
 
    //mean free paths for which vals have been calculated
    private static Integer[] MEAN_FREE_PATHS = new Integer[]{30, 90};
-   private static Integer[] RADII_OF_CURVATURE = new Integer[]{600};
+   private static Integer[] RADII_OF_CURVATURE = new Integer[]{400, 600};
    //ponts at which relative power has been calculated
-   private static double[] VERTICAL_DISTANCE_POINTS = {0, 20, 40, 60, 80, 100, 120, 140, 160,  180,  200,  220, 240,  260, 280, 300};
-   private static double[] NORMAL_POINTS = {0, 10, 20, 30, 40, 50, 60, 70, 80, 90};
+   private static int DISTANCE_INCREMENT = 20;
+   private static int NORMAL_INCREMENT = 10;
    //[radius of curvature][mean free path][normal][vertical distance]
    private static final double[][][][] RELATIVE_POWERS = new double[][][][]{
-      //first radius of curvature
+      //radius  = 400
       {
-         //first mean free path
+         //MFP 30
+         null,
+         //MFP 90
+         null
+      },
+      
+      
+      //radius = 600
+      {
+         //MFP 30
          {{1.000000, 1.956162, 3.062142, 4.216545, 5.374378, 6.517948, 7.640522, 8.739686, 9.814809, 10.866024, 11.893796, 12.898725, 13.881446, 14.842592, 15.782769, 15.782769},
             {1.000000, 1.950023, 3.110374, 4.357412, 5.619179, 6.863916, 8.080026, 9.264360, 10.416978, 11.539048, 12.632028, 13.697370, 14.736418, 15.750369, 16.740292, 16.740292},
             {1.000000, 1.966496, 3.180014, 4.513880, 5.876458, 7.221048, 8.529177, 9.795824, 11.021389, 12.208105, 13.358597, 14.475363, 15.560622, 16.616293, 17.644024, 17.644024},
@@ -48,8 +56,7 @@ public class CurvedSurfaceCalculations {
             {1.282357, 2.201728, 3.200110, 4.279121, 5.381698, 6.458291, 7.473654, 8.404912, 9.237535, 9.961323, 10.560946, 12.800000, 12.000000, 13.000000, 14.000000, 14.000000},
             {1.435294, 2.197745, 2.946482, 3.703740, 4.432399, 5.096350, 5.665950, 6.117558, 6.431698, 6.590303, 6.561362, 10.429641, 10.766784, 10.940900, 11.000000, 11.000000},
             {1.588231, 2.193761, 2.692854, 3.128359, 3.483099, 3.734409, 3.858246, 3.830204, 3.625860, 3.219283, 2.561777, 2.446063, 2.812709, 2.964646, 2.929796, 2.929796}},
-         ///
-
+         //MFP 90
          {{1.000000, 1.288286, 1.596022, 1.917581, 2.248076, 2.583494, 2.920679, 3.257234, 3.591394, 3.921893, 4.247850, 4.568672, 4.883973, 5.193521, 5.497186, 5.497186},
             {1.000000, 1.279781, 1.584052, 1.907682, 2.245574, 2.593059, 2.946107, 3.301400, 3.656308, 4.008818, 4.357440, 4.701105, 5.039074, 5.370863, 5.696172, 5.696172},
             {1.000000, 1.280337, 1.584774, 1.910662, 2.253768, 2.609614, 2.973957, 3.343030, 3.713645, 4.083216, 4.449715, 4.811608, 5.167777, 5.517436, 5.860064, 5.860064},
@@ -61,8 +68,7 @@ public class CurvedSurfaceCalculations {
             {1.428078, 1.630085, 1.788115, 1.922932, 2.034927, 2.121671, 2.179338, 2.202806, 2.185072, 2.115186, 1.967917, 1.928475, 2.036901, 2.112577, 2.150098, 2.150098}
          }
       }};
-   private static double distanceIncrement_ = VERTICAL_DISTANCE_POINTS[1] - VERTICAL_DISTANCE_POINTS[0];
-   private static double normalIncrement_ = NORMAL_POINTS[1] - NORMAL_POINTS[0];
+
 
    public static double getRelativePower(int meanFreePath, double vertDistance, double normal, int radiusOfCurvature) {
        int mfpIndex = Arrays.asList(MEAN_FREE_PATHS).indexOf(meanFreePath);
@@ -75,8 +81,8 @@ public class CurvedSurfaceCalculations {
          Log.log("Couldn't find radius of curvature in precalculated values");
          throw new RuntimeException();
       }
-      double indexedDistance = vertDistance / distanceIncrement_;
-      int normalIndex = (int) Math.round(normal / normalIncrement_); //this one should never exceed 90 degrees so we can round
+      double indexedDistance = vertDistance / DISTANCE_INCREMENT;
+      int normalIndex = (int) Math.round(normal / NORMAL_INCREMENT); //this one should never exceed 90 degrees so we can round
       double[] distanceVec = RELATIVE_POWERS[radiusIndex][mfpIndex][normalIndex];
       if (indexedDistance > distanceVec.length - 1) {
          return distanceVec[distanceVec.length - 1];
@@ -86,12 +92,20 @@ public class CurvedSurfaceCalculations {
       }
    }
 
-   public static String[] getAvailableMeanFreePathLengths() {
-      String[] vals = new String[MEAN_FREE_PATHS.length];
-      for (int i = 0; i < vals.length; i++) {
-         vals[i] = MEAN_FREE_PATHS[i] + "";
+   public static String[] getAvailableMeanFreePathLengths(int radius) {
+      ArrayList<String> mfps = new ArrayList<String>();
+      for (int radiusIndex = 0; radiusIndex < RADII_OF_CURVATURE.length; radiusIndex++) {
+         if (radius == RADII_OF_CURVATURE[radiusIndex]) {
+            for (int mfpIndex = 0; mfpIndex < MEAN_FREE_PATHS.length; mfpIndex++) {
+               if (RELATIVE_POWERS[radiusIndex][mfpIndex] != null) {
+                  mfps.add(MEAN_FREE_PATHS[mfpIndex] + "");
+               }
+            }
+            String[] arr = new String[mfps.size()];            
+            return mfps.toArray(arr);
+         }
       }
-      return vals;
+      throw new RuntimeException("Radius of curvature not found");
    }
 
    public static String[] getAvailableRadiiOfCurvature() {

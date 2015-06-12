@@ -80,9 +80,6 @@ public class FixedAreaAcquisitionSettings  {
    //2photon
    public int imageFilterType_;
    public double rank_;
-   public double laser1BasePower_, laser2BasePower_;
-   public int laser1MeanFreePath_, laser2MeanFreePath_;
-   public int radiusOfCurvature_;
    
    
    public FixedAreaAcquisitionSettings() {
@@ -125,11 +122,6 @@ public class FixedAreaAcquisitionSettings  {
       //dont load so defaults to frame average for now
 //      imageFilterType_ = prefs.getInt(PREF_PREFIX + "IMAGE_FILTER", FrameIntegrationMethod.FRAME_AVERAGE);   
       rank_ = prefs.getDouble(PREF_PREFIX + "RANK", 0.95);
-      laser1BasePower_ = prefs.getDouble(PREF_PREFIX + "LASER_1_BASE_POWER", 0.1);
-      laser2BasePower_ = prefs.getDouble(PREF_PREFIX + "LASER_2_BASE_POWER", 0.1);
-      laser1MeanFreePath_ = prefs.getInt(PREF_PREFIX + "LASER_1_MFP", 90);
-      laser2MeanFreePath_ = prefs.getInt(PREF_PREFIX + "LASER_2_MFP", 90);
-      radiusOfCurvature_ = prefs.getInt(PREF_PREFIX + "RADIUS", 600);
    }
    
    public boolean hasPairing(CovariantPairing pair) {
@@ -198,11 +190,6 @@ public class FixedAreaAcquisitionSettings  {
       //image filtering
       prefs.putInt(PREF_PREFIX + "IMAGE_FILTER", imageFilterType_);
       prefs.putDouble(PREF_PREFIX + "RANK", rank_);
-      prefs.putDouble(PREF_PREFIX + "LASER_1_BASE_POWER", laser1BasePower_);
-      prefs.putDouble(PREF_PREFIX + "LASER_2_BASE_POWER", laser2BasePower_);
-      prefs.putInt(PREF_PREFIX + "LASER_1_MFP", laser1MeanFreePath_);
-      prefs.putInt(PREF_PREFIX + "LASER_2_MFP", laser2MeanFreePath_);
-      prefs.putInt(PREF_PREFIX + "RADIUS", radiusOfCurvature_);
    }
 
 }

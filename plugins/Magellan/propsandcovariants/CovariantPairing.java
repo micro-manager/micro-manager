@@ -63,7 +63,7 @@ public class CovariantPairing {
     */
    private CovariantValue getDependentValue(AcquisitionEvent evt) throws Exception {
       //get the value of the independent based on state of hardware
-      CovariantValue iVal = independent_.getCurrentValue(evt, this);
+      CovariantValue iVal = independent_.getCurrentValue(evt);
       
       if (independent_.isDiscrete() || independent_.getType() == CovariantType.STRING) {
          //if independent is discrete, dependent value is whatever is defined

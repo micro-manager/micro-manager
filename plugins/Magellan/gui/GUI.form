@@ -16,7 +16,6 @@
   </NonVisualComponents>
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
-    <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
   </SyntheticProperties>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
@@ -2009,11 +2008,7 @@
                                           <Component id="burstModeButton_" min="-2" max="-2" attributes="0"/>
                                           <Component id="frameSummationButton_" min="-2" max="-2" attributes="0"/>
                                       </Group>
-                                      <EmptySpace max="32767" attributes="0"/>
-                                      <Group type="103" groupAlignment="0" attributes="0">
-                                          <Component id="basePowerSpinnerChameleon_" min="-2" pref="74" max="-2" attributes="0"/>
-                                          <Component id="mfpComboChameleon_" alignment="0" min="-2" pref="74" max="-2" attributes="0"/>
-                                      </Group>
+                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                   </Group>
                                   <Group type="102" attributes="0">
                                       <Group type="103" groupAlignment="0" attributes="0">
@@ -2030,28 +2025,6 @@
                                           <Group type="102" alignment="0" attributes="0">
                                               <EmptySpace min="-2" pref="71" max="-2" attributes="0"/>
                                               <Component id="offsetsLabel_" min="-2" max="-2" attributes="0"/>
-                                              <EmptySpace min="-2" pref="108" max="-2" attributes="0"/>
-                                              <Group type="103" groupAlignment="0" attributes="0">
-                                                  <Component id="jLabel12" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                  <Group type="102" alignment="0" attributes="0">
-                                                      <Group type="103" groupAlignment="1" attributes="0">
-                                                          <Component id="jLabel17" min="-2" max="-2" attributes="0"/>
-                                                          <Group type="102" attributes="0">
-                                                              <Group type="103" groupAlignment="0" attributes="0">
-                                                                  <Component id="jLabel13" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                                  <Component id="jLabel14" alignment="0" min="-2" max="-2" attributes="0"/>
-                                                              </Group>
-                                                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                                              <Group type="103" groupAlignment="0" attributes="0">
-                                                                  <Component id="mfpComboMaitai_" min="-2" pref="76" max="-2" attributes="0"/>
-                                                                  <Component id="basePowerSpinnerMaitai_" alignment="0" min="-2" pref="76" max="-2" attributes="0"/>
-                                                              </Group>
-                                                          </Group>
-                                                      </Group>
-                                                      <EmptySpace max="-2" attributes="0"/>
-                                                      <Component id="radiusOfCurvatureCombo_" min="-2" pref="76" max="-2" attributes="0"/>
-                                                  </Group>
-                                              </Group>
                                               <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                           </Group>
                                           <Group type="102" alignment="0" attributes="0">
@@ -2075,11 +2048,7 @@
                                                   <Component id="ch4OffsetSpinner_" alignment="0" min="-2" pref="46" max="-2" attributes="0"/>
                                                   <Component id="ch0OffsetSpinner_" alignment="0" min="-2" pref="46" max="-2" attributes="0"/>
                                               </Group>
-                                              <EmptySpace min="204" max="32767" attributes="0"/>
-                                              <Component id="jLabel15" min="-2" max="-2" attributes="0"/>
-                                              <EmptySpace min="-2" pref="68" max="-2" attributes="0"/>
-                                              <Component id="jLabel16" min="-2" max="-2" attributes="0"/>
-                                              <EmptySpace min="-2" pref="13" max="-2" attributes="0"/>
+                                              <EmptySpace min="13" pref="366" max="32767" attributes="0"/>
                                           </Group>
                                       </Group>
                                   </Group>
@@ -2092,82 +2061,47 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="1" attributes="0">
-                                  <Group type="102" attributes="0">
-                                      <Group type="103" groupAlignment="3" attributes="0">
-                                          <Component id="jLabel10" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="offsetsLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="jLabel12" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                      <Group type="103" groupAlignment="0" attributes="0">
-                                          <Group type="103" groupAlignment="3" attributes="0">
-                                              <Component id="frameAverageRadioButton_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                              <Component id="ch0OffsetSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                              <Component id="ch0OffsetLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          </Group>
-                                          <Component id="jLabel15" alignment="1" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                  </Group>
-                                  <Component id="jLabel16" min="-2" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="jLabel10" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="offsetsLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Group type="102" alignment="0" attributes="0">
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Group type="103" groupAlignment="3" attributes="0">
-                                          <Component id="rankFilterRadioButton_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="ch1OffsetSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="ch1OffsetLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="jLabel13" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="basePowerSpinnerMaitai_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="basePowerSpinnerChameleon_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Group type="103" groupAlignment="3" attributes="0">
-                                          <Component id="rankSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="jLabel9" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="ch2OffsetSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="ch2OffsetLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Group type="103" groupAlignment="3" attributes="0">
-                                          <Component id="ch3OffsetSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="ch3OffsetLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="frameSummationButton_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                  </Group>
-                                  <Group type="102" alignment="0" attributes="0">
-                                      <EmptySpace min="-2" pref="46" max="-2" attributes="0"/>
-                                      <Group type="103" groupAlignment="3" attributes="0">
-                                          <Component id="jLabel14" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="mfpComboMaitai_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="mfpComboChameleon_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                  </Group>
+                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="frameAverageRadioButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="ch0OffsetSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="ch0OffsetLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <Group type="103" groupAlignment="0" attributes="0">
-                                  <Group type="102" attributes="0">
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Group type="103" groupAlignment="3" attributes="0">
-                                          <Component id="ch4OffsetSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="ch4OffsetLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="burstModeButton_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                      <EmptySpace max="-2" attributes="0"/>
-                                      <Group type="103" groupAlignment="3" attributes="0">
-                                          <Component id="ch5OffsetSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="ch5OffsetLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                  </Group>
-                                  <Group type="102" alignment="0" attributes="0">
-                                      <EmptySpace min="-2" pref="14" max="-2" attributes="0"/>
-                                      <Group type="103" groupAlignment="3" attributes="0">
-                                          <Component id="radiusOfCurvatureCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="jLabel17" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                  </Group>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="rankFilterRadioButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="ch1OffsetSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="ch1OffsetLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace pref="65" max="32767" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="rankSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="jLabel9" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="ch2OffsetSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="ch2OffsetLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="ch3OffsetSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="ch3OffsetLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="frameSummationButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="ch4OffsetSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="ch4OffsetLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="burstModeButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="ch5OffsetSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                                  <Component id="ch5OffsetLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                              <EmptySpace pref="69" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -2355,89 +2289,6 @@
                       </Properties>
                       <Events>
                         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="burstModeButton_ActionPerformed"/>
-                      </Events>
-                    </Component>
-                    <Component class="javax.swing.JLabel" name="jLabel12">
-                      <Properties>
-                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                          <Font name="Tahoma" size="11" style="1"/>
-                        </Property>
-                        <Property name="text" type="java.lang.String" value="Curved surface power scaling"/>
-                      </Properties>
-                    </Component>
-                    <Component class="javax.swing.JLabel" name="jLabel13">
-                      <Properties>
-                        <Property name="text" type="java.lang.String" value="Base power (0-1):"/>
-                      </Properties>
-                    </Component>
-                    <Component class="javax.swing.JLabel" name="jLabel14">
-                      <Properties>
-                        <Property name="text" type="java.lang.String" value="Mean free path:"/>
-                      </Properties>
-                    </Component>
-                    <Component class="javax.swing.JSpinner" name="basePowerSpinnerMaitai_">
-                      <Properties>
-                        <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
-                          <SpinnerModel initial="0.05" maximum="1.0" minimum="1.0E-5" numberType="java.lang.Double" stepSize="0.01" type="number"/>
-                        </Property>
-                      </Properties>
-                      <Events>
-                        <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="basePowerSpinnerMaitai_StateChanged"/>
-                      </Events>
-                    </Component>
-                    <Component class="javax.swing.JComboBox" name="mfpComboMaitai_">
-                      <Properties>
-                        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-                          <Connection code="new DefaultComboBoxModel(CurvedSurfaceCalculations.getAvailableMeanFreePathLengths())" type="code"/>
-                        </Property>
-                      </Properties>
-                      <Events>
-                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mfpComboMaitai_ActionPerformed"/>
-                      </Events>
-                    </Component>
-                    <Component class="javax.swing.JLabel" name="jLabel15">
-                      <Properties>
-                        <Property name="text" type="java.lang.String" value="Maitai"/>
-                      </Properties>
-                    </Component>
-                    <Component class="javax.swing.JLabel" name="jLabel16">
-                      <Properties>
-                        <Property name="text" type="java.lang.String" value="Chameleon"/>
-                      </Properties>
-                    </Component>
-                    <Component class="javax.swing.JSpinner" name="basePowerSpinnerChameleon_">
-                      <Properties>
-                        <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
-                          <SpinnerModel initial="0.05" maximum="1.0" minimum="1.0E-5" numberType="java.lang.Double" stepSize="0.01" type="number"/>
-                        </Property>
-                      </Properties>
-                      <Events>
-                        <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="basePowerSpinnerChameleon_StateChanged"/>
-                      </Events>
-                    </Component>
-                    <Component class="javax.swing.JComboBox" name="mfpComboChameleon_">
-                      <Properties>
-                        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-                          <Connection code="new DefaultComboBoxModel(CurvedSurfaceCalculations.getAvailableMeanFreePathLengths())" type="code"/>
-                        </Property>
-                      </Properties>
-                      <Events>
-                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mfpComboChameleon_ActionPerformed"/>
-                      </Events>
-                    </Component>
-                    <Component class="javax.swing.JLabel" name="jLabel17">
-                      <Properties>
-                        <Property name="text" type="java.lang.String" value="Radius of curvature:"/>
-                      </Properties>
-                    </Component>
-                    <Component class="javax.swing.JComboBox" name="radiusOfCurvatureCombo_">
-                      <Properties>
-                        <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
-                          <Connection code="new DefaultComboBoxModel(CurvedSurfaceCalculations.getAvailableRadiiOfCurvature())" type="code"/>
-                        </Property>
-                      </Properties>
-                      <Events>
-                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="radiusOfCurvatureCombo_ActionPerformed"/>
                       </Events>
                     </Component>
                   </SubComponents>

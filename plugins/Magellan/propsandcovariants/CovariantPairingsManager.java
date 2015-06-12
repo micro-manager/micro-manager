@@ -175,7 +175,6 @@ public class CovariantPairingsManager {
          String[] lines = pairingText.trim().split("\n");
          String independentName = lines[0].split(",")[0];
          String dependentName = lines[0].split(",")[1];
-         Covariant independent, dependent;
          //Generate covariants from names
          //Groups and surface data have specific prefixes. No prefix = property
          if (independentName.startsWith(SurfaceData.PREFIX)) {
@@ -193,9 +192,11 @@ public class CovariantPairingsManager {
                   throw new RuntimeException();
                }
                try {
-                  Covariant ind = new SurfaceData(surface, type);
+                  SurfaceData ind = new SurfaceData(surface, type);
+                  ind.initializeCurvedSurfaceData();
                   createCovariantAndAddValues(ind, dependentName, lines);
                } catch (Exception e) {
+                  e.printStackTrace();
                   Log.log("Expected type wrong",true);
                   throw new RuntimeException();
                }
