@@ -205,6 +205,7 @@ public class SurfaceData implements Covariant {
         } catch (Exception e) {
            Log.log("Couldn't calculate curved surface power");
            Log.log(e);
+           return 0;
         }
      }
 
