@@ -153,6 +153,8 @@ public class ToolsMenu {
                  }
               });
 
+      toolsMenu_.addSeparator();
+
       GUIUtils.addMenuItem(toolsMenu_, "Hardware Configuration Wizard...",
               "Open wizard to create new hardware configuration",
               new Runnable() {
