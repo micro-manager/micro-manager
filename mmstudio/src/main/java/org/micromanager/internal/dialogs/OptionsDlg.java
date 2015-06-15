@@ -80,6 +80,7 @@ public class OptionsDlg extends MMDialog {
 
       setResizable(false);
       setModal(true);
+      setAlwaysOnTop(true);
       setTitle("Micro-Manager Options");
       
       loadAndRestorePosition(100, 100);     
