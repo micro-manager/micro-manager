@@ -553,7 +553,8 @@ public class MMAcquisition {
             ijType = ImagePlus.COLOR_RGB;
          }
          summaryMetadata.put("IJType", ijType);
-         summaryMetadata.put("MetadataVersion", 10);
+         summaryMetadata.put("MetadataVersion",
+               DefaultSummaryMetadata.METADATA_VERSION);
          summaryMetadata.put("MicroManagerVersion", MMStudio.getInstance().getVersion());
          summaryMetadata.put("NumComponents", 1);
          summaryMetadata.put("Positions", numPositions_);

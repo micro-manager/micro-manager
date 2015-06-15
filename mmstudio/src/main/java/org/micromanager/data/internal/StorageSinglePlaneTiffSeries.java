@@ -696,5 +696,10 @@ public class StorageSinglePlaneTiffSeries implements Storage {
    @Subscribe
    public void onNewSummaryMetadata(NewSummaryMetadataEvent event) {
       summaryMetadata_ = event.getSummaryMetadata();
+      // HACK: ensure the metadata version is valid.
+      if (summaryMetadata_.getMetadataVersion() == null) {
+         summaryMetadata_ = summaryMetadata_.copy().metadataVersion(
+               DefaultSummaryMetadata.METADATA_VERSION).build();
+      }
    }
 }

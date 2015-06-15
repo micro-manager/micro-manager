@@ -486,6 +486,11 @@ public final class StorageMultipageTiff implements Storage {
    private void setSummaryMetadata(DefaultSummaryMetadata summary,
          boolean showProgress) {
       summaryMetadata_ = summary;
+      // HACK: ensure the metadata version is valid.
+      if (summaryMetadata_.getMetadataVersion() == null) {
+         summaryMetadata_ = (DefaultSummaryMetadata) summaryMetadata_.copy()
+            .metadataVersion(DefaultSummaryMetadata.METADATA_VERSION).build();
+      }
       JSONObject summaryJSON = summary.toJSON();
       if (summaryJSON != null) {
          summaryMetadataString_ = summaryJSON.toString();

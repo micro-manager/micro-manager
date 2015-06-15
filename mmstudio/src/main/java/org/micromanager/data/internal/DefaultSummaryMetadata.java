@@ -46,7 +46,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
     * This is the version string for all metadata as saved in Micro-Manager
     * data files.
     */
-   private static final String METADATA_VERSION = "11.0.0";
+   public static final String METADATA_VERSION = "11.0.0";
 
    /**
     * Retrieve the summary metadata that has been saved in the preferences.

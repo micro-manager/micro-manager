@@ -37,6 +37,7 @@
     [mmcorej Configuration Metadata TaggedImage]
     [org.json JSONArray JSONObject]
     [org.micromanager.acquisition.internal TaggedImageQueue]
+    [org.micromanager.data.internal DefaultSummaryMetadata]
     [org.micromanager.display.internal ChannelSettings]
     [org.micromanager PositionList SequenceSettings]
     [org.micromanager.internal.utils MDUtils ReportingUtils])
@@ -929,7 +930,7 @@
       "KeepShutterOpenChannels" (:keep-shutter-open-channels settings)
       "KeepShutterOpenSlices" (:keep-shutter-open-slices settings)
       "MicroManagerVersion" (if gui (.getVersion gui) "N/A")
-      "MetadataVersion" 10
+      "MetadataVersion" (DefaultSummaryMetadata/METADATA_VERSION)
       "PixelAspect" 1.0
       "PixelSize_um" (core getPixelSizeUm)
       "PixelType" (get-pixel-type)
