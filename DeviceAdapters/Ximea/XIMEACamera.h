@@ -143,6 +143,7 @@ private:
 	MySequenceThread * thd_;
 	bool stopOnOverflow_;
 	bool isAcqRunning;
+	DWORD family;
 };
 
 //////////////////////////////////////////////////////////////////////////////

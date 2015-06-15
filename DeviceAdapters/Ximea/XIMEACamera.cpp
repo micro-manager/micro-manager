@@ -224,7 +224,8 @@ XIMEACamera::XIMEACamera(const char* name) :
 	sequenceStartTime_(0),
 	imageCounter_(0),
 	stopOnOverflow_(false),
-	isAcqRunning(false)
+	isAcqRunning(false),
+	family(0)
 {
 	// call the base class method to set-up default error codes/messages
 	InitializeDefaultErrorMessages();
@@ -273,13 +274,6 @@ int XIMEACamera::Initialize()
 	if(ret != XI_OK) 
 		return DEVICE_ERR;
 
-	// reset camera timestamp
-	ret = xiSetParamInt(handle, XI_PRM_TS_RST_SOURCE, XI_TS_RST_SRC_SW);
-	if (ret != XI_OK) return DEVICE_ERR;
-
-	ret = xiSetParamInt(handle, XI_PRM_TS_RST_MODE, XI_TS_RST_ARM_ONCE);
-	if (ret != XI_OK) return DEVICE_ERR;
-	
 	// -------------------------------------------------------------------------------------
 	// Set property list
 	// -------------------------------------------------------------------------------------
@@ -340,8 +334,7 @@ int XIMEACamera::Initialize()
 
 	// -------------------------------------------------------------------------------------
 	// data format
-	int isColor  = 0;
-	DWORD family=0;
+	int isColor  = 0;	
 	xiGetParamInt( handle, XI_PRM_IMAGE_IS_COLOR, &isColor);
 	mmGetModelFamily( handle, &family);
 	xiGetParamInt(handle, XI_PRM_OUTPUT_DATA_BIT_DEPTH, &adc_);
@@ -369,6 +362,18 @@ int XIMEACamera::Initialize()
 
 	ret = SetAllowedValues(g_Data_Format, pixelTypeValues);
 	assert(ret == DEVICE_OK);
+
+	// -------------------------------------------------------------------------------------
+	// reset timestamp for MQ and MD cameras
+	if (family == FAMILY_MD || family == FAMILY_MQ)
+	{
+		// reset camera timestamp
+		ret = xiSetParamInt(handle, XI_PRM_TS_RST_SOURCE, XI_TS_RST_SRC_SW);
+		if (ret != XI_OK) return DEVICE_ERR;
+
+		ret = xiSetParamInt(handle, XI_PRM_TS_RST_MODE, XI_TS_RST_ARM_ONCE);
+		if (ret != XI_OK) return DEVICE_ERR;
+	}
 
 	// -------------------------------------------------------------------------------------
 	// sensor taps for MD cameras
@@ -1096,12 +1101,15 @@ int XIMEACamera::StartSequenceAcquisition(long numImages, double interval_ms, bo
 	if (ret != DEVICE_OK)
 		return ret;
 
-	// reset camera timestamp
-	ret = xiSetParamInt(handle, XI_PRM_TS_RST_SOURCE, XI_TS_RST_SRC_SW);
-	if (ret != XI_OK) return DEVICE_ERR;
+	// reset camera timestamp for MQ/MD cameras
+	if (family == FAMILY_MD || family == FAMILY_MQ)
+	{
+		ret = xiSetParamInt(handle, XI_PRM_TS_RST_SOURCE, XI_TS_RST_SRC_SW);
+		if (ret != XI_OK) return DEVICE_ERR;
 
-	ret = xiSetParamInt(handle, XI_PRM_TS_RST_MODE, XI_TS_RST_ARM_ONCE);
-	if (ret != XI_OK) return DEVICE_ERR;
+		ret = xiSetParamInt(handle, XI_PRM_TS_RST_MODE, XI_TS_RST_ARM_ONCE);
+		if (ret != XI_OK) return DEVICE_ERR;
+	}
 
 	// start image acquisition	
 	ret = xiStartAcquisition(handle);
