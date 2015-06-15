@@ -121,7 +121,6 @@ public interface DataManager {
     * Micro-Manager by default (see the
     * org.micromanager.api.display.DisplayManager.manage() method for more
     * information).
-    * TODO: replace all uses of ScriptInterface.openAcquisitionData with this.
     * @param directory Location on disk from which to pull image data.
     * @param isVirtual If true, then only load images into RAM as they are
     *        requested. This reduces RAM utilization and has a lesser delay
