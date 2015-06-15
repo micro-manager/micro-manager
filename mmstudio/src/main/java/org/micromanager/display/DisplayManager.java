@@ -197,4 +197,20 @@ public interface DisplayManager {
     *        OverlayPanels.
     */
    public void registerOverlay(OverlayPanelFactory factory);
+
+   /**
+    * Close all open image windows.
+    * @param shouldPromptToSave If true, then any open windows for Datastores
+    *        that have not been saved will show a prompt to save, and if the
+    *        user chooses not to save a file, then the process of closing
+    *        windows will be halted. If false, then all windows will be closed
+    *        regardless of whether or not the data they show has been saved,
+    *        with no prompting of the user whatsoever. Note that the
+    *        corresponding File menu option to close all open windows does
+    *        prompt the user to ensure they are absolutely certain they want to
+    *        close all open windows without prompts to save; this API call does
+    *        not have that prompt.
+    * @return true if all windows are closed; false if any window did not close.
+    */
+   public boolean closeAllDisplayWindows(boolean shouldPromptToSave);
 }

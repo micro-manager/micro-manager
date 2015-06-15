@@ -1180,11 +1180,9 @@ public class MMStudio implements Studio, CompatibilityInterface {
 
       stopAllActivity();
 
-      for (DisplayWindow display : displays().getAllImageWindows()) {
-         if (!display.requestToClose()) {
-            // This display is unable to close for some reason.
-            return false;
-         }
+      if (!displays().closeAllDisplayWindows(true)) {
+         // The user canceled out of closing a display window.
+         return false;
       }
 
       if (!cleanupOnClose(calledByImageJ)) {

@@ -299,6 +299,21 @@ public final class DefaultDisplayManager implements DisplayManager {
       return true;
    }
 
+   @Override
+   public boolean closeAllDisplayWindows(boolean shouldPromptToSave) {
+      for (DisplayWindow display : getAllImageWindows()) {
+         if (shouldPromptToSave && !display.requestToClose()) {
+            // User cancelled closing.
+            return false;
+         }
+         else if (!shouldPromptToSave) {
+            // Force display closed.
+            display.forceClosed();
+         }
+      }
+      return true;
+   }
+
    private void removeDisplay(DisplayWindow display) {
       Datastore store = display.getDatastore();
       ArrayList<DisplayWindow> displays = storeToDisplays_.get(store);
