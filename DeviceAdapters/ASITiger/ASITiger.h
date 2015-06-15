@@ -337,6 +337,10 @@ const char* const g_SPIMLaserDurationPropertyName = "SPIMLaserDuration(ms)";
 const char* const g_LaserOutputModePropertyName = "LaserOutputMode";
 const char* const g_LaserSwitchTimePropertyName = "LaserSwitchTime(ms)";
 
+// scanner phototargeting property names
+const char* const g_TargetExposureTimePropertyName = "TargetExposureTime(ms)";
+const char* const g_TargetSettlingTimePropertyName = "TargetSettlingTime(ms)";
+
 // LED property names
 const char* const g_LEDIntensityPropertyName = "LED Intensity(%)";
 const char* const g_ShutterState = "State";
