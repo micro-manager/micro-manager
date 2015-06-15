@@ -294,7 +294,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
 
       openAcqDirectory_ = profile().getString(MMStudio.class,
             OPEN_ACQ_DIR, "");
-      ReportingUtils.logError("TODO: restore previous default data saving method");
 
       ToolTipManager ttManager = ToolTipManager.sharedInstance();
       ttManager.setDismissDelay(TOOLTIP_DISPLAY_DURATION_MILLISECONDS);
@@ -1152,7 +1151,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       frame_.savePrefs();
       
       profile().setString(MMStudio.class, OPEN_ACQ_DIR, openAcqDirectory_);
-      ReportingUtils.logError("TODO: record default data-saving method");
 
       // NOTE: do not save auto shutter state
       if (afMgr_ != null && afMgr_.getDevice() != null) {
