@@ -420,8 +420,6 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
 
    /**
     * Snap an image, display it if indicated, and return it.
-    * TODO: for multichannel images we are just returning the last channel's
-    * image.
     */
    @Override
    public List<Image> snap(boolean shouldDisplay) {
