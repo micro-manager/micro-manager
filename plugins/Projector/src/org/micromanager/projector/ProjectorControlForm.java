@@ -41,6 +41,7 @@ import ij.plugin.filter.GaussianBlur;
 import ij.plugin.frame.RoiManager;
 import ij.process.FloatPolygon;
 import ij.process.ImageProcessor;
+
 import java.awt.AWTEvent;
 import java.awt.HeadlessException;
 import java.awt.Point;
@@ -70,15 +71,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.prefs.Preferences;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
 import javax.swing.JOptionPane;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 import javax.swing.text.DefaultFormatter;
+
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.DeviceType;
 import mmcorej.TaggedImage;
+
 import org.json.JSONException;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
@@ -407,7 +411,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * location on the camera.  Does not do sub-pixel localization, but could
     * (just would change its return type, most other code would be OK with this)
    */
-   private Point measureSpotOnCamera(Point2D.Double projectionPoint) {
+   private Point measureSpotOnCamera(Point2D.Double projectionPoint, boolean addToAlbum) {
       if (stopRequested_.get()) {
          return null;
       }
@@ -433,18 +437,21 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          Thread.sleep(delayMs);
          core_.snapImage();
          // NS: just make sure to wait until the spot is no longer displayed
-         // JonD: time to wait is simply the exposure time
+         // JonD: time to wait is simply the exposure time less any delay
           Thread.sleep((int) (dev_.getExposure()/1000) - delayMs);
          // JonD: see earlier comment => commenting out next line
          // dev_.setExposure(originalExposure);
          TaggedImage taggedImage2 = core_.getTaggedImage();
          ImageProcessor proc2 = ImageUtils.makeMonochromeProcessor(taggedImage2);
          app_.displayImage(taggedImage2);
-         // saving images to album is useful for debugging, TODO add debug mode where this happens
-         // app_.addToAlbum(taggedImage2);
+         // saving images to album is useful for debugging
+         // TODO figure out why this doesn't work towards the end; maybe limitation on # of images in album
+         // if (addToAlbum) {
+         //    app_.addToAlbum(taggedImage2);
+         // }
          ImageProcessor diffImage = ImageUtils.subtractImageProcessors(proc2.convertToFloatProcessor(), proc1.convertToFloatProcessor());
          Point maxPt = findPeak(diffImage);
-         IJ.getImage().setRoi(new PointRoi(maxPt.x, maxPt.y));
+         app_.getSnapLiveWin().getImagePlus().setRoi(new PointRoi(maxPt.x, maxPt.y));
          // NS: what is this second sleep good for????
          // core_.sleep(500);
          return maxPt;
@@ -460,7 +467,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     */
    private void measureAndAddToSpotMap(Map<Point2D.Double, Point2D.Double> spotMap,
          Point2D.Double ptSLM) {
-      Point ptCam = measureSpotOnCamera(ptSLM);
+      Point ptCam = measureSpotOnCamera(ptSLM, false);
       Point2D.Double ptCamDouble = new Point2D.Double(ptCam.x, ptCam.y);
       spotMap.put(ptCamDouble, ptSLM);
    }
@@ -557,7 +564,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             double xoffset = ((i + 0.5) * width / (nGrid + 1.0));
             double yoffset = ((j + 0.5) * height / (nGrid + 1.0));
             slmPoint[i][j] = new Point2D.Double(left + xoffset, top + yoffset);
-            Point spot = measureSpotOnCamera(slmPoint[i][j]);
+            Point spot = measureSpotOnCamera(slmPoint[i][j], true);
             if (spot != null) {
                camPoint[i][j] = toDoublePoint(spot);
             }
