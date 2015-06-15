@@ -78,6 +78,15 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    private final JLabel acquisitionOrderText_;
    private static final String SHOULD_SYNC_EXPOSURE = "should sync exposure times between main window and Acquire dialog";
    private static final String SHOULD_HIDE_DISPLAY = "should hide image display windows for multi-dimensional acquisitions";
+   private static final String SAVE_MODE = "default save mode";
+   // This array allows us to convert from SaveModes to integers. Of course it
+   // needs to be updated if any new save modes are added in the future.
+   private static final ArrayList<Datastore.SaveMode> SAVE_MODE_ARRAY;
+   static {
+      SAVE_MODE_ARRAY = new ArrayList<Datastore.SaveMode>();
+      SAVE_MODE_ARRAY.add(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
+      SAVE_MODE_ARRAY.add(Datastore.SaveMode.MULTIPAGE_TIFF);
+   }
    private JComboBox channelGroupCombo_;
    private final JTextArea commentTextArea_;
    private final JComboBox zValCombo_;
@@ -849,7 +858,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       singleButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            ReportingUtils.logError("TODO: allow saving as separate image files");
+            setSaveMode(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
          }});
 
       multiButton_ = new JRadioButton("Image stack file");
@@ -859,7 +868,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       multiButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            ReportingUtils.logError("TODO: set saving mode to multi-image file");
+            setSaveMode(Datastore.SaveMode.MULTIPAGE_TIFF);
          }});
       
       ButtonGroup buttonGroup = new ButtonGroup();
@@ -1087,7 +1096,16 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    }
    
    public final void updateSavingTypeButtons() {
-      ReportingUtils.logError("TODO: set saving mode button states");
+      Datastore.SaveMode mode = getSaveMode();
+      if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
+         singleButton_.setSelected(true);
+      }
+      else if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
+         multiButton_.setSelected(true);
+      }
+      else {
+         ReportingUtils.logError("Unrecognized save mode " + mode);
+      }
    }
 
    public void close() {
@@ -1298,6 +1316,16 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
       profile.setBoolean(this.getClass(), ACQ_ENABLE_CUSTOM_INTERVALS, acqEng_.customTimeIntervalsEnabled());
 
+      // Save preferred save mode.
+      if (singleButton_.isSelected()) {
+         setSaveMode(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
+      }
+      else if (multiButton_.isSelected()) {
+         setSaveMode(Datastore.SaveMode.MULTIPAGE_TIFF);
+      }
+      else {
+         ReportingUtils.logError("Unknown save mode button is selected, or no buttons are selected");
+      }
 
       // Save model column widths and order
       for (int k = 0; k < model_.getColumnCount(); k++) {
@@ -2046,5 +2074,19 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    public static void setShouldHideMDADisplay(boolean shouldHide) {
       DefaultUserProfile.getInstance().setBoolean(AcqControlDlg.class,
             SHOULD_HIDE_DISPLAY, shouldHide);
+   }
+
+   public static Datastore.SaveMode getSaveMode() {
+      // HACK: convert from Java enums to ints.
+      int mode = DefaultUserProfile.getInstance().getInt(
+            AcqControlDlg.class, SAVE_MODE,
+            SAVE_MODE_ARRAY.indexOf(Datastore.SaveMode.MULTIPAGE_TIFF));
+      return SAVE_MODE_ARRAY.get(mode);
+   }
+
+   public static void setSaveMode(Datastore.SaveMode saveMode) {
+      int mode = SAVE_MODE_ARRAY.indexOf(saveMode);
+      DefaultUserProfile.getInstance().setInt(AcqControlDlg.class,
+            SAVE_MODE, mode);
    }
 }

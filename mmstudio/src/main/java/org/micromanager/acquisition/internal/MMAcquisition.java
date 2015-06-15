@@ -30,6 +30,7 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
@@ -54,10 +55,6 @@ import org.json.JSONObject;
 import org.json.JSONException;
 import org.micromanager.internal.MMStudio;
 
-import org.micromanager.data.internal.multipagetiff.MultipageTiffReader;
-import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
-import org.micromanager.data.internal.StorageSinglePlaneTiffSeries;
-import org.micromanager.data.internal.StorageRAM;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Storage;
@@ -66,6 +63,10 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
+import org.micromanager.data.internal.multipagetiff.MultipageTiffReader;
+import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
+import org.micromanager.data.internal.StorageSinglePlaneTiffSeries;
+import org.micromanager.data.internal.StorageRAM;
 
 import org.micromanager.events.internal.DefaultEventManager;
 
@@ -150,9 +151,7 @@ public class MMAcquisition {
                String acqDirectory = createAcqDirectory(summaryMetadata.getString("Directory"), summaryMetadata.getString("Prefix"));
                summaryMetadata.put("Prefix", acqDirectory);
                String acqPath = summaryMetadata.getString("Directory") + File.separator + acqDirectory;
-               // TODO: respect user selection of multi-file saving method.
-               store_.setStorage(new StorageMultipageTiff(store_,
-                        acqPath, true));
+               store_.setStorage(getAppropriateStorage(store_, acqPath, true));
             } catch (Exception e) {
                ReportingUtils.showError(e, "Unable to create directory for saving images.");
                eng.stop(true);
@@ -335,12 +334,10 @@ public class MMAcquisition {
 
          SummaryMetadata summary = DefaultSummaryMetadata.legacyFromJSON(summary_);
          try {
-            // TODO: allow users to save in the StorageSinglePlaneTiffSeries
-            // format.
-            store_.setStorage(new StorageMultipageTiff(store_, dirName, true));
+            store_.setStorage(getAppropriateStorage(store_, dirName, true));
             store_.setSummaryMetadata(summary);
          }
-         catch (java.io.IOException e) {
+         catch (IOException e) {
             ReportingUtils.showError(e, "Unable to prepare saving");
          }
          catch (DatastoreFrozenException e) {
@@ -758,6 +755,21 @@ public class MMAcquisition {
             return "RGB64";
       }
       return null;
+   }
+
+   private static Storage getAppropriateStorage(DefaultDatastore store,
+         String path, boolean isNew) throws IOException {
+      Datastore.SaveMode mode = AcqControlDlg.getSaveMode();
+      if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
+         return new StorageSinglePlaneTiffSeries(store, path, isNew);
+      }
+      else if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
+         return new StorageMultipageTiff(store, path, isNew);
+      }
+      else {
+         ReportingUtils.logError("Unrecognized save mode " + mode);
+         return null;
+      }
    }
 
    public int getLastAcquiredFrame() {
