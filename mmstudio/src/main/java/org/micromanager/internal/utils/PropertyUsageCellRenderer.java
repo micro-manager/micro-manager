@@ -24,7 +24,7 @@ public class PropertyUsageCellRenderer implements TableCellRenderer {
       item_ = data.getPropertyItem(rowIndex);
 
       cb_.setSelected(item_.confInclude);
-      cb_.setBackground(Color.white);
+      cb_.setBackground(DaytimeNighttime.getBackgroundColor());
       if (item_.readOnly) {
          cb_.setEnabled(false);
       }
