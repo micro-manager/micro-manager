@@ -419,7 +419,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          TaggedImage image = core_.getTaggedImage();
          ImageProcessor proc1 = ImageUtils.makeMonochromeProcessor(image);
          // JonD: should use the exposure that the user has set to avoid hardcoding a value;
-         // if the user wants a different exposure time for calibration than for use it's easy to specify
+         // if the user wants a different exposure time for calibration it's easy to specify
          // => commenting out next two lines
          // long originalExposure = dev_.getExposure();
          // dev_.setExposure(500000);
@@ -432,12 +432,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          int delayMs = Integer.parseInt(delayField_.getText());
          Thread.sleep(delayMs);
          core_.snapImage();
-         // JonD: added line below to short-circuit exposure time
-         dev_.turnOff();
          // NS: just make sure to wait until the spot is no longer displayed
          // JonD: time to wait is simply the exposure time
-         // JonD: no longer needed now that we turn the device off after taking our image
-         // Thread.sleep((int) (dev_.getExposure()/1000) - delayMs);
+          Thread.sleep((int) (dev_.getExposure()/1000) - delayMs);
          // JonD: see earlier comment => commenting out next line
          // dev_.setExposure(originalExposure);
          TaggedImage taggedImage2 = core_.getTaggedImage();
@@ -476,7 +473,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private AffineTransform generateLinearMapping() {
       double centerX = dev_.getXRange() / 2 + dev_.getXMinimum();
       double centerY = dev_.getYRange() / 2 + dev_.getYMinimum();
-      double spacing = Math.min(dev_.getXRange(), dev_.getYRange()) / 10;  // user 10% of galvo/SLM range
+      double spacing = Math.min(dev_.getXRange(), dev_.getYRange()) / 10;  // use 10% of galvo/SLM range
       Map<Point2D.Double, Point2D.Double> spotMap
             = new HashMap<Point2D.Double, Point2D.Double>();
 
@@ -490,8 +487,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
       try {
          // require that the RMS value between the mapped points and the measured points be less than 5% of image size
+         // also require that the RMS value be less than the spacing between points in the galvo/SLM coordinate system
+         // (2nd requirement was probably the intent of the code until r15505, but parameters were interchanged in call) 
          final long imageSize = Math.min(core_.getImageWidth(), core_.getImageHeight()); 
-         return MathFunctions.generateAffineTransformFromPointPairs(spotMap, imageSize*0.05, Double.MAX_VALUE);
+         return MathFunctions.generateAffineTransformFromPointPairs(spotMap, imageSize*0.05, spacing);
       } catch (Exception e) {
          throw new RuntimeException("Spots aren't detected as expected. Is DMD in focus and roughly centered in camera's field of view?");
       }
