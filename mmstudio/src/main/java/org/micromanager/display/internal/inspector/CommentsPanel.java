@@ -150,7 +150,8 @@ public class CommentsPanel extends InspectorPanel {
             imageToSaveTimer_.get(curImage).cancel();
          }
          Timer timer = new Timer("Ephemeral comments save timer");
-         timer.schedule(makeSaveTask(curImage, imageText, summaryText), 5000);
+         timer.schedule(makeSaveTask(curImage, imageText, summaryText, store_),
+               5000);
          imageToSaveTimer_.put(curImage, timer);
       }
    }
@@ -158,9 +159,12 @@ public class CommentsPanel extends InspectorPanel {
    /**
     * Create a task that will record changes in the comments text for the
     * given image. Only makes changes if the input strings are non-null.
+    * Takes the Datastore as a passed-in parameter because setDisplay may
+    * change store_ out from under us otherwise.
     */
    private TimerTask makeSaveTask(final Image image,
-         final String imageText, final String summaryText) {
+         final String imageText, final String summaryText,
+         final Datastore store) {
       return new TimerTask() {
          @Override
          public void run() {
@@ -170,22 +174,22 @@ public class CommentsPanel extends InspectorPanel {
                      // Comments have changed.
                      Metadata metadata = image.getMetadata();
                      metadata = metadata.copy().comments(imageText).build();
-                     store_.putImage(image.copyWithMetadata(metadata));
+                     store.putImage(image.copyWithMetadata(metadata));
                   }
                   if (summaryText != null) {
                      // Summary comments have changed.
-                     SummaryMetadata summary = store_.getSummaryMetadata();
+                     SummaryMetadata summary = store.getSummaryMetadata();
                      summary = summary.copy().comments(summaryText).build();
-                     store_.setSummaryMetadata(summary);
+                     store.setSummaryMetadata(summary);
                   }
                }
                catch (DatastoreFrozenException e) {
                   ReportingUtils.showError("Comments cannot be changed because the datastore has been locked.");
                   // Prevent redundant errors by forcing the text back to
                   // what it should be.
-                  Image curImage = store_.getImage(stack_.getCurrentImageCoords());
+                  Image curImage = store.getImage(stack_.getCurrentImageCoords());
                   imageCommentsTextArea_.setText(curImage.getMetadata().getComments());
-                  summaryCommentsTextArea_.setText(store_.getSummaryMetadata().getComments());
+                  summaryCommentsTextArea_.setText(store.getSummaryMetadata().getComments());
                }
                imageToSaveTimer_.remove(image);
             }
@@ -287,6 +291,10 @@ public class CommentsPanel extends InspectorPanel {
          return;
       }
       store_ = display_.getDatastore();
+      imageCommentsTextArea_.setEditable(!store_.getIsFrozen());
+      summaryCommentsTextArea_.setEditable(!store_.getIsFrozen());
+      summaryCommentsTextArea_.setText(
+            store_.getSummaryMetadata().getComments());
       stack_ = ((DefaultDisplayWindow) display_).getStack();
       display_.registerForEvents(this);
       List<Image> images = display_.getDisplayedImages();
