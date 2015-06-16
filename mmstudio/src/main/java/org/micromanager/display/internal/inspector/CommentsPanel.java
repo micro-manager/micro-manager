@@ -124,22 +124,25 @@ public class CommentsPanel extends InspectorPanel {
    private void recordCommentsChanges() {
       Image curImage = store_.getImage(stack_.getCurrentImageCoords());
       // Determine if anything has actually changed.
-      String imageText = null;
-      String summaryText = null;
+      String imageText = imageCommentsTextArea_.getText();
+      String summaryText = summaryCommentsTextArea_.getText();
+
       Metadata metadata = curImage.getMetadata();
       String oldComments = metadata.getComments();
-      if (oldComments == null ||
-            !oldComments.equals(imageCommentsTextArea_.getText())) {
-         // Comments have changed.
-         imageText = imageCommentsTextArea_.getText();
-      }
       SummaryMetadata summary = store_.getSummaryMetadata();
       String oldSummary = summary.getComments();
-      if (oldSummary == null ||
-            !oldSummary.equals(summaryCommentsTextArea_.getText())) {
-         // Summary comments have changed.
-         summaryText = summaryCommentsTextArea_.getText();
+
+      if (imageText.equals(oldComments) ||
+            (imageText.equals("") && oldComments == null)) {
+         // Don't update image text.
+         imageText = null;
       }
+      if (summaryText.equals(oldSummary) ||
+            (summaryText.equals("") && oldSummary == null)) {
+         // Don't update summary text.
+         summaryText = null;
+      }
+
       synchronized(imageToSaveTimer_) {
          if (imageToSaveTimer_.containsKey(curImage)) {
             // Cancel the current timer. Since the task is synchronized around
@@ -162,10 +165,10 @@ public class CommentsPanel extends InspectorPanel {
          @Override
          public void run() {
             synchronized(imageToSaveTimer_) {
-               Metadata metadata = image.getMetadata();
                try {
                   if (imageText != null) {
                      // Comments have changed.
+                     Metadata metadata = image.getMetadata();
                      metadata = metadata.copy().comments(imageText).build();
                      store_.putImage(image.copyWithMetadata(metadata));
                   }
