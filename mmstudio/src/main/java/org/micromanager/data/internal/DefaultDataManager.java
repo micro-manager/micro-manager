@@ -55,10 +55,7 @@ import org.micromanager.PropertyMap;
  * access to Micro-Manager's data objects.
  */
 public class DefaultDataManager implements DataManager {
-   private MMStudio studio_;
-
-   public DefaultDataManager(MMStudio studio) {
-      studio_ = studio;
+   public DefaultDataManager() {
       DefaultEventManager.getInstance().registerForEvents(this);
    }
 

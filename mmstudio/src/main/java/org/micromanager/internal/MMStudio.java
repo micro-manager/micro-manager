@@ -357,7 +357,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
 
       engine_.setParentGUI(studio_);
 
-      dataManager_ = new DefaultDataManager(this);
+      dataManager_ = new DefaultDataManager();
       displayManager_ = new DefaultDisplayManager(this);
 
       afMgr_ = new AutofocusManager(studio_);
