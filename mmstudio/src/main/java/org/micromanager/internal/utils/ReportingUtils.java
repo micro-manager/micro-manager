@@ -216,21 +216,40 @@ public class ReportingUtils {
       return sb.toString();
    }
 
-   private static void showErrorMessage(final String fullMsg, final Component parent) {
+   private static void showErrorMessage(final String fullMsg,
+         final Component parent) {
       int maxNrLines = 10;
       String lines[] = fullMsg.split("\n");
-      if (lines.length < maxNrLines) {
-         String wrappedMsg = formatAlertMessage(lines);
-         JOptionPane.showMessageDialog(parent, wrappedMsg,
-                 "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
-      } else {
-         JTextArea area = new JTextArea(fullMsg);
-         area.setRows(maxNrLines);
-         area.setColumns(50);
-         area.setLineWrap(true);
-         JScrollPane pane = new JScrollPane(area);
-         JOptionPane.showMessageDialog(parent, pane,
-                 "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
+      try {
+         if (lines.length < maxNrLines) {
+            final String wrappedMsg = formatAlertMessage(lines);
+            GUIUtils.invokeLater(new Runnable() {
+               @Override
+               public void run() {
+                  JOptionPane.showMessageDialog(parent, wrappedMsg,
+                          "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
+               }
+            });
+         } else {
+            JTextArea area = new JTextArea(fullMsg);
+            area.setRows(maxNrLines);
+            area.setColumns(50);
+            area.setLineWrap(true);
+            final JScrollPane pane = new JScrollPane(area);
+            GUIUtils.invokeLater(new Runnable() {
+               @Override
+               public void run() {
+                  JOptionPane.showMessageDialog(parent, pane,
+                          "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
+               }
+            });
+         }
+      }
+      catch (InterruptedException e) {
+         ReportingUtils.logError(e, "Interrupted when showing error");
+      }
+      catch (java.lang.reflect.InvocationTargetException e) {
+         ReportingUtils.logError(e, "Error showing error dialog");
       }
 }
 
