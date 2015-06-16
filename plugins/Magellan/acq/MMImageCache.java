@@ -31,6 +31,7 @@ import javax.swing.SwingUtilities;
 import json.JSONArray;
 import json.JSONException;
 import json.JSONObject;
+import main.Magellan;
 import misc.Log;
 import misc.MD;
 
@@ -333,7 +334,8 @@ public class MMImageCache {
 
    public int getChannelMin(int channelIndex) {
       try {
-         return getChannelSetting(channelIndex).getInt("Min");
+         JSONObject channelSetting = getChannelSetting(channelIndex);
+         return channelSetting != null ? channelSetting.getInt("Min") : 0 ;
       } catch (Exception ex) {
          return 0;
       }
@@ -341,7 +343,8 @@ public class MMImageCache {
 
    public int getChannelMax(int channelIndex) {
       try {
-         return getChannelSetting(channelIndex).getInt("Max");
+         JSONObject channelSetting = getChannelSetting(channelIndex);
+         return channelSetting != null ? channelSetting.getInt("Max") : 1 << (8*Magellan.getCore().getBytesPerPixel()) - 1 ;
       } catch (Exception ex) {
          return -1;
       }
@@ -349,7 +352,8 @@ public class MMImageCache {
 
    public double getChannelGamma(int channelIndex) {
       try {
-         return getChannelSetting(channelIndex).getDouble("Gamma");
+        JSONObject channelSetting = getChannelSetting(channelIndex);
+        return channelSetting != null ? channelSetting.getInt("Gamma") : 1.0 ;
       } catch (Exception ex) {
          return 1.0;
       }

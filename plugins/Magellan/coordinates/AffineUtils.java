@@ -53,7 +53,9 @@ public class AffineUtils {
    
    //called when an affine transform is updated
    public static void transformUpdated(String pixelSizeConfig, AffineTransform transform) {
-      affineTransforms_.put(pixelSizeConfig, transform);
+      if (transform != null) {
+         affineTransforms_.put(pixelSizeConfig, transform);
+      }
    }
    
    //Only read from preferences one time, so that an inordinate amount of time isn't spent in native system calls

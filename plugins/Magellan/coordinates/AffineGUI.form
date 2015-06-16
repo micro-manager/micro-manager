@@ -7,7 +7,6 @@
   </Properties>
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
-    <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
   </SyntheticProperties>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
@@ -53,7 +52,7 @@
                               <EmptySpace min="-2" pref="34" max="-2" attributes="0"/>
                               <Component id="shearSpinner_" min="-2" pref="60" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jButton1" min="-2" max="-2" attributes="0"/>
+                              <Component id="applyButton_" min="-2" max="-2" attributes="0"/>
                           </Group>
                       </Group>
                   </Group>
@@ -105,7 +104,7 @@
                   <Component id="rotationSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="scaleSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="shearSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="jButton1" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="applyButton_" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jPanel2" min="-2" max="-2" attributes="0"/>
@@ -191,12 +190,12 @@
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JButton" name="jButton1">
+    <Component class="javax.swing.JButton" name="applyButton_">
       <Properties>
         <Property name="text" type="java.lang.String" value="Apply"/>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton1ActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="applyButton_ActionPerformed"/>
       </Events>
     </Component>
     <Container class="javax.swing.JPanel" name="jPanel1">

@@ -131,17 +131,32 @@ public class AffineCalibrator {
        int height = 2 * img1.tags.getInt("Height");
        ImageStack stack1 = new ImageStack(width, height);
        ImageStack stack2 = new ImageStack(width, height);
-       byte[] newPix1 = new byte[width * height];
-       byte[] newPix2 = new byte[width * height];
-       //fill with background pix value to not throw things off
-       byte[] sortedPix1 = Arrays.copyOf((byte[]) img1.pix, (width / 2) * (height / 2));
-       byte[] sortedPix2 = Arrays.copyOf((byte[]) img2.pix, (width / 2) * (height / 2));
-       Arrays.sort(sortedPix1); 
-       Arrays.sort(sortedPix2); 
-       Arrays.fill(newPix1, sortedPix1[(int) (sortedPix1.length * 0.1)]);
-       Arrays.fill(newPix2, sortedPix2[(int) (sortedPix2.length * 0.1)]);
-       for (int y = 0; y < height / 2; y++) {
-           System.arraycopy(img1.pix, y*(width/2), newPix1, (y+height/4)*width + width/4, width/2);
+       boolean eightBit = img1.pix instanceof byte[];
+       Object newPix1, newPix2, sortedPix1, sortedPix2;
+      if (eightBit) {
+         newPix1 = new byte[width * height];
+         newPix2 = new byte[width * height];
+         //fill with background pix value to not throw things off
+         sortedPix1 = Arrays.copyOf((byte[]) img1.pix, (width / 2) * (height / 2));
+         sortedPix2 = Arrays.copyOf((byte[]) img2.pix, (width / 2) * (height / 2));
+         Arrays.sort((byte[]) sortedPix1);
+         Arrays.sort((byte[]) sortedPix2);
+         Arrays.fill((byte[]) newPix1, ((byte[]) sortedPix1)[(int) (((byte[]) sortedPix1).length * 0.1)]);
+         Arrays.fill((byte[]) newPix2, ((byte[]) sortedPix2)[(int) (((byte[]) sortedPix2).length * 0.1)]);
+      } else {
+         newPix1 = new short[width * height];
+         newPix2 = new short[width * height];
+         //fill with background pix value to not throw things off
+         sortedPix1 = Arrays.copyOf((short[]) img1.pix, (width / 2) * (height / 2));
+         sortedPix2 = Arrays.copyOf((short[]) img2.pix, (width / 2) * (height / 2));
+         Arrays.sort((short[]) sortedPix1);
+         Arrays.sort((short[]) sortedPix2);
+         Arrays.fill((short[]) newPix1, ((short[]) sortedPix1)[(int) (((short[]) sortedPix1).length * 0.1)]);
+         Arrays.fill((short[]) newPix2, ((short[]) sortedPix2)[(int) (((short[]) sortedPix2).length * 0.1)]);
+      }
+
+      for (int y = 0; y < height / 2; y++) {
+         System.arraycopy(img1.pix, y*(width/2), newPix1, (y+height/4)*width + width/4, width/2);
            System.arraycopy(img2.pix, y*(width/2), newPix2, (y+height/4)*width + width/4, width/2);
        }
        stack1.addSlice(null, newPix1);
