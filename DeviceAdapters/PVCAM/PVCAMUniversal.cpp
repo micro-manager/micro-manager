@@ -235,6 +235,7 @@ prmColorMode_(0)
    SetErrorText(ERR_CAMERA_NOT_FOUND, "No Camera Found. Is it connected and switched on?");
    SetErrorText(ERR_BUSY_ACQUIRING, "Acquisition already in progress.");
    SetErrorText(ERR_ROI_SIZE_NOT_SUPPORTED, "Selected ROI is not supported by the camera");
+   SetErrorText(ERR_BUFFER_TOO_LARGE, "Buffer too large");
    
    pollingThd_ = new PollingThread(this);             // Pointer to the sequencing thread
 
@@ -2661,6 +2662,11 @@ int Universal::ResizeImageBufferContinuous()
           circBufFrameCount_ = static_cast<int>((CIRC_BUF_MAX_SIZE_MB * 1024ULL * 1024ULL) / frameSize);
           circBufFrameCount_ = (std::min)(circBufFrameCount_, CIRC_BUF_FRAME_CNT_MAX);
       }
+
+      // PVCAM does not support buffers larger that 4GB
+      const ulong64 bufferSize = circBufFrameCount_ * static_cast<ulong64>(frameSize);
+      if (bufferSize > 0xFFFFFFFF)
+          return LogMMError(ERR_BUFFER_TOO_LARGE, __LINE__);
 
       circBuf_.Resize(frameSize, circBufFrameCount_);
       //OnPropertiesChanged(); // Notify the Core that the circ buf frame count has chenged
