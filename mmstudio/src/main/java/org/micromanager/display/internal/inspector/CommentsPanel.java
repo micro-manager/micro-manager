@@ -181,6 +181,11 @@ public class CommentsPanel extends InspectorPanel {
                }
                catch (DatastoreFrozenException e) {
                   ReportingUtils.showError("Comments cannot be changed because the datastore has been locked.");
+                  // Prevent redundant errors by forcing the text back to
+                  // what it should be.
+                  Image curImage = store_.getImage(stack_.getCurrentImageCoords());
+                  imageCommentsTextArea_.setText(curImage.getMetadata().getComments());
+                  summaryCommentsTextArea_.setText(store_.getSummaryMetadata().getComments());
                }
                imageToSaveTimer_.remove(image);
             }
