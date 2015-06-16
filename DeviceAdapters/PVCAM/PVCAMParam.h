@@ -6,6 +6,7 @@
 
 #ifndef WIN32
 typedef long long long64;
+typedef unsigned long long ulong64;
 #endif
 
 /***
