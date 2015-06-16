@@ -177,8 +177,17 @@ public class MD {
          Log.log("Couldn set image width");
       }
    }
+       
+   public static JSONArray getInitialPositionList(JSONObject map) {
+      try {
+         return map.getJSONArray(INITIAL_POS_LIST);
+      } catch (JSONException ex) {
+         Log.log("Couldn get Initial position list");
+         throw new RuntimeException();
+      }
+   }
    
-      public static void setInitialPositionList(JSONObject map, JSONArray initialPositionList) {
+   public static void setInitialPositionList(JSONObject map, JSONArray initialPositionList) {
       try {
          map.put(INITIAL_POS_LIST, initialPositionList);
       } catch (JSONException ex) {
