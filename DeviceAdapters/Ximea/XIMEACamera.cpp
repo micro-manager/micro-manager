@@ -469,8 +469,7 @@ int XIMEACamera::Initialize()
 		gpoTypeValues.push_back(g_Gpo_FrmTrgWaitNeg);
 		gpoTypeValues.push_back(g_Gpo_ExpPulse);
 		gpoTypeValues.push_back(g_Gpo_ExpPulseNeg);
-		gpoTypeValues.push_back(g_Gpo_Busy);
-		gpoTypeValues.push_back(g_Gpo_BusyNeg);
+		
 		// init GPI1
 		pAct = new CPropertyAction (this, &XIMEACamera::OnGpi1);
 		ret = CreateProperty(g_Gpi_1, g_Gpi_Off, MM::String, false, pAct);
@@ -491,6 +490,9 @@ int XIMEACamera::Initialize()
 		// MD cameras have additional input and output
 		if(family == FAMILY_MD)
 		{
+			gpoTypeValues.push_back(g_Gpo_Busy);
+			gpoTypeValues.push_back(g_Gpo_BusyNeg);
+
 			pAct = new CPropertyAction (this, &XIMEACamera::OnGpi2);
 			ret = CreateProperty(g_Gpi_2, g_Gpi_Off, MM::String, false, pAct);
 			assert(ret == DEVICE_OK);
@@ -510,6 +512,15 @@ int XIMEACamera::Initialize()
 			gpoTypeValues.push_back(g_Gpo_Off);
 			gpoTypeValues.push_back(g_Gpo_On);
 			gpoTypeValues.push_back(g_Gpo_FrameActive);
+			gpoTypeValues.push_back(g_Gpo_FrameActiveNeg);
+			gpoTypeValues.push_back(g_Gpo_ExpActive);
+			gpoTypeValues.push_back(g_Gpo_ExpActiveNeg);
+			gpoTypeValues.push_back(g_Gpo_FrmTrgWait);
+			gpoTypeValues.push_back(g_Gpo_FrmTrgWaitNeg);
+			gpoTypeValues.push_back(g_Gpo_ExpPulse);
+			gpoTypeValues.push_back(g_Gpo_ExpPulseNeg);
+			gpoTypeValues.push_back(g_Gpo_Busy);
+			gpoTypeValues.push_back(g_Gpo_BusyNeg);
 		} else {
 			gpoTypeValues.push_back(g_Gpo_Off);
 			gpoTypeValues.push_back(g_Gpo_On);
