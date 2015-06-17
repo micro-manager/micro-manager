@@ -169,51 +169,51 @@ public class SurfaceData implements Covariant {
          d++;
       }
    }
-   
-     private double curvedSurfacePower(XYStagePosition xyPos, double zPosition)   {
-        try{
-      double[] vals = distanceAndNormalCalc(xyPos.getFullTileCorners(), zPosition);
-      double minDist = vals[0];
-      double maxDist = vals[1];
-      double maxNormal = vals[3];
-      if (curvedSurfaceMode_ == CurvedSurfaceCovariantCreationDialog.SURFACE_CONSERVATIVE_POWER_MODE) {
-      //Non-exploding exciation scheme: 
-      // Min distance < 30 um -- use surface minimum distance
-      // Next 100 um -- increase from minimum distance to maximum distance
-      // Below 130 um -- use max distance
-      //always use max normal
-      double dist;
-      if (minDist < 25) {
-         dist = minDist;
-      } else if (minDist < 100) {
-         dist = minDist + ((maxDist - minDist) / 75.0) * (minDist - 25);
-      } else {
-         dist = maxDist;
-      }    
-      double relPower = CurvedSurfaceCalculations.getRelativePower(meanFreePath_, dist, maxNormal, radiusOfCurvature_);
-      //relative power is fold increase needed from base power
-      return basePower_ * relPower;
-     } else {
-           //if interpolation is undefined at position center, assume distance below is 0
-           double centerDistance = 0;
-           //likewise, take biggest defined normal
-           double normal = maxNormal;
-           Point2D.Double center = xyPos.getCenter();
-           SingleResolutionInterpolation interp = surface_.waitForCurentInterpolation();
-           if (interp.isInterpDefined(center.x, center.y)) {
-              centerDistance = Math.max(0, zPosition - interp.getInterpolatedValue(center.x, center.y));
-              normal = surface_.waitForCurentInterpolation().getNormalAngleToVertical(center.x, center.y);
-           }
-           double relPower = CurvedSurfaceCalculations.getRelativePower(meanFreePath_, centerDistance, normal, radiusOfCurvature_);
-           //relative power is fold increase needed from base power
-           return basePower_ * relPower;
-        }
+
+    private double curvedSurfacePower(XYStagePosition xyPos, double zPosition) {
+        try {
+            double[] vals = distanceAndNormalCalc(xyPos.getFullTileCorners(), zPosition);
+            double minDist = vals[0];
+            double maxDist = vals[1];
+            double maxNormal = vals[3];
+            if (curvedSurfaceMode_ == CurvedSurfaceCovariantCreationDialog.SURFACE_CONSERVATIVE_POWER_MODE) {
+                //Non-exploding exciation scheme: 
+                // Min distance < 30 um -- use surface minimum distance
+                // Next 100 um -- increase from minimum distance to maximum distance
+                // Below 130 um -- use max distance
+                //always use max normal
+                double dist;
+                if (minDist < 25) {
+                    dist = minDist;
+                } else if (minDist < 100) {
+                    dist = minDist + ((maxDist - minDist) / 75.0) * (minDist - 25);
+                } else {
+                    dist = maxDist;
+                }
+                double relPower = CurvedSurfaceCalculations.getRelativePower(meanFreePath_, dist, maxNormal, radiusOfCurvature_);
+                //relative power is fold increase needed from base power
+                return basePower_ * relPower;
+            } else {
+                //if interpolation is undefined at position center, assume distance below is 0
+                double centerDistance = 0;
+                //likewise, take biggest defined normal
+                double normal = maxNormal;
+                Point2D.Double center = xyPos.getCenter();
+                SingleResolutionInterpolation interp = surface_.waitForCurentInterpolation();
+                if (interp.isInterpDefined(center.x, center.y)) {
+                    centerDistance = Math.max(0, zPosition - interp.getInterpolatedValue(center.x, center.y));
+                    normal = surface_.waitForCurentInterpolation().getNormalAngleToVertical(center.x, center.y);
+                }
+                double relPower = CurvedSurfaceCalculations.getRelativePower(meanFreePath_, centerDistance, normal, radiusOfCurvature_);
+                //relative power is fold increase needed from base power
+                return basePower_ * relPower;
+            }
         } catch (Exception e) {
-           Log.log("Couldn't calculate curved surface power");
-           Log.log(e);
-           return 0;
+            Log.log("Couldn't calculate curved surface power");
+            Log.log(e);
+            return 0;
         }
-     }
+    }
 
    /**
     *

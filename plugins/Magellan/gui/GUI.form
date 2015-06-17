@@ -16,6 +16,7 @@
   </NonVisualComponents>
   <SyntheticProperties>
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
+    <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
   </SyntheticProperties>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
@@ -1812,8 +1813,8 @@
                 <Container class="javax.swing.JPanel" name="autofocusTab_l">
                   <Constraints>
                     <Constraint layoutClass="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout" value="org.netbeans.modules.form.compat2.layouts.support.JTabbedPaneSupportLayout$JTabbedPaneConstraintsDescription">
-                      <JTabbedPaneConstraints tabName="Autofocus">
-                        <Property name="tabTitle" type="java.lang.String" value="Autofocus"/>
+                      <JTabbedPaneConstraints tabName="Drift Compensation">
+                        <Property name="tabTitle" type="java.lang.String" value="Drift Compensation"/>
                       </JTabbedPaneConstraints>
                     </Constraint>
                   </Constraints>
@@ -1827,7 +1828,7 @@
                                   <Component id="useAutofocusCheckBox_" min="-2" max="-2" attributes="0"/>
                                   <Component id="autofocusComponentsPanel_" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace pref="562" max="32767" attributes="0"/>
+                              <EmptySpace pref="536" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -1846,7 +1847,7 @@
                   <SubComponents>
                     <Component class="javax.swing.JCheckBox" name="useAutofocusCheckBox_">
                       <Properties>
-                        <Property name="text" type="java.lang.String" value="Activate cross-correlation based autofocus"/>
+                        <Property name="text" type="java.lang.String" value="Activate cross-correlation based drift compensation"/>
                       </Properties>
                       <Events>
                         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="useAutofocusCheckBox_ActionPerformed"/>
@@ -1881,7 +1882,7 @@
                                           <Component id="autofocusInitialPositionSpinner_" min="-2" pref="91" max="-2" attributes="0"/>
                                       </Group>
                                   </Group>
-                                  <EmptySpace pref="25" max="32767" attributes="0"/>
+                                  <EmptySpace max="32767" attributes="0"/>
                               </Group>
                           </Group>
                         </DimensionLayout>
@@ -1916,7 +1917,7 @@
                       <SubComponents>
                         <Component class="javax.swing.JLabel" name="autofocusZLabel_">
                           <Properties>
-                            <Property name="text" type="java.lang.String" value="Autofocus Z device: "/>
+                            <Property name="text" type="java.lang.String" value="Drift compensation Z device: "/>
                           </Properties>
                         </Component>
                         <Component class="javax.swing.JComboBox" name="autofocusZDeviceComboBox_">

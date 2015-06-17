@@ -1855,14 +1855,14 @@ public class GUI extends javax.swing.JFrame {
 
         acqTabbedPane_.addTab("Covaried settings", covariedSettingsTab_);
 
-        useAutofocusCheckBox_.setText("Activate cross-correlation based autofocus");
+        useAutofocusCheckBox_.setText("Activate cross-correlation based drift compensation");
         useAutofocusCheckBox_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 useAutofocusCheckBox_ActionPerformed(evt);
             }
         });
 
-        autofocusZLabel_.setText("Autofocus Z device: ");
+        autofocusZLabel_.setText("Drift compensation Z device: ");
 
         StrVector zVec = Magellan.getCore().getLoadedDevicesOfType(mmcorej.DeviceType.StageDevice);
         String[] zNames = new String[(int)zVec.size()];
@@ -1933,7 +1933,7 @@ public class GUI extends javax.swing.JFrame {
                         .addComponent(autofocusInitialPositionCheckBox_)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(autofocusInitialPositionSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 91, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(25, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         autofocusComponentsPanel_Layout.setVerticalGroup(
             autofocusComponentsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1966,7 +1966,7 @@ public class GUI extends javax.swing.JFrame {
                 .addGroup(autofocusTab_lLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(useAutofocusCheckBox_)
                     .addComponent(autofocusComponentsPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(562, Short.MAX_VALUE))
+                .addContainerGap(536, Short.MAX_VALUE))
         );
         autofocusTab_lLayout.setVerticalGroup(
             autofocusTab_lLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1978,7 +1978,7 @@ public class GUI extends javax.swing.JFrame {
                 .addContainerGap(55, Short.MAX_VALUE))
         );
 
-        acqTabbedPane_.addTab("Autofocus", autofocusTab_l);
+        acqTabbedPane_.addTab("Drift Compensation", autofocusTab_l);
 
         filterMethodButtonGroup_.add(frameAverageRadioButton_);
         frameAverageRadioButton_.setSelected(true);
@@ -2279,7 +2279,7 @@ public class GUI extends javax.swing.JFrame {
                     .addGroup(splitPaneBottomPanel_Layout.createSequentialGroup()
                         .addGap(345, 345, 345)
                         .addComponent(runAcqButton_)))
-                .addContainerGap())
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         splitPaneBottomPanel_Layout.setVerticalGroup(
             splitPaneBottomPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
