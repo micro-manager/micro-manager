@@ -20,6 +20,7 @@
 
 package org.micromanager.data.internal;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -261,7 +262,20 @@ public class DefaultPropertyMap implements PropertyMap {
             return false;
          }
          PropertyValue alt = (PropertyValue) obj;
-         return (alt.getType().equals(type_) && alt.getVal().equals(val_));
+         if (!alt.getType().equals(type_)) {
+            return false;
+         }
+         if (type_.isArray()) {
+            return Arrays.deepEquals((Object[]) val_,
+                  (Object[]) (alt.getVal()));
+         }
+         return alt.getVal().equals(val_);
+      }
+
+      @Override
+      public String toString() {
+         return String.format("<PropertyValue with type %s and value %s>",
+               type_, val_);
       }
    }
    public static class Builder implements PropertyMap.PropertyMapBuilder {
