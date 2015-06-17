@@ -22,6 +22,7 @@ package org.micromanager.data.internal;
 
 import java.awt.Rectangle;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -55,7 +56,7 @@ public class ManualTiffTest {
     * Maps file paths to descriptors of the images we expect to find there.
     * We test the image metadata and spot-test the image data.
     */
-   private static final HashMap<String, ImageInfo> IMAGES;
+   private static final HashMap<String, ArrayList<ImageInfo>> IMAGES;
 
    private static class ImageInfo {
       private Coords coords_;
@@ -113,10 +114,10 @@ public class ManualTiffTest {
 
    static {
       SUMMARIES = new HashMap<String, SummaryMetadata>();
-      IMAGES = new HashMap<String, ImageInfo>();
+      IMAGES = new HashMap<String, ArrayList<ImageInfo>>();
 
       // This file is a manually-generated acquisition from the MM2.0 alpha.
-      String alpha2 = "/Users/chriswei/proj/vale/svn/micromanager/mmstudio/src/test/resources/org/micromanager/testData/alpha2-singleplane-manual";
+      String alpha2 = "/Users/chriswei/proj/vale/svn/micromanager/mmstudio/src/test/resources/org/micromanager/testData/alpha_2.0_singleplane_manual";
       DefaultSummaryMetadata.Builder summary = new DefaultSummaryMetadata.Builder();
       summary.name("alpha-2 manual").prefix("thisIsAPrefix")
          .userName("John Doe").profileName("John's Profile")
@@ -154,7 +155,7 @@ public class ManualTiffTest {
          .keepShutterOpenChannels(false).keepShutterOpenSlices(true)
          .pixelAspect(.001).pixelSizeUm(new Double(55555555))
          .pixelType("GRAY16").positionName("Pos0")
-         .receivedTime("1970-01-01 12:34:56")
+         .receivedTime("1920-01-01 12:34:56")
          .ROI(new Rectangle(0, 0, 512, 512)).source("A keyboard")
          .startTimeMs(new Double(1928))
          // NB these are not exhaustive, because I can only take so much
@@ -187,17 +188,18 @@ public class ManualTiffTest {
 
       HashMap<Coords, Integer> values = new HashMap<Coords, Integer>();
       DefaultCoords.Builder coords = new DefaultCoords.Builder();
-      values.put(coords.index("x", 0).index("y", 0).build(), 5846);
+      values.put(coords.index("x", 0).index("y", 0).build(), 3276);
       values.put(coords.index("y", 8).build(), 5093);
       values.put(coords.index("x", 4).build(), 1459);
-      values.put(coords.index("x", 11).build(), 706);
-      values.put(coords.index("y", 13).build(), 1010);
-      IMAGES.put(alpha2, new ImageInfo(imageCoords.build(),
+      values.put(coords.index("x", 11).build(), 3276);
+      values.put(coords.index("y", 13).build(), 2065);
+      IMAGES.put(alpha2, new ArrayList<ImageInfo>());
+      IMAGES.get(alpha2).add(new ImageInfo(imageCoords.build(),
                imageMetadata.build(), values));
    }
 
    @Test
-   public void testSinglPlaneTIFF() {
+   public void testSinglePlaneTIFF() {
       DefaultDataManager manager = new DefaultDataManager();
       for (String path : SUMMARIES.keySet()) {
          try {
@@ -235,5 +237,8 @@ public class ManualTiffTest {
    }
 
    private void testImages(String path, Datastore store) {
+      for (ImageInfo info : IMAGES.get(path)) {
+         info.test(store);
+      }
    }
 }
