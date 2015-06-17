@@ -618,6 +618,18 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
             ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field stagePositions");
          }
       }
+      if (tags.has("UserData")) {
+         try {
+            builder.userData(
+                  DefaultPropertyMap.fromJSON(tags.getJSONObject("UserData")));
+         }
+         catch (JSONException e) {
+            ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field userData: " + e);
+         }
+      }
+      else {
+         System.out.println("No user data available");
+      }
 
       return builder.build();
    }
@@ -689,7 +701,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
             }
             result.put("StagePositions", positions);
          }
-         result.put("PropertyMap", userData_);
+         result.put("UserData", ((DefaultPropertyMap) userData_).toJSON());
          return result;
       }
       catch (JSONException e) {
