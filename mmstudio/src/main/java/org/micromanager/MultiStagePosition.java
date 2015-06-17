@@ -326,4 +326,44 @@ public final class MultiStagePosition {
    public int getGridColumn() {
       return gridCol_;
    }
+
+   /**
+    * Compares this MultiStagePosition to another, and returns true if they
+    * are equal in all aspects.
+    * @param alt The MultiStagePosition to compare against.
+    * @return true if every field of this MultiStagePosition matches every
+    *         field of the provided MultiStagePosition, false otherwise.
+    */
+   @Override
+   public boolean equals(Object alt) {
+      if (!(alt instanceof MultiStagePosition)) {
+         return false;
+      }
+      MultiStagePosition multiAlt = (MultiStagePosition) alt;
+      if (!(label_.equals(multiAlt.getLabel()) &&
+               defaultZStage_.equals(multiAlt.getDefaultZStage()) &&
+               defaultXYStage_.equals(multiAlt.getDefaultXYStage()) &&
+               gridRow_ == multiAlt.getGridRow() &&
+               gridCol_ == multiAlt.getGridColumn() &&
+               stagePosList_.size() == multiAlt.size())) {
+         return false;
+      }
+      for (int i = 0; i < stagePosList_.size(); ++i) {
+         if (!stagePosList_.get(i).equals(multiAlt.get(i))) {
+            return false;
+         }
+      }
+      for (String key : properties_.keySet()) {
+         if (!properties_.get(key).equals(multiAlt.getProperty(key))) {
+            return false;
+         }
+      }
+      // And ensure they don't have any keys we don't.
+      for (String key : multiAlt.getPropertyNames()) {
+         if (multiAlt.getProperty(key).equals(getProperty(key))) {
+            return false;
+         }
+      }
+      return true;
+   }
 }

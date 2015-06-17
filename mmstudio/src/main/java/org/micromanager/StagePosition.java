@@ -72,4 +72,20 @@ public class StagePosition {
       "," + NumberUtils.doubleToDisplayString(z) + ")";
 
    }
+
+   /**
+    * Compare us against the provided StagePosition and return true only if
+    * we are equal in all respects.
+    * @param alt Other StagePosition to compare against.
+    * @return true iff every field in alt equals our corresponding field.
+    */
+   @Override
+   public boolean equals(Object alt) {
+      if (!(alt instanceof StagePosition)) {
+         return false;
+      }
+      StagePosition spAlt = (StagePosition) alt;
+      return (x == spAlt.x && y == spAlt.y && z == spAlt.z &&
+            numAxes == spAlt.numAxes && stageName.equals(spAlt.stageName));
+   }
 }
