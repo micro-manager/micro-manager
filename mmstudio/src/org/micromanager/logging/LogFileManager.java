@@ -50,6 +50,9 @@ public final class LogFileManager {
 
       File[] legacyLogFiles =
          getLegacyLogFileDirectory().listFiles(coreLogFilter);
+      if (legacyLogFiles == null) {
+         legacyLogFiles = new File[0];
+      }
       for (File file : Arrays.asList(legacyLogFiles)) {
          Calendar fileDate = getLegacyLogFileDate(file.getName());
          if (fileDate != null && fileDate.before(cutoffDate)) {
@@ -61,6 +64,9 @@ public final class LogFileManager {
 
       File[] modernLogFiles =
          getLogFileDirectory().listFiles(coreLogFilter);
+      if (modernLogFiles == null) {
+         modernLogFiles = new File[0];
+      }
       for (File file : Arrays.asList(modernLogFiles)) {
          Calendar fileDate = getLogFileDate(file.getName());
          if (fileDate != null && fileDate.before(cutoffDate)) {
