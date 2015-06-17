@@ -598,7 +598,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
 
       try {
-         ReportingUtils.logError(tags.toString(2));
          builder.startDate(tags.getString("StartTime"));
       }
       catch (JSONException e) {
@@ -715,7 +714,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
     * MultiStagePosition.java to avoid exposing our JSON library in the API,
     * as said library is old and creaky.
     */
-   private static JSONObject MultiStagePositionToJSON(MultiStagePosition pos) {
+   public static JSONObject MultiStagePositionToJSON(MultiStagePosition pos) {
       try {
          JSONObject result = new JSONObject();
          result.put("label", pos.getLabel());
@@ -746,7 +745,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
     * MultiStagePositionToJSON, this method is here to avoid exposing our old
     * JSON library in the API.
     */
-   private static MultiStagePosition MultiStagePositionFromJSON(
+   public static MultiStagePosition MultiStagePositionFromJSON(
          JSONObject tags) {
       try {
          MultiStagePosition result = new MultiStagePosition();
