@@ -185,6 +185,7 @@ public:
    int OnCCDTemp(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnIsSequenceable(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnCrash(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    // Special public DemoCamera methods
    void AddBackgroundAndNoise(ImgBuffer& img, double mean, double stdDev);
