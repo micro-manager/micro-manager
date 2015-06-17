@@ -55,6 +55,7 @@ public class SurfaceData implements Covariant {
    
    //used for curved surface calculations
    private int radiusOfCurvature_, meanFreePath_;
+   private double baseVoltage_;
    private double basePower_;
    private int curvedSurfaceMode_;
    
@@ -76,10 +77,15 @@ public class SurfaceData implements Covariant {
          }
          radiusOfCurvature_ = creator.getRadiusOfCurvature();
          meanFreePath_ = creator.getMFP();
-         basePower_ = creator.getBasePower();
+         baseVoltage_ = creator.getBaseVoltage();     
          curvedSurfaceMode_ = creator.getMode();
       }
    }
+   
+   public void setBasePowerFromBaseVoltage(CovariantPairing reversePairing) {
+       basePower_ = reversePairing.getInterpolatedNumericalValue(new CovariantValue(baseVoltage_));
+}
+
 
    public SurfaceInterpolator getSurface() {
       return surface_;
@@ -177,10 +183,10 @@ public class SurfaceData implements Covariant {
       // Below 130 um -- use max distance
       //always use max normal
       double dist;
-      if (minDist < 30) {
+      if (minDist < 25) {
          dist = minDist;
-      } else if (minDist < 130) {
-         dist = minDist + ((maxDist - minDist) / 100.0) * (minDist - 30);
+      } else if (minDist < 100) {
+         dist = minDist + ((maxDist - minDist) / 75.0) * (minDist - 25);
       } else {
          dist = maxDist;
       }    
@@ -294,6 +300,7 @@ public class SurfaceData implements Covariant {
       Log.log("No hardware associated with Surface data",true);
       throw new RuntimeException();
    }
+
 
    
    }

@@ -50,7 +50,21 @@ public class CovariantPairing {
       excludedAcqs_ = new IdentityHashMap<Acquisition, Object>();
    }
    
-   
+    public double getInterpolatedNumericalValue(CovariantValue independentValue) {
+        double indVal = independent_.getType() == CovariantType.INT ? independentValue.intValue() : independentValue.doubleValue();
+        double indLowLimit = independent_.getType() == CovariantType.INT ? independentValues_.getFirst().intValue() : independentValues_.getFirst().doubleValue();
+        double indHighLimit = independent_.getType() == CovariantType.INT ? independentValues_.getLast().intValue() : independentValues_.getLast().doubleValue();
+        if (indVal <= indLowLimit) {
+            return dependent_.getType() == CovariantType.INT ? valueMap_.get(independentValues_.getFirst()).intValue()
+                    : valueMap_.get(independentValues_.getFirst()).doubleValue();
+        } else if (indVal >= indHighLimit) {
+            return dependent_.getType() == CovariantType.INT ? valueMap_.get(independentValues_.getLast()).intValue()
+                    : valueMap_.get(independentValues_.getLast()).doubleValue();
+        } else {
+            return interpolant_.value(indVal);
+        }
+    }
+
    public void updateHardwareBasedOnPairing(AcquisitionEvent event) throws Exception {
       CovariantValue dVal = getDependentValue(event);
       dependent_.updateHardwareToValue(dVal);
@@ -78,19 +92,7 @@ public class CovariantPairing {
          //indpendent value is not discrete or String 
          //if its an int or double this means you should be able to interpolate (I think...)
          //this interpolator does ot extrapolate, so check range and set to nearest neighbor if needed
-         double interpolatedVal;
-         double indVal = independent_.getType() == CovariantType.INT ? iVal.intValue() : iVal.doubleValue();
-         double indLowLimit = independent_.getType() == CovariantType.INT ? independentValues_.getFirst().intValue() : independentValues_.getFirst().doubleValue();
-         double indHighLimit = independent_.getType() == CovariantType.INT ? independentValues_.getLast().intValue() : independentValues_.getLast().doubleValue();
-         if (indVal <= indLowLimit) {
-            interpolatedVal = dependent_.getType() == CovariantType.INT ? valueMap_.get(independentValues_.getFirst()).intValue() :
-                    valueMap_.get(independentValues_.getFirst()).doubleValue();                                    
-         } else if (indVal >= indHighLimit) {
-             interpolatedVal = dependent_.getType() == CovariantType.INT ? valueMap_.get(independentValues_.getLast()).intValue() :
-                    valueMap_.get(independentValues_.getLast()).doubleValue();                      
-         } else {
-            interpolatedVal  = interpolant_.value(indVal);
-         }
+         double interpolatedVal = getInterpolatedNumericalValue(iVal);
          //convert back to int if needed
          if (dependent_.getType() == CovariantType.INT) {
             return new CovariantValue((int) Math.round(interpolatedVal));

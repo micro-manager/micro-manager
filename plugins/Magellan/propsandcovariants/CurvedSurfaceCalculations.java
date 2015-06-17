@@ -137,27 +137,41 @@ public class CurvedSurfaceCalculations {
       }
    };
 
-   public static double getRelativePower(int meanFreePath, double vertDistance, double normal, int radiusOfCurvature) {
-      int mfpIndex = Arrays.asList(MEAN_FREE_PATHS).indexOf(meanFreePath);
-      int radiusIndex = Arrays.asList(RADII_OF_CURVATURE).indexOf(radiusOfCurvature);
-      if (mfpIndex == -1) {
-         Log.log("Couldn't find mean free path in precalculated values");
-         throw new RuntimeException();
-      }
-      if (radiusIndex == -1) {
-         Log.log("Couldn't find radius of curvature in precalculated values");
-         throw new RuntimeException();
-      }
-      double indexedDistance = vertDistance / DISTANCE_INCREMENT;
-      int normalIndex = (int) Math.round(normal / NORMAL_INCREMENT); //this one should never exceed 90 degrees so we can round
-      double[] distanceVec = RELATIVE_POWERS[radiusIndex][mfpIndex][normalIndex];
-      if (indexedDistance > distanceVec.length - 1) {
-         return distanceVec[distanceVec.length - 1];
-      } else {
-         double weight = indexedDistance % 1;
-         return (1 - weight) * distanceVec[(int) Math.floor(indexedDistance)] + weight * distanceVec[(int) Math.ceil(indexedDistance)];
-      }
-   }
+    public static double getRelativePower(int meanFreePath, double vertDistance, double normal, int radiusOfCurvature) {
+        int mfpIndex = Arrays.asList(MEAN_FREE_PATHS).indexOf(meanFreePath);
+        int radiusIndex = Arrays.asList(RADII_OF_CURVATURE).indexOf(radiusOfCurvature);
+        if (mfpIndex == -1) {
+            Log.log("Couldn't find mean free path in precalculated values");
+            throw new RuntimeException();
+        }
+        if (radiusIndex == -1) {
+            Log.log("Couldn't find radius of curvature in precalculated values");
+            throw new RuntimeException();
+        }
+        double indexedDistance = vertDistance / DISTANCE_INCREMENT;
+        int normalIndexLow = (int) Math.floor(normal / NORMAL_INCREMENT);
+        int normalIndexHi = (int) Math.ceil(normal / NORMAL_INCREMENT);
+        double[] distanceVecLow = RELATIVE_POWERS[radiusIndex][mfpIndex][normalIndexLow];
+        double[] distanceVecHi = RELATIVE_POWERS[radiusIndex][mfpIndex][normalIndexHi];
+        double realtivePowerLow, relativePowerHigh;
+        if (indexedDistance > distanceVecLow.length - 1) {
+            realtivePowerLow = distanceVecLow[distanceVecLow.length - 1];
+        } else {
+            double weight = indexedDistance % 1;
+            realtivePowerLow = (1 - weight) * distanceVecLow[(int) Math.floor(indexedDistance)]
+                    + weight * distanceVecLow[(int) Math.ceil(indexedDistance)];
+        }
+        if (indexedDistance > distanceVecHi.length - 1) {
+            relativePowerHigh = distanceVecHi[distanceVecHi.length - 1];
+        } else {
+            double weight = indexedDistance % 1;
+            relativePowerHigh = (1 - weight) * distanceVecHi[(int) Math.floor(indexedDistance)] 
+                    + weight * distanceVecHi[(int) Math.ceil(indexedDistance)];
+        }
+        //return weight average of weighted average of distances
+        double weight = (normal / NORMAL_INCREMENT) %1;
+        return (1.0 - weight) * realtivePowerLow + weight * relativePowerHigh;
+    }
 
    public static String[] getAvailableMeanFreePathLengths(int radius) {
       ArrayList<String> mfps = new ArrayList<String>();
