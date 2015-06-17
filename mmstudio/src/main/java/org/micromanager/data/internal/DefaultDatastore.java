@@ -279,11 +279,9 @@ public class DefaultDatastore implements Datastore {
 
          Storage saver;
          if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
-            // TODO: "false" is saying to not use separate files for each
-            // position.  Should have a better way to handle this.
-            // Should also respect the user's options here.
             saver = new StorageMultipageTiff(duplicate,
-               path, true, true, false);
+               path, true, true,
+               StorageMultipageTiff.getShouldSplitPositions());
          }
          else if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
             saver = new StorageSinglePlaneTiffSeries(duplicate, path, true);
