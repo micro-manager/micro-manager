@@ -195,10 +195,10 @@ public class SurfaceData implements Covariant {
            Point2D.Double center = xyPos.getCenter();
            SingleResolutionInterpolation interp = surface_.waitForCurentInterpolation();
            if (interp.isInterpDefined(center.x, center.y)) {
-              centerDistance = zPosition - interp.getInterpolatedValue(center.x, center.y);
+              centerDistance = Math.max(0, zPosition - interp.getInterpolatedValue(center.x, center.y));
               normal = surface_.waitForCurentInterpolation().getNormalAngleToVertical(center.x, center.y);
            }
-           double relPower = CurvedSurfaceCalculations.getRelativePower(meanFreePath_, centerDistance, maxNormal, radiusOfCurvature_);
+           double relPower = CurvedSurfaceCalculations.getRelativePower(meanFreePath_, centerDistance, normal, radiusOfCurvature_);
            //relative power is fold increase needed from base power
            return basePower_ * relPower;
         }
