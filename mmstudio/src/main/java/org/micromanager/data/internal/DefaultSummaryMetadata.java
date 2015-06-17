@@ -30,6 +30,7 @@ import org.json.JSONObject;
 import org.micromanager.data.Coords;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.MultiStagePosition;
+import org.micromanager.StagePosition;
 
 import org.micromanager.internal.MMStudio;
 
@@ -604,6 +605,20 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field startDate");
       }
 
+      if (tags.has("StagePositions")) {
+         try {
+            JSONArray positions = tags.getJSONArray("StagePositions");
+            MultiStagePosition[] stagePositions = new MultiStagePosition[positions.length()];
+            for (int i = 0; i < stagePositions.length; ++i) {
+               stagePositions[i] = MultiStagePositionFromJSON(positions.getJSONObject(i));
+            }
+            builder.stagePositions(stagePositions);
+         }
+         catch (JSONException e) {
+            ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field stagePositions");
+         }
+      }
+
       return builder.build();
    }
 
@@ -667,7 +682,13 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
             result.put("IntendedDimensions", intendedDims);
          }
          result.put("StartTime", startDate_);
-         result.put("Positions", stagePositions_);
+         if (stagePositions_ != null) {
+            JSONArray positions = new JSONArray();
+            for (int i = 0; i < stagePositions_.length; ++i) {
+               positions.put(MultiStagePositionToJSON(stagePositions_[i]));
+            }
+            result.put("StagePositions", positions);
+         }
          result.put("PropertyMap", userData_);
          return result;
       }
@@ -675,5 +696,95 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          ReportingUtils.logError(e, "Couldn't convert DefaultSummaryMetadata to JSON");
          return null;
       }
+   }
+
+   /**
+    * Convert a MultiStagePosition to a JSONObject. It's here instead of in
+    * MultiStagePosition.java to avoid exposing our JSON library in the API,
+    * as said library is old and creaky.
+    */
+   private static JSONObject MultiStagePositionToJSON(MultiStagePosition pos) {
+      try {
+         JSONObject result = new JSONObject();
+         result.put("label", pos.getLabel());
+         result.put("defaultXYStage", pos.getDefaultXYStage());
+         result.put("defaultZStage", pos.getDefaultZStage());
+         result.put("gridRow", pos.getGridRow());
+         result.put("gridCol", pos.getGridColumn());
+         DefaultPropertyMap.Builder propBuilder = new DefaultPropertyMap.Builder();
+         for (String name : pos.getPropertyNames()) {
+            propBuilder.putString(name, pos.getProperty(name));
+         }
+         result.put("properties", ((DefaultPropertyMap) (propBuilder.build())).toJSON());
+         JSONArray subPoses = new JSONArray();
+         for (int i = 0; i < pos.size(); ++i) {
+            subPoses.put(StagePositionToJSON(pos.get(i)));
+         }
+         result.put("subpositions", subPoses);
+         return result;
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError("Failed to convert MultiStagePosition to JSON: " + e);
+         return null;
+      }
+   }
+
+   /**
+    * Convert a JSONObject to a MultiStagePosition. As with
+    * MultiStagePositionToJSON, this method is here to avoid exposing our old
+    * JSON library in the API.
+    */
+   private static MultiStagePosition MultiStagePositionFromJSON(
+         JSONObject tags) {
+      try {
+         MultiStagePosition result = new MultiStagePosition();
+         result.setLabel(tags.getString("label"));
+         result.setDefaultXYStage(tags.getString("defaultXYStage"));
+         result.setDefaultZStage(tags.getString("defaultZStage"));
+         result.setGridCoordinates(tags.getInt("gridRow"),
+               tags.getInt("gridCol"));
+         JSONObject props = tags.getJSONObject("properties");
+         for (String key : MDUtils.getKeys(props)) {
+            result.setProperty(key, props.getString(key));
+         }
+         JSONArray subPoses = tags.getJSONArray("subpositions");
+         for (int i = 0; i < subPoses.length(); ++i) {
+            JSONObject subPos = subPoses.getJSONObject(i);
+            result.add(StagePositionFromJSON(subPos));
+         }
+         return result;
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError("Failed to convert JSONObject to MultiStagePosition: " + e);
+         return null;
+      }
+   }
+
+   /**
+    * Convert a StagePosition to a JSONObject. Here instead of in
+    * StagePosition.java to avoid polluting our API with an old JSON library.
+    */
+   private static JSONObject StagePositionToJSON(StagePosition pos) throws JSONException {
+      JSONObject result = new JSONObject();
+      result.put("x", pos.x);
+      result.put("y", pos.y);
+      result.put("z", pos.z);
+      result.put("stageName", pos.stageName);
+      result.put("numAxes", pos.numAxes);
+      return result;
+   }
+
+   /**
+    * Convert a JSONObject to a StagePosition. Here instead of in
+    * StagePosition.java to avoid polluting our API with an old JSON library.
+    */
+   private static StagePosition StagePositionFromJSON(JSONObject tags) throws JSONException {
+      StagePosition result = new StagePosition();
+      result.x = tags.getDouble("x");
+      result.y = tags.getDouble("y");
+      result.z = tags.getDouble("z");
+      result.stageName = tags.getString("stageName");
+      result.numAxes = tags.getInt("numAxes");
+      return result;
    }
 }
