@@ -1,0 +1,38 @@
+{
+"Summary": {
+  "ChannelGroup": "Some channel group",
+  "Slices": -1,
+  "Comments": "This is some manually made-up comments",
+  "ChNames": [
+    "Alpha",
+    "Beta",
+    "Romeo"
+  ],
+  "AxisOrder": [
+    "axis 5",
+    "axis 3",
+    "axis 97"
+  ],
+  "UserName": "John Doe",
+  "Frames": -1,
+  "Prefix": "thisIsAPrefix",
+  "PropertyMap": "{\n  \"Ha ha I'm some user data\": {\n    \"PropVal\": \"and I'm the value\",\n    \"PropType\": \"String\"\n  },\n  \"I'm a number\": {\n    \"PropVal\": 42,\n    \"PropType\": \"Integer\"\n  }\n}",
+  "Channels": -1,
+  "ComputerName": "my arduino",
+  "CustomIntervals_ms": "[Ljava.lang.Double;@2da75e1b",
+  "ProfileName": "John's Profile",
+  "FileName": "alpha-2 manual",
+  "MetadataVersion": "manual metadata",
+  "z-step_um": 1.23456789012345E8,
+  "StartTime": "1970-01-01",
+  "Positions": "[Lorg.micromanager.MultiStagePosition;@47135607",
+  "WaitInterval": -1234.5678,
+  "Directory": "/dev/null",
+  "MicroManagerVersion": "made-up version"
+},
+"Coords-img_channel000_position000_time000000000_z000.tif": {
+  "position": 0,
+  "time": 0,
+  "z": 0,
+  "channel": 0
+}
