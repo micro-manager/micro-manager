@@ -580,7 +580,24 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
       builder.intendedDimensions(dimsBuilder.build());
 
+      if (tags.has("IntendedDimensions")) {
+         // Replace the manually-hacked-together Coords of the above with what
+         // the metadata explicitly says are the intended dimensions.
+         try {
+            JSONObject dims = tags.getJSONObject("IntendedDimensions");
+            dimsBuilder = new DefaultCoords.Builder();
+            for (String key : MDUtils.getKeys(dims)) {
+               dimsBuilder.index(key, dims.getInt(key));
+            }
+            builder.intendedDimensions(dimsBuilder.build());
+         }
+         catch (JSONException e) {
+            ReportingUtils.logDebugMessage("Failed to extract intended dimensions: " + e);
+         }
+      }
+
       try {
+         ReportingUtils.logError(tags.toString(2));
          builder.startDate(tags.getString("StartTime"));
       }
       catch (JSONException e) {
@@ -642,6 +659,12 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
                   intendedDimensions_.getZ());
             MDUtils.setNumPositions(result,
                   intendedDimensions_.getStagePosition());
+
+            JSONObject intendedDims = new JSONObject();
+            for (String axis : intendedDimensions_.getAxes()) {
+               intendedDims.put(axis, intendedDimensions_.getIndex(axis));
+            }
+            result.put("IntendedDimensions", intendedDims);
          }
          result.put("StartTime", startDate_);
          result.put("Positions", stagePositions_);
