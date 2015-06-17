@@ -247,6 +247,22 @@ public class DefaultPropertyMap implements PropertyMap {
          }
          return result;
       }
+
+      public Object getVal() {
+         return val_;
+      }
+      public Class getType() {
+         return type_;
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+         if (!(obj instanceof PropertyValue)) {
+            return false;
+         }
+         PropertyValue alt = (PropertyValue) obj;
+         return (alt.getType().equals(type_) && alt.getVal().equals(val_));
+      }
    }
    public static class Builder implements PropertyMap.PropertyMapBuilder {
       private HashMap<String, PropertyValue> propMap_;
@@ -498,6 +514,10 @@ public class DefaultPropertyMap implements PropertyMap {
       return propMap_.keySet();
    }
 
+   public boolean hasProperty(String key) {
+      return propMap_.containsKey(key);
+   }
+
    public PropertyValue getProperty(String key) {
       return propMap_.get(key);
    }
@@ -641,5 +661,20 @@ public class DefaultPropertyMap implements PropertyMap {
          ReportingUtils.logError(e, "Error converting PropertyMap to String");
          return "<DefaultPropertyMap with unknown contents>";
       }
+   }
+
+   @Override
+   public boolean equals(Object obj) {
+      if (!(obj instanceof DefaultPropertyMap)) {
+         return false;
+      }
+      DefaultPropertyMap alt = (DefaultPropertyMap) obj;
+      for (String key : getKeys()) {
+         if (!alt.hasProperty(key) ||
+               !alt.getProperty(key).equals(getProperty(key))) {
+            return false;
+         }
+      }
+      return true;
    }
 }
