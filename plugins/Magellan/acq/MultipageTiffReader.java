@@ -60,7 +60,6 @@ public class MultipageTiffReader {
    private JSONObject summaryMetadata_;
    private int byteDepth_ = 0;;
    private boolean rgb_;
-   private boolean writingFinished_;
    
    private HashMap<String,Long> indexMap_;
    
@@ -72,7 +71,6 @@ public class MultipageTiffReader {
       summaryMetadata_ = summaryMD;
       byteOrder_ = MultipageTiffWriter.BYTE_ORDER;
       getRGBAndByteDepth(summaryMD);
-      writingFinished_ = false;
    }
    
    public void setIndexMap(HashMap<String,Long> indexMap) {
@@ -82,6 +80,28 @@ public class MultipageTiffReader {
    public void setFileChannel(FileChannel fc) {
       fileChannel_ = fc;
    }
+   
+   private MultipageTiffReader(String file) {
+      file_ = new File(file);
+      byteOrder_ = MultipageTiffWriter.BYTE_ORDER;
+      try {
+         createFileChannel(file_);
+      } catch (Exception ex) {
+         Log.log("Can't successfully open file: " + file_.getName());
+      }
+      
+   }
+   
+   /**
+    * read summary metadata without opening whole dataset
+    * @return 
+    */
+   public static JSONObject readSummaryMD(String file) throws IOException {
+      MultipageTiffReader reader = new MultipageTiffReader(file);
+      JSONObject smd = reader.readSummaryMD();
+      reader.close();
+      return smd;
+   }
   
    /**
     * This constructor is used for opening datasets that have already been saved
@@ -90,11 +110,10 @@ public class MultipageTiffReader {
       displayAndComments_ = new JSONObject();
       file_ = file;
       try {
-         createFileChannel();
+         createFileChannel(file_);
       } catch (Exception ex) {
          Log.log("Can't successfully open file: " +  file_.getName());
       }
-      writingFinished_ = true;
       long firstIFD = readHeader();
       summaryMetadata_ = readSummaryMD();
       try {
@@ -164,11 +183,6 @@ public class MultipageTiffReader {
       return false;
    }
 
-
-   public void finishedWriting() {
-      writingFinished_ = true;
-   }
-
    private void getRGBAndByteDepth(JSONObject md) {
       try {
          String pixelType = MD.getPixelType(md);
@@ -236,12 +250,6 @@ public class MultipageTiffReader {
          fileChannel_.read(mdBuffer, 40);
          JSONObject summaryMD = new JSONObject(getString(mdBuffer));
 
-         //Summary MD written start of acquisition and never changed, this code makes sure acquisition comment
-         //field is current
-         if (displayAndComments_ != null && displayAndComments_.has("Comments") 
-                 && displayAndComments_.getJSONObject("Comments").has("Summary")) {
-            summaryMD.put("Comment", displayAndComments_.getJSONObject("Comments").getString("Summary"));
-         }
          return summaryMD;
       } catch (Exception ex) {
          Log.log("Couldn't read summary Metadata from file: " + file_.getName());
@@ -433,8 +441,8 @@ public class MultipageTiffReader {
       }
    }
    
-   private void createFileChannel() throws FileNotFoundException, IOException {      
-      raFile_ = new RandomAccessFile(file_,"r");
+   private void createFileChannel(File file) throws FileNotFoundException, IOException {      
+      raFile_ = new RandomAccessFile(file,"r");
       fileChannel_ = raFile_.getChannel();
    }
    

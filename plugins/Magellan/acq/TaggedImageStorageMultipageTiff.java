@@ -36,6 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import javax.imageio.IIOException;
 import json.JSONException;
 import json.JSONObject;
 import misc.JavaUtils;
@@ -89,6 +90,22 @@ public final class TaggedImageStorageMultipageTiff   {
          openExistingDataSet();
       }    
       
+   }
+   
+   /**
+    * read summary metadata without reading index map
+    * @param dir
+    * @return
+    */
+   public static JSONObject readSummaryMD(String dir) throws IOException {
+      File directory = new File(dir);
+      for (File f : directory.listFiles()) {
+         if (f.getName().endsWith(".tif") || f.getName().endsWith(".TIF")) {
+            //this is where fixing dataset code occurs
+            return MultipageTiffReader.readSummaryMD(f.getAbsolutePath());
+         }
+      }
+      throw new IIOException("Couldn't find a vlid TIFF to read metadata from");
    }
    
    private void processSummaryMD() {

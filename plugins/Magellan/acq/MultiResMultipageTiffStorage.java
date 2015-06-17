@@ -64,7 +64,7 @@ public class MultiResMultipageTiffStorage {
    private int fullResTileWidthIncludingOverlap_, fullResTileHeightIncludingOverlap_;
    private int tileWidth_, tileHeight_; //Indpendent of zoom level because tile sizes stay the same--which means overlap is cut off
    private PositionManager posManager_;
-   private boolean finished_ = false;
+   private boolean finished_;
    private String uniqueAcqName_;
    private int byteDepth_;
    private TreeMap<Integer, Integer> backgroundPix_ = new TreeMap<Integer, Integer>(); //map of channel index to background pixel value
@@ -80,12 +80,13 @@ public class MultiResMultipageTiffStorage {
     */
    public MultiResMultipageTiffStorage(String dir) throws IOException {
       directory_ = dir;
+      finished_ = true;
       estimateBackground_ = false;
       String fullResDir = dir + (dir.endsWith(File.separator) ? "" : File.separator) + FULL_RES_SUFFIX;
       //create fullResStorage
       fullResStorage_ = new TaggedImageStorageMultipageTiff(fullResDir, false, null);
       summaryMD_ = fullResStorage_.getSummaryMetadata();
-      readSummaryMetadata();
+      processSummaryMetadata();
       lowResStorages_ = new TreeMap<Integer, TaggedImageStorageMultipageTiff>();
       //create low res storages
       int resIndex = 1;
@@ -137,7 +138,7 @@ public class MultiResMultipageTiffStorage {
       } catch (JSONException ex) {
          Log.log("Couldnt copy summary metadata", true);
       }
-      readSummaryMetadata();
+      processSummaryMetadata();
 
       //prefix is provided by summary metadata
       try {
@@ -177,7 +178,12 @@ public class MultiResMultipageTiffStorage {
       }
    }
 
-   private void readSummaryMetadata() {
+   public static JSONObject readSummaryMetadata(String dir) throws IOException {
+      String fullResDir = dir + (dir.endsWith(File.separator) ? "" : File.separator) + FULL_RES_SUFFIX;
+      return TaggedImageStorageMultipageTiff.readSummaryMD(fullResDir);
+   }
+
+   private void processSummaryMetadata() {
       xOverlap_ = MD.getPixelOverlapX(summaryMD_);
       yOverlap_ = MD.getPixelOverlapY(summaryMD_);
       byteDepth_ = MD.getBytesPerPixel(summaryMD_);

@@ -328,7 +328,7 @@ public class MultipageTiffWriter {
             } catch (IOException ex) {
                Log.log(ex);
             }
-            reader_.finishedWriting();
+//            reader_.finishedWriting();
             //Dont close file channel and random access file becase Tiff reader still using them
             fileChannel_ = null;
             raFile_ = null;
