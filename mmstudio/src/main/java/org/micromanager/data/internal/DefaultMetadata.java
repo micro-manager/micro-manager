@@ -538,26 +538,42 @@ public class DefaultMetadata implements Metadata {
     */
    public JSONObject toJSON() {
       try {
+         // If we don't do these manual conversions for various MDUtils
+         // methods, we get null pointer exceptions because the argument type
+         // for MDUtils here is a double or int, not Double or Integer.
          JSONObject result = new JSONObject();
-         MDUtils.setChannelName(result, getCamera());
-         MDUtils.setROI(result, getROI());
-         MDUtils.setBinning(result, getBinning());
-         MDUtils.setBitDepth(result, getBitDepth());
-         MDUtils.setPixelSizeUm(result, getPixelSizeUm());
-         MDUtils.setPixelTypeFromString(result, getPixelType());
-         result.put("Source", getSource());
-         MDUtils.setUUID(result, getUUID());
-         // If we don't do these manual conversions, we get null pointer
-         // exceptions because the argument type for MDUtils here is a
-         // double or int, not Double or Integer.
-         MDUtils.setElapsedTimeMs(result, 
-               (getElapsedTimeMs() == null) ? 0 : getElapsedTimeMs());
-         MDUtils.setExposureMs(result,
-               (getExposureMs() == null) ? 0 : getExposureMs());
          MDUtils.setBinning(result,
                (getBinning() == null) ? 0 : getBinning());
+         MDUtils.setBitDepth(result, getBitDepth());
+         result.put("Camera", getCamera());
+         MDUtils.setChannelName(result, getChannelName());
+         MDUtils.setComments(result, getComments());
+         MDUtils.setElapsedTimeMs(result, 
+               (getElapsedTimeMs() == null) ? 0 : getElapsedTimeMs());
+         result.put("emissionLabel", getEmissionLabel());
+         result.put("excitationLabel", getExcitationLabel());
+         MDUtils.setExposureMs(result,
+               (getExposureMs() == null) ? 0 : getExposureMs());
+         result.put("gridColumn", getGridColumn());
+         result.put("gridRow", getGridRow());
+         result.put("IJType", getIjType());
          MDUtils.setSequenceNumber(result,
                (getImageNumber() == null) ? -1 : getImageNumber());
+         if (initialPositionList_ != null) {
+            result.put("initialPositionList",
+                  DefaultSummaryMetadata.MultiStagePositionToJSON(initialPositionList_));
+         }
+         result.put("keepShutterOpenChannels", getKeepShutterOpenChannels());
+         result.put("keepShutterOpenSlices", getKeepShutterOpenSlices());
+         result.put("pixelAspect", getPixelAspect());
+         MDUtils.setPixelSizeUm(result, getPixelSizeUm());
+         MDUtils.setPixelTypeFromString(result, getPixelType());
+         MDUtils.setPositionName(result, getPositionName());
+         result.put("receivedTime", getReceivedTime());
+         MDUtils.setROI(result, getROI());
+         result.put("Source", getSource());
+         result.put("startTimeMs", getStartTimeMs());
+         MDUtils.setUUID(result, getUUID());
          MDUtils.setXPositionUm(result,
                (getXPositionUm() == null) ? 0 : getXPositionUm());
          MDUtils.setYPositionUm(result,
@@ -565,8 +581,6 @@ public class DefaultMetadata implements Metadata {
          MDUtils.setZPositionUm(result,
                (getZPositionUm() == null) ? 0 : getZPositionUm());
 
-         MDUtils.setPositionName(result, getPositionName());
-         MDUtils.setComments(result, getComments());
          if (scopeData_ != null) {
             JSONArray keys = new JSONArray();
             for (String key : scopeData_.getKeys()) {
@@ -597,76 +611,7 @@ public class DefaultMetadata implements Metadata {
     */
    public static Metadata legacyFromJSON(JSONObject tags) {
       Builder builder = new Builder();
-      try {
-         builder.uuid(MDUtils.getUUID(tags));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Metadata failed to extract field uuid");
-      }
-      try {
-         builder.source(tags.getString("Source"));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Metadata failed to extract field source");
-      }
 
-      // TODO: we don't try to preserve/restore the MultiStagePosition property.
-
-      try {
-         builder.keepShutterOpenSlices(tags.getBoolean("keepShutterOpenSlices"));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Metadata failed to extract field keepShutterOpenSlices");
-      }
-      try {
-         builder.keepShutterOpenChannels(tags.getBoolean("keepShutterOpenChannels"));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Metadata failed to extract field keepShutterOpenChannels");
-      }
-
-      try {
-         builder.pixelType(MDUtils.getPixelType(tags));
-      }
-      catch (Exception e) { // JSONException and MMScriptException
-         ReportingUtils.logDebugMessage("Metadata failed to extract field pixelType");
-      }
-      try {
-         builder.bitDepth(MDUtils.getBitDepth(tags));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Metadata failed to extract field bitDepth");
-      }
-      try {
-         builder.ijType(tags.getInt("IJType"));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Metadata failed to extract field ijType");
-      }
-      try {
-         builder.channelName(tags.getString("channelName"));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Metadata failed to extract field channelName");
-      }
-      try {
-         builder.exposureMs(MDUtils.getExposureMs(tags));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Metadata failed to extract field exposureMs");
-      }
-      try {
-         builder.elapsedTimeMs(MDUtils.getElapsedTimeMs(tags));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Metadata failed to extract field elapsedTimeMs");
-      }
-      try {
-         builder.startTimeMs(tags.getDouble("startTimeMs"));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Metadata failed to extract field startTimeMs");
-      }
       try {
          builder.binning(MDUtils.getBinning(tags));
       }
@@ -675,29 +620,175 @@ public class DefaultMetadata implements Metadata {
       }
 
       try {
-         builder.imageNumber(MDUtils.getSequenceNumber(tags));
+         builder.bitDepth(MDUtils.getBitDepth(tags));
       }
       catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Metadata failed to extract field imageNumber");
+         ReportingUtils.logDebugMessage("Metadata failed to extract field bitDepth");
       }
+
       try {
-         builder.gridRow(tags.getInt("gridRow"));
+         builder.camera(tags.getString("Camera"));
       }
       catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Metadata failed to extract field gridRow");
+         ReportingUtils.logDebugMessage("Metadata failed to extract field camera");
       }
+
+      try {
+         builder.channelName(MDUtils.getChannelName(tags));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logDebugMessage("Metadata failed to extract field channelName");
+      }
+
+      try {
+         builder.comments(MDUtils.getComments(tags));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logDebugMessage("Metadata failed to extract field comments");
+      }
+
+      try {
+         builder.elapsedTimeMs(MDUtils.getElapsedTimeMs(tags));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logDebugMessage("Metadata failed to extract field elapsedTimeMs");
+      }
+
+      try {
+         builder.emissionLabel(tags.getString("emissionLabel"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logDebugMessage("Metadata failed to extract field emissionLabel");
+      }
+
+      try {
+         builder.excitationLabel(tags.getString("excitationLabel"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logDebugMessage("Metadata failed to extract field excitationLabel");
+      }
+
+      try {
+         builder.exposureMs(MDUtils.getExposureMs(tags));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logDebugMessage("Metadata failed to extract field exposureMs");
+      }
+
       try {
          builder.gridColumn(tags.getInt("gridColumn"));
       }
       catch (JSONException e) {
          ReportingUtils.logDebugMessage("Metadata failed to extract field gridColumn");
       }
+
+      try {
+         builder.gridRow(tags.getInt("gridRow"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logDebugMessage("Metadata failed to extract field gridRow");
+      }
+
+      try {
+         builder.ijType(tags.getInt("IJType"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logDebugMessage("Metadata failed to extract field ijType");
+      }
+
+      try {
+         builder.imageNumber(MDUtils.getSequenceNumber(tags));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logDebugMessage("Metadata failed to extract field imageNumber");
+      }
+
+      try {
+         builder.initialPositionList(
+               DefaultSummaryMetadata.MultiStagePositionFromJSON(
+                  tags.getJSONObject("initialPositionList")));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logDebugMessage("Metadata failed to extract field initialPositionList");
+      }
+
+      try {
+         builder.keepShutterOpenChannels(tags.getBoolean("keepShutterOpenChannels"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logDebugMessage("Metadata failed to extract field keepShutterOpenChannels");
+      }
+
+      try {
+         builder.keepShutterOpenSlices(tags.getBoolean("keepShutterOpenSlices"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logDebugMessage("Metadata failed to extract field keepShutterOpenSlices");
+      }
+
+      try {
+         builder.pixelAspect(tags.getDouble("pixelAspect"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logDebugMessage("Metadata failed to extract field pixelAspect");
+      }
+
+      try {
+         builder.pixelSizeUm(MDUtils.getPixelSizeUm(tags));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logDebugMessage("Metadata failed to extract field pixelSizeUm");
+      }
+
+      try {
+         builder.pixelType(MDUtils.getPixelType(tags));
+      }
+      catch (Exception e) { // JSONException and MMScriptException
+         ReportingUtils.logDebugMessage("Metadata failed to extract field pixelType");
+      }
+
       try {
          builder.positionName(MDUtils.getPositionName(tags));
       }
       catch (JSONException e) {
          ReportingUtils.logDebugMessage("Metadata failed to extract field positionName");
       }
+
+      try {
+         builder.receivedTime(tags.getString("receivedTime"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logDebugMessage("Metadata failed to extract field receivedTime");
+      }
+
+      try {
+         builder.ROI(MDUtils.getROI(tags));
+      }
+      catch (Exception e) { // JSONException or MMScriptException
+         ReportingUtils.logDebugMessage("Metadata failed to extract field ROI");
+      }
+
+      try {
+         builder.source(tags.getString("Source"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logDebugMessage("Metadata failed to extract field source");
+      }
+
+      try {
+         builder.startTimeMs(tags.getDouble("startTimeMs"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logDebugMessage("Metadata failed to extract field startTimeMs");
+      }
+
+      try {
+         builder.uuid(MDUtils.getUUID(tags));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logDebugMessage("Metadata failed to extract field uuid");
+      }
+
       try {
          builder.xPositionUm(MDUtils.getXPositionUm(tags));
       }
@@ -715,56 +806,6 @@ public class DefaultMetadata implements Metadata {
       }
       catch (JSONException e) {
          ReportingUtils.logDebugMessage("Metadata failed to extract field zPositionUm");
-      }
-
-      try {
-         builder.pixelSizeUm(MDUtils.getPixelSizeUm(tags));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Metadata failed to extract field pixelSizeUm");
-      }
-      try {
-         builder.camera(tags.getString("camera"));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Metadata failed to extract field camera");
-      }
-      try {
-         builder.receivedTime(tags.getString("receivedTime"));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Metadata failed to extract field receivedTime");
-      }
-      try {
-         builder.excitationLabel(tags.getString("excitationLabel"));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Metadata failed to extract field excitationLabel");
-      }
-      try {
-         builder.emissionLabel(tags.getString("emissionLabel"));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Metadata failed to extract field emissionLabel");
-      }
-      try {
-         builder.ROI(MDUtils.getROI(tags));
-      }
-      catch (Exception e) { // JSONException or MMScriptException
-         ReportingUtils.logDebugMessage("Metadata failed to extract field ROI");
-      }
-      try {
-         builder.comments(MDUtils.getComments(tags));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Metadata failed to extract field comments");
-      }
-
-      try {
-         builder.pixelAspect(tags.getDouble("pixelAspect"));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Metadata failed to extract field pixelAspect");
       }
 
       if (tags.has("scopeDataKeys")) {
@@ -796,105 +837,12 @@ public class DefaultMetadata implements Metadata {
 
    @Override
    public String toString() {
-      String result = "<Metadata:";
-      if (uuid_ != null) {
-         result += "\n  UUID: " + uuid_.toString();
+      try {
+         return toJSON().toString(2);
       }
-      if (source_ != null) {
-         result += "\n  source: " + source_.toString();
+      catch (JSONException e) {
+         ReportingUtils.logError("Failed to convert JSONized metadata to string: " + e);
+         return "<Unknown metadata>";
       }
-
-      if (initialPositionList_ != null) {
-         result += "\n  initialPositionList: " + initialPositionList_.toString();
-      }
-
-      if (keepShutterOpenSlices_ != null) {
-         result += "\n  keepShutterOpenSlices: " + keepShutterOpenSlices_.toString();
-      }
-      if (keepShutterOpenChannels_ != null) {
-         result += "\n  keepShutterOpenChannels: " + keepShutterOpenChannels_.toString();
-      }
-
-      if (pixelType_ != null) {
-         result += "\n  pixelType: " + pixelType_.toString();
-      }
-      if (bitDepth_ != null) {
-         result += "\n  bitDepth: " + bitDepth_.toString();
-      }
-      if (ijType_ != null) {
-         result += "\n  ijType: " + ijType_.toString();
-      }
-      if (channelName_ != null) {
-         result += "\n  channelName: " + channelName_.toString();
-      }
-      if (exposureMs_ != null) {
-         result += "\n  exposureMs: " + exposureMs_.toString();
-      }
-      if (elapsedTimeMs_ != null) {
-         result += "\n  elapsedTimeMs: " + elapsedTimeMs_.toString();
-      }
-      if (startTimeMs_ != null) {
-         result += "\n  startTimeMs: " + startTimeMs_.toString();
-      }
-      if (binning_ != null) {
-         result += "\n  binning: " + binning_.toString();
-      }
-
-      if (imageNumber_ != null) {
-         result += "\n  imageNumber: " + imageNumber_.toString();
-      }
-      if (gridRow_ != null) {
-         result += "\n  gridRow: " + gridRow_.toString();
-      }
-      if (gridColumn_ != null) {
-         result += "\n  gridColumn: " + gridColumn_.toString();
-      }
-      if (positionName_ != null) {
-         result += "\n  positionName: " + positionName_.toString();
-      }
-      if (xPositionUm_ != null) {
-         result += "\n  xPositionUm: " + xPositionUm_.toString();
-      }
-      if (yPositionUm_ != null) {
-         result += "\n  yPositionUm: " + yPositionUm_.toString();
-      }
-      if (zPositionUm_ != null) {
-         result += "\n  zPositionUm: " + zPositionUm_.toString();
-      }
-
-      if (pixelSizeUm_ != null) {
-         result += "\n  pixelSizeUm: " + pixelSizeUm_.toString();
-      }
-      if (camera_ != null) {
-         result += "\n  camera: " + camera_.toString();
-      }
-      if (receivedTime_ != null) {
-         result += "\n  receivedTime: " + receivedTime_.toString();
-      }
-      if (excitationLabel_ != null) {
-         result += "\n  excitationLabel: " + excitationLabel_.toString();
-      }
-      if (emissionLabel_ != null) {
-         result += "\n  emissionLabel: " + emissionLabel_.toString();
-      }
-      if (ROI_ != null) {
-         result += "\n  ROI: " + ROI_.toString();
-      }
-      if (comments_ != null) {
-         result += "\n  comments: " + comments_.toString();
-      }
-
-      if (pixelAspect_ != null) {
-         result += "\n  pixelAspect: " + pixelAspect_.toString();
-      }
-
-      if (scopeData_ != null) {
-         result += "\n  scopeData: " + scopeData_.toString();
-      }
-
-      if (userData_ != null) {
-         result += "\n  userData: " + userData_.toString();
-      }
-      return result + ">";
    }
 }
