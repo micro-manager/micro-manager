@@ -829,16 +829,25 @@ public class MDUtils {
    public static PropertyMap extractUserData(JSONObject tags,
          Set<String> ignoredKeys) {
       DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();
-      for (String key : getKeys(tags)) {
-         if ((ignoredKeys == null || !ignoredKeys.contains(key)) &&
-               !IGNORED_KEYS.contains(key)) {
-            try {
-               putProperty(builder, key, tags.get(key));
-            }
-            catch (JSONException e) {
-               ReportingUtils.logError(e, "Error extracting user-data property with key " + key);
+      if (!tags.has("userData")) {
+         return builder.build();
+      }
+      try {
+         JSONObject userData = tags.getJSONObject("userData");
+         for (String key : getKeys(userData)) {
+            if ((ignoredKeys == null || !ignoredKeys.contains(key)) &&
+                  !IGNORED_KEYS.contains(key)) {
+               try {
+                  putProperty(builder, key, userData.get(key));
+               }
+               catch (JSONException e) {
+                  ReportingUtils.logError(e, "Error extracting user-data property with key " + key);
+               }
             }
          }
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError("Unable to extract user data from JSON: " + e);
       }
       return builder.build();
    }
