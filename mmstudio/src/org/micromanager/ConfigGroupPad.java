@@ -270,10 +270,6 @@ public class ConfigGroupPad extends JScrollPane{
          try {
             ReportingUtils.logMessage("Rebuilding config group table");
             StrVector groups = core_.getAvailableConfigGroups();
-            HashMap<String, String> oldGroupHash = new HashMap<String, String>();
-            for (StateItem group : groupList_) {
-               oldGroupHash.put(group.group, group.config);
-            }
             groupList_.clear();
 
             for (String group : groups) {
