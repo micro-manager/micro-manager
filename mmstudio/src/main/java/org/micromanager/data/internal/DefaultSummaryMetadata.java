@@ -417,6 +417,13 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       Builder builder = new Builder();
 
       try {
+         builder.name(tags.getString("Name"));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field name");
+      }
+
+      try {
          builder.prefix(tags.getString("Prefix"));
       }
       catch (JSONException e) {
@@ -568,6 +575,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       try {
          JSONObject result = new JSONObject();
          MDUtils.setFileName(result, name_);
+         result.put("Name", name_);
          result.put("Prefix", prefix_);
          result.put("UserName", userName_);
          result.put("ProfileName", profileName_);
