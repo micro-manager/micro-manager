@@ -522,7 +522,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
       String time = image.getMetadata().getReceivedTime();
       // TODO: should we log if the date isn't available?
       SummaryMetadata summary = summaryMetadata_;
-      if (time != null) {
+      if (time != null && summary.getStartDate() == null) {
          summary = summary.copy().startDate(time.split(" ")[0]).build();
       }
       writeJSONMetadata(pos, ((DefaultSummaryMetadata) summary).toJSON(),
