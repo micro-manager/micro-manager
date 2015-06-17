@@ -473,6 +473,13 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
 
       try {
+         builder.comments(MDUtils.getComments(tags));
+      }
+      catch (JSONException e) {
+         ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field comments");
+      }
+
+      try {
          builder.channelGroup(tags.getString("ChannelGroup"));
       }
       catch (JSONException e) {
@@ -513,6 +520,21 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
       catch (java.text.ParseException e) {
          ReportingUtils.logDebugMessage("Failed to parse input string for customIntervalsMs");
+      }
+
+      if (builder.customIntervalsMs_ == null) {
+         // Try treating it as an array rather than a string.
+         try {
+            JSONArray intervals = tags.getJSONArray("CustomIntervals_ms");
+            Double[] customIntervals = new Double[intervals.length()];
+            for (int i = 0; i < customIntervals.length; ++i) {
+               customIntervals[i] = intervals.getDouble(i);
+            }
+            builder.customIntervalsMs(customIntervals);
+         }
+         catch (JSONException e) {
+            ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field customIntervalsMs");
+         }
       }
 
       try {
@@ -597,7 +619,13 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          MDUtils.setZStepUm(result,
                (zStepUm_ == null) ? 0 : zStepUm_);
          result.put("WaitInterval", waitInterval_);
-         result.put("CustomIntervals_ms", customIntervalsMs_);
+         if (customIntervalsMs_ != null) {
+            JSONArray intervals = new JSONArray();
+            for (int i = 0; i < customIntervalsMs_.length; ++i) {
+               intervals.put(customIntervalsMs_[i]);
+            }
+            result.put("CustomIntervals_ms", intervals);
+         }
          if (axisOrder_ != null) {
             JSONArray order = new JSONArray();
             for (int i = 0; i < axisOrder_.length; ++i) {
