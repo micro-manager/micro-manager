@@ -16,6 +16,7 @@
 	<property name="testdir" value="src/test/java"/>
 	<property name="rscdir" value="src/main/resources"/>
 	<property name="scriptdir" value="src/main/scripts"/>
+	<property name="testrscdir" value="src/test/resources"/>
 	<if>
 		<isset property="mm.platform.is.windows"/>
 		<then>

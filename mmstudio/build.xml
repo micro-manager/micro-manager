@@ -22,7 +22,10 @@
 				<include name="**/*.gif"/>
 				<include name="**/*.html"/>
 			</fileset>
-		</copy>
+        </copy>
+        <copy todir="${intdir}">
+            <fileset dir="${testrscdir}"/>
+        </copy>
 		<copy todir="${intdir}">
 			<fileset dir="${scriptdir}"/>
 		</copy>
