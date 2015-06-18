@@ -49,6 +49,7 @@ public final class SystemInfo {
 
       if (includeUnchanging) {
          sections.add(new MMVersionInfoSection());
+         sections.add(new ImageJInfoSection());
          sections.add(new OperatingSystemInfoSection());
          sections.add(new JVMInfoSection());
          sections.add(new JVMArgumentsInfoSection());
