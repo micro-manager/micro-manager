@@ -117,7 +117,7 @@ public class ManualTiffTest {
       IMAGES = new HashMap<String, ArrayList<ImageInfo>>();
 
       // This file is a manually-generated acquisition from the MM2.0 alpha.
-      String alpha2 = "/Users/chriswei/proj/vale/svn/micromanager/mmstudio/src/test/resources/org/micromanager/testData/alpha_2.0_singleplane_manual";
+      String alpha2 = System.getProperty("user.dir") + "/src/test/resources/org/micromanager/data/internal/alpha_2.0_singleplane_manual";
       DefaultSummaryMetadata.Builder summary = new DefaultSummaryMetadata.Builder();
       summary.name("alpha-2 manual").prefix("thisIsAPrefix")
          .userName("John Doe").profileName("John's Profile")

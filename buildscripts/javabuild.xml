@@ -1,16 +1,16 @@
 <project name="mm.javabuild">
 	<!-- This file is intended to be used via 'import' in each Java
-	     project's buildfile -->
+		 project's buildfile -->
 
 	<include file="buildprops.xml"/>
 
 	<!-- Default settings (importing buildfile can override) -->
 	<!-- intdir - where to put tree of *.class
-	     outdir - where to put JAR
-	     installdir - where to install JAR
-	     scratchdir - used only by clojurebuild_noaot
-	     (intdir and scratchdir must not be shared with other projects)
-	     -->
+		 outdir - where to put JAR
+		 installdir - where to install JAR
+		 scratchdir - used only by clojurebuild_noaot
+		 (intdir and scratchdir must not be shared with other projects)
+		 -->
 	<property name="product" value="${ant.project.name}"/>
 	<property name="srcdir" value="src/main/java"/>
 	<property name="testdir" value="src/test/java"/>
@@ -66,7 +66,7 @@
 	</path>
 
 	<!-- JARs whose change should trigger a rebuild of the current project
-	     (override after the 'import' element) -->
+		 (override after the 'import' element) -->
 	<path id="project.linked.jars"/>
 
 	<!-- Automatically determine whether the project has any tests -->
@@ -125,6 +125,9 @@
 		<mm-javac srcdir="${testdir}" destdir="${test.intdir}">
 			<classpath refid="project.test.classpath"/>
 		</mm-javac>
+		<copy todir="${test.intdir}">
+			<fileset dir="${testrscdir}"/>
+		</copy>
 		<mkdir dir="${test.reportdir}"/>
 		<junit fork="true" haltonfailure="true" printsummary="true">
 			<sysproperty key="java.awt.headless" value="true"/>
