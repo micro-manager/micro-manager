@@ -109,14 +109,14 @@ public class IJVersionCheckDlg extends JDialog {
          goodVersions += version;
       }
       if (hasOneGoodVersion) {
-         goodVersions = "Micro-Manager is only tested with " + goodVersions;
+         goodVersions = "is only tested with " + goodVersions;
       }
       else {
-         goodVersions = "Micro-Manager is only known to work with these versions: " + goodVersions;
+         goodVersions = "is only known to work with these versions: " + goodVersions;
       }
       JLabel warning = new JLabel(
-            "<html><body>The version of ImageJ you are using is not guaranteed to be compatible with<br>MicroManager. You are using version " +
-            badVersion + ", while<br>" + goodVersions +
+            "<html><body>The version of ImageJ you are using is not guaranteed to be compatible with<br>this version of MicroManager. You are using version " +
+            badVersion + ", while<br>this version of MicroManager " + goodVersions +
             ".</body></html>");
 
       warning.setIcon(UIManager.getIcon("OptionPane.warningIcon"));
