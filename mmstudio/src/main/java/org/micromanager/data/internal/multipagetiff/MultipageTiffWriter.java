@@ -26,6 +26,7 @@ import ij.ImageJ;
 import ij.io.TiffDecoder;
 import ij.process.LUT;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -785,23 +786,30 @@ public class MultipageTiffWriter {
       }
 
       DisplaySettings settings = DefaultDisplaySettings.getStandardSettings();
-      for (int i = 0; i < numChannels; i++) {
-         //Display Ranges: For each channel, write min then max
-         mdBuffer.putDouble(bufferPosition, 
-               settings.getChannelContrastMins()[i]);
-         bufferPosition += 8;
-         mdBuffer.putDouble(bufferPosition,
-               settings.getChannelContrastMaxes()[i]);
-         bufferPosition += 8;
+      Integer[] mins = settings.getChannelContrastMins();
+      Integer[] maxes = settings.getChannelContrastMaxes();
+      if (mins != null && mins.length > numChannels &&
+            maxes != null && maxes.length > numChannels) {
+         for (int i = 0; i < numChannels; i++) {
+            //Display Ranges: For each channel, write min then max
+            mdBuffer.putDouble(bufferPosition, mins[i]);
+            bufferPosition += 8;
+            mdBuffer.putDouble(bufferPosition, maxes[i]);
+            bufferPosition += 8;
+         }
       }
 
-      //LUTs
-      for (int i = 0; i < numChannels; i++) {
-         LUT lut = ImageUtils.makeLUT(settings.getChannelColors()[i],
-               settings.getChannelGammas()[i]);
-         for (byte b : lut.getBytes()) {
-            mdBuffer.put(bufferPosition, b);
-            bufferPosition++;
+      Color[] colors = settings.getChannelColors();
+      Double[] gammas = settings.getChannelGammas();
+      if (colors != null && colors.length > numChannels &&
+            gammas != null && gammas.length > numChannels) {
+         //LUTs
+         for (int i = 0; i < numChannels; i++) {
+            LUT lut = ImageUtils.makeLUT(colors[i], gammas[i]);
+            for (byte b : lut.getBytes()) {
+               mdBuffer.put(bufferPosition, b);
+               bufferPosition++;
+            }
          }
       }
 
@@ -841,10 +849,13 @@ public class MultipageTiffWriter {
       //write single channel contrast settings or display mode if multi channel
       DisplaySettings settings = DefaultDisplaySettings.getStandardSettings();
       if (numChannels_ == 1) {
-         double min = settings.getChannelContrastMins()[0];
-         double max = settings.getChannelContrastMaxes()[0];
-         sb.append("min=").append(min).append("\n");
-         sb.append("max=").append(max).append("\n");
+         Integer[] mins = settings.getChannelContrastMins();
+         Integer[] maxes = settings.getChannelContrastMaxes();
+         if (mins != null && mins.length > 0 &&
+               maxes != null && maxes.length > 0) {
+            sb.append("min=").append(mins[0]).append("\n");
+            sb.append("max=").append(maxes[0]).append("\n");
+         }
       } else {
          int displayMode = settings.getChannelDisplayModeIndex();
          // TODO: the below interpretation is wrong.
