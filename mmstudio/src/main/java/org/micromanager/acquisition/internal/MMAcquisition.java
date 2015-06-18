@@ -176,6 +176,7 @@ public class MMAcquisition {
          display_.setDisplaySettings(DefaultDisplaySettings.legacyFromJSON(summaryMetadata));
          display_.registerForEvents(this);
       }
+      DefaultEventManager.getInstance().registerForEvents(this);
   }
    
    private String createAcqDirectory(String root, String prefix) throws Exception {
@@ -731,6 +732,12 @@ public class MMAcquisition {
    public void onDisplayDestroyed(DisplayDestroyedEvent event) {
       display_.unregisterForEvents(this);
       display_ = null;
+   }
+
+   @Subscribe
+   public void onAcquisitionEnded(AcquisitionEndedEvent event) {
+      store_.freeze();
+      DefaultEventManager.getInstance().unregisterForEvents(this);
    }
    
    /**

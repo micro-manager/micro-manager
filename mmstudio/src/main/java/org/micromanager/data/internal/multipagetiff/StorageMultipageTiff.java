@@ -77,6 +77,8 @@ public final class StorageMultipageTiff implements Storage {
    private static final HashSet<String> ALLOWED_AXES = new HashSet<String>(
          Arrays.asList(Coords.CHANNEL, Coords.TIME, Coords.Z,
             Coords.STAGE_POSITION));
+
+   private DefaultDatastore store_;
    private DefaultSummaryMetadata summaryMetadata_;
    private String summaryMetadataString_ = null;
    private boolean amInWriteMode_;
@@ -120,9 +122,10 @@ public final class StorageMultipageTiff implements Storage {
    public StorageMultipageTiff(Datastore store, String dir,
          boolean amInWriteMode, boolean separateMDFile,
          boolean separateFilesForPositions) throws IOException {
+      store_ = (DefaultDatastore) store;
       // We must be notified of changes in the Datastore before everyone else,
       // so that others can read those changes out of the Datastore later.
-      ((DefaultDatastore) store).registerForEvents(this, 0);
+      store_.registerForEvents(this, 0);
       separateMetadataFile_ = separateMDFile;
       splitByXYPosition_ = separateFilesForPositions;
 
@@ -229,7 +232,13 @@ public final class StorageMultipageTiff implements Storage {
 
    @Subscribe
    public void onDatastoreFrozen(DatastoreFrozenEvent event) {
-      finished();
+      try {
+         finished();
+         store_.setSavePath(directory_);
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Failed to finish saving");
+      }
    }
 
    private void putImage(DefaultImage image, boolean waitForWritingToFinish) throws MMException, InterruptedException, ExecutionException, IOException {

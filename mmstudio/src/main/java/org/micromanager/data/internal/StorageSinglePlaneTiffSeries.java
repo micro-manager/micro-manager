@@ -548,6 +548,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
    private void finish() {
       closeMetadataStreams();
       isDatasetWritable_ = false;
+      store_.setSavePath(dir_);
    }
 
    private void closeMetadataStreams() {
