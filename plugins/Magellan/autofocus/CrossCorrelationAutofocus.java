@@ -60,6 +60,7 @@ public class CrossCorrelationAutofocus {
    private final int channelIndex_;
    private final double maxDisplacement_;
    private double initialPosition_;
+   private double previousPosition_;
    private double currentPosition_;
    private FixedAreaAcquisition acq_;
    private int downsampleIndex_;
@@ -130,6 +131,7 @@ public class CrossCorrelationAutofocus {
             //get initial position
             try {
                 currentPosition_ = initialPosition_;
+                previousPosition_ = initialPosition_;
             } catch (Exception e) {
                Log.log("Couldn't get autofocus Z drive initial position", true);
             }
@@ -150,25 +152,33 @@ public class CrossCorrelationAutofocus {
             downsampleIndex_ = (int) Math.max(0, Math.round(Math.log(dsFactor) / Math.log(2)));
             downsampledWidth_ = (int) (tileWidth.multiply(numCols).longValue() / Math.pow(2, downsampleIndex_));
             downsampledHeight_ = (int) (tileHeight.multiply(numRows).longValue() / Math.pow(2, downsampleIndex_));
-            Log.log("Autofocus DS Index: " + downsampleIndex_, true);
-            Log.log("Autofocus DS Width: " + downsampledWidth_, true);
-            Log.log("Autofocus DS Height: " + downsampledHeight_, true);
-            return;
-        }
-
-        ImageStack lastTPStack = createAFStack(acq_, timeIndex - 1, channelIndex_, downsampledWidth_, downsampledHeight_, downsampleIndex_);
-        ImageStack currentTPStack = createAFStack(acq_, timeIndex, channelIndex_, downsampledWidth_, downsampledHeight_, downsampleIndex_);
-        //run autofocus
-        double drift = calcFocusDrift(acq_.getName(), lastTPStack, currentTPStack, acq_.getZStep());
-        //check if outside max displacement
-        if (Math.abs(currentPosition_ - drift - initialPosition_) > maxDisplacement_) {
-            Log.log("Calculated focus drift of " + drift + " um exceeds tolerance. Leaving autofocus offset unchanged", true);
-            return;
+            Log.log("Drift compensation DS Index: " + downsampleIndex_, false);
+            Log.log("Drift compensation DS Width: " + downsampledWidth_, false);
+            Log.log("Drift compensation DS Height: " + downsampledHeight_, false);
         } else {
-           Log.log(acq_.getName() + " Autofocus: calculated drift of " + drift, true);
-           Log.log( "New position: " + (currentPosition_ - drift), true);
+            ImageStack lastTPStack = createAFStack(acq_, timeIndex - 1, channelIndex_, downsampledWidth_, downsampledHeight_, downsampleIndex_);
+            ImageStack currentTPStack = createAFStack(acq_, timeIndex, channelIndex_, downsampledWidth_, downsampledHeight_, downsampleIndex_);
+            //run autofocus
+            //image drift is the difference between this TP and the previous one
+            //but does not represent the acutal drift because these 2 TPs will likely have different 
+            //positions for the AF compensation Z device
+            //drifteCorrection = move for the AF drive to bring current TP to position of previous TP
+            double driftCorrection = -calcFocusDrift(acq_.getName(), lastTPStack, currentTPStack, acq_.getZStep());
+            Log.log(acq_.getName() + " Drift compensation: correction = " + driftCorrection, true);
+            //now add in a factor accounting for the previous AF
+            //i.e. how far the reference image is from the desired position
+            driftCorrection += (currentPosition_ - previousPosition_);           
+            Log.log(acq_.getName() + " Drift compensation: correction (accounting for previous position) = " + driftCorrection, true);
+            
+            //check if outside max displacement
+            if (Math.abs(currentPosition_ + driftCorrection - initialPosition_) > maxDisplacement_) {
+                Log.log("Calculated focus drift of " + driftCorrection + " um exceeds tolerance. Leaving autofocus offset unchanged", true);
+                return;
+            }               
+            Log.log("New position: " + (currentPosition_ + driftCorrection), true);            
+            previousPosition_ = currentPosition_;
+            currentPosition_ += driftCorrection;
         }
-        currentPosition_ -= drift;
     }
 
     /**

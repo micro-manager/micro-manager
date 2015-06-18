@@ -190,6 +190,8 @@ public class SurfaceData implements Covariant {
                 } else {
                     dist = maxDist;
                 }
+                System.out.println(minDist +"\t\t" + maxDist +"\t\t" + maxNormal );
+
                 double relPower = CurvedSurfaceCalculations.getRelativePower(meanFreePath_, dist, maxNormal, radiusOfCurvature_);
                 //relative power is fold increase needed from base power
                 return basePower_ * relPower;

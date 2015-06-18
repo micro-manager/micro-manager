@@ -368,7 +368,7 @@ public class GUI extends javax.swing.JFrame {
        l5.setForeground(((CovariantPairingsTableModel) covariantPairingsTable_.getModel()).isAnyPairingActive() ? DARK_GREEN : Color.black);
        l5.setFont(acqTabbedPane_.getComponent(4).getFont().deriveFont(((CovariantPairingsTableModel) covariantPairingsTable_.getModel()).isAnyPairingActive() ? Font.BOLD : Font.PLAIN));
         acqTabbedPane_.setTabComponentAt(4, l5);
-        JLabel l6 = new JLabel("Autofocus");
+        JLabel l6 = new JLabel("Drift Compensation");
         l6.setForeground(useAutofocusCheckBox_.isSelected() ? DARK_GREEN : Color.black);
         l6.setFont(acqTabbedPane_.getComponent(5).getFont().deriveFont((useAutofocusCheckBox_.isSelected() ? Font.BOLD : Font.PLAIN)));
         acqTabbedPane_.setTabComponentAt(5, l6);
