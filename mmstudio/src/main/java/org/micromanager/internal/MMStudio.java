@@ -910,31 +910,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       return false;
    }
 
-   /**
-    * Is this function still needed?  It does some magic with tags. I found 
-    * it to do harmful thing with tags when a Multi-Camera device is
-    * present (that issue is now fixed).
-    * @param ti
-    */
-   public void normalizeTags(TaggedImage ti) {
-      if (ti != TaggedImageQueue.POISON) {
-      int channel = 0;
-      try {
-
-         if (ti.tags.has("ChannelIndex")) {
-            channel = MDUtils.getChannelIndex(ti.tags);
-         }
-         MDUtils.setChannelIndex(ti.tags, channel);
-         MDUtils.setPositionIndex(ti.tags, 0);
-         MDUtils.setSliceIndex(ti.tags, 0);
-         MDUtils.setFrameIndex(ti.tags, 0);
-         
-      } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
-      }
-      }
-   }
-
    private void configureBinningCombo() throws Exception {
       if (StaticInfo.cameraLabel_.length() > 0) {
          frame_.configureBinningComboForCamera(StaticInfo.cameraLabel_);
