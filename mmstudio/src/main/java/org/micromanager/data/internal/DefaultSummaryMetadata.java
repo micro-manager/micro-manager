@@ -700,7 +700,9 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
             }
             result.put("StagePositions", positions);
          }
-         result.put("UserData", ((DefaultPropertyMap) userData_).toJSON());
+         if (userData_ != null) {
+            result.put("UserData", ((DefaultPropertyMap) userData_).toJSON());
+         }
          return result;
       }
       catch (JSONException e) {
