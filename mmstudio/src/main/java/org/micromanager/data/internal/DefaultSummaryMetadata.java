@@ -507,7 +507,12 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
 
       try {
-         builder.waitInterval(tags.getDouble("WaitInterval"));
+         if (tags.has("WaitInterval")) {
+            builder.waitInterval(tags.getDouble("WaitInterval"));
+         }
+         else if (tags.has("Interval_ms")) {
+            builder.waitInterval(tags.getDouble("Interval_ms"));
+         }
       }
       catch (JSONException e) {
          ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field waitInterval");
@@ -598,7 +603,12 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
 
       try {
-         builder.startDate(tags.getString("StartTime"));
+         if (tags.has("StartTime")) {
+            builder.startDate(tags.getString("StartTime"));
+         }
+         else if (tags.has("Time")) {
+            builder.startDate(tags.getString("Time"));
+         }
       }
       catch (JSONException e) {
          ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field startDate");
