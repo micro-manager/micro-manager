@@ -64,6 +64,7 @@ import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TextUtils;
+import org.micromanager.internal.utils.VersionUtils;
 
 /**
  * This class provides Image storage backed by a file system in which each
@@ -221,6 +222,18 @@ public class StorageSinglePlaneTiffSeries implements Storage {
             try {
                JSONObject jsonMeta = new JSONObject((String) imp.getProperty("Info"));
                metadata = DefaultMetadata.legacyFromJSON(jsonMeta);
+               if (summaryMetadata_.getMetadataVersion() != null &&
+                     metadata.getUserData() == null &&
+                     VersionUtils.isOlderVersion(
+                        summaryMetadata_.getMetadataVersion(), "11")) {
+                  ReportingUtils.logDebugMessage("Importing \"flat\" miscellaneous metadata into the userData structure");
+                  // These older versions don't have a separate location for
+                  // the scope data, so we just stuff all unused tags into
+                  // the userData section for lack of any better place to
+                  // put them.
+                  metadata = metadata.copy().userData(
+                        MDUtils.extractUserData(jsonMeta, null)).build();
+               }
                width = MDUtils.getWidth(jsonMeta);
                height = MDUtils.getHeight(jsonMeta);
             }
@@ -614,7 +627,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
                   builder.z(new Integer(items[3]));
                   JSONObject innerMetadata = data.getJSONObject(key);
                   summaryMetadata_ = DefaultSummaryMetadata.legacyFromJSON(
-                        innerMetadata);
+                        innerMetadata.getJSONObject("Summary"));
                   builder.stagePosition(
                         MDUtils.getPositionIndex(innerMetadata));
                   coords = builder.build();

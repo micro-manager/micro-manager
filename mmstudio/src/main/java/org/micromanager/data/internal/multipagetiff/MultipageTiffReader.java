@@ -58,6 +58,7 @@ import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ProgressBar;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.VersionUtils;
 
 
 public class MultipageTiffReader {
@@ -264,8 +265,17 @@ public class MultipageTiffReader {
                   blockedKeys.add(key);
                }
             }
-            metadata = metadata.copy().userData(
-                  MDUtils.extractUserData(tagged.tags, blockedKeys)).build();
+            if (summaryMetadata_.getMetadataVersion() != null &&
+                  metadata.getUserData() == null &&
+                  VersionUtils.isOlderVersion(
+                     summaryMetadata_.getMetadataVersion(), "11")) {
+               // These older versions of the metadata don't have a separate
+               // location for scope data or user data, so we just stuff all
+               // unused tags into the userData section.
+               ReportingUtils.logDebugMessage("Importing \"flat\" miscellaneous metadata into the userData structure");
+               metadata = metadata.copy().userData(
+                     MDUtils.extractUserData(tagged.tags, blockedKeys)).build();
+            }
             return new DefaultImage(tagged, null, metadata);
          } catch (IOException ex) {
             ReportingUtils.logError(ex);
