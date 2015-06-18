@@ -96,6 +96,7 @@ import org.micromanager.internal.dialogs.CalibrationListDlg;
 import org.micromanager.internal.dialogs.IntroDlg;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.RegistrationDlg;
+import org.micromanager.internal.dialogs.IJVersionCheckDlg;
 
 import org.micromanager.events.internal.DefaultEventManager;
 
@@ -392,6 +393,8 @@ public class MMStudio implements Studio, CompatibilityInterface {
          }
          sysConfigFile_ = introDlg.getConfigFile();
       }
+
+      IJVersionCheckDlg.execute();
 
       // before loading the system configuration, we need to wait 
       // until the plugins are loaded
