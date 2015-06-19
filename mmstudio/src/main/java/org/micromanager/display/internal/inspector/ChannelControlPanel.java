@@ -121,6 +121,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private int contrastMin_ = -1;
    private int contrastMax_ = -1;
    private double gamma_ = 1;
+   private boolean isFirstLUTUpdate_ = true;
    private int minAfterRejectingOutliers_;
    private int maxAfterRejectingOutliers_;
    private int pixelMin_ = 0;
@@ -751,6 +752,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          if (color_ == null) {
             // Can't do anything about this yet.
             return;
+         }
+
+         if (isFirstLUTUpdate_) {
+            // Haven't initialized contrast yet; do so by autostretching.
+            autostretch();
+            isFirstLUTUpdate_ = false;
          }
          // Need to put this on EDT to avoid index out of bounds because of
          // setting currentChannel to -1
