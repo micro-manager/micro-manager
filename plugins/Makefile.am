@@ -20,6 +20,7 @@ nobase_mmplugin_DATA = \
 	Device_Control/ASIdiSPIM.jar \
 	Device_Control/AutoLase.jar \
 	Device_Control/CRISP.jar \
+	Device_Control/MightexPolygon.jar \
 	Device_Control/MultiCamera.jar \
 	Device_Control/Projector.jar \
 	Device_Control/StageControl.jar \
