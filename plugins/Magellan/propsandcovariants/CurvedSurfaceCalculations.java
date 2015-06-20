@@ -28,7 +28,7 @@ import misc.Log;
 public class CurvedSurfaceCalculations {
 
    //mean free paths for which vals have been calculated
-   private static Integer[] MEAN_FREE_PATHS = new Integer[]{25, 30, 70, 80, 90, 200};
+   private static Integer[] MEAN_FREE_PATHS = new Integer[]{25, 30, 70, 80, 90, 150, 200, 250};
    private static Integer[] RADII_OF_CURVATURE = new Integer[]{400, 600, 800};
    //ponts at which relative power has been calculated
    private static int DISTANCE_INCREMENT = 20;

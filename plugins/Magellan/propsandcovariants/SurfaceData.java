@@ -196,17 +196,16 @@ public class SurfaceData implements Covariant {
                 //relative power is fold increase needed from base power
                 return basePower_ * relPower;
             } else {
-                //if interpolation is undefined at position center, assume distance below is 0
-                double centerDistance = 0;
+                double distance =  Math.max(0, maxDist);
                 //likewise, take biggest defined normal
                 double normal = maxNormal;
                 Point2D.Double center = xyPos.getCenter();
                 SingleResolutionInterpolation interp = surface_.waitForCurentInterpolation();
                 if (interp.isInterpDefined(center.x, center.y)) {
-                    centerDistance = Math.max(0, zPosition - interp.getInterpolatedValue(center.x, center.y));
+                    //if interp is defined at center, use center normal
                     normal = surface_.waitForCurentInterpolation().getNormalAngleToVertical(center.x, center.y);
                 }
-                double relPower = CurvedSurfaceCalculations.getRelativePower(meanFreePath_, centerDistance, normal, radiusOfCurvature_);
+                double relPower = CurvedSurfaceCalculations.getRelativePower(meanFreePath_, distance, normal, radiusOfCurvature_);
                 //relative power is fold increase needed from base power
                 return basePower_ * relPower;
             }
