@@ -1100,11 +1100,9 @@ public class GUI extends javax.swing.JFrame {
 
         exploreOverlapLabel_.setText("Tile overlap:");
 
-        exploreChannelGroupCombo_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-        exploreChannelGroupCombo_.setEnabled(false);
+        exploreChannelGroupCombo_.setModel(new ChannelComboBoxModel());
 
         channelGroupLabel_.setText("Channel Group: ");
-        channelGroupLabel_.setEnabled(false);
 
         exploreZStepSpinner_.setModel(new javax.swing.SpinnerNumberModel(Double.valueOf(1.0d), null, null, Double.valueOf(1.0d)));
         exploreZStepSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
@@ -2279,7 +2277,7 @@ public class GUI extends javax.swing.JFrame {
                     .addGroup(splitPaneBottomPanel_Layout.createSequentialGroup()
                         .addGap(345, 345, 345)
                         .addComponent(runAcqButton_)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         splitPaneBottomPanel_Layout.setVerticalGroup(
             splitPaneBottomPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)

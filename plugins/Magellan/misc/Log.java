@@ -47,12 +47,14 @@ public class Log {
 
    public static void log(Exception e, boolean show) {
       try {
+         Magellan.getCore().logMessage(e.toString());
          Magellan.getCore().logMessage(getStackTraceAsString(e));
          Magellan.getCore().logMessage(e.getMessage() == null ? e.toString() : e.getMessage());
       } catch (NoClassDefFoundError ex) {
          //running outside of MM, ignore
       }
       if (show) {
+         IJ.log(e.toString());
          IJ.log(getStackTraceAsString(e));
       }
    }

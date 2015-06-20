@@ -75,24 +75,27 @@ public class AffineGUI extends javax.swing.JFrame {
        //get scales
        double[] newMat = new double[6];
        at.getMatrix(newMat);
-       double scale = Math.sqrt(newMat[0] * newMat[0] + newMat[1] * newMat[1]);
-       AffineTransform at2 = AffineTransform.getScaleInstance(scale, scale).createInverse();
+       double xScale = Math.sqrt(newMat[0] * newMat[0] + newMat[1] * newMat[1]) * (newMat[0] > 0 ? 1.0 : -1.0);
+       double yScale = Math.sqrt(newMat[2] * newMat[2] + newMat[3] * newMat[3]) * (newMat[3] > 0 ? 1.0 : -1.0);
+       AffineTransform at2 = AffineTransform.getScaleInstance(xScale, yScale).createInverse();
        at2.concatenate(at); // take out the scale
        //should now be left with shear transform;
        double shear = at2.getShearX();
        rotationSpinner_.setValue(angle / Math.PI * 180.0);
        shearSpinner_.setValue(shear);
-       scaleSpinner_.setValue(scale);
+       xScaleSpinner_1.setValue(xScale);
+       yScaleSpinner_1.setValue(yScale);
 
    }
    
    private void applyValues() {      
        //[T] = [R][Sc][Sh]
-       double scale = ((Number)scaleSpinner_.getValue()).doubleValue() ;
+       double xScale = ((Number)xScaleSpinner_1.getValue()).doubleValue() ;
+       double yScale = ((Number)yScaleSpinner_1.getValue()).doubleValue() ;
        double angle = ((Number)rotationSpinner_.getValue()).doubleValue() /180.0 * Math.PI;
        double shear = ((Number)shearSpinner_.getValue()).doubleValue();
        //scale shear and rotate to genrate affine
-       AffineTransform scaleAT = AffineTransform.getScaleInstance(scale, scale);
+       AffineTransform scaleAT = AffineTransform.getScaleInstance(xScale, yScale);
        AffineTransform rotAT = AffineTransform.getRotateInstance(angle);
        AffineTransform shearAT = AffineTransform.getShearInstance(shear, 0);
        
@@ -136,13 +139,15 @@ public class AffineGUI extends javax.swing.JFrame {
         jLabel6 = new javax.swing.JLabel();
         pixSizeLabel_ = new javax.swing.JLabel();
         rotationSpinner_ = new javax.swing.JSpinner();
-        scaleSpinner_ = new javax.swing.JSpinner();
+        xScaleSpinner_1 = new javax.swing.JSpinner();
         shearSpinner_ = new javax.swing.JSpinner();
         applyButton_ = new javax.swing.JButton();
         jPanel1 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
+        yScaleSpinner_1 = new javax.swing.JSpinner();
+        jLabel7 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Affine transform calibrator");
@@ -169,7 +174,7 @@ public class AffineGUI extends javax.swing.JFrame {
 
         jLabel4.setText("Rotation (degrees)");
 
-        jLabel5.setText("Scale");
+        jLabel5.setText("X Scale");
 
         jLabel6.setText("Shear");
 
@@ -177,7 +182,7 @@ public class AffineGUI extends javax.swing.JFrame {
 
         rotationSpinner_.setModel(new javax.swing.SpinnerNumberModel(-1.0d, -180.0d, 180.0d, 1.0d));
 
-        scaleSpinner_.setModel(new javax.swing.SpinnerNumberModel(1.0d, 0.2d, 5.0d, 0.01d));
+        xScaleSpinner_1.setModel(new javax.swing.SpinnerNumberModel(Double.valueOf(1.0d), null, null, Double.valueOf(0.01d)));
 
         shearSpinner_.setModel(new javax.swing.SpinnerNumberModel(0.0d, -1.0d, 1.0d, 0.01d));
 
@@ -229,6 +234,10 @@ public class AffineGUI extends javax.swing.JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        yScaleSpinner_1.setModel(new javax.swing.SpinnerNumberModel(Double.valueOf(1.0d), null, null, Double.valueOf(0.01d)));
+
+        jLabel7.setText("Y Scale");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -248,17 +257,21 @@ public class AffineGUI extends javax.swing.JFrame {
                                 .addComponent(jLabel4)))
                         .addGap(23, 23, 23)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(xScaleSpinner_1, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(layout.createSequentialGroup()
                                 .addGap(12, 12, 12)
-                                .addComponent(jLabel5)
-                                .addGap(56, 56, 56)
-                                .addComponent(jLabel6))
+                                .addComponent(jLabel5)))
+                        .addGap(18, 18, 18)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel7)
+                            .addComponent(yScaleSpinner_1, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(36, 36, 36)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(scaleSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(34, 34, 34)
                                 .addComponent(shearSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(applyButton_))))
+                                .addGap(18, 18, 18)
+                                .addComponent(applyButton_))
+                            .addComponent(jLabel6)))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(222, 222, 222)
                         .addComponent(calibrateButton_)
@@ -290,14 +303,16 @@ public class AffineGUI extends javax.swing.JFrame {
                     .addComponent(jLabel3)
                     .addComponent(jLabel4)
                     .addComponent(jLabel5)
-                    .addComponent(jLabel6))
+                    .addComponent(jLabel6)
+                    .addComponent(jLabel7))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(pixSizeLabel_)
                     .addComponent(rotationSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(scaleSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(xScaleSpinner_1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(shearSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(applyButton_))
+                    .addComponent(applyButton_)
+                    .addComponent(yScaleSpinner_1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -384,12 +399,14 @@ public class AffineGUI extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JLabel pixSizeLabel_;
     private javax.swing.JLabel pixelCalLabel_;
     private javax.swing.JSpinner rotationSpinner_;
-    private javax.swing.JSpinner scaleSpinner_;
     private javax.swing.JSpinner shearSpinner_;
+    private javax.swing.JSpinner xScaleSpinner_1;
+    private javax.swing.JSpinner yScaleSpinner_1;
     // End of variables declaration//GEN-END:variables
 }

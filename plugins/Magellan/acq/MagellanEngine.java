@@ -329,6 +329,9 @@ public class MagellanEngine {
             loopHardwareCommandRetries(new HardwareCommand() {
                 @Override
                 public void run() throws Exception {
+                   //TODO: for debugging
+                   Log.log("Acq event slice index " + event.sliceIndex_);
+                   Log.log("Acq event z position " + event.zPosition_);
                     core_.setPosition(zStage, event.zPosition_);
                 }
             }, "move Z device");

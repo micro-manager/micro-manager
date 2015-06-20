@@ -41,19 +41,25 @@
                       </Group>
                       <EmptySpace min="-2" pref="23" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="xScaleSpinner_1" alignment="0" min="-2" pref="55" max="-2" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
                               <Component id="jLabel5" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace min="-2" pref="56" max="-2" attributes="0"/>
-                              <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <Group type="102" alignment="0" attributes="0">
-                              <Component id="scaleSpinner_" min="-2" pref="55" max="-2" attributes="0"/>
-                              <EmptySpace min="-2" pref="34" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="jLabel7" min="-2" max="-2" attributes="0"/>
+                          <Component id="yScaleSpinner_1" min="-2" pref="55" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace min="-2" pref="36" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" attributes="0">
                               <Component id="shearSpinner_" min="-2" pref="60" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
+                              <EmptySpace type="separate" max="-2" attributes="0"/>
                               <Component id="applyButton_" min="-2" max="-2" attributes="0"/>
                           </Group>
+                          <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                   <Group type="102" attributes="0">
@@ -97,14 +103,16 @@
                   <Component id="jLabel4" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="jLabel5" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="jLabel6" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="jLabel7" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="pixSizeLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="rotationSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="scaleSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="xScaleSpinner_1" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="shearSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="applyButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="yScaleSpinner_1" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jPanel2" min="-2" max="-2" attributes="0"/>
@@ -156,7 +164,7 @@
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel5">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Scale"/>
+        <Property name="text" type="java.lang.String" value="X Scale"/>
       </Properties>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel6">
@@ -176,10 +184,10 @@
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JSpinner" name="scaleSpinner_">
+    <Component class="javax.swing.JSpinner" name="xScaleSpinner_1">
       <Properties>
         <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
-          <SpinnerModel initial="1.0" maximum="5.0" minimum="0.2" numberType="java.lang.Double" stepSize="0.01" type="number"/>
+          <SpinnerModel initial="1.0" numberType="java.lang.Double" stepSize="0.01" type="number"/>
         </Property>
       </Properties>
     </Component>
@@ -267,5 +275,17 @@
         </Component>
       </SubComponents>
     </Container>
+    <Component class="javax.swing.JSpinner" name="yScaleSpinner_1">
+      <Properties>
+        <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
+          <SpinnerModel initial="1.0" numberType="java.lang.Double" stepSize="0.01" type="number"/>
+        </Property>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="jLabel7">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Y Scale"/>
+      </Properties>
+    </Component>
   </SubComponents>
 </Form>

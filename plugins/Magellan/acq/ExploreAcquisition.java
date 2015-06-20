@@ -87,7 +87,6 @@ public class ExploreAcquisition extends Acquisition {
       queuedTileEvents_.clear();
       //signal acquisition engine to start finishigng process
       try {
-//          IJ.log("Adding finishing events");
          events_.put(AcquisitionEvent.createAcquisitionFinishedEvent(this));         
          events_.put(AcquisitionEvent.createEngineTaskFinishedEvent());
       } catch (InterruptedException ex) {
@@ -109,8 +108,8 @@ public class ExploreAcquisition extends Acquisition {
    //called by acq engine
    public void eventAcquired(AcquisitionEvent e) {
       //remove from tile queue for overlay drawing purposes
-      int sliceIndex = e.sliceIndex_;
-      queuedTileEvents_.get(sliceIndex).remove(new ExploreTileWaitingToAcquire(e.xyPosition_.getGridRow(), e.xyPosition_.getGridCol(), sliceIndex));
+      queuedTileEvents_.get(e.sliceIndex_).remove(new ExploreTileWaitingToAcquire(e.xyPosition_.getGridRow(), e.xyPosition_.getGridCol(), 
+              e.sliceIndex_, e.channelIndex_));
    }
 
    public void acquireTiles(final int r1, final int c1, final int r2, final int c2) {
@@ -177,7 +176,7 @@ public class ExploreAcquisition extends Acquisition {
                         }
 
                         ExploreTileWaitingToAcquire tile = new ExploreTileWaitingToAcquire(imageStorage_.getXYPosition(posIndices[i]).getGridRow(),
-                                imageStorage_.getXYPosition(posIndices[i]).getGridCol(), sliceIndex);
+                                imageStorage_.getXYPosition(posIndices[i]).getGridCol(), sliceIndex, channelIndex);
                         if (queuedTileEvents_.get(sliceIndex).contains(tile)) {
                            continue; //ignor commands for duplicates
                         }
@@ -310,17 +309,19 @@ public class ExploreAcquisition extends Acquisition {
    
    //slice and row/col index of an acquisition event in the queue
    public class ExploreTileWaitingToAcquire {
-      public long row, col, sliceIndex;
+      public long row, col, sliceIndex, channelIndex;
       
-      public ExploreTileWaitingToAcquire(long r, long c, int z) {
+      public ExploreTileWaitingToAcquire(long r, long c, int z, int ch) {
          row = r;
          col = c;
          sliceIndex = z;
+         channelIndex = ch;
       }
       
       @Override 
       public boolean equals(Object other) {
-         return ((ExploreTileWaitingToAcquire) other).col == col && ((ExploreTileWaitingToAcquire) other).row == row && ((ExploreTileWaitingToAcquire) other).sliceIndex == sliceIndex;
+         return ((ExploreTileWaitingToAcquire) other).col == col && ((ExploreTileWaitingToAcquire) other).row == row && 
+                 ((ExploreTileWaitingToAcquire) other).sliceIndex == sliceIndex && ((ExploreTileWaitingToAcquire) other).channelIndex == channelIndex;
       }
       
       
