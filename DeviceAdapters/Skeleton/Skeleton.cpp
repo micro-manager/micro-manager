@@ -36,6 +36,11 @@ using namespace std;
 // Exported MMDevice API
 ///////////////////////////////////////////////////////////////////////////////
 
+MODULE_API void InitializeModuleData()
+{
+   RegisterDevice(g_SkeletonDeviceName, MM::GenericDevice, "Skeleton");            
+}
+
 MODULE_API MM::Device* CreateDevice(const char* deviceName)                  
 {                                                                            
    if (deviceName == 0)                                                      
@@ -123,5 +128,5 @@ void SkeletonDevice::GetName (char* Name) const
 
 bool SkeletonDevice::Busy() 
 {
-   return true;
+   return false;
 }
