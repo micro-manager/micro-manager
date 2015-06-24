@@ -422,6 +422,19 @@ bool ASIHub::IsDefinePresent(const build_info_type build, const string defineToL
    return (it != build.defines.end());
 }
 
+string ASIHub::GetDefineString(const build_info_type build, const string substringToLookFor)
+{
+   vector<string>::const_iterator it;
+   for (it = build.defines.begin(); it != build.defines.end(); ++it)
+   {
+      if ((*it).find(substringToLookFor)!=std::string::npos)
+      {
+         return *it;
+      }
+   }
+   return "";
+}
+
 int ASIHub::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)

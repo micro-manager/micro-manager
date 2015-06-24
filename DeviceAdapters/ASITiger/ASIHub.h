@@ -113,6 +113,9 @@ public:
    // look to see if particular define is present
    bool IsDefinePresent(const build_info_type build, const string defineToLookFor);
 
+   // get define string from substring (e.g. the RING BUFFER define has the # of positions)
+   string GetDefineString(const build_info_type build, const string substringToLookFor);
+
    // action/property handlers
    int OnPort                       (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSerialTerminator           (MM::PropertyBase* pProp, MM::ActionType eAct);

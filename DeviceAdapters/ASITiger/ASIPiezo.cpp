@@ -51,7 +51,10 @@ CPiezo::CPiezo(const char* name) :
    unitMult_(g_StageDefaultUnitMult),  // later will try to read actual setting
    stepSizeUm_(g_StageMinStepSize),    // we'll use 1 nm as our smallest possible step size, this is somewhat arbitrary and doesn't change during the program
    axisLetter_(g_EmptyAxisLetterStr),  // value determined by extended name
-   ring_buffer_supported_(false)
+   ring_buffer_supported_(false),
+   ring_buffer_capacity_(0),
+   ttl_trigger_supported_(false),
+   ttl_trigger_enabled_(false)
 {
    if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
    {
@@ -331,32 +334,55 @@ int CPiezo::Initialize()
    // add ring buffer properties if supported (starting version 2.81)
    if (FirmwareVersionAtLeast(2.81) && (build.vAxesProps[0] & BIT1))
    {
-      ring_buffer_supported_ = true;
+      // get the number of positions from the BU X output
+      string rb_define = hub_->GetDefineString(build, "RING BUFFER");
 
-      pAct = new CPropertyAction (this, &CPiezo::OnRBMode);
-      CreateProperty(g_RB_ModePropertyName, g_RB_OnePoint_1, MM::String, false, pAct);
-      AddAllowedValue(g_RB_ModePropertyName, g_RB_OnePoint_1);
-      AddAllowedValue(g_RB_ModePropertyName, g_RB_PlayOnce_2);
-      AddAllowedValue(g_RB_ModePropertyName, g_RB_PlayRepeat_3);
-      UpdateProperty(g_RB_ModePropertyName);
+      ring_buffer_capacity_ = 0;
+      if (rb_define.size() > 12)
+      {
+         ring_buffer_capacity_ = atol(rb_define.substr(11).c_str());
+      }
 
-      pAct = new CPropertyAction (this, &CPiezo::OnRBDelayBetweenPoints);
-      CreateProperty(g_RB_DelayPropertyName, "0", MM::Integer, false, pAct);
-      UpdateProperty(g_RB_DelayPropertyName);
+      if (ring_buffer_capacity_ != 0)
+      {
+         ring_buffer_supported_ = true;
 
-      // "do it" property to do TTL trigger via serial
-      pAct = new CPropertyAction (this, &CPiezo::OnRBTrigger);
-      CreateProperty(g_RB_TriggerPropertyName, g_IdleState, MM::String, false, pAct);
-      AddAllowedValue(g_RB_TriggerPropertyName, g_IdleState, 0);
-      AddAllowedValue(g_RB_TriggerPropertyName, g_DoItState, 1);
-      AddAllowedValue(g_RB_TriggerPropertyName, g_DoneState, 2);
-      UpdateProperty(g_RB_TriggerPropertyName);
+         pAct = new CPropertyAction (this, &CPiezo::OnRBMode);
+         CreateProperty(g_RB_ModePropertyName, g_RB_OnePoint_1, MM::String, false, pAct);
+         AddAllowedValue(g_RB_ModePropertyName, g_RB_OnePoint_1);
+         AddAllowedValue(g_RB_ModePropertyName, g_RB_PlayOnce_2);
+         AddAllowedValue(g_RB_ModePropertyName, g_RB_PlayRepeat_3);
+         UpdateProperty(g_RB_ModePropertyName);
 
-      pAct = new CPropertyAction (this, &CPiezo::OnRBRunning);
-      CreateProperty(g_RB_AutoplayRunningPropertyName, g_NoState, MM::String, false, pAct);
-      AddAllowedValue(g_RB_AutoplayRunningPropertyName, g_NoState);
-      AddAllowedValue(g_RB_AutoplayRunningPropertyName, g_YesState);
-      UpdateProperty(g_RB_AutoplayRunningPropertyName);
+         pAct = new CPropertyAction (this, &CPiezo::OnRBDelayBetweenPoints);
+         CreateProperty(g_RB_DelayPropertyName, "0", MM::Integer, false, pAct);
+         UpdateProperty(g_RB_DelayPropertyName);
+
+         // "do it" property to do TTL trigger via serial
+         pAct = new CPropertyAction (this, &CPiezo::OnRBTrigger);
+         CreateProperty(g_RB_TriggerPropertyName, g_IdleState, MM::String, false, pAct);
+         AddAllowedValue(g_RB_TriggerPropertyName, g_IdleState, 0);
+         AddAllowedValue(g_RB_TriggerPropertyName, g_DoItState, 1);
+         AddAllowedValue(g_RB_TriggerPropertyName, g_DoneState, 2);
+         UpdateProperty(g_RB_TriggerPropertyName);
+
+         pAct = new CPropertyAction (this, &CPiezo::OnRBRunning);
+         CreateProperty(g_RB_AutoplayRunningPropertyName, g_NoState, MM::String, false, pAct);
+         AddAllowedValue(g_RB_AutoplayRunningPropertyName, g_NoState);
+         AddAllowedValue(g_RB_AutoplayRunningPropertyName, g_YesState);
+         UpdateProperty(g_RB_AutoplayRunningPropertyName);
+
+         pAct = new CPropertyAction (this, &CPiezo::OnUseSequence);
+         CreateProperty(g_UseSequencePropertyName, g_NoState, MM::String, false, pAct);
+         AddAllowedValue(g_UseSequencePropertyName, g_NoState);
+         AddAllowedValue(g_UseSequencePropertyName, g_YesState);
+      }
+
+   }
+
+   if (FirmwareVersionAtLeast(3.09) && (hub_->IsDefinePresent(build, "IN0_INT")))
+   {
+      ttl_trigger_supported_ = true;
    }
 
    initialized_ = true;
@@ -458,6 +484,80 @@ int CPiezo::SetOrigin()
    ostringstream command; command.str("");
    command << "H " << axisLetter_ << "=" << 0;
    return hub_->QueryCommandVerify(command.str(),":A");
+}
+
+int CPiezo::StopStageSequence()
+// disables TTL triggering; doesn't actually stop anything already happening on controller
+{
+   ostringstream command; command.str("");
+   if (!ttl_trigger_supported_)
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+   command << addressChar_ << "TTL X=0";  // switch off TTL triggering
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   return DEVICE_OK;
+}
+
+int CPiezo::StartStageSequence()
+// enables TTL triggering; doesn't actually start anything going on controller
+{
+   ostringstream command; command.str("");
+   if (!ttl_trigger_supported_)
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+   // ensure that ringbuffer pointer points to first entry and
+   // that we only trigger the first axis (assume only 1 axis on piezo card)
+   command << addressChar_ << "RM Y=1 Z=0";
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+
+   command.str("");
+   command << addressChar_ << "TTL X=1";  // switch on TTL triggering
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   return DEVICE_OK;
+}
+
+int CPiezo::SendStageSequence()
+{
+   ostringstream command; command.str("");
+   if (!ttl_trigger_supported_)
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+   command << addressChar_ << "RM X=0"; // clear ring buffer
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   for (unsigned i=0; i< sequence_.size(); i++)  // send new points
+   {
+      command.str("");
+      command << "LD " << axisLetter_ << "=" << sequence_[i]*unitMult_;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   }
+
+   return DEVICE_OK;
+}
+
+int CPiezo::ClearStageSequence()
+{
+   ostringstream command; command.str("");
+   if (!ttl_trigger_supported_)
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+   sequence_.clear();
+   command << addressChar_ << "RM X=0";  // clear ring buffer
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   return DEVICE_OK;
+}
+
+int CPiezo::AddToStageSequence(double position)
+{
+   if (!ttl_trigger_supported_)
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+   sequence_.push_back(position);
+   return DEVICE_OK;
 }
 
 
@@ -1662,6 +1762,24 @@ int CPiezo::OnRBDelayBetweenPoints(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmp);
       command << addressChar_ << "RT Z=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnUseSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   if (eAct == MM::BeforeGet)
+   {
+      if (ttl_trigger_enabled_)
+         pProp->Set(g_YesState);
+      else
+         pProp->Set(g_NoState);
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      ttl_trigger_enabled_ = (tmpstr.compare(g_YesState) == 0);
    }
    return DEVICE_OK;
 }
