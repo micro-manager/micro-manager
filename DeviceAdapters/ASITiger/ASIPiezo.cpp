@@ -380,7 +380,8 @@ int CPiezo::Initialize()
 
    }
 
-   if (FirmwareVersionAtLeast(3.09) && (hub_->IsDefinePresent(build, "IN0_INT")))
+   if (FirmwareVersionAtLeast(3.09) && (hub_->IsDefinePresent(build, "IN0_INT"))
+         && ring_buffer_supported_)
    {
       ttl_trigger_supported_ = true;
    }
@@ -1779,7 +1780,8 @@ int CPiezo::OnUseSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet) {
       string tmpstr;
       pProp->Get(tmpstr);
-      ttl_trigger_enabled_ = (tmpstr.compare(g_YesState) == 0);
+      ttl_trigger_enabled_ = (ttl_trigger_supported_ && (tmpstr.compare(g_YesState) == 0));
+      return OnUseSequence(pProp, MM::BeforeGet);  // refresh value
    }
    return DEVICE_OK;
 }
