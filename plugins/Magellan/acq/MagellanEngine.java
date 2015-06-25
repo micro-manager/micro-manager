@@ -304,8 +304,8 @@ public class MagellanEngine {
 //// image is acquired
 //core.snapImage();
     
-    private void updateHardware(final AcquisitionEvent event) throws InterruptedException {
-        //compare to last event to see what needs to change
+    private void updateHardware(final AcquisitionEvent event) throws InterruptedException {       
+       //compare to last event to see what needs to change
         if (lastEvent_ != null && lastEvent_.acquisition_ != event.acquisition_) {
             lastEvent_ = null; //update all hardware if switching to a new acquisition
         }
@@ -329,9 +329,6 @@ public class MagellanEngine {
             loopHardwareCommandRetries(new HardwareCommand() {
                 @Override
                 public void run() throws Exception {
-                   //TODO: for debugging
-                   Log.log("Acq event slice index " + event.sliceIndex_);
-                   Log.log("Acq event z position " + event.zPosition_);
                     core_.setPosition(zStage, event.zPosition_);
                 }
             }, "move Z device");
@@ -391,7 +388,8 @@ public class MagellanEngine {
         }
 
         /////////////////////////////Channels/////////////////////////////
-      if (lastEvent_ == null || event.channelIndex_ != lastEvent_.channelIndex_) {
+      if (lastEvent_ == null || event.channelIndex_ != lastEvent_.channelIndex_ 
+              && event.acquisition_.channels_ != null && !event.acquisition_.channels_.isEmpty()) {
          try {
             final ChannelSetting setting = event.acquisition_.channels_.get(event.channelIndex_);
             if (setting.use_ && setting.config_ != null) {

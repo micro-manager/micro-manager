@@ -48,6 +48,7 @@ import imagedisplay.DisplayPlus;
 import mmcloneclasses.graph.HistogramPanel.CursorListener;
 import imagedisplay.VirtualAcquisitionDisplay;
 import misc.HistogramUtils;
+import misc.Log;
 import misc.NumberUtils;
 
 
@@ -344,6 +345,7 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
    }
       
    private void loadDisplaySettings() {
+     try {
       contrastMax_ = cache_.getChannelMax(0);
       if (contrastMax_ < 0 || contrastMax_ > maxIntensity_) {
          contrastMax_ = maxIntensity_;
@@ -355,6 +357,9 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
          int index = (int) (Math.ceil(Math.log(histMax) / Math.log(2)) - 3);
          histRangeComboBox_.setSelectedIndex(index);
       }
+     } catch (Exception e) {
+        //whatever...
+     }
    }
    
    private void autoButtonAction() {

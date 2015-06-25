@@ -161,9 +161,11 @@ public class ExploreAcquisition extends Acquisition {
                updateLowestAndHighestSlices();
                //Add events for each channel, slice            
                for (int sliceIndex = getMinSliceIndex(); sliceIndex <= getMaxSliceIndex(); sliceIndex++) {
-                  for (int channelIndex = 0; channelIndex < channels_.size(); channelIndex++) {
-                     if (!channels_.get(channelIndex).uniqueEvent_ || !channels_.get(channelIndex).use_) {
-                        continue;
+                  for (int channelIndex = 0; channelIndex < Math.max(1,channels_.size()); channelIndex++) {
+                     if (channels_ != null && !channels_.isEmpty()) {
+                        if (!channels_.get(channelIndex).uniqueEvent_ || !channels_.get(channelIndex).use_) {
+                           continue;
+                        }
                      }
                      try {
                         //in case interupt occurs in between blocking calls of a really big loop
