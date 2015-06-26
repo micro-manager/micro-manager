@@ -202,13 +202,15 @@ public class ControllerUtils {
          //    scan settling time = delay before side
          final boolean isInterleaved = (spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED);
          final Devices.Keys xyDevice = Devices.Keys.XYSTAGE;
-         final double sliceDuration = computeActualSlicePeriod(sliceTiming);
-         
-         double requestedMotorSpeed = stepSizeUm * Math.sqrt(2.) / sliceDuration / numChannels;
+         double sliceDuration = computeActualSlicePeriod(sliceTiming);
          if (isInterleaved) {
-            // if alternating views need to move half speed to keep spacing same on each view 
-            requestedMotorSpeed *= 0.5;
+            // pretend like our slice takes twice as long so that we move the correct speed
+            // this has the effect of halving the motor speed
+            // but keeping the scan distance the same
+            sliceDuration *= 2;
          }
+         
+         final double requestedMotorSpeed = stepSizeUm * Math.sqrt(2.) / sliceDuration / numChannels;
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED, (float)requestedMotorSpeed);
          
          // ask for the actual speed and calculate the actual step size
