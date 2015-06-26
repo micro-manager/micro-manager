@@ -137,7 +137,7 @@ public class AutofocusPanel extends ListeningJPanel{
       });
       optionsPanel_.add(fitFunctionSelection, "wrap");
             
-      optionsPanel_.add(new JLabel("Minimum R²:"));
+      optionsPanel_.add(new JLabel("<html>Minimum R<sup>2</sup></html>:"));
       final JSpinner minimumR2Spinner = pu.makeSpinnerFloat(0.0, 1.0, 0.01,
               Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_AUTOFOCUS_MINIMUMR2, 0.75);
       optionsPanel_.add(minimumR2Spinner);
