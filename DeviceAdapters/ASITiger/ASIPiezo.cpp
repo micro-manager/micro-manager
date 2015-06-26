@@ -334,7 +334,7 @@ int CPiezo::Initialize()
    // add ring buffer properties if supported (starting version 2.81)
    if (FirmwareVersionAtLeast(2.81) && (build.vAxesProps[0] & BIT1))
    {
-      // get the number of positions from the BU X output
+      // get the number of ring buffer positions from the BU X output
       string rb_define = hub_->GetDefineString(build, "RING BUFFER");
 
       ring_buffer_capacity_ = 0;
@@ -376,6 +376,7 @@ int CPiezo::Initialize()
          CreateProperty(g_UseSequencePropertyName, g_NoState, MM::String, false, pAct);
          AddAllowedValue(g_UseSequencePropertyName, g_NoState);
          AddAllowedValue(g_UseSequencePropertyName, g_YesState);
+         ttl_trigger_enabled_ = false;
       }
 
    }
