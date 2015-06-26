@@ -225,9 +225,9 @@ public class ControllerUtils {
          }
          
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_FAST_START,
-               (float)(posUm.x / 1000d));
+               (float)((posUm.x - scanDistance/2) / 1000d));
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_FAST_STOP,
-               (float)((posUm.x + scanDistance) / 1000d));
+               (float)((posUm.x + scanDistance/2) / 1000d));
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SLOW_START,
                (float)(posUm.y / 1000d));
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SLOW_STOP,
