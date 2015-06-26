@@ -32,6 +32,7 @@ public:
    int SetTriggerOutConfig(MM::Device& device, MM::Core& core, unsigned char * config);
    int GetTriggerOutConfig(MM::Device& device, MM::Core& core, unsigned char *);
    int GetFirmwareVersion(MM::Device& device, MM::Core& core, std::string& version);
+   int GetFLICRAvailable(MM::Device& device, MM::Core& core, bool& available);
    int GetNrLines() { return nrLines_;}
 
    const static int maxLines_ = 8;
@@ -39,6 +40,7 @@ public:
 
 
 private:
+   unsigned char majorFWV_, minorFWV_;
    availableLines laserLines_[maxLines_];
    std::string port_;
    bool initialized_;

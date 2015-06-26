@@ -60,11 +60,13 @@ class LMM5Hub : public CGenericBase<LMM5Hub>
       int OnTriggerOutExposureTime(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    private:
+      unsigned char majorFWV_, minorFWV_;
       std::map<std::string, uint16_t> triggerConfigMap_;
       uint16_t triggerOutConfig_;
       uint16_t triggerOutExposureTime_;
       std::string port_;
       bool initialized_;
+      bool flicrAvailable_;
       int nrLines_;
 };
 

@@ -24,10 +24,10 @@
 
 #ifdef WIN32
    #include <winsock.h>
-
 #else
    #include <netinet/in.h>
 #endif
+#include <sstream>
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
@@ -78,9 +78,12 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 ////////////////////////////////
 
 LMM5Hub::LMM5Hub() :
+majorFWV_('0'),
+minorFWV_('0'),
 triggerOutConfig_ (0),
 port_ ("Undefined"),
-initialized_ (false)
+initialized_ (false),
+flicrAvailable_(false)
 {
    InitializeDefaultErrorMessages();
 
@@ -123,6 +126,17 @@ int LMM5Hub::Initialize()
    ret = CreateStringProperty("Firmware Version", version.c_str(), true);
    if (ret != DEVICE_OK)
       return ret;
+
+   // Does this controller support FLICR (i.e PWM)?
+   ret = g_Interface->GetFLICRAvailable(*this, *GetCoreCallback(), flicrAvailable_);
+   if (ret != DEVICE_OK)
+      return ret;
+   std::string msg = "This controller does not support FLICR";
+   if (!flicrAvailable_) 
+   {
+      msg = "This controller supports FLICR";
+   }
+   LogMessage(msg.c_str());
 
    // Power monitor
    /*
@@ -494,13 +508,13 @@ std::string LMM5Shutter::StateToLabel(int state)
       if (state & (1 << j)) 
          label += lines[j].name + "_";
    }
-   printf ("StateToLabel: state %d label %s\n", state, label.c_str());
+   // printf ("StateToLabel: state %d label %s\n", state, label.c_str());
    return label.substr(0,label.length()-1);
 }
 
 int LMM5Shutter::LabelToState(std::string label)
 {
-   printf ("LabelToState!!!!!!!!!!!!!!!!!!!!!!!!: label %s\n", label.c_str());
+   // printf ("LabelToState!!!!!!!!!!!!!!!!!!!!!!!!: label %s\n", label.c_str());
    int state = 0;
    availableLines* lines = g_Interface->getAvailableLaserLines();
    // tokenize the label string on "/"

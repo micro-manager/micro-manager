@@ -196,9 +196,9 @@ int SpectralLMM5Interface::GetTransmission(MM::Device& device, MM::Core& core, l
    memcpy(&tr, answer + 1, 2);
    tr = ntohs(tr);
    transmission = tr/10;
-   std::ostringstream os;
-   os << "Transmission for line" << laserLine << " is: " << transmission;
-   printf("%s tr: %d\n", os.str().c_str(), tr);
+   //std::ostringstream os;
+   //os << "Transmission for line" << laserLine << " is: " << transmission;
+   //printf("%s tr: %d\n", os.str().c_str(), tr);
 
    return DEVICE_OK;
 }
@@ -263,7 +263,7 @@ int SpectralLMM5Interface::SetExposureConfig(MM::Device& device, MM::Core& core,
 
    const unsigned long answerLen = 1;
    unsigned char answer[answerLen];
-   printf ("Set Exposure confign \n");
+   printf ("Set Exposure config \n");
    int ret = ExecuteCommand(device, core, buf, bufLen, answer, answerLen, read);
    if (ret != DEVICE_OK)
       return ret;
@@ -370,6 +370,38 @@ int SpectralLMM5Interface::GetFirmwareVersion(MM::Device& device, MM::Core& core
       hex_oss << std::setfill('0') << std::setw(2) << std::hex << static_cast<unsigned int>(byte);
    }
    version = hex_oss.str();
+   majorFWV_ = answer[0];
+   minorFWV_ = answer[1];
+
+   return DEVICE_OK;
+}
+
+int SpectralLMM5Interface::GetFLICRAvailable(MM::Device& device, MM::Core& core, bool& available) 
+{
+   available = false;
+   if (majorFWV_ != 1 || minorFWV_ < 30) {  // FLICR only available in firmware version 1.30 and higher (note that older majorversions are 2, 162, and 178)
+      return DEVICE_OK; 
+   }
+   // TODO: check firmware version first
+   const unsigned long bufLen = 3;
+   unsigned char buf[bufLen];
+   buf[0] = 0x52;
+   buf[1] = 0x10;
+   buf[2] = 0x02;
+   const unsigned long answerLen = 3;
+   unsigned char answer[answerLen];
+   unsigned long read;
+   int ret = ExecuteCommand(device, core, buf, bufLen, answer, answerLen, read);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if ( read < answerLen)
+      return ERR_UNEXPECTED_ANSWER;
+
+   available = false;
+   if (answer[2] == 0x01) {
+      available = true;
+   } 
 
    return DEVICE_OK;
 }
