@@ -263,7 +263,6 @@ int SpectralLMM5Interface::SetExposureConfig(MM::Device& device, MM::Core& core,
 
    const unsigned long answerLen = 1;
    unsigned char answer[answerLen];
-   printf ("Set Exposure config \n");
    int ret = ExecuteCommand(device, core, buf, bufLen, answer, answerLen, read);
    if (ret != DEVICE_OK)
       return ret;
@@ -283,7 +282,6 @@ int SpectralLMM5Interface::GetExposureConfig(MM::Device& device, MM::Core& core,
    const unsigned long answerLen = 70;
    unsigned char answer[answerLen];
    unsigned long read;
-   printf ("Detecting Exposure Config: \n");
    int ret = ExecuteCommand(device, core, buf, bufLen, answer, answerLen, read);
    if (ret != DEVICE_OK)
       return ret;
@@ -310,7 +308,6 @@ int SpectralLMM5Interface::SetTriggerOutConfig(MM::Device& device, MM::Core& cor
 
    const unsigned long answerLen = 10;
    unsigned char answer[answerLen];
-   printf ("Set Trigger Out \n");
    int ret = ExecuteCommand(device, core, buf, bufLen, answer, answerLen, read);
    if (ret != DEVICE_OK)
       return ret;
@@ -330,7 +327,6 @@ int SpectralLMM5Interface::GetTriggerOutConfig(MM::Device& device, MM::Core& cor
    const unsigned long answerLen = 10;
    unsigned char answer[answerLen];
    unsigned long read;
-   printf ("Detecting Trigger out Config: \n");
    int ret = ExecuteCommand(device, core, buf, bufLen, answer, answerLen, read);
    if (ret != DEVICE_OK)
       return ret;
@@ -363,15 +359,11 @@ int SpectralLMM5Interface::GetFirmwareVersion(MM::Device& device, MM::Core& core
       return ERR_UNEXPECTED_ANSWER;
 
    // The firmware version is a two-byte word.
-   std::ostringstream hex_oss;
-   hex_oss << "0x";
-   for (unsigned long i = 1; i < read; i++) {
-      unsigned char byte = answer[i];
-      hex_oss << std::setfill('0') << std::setw(2) << std::hex << static_cast<unsigned int>(byte);
-   }
-   version = hex_oss.str();
-   majorFWV_ = answer[0];
-   minorFWV_ = answer[1];
+   std::ostringstream oss;
+   oss << static_cast<unsigned int>(answer[1]) << "." << static_cast<unsigned int>(answer[2]);
+   version = oss.str();
+   majorFWV_ = answer[1];
+   minorFWV_ = answer[2];
 
    return DEVICE_OK;
 }
@@ -388,7 +380,7 @@ int SpectralLMM5Interface::GetFLICRAvailable(MM::Device& device, MM::Core& core,
    buf[0] = 0x52;
    buf[1] = 0x10;
    buf[2] = 0x02;
-   const unsigned long answerLen = 3;
+   const unsigned long answerLen = 4;
    unsigned char answer[answerLen];
    unsigned long read;
    int ret = ExecuteCommand(device, core, buf, bufLen, answer, answerLen, read);
@@ -399,9 +391,213 @@ int SpectralLMM5Interface::GetFLICRAvailable(MM::Device& device, MM::Core& core,
       return ERR_UNEXPECTED_ANSWER;
 
    available = false;
-   if (answer[2] == 0x01) {
+   if (answer[3] == 0x01) {
       available = true;
    } 
+
+   return DEVICE_OK;
+}
+
+
+int SpectralLMM5Interface::GetFLICRAvailableByLine(MM::Device& device, MM::Core& core, long laserLine, bool& available) 
+{
+   available = false;
+   if (majorFWV_ != 1 || minorFWV_ < 30) {  // FLICR only available in firmware version 1.30 and higher (note that older majorversions are 2, 162, and 178)
+      return DEVICE_OK; 
+   }
+   // TODO: check firmware version first
+   const unsigned long bufLen = 4;
+   unsigned char buf[bufLen];
+   buf[0] = 0x52;
+   buf[1] = 0x10;
+   buf[2] = 0x03;
+   buf[3] = (unsigned char) laserLine;
+   const unsigned long answerLen = 4;
+   unsigned char answer[answerLen];
+   unsigned long read;
+   int ret = ExecuteCommand(device, core, buf, bufLen, answer, answerLen, read);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if ( read < answerLen)
+      return ERR_UNEXPECTED_ANSWER;
+
+   available = false;
+   if (answer[0] != 0X52 || answer[1] != 0x10 || answer[2] != 0x03)
+      return ERR_UNEXPECTED_ANSWER;
+   if (answer[3] == 0x01) {
+      available = true;
+   } 
+
+   return DEVICE_OK;
+}
+
+
+int SpectralLMM5Interface::GetMaxFLICRValue(MM::Device& device, MM::Core& core, long laserLine, uint16_t & maxValue)
+{
+   maxValue = 10000;
+   if (majorFWV_ != 1 || minorFWV_ < 30) {  // FLICR only available in firmware version 1.30 and higher (note that older majorversions are 2, 162, and 178)
+      return DEVICE_OK; 
+   }
+   // TODO: check firmware version first
+   const unsigned long bufLen = 4;
+   unsigned char buf[bufLen];
+   buf[0] = 0x52;
+   buf[1] = 0x10;
+   buf[2] = 0x04;
+   buf[3] = (unsigned char) laserLine;
+   const unsigned long answerLen = 5;
+   unsigned char answer[answerLen];
+   unsigned long read;
+   int ret = ExecuteCommand(device, core, buf, bufLen, answer, answerLen, read);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if ( read < answerLen)
+      return ERR_UNEXPECTED_ANSWER;
+
+   if (answer[0] != 0X52 || answer[1] != 0x10 || answer[2] != 0x04)
+      return ERR_UNEXPECTED_ANSWER;
+   uint16_t highByte = answer[3];
+   highByte = highByte << 8;
+   uint16_t lowByte = answer[4];
+   maxValue = highByte + lowByte;
+
+   return DEVICE_OK;
+}
+
+
+int SpectralLMM5Interface::SetFLICRValue(MM::Device& device, MM::Core& core, long laserLine, uint16_t value) 
+{
+   const unsigned long bufLen = 7;
+   unsigned char buf[bufLen];
+   buf[0] = 0x53;
+   buf[1] = 0x90;
+   buf[2] = 0x10;
+   buf[3] = 0x01;
+   buf[4] = (unsigned char) laserLine;
+   buf[5] = (value >> (8)) & 0xff;
+   buf[6] = value & 0xff;
+   const unsigned long answerLen = 1;
+   unsigned char answer[answerLen];
+   unsigned long read;
+   int ret = ExecuteCommand(device, core, buf, bufLen, answer, answerLen, read);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if ( read < answerLen)
+      return ERR_UNEXPECTED_ANSWER;
+
+   if (answer[0] != 0X53)
+      return ERR_UNEXPECTED_ANSWER;
+
+   return DEVICE_OK;
+}
+ 
+int SpectralLMM5Interface::GetFLICRValue(MM::Device& device, MM::Core& core, long laserLine, uint16_t& value)
+{
+   const unsigned long bufLen = 4;
+   unsigned char buf[bufLen];
+   buf[0] = 0x52;
+   buf[1] = 0x10;
+   buf[2] = 0x01;
+   buf[3] = (unsigned char) laserLine;
+   const unsigned long answerLen = 5;
+   unsigned char answer[answerLen];
+   unsigned long read;
+   int ret = ExecuteCommand(device, core, buf, bufLen, answer, answerLen, read);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if ( read < answerLen)
+      return ERR_UNEXPECTED_ANSWER;
+
+   if (answer[0] != 0X52 || answer[1] != 0x10 || answer[2] != 0x01)
+      return ERR_UNEXPECTED_ANSWER;
+
+   uint16_t highByte = answer[3];
+   highByte = highByte << 8;
+   uint16_t lowByte = answer[4];
+   value = highByte + lowByte;
+
+   return DEVICE_OK;
+}
+
+int SpectralLMM5Interface::GetNumberOfOutputs(MM::Device& device, MM::Core& core, uint16_t& nrOutputs)
+{
+   // if the firmware does not support this command, return 1
+      if (majorFWV_ != 1 || minorFWV_ < 30) { 
+         nrOutputs = 1;
+      return DEVICE_OK; 
+   }
+
+   const unsigned long bufLen = 3;
+   unsigned char buf[bufLen];
+   buf[0] = 0x52;
+   buf[1] = 0x20;
+   buf[2] = 0x03;
+   const unsigned long answerLen = 4;
+   unsigned char answer[answerLen];
+   unsigned long read;
+   int ret = ExecuteCommand(device, core, buf, bufLen, answer, answerLen, read);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if ( read < answerLen)
+      return ERR_UNEXPECTED_ANSWER;
+
+   if (answer[0] != 0X52 || answer[1] != 0x20 || answer[2] != 0x03)
+      return ERR_UNEXPECTED_ANSWER;
+
+   nrOutputs = answer[3];
+
+   return DEVICE_OK;
+}
+
+int SpectralLMM5Interface::GetOutput(MM::Device& device, MM::Core& core, uint16_t& output)
+{
+   const unsigned long bufLen = 2;
+   unsigned char buf[bufLen];
+   buf[0] = 0x55;
+   buf[1] = 0x03;
+   const unsigned long answerLen = 3;
+   unsigned char answer[answerLen];
+   unsigned long read;
+   int ret = ExecuteCommand(device, core, buf, bufLen, answer, answerLen, read);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if ( read < answerLen)
+      return ERR_UNEXPECTED_ANSWER;
+
+   if (answer[0] != buf[0] || answer[1] != buf[1])
+      return ERR_UNEXPECTED_ANSWER;
+
+   output = answer[2];
+
+   return DEVICE_OK;
+}
+
+int SpectralLMM5Interface::SetOutput(MM::Device& device, MM::Core& core, uint16_t output)
+{
+   const unsigned long bufLen = 4;
+   unsigned char buf[bufLen];
+   buf[0] = 0x54;
+   buf[1] = 0xA7;
+   buf[2] = 0x03;
+   buf[3] = (unsigned char) output;
+   const unsigned long answerLen = 1;
+   unsigned char answer[answerLen];
+   unsigned long read;
+   int ret = ExecuteCommand(device, core, buf, bufLen, answer, answerLen, read);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if ( read < answerLen)
+      return ERR_UNEXPECTED_ANSWER;
+
+   if (answer[0] != 0X54)
+      return ERR_UNEXPECTED_ANSWER;
 
    return DEVICE_OK;
 }

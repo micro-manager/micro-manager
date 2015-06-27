@@ -10,6 +10,8 @@ struct availableLines {
    double waveLength;
    bool present;
    std::string name;
+   bool flicrAvailable;
+   uint16_t maxFLICR;
 };
 
 class SpectralLMM5Interface
@@ -33,6 +35,13 @@ public:
    int GetTriggerOutConfig(MM::Device& device, MM::Core& core, unsigned char *);
    int GetFirmwareVersion(MM::Device& device, MM::Core& core, std::string& version);
    int GetFLICRAvailable(MM::Device& device, MM::Core& core, bool& available);
+   int GetFLICRAvailableByLine(MM::Device& device, MM::Core& core, long laserLine, bool& available);
+   int GetMaxFLICRValue(MM::Device& device, MM::Core& core, long laserLine, uint16_t& maxValue);
+   int SetFLICRValue(MM::Device& device, MM::Core& core, long laserLine, uint16_t value);
+   int GetFLICRValue(MM::Device& device, MM::Core& core, long laserLine, uint16_t& value);
+   int GetNumberOfOutputs(MM::Device& device, MM::Core& core, uint16_t& nrOutputs);
+   int GetOutput(MM::Device& device, MM::Core& core, uint16_t& output);
+   int SetOutput(MM::Device& device, MM::Core& core, uint16_t output);
    int GetNrLines() { return nrLines_;}
 
    const static int maxLines_ = 8;

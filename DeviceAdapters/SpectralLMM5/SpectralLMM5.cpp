@@ -83,7 +83,8 @@ minorFWV_('0'),
 triggerOutConfig_ (0),
 port_ ("Undefined"),
 initialized_ (false),
-flicrAvailable_(false)
+flicrAvailable_(false),
+nrOutputs_(0)
 {
    InitializeDefaultErrorMessages();
 
@@ -132,11 +133,13 @@ int LMM5Hub::Initialize()
    if (ret != DEVICE_OK)
       return ret;
    std::string msg = "This controller does not support FLICR";
-   if (!flicrAvailable_) 
+   if (flicrAvailable_) 
    {
       msg = "This controller supports FLICR";
    }
    LogMessage(msg.c_str());
+
+  
 
    // Power monitor
    /*
@@ -150,15 +153,52 @@ int LMM5Hub::Initialize()
    {
       if (lines[i].present) 
       {
-         CPropertyActionEx *pEx = new CPropertyActionEx(this, &LMM5Hub::OnTransmission, (long) i);
-         std::ostringstream propName;
-         propName << "Transmission (%) " << lines[i].name; 
-         ret = CreateProperty(propName.str().c_str(), "100.0", MM::Float, false, pEx);
-         if (ret != DEVICE_OK)
-            return ret;
-         SetPropertyLimits(propName.str().c_str(), 0.0, 100.0);
+			if (lines[i].waveLength >= 100) 
+			{
+			   CPropertyActionEx *pEx = new CPropertyActionEx(this, &LMM5Hub::OnTransmission, (long) i);
+			   std::ostringstream propName;
+			   propName << "Transmission (%) " << lines[i].name; 
+			   ret = CreateProperty(propName.str().c_str(), "100.0", MM::Float, false, pEx);
+			   if (ret != DEVICE_OK)
+				   return ret;
+			   SetPropertyLimits(propName.str().c_str(), 0.0, 100.0);
+			}
+         if (flicrAvailable_) 
+         {
+            // check if this line has flicr available
+            ret = g_Interface->GetFLICRAvailableByLine(*this, *GetCoreCallback(), i, lines[i].flicrAvailable);
+            if (ret != DEVICE_OK)
+               return ret;
+            if (lines[i].flicrAvailable) 
+            {
+               // check for maximum FLICR value
+               ret = g_Interface->GetMaxFLICRValue(*this, *GetCoreCallback(), i, lines[i].maxFLICR);
+               if (ret != DEVICE_OK)
+                  return ret;
+               std::ostringstream os;
+               os << "Max FLICR for line " << i << " is: " << lines[i].maxFLICR;
+               LogMessage(os.str().c_str());
+               // ad FLICR/PWM property
+               CPropertyActionEx *pEx = new CPropertyActionEx(this, &LMM5Hub::OnFlicr, (long) i);
+               std::ostringstream fPropName;
+               fPropName << "PWM (%) " << lines[i].name;
+               ret = CreateProperty(fPropName.str().c_str(), "1.0", MM::String, false, pEx);
+               if (ret != DEVICE_OK)
+                  return ret;
+               // populate with presets
+               uint16_t val = 1;
+               while (val <= lines[i].maxFLICR) 
+               {
+                  std::string valStr;
+                  IntToPerc(val, valStr);
+                  AddAllowedValue(fPropName.str().c_str(), valStr.c_str());
+                  val = val * 10;
+               }
+            }
+         }
       }
    }
+   
    
    // Exposure Configuration
    /*
@@ -189,6 +229,19 @@ int LMM5Hub::Initialize()
       // Trigger Exposure Time
       pAct = new CPropertyAction(this, &LMM5Hub::OnTriggerOutExposureTime);
       CreateProperty("TriggerExpTime(0.1ms)", "", MM::Integer, false, pAct);
+   }
+
+   // outputs are available only since firmware 1.30.  Our interface will always return 1 for firmware that is older
+   ret = g_Interface->GetNumberOfOutputs(*this, *GetCoreCallback(), nrOutputs_);
+   if (nrOutputs_ > 1) 
+   {
+      CPropertyAction *pAct = new CPropertyAction(this, &LMM5Hub::OnOutputSelect);
+      CreateProperty("FiberOutput", "0", MM::Integer, false, pAct);
+      for (int i = 0; i < nrOutputs_; i++) {
+         std::ostringstream os;
+         os << i;
+         AddAllowedValue("FiberOutput", os.str().c_str());
+      }
    }
 
    ret = UpdateStatus();
@@ -245,6 +298,55 @@ int LMM5Hub::OnTransmission(MM::PropertyBase* pProp, MM::ActionType pAct, long l
 
    return DEVICE_OK;
 }
+
+int LMM5Hub::OnFlicr(MM::PropertyBase* pProp, MM::ActionType pAct, long line)
+{  
+   uint16_t flicr;
+   if (pAct == MM::BeforeGet)
+   {
+      int ret = g_Interface->GetFLICRValue(*this, *GetCoreCallback(), line, flicr);
+      if (ret != DEVICE_OK)
+         return ret;
+      // present to the user as a fraction
+      std::string val;
+      IntToPerc(flicr, val);
+      pProp->Set(val.c_str());
+   }
+   else if (pAct == MM::AfterSet)
+   {
+      std::string val;
+      pProp->Get(val);
+      uint16_t flicr;
+      PercToInt(val, flicr); 
+      int ret = g_Interface->SetFLICRValue(*this, *GetCoreCallback(), line, flicr);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+
+   return DEVICE_OK;
+
+
+}
+
+// converts integer to a percentage (i.e. 100 becomes 1%, 1000 becomes 0.1%, etc...
+void LMM5Hub::IntToPerc(uint16_t value, std::string& result)
+{
+   double perc = 100.0 * 1.0 / (double) value;
+   std::ostringstream os;
+   os << perc << "%";
+   result = os.str();
+}
+
+void LMM5Hub::PercToInt(std::string in, uint16_t& result) 
+{
+   std::string n = in.substr(0, n.size() - 1);
+   double val;
+   std::stringstream convert(n);
+   convert >> val;
+   val = val / 100.0;
+   result = (uint16_t) (1.0 / val);
+}
+
 
 int LMM5Hub::OnExposureConfig(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
@@ -338,6 +440,28 @@ int LMM5Hub::OnTriggerOutExposureTime(MM::PropertyBase* pProp, MM::ActionType pA
       memcpy(buf, &config, 2);
       memcpy(buf + 2, &time, 2);
       int ret = g_Interface->SetTriggerOutConfig(*this, *GetCoreCallback(), buf);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+
+   return DEVICE_OK;
+}
+
+int LMM5Hub::OnOutputSelect(MM::PropertyBase* pProp, MM::ActionType pAct)
+{
+   uint16_t output;
+   if (pAct == MM::BeforeGet)
+   {
+      int ret = g_Interface->GetOutput(*this, *GetCoreCallback(), output);
+      if (ret != DEVICE_OK)
+         return ret;
+      pProp->Set((long) output);
+   }
+   else if (pAct == MM::AfterSet)
+   {
+      long output;
+      pProp->Get(output);
+      int ret = g_Interface->SetOutput(*this, *GetCoreCallback(), (uint16_t) output);
       if (ret != DEVICE_OK)
          return ret;
    }

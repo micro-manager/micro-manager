@@ -55,19 +55,25 @@ class LMM5Hub : public CGenericBase<LMM5Hub>
       int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
       // int OnPowerMonitor(MM::PropertyBase* pProp, MM::ActionType eAct);
       int OnTransmission(MM::PropertyBase* pProp, MM::ActionType eAct, long line);
+      int OnFlicr(MM::PropertyBase* pProp, MM::ActionType eAct, long line);
       int OnExposureConfig(MM::PropertyBase* pProp, MM::ActionType eAct);
+      int OnOutputSelect(MM::PropertyBase* pProp, MM::ActionType eAct);
       int OnTriggerOutConfig(MM::PropertyBase* pProp, MM::ActionType eAct);
       int OnTriggerOutExposureTime(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    private:
+      void IntToPerc(uint16_t value, std::string& result);
+      void PercToInt(std::string in, uint16_t& result);
       unsigned char majorFWV_, minorFWV_;
       std::map<std::string, uint16_t> triggerConfigMap_;
       uint16_t triggerOutConfig_;
       uint16_t triggerOutExposureTime_;
+      uint16_t flicrMaxValue_;
       std::string port_;
       bool initialized_;
       bool flicrAvailable_;
       int nrLines_;
+      uint16_t nrOutputs_;
 };
 
 class LMM5Shutter : public CShutterBase<LMM5Shutter>
