@@ -153,7 +153,7 @@ public class CameraModes {
                   + getKeyFromPrefCode(origCode) + "\" is not valid.  Changing to default.");
             if (jcb_.getSelectedItem() != null) {
                prefs_.putInt(MyStrings.PanelNames.SETTINGS.toString(),
-                  Properties.Keys.PLUGIN_CAMERA_MODE, ((Keys) jcb_.getSelectedItem()).getPrefCode());     
+                  Properties.Keys.PLUGIN_CAMERA_MODE, ((Keys) jcb_.getSelectedItem()).getPrefCode());
             }
          }
       }//updateSelections

@@ -763,6 +763,8 @@ public class ControllerUtils {
     * @return duration in ms
     */
    // TODO should use function in AcquisitionPanel instead of this one or else refactor
+   // NOTE THAT THIS VALUE IS NOT ACCURATE, ESPECIALLY FOR STAGE SCANNING
+   // the right thing is probably to create a separate acquisition object
    private double computeActualVolumeDuration(
            final int numChannels, 
            final int numSlices, 
@@ -790,7 +792,7 @@ public class ControllerUtils {
     * Compute slice period in ms based on controller's timing settings.
     * @return period in ms
     */
-   // TODO should use function in AcquisitionPanel instead of this one or else refactor
+   // TODO should have an acquisition object with this method
    private double computeActualSlicePeriod(
          final float delayScanValue,
          final int lineScanPeriod,
