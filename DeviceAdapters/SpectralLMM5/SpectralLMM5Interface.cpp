@@ -33,6 +33,7 @@
 
 SpectralLMM5Interface::SpectralLMM5Interface(std::string port, MM::PortType portType) :
    laserLinesDetected_ (false),
+   firmwareDetected_(false),
    nrLines_ (5)
 {
    port_ = port;
@@ -101,9 +102,11 @@ int SpectralLMM5Interface::ExecuteCommand(MM::Device& device, MM::Core& core, un
    return DEVICE_OK;
 }
 
-int SpectralLMM5Interface::DetectLaserLines(MM::Device& device, MM::Core& core) {
+int SpectralLMM5Interface::DetectLaserLines(MM::Device& device, MM::Core& core) 
+{
    if (laserLinesDetected_)
       return DEVICE_OK;
+
    const unsigned long bufLen = 1;
    unsigned char buf[bufLen];
    buf[0]=0x08;
@@ -120,7 +123,6 @@ int SpectralLMM5Interface::DetectLaserLines(MM::Device& device, MM::Core& core) 
 
    uint16_t* lineP = (uint16_t*) (answer + 1);
    nrLines_ = (read-1)/2;
-   printf("NrLines: %d\n", nrLines_);
    char outputPort = 'A';
    for (int i=0; i<nrLines_; i++) 
    {
@@ -171,7 +173,8 @@ int SpectralLMM5Interface::SetTransmission(MM::Device& device, MM::Core& core, l
    return DEVICE_OK;
 }
 
-int SpectralLMM5Interface::GetTransmission(MM::Device& device, MM::Core& core, long laserLine, double& transmission) {
+int SpectralLMM5Interface::GetTransmission(MM::Device& device, MM::Core& core, long laserLine, double& transmission) 
+{
    const unsigned long bufLen = 2;
    unsigned char buf[bufLen];
    buf[0]=0x05;
@@ -196,9 +199,6 @@ int SpectralLMM5Interface::GetTransmission(MM::Device& device, MM::Core& core, l
    memcpy(&tr, answer + 1, 2);
    tr = ntohs(tr);
    transmission = tr/10;
-   //std::ostringstream os;
-   //os << "Transmission for line" << laserLine << " is: " << transmission;
-   //printf("%s tr: %d\n", os.str().c_str(), tr);
 
    return DEVICE_OK;
 }
@@ -248,7 +248,8 @@ int SpectralLMM5Interface::GetShutterState(MM::Device& device, MM::Core& core, i
    return DEVICE_OK;
 }
 
-int SpectralLMM5Interface::SetExposureConfig(MM::Device& device, MM::Core& core, std::string config) {
+int SpectralLMM5Interface::SetExposureConfig(MM::Device& device, MM::Core& core, std::string config) 
+{
    unsigned char* buf;
    int length = (int) config.size()/2;
    unsigned long bufLen = length +1;
@@ -371,10 +372,14 @@ int SpectralLMM5Interface::GetFirmwareVersion(MM::Device& device, MM::Core& core
 int SpectralLMM5Interface::GetFLICRAvailable(MM::Device& device, MM::Core& core, bool& available) 
 {
    available = false;
+   if (!firmwareDetected_) 
+   {
+      std::string version;
+      GetFirmwareVersion(device, core, version);
+   }
    if (majorFWV_ != 1 || minorFWV_ < 30) {  // FLICR only available in firmware version 1.30 and higher (note that older majorversions are 2, 162, and 178)
       return DEVICE_OK; 
    }
-   // TODO: check firmware version first
    const unsigned long bufLen = 3;
    unsigned char buf[bufLen];
    buf[0] = 0x52;
@@ -402,10 +407,14 @@ int SpectralLMM5Interface::GetFLICRAvailable(MM::Device& device, MM::Core& core,
 int SpectralLMM5Interface::GetFLICRAvailableByLine(MM::Device& device, MM::Core& core, long laserLine, bool& available) 
 {
    available = false;
+   if (!firmwareDetected_) 
+   {
+      std::string version;
+      GetFirmwareVersion(device, core, version);
+   }
    if (majorFWV_ != 1 || minorFWV_ < 30) {  // FLICR only available in firmware version 1.30 and higher (note that older majorversions are 2, 162, and 178)
       return DEVICE_OK; 
    }
-   // TODO: check firmware version first
    const unsigned long bufLen = 4;
    unsigned char buf[bufLen];
    buf[0] = 0x52;
@@ -526,7 +535,12 @@ int SpectralLMM5Interface::GetFLICRValue(MM::Device& device, MM::Core& core, lon
 int SpectralLMM5Interface::GetNumberOfOutputs(MM::Device& device, MM::Core& core, uint16_t& nrOutputs)
 {
    // if the firmware does not support this command, return 1
-      if (majorFWV_ != 1 || minorFWV_ < 30) { 
+   if (!firmwareDetected_) 
+   {
+      std::string version;
+      GetFirmwareVersion(device, core, version);
+   }
+   if (majorFWV_ != 1 || minorFWV_ < 30) { 
          nrOutputs = 1;
       return DEVICE_OK; 
    }

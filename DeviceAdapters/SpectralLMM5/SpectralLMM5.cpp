@@ -83,8 +83,7 @@ minorFWV_('0'),
 triggerOutConfig_ (0),
 port_ ("Undefined"),
 initialized_ (false),
-flicrAvailable_(false),
-nrOutputs_(0)
+flicrAvailable_(false)
 {
    InitializeDefaultErrorMessages();
 
@@ -138,14 +137,6 @@ int LMM5Hub::Initialize()
       msg = "This controller supports FLICR";
    }
    LogMessage(msg.c_str());
-
-  
-
-   // Power monitor
-   /*
-   CPropertyAction* pAct = new CPropertyAction(this, &LMM5Hub::OnPowerMonitor);
-   CreateProperty("PowerMonitor", "0", MM::Float, false, pAct);
-   */
 
    // For each laser line, create transmission properties 
    availableLines* lines = g_Interface->getAvailableLaserLines();
@@ -229,19 +220,6 @@ int LMM5Hub::Initialize()
       // Trigger Exposure Time
       pAct = new CPropertyAction(this, &LMM5Hub::OnTriggerOutExposureTime);
       CreateProperty("TriggerExpTime(0.1ms)", "", MM::Integer, false, pAct);
-   }
-
-   // outputs are available only since firmware 1.30.  Our interface will always return 1 for firmware that is older
-   ret = g_Interface->GetNumberOfOutputs(*this, *GetCoreCallback(), nrOutputs_);
-   if (nrOutputs_ > 1) 
-   {
-      CPropertyAction *pAct = new CPropertyAction(this, &LMM5Hub::OnOutputSelect);
-      CreateProperty("FiberOutput", "0", MM::Integer, false, pAct);
-      for (int i = 0; i < nrOutputs_; i++) {
-         std::ostringstream os;
-         os << i;
-         AddAllowedValue("FiberOutput", os.str().c_str());
-      }
    }
 
    ret = UpdateStatus();
@@ -447,27 +425,6 @@ int LMM5Hub::OnTriggerOutExposureTime(MM::PropertyBase* pProp, MM::ActionType pA
    return DEVICE_OK;
 }
 
-int LMM5Hub::OnOutputSelect(MM::PropertyBase* pProp, MM::ActionType pAct)
-{
-   uint16_t output;
-   if (pAct == MM::BeforeGet)
-   {
-      int ret = g_Interface->GetOutput(*this, *GetCoreCallback(), output);
-      if (ret != DEVICE_OK)
-         return ret;
-      pProp->Set((long) output);
-   }
-   else if (pAct == MM::AfterSet)
-   {
-      long output;
-      pProp->Get(output);
-      int ret = g_Interface->SetOutput(*this, *GetCoreCallback(), (uint16_t) output);
-      if (ret != DEVICE_OK)
-         return ret;
-   }
-
-   return DEVICE_OK;
-}
 
 /*
 int LMM5Hub::OnPowerMonitor(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -481,7 +438,8 @@ int LMM5Hub::OnPowerMonitor(MM::PropertyBase* pProp, MM::ActionType eAct)
 LMM5Shutter::LMM5Shutter() :
    changedTime_(0.0),
    state_(0),
-   open_ (false)
+   open_ (false),
+   nrOutputs_(0)
 {
    InitializeDefaultErrorMessages();
 
@@ -514,7 +472,19 @@ int LMM5Shutter::Initialize()
       if (lines[i].present) 
          lineMask = lineMask | (1 << i);
    
-   printf ("LineMask: %lx\n", lineMask);
+   
+   // outputs are available only since firmware 1.30.  Our interface will always return 1 for firmware that is older
+   ret = g_Interface->GetNumberOfOutputs(*this, *GetCoreCallback(), nrOutputs_);
+   if (nrOutputs_ > 1) 
+   {
+      CPropertyAction *pAct = new CPropertyAction(this, &LMM5Shutter::OnOutputSelect);
+      CreateProperty("FiberOutput", "0", MM::Integer, false, pAct);
+      for (int i = 0; i < nrOutputs_; i++) {
+         std::ostringstream os;
+         os << i;
+         AddAllowedValue("FiberOutput", os.str().c_str());
+      }
+   }
 
    // We roll our own implementation of State and Label here (since we are a Shutter device, not a State Device
    // State
@@ -551,9 +521,12 @@ int LMM5Shutter::Initialize()
    {
       if (lines[i].present) 
       {
-         CPropertyActionEx *pActEx = new CPropertyActionEx(this, &LMM5Shutter::OnStateEx, i);
-         CreateProperty(lines[i].name.c_str(), "0", MM::Integer, false, pActEx);
-         SetPropertyLimits(lines[i].name.c_str(), 0, 1);
+         if (lines[i].waveLength >= 100 || nrOutputs_ == 1)
+         {
+            CPropertyActionEx *pActEx = new CPropertyActionEx(this, &LMM5Shutter::OnStateEx, i);
+            CreateProperty(lines[i].name.c_str(), "0", MM::Integer, false, pActEx);
+            SetPropertyLimits(lines[i].name.c_str(), 0, 1);
+         }
       }
    }
 
@@ -718,6 +691,29 @@ int LMM5Shutter::OnStateEx(MM::PropertyBase* pProp, MM::ActionType pAct, long li
          state_ = ~invState;
       }
       SetOpen(open_);
+   }
+
+   return DEVICE_OK;
+}
+
+
+int LMM5Shutter::OnOutputSelect(MM::PropertyBase* pProp, MM::ActionType pAct)
+{
+   uint16_t output;
+   if (pAct == MM::BeforeGet)
+   {
+      int ret = g_Interface->GetOutput(*this, *GetCoreCallback(), output);
+      if (ret != DEVICE_OK)
+         return ret;
+      pProp->Set((long) output);
+   }
+   else if (pAct == MM::AfterSet)
+   {
+      long output;
+      pProp->Get(output);
+      int ret = g_Interface->SetOutput(*this, *GetCoreCallback(), (uint16_t) output);
+      if (ret != DEVICE_OK)
+         return ret;
    }
 
    return DEVICE_OK;

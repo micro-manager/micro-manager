@@ -54,6 +54,7 @@ private:
    std::string port_;
    bool initialized_;
    bool laserLinesDetected_;
+   bool firmwareDetected_;
    MM::PortType portType_;
    int nrLines_;
 };

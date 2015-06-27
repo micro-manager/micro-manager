@@ -57,7 +57,6 @@ class LMM5Hub : public CGenericBase<LMM5Hub>
       int OnTransmission(MM::PropertyBase* pProp, MM::ActionType eAct, long line);
       int OnFlicr(MM::PropertyBase* pProp, MM::ActionType eAct, long line);
       int OnExposureConfig(MM::PropertyBase* pProp, MM::ActionType eAct);
-      int OnOutputSelect(MM::PropertyBase* pProp, MM::ActionType eAct);
       int OnTriggerOutConfig(MM::PropertyBase* pProp, MM::ActionType eAct);
       int OnTriggerOutExposureTime(MM::PropertyBase* pProp, MM::ActionType eAct);
 
@@ -73,7 +72,6 @@ class LMM5Hub : public CGenericBase<LMM5Hub>
       bool initialized_;
       bool flicrAvailable_;
       int nrLines_;
-      uint16_t nrOutputs_;
 };
 
 class LMM5Shutter : public CShutterBase<LMM5Shutter>
@@ -100,6 +98,7 @@ public:
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnLabel(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStateEx(MM::PropertyBase* pProp, MM::ActionType eAct, long line);
+   int OnOutputSelect(MM::PropertyBase* pProp, MM::ActionType eAct);
    unsigned long GetNumberOfPositions();
    int LabelToState(std::string label);
    std::string StateToLabel(int state);
@@ -112,6 +111,7 @@ private:
    bool open_;
    bool initialized_;
    int nrLines_;
+    uint16_t nrOutputs_;
 };
 
 #endif //_SPECTRALLMM5_H_
