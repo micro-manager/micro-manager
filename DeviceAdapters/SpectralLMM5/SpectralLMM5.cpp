@@ -317,7 +317,7 @@ void LMM5Hub::IntToPerc(uint16_t value, std::string& result)
 
 void LMM5Hub::PercToInt(std::string in, uint16_t& result) 
 {
-   std::string n = in.substr(0, n.size() - 1);
+   std::string n = in.substr(0, in.size() - 1);
    double val;
    std::stringstream convert(n);
    convert >> val;
