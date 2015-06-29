@@ -24,6 +24,7 @@ protected:
 
 private:
    void setFeatureWithinLimits(double new_value);
+   bool valueIsWithinLimits(double new_value);
 
 private:
    andor::IFloat* float_feature_;
