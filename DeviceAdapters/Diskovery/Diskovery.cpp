@@ -148,7 +148,7 @@ int Diskovery::Initialize()
 
    // Spinning disk preset position
    pAct = new CPropertyAction(this, &Diskovery::OnSpDiskPresetPosition);
-   nRet = CreateIntegerProperty("Spinning Disk Position", spDiskPos_, false, pAct);
+   nRet = CreateIntegerProperty(model_.spinningDiskPositionProp_, spDiskPos_, false, pAct);
 
    return DEVICE_OK;
 }

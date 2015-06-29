@@ -55,6 +55,7 @@ class DiskoveryModel
          firmwareVersionProp_ = "FirmwareVersion";
          manufacturingDateProp_ = "ManufacturingDate";
          serialNumberProp_ = "SerialNumber";
+         spinningDiskPositionProp_ = "Spinning Disk Position";
       };
       ~DiskoveryModel();
 
@@ -126,7 +127,13 @@ class DiskoveryModel
       void SetBusy(const bool busy) { MMThreadGuard guard(mutex_); busy_ = busy; };
 
       // TODO: add callbacks to notify the core that changes occurred
-      void SetPresetSD(const uint16_t p) { MMThreadGuard guard(mutex_); presetSD_ = p; };
+      void SetPresetSD(const uint16_t p) 
+      { 
+         MMThreadGuard guard(mutex_); 
+         presetSD_ = p;
+         std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << p) )->str();
+         core_.OnPropertyChanged(&device_, spinningDiskPositionProp_, s.c_str());
+      };
       uint16_t GetPresetSD() { MMThreadGuard guard(mutex_); return presetSD_; };
       void SetPresetWF(const uint16_t p) { MMThreadGuard guard(mutex_); presetWF_ = p; };
       uint16_t GetPresetWF() { MMThreadGuard guard(mutex_); return presetWF_; };
@@ -142,6 +149,7 @@ class DiskoveryModel
       const char* firmwareVersionProp_;
       const char* manufacturingDateProp_;
       const char* serialNumberProp_;
+      const char* spinningDiskPositionProp_;
 
 
     private:
