@@ -25,7 +25,6 @@ import com.bulenkov.iconloader.IconLoader;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
-import java.awt.Window;
 
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.JButton;
@@ -34,20 +33,23 @@ import javax.swing.JPopupMenu;
 
 import org.micromanager.data.Datastore;
 
+import org.micromanager.display.DisplayWindow;
+
 /**
  * This class provides a button for saving the current datastore to TIFF.
  */
 public class SaveButton extends JButton {
    private JPopupMenu menu_;
 
-   public SaveButton(final Datastore store, final Window window) {
+   public SaveButton(final Datastore store, final DisplayWindow display) {
       setToolTipText("Save data as a Micro-Manager dataset.");
       menu_ = new JPopupMenu();
       JMenuItem separateImages = new JMenuItem("Save to Separate Image Files");
       separateImages.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            store.save(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES, window);
+            store.save(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES,
+               display.getAsWindow());
          }
       });
       menu_.add(separateImages);
@@ -55,10 +57,20 @@ public class SaveButton extends JButton {
       multistack.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            store.save(Datastore.SaveMode.MULTIPAGE_TIFF, window);
+            store.save(Datastore.SaveMode.MULTIPAGE_TIFF,
+               display.getAsWindow());
          }
       });
       menu_.add(multistack);
+
+      JMenuItem movieExport = new JMenuItem("Export Part or All to Movie");
+      movieExport.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            new ExportMovieDlg(display);
+         }
+      });
+      menu_.add(movieExport);
 
       final JButton staticThis = this;
       addMouseListener(new MouseInputAdapter() {
