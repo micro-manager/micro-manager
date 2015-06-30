@@ -575,7 +575,6 @@ int CAndorSDK3Camera::Initialize()
 
    exposureTime_property = new TExposureProperty(MM::g_Keyword_Exposure,
                                        new TAndorFloatValueMapper(cameraDevice->GetFloat(L"ExposureTime"), 1000),
-                                       cameraDevice->GetFloat(L"ReadoutTime"),
                                        callbackManager_, false, false);
    
    frameRateLimits_property = new TFloatStringProperty(TAndorSDK3Strings::FRAME_RATE_LIMITS, 

@@ -7,11 +7,10 @@
 using namespace andor;
 using namespace std;
 
-TExposureProperty::TExposureProperty(const string & MM_name, IFloat * float_feature, IFloat* readoutTimeFeature, ICallBackManager* callback,
+TExposureProperty::TExposureProperty(const string & MM_name, IFloat * float_feature, ICallBackManager* callback,
                                 bool readOnly, bool needsCallBack)
 : MM_name_(MM_name),
   float_feature_(float_feature),
-  readoutTimeFeature_(readoutTimeFeature),
   callback_(callback),
   callbackRegistered_(needsCallBack)
 {

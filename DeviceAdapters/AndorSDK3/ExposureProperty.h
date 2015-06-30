@@ -12,7 +12,6 @@ class TExposureProperty : public andor::IObserver
 public:
    TExposureProperty(const std::string & MM_name,
                   andor::IFloat* float_feature,
-                  andor::IFloat* readoutTimeFeature,
                   ICallBackManager* callback,
                   bool readOnly, bool needsCallBack);
    ~TExposureProperty();
@@ -28,7 +27,6 @@ private:
 
 private:
    andor::IFloat* float_feature_;
-   andor::IFloat* readoutTimeFeature_;
    ICallBackManager* callback_;
    std::string MM_name_;
    bool callbackRegistered_;
