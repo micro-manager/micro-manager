@@ -27,6 +27,10 @@ import com.bulenkov.iconloader.IconLoader;
 
 import com.google.common.eventbus.Subscribe;
 
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.process.ColorProcessor;
+
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -83,10 +87,9 @@ public class ExportMovieDlg extends JDialog {
 
    private static final String FORMAT_PNG = "PNG";
    private static final String FORMAT_JPEG = "JPEG";
-   // ImageJ stack format isn't yet available.
    private static final String FORMAT_IMAGEJ = "ImageJ stack";
    private static final String[] OUTPUT_FORMATS = {
-      FORMAT_PNG, FORMAT_JPEG
+      FORMAT_PNG, FORMAT_JPEG, FORMAT_IMAGEJ
    };
 
    /**
@@ -228,6 +231,104 @@ public class ExportMovieDlg extends JDialog {
       }
    }
 
+   /**
+    * This object will get notifications of when the display is done
+    * drawing, so the drawn images can be exported and the above thread
+    * can be re-started (since AxisPanel.runLoop pauses itself after every
+    * call to DisplayWindow.setDisplayedImageTo()).
+    */
+   private static class Exporter {
+      private int sequenceNum_ = 0;
+      private ImageStack stack_;
+      private File outputDir_;
+      private String mode_;
+      private AtomicBoolean drawFlag_;
+      private AtomicBoolean doneFlag_;
+      private boolean isSingleShot_;
+      private int jpegQuality_;
+
+      public Exporter(File outputDir, String mode, AtomicBoolean drawFlag,
+            AtomicBoolean doneFlag, boolean isSingleShot, int jpegQuality) {
+         outputDir_ = outputDir;
+         mode_ = mode;
+         drawFlag_ = drawFlag;
+         doneFlag_ = doneFlag;
+         isSingleShot_ = isSingleShot;
+         jpegQuality_ = jpegQuality;
+      }
+
+      @Subscribe
+      public void onDrawComplete(CanvasDrawCompleteEvent event) {
+         BufferedImage image = event.getBufferedImage();
+         if (mode_.equals(FORMAT_IMAGEJ)) {
+            if (stack_ == null) {
+               // Create the ImageJ stack object to add images to.
+               stack_ = new ImageStack(image.getWidth(), image.getHeight());
+            }
+            addToStack(stack_, image);
+         }
+         else {
+            // Save the image to disk in appropriate format.
+            exportImage(outputDir_, mode_, image, sequenceNum_++);
+         }
+         drawFlag_.set(false);
+         if (isSingleShot_) {
+            doneFlag_.set(true);
+         }
+      }
+
+      /**
+       * Save a single image to disk at the provided directory, with a filename
+       * based on the provided sequence number, in the specified mode.
+       */
+      private void exportImage(File outputDir, String mode, BufferedImage image,
+            int sequenceNum) {
+         if (mode.equals(FORMAT_PNG)) {
+            File file = new File(outputDir,
+                  String.format("%010d.png", sequenceNum));
+            try {
+               ImageIO.write(image, "png", file);
+            }
+            catch (IOException e) {
+               ReportingUtils.logError(e, "Error writing exported PNG image");
+            }
+         }
+         else if (mode.equals(FORMAT_JPEG)) {
+            File file = new File(outputDir,
+                  String.format("%010d.jpg", sequenceNum));
+            // Set the compression quality.
+            float quality = jpegQuality_ / ((float) 10.0);
+            ImageWriter writer = ImageIO.getImageWritersByFormatName(
+                  "jpeg").next();
+            ImageWriteParam param = writer.getDefaultWriteParam();
+            param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+            param.setCompressionQuality(quality);
+            try {
+               ImageOutputStream stream = ImageIO.createImageOutputStream(file);
+               writer.setOutput(stream);
+               writer.write(image);
+               stream.close();
+            }
+            catch (IOException e) {
+               ReportingUtils.logError(e, "Error writing exported JPEG image");
+            }
+            writer.dispose();
+         }
+      }
+
+      /**
+       * Append the provided image onto the end of the given ImageJ ImageStack.
+       */
+      private void addToStack(ImageStack stack, BufferedImage image) {
+         ColorProcessor processor = new ColorProcessor(image);
+         stack.addSlice(processor);
+      }
+
+      public ImageStack getStack() {
+         return stack_;
+      }
+   }
+
    private DisplayWindow display_;
    private Datastore store_;
    private ArrayList<AxisPanel> axisPanels_;
@@ -323,28 +424,32 @@ public class ExportMovieDlg extends JDialog {
     * saving the drawn image to disk, and then moving on.
     */
    private void export() {
-      // Prompt the user for a directory to save to.
-      JFileChooser chooser = new JFileChooser();
-      chooser.setDialogTitle("Please choose a directory to export to.");
-      chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-      chooser.setAcceptAllFileFilterUsed(false);
-      if (store_.getSavePath() != null) {
-         // Default them to where their data was originally saved.
-         File path = new File(store_.getSavePath());
-         chooser.setCurrentDirectory(path);
-         chooser.setSelectedFile(path);
-         // HACK: on OSX if we don't do this, the "Choose" button will be
-         // disabled until the user interacts with the dialog.
-         // This may be related to a bug in the OSX JRE; see
-         // http://stackoverflow.com/questions/31148021/jfilechooser-cant-set-default-selection/31148287
-         // and in particular Madhan's reply.
-         chooser.updateUI();
+      File outputDir = null;
+      String mode = (String) outputFormatSelector_.getSelectedItem();
+      if (!mode.equals(FORMAT_IMAGEJ)) {
+         // Prompt the user for a directory to save to.
+         JFileChooser chooser = new JFileChooser();
+         chooser.setDialogTitle("Please choose a directory to export to.");
+         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+         chooser.setAcceptAllFileFilterUsed(false);
+         if (store_.getSavePath() != null) {
+            // Default them to where their data was originally saved.
+            File path = new File(store_.getSavePath());
+            chooser.setCurrentDirectory(path);
+            chooser.setSelectedFile(path);
+            // HACK: on OSX if we don't do this, the "Choose" button will be
+            // disabled until the user interacts with the dialog.
+            // This may be related to a bug in the OSX JRE; see
+            // http://stackoverflow.com/questions/31148021/jfilechooser-cant-set-default-selection/31148287
+            // and in particular Madhan's reply.
+            chooser.updateUI();
+         }
+         if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+            // User cancelled.
+            return;
+         }
+         outputDir = chooser.getSelectedFile();
       }
-      if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
-         // User cancelled.
-         return;
-      }
-      final File outputDir = chooser.getSelectedFile();
 
       // This thread will handle telling the display window to display new
       // images.
@@ -373,24 +478,9 @@ public class ExportMovieDlg extends JDialog {
          }, "Image export thread");
       }
 
-      final String mode = (String) outputFormatSelector_.getSelectedItem();
-      // This object will get notifications of when the display is done
-      // drawing, so the drawn images can be exported and the above thread
-      // can be re-started (since AxisPanel.runLoop pauses itself after every
-      // call to DisplayWindow.setDisplayedImageTo()).
-      final Object exporter = new Object() {
-         private int sequenceNum_ = 0;
-         @Subscribe
-         public void onDrawComplete(CanvasDrawCompleteEvent event) {
-            // TODO: add support for exporting to an ImageJ stack.
-            exportImage(outputDir, mode,
-                  event.getBufferedImage(), sequenceNum_++);
-            drawFlag.set(false);
-            if (isSingleShot) {
-               doneFlag.set(true);
-            }
-         }
-      };
+      final Exporter exporter = new Exporter(outputDir, mode, drawFlag,
+            doneFlag, isSingleShot,
+            ((Integer) jpegQualitySpinner_.getValue()));
       display_.registerForEvents(exporter);
 
       // Create a thread to wait for the process to finish, and unsubscribe
@@ -408,49 +498,18 @@ public class ExportMovieDlg extends JDialog {
                }
             }
             display_.unregisterForEvents(exporter);
+            if (exporter.getStack() != null) {
+               // Show the ImageJ stack.
+               ImagePlus plus = new ImagePlus(
+                  "MM export results", exporter.getStack());
+               plus.show();
+            }
          }
       });
 
+      unsubscriber.start();
       loopThread.start();
-   }
-
-   /**
-    * Save a single image to disk at the provided directory, with a filename
-    * based on the provided sequence number, in the specified mode.
-    */
-   private void exportImage(File outputDir, String mode, BufferedImage image,
-         int sequenceNum) {
-      if (mode.equals(FORMAT_PNG)) {
-         File file = new File(outputDir,
-               String.format("%010d.png", sequenceNum));
-         try {
-            ImageIO.write(image, "png", file);
-         }
-         catch (IOException e) {
-            ReportingUtils.logError(e, "Error writing exported PNG image");
-         }
-      }
-      else if (mode.equals(FORMAT_JPEG)) {
-         File file = new File(outputDir,
-               String.format("%010d.jpg", sequenceNum));
-         // Set the compression quality.
-         float quality = ((Integer) jpegQualitySpinner_.getValue()) / ((float) 10.0);
-         ImageWriter writer = ImageIO.getImageWritersByFormatName(
-               "jpeg").next();
-         ImageWriteParam param = writer.getDefaultWriteParam();
-         param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-         param.setCompressionQuality(quality);
-         try {
-            ImageOutputStream stream = ImageIO.createImageOutputStream(file);
-            writer.setOutput(stream);
-            writer.write(image);
-            stream.close();
-         }
-         catch (IOException e) {
-            ReportingUtils.logError(e, "Error writing exported JPEG image");
-         }
-         writer.dispose();
-      }
+      dispose();
    }
 
    /**
