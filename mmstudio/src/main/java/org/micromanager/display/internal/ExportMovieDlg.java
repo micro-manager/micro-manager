@@ -44,6 +44,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.HashSet;
 
 import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageOutputStream;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.JComboBox;
@@ -77,6 +80,14 @@ public class ExportMovieDlg extends JDialog {
                IconLoader.getIcon("/org/micromanager/icons/plus_green.png");
    private static final Icon DELETE_ICON =
                IconLoader.getIcon("/org/micromanager/icons/minus.png");
+
+   private static final String FORMAT_PNG = "PNG";
+   private static final String FORMAT_JPEG = "JPEG";
+   // ImageJ stack format isn't yet available.
+   private static final String FORMAT_IMAGEJ = "ImageJ stack";
+   private static final String[] OUTPUT_FORMATS = {
+      FORMAT_PNG, FORMAT_JPEG
+   };
 
    /**
     * A set of controls for selecting a range of values for a single axis of
@@ -221,6 +232,9 @@ public class ExportMovieDlg extends JDialog {
    private Datastore store_;
    private ArrayList<AxisPanel> axisPanels_;
    private JPanel contentsPanel_;
+   private JComboBox outputFormatSelector_;
+   private JPanel jpegPanel_;
+   private JSpinner jpegQualitySpinner_;
 
    /**
     * Show the dialog.
@@ -237,6 +251,33 @@ public class ExportMovieDlg extends JDialog {
 
       JLabel help = new JLabel("Export a series of PNG or JPG images from your dataset, with all overlays included.");
       contentsPanel_.add(help, "align center");
+
+      contentsPanel_.add(new JLabel("Output format: "),
+            "split 2, flowx");
+      outputFormatSelector_ = new JComboBox(OUTPUT_FORMATS);
+      outputFormatSelector_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            // Show/hide the JPEG quality controls.
+            String selection = (String) outputFormatSelector_.getSelectedItem();
+            if (selection.equals(FORMAT_JPEG)) {
+               jpegPanel_.add(new JLabel("JPEG quality: "));
+               jpegPanel_.add(jpegQualitySpinner_);
+            }
+            else {
+               jpegPanel_.removeAll();
+            }
+            pack();
+         }
+      });
+      contentsPanel_.add(outputFormatSelector_);
+
+      jpegPanel_ = new JPanel(new MigLayout("flowx"));
+      jpegQualitySpinner_ = new JSpinner();
+      jpegQualitySpinner_.setModel(new SpinnerNumberModel(10, 0, 10, 1));
+
+      contentsPanel_.add(jpegPanel_);
+
       if (getNonZeroAxes().size() == 0) {
          // No iteration available.
          contentsPanel_.add(
@@ -294,6 +335,9 @@ public class ExportMovieDlg extends JDialog {
          chooser.setSelectedFile(path);
          // HACK: on OSX if we don't do this, the "Choose" button will be
          // disabled until the user interacts with the dialog.
+         // This may be related to a bug in the OSX JRE; see
+         // http://stackoverflow.com/questions/31148021/jfilechooser-cant-set-default-selection/31148287
+         // and in particular Madhan's reply.
          chooser.updateUI();
       }
       if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
@@ -329,6 +373,7 @@ public class ExportMovieDlg extends JDialog {
          }, "Image export thread");
       }
 
+      final String mode = (String) outputFormatSelector_.getSelectedItem();
       // This object will get notifications of when the display is done
       // drawing, so the drawn images can be exported and the above thread
       // can be re-started (since AxisPanel.runLoop pauses itself after every
@@ -337,15 +382,9 @@ public class ExportMovieDlg extends JDialog {
          private int sequenceNum_ = 0;
          @Subscribe
          public void onDrawComplete(CanvasDrawCompleteEvent event) {
-            BufferedImage output = event.getBufferedImage();
-            try {
-               File file = new File(outputDir,
-                     String.format("%010d.png", sequenceNum_++));
-               ImageIO.write(output, "png", file);
-            }
-            catch (IOException e) {
-               ReportingUtils.logError(e, "Error writing exported image");
-            }
+            // TODO: add support for exporting to an ImageJ stack.
+            exportImage(outputDir, mode,
+                  event.getBufferedImage(), sequenceNum_++);
             drawFlag.set(false);
             if (isSingleShot) {
                doneFlag.set(true);
@@ -373,6 +412,45 @@ public class ExportMovieDlg extends JDialog {
       });
 
       loopThread.start();
+   }
+
+   /**
+    * Save a single image to disk at the provided directory, with a filename
+    * based on the provided sequence number, in the specified mode.
+    */
+   private void exportImage(File outputDir, String mode, BufferedImage image,
+         int sequenceNum) {
+      if (mode.equals(FORMAT_PNG)) {
+         File file = new File(outputDir,
+               String.format("%010d.png", sequenceNum));
+         try {
+            ImageIO.write(image, "png", file);
+         }
+         catch (IOException e) {
+            ReportingUtils.logError(e, "Error writing exported PNG image");
+         }
+      }
+      else if (mode.equals(FORMAT_JPEG)) {
+         File file = new File(outputDir,
+               String.format("%010d.jpg", sequenceNum));
+         // Set the compression quality.
+         float quality = ((Integer) jpegQualitySpinner_.getValue()) / ((float) 10.0);
+         ImageWriter writer = ImageIO.getImageWritersByFormatName(
+               "jpeg").next();
+         ImageWriteParam param = writer.getDefaultWriteParam();
+         param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+         param.setCompressionQuality(quality);
+         try {
+            ImageOutputStream stream = ImageIO.createImageOutputStream(file);
+            writer.setOutput(stream);
+            writer.write(image);
+            stream.close();
+         }
+         catch (IOException e) {
+            ReportingUtils.logError(e, "Error writing exported JPEG image");
+         }
+         writer.dispose();
+      }
    }
 
    /**
