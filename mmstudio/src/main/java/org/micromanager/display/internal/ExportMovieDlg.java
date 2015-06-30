@@ -288,7 +288,13 @@ public class ExportMovieDlg extends JDialog {
       chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
       chooser.setAcceptAllFileFilterUsed(false);
       if (store_.getSavePath() != null) {
-         chooser.setCurrentDirectory(new File(store_.getSavePath()));
+         // Default them to where their data was originally saved.
+         File path = new File(store_.getSavePath());
+         chooser.setCurrentDirectory(path);
+         chooser.setSelectedFile(path);
+         // HACK: on OSX if we don't do this, the "Choose" button will be
+         // disabled until the user interacts with the dialog.
+         chooser.updateUI();
       }
       if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
          // User cancelled.
