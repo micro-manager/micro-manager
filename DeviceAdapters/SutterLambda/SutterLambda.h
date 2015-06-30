@@ -94,6 +94,7 @@ public:
    int OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBusy(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAnswerTimeout(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    bool SetWheelPosition(unsigned pos);
