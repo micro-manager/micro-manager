@@ -50,6 +50,7 @@ import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
@@ -281,6 +282,20 @@ public class ExportMovieDlg extends JDialog {
     * saving the drawn image to disk, and then moving on.
     */
    private void export() {
+      // Prompt the user for a directory to save to.
+      JFileChooser chooser = new JFileChooser();
+      chooser.setDialogTitle("Please choose a directory to export to.");
+      chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+      chooser.setAcceptAllFileFilterUsed(false);
+      if (store_.getSavePath() != null) {
+         chooser.setCurrentDirectory(new File(store_.getSavePath()));
+      }
+      if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+         // User cancelled.
+         return;
+      }
+      final File outputDir = chooser.getSelectedFile();
+
       // This thread will handle telling the display window to display new
       // images.
       Thread loopThread;
@@ -318,7 +333,8 @@ public class ExportMovieDlg extends JDialog {
          public void onDrawComplete(CanvasDrawCompleteEvent event) {
             BufferedImage output = event.getBufferedImage();
             try {
-               File file = new File(String.format("%010d.png", sequenceNum_++));
+               File file = new File(outputDir,
+                     String.format("%010d.png", sequenceNum_++));
                ImageIO.write(output, "png", file);
             }
             catch (IOException e) {
