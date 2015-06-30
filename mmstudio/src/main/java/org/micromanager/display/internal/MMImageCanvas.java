@@ -32,12 +32,14 @@ import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.Graphics;
+import java.awt.image.BufferedImage;
 import java.awt.Rectangle;
 
 
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.NewDisplaySettingsEvent;
 import org.micromanager.display.internal.events.CanvasDrawEvent;
+import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.display.internal.events.MouseMovedEvent;
@@ -47,9 +49,10 @@ import org.micromanager.display.internal.events.MouseMovedEvent;
  * specialized drawing logic and some other minor customizations.
  */
 class MMImageCanvas extends ImageCanvas {
-   ImagePlus ijImage_;
-   DefaultDisplayWindow display_;
-   
+   private ImagePlus ijImage_;
+   private DefaultDisplayWindow display_;
+   private BufferedImage bufferedImage_;
+
    public MMImageCanvas(ImagePlus ijImage, DefaultDisplayWindow display) {
       super(ijImage);
       ijImage_ = ijImage;
@@ -111,13 +114,28 @@ class MMImageCanvas extends ImageCanvas {
    }
 
    /**
-    * In addition to drawing the image canvas, we also draw a border around it,
-    * using a color that indicates the current active channel.
+    * Draw the canvas, with our own embellishments.
+    * In addition to drawing the image canvas, we also:
+    * - draw a border around it, using a color that indicates the current
+    *   active channel
+    * - post a CanvasDrawEvent so that other objects may add their own
+    *   embellishments
+    * - render to a BufferedImage (and then render from that to our actual
+    *   normal image), so that a copy of the drawn image (with overlays, etc.)
+    *   is available when we post a CanvasDrawCompleteEvent. Effectively we're
+    *   doing manual double-buffering.
     */
    @Override
    public void paint(Graphics g) {
+      if (bufferedImage_ == null || bufferedImage_.getWidth() != getWidth() ||
+            bufferedImage_.getHeight() != getHeight()) {
+         // Dimensions have changed; must recreate the BufferedImage.
+         bufferedImage_ = new BufferedImage(getWidth(), getHeight(),
+               BufferedImage.TYPE_INT_RGB);
+      }
+      Graphics bufG = bufferedImage_.createGraphics();
       // Draw the actual canvas image
-      super.paint(g);
+      super.paint(bufG);
 
       // Determine the color to use (default is black).
       if (ijImage_.isComposite()) {
@@ -127,10 +145,10 @@ class MMImageCanvas extends ImageCanvas {
          if (Color.green.equals(color)) {
             color = new Color(0, 180, 0);
          }
-         g.setColor(color);
+         bufG.setColor(color);
       }
       else {
-         g.setColor(Color.BLACK);
+         bufG.setColor(Color.BLACK);
       }
 
       // This rectangle is relative to the panel we're in, but we're drawing
@@ -143,11 +161,16 @@ class MMImageCanvas extends ImageCanvas {
       rect.width -= 2;
       rect.height -= 2;
       if (!Prefs.noBorder && !IJ.isLinux()) {
-         g.drawRect(rect.x - 1, rect.y - 1,
+         bufG.drawRect(rect.x - 1, rect.y - 1,
                rect.width + 1, rect.height + 1);
       }
 
-      display_.postEvent(new CanvasDrawEvent(g, this));
+      display_.postEvent(new CanvasDrawEvent(bufG, this));
+      display_.postEvent(new CanvasDrawCompleteEvent(bufferedImage_));
+
+      // Drawing to the buffered image is done; now draw to ourselves.
+      bufG.dispose();
+      g.drawImage(bufferedImage_, 0, 0, null);
    }
 
    /**

@@ -25,16 +25,25 @@ package org.micromanager.display.internal;
 
 import com.bulenkov.iconloader.IconLoader;
 
+import com.google.common.eventbus.Subscribe;
+
+import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 import java.awt.Rectangle;
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.HashSet;
 
+import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.JComboBox;
@@ -49,11 +58,14 @@ import javax.swing.UIManager;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
 
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
+
 
 /**
  * This dialog provides an interface for exporting (a portion of) a dataset
@@ -72,6 +84,7 @@ public class ExportMovieDlg extends JDialog {
     */
    public static class AxisPanel extends JPanel {
       private Datastore store_;
+      private DisplayWindow display_;
       private JComboBox axisSelector_;
       private JSpinner minSpinner_;
       private JSpinner maxSpinner_;
@@ -81,10 +94,11 @@ public class ExportMovieDlg extends JDialog {
       // Hacky method of coping with action events we don't care about.
       private boolean amInSetAxis_ = false;
 
-      public AxisPanel(Datastore store, final ExportMovieDlg parent) {
+      public AxisPanel(DisplayWindow display, final ExportMovieDlg parent) {
          super(new MigLayout("flowx"));
          setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
-         store_ = store;
+         display_ = display;
+         store_ = display.getDatastore();
          ArrayList<String> axes = new ArrayList<String>(
                parent.getNonZeroAxes());
          Collections.sort(axes);
@@ -119,6 +133,7 @@ public class ExportMovieDlg extends JDialog {
                else {
                   remove(child_);
                   parent.deleteFollowing(localThis);
+                  child_ = null;
                   addButton_.setText("And at each of these...");
                   addButton_.setIcon(ADD_ICON);
                }
@@ -158,12 +173,50 @@ public class ExportMovieDlg extends JDialog {
          return (String) axisSelector_.getSelectedItem();
       }
 
+      /**
+       * Iterate over our specified axis, while running any inner loop(s),
+       * drawing the image at each new coordinate set. Use the provided
+       * base coordinates to cover for any coords we aren't iterating over.
+       * @param drawFlag True when drawing, false when drawing is done and
+       *        the next image can be requested. See the "exporter" object.
+       * @param doneFlag True when all images are done drawing. Signals that
+       *        exporting is done and cleanup can begin.
+       */
+      public void runLoop(Coords coords, AtomicBoolean drawFlag,
+            AtomicBoolean doneFlag) {
+         int minVal = (Integer) (minSpinner_.getValue());
+         int maxVal = (Integer) (maxSpinner_.getValue());
+         for (int i = minVal; i < maxVal; ++i) {
+            Coords newCoords = coords.copy().index(getAxis(), i).build();
+            if (child_ == null) {
+               drawFlag.set(true);
+               display_.setDisplayedImageTo(newCoords);
+               // Wait until drawing is done.
+               while (drawFlag.get()) {
+                  try {
+                     Thread.sleep(10);
+                  }
+                  catch (InterruptedException e) {
+                     ReportingUtils.logError("Interrupted while waiting for drawing to complete.");
+                     return;
+                  }
+               }
+            }
+            else {
+               // Recurse.
+               child_.runLoop(newCoords, drawFlag, doneFlag);
+            }
+         }
+         doneFlag.set(true);
+      }
+
       @Override
       public String toString() {
          return "<AxisPanel for axis " + getAxis() + ">";
       }
    }
 
+   private DisplayWindow display_;
    private Datastore store_;
    private ArrayList<AxisPanel> axisPanels_;
    private JPanel contentsPanel_;
@@ -173,6 +226,7 @@ public class ExportMovieDlg extends JDialog {
     */
    public ExportMovieDlg(DisplayWindow display) {
       super(display.getAsWindow());
+      display_ = display;
       store_ = display.getDatastore();
       axisPanels_ = new ArrayList<AxisPanel>();
 
@@ -197,6 +251,7 @@ public class ExportMovieDlg extends JDialog {
       // allow selecting range for each axis; "add axis" button which disables
       // when all axes are used
       // for single-axis datasets just auto-fill the one axis
+      // Future req: add ability to export to ImageJ as RGB stack
 
       JButton cancelButton = new JButton("Cancel");
       cancelButton.addActionListener(new ActionListener() {
@@ -226,7 +281,76 @@ public class ExportMovieDlg extends JDialog {
     * saving the drawn image to disk, and then moving on.
     */
    private void export() {
-      ReportingUtils.logError("TODO: implement export method");
+      // This thread will handle telling the display window to display new
+      // images.
+      Thread loopThread;
+      final AtomicBoolean drawFlag = new AtomicBoolean(false);
+      final AtomicBoolean doneFlag = new AtomicBoolean(false);
+      final boolean isSingleShot;
+      if (axisPanels_.size() == 0) {
+         // Only one image to draw.
+         isSingleShot = true;
+         loopThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+               display_.requestRedraw();
+            }
+         }, "Image export thread");
+      }
+      else {
+         isSingleShot = false;
+         loopThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+               Coords baseCoords = display_.getDisplayedImages().get(0).getCoords();
+               axisPanels_.get(0).runLoop(baseCoords, drawFlag, doneFlag);
+            }
+         }, "Image export thread");
+      }
+
+      // This object will get notifications of when the display is done
+      // drawing, so the drawn images can be exported and the above thread
+      // can be re-started (since AxisPanel.runLoop pauses itself after every
+      // call to DisplayWindow.setDisplayedImageTo()).
+      final Object exporter = new Object() {
+         private int sequenceNum_ = 0;
+         @Subscribe
+         public void onDrawComplete(CanvasDrawCompleteEvent event) {
+            BufferedImage output = event.getBufferedImage();
+            try {
+               File file = new File(String.format("%010d.png", sequenceNum_++));
+               ImageIO.write(output, "png", file);
+            }
+            catch (IOException e) {
+               ReportingUtils.logError(e, "Error writing exported image");
+            }
+            drawFlag.set(false);
+            if (isSingleShot) {
+               doneFlag.set(true);
+            }
+         }
+      };
+      display_.registerForEvents(exporter);
+
+      // Create a thread to wait for the process to finish, and unsubscribe
+      // the exporter at that time.
+      Thread unsubscriber = new Thread(new Runnable() {
+         @Override
+         public void run() {
+            while (!doneFlag.get()) {
+               try {
+                  Thread.sleep(100);
+               }
+               catch (InterruptedException e) {
+                  ReportingUtils.logError("Interrupted while waiting for export to complete.");
+                  return;
+               }
+            }
+            display_.unregisterForEvents(exporter);
+         }
+      });
+
+      loopThread.start();
    }
 
    /**
@@ -244,7 +368,7 @@ public class ExportMovieDlg extends JDialog {
       }
       String axis = (new ArrayList<String>(axes)).get(0);
 
-      AxisPanel panel = new AxisPanel(store_, this);
+      AxisPanel panel = new AxisPanel(display_, this);
       panel.setAxis(axis);
       axisPanels_.add(panel);
       return panel;
