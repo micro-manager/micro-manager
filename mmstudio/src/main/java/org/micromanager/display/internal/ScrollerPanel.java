@@ -226,7 +226,7 @@ public class ScrollerPanel extends JPanel {
       // The JButton approach dodges this issue because the text field we
       // create on click is not modified by setPosition(), and there are no
       // locks associated with changing the label on the JButton.
-      final JButton positionButton = new JButton("0");
+      final JButton positionButton = new JButton("1");
       positionButton.setFont(GUIUtils.buttonFont);
       positionButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
       positionButton.setMinimumSize(new Dimension(30, 18));
