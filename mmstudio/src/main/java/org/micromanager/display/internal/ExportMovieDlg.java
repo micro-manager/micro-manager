@@ -53,6 +53,8 @@ import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
 import javax.swing.BorderFactory;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.Icon;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -103,7 +105,9 @@ public class ExportMovieDlg extends JDialog {
       private DisplayWindow display_;
       private JComboBox axisSelector_;
       private JSpinner minSpinner_;
+      private SpinnerNumberModel minModel_ = null;
       private JSpinner maxSpinner_;
+      private SpinnerNumberModel maxModel_ = null;
       private JButton addButton_;
       private AxisPanel child_;
       private String oldAxis_;
@@ -131,7 +135,27 @@ public class ExportMovieDlg extends JDialog {
             }
          });;
          minSpinner_ = new JSpinner();
+         minSpinner_.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+               // Ensure that the end point can't go below the start point.
+               int newMin = (Integer) minSpinner_.getValue();
+               int curMax = (Integer) maxSpinner_.getValue();
+               int axisLen = store_.getAxisLength(getAxis());
+               maxModel_.setMinimum(newMin + 1);
+            }
+         });
          maxSpinner_ = new JSpinner();
+         maxSpinner_.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+               // Ensure that the start point can't come after the end point.
+               int newMax = (Integer) maxSpinner_.getValue();
+               int curMin = (Integer) minSpinner_.getValue();
+               int axisLen = store_.getAxisLength(getAxis());
+               minModel_.setMaximum(newMax - 1);
+            }
+         });
 
          final AxisPanel localThis = this;
          addButton_ = new JButton("And at each of these...", ADD_ICON);
@@ -173,15 +197,27 @@ public class ExportMovieDlg extends JDialog {
       public void setAxis(String axis) {
          int axisLen = store_.getAxisLength(axis);
          String curAxis = (String) axisSelector_.getSelectedItem();
-         if (curAxis.equals(axis)) {
-            // Already set properly.
+         if (curAxis.equals(axis) && minModel_ != null) {
+            // Already set properly and spinner models exist.
             return;
          }
          amInSetAxis_ = true;
          oldAxis_ = axis;
+         if (minModel_ == null) {
+            // Create the spinner models now.
+            minModel_ = new SpinnerNumberModel(0, 0, axisLen - 1, 1);
+            maxModel_ = new SpinnerNumberModel(axisLen - 1, 1, axisLen, 1);
+            minSpinner_.setModel(minModel_);
+            maxSpinner_.setModel(maxModel_);
+         }
+         else {
+            // Update their maxima according to the new axis.
+            minModel_.setMaximum(axisLen - 1);
+            maxModel_.setMaximum(axisLen);
+            minModel_.setValue(0);
+            maxModel_.setValue(axisLen - 1);
+         }
          axisSelector_.setSelectedItem(axis);
-         minSpinner_.setModel(new SpinnerNumberModel(0, 0, axisLen - 1, 1));
-         maxSpinner_.setModel(new SpinnerNumberModel(axisLen, 1, axisLen, 1));
          amInSetAxis_ = false;
       }
 
