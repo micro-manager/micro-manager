@@ -69,14 +69,14 @@ public class AboutDlg extends JDialog {
       setResizable(false);
       setModal(true);
       getContentPane().setLayout(null);
-      setTitle("About Micro-Manager 1.4");
+      setTitle("About Micro-Manager 2.0");
       
       Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
       setLocation(screenSize.width/2 - (winSize.width/2), screenSize.height/2 - (winSize.height/2));
 
       final JLabel micromanageLabel = new JLabel();
       micromanageLabel.setFont(new Font("", Font.BOLD, 16));
-      micromanageLabel.setText("Micro-Manager 1.4");
+      micromanageLabel.setText("Micro-Manager 2.0");
       micromanageLabel.setBounds(44, 11, 176, 23);
       getContentPane().add(micromanageLabel);
 
@@ -92,7 +92,6 @@ public class AboutDlg extends JDialog {
       citeUs.setLineWrap(true);
       citeUs.setWrapStyleWord(true);
       citeUs.setBorder(new LineBorder(Color.black, 1, false));
-      citeUs.setBackground(new Color(192, 192, 192));
       citeUs.setText("If you've found this software useful, please cite Micro-Manager in your publications.");
       citeUs.setBounds(5, 277, 368, 40);
       getContentPane().add(citeUs);
@@ -120,7 +119,6 @@ public class AboutDlg extends JDialog {
       homeHttphcs100ximagingcomBugTextArea = new JTextArea();
       homeHttphcs100ximagingcomBugTextArea.setEditable(false);
       homeHttphcs100ximagingcomBugTextArea.setBorder(new LineBorder(Color.black, 1, false));
-      homeHttphcs100ximagingcomBugTextArea.setBackground(new Color(192, 192, 192));
       homeHttphcs100ximagingcomBugTextArea.setFont(new Font("Courier New", Font.PLAIN, 12));
       homeHttphcs100ximagingcomBugTextArea.setText(" home:               http://www.micro-manager.org\r\n bug reports:        bugs@micro-manager.org\r\n feature requests:   features@micro-manager.org\r\n");
       homeHttphcs100ximagingcomBugTextArea.setBounds(5, 219, 368, 47);
@@ -141,7 +139,6 @@ public class AboutDlg extends JDialog {
       welcomeTextArea_.setFont(new Font("Arial", Font.PLAIN, 10));
       welcomeTextArea_.setFocusable(false);
       welcomeTextArea_.setEditable(false);
-      welcomeTextArea_.setBackground(new Color(192, 192, 192));
       welcomeTextArea_.setBounds(5, 126, 368, 87);
       getContentPane().add(welcomeTextArea_);
    }
