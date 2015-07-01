@@ -205,8 +205,9 @@ public class ExportMovieDlg extends JDialog {
          oldAxis_ = axis;
          if (minModel_ == null) {
             // Create the spinner models now.
-            minModel_ = new SpinnerNumberModel(0, 0, axisLen - 1, 1);
-            maxModel_ = new SpinnerNumberModel(axisLen - 1, 1, axisLen, 1);
+            // Remember our indices here are 1-indexed.
+            minModel_ = new SpinnerNumberModel(1, 1, axisLen - 1, 1);
+            maxModel_ = new SpinnerNumberModel(axisLen, 2, axisLen, 1);
             minSpinner_.setModel(minModel_);
             maxSpinner_.setModel(maxModel_);
          }
@@ -214,8 +215,8 @@ public class ExportMovieDlg extends JDialog {
             // Update their maxima according to the new axis.
             minModel_.setMaximum(axisLen - 1);
             maxModel_.setMaximum(axisLen);
-            minModel_.setValue(0);
-            maxModel_.setValue(axisLen - 1);
+            minModel_.setValue(1);
+            maxModel_.setValue(axisLen);
          }
          axisSelector_.setSelectedItem(axis);
          amInSetAxis_ = false;
@@ -236,9 +237,10 @@ public class ExportMovieDlg extends JDialog {
        */
       public void runLoop(Coords coords, AtomicBoolean drawFlag,
             AtomicBoolean doneFlag) {
-         int minVal = (Integer) (minSpinner_.getValue());
-         int maxVal = (Integer) (maxSpinner_.getValue());
-         for (int i = minVal; i < maxVal; ++i) {
+         // Correct for the 1-indexed GUI values, since coords are 0-indexed.
+         int minVal = (Integer) (minSpinner_.getValue()) - 1;
+         int maxVal = (Integer) (maxSpinner_.getValue()) - 1;
+         for (int i = minVal; i <= maxVal; ++i) {
             Coords newCoords = coords.copy().index(getAxis(), i).build();
             if (child_ == null) {
                drawFlag.set(true);
