@@ -27,6 +27,7 @@ import com.bulenkov.iconloader.IconLoader;
 
 import com.google.common.eventbus.Subscribe;
 
+import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ColorProcessor;
@@ -346,12 +347,17 @@ public class ExportMovieDlg extends JDialog {
       store_ = display.getDatastore();
       axisPanels_ = new ArrayList<AxisPanel>();
 
-      setName("Export Image Series");
+      setTitle("Export Image Series");
 
       contentsPanel_ = new JPanel(new MigLayout("flowy"));
 
-      JLabel help = new JLabel("Export a series of PNG or JPG images from your dataset, with all overlays included.");
+      JLabel help = new JLabel("<html><body>Export a series of images from your dataset. The images will be exactly as<br>currently drawn on your display, including histogram scaling, overlays, etc.</body></html>");
       contentsPanel_.add(help, "align center");
+
+      if (getIsComposite()) {
+         contentsPanel_.add(new JLabel("<html><body>The \"channel\" axis is unavailable as the display is in composite mode.</body></html>"),
+               "align center");
+      }
 
       contentsPanel_.add(new JLabel("Output format: "),
             "split 2, flowx");
@@ -373,7 +379,9 @@ public class ExportMovieDlg extends JDialog {
       });
       contentsPanel_.add(outputFormatSelector_);
 
-      jpegPanel_ = new JPanel(new MigLayout("flowx"));
+      // We want this panel to take up minimal space when it is not needed.
+      jpegPanel_ = new JPanel(new MigLayout("flowx, gap 0", "0[]0[]0",
+               "0[]0[]0"));
       jpegQualitySpinner_ = new JSpinner();
       jpegQualitySpinner_.setModel(new SpinnerNumberModel(10, 0, 10, 1));
 
@@ -570,13 +578,26 @@ public class ExportMovieDlg extends JDialog {
    }
 
    /**
+    * Returns true if the display mode is composite.
+    */
+   private boolean getIsComposite() {
+      ImagePlus displayPlus = display_.getImagePlus();
+      if (displayPlus instanceof CompositeImage) {
+         return ((CompositeImage) displayPlus).getMode() == CompositeImage.COMPOSITE;
+      }
+      return false;
+   }
+
+   /**
     * Return the available axes (that exist in the datastore and have nonzero
     * length).
     */
    public ArrayList<String> getNonZeroAxes() {
       ArrayList<String> result = new ArrayList<String>();
       for (String axis : store_.getAxes()) {
-         if (store_.getMaxIndex(axis) > 0) {
+         // Channel axis is only available when in non-composite display modes.
+         if (store_.getMaxIndex(axis) > 0 &&
+               (!axis.equals(Coords.CHANNEL) || !getIsComposite())) {
             result.add(axis);
          }
       }
