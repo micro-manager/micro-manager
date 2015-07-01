@@ -268,8 +268,7 @@ public class ConfiguratorDlg2 extends MMDialog {
             if (helpFileName == null) {
                 return;
             }
-            URL htmlURL = ConfiguratorDlg2.class.getResource(helpFileName);
-            String helpText = readStream(ConfiguratorDlg2.class.getResourceAsStream(helpFileName));
+            String helpText = readStream(ConfiguratorDlg2.class.getResourceAsStream("/org/micromanager/conf2/" + helpFileName));
             helpTextPane_.setContentType("text/html; charset=ISO-8859-1");
             helpTextPane_.setText(helpText);
             
