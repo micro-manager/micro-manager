@@ -20,7 +20,10 @@
 
 package org.micromanager.data.internal;
 
+import com.google.common.io.Files;
+
 import java.awt.Rectangle;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,6 +34,7 @@ import org.junit.Assert;
 
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
+import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
@@ -58,6 +62,12 @@ public class ManualTiffTest {
     */
    private static final HashMap<String, ArrayList<ImageInfo>> IMAGES;
 
+   /**
+    * Path for one of the file sets we use. This is a manually-created (i.e.
+    * not using MDA) singleplane TIFF acquisition.
+    */
+   private static final String ALPHA2_PATH = System.getProperty("user.dir") + "/src/test/resources/org/micromanager/data/internal/alpha_2.0_singleplane_manual";
+
    private static class ImageInfo {
       private Coords coords_;
       private Metadata metadata_;
@@ -68,6 +78,10 @@ public class ManualTiffTest {
          coords_ = coords;
          metadata_ = metadata;
          values_ = values;
+      }
+
+      public Metadata getMetadata() {
+         return metadata_;
       }
 
       public void test(Datastore store) {
@@ -116,8 +130,6 @@ public class ManualTiffTest {
       SUMMARIES = new HashMap<String, SummaryMetadata>();
       IMAGES = new HashMap<String, ArrayList<ImageInfo>>();
 
-      // This file is a manually-generated acquisition from the MM2.0 alpha.
-      String alpha2 = System.getProperty("user.dir") + "/src/test/resources/org/micromanager/data/internal/alpha_2.0_singleplane_manual";
       DefaultSummaryMetadata.Builder summary = new DefaultSummaryMetadata.Builder();
       summary.name("alpha-2 manual").prefix("thisIsAPrefix")
          .userName("John Doe").profileName("John's Profile")
@@ -137,7 +149,7 @@ public class ManualTiffTest {
             new MultiStagePosition("some other xy stage", 99.8, 88.9, "some other z stage", 2.02)
          })
          .userData((new DefaultPropertyMap.Builder()).putString("Ha ha I'm some user data", "and I'm the value").putInt("I'm a number", 42).build());
-      SUMMARIES.put(alpha2, summary.build());
+      SUMMARIES.put(ALPHA2_PATH, summary.build());
 
       DefaultCoords.Builder imageCoords = new DefaultCoords.Builder();
       imageCoords.channel(0).stagePosition(0).time(0).z(0);
@@ -193,24 +205,9 @@ public class ManualTiffTest {
       values.put(coords.index("x", 4).build(), 1459);
       values.put(coords.index("x", 11).build(), 3276);
       values.put(coords.index("y", 13).build(), 2065);
-      IMAGES.put(alpha2, new ArrayList<ImageInfo>());
-      IMAGES.get(alpha2).add(new ImageInfo(imageCoords.build(),
+      IMAGES.put(ALPHA2_PATH, new ArrayList<ImageInfo>());
+      IMAGES.get(ALPHA2_PATH).add(new ImageInfo(imageCoords.build(),
                imageMetadata.build(), values));
-   }
-
-   @Test
-   public void testSinglePlaneTIFF() {
-      DefaultDataManager manager = new DefaultDataManager();
-      for (String path : SUMMARIES.keySet()) {
-         try {
-            Datastore data = manager.loadData(path, true);
-            testSummary(path, data.getSummaryMetadata());
-            testImages(path, data);
-         }
-         catch (IOException e) {
-            Assert.fail("Unable to load required data file " + path);
-         }
-      }
    }
 
    private void testSummary(String path, SummaryMetadata summary) {
@@ -239,6 +236,72 @@ public class ManualTiffTest {
    private void testImages(String path, Datastore store) {
       for (ImageInfo info : IMAGES.get(path)) {
          info.test(store);
+      }
+   }
+
+   // Tests proper loading of a stored singleplane TIFF file.
+   @Test
+   public void testSinglePlaneTIFFLoad() {
+      DefaultDataManager manager = new DefaultDataManager();
+      for (String path : SUMMARIES.keySet()) {
+         try {
+            Datastore data = manager.loadData(path, true);
+            testSummary(path, data.getSummaryMetadata());
+            testImages(path, data);
+         }
+         catch (IOException e) {
+            Assert.fail("Unable to load required data file " + path);
+         }
+      }
+   }
+
+   // Creates a new multipage TIFF, saves it, loads it, and verifies the
+   // results are as expected. For convenience, re-uses the summary metadata
+   // and image metadata used by the testSinglePlaneTIFFLoad() method.
+   @Test
+   public void testMultipageTIFFSaveLoad() {
+      DefaultDataManager manager = new DefaultDataManager();
+      Datastore store = manager.createRAMDatastore();
+      // Manufacture an Image.
+      short[] pixels = new short[16*24];
+      HashMap<Coords, Integer> values = new HashMap<Coords, Integer>();
+      Coords.CoordsBuilder valBuilder = manager.getCoordsBuilder();
+      for (int i = 0; i < 16; ++i) {
+         valBuilder.index("x", i);
+         for (int j = 0; j < 24; ++j) {
+            valBuilder.index("y", j);
+            short val = (short) ((i * 16 + j) * 24);
+            values.put(valBuilder.build(), new Integer(val));
+            pixels[i * 24 + j] = val;
+         }
+      }
+      Coords.CoordsBuilder builder = manager.getCoordsBuilder();
+      builder.z(0).time(0).channel(0).stagePosition(0);
+      Metadata metadata = IMAGES.get(ALPHA2_PATH).get(0).getMetadata();
+      Image image = new DefaultImage(pixels, 16, 24, 2, 1, builder.build(),
+            metadata);
+      ImageInfo info = new ImageInfo(builder.build(), metadata, values);
+      try {
+         store.putImage(image);
+         SummaryMetadata summary = SUMMARIES.get(ALPHA2_PATH);
+         store.setSummaryMetadata(summary);
+      }
+      catch (DatastoreFrozenException e) {
+         Assert.fail("Unable to add images or set summary metadata: " + e);
+      }
+      File tempDir = Files.createTempDir();
+      store.save(Datastore.SaveMode.MULTIPAGE_TIFF, tempDir.getPath());
+      store.setSavePath(tempDir.toString());
+      store = null;
+
+      System.out.println("Loading data from " + tempDir.getPath());
+      try {
+         Datastore loadedStore = manager.loadData(tempDir.getPath(), true);
+         testSummary(ALPHA2_PATH, loadedStore.getSummaryMetadata());
+         info.test(loadedStore);
+      }
+      catch (IOException e) {
+         Assert.fail("Unable to load newly-generated datastore: " + e);
       }
    }
 }
