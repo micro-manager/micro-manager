@@ -25,6 +25,9 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
+/* JTZ: 2015/7/2: Check In Test 
+*/
+
 #ifndef _Mightex_USBCamera_H_
 #define _Mightex_USBCamera_H_
 
