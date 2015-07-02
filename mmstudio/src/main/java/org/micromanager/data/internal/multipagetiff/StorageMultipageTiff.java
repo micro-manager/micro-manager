@@ -20,6 +20,7 @@ package org.micromanager.data.internal.multipagetiff;
 
 import com.google.common.eventbus.Subscribe;
 
+import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -170,10 +171,16 @@ public final class StorageMultipageTiff implements Storage {
       MultipageTiffReader reader = null;
       File dir = new File(directory_);
 
-      ProgressBar progressBar = new ProgressBar("Reading " + directory_, 0, dir.listFiles().length);
+      ProgressBar progressBar = null;
+      // Allow operation in headless mode.
+      if (!GraphicsEnvironment.isHeadless()) {
+         progressBar = new ProgressBar("Reading " + directory_, 0, dir.listFiles().length);
+      }
       int numRead = 0;
-      progressBar.setProgress(numRead);
-      progressBar.setVisible(true);
+      if (progressBar != null) {
+         progressBar.setProgress(numRead);
+         progressBar.setVisible(true);
+      }
       for (File f : dir.listFiles()) {
          if (f.getName().endsWith(".tif") || f.getName().endsWith(".TIF")) {
             try {
@@ -193,9 +200,13 @@ public final class StorageMultipageTiff implements Storage {
             }
          }
          numRead++;
-         progressBar.setProgress(numRead);
+         if (progressBar != null) {
+            progressBar.setProgress(numRead);
+         }
       }
-      progressBar.setVisible(false);
+      if (progressBar != null) {
+         progressBar.setVisible(false);
+      }
       //reset this static variable to false so the prompt is delivered if a new data set is opened
       MultipageTiffReader.fixIndexMapWithoutPrompt_ = false;
 
@@ -205,8 +216,10 @@ public final class StorageMultipageTiff implements Storage {
          setSummaryMetadata((DefaultSummaryMetadata) reader.getSummaryMetadata(), true);
       }
 
-      progressBar.setProgress(1);
-      progressBar.setVisible(false);
+      if (progressBar != null) {
+         progressBar.setProgress(1);
+         progressBar.setVisible(false);
+      }
    }
 
    @Subscribe
@@ -507,7 +520,7 @@ public final class StorageMultipageTiff implements Storage {
          boolean timeFirst = summaryJSON.optBoolean("TimeFirst", false);
          TreeMap<Coords, MultipageTiffReader> oldImageMap = coordsToReader_;
          coordsToReader_ = new TreeMap<Coords, MultipageTiffReader>();
-         if (showProgress) {
+         if (showProgress && !GraphicsEnvironment.isHeadless()) {
             ProgressBar progressBar = new ProgressBar("Building image location map", 0, oldImageMap.keySet().size());
             progressBar.setProgress(0);
             progressBar.setVisible(true);
