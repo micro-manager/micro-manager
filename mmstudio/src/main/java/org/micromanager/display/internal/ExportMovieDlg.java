@@ -64,6 +64,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
+import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.UIManager;
 
@@ -74,6 +75,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
 
+import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -87,6 +89,8 @@ public class ExportMovieDlg extends JDialog {
                IconLoader.getIcon("/org/micromanager/icons/plus_green.png");
    private static final Icon DELETE_ICON =
                IconLoader.getIcon("/org/micromanager/icons/minus.png");
+   private static final String DEFAULT_EXPORT_FORMAT = "default format to use for exporting image sequences";
+   private static final String DEFAULT_FILENAME_PREFIX = "default prefix to use for files when exporting image sequences";
 
    private static final String FORMAT_PNG = "PNG";
    private static final String FORMAT_JPEG = "JPEG";
@@ -280,15 +284,18 @@ public class ExportMovieDlg extends JDialog {
       private int sequenceNum_ = 0;
       private ImageStack stack_;
       private File outputDir_;
+      private String prefix_;
       private String mode_;
       private AtomicBoolean drawFlag_;
       private AtomicBoolean doneFlag_;
       private boolean isSingleShot_;
       private int jpegQuality_;
 
-      public Exporter(File outputDir, String mode, AtomicBoolean drawFlag,
-            AtomicBoolean doneFlag, boolean isSingleShot, int jpegQuality) {
+      public Exporter(File outputDir, String prefix, String mode,
+            AtomicBoolean drawFlag, AtomicBoolean doneFlag,
+            boolean isSingleShot, int jpegQuality) {
          outputDir_ = outputDir;
+         prefix_ = prefix;
          mode_ = mode;
          drawFlag_ = drawFlag;
          doneFlag_ = doneFlag;
@@ -322,9 +329,13 @@ public class ExportMovieDlg extends JDialog {
        */
       private void exportImage(File outputDir, String mode, BufferedImage image,
             int sequenceNum) {
+         String filename = String.format("%s_%010d", prefix_, sequenceNum);
+         if (isSingleShot_) {
+            // No need to append sequence numbers.
+            filename = prefix_;
+         }
          if (mode.equals(FORMAT_PNG)) {
-            File file = new File(outputDir,
-                  String.format("%010d.png", sequenceNum));
+            File file = new File(outputDir, filename + ".png");
             try {
                ImageIO.write(image, "png", file);
             }
@@ -333,8 +344,7 @@ public class ExportMovieDlg extends JDialog {
             }
          }
          else if (mode.equals(FORMAT_JPEG)) {
-            File file = new File(outputDir,
-                  String.format("%010d.jpg", sequenceNum));
+            File file = new File(outputDir, filename + ".jpg");
             // Set the compression quality.
             float quality = jpegQuality_ / ((float) 10.0);
             ImageWriter writer = ImageIO.getImageWritersByFormatName(
@@ -373,6 +383,8 @@ public class ExportMovieDlg extends JDialog {
    private ArrayList<AxisPanel> axisPanels_;
    private JPanel contentsPanel_;
    private JComboBox outputFormatSelector_;
+   private JLabel prefixLabel_;
+   private JTextField prefixText_;
    private JPanel jpegPanel_;
    private JSpinner jpegQualitySpinner_;
 
@@ -389,7 +401,7 @@ public class ExportMovieDlg extends JDialog {
 
       contentsPanel_ = new JPanel(new MigLayout("flowy"));
 
-      JLabel help = new JLabel("<html><body>Export a series of images from your dataset. The images will be exactly as<br>currently drawn on your display, including histogram scaling, overlays, etc.</body></html>");
+      JLabel help = new JLabel("<html><body>Export a series of images from your dataset. The images will be exactly as currently<br>drawn on your display, including histogram scaling, zoom, overlays, etc.</body></html>");
       contentsPanel_.add(help, "align center");
 
       if (getIsComposite()) {
@@ -398,7 +410,7 @@ public class ExportMovieDlg extends JDialog {
       }
 
       contentsPanel_.add(new JLabel("Output format: "),
-            "split 2, flowx");
+            "split 4, flowx");
       outputFormatSelector_ = new JComboBox(OUTPUT_FORMATS);
       outputFormatSelector_.addActionListener(new ActionListener() {
          @Override
@@ -412,10 +424,18 @@ public class ExportMovieDlg extends JDialog {
             else {
                jpegPanel_.removeAll();
             }
+            prefixLabel_.setEnabled(!selection.equals(FORMAT_IMAGEJ));
+            prefixText_.setEnabled(!selection.equals(FORMAT_IMAGEJ));
             pack();
          }
       });
       contentsPanel_.add(outputFormatSelector_);
+
+      prefixLabel_ = new JLabel("Filename prefix: ");
+      contentsPanel_.add(prefixLabel_);
+
+      prefixText_ = new JTextField(getDefaultPrefix(), 20);
+      contentsPanel_.add(prefixText_, "grow 0");
 
       // We want this panel to take up minimal space when it is not needed.
       jpegPanel_ = new JPanel(new MigLayout("flowx, gap 0", "0[]0[]0",
@@ -460,6 +480,7 @@ public class ExportMovieDlg extends JDialog {
       contentsPanel_.add(exportButton);
 
       getContentPane().add(contentsPanel_);
+      outputFormatSelector_.setSelectedItem(getDefaultExportFormat());
       pack();
       setVisible(true);
    }
@@ -472,6 +493,7 @@ public class ExportMovieDlg extends JDialog {
    private void export() {
       File outputDir = null;
       String mode = (String) outputFormatSelector_.getSelectedItem();
+      setDefaultExportFormat(mode);
       if (!mode.equals(FORMAT_IMAGEJ)) {
          // Prompt the user for a directory to save to.
          JFileChooser chooser = new JFileChooser();
@@ -495,6 +517,16 @@ public class ExportMovieDlg extends JDialog {
             return;
          }
          outputDir = chooser.getSelectedFile();
+         // HACK: for unknown reasons, on OSX at least we can get a
+         // repetition of the final directory if the user clicks the "Choose"
+         // button when inside the directory they want to use, resulting in
+         // e.g. /foo/bar/baz/baz when only /foo/bar/baz exists.
+         if (!outputDir.exists()) {
+            outputDir = new File(outputDir.getParent());
+            if (!outputDir.exists()) {
+               ReportingUtils.showError("Unable to find directory at " + outputDir);
+            }
+         }
       }
 
       // This thread will handle telling the display window to display new
@@ -524,8 +556,10 @@ public class ExportMovieDlg extends JDialog {
          }, "Image export thread");
       }
 
-      final Exporter exporter = new Exporter(outputDir, mode, drawFlag,
-            doneFlag, isSingleShot,
+      String prefix = prefixText_.getText();
+      setDefaultPrefix(prefix);
+      final Exporter exporter = new Exporter(outputDir, prefix, mode,
+            drawFlag, doneFlag, isSingleShot,
             ((Integer) jpegQualitySpinner_.getValue()));
       display_.registerForEvents(exporter);
 
@@ -648,6 +682,38 @@ public class ExportMovieDlg extends JDialog {
     */
    public int getNumSpareAxes() {
       return getNonZeroAxes().size() - axisPanels_.size();
+   }
+
+   /**
+    * Get the default mode the user wants to use for exporting movies.
+    */
+   private static String getDefaultExportFormat() {
+      return DefaultUserProfile.getInstance().getString(ExportMovieDlg.class,
+            DEFAULT_EXPORT_FORMAT, FORMAT_PNG);
+   }
+
+   /**
+    * Set the default mode to use for exporting movies.
+    */
+   private static void setDefaultExportFormat(String format) {
+      DefaultUserProfile.getInstance().setString(ExportMovieDlg.class,
+            DEFAULT_EXPORT_FORMAT, format);
+   }
+
+   /**
+    * Get the default filename prefix.
+    */
+   private static String getDefaultPrefix() {
+      return DefaultUserProfile.getInstance().getString(ExportMovieDlg.class,
+            DEFAULT_FILENAME_PREFIX, "exported");
+   }
+
+   /**
+    * Set a new default filename prefix.
+    */
+   private static void setDefaultPrefix(String prefix) {
+      DefaultUserProfile.getInstance().setString(ExportMovieDlg.class,
+            DEFAULT_FILENAME_PREFIX, prefix);
    }
 }
 
