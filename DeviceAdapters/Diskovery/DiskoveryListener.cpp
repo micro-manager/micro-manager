@@ -97,10 +97,20 @@ void DiskoveryListener::ParseMessage(std::string message)
          {
             model_->SetBusy(true);
          }
+
+      // Preset Spinning Disk
       } else if (tokens[0] == "PRESET_SD") 
       {
          std::istringstream(tokens[1].c_str()) >> number;
          model_->SetPresetSD(number);
+
+      // Preset Wide Field
+      } else if (tokens[0] == "PRESET_WF") 
+      {
+         std::istringstream(tokens[1].c_str()) >> number;
+         model_->SetPresetWF(number);
+
+      // Motor Running
       } else if (tokens[0] == "MOTOR_RUNNING_SD") 
       {
          std::istringstream(tokens[1].c_str()) >> number;
@@ -108,18 +118,32 @@ void DiskoveryListener::ParseMessage(std::string message)
          if (number == 1) 
             state = true;
          model_->SetMotorRunningSD(state);
+
+      // Preset Wide Field
       } else if (tokens[0] == "PRESET_WF") 
       {
          std::istringstream(tokens[1].c_str()) >> number;
          model_->SetPresetWF(number);
+
+      // Preset iris
       } else if (tokens[0] == "PRESET_IRIS") 
       {
          std::istringstream(tokens[1].c_str()) >> number;
          model_->SetPresetIris(number);
+
+      // Preset Filter
+      } else if (tokens[0] == "PRESET_FILTER_W") 
+      {
+         std::istringstream(tokens[1].c_str()) >> number;
+         model_->SetPresetFilter(number);
+
+      // Preset PX (TIRF)
       } else if (tokens[0] == "PRESET_PX") 
       {
          std::istringstream(tokens[1].c_str()) >> number;
-         model_->SetPresetPX(number);
+         model_->SetPresetTIRF(number);
+
+      // Hardware version
       } else if (tokens[0] == "VERSION_HW_MAJOR") 
       {
          std::istringstream(tokens[1].c_str()) >> number;
@@ -132,6 +156,8 @@ void DiskoveryListener::ParseMessage(std::string message)
       {
          std::istringstream(tokens[1].c_str()) >> number;
          model_->SetHardwareVersionRevision(number);
+
+      // Firmware version
       } else if (tokens[0] == "VERSION_FW_MAJOR") 
       {
          std::istringstream(tokens[1].c_str()) >> number;
@@ -144,6 +170,25 @@ void DiskoveryListener::ParseMessage(std::string message)
       {
          std::istringstream(tokens[1].c_str()) >> number;
          model_->SetFirmwareVersionRevision(number);
+
+      // manufacture date
+      } else if (tokens[0] == "MANUFACTURE_YEAR") 
+      {
+         std::istringstream(tokens[1].c_str()) >> number;
+         model_->SetManufactureYear(number);
+      } else if (tokens[0] == "MANUFACTURE_MONTH") 
+      {
+         std::istringstream(tokens[1].c_str()) >> number;
+         model_->SetManufactureMonth(number);
+      } else if (tokens[0] == "MANUFACTURE_DAY") 
+      {
+         std::istringstream(tokens[1].c_str()) >> number;
+         model_->SetManufactureDay(number);
+
+      // serial no.
+      } else if (tokens[0] == "PRODUCT_SERIAL_NO") 
+      {
+         model_->SetSerialNumber(tokens[1]);
       }
    }
 } 

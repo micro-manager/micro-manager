@@ -56,9 +56,15 @@ class DiskoveryModel
          manufacturingDateProp_ = "ManufacturingDate";
          serialNumberProp_ = "SerialNumber";
          spinningDiskPositionProp_ = "Spinning Disk Position";
+         wideFieldPositionProp_ = "Wide Field Position";
+         filterPositionProp_ = "Filter Position";
+         irisPositionProp_ = "Iris Position";
+         tirfPositionProp_ = "TIRF Position";
+         motorRunningProp_ = "Motor Running";
       };
       ~DiskoveryModel() {};
 
+      // Hardware version
       std::string GetHardwareVersion() 
          { MMThreadGuard guard(mutex_); return hardwareVersion_; };
       void SetHardwareVersionMajor(const uint16_t major)
@@ -86,6 +92,7 @@ class DiskoveryModel
       uint16_t GetHardwareVersionRevision()
          { MMThreadGuard guard(mutex_);  return hwrevision_; }
 
+      // Firmware version
       std::string GetFirmwareVersion() 
          { MMThreadGuard guard(mutex_); return firmwareVersion_; };
       void SetFirmwareVersionMajor(const uint16_t major)
@@ -113,38 +120,90 @@ class DiskoveryModel
       uint16_t GetFirmwareVersionRevision()
          { MMThreadGuard guard(mutex_); return fwrevision_; };
 
-      std::string GetManufacturingDate() 
-         {MMThreadGuard guard(mutex_); return manufacturingDate_;};
-      void SetManufacturingDate(const std::string manufacturingDate)
-         {MMThreadGuard guard(mutex_); manufacturingDate_ = manufacturingDate;};
+      // Manufacturing date
+      uint16_t GetManufactureYear()
+         { MMThreadGuard guard(mutex_); return manYear_; };
+      void SetManufactureYear(const uint16_t year)
+         { MMThreadGuard guard(mutex_); manYear_ = year; };
+      uint16_t GetManufactureMonth()
+         { MMThreadGuard guard(mutex_); return manMonth_; };
+      void SetManufactureMonth(const uint16_t month)
+         { MMThreadGuard guard(mutex_); manMonth_ = month; };
+      uint16_t GetManufactureDay()
+         { MMThreadGuard guard(mutex_); return manDay_; };
+      void SetManufactureDay(const uint16_t day)
+         { MMThreadGuard guard(mutex_); manDay_ = day; };
+
+      // Serial number
       std::string GetSerialNumber() 
          {MMThreadGuard guard(mutex_); return serialNumber_;};
       void SetSerialNumber(const std::string serialNumber)
          {MMThreadGuard guard(mutex_); serialNumber_ = serialNumber;};
-      //
+
       // TODO: change Busy to lock-free implementation!
       bool GetBusy() { MMThreadGuard guard(mutex_); return busy_; };
       void SetBusy(const bool busy) { MMThreadGuard guard(mutex_); busy_ = busy; };
 
-      // TODO: add callbacks to notify the core that changes occurred
+      // Preset SD
       void SetPresetSD(const uint16_t p) 
       { 
          MMThreadGuard guard(mutex_); 
          presetSD_ = p;
          std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << p) )->str();
-         // printf(s.c_str());
-         // core_.LogMessage(&device_, s.c_str(), false);
-         //core_.OnPropertyChanged(&device_, spinningDiskPositionProp_, s.c_str());
+         core_.OnPropertyChanged(&device_, spinningDiskPositionProp_, s.c_str());
       };
       uint16_t GetPresetSD() { MMThreadGuard guard(mutex_); return presetSD_; };
-      void SetPresetWF(const uint16_t p) { MMThreadGuard guard(mutex_); presetWF_ = p; };
+
+      // Preset WF
+      void SetPresetWF(const uint16_t p) 
+      { 
+         MMThreadGuard guard(mutex_); 
+         presetWF_ = p; 
+         std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << p) )->str();
+         core_.OnPropertyChanged(&device_, wideFieldPositionProp_, s.c_str());
+      };
       uint16_t GetPresetWF() { MMThreadGuard guard(mutex_); return presetWF_; };
-      void SetPresetIris(const uint16_t p) { MMThreadGuard guard(mutex_); presetIris_ = p; };
+
+      // Preset Iris
+      void SetPresetIris(const uint16_t p) 
+      { 
+         MMThreadGuard guard(mutex_); 
+         presetIris_ = p; 
+         std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << p) )->str();
+         core_.OnPropertyChanged(&device_, irisPositionProp_, s.c_str());
+      };
       uint16_t GetPresetIris() { MMThreadGuard guard(mutex_); return presetIris_; };
-      void SetPresetPX(const uint16_t p) { MMThreadGuard guard(mutex_); presetPX_ = p; };
-      uint16_t GetPresetPX() { MMThreadGuard guard(mutex_); return presetPX_; };
-      void SetMotorRunningSD(const bool r) { MMThreadGuard guard(mutex_); motorRunningSD_ = r; };
-      bool GetMotorRunningSD() { MMThreadGuard guard(mutex_); return motorRunningSD_; };
+
+      // Preset TIRF 
+      void SetPresetTIRF(const uint16_t p) 
+      { 
+         MMThreadGuard guard(mutex_); 
+         presetPX_ = p; 
+         std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << p) )->str();
+         core_.OnPropertyChanged(&device_, tirfPositionProp_, s.c_str());
+      };
+      uint16_t GetPresetTIRF() { MMThreadGuard guard(mutex_); return presetPX_; };
+
+      // Preset Filter 
+      void SetPresetFilter(const uint16_t p) 
+      { 
+         MMThreadGuard guard(mutex_); 
+         presetFilter_ = p; 
+         std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << p) )->str();
+         core_.OnPropertyChanged(&device_, filterPositionProp_, s.c_str());
+      };
+      uint16_t GetPresetFilter() { MMThreadGuard guard(mutex_); return presetFilter_; };
+
+      // Motor Running
+      void SetMotorRunningSD(const bool p) 
+      { 
+         MMThreadGuard guard(mutex_); 
+         motorRunningSD_ = p; 
+         std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << p) )->str();
+         core_.OnPropertyChanged(&device_, motorRunningProp_, s.c_str());
+      };
+      bool GetMotorRunningSD() 
+         { MMThreadGuard guard(mutex_); return motorRunningSD_; };
 
 
       const char* hardwareVersionProp_;
@@ -152,7 +211,11 @@ class DiskoveryModel
       const char* manufacturingDateProp_;
       const char* serialNumberProp_;
       const char* spinningDiskPositionProp_;
-
+      const char* wideFieldPositionProp_;
+      const char* motorRunningProp_;
+      const char* filterPositionProp_;
+      const char* irisPositionProp_;
+      const char* tirfPositionProp_;
 
     private:
       void MakeVersionString(std::string& it, uint16_t maj, 
@@ -167,10 +230,10 @@ class DiskoveryModel
       uint16_t hwmajor_, hwminor_, hwrevision_;
       std::string firmwareVersion_;
       uint16_t fwmajor_, fwminor_, fwrevision_;
-      std::string manufacturingDate_;
+      uint16_t manYear_, manMonth_, manDay_;
       std::string serialNumber_;
       bool busy_; // should be std::atomic_flag when we go to C++11
-      uint16_t presetSD_, presetWF_, presetIris_, presetPX_;
+      uint16_t presetSD_, presetWF_, presetIris_, presetPX_, presetFilter_;
       bool motorRunningSD_;
 
       MMThreadLock mutex_;
@@ -187,6 +250,11 @@ class DiskoveryCommander
       ~DiskoveryCommander();
       int Initialize();
       int SetPresetSD(uint16_t pos);
+      int SetPresetWF(uint16_t pos);
+      int SetPresetFilter(uint16_t pos);
+      int SetPresetIris(uint16_t pos);
+      int SetPresetTIRF(uint16_t pos);
+      int SetMotorRunningSD(uint16_t pos);
 
    private:
       inline int SendCommand(const char* command);
@@ -244,6 +312,11 @@ class Diskovery : public CGenericBase<Diskovery>
       int OnManufacturingDate(MM::PropertyBase* pProp, MM::ActionType eAct); 
       int OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType eAct); 
       int OnSpDiskPresetPosition(MM::PropertyBase* pProp, MM::ActionType eAct); 
+      int OnWideFieldPreset(MM::PropertyBase* pProp, MM::ActionType eAct); 
+      int OnFilter(MM::PropertyBase* pProp, MM::ActionType eAct); 
+      int OnIris(MM::PropertyBase* pProp, MM::ActionType eAct); 
+      int OnTIRF(MM::PropertyBase* pProp, MM::ActionType eAct); 
+      int OnMotorRunning(MM::PropertyBase* pProp, MM::ActionType eAct); 
 
    private:
       int QueryCommand(const char* command, std::string& answer);
@@ -252,6 +325,7 @@ class Diskovery : public CGenericBase<Diskovery>
       std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
 
       std::string port_;
+      std::string manufacturingDate_;
       DiskoveryModel* model_;
       DiskoveryListener* listener_;
       DiskoveryCommander* commander_;
