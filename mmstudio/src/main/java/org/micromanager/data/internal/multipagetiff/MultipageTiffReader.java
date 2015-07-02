@@ -161,7 +161,7 @@ public class MultipageTiffReader {
       File dir = new File(directory);
       File[] children = dir.listFiles();
       if (children == null) {
-         throw new IOException("No subfiles within TIFF structure of " + dir + "; is this an MM dataset?");
+         throw new IOException("No subfiles within TIFF structure of " + directory + "; is this an MM dataset?");
       }
       File testFile = null;
       for (File child : children) {
@@ -179,7 +179,7 @@ public class MultipageTiffReader {
          }
       }
       if (testFile == null) {
-         throw new IOException("Unexpected file structure in file " + testFile + "; is this an MM dataset?");
+         throw new IOException("Unable to find any TIFs in " + directory + "; is this an MM dataset?");
       }
       RandomAccessFile ra;
       try {
