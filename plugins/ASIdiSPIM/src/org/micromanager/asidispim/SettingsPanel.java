@@ -167,27 +167,30 @@ public class SettingsPanel extends ListeningJPanel {
       // end camera panel
       
       
-      // start stage scan panel
-      
-      final JPanel stageScanPanel = new JPanel(new MigLayout(
-            "",
-            "[right]16[center]",
-            "[]8[]"));
-      stageScanPanel.setBorder(PanelUtils.makeTitledBorder("Stage scanning"));
-
-      stageScanPanel.add(new JLabel("Motor acceleration time [ms]:"));
-      final JSpinner stageAccelTime = pu.makeSpinnerFloat(10, 1000, 10,
-            Devices.Keys.XYSTAGE,
-            Properties.Keys.STAGESCAN_MOTOR_ACCEL, 50);
-      stageScanPanel.add(stageAccelTime, "wrap");
-      
-      // end stage scan panel
-      
       // construct main panel
       add(guiPanel);
       add(scannerPanel);
       add(cameraPanel, "wrap");
-      add(stageScanPanel, "growx");
+      
+      // start stage scan panel
+      // only add this panel if stage scanning is supported
+      // TODO create method to determine this instead of separate code here and in AcquisitionPanel
+      if (devices_.isTigerDevice(Devices.Keys.XYSTAGE)
+            && props_.hasProperty(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_NUMLINES)) {
+         final JPanel stageScanPanel = new JPanel(new MigLayout(
+               "",
+               "[right]16[center]",
+               "[]8[]"));
+         stageScanPanel.setBorder(PanelUtils.makeTitledBorder("Stage scanning"));
+         stageScanPanel.add(new JLabel("Motor acceleration time [ms]:"));
+         final JSpinner stageAccelTime = pu.makeSpinnerFloat(10, 1000, 10,
+               Devices.Keys.XYSTAGE,
+               Properties.Keys.STAGESCAN_MOTOR_ACCEL, 50);
+         stageScanPanel.add(stageAccelTime, "wrap");
+         add(stageScanPanel, "growx");
+       }
+      // end stage scan panel
+      
       
       
    }
