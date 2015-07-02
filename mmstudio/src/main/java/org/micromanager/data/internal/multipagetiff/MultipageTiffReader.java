@@ -119,7 +119,6 @@ public class MultipageTiffReader {
     * This constructor is used for opening datasets that have already been saved
     */
    public MultipageTiffReader(File file) throws IOException {
-      JSONObject displayAndComments = new JSONObject();
       file_ = file;
       try {
          createFileChannel();
@@ -141,9 +140,11 @@ public class MultipageTiffReader {
          }
       }
       try {
-         // Copy out the primary comment into the summary metadata.
          if (summaryMetadata_ != null) {
-            summaryMetadata_ = summaryMetadata_.copy().comments(readComments()).build();
+            if (summaryMetadata_.getComments() == null) {
+               // Copy out the primary comment into the summary metadata.
+               summaryMetadata_ = summaryMetadata_.copy().comments(readComments()).build();
+            }
          }
          else {
             ReportingUtils.logError("No SummaryMetadata available to copy comments into.");
