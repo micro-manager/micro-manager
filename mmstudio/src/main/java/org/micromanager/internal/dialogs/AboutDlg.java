@@ -40,6 +40,7 @@ import javax.swing.WindowConstants;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.LineBorder;
 
+import org.micromanager.internal.MMVersion;
 
 /**
  * Help | About dialog for MMStudio.
@@ -69,15 +70,15 @@ public class AboutDlg extends JDialog {
       setResizable(false);
       setModal(true);
       getContentPane().setLayout(null);
-      setTitle("About Micro-Manager 2.0");
+      setTitle("About Micro-Manager");
       
       Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
       setLocation(screenSize.width/2 - (winSize.width/2), screenSize.height/2 - (winSize.height/2));
 
       final JLabel micromanageLabel = new JLabel();
       micromanageLabel.setFont(new Font("", Font.BOLD, 16));
-      micromanageLabel.setText("Micro-Manager 2.0");
-      micromanageLabel.setBounds(44, 11, 176, 23);
+      micromanageLabel.setText("Micro-Manager " + MMVersion.VERSION_STRING);
+      micromanageLabel.setBounds(44, 11, 250, 23);
       getContentPane().add(micromanageLabel);
 
       final JLabel openSourceAutomatedLabel = new JLabel();
