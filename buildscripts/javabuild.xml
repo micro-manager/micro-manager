@@ -129,7 +129,8 @@
 			<fileset dir="${testrscdir}"/>
 		</copy>
 		<mkdir dir="${test.reportdir}"/>
-		<junit fork="true" haltonfailure="true" printsummary="true">
+        <junit fork="true" haltonfailure="true" printsummary="true"
+            maxmemory="256m">
 			<sysproperty key="java.awt.headless" value="true"/>
 			<classpath refid="project.test.classpath"/>
 			<formatter type="plain"/>
