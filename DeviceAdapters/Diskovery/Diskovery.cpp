@@ -38,7 +38,7 @@ using namespace std;
 
 MODULE_API void InitializeModuleData()
 {
-   RegisterDevice(g_Diskoveryname, MM::GenericDevice, "Diskovery1");
+   RegisterDevice(g_Diskoveryname, MM::GenericDevice, "Diskovery");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)                  
@@ -68,7 +68,8 @@ Diskovery::Diskovery() :
    initialized_(false),
    port_("Undefined"),                                                       
    answerTimeoutMs_(1000),
-   model_(*this, *GetCoreCallback())
+   model_(*this, *GetCoreCallback()),
+   listener_(0)
 {
    InitializeDefaultErrorMessages();
 
@@ -89,14 +90,22 @@ Diskovery::Diskovery() :
 
 Diskovery::~Diskovery() 
 {
+   if (listener_ != 0)
+      listener_->Stop();
    Shutdown();
 }
 
 int Diskovery::Initialize() 
 {
+   listener_ = new DiskoveryListener(*this, *GetCoreCallback(), port_, &model_);
+   commander_ = new DiskoveryCommander(*this, *GetCoreCallback(), port_, &model_);
+   listener_->Start();
+   RETURN_ON_MM_ERROR( commander_->Initialize() );
+
    // get information from the device 
   
    // Hardware version
+   /*
    unsigned int hwmajor;
    RETURN_ON_MM_ERROR ( QueryCommandInt("Q:VERSION_HW_MAJOR", &hwmajor) );
    unsigned int hwminor;
@@ -106,12 +115,15 @@ int Diskovery::Initialize()
    std::ostringstream oss;
    oss << hwmajor << "." << hwminor << "." << hwrevision;
    hardwareVersion_ = oss.str();
+   */
 
    CPropertyAction *pAct = new CPropertyAction (this, &Diskovery::OnHardwareVersion);
-   int nRet = CreateStringProperty(model_.hardwareVersionProp_, hardwareVersion_.c_str(), true, pAct);
+   int nRet = CreateStringProperty(model_.hardwareVersionProp_, 
+         model_.GetHardwareVersion().c_str(), true, pAct);
    assert(nRet == DEVICE_OK);
 
    // Firmware version
+   /*
    unsigned int fwmajor;
    RETURN_ON_MM_ERROR ( QueryCommandInt("Q:VERSION_FW_MAJOR", &fwmajor) );
    unsigned int fwminor;
@@ -121,12 +133,13 @@ int Diskovery::Initialize()
    std::ostringstream oss2;
    oss2 << fwmajor << "." << fwminor << "." << fwrevision;
    firmwareVersion_ = oss2.str();
-
+   */
    pAct = new CPropertyAction (this, &Diskovery::OnFirmwareVersion);
    nRet = CreateStringProperty(model_.firmwareVersionProp_, firmwareVersion_.c_str(), true, pAct);
    assert(nRet == DEVICE_OK);
 
    // Manufacturing date
+   /*
    unsigned int year;
    RETURN_ON_MM_ERROR ( QueryCommandInt("Q:MANUFACTURE_YEAR", &year) );
    unsigned int month;
@@ -136,12 +149,13 @@ int Diskovery::Initialize()
    std::ostringstream oss3;
    oss3 << "20" << year << "-" << month << "-" << day;
    manufacturingDate_ = oss3.str();
+   */
 
    pAct = new CPropertyAction (this, &Diskovery::OnManufacturingDate);
    nRet = CreateStringProperty(model_.manufacturingDateProp_, manufacturingDate_.c_str(), true, pAct);
 
    // Serial Number
-   RETURN_ON_MM_ERROR ( QueryCommand("Q:PRODUCT_SERIAL_NO", serialNumber_) );
+   // RETURN_ON_MM_ERROR ( QueryCommand("Q:PRODUCT_SERIAL_NO", serialNumber_) );
    pAct = new CPropertyAction (this, &Diskovery::OnSerialNumber);
    nRet = CreateStringProperty(model_.serialNumberProp_, serialNumber_.c_str(), true, pAct);
 
@@ -193,7 +207,7 @@ int Diskovery::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 int Diskovery::OnHardwareVersion(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet) {
-      pProp->Set(hardwareVersion_.c_str());
+      pProp->Set(model_.GetHardwareVersion().c_str());
    }
    
    return DEVICE_OK;
@@ -202,7 +216,7 @@ int Diskovery::OnHardwareVersion(MM::PropertyBase* pProp, MM::ActionType eAct)
 int Diskovery::OnFirmwareVersion(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet) {
-      pProp->Set(firmwareVersion_.c_str());
+      pProp->Set(model_.GetFirmwareVersion().c_str());
    }
    
    return DEVICE_OK;
@@ -211,7 +225,7 @@ int Diskovery::OnFirmwareVersion(MM::PropertyBase* pProp, MM::ActionType eAct)
 int Diskovery::OnManufacturingDate(MM::PropertyBase* pProp, MM::ActionType eAct) 
 {
    if (eAct == MM::BeforeGet) {
-      pProp->Set(manufacturingDate_.c_str());
+      pProp->Set(model_.GetManufacturingDate().c_str());
    }
    
    return DEVICE_OK;
@@ -229,15 +243,12 @@ int Diskovery::OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType eAct)
 int Diskovery::OnSpDiskPresetPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet) {
-      RETURN_ON_MM_ERROR ( QueryCommandInt("Q:PRESET_SD", &spDiskPos_) );
-      pProp->Set((long) spDiskPos_);
+      pProp->Set((long) model_.GetPresetSD() );
    }
    else if (eAct == MM::AfterSet) {
-      std::ostringstream os;
       long tmp;
       pProp->Get(tmp);
-      os << "A:PRESET_SD," << tmp;
-      RETURN_ON_MM_ERROR( QueryCommandInt(os.str().c_str(), &spDiskPos_) );
+      RETURN_ON_MM_ERROR( commander_->SetPresetSD( (uint16_t) tmp) );
    }
    
    return DEVICE_OK;

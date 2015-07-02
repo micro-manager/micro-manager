@@ -57,7 +57,7 @@ class DiskoveryModel
          serialNumberProp_ = "SerialNumber";
          spinningDiskPositionProp_ = "Spinning Disk Position";
       };
-      ~DiskoveryModel();
+      ~DiskoveryModel() {};
 
       std::string GetHardwareVersion() 
          { MMThreadGuard guard(mutex_); return hardwareVersion_; };
@@ -65,7 +65,7 @@ class DiskoveryModel
       {
          MMThreadGuard guard(mutex_); 
          hwmajor_ = major;
-         MakeVersionString(hardwareVersion_);
+         MakeVersionString(hardwareVersion_, hwmajor_, hwminor_, hwrevision_);
       };
       uint16_t GetHardwareVersionMajor()
          { MMThreadGuard guard(mutex_);  return hwmajor_; }
@@ -73,7 +73,7 @@ class DiskoveryModel
       {
          MMThreadGuard guard(mutex_); 
          hwminor_ = minor;
-         MakeVersionString(hardwareVersion_);
+         MakeVersionString(hardwareVersion_, hwmajor_, hwminor_, hwrevision_);
       };
       uint16_t GetHardwareVersionMinor()
          { MMThreadGuard guard(mutex_);  return hwminor_; }
@@ -81,7 +81,7 @@ class DiskoveryModel
       {
          MMThreadGuard guard(mutex_); 
          hwrevision_ = revision;
-         MakeVersionString(hardwareVersion_);
+         MakeVersionString(hardwareVersion_, hwmajor_, hwminor_, hwrevision_);
       };
       uint16_t GetHardwareVersionRevision()
          { MMThreadGuard guard(mutex_);  return hwrevision_; }
@@ -92,7 +92,7 @@ class DiskoveryModel
       {
          MMThreadGuard guard(mutex_); 
          fwmajor_ = major;
-         MakeVersionString(firmwareVersion_);
+         MakeVersionString(firmwareVersion_, fwmajor_, fwminor_, fwrevision_);
       };
       uint16_t GetFirmwareVersionMajor()
          { MMThreadGuard guard(mutex_); return fwmajor_; };
@@ -100,7 +100,7 @@ class DiskoveryModel
       {
          MMThreadGuard guard(mutex_); 
          fwminor_ = minor;
-         MakeVersionString(firmwareVersion_);
+         MakeVersionString(firmwareVersion_, fwmajor_, fwminor_, fwrevision_);
       };
       uint16_t GetFirmwareVersionMinor()
          { MMThreadGuard guard(mutex_); return fwminor_; };
@@ -108,7 +108,7 @@ class DiskoveryModel
       {
          MMThreadGuard guard(mutex_); 
          fwrevision_ = revision;
-         MakeVersionString(firmwareVersion_);
+         MakeVersionString(firmwareVersion_, fwmajor_, fwminor_, fwrevision_);
       };
       uint16_t GetFirmwareVersionRevision()
          { MMThreadGuard guard(mutex_); return fwrevision_; };
@@ -132,7 +132,9 @@ class DiskoveryModel
          MMThreadGuard guard(mutex_); 
          presetSD_ = p;
          std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << p) )->str();
-         core_.OnPropertyChanged(&device_, spinningDiskPositionProp_, s.c_str());
+         printf(s.c_str());
+         // core_.LogMessage(&device_, s.c_str(), false);
+         //core_.OnPropertyChanged(&device_, spinningDiskPositionProp_, s.c_str());
       };
       uint16_t GetPresetSD() { MMThreadGuard guard(mutex_); return presetSD_; };
       void SetPresetWF(const uint16_t p) { MMThreadGuard guard(mutex_); presetWF_ = p; };
@@ -153,10 +155,11 @@ class DiskoveryModel
 
 
     private:
-      void MakeVersionString(std::string& it) 
+      void MakeVersionString(std::string& it, uint16_t maj, 
+            uint16_t min, uint16_t rev) 
       {
          std::ostringstream oss;
-         oss << hwmajor_ << "." << hwminor_ << "." << hwrevision_;
+         oss << maj << "." << min << "." << rev;
          it  = oss.str();
       };
 
@@ -178,8 +181,20 @@ class DiskoveryModel
 
 class DiskoveryCommander
 {
-   DiskoveryCommander(std::string serialPort, DiskoveryModel model);
-   ~DiskoveryCommander();
+   public:
+      DiskoveryCommander(MM::Device& device, MM::Core& core, std::string serialPort, 
+         DiskoveryModel* model);
+      ~DiskoveryCommander();
+      int Initialize();
+      int SetPresetSD(uint16_t pos);
+
+   private:
+      inline int SendCommand(const char* command);
+
+      MM::Device& device_;
+      MM::Core& core_;
+      DiskoveryModel* model_;
+      std::string port_;
 };
 
 class DiskoveryListener : public MMDeviceThreadBase
@@ -188,6 +203,7 @@ class DiskoveryListener : public MMDeviceThreadBase
       DiskoveryListener(MM::Device& device, MM::Core& core, std::string serialPort, 
             DiskoveryModel* model);
       ~DiskoveryListener();
+      void Shutdown();
       int svc();
       int open (void*) { return 0; }
       int close (unsigned long) { return 0; }
@@ -244,6 +260,8 @@ class Diskovery : public CGenericBase<Diskovery>
       double answerTimeoutMs_;
       std::string port_;
       DiskoveryModel model_;
+      DiskoveryListener* listener_;
+      DiskoveryCommander* commander_;
 };
 
 #endif // _Diskovery_H_

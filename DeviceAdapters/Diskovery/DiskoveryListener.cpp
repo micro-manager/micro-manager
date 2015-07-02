@@ -34,17 +34,23 @@ DiskoveryListener::DiskoveryListener(
 
 DiskoveryListener::~DiskoveryListener()
 {
-   Stop();                                                                           
-   wait();                                                                           
-   core_.LogMessage(&device_, "Destructing MonitoringThread", true);                 
-}   
+   Shutdown();
+}
+
+void DiskoveryListener::Shutdown()
+{
+   Stop();
+   wait();
+   core_.LogMessage(&device_, "Destructing MonitoringThread", true);
+}
+
 
 int DiskoveryListener::svc()
 {
-   core_.LogMessage(&device_, "Starting Diskovery1 Listener Thread", true);
+   core_.LogMessage(&device_, "Starting Diskovery Listener Thread", true);
 
    char answer[MM::MaxStrLength];
-   std::string term = "\n\a";
+   std::string term = "\r\n";
    int ret = DEVICE_OK;
    while (!stop_)
    {
@@ -91,64 +97,56 @@ void DiskoveryListener::ParseMessage(std::string message)
          {
             model_->SetBusy(true);
          }
-      } else if (tokens[0] == "MESSAGE") 
+      } else if (tokens[0] == "PRESET_SD") 
       {
-         std::vector<std::string> subtokens = split(tokens[1], ',');
-         if (subtokens.size() == 2) 
-         {
-            if (subtokens[0] == "PRESET_SD") 
-            {
-               std::istringstream(subtokens[1].c_str()) >> number;
-               model_->SetPresetSD(number);
-            } else if (subtokens[0] == "MOTOR_RUNNING_SD") 
-            {
-               std::istringstream(subtokens[1].c_str()) >> number;
-               state = false;
-               if (number == 1) 
-                  state = true;
-               model_->SetMotorRunningSD(state);
-            } else if (subtokens[0] == "PRESET_WF") 
-            {
-               std::istringstream(subtokens[1].c_str()) >> number;
-               model_->SetPresetWF(number);
-            } else if (subtokens[0] == "PRESET_IRIS") 
-            {
-               std::istringstream(subtokens[1].c_str()) >> number;
-               model_->SetPresetIris(number);
-            } else if (subtokens[0] == "PRESET_PX") 
-            {
-               std::istringstream(subtokens[1].c_str()) >> number;
-               model_->SetPresetPX(number);
-            } else if (subtokens[0] == "VERSION_HW_MAJOR") 
-            {
-               std::istringstream(subtokens[1].c_str()) >> number;
-               model_->SetHardwareVersionMajor(number);
-            } else if (subtokens[0] == "VERSION_HW_MINORR") 
-            {
-               std::istringstream(subtokens[1].c_str()) >> number;
-               model_->SetHardwareVersionMinor(number);
-            } else if (subtokens[0] == "VERSION_HW_REVISION") 
-            {
-               std::istringstream(subtokens[1].c_str()) >> number;
-               model_->SetHardwareVersionRevision(number);
-            } else if (subtokens[0] == "VERSION_FW_MAJOR") 
-            {
-               std::istringstream(subtokens[1].c_str()) >> number;
-               model_->SetFirmwareVersionMajor(number);
-            } else if (subtokens[0] == "VERSION_FW_MINORR") 
-            {
-               std::istringstream(subtokens[1].c_str()) >> number;
-               model_->SetFirmwareVersionMinor(number);
-            } else if (subtokens[0] == "VERSION_FW_REVISION") 
-            {
-               std::istringstream(subtokens[1].c_str()) >> number;
-               model_->SetFirmwareVersionRevision(number);
-            }
-         }
-      } // else if (tokens[0] == 
+         std::istringstream(tokens[1].c_str()) >> number;
+         model_->SetPresetSD(number);
+      } else if (tokens[0] == "MOTOR_RUNNING_SD") 
+      {
+         std::istringstream(tokens[1].c_str()) >> number;
+         state = false;
+         if (number == 1) 
+            state = true;
+         model_->SetMotorRunningSD(state);
+      } else if (tokens[0] == "PRESET_WF") 
+      {
+         std::istringstream(tokens[1].c_str()) >> number;
+         model_->SetPresetWF(number);
+      } else if (tokens[0] == "PRESET_IRIS") 
+      {
+         std::istringstream(tokens[1].c_str()) >> number;
+         model_->SetPresetIris(number);
+      } else if (tokens[0] == "PRESET_PX") 
+      {
+         std::istringstream(tokens[1].c_str()) >> number;
+         model_->SetPresetPX(number);
+      } else if (tokens[0] == "VERSION_HW_MAJOR") 
+      {
+         std::istringstream(tokens[1].c_str()) >> number;
+         model_->SetHardwareVersionMajor(number);
+      } else if (tokens[0] == "VERSION_HW_MINOR") 
+      {
+         std::istringstream(tokens[1].c_str()) >> number;
+         model_->SetHardwareVersionMinor(number);
+      } else if (tokens[0] == "VERSION_HW_REVISION") 
+      {
+         std::istringstream(tokens[1].c_str()) >> number;
+         model_->SetHardwareVersionRevision(number);
+      } else if (tokens[0] == "VERSION_FW_MAJOR") 
+      {
+         std::istringstream(tokens[1].c_str()) >> number;
+         model_->SetFirmwareVersionMajor(number);
+      } else if (tokens[0] == "VERSION_FW_MINOR") 
+      {
+         std::istringstream(tokens[1].c_str()) >> number;
+         model_->SetFirmwareVersionMinor(number);
+      } else if (tokens[0] == "VERSION_FW_REVISION") 
+      {
+         std::istringstream(tokens[1].c_str()) >> number;
+         model_->SetFirmwareVersionRevision(number);
+      }
    }
-
-}
+} 
 
 
 std::vector<std::string>& DiskoveryListener::split(const std::string &s, char delim, std::vector<std::string> &elems) {
