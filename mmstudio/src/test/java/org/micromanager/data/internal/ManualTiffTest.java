@@ -89,8 +89,8 @@ public class ManualTiffTest {
          Assert.assertNotNull("Image at " + coords_ + " is null", image);
          for (Coords c : values_.keySet()) {
             Assert.assertEquals(
-                  image.getIntensityAt(c.getIndex("x"), c.getIndex("y")),
-                  (int) values_.get(c));
+                  (int) values_.get(c),
+                  image.getIntensityAt(c.getIndex("x"), c.getIndex("y")));
          }
          Metadata metadata = image.getMetadata();
          Assert.assertEquals(metadata_.getBinning(), metadata.getBinning());
@@ -267,10 +267,10 @@ public class ManualTiffTest {
       HashMap<Coords, Integer> values = new HashMap<Coords, Integer>();
       Coords.CoordsBuilder valBuilder = manager.getCoordsBuilder();
       for (int i = 0; i < 16; ++i) {
-         valBuilder.index("x", i);
+         valBuilder.index("y", i);
          for (int j = 0; j < 24; ++j) {
-            valBuilder.index("y", j);
-            short val = (short) ((i * 16 + j) * 24);
+            valBuilder.index("x", j);
+            short val = (short) (i * 100 + j);
             values.put(valBuilder.build(), new Integer(val));
             pixels[i * 24 + j] = val;
          }
@@ -278,7 +278,7 @@ public class ManualTiffTest {
       Coords.CoordsBuilder builder = manager.getCoordsBuilder();
       builder.z(0).time(0).channel(0).stagePosition(0);
       Metadata metadata = IMAGES.get(ALPHA2_PATH).get(0).getMetadata();
-      Image image = new DefaultImage(pixels, 16, 24, 2, 1, builder.build(),
+      Image image = new DefaultImage(pixels, 24, 16, 2, 1, builder.build(),
             metadata);
       ImageInfo info = new ImageInfo(builder.build(), metadata, values);
       try {
