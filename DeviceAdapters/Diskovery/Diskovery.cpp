@@ -65,11 +65,10 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // Diskovery
 //
 Diskovery::Diskovery() :
-   initialized_(false),
    port_("Undefined"),                                                       
-   answerTimeoutMs_(1000),
-   model_(*this, *GetCoreCallback()),
-   listener_(0)
+   model_(0),
+   listener_(0),
+   commander_(0)
 {
    InitializeDefaultErrorMessages();
 
@@ -90,52 +89,29 @@ Diskovery::Diskovery() :
 
 Diskovery::~Diskovery() 
 {
-   if (listener_ != 0)
-      listener_->Stop();
    Shutdown();
 }
 
 int Diskovery::Initialize() 
 {
-   listener_ = new DiskoveryListener(*this, *GetCoreCallback(), port_, &model_);
-   commander_ = new DiskoveryCommander(*this, *GetCoreCallback(), port_, &model_);
+   model_ = new DiskoveryModel(*this, *GetCoreCallback());
+   listener_ = new DiskoveryListener(*this, *GetCoreCallback(), port_, model_);
+   commander_ = new DiskoveryCommander(*this, *GetCoreCallback(), port_, model_);
    listener_->Start();
    RETURN_ON_MM_ERROR( commander_->Initialize() );
 
-   // get information from the device 
+   // Create properties storing information from the device 
   
    // Hardware version
-   /*
-   unsigned int hwmajor;
-   RETURN_ON_MM_ERROR ( QueryCommandInt("Q:VERSION_HW_MAJOR", &hwmajor) );
-   unsigned int hwminor;
-   RETURN_ON_MM_ERROR ( QueryCommandInt("Q:VERSION_HW_MINOR", &hwminor) );
-   unsigned int hwrevision;
-   RETURN_ON_MM_ERROR ( QueryCommandInt("Q:VERSION_HW_REVISION", &hwrevision) );
-   std::ostringstream oss;
-   oss << hwmajor << "." << hwminor << "." << hwrevision;
-   hardwareVersion_ = oss.str();
-   */
-
    CPropertyAction *pAct = new CPropertyAction (this, &Diskovery::OnHardwareVersion);
-   int nRet = CreateStringProperty(model_.hardwareVersionProp_, 
-         model_.GetHardwareVersion().c_str(), true, pAct);
+   int nRet = CreateStringProperty(model_->hardwareVersionProp_, 
+         model_->GetHardwareVersion().c_str(), true, pAct);
    assert(nRet == DEVICE_OK);
 
    // Firmware version
-   /*
-   unsigned int fwmajor;
-   RETURN_ON_MM_ERROR ( QueryCommandInt("Q:VERSION_FW_MAJOR", &fwmajor) );
-   unsigned int fwminor;
-   RETURN_ON_MM_ERROR ( QueryCommandInt("Q:VERSION_FW_MINOR", &fwminor) );
-   unsigned int fwrevision;
-   RETURN_ON_MM_ERROR ( QueryCommandInt("Q:VERSION_FW_REVISION", &fwrevision) );
-   std::ostringstream oss2;
-   oss2 << fwmajor << "." << fwminor << "." << fwrevision;
-   firmwareVersion_ = oss2.str();
-   */
    pAct = new CPropertyAction (this, &Diskovery::OnFirmwareVersion);
-   nRet = CreateStringProperty(model_.firmwareVersionProp_, firmwareVersion_.c_str(), true, pAct);
+   nRet = CreateStringProperty(model_->firmwareVersionProp_, 
+         model_->GetFirmwareVersion().c_str(), true, pAct);
    assert(nRet == DEVICE_OK);
 
    // Manufacturing date
@@ -152,23 +128,32 @@ int Diskovery::Initialize()
    */
 
    pAct = new CPropertyAction (this, &Diskovery::OnManufacturingDate);
-   nRet = CreateStringProperty(model_.manufacturingDateProp_, manufacturingDate_.c_str(), true, pAct);
+   nRet = CreateStringProperty(model_->manufacturingDateProp_, 
+         model_->GetManufacturingDate().c_str(), true, pAct);
 
    // Serial Number
    // RETURN_ON_MM_ERROR ( QueryCommand("Q:PRODUCT_SERIAL_NO", serialNumber_) );
    pAct = new CPropertyAction (this, &Diskovery::OnSerialNumber);
-   nRet = CreateStringProperty(model_.serialNumberProp_, serialNumber_.c_str(), true, pAct);
+   nRet = CreateStringProperty(model_->serialNumberProp_, 
+         model_->GetSerialNumber().c_str(), true, pAct);
 
 
    // Spinning disk preset position
    pAct = new CPropertyAction(this, &Diskovery::OnSpDiskPresetPosition);
-   nRet = CreateIntegerProperty(model_.spinningDiskPositionProp_, spDiskPos_, false, pAct);
+   nRet = CreateIntegerProperty(model_->spinningDiskPositionProp_, model_->GetPresetSD(), 
+         false, pAct);
 
    return DEVICE_OK;
 }
 
 int Diskovery::Shutdown() 
 {
+   if (listener_ != 0)
+      delete(listener_);
+   if (commander_ != 0)
+      delete(commander_);
+   if (model_ != 0)
+      delete(model_);
    return DEVICE_OK;
 }
 
@@ -191,12 +176,6 @@ int Diskovery::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::BeforeGet) {
       pProp->Set(port_.c_str());
    } else if (eAct == MM::AfterSet) {
-      if (initialized_) {
-         // revert
-         pProp->Set(port_.c_str());
-         return ERR_PORT_CHANGE_FORBIDDEN;
-      }
-
       pProp->Get(port_);
    }
 
@@ -207,7 +186,7 @@ int Diskovery::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 int Diskovery::OnHardwareVersion(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet) {
-      pProp->Set(model_.GetHardwareVersion().c_str());
+      pProp->Set(model_->GetHardwareVersion().c_str());
    }
    
    return DEVICE_OK;
@@ -216,7 +195,7 @@ int Diskovery::OnHardwareVersion(MM::PropertyBase* pProp, MM::ActionType eAct)
 int Diskovery::OnFirmwareVersion(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet) {
-      pProp->Set(model_.GetFirmwareVersion().c_str());
+      pProp->Set(model_->GetFirmwareVersion().c_str());
    }
    
    return DEVICE_OK;
@@ -225,7 +204,7 @@ int Diskovery::OnFirmwareVersion(MM::PropertyBase* pProp, MM::ActionType eAct)
 int Diskovery::OnManufacturingDate(MM::PropertyBase* pProp, MM::ActionType eAct) 
 {
    if (eAct == MM::BeforeGet) {
-      pProp->Set(model_.GetManufacturingDate().c_str());
+      pProp->Set(model_->GetManufacturingDate().c_str());
    }
    
    return DEVICE_OK;
@@ -234,7 +213,7 @@ int Diskovery::OnManufacturingDate(MM::PropertyBase* pProp, MM::ActionType eAct)
 int Diskovery::OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet) {
-      pProp->Set(serialNumber_.c_str());
+      pProp->Set(model_->GetSerialNumber().c_str());
    }
    
    return DEVICE_OK;
@@ -243,7 +222,7 @@ int Diskovery::OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType eAct)
 int Diskovery::OnSpDiskPresetPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet) {
-      pProp->Set((long) model_.GetPresetSD() );
+      pProp->Set((long) model_->GetPresetSD() );
    }
    else if (eAct == MM::AfterSet) {
       long tmp;

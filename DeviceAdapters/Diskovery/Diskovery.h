@@ -132,7 +132,7 @@ class DiskoveryModel
          MMThreadGuard guard(mutex_); 
          presetSD_ = p;
          std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << p) )->str();
-         printf(s.c_str());
+         // printf(s.c_str());
          // core_.LogMessage(&device_, s.c_str(), false);
          //core_.OnPropertyChanged(&device_, spinningDiskPositionProp_, s.c_str());
       };
@@ -251,15 +251,8 @@ class Diskovery : public CGenericBase<Diskovery>
       std::vector<std::string> split(const std::string &s, char delim);
       std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems);
 
-      std::string hardwareVersion_;
-      std::string firmwareVersion_;
-      std::string manufacturingDate_;
-      std::string serialNumber_;
-      unsigned int spDiskPos_;
-      bool initialized_;
-      double answerTimeoutMs_;
       std::string port_;
-      DiskoveryModel model_;
+      DiskoveryModel* model_;
       DiskoveryListener* listener_;
       DiskoveryCommander* commander_;
 };
