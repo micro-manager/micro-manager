@@ -30,8 +30,10 @@ const char* g_SetPresetSD = "A:PRESET_SD,";
 const char* g_GetPresetSD = "Q:PRESET_SD";
 const char* g_SetPresetWF = "A:PRESET_WF,";
 const char* g_GetPresetWF = "Q:PRESET_WF";
-const char* g_SetPresetFilter = "A:PRESET_FILTER_W,";
-const char* g_GetPresetFilter = "Q:PRESET_FILTER_W";
+const char* g_SetPresetFilterW = "A:PRESET_FILTER_W,";
+const char* g_GetPresetFilterW = "Q:PRESET_FILTER_W";
+const char* g_SetPresetFilterT = "A:PRESET_FILTER_T,";
+const char* g_GetPresetFilterT = "Q:PRESET_FILTER_T";
 const char* g_SetPresetIris = "A:PRESET_IRIS,";
 const char* g_GetPresetIris = "Q:PRESET_IRIS";
 const char* g_SetPresetTIRF = "A:PRESET_PX,";
@@ -86,11 +88,13 @@ int DiskoveryCommander::Initialize()
    RETURN_ON_MM_ERROR( SendCommand(g_GetPresetSD) );
    RETURN_ON_MM_ERROR( SendCommand(g_GetPresetWF) );
    CDeviceUtils::SleepMs(50);
-   RETURN_ON_MM_ERROR( SendCommand(g_GetPresetFilter) );
+   RETURN_ON_MM_ERROR( SendCommand(g_GetPresetFilterW) );
+   RETURN_ON_MM_ERROR( SendCommand(g_GetPresetFilterT) );
    RETURN_ON_MM_ERROR( SendCommand(g_GetPresetIris) );
-   RETURN_ON_MM_ERROR( SendCommand(g_GetPresetTIRF) );
    CDeviceUtils::SleepMs(50);
+   RETURN_ON_MM_ERROR( SendCommand(g_GetPresetTIRF) );
    RETURN_ON_MM_ERROR( SendCommand(g_GetMotorRunningSD) );
+   CDeviceUtils::SleepMs(50);
 
    return DEVICE_OK;
 }
@@ -106,63 +110,52 @@ int DiskoveryCommander::GetProductModel()
 
 int DiskoveryCommander::SetPresetSD(uint16_t pos)
 {
-   std::ostringstream os;
-   os << g_SetPresetSD << pos;
-   RETURN_ON_MM_ERROR( SendCommand(os.str().c_str()) );
-
-   return DEVICE_OK;
+   return SendSetCommand(g_SetPresetSD, pos);
 }
 
 int DiskoveryCommander::SetPresetWF(uint16_t pos)
 {
-   std::ostringstream os;
-   os << g_SetPresetWF << pos;
-   RETURN_ON_MM_ERROR( SendCommand(os.str().c_str()) );
-
-   return DEVICE_OK;
+   return SendSetCommand(g_SetPresetWF, pos);
 }
 
-int DiskoveryCommander::SetPresetFilter(uint16_t pos)
+int DiskoveryCommander::SetPresetFilterW(uint16_t pos)
 {
-   std::ostringstream os;
-   os << g_SetPresetFilter << pos;
-   RETURN_ON_MM_ERROR( SendCommand(os.str().c_str()) );
-
-   return DEVICE_OK;
+   return SendSetCommand(g_SetPresetFilterW, pos);
 }
 
+int DiskoveryCommander::SetPresetFilterT(uint16_t pos)
+{
+   return SendSetCommand(g_SetPresetFilterT, pos);
+}
 int DiskoveryCommander::SetPresetIris(uint16_t pos)
 {
-   std::ostringstream os;
-   os << g_SetPresetIris << pos;
-   RETURN_ON_MM_ERROR( SendCommand(os.str().c_str()) );
-
-   return DEVICE_OK;
+   return SendSetCommand(g_SetPresetIris, pos);
 }
 
 int DiskoveryCommander::SetPresetTIRF(uint16_t pos)
 {
-   std::ostringstream os;
-   os << g_SetPresetTIRF << pos;
-   RETURN_ON_MM_ERROR( SendCommand(os.str().c_str()) );
-
-   return DEVICE_OK;
+   return SendSetCommand(g_SetPresetTIRF, pos);
 }
 
 int DiskoveryCommander::SetMotorRunningSD(uint16_t pos)
 {
+   return SendSetCommand(g_SetMotorRunningSD, pos);
+}
+
+int DiskoveryCommander::SendSetCommand(const char* command, uint16_t pos)
+{
    std::ostringstream os;
-   os << g_SetMotorRunningSD << pos;
-   RETURN_ON_MM_ERROR( SendCommand(os.str().c_str()) );
+   os << command << pos;
+   model_->SetBusy(true);
+   RETURN_ON_MM_ERROR(  core_.SetSerialCommand(&device_, port_.c_str(), os.str().c_str(), "\n") );
 
    return DEVICE_OK;
 }
 
 int DiskoveryCommander::SendCommand(const char* command)
 {
-   int ret = core_.SetSerialCommand(&device_, port_.c_str(), command, "\n");
-   if (ret != DEVICE_OK)
-      return ret;
+   RETURN_ON_MM_ERROR(  core_.SetSerialCommand(&device_, port_.c_str(), command, "\n") );
+
    return DEVICE_OK;
 }
 

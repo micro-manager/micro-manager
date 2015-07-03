@@ -30,7 +30,16 @@ class DiskoveryModel
          sdDevice_(device),
          wfDevice_(device),
          tirfDevice_(device),
-         core_(core)
+         irisDevice_(device),
+         filterWDevice_(device),
+         filterTDevice_(device),
+         core_(core),
+         presetSD_(0),
+         presetWF_(0),
+         presetIris_(0),
+         presetPX_(0),
+         presetFilterT_(0),
+         presetFilterW_(0)
       {
          // propertyname are stored in the model so that we can generate
          // callbacks indicating properties have changed
@@ -47,9 +56,12 @@ class DiskoveryModel
       };
       ~DiskoveryModel() {};
 
-      void RegisterSDDevice(MM::Device* sdDevice) { sdDevice_ = sdDevice; };
-      void RegisterWFDevice(MM::Device* wfDevice) { wfDevice_ = wfDevice; };
-      void RegisterTIRFDevice(MM::Device* tirfDevice) { tirfDevice_ = tirfDevice; };
+      void RegisterSDDevice(MM::Device* device) { sdDevice_ = device; };
+      void RegisterWFDevice(MM::Device* device) { wfDevice_ = device; };
+      void RegisterTIRFDevice(MM::Device* device) { tirfDevice_ = device; };
+      void RegisterIRISDevice(MM::Device* device) { irisDevice_ = device; };
+      void RegisterFILTERWDevice(MM::Device* device) { filterWDevice_ = device; };
+      void RegisterFILTERTDevice(MM::Device* device) { filterTDevice_ = device; };
 
       // Hardware version
       std::string GetHardwareVersion() 
@@ -162,8 +174,11 @@ class DiskoveryModel
       { 
          MMThreadGuard guard(mutex_); 
          presetIris_ = p; 
-         std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << p) )->str();
-         core_.OnPropertyChanged(hubDevice_, irisPositionProp_, s.c_str());
+         if (irisDevice_->GetType() == MM::StateDevice)
+         {
+            std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << (p - 1)) )->str();
+            core_.OnPropertyChanged(irisDevice_, MM::g_Keyword_State, s.c_str());
+         }
       };
       uint16_t GetPresetIris() { MMThreadGuard guard(mutex_); return presetIris_; };
 
@@ -180,15 +195,31 @@ class DiskoveryModel
       };
       uint16_t GetPresetTIRF() { MMThreadGuard guard(mutex_); return presetPX_; };
 
-      // Preset Filter 
-      void SetPresetFilter(const uint16_t p) 
+      // Preset Filter W
+      void SetPresetFilterW(const uint16_t p) 
       { 
          MMThreadGuard guard(mutex_); 
-         presetFilter_ = p; 
-         std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << p) )->str();
-         core_.OnPropertyChanged(hubDevice_, filterPositionProp_, s.c_str());
+         presetFilterW_ = p; 
+         if (filterWDevice_->GetType() == MM::StateDevice)
+         {
+            std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << (p - 1)) )->str();
+            core_.OnPropertyChanged(filterWDevice_, MM::g_Keyword_State, s.c_str());
+         }
       };
-      uint16_t GetPresetFilter() { MMThreadGuard guard(mutex_); return presetFilter_; };
+      uint16_t GetPresetFilterW() { MMThreadGuard guard(mutex_); return presetFilterW_; };
+
+      // Preset Filter T
+      void SetPresetFilterT(const uint16_t p) 
+      { 
+         MMThreadGuard guard(mutex_); 
+         presetFilterT_ = p; 
+         if (filterTDevice_->GetType() == MM::StateDevice)
+         {
+            std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << (p - 1)) )->str();
+            core_.OnPropertyChanged(filterTDevice_, MM::g_Keyword_State, s.c_str());
+         }
+      };
+      uint16_t GetPresetFilterT() { MMThreadGuard guard(mutex_); return presetFilterT_; };
 
       // Motor Running
       void SetMotorRunningSD(const bool p) 
@@ -229,7 +260,7 @@ class DiskoveryModel
       uint16_t manYear_, manMonth_, manDay_;
       std::string serialNumber_;
       bool busy_; // should be std::atomic_flag when we go to C++11
-      uint16_t presetSD_, presetWF_, presetIris_, presetPX_, presetFilter_;
+      uint16_t presetSD_, presetWF_, presetIris_, presetPX_, presetFilterT_, presetFilterW_;
       bool motorRunningSD_;
 
       MMThreadLock mutex_;
@@ -237,6 +268,9 @@ class DiskoveryModel
       MM::Device* sdDevice_;
       MM::Device* wfDevice_;
       MM::Device* tirfDevice_;
+      MM::Device* irisDevice_;
+      MM::Device* filterWDevice_;
+      MM::Device* filterTDevice_;
       MM::Core& core_;
 };
 

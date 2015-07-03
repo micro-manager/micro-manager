@@ -135,7 +135,13 @@ void DiskoveryListener::ParseMessage(std::string message)
       } else if (tokens[0] == "PRESET_FILTER_W") 
       {
          std::istringstream(tokens[1].c_str()) >> number;
-         model_->SetPresetFilter(number);
+         model_->SetPresetFilterW(number);
+
+      // Preset Filter T
+      } else if (tokens[0] == "PRESET_FILTER_T") 
+      {
+         std::istringstream(tokens[1].c_str()) >> number;
+         model_->SetPresetFilterT(number);
 
       // Preset PX (TIRF)
       } else if (tokens[0] == "PRESET_PX") 

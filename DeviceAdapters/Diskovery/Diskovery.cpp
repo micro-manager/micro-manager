@@ -31,6 +31,9 @@ const char* g_DiskoveryHub = "Diskovery-Hub";
 const char* g_DiskoverySD = "Diskovery-Disk-Position";
 const char* g_DiskoveryWF = "Diskovery-Illumination-Size";
 const char* g_DiskoveryTIRF = "Diskovery-TIRF-Position";
+const char* g_DiskoveryIris = "Diskovery-Objective-Select";
+const char* g_DiskoveryFilterW = "Diskovery-Filter-W";
+const char* g_DiskoveryFilterT = "Diskovery-Filter-T";
 ///////////////////////////////////////////////////////////////////////////////
 
 using namespace std;
@@ -45,6 +48,9 @@ MODULE_API void InitializeModuleData()
    RegisterDevice(g_DiskoverySD, MM::StateDevice, "Diskovery Spinning Disk Position");
    RegisterDevice(g_DiskoveryWF, MM::StateDevice, "Diskovery Illumination Size");
    RegisterDevice(g_DiskoveryTIRF, MM::StateDevice, "Diskovery TIRF Position");
+   RegisterDevice(g_DiskoveryIris, MM::StateDevice, "Diskovery Objective Select");
+   RegisterDevice(g_DiskoveryFilterW, MM::StateDevice, "Diskovery Filter W");
+   RegisterDevice(g_DiskoveryFilterT, MM::StateDevice, "Diskovery Filter T");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)                  
@@ -58,15 +64,27 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    }
    if (strcmp(deviceName, g_DiskoverySD) == 0)
    {
-        return new DiskoverySD();
+        return new DiskoveryStateDev(g_DiskoverySD, g_DiskoverySD, SD);
    }
    if (strcmp(deviceName, g_DiskoveryWF) == 0)
    {
-        return new DiskoveryWF();
+        return new DiskoveryStateDev(g_DiskoveryWF, g_DiskoveryWF, WF);
    }
    if (strcmp(deviceName, g_DiskoveryTIRF) == 0)
    {
         return new DiskoveryStateDev(g_DiskoveryTIRF, g_DiskoveryTIRF, TIRF);
+   }
+   if (strcmp(deviceName, g_DiskoveryIris) == 0)
+   {
+        return new DiskoveryStateDev(g_DiskoveryIris, g_DiskoveryIris, IRIS);
+   }
+   if (strcmp(deviceName, g_DiskoveryFilterW) == 0)
+   {
+        return new DiskoveryStateDev(g_DiskoveryFilterW, g_DiskoveryFilterW, FILTERW);
+   }
+   if (strcmp(deviceName, g_DiskoveryFilterT) == 0)
+   {
+        return new DiskoveryStateDev(g_DiskoveryFilterT, g_DiskoveryFilterT, FILTERT);
    }
 
 
@@ -142,39 +160,6 @@ int DiskoveryHub::Initialize()
    pAct = new CPropertyAction (this, &DiskoveryHub::OnSerialNumber);
    nRet = CreateStringProperty(model_->serialNumberProp_, 
          model_->GetSerialNumber().c_str(), true, pAct);
-
-   // Filter preset position
-   pAct = new CPropertyAction(this, &DiskoveryHub::OnFilter);
-   nRet = CreateIntegerProperty(model_->filterPositionProp_, 
-         model_->GetPresetFilter(), false, pAct);
-   for (int i=1; i <=4; i++) 
-   {
-      std::ostringstream os;
-      os << i;
-      AddAllowedValue(model_->filterPositionProp_, os.str().c_str());
-   }
-
-   // Iris position
-   pAct = new CPropertyAction(this, &DiskoveryHub::OnIris);
-   nRet = CreateIntegerProperty(model_->irisPositionProp_, 
-         model_->GetPresetIris(), false, pAct);
-   for (int i=1; i <=4; i++) 
-   {
-      std::ostringstream os;
-      os << i;
-      AddAllowedValue(model_->irisPositionProp_, os.str().c_str());
-   }
-
-   // TIRF position
-   pAct = new CPropertyAction(this, &DiskoveryHub::OnTIRF);
-   nRet = CreateIntegerProperty(model_->tirfPositionProp_, 
-         model_->GetPresetTIRF(), false, pAct);
-   for (int i=0; i <=5; i++) 
-   {
-      std::ostringstream os;
-      os << i;
-      AddAllowedValue(model_->tirfPositionProp_, os.str().c_str());
-   }
 
    // motor running
    pAct = new CPropertyAction(this, &DiskoveryHub::OnMotorRunning);
@@ -296,7 +281,7 @@ int DiskoveryHub::IsControllerPresent(const std::string port, bool& present)
    CDeviceUtils::SleepMs(100);
    RETURN_ON_MM_ERROR( PurgeComPort(port.c_str()) );
    // strange, this sleep really helps successful device detection!
-   CDeviceUtils::SleepMs(50);
+   CDeviceUtils::SleepMs(100);
    RETURN_ON_MM_ERROR( SendSerialCommand(port.c_str(), "Q:PRODUCT_MODEL", 
             "\r\n") );
    std::string answer;
@@ -319,6 +304,9 @@ int DiskoveryHub::DetectInstalledDevices()
       peripherals.push_back(g_DiskoverySD);
       peripherals.push_back(g_DiskoveryWF);
       peripherals.push_back(g_DiskoveryTIRF);
+      peripherals.push_back(g_DiskoveryIris);
+      peripherals.push_back(g_DiskoveryFilterW);
+      peripherals.push_back(g_DiskoveryFilterT);
       for (size_t i=0; i < peripherals.size(); i++) 
       {
          MM::Device* pDev = ::CreateDevice(peripherals[i].c_str());
@@ -391,48 +379,6 @@ int DiskoveryHub::OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int DiskoveryHub::OnFilter(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (eAct == MM::BeforeGet) {
-      pProp->Set((long) model_->GetPresetFilter() );
-   }
-   else if (eAct == MM::AfterSet) {
-      long tmp;
-      pProp->Get(tmp);
-      RETURN_ON_MM_ERROR( commander_->SetPresetFilter( (uint16_t) tmp) );
-   }
-   
-   return DEVICE_OK;
-}
-
-int DiskoveryHub::OnIris(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (eAct == MM::BeforeGet) {
-      pProp->Set((long) model_->GetPresetIris() );
-   }
-   else if (eAct == MM::AfterSet) {
-      long tmp;
-      pProp->Get(tmp);
-      RETURN_ON_MM_ERROR( commander_->SetPresetIris( (uint16_t) tmp) );
-   }
-   
-   return DEVICE_OK;
-}
-
-int DiskoveryHub::OnTIRF(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (eAct == MM::BeforeGet) {
-      pProp->Set((long) model_->GetPresetTIRF() );
-   }
-   else if (eAct == MM::AfterSet) {
-      long tmp;
-      pProp->Get(tmp);
-      RETURN_ON_MM_ERROR( commander_->SetPresetTIRF( (uint16_t) tmp) );
-   }
-   
-   return DEVICE_OK;
-}
-
 int DiskoveryHub::OnMotorRunning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet) {
@@ -446,10 +392,6 @@ int DiskoveryHub::OnMotorRunning(MM::PropertyBase* pProp, MM::ActionType eAct)
    
    return DEVICE_OK;
 }
-
-
-
-
 
 
 // Device communication functions
@@ -512,14 +454,12 @@ DiskoveryStateDev::DiskoveryStateDev(
 {
    firstPos_ = 1;
    numPos_ = 5;
-   if (devType_ == WF) 
-   {
+   if (devType_ == WF || devType_ == IRIS || devType_ == FILTERW || devType == FILTERT) 
       numPos_ = 4;
-   }
+   if (devType_ == IRIS) 
+      numPos_ = 4;
    if (devType_ == TIRF) 
-   {
       firstPos_ = 0;
-   }
 
    InitializeDefaultErrorMessages();
 
@@ -594,6 +534,12 @@ int DiskoveryStateDev::Initialize()
       hub_->RegisterWFDevice(this);
    else if (devType_ == TIRF)
       hub_->RegisterTIRFDevice(this);
+   else if (devType_ == IRIS)
+      hub_->RegisterIRISDevice(this);
+   else if (devType_ == FILTERW)
+      hub_->RegisterFILTERWDevice(this);
+   else if (devType_ == FILTERT)
+      hub_->RegisterFILTERTDevice(this);
 
    return DEVICE_OK;
 }
@@ -648,215 +594,45 @@ int DiskoveryStateDev::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
          hub_->GetCommander()->SetPresetTIRF( (uint16_t) (pos + firstPos_));
       }
    }
-   return DEVICE_OK;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-// DiskoverySD
-//
-DiskoverySD::DiskoverySD()  :
-   initialized_(false),
-   hub_(0)
-{
-   InitializeDefaultErrorMessages();
-
-   // Description
-   int ret = CreateProperty(MM::g_Keyword_Description, "Diskovery Spinning Disk Position", MM::String, true);
-   assert(DEVICE_OK == ret);
-
-   // Name
-   ret = CreateProperty(MM::g_Keyword_Name, "Diskovery Spinning Disk", MM::String, true);
-   assert(DEVICE_OK == ret);
-
-   // parent ID display
-   CreateHubIDProperty();
-}
-
-DiskoverySD::~DiskoverySD() 
-{
-   Shutdown();
-}
-
-int DiskoverySD::Shutdown()
-{
-   initialized_ = false;
-   hub_ = 0;
-   return DEVICE_OK;
-}
-
-void DiskoverySD::GetName(char* name) const
-{
-   CDeviceUtils::CopyLimitedString(name, g_DiskoverySD);
-}
-
-int DiskoverySD::Initialize() 
-{
-   hub_ = static_cast<DiskoveryHub*>(GetParentHub());
-   if (!hub_)
-      return DEVICE_COMM_HUB_MISSING;
-   char hubLabel[MM::MaxStrLength];
-   hub_->GetLabel(hubLabel);
-   SetParentID(hubLabel); // for backward compatibility (delete?)
-
-   for (unsigned int i = 0; i < NUMPOS; i++) {
-      ostringstream os;
-      os << (i + 1);
-      SetPositionLabel(i, os.str().c_str());
-   }
-
-   // State
-   // -----
-   CPropertyAction* pAct = new CPropertyAction (this, &DiskoverySD::OnState);
-   int nRet = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
-   if (nRet != DEVICE_OK)
-      return nRet;
-   for (int i=0; i < NUMPOS; i++) 
+   else if (devType_ == IRIS)
    {
-      std::ostringstream os;
-      os << i;
-      AddAllowedValue(MM::g_Keyword_State, os.str().c_str());
+      if (eAct == MM::BeforeGet)
+      {
+         pProp->Set( (long) (hub_->GetModel()->GetPresetIris() - firstPos_) );
+      }
+      else if (eAct == MM::AfterSet)
+      {
+         long pos;
+         pProp->Get(pos);
+         hub_->GetCommander()->SetPresetIris( (uint16_t) (pos + firstPos_));
+      }
    }
-
-   // Label
-
-   // Label
-   // -----
-   pAct = new CPropertyAction (this, &CStateBase::OnLabel);
-   nRet = CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
-   if (nRet != DEVICE_OK)
-      return nRet;
-
-   // Register our instance for callbacks
-   hub_->RegisterSDDevice(this);
+   else if (devType_ == FILTERW)
+   {
+      if (eAct == MM::BeforeGet)
+      {
+         pProp->Set( (long) (hub_->GetModel()->GetPresetFilterW() - firstPos_) );
+      }
+      else if (eAct == MM::AfterSet)
+      {
+         long pos;
+         pProp->Get(pos);
+         hub_->GetCommander()->SetPresetFilterW( (uint16_t) (pos + firstPos_));
+      }
+   }
+   else if (devType_ == FILTERT)
+   {
+      if (eAct == MM::BeforeGet)
+      {
+         pProp->Set( (long) (hub_->GetModel()->GetPresetFilterT() - firstPos_) );
+      }
+      else if (eAct == MM::AfterSet)
+      {
+         long pos;
+         pProp->Get(pos);
+         hub_->GetCommander()->SetPresetFilterT( (uint16_t) (pos + firstPos_));
+      }
+   }
 
    return DEVICE_OK;
 }
-
-bool DiskoverySD::Busy() 
-{
-   if (hub_ != 0)
-   {
-      return hub_->Busy();
-   }
-   return false;
-}
-
-int DiskoverySD::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (eAct == MM::BeforeGet)
-   {
-      pProp->Set( (long) (hub_->GetModel()->GetPresetSD() - 1) );
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      long pos;
-      pProp->Get(pos);
-      hub_->GetCommander()->SetPresetSD( (uint16_t) (pos + 1));
-   }
-   return DEVICE_OK;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// DiskoveryWF
-//
-DiskoveryWF::DiskoveryWF()  :
-   initialized_(false),
-   hub_(0)
-{
-   InitializeDefaultErrorMessages();
-
-   // Description
-   int ret = CreateProperty(MM::g_Keyword_Description, "Diskovery IlluminationSize", MM::String, true);
-   assert(DEVICE_OK == ret);
-
-   // Name
-   ret = CreateProperty(MM::g_Keyword_Name, "Diskovery Illumination Size", MM::String, true);
-   assert(DEVICE_OK == ret);
-
-   // parent ID display
-   CreateHubIDProperty();
-}
-
-DiskoveryWF::~DiskoveryWF() 
-{
-   Shutdown();
-}
-
-int DiskoveryWF::Shutdown()
-{
-   initialized_ = false;
-   hub_ = 0;
-   return DEVICE_OK;
-}
-
-void DiskoveryWF::GetName(char* name) const
-{
-   CDeviceUtils::CopyLimitedString(name, g_DiskoveryWF);
-}
-
-int DiskoveryWF::Initialize() 
-{
-   hub_ = static_cast<DiskoveryHub*>(GetParentHub());
-   if (!hub_)
-      return DEVICE_COMM_HUB_MISSING;
-   char hubLabel[MM::MaxStrLength];
-   hub_->GetLabel(hubLabel);
-   SetParentID(hubLabel); // for backward compatibility (delete?)
-
-   for (unsigned int i = 0; i < NUMPOS; i++) {
-      ostringstream os;
-      os << (i + 1);
-      SetPositionLabel(i, os.str().c_str());
-   }
-
-   // State
-   // -----
-   CPropertyAction* pAct = new CPropertyAction (this, &DiskoveryWF::OnState);
-   int nRet = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
-   if (nRet != DEVICE_OK)
-      return nRet;
-   for (int i=0; i < NUMPOS; i++) 
-   {
-      std::ostringstream os;
-      os << i;
-      AddAllowedValue(MM::g_Keyword_State, os.str().c_str());
-   }
-
-   // Label
-   // -----
-   pAct = new CPropertyAction (this, &CStateBase::OnLabel);
-   nRet = CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
-   if (nRet != DEVICE_OK)
-      return nRet;
-
-   // Register our instance for callbacks
-   hub_->RegisterWFDevice(this);
-
-   return DEVICE_OK;
-}
-
-bool DiskoveryWF::Busy() 
-{
-   if (hub_ != 0)
-   {
-      return hub_->Busy();
-   }
-   return false;
-}
-
-int DiskoveryWF::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (eAct == MM::BeforeGet)
-   {
-      pProp->Set( (long) (hub_->GetModel()->GetPresetWF() - FIRSTPOS) );
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      long pos;
-      pProp->Get(pos);
-      hub_->GetCommander()->SetPresetWF( (uint16_t) (pos + FIRSTPOS));
-   }
-   return DEVICE_OK;
-}
-

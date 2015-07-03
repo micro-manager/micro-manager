@@ -58,13 +58,15 @@ class DiskoveryCommander
       int GetProductModel();
       int SetPresetSD(uint16_t pos);
       int SetPresetWF(uint16_t pos);
-      int SetPresetFilter(uint16_t pos);
+      int SetPresetFilterW(uint16_t pos);
+      int SetPresetFilterT(uint16_t pos);
       int SetPresetIris(uint16_t pos);
       int SetPresetTIRF(uint16_t pos);
       int SetMotorRunningSD(uint16_t pos);
 
    private:
       inline int SendCommand(const char* command);
+      inline int SendSetCommand(const char* command, uint16_t pos);
 
       MM::Device& device_;
       MM::Core& core_;
@@ -130,6 +132,12 @@ class DiskoveryHub : public HubBase<DiskoveryHub>
          { if (model_ != 0) model_->RegisterWFDevice(device);};
       void RegisterTIRFDevice(MM::Device* device) 
          { if (model_ != 0) model_->RegisterTIRFDevice(device);};
+      void RegisterIRISDevice(MM::Device* device) 
+         { if (model_ != 0) model_->RegisterIRISDevice(device);};
+      void RegisterFILTERWDevice(MM::Device* device) 
+         { if (model_ != 0) model_->RegisterFILTERWDevice(device);};
+      void RegisterFILTERTDevice(MM::Device* device) 
+         { if (model_ != 0) model_->RegisterFILTERTDevice(device);};
       
       // action interface                                                       
       // ----------------                                                       
@@ -138,9 +146,6 @@ class DiskoveryHub : public HubBase<DiskoveryHub>
       int OnFirmwareVersion(MM::PropertyBase* pProp, MM::ActionType eAct); 
       int OnManufacturingDate(MM::PropertyBase* pProp, MM::ActionType eAct); 
       int OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType eAct); 
-      int OnFilter(MM::PropertyBase* pProp, MM::ActionType eAct); 
-      int OnIris(MM::PropertyBase* pProp, MM::ActionType eAct); 
-      int OnTIRF(MM::PropertyBase* pProp, MM::ActionType eAct); 
       int OnMotorRunning(MM::PropertyBase* pProp, MM::ActionType eAct); 
 
    private:
@@ -158,7 +163,7 @@ class DiskoveryHub : public HubBase<DiskoveryHub>
       bool initialized_;
 };
 
-enum DevType { NONE, SD, WF, TIRF};
+enum DevType { NONE, SD, WF, TIRF, IRIS, FILTERW, FILTERT };
 
 class DiskoveryStateDev : public CStateDeviceBase<DiskoveryStateDev>
 {
@@ -185,57 +190,4 @@ class DiskoveryStateDev : public CStateDeviceBase<DiskoveryStateDev>
       DiskoveryHub* hub_;
 };
 
-class DiskoverySD : public CStateDeviceBase<DiskoverySD>
-{
-   public :
-      DiskoverySD();
-      ~DiskoverySD();
-
-      int Initialize();
-      int Shutdown();
-      void GetName(char* name) const;
-      bool Busy();
-
-      unsigned long GetNumberOfPositions() const {return NUMPOS;};
-
-      int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-   private:
-      static const unsigned int NUMPOS = 5;
-      static const unsigned int FIRSTPOS = 1;
-
-      bool initialized_;
-      DiskoveryHub* hub_;
-};
-    
-
-class DiskoveryWF : public CStateDeviceBase<DiskoveryWF>
-{
-   public :
-      DiskoveryWF();
-      ~DiskoveryWF();
-
-      int Initialize();
-      int Shutdown();
-      void GetName(char* name) const;
-      bool Busy();
-
-      unsigned long GetNumberOfPositions() const {return NUMPOS;};
-
-      int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-   private:
-      static const unsigned int NUMPOS = 4;
-      static const unsigned int FIRSTPOS = 1;
-
-      bool initialized_;
-      DiskoveryHub* hub_;
-};
-
-class DiskoveryTIRF : public DiskoveryStateDev
-{
-   private:
-      static const unsigned int NUMPOS = 5;
-      static const unsigned int FIRSTPOS = 1;
-};
 #endif // _Diskovery_H_
