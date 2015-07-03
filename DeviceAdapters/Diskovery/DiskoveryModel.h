@@ -22,17 +22,19 @@
 #include <sstream>
 #include <vector>
 
+class DiskoveryStateDev;
+
 class DiskoveryModel
 {
    public:
       DiskoveryModel(MM::Device* device, MM::Core& core) :
          hubDevice_(device),
-         sdDevice_(device),
-         wfDevice_(device),
-         tirfDevice_(device),
-         irisDevice_(device),
-         filterWDevice_(device),
-         filterTDevice_(device),
+         sdDevice_(0),
+         wfDevice_(0),
+         tirfDevice_(0),
+         irisDevice_(0),
+         filterWDevice_(0),
+         filterTDevice_(0),
          core_(core),
          presetSD_(0),
          presetWF_(0),
@@ -56,12 +58,12 @@ class DiskoveryModel
       };
       ~DiskoveryModel() {};
 
-      void RegisterSDDevice(MM::Device* device) { sdDevice_ = device; };
-      void RegisterWFDevice(MM::Device* device) { wfDevice_ = device; };
-      void RegisterTIRFDevice(MM::Device* device) { tirfDevice_ = device; };
-      void RegisterIRISDevice(MM::Device* device) { irisDevice_ = device; };
-      void RegisterFILTERWDevice(MM::Device* device) { filterWDevice_ = device; };
-      void RegisterFILTERTDevice(MM::Device* device) { filterTDevice_ = device; };
+      void RegisterSDDevice(DiskoveryStateDev* device) { sdDevice_ = device; };
+      void RegisterWFDevice(DiskoveryStateDev* device) { wfDevice_ = device; };
+      void RegisterTIRFDevice(DiskoveryStateDev* device) { tirfDevice_ = device; };
+      void RegisterIRISDevice(DiskoveryStateDev* device) { irisDevice_ = device; };
+      void RegisterFILTERWDevice(DiskoveryStateDev* device) { filterWDevice_ = device; };
+      void RegisterFILTERTDevice(DiskoveryStateDev* device) { filterTDevice_ = device; };
 
       // Hardware version
       std::string GetHardwareVersion() 
@@ -144,81 +146,27 @@ class DiskoveryModel
       void SetBusy(const bool busy) { MMThreadGuard guard(mutex_); busy_ = busy; };
 
       // Preset SD
-      void SetPresetSD(const uint16_t p) 
-      { 
-         MMThreadGuard guard(mutex_); 
-         presetSD_ = p;
-         if (sdDevice_->GetType() == MM::StateDevice)
-         {
-            std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << (p - 1) ) )->str();
-            core_.OnPropertyChanged(sdDevice_, MM::g_Keyword_State, s.c_str());
-         }
-      };
+      void SetPresetSD(const uint16_t p);
       uint16_t GetPresetSD() { MMThreadGuard guard(mutex_); return presetSD_; };
 
       // Preset WF
-      void SetPresetWF(const uint16_t p) 
-      { 
-         MMThreadGuard guard(mutex_); 
-         presetWF_ = p; 
-         if (wfDevice_->GetType() == MM::StateDevice)
-         {
-            std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << (p - 1)) )->str();
-            core_.OnPropertyChanged(wfDevice_, MM::g_Keyword_State, s.c_str());
-         }
-      };
+      void SetPresetWF(const uint16_t p); 
       uint16_t GetPresetWF() { MMThreadGuard guard(mutex_); return presetWF_; };
 
       // Preset Iris
-      void SetPresetIris(const uint16_t p) 
-      { 
-         MMThreadGuard guard(mutex_); 
-         presetIris_ = p; 
-         if (irisDevice_->GetType() == MM::StateDevice)
-         {
-            std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << (p - 1)) )->str();
-            core_.OnPropertyChanged(irisDevice_, MM::g_Keyword_State, s.c_str());
-         }
-      };
+      void SetPresetIris(const uint16_t p);
       uint16_t GetPresetIris() { MMThreadGuard guard(mutex_); return presetIris_; };
 
       // Preset TIRF 
-      void SetPresetTIRF(const uint16_t p) 
-      { 
-         MMThreadGuard guard(mutex_); 
-         presetPX_ = p; 
-         if (tirfDevice_->GetType() == MM::StateDevice)
-         {
-            std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << (p)) )->str();
-            core_.OnPropertyChanged(tirfDevice_, MM::g_Keyword_State, s.c_str());
-         }
-      };
+      void SetPresetTIRF(const uint16_t p);
       uint16_t GetPresetTIRF() { MMThreadGuard guard(mutex_); return presetPX_; };
 
       // Preset Filter W
-      void SetPresetFilterW(const uint16_t p) 
-      { 
-         MMThreadGuard guard(mutex_); 
-         presetFilterW_ = p; 
-         if (filterWDevice_->GetType() == MM::StateDevice)
-         {
-            std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << (p - 1)) )->str();
-            core_.OnPropertyChanged(filterWDevice_, MM::g_Keyword_State, s.c_str());
-         }
-      };
+      void SetPresetFilterW(const uint16_t p); 
       uint16_t GetPresetFilterW() { MMThreadGuard guard(mutex_); return presetFilterW_; };
 
       // Preset Filter T
-      void SetPresetFilterT(const uint16_t p) 
-      { 
-         MMThreadGuard guard(mutex_); 
-         presetFilterT_ = p; 
-         if (filterTDevice_->GetType() == MM::StateDevice)
-         {
-            std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << (p - 1)) )->str();
-            core_.OnPropertyChanged(filterTDevice_, MM::g_Keyword_State, s.c_str());
-         }
-      };
+      void SetPresetFilterT(const uint16_t p);
       uint16_t GetPresetFilterT() { MMThreadGuard guard(mutex_); return presetFilterT_; };
 
       // Motor Running
@@ -265,12 +213,12 @@ class DiskoveryModel
 
       MMThreadLock mutex_;
       MM::Device* hubDevice_;
-      MM::Device* sdDevice_;
-      MM::Device* wfDevice_;
-      MM::Device* tirfDevice_;
-      MM::Device* irisDevice_;
-      MM::Device* filterWDevice_;
-      MM::Device* filterTDevice_;
+      DiskoveryStateDev* sdDevice_;
+      DiskoveryStateDev* wfDevice_;
+      DiskoveryStateDev* tirfDevice_;
+      DiskoveryStateDev* irisDevice_;
+      DiskoveryStateDev* filterWDevice_;
+      DiskoveryStateDev* filterTDevice_;
       MM::Core& core_;
 };
 

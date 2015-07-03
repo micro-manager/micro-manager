@@ -126,17 +126,17 @@ class DiskoveryHub : public HubBase<DiskoveryHub>
       DiskoveryModel* GetModel() { return model_;};
       DiskoveryCommander* GetCommander() { return commander_;};
 
-      void RegisterSDDevice(MM::Device* device) 
+      void RegisterSDDevice(DiskoveryStateDev* device) 
          { if (model_ != 0) model_->RegisterSDDevice(device);};
-      void RegisterWFDevice(MM::Device* device) 
+      void RegisterWFDevice(DiskoveryStateDev* device) 
          { if (model_ != 0) model_->RegisterWFDevice(device);};
-      void RegisterTIRFDevice(MM::Device* device) 
+      void RegisterTIRFDevice(DiskoveryStateDev* device) 
          { if (model_ != 0) model_->RegisterTIRFDevice(device);};
-      void RegisterIRISDevice(MM::Device* device) 
+      void RegisterIRISDevice(DiskoveryStateDev* device) 
          { if (model_ != 0) model_->RegisterIRISDevice(device);};
-      void RegisterFILTERWDevice(MM::Device* device) 
+      void RegisterFILTERWDevice(DiskoveryStateDev* device) 
          { if (model_ != 0) model_->RegisterFILTERWDevice(device);};
-      void RegisterFILTERTDevice(MM::Device* device) 
+      void RegisterFILTERTDevice(DiskoveryStateDev* device) 
          { if (model_ != 0) model_->RegisterFILTERTDevice(device);};
       
       // action interface                                                       

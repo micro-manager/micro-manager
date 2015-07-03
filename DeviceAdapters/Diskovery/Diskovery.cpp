@@ -1,13 +1,13 @@
-///////////////////////////////////////////////////////////////////////////////
-//// FILE:       DiskoveryHub.cpp
-//// PROJECT:    MicroManage
-//// SUBSYSTEM:  DeviceAdapters
-////-----------------------------------------------------------------------------
-//// DESCRIPTION:
-//// The basic ingredients for a device adapter
-////                
-//// AUTHOR: Nico Stuurman, 1/16/2006
-////
+/////////////////////////////////////////////////////////////////////////////
+// FILE:       Diskovery.cpp
+// PROJECT:    MicroManage
+// SUBSYSTEM:  DeviceAdapters
+//-----------------------------------------------------------------------------
+// DESCRIPTION:
+// Andor/Spectral Diskovery Device adapter
+//                
+// AUTHOR: Nico Stuurman,  06/31/2015
+//
 //
 
 #ifdef WIN32
