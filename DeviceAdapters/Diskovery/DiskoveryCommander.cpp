@@ -24,6 +24,7 @@ const char* g_VersionFWRevision = "Q:VERSION_FW_REVISION";
 const char* g_ManufactureYear = "Q:MANUFACTURE_YEAR";
 const char* g_ManufactureMonth = "Q:MANUFACTURE_MONTH";
 const char* g_ManufactureDay = "Q:MANUFACTURE_DAY";
+const char* g_ProductModel = "Q:PRODUCT_MODEL";
 const char* g_SerialNumber = "Q:PRODUCT_SERIAL_NO";
 const char* g_SetPresetSD = "A:PRESET_SD,";
 const char* g_GetPresetSD = "Q:PRESET_SD";
@@ -91,6 +92,15 @@ int DiskoveryCommander::Initialize()
    CDeviceUtils::SleepMs(50);
    RETURN_ON_MM_ERROR( SendCommand(g_GetMotorRunningSD) );
 
+   return DEVICE_OK;
+}
+
+/**
+ * This function is used to send an inocous command
+ */
+int DiskoveryCommander::GetProductModel()
+{
+   RETURN_ON_MM_ERROR( SendCommand(g_ProductModel) );
    return DEVICE_OK;
 }
 

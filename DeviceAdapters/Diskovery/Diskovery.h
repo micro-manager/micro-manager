@@ -45,8 +45,10 @@
 class DiskoveryModel
 {
    public:
-      DiskoveryModel(MM::Device& device, MM::Core& core) :
-         device_(device),
+      DiskoveryModel(MM::Device* device, MM::Core& core) :
+         hubDevice_(device),
+         sdDevice_(device),
+         wfDevice_(device),
          core_(core)
       {
          // propertyname are stored in the model so that we can generate
@@ -63,6 +65,9 @@ class DiskoveryModel
          motorRunningProp_ = "Motor Running";
       };
       ~DiskoveryModel() {};
+
+      void RegisterSDDevice(MM::Device* sdDevice) { sdDevice_ = sdDevice; };
+      void RegisterWFDevice(MM::Device* wfDevice) { wfDevice_ = wfDevice; };
 
       // Hardware version
       std::string GetHardwareVersion() 
@@ -149,8 +154,11 @@ class DiskoveryModel
       { 
          MMThreadGuard guard(mutex_); 
          presetSD_ = p;
-         std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << p) )->str();
-         core_.OnPropertyChanged(&device_, spinningDiskPositionProp_, s.c_str());
+         if (sdDevice_->GetType() == MM::StateDevice)
+         {
+            std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << (p - 1) ) )->str();
+            core_.OnPropertyChanged(sdDevice_, MM::g_Keyword_State, s.c_str());
+         }
       };
       uint16_t GetPresetSD() { MMThreadGuard guard(mutex_); return presetSD_; };
 
@@ -159,8 +167,11 @@ class DiskoveryModel
       { 
          MMThreadGuard guard(mutex_); 
          presetWF_ = p; 
-         std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << p) )->str();
-         core_.OnPropertyChanged(&device_, wideFieldPositionProp_, s.c_str());
+         if (wfDevice_->GetType() == MM::StateDevice)
+         {
+            std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << (p - 1)) )->str();
+            core_.OnPropertyChanged(wfDevice_, MM::g_Keyword_State, s.c_str());
+         }
       };
       uint16_t GetPresetWF() { MMThreadGuard guard(mutex_); return presetWF_; };
 
@@ -170,7 +181,7 @@ class DiskoveryModel
          MMThreadGuard guard(mutex_); 
          presetIris_ = p; 
          std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << p) )->str();
-         core_.OnPropertyChanged(&device_, irisPositionProp_, s.c_str());
+         core_.OnPropertyChanged(hubDevice_, irisPositionProp_, s.c_str());
       };
       uint16_t GetPresetIris() { MMThreadGuard guard(mutex_); return presetIris_; };
 
@@ -180,7 +191,7 @@ class DiskoveryModel
          MMThreadGuard guard(mutex_); 
          presetPX_ = p; 
          std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << p) )->str();
-         core_.OnPropertyChanged(&device_, tirfPositionProp_, s.c_str());
+         core_.OnPropertyChanged(hubDevice_, tirfPositionProp_, s.c_str());
       };
       uint16_t GetPresetTIRF() { MMThreadGuard guard(mutex_); return presetPX_; };
 
@@ -190,7 +201,7 @@ class DiskoveryModel
          MMThreadGuard guard(mutex_); 
          presetFilter_ = p; 
          std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << p) )->str();
-         core_.OnPropertyChanged(&device_, filterPositionProp_, s.c_str());
+         core_.OnPropertyChanged(hubDevice_, filterPositionProp_, s.c_str());
       };
       uint16_t GetPresetFilter() { MMThreadGuard guard(mutex_); return presetFilter_; };
 
@@ -200,7 +211,7 @@ class DiskoveryModel
          MMThreadGuard guard(mutex_); 
          motorRunningSD_ = p; 
          std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << p) )->str();
-         core_.OnPropertyChanged(&device_, motorRunningProp_, s.c_str());
+         core_.OnPropertyChanged(hubDevice_, motorRunningProp_, s.c_str());
       };
       bool GetMotorRunningSD() 
          { MMThreadGuard guard(mutex_); return motorRunningSD_; };
@@ -237,7 +248,9 @@ class DiskoveryModel
       bool motorRunningSD_;
 
       MMThreadLock mutex_;
-      MM::Device& device_;
+      MM::Device* hubDevice_;
+      MM::Device* sdDevice_;
+      MM::Device* wfDevice_;
       MM::Core& core_;
 };
 
@@ -249,6 +262,7 @@ class DiskoveryCommander
          DiskoveryModel* model);
       ~DiskoveryCommander();
       int Initialize();
+      int GetProductModel();
       int SetPresetSD(uint16_t pos);
       int SetPresetWF(uint16_t pos);
       int SetPresetFilter(uint16_t pos);
@@ -291,11 +305,11 @@ class DiskoveryListener : public MMDeviceThreadBase
 
 };
 
-class Diskovery : public CGenericBase<Diskovery>
+class DiskoveryHub : public HubBase<DiskoveryHub>
 {
    public:
-      Diskovery();
-      ~Diskovery();
+      DiskoveryHub();
+      ~DiskoveryHub();
 
       // Device API
       // ---------
@@ -304,6 +318,17 @@ class Diskovery : public CGenericBase<Diskovery>
       void GetName(char* pszName) const;
       bool Busy();
       
+      MM::DeviceDetectionStatus DetectDevice(void);
+      int DetectInstalledDevices();
+
+      DiskoveryModel* GetModel() { return model_;};
+      DiskoveryCommander* GetCommander() { return commander_;};
+
+      void RegisterSDDevice(MM::Device* device) 
+         { if (model_ != 0) model_->RegisterSDDevice(device);};
+      void RegisterWFDevice(MM::Device* device) 
+         { if (model_ != 0) model_->RegisterWFDevice(device);};
+      
       // action interface                                                       
       // ----------------                                                       
       int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct); 
@@ -311,14 +336,13 @@ class Diskovery : public CGenericBase<Diskovery>
       int OnFirmwareVersion(MM::PropertyBase* pProp, MM::ActionType eAct); 
       int OnManufacturingDate(MM::PropertyBase* pProp, MM::ActionType eAct); 
       int OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType eAct); 
-      int OnSpDiskPresetPosition(MM::PropertyBase* pProp, MM::ActionType eAct); 
-      int OnWideFieldPreset(MM::PropertyBase* pProp, MM::ActionType eAct); 
       int OnFilter(MM::PropertyBase* pProp, MM::ActionType eAct); 
       int OnIris(MM::PropertyBase* pProp, MM::ActionType eAct); 
       int OnTIRF(MM::PropertyBase* pProp, MM::ActionType eAct); 
       int OnMotorRunning(MM::PropertyBase* pProp, MM::ActionType eAct); 
 
    private:
+      int IsControllerPresent(const std::string port, bool& present);
       int QueryCommand(const char* command, std::string& answer);
       int QueryCommandInt(const char* command, unsigned int* result);
       std::vector<std::string> split(const std::string &s, char delim);
@@ -329,6 +353,57 @@ class Diskovery : public CGenericBase<Diskovery>
       DiskoveryModel* model_;
       DiskoveryListener* listener_;
       DiskoveryCommander* commander_;
+      bool initialized_;
+};
+
+
+class DiskoverySD : public CStateDeviceBase<DiskoverySD>
+{
+   public :
+      DiskoverySD();
+      ~DiskoverySD();
+
+      int Initialize();
+      int Shutdown();
+      void GetName(char* name) const;
+      bool Busy();
+
+      unsigned long GetNumberOfPositions() const {return NUMPOS;};
+
+      int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+   private:
+      static const unsigned int NUMPOS = 5;
+      static const unsigned int FIRSTPOS = 1;
+
+      bool initialized_;
+      DiskoveryHub* hub_;
+
+};
+    
+
+class DiskoveryWF : public CStateDeviceBase<DiskoveryWF>
+{
+   public :
+      DiskoveryWF();
+      ~DiskoveryWF();
+
+      int Initialize();
+      int Shutdown();
+      void GetName(char* name) const;
+      bool Busy();
+
+      unsigned long GetNumberOfPositions() const {return NUMPOS;};
+
+      int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+   private:
+      static const unsigned int NUMPOS = 4;
+      static const unsigned int FIRSTPOS = 1;
+
+      bool initialized_;
+      DiskoveryHub* hub_;
+
 };
 
 #endif // _Diskovery_H_
