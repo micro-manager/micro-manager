@@ -1174,7 +1174,7 @@ protected:
    {
       char pid[MM::MaxStrLength];
       this->GetParentID(pid);
-      this->CreateProperty(MM::g_Keyword_HubID, pid, MM::String, false);
+      this->CreateProperty(MM::g_Keyword_HubID, pid, MM::String, true);
    }
 
    /**
