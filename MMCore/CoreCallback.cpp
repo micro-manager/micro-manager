@@ -423,6 +423,23 @@ int CoreCallback::OnPropertyChanged(const MM::Device* device, const char* propNa
       }
       core_->externalCallback_->onPropertyChanged(label, propName, value);
 
+      // If this is a state device and the state property was changed
+      // also update the label
+      if (strcmp(propName, MM::g_Keyword_State) == 0 && 
+            device->HasProperty(MM::g_Keyword_Label) ) 
+      {
+         if (device->GetType() == MM::StateDevice)
+         {
+            const MM::State* sDevice = dynamic_cast<const MM::State*>(device);
+            long state;
+            sDevice->GetPosition(state);
+            char posLabel[MM::MaxStrLength];
+            sDevice->GetPositionLabel(state, posLabel);
+            core_->externalCallback_->onPropertyChanged(label, 
+                  MM::g_Keyword_Label, posLabel);
+         }
+      }
+
       // find all configs that contain this property and callback to indicate 
       // that the config group changed
       // TODO: assess whether performace is better by maintaining a map tying 
