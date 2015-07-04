@@ -116,11 +116,19 @@ TangoBase::~TangoBase()
 // Communication "clear buffer" utility function:
 int TangoBase::ClearPort(void)
 {
+
    // Clear contents of serial port
    const int bufSize = 255;
    unsigned char clear[bufSize];
    unsigned long read = bufSize;
    int ret;
+
+   // clear Tango Rx Buffer from any incomplete command or rubbish sent from PC OS
+   // send \r to clear Tango Rx Buffer
+   ret = SendCommand("");
+   CDeviceUtils::SleepMs(10);
+ 
+   // clear PC Rx buffer
    while ((int) read == bufSize)
    {
       ret = core_->ReadFromSerial(device_, port_.c_str(), clear, bufSize, read);
