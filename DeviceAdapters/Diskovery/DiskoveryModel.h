@@ -3,14 +3,22 @@
 // PROJECT:    MicroManager
 // SUBSYSTEM:  DeviceAdapters
 // AUTHOR:     Nico Stuurman
-// COPYRIGHT:  Regenst of the University of California, 2015
+// COPYRIGHT:  Regents of the University of California, 2015
 // 
 //-----------------------------------------------------------------------------
 // DESCRIPTION:
 // Adapter for the Spectral/Andor/Oxford Instruments Diskovery 1 spinning disk confocal
 // microscope system
+// LICENSE:       This file is distributed under the BSD license.
+//                License text is included with the source distribution.
 //
-// LICENSE: BSD
+//                This file is distributed in the hope that it will be useful,
+//                but WITHOUT ANY WARRANTY; without even the implied warranty
+//                of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 #ifndef _DiskoveryModel_H_
 #define _DiskoveryModel_H_
@@ -77,80 +85,58 @@ class DiskoveryModel
       void RegisterFILTERTDevice(DiskoveryStateDev* device) { filterTDevice_ = device; };
 
       // Hardware version
-      std::string GetHardwareVersion() 
-         { MMThreadGuard guard(mutex_); return hardwareVersion_; };
+      std::string GetHardwareVersion() { return hardwareVersion_; };
       void SetHardwareVersionMajor(const uint16_t major)
       {
-         MMThreadGuard guard(mutex_); 
          hwmajor_ = major;
          MakeVersionString(hardwareVersion_, hwmajor_, hwminor_, hwrevision_);
       };
-      uint16_t GetHardwareVersionMajor()
-         { MMThreadGuard guard(mutex_);  return hwmajor_; }
+      uint16_t GetHardwareVersionMajor() { return hwmajor_; }
       void SetHardwareVersionMinor(const uint16_t minor)
       {
-         MMThreadGuard guard(mutex_); 
          hwminor_ = minor;
          MakeVersionString(hardwareVersion_, hwmajor_, hwminor_, hwrevision_);
       };
-      uint16_t GetHardwareVersionMinor()
-         { MMThreadGuard guard(mutex_);  return hwminor_; }
+      uint16_t GetHardwareVersionMinor() { return hwminor_; }
       void SetHardwareVersionRevision(const uint16_t revision)
       {
-         MMThreadGuard guard(mutex_); 
          hwrevision_ = revision;
          MakeVersionString(hardwareVersion_, hwmajor_, hwminor_, hwrevision_);
       };
-      uint16_t GetHardwareVersionRevision()
-         { MMThreadGuard guard(mutex_);  return hwrevision_; }
+      uint16_t GetHardwareVersionRevision() { return hwrevision_; }
 
       // Firmware version
-      std::string GetFirmwareVersion() 
-         { MMThreadGuard guard(mutex_); return firmwareVersion_; };
+      std::string GetFirmwareVersion() { return firmwareVersion_; };
       void SetFirmwareVersionMajor(const uint16_t major)
       {
-         MMThreadGuard guard(mutex_); 
          fwmajor_ = major;
          MakeVersionString(firmwareVersion_, fwmajor_, fwminor_, fwrevision_);
       };
-      uint16_t GetFirmwareVersionMajor()
-         { MMThreadGuard guard(mutex_); return fwmajor_; };
+      uint16_t GetFirmwareVersionMajor() { return fwmajor_; };
       void SetFirmwareVersionMinor(uint16_t minor)
       {
-         MMThreadGuard guard(mutex_); 
          fwminor_ = minor;
          MakeVersionString(firmwareVersion_, fwmajor_, fwminor_, fwrevision_);
       };
-      uint16_t GetFirmwareVersionMinor()
-         { MMThreadGuard guard(mutex_); return fwminor_; };
+      uint16_t GetFirmwareVersionMinor() { return fwminor_; };
       void SetFirmwareVersionRevision(const uint16_t revision)
       {
-         MMThreadGuard guard(mutex_); 
          fwrevision_ = revision;
          MakeVersionString(firmwareVersion_, fwmajor_, fwminor_, fwrevision_);
       };
-      uint16_t GetFirmwareVersionRevision()
-         { MMThreadGuard guard(mutex_); return fwrevision_; };
+      uint16_t GetFirmwareVersionRevision() { return fwrevision_; };
 
       // Manufacturing date
-      uint16_t GetManufactureYear()
-         { MMThreadGuard guard(mutex_); return manYear_; };
-      void SetManufactureYear(const uint16_t year)
-         { MMThreadGuard guard(mutex_); manYear_ = year; };
-      uint16_t GetManufactureMonth()
-         { MMThreadGuard guard(mutex_); return manMonth_; };
-      void SetManufactureMonth(const uint16_t month)
-         { MMThreadGuard guard(mutex_); manMonth_ = month; };
-      uint16_t GetManufactureDay()
-         { MMThreadGuard guard(mutex_); return manDay_; };
-      void SetManufactureDay(const uint16_t day)
-         { MMThreadGuard guard(mutex_); manDay_ = day; };
+      uint16_t GetManufactureYear() { return manYear_; };
+      void SetManufactureYear(const uint16_t year) {  manYear_ = year; };
+      uint16_t GetManufactureMonth() { return manMonth_; };
+      void SetManufactureMonth(const uint16_t month) { manMonth_ = month; };
+      uint16_t GetManufactureDay() { return manDay_; };
+      void SetManufactureDay(const uint16_t day) { manDay_ = day; };
 
       // Serial number
-      std::string GetSerialNumber() 
-         {MMThreadGuard guard(mutex_); return serialNumber_;};
-      void SetSerialNumber(const std::string serialNumber)
-         {MMThreadGuard guard(mutex_); serialNumber_ = serialNumber;};
+      std::string GetSerialNumber() { return serialNumber_; };
+      void SetSerialNumber(const std::string serialNumber) { serialNumber_ = serialNumber; };
 
       // Busy, uses atomic boolean
       bool GetBusy() { return busy_; };
@@ -158,38 +144,31 @@ class DiskoveryModel
 
       // Preset SD
       void SetPresetSD(const uint16_t p);
-      uint16_t GetPresetSD() { MMThreadGuard guard(mutex_); return presetSD_; };
+      uint16_t GetPresetSD() { return presetSD_; };
 
       // Preset WF
       void SetPresetWF(const uint16_t p); 
-      uint16_t GetPresetWF() { MMThreadGuard guard(mutex_); return presetWF_; };
+      uint16_t GetPresetWF() { return presetWF_; };
 
       // Preset Iris
       void SetPresetIris(const uint16_t p);
-      uint16_t GetPresetIris() { MMThreadGuard guard(mutex_); return presetIris_; };
+      uint16_t GetPresetIris() { return presetIris_; };
 
       // Preset TIRF 
       void SetPresetTIRF(const uint16_t p);
-      uint16_t GetPresetTIRF() { MMThreadGuard guard(mutex_); return presetPX_; };
+      uint16_t GetPresetTIRF() { return presetPX_; };
 
       // Preset Filter W
       void SetPresetFilterW(const uint16_t p); 
-      uint16_t GetPresetFilterW() { MMThreadGuard guard(mutex_); return presetFilterW_; };
+      uint16_t GetPresetFilterW() { return presetFilterW_; };
 
       // Preset Filter T
       void SetPresetFilterT(const uint16_t p);
-      uint16_t GetPresetFilterT() { MMThreadGuard guard(mutex_); return presetFilterT_; };
+      uint16_t GetPresetFilterT() { return presetFilterT_; };
 
       // Motor Running
-      void SetMotorRunningSD(const bool p) 
-      { 
-         MMThreadGuard guard(mutex_); 
-         motorRunningSD_ = p; 
-         std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << p) )->str();
-         core_.OnPropertyChanged(hubDevice_, motorRunningProp_, s.c_str());
-      };
-      bool GetMotorRunningSD() 
-         { MMThreadGuard guard(mutex_); return motorRunningSD_; };
+      void SetMotorRunningSD(const bool p); 
+      bool GetMotorRunningSD() { return motorRunningSD_; };
 
       void SetHasWFX(bool h) { hasWFX_ = h; };
       bool GetHasWFX() { return hasWFX_; };
@@ -233,7 +212,7 @@ class DiskoveryModel
       const char* tirfPositionProp_;
 
     private:
-      void MakeVersionString(std::string& it, uint16_t maj, 
+      void MakeVersionString(boost::atomic<std::string>& it, uint16_t maj, 
             uint16_t min, uint16_t rev) 
       {
          std::ostringstream oss;
@@ -241,19 +220,18 @@ class DiskoveryModel
          it  = oss.str();
       };
 
-      std::string hardwareVersion_;
-      uint16_t hwmajor_, hwminor_, hwrevision_;
-      std::string firmwareVersion_;
-      uint16_t fwmajor_, fwminor_, fwrevision_;
-      uint16_t manYear_, manMonth_, manDay_;
-      std::string serialNumber_;
+      boost::atomic<std::string> hardwareVersion_;
+      boost::atomic<uint16_t> hwmajor_, hwminor_, hwrevision_;
+      boost::atomic<std::string> firmwareVersion_;
+      boost::atomic<uint16_t> fwmajor_, fwminor_, fwrevision_;
+      boost::atomic<uint16_t> manYear_, manMonth_, manDay_;
+      boost::atomic<std::string> serialNumber_;
       boost::atomic<bool> busy_; 
-      uint16_t presetSD_, presetWF_, presetIris_, presetPX_, presetFilterT_, presetFilterW_;
+      boost::atomic<uint16_t> presetSD_, presetWF_, presetIris_, presetPX_, presetFilterT_, presetFilterW_;
       boost::atomic<bool> hasWFX_, hasWFY_, hasSD_, hasROT_, hasLIN_, hasP1_, hasP2_, 
          hasIRIS_, hasFilterW_, hasFilterT_;
-      bool motorRunningSD_;
+      boost::atomic<bool> motorRunningSD_;
 
-      MMThreadLock mutex_;
       MM::Device* hubDevice_;
       DiskoveryStateDev* sdDevice_;
       DiskoveryStateDev* wfDevice_;

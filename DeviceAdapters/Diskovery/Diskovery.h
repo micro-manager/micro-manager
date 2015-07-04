@@ -3,14 +3,24 @@
 // PROJECT:    MicroManager
 // SUBSYSTEM:  DeviceAdapters
 // AUTHOR:     Nico Stuurman
-// COPYRIGHT:  Regenst of the University of California, 2015
+// COPYRIGHT:  Regents of the University of California, 2015
 // 
 //-----------------------------------------------------------------------------
 // DESCRIPTION:
 // Adapter for the Spectral/Andor/Oxford Instruments Diskovery 1 spinning disk confocal
 // microscope system
 //
-// LICENSE: BSD
+// LICENSE:       This file is distributed under the BSD license.
+//                License text is included with the source distribution.
+//
+//                This file is distributed in the hope that it will be useful,
+//                but WITHOUT ANY WARRANTY; without even the implied warranty
+//                of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 
 #ifndef _Diskovery_H_
 #define _Diskovery_H_

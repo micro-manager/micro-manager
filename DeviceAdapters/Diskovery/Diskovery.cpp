@@ -8,6 +8,18 @@
 //                
 // AUTHOR: Nico Stuurman,  06/31/2015
 //
+// COPYRIGHT:  Regents of the University of California, 2015
+//
+// LICENSE:       This file is distributed under the BSD license.
+//                License text is included with the source distribution.
+//
+//                This file is distributed in the hope that it will be useful,
+//                but WITHOUT ANY WARRANTY; without even the implied warranty
+//                of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
 #ifdef WIN32
@@ -406,55 +418,6 @@ int DiskoveryHub::OnMotorRunning(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    
    return DEVICE_OK;
-}
-
-
-// Device communication functions
-
-int DiskoveryHub::QueryCommand(const char* command, std::string& answer) 
-{
-   RETURN_ON_MM_ERROR (PurgeComPort(port_.c_str()));
-   RETURN_ON_MM_ERROR (SendSerialCommand(port_.c_str(), command, "\n"));
-   RETURN_ON_MM_ERROR (GetSerialAnswer(port_.c_str(), "\r\n", answer));
-   std::vector<std::string> tokens = split(answer, '=');
-   if (tokens.size() == 2) {
-      answer = tokens[1];
-      return DEVICE_OK;
-   }
-   // TODO find appropriate error code
-   return 1;
-}
-
-int DiskoveryHub::QueryCommandInt(const char* command, unsigned int* result) 
-{
-   RETURN_ON_MM_ERROR (PurgeComPort(port_.c_str()));
-   RETURN_ON_MM_ERROR (SendSerialCommand(port_.c_str(), command, "\n"));
-   // even though the documentation states that an integer is returned, in real life
-   // the device returns a string that ends with "=#", where "#" is what we want
-   std::string answer;
-   RETURN_ON_MM_ERROR (GetSerialAnswer(port_.c_str(), "\r\n", answer));
-   std::vector<std::string> tokens = split(answer, '=');
-   if (tokens.size() == 2) {
-      istringstream(tokens[1].c_str()) >> *result;
-      return DEVICE_OK;
-   }
-   // TODO find appropriate error code
-   return 1;
-}
-
-std::vector<std::string>& DiskoveryHub::split(const std::string &s, char delim, std::vector<std::string> &elems) {
-    std::stringstream ss(s);
-    std::string item;
-    while (std::getline(ss, item, delim)) {
-        elems.push_back(item);
-    }
-    return elems;
-}
-
-std::vector<std::string> DiskoveryHub::split(const std::string &s, char delim) {
-    std::vector<std::string> elems;
-    split(s, delim, elems);
-    return elems;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

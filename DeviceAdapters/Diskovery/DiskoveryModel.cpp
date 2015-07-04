@@ -8,6 +8,8 @@
 //                
 // AUTHOR: Nico Stuurman, 06/31/2015
 //
+// COPYRIGHT:  Regents of the University of California, 2015
+//
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
 //
@@ -29,11 +31,17 @@
 #include "DiskoveryModel.h"
 #include "Diskovery.h"
 
+// Motor Running
+void DiskoveryModel::SetMotorRunningSD(const bool p)
+{
+   motorRunningSD_ = p;
+   std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << p) )->str();
+   core_.OnPropertyChanged(hubDevice_, motorRunningProp_, s.c_str());
+}
 
 // Preset SD
 void DiskoveryModel::SetPresetSD(const uint16_t p)
 {
-   MMThreadGuard guard(mutex_);
    presetSD_ = p;
    if (sdDevice_ != 0)
    {
@@ -43,7 +51,6 @@ void DiskoveryModel::SetPresetSD(const uint16_t p)
 
 void DiskoveryModel::SetPresetWF(const uint16_t p)
 {
-   MMThreadGuard guard(mutex_);
    presetWF_ = p;
    if (wfDevice_ != 0)
    {
@@ -54,7 +61,6 @@ void DiskoveryModel::SetPresetWF(const uint16_t p)
 // Preset Iris                                                         
 void DiskoveryModel::SetPresetIris(const uint16_t p)                         
 {
-   MMThreadGuard guard(mutex_);
    presetIris_ = p;
    if (irisDevice_ != 0)
    {
@@ -65,7 +71,6 @@ void DiskoveryModel::SetPresetIris(const uint16_t p)
 // Preset TIRF                                                         
 void DiskoveryModel::SetPresetTIRF(const uint16_t p)                         
 {
-   MMThreadGuard guard(mutex_);
    presetPX_ = p;
    if (tirfDevice_ != 0)
    {
@@ -76,7 +81,6 @@ void DiskoveryModel::SetPresetTIRF(const uint16_t p)
 // Preset Filter W
 void DiskoveryModel::SetPresetFilterW(const uint16_t p) 
 {  
-   MMThreadGuard guard(mutex_); 
    presetFilterW_ = p;
    if (filterWDevice_ != 0)
    {
@@ -87,7 +91,6 @@ void DiskoveryModel::SetPresetFilterW(const uint16_t p)
 // Preset Filter T                                                     
 void DiskoveryModel::SetPresetFilterT(const uint16_t p)                                
 { 
-   MMThreadGuard guard(mutex_);                                        
    presetFilterT_ = p;                                       
    if (filterTDevice_ != 0)
    {
