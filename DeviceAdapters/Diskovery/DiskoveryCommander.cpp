@@ -50,6 +50,19 @@ const char* g_GetPresetTIRF = "Q:PRESET_PX";
 const char* g_SetMotorRunningSD = "A:MOTOR_RUNNING_SD,";
 const char* g_GetMotorRunningSD = "Q:MOTOR_RUNNING_SD";
 
+// commands to determine configuration of this device
+const char* g_HasWFX = "Q:ACTIVE_WF_X";
+const char* g_HasWFY = "Q:ACTIVE_WF_Y";
+const char* g_HasSD = "Q:ACTIVE_SD";
+const char* g_HasROT = "Q:ACTIVE_ROT";
+const char* g_HasLIN = "Q:ACTIVE_LIN";
+const char* g_HasP1 = "Q:ACTIVE_P1";
+const char* g_HasP2 = "Q:ACTIVE_P2";
+const char* g_HasIRIS = "Q:ACTIVE_IRIS";
+const char* g_HasFilterW = "Q:ACTIVE_FILTER_W";
+const char* g_HasFilterT = "Q:ACTIVE_FILTER_T";
+
+
 /**
  * Class that sends commands to the Diskovery1
  */
@@ -107,6 +120,40 @@ int DiskoveryCommander::Initialize()
 
    return DEVICE_OK;
 }
+
+/**
+ * Send request to the controller asking it to divulge what it 
+ * can and can not do.  Ansers should be received and analyzed elsewhere
+ */
+int DiskoveryCommander::CheckCapabilities()
+{
+   CDeviceUtils::SleepMs(50);
+   RETURN_ON_MM_ERROR( SendCommand(g_HasWFX) );
+   CDeviceUtils::SleepMs(50);
+   RETURN_ON_MM_ERROR( SendCommand(g_HasWFY) );
+   CDeviceUtils::SleepMs(50);
+   RETURN_ON_MM_ERROR( SendCommand(g_HasSD) );
+   CDeviceUtils::SleepMs(50);
+   RETURN_ON_MM_ERROR( SendCommand(g_HasROT) );
+   CDeviceUtils::SleepMs(50);
+   RETURN_ON_MM_ERROR( SendCommand(g_HasLIN) );
+   CDeviceUtils::SleepMs(50);
+   RETURN_ON_MM_ERROR( SendCommand(g_HasP1) );
+   CDeviceUtils::SleepMs(50);
+   RETURN_ON_MM_ERROR( SendCommand(g_HasP2) );
+   CDeviceUtils::SleepMs(50);
+   RETURN_ON_MM_ERROR( SendCommand(g_HasIRIS) );
+   CDeviceUtils::SleepMs(50);
+   RETURN_ON_MM_ERROR( SendCommand(g_HasFilterW) );
+   CDeviceUtils::SleepMs(50);
+   RETURN_ON_MM_ERROR( SendCommand(g_HasFilterT) );
+   // give the device some time to actually send the command
+   // so that other code can make use of the results
+   CDeviceUtils::SleepMs(50);
+
+   return DEVICE_OK;
+}
+
 
 /**
  * This function is used to send an inocous command

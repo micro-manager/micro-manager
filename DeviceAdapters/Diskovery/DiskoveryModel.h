@@ -21,6 +21,7 @@
 #include <map>
 #include <sstream>
 #include <vector>
+#include "boost/atomic/atomic.hpp"
 
 class DiskoveryStateDev;
 
@@ -41,7 +42,17 @@ class DiskoveryModel
          presetIris_(0),
          presetPX_(0),
          presetFilterT_(0),
-         presetFilterW_(0)
+         presetFilterW_(0),
+         hasWFX_(false),
+         hasWFY_(false),
+         hasSD_(false),
+         hasROT_(false),
+         hasLIN_(false),
+         hasP1_(false),
+         hasP2_(false),
+         hasIRIS_(false),
+         hasFilterW_(false),
+         hasFilterT_(false)
       {
          // propertyname are stored in the model so that we can generate
          // callbacks indicating properties have changed
@@ -141,9 +152,9 @@ class DiskoveryModel
       void SetSerialNumber(const std::string serialNumber)
          {MMThreadGuard guard(mutex_); serialNumber_ = serialNumber;};
 
-      // TODO: change Busy to lock-free implementation!
-      bool GetBusy() { MMThreadGuard guard(mutex_); return busy_; };
-      void SetBusy(const bool busy) { MMThreadGuard guard(mutex_); busy_ = busy; };
+      // Busy, uses atomic boolean
+      bool GetBusy() { return busy_; };
+      void SetBusy(const bool busy) { busy_ = busy; };
 
       // Preset SD
       void SetPresetSD(const uint16_t p);
@@ -180,6 +191,35 @@ class DiskoveryModel
       bool GetMotorRunningSD() 
          { MMThreadGuard guard(mutex_); return motorRunningSD_; };
 
+      void SetHasWFX(bool h) { hasWFX_ = h; };
+      bool GetHasWFX() { return hasWFX_; };
+
+      void SetHasWFY(bool h) { hasWFY_ = h; };
+      bool GetHasWFY() { return hasWFY_; };
+      
+      void SetHasSD(bool h) { hasSD_ = h; };
+      bool GetHasSD() { return hasSD_; };
+
+      void SetHasROT(bool h) { hasROT_ = h; };
+      bool GetHasROT() { return hasROT_; };
+
+      void SetHasLIN(bool h) { hasLIN_ = h; };
+      bool GetHasLIN() { return hasLIN_; };
+
+      void SetHasP1(bool h) { hasP1_ = h; };
+      bool GetHasP1() { return hasP1_; };
+
+      void SetHasP2(bool h) { hasP2_ = h; };
+      bool GetHasP2() { return hasP2_; };
+
+      void SetHasIRIS(bool h) { hasIRIS_ = h; };
+      bool GetHasIRIS() { return hasIRIS_; };
+
+      void SetHasFilterW(bool h) { hasFilterW_ = h; };
+      bool GetHasFilterW() { return hasFilterW_; };
+
+      void SetHasFilterT(bool h) { hasFilterT_ = h; };
+      bool GetHasFilterT() { return hasFilterT_; };
 
       const char* hardwareVersionProp_;
       const char* firmwareVersionProp_;
@@ -207,8 +247,10 @@ class DiskoveryModel
       uint16_t fwmajor_, fwminor_, fwrevision_;
       uint16_t manYear_, manMonth_, manDay_;
       std::string serialNumber_;
-      bool busy_; // should be std::atomic_flag when we go to C++11
+      boost::atomic<bool> busy_; 
       uint16_t presetSD_, presetWF_, presetIris_, presetPX_, presetFilterT_, presetFilterW_;
+      boost::atomic<bool> hasWFX_, hasWFY_, hasSD_, hasROT_, hasLIN_, hasP1_, hasP2_, 
+         hasIRIS_, hasFilterW_, hasFilterT_;
       bool motorRunningSD_;
 
       MMThreadLock mutex_;

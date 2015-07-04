@@ -298,15 +298,30 @@ int DiskoveryHub::DetectInstalledDevices()
 {
    if (MM::CanCommunicate == DetectDevice() )
    {
+      // there is a controller, now figure out which devices it has
+      // this code can only work if the Hub::Initialize function 
+      // has been called before.  Check to avoid a crash
+      if (commander_ == 0)
+         return DEVICE_ERR;
+      
+     RETURN_ON_MM_ERROR( commander_->CheckCapabilities() );
+
       std::vector<std::string> peripherals;
       peripherals.clear();
       // TODO: actually detect devices
-      peripherals.push_back(g_DiskoverySD);
-      peripherals.push_back(g_DiskoveryWF);
-      peripherals.push_back(g_DiskoveryTIRF);
-      peripherals.push_back(g_DiskoveryIris);
-      peripherals.push_back(g_DiskoveryFilterW);
-      peripherals.push_back(g_DiskoveryFilterT);
+      if (model_->GetHasSD())
+         peripherals.push_back(g_DiskoverySD);
+      if (model_->GetHasWFX() && model_->GetHasWFY())
+         peripherals.push_back(g_DiskoveryWF);
+      if (model_->GetHasROT() && model_->GetHasLIN() && 
+            model_->GetHasP1() && model_->GetHasP2())
+         peripherals.push_back(g_DiskoveryTIRF);
+      if (model_->GetHasIRIS())
+         peripherals.push_back(g_DiskoveryIris);
+      if (model_->GetHasFilterW())
+         peripherals.push_back(g_DiskoveryFilterW);
+      if (model_->GetHasFilterT())
+         peripherals.push_back(g_DiskoveryFilterT);
       for (size_t i=0; i < peripherals.size(); i++) 
       {
          MM::Device* pDev = ::CreateDevice(peripherals[i].c_str());

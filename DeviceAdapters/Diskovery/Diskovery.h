@@ -55,6 +55,7 @@ class DiskoveryCommander
          DiskoveryModel* model);
       ~DiskoveryCommander();
       int Initialize();
+      int CheckCapabilities();
       int GetProductModel();
       int SetPresetSD(uint16_t pos);
       int SetPresetWF(uint16_t pos);

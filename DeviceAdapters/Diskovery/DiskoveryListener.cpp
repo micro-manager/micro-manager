@@ -94,6 +94,8 @@ void DiskoveryListener::ParseMessage(std::string message)
    bool state;
 
    // split the message at the '=' sign
+   // TODO: the manual states that some message can start with "MESSAGE="
+   // My device does not answer like that.  Investigate....
    std::vector<std::string> tokens = split(message, '=');
    if (tokens.size() == 2) 
    {
@@ -200,11 +202,75 @@ void DiskoveryListener::ParseMessage(std::string message)
          std::istringstream(tokens[1].c_str()) >> number;
          model_->SetManufactureDay(number);
 
-      // serial no.
+      // Serial no.
       } else if (tokens[0] == "PRODUCT_SERIAL_NO") 
       {
          model_->SetSerialNumber(tokens[1]);
+         
+      // ------------------  Queries concerning capabililties --------
+      // The model sets everything false by default
+      // Only set to true if capability was found
+      // Has WFX
+      } else if (tokens[0] == "ACTIVE_WF_X") 
+      {
+         if (tokens[1] == "1")
+            model_->SetHasWFX(true);
+
+      // Has WFY
+      } else if (tokens[0] == "ACTIVE_WF_Y") 
+      {
+         if (tokens[1] == "1")
+            model_->SetHasWFY(true);
+
+      // Has Spinning Disk
+      } else if (tokens[0] == "ACTIVE_SD") 
+      {
+         if (tokens[1] == "1")
+            model_->SetHasSD(true);
+
+      // Has LIN
+      } else if (tokens[0] == "ACTIVE_LIN") 
+      {
+         if (tokens[1] == "1")
+            model_->SetHasLIN(true);
+
+      // Has ROT
+      } else if (tokens[0] == "ACTIVE_ROT") 
+      {
+         if (tokens[1] == "1")
+            model_->SetHasROT(true);
+
+      // Has P1 
+      } else if (tokens[0] == "ACTIVE_P1") 
+      {
+         if (tokens[1] == "1")
+            model_->SetHasP1(true);
+
+      // Has P2 
+      } else if (tokens[0] == "ACTIVE_P2") 
+      {
+         if (tokens[1] == "1")
+            model_->SetHasP2(true);
+
+      // Has Iris
+      } else if (tokens[0] == "ACTIVE_IRIS") 
+      {
+         if (tokens[1] == "1")
+            model_->SetHasIRIS(true);
+
+      // Has FilterW
+      } else if (tokens[0] == "ACTIVE_FILTER_W") 
+      {
+         if (tokens[1] == "1")
+            model_->SetHasFilterW(true);
+
+      // Has FilterT
+      } else if (tokens[0] == "ACTIVE_FILTER_T") 
+      {
+         if (tokens[1] == "1")
+            model_->SetHasFilterT(true);
       }
+
    }
 } 
 
