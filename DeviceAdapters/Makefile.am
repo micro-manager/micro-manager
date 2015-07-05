@@ -96,6 +96,7 @@ SUBDIRS = \
 	Corvus \
 	DTOpenLayer \
 	DemoCamera \
+	Diskovery \
 	FocalPoint \
 	FreeSerialPort \
 	ImageProcessorChain \
