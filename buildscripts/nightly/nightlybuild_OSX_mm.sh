@@ -65,7 +65,7 @@ if [ -z "$MM_VERSION" ]; then
    MM_VERSION="$(cat version.txt)"
    [ "$use_release_version" = yes ] || MM_VERSION="$MM_VERSION-$(date +%Y%m%d)"
 fi
-sed -e "s/@VERSION_STRING@/$MM_VERSION/" buildscripts/MMVersion.java.in > mmstudio/src/org/micromanager/MMVersion.java || exit
+sed -e "s/@VERSION_STRING@/$MM_VERSION/" buildscripts/MMVersion.java.in > mmstudio/src/main/java/org/micromanager/internal/MMVersion.java || exit
 
 if [ "$skip_autogen" != yes ]; then
    sh autogen.sh

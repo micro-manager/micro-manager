@@ -36,7 +36,7 @@
 		<replace file="${mm.version.java.tmp}"
 			token="@VERSION_STRING@" value="${mm.versionstring}"
 			failOnNoReplacements="true"/>
-		<move tofile="${mm.basedir}/mmstudio/src/org/micromanager/MMVersion.java" file="${mm.version.java.tmp}"/>
+        <move tofile="${mm.basedir}/mmstudio/src/main/java/org/micromanager/internal/MMVersion.java" file="${mm.version.java.tmp}"/>
 
 		<echo>Version set to: "${mm.versionstring}"</echo>
 	</target>
