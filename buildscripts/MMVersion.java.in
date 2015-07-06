@@ -25,7 +25,7 @@
 //               not be edited. Note that there is also a default
 //               MMVersion.java included in the source tree.
 
-package org.micromanager;
+package org.micromanager.internal;
 
 /*
  * A class with a single public string, containing the version of
