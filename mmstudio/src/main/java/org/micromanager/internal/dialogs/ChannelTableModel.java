@@ -10,6 +10,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
 import org.micromanager.acquisition.internal.AcquisitionEngine;
+import org.micromanager.display.internal.inspector.HistogramsPanel;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.ChannelSpec;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -202,9 +203,14 @@ public class ChannelTableModel extends AbstractTableModel implements TableModelL
          if (channel.config.length() == 0) {
             ReportingUtils.showMessage("No more channels are available\nin this channel group.");
          } else {
+            // Pick a non-white default color if possible.
+            Color defaultColor = Color.WHITE;
+            if (channels_.size() < HistogramsPanel.COLORBLIND_COLORS.length) {
+               defaultColor = HistogramsPanel.COLORBLIND_COLORS[channels_.size()];
+            }
             channel.color = new Color(AcqControlDlg.getChannelColor(
                      acqEng_.getChannelGroup(), channel.config,
-                     Color.white.getRGB()));
+                     defaultColor.getRGB()));
             channel.exposure = AcqControlDlg.getChannelExposure(
                   acqEng_.getChannelGroup(), channel.config, 10.0);
             channels_.add(channel);
