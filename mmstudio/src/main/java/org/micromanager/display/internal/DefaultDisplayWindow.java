@@ -60,6 +60,7 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
+import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.DatastoreSavedEvent;
 import org.micromanager.data.Image;
 import org.micromanager.data.NewImageEvent;
@@ -1065,16 +1066,28 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       return result;
    }
 
+   // Letters for differentiating displays for the same dataset.
+   private static final String LETTERS = "abcdefghijklmnopqrstuvwxyz";
+   /**
+    * We try a series of fallback measures to extract a meaningful name.
+    */
    @Override
    public String getName() {
-      String name = customName_;
+      String name = getSpecifiedName();
       if (name == null) {
-         // Use the filename instead.
-         name = store_.getSummaryMetadata().getName();
-      }
-      if (name == null || name.contentEquals("")) {
-         // Use a fallback name.
-         name = "MM image display";
+         // No metadata, no save path; use a fallback name. Then save that
+         // name into the SummaryMetadata so future calls to getName() don't
+         // call getUniqueDisplayName() again and get a new,
+         // further-incremented name.
+         name = getUniqueDisplayName(this);
+         SummaryMetadata summary = store_.getSummaryMetadata();
+         summary = summary.copy().name(name).build();
+         try {
+            store_.setSummaryMetadata(summary);
+         }
+         catch (DatastoreFrozenException e) {
+            ReportingUtils.logError("Unable to set name on anonymous dataset because store is frozen.");
+         }
       }
       List<DisplayWindow> displays = DisplayGroupManager.getDisplaysForDatastore(store_);
       if (displays.size() > 1) {
@@ -1082,12 +1095,45 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          // same datastore apart.
          for (int i = 0; i < displays.size(); ++i) {
             if (displays.get(i) == this) {
-               name = String.format("#%d: %s", i + 1, name);
+               // Note "clever" use of modulus operator to avoid throwing
+               // errors if the user duplicates a display 26 times.
+               name = String.format("%s (%s)", name,
+                     LETTERS.charAt(i % LETTERS.length()));
                break;
             }
          }
       }
       return name;
+   }
+
+   /**
+    * Tries all methods we have of generating a specific name, and returns the
+    * first that succeeds, or null on failure.
+    */
+   private String getSpecifiedName() {
+      String name = customName_;
+      if (name == null) {
+         // Use the filename instead.
+         name = store_.getSummaryMetadata().getName();
+      }
+      if (name == null || name.contentEquals("")) {
+         // The summary metadata may not have this information for older
+         // datasets, but the Datastore should still know where it was saved
+         // to, if the data resides on disk.
+         name = store_.getSavePath();
+      }
+      // If it's null now, then it's an anonymous RAM datastore.
+      return name;
+   }
+
+   private static int UNIQUE_ID = 1;
+   /**
+    * Generate a unique name for a given display. This is only invoked
+    * when we have no specific name to assign to the display's data
+    * (typically because it's for a RAM-based acquisition).
+    */
+   private static String getUniqueDisplayName(DefaultDisplayWindow display) {
+      return String.format("MM Image Display #%d", UNIQUE_ID++);
    }
 
    @Override
