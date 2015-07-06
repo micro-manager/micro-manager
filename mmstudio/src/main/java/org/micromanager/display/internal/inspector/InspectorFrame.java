@@ -186,19 +186,16 @@ public class InspectorFrame extends MMFrame implements Inspector {
 
       // We want to be in the upper-right corner of the primary display.
       GraphicsConfiguration config = GUIUtils.getGraphicsConfigurationContaining(1, 1);
+      // Allocate enough width that the histograms look decent.
+      setMinimumSize(new Dimension(400, 50));
       // HACK: don't know our width; just choose a vaguely-correct offset.
-      loadAndRestorePosition(config.getBounds().width - 350, 0);
+      loadAndRestorePosition(config.getBounds().width - 450, 0);
 
       DefaultEventManager.getInstance().registerForEvents(this);
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent event) {
-            for (InspectorPanel panel : panels_) {
-               panel.cleanup();
-            }
-            savePosition();
-            DefaultEventManager.getInstance().unregisterForEvents(
-               InspectorFrame.this);
+            cleanup();
          }
       });
    }
@@ -386,5 +383,24 @@ public class InspectorFrame extends MMFrame implements Inspector {
       }
       // Redo the layout to account for curDisplayTitle_ being shown/hidden.
       validate();
+   }
+
+   @Override
+   public void dispose() {
+      cleanup();
+      super.dispose();
+   }
+
+   /**
+    * Make certain that our panels get cleaned up and we don't leave any
+    * references lying around.
+    */
+   private void cleanup() {
+      for (InspectorPanel panel : panels_) {
+         panel.cleanup();
+      }
+      savePosition();
+      DefaultEventManager.getInstance().unregisterForEvents(
+         InspectorFrame.this);
    }
 }
