@@ -126,6 +126,8 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       springLayout.putConstraint(SpringLayout.WEST, plateIDCombo_, 6, SpringLayout.EAST, platePanel_);
       springLayout.putConstraint(SpringLayout.EAST, plateIDCombo_, -4, SpringLayout.EAST, getContentPane());
       getContentPane().add(plateIDCombo_);
+      plateIDCombo_.addItem(SBSPlate.SBS_6_WELL);
+      plateIDCombo_.addItem(SBSPlate.SBS_12_WELL);
       plateIDCombo_.addItem(SBSPlate.SBS_24_WELL);
       plateIDCombo_.addItem(SBSPlate.SBS_48_WELL);
       plateIDCombo_.addItem(SBSPlate.SBS_96_WELL);

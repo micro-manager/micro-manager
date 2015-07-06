@@ -63,6 +63,8 @@ public class SBSPlate {
    private static final String FIRST_WELL_X = "first_well_x";
    private static final String FIRST_WELL_Y = "first_well_y";
 
+   public static final String SBS_6_WELL= "6WELL";
+   public static final String SBS_12_WELL= "12WELL";
    public static final String SBS_24_WELL= "24WELL";
    public static final String SBS_48_WELL= "48WELL";
    public static final String SBS_96_WELL= "96WELL";
@@ -107,7 +109,37 @@ public class SBSPlate {
          wellSizeY_ = 14000.0;
          circular_ = true;
 */
-      if (id.equals(SBS_24_WELL)){
+      if (id.equals(SBS_6_WELL)) {
+         // Corning plates
+         id_ = SBS_6_WELL;
+         numColumns_ = 3;
+         numRows_ = 2;
+         sizeXUm_ = 127760.0;
+         sizeYUm_ = 85470.0;
+         wellSpacingX_ = 39120.0;
+         wellSpacingY_ = 39120.0;
+         firstWellX_ = 24760.0;
+         firstWellY_ = 23160.0;
+         wellSizeX_ = 34800.0;
+         wellSizeY_ = 34800.0;
+         circular_ = true;
+      }
+      else if (id.equals(SBS_12_WELL)) {
+         // Corning plates
+         id_ = SBS_12_WELL;
+         numColumns_ = 4;
+         numRows_ = 3;
+         sizeXUm_ = 127890.0;
+         sizeYUm_ = 85600.0;
+         wellSpacingX_ = 26010.0;
+         wellSpacingY_ = 26010.0;
+         firstWellX_ = 24940.0;
+         firstWellY_ = 16790.0;
+         wellSizeX_ = 22110.0;
+         wellSizeY_ = 22110.0;
+         circular_ = true;
+      }
+      else if (id.equals(SBS_24_WELL)){
          id_ = SBS_24_WELL;
          numColumns_ = 6;
          numRows_ = 4;
