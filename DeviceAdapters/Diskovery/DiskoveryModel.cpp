@@ -34,6 +34,7 @@
 // Motor Running
 void DiskoveryModel::SetMotorRunningSD(const bool p)
 {
+   MMThreadGuard g(lock_);
    motorRunningSD_ = p;
    std::string s = static_cast<std::ostringstream*>( &(std::ostringstream() << p) )->str();
    core_.OnPropertyChanged(hubDevice_, motorRunningProp_, s.c_str());
@@ -42,6 +43,7 @@ void DiskoveryModel::SetMotorRunningSD(const bool p)
 // Preset SD
 void DiskoveryModel::SetPresetSD(const uint16_t p)
 {
+   MMThreadGuard g(lock_);
    presetSD_ = p;
    if (sdDevice_ != 0)
    {
@@ -51,6 +53,7 @@ void DiskoveryModel::SetPresetSD(const uint16_t p)
 
 void DiskoveryModel::SetPresetWF(const uint16_t p)
 {
+   MMThreadGuard g(lock_);
    presetWF_ = p;
    if (wfDevice_ != 0)
    {
@@ -61,6 +64,7 @@ void DiskoveryModel::SetPresetWF(const uint16_t p)
 // Preset Iris                                                         
 void DiskoveryModel::SetPresetIris(const uint16_t p)                         
 {
+   MMThreadGuard g(lock_);
    presetIris_ = p;
    if (irisDevice_ != 0)
    {
@@ -71,6 +75,7 @@ void DiskoveryModel::SetPresetIris(const uint16_t p)
 // Preset TIRF                                                         
 void DiskoveryModel::SetPresetTIRF(const uint16_t p)                         
 {
+   MMThreadGuard g(lock_);
    presetPX_ = p;
    if (tirfDevice_ != 0)
    {
@@ -81,6 +86,7 @@ void DiskoveryModel::SetPresetTIRF(const uint16_t p)
 // Preset Filter W
 void DiskoveryModel::SetPresetFilterW(const uint16_t p) 
 {  
+   MMThreadGuard g(lock_);
    presetFilterW_ = p;
    if (filterWDevice_ != 0)
    {
@@ -89,8 +95,9 @@ void DiskoveryModel::SetPresetFilterW(const uint16_t p)
 }
 
 // Preset Filter T                                                     
-void DiskoveryModel::SetPresetFilterT(const uint16_t p)                                
+void DiskoveryModel::SetPresetFilterT(const uint16_t p) 
 { 
+   MMThreadGuard g(lock_);
    presetFilterT_ = p;                                       
    if (filterTDevice_ != 0)
    {

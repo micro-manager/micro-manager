@@ -29,7 +29,6 @@
 #include <map>
 #include <sstream>
 #include <vector>
-#include "boost/atomic/atomic.hpp"
 
 class DiskoveryStateDev;
 
@@ -37,6 +36,7 @@ class DiskoveryModel
 {
    public:
       DiskoveryModel(MM::Device* device, MM::Core& core) :
+         lock_(),
          hubDevice_(device),
          sdDevice_(0),
          wfDevice_(0),
@@ -77,128 +77,134 @@ class DiskoveryModel
       };
       ~DiskoveryModel() {};
 
-      void RegisterSDDevice(DiskoveryStateDev* device) { sdDevice_ = device; };
-      void RegisterWFDevice(DiskoveryStateDev* device) { wfDevice_ = device; };
-      void RegisterTIRFDevice(DiskoveryStateDev* device) { tirfDevice_ = device; };
-      void RegisterIRISDevice(DiskoveryStateDev* device) { irisDevice_ = device; };
-      void RegisterFILTERWDevice(DiskoveryStateDev* device) { filterWDevice_ = device; };
-      void RegisterFILTERTDevice(DiskoveryStateDev* device) { filterTDevice_ = device; };
+      void RegisterSDDevice(DiskoveryStateDev* device) {  MMThreadGuard g(lock_); sdDevice_ = device; };
+      void RegisterWFDevice(DiskoveryStateDev* device) {  MMThreadGuard g(lock_); wfDevice_ = device; };
+      void RegisterTIRFDevice(DiskoveryStateDev* device) {  MMThreadGuard g(lock_); tirfDevice_ = device; };
+      void RegisterIRISDevice(DiskoveryStateDev* device) {  MMThreadGuard g(lock_); irisDevice_ = device; };
+      void RegisterFILTERWDevice(DiskoveryStateDev* device) {  MMThreadGuard g(lock_); filterWDevice_ = device; };
+      void RegisterFILTERTDevice(DiskoveryStateDev* device) {  MMThreadGuard g(lock_); filterTDevice_ = device; };
 
       // Hardware version
-      std::string GetHardwareVersion() { return hardwareVersion_; };
+      std::string GetHardwareVersion() {  MMThreadGuard g(lock_); return hardwareVersion_; };
       void SetHardwareVersionMajor(const uint16_t major)
       {
-         hwmajor_ = major;
-         MakeVersionString(hardwareVersion_, hwmajor_, hwminor_, hwrevision_);
+          MMThreadGuard g(lock_);
+          hwmajor_ = major;
+          MakeVersionString(hardwareVersion_, hwmajor_, hwminor_, hwrevision_);
       };
-      uint16_t GetHardwareVersionMajor() { return hwmajor_; }
+      uint16_t GetHardwareVersionMajor() {  MMThreadGuard g(lock_); return hwmajor_; }
       void SetHardwareVersionMinor(const uint16_t minor)
       {
-         hwminor_ = minor;
-         MakeVersionString(hardwareVersion_, hwmajor_, hwminor_, hwrevision_);
+          MMThreadGuard g(lock_);
+          hwminor_ = minor;
+          MakeVersionString(hardwareVersion_, hwmajor_, hwminor_, hwrevision_);
       };
-      uint16_t GetHardwareVersionMinor() { return hwminor_; }
+      uint16_t GetHardwareVersionMinor() {  MMThreadGuard g(lock_); return hwminor_; }
       void SetHardwareVersionRevision(const uint16_t revision)
       {
-         hwrevision_ = revision;
-         MakeVersionString(hardwareVersion_, hwmajor_, hwminor_, hwrevision_);
+          MMThreadGuard g(lock_);
+          hwrevision_ = revision;
+          MakeVersionString(hardwareVersion_, hwmajor_, hwminor_, hwrevision_);
       };
-      uint16_t GetHardwareVersionRevision() { return hwrevision_; }
+      uint16_t GetHardwareVersionRevision() {  MMThreadGuard g(lock_); return hwrevision_; }
 
       // Firmware version
-      std::string GetFirmwareVersion() { return firmwareVersion_; };
+      std::string GetFirmwareVersion() {  MMThreadGuard g(lock_); return firmwareVersion_; };
       void SetFirmwareVersionMajor(const uint16_t major)
       {
-         fwmajor_ = major;
-         MakeVersionString(firmwareVersion_, fwmajor_, fwminor_, fwrevision_);
+          MMThreadGuard g(lock_);
+          fwmajor_ = major;
+          MakeVersionString(firmwareVersion_, fwmajor_, fwminor_, fwrevision_);
       };
-      uint16_t GetFirmwareVersionMajor() { return fwmajor_; };
+      uint16_t GetFirmwareVersionMajor() {  MMThreadGuard g(lock_); return fwmajor_; };
       void SetFirmwareVersionMinor(uint16_t minor)
       {
-         fwminor_ = minor;
-         MakeVersionString(firmwareVersion_, fwmajor_, fwminor_, fwrevision_);
+          MMThreadGuard g(lock_);
+          fwminor_ = minor;
+          MakeVersionString(firmwareVersion_, fwmajor_, fwminor_, fwrevision_);
       };
-      uint16_t GetFirmwareVersionMinor() { return fwminor_; };
+      uint16_t GetFirmwareVersionMinor() {  MMThreadGuard g(lock_); return fwminor_; };
       void SetFirmwareVersionRevision(const uint16_t revision)
       {
-         fwrevision_ = revision;
-         MakeVersionString(firmwareVersion_, fwmajor_, fwminor_, fwrevision_);
+          MMThreadGuard g(lock_);
+          fwrevision_ = revision;
+          MakeVersionString(firmwareVersion_, fwmajor_, fwminor_, fwrevision_);
       };
-      uint16_t GetFirmwareVersionRevision() { return fwrevision_; };
+      uint16_t GetFirmwareVersionRevision() {  MMThreadGuard g(lock_); return fwrevision_; };
 
       // Manufacturing date
-      uint16_t GetManufactureYear() { return manYear_; };
-      void SetManufactureYear(const uint16_t year) {  manYear_ = year; };
-      uint16_t GetManufactureMonth() { return manMonth_; };
-      void SetManufactureMonth(const uint16_t month) { manMonth_ = month; };
-      uint16_t GetManufactureDay() { return manDay_; };
-      void SetManufactureDay(const uint16_t day) { manDay_ = day; };
+      uint16_t GetManufactureYear() {  MMThreadGuard g(lock_); return manYear_; };
+      void SetManufactureYear(const uint16_t year) {   MMThreadGuard g(lock_); manYear_ = year; };
+      uint16_t GetManufactureMonth() {  MMThreadGuard g(lock_); return manMonth_; };
+      void SetManufactureMonth(const uint16_t month) {  MMThreadGuard g(lock_); manMonth_ = month; };
+      uint16_t GetManufactureDay() {  MMThreadGuard g(lock_); return manDay_; };
+      void SetManufactureDay(const uint16_t day) {  MMThreadGuard g(lock_); manDay_ = day; };
 
       // Serial number
-      std::string GetSerialNumber() { return serialNumber_; };
-      void SetSerialNumber(const std::string serialNumber) { serialNumber_ = serialNumber; };
+      std::string GetSerialNumber() {  MMThreadGuard g(lock_); return serialNumber_; };
+      void SetSerialNumber(const std::string serialNumber) {  MMThreadGuard g(lock_); serialNumber_ = serialNumber; };
 
-      // Busy, uses atomic boolean
-      bool GetBusy() { return busy_; };
-      void SetBusy(const bool busy) { busy_ = busy; };
+      // Busy
+      bool GetBusy() { MMThreadGuard g(lock_); return busy_; };
+      void SetBusy(const bool busy) {  MMThreadGuard g(lock_); busy_ = busy; };
 
       // Preset SD
       void SetPresetSD(const uint16_t p);
-      uint16_t GetPresetSD() { return presetSD_; };
+      uint16_t GetPresetSD() {  MMThreadGuard g(lock_); return presetSD_; };
 
       // Preset WF
       void SetPresetWF(const uint16_t p); 
-      uint16_t GetPresetWF() { return presetWF_; };
+      uint16_t GetPresetWF() {  MMThreadGuard g(lock_); return presetWF_; };
 
       // Preset Iris
       void SetPresetIris(const uint16_t p);
-      uint16_t GetPresetIris() { return presetIris_; };
+      uint16_t GetPresetIris() {  MMThreadGuard g(lock_); return presetIris_; };
 
       // Preset TIRF 
       void SetPresetTIRF(const uint16_t p);
-      uint16_t GetPresetTIRF() { return presetPX_; };
+      uint16_t GetPresetTIRF() {  MMThreadGuard g(lock_); return presetPX_; };
 
       // Preset Filter W
       void SetPresetFilterW(const uint16_t p); 
-      uint16_t GetPresetFilterW() { return presetFilterW_; };
+      uint16_t GetPresetFilterW() {  MMThreadGuard g(lock_); return presetFilterW_; };
 
       // Preset Filter T
       void SetPresetFilterT(const uint16_t p);
-      uint16_t GetPresetFilterT() { return presetFilterT_; };
+      uint16_t GetPresetFilterT() {  MMThreadGuard g(lock_); return presetFilterT_; };
 
       // Motor Running
       void SetMotorRunningSD(const bool p); 
-      bool GetMotorRunningSD() { return motorRunningSD_; };
+      bool GetMotorRunningSD() {  MMThreadGuard g(lock_); return motorRunningSD_; };
 
-      void SetHasWFX(bool h) { hasWFX_ = h; };
-      bool GetHasWFX() { return hasWFX_; };
+      void SetHasWFX(bool h) {  MMThreadGuard g(lock_); hasWFX_ = h; };
+      bool GetHasWFX() {  MMThreadGuard g(lock_); return hasWFX_; };
 
-      void SetHasWFY(bool h) { hasWFY_ = h; };
-      bool GetHasWFY() { return hasWFY_; };
+      void SetHasWFY(bool h) {  MMThreadGuard g(lock_); hasWFY_ = h; };
+      bool GetHasWFY() {  MMThreadGuard g(lock_); return hasWFY_; };
       
-      void SetHasSD(bool h) { hasSD_ = h; };
-      bool GetHasSD() { return hasSD_; };
+      void SetHasSD(bool h) {  MMThreadGuard g(lock_); hasSD_ = h; };
+      bool GetHasSD() {  MMThreadGuard g(lock_); return hasSD_; };
 
-      void SetHasROT(bool h) { hasROT_ = h; };
-      bool GetHasROT() { return hasROT_; };
+      void SetHasROT(bool h) {  MMThreadGuard g(lock_); hasROT_ = h; };
+      bool GetHasROT() {  MMThreadGuard g(lock_); return hasROT_; };
 
-      void SetHasLIN(bool h) { hasLIN_ = h; };
-      bool GetHasLIN() { return hasLIN_; };
+      void SetHasLIN(bool h) {  MMThreadGuard g(lock_); hasLIN_ = h; };
+      bool GetHasLIN() {  MMThreadGuard g(lock_); return hasLIN_; };
 
-      void SetHasP1(bool h) { hasP1_ = h; };
-      bool GetHasP1() { return hasP1_; };
+      void SetHasP1(bool h) {  MMThreadGuard g(lock_); hasP1_ = h; };
+      bool GetHasP1() {  MMThreadGuard g(lock_); return hasP1_; };
 
-      void SetHasP2(bool h) { hasP2_ = h; };
-      bool GetHasP2() { return hasP2_; };
+      void SetHasP2(bool h) {  MMThreadGuard g(lock_); hasP2_ = h; };
+      bool GetHasP2() {  MMThreadGuard g(lock_); return hasP2_; };
 
-      void SetHasIRIS(bool h) { hasIRIS_ = h; };
-      bool GetHasIRIS() { return hasIRIS_; };
+      void SetHasIRIS(bool h) {  MMThreadGuard g(lock_); hasIRIS_ = h; };
+      bool GetHasIRIS() {  MMThreadGuard g(lock_); return hasIRIS_; };
 
-      void SetHasFilterW(bool h) { hasFilterW_ = h; };
-      bool GetHasFilterW() { return hasFilterW_; };
+      void SetHasFilterW(bool h) {  MMThreadGuard g(lock_); hasFilterW_ = h; };
+      bool GetHasFilterW() {  MMThreadGuard g(lock_); return hasFilterW_; };
 
-      void SetHasFilterT(bool h) { hasFilterT_ = h; };
-      bool GetHasFilterT() { return hasFilterT_; };
+      void SetHasFilterT(bool h) {  MMThreadGuard g(lock_); hasFilterT_ = h; };
+      bool GetHasFilterT() {  MMThreadGuard g(lock_); return hasFilterT_; };
 
       const char* hardwareVersionProp_;
       const char* firmwareVersionProp_;
@@ -212,7 +218,7 @@ class DiskoveryModel
       const char* tirfPositionProp_;
 
     private:
-      void MakeVersionString(boost::atomic<std::string>& it, uint16_t maj, 
+      void MakeVersionString(std::string& it, uint16_t maj, 
             uint16_t min, uint16_t rev) 
       {
          std::ostringstream oss;
@@ -220,17 +226,19 @@ class DiskoveryModel
          it  = oss.str();
       };
 
-      boost::atomic<std::string> hardwareVersion_;
-      boost::atomic<uint16_t> hwmajor_, hwminor_, hwrevision_;
-      boost::atomic<std::string> firmwareVersion_;
-      boost::atomic<uint16_t> fwmajor_, fwminor_, fwrevision_;
-      boost::atomic<uint16_t> manYear_, manMonth_, manDay_;
-      boost::atomic<std::string> serialNumber_;
-      boost::atomic<bool> busy_; 
-      boost::atomic<uint16_t> presetSD_, presetWF_, presetIris_, presetPX_, presetFilterT_, presetFilterW_;
-      boost::atomic<bool> hasWFX_, hasWFY_, hasSD_, hasROT_, hasLIN_, hasP1_, hasP2_, 
+      MMThreadLock lock_;
+
+      std::string hardwareVersion_;
+      uint16_t hwmajor_, hwminor_, hwrevision_;
+      std::string firmwareVersion_;
+      uint16_t fwmajor_, fwminor_, fwrevision_;
+      uint16_t manYear_, manMonth_, manDay_;
+      std::string serialNumber_;
+      bool busy_; 
+      uint16_t presetSD_, presetWF_, presetIris_, presetPX_, presetFilterT_, presetFilterW_;
+      bool hasWFX_, hasWFY_, hasSD_, hasROT_, hasLIN_, hasP1_, hasP2_, 
          hasIRIS_, hasFilterW_, hasFilterT_;
-      boost::atomic<bool> motorRunningSD_;
+      bool motorRunningSD_;
 
       MM::Device* hubDevice_;
       DiskoveryStateDev* sdDevice_;
