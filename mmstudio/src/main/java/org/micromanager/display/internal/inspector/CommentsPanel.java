@@ -63,7 +63,6 @@ public class CommentsPanel extends InspectorPanel {
    private ImageWindow currentWindow_;
    private DisplayWindow display_;
    private Datastore store_;
-   private MMVirtualStack stack_;
    private Timer updateTimer_;
    private HashMap<Image, Timer> imageToSaveTimer_;
 
@@ -122,7 +121,11 @@ public class CommentsPanel extends InspectorPanel {
     * after the user is done typing (5s).
     */
    private void recordCommentsChanges() {
-      Image curImage = store_.getImage(stack_.getCurrentImageCoords());
+      if (display_.getDisplayedImages().size() == 0) {
+         // No images to record for.
+         return;
+      }
+      Image curImage = display_.getDisplayedImages().get(0);
       // Determine if anything has actually changed.
       String imageText = imageCommentsTextArea_.getText();
       String summaryText = summaryCommentsTextArea_.getText();
@@ -187,7 +190,7 @@ public class CommentsPanel extends InspectorPanel {
                   ReportingUtils.showError("Comments cannot be changed because the datastore has been locked.");
                   // Prevent redundant errors by forcing the text back to
                   // what it should be.
-                  Image curImage = store.getImage(stack_.getCurrentImageCoords());
+                  Image curImage = display_.getDisplayedImages().get(0);
                   imageCommentsTextArea_.setText(curImage.getMetadata().getComments());
                   summaryCommentsTextArea_.setText(store.getSummaryMetadata().getComments());
                }
@@ -295,7 +298,6 @@ public class CommentsPanel extends InspectorPanel {
       summaryCommentsTextArea_.setEditable(!store_.getIsFrozen());
       summaryCommentsTextArea_.setText(
             store_.getSummaryMetadata().getComments());
-      stack_ = ((DefaultDisplayWindow) display_).getStack();
       display_.registerForEvents(this);
       List<Image> images = display_.getDisplayedImages();
       if (images.size() > 0) {
