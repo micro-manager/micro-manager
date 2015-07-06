@@ -79,6 +79,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    private static final String SHOULD_SYNC_EXPOSURE = "should sync exposure times between main window and Acquire dialog";
    private static final String SHOULD_HIDE_DISPLAY = "should hide image display windows for multi-dimensional acquisitions";
    private static final String SAVE_MODE = "default save mode";
+   private static final String SHOULD_CHECK_EXPOSURE_SANITY = "whether to prompt the user if their exposure times seem excessively long";
    // This array allows us to convert from SaveModes to integers. Of course it
    // needs to be updated if any new save modes are added in the future.
    private static final ArrayList<Datastore.SaveMode> SAVE_MODE_ARRAY;
@@ -1596,6 +1597,28 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
             JOptionPane.showMessageDialog(this, "Cannot start acquisition using the same channel twice");
             return null;
          }
+         // Check for excessively long exposure times.
+         ArrayList<String> badChannels = new ArrayList<String>();
+         for (ChannelSpec spec : model.getChannels()) {
+            if (spec.exposure > 30000) { // More than 30s
+               badChannels.add(spec.config);
+            }
+         }
+         if (badChannels.size() > 0 && getShouldCheckExposureSanity()) {
+            String channelString = (badChannels.size() == 1) ?
+               String.format("the %s channel", badChannels.get(0)) :
+               String.format("these channels: %s", badChannels.toString());
+            String message = String.format("I found unusually long exposure times for %s. Are you sure you want to run this acquisition?",
+                  channelString);
+            JCheckBox neverAgain = new JCheckBox("Do not ask me again.");
+            int response = JOptionPane.showConfirmDialog(this,
+                  new Object[] {message, neverAgain},
+                  "Confirm exposure times", JOptionPane.YES_NO_OPTION);
+            setShouldCheckExposureSanity(!neverAgain.isSelected());
+            if (response == JOptionPane.NO_OPTION) {
+               return null;
+            }
+         }
          return acqEng_.acquire();
       } catch (MMException e) {
          ReportingUtils.showError(e);
@@ -2088,5 +2111,15 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       int mode = SAVE_MODE_ARRAY.indexOf(saveMode);
       DefaultUserProfile.getInstance().setInt(AcqControlDlg.class,
             SAVE_MODE, mode);
+   }
+
+   public static boolean getShouldCheckExposureSanity() {
+      return DefaultUserProfile.getInstance().getBoolean(AcqControlDlg.class,
+            SHOULD_CHECK_EXPOSURE_SANITY, true);
+   }
+
+   public static void setShouldCheckExposureSanity(boolean shouldCheck) {
+      DefaultUserProfile.getInstance().setBoolean(AcqControlDlg.class,
+            SHOULD_CHECK_EXPOSURE_SANITY, shouldCheck);
    }
 }
