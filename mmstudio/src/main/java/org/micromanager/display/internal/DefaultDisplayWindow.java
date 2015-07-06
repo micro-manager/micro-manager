@@ -1112,15 +1112,15 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     */
    private String getSpecifiedName() {
       String name = customName_;
-      if (name == null) {
-         // Use the filename instead.
-         name = store_.getSummaryMetadata().getName();
-      }
       if (name == null || name.contentEquals("")) {
          // The summary metadata may not have this information for older
          // datasets, but the Datastore should still know where it was saved
          // to, if the data resides on disk.
          name = store_.getSavePath();
+      }
+      if (name == null) {
+         // Use the filename instead.
+         name = store_.getSummaryMetadata().getName();
       }
       // If it's null now, then it's an anonymous RAM datastore.
       return name;
@@ -1133,7 +1133,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     * (typically because it's for a RAM-based acquisition).
     */
    private static String getUniqueDisplayName(DefaultDisplayWindow display) {
-      return String.format("MM Image Display #%d", UNIQUE_ID++);
+      return String.format("Untitled Data #%d", UNIQUE_ID++);
    }
 
    @Override
