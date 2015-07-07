@@ -30,6 +30,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseAdapter;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.border.TitledBorder;
 import javax.swing.ImageIcon;
@@ -139,7 +140,12 @@ class OverlaysPanel extends InspectorPanel {
 
    @Subscribe
    public void onCanvasDraw(CanvasDrawEvent event) {
-      Image image = display_.getDatastore().getImage(stack_.getCurrentImageCoords());
+      List<Image> images = display_.getDisplayedImages();
+      if (images.size() == 0) {
+         // Nothing to draw on yet.
+         return;
+      }
+      Image image = images.get(0);
       for (OverlayPanel overlay : overlays_) {
          overlay.drawOverlay(event.getGraphics(), display_, image,
                event.getCanvas());
