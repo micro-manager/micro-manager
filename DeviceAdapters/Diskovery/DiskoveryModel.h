@@ -221,6 +221,9 @@ class DiskoveryModel
       void MakeVersionString(std::string& it, uint16_t maj, 
             uint16_t min, uint16_t rev) 
       {
+         // note: this function should always be called after setting a lock!
+         // do not set the lock here, since we can not be sure if double
+         // locking is OK or not
          std::ostringstream oss;
          oss << maj << "." << min << "." << rev;
          it  = oss.str();
