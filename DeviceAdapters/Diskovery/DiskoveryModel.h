@@ -159,7 +159,7 @@ class DiskoveryModel
       bool GetBusy() 
       { 
          MMThreadGuard g(lock_); 
-         return logicalBusy_ && deviceBusy_; 
+         return logicalBusy_ || deviceBusy_; 
       };
       void SetDeviceBusy(const bool deviceBusy) 
       {  
