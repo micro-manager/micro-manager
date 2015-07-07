@@ -323,7 +323,10 @@ int DiskoveryHub::DetectInstalledDevices()
       // TODO: actually detect devices
       if (model_->GetHasSD())
          peripherals.push_back(g_DiskoverySD);
-      if (model_->GetHasWFX() && model_->GetHasWFY())
+      // NOTE: the manual states that the controller should have both WF_X and 
+      // WF_Y.  However, the demo unit has only WF_X, so only require that...
+      // if (model_->GetHasWFX() && model_->GetHasWFY())
+      if (model_->GetHasWFX())
          peripherals.push_back(g_DiskoveryWF);
       if (model_->GetHasROT() && model_->GetHasLIN() && 
             model_->GetHasP1() && model_->GetHasP2())

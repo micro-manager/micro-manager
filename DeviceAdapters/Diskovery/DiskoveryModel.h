@@ -46,8 +46,8 @@ class DiskoveryModel
          filterWDevice_(0),
          filterTDevice_(0),
          core_(core),
-         logicalBusy_(false),
          deviceBusy_(false),
+         logicalBusy_(false),
          presetSD_(0),
          presetWF_(0),
          presetIris_(0),
@@ -152,14 +152,13 @@ class DiskoveryModel
 
       // Busy
       // deviceBusy_ keeps track of the busy state as signalled by the
-      // controller.  logicaBusy_ is set to true by the Commander
-      // and cleared when the device is no longer busy
-      // the WaitForDeviceBusy function is used by the MessageSender
+      // controller.  
+      // The WaitForDeviceBusy function is used by the MessageSender
       // which only sends comamnds to the controller when it is not busy
       bool GetBusy() 
       { 
          MMThreadGuard g(lock_); 
-         return logicalBusy_ || deviceBusy_; 
+         return deviceBusy_ || logicalBusy_; 
       };
       void SetDeviceBusy(const bool deviceBusy) 
       {  
@@ -168,27 +167,22 @@ class DiskoveryModel
          // notify waiting threads and also clear the logical busy
          if (!deviceBusy_)
          {
-            varCondition_.notify_one();
             logicalBusy_ = false;
+            varCondition_.notify_one();
          }
       };
       void WaitForDeviceBusy() 
       {
          boost::mutex::scoped_lock bLock(mutex_);
          bool deviceBusy = false;
-         do 
-         {
-            MMThreadGuard g(lock_);
-            deviceBusy = deviceBusy_;
-         } while (false);
-         while (deviceBusy) {
+         while (deviceBusy_) {
             varCondition_.wait(bLock);
          }
       };
-      void SetLogicalBusy(const bool logicalBusy) 
+      void SetLogicalBusy(const bool busy) 
       {  
          MMThreadGuard g(lock_); 
-         logicalBusy_ = logicalBusy; 
+         logicalBusy_ = busy; 
       };
 
       // Preset SD
@@ -282,7 +276,7 @@ class DiskoveryModel
       uint16_t fwmajor_, fwminor_, fwrevision_;
       uint16_t manYear_, manMonth_, manDay_;
       std::string serialNumber_;
-      bool logicalBusy_, deviceBusy_;
+      bool deviceBusy_, logicalBusy_;
       uint16_t presetSD_, presetWF_, presetIris_, presetPX_, presetFilterT_, presetFilterW_;
       bool hasWFX_, hasWFY_, hasSD_, hasROT_, hasLIN_, hasP1_, hasP2_, 
          hasIRIS_, hasFilterW_, hasFilterT_;

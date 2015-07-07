@@ -202,6 +202,10 @@ int DiskoveryCommander::SetMotorRunningSD(uint16_t pos)
    return SendSetCommand(g_SetMotorRunningSD, pos);
 }
 
+/**
+ * Do not send commands directly, but queue them up
+ * They will be send by the MessageSender whenever the device is not busy
+ */
 int DiskoveryCommander::SendSetCommand(const char* command, uint16_t pos)
 {
    model_->SetLogicalBusy(true);
