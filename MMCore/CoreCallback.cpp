@@ -423,32 +423,34 @@ int CoreCallback::OnPropertyChanged(const MM::Device* device, const char* propNa
       }
       core_->externalCallback_->onPropertyChanged(label, propName, value);
 
-      // find all configs that contain this property and callback to indicate 
+      // Find all configs that contain this property and callback to indicate 
       // that the config group changed
-      // TODO: assess whether performace is better by maintaining a map tying 
+      // TODO: Assess whether performace is better by maintaining a map tying 
       // property to configurations
-  /*
-      using namespace std;
-      vector<string> configGroups = core_->getAvailableConfigGroups ();
-      for (vector<string>::iterator it = configGroups.begin(); 
-            it!=configGroups.end(); ++it) 
+      std::vector<std::string> configGroups = 
+         core_->getAvailableConfigGroups ();
+      for (std::vector<std::string>::iterator it = configGroups.begin(); 
+            it != configGroups.end(); ++it) 
       {
-         vector<string> configs = core_->getAvailableConfigs((*it).c_str());
+         std::vector<std::string> configs = 
+            core_->getAvailableConfigs((*it).c_str());
          bool found = false;
-         for (vector<string>::iterator itc = configs.begin();
+         for (std::vector<std::string>::iterator itc = configs.begin();
                itc != configs.end() && !found; itc++) 
          {
-            Configuration config = core_->getConfigData((*it).c_str(), (*itc).c_str());
+            Configuration config = 
+               core_->getConfigData((*it).c_str(), (*itc).c_str());
             if (config.isPropertyIncluded(label, propName)) {
                found = true;
-               // If we are part of this configuration, notify that it was changed
-               // get the new config from cache rather than query the hardware
-               string currentConfig = core_->getCurrentConfigFromCache( (*it).c_str() );
+               // If we are part of this configuration, notify that it 
+               // was changed. Get the new config from cache rather 
+               // than by querying the hardware
+               std::string currentConfig = 
+                  core_->getCurrentConfigFromCache( (*it).c_str() );
                OnConfigGroupChanged((*it).c_str(), currentConfig.c_str());
             }
          }
       }
-      */
           
 
       // Check if pixel size was potentially affected.  If so, update from cache
