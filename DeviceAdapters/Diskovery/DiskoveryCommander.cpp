@@ -76,10 +76,12 @@ DiskoveryCommander::DiskoveryCommander(
    model_(model),
    port_(serialPort)
 {
+   sender_ = new MessageSender(device_, core_, port_, blockingQueue_, model_);
 }
 
 DiskoveryCommander::~DiskoveryCommander()
 {
+   delete(sender_);
 }   
 
 /**
@@ -117,6 +119,8 @@ int DiskoveryCommander::Initialize()
    RETURN_ON_MM_ERROR( SendCommand(g_GetPresetTIRF) );
    RETURN_ON_MM_ERROR( SendCommand(g_GetMotorRunningSD) );
    CDeviceUtils::SleepMs(50);
+
+   sender_->Start();
 
    return DEVICE_OK;
 }
@@ -200,10 +204,10 @@ int DiskoveryCommander::SetMotorRunningSD(uint16_t pos)
 
 int DiskoveryCommander::SendSetCommand(const char* command, uint16_t pos)
 {
+   model_->SetLogicalBusy(true);
    std::ostringstream os;
    os << command << pos;
-   model_->SetBusy(true);
-   RETURN_ON_MM_ERROR(  core_.SetSerialCommand(&device_, port_.c_str(), os.str().c_str(), "\n") );
+   blockingQueue_.push(os.str());
 
    return DEVICE_OK;
 }

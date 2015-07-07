@@ -32,6 +32,7 @@
 #include <sstream>
 #include <vector>
 #include "DiskoveryModel.h"
+#include "BlockingQueue.h"
 
 // Use the name 'return_value' that is unlikely to appear within 'result'.
 #define RETURN_ON_MM_ERROR( result ) do { \
@@ -52,6 +53,31 @@
 #define ERR_LOW_LEVEL_MODE_FAILED    10007                                   
 #define ERR_INVALID_MODE             10008 
 
+/**
+ * Thread that services the blockingqueue; a queue of commands
+ * that can only be send to the controller when it is not busy
+ */
+class MessageSender : public MMDeviceThreadBase
+{
+   public:
+      MessageSender(MM::Device& device, MM::Core& core, std::string port,
+            BlockingQueue<std::string>& blockingQueue, DiskoveryModel* model);
+      ~MessageSender();
+      void Shutdown();
+      int svc();
+      int open (void*) { return 0; }
+      int close (unsigned long) { return 0; }
+      void Start();
+      void Stop() { stop_ = true; };
+
+   private:
+      bool stop_;
+      MM::Device& device_;
+      MM::Core& core_;
+      std::string port_;
+      BlockingQueue<std::string>& blockingQueue_;
+      DiskoveryModel* model_;
+};
 
 /**
  * Commander device is used to send commands to the Diskovery
@@ -79,11 +105,16 @@ class DiskoveryCommander
       inline int SendCommand(const char* command);
       inline int SendSetCommand(const char* command, uint16_t pos);
 
+      BlockingQueue<std::string> blockingQueue_;
       MM::Device& device_;
       MM::Core& core_;
       DiskoveryModel* model_;
       std::string port_;
+      MessageSender* sender_;
 };
+
+
+
 
 /**
  * The Listener receives all messages from the Diskovery and stores
@@ -93,8 +124,8 @@ class DiskoveryCommander
 class DiskoveryListener : public MMDeviceThreadBase
 {
    public:
-      DiskoveryListener(MM::Device& device, MM::Core& core, std::string serialPort, 
-            DiskoveryModel* model);
+      DiskoveryListener(MM::Device& device, MM::Core& core, 
+            std::string serialPort, DiskoveryModel* model);
       ~DiskoveryListener();
       void Shutdown();
       int svc();

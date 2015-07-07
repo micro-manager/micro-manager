@@ -103,10 +103,10 @@ void DiskoveryListener::ParseMessage(std::string message)
       { 
          if (tokens[1] == "1") 
          {
-            model_->SetBusy(false);
+            model_->SetDeviceBusy(false);
          } else
          {
-            model_->SetBusy(true);
+            model_->SetDeviceBusy(true);
          }
 
       // Preset Spinning Disk

@@ -29,6 +29,7 @@
 #include <map>
 #include <sstream>
 #include <vector>
+#include <boost/thread/condition_variable.hpp>
 
 class DiskoveryStateDev;
 
@@ -45,6 +46,8 @@ class DiskoveryModel
          filterWDevice_(0),
          filterTDevice_(0),
          core_(core),
+         logicalBusy_(false),
+         deviceBusy_(false),
          presetSD_(0),
          presetWF_(0),
          presetIris_(0),
@@ -75,7 +78,10 @@ class DiskoveryModel
          tirfPositionProp_ = "TIRF Position";
          motorRunningProp_ = "Motor Running";
       };
-      ~DiskoveryModel() {};
+      ~DiskoveryModel() 
+      {
+         varCondition_.notify_one();
+      };
 
       void RegisterSDDevice(DiskoveryStateDev* device) {  MMThreadGuard g(lock_); sdDevice_ = device; };
       void RegisterWFDevice(DiskoveryStateDev* device) {  MMThreadGuard g(lock_); wfDevice_ = device; };
@@ -145,8 +151,45 @@ class DiskoveryModel
       void SetSerialNumber(const std::string serialNumber) {  MMThreadGuard g(lock_); serialNumber_ = serialNumber; };
 
       // Busy
-      bool GetBusy() { MMThreadGuard g(lock_); return busy_; };
-      void SetBusy(const bool busy) {  MMThreadGuard g(lock_); busy_ = busy; };
+      // deviceBusy_ keeps track of the busy state as signalled by the
+      // controller.  logicaBusy_ is set to true by the Commander
+      // and cleared when the device is no longer busy
+      // the WaitForDeviceBusy function is used by the MessageSender
+      // which only sends comamnds to the controller when it is not busy
+      bool GetBusy() 
+      { 
+         MMThreadGuard g(lock_); 
+         return logicalBusy_ && deviceBusy_; 
+      };
+      void SetDeviceBusy(const bool deviceBusy) 
+      {  
+         MMThreadGuard g(lock_); 
+         deviceBusy_ = deviceBusy; 
+         // notify waiting threads and also clear the logical busy
+         if (!deviceBusy_)
+         {
+            varCondition_.notify_one();
+            logicalBusy_ = false;
+         }
+      };
+      void WaitForDeviceBusy() 
+      {
+         boost::mutex::scoped_lock bLock(mutex_);
+         bool deviceBusy = false;
+         do 
+         {
+            MMThreadGuard g(lock_);
+            deviceBusy = deviceBusy_;
+         } while (false);
+         while (deviceBusy) {
+            varCondition_.wait(bLock);
+         }
+      };
+      void SetLogicalBusy(const bool logicalBusy) 
+      {  
+         MMThreadGuard g(lock_); 
+         logicalBusy_ = logicalBusy; 
+      };
 
       // Preset SD
       void SetPresetSD(const uint16_t p);
@@ -230,6 +273,8 @@ class DiskoveryModel
       };
 
       MMThreadLock lock_;
+      boost::condition_variable varCondition_;
+      boost::mutex mutex_;
 
       std::string hardwareVersion_;
       uint16_t hwmajor_, hwminor_, hwrevision_;
@@ -237,7 +282,7 @@ class DiskoveryModel
       uint16_t fwmajor_, fwminor_, fwrevision_;
       uint16_t manYear_, manMonth_, manDay_;
       std::string serialNumber_;
-      bool busy_; 
+      bool logicalBusy_, deviceBusy_;
       uint16_t presetSD_, presetWF_, presetIris_, presetPX_, presetFilterT_, presetFilterW_;
       bool hasWFX_, hasWFY_, hasSD_, hasROT_, hasLIN_, hasP1_, hasP2_, 
          hasIRIS_, hasFilterW_, hasFilterT_;
