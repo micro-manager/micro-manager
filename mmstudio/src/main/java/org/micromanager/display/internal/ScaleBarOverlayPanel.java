@@ -196,13 +196,14 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
          return;
       }
 
-      double scaleSize = 0;
+      int scaleSize = 0;
       try {
-         scaleSize = Double.parseDouble(scaleSize_.getText());
+         // Throw away any floating point portion of the scale bar.
+         scaleSize = (int) Double.parseDouble(scaleSize_.getText());
       }
       catch (NumberFormatException e) {} // Ignore it.
 
-      int width = (int) (pixelSize * scaleSize * canvas.getMagnification());
+      int width = (int) (scaleSize / pixelSize * canvas.getMagnification());
       g.setColor(COLORS[color_.getSelectedIndex()]);
       int xOffset = 0;
       try {
@@ -225,7 +226,7 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
       }
 
       if (shouldDrawText_.isSelected()) {
-         g.drawString(String.format("%.2fum", scaleSize), xOffset, yOffset);
+         g.drawString(String.format("%dum", scaleSize), xOffset, yOffset);
       }
       if (isBarFilled_.isSelected()) {
          g.fillRect(xOffset, yOffset + 6, width, 5);
