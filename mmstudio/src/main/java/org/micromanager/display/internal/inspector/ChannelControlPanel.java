@@ -881,14 +881,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          return;
       }
 
-      // Autostretch, if necessary.
       DisplaySettings settings = display_.getDisplaySettings();
-      if (settings.getShouldAutostretch() != null &&
-            settings.getShouldAutostretch()) {
-         autostretch();
-         applyLUT(false);
-      }
-
       // Determine what percentage of the histogram range to autotrim.
       maxAfterRejectingOutliers_ = rawHistogram.length;
       int totalPoints = imgHeight * imgWidth;
@@ -940,6 +933,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                pixelMin_ = i;
             }
          }
+      }
+
+      // Autostretch, if necessary.
+      if (settings.getShouldAutostretch() != null &&
+            settings.getShouldAutostretch()) {
+         autostretch();
+         applyLUT(false);
       }
 
       // work around what is apparently a bug in ImageJ
