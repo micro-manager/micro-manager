@@ -270,7 +270,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    /**
     * We need to [re]create the display and its associated custom controls.
     */
-   private void createDisplay() {
+   private synchronized void createDisplay() {
       display_ = MMStudio.getInstance().displays().createDisplay(store_,
          new ControlsFactory() {
             @Override
@@ -365,7 +365,15 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
     * @param image Image to be displayed
     */
    @Override
-   public void displayImage(Image image) {
+   public synchronized void displayImage(Image image) {
+      // Check for changes in the number of channels, indicating e.g. changing
+      // multicamera.
+      boolean shouldReset = false;
+      long numChannels = core_.getNumberOfCameraChannels();
+      if (store_ != null &&
+            numChannels < store_.getAxisLength(Coords.CHANNEL)) {
+         shouldReset = true;
+      }
       try {
          DefaultImage newImage = new DefaultImage(image, image.getCoords(), image.getMetadata());
          // Find any image to compare against, at all.
@@ -381,8 +389,12 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
                newImage.getBytesPerPixel() != lastImage.getBytesPerPixel()) {
             // Format changing and/or we have no display; we need to recreate
             // everything.
+            shouldReset = true;
+         }
+         if (shouldReset) {
             reset();
          }
+         // Check for display having been closed on us by the user.
          else if (display_ == null || display_.getIsClosed()) {
             createDisplay();
          }
@@ -473,6 +485,6 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    public void onRequestToClose(RequestToCloseEvent event) {
       // Closing is fine by us, but we need to stop live mode first.
       setLiveMode(false);
-      display_.forceClosed();
+      event.getDisplay().forceClosed();
    }
 }
