@@ -26,6 +26,7 @@ import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.AcquisitionModes;
+import org.micromanager.asidispim.Data.AcquisitionSettings;
 import org.micromanager.asidispim.Data.CameraModes;
 import org.micromanager.asidispim.Data.ChannelSpec;
 import org.micromanager.asidispim.Data.Devices;
@@ -100,7 +101,8 @@ public class ControllerUtils {
          final float delayBeforeSide,
          final float stepSizeUm,
          final SliceTiming sliceTiming
-         ) {
+         ) 
+   {
       
       // turn off beam and scan on both sides (they are turned off by SPIM state machine anyway)
       // also ensures that properties match reality at end of acquisition
@@ -248,6 +250,28 @@ public class ControllerUtils {
             Properties.Values.PLOGIC_PRESET_3, true);
       
       return true;
+   }
+   
+   
+   public boolean prepareControllerForAquisition(AcquisitionSettings settings)
+   {
+      return prepareControllerForAquisition(
+         settings.hardwareTimepoints_,
+         settings.channelMode_,
+         settings.useChannels_,
+         settings.numChannels_,
+         settings.numSlices_,
+         settings.numTimepoints_,
+         settings.timePointInterval_,
+         settings.numSides_,
+         settings.firstSide_,
+         settings.useTimepoints_,
+         settings.spimMode_,
+         settings.centerAtCurrentZ_,
+         settings.delayBeforeSide_,
+         settings.stepSizeUm_,
+         settings.sliceTiming_
+      );
    }
    
     /**

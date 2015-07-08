@@ -103,6 +103,7 @@ import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
 
 import javax.swing.BorderFactory;
+import org.micromanager.asidispim.Data.AcquisitionSettings;
 
 import org.micromanager.asidispim.Data.ChannelSpec;
 import org.micromanager.asidispim.Data.Devices.Sides;
@@ -841,7 +842,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       return (numSides_.getSelectedIndex() == 1);
    }
    
-   private int getNumTimepoints() {
+   private int getNumTimePoints() {
       if (!useTimepointsCB_.isSelected()) {
          return 1;
       }
@@ -852,7 +853,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       return (double) PanelUtils.getSpinnerFloatValue(acquisitionInterval_);
    }
    
-   private boolean isMultichannel() {
+   private boolean isMultiChannel() {
       return multiChannelPanel_.isPanelEnabled() && multiChannelPanel_.getUsedChannels().length > 1;
    }
    
@@ -874,7 +875,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * selection otherwise
     */
    private MultichannelModes.Keys getChannelMode() {
-      if (isMultichannel()) {
+      if (isMultiChannel()) {
       return MultichannelModes.getKeyFromPrefCode(
             props_.getPropValueInteger(Devices.Keys.PLUGIN, 
                     Properties.Keys.PLUGIN_MULTICHANNEL_MODE));
@@ -1149,7 +1150,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @return duration in s
     */
    private double computeActualTimeLapseDuration() {
-      double duration = (getNumTimepoints() - 1) * getTimePointInterval() 
+      double duration = (getNumTimePoints() - 1) * getTimePointInterval() 
             + computeActualVolumeDuration()/1000;
       return duration;
    }
@@ -1273,13 +1274,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          text = "Acquiring time point "
                + NumberUtils.intToDisplayString(numTimePointsDone_)
                + " of "
-               + NumberUtils.intToDisplayString(getNumTimepoints());
+               + NumberUtils.intToDisplayString(getNumTimePoints());
          break;
       case WAITING:
          text = "Next timepoint ("
                + NumberUtils.intToDisplayString(numTimePointsDone_+1)
                + " of "
-               + NumberUtils.intToDisplayString(getNumTimepoints())
+               + NumberUtils.intToDisplayString(getNumTimePoints())
                + ") in "
                + NumberUtils.intToDisplayString(secsToNextAcquisition)
                + " s.";
@@ -1317,6 +1318,26 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
    }
    
+   private AcquisitionSettings generateAcquisitionSettings(boolean hardwareTimePoints) {
+      AcquisitionSettings acqSettings = new AcquisitionSettings();
+      acqSettings.hardwareTimepoints_ = hardwareTimePoints;
+      acqSettings.channelMode_ = getChannelMode();
+      acqSettings.useChannels_ = isMultiChannel();
+      acqSettings.numSlices_ = getNumSlices();
+      acqSettings.numTimepoints_ = getNumTimePoints();
+      acqSettings.timePointInterval_ = getTimePointInterval();
+      acqSettings.numSides_ = getNumSides();
+      acqSettings.firstSide_ = getFirstSide();
+      acqSettings.useTimepoints_ = useTimepointsCB_.isSelected();
+      acqSettings.spimMode_ = getAcquisitionMode();
+      acqSettings.centerAtCurrentZ_ = false;
+      acqSettings.delayBeforeSide_ = getDelayBeforeSide();
+      acqSettings.stepSizeUm_ = getStepSizeUm();
+      acqSettings.sliceTiming_ = sliceTiming_;
+              
+      return acqSettings;
+   }
+   
    /**
     * Sets all the controller's properties according to volume settings
     * and otherwise gets controller all ready for acquisition
@@ -1327,13 +1348,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     */
    private boolean prepareControllerForAquisition(boolean hardwareTimepoints) {
       
-      return controller_.prepareControllerForAquisition(
-              hardwareTimepoints, 
+      return controller_.prepareControllerForAquisition(hardwareTimepoints, 
               getChannelMode(),
-              isMultichannel(),
+              isMultiChannel(),
               getNumChannels(),
               getNumSlices(),
-              getNumTimepoints(),
+              getNumTimePoints(),
               getTimePointInterval(),
               getNumSides(),
               getFirstSide(),
@@ -1445,7 +1465,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       int nrSlicesSoftware = nrSlices;
       String originalChannelConfig = "";
       boolean changeChannelPerVolumeSoftware = false;
-      boolean useChannels =  isMultichannel();
+      boolean useChannels =  isMultiChannel();
       MultichannelModes.Keys channelMode = getChannelMode();
       if (useChannels) {
          if (nrChannels < 1) {
@@ -1520,9 +1540,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       int nrFrames;   // how many Micro-manager "frames" = time points to take
       if (singleTimePointViewers) {
          nrFrames = 1;
-         nrRepeats = getNumTimepoints();
+         nrRepeats = getNumTimePoints();
       } else {
-         nrFrames = getNumTimepoints();
+         nrFrames = getNumTimePoints();
          nrRepeats = 1;
       }
       long timepointsIntervalMs = Math.round(
@@ -1560,7 +1580,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // experimentally need ~0.5 sec to set up acquisition, this gives a bit of cushion
       boolean hardwareTimepoints = false;
       if (timepointsIntervalMs < (volumeDuration + 750)
-            && getNumTimepoints() > 1) {
+            && getNumTimePoints() > 1) {
          hardwareTimepoints = true;
       }
       
@@ -1580,7 +1600,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
       
-      if (getNumTimepoints() > 1) {
+      if (getNumTimePoints() > 1) {
          if (timepointsIntervalMs < volumeDuration) {
             MyDialogUtils.showError("Time point interval shorter than" +
                   " the time to collect a single volume.\n");
@@ -1670,7 +1690,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // Set up controller SPIM parameters (including from Setup panel settings)
       // want to do this, even with demo cameras, so we can test everything else
-      if (! prepareControllerForAquisition(hardwareTimepoints)) {
+      AcquisitionSettings acqSettings = generateAcquisitionSettings(hardwareTimepoints);
+      if (!controller_.prepareControllerForAquisition(acqSettings)) {
          return false;
       }
       
@@ -1837,7 +1858,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                 sliceTiming_, false);
                      }
                      // Restore settings of the controller
-                     prepareControllerForAquisition(hardwareTimepoints);
+                    controller_.prepareControllerForAquisition(acqSettings);
                   }
                }
 
