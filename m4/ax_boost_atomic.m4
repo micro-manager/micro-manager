@@ -92,12 +92,13 @@ AC_DEFUN([AX_BOOST_ATOMIC],
                   done
 
             fi
-            if test "x$ax_lib" = "x"; then
-                AC_MSG_ERROR(Could not find a version of the library!)
-            fi
-			if test "x$link_atomic" = "xno"; then
-				AC_MSG_ERROR(Could not link against $ax_lib !)
-			fi
+# we do not want to abort when the library is not found
+#if test "x$ax_lib" = "x"; then
+#                AC_MSG_ERROR(Could not find a version of the library!)
+#            fi
+#			if test "x$link_atomic" = "xno"; then
+#				AC_MSG_ERROR(Could not link against $ax_lib !)
+#			fi
 		fi
 
 		CPPFLAGS="$CPPFLAGS_SAVED"
