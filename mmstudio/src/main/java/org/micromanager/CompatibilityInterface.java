@@ -371,6 +371,12 @@ public interface CompatibilityInterface {
     * @param settings acquisition settings
     */ 
    public void setAcquisitionSettings(SequenceSettings settings);
+
+   /**
+    * Set the format for saving acquisitions that are run via the MDA dialog.
+    * @param format The format to use when saving acquisitions.
+    */
+   public void setImageSavingFormat(Datastore.SaveMode format);
  
    /**
     * Autostretch each histogram for the currently-active window, as if the

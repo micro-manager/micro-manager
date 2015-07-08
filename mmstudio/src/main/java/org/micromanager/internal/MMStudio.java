@@ -1688,6 +1688,12 @@ public class MMStudio implements Studio, CompatibilityInterface {
    }
 
    @Override
+   public void setImageSavingFormat(Datastore.SaveMode format) {
+      acqControlWin_.setSaveMode(format);
+      acqControlWin_.updateSavingTypeButtons();
+   }
+
+   @Override
    public void setROI(Rectangle r) throws MMScriptException {
       live().setSuspended(true);
       try {
