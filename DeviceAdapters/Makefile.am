@@ -94,8 +94,9 @@ SUBDIRS = \
 	CoherentOBIS \
 	Conix \
 	Corvus \
-	DTOpenLayer \
 	DemoCamera \
+	Diskovery \
+	DTOpenLayer \
 	Diskovery \
 	FocalPoint \
 	FreeSerialPort \
