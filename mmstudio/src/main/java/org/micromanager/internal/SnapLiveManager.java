@@ -371,7 +371,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       boolean shouldReset = false;
       long numChannels = core_.getNumberOfCameraChannels();
       if (store_ != null &&
-            numChannels < store_.getAxisLength(Coords.CHANNEL)) {
+            numChannels * image.getNumComponents() < store_.getAxisLength(Coords.CHANNEL)) {
          shouldReset = true;
       }
       try {
