@@ -28,6 +28,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
+import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.display.DisplayWindow;
 
 import org.micromanager.internal.MMStudio;
@@ -80,7 +81,8 @@ public class DefaultAlbum implements Album {
       }
       Coords newCoords = image.getCoords().copy().time(curTime_).build();
       try {
-         store_.putImage(image.copyAtCoords(newCoords));
+         image = image.copyAtCoords(newCoords);
+         ((DefaultImage) image).splitMultiComponentIntoStore(store_);
       }
       catch (DatastoreFrozenException e) {
          ReportingUtils.showError(e, "Album datastore is locked.");
