@@ -1,0 +1,69 @@
+import java.awt.Color;
+import java.awt.Shape;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Point2D;
+
+import org.jfree.chart.axis.LogAxis;
+import org.jfree.chart.axis.NumberTickUnit;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartFrame;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
+
+
+
+public static void plotData(String title, XYSeries data, String xTitle,
+           String yTitle, int xLocation, int yLocation, boolean xLog, boolean yLog) {
+      // JFreeChart code
+      XYSeriesCollection dataset = new XYSeriesCollection();
+      dataset.addSeries(data);
+      JFreeChart chart = ChartFactory.createScatterPlot(title, // Title
+                xTitle, // x-axis Label
+                yTitle, // y-axis Label
+                dataset, // Dataset
+                PlotOrientation.VERTICAL, // Plot Orientation
+                false, // Show Legend
+                true, // Use tooltips
+                false // Configure chart to generate URLs?
+            );
+      XYPlot plot = (XYPlot) chart.getPlot();
+      plot.setBackgroundPaint(Color.white);
+      plot.setRangeGridlinePaint(Color.lightGray);
+		if (xLog) {
+			LogAxis xAxis = new LogAxis(xTitle);
+			xAxis.setTickUnit(new NumberTickUnit(1.0, new java.text.DecimalFormat(), 10));
+			plot.setDomainAxis(xAxis);		
+      	plot.setDomainGridlinePaint(Color.lightGray);
+			plot.setDomainGridlineStroke(new BasicStroke(1.0f));
+			plot.setDomainMinorGridlinePaint(Color.lightGray);
+			plot.setDomainMinorGridlineStroke(new BasicStroke(0.2f));
+			plot.setDomainMinorGridlinesVisible(true);	
+		}
+		if (yLog) {
+			LogAxis yAxis = new LogAxis(yTitle);
+			yAxis.setTickUnit(new NumberTickUnit(1.0, new java.text.DecimalFormat(), 10));
+			plot.setRangeAxis(yAxis);
+			plot.setRangeGridlineStroke(new BasicStroke(1.0f));
+			plot.setRangeMinorGridlinePaint(Color.lightGray);
+			plot.setRangeMinorGridlineStroke(new BasicStroke(0.2f));
+			plot.setRangeMinorGridlinesVisible(true);
+		}
+      XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
+      renderer.setBaseShapesVisible(true);
+      renderer.setSeriesPaint(0, Color.black);
+      renderer.setSeriesFillPaint(0, Color.white);
+      renderer.setSeriesLinesVisible(0, true);
+      Shape circle = new Ellipse2D.Float(-2.0f, -2.0f, 4.0f, 4.0f);
+      renderer.setSeriesShape(0, circle, false);
+      renderer.setUseFillPaint(true);
+
+      ChartFrame graphFrame = new ChartFrame(title, chart);
+      graphFrame.getChartPanel().setMouseWheelEnabled(true);
+      graphFrame.pack();
+      graphFrame.setLocation(xLocation, yLocation);
+      graphFrame.setVisible(true);
+   }
