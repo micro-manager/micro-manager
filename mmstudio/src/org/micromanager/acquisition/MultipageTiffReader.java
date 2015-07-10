@@ -427,14 +427,22 @@ public class MultipageTiffReader {
       
       if (rgb_) {
          if (byteDepth_ == 1) {
+            // This gets a little unpleasant. Our source pixels array is in
+            // BGR format (see MultipageTiffWriter.getPixelBuffer()), and we
+            // need to transform it into RGBA format -- swapping the R and B
+            // components and inserting a blank alpha component.
             byte[] pixels = new byte[(int) (4 * data.bytesPerImage / 3)];
-            int i = 0;
-            for (byte b : pixelBuffer.array()) {
-               pixels[i] = b;
-               i++;
-               if ((i + 1) % 4 == 0) {
-                  pixels[i] = 0;
-                  i++;
+            byte[] source = pixelBuffer.array();
+            int numPixels = 0;
+            int numComponents = 0;
+            for (int i = 0; i < source.length; ++i) {
+               pixels[i + numPixels] = source[i - (2 * (i % 3)) + 2];
+               numComponents++;
+               if (numComponents == 3) {
+                  // Insert a blank alpha byte to cap off the pixel.
+                  pixels[i + numPixels + 1] = 0;
+                  numPixels++;
+                  numComponents = 0;
                }
             }
             return new TaggedImage(pixels, md);
