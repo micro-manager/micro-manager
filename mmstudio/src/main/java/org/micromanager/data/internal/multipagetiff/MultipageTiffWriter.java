@@ -857,14 +857,12 @@ public class MultipageTiffWriter {
             sb.append("max=").append(maxes[0]).append("\n");
          }
       } else {
-         int displayMode = settings.getChannelDisplayModeIndex();
-         // TODO: the below interpretation is wrong.
-         //COMPOSITE=1, COLOR=2, GRAYSCALE=3
-         if (displayMode == 1) {
+         DisplaySettings.ColorMode mode = settings.getChannelColorMode();
+         if (mode == DisplaySettings.ColorMode.COMPOSITE) {
             sb.append("mode=composite\n");
-         } else if (displayMode == 2) {
+         } else if (mode == DisplaySettings.ColorMode.COLOR) {
             sb.append("mode=color\n");
-         } else if (displayMode==3) {
+         } else if (mode == DisplaySettings.ColorMode.GRAYSCALE) {
             sb.append("mode=gray\n");
          }    
       }

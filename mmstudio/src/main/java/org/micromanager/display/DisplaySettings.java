@@ -57,7 +57,7 @@ public interface DisplaySettings {
       DisplaySettingsBuilder channelGammas(Double[] channelGammas);
       DisplaySettingsBuilder magnification(Double magnification);
       DisplaySettingsBuilder animationFPS(Integer animationFPS);
-      DisplaySettingsBuilder channelDisplayModeIndex(Integer channelDisplayModeIndex);
+      DisplaySettingsBuilder channelColorMode(ColorMode channelColorMode);
       DisplaySettingsBuilder histogramUpdateRate(Double histogramUpdateRate);
       DisplaySettingsBuilder shouldSyncChannels(Boolean shouldSyncChannels);
       DisplaySettingsBuilder shouldAutostretch(Boolean shouldAutostretch);
@@ -111,14 +111,41 @@ public interface DisplaySettings {
     * @return Animation speed in frames per second
     */
    public Integer getAnimationFPS();
-   
+
+   /**
+    * This enum defines the order in which values in the "color mode"
+    * control are listed. In other words, the value of one of these enums
+    * corresponds to the index of the corresponding entry in the dropdown
+    * menu.
+    */
+   public enum ColorMode {
+      GRAYSCALE(0), COLOR(1), COMPOSITE(2);
+      private int index_;
+
+      ColorMode(int index) {
+         index_ = index;
+      }
+
+      public int getIndex() {
+         return index_;
+      }
+
+      public static ColorMode fromInt(int index) {
+         for (ColorMode mode : ColorMode.values()) {
+            if (mode.getIndex() == index) {
+               return mode;
+            }
+         }
+         return null;
+      }
+   }
+
    /** 
-    * The index into the "Display mode" control; 0 = Color, 1 = Grayscale,
-    * 2 = Composite 
+    * The index into the "Display mode" control.
     * @return index into the "Display mode" control
     */
-   public Integer getChannelDisplayModeIndex();
-   
+   public ColorMode getChannelColorMode();
+
    /** 
     * How much time to allow to pass between updates to the histogram, in
     * seconds (set to 0 for continuous update, or any negative value to

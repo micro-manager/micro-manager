@@ -62,8 +62,9 @@ public class DefaultDisplaySettings implements DisplaySettings {
          Color.MAGENTA, Color.RED, Color.GREEN, Color.BLUE, Color.ORANGE};
       Integer[] defaultIntColors = colorsToInts(defaultColors);
 
-      builder.channelDisplayModeIndex(profile.getInt(
-            DefaultDisplaySettings.class, "channelDisplayModeIndex", 0));
+      builder.channelColorMode(
+            DisplaySettings.ColorMode.fromInt(profile.getInt(
+            DefaultDisplaySettings.class, "channelColorMode", 0)));
       builder.histogramUpdateRate(profile.getDouble(
             DefaultDisplaySettings.class, "histogramUpdateRate", 0.0));
       builder.magnification(profile.getDouble(
@@ -89,7 +90,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
    public static void setStandardSettings(DisplaySettings settings) {
       DefaultUserProfile profile = DefaultUserProfile.getInstance();
       profile.setInt(DefaultDisplaySettings.class,
-            "channelDisplayModeIndex", settings.getChannelDisplayModeIndex());
+            "channelColorMode",
+            settings.getChannelColorMode().getIndex());
       profile.setDouble(DefaultDisplaySettings.class,
             "histogramUpdateRate", settings.getHistogramUpdateRate());
       profile.setDouble(DefaultDisplaySettings.class,
@@ -144,7 +146,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       private Double[] channelGammas_ = null;
       private Double magnification_ = null;
       private Integer animationFPS_ = null;
-      private Integer channelDisplayModeIndex_ = null;
+      private DisplaySettings.ColorMode channelColorMode_ = null;
       private Double histogramUpdateRate_ = null;
       private Boolean shouldSyncChannels_ = null;
       private Boolean shouldAutostretch_ = null;
@@ -195,8 +197,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
-      public DisplaySettingsBuilder channelDisplayModeIndex(Integer channelDisplayModeIndex) {
-         channelDisplayModeIndex_ = channelDisplayModeIndex;
+      public DisplaySettingsBuilder channelColorMode(ColorMode channelColorMode) {
+         channelColorMode_ = channelColorMode;
          return this;
       }
 
@@ -249,7 +251,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    private Double[] channelGammas_ = null;
    private Double magnification_ = null;
    private Integer animationFPS_ = null;
-   private Integer channelDisplayModeIndex_ = null;
+   private DisplaySettings.ColorMode channelColorMode_ = null;
    private Double histogramUpdateRate_ = null;
    private Boolean shouldSyncChannels_ = null;
    private Boolean shouldAutostretch_ = null;
@@ -265,7 +267,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       channelGammas_ = builder.channelGammas_;
       magnification_ = builder.magnification_;
       animationFPS_ = builder.animationFPS_;
-      channelDisplayModeIndex_ = builder.channelDisplayModeIndex_;
+      channelColorMode_ = builder.channelColorMode_;
       histogramUpdateRate_ = builder.histogramUpdateRate_;
       shouldSyncChannels_ = builder.shouldSyncChannels_;
       shouldAutostretch_ = builder.shouldAutostretch_;
@@ -306,8 +308,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
-   public Integer getChannelDisplayModeIndex() {
-      return channelDisplayModeIndex_;
+   public DisplaySettings.ColorMode getChannelColorMode() {
+      return channelColorMode_;
    }
 
    @Override
@@ -354,7 +356,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
             .channelGammas(channelGammas_)
             .magnification(magnification_)
             .animationFPS(animationFPS_)
-            .channelDisplayModeIndex(channelDisplayModeIndex_)
+            .channelColorMode(channelColorMode_)
             .histogramUpdateRate(histogramUpdateRate_)
             .shouldSyncChannels(shouldSyncChannels_)
             .shouldAutostretch(shouldAutostretch_)

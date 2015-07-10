@@ -102,9 +102,6 @@ public final class HistogramsPanel extends InspectorPanel {
          new Color(0, 114, 178), new Color(213, 94, 0),
          new Color(0, 158, 115), Color.RED, Color.CYAN, Color.YELLOW,
          Color.WHITE};
-   public static final int GRAYSCALE = 0;
-   public static final int COLOR = 1;
-   public static final int COMPOSITE = 2;
 
    private Inspector inspector_;
 
@@ -222,9 +219,9 @@ public final class HistogramsPanel extends InspectorPanel {
             setDisplayMode(displayModeCombo_.getSelectedIndex());
          }
       });
-      if (settings.getChannelDisplayModeIndex() != null) {
+      if (settings.getChannelColorMode() != null) {
          displayModeCombo_.setSelectedIndex(
-               settings.getChannelDisplayModeIndex());
+               settings.getChannelColorMode().getIndex());
       }
       add(displayModeCombo_, "align right");
 
@@ -275,34 +272,40 @@ public final class HistogramsPanel extends InspectorPanel {
 
    private void setDisplayMode(int selection) {
       if (!(display_.getImagePlus() instanceof CompositeImage)) {
-         // Non-composite images must be in grayscale mode.
-         displayModeCombo_.setSelectedIndex(GRAYSCALE);
+         // Non-composite ImagePlus objects don't support colored or composite
+         // view modes.
+         displayModeCombo_.setSelectedIndex(
+               DisplaySettings.ColorMode.GRAYSCALE.getIndex());
          return;
       }
       CompositeImage composite = (CompositeImage) (display_.getImagePlus());
       DisplaySettings.DisplaySettingsBuilder builder = display_.getDisplaySettings().copy();
-      if (selection == COMPOSITE) {
+      DisplaySettings.ColorMode mode = DisplaySettings.ColorMode.fromInt(selection);
+      if (mode == DisplaySettings.ColorMode.COMPOSITE) {
          if (store_.getAxisLength(Coords.CHANNEL) > 7) {
             JOptionPane.showMessageDialog(null,
                "Images with more than 7 channels cannot be displayed in Composite mode.");
             // Send them back to Color mode.
-            displayModeCombo_.setSelectedIndex(COLOR);
-            builder.channelDisplayModeIndex(COLOR);
+            mode = DisplaySettings.ColorMode.COLOR;
+            displayModeCombo_.setSelectedIndex(mode.getIndex());
          }
          else {
+            mode = DisplaySettings.ColorMode.COMPOSITE;
             composite.setMode(CompositeImage.COMPOSITE);
-            builder.channelDisplayModeIndex(COMPOSITE);
          }
       }
-      else if (selection == COLOR) {
+      else if (mode == DisplaySettings.ColorMode.COLOR) {
          composite.setMode(CompositeImage.COLOR);
-         builder.channelDisplayModeIndex(COLOR);
+         mode = DisplaySettings.ColorMode.COLOR;
+      }
+      else if (mode == DisplaySettings.ColorMode.GRAYSCALE) {
+         composite.setMode(CompositeImage.GRAYSCALE);
+         mode = DisplaySettings.ColorMode.GRAYSCALE;
       }
       else {
-         // Assume grayscale mode.
-         composite.setMode(CompositeImage.GRAYSCALE);
-         builder.channelDisplayModeIndex(GRAYSCALE);
+         ReportingUtils.showError("Unsupported color mode " + mode);
       }
+      builder.channelColorMode(mode);
       composite.updateAndDraw();
       DisplaySettings settings = builder.build();
       DefaultDisplaySettings.setStandardSettings(settings);
