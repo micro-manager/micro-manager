@@ -1323,6 +1323,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acqSettings.hardwareTimepoints_ = hardwareTimePoints;
       acqSettings.channelMode_ = getChannelMode();
       acqSettings.useChannels_ = isMultiChannel();
+      acqSettings.numChannels_ = getNumChannels();
       acqSettings.numSlices_ = getNumSlices();
       acqSettings.numTimepoints_ = getNumTimePoints();
       acqSettings.timePointInterval_ = getTimePointInterval();
@@ -1629,8 +1630,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       boolean useAutofocus = useAutofocusCB_.isSelected();
       boolean autofocusAtT0 = prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(), 
               Properties.Keys.PLUGIN_AUTOFOCUS_ACQBEFORESTART, false);
-      int autofocusEachNFrames = prefs_.getInt(MyStrings.PanelNames.AUTOFOCUS.toString(), 
-              Properties.Keys.PLUGIN_AUTOFOCUS_EACHNIMAGES, 10);
+      int autofocusEachNFrames = props_.getPropValueInteger(Devices.Keys.PLUGIN, 
+              Properties.Keys.PLUGIN_AUTOFOCUS_EACHNIMAGES);
       String autofocusChannel = props_.getPropValueString(Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_AUTOFOCUS_CHANNEL);
       
@@ -2060,7 +2061,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // cleanup after end of all acquisitions
       
-      // TODO be more careful and always do these if we actually started acquisition, even if exception happened
+      // TODO be more careful and always do these if we actually started acquisition, 
+      // even if exception happened
       
       // reset channel to original if we clobbered it
       if (useChannels) {

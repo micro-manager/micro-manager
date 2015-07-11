@@ -42,6 +42,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.AcquisitionModes;
+import org.micromanager.asidispim.Data.AcquisitionSettings;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick.Directions;
@@ -167,27 +168,28 @@ public class AutofocusUtils {
             if (!centerAtCurrentZ) {
                positions_.setPosition(piezoDevice, piezoCenter);
             }
-            
+          
             posUpdater_.pauseUpdates(true);
+            
+            AcquisitionSettings acqSettings = new AcquisitionSettings();
+            acqSettings.hardwareTimepoints_ = false;
+            acqSettings.channelMode_ = MultichannelModes.Keys.NONE;
+            acqSettings.useChannels_ = false;
+            acqSettings.numChannels_ = 1;
+            acqSettings.numSlices_ = nrImages;
+            acqSettings.numTimepoints_ = 1;
+            acqSettings.timePointInterval_ = 1;
+            acqSettings.numSides_ = 1;
+            acqSettings.firstSide_ = side.toString();
+            acqSettings.useTimepoints_ = false;
+            acqSettings.spimMode_ = AcquisitionModes.Keys.SLICE_SCAN_ONLY;
+            acqSettings.centerAtCurrentZ_ = centerAtCurrentZ;
+            acqSettings.delayBeforeSide_ = 0.0f;
+            acqSettings.stepSizeUm_ = piezoStepSize;
+            acqSettings.sliceTiming_ = sliceTiming;
 
-            // TODO: run this on its own thread
-            controller_.prepareControllerForAquisition(
-                    false, // no hardware timepoints
-                    MultichannelModes.Keys.NONE,
-                    false, // do not use channels
-                    1, // numChannels
-                    nrImages, // numSlices
-                    1, // numTimepoints
-                    1, // timeInterval
-                    1, // numSides
-                    side.toString(), // firstside
-                    false, // useTimepoints
-                    AcquisitionModes.Keys.SLICE_SCAN_ONLY, // scan only the mirror
-                    centerAtCurrentZ,  // center around the current Z or the middle set in the setup panel
-                    0.0f, // delay before side (move piezo ahead of time so 0 delay should be OK with >100ms comm time) 
-                    piezoStepSize, // piezoStepSize in microns, used in SLICE_SCAN_ONLY to compute slice movement
-                    sliceTiming);
-
+            controller_.prepareControllerForAquisition(acqSettings);
+            
             final float galvoRate = prefs_.getFloat(
                      MyStrings.PanelNames.SETUP.toString() + side.toString(), 
                      Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, 100);
