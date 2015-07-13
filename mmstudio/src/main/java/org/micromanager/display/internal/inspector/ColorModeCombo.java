@@ -195,7 +195,6 @@ public class ColorModeCombo extends JButton {
    }
 
    private DisplayWindow display_;
-   private JPopupMenu menu_;
 
    public ColorModeCombo(DisplayWindow display) {
       super(ICONS.get(0).text_, ICONS.get(0).icon_);
@@ -203,7 +202,25 @@ public class ColorModeCombo extends JButton {
 
       setToolTipText("Set how the image display uses color");
 
-      menu_ = new JPopupMenu();
+      addMouseListener(new MouseInputAdapter() {
+         @Override
+         public void mousePressed(MouseEvent e) {
+            showMenu();
+         }
+      });
+
+      DisplaySettings settings = display_.getDisplaySettings();
+      if (settings.getChannelColorMode() != null) {
+         setModeByIndex(settings.getChannelColorMode().getIndex());
+      }
+   }
+
+   /**
+    * Generate and display the popup menu.
+    */
+   private void showMenu() {
+      JPopupMenu menu = new JPopupMenu();
+
       for (int i = 0; i < ICONS.size(); ++i) {
          final int index = i;
          IconWithStats icon = ICONS.get(i);
@@ -214,21 +231,17 @@ public class ColorModeCombo extends JButton {
                setModeByIndex(index);
             }
          });
-         menu_.add(item);
-      }
-
-      final JButton staticThis = this;
-      addMouseListener(new MouseInputAdapter() {
-         @Override
-         public void mousePressed(MouseEvent e) {
-            menu_.show(staticThis, 0, 0);
+         // HACK: disable the Color/Composite options for single-channel
+         // displays, as ImageJ doesn't support those combinations.
+         DisplaySettings.ColorMode mode = DisplaySettings.ColorMode.fromInt(i);
+         if (display_.getDatastore().getAxisLength(Coords.CHANNEL) <= 1 &&
+               (mode == DisplaySettings.ColorMode.COLOR ||
+               mode == DisplaySettings.ColorMode.COMPOSITE)) {
+            item.setEnabled(false);
          }
-      });
-
-      DisplaySettings settings = display_.getDisplaySettings();
-      if (settings.getChannelColorMode() != null) {
-         setModeByIndex(settings.getChannelColorMode().getIndex());
+         menu.add(item);
       }
+      menu.show(this, 0, 0);
    }
 
    public void setModeByIndex(int index) {
