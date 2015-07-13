@@ -83,28 +83,37 @@ public class ColorModeCombo extends JButton {
       public Icon icon_;
 
       /**
-       * HACK: allow null byte info to support the Color/Composite options --
-       * in which case the icon is the empty icon image instead.
+       * Derive the icon from the byte arrays we are provided.
        */
       public IconWithStats(String text, byte[] red, byte[] green, byte[] blue) {
          text_ = text;
          // Clone the arrays because they get re-used in the process of
          // creating all IconWithStats instances.
+         red_ = red.clone();
+         green_ = green.clone();
+         blue_ = blue.clone();
+         icon_ = makeLUTIcon(red, green, blue);
+      }
+
+      /**
+       * Take in a pre-set icon.
+       */
+      public IconWithStats(String text, Icon icon, byte[] red, byte[] green,
+            byte[] blue) {
+         text_ = text;
+         icon_ = icon;
+         // Null shows up here for the color and composite options.
          if (red != null) {
             red_ = red.clone();
             green_ = green.clone();
             blue_ = blue.clone();
-            icon_ = makeLUTIcon(red, green, blue);
-         }
-         else {
-            icon_ = IconLoader.getIcon("/org/micromanager/icons/empty.png");
          }
       }
 
       /**
        * Generate a gradient icon for one of the LUTs we support.
        */
-      private static ImageIcon makeLUTIcon(byte[] red, byte[] green,
+      public static ImageIcon makeLUTIcon(byte[] red, byte[] green,
             byte[] blue) {
          int[] pixels = new int[ICON_WIDTH * ICON_HEIGHT];
          double ratio = (double) 256 / (double) ICON_WIDTH;
@@ -152,16 +161,27 @@ public class ColorModeCombo extends JButton {
       }
       GRAY = new IconWithStats("Grayscale", red, green, blue);
 
-      // Glow. We pad the low/high bits a bit so they're visible in the icon.
+      // Glow. In the icon, we make the low/high bits wider so they're more
+      // visible.
+      byte[] iconRed = red.clone();
+      byte[] iconGreen = green.clone();
+      byte[] iconBlue = blue.clone();
       for (int i = 0; i < 6; ++i) {
-         red[i] = (byte) 0;
-         green[i] = (byte) 0;
-         blue[i] = (byte) 255;
-         red[255 - i] = (byte) 255;
-         green[255 - i] = (byte) 0;
-         blue[255 - i] = (byte) 0;
+         iconRed[i] = (byte) 0;
+         iconGreen[i] = (byte) 0;
+         iconBlue[i] = (byte) 255;
+         iconRed[255 - i] = (byte) 255;
+         iconGreen[255 - i] = (byte) 0;
+         iconBlue[255 - i] = (byte) 0;
       }
+      red[0] = (byte) 0;
+      green[0] = (byte) 0;
+      blue[0] = (byte) 255;
+      red[255] = (byte) 255;
+      green[255] = (byte) 0;
+      blue[255] = (byte) 0;
       GLOW_OVER_UNDER = new IconWithStats("Highlight min/max",
+            IconWithStats.makeLUTIcon(iconRed, iconGreen, iconBlue),
             red, green, blue);
    }
 
@@ -169,8 +189,8 @@ public class ColorModeCombo extends JButton {
    private static final ArrayList<IconWithStats> ICONS = new ArrayList<IconWithStats>();
    static {
       ICONS.add(GRAY);
-      ICONS.add(new IconWithStats("Color", null, null, null));
-      ICONS.add(new IconWithStats("Composite", null, null, null));
+      ICONS.add(new IconWithStats("Color", EMPTY, null, null, null));
+      ICONS.add(new IconWithStats("Composite", EMPTY, null, null, null));
       ICONS.add(GLOW_OVER_UNDER);
    }
 
