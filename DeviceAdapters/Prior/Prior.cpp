@@ -217,13 +217,23 @@ void Shutter::GetName(char* name) const
 
 int Shutter::Initialize()
 {
+   // Ensure we are in Standard mode (not Compatibility mode)
+   int ret = SendSerialCommand(port_.c_str(), "COMP 0", "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+   std::string compAnswer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", compAnswer);
+   // (compAnswer should be "0")
+   if (ret != DEVICE_OK)
+      return false;
+
    // set property list
    // -----------------
    
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction (this, &Shutter::OnState);
-   int ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -505,6 +515,16 @@ bool Wheel::Busy()
 
 int Wheel::Initialize()
 {
+   // Ensure we are in Standard mode (not Compatibility mode)
+   int ret = SendSerialCommand(port_.c_str(), "COMP 0", "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+   std::string compAnswer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", compAnswer);
+   // (compAnswer should be "0")
+   if (ret != DEVICE_OK)
+      return false;
+
 
    // set property list
    // -----------------
@@ -512,7 +532,7 @@ int Wheel::Initialize()
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction (this, &Wheel::OnState);
-   int ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -757,19 +777,16 @@ void XYStage::GetName(char* name) const
 
 int XYStage::Initialize()
 {
-   // make sure that we are in compatiblity mode
-   std::ostringstream command;
-   command << "comp,0";
-
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+   // Ensure we are in Standard mode (not Compatibility mode)
+   int ret = SendSerialCommand(port_.c_str(), "COMP 0", "\r");
    if (ret != DEVICE_OK)
       return ret;
-
-   std::string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   std::string compAnswer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", compAnswer);
+   // (compAnswer should be "0")
    if (ret != DEVICE_OK)
       return false;
+
 
    // Some individual stages start up with the SAS, SCS, SMS, SAZ, SCZ, SMZ
    // parameters set to > 100 (the maximum stated in the manual). We may allow
@@ -1501,6 +1518,17 @@ void ZStage::GetName(char* Name) const
 
 int ZStage::Initialize()
 {
+   // Ensure we are in Standard mode (not Compatibility mode)
+   int ret = SendSerialCommand(port_.c_str(), "COMP 0", "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+   std::string compAnswer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", compAnswer);
+   // (compAnswer should be "0")
+   if (ret != DEVICE_OK)
+      return false;
+
+
    // Some individual stages start up with the SAS, SCS, SMS, SAZ, SCZ, SMZ
    // parameters set to > 100 (the maximum stated in the manual). We may allow
    // higher values in the future, but for now, set everything > 100 to 100
@@ -1539,7 +1567,7 @@ int ZStage::Initialize()
 
    // set stage step size and resolution
    double res;
-   int ret = GetResolution(res);
+   ret = GetResolution(res);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -2042,8 +2070,19 @@ void NanoZStage::GetName(char* Name) const
 
 int NanoZStage::Initialize()
 {
+   // Ensure we are in Standard mode (not Compatibility mode)
+   int ret = SendSerialCommand(port_.c_str(), "COMP 0", "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+   std::string compAnswer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", compAnswer);
+   // (compAnswer should be "0")
+   if (ret != DEVICE_OK)
+      return false;
+
+
    // set stage step size and resolution
-   int ret = GetPositionSteps(curSteps_);
+   ret = GetPositionSteps(curSteps_);
    if (ret != DEVICE_OK)
       ret = GetPositionSteps(curSteps_);
       if (ret != DEVICE_OK)
