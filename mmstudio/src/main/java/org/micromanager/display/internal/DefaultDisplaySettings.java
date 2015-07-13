@@ -89,9 +89,11 @@ public class DefaultDisplaySettings implements DisplaySettings {
     */
    public static void setStandardSettings(DisplaySettings settings) {
       DefaultUserProfile profile = DefaultUserProfile.getInstance();
-      profile.setInt(DefaultDisplaySettings.class,
-            "channelColorMode",
-            settings.getChannelColorMode().getIndex());
+      if (settings.getChannelColorMode() != null) {
+         profile.setInt(DefaultDisplaySettings.class,
+               "channelColorMode",
+               settings.getChannelColorMode().getIndex());
+      }
       profile.setDouble(DefaultDisplaySettings.class,
             "histogramUpdateRate", settings.getHistogramUpdateRate());
       profile.setDouble(DefaultDisplaySettings.class,
