@@ -16,8 +16,8 @@ libmmgr_dal_ASITiger_la_SOURCES = \
 	ASIPeripheralBase.h \
 	ASIPiezo.cpp \
 	ASIPiezo.h \
-	ASIPlogic.cpp \
-	ASIPlogic.h \
+	ASIPLogic.cpp \
+	ASIPLogic.h \
 	ASIScanner.cpp \
 	ASIScanner.h \
 	ASITiger.cpp \
