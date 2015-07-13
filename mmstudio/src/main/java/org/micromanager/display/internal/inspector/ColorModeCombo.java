@@ -314,13 +314,22 @@ public class ColorModeCombo extends JButton {
     */
    private void setLUTMode(int index) {
       ImagePlus plus = display_.getImagePlus();
-      if (plus instanceof CompositeImage) {
-         ((CompositeImage) plus).setMode(CompositeImage.GRAYSCALE);
-      }
       IconWithStats icon = ICONS.get(index);
-      ImageProcessor proc = plus.getProcessor();
-      proc.setColorModel(new LUT(8, icon.red_.length, icon.red_, icon.green_,
-               icon.blue_));
+      LUT lut = new LUT(8, icon.red_.length, icon.red_, icon.green_,
+               icon.blue_);
+      plus.getProcessor().setColorModel(lut);
+      if (plus instanceof CompositeImage) {
+         // Composite LUTs are done by shifting to grayscale and setting the
+         // LUT for all channels to be the same; only one will be drawn at a
+         // time.
+         CompositeImage composite = (CompositeImage) plus;
+         composite.setMode(CompositeImage.GRAYSCALE);
+         for (int i = 0; i < display_.getDatastore().getAxisLength(
+                  Coords.CHANNEL); ++i) {
+            // ImageJ is 1-indexed...
+            composite.setChannelLut(lut, i + 1);
+         }
+      }
       setText(icon.text_);
       setIcon(icon.icon_);
       plus.updateAndDraw();

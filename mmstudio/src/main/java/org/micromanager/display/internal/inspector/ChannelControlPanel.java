@@ -776,11 +776,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                   plus_.getProcessor().setMinAndMax(lut.min, lut.max);
                }
                else {
-                  // uses lut.min and lut.max to set min and max of processor
-                  composite_.setChannelLut(lut, channelIndex_ + 1);
+                  if (!hasCustomLUT) {
+                     composite_.setChannelLut(lut, channelIndex_ + 1);
+                  }
 
-                  if (composite_.getMode() == CompositeImage.COLOR ||
-                        composite_.getMode() == CompositeImage.GRAYSCALE) {
+                  if (composite_.getMode() != CompositeImage.COMPOSITE) {
                      // ImageJ workaround: do this so the appropriate color
                      // model gets applied in color or grayscale mode.
                      // Otherwise we can end up with erroneously grayscale
@@ -793,12 +793,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                      }
                   }
 
+                  ImageProcessor processor = composite_.getProcessor();
+                  processor.setMinAndMax(contrastMin_, contrastMax_);
                   if (composite_.getChannel() == channelIndex_ + 1) {
                      LUT grayLut = ImageUtils.makeLUT(Color.white, gamma_);
-                     ImageProcessor processor = composite_.getProcessor();
                      if (processor != null && !hasCustomLUT) {
                         processor.setColorModel(grayLut);
-                        processor.setMinAndMax(contrastMin_, contrastMax_);
                      }
                      if (composite_.getMode() == CompositeImage.GRAYSCALE) {
                         composite_.updateImage();
