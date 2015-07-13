@@ -119,6 +119,7 @@ public interface DisplaySettings {
     * menu.
     */
    public enum ColorMode {
+      // TODO: replace numbers with strings.
       GRAYSCALE(0), COLOR(1), COMPOSITE(2), HIGHLIGHT_MIN_MAX(3);
       private int index_;
 
