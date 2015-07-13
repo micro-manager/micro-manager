@@ -764,12 +764,15 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          Runnable run = new Runnable() {
             @Override
             public void run() {
+               boolean hasCustomLUT = display_.getDisplaySettings().getChannelColorMode().getIndex() > DisplaySettings.ColorMode.COMPOSITE.getIndex();
                LUT lut = ImageUtils.makeLUT(color_, gamma_);
                lut.min = contrastMin_;
                lut.max = contrastMax_;
                if (composite_ == null) {
-                  // Single-channel case is straightforward.
-                  plus_.getProcessor().setColorModel(lut);
+                  // Single-channel; don't replace existing LUT if any.
+                  if (!hasCustomLUT) {
+                     plus_.getProcessor().setColorModel(lut);
+                  }
                   plus_.getProcessor().setMinAndMax(lut.min, lut.max);
                }
                else {
@@ -793,7 +796,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                   if (composite_.getChannel() == channelIndex_ + 1) {
                      LUT grayLut = ImageUtils.makeLUT(Color.white, gamma_);
                      ImageProcessor processor = composite_.getProcessor();
-                     if (processor != null) {
+                     if (processor != null && !hasCustomLUT) {
                         processor.setColorModel(grayLut);
                         processor.setMinAndMax(contrastMin_, contrastMax_);
                      }

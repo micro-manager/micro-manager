@@ -114,7 +114,6 @@ public final class HistogramsPanel extends InspectorPanel {
    private HashMap<DisplayWindow, ArrayList<ChannelControlPanel>> displayToPanels_;
    // The current active (displayed) set of histograms.
    private ArrayList<ChannelControlPanel> channelPanels_;
-   private JComboBox displayModeCombo_;
    private JCheckBox shouldAutostretch_;
    private JLabel extremaLabel_;
    private JSpinner extrema_;
@@ -210,20 +209,8 @@ public final class HistogramsPanel extends InspectorPanel {
       percentLabel_ = null;
 
       add(new JLabel("Color mode: "), "split 2, flowx, gapleft 15");
-      displayModeCombo_ = new JComboBox(
-            new String[] {"Grayscale", "Color", "Composite"});
-      displayModeCombo_.setToolTipText("<html>Set the display mode for the image:<ul><li>Grayscale: single-channel grayscale<li>Color: single channel, in color<li>Composite: multi-channel color overlay</ul></html>");
-      displayModeCombo_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            setDisplayMode(displayModeCombo_.getSelectedIndex());
-         }
-      });
-      if (settings.getChannelColorMode() != null) {
-         displayModeCombo_.setSelectedIndex(
-               settings.getChannelColorMode().getIndex());
-      }
-      add(displayModeCombo_, "align right");
+      ColorModeCombo colorModeCombo = new ColorModeCombo(display_);
+      add(colorModeCombo, "align right");
 
       boolean shouldAutostretchSetting = true;
       if (display_.getDisplaySettings().getShouldAutostretch() != null) {
@@ -268,48 +255,6 @@ public final class HistogramsPanel extends InspectorPanel {
             display_.setDisplaySettings(newSettings);
          }
       });
-   }
-
-   private void setDisplayMode(int selection) {
-      if (!(display_.getImagePlus() instanceof CompositeImage)) {
-         // Non-composite ImagePlus objects don't support colored or composite
-         // view modes.
-         displayModeCombo_.setSelectedIndex(
-               DisplaySettings.ColorMode.GRAYSCALE.getIndex());
-         return;
-      }
-      CompositeImage composite = (CompositeImage) (display_.getImagePlus());
-      DisplaySettings.DisplaySettingsBuilder builder = display_.getDisplaySettings().copy();
-      DisplaySettings.ColorMode mode = DisplaySettings.ColorMode.fromInt(selection);
-      if (mode == DisplaySettings.ColorMode.COMPOSITE) {
-         if (store_.getAxisLength(Coords.CHANNEL) > 7) {
-            JOptionPane.showMessageDialog(null,
-               "Images with more than 7 channels cannot be displayed in Composite mode.");
-            // Send them back to Color mode.
-            mode = DisplaySettings.ColorMode.COLOR;
-            displayModeCombo_.setSelectedIndex(mode.getIndex());
-         }
-         else {
-            mode = DisplaySettings.ColorMode.COMPOSITE;
-            composite.setMode(CompositeImage.COMPOSITE);
-         }
-      }
-      else if (mode == DisplaySettings.ColorMode.COLOR) {
-         composite.setMode(CompositeImage.COLOR);
-         mode = DisplaySettings.ColorMode.COLOR;
-      }
-      else if (mode == DisplaySettings.ColorMode.GRAYSCALE) {
-         composite.setMode(CompositeImage.GRAYSCALE);
-         mode = DisplaySettings.ColorMode.GRAYSCALE;
-      }
-      else {
-         ReportingUtils.showError("Unsupported color mode " + mode);
-      }
-      builder.channelColorMode(mode);
-      composite.updateAndDraw();
-      DisplaySettings settings = builder.build();
-      DefaultDisplaySettings.setStandardSettings(settings);
-      display_.setDisplaySettings(settings);
    }
 
    private void setExtremaPercentage(JSpinner extrema) {
