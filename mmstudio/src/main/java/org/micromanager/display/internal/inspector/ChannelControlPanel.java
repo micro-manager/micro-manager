@@ -764,7 +764,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          Runnable run = new Runnable() {
             @Override
             public void run() {
-               boolean hasCustomLUT = display_.getDisplaySettings().getChannelColorMode().getIndex() > DisplaySettings.ColorMode.COMPOSITE.getIndex();
+               DisplaySettings.ColorMode mode = display_.getDisplaySettings().getChannelColorMode();
+               boolean hasCustomLUT = mode != null && mode.getIndex() > DisplaySettings.ColorMode.COMPOSITE.getIndex();
                LUT lut = ImageUtils.makeLUT(color_, gamma_);
                ImageProcessor processor = plus_.getProcessor();
                if (hasCustomLUT) {

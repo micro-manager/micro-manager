@@ -183,6 +183,42 @@ public class ColorModeCombo extends JButton {
       GLOW_OVER_UNDER = new IconWithStats("Highlight min/max",
             IconWithStats.makeLUTIcon(iconRed, iconGreen, iconBlue),
             red, green, blue);
+
+      // Fire. Interpolated from 32 control points, copied from ImageJ.
+      int[] r = {0,0,1,25,49,73,98,122,146,162,173,184,195,207,217,229,240,252,255,255,255,255,255,255,255,255,255,255,255,255,255,255};
+      int[] g = {0,0,0,0,0,0,0,0,0,0,0,0,0,14,35,57,79,101,117,133,147,161,175,190,205,219,234,248,255,255,255,255};
+      int[] b = {0,61,96,130,165,192,220,227,210,181,151,122,93,64,35,5,0,0,0,0,0,0,0,0,0,0,0,35,98,160,223,255};
+      red = interpolate(r);
+      green = interpolate(g);
+      blue = interpolate(b);
+      FIRE = new IconWithStats("Fire", red, green, blue);
+   }
+
+   /**
+    * Given an array of ints, generate a length-256 array of bytes
+    * interpolating between the ints. ints are used just as a convenience to
+    * avoid excessive casting to byte, as numeric literals are ints in Java.
+    * NOTE: it is assumed that the length of the input array evenly divides
+    * 256.
+    */
+   private static byte[] interpolate(int[] vals) {
+      byte[] result = new byte[256];
+      // Ratio of final control points to initial control points.
+      double ratio = 256 / vals.length;
+      for (int i = 0; i < 256; ++i) {
+         // First control point
+         int a = (int) (i / ratio);
+         // Second control point
+         int b = a + 1;
+         // Don't go off the end of the control points.
+         if (b >= vals.length) {
+            b = a;
+         }
+         // Location of this value between a and b
+         double delta = (i % ratio) / ratio;
+         result[i] = (byte) (vals[a] + (vals[b] - vals[a]) * delta);
+      }
+      return result;
    }
 
    // Four false-color modes, grayscale, color, and composite.
@@ -192,6 +228,7 @@ public class ColorModeCombo extends JButton {
       ICONS.add(new IconWithStats("Composite", EMPTY, null, null, null));
       ICONS.add(GRAY);
       ICONS.add(GLOW_OVER_UNDER);
+      ICONS.add(FIRE);
    }
 
    private DisplayWindow display_;
@@ -240,6 +277,11 @@ public class ColorModeCombo extends JButton {
             item.setEnabled(false);
          }
          menu.add(item);
+
+         // HACK: stick a separator after the Grayscale option.
+         if (icon == GRAY) {
+            menu.addSeparator();
+         }
       }
       menu.show(this, 0, 0);
    }
