@@ -188,10 +188,25 @@ public class ColorModeCombo extends JButton {
       int[] r = {0,0,1,25,49,73,98,122,146,162,173,184,195,207,217,229,240,252,255,255,255,255,255,255,255,255,255,255,255,255,255,255};
       int[] g = {0,0,0,0,0,0,0,0,0,0,0,0,0,14,35,57,79,101,117,133,147,161,175,190,205,219,234,248,255,255,255,255};
       int[] b = {0,61,96,130,165,192,220,227,210,181,151,122,93,64,35,5,0,0,0,0,0,0,0,0,0,0,0,35,98,160,223,255};
-      red = interpolate(r);
-      green = interpolate(g);
-      blue = interpolate(b);
-      FIRE = new IconWithStats("Fire", red, green, blue);
+      FIRE = new IconWithStats("Fire", interpolate(r), interpolate(g),
+            interpolate(b));
+
+      // Redhot; developed by Nico Stuurman based on ImageJ. Similarly
+      // interpolated based on 32 control points.
+      r = new int[] {0,1,27,52,78,103,130,155,181,207,233,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255};
+      g = new int[] {0,1, 0, 0, 0,  0,  0,  0,  0,  0,  0,  3, 29, 55, 81,106,133,158,184,209,236,255,255,255,255,255,255,255,255,255,255,255};
+      b = new int[] {0,1, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  6, 32, 58, 84,110,135,161,187,160,213,255};
+      REDHOT = new IconWithStats("Red-Hot", interpolate(r), interpolate(g),
+            interpolate(b));
+
+      // Spectrum.
+      for (int i = 0; i < 256; ++i) {
+         Color color = Color.getHSBColor(i / 255f, 1f, 1f);
+         red[i] = (byte) color.getRed();
+         green[i] = (byte) color.getGreen();
+         blue[i] = (byte) color.getBlue();
+      }
+      SPECTRUM = new IconWithStats("Spectrum", red, green, blue);
    }
 
    /**
@@ -221,7 +236,9 @@ public class ColorModeCombo extends JButton {
       return result;
    }
 
-   // Four false-color modes, grayscale, color, and composite.
+   // List of available color modes we allow.
+   // NOTE: the order of items in this list must match the order of ColorMode
+   // enums!
    private static final ArrayList<IconWithStats> ICONS = new ArrayList<IconWithStats>();
    static {
       ICONS.add(new IconWithStats("Color", EMPTY, null, null, null));
@@ -229,6 +246,8 @@ public class ColorModeCombo extends JButton {
       ICONS.add(GRAY);
       ICONS.add(GLOW_OVER_UNDER);
       ICONS.add(FIRE);
+      ICONS.add(REDHOT);
+      ICONS.add(SPECTRUM);
    }
 
    private DisplayWindow display_;
