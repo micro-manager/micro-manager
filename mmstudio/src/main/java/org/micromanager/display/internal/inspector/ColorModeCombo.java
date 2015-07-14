@@ -188,9 +188,9 @@ public class ColorModeCombo extends JButton {
    // Four false-color modes, grayscale, color, and composite.
    private static final ArrayList<IconWithStats> ICONS = new ArrayList<IconWithStats>();
    static {
-      ICONS.add(GRAY);
       ICONS.add(new IconWithStats("Color", EMPTY, null, null, null));
       ICONS.add(new IconWithStats("Composite", EMPTY, null, null, null));
+      ICONS.add(GRAY);
       ICONS.add(GLOW_OVER_UNDER);
    }
 
@@ -322,12 +322,14 @@ public class ColorModeCombo extends JButton {
          // Composite LUTs are done by shifting to grayscale and setting the
          // LUT for all channels to be the same; only one will be drawn at a
          // time.
+         // Though we can't actually use the *same* LUT instance because then
+         // the scaling is shared across channels.
          CompositeImage composite = (CompositeImage) plus;
          composite.setMode(CompositeImage.GRAYSCALE);
          for (int i = 0; i < display_.getDatastore().getAxisLength(
                   Coords.CHANNEL); ++i) {
             // ImageJ is 1-indexed...
-            composite.setChannelLut(lut, i + 1);
+            composite.setChannelLut((LUT) lut.clone(), i + 1);
          }
       }
       setText(icon.text_);

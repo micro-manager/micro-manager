@@ -766,18 +766,48 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             public void run() {
                boolean hasCustomLUT = display_.getDisplaySettings().getChannelColorMode().getIndex() > DisplaySettings.ColorMode.COMPOSITE.getIndex();
                LUT lut = ImageUtils.makeLUT(color_, gamma_);
+               ImageProcessor processor = plus_.getProcessor();
+               if (hasCustomLUT) {
+                  // Get the current LUT from ImageJ instead.
+                  // TODO: Ignore gamma settings for custom LUTs.
+                  if (composite_ == null) {
+                     lut = processor.getLut();
+                  }
+                  else {
+                     // ImageJ is 1-indexed...
+                     try {
+                        lut = composite_.getChannelLut(channelIndex_ + 1);
+                     }
+                     catch (IllegalArgumentException e) {
+                        // This can happen sometimes before the display gets
+                        // set up properly, as the CompositeImage doesn't
+                        // have the required number of LUTs for
+                        // getChannelLut() to succeed. Just ignore it.
+                        // TODO: fix whatever race condition between this code
+                        // and ColorModeCombo.setLUTMode() causes this to
+                        // happen.
+                        return;
+                     }
+                  }
+               }
                lut.min = contrastMin_;
                lut.max = contrastMax_;
+               processor.setMinAndMax(contrastMin_, contrastMax_);
                if (composite_ == null) {
-                  // Single-channel; don't replace existing LUT if any.
+                  // Single-channel.
                   if (!hasCustomLUT) {
-                     plus_.getProcessor().setColorModel(lut);
+                     processor.setColorModel(lut);
                   }
-                  plus_.getProcessor().setMinAndMax(lut.min, lut.max);
                }
                else {
                   if (!hasCustomLUT) {
-                     composite_.setChannelLut(lut, channelIndex_ + 1);
+                     try {
+                        composite_.setChannelLut(lut, channelIndex_ + 1);
+                     }
+                     catch (IllegalArgumentException e) {
+                        // See above catch of the same exception.
+                        return;
+                     }
                   }
 
                   if (composite_.getMode() != CompositeImage.COMPOSITE) {
@@ -791,18 +821,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                      } catch (NoSuchFieldException ex) {
                         ReportingUtils.logError(ex);
                      }
-                  }
-
-                  ImageProcessor processor = composite_.getProcessor();
-                  processor.setMinAndMax(contrastMin_, contrastMax_);
-                  if (composite_.getChannel() == channelIndex_ + 1) {
-                     LUT grayLut = ImageUtils.makeLUT(Color.white, gamma_);
-                     if (processor != null && !hasCustomLUT) {
-                        processor.setColorModel(grayLut);
-                     }
-                     if (composite_.getMode() == CompositeImage.GRAYSCALE) {
-                        composite_.updateImage();
-                     }
+                     composite_.updateImage();
                   }
                } // End multi-channel case.
                updateHistogram();
