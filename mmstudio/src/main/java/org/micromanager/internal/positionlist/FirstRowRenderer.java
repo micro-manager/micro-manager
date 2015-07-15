@@ -7,6 +7,8 @@ import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 
+import org.micromanager.internal.utils.DaytimeNighttime;
+
 /**
  * Renders the first row of the position list table
  */
@@ -24,7 +26,10 @@ class FirstRowRenderer extends JLabel implements TableCellRenderer {
          int row, int column) {
 
       setText((String) text);
-      setBackground(Color.lightGray);
+      // HACK: use the "disabled" color for this row to differentiate it from
+      // other rows.
+      setBackground(DaytimeNighttime.getDisabledBackgroundColor());
+      setForeground(DaytimeNighttime.getEnabledTextColor());
       return this;
    }
 }

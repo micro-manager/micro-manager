@@ -76,7 +76,7 @@ public class DaytimeNighttime {
          "InternalFrame", "Label", "List",
          "OptionPane", "Panel", "ProgressBar",
          "RadioButton", "ScrollPane", "Slider", "Spinner",
-         "SplitPane", "TabbedPane", "TextArea", "TextField",
+         "SplitPane", "TabbedPane", "Table", "TextArea", "TextField",
          "TollBar", "Tree", "Viewport"
    };
 
@@ -232,19 +232,24 @@ public class DaytimeNighttime {
    public static class Table extends JTable {
       public Table() {
          super();
-         validateBackground();
+         validateColors();
       }
 
       public Table(TableModel model) {
          super(model);
-         validateBackground();
+         validateColors();
       }
 
-      private void validateBackground() {
+      private void validateColors() {
          Color background = getBackground();
          Color targetBackground = UIManager.getColor("Table.background");
          if (!background.equals(targetBackground)) {
             setBackground(targetBackground);
+         }
+         Color foreground = getForeground();
+         Color targetForeground = UIManager.getColor("Table.foreground");
+         if (!foreground.equals(targetForeground)) {
+            setForeground(targetForeground);
          }
       }
 
@@ -253,7 +258,7 @@ public class DaytimeNighttime {
        */
       @Override
       public void paint(Graphics g) {
-         validateBackground();
+         validateColors();
          super.paint(g);
       }
    }
