@@ -141,7 +141,7 @@ public class ColorModeCombo extends JButton {
 
    public static IconWithStats GRAY;
    // Highlights the dimmest and brightest pixels; otherwise gray.
-   public static IconWithStats GLOW_OVER_UNDER;
+   public static IconWithStats HIGHLIGHT_LIMITS;
    public static IconWithStats FIRE;
    public static IconWithStats REDHOT;
    public static IconWithStats SPECTRUM;
@@ -180,7 +180,7 @@ public class ColorModeCombo extends JButton {
       red[255] = (byte) 255;
       green[255] = (byte) 0;
       blue[255] = (byte) 0;
-      GLOW_OVER_UNDER = new IconWithStats("Highlight min/max",
+      HIGHLIGHT_LIMITS = new IconWithStats("Highlight limits",
             IconWithStats.makeLUTIcon(iconRed, iconGreen, iconBlue),
             red, green, blue);
 
@@ -244,7 +244,7 @@ public class ColorModeCombo extends JButton {
       ICONS.add(new IconWithStats("Color", EMPTY, null, null, null));
       ICONS.add(new IconWithStats("Composite", EMPTY, null, null, null));
       ICONS.add(GRAY);
-      ICONS.add(GLOW_OVER_UNDER);
+      ICONS.add(HIGHLIGHT_LIMITS);
       ICONS.add(FIRE);
       ICONS.add(REDHOT);
       ICONS.add(SPECTRUM);
