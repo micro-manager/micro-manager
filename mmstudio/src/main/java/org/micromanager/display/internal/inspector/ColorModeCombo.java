@@ -265,9 +265,13 @@ public class ColorModeCombo extends JButton {
          }
       });
 
+      // Use saved settings, or default to composite.
       DisplaySettings settings = display_.getDisplaySettings();
       if (settings.getChannelColorMode() != null) {
          setModeByIndex(settings.getChannelColorMode().getIndex());
+      }
+      else {
+         setModeByIndex(DisplaySettings.ColorMode.COMPOSITE.getIndex());
       }
    }
 
