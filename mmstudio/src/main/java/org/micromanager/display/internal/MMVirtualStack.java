@@ -27,6 +27,7 @@ import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.micromanager.data.Coords;
@@ -99,19 +100,27 @@ public class MMVirtualStack extends ij.VirtualStack {
          builder.time(frame);
       }
       // Augment all missing axes with zeros.
-      // TODO: is this always what we want to do? It makes an implicit
-      // assumption that all images in the datastore have the same axes.
+      ArrayList<String> missingAxes = new ArrayList<String>();
       for (String axis : store_.getAxes()) {
          if (curCoords_.getIndex(axis) == -1) {
+            missingAxes.add(axis);
             builder.index(axis, 0);
          }
+      }
+      // Update curCoords if necessary.
+      if (missingAxes.size() > 0) {
+         Coords.CoordsBuilder replacement = curCoords_.copy();
+         for (String axis : missingAxes) {
+            replacement.index(axis, 0);
+         }
+         setCoords(replacement.build());
       }
       return builder.build();
    }
 
    /**
     * Retrieve the image at the specified index, which we map into a
-    * channel/frame/z offset. This will also update curCoords_ as needed.
+    * channel/frame/z offset.
     * Note that we only pay attention to a given offset if we already have
     * an index along that axis (e.g. so that we don't try to ask the
     * Datastore for an image at time=0 when none of the images in the Datastore

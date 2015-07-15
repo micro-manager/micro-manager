@@ -665,7 +665,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     */
    @Override
    public void requestRedraw() {
-      canvasQueue_.enqueue(stack_.getCurrentImageCoords());
+      setDisplayedImageTo(stack_.getCurrentImageCoords());
    }
 
    @Override
@@ -720,7 +720,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             constrainWindowShape();
          }
          // Assume any change in display settings will necessitate a redraw.
-         displayBus_.post(new DefaultRequestToDrawEvent(null));
+         requestRedraw();
          // And the magnification may have changed.
          resetTitle();
       }

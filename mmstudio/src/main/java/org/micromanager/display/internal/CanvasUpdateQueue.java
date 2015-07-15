@@ -109,7 +109,7 @@ public class CanvasUpdateQueue {
          coordsQueue_.put(coords);
       }
       catch (InterruptedException e) {
-         // Ignore it.
+         ReportingUtils.logError("Interrupted while adding coords " + coords + " to queue");
       }
       SwingUtilities.invokeLater(consumer_);
    }

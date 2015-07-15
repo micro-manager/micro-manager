@@ -139,7 +139,7 @@ class MMImageCanvas extends ImageCanvas {
       // Draw the actual canvas image
       super.paint(bufG);
 
-      // Determine the color to use (default is black).
+      // Determine the color to use for the border (default is black).
       if (ijImage_.isComposite()) {
          Color color = ((MMCompositeImage) ijImage_).getChannelColor();
          // Re-implement the same hack that ImageWindow uses in its
