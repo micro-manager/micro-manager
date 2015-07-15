@@ -166,6 +166,18 @@ public class ScrollerPanel extends JPanel {
       // Don't prevent other components from shrinking
       setMinimumSize(new Dimension(1, 1));
 
+      // Set up the FPS rate prior to calling addScroller(), below, as
+      // that method creates the FPS button which needs animationFPS_ to be set
+      Integer fps = parent.getDisplaySettings().getAnimationFPS();
+      // Default to 10 if it's not set.
+      if (fps == null) {
+         fps = 10;
+         parent.setDisplaySettings(parent.getDisplaySettings().copy()
+               .animationFPS(fps).build());
+      }
+      animationFPS_ = fps;
+      fpsMenu_ = new FPSPopupMenu(parent_, animationFPS_);
+
       ArrayList<String> axes;
       String[] axisOrder = store_.getSummaryMetadata().getAxisOrder();
       if (axisOrder != null) {
@@ -180,16 +192,6 @@ public class ScrollerPanel extends JPanel {
             addScroller(axis);
          }
       }
-
-      Integer fps = parent.getDisplaySettings().getAnimationFPS();
-      // Default to 10 if it's not set.
-      if (fps == null) {
-         fps = 10;
-         parent.setDisplaySettings(parent.getDisplaySettings().copy()
-               .animationFPS(fps).build());
-      }
-      animationFPS_ = fps;
-      fpsMenu_ = new FPSPopupMenu(parent_, animationFPS_);
 
       // Spin up a new thread to handle changes to the scrollbar positions.
       // See runUpdateThread() for more information.
