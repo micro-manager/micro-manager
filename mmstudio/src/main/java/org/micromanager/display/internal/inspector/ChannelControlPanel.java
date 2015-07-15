@@ -485,11 +485,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             // TODO: use differentiated colors instead of white everywhere.
             newColors = new Color[channelIndex_ + 1];
             for (int i = 0; i < newColors.length; ++i) {
-               if (i < channelColors.length) {
-                  newColors[i] = channelColors[i];
+               if (channelColors == null || i >= channelColors.length) {
+                  newColors[i] = Color.WHITE;
                }
                else {
-                  newColors[i] = Color.WHITE;
+                  newColors[i] = channelColors[i];
                }
             }
          }
