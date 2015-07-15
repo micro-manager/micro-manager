@@ -124,6 +124,8 @@ class MMImageCanvas extends ImageCanvas {
     *   normal image), so that a copy of the drawn image (with overlays, etc.)
     *   is available when we post a CanvasDrawCompleteEvent. Effectively we're
     *   doing manual double-buffering.
+    * TODO: ideally we'd replace the manual double-buffering with an API
+    * method that hands the DisplayWindow a Graphics object to draw to.
     */
    @Override
    public void paint(Graphics g) {
@@ -166,11 +168,10 @@ class MMImageCanvas extends ImageCanvas {
       }
 
       display_.postEvent(new CanvasDrawEvent(bufG, this));
-      display_.postEvent(new CanvasDrawCompleteEvent(bufferedImage_));
-
       // Drawing to the buffered image is done; now draw to ourselves.
       bufG.dispose();
       g.drawImage(bufferedImage_, 0, 0, null);
+      display_.postEvent(new CanvasDrawCompleteEvent(bufferedImage_));
    }
 
    /**

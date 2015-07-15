@@ -141,7 +141,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    // Used by the pack() method to track changes in our size.
    private Dimension prevControlsSize_;
 
-   private CanvasUpdateThread canvasThread_;
+   private CanvasUpdateQueue canvasQueue_;
 
    private boolean haveClosed_ = false;
 
@@ -314,12 +314,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          ((MMCompositeImage) ijImage_).reset();
       }
 
-      // Make the canvas thread before any of our other control objects,
-      // which may perform draw requests that need to be processed.
-      haltCanvasThread();
-      canvasThread_ = new CanvasUpdateThread(store_, stack_, ijImage_,
-            this);
-      canvasThread_.start();
+      canvasQueue_ = CanvasUpdateQueue.makeQueue(this, stack_);
 
       makeWindowControls();
       // This needs to be done after the canvas is created, but before we
@@ -561,9 +556,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       // of building our GUI, e.g. because a second image arrived while we're
       // still responding to the first one.
       synchronized(this) {
-         // Don't draw anything while we're doing this -- and we'll need a
-         // new thread later anyway.
-         haltCanvasThread();
+         // Don't draw anything while we're doing this.
+         canvasQueue_.halt();
          // TODO: assuming mode 1 for now.
          ijImage_ = new MMCompositeImage(ijImage_, 1, ijImage_.getTitle());
          ijImage_.setOpenAsHyperStack(true);
@@ -572,27 +566,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          composite.setNChannelsUnverified(numChannels);
          composite.reset();
          setImagePlusMetadata(ijImage_);
-         canvasThread_ = new CanvasUpdateThread(store_, stack_, ijImage_,
-               this);
-         canvasThread_.start();
       }
       displayBus_.post(new DefaultNewImagePlusEvent(this, ijImage_));
-   }
-
-   /**
-    * Tell our canvas update thread, if it exists, to cease all actions, then
-    * wait for the thread to exit.
-    */
-   private void haltCanvasThread() {
-      if (canvasThread_ != null) {
-         canvasThread_.stopDisplayUpdates();
-         try {
-            canvasThread_.join();
-         }
-         catch (InterruptedException e) {
-            ReportingUtils.logError(e, "Interrupted while waiting for canvas update thread to terminate");
-         }
-      }
+      canvasQueue_.resume();
    }
 
    /**
@@ -677,7 +653,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     */
    @Override
    public void setDisplayedImageTo(Coords coords) {
-      canvasThread_.addCoords(coords);
+      canvasQueue_.enqueue(coords);
    }
 
    /**
@@ -685,7 +661,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     */
    @Override
    public void requestRedraw() {
-      canvasThread_.addCoords(stack_.getCurrentImageCoords());
+      canvasQueue_.enqueue(stack_.getCurrentImageCoords());
    }
 
    @Override
@@ -818,9 +794,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    @Override
    public synchronized void toggleFullScreen() {
       // If the canvas decides to update while we are changing to/from
-      // fullscreen mode, then bad things can happen, so we kill the canvas
-      // thread first.
-      haltCanvasThread();
+      // fullscreen mode, then bad things can happen, so we halt updates
+      // first.
+      canvasQueue_.halt();
       if (fullScreenFrame_ != null) {
          // We're currently fullscreen, and our fullscreen frame needs to go
          // away now. Retrieve our contents from it first, of course.
@@ -843,8 +819,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          fullScreenFrame_.setVisible(true);
          constrainWindowShape();
       }
-      canvasThread_ = new CanvasUpdateThread(store_, stack_, ijImage_, this);
-      canvasThread_.start();
+      canvasQueue_.resume();
       displayBus_.post(
             new FullScreenEvent(getScreenConfig(), fullScreenFrame_ != null));
    }

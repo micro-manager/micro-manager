@@ -43,6 +43,7 @@ import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
 
 import org.micromanager.data.internal.NewImageEvent;
+import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
 import org.micromanager.display.internal.events.FPSEvent;
 import org.micromanager.display.internal.events.MouseMovedEvent;
 import org.micromanager.display.internal.events.StatusEvent;
@@ -63,6 +64,9 @@ public class HyperstackControls extends JPanel {
    private ScrollerPanel scrollerPanel_;
    private JLabel pixelInfoLabel_;
    private JLabel fpsLabel_;
+   private long msSinceLastFPSUpdate_ = 0;
+   private int imagesReceived_ = 0;
+   private int displayUpdates_ = 0;
    // Displays the countdown to the next frame.
    private JLabel countdownLabel_;
    // Displays general status information.
@@ -207,25 +211,45 @@ public class HyperstackControls extends JPanel {
             ReportingUtils.logError(e, "Error in HyperstackControls onNewImage");
          }
       }
+      imagesReceived_++;
+      updateFPS();
+   }
+
+   @Subscribe
+   public void onCanvasDrawComplete(CanvasDrawCompleteEvent event) {
+      displayUpdates_++;
+      updateFPS();
    }
 
    /**
-    * New information on our FPS; update a label.
-    * @param event
+    * Update the FPS display label.
     */
-   @Subscribe
-   public void onFPSUpdate(FPSEvent event) {
+   public void updateFPS() {
+      if (System.currentTimeMillis() - msSinceLastFPSUpdate_ < 500) {
+         // Too soon since the last FPS update.
+         return;
+      }
       // Default to assuming we'll be blanking the label.
       String newLabel = "";
-      if (event.getDataFPS() != 0) {
-         newLabel = String.format("FPS: %.1f (display %.1f)",
-               event.getDataFPS(), event.getDisplayFPS());
-      }
-      else if (event.getDisplayFPS() != 0) {
-         newLabel = String.format("Display FPS: %.1f", event.getDisplayFPS());
+      if (msSinceLastFPSUpdate_ != 0) {
+         double deltaSec = (System.currentTimeMillis() - msSinceLastFPSUpdate_) / 1000.0;
+         if (imagesReceived_ != 0) {
+            // Show both data FPS (number of new images) and display FPS
+            // (rate at which display updates).
+            newLabel = String.format("FPS: %.1f (display %.1f)",
+                  imagesReceived_ / deltaSec, displayUpdates_ / deltaSec);
+         }
+         else if (displayUpdates_ != 0) {
+            // Show just the display FPS.
+            newLabel = String.format("Display FPS: %.1f",
+                  displayUpdates_ / deltaSec);
+         }
       }
       fpsLabel_.setText(newLabel);
       validate();
+      msSinceLastFPSUpdate_ = System.currentTimeMillis();
+      imagesReceived_ = 0;
+      displayUpdates_ = 0;
    }
 
    @Subscribe

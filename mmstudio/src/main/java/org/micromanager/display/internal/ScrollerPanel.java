@@ -58,6 +58,7 @@ import org.micromanager.display.NewDisplaySettingsEvent;
 
 import org.micromanager.data.internal.DefaultCoords;
 
+import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.display.internal.link.ImageCoordsEvent;
@@ -135,10 +136,13 @@ public class ScrollerPanel extends JPanel {
    private final HashMap<String, Integer> axisToSavedPosition_;
    private JButton fpsButton_;
    private final FPSPopupMenu fpsMenu_;
-   private int fps_;
 
    private Timer snapbackTimer_;
    private Timer animationTimer_;
+   private int animationFPS_ = 0;
+   private int animationStepSize_ = 0;
+   private long lastAnimationTimeMs_ = 0;
+
    // We turn this off when we want to update the position of several
    // scrollbars in rapid succession, so that we don't post multiple spurious
    // draw requests.
@@ -179,13 +183,13 @@ public class ScrollerPanel extends JPanel {
 
       Integer fps = parent.getDisplaySettings().getAnimationFPS();
       // Default to 10 if it's not set.
-      fps_ = (fps == null) ? 10 : fps;
-      fpsMenu_ = new FPSPopupMenu(parent_, fps_);
       if (fps == null) {
-         // Update the DisplaySettings to reflect our default.
+         fps = 10;
          parent.setDisplaySettings(parent.getDisplaySettings().copy()
-               .animationFPS(fps_).build());
+               .animationFPS(fps).build());
       }
+      animationFPS_ = fps;
+      fpsMenu_ = new FPSPopupMenu(parent_, animationFPS_);
 
       // Spin up a new thread to handle changes to the scrollbar positions.
       // See runUpdateThread() for more information.
@@ -268,7 +272,7 @@ public class ScrollerPanel extends JPanel {
 
       if (fpsButton_ == null) {
          // We have at least one scroller, so add our FPS control button.
-         fpsButton_ = new JButton("FPS: " + fps_);
+         fpsButton_ = new JButton("FPS: " + animationFPS_);
          fpsButton_.setFont(GUIUtils.buttonFont);
          fpsButton_.addMouseListener(new MouseInputAdapter() {
             @Override
@@ -286,7 +290,7 @@ public class ScrollerPanel extends JPanel {
     */
    public void toggleAnimation(String axis) {
       axisToState_.get(axis).isAnimated_ = !axisToState_.get(axis).isAnimated_;
-      resetAnimation();
+      updateAnimation();
    }
 
    /**
@@ -354,7 +358,7 @@ public class ScrollerPanel extends JPanel {
       String axis = event.getAxis();
       ScrollbarLockIcon.LockedState lockState = event.getLockedState();
       axisToState_.get(axis).lockState_ = lockState;
-      resetAnimation();
+      updateAnimation();
    }
 
    /**
@@ -364,10 +368,10 @@ public class ScrollerPanel extends JPanel {
    public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
       DisplaySettings settings = event.getDisplaySettings();
       if (settings.getAnimationFPS() != null &&
-            settings.getAnimationFPS() != fps_) {
-         fps_ = settings.getAnimationFPS();
-         fpsButton_.setText("FPS: " + fps_);
-         resetAnimation();
+            settings.getAnimationFPS() != animationFPS_) {
+         animationFPS_ = settings.getAnimationFPS();
+         fpsButton_.setText("FPS: " + animationFPS_);
+         updateAnimation();
       }
    }
 
@@ -419,53 +423,6 @@ public class ScrollerPanel extends JPanel {
             shouldPostEvents_ = true;
          }
       }
-   }
-
-   /**
-    * Animation state or lock state has changed; reset our animation timers.
-    */
-   private void resetAnimation() {
-      if (animationTimer_ != null) {
-         animationTimer_.cancel();
-      }
-
-      boolean amAnimated = false;
-      for (String axis : axisToState_.keySet()) {
-         if (axisToState_.get(axis).isAnimated_) {
-            amAnimated = true;
-            break;
-         }
-      }
-      if (!amAnimated) {
-         // No animation is currently running.
-         return;
-      }
-
-      // Calculate the update rate and the number of images to step forward
-      // by for each animation tick. We cap at an update rate of 30FPS;
-      // past that, we step forward by more than one image per step to
-      // compensate.
-      int updateRate = Math.min(30, fps_);
-      final int updateStep = (int) Math.max(1,
-            Math.round(updateRate * fps_ / 1000.0));
-
-      animationTimer_ = new Timer();
-      TimerTask task = new TimerTask() {
-         @Override
-         public void run() {
-            shouldPostEvents_ = false;
-            for (String axis : axisToState_.keySet()) {
-               if (axisToState_.get(axis).isAnimated_ &&
-                     axisToState_.get(axis).lockState_ == ScrollbarLockIcon.LockedState.UNLOCKED) {
-                  advancePosition(axis, updateStep);
-               }
-            }
-            shouldPostEvents_ = true;
-            postDrawEvent();
-         }
-      };
-
-      animationTimer_.schedule(task, 0, (int) (1000.0 / updateRate));
    }
 
    /**
@@ -570,6 +527,78 @@ public class ScrollerPanel extends JPanel {
          shouldPostEvents_ = true;
       }
       return didAddScroller;
+   }
+
+   /**
+    * The canvas has finished drawing an image; move to the next one in our
+    * animation.
+    */
+   @Subscribe
+   public void onCanvasDrawComplete(CanvasDrawCompleteEvent event) {
+      updateAnimation();
+   }
+
+   /**
+    * Move another step forward in our animation (assuming we are animated).
+    */
+   private synchronized void updateAnimation() {
+      if (animationTimer_ != null) {
+         animationTimer_.cancel();
+      }
+
+      boolean amAnimated = false;
+      for (String axis : axisToState_.keySet()) {
+         if (axisToState_.get(axis).isAnimated_) {
+            amAnimated = true;
+            break;
+         }
+      }
+      if (!amAnimated) {
+         // No animation is currently running.
+         lastAnimationTimeMs_ = 0;
+         return;
+      }
+
+      // Calculate the update rate and the number of images to step forward
+      // by for each animation tick. We cap at an update rate of 30FPS;
+      // past that, we step forward by more than one image per step to
+      // compensate.
+      int updateFPS = Math.min(30, animationFPS_);
+      animationStepSize_ = (int) Math.max(1,
+            Math.round(updateFPS * animationFPS_ / 1000.0));
+
+      animationTimer_ = new Timer();
+      // This task simply pushes the scrollbars forward and then requests
+      // drawing at the new coordinates.
+      TimerTask task = new TimerTask() {
+         @Override
+         public void run() {
+            lastAnimationTimeMs_ = System.currentTimeMillis();
+            shouldPostEvents_ = false;
+            for (String axis : axisToState_.keySet()) {
+               if (axisToState_.get(axis).isAnimated_ &&
+                     axisToState_.get(axis).lockState_ == ScrollbarLockIcon.LockedState.UNLOCKED) {
+                  advancePosition(axis, animationStepSize_);
+               }
+            }
+            shouldPostEvents_ = true;
+            postDrawEvent();
+         }
+      };
+
+      // Schedule the update to happen either immediately (for the first time
+      // we run) or a set time after the last time we ran (for continuous
+      // running).
+      if (lastAnimationTimeMs_ == 0) {
+         animationTimer_.schedule(task, 0);
+      }
+      else {
+         // Target delay between updates
+         int delayMs = 1000 / updateFPS;
+         long sleepTime = Math.max(0,
+               delayMs - (System.currentTimeMillis() - lastAnimationTimeMs_));
+         animationTimer_.schedule(task, sleepTime);
+      }
    }
 
    /**
