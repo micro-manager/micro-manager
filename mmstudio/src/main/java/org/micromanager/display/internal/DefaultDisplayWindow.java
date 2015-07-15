@@ -557,7 +557,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       // still responding to the first one.
       synchronized(this) {
          // Don't draw anything while we're doing this.
-         canvasQueue_.halt();
+         if (canvasQueue_ != null) {
+            canvasQueue_.halt();
+         }
          // TODO: assuming mode 1 for now.
          ijImage_ = new MMCompositeImage(ijImage_, 1, ijImage_.getTitle());
          ijImage_.setOpenAsHyperStack(true);
@@ -566,9 +568,11 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          composite.setNChannelsUnverified(numChannels);
          composite.reset();
          setImagePlusMetadata(ijImage_);
+         if (canvasQueue_ != null) {
+            canvasQueue_.resume();
+         }
       }
       displayBus_.post(new DefaultNewImagePlusEvent(this, ijImage_));
-      canvasQueue_.resume();
    }
 
    /**
