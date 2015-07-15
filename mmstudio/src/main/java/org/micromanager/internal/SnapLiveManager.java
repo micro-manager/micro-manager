@@ -382,13 +382,22 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
             int channel = new ArrayList<Integer>(channelToLastImage_.keySet()).get(0);
             lastImage = channelToLastImage_.get(channel);
          }
+         // Check for a change in the channel name.
+         boolean didChannelChange = false;
+         if (lastImage != null) {
+            String lastChannel = lastImage.getMetadata().getChannelName();
+            String newChannel = image.getMetadata().getChannelName();
+            didChannelChange = ((lastChannel == null && newChannel != null) ||
+                  (lastChannel != null && !lastChannel.equals(newChannel)));
+         }
          if (lastImage == null ||
                newImage.getWidth() != lastImage.getWidth() ||
                newImage.getHeight() != lastImage.getHeight() ||
                newImage.getNumComponents() != lastImage.getNumComponents() ||
-               newImage.getBytesPerPixel() != lastImage.getBytesPerPixel()) {
-            // Format changing and/or we have no display; we need to recreate
-            // everything.
+               newImage.getBytesPerPixel() != lastImage.getBytesPerPixel() ||
+               didChannelChange) {
+            // Format changing, channel changing, and/or we have no display; we
+            // need to recreate everything.
             shouldReset = true;
          }
          if (shouldReset) {
