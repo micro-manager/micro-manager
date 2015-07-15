@@ -68,6 +68,7 @@ public class CanvasUpdateQueue {
    private final DisplayWindow display_;
    private final Runnable consumer_;
 
+   private final Object queueLock_ = new Object();
    private final LinkedBlockingQueue<Coords> coordsQueue_;
    private boolean shouldAcceptNewCoords_ = true;
 
@@ -122,8 +123,10 @@ public class CanvasUpdateQueue {
       Coords coords = null;
       // Grab images from the queue until we get the last one, so all
       // others get ignored (because we don't have time to display them).
-      while (!coordsQueue_.isEmpty()) {
-         coords = coordsQueue_.poll();
+      synchronized(queueLock_) {
+         while (!coordsQueue_.isEmpty()) {
+            coords = coordsQueue_.poll();
+         }
       }
       if (coords == null) {
          // No images in the queue; nothing to do.
@@ -167,23 +170,21 @@ public class CanvasUpdateQueue {
     * Wait for the coords queue to become empty, and block any additions to
     * it.
     */
-   public void halt() {
+   public synchronized void halt() {
       shouldAcceptNewCoords_ = false;
-      while (!coordsQueue_.isEmpty()) {
-         try {
-            Thread.sleep(10);
-         }
-         catch (InterruptedException e) {
-            ReportingUtils.logError("Interrupted while waiting for canvas update queue to empty");
-         }
+      synchronized(queueLock_) {
+         coordsQueue_.clear();
       }
    }
 
    /**
-    * Allow additions to the coords queue again.
+    * Allow additions to the coords queue again. Since halt() empties the queue
+    * and may potentially result in there being nothing drawn at all, we add a
+    * redraw now.
     */
    public void resume() {
       shouldAcceptNewCoords_ = true;
+      display_.requestRedraw();
    }
 
    @Subscribe
