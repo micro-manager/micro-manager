@@ -257,7 +257,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
                sendFPSUpdate(tags);
             } // End while loop
          }
-      });
+      }, "VirtualAcquisitionDisplay display thread");
       displayThread_.start();
    }
 

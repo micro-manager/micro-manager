@@ -53,6 +53,8 @@ public class LiveModeTimer {
    private SnapLiveManager snapLiveManager_;
    private int multiChannelCameraNrCh_;
 
+   private Thread displayThread_;
+
    private long fpsTimer_; // Guarded by this
    private long fpsCounter_; // Guarded by this
    private long imageNumber_; // Guarded by this
@@ -104,16 +106,19 @@ public class LiveModeTimer {
          }
       }
 
-      // Thread-safe, but will deadlock if called from within the task.
-      public void stopAndWaitForCompletion() {
+      public void stop() {
          synchronized (timerLock_) {
-            if (timer_ == null) {
+            if (timer_ == null || timerTaskShouldStop_) {
                return;
             }
-            // Stop the timer task atomically, ensuring that any currently running
-            // cycle is finished and no further cycles will be run.
+
             timerTaskShouldStop_ = true;
             timer_.cancel();
+         }
+      }
+
+      public void waitForCompletion() {
+         synchronized (timerLock_) {
             while (timerTaskIsBusy_) {
                try {
                   timerLock_.wait();
@@ -282,7 +287,8 @@ public class LiveModeTimer {
 
       win_.getImagePlus().getWindow().toFront();
       running_ = true;
-      studio_.runDisplayThread(imageQueue_, displayImageRoutine_);
+      displayThread_ = studio_.runDisplayThread(imageQueue_,
+            displayImageRoutine_);
    }
 
    public void stop() {
@@ -290,10 +296,52 @@ public class LiveModeTimer {
    }
 
    private void stop(boolean firstAttempt) {
-      ReportingUtils.logMessage("Stop called in LivemodeTimer, " + firstAttempt);
+      ReportingUtils.logMessage("Stop called in LiveModeTimer, " +
+            (firstAttempt ? "first" : "second") + " attempt");
 
-      timerController_.stopAndWaitForCompletion();
+      // To safely shut down live mode, we need to stop (1) image acquisition,
+      // (2) transfer of images from the Core to image queue (live mode timer),
+      // and (3) transfer of images from the image processor output to the
+      // display (display thread). Furthermore, we need to wait for all of
+      // these to complete, so that whatever comes next (e.g. MDA) does not
+      // see any resources in an inconsistent or busy state.
 
+      // (1) Stop image acquisition (with up to one retry, FWIW)
+      try {
+         if (core_.isSequenceRunning()) {
+            core_.stopSequenceAcquisition();
+         }
+         running_ = false;
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+         if (firstAttempt) {
+            final long RETRY_DELAY_MS = 1000;
+            ReportingUtils.logMessage(
+                  "Will try again to stop live acquisition after " +
+                  RETRY_DELAY_MS + " ms");
+            new Timer().schedule(new TimerTask() {
+               @Override
+               public void run() {
+                  stop(false);
+               }
+            }, RETRY_DELAY_MS);
+         }
+      }
+
+      // (2) Stop transfering images from Core to image queue
+      // Indicate end of image stream by sending POISON. Note that POISON might
+      // be enqueued before the final image (since we have not yet waited for
+      // the timer to finish), but that is not a problem because the queue
+      // simply gets discarded.
+      timerController_.stop();
+      // Note: This will block if downstream (image processors and display
+      // thread) do not consume images.
+      ReportingUtils.logMessage("Waiting for timer to stop");
+      timerController_.waitForCompletion();
+      ReportingUtils.logMessage("Finished waiting for timer to stop");
+
+      // Now nobody is enqueuing images to imageQueue_, so we can be sure
+      // that the POISON we enqueue will not be followed by any images.
       try {
          if (imageQueue_ != null) {
             imageQueue_.put(TaggedImageQueue.POISON);
@@ -303,27 +351,20 @@ public class LiveModeTimer {
            Thread.currentThread().interrupt();
       }
 
+      // (3) Now the display thread should exit on its own when it sees the
+      // POISON.
+
+      // Finally, make sure we block until the POISON passes through the image
+      // processors, so that no images get stranded.
+      ReportingUtils.logMessage("Waiting for live mode display thread");
       try {
-         if (core_.isSequenceRunning()) {
-            core_.stopSequenceAcquisition();
-         }
-         running_ = false;
-      } catch (Exception ex) {
-         try {
-         } catch (Exception e) {
-            ReportingUtils.showError("Error closing shutter");
-         }
-         ReportingUtils.showError(ex);
-         //Wait 1 s and try to stop again
-         if (firstAttempt) {
-            final Timer delayStop = new Timer();
-            delayStop.schedule( new TimerTask() {
-               @Override
-               public void run() {
-                  stop(false);
-               }},1000);   
-         }
-      } 
+         displayThread_.join();
+      }
+      catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+      }
+      ReportingUtils.logMessage("Finished waiting for live mode display thread");
+      displayThread_ = null;
    }
 
    /**
@@ -377,8 +418,8 @@ public class LiveModeTimer {
     * 
     * @return 
     */
-   private TimerTask singleCameraLiveTask() {
-      return new TimerTask() {
+   private Runnable singleCameraLiveTask() {
+      return new Runnable() {
          @Override
          public void run() {
             if (core_.getRemainingImageCount() == 0) {
@@ -412,8 +453,8 @@ public class LiveModeTimer {
    }
 
    
-   private TimerTask multiCamLiveTask() {
-      return new TimerTask() {
+   private Runnable multiCamLiveTask() {
+      return new Runnable() {
          @Override
          public void run() {
             if (core_.getRemainingImageCount() == 0) {

@@ -142,6 +142,12 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
             return null;
          }
       }
+
+      // If we don't stop Live here, we run into trouble if any processors are
+      // active, because the processor pipeline would get rewired before it
+      // finishes processing live images.
+      studio_.enableLiveMode(false);
+
       try {
          // Start up the acquisition engine
          BlockingQueue<TaggedImage> engineOutputQueue = getAcquisitionEngine2010().run(

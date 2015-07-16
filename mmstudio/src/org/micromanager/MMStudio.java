@@ -613,14 +613,16 @@ public class MMStudio implements ScriptInterface {
     * the rawImageQueue.
     * @param rawImageQueue
     * @param displayImageRoutine
+    * @return the display thread, which can be joined to ensure all images
+    * have been processed.
     */
-   public void runDisplayThread(BlockingQueue<TaggedImage> rawImageQueue, 
+   public Thread runDisplayThread(BlockingQueue<TaggedImage> rawImageQueue, 
             final DisplayImageRoutine displayImageRoutine) {
       final BlockingQueue<TaggedImage> processedImageQueue = 
             ProcessorStack.run(rawImageQueue, 
             getAcquisitionEngine().getImageProcessors());
-        
-      new Thread("Display thread") {
+
+      final Thread displayThread = new Thread("Display thread") {
        @Override
          public void run() {
             try {
@@ -635,7 +637,9 @@ public class MMStudio implements ScriptInterface {
                ReportingUtils.logError(ex);
             }
          }
-      }.start();
+      };
+      displayThread.start();
+      return displayThread;
    }
 
    public interface DisplayImageRoutine {

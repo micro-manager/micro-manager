@@ -79,6 +79,8 @@ public class ProcessorStack<E> {
       }
    }
 
+   private static Object processorInputOutputLock_ = new Object();
+
    /**
     * Sets up the DataProcessor<TaggedImage> sequence
     * @param inputTaggedImageQueue
@@ -88,9 +90,11 @@ public class ProcessorStack<E> {
    public static BlockingQueue<TaggedImage> run(
            BlockingQueue<TaggedImage> inputTaggedImageQueue, 
            List<DataProcessor<TaggedImage>> imageProcessors) {
-      ProcessorStack<TaggedImage> processorStack = 
+      synchronized(processorInputOutputLock_) {
+         ProcessorStack<TaggedImage> processorStack =
               new ProcessorStack<TaggedImage>(inputTaggedImageQueue, imageProcessors);
-      return processorStack.begin();
+         return processorStack.begin();
+      }
    }
    
 }
