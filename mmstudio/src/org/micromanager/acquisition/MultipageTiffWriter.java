@@ -303,9 +303,9 @@ public class MultipageTiffWriter {
    }
 
    /**
-    * Called when entire set of files (i.e. acquisition) is finished. Adds in all the extra
-    * (but nonessential) stuff--comments, display settings, OME/IJ metadata, and truncates the
-    * file to a reasonable length
+    * Called when entire set of files (i.e. acquisition) is finished. Adds in
+    * all the extra (but nonessential) stuff--comments, display settings,
+    * OME/IJ metadata, and truncates the file to a reasonable length
     */
    public void close(String omeXML) throws IOException {
       String summaryComment = "";
@@ -322,7 +322,7 @@ public class MultipageTiffWriter {
 
       if (omeTiff_) {
          try {
-            writeImageDescription(omeXML, omeDescriptionTagPosition_);                 
+            writeImageDescription(omeXML, omeDescriptionTagPosition_);
          } catch (Exception ex) {
             ReportingUtils.showError("Error writing OME metadata");
          }
@@ -353,7 +353,7 @@ public class MultipageTiffWriter {
       //5 MB extra padding..just to be safe
       int extraPadding = 5000000; 
       long size = length + SPACE_FOR_COMMENTS + numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL + extraPadding + filePosition_;
-      if ( size >= MAX_FILE_SIZE) {
+      if (size >= MAX_FILE_SIZE) {
          return false;
       }
       return true;
@@ -854,14 +854,15 @@ public class MultipageTiffWriter {
    }
 
    private void writeImageDescription(String value, long imageDescriptionTagOffset) throws IOException {
+      ByteBuffer buffer = ByteBuffer.wrap(getBytesFromString(value));
+      int numBytes = buffer.array().length;
       //write first image IFD
       ByteBuffer ifdCountAndValueBuffer = allocateByteBuffer(8);
-      ifdCountAndValueBuffer.putInt(0, value.length());
+      ifdCountAndValueBuffer.putInt(0, numBytes);
       ifdCountAndValueBuffer.putInt(4, (int) filePosition_);
       fileChannelWrite(ifdCountAndValueBuffer, imageDescriptionTagOffset + 4);
 
       //write String
-      ByteBuffer buffer = ByteBuffer.wrap(getBytesFromString(value));
       fileChannelWrite(buffer, filePosition_);
       filePosition_ += buffer.capacity();
    }
