@@ -26,6 +26,7 @@ import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
+import java.util.Arrays;
 import java.util.Calendar;
 
 import javax.swing.JDialog;
@@ -291,15 +292,25 @@ public class ReportingUtils {
     * logging when you want to know where you were called from.
     */
    public static String getStackTraceAsString() {
+      return getStackTraceAsString(100);
+   }
+
+   /**
+    * Return the stack trace of the current thread up to the specified limit
+    * of entries.
+    */
+   public static String getStackTraceAsString(int numEntries) {
       String result = "";
-      for (StackTraceElement line : java.lang.Thread.currentThread().getStackTrace()) {
+      StackTraceElement[] lines = Thread.currentThread().getStackTrace();
+      numEntries = Math.min(lines.length, numEntries);
+      for (StackTraceElement line : Arrays.copyOfRange(lines, 0, numEntries)) {
          result += "  at " + line.toString() + "\n";
       }
       return result;
    }
 
    /**
-    * As above, but only the caller is returned, not the entire trace.
+    * Return the caller of the method that called getCaller().
     */
    public static String getCaller() {
       // First is getStackTrace, second is us, third is whoever called us,
