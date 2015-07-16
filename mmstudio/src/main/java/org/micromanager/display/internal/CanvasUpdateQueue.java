@@ -71,6 +71,12 @@ public class CanvasUpdateQueue {
    private final Object queueLock_ = new Object();
    private final LinkedBlockingQueue<Coords> coordsQueue_;
    private boolean shouldAcceptNewCoords_ = true;
+   // Unfortunately, even though we do all of our work in the EDT, there's
+   // no way for us to tell Swing to paint *right now* -- we can only put a
+   // draw command on the EDT to be processed later. This boolean allows us
+   // to recognize when we're waiting for such a draw to process, so we don't
+   // spam up the EDT with lots of excess draw requests.
+   private boolean amWaitingForDraw_ = false;
 
    public static CanvasUpdateQueue makeQueue(DisplayWindow display,
          MMVirtualStack stack) {
@@ -121,12 +127,15 @@ public class CanvasUpdateQueue {
     */
    private void consumeImages() {
       Coords coords = null;
+      if (amWaitingForDraw_) {
+         // No point in running right now as we're waiting for a draw
+         // request to make its way through the EDT.
+         return;
+      }
       // Grab images from the queue until we get the last one, so all
       // others get ignored (because we don't have time to display them).
-      synchronized(queueLock_) {
-         while (!coordsQueue_.isEmpty()) {
-            coords = coordsQueue_.poll();
-         }
+      while (!coordsQueue_.isEmpty()) {
+         coords = coordsQueue_.poll();
       }
       if (coords == null) {
          // No images in the queue; nothing to do.
@@ -146,6 +155,7 @@ public class CanvasUpdateQueue {
 
    @Subscribe
    public void onCanvasDrawComplete(CanvasDrawCompleteEvent event) {
+      amWaitingForDraw_ = false;
       if (!coordsQueue_.isEmpty()) {
          // New image(s) arrived while we were drawing; repeat.
          SwingUtilities.invokeLater(consumer_);
@@ -159,6 +169,7 @@ public class CanvasUpdateQueue {
       // This null check protects us against harmless exception spew when
       // e.g. live mode is running and the user closes the window.
       if (plus_.getProcessor() != null) {
+         amWaitingForDraw_ = true;
          stack_.setCoords(image.getCoords());
          plus_.getProcessor().setPixels(image.getRawPixels());
          plus_.updateAndDraw();
