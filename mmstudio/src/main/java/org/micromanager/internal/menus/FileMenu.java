@@ -112,8 +112,8 @@ public class FileMenu {
                      MMStudio.getInstance().getFrame(), isVirtual);
                if (store != null) {
                   studio_.displays().loadDisplays(store);
+                  updateFileHistory(store.getSavePath());
                }
-               updateFileHistory(store.getSavePath());
             }
             catch (IOException e) {
                ReportingUtils.showError(e, "There was an error when opening data");
