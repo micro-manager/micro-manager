@@ -127,7 +127,7 @@ public class ScrollerPanel extends JPanel {
    }
 
    private final Datastore store_;
-   private final DisplayWindow parent_;
+   private final DisplayWindow display_;
    private final Thread updateThread_;
    private final LinkedBlockingQueue<Coords> updateQueue_;
    private final AtomicBoolean shouldStopUpdates_;
@@ -148,9 +148,9 @@ public class ScrollerPanel extends JPanel {
    // draw requests.
    private boolean shouldPostEvents_ = true;
 
-   public ScrollerPanel(Datastore store, DisplayWindow parent) {
+   public ScrollerPanel(Datastore store, DisplayWindow display) {
       store_ = store;
-      parent_ = parent;
+      display_ = display;
 
       updateQueue_ = new LinkedBlockingQueue<Coords>();
       shouldStopUpdates_ = new AtomicBoolean(false);
@@ -168,15 +168,15 @@ public class ScrollerPanel extends JPanel {
 
       // Set up the FPS rate prior to calling addScroller(), below, as
       // that method creates the FPS button which needs animationFPS_ to be set
-      Integer fps = parent.getDisplaySettings().getAnimationFPS();
+      Integer fps = display.getDisplaySettings().getAnimationFPS();
       // Default to 10 if it's not set.
       if (fps == null) {
          fps = 10;
-         parent.setDisplaySettings(parent.getDisplaySettings().copy()
+         display.setDisplaySettings(display.getDisplaySettings().copy()
                .animationFPS(fps).build());
       }
       animationFPS_ = fps;
-      fpsMenu_ = new FPSPopupMenu(parent_, animationFPS_);
+      fpsMenu_ = new FPSPopupMenu(display_, animationFPS_);
 
       ArrayList<String> axes;
       String[] axisOrder = store_.getSummaryMetadata().getAxisOrder();
@@ -203,7 +203,7 @@ public class ScrollerPanel extends JPanel {
       });
       updateThread_.start();
       store_.registerForEvents(this);
-      parent_.registerForEvents(this);
+      display_.registerForEvents(this);
    }
 
    /**
@@ -262,12 +262,12 @@ public class ScrollerPanel extends JPanel {
       add(scrollbar, "shrinkx, growx");
 
       ScrollbarLockIcon lock = new ScrollbarLockIcon(axis,
-            parent_.getDisplayBus());
+            display_.getDisplayBus());
       add(lock, "grow 0");
 
       LinkButton linker = new LinkButton(
-            new ImageCoordsLinker(axis, parent_, this),
-            parent_);
+            new ImageCoordsLinker(axis, display_, this),
+            display_);
       add(linker, "grow 0, wrap");
 
       axisToState_.put(axis, new AxisState(positionButton, scrollbar, maxLabel));
@@ -348,8 +348,8 @@ public class ScrollerPanel extends JPanel {
       }
       Coords target = builder.build();
       // Coordinate our linkers.
-      parent_.postEvent(new ImageCoordsEvent(target));
-      parent_.postEvent(new DefaultRequestToDrawEvent(target));
+      display_.postEvent(new ImageCoordsEvent(target));
+      display_.setDisplayedImageTo(target);
    }
 
    /**
@@ -447,9 +447,9 @@ public class ScrollerPanel extends JPanel {
          }
          if (didAddScrollers) {
             // Ensure new scrollers get displayed properly.
-            parent_.postEvent(new LayoutChangedEvent());
+            display_.postEvent(new LayoutChangedEvent());
          }
-         parent_.postEvent(new DefaultRequestToDrawEvent(displayedBuilder.build()));
+         display_.setDisplayedImageTo(displayedBuilder.build());
 
          // Set up snapping back to our current positions. 
          if (axisToSavedPosition_.size() > 0) {
@@ -616,7 +616,7 @@ public class ScrollerPanel extends JPanel {
    @Subscribe
    public void onDisplayDestroyed(DisplayDestroyedEvent event) {
       store_.unregisterForEvents(this);
-      parent_.unregisterForEvents(this);
+      display_.unregisterForEvents(this);
       if (animationTimer_ != null) {
          animationTimer_.cancel();
       }
