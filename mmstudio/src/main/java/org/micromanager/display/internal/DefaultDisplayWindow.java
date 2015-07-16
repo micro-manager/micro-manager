@@ -627,6 +627,14 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       try {
          validate();
          pack();
+         // It's possible we've grown past the bottom of the screen (under
+         // the taskbar on Windows), in which case we need to reset.
+         Rectangle safeBounds = getSafeBounds();
+         if (getY() + getHeight() > safeBounds.getY() + safeBounds.getHeight()) {
+            Dimension safeSize = getMaxSafeSizeFromHere();
+            setSize((int) Math.min(getWidth(), safeSize.getWidth()),
+                  (int) Math.min(getHeight(), safeSize.getHeight()));
+         }
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Error processing layout-changed event");
