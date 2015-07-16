@@ -52,7 +52,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 public class HyperstackControls extends JPanel {
 
-   private final DisplayWindow parent_;
+   private final DisplayWindow display_;
    private final Datastore store_;
    private final MMVirtualStack stack_;
 
@@ -75,19 +75,19 @@ public class HyperstackControls extends JPanel {
    /**
     * @param store
     * @param stack
-    * @param parent
+    * @param display DisplayWindow we are embedded in
     * @param shouldUseLiveControls - indicates if we should use the buttons for 
     *        the "Snap/Live" window or the buttons for normal displays.
     */
    public HyperstackControls(Datastore store, MMVirtualStack stack,
-         DisplayWindow parent, boolean shouldUseLiveControls) {
+         DisplayWindow display, boolean shouldUseLiveControls) {
       super(new FlowLayout(FlowLayout.LEADING));
-      parent_ = parent;
+      display_ = display;
       store_ = store;
       store_.registerForEvents(this);
       stack_ = stack;
       initComponents();
-      parent_.registerForEvents(this);
+      display_.registerForEvents(this);
    }
 
    private void initComponents() {
@@ -123,7 +123,7 @@ public class HyperstackControls extends JPanel {
 
       add(labelsPanel, "span, growx, align center, wrap");
 
-      scrollerPanel_ = new ScrollerPanel(store_, parent_);
+      scrollerPanel_ = new ScrollerPanel(store_, display_);
       add(scrollerPanel_, "span, growx, shrinkx, wrap 0px");
    }
 
@@ -183,9 +183,11 @@ public class HyperstackControls extends JPanel {
     * Update our pixel info text.
     */
    private void setPixelInfo(int x, int y) {
-      String intensity = getIntensityString(x, y);
-      pixelInfoLabel_.setText(String.format("x=%d, y=%d, value=%s",
-               x, y, intensity));
+      if (x >= 0 && y >= 0) {
+         String intensity = getIntensityString(x, y);
+         pixelInfoLabel_.setText(String.format("x=%d, y=%d, value=%s",
+                  x, y, intensity));
+      }
       // If the pixel info display grows (e.g. due to extra digits in the
       // intensity display) then we don't want to let it shrink again, or else
       // the FPS display to its right will get bounced back and forth.
@@ -195,28 +197,31 @@ public class HyperstackControls extends JPanel {
    }
 
    /**
-    * A new image has been made available. Update our pixel info, assuming
-    * we have a valid mouse position.
-    * @param event
+    * A new image has arrived; we track it so we can know the data FPS (the
+    * rate at which new images are being acquired).
     */
    @Subscribe
    public void onNewImage(NewImageEvent event) {
-      Image image = event.getImage();
-      if (mouseX_ >= 0 && mouseX_ < image.getWidth() &&
-            mouseY_ >= 0 && mouseY_ < image.getHeight()) {
-         try {
-            setPixelInfo(mouseX_, mouseY_);
-         }
-         catch (Exception e) {
-            ReportingUtils.logError(e, "Error in HyperstackControls onNewImage");
-         }
-      }
       imagesReceived_++;
       updateFPS();
    }
 
+   /**
+    * The displayed image has changed, so update our pixel info display. We
+    * also need to track the display FPS (the rate at which images are
+    * displayed).
+    */
    @Subscribe
    public void onCanvasDrawComplete(CanvasDrawCompleteEvent event) {
+      Image image = display_.getDisplayedImages().get(0);
+      if (mouseX_ >= 0 && mouseX_ < image.getWidth() &&
+            mouseY_ >= 0 && mouseY_ < image.getHeight()) {
+         setPixelInfo(mouseX_, mouseY_);
+      }
+      else {
+         // Hide pixel info when the mouse isn't on the display.
+         setPixelInfo(-1, -1);
+      }
       displayUpdates_++;
       updateFPS();
    }
@@ -291,7 +296,7 @@ public class HyperstackControls extends JPanel {
 
    @Subscribe
    public void onDisplayDestroyed(DisplayDestroyedEvent event) {
-      parent_.unregisterForEvents(this);
+      display_.unregisterForEvents(this);
       store_.unregisterForEvents(this);
    }
 }
