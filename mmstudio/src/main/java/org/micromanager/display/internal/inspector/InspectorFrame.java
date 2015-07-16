@@ -32,6 +32,8 @@ import java.awt.Dimension;
 import java.awt.GraphicsConfiguration;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
@@ -63,6 +65,7 @@ import org.micromanager.display.internal.events.DisplayActivatedEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.events.DisplayAboutToShowEvent;
 import org.micromanager.events.internal.DefaultEventManager;
+import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -105,6 +108,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
 
    private static final String TOPMOST_DISPLAY = "Topmost Window";
    private static final String CONTRAST_TITLE = "Histograms and Settings";
+   private static final String WINDOW_WIDTH = "width of the inspector frame";
    private DisplayWindow display_;
    private ArrayList<InspectorPanel> panels_;
    private JPanel contents_;
@@ -190,12 +194,21 @@ public class InspectorFrame extends MMFrame implements Inspector {
       setMinimumSize(new Dimension(400, 50));
       // HACK: don't know our width; just choose a vaguely-correct offset.
       loadAndRestorePosition(config.getBounds().width - 450, 0);
+      setSize(new Dimension(getDefaultWidth(), getHeight()));
 
       DefaultEventManager.getInstance().registerForEvents(this);
+      // Cleanup when window closes.
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent event) {
             cleanup();
+         }
+      });
+      // Save the size when the user resizes the window.
+      addComponentListener(new ComponentAdapter() {
+         @Override
+         public void componentResized(ComponentEvent e) {
+            setDefaultWidth((int) getSize().getWidth());
          }
       });
    }
@@ -313,8 +326,15 @@ public class InspectorFrame extends MMFrame implements Inspector {
    }
 
    @Override
-   public void relayout() {
+   public synchronized void relayout() {
+      // HACK: coerce minimum size to our default size for the duration of this
+      // pack; otherwise our default size effectively gets ignored on a
+      // routine basis.
+      Dimension minSize = getMinimumSize();
+      int width = getDefaultWidth();
+      setMinimumSize(new Dimension(width, (int) minSize.getHeight()));
       pack();
+      setMinimumSize(minSize);
    }
 
    @Subscribe
@@ -402,5 +422,15 @@ public class InspectorFrame extends MMFrame implements Inspector {
       savePosition();
       DefaultEventManager.getInstance().unregisterForEvents(
          InspectorFrame.this);
+   }
+
+   private static int getDefaultWidth() {
+      return DefaultUserProfile.getInstance().getInt(
+            InspectorFrame.class, WINDOW_WIDTH, 450);
+   }
+
+   private static void setDefaultWidth(int width) {
+      DefaultUserProfile.getInstance().setInt(
+            InspectorFrame.class, WINDOW_WIDTH, width);
    }
 }
