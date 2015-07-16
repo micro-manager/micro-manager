@@ -70,7 +70,6 @@ import org.micromanager.internal.graph.HistogramPanel;
 import org.micromanager.internal.graph.HistogramPanel.CursorListener;
 import org.micromanager.internal.MMStudio;
 
-import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
 import org.micromanager.display.internal.events.LUTUpdateEvent;
 import org.micromanager.display.internal.link.ContrastEvent;
 import org.micromanager.display.internal.link.ContrastLinker;
@@ -1114,7 +1113,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          display_.postEvent(new LUTUpdateEvent(null, null, null));
       }
       if (shouldRedisplay) {
-         display_.postEvent(new DefaultRequestToDrawEvent());
+         display_.requestRedraw();
       }
    }
 
