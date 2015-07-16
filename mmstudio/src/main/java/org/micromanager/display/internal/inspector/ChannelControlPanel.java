@@ -1170,8 +1170,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    /**
     * A new image has arrived; if it's for our channel and we haven't set bit
     * depth yet, then do so now. And if we're the first channel, our color is
-    * white (i.e. the default color), and an image for another channel arrives,
-    * then we need to re-load our color.
+    * white (i.e. the default color for singlechannel displays), and an image
+    * for another channel arrives, then we need to re-load our color.
     * @param event
     */
    @Subscribe
@@ -1182,9 +1182,18 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             bitDepth_ = event.getImage().getMetadata().getBitDepth();
             initialize();
          }
+         // Only reload display settings if we really have to, as this forces
+         // redraws which can slow the display way down.
          if (channelIndex_ == 0 && channel != channelIndex_ &&
                color_.equals(Color.WHITE)) {
-            reloadDisplaySettings();
+            Color[] channelColors = display_.getDisplaySettings().getChannelColors();
+            Color targetColor = null;
+            if (channelColors != null && channelColors.length > 0) {
+               targetColor = channelColors[0];
+            }
+            if (!color_.equals(targetColor)) {
+               reloadDisplaySettings();
+            }
          }
       }
       catch (Exception e) {
