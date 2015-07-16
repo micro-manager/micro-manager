@@ -218,10 +218,6 @@ public class HyperstackControls extends JPanel {
             mouseY_ >= 0 && mouseY_ < image.getHeight()) {
          setPixelInfo(mouseX_, mouseY_);
       }
-      else {
-         // Hide pixel info when the mouse isn't on the display.
-         setPixelInfo(-1, -1);
-      }
       displayUpdates_++;
       updateFPS();
    }
