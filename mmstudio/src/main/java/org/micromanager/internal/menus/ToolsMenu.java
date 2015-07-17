@@ -95,7 +95,7 @@ public class ToolsMenu {
       
       toolsMenu_.addSeparator();
 
-      GUIUtils.addMenuItem(toolsMenu_, "Stage Control",
+      GUIUtils.addMenuItem(toolsMenu_, "Stage Control...",
             "Control the stage position with a virtual joystick",
             new Runnable() {
                @Override
