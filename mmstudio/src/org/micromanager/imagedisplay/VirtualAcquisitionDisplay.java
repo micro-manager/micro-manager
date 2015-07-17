@@ -364,7 +364,10 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
             imageChannelIndex = -1;
          }
          numSlices = Math.max(summaryMetadata.getInt("Slices"), 1);
-         numFrames = Math.max(summaryMetadata.getInt("Frames"), 1);
+         numFrames = imageCache_.lastAcquiredFrame();
+         if (numFrames <= 0) {
+            numFrames = Math.max(summaryMetadata.getInt("Frames"), 1);
+         }
 
          numChannels = Math.max(1 + imageChannelIndex,
                  Math.max(summaryMetadata.getInt("Channels"), 1));
