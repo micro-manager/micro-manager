@@ -1031,28 +1031,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       return null;
    }
 
-   /**
-    * Retrieve a list of all open DisplayWindows. We do this by iterating over
-    * all ImageJ windows, checking to see if they are DummyImageWindows, and if
-    * so, retrieving the master window for that DummyImageWindow.
-    */
-   public static List<DisplayWindow> getAllImageWindows() {
-      ArrayList<DisplayWindow> result = new ArrayList<DisplayWindow>();
-      int[] plusIDs = WindowManager.getIDList();
-      if (plusIDs == null) {
-         // Assume no displays have been created yet.
-         return result;
-      }
-      for (int id : plusIDs) {
-         ImagePlus plus = WindowManager.getImage(id);
-         ImageWindow window = plus.getWindow();
-         if (window instanceof DummyImageWindow) {
-            result.add(((DummyImageWindow) window).getMaster());
-         }
-      }
-      return result;
-   }
-
    // Letters for differentiating displays for the same dataset.
    private static final String LETTERS = "abcdefghijklmnopqrstuvwxyz";
    /**

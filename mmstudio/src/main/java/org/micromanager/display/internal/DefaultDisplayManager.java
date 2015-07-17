@@ -64,11 +64,13 @@ public final class DefaultDisplayManager implements DisplayManager {
    private final MMStudio studio_;
    private final HashMap<Datastore, ArrayList<DisplayWindow>> storeToDisplays_;
    private final LinkedHashMap<String, OverlayPanelFactory> titleToOverlay_;
+   private final ArrayList<DisplayWindow> allDisplays_;
 
    public DefaultDisplayManager(MMStudio studio) {
       studio_ = studio;
       storeToDisplays_ = new HashMap<Datastore, ArrayList<DisplayWindow>>();
       titleToOverlay_ = new LinkedHashMap<String, OverlayPanelFactory>();
+      allDisplays_ = new ArrayList<DisplayWindow>();
       // HACK: start out with some hardcoded overlay options for now.
       registerOverlay(new ScaleBarOverlayFactory());
       registerOverlay(new TimestampOverlayFactory());
@@ -194,7 +196,7 @@ public final class DefaultDisplayManager implements DisplayManager {
 
    @Override
    public List<DisplayWindow> getAllImageWindows() {
-      return DefaultDisplayWindow.getAllImageWindows();
+      return new ArrayList<DisplayWindow>(allDisplays_);
    }
 
    @Override
@@ -333,6 +335,7 @@ public final class DefaultDisplayManager implements DisplayManager {
          storeToDisplays_.get(store).add(display);
          display.registerForEvents(this);
       }
+      allDisplays_.add(display);
    }
 
    /**
@@ -344,6 +347,13 @@ public final class DefaultDisplayManager implements DisplayManager {
       Datastore store = display.getDatastore();
       if (getIsManaged(store)) {
          storeToDisplays_.get(store).remove(display);
+      }
+      if (allDisplays_.contains(display)) {
+         allDisplays_.remove(display);
+      }
+      else {
+         // This should never happen.
+         ReportingUtils.logError("DisplayManager informed of destruction of display it didn't know existed.");
       }
    }
 
