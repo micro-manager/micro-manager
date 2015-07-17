@@ -357,6 +357,11 @@ public class InspectorFrame extends MMFrame implements Inspector {
 
    @Subscribe
    public void onDisplayActivated(DisplayActivatedEvent event) {
+      DisplayWindow newDisplay = event.getDisplay();
+      if (newDisplay.getIsClosed()) {
+         // TODO: why do we get notified of this?
+         return;
+      }
       try {
          DisplayMenuItem item = (DisplayMenuItem) (displayChooser_.getSelectedItem());
          if (item.getDisplay() != null) {
@@ -364,11 +369,11 @@ public class InspectorFrame extends MMFrame implements Inspector {
             // one is now on top.
             return;
          }
-         if (display_ == event.getDisplay()) {
+         if (display_ == newDisplay) {
             // We're already keyed to this display, so do nothing.
             return;
          }
-         setDisplay(event.getDisplay());
+         setDisplay(newDisplay);
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Error on new display activation");
