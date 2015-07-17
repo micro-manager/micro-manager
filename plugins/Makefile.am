@@ -12,7 +12,6 @@ nobase_mmplugin_DATA = \
 	Acquisition_Tools/PatternOverlay.jar \
 	Acquisition_Tools/SlideExplorer.jar \
 	Beta/CRISPv2.jar \
-	#Beta/SlideExplorer2.jar \
 	Big.jar \
 	Developer_Tools/ClojureEditor.jar \
 	Developer_Tools/SequenceBufferMonitor.jar \
@@ -20,7 +19,6 @@ nobase_mmplugin_DATA = \
 	Device_Control/CRISP.jar \
 	Device_Control/MultiCamera.jar \
 	Device_Control/Projector.jar \
-	Device_Control/StageControl.jar \
 	Device_Control/WhiteBalance.jar \
 	Device_Control/pgFocus.jar \
 	On-The-Fly_Processors/ImageFlipper.jar \
@@ -28,6 +26,8 @@ nobase_mmplugin_DATA = \
 	On-The-Fly_Processors/SplitView.jar \
 	PixelCalibrator.jar \
 	Recall.jar
+
+# Note: temporaripy removed in 2.x: Beta/SlideExplorer2.jar
 
 .PHONY: plugins.stamp
 
