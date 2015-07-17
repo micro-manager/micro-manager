@@ -40,6 +40,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
+import org.micromanager.data.Metadata;
 import org.micromanager.display.DisplayWindow;
 
 import org.micromanager.data.internal.NewImageEvent;
@@ -65,6 +66,7 @@ public class HyperstackControls extends JPanel {
    private JLabel pixelInfoLabel_;
    private JLabel fpsLabel_;
    private long msSinceLastFPSUpdate_ = 0;
+   private Image imageFromLastFPS_ = null;
    private int imagesReceived_ = 0;
    private int displayUpdates_ = 0;
    // Displays the countdown to the next frame.
@@ -197,13 +199,16 @@ public class HyperstackControls extends JPanel {
    }
 
    /**
-    * A new image has arrived; we track it so we can know the data FPS (the
+    * A new image has arrived; we may need to update our data FPS (
     * rate at which new images are being acquired).
     */
    @Subscribe
    public void onNewImage(NewImageEvent event) {
+      if (imageFromLastFPS_ == null) {
+         imageFromLastFPS_ = event.getImage();
+      }
       imagesReceived_++;
-      updateFPS();
+      updateFPS(event.getImage());
    }
 
    /**
@@ -219,38 +224,50 @@ public class HyperstackControls extends JPanel {
          setPixelInfo(mouseX_, mouseY_);
       }
       displayUpdates_++;
-      updateFPS();
+      updateFPS(image);
    }
 
    /**
-    * Update the FPS display label.
+    * Update the FPS display label. We use sequence number and elapsedTimeMs
+    * when they're available, and otherwise just the number of images added to
+    * the datastore and the system time change.
     */
-   public void updateFPS() {
+   public void updateFPS(Image newImage) {
       if (System.currentTimeMillis() - msSinceLastFPSUpdate_ < 500) {
          // Too soon since the last FPS update.
          return;
       }
       // Default to assuming we'll be blanking the label.
       String newLabel = "";
-      if (msSinceLastFPSUpdate_ != 0) {
-         double deltaSec = (System.currentTimeMillis() - msSinceLastFPSUpdate_) / 1000.0;
-         if (imagesReceived_ != 0) {
-            // Show both data FPS (number of new images) and display FPS
-            // (rate at which display updates).
-            newLabel = String.format("FPS: %.1f (display %.1f)",
-                  imagesReceived_ / deltaSec, displayUpdates_ / deltaSec);
-         }
-         else if (displayUpdates_ != 0) {
-            // Show just the display FPS.
-            newLabel = String.format("Display FPS: %.1f",
-                  displayUpdates_ / deltaSec);
-         }
+      double deltaSec = (System.currentTimeMillis() - msSinceLastFPSUpdate_) / 1000.0;
+      Metadata newMetadata = newImage.getMetadata();
+      Metadata oldMetadata = imageFromLastFPS_.getMetadata();
+      if (newMetadata.getElapsedTimeMs() != null &&
+            oldMetadata.getElapsedTimeMs() != null) {
+         deltaSec = (newMetadata.getElapsedTimeMs() - oldMetadata.getElapsedTimeMs()) / 1000.0;
+      }
+      long elapsedImages = imagesReceived_;
+      if (newMetadata.getImageNumber() != null &&
+            oldMetadata.getImageNumber() != null) {
+         elapsedImages = newMetadata.getImageNumber() - oldMetadata.getImageNumber();
+      }
+      if (elapsedImages != 0) {
+         // Show both data FPS (number of new images) and display FPS
+         // (rate at which display updates).
+         newLabel = String.format("FPS: %.1f (display %.1f)",
+               elapsedImages / deltaSec, displayUpdates_ / deltaSec);
+      }
+      else if (displayUpdates_ != 0) {
+         // Show just the display FPS.
+         newLabel = String.format("Display FPS: %.1f",
+               displayUpdates_ / deltaSec);
       }
       fpsLabel_.setText(newLabel);
       validate();
       msSinceLastFPSUpdate_ = System.currentTimeMillis();
       imagesReceived_ = 0;
       displayUpdates_ = 0;
+      imageFromLastFPS_ = newImage;
    }
 
    @Subscribe
