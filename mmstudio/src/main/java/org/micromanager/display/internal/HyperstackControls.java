@@ -30,12 +30,13 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.util.concurrent.TimeUnit;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import net.miginfocom.swing.MigLayout;
-
 
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
@@ -69,6 +70,7 @@ public class HyperstackControls extends JPanel {
    private Image imageFromLastFPS_ = null;
    private int imagesReceived_ = 0;
    private int displayUpdates_ = 0;
+   private Timer blankingTimer_ = null;
    // Displays the countdown to the next frame.
    private JLabel countdownLabel_;
    // Displays general status information.
@@ -204,9 +206,6 @@ public class HyperstackControls extends JPanel {
     */
    @Subscribe
    public void onNewImage(NewImageEvent event) {
-      if (imageFromLastFPS_ == null) {
-         imageFromLastFPS_ = event.getImage();
-      }
       imagesReceived_++;
       updateFPS(event.getImage());
    }
@@ -237,6 +236,18 @@ public class HyperstackControls extends JPanel {
          // Too soon since the last FPS update.
          return;
       }
+      if (blankingTimer_ == null) {
+         blankingTimer_ = new Timer();
+      }
+      if (imageFromLastFPS_ == null) {
+         imageFromLastFPS_ = newImage;
+         // Can't display any meaningful FPS yet.
+         return;
+      }
+
+      // Cancel the timer that will blank the FPS, as we have updated info.
+      blankingTimer_.cancel();
+
       // Default to assuming we'll be blanking the label.
       String newLabel = "";
       double deltaSec = (System.currentTimeMillis() - msSinceLastFPSUpdate_) / 1000.0;
@@ -268,6 +279,15 @@ public class HyperstackControls extends JPanel {
       imagesReceived_ = 0;
       displayUpdates_ = 0;
       imageFromLastFPS_ = newImage;
+      // Set up a timer to blank the FPS after awhile (1s).
+      TimerTask blankingTask = new TimerTask() {
+         @Override
+         public void run() {
+            fpsLabel_.setText("");
+         }
+      };
+      blankingTimer_ = new Timer();
+      blankingTimer_.schedule(blankingTask, 1000);
    }
 
    @Subscribe
