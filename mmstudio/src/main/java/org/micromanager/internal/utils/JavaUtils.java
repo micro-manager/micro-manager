@@ -300,58 +300,6 @@ public class JavaUtils {
       }
    }
 
-   public static void writeTextFile(String filepath, String text) {
-      BufferedWriter writer = null;
-      try {
-         writer = new BufferedWriter(new FileWriter(filepath));
-         writer.write(text);
-      } catch (IOException ex) {
-         ReportingUtils.logError(ex);
-      } finally {
-         if (writer != null) {
-            try {
-               writer.close();
-            } catch (IOException ex) {
-               ReportingUtils.logError(ex);
-            }
-         }
-      }
-   }
-
-   static public String readTextFile(String filepath) {
-      File f = new File(filepath);
-      if (!f.exists()) {
-         return null;
-      }
-
-      StringBuilder contents = new StringBuilder();
-
-      try {
-         //use buffering, reading one line at a time
-         //FileReader always assumes default encoding is OK!
-         BufferedReader input = new BufferedReader(new FileReader(filepath));
-         try {
-            String line; //not declared within while loop
-             /*
-             * readLine is a bit quirky :
-             * it returns the content of a line MINUS the newline.
-             * it returns null only for the END of the stream.
-             * it returns an empty String if two newlines appear in a row.
-             */
-            while ((line = input.readLine()) != null) {
-               contents.append(line);
-               contents.append(System.getProperty("line.separator"));
-            }
-         } finally {
-            input.close();
-         }
-      } catch (IOException ex) {
-         ReportingUtils.logError(ex);
-      }
-
-      return contents.toString();
-   }
-
    /**
     * Find out how much unused memory (in bytes) is still available 
     * for the JVM to use.
@@ -407,35 +355,4 @@ public class JavaUtils {
       }
       System.err.println("End all stack traces. =============");
    }
-
-   /**
-    * Utility function that converts a double array to a Double array
-    * @param input double[] to be converted
-    * @return Double[]
-    */
-   public static Double[] doubleArrayToClass (double[] input)
-   {
-      Double[] newArray = new Double[input.length];
-      for (int i = 0; i < input.length; i++)
-      {
-         newArray[i] = input[i];
-      }
-      return newArray;
-   }
-   
-   /**
-    * Utility function that converts a Double array to a double array
-    * @param input Double[] to be converted
-    * @return double[]
-    */
-   public static double[] doubleArrayToPrimitive(Double[] input)
-   {
-      double[] newArray = new double[input.length];
-      for (int i = 0; i < input.length; i++)
-      {
-         newArray[i] = input[i];
-      }
-      return newArray;
-   }
-
 }
