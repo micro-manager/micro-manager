@@ -104,6 +104,9 @@ public class DaytimeNighttime {
    // Color of disabled text.
    private static HashMap<String, ColorUIResource> disabledTextColor_;
 
+   // Mode we were in before suspendToMode() was called.
+   private static String suspendedMode_ = null;
+
    static {
       // Possible: make UI to let user set these colors
       background_ = new HashMap<String, ColorUIResource>();
@@ -146,6 +149,16 @@ public class DaytimeNighttime {
    }
 
    public static void setMode(String mode) {
+      setMode(mode, true);
+   }
+
+   /**
+    * This version of the function allows us to specify whether or not the
+    * UI should be updated after changing modes. Not updating is only generally
+    * wanted in cases where a one-off component must be created that doesn't
+    * adhere to our custom look and feel; see suspendToMode() below.
+    */
+   private static void setMode(String mode, boolean shouldUpdateUI) {
       if (!(mode.contentEquals(CompatibilityInterface.DAY) ||
             mode.contentEquals(CompatibilityInterface.NIGHT))) {
          throw new IllegalArgumentException("Invalid background style \"" +
@@ -170,15 +183,42 @@ public class DaytimeNighttime {
       for (String key : DISABLED_TEXT_COLOR_KEYS) {
          UIManager.put(key + ".disabledText", disabledTextColor_.get(mode));
       }
-      SwingUtilities.invokeLater(new Runnable() {
-         @Override
-         public void run() {
-            // Update existing components.
-            for (Window w : Window.getWindows()) {
-               SwingUtilities.updateComponentTreeUI(w);
+      if (shouldUpdateUI) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               // Update existing components.
+               for (Window w : Window.getWindows()) {
+                  SwingUtilities.updateComponentTreeUI(w);
+               }
             }
-         }
-      });
+         });
+      }
+   }
+
+   /**
+    * If the specified mode is not currently active, then we switch to that
+    * mode without updating the UI. Useful if a component must be generated
+    * with a nonstandard look-and-feel.
+    */
+   public static void suspendToMode(String mode) {
+      suspendedMode_ = getBackgroundMode();
+      if (suspendedMode_.equals(mode)) {
+         // Already in the desired mode.
+         suspendedMode_ = null;
+         return;
+      }
+      setMode(mode, false);
+   }
+
+   /**
+    * Restores the mode that was active before suspendToMode was called.
+    */
+   public static void resume() {
+      if (suspendedMode_ != null) {
+         setMode(suspendedMode_, false);
+         suspendedMode_ = null;
+      }
    }
 
    /**

@@ -22,6 +22,8 @@ import java.awt.Window;
 import java.io.File;
 import javax.swing.JFileChooser;
 
+import org.micromanager.CompatibilityInterface;
+
 public class FileDialogs {
 
    public static class FileType {
@@ -134,6 +136,13 @@ public class FileDialogs {
          fd.dispose();
          
       } else {
+         // HACK: we have very limited control over how file choosers are
+         // rendered (they're highly platform-specific). Unfortunately on
+         // Windows our look-and-feel overrides make choosers look awful in
+         // the "night" UI. So we temporarily force the "Daytime" look and
+         // feel, without redrawing the entire program UI, just for as long as
+         // it takes us to create this chooser.
+         DaytimeNighttime.suspendToMode(CompatibilityInterface.DAY);
          JFileChooser fc = new JFileChooser();
          if (startFile != null) {
             if ((!load && suggestFileName) || startFile.isDirectory()) {
@@ -142,6 +151,7 @@ public class FileDialogs {
                fc.setSelectedFile(startFile.getParentFile());
             }
          }
+         DaytimeNighttime.resume();
          fc.setDialogTitle(title);
          if (selectDirectories) {
             fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
