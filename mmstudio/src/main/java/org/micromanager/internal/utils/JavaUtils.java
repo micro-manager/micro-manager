@@ -409,14 +409,14 @@ public class JavaUtils {
 
    public static String getApplicationDataPath() {
       if (isMac()) {
-         return System.getenv("HOME")+"/Library/Application Support/Micro-Manager/";
+         return System.getenv("HOME") + "/Library/Application Support/Micro-Manager/";
       }
       if (isWindows()) {
          String os = System.getProperty("os.name").toLowerCase();
          if (os.contains("xp")) {
-            return System.getenv("USERPROFILE") + "/Local Settings/Application Data/Micro-Manager/";
-         } else if ((os.contains("windows 7")) || (os.contains("windows vista"))) {
-            return System.getenv("USERPROFILE") + "/AppData/Local/Micro-Manager/";
+            return System.getenv("APPDATA") + "/Micro-Manager/";
+         } else { // Assume Vista or newer
+            return System.getenv("LOCALAPPDATA") + "/Micro-Manager/";
          }
       }
       if (isUnix()) {
