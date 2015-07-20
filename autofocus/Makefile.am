@@ -4,6 +4,7 @@ mmautofocus_DATA = \
 	MMAutofocus.jar \
 	MMAutofocusDuo.jar \
 	MMAutofocusTB.jar \
+	MMNullAutofocus.jar \
 	MMOughtaFocus.jar
 
 .PHONY: autofocus.stamp
