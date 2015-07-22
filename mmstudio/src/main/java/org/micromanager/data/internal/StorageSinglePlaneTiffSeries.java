@@ -185,9 +185,11 @@ public class StorageSinglePlaneTiffSeries implements Storage {
       }
 
       Coords coords = image.getCoords();
-      // TODO: is this in fact always the correct fileName? What if it isn't?
-      // See the above code that branches based on amLoading_.
-      coordsToFilename_.put(coords, fileName);
+      if (!coordsToFilename_.containsKey(coords)) {
+         // TODO: is this in fact always the correct fileName? What if it
+         // isn't?  See the above code that branches based on amLoading_.
+         coordsToFilename_.put(coords, fileName);
+      }
       // Update our tracking of the max index along each axis.
       for (String axis : coords.getAxes()) {
          if (coords.getIndex(axis) > maxIndices_.getIndex(axis)) {
@@ -641,10 +643,13 @@ public class StorageSinglePlaneTiffSeries implements Storage {
                }
                try {
                   // TODO: omitting pixel type information.
-                  // Reconstruct the filename from the coordinates.
-                  if (position.length() > 0) {
-                     // File is in a subdirectory.
+                  if (position.length() > 0 &&
+                        !(new File(dir_ + "/" + fileName).exists())) {
+                     // Assume file is in a subdirectory.
                      fileName = position + "/" + fileName;
+                  }
+                  if (!(new File(dir_ + "/" + fileName).exists())) {
+                     ReportingUtils.logError("For key " + key + " tried to find file at " + fileName + " but it did not exist");
                   }
                   // This will update our internal records without touching
                   // the disk, as amLoading_ is true.
