@@ -252,7 +252,12 @@ public class MetadataPanel extends InspectorPanel {
 
    @Subscribe
    public void onPixelsSet(PixelsSetEvent event) {
-      imageChangedUpdate(event.getImage());
+      try {
+         imageChangedUpdate(event.getImage());
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error updating displayed metadata");
+      }
    }
 
    @Override
