@@ -636,9 +636,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
             ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field userData: " + e);
          }
       }
-      else {
-         System.out.println("No user data available");
-      }
 
       return builder.build();
    }
