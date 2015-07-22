@@ -510,7 +510,10 @@ public class DefaultMetadata implements Metadata {
 
    @Override
    public Rectangle getROI() {
-      return new Rectangle(ROI_);
+      if (ROI_ != null) {
+         return new Rectangle(ROI_);
+      }
+      return null;
    }
 
    @Override
@@ -570,7 +573,9 @@ public class DefaultMetadata implements Metadata {
          MDUtils.setPixelTypeFromString(result, getPixelType());
          MDUtils.setPositionName(result, getPositionName());
          result.put("receivedTime", getReceivedTime());
-         MDUtils.setROI(result, getROI());
+         if (ROI_ != null) {
+            MDUtils.setROI(result, getROI());
+         }
          result.put("Source", getSource());
          result.put("startTimeMs", getStartTimeMs());
          MDUtils.setUUID(result, getUUID());
