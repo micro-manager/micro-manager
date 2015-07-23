@@ -786,6 +786,26 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       updateActualTimeLapseDurationLabel();
    }
    
+   private void updateCalibrationOffset(Sides side) {
+      try {
+         Devices.Keys galvo = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side);
+         Devices.Keys piezo = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side);
+         String sideString = MyStrings.PanelNames.SETUP.toString() + side.toString();
+         double rate = prefs_.getFloat(sideString, 
+                 Properties.Keys.PLUGIN_RATE_PIEZO_SHEET.toString(), (float) 0.0);
+         // bypass cached positions in positions_ in case they aren't current
+         double currentScanner = positions_.getUpdatedPosition(galvo,
+               Joystick.Directions.Y);
+         double currentPiezo = positions_.getUpdatedPosition(piezo);
+         float newOffset = (float) (currentPiezo - rate * currentScanner);
+         // TODO: get the correct value before writing it!
+         // prefs_.putFloat(MyStrings.PanelNames.SETUP.toString() + side.toString(), 
+         //   Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, newOffset);
+      } catch (Exception ex) {
+         MyDialogUtils.showError(ex);
+      }
+   }
+   
    public SliceTiming getSliceTiming() {
       return sliceTiming_;
    }
@@ -1818,8 +1838,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // Loop over all the times we trigger the controller's acquisition
             // For hardware-timed timepoints we only trigger the controller once
             long acqStart = System.currentTimeMillis();
+            
             for (int timePoint = 0; timePoint < nrFrames; timePoint++) {
-               
                // handle intervals between (software-timed) time points
                long acqNow = System.currentTimeMillis();
                long delay = acqStart + timePoint * timepointsIntervalMs - acqNow;
@@ -1845,21 +1865,25 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                           (timePoint % autofocusEachNFrames == 0 ) ) ) {
                      multiChannelPanel_.selectChannel(autofocusChannel);
                      if (twoSided) {
-                        double score = autofocus_.runFocus(this, Devices.Sides.A, false,
-                                sliceTiming_, false);
+                        double score = autofocus_.runFocus(this, Devices.Sides.A, true,
+                                sliceTiming_, false, false);
+                        updateCalibrationOffset(Devices.Sides.A);
+                        
                         // TODO: apply new slice setting!
                         score = autofocus_.runFocus(this, Devices.Sides.B, false,
-                                sliceTiming_, false);
+                                sliceTiming_, false, false);
+                        updateCalibrationOffset(Devices.Sides.B);
                      } else {
                         Sides side = Devices.Sides.B;
                         if (firstSideA) {
                            side = Devices.Sides.A;
                         }
                         double score = autofocus_.runFocus(this, side, false,
-                                sliceTiming_, false);
+                                sliceTiming_, false, false);
+                        updateCalibrationOffset(side);
                      }
                      // Restore settings of the controller
-                    controller_.prepareControllerForAquisition(acqSettings);
+                     controller_.prepareControllerForAquisition(acqSettings);
                   }
                }
 

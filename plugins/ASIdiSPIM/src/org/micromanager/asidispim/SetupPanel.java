@@ -246,7 +246,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          public void actionPerformed(ActionEvent e) {
             autofocus_.runFocus(setupPanel, side, true,
                     ASIdiSPIM.getFrame().getAcquisitionPanel().getSliceTiming(),
-                    true);
+                    true, true);
          }
       });
       calibrationPanel.add(tmp_but, "center, span 3, wrap");
@@ -381,7 +381,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          public void actionPerformed(ActionEvent e) {
             autofocus_.runFocus(setupPanel, side, true,
                     ASIdiSPIM.getFrame().getAcquisitionPanel().getSliceTiming(),
-                    true);
+                    true, true);
          }
       });
       slopeCalibrationPanel.add(tmp_but);

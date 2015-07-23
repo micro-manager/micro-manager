@@ -556,6 +556,7 @@ public class ControllerUtils {
     * @param numChannels
     * @param channels
     * @param channelGroup
+    * @param firstSideA
     * @return false if there is a fatal error, true if successful
     */
    public boolean setupHardwareChannelSwitching(

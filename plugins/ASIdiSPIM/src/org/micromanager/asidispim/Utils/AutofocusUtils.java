@@ -97,6 +97,7 @@ public class AutofocusUtils {
     * @param centerAtCurrentZ - whether to focus around the current position (true), or
     *                            around the imaging center set in the setup panel (false)
     * @param sliceTiming - Data structure with current device timing setting
+    * @param restoreCameraMode - After autofocus, set camera trigger back to internal or not
     * @param runAsynchronously - whether or not to run the function asynchronously
     * @return R-square for Gaussian fit to the focus data
     *
@@ -106,6 +107,7 @@ public class AutofocusUtils {
            final Devices.Sides side,
            final boolean centerAtCurrentZ,
            final SliceTiming sliceTiming,
+           final boolean restoreCameraMode,
            final boolean runAsynchronously) {
 
       class FocusWorker extends SwingWorker<Double, Object> {
@@ -151,9 +153,10 @@ public class AutofocusUtils {
 
             final int nrImages = props_.getPropValueInteger(
                     Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_AUTOFOCUS_NRIMAGES);
-            final boolean debug = prefs_.getBoolean(
-                    MyStrings.PanelNames.AUTOFOCUS.toString(),
-                    Properties.Keys.PLUGIN_AUTOFOCUS_DEBUG, false);
+            final boolean showImages = prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(),
+                    Properties.Keys.PLUGIN_AUTOFOCUS_SHOWIMAGES, false);
+            final boolean showPlot = prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(),
+                    Properties.Keys.PLUGIN_AUTOFOCUS_SHOWPLOT, false);
             final float piezoStepSize = props_.getPropValueFloat(Devices.Keys.PLUGIN,
                     Properties.Keys.PLUGIN_AUTOFOCUS_STEPSIZE);  // user specifies step size in um, we translate to galvo and move only galvo
             final float imagingCenter = prefs_.getFloat(
@@ -236,7 +239,7 @@ public class AutofocusUtils {
                }
                
                gui_.getMMCore().setCameraDevice(camera);
-               if (debug) {
+               if (showImages) {
                   if (gui_.acquisitionExists(acqName)) {
                      gui_.closeAcquisitionWindow(acqName);
                   }
@@ -304,14 +307,15 @@ public class AutofocusUtils {
                      imageStore[counter] = timg;
                      ReportingUtils.logDebugMessage("Autofocus, image: " + counter
                              + ", score: " + focusScores[counter]);
-                     if (debug) {
+                     
+                     double galvoPos = galvoStart + counter * galvoStepSize;
+                     scoresToPlot[0].add(galvoPos, focusScores[counter]);
+                     if (showImages) {
                         // we are using the slow way to insert images, should be OK
                         // as long as the circular buffer is big enough
-                        double galvoPos = galvoStart + counter * galvoStepSize;
                         timg.tags.put("SlicePosition", galvoPos);
                         timg.tags.put("ZPositionUm", piezoCenter);
                         gui_.addImageToAcquisition(acqName, 0, 0, counter, 0, timg);
-                        scoresToPlot[0].add(galvoPos, focusScores[counter]);
                      }
                      counter++;
                      if (counter >= nrImages) {
@@ -345,7 +349,7 @@ public class AutofocusUtils {
                
                // display the best scoring image in the debug stack if it exists
                // or if not then in the snap/live window if it exists
-               if (debug) {
+               if (showImages) {
                   // the following does not work.  Delete?
                   VirtualAcquisitionDisplay vad = gui_.getAcquisition(acqName).getAcquisitionWindow();
                   vad.setSliceIndex(highestIndex);
@@ -357,7 +361,7 @@ public class AutofocusUtils {
                   gui_.displayImage(imageStore[highestIndex]);
                }
                
-               if (debug) {
+               if (showPlot) {
                   PlotUtils plotter = new PlotUtils(prefs_, "AutofocusUtils");
                   boolean[] showSymbols = {true, false};
                   plotter.plotDataN("Focus curve", 
@@ -379,13 +383,14 @@ public class AutofocusUtils {
 
                   gui_.getMMCore().stopSequenceAcquisition(camera);
                   gui_.getMMCore().setCameraDevice(originalCamera);
-                  if (debug) {
+                  if (showImages) {
                      gui_.promptToSaveAcquisition(acqName, false);
                   }
 
                   controller_.cleanUpControllerAfterAcquisition(1, side.toString(), false);
 
-                  cameras_.setSPIMCamerasForAcquisition(false);
+                  if (restoreCameraMode)
+                     cameras_.setSPIMCamerasForAcquisition(false);
 
                   // move piezo back to original position if needed
                   if (!centerAtCurrentZ) {

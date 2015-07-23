@@ -84,10 +84,15 @@ public class AutofocusPanel extends ListeningJPanel{
             "[]8[]"));
       optionsPanel_.setBorder(PanelUtils.makeTitledBorder("Autofocus Options"));
       
-      // debug checkbox
-      final JCheckBox debugCheckBox = pu.makeCheckBox("Show images",
-              Properties.Keys.PLUGIN_AUTOFOCUS_DEBUG, panelName_, false);     
-      optionsPanel_.add(debugCheckBox, "center, span 2, wrap");
+      // show images checkbox
+      final JCheckBox showImagesCheckBox = pu.makeCheckBox("Show images",
+              Properties.Keys.PLUGIN_AUTOFOCUS_SHOWIMAGES, panelName_, false);     
+      optionsPanel_.add(showImagesCheckBox, "left, span 2, wrap");
+      
+      // show plot checkbox
+      final JCheckBox showPlotCheckBox = pu.makeCheckBox("Show plot",
+              Properties.Keys.PLUGIN_AUTOFOCUS_SHOWPLOT, panelName_, false);     
+      optionsPanel_.add(showPlotCheckBox, "left, span 2, wrap");
  
       // spinner with number of images:
       optionsPanel_.add(new JLabel("Number of Images:"));
