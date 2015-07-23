@@ -185,8 +185,10 @@ public class AutofocusUtils {
             final double originalGalvoPosition = positions_.getUpdatedPosition(galvoDevice);
             final double piezoCenter = centerAtCurrentZ ? originalPiezoPosition : imagingCenter;
             
+            double piezoPosition = originalPiezoPosition;
             if (!centerAtCurrentZ) {
                positions_.setPosition(piezoDevice, piezoCenter);
+               piezoPosition = piezoCenter;
             }
           
             posUpdater_.pauseUpdates(true);
@@ -359,7 +361,7 @@ public class AutofocusUtils {
                double[] fitParms = Fitter.fit(scoresToPlot[0], function, null);
                bestGalvoPosition = Fitter.getXofMaxY(scoresToPlot[0], function, fitParms);
                // TODO: Check this is right!
-               bestGalvoOffset = originalPiezoPosition - galvoRate * bestGalvoPosition;
+               bestGalvoOffset = piezoPosition - galvoRate * bestGalvoPosition;
 
                highestIndex = Fitter.getIndex(scoresToPlot[0], bestGalvoPosition);
                scoresToPlot[1] = Fitter.getFittedSeries(scoresToPlot[0], 

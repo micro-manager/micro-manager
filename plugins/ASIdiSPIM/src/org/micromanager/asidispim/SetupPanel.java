@@ -655,6 +655,14 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          MyDialogUtils.showError(ex);
       }
    }
+
+   /**
+    * Give autofocus and acquisition the opportunity to update the offset
+    * @param newValue - new value for the piezo/slice calibration offset
+    */
+   public void updateCalibrationOffset(double newValue) {
+      offsetField_.setValue(newValue);
+   }
    
    /**
     * Performs "2-point" calibration updating the offset and slope.

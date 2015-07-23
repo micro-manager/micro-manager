@@ -18,6 +18,7 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.asidispim;
 
 
@@ -792,8 +793,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          final float minimumRSquare =  props_.getPropValueFloat(Devices.Keys.PLUGIN,
                      Properties.Keys.PLUGIN_AUTOFOCUS_MINIMUMR2, null);
          if (score.getR2() > minimumRSquare) {
-            prefs_.putFloat(MyStrings.PanelNames.SETUP.toString() + side.toString(),
-                    Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, (float) score.getGalvoBestOffset());
+             ASIdiSPIM.getFrame().getSetupPanel(side).updateCalibrationOffset(score.getGalvoBestOffset());
          }
       } catch (Exception ex) {
          MyDialogUtils.showError(ex);
