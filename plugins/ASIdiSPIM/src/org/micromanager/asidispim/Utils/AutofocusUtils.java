@@ -84,6 +84,19 @@ public class AutofocusUtils {
       controller_ = controller;
    }
 
+   public class FocusResult {
+      private final double r2_;
+      private final double galvoBestOffset_;
+      
+      public FocusResult(double r2, double offset) {
+         r2_ = r2;
+         galvoBestOffset_ = offset;
+      }
+      
+      public double getR2() { return r2_;}
+      public double getGalvoBestOffset() { return galvoBestOffset_; }
+   }
+   
    /**
     * Acquires image stack by scanning the mirror, calculates focus scores
     * Acquires around the current piezo position. As a side effect, will
@@ -102,7 +115,7 @@ public class AutofocusUtils {
     * @return R-square for Gaussian fit to the focus data
     *
     */
-   public double runFocus(
+   public FocusResult runFocus(
            final ListeningJPanel caller,
            final Devices.Sides side,
            final boolean centerAtCurrentZ,
@@ -110,18 +123,22 @@ public class AutofocusUtils {
            final boolean restoreCameraMode,
            final boolean runAsynchronously) {
 
-      class FocusWorker extends SwingWorker<Double, Object> {
+      class FocusWorker extends SwingWorker<FocusResult, Object> {
 
          @Override
-         protected Double doInBackground() throws Exception {
+         protected FocusResult doInBackground() throws Exception {
 
             double bestGalvoPosition = 0;
             
+            // Score indicating goodness of the fit
             double r2 = 0;
+            double bestGalvoOffset = 0;
 
             if (gui_.getAutofocus() == null) {
                throw new ASIdiSPIMException("Please define an autofocus methods first");
             }
+            // make sure that the currently selected MM autofocus device uses the 
+            // settings in its dialog
             gui_.getAutofocus().applySettings();
             
             // if the Snap/Live window has an ROI set, we will use the same 
@@ -255,7 +272,6 @@ public class AutofocusUtils {
                gui_.getMMCore().initializeCircularBuffer();
                cameras_.setSPIMCamerasForAcquisition(true);
                gui_.getMMCore().setExposure((double) sliceTiming.cameraExposure);
-
                gui_.getMMCore().startSequenceAcquisition(camera, nrImages, 0, true);
 
                boolean success = controller_.triggerControllerStartAcquisition(
@@ -342,6 +358,9 @@ public class AutofocusUtils {
                // limit the best position to the range of galvo range we used
                double[] fitParms = Fitter.fit(scoresToPlot[0], function, null);
                bestGalvoPosition = Fitter.getXofMaxY(scoresToPlot[0], function, fitParms);
+               // TODO: Check this is right!
+               bestGalvoOffset = originalPiezoPosition - galvoRate * bestGalvoPosition;
+
                highestIndex = Fitter.getIndex(scoresToPlot[0], bestGalvoPosition);
                scoresToPlot[1] = Fitter.getFittedSeries(scoresToPlot[0], 
                        function, fitParms);
@@ -421,7 +440,7 @@ public class AutofocusUtils {
                   throw new ASIdiSPIMException(ex, "Error while restoring hardware state after autofocus.");
                }
             }
-            return r2;
+            return new FocusResult(r2, bestGalvoOffset);
          }
 
          @Override
@@ -443,7 +462,7 @@ public class AutofocusUtils {
          FocusWorker fw = new FocusWorker();
          fw.execute();
          try {
-            double result = fw.get();
+            FocusResult result = fw.get();
             return result;
          } catch (InterruptedException ex) {
             MyDialogUtils.showError(ex);
@@ -453,7 +472,7 @@ public class AutofocusUtils {
       }
       
       // we can only return a bogus score 
-      return 0;
+      return new FocusResult(0.0, 0.0);
    }
 
    public static ImageProcessor makeProcessor(TaggedImage taggedImage)

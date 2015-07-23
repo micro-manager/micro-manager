@@ -786,21 +786,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       updateActualTimeLapseDurationLabel();
    }
    
-   private void updateCalibrationOffset(Sides side) {
+   private void updateCalibrationOffset(final Sides side, 
+           final AutofocusUtils.FocusResult score) {
       try {
-         Devices.Keys galvo = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side);
-         Devices.Keys piezo = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side);
-         String sideString = MyStrings.PanelNames.SETUP.toString() + side.toString();
-         double rate = prefs_.getFloat(sideString, 
-                 Properties.Keys.PLUGIN_RATE_PIEZO_SHEET.toString(), (float) 0.0);
-         // bypass cached positions in positions_ in case they aren't current
-         double currentScanner = positions_.getUpdatedPosition(galvo,
-               Joystick.Directions.Y);
-         double currentPiezo = positions_.getUpdatedPosition(piezo);
-         float newOffset = (float) (currentPiezo - rate * currentScanner);
-         // TODO: get the correct value before writing it!
-         // prefs_.putFloat(MyStrings.PanelNames.SETUP.toString() + side.toString(), 
-         //   Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, newOffset);
+         final float minimumRSquare =  props_.getPropValueFloat(Devices.Keys.PLUGIN,
+                     Properties.Keys.PLUGIN_AUTOFOCUS_MINIMUMR2, null);
+         if (score.getR2() > minimumRSquare) {
+            prefs_.putFloat(MyStrings.PanelNames.SETUP.toString() + side.toString(),
+                    Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, (float) score.getGalvoBestOffset());
+         }
       } catch (Exception ex) {
          MyDialogUtils.showError(ex);
       }
@@ -1865,22 +1859,21 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                           (timePoint % autofocusEachNFrames == 0 ) ) ) {
                      multiChannelPanel_.selectChannel(autofocusChannel);
                      if (twoSided) {
-                        double score = autofocus_.runFocus(this, Devices.Sides.A, true,
+                        AutofocusUtils.FocusResult score = autofocus_.runFocus(
+                                this, Devices.Sides.A, true,
                                 sliceTiming_, false, false);
-                        updateCalibrationOffset(Devices.Sides.A);
-                        
-                        // TODO: apply new slice setting!
+                        updateCalibrationOffset(Devices.Sides.A, score);
                         score = autofocus_.runFocus(this, Devices.Sides.B, false,
                                 sliceTiming_, false, false);
-                        updateCalibrationOffset(Devices.Sides.B);
+                        updateCalibrationOffset(Devices.Sides.B, score);
                      } else {
                         Sides side = Devices.Sides.B;
                         if (firstSideA) {
                            side = Devices.Sides.A;
                         }
-                        double score = autofocus_.runFocus(this, side, false,
+                        AutofocusUtils.FocusResult score = autofocus_.runFocus(this, side, false,
                                 sliceTiming_, false, false);
-                        updateCalibrationOffset(side);
+                        updateCalibrationOffset(side, score);
                      }
                      // Restore settings of the controller
                      controller_.prepareControllerForAquisition(acqSettings);
