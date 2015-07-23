@@ -71,6 +71,7 @@ import org.micromanager.utils.MMFrame;
 //TODO save/load plugin settings from file instead of from registry (nice to also include controller settings)
 //TODO improve efficiency of camera code by pre-calculating key factors and updating when needed instead of calculating every time
 //TODO add check for correct Hamamatsu model
+//TODO execute autofocus during acquisition before the desired time point is reached instead of waiting until a timepoint should be collected
 
 
 /**

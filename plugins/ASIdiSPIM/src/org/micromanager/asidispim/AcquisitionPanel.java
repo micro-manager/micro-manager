@@ -1595,7 +1595,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // experimentally need ~0.5 sec to set up acquisition, this gives a bit of cushion
       boolean hardwareTimepoints = false;
       if (timepointsIntervalMs < (volumeDuration + 750)
-            && getNumTimePoints() > 1) {
+            && getNumTimePoints() > 1  && !isStageScanning() ) {
          hardwareTimepoints = true;
       }
       
