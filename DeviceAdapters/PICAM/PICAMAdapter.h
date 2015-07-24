@@ -399,7 +399,6 @@ class Universal : public CCameraBase<Universal>
       int ClearROI();
       int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize);
       int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize);
-      int AddFrame(unsigned char* frame);
 
       struct {
          bool bOverruned;

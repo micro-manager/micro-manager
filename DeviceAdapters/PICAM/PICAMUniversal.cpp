@@ -52,6 +52,8 @@
 #include <pvcam/pvcam.h>
 #endif
 
+#include <boost/lexical_cast.hpp>
+
 #include <string>
 #include <sstream>
 #include <iomanip>
@@ -1547,19 +1549,17 @@ int Universal::SnapImage()
    if(!singleFrameModeReady_)
    {
       g_picamLock.Lock();
+      LogMessage("Will stop any running acquisition", true);
       Picam_StopAcquisition(hPICAM_);
+      LogMessage("Did stop any running acquisition", true);
       g_picamLock.Unlock();
 
-      MM::MMTime mid = GetCurrentMMTime();
-      LogTimeDiff(start, mid, "Exposure took 1: ", true);
-
+      LogMessage("Will resize image buffer", true);
       nRet = ResizeImageBufferSingle();
       if (nRet != DEVICE_OK)
          return LogMMError(nRet, __LINE__);
+      LogMessage("Did resize image buffer", true);
       singleFrameModeReady_ = true;
-
-      mid = GetCurrentMMTime();
-      LogTimeDiff(start, mid, "Exposure took 2: ", true);
    }
 
    if (!InitializeCalculatedBufferSize())
@@ -1567,7 +1567,6 @@ int Universal::SnapImage()
       snappingSingleFrame_ = false;
       singleFrameModeReady_ = false;
       LogCamError( __LINE__, "Set Circular buffer error" );
-
    }
 
    // Reset event handle
@@ -1578,19 +1577,19 @@ int Universal::SnapImage()
    curImageCnt_ = 0;
 
 
+   double maxReadTimeSec =
+      ((double)camCurrentSpeed_.pixTime * GetImageHeight() * GetImageWidth()) / 1000000000.0;
+   double timeoutSec =
+      triggerTimeout_ + maxReadTimeSec + (2 * GetExposure() * 0.001);
+   piint timeout_ms = (piint)(timeoutSec * 1000 + 0.5);
+   timeout_ms += 10000; // extra, just in case
+
    g_picamLock.Lock();
-   double maxReadTimeSec = (double)(camCurrentSpeed_.pixTime * GetImageHeight() * GetImageWidth()) / 1000000000.0f;
-   // make the time out 2 seconds plus twice the exposure
-   // Added readout time, this caused troubles on very low readout speeds and large buffers, this code timeouted before the image was read out
-   MM::MMTime timeout((long)(triggerTimeout_ + maxReadTimeSec + 2*GetExposure() * 0.001), (long)(2*GetExposure() * 1000+ maxReadTimeSec));
-   piint timeout_ms=(piint)((double)timeout.getMsec()+0.5);
-
-
-
-   MM::MMTime end = GetCurrentMMTime();
 
    /* Number of frames */
-   Picam_SetParameterLargeIntegerValue( hPICAM_, PicamParameter_ReadoutCount, 0);//numImages );
+   // 0 = acquire indefinitely (we let acquisition run until we see a frame; I
+   // don't know if this is necessary...)
+   Picam_SetParameterLargeIntegerValue(hPICAM_, PicamParameter_ReadoutCount, 0);
 
    const PicamParameter* failed_parameters;
    piint failed_parameters_count;
@@ -1600,36 +1599,45 @@ int Universal::SnapImage()
          &failed_parameters_count );
    Picam_DestroyParameters( failed_parameters );
 
-   nRet=DEVICE_ERR;
+   nRet = DEVICE_ERR;
 
-   if (PicamError_None== Picam_StartAcquisition( hPICAM_ ))
+   LogMessage("Starting acquisition", true);
+   if (PicamError_None == Picam_StartAcquisition(hPICAM_))
    {
-      if (WAIT_OBJECT_0==WaitForSingleObject( hDataUpdatedEvent_, timeout_ms+10000))
+      LogMessage(("Waiting for acquisition with timeout " +
+            boost::lexical_cast<std::string>(timeout_ms) +
+            " ms").c_str(), true);
+      if (WAIT_OBJECT_0 == WaitForSingleObject(hDataUpdatedEvent_, timeout_ms))
       {
+         LogMessage("Wait finished", true);
          // maybe acquired!
-         // numImages_=1
-         if (curImageCnt_>0)
-            nRet=DEVICE_OK;
+         if (curImageCnt_ > 0)
+         {
+            LogMessage("Received image", true);
+            nRet = DEVICE_OK;
+         }
+         else
+         {
+            LogMessage("No image received", true);
+         }
       }
-      else{
-         // Timed out
+      else
+      {
+         LogMessage("Wait timed out", true);
          snappingSingleFrame_ = false;
          singleFrameModeReady_ = false;
-         LogCamError( __LINE__, "Picam_StartAcquisition timed out" );
-
       }
+      LogMessage("Stopping acquisition", true);
       Picam_StopAcquisition(hPICAM_);
+      LogMessage("Stopped acquisition", true);
    }
-   else{
+   else
+   {
+      LogMessage("Failed to start acquisition");
       snappingSingleFrame_ = false;
       singleFrameModeReady_ = false;
-
    }
    g_picamLock.Unlock();
-
-   end = GetCurrentMMTime();
-
-   LogTimeDiff(start, end, "Exposure took 4: ", true);
 
    return nRet;
 }
@@ -2529,6 +2537,8 @@ int Universal::PushImage(const unsigned char* pixBuffer, Metadata* pMd )
 
 piint Universal::LogCamError(int lineNr, std::string message, bool debug) throw()
 {
+   LogMessage((message + " (line " +
+            boost::lexical_cast<std::string>(lineNr) + ")").c_str(), debug);
    return 0;
 }
 
@@ -2608,16 +2618,3 @@ int Universal::OnPostProcProperties(MM::PropertyBase* pProp, MM::ActionType eAct
 }
 
 #endif // WIN32
-
-int Universal::AddFrame(unsigned char* frame)
-{
-   Metadata md;
-
-   curImageCnt_++; // A new frame has been successfully retrieved from the camera
-   BuildMetadata( md );
-
-   PushImage( (unsigned char*)frame, &md );
-
-   return DEVICE_OK;
-}
-//===========================================================================
