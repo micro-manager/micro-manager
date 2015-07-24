@@ -213,14 +213,9 @@ Universal::Universal(short cameraId, const char* name) :
 
 Universal::~Universal()
 {
-   if (--refCount_ <= 0)
-   {
-      refCount_ = 0; // having the refCount as uint caused underflow and incorrect behavior in Shutdown()
-      // release resources
-      if (initialized_)
-         Shutdown();
-      delete[] circBuffer_;
-   }
+   if (initialized_)
+      Shutdown();
+   delete[] circBuffer_;
    if (!uniAcqThd_->getStop()) {
       uniAcqThd_->setStop(true);
       uniAcqThd_->wait();
@@ -429,14 +424,23 @@ int Universal::Initialize()
    nRet = CreateProperty(MM::g_Keyword_Description, "PICAM API device adapter", MM::String, true);
    assert(nRet == DEVICE_OK);
 
-   if (Picam_InitializeLibrary()==PicamError_None)
+   if (refCount_ <= 0)
    {
-      LogCamError(__LINE__, "First PICAM init failed");
-      // Try once more:
-      Picam_UninitializeLibrary();
-      if (Picam_InitializeLibrary()!=PicamError_None)
-         return LogCamError(__LINE__, "Second PICAM init failed");
+      if (Picam_InitializeLibrary() != PicamError_None)
+      {
+         LogCamError(__LINE__, "First PICAM init failed");
+         // PICam should not be initialized, but maybe it is. Try again.
+         if (!Picam_UninitializeLibrary() != PicamError_None)
+         {
+            return LogCamError(__LINE__, "PICAM init failed and cannot uninit either");
+         }
+         if (Picam_InitializeLibrary() != PicamError_None)
+         {
+            return LogCamError(__LINE__, "Second PICAM init failed");
+         }
+      }
       PICAM_initialized_ = true;
+      refCount_ = 1;
    }
 
    // gather information about the camera
@@ -502,8 +506,6 @@ int Universal::Initialize()
    Picam_GetEnumerationString( PicamEnumeratedType_Model, CameraInfo_.model, &model_string);
    sprintf_s(camName_, sizeof(camName_), "%s", model_string);
    Picam_DestroyString( model_string );
-
-   refCount_++;
 
    /// --- BUILD THE SPEED TABLE
    LogMessage( "Building Speed Table" );
@@ -788,8 +790,8 @@ int Universal::Shutdown()
 
       // Close Device
       PicamAdvanced_CloseCameraDevice( hPICAM_ );
-      refCount_--;
-      if (PICAM_initialized_ && refCount_ <= 0)
+
+      if (PICAM_initialized_ && --refCount_ <= 0)
       {
          refCount_ = 0;
          if (!Picam_UninitializeLibrary()){

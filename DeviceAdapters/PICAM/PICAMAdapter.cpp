@@ -78,6 +78,9 @@ MODULE_API void InitializeModuleData()
 
 
    /* Initialize PICAM */
+   // TODO Strictly speaking, the initialize/uninitialize here
+   // should take into account the reference count used by the
+   // camera device initialization.
    if (Picam_InitializeLibrary()==PicamError_None){
       Picam_GetAvailableCameraIDs( &camID, &numCamsAvailable );
 
