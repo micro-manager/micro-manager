@@ -79,6 +79,53 @@ int  Universal::refCount_ = 0;
 bool Universal::PICAM_initialized_ = false;
 MMThreadLock g_picamLock;
 
+// We maintain a global map of PicamHandle to Universal*, so that we can obtain
+// the device instance in callback functions.
+// We use a pair of vectors instead of a map, because it is the most efficient
+// data structure to search when there are only a few elements.
+MMThreadLock g_handleMapLock;
+std::vector<PicamHandle> g_picamHandles;
+std::vector<Universal*> g_devicePointers;
+
+Universal* GetDevicePtrFromPicamHandle(PicamHandle hPICAM)
+{
+   MMThreadGuard g(g_handleMapLock);
+
+   std::vector<PicamHandle>::const_iterator
+         first = g_picamHandles.begin(),
+         last = g_picamHandles.end(),
+         found = std::find(first, last, hPICAM);
+   if (found == last)
+      return 0; // Programming error
+   return g_devicePointers[std::distance(first, found)];
+}
+
+void RegisterPicamHandle(PicamHandle hPICAM, Universal* pDevice)
+{
+   MMThreadGuard g(g_handleMapLock);
+
+   g_picamHandles.push_back(hPICAM);
+   g_devicePointers.push_back(pDevice);
+}
+
+void UnregisterPicamHandle(PicamHandle hPICAM)
+{
+   MMThreadGuard g(g_handleMapLock);
+
+   std::vector<PicamHandle>::const_iterator
+         first = g_picamHandles.begin(),
+         last = g_picamHandles.end(),
+         found = std::find(first, last, hPICAM);
+   if (found == last)
+      return;
+   g_picamHandles.erase(found, found + 1);
+   ptrdiff_t d = std::distance(first, found);
+   std::vector<Universal*>::const_iterator devFirst =
+         g_devicePointers.begin();
+   g_devicePointers.erase(devFirst + d, devFirst + d + 1);
+}
+
+
 // Maximum pixel time to be used in case we fail to get the PARAM_PIX_TIME from the camera.
 const int MAX_PIX_TIME = 500;
 // Circular buffer default values
@@ -156,7 +203,6 @@ ParamNameIdPair g_UniversalParams[] = {
 };
 const int g_UniversalParamsCount = sizeof(g_UniversalParams)/sizeof(ParamNameIdPair);
 
-Universal *gUniversal;
 
 ///////////////////////////////////////////////////////////////////////////////
 // &Universal constructor/destructor
@@ -260,7 +306,8 @@ PicamError GlobalAcquisitionUpdated(
       const PicamAvailableData* available,
       const PicamAcquisitionStatus* status )
 {
-   return gUniversal->AcquisitionUpdated( device, available,status );
+   return GetDevicePtrFromPicamHandle(device)->
+      AcquisitionUpdated( device, available,status );
 }
 
 PicamError Universal::AcquisitionUpdated(
@@ -502,6 +549,7 @@ int Universal::Initialize()
    // Open the camera
    if( PicamAdvanced_OpenCameraDevice( &CameraInfo_, &hPICAM_ )!= PicamError_None )
       return LogCamError(__LINE__, "Picam_OpenCamera" );
+   RegisterPicamHandle(hPICAM_, this);
 
    /* Set camName_*/
    const pichar* model_string;
@@ -769,7 +817,6 @@ int Universal::Initialize()
    hDataUpdatedEvent_ = CreateEvent( NULL, TRUE, FALSE, NULL );
 
    // Regist Update
-   gUniversal=this;
    PicamAdvanced_RegisterForAcquisitionUpdated(hPICAM_,  GlobalAcquisitionUpdated );
 
    initialized_ = true;
@@ -791,6 +838,7 @@ int Universal::Shutdown()
       PicamAdvanced_UnregisterForAcquisitionUpdated(hPICAM_,  GlobalAcquisitionUpdated );
 
       // Close Device
+      UnregisterPicamHandle(hPICAM_);
       PicamAdvanced_CloseCameraDevice( hPICAM_ );
 
       if (PICAM_initialized_ && --refCount_ <= 0)
