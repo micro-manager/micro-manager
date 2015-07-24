@@ -38,7 +38,7 @@
 #pragma warning(pop)
 #endif
 
-#include <functional>//mem_fn‚É•K—v
+#include <functional> // for mem_fn
 
 #ifdef linux
 #include <pvcam/master.h>

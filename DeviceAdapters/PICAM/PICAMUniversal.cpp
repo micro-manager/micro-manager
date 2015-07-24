@@ -255,8 +255,8 @@ Universal::~Universal()
 }
 
 ///////////////////////////////////////////////////////
-// Picam_StartAcquisition発令後、Callbackされる関数
-// hDataUpdatedEvent_をセットして、測定がされた事を告げる
+// This gets called back after issuing Picam_StartAcquisition.
+// Set hDataUpdatedEvent_ to notify that acquisition has occurred.
 ///////////////////////////////////////////////////////
 PicamError GlobalAcquisitionUpdated(
       PicamHandle device,
@@ -396,7 +396,7 @@ bool Universal::InitializeCalculatedBufferSize()
    buffer.memory = circBuffer_;
    buffer.memory_size = circBufferSize_;
 
-   // User Bufferを設定しないと、動作できなかった。
+   // Could not get to work without setting user buffer
    PicamAdvanced_SetAcquisitionBuffer( hPICAM_, &buffer );
 
    Picam_GetParameterIntegerValue(hPICAM_,  PicamParameter_ReadoutStride,    &readoutStride_ );
@@ -853,7 +853,7 @@ int Universal::initializeStaticCameraParams()
    // Camera CCD size
    const PicamRoisConstraint  *constraint; /* Constraints */
 
-   /* イメージサイズを取得しておく
+   /* Obtain the image size */
    /* Variables to compute central region in image */
    PicamError err; /* Error Code */
 
@@ -1285,7 +1285,8 @@ int Universal::OnMultiplierGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    START_ONPROPERTY("Universal::OnMultiplierGain", eAct);
 
-   // 多分Picam_SetParameterIntegerValueOnlineが使えるので、PvParamを改造すべし
+   // Picam_SetParameterIntegerValueOnline can probably be used, so PvParam
+   // should be extended
 
    if (eAct == MM::AfterSet)
    {
@@ -2041,7 +2042,7 @@ int Universal::ResizeImageBufferContinuous()
       /* Set Exposure time */
       Picam_SetParameterFloatingPointValue(
             hPICAM_,
-            PicamParameter_ExposureTime, // msec単位で設定する
+            PicamParameter_ExposureTime, // msec units
             pvExposure );
 
       /* Set ROIs */
@@ -2130,7 +2131,7 @@ int Universal::ResizeImageBufferSingle()
       /* Set Exposure time */
       Picam_SetParameterFloatingPointValue(
             hPICAM_,
-            PicamParameter_ExposureTime, // msec単位で設定する
+            PicamParameter_ExposureTime, // msec units
             pvExposure );
 
       /* Set ROIs */
