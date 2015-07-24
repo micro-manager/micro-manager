@@ -4,7 +4,7 @@
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   PICAM camera module
-//                
+//
 // AUTHOR:        Toshio Suzuki
 //
 // PORTED from    PVCAMAdapter.cpp
@@ -69,73 +69,73 @@ const char* g_ReadoutPort_HighCap = "HighCap";
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-	piint demoList[] = { PicamModel_Pixis1024B, PicamModel_Nirvana640, PicamModel_ProEM1024B, PicamModel_Pylonir102417  };
-	const pichar *sn[] = { "1000000001", "1000000002", "1000000003" , "1000000004" };
-    piint numCamsAvailable = 0;
-    const PicamCameraID *camID;
-	piint numDemos = 0;
-    PicamCameraID *demoID = NULL;
+   piint demoList[] = { PicamModel_Pixis1024B, PicamModel_Nirvana640, PicamModel_ProEM1024B, PicamModel_Pylonir102417  };
+   const pichar *sn[] = { "1000000001", "1000000002", "1000000003" , "1000000004" };
+   piint numCamsAvailable = 0;
+   const PicamCameraID *camID;
+   piint numDemos = 0;
+   PicamCameraID *demoID = NULL;
 
 
    /*	Initialize PICAM */
-	if (Picam_InitializeLibrary()==PicamError_None){
-		Picam_GetAvailableCameraIDs( &camID, &numCamsAvailable );
+   if (Picam_InitializeLibrary()==PicamError_None){
+      Picam_GetAvailableCameraIDs( &camID, &numCamsAvailable );
 
-		//	Add demo Camera
-		if( numCamsAvailable < MIN_CAMERAS )
-		{
-			numDemos = MIN_CAMERAS - numCamsAvailable;
-			demoID = (PicamCameraID*) malloc( sizeof( PicamCameraID ) * numDemos );
-		}
-		piint count = 0;
-		while( numCamsAvailable < MIN_CAMERAS )
-		{
-			//need a minimum of MIN_CAMERAS(2) for multi-camera example
-			Picam_ConnectDemoCamera( (PicamModel)demoList[count], sn[count], &demoID[count] );
-			++numCamsAvailable;
-			++count;
-		}
+      //	Add demo Camera
+      if( numCamsAvailable < MIN_CAMERAS )
+      {
+         numDemos = MIN_CAMERAS - numCamsAvailable;
+         demoID = (PicamCameraID*) malloc( sizeof( PicamCameraID ) * numDemos );
+      }
+      piint count = 0;
+      while( numCamsAvailable < MIN_CAMERAS )
+      {
+         //need a minimum of MIN_CAMERAS(2) for multi-camera example
+         Picam_ConnectDemoCamera( (PicamModel)demoList[count], sn[count], &demoID[count] );
+         ++numCamsAvailable;
+         ++count;
+      }
 
-		// may get 4 cameras
-		Picam_GetAvailableCameraIDs( &camID, &numCamsAvailable );
+      // may get 4 cameras
+      Picam_GetAvailableCameraIDs( &camID, &numCamsAvailable );
 
-	    const pichar* string;
+      const pichar* string;
 
-		Picam_GetEnumerationString( PicamEnumeratedType_Model, camID[0].model, &string );
-		RegisterDevice(string, MM::CameraDevice, camID[0].serial_number);
-		strcpy(g_DeviceName[0], string);
-	    Picam_DestroyString( string );
+      Picam_GetEnumerationString( PicamEnumeratedType_Model, camID[0].model, &string );
+      RegisterDevice(string, MM::CameraDevice, camID[0].serial_number);
+      strcpy(g_DeviceName[0], string);
+      Picam_DestroyString( string );
 
-		Picam_GetEnumerationString( PicamEnumeratedType_Model, camID[1].model, &string );
-		RegisterDevice(string, MM::CameraDevice, camID[1].serial_number);
-		strcpy(g_DeviceName[1], string);
-	    Picam_DestroyString( string );
+      Picam_GetEnumerationString( PicamEnumeratedType_Model, camID[1].model, &string );
+      RegisterDevice(string, MM::CameraDevice, camID[1].serial_number);
+      strcpy(g_DeviceName[1], string);
+      Picam_DestroyString( string );
 
 
-		Picam_GetEnumerationString( PicamEnumeratedType_Model, camID[2].model, &string );
-		RegisterDevice(string, MM::CameraDevice, camID[2].serial_number);
-		strcpy(g_DeviceName[2], string);
-	    Picam_DestroyString( string );
+      Picam_GetEnumerationString( PicamEnumeratedType_Model, camID[2].model, &string );
+      RegisterDevice(string, MM::CameraDevice, camID[2].serial_number);
+      strcpy(g_DeviceName[2], string);
+      Picam_DestroyString( string );
 
-		Picam_GetEnumerationString( PicamEnumeratedType_Model, camID[3].model, &string );
-		RegisterDevice(string, MM::CameraDevice, camID[3].serial_number);
-		strcpy(g_DeviceName[3], string);
-	    Picam_DestroyString( string );
+      Picam_GetEnumerationString( PicamEnumeratedType_Model, camID[3].model, &string );
+      RegisterDevice(string, MM::CameraDevice, camID[3].serial_number);
+      strcpy(g_DeviceName[3], string);
+      Picam_DestroyString( string );
 
-		Picam_DestroyCameraIDs( camID );
+      Picam_DestroyCameraIDs( camID );
 
-		Picam_UninitializeLibrary();
-	}
-	else{
-		strcpy(g_DeviceName[0], "Error1");
-		strcpy(g_DeviceName[1], "Error2");
-		strcpy(g_DeviceName[2], "Error3");
-		strcpy(g_DeviceName[3], "Error4");
-		RegisterDevice(g_DeviceName[0], MM::CameraDevice, "Universal PICAM interface - camera 1");
-		RegisterDevice(g_DeviceName[1], MM::CameraDevice, "Universal PICAM interface - camera 2");
-		RegisterDevice(g_DeviceName[2], MM::CameraDevice, "Universal PICAM interface - camera 3");
-		RegisterDevice(g_DeviceName[3], MM::CameraDevice, "Universal PICAM interface - camera 4");
-	}
+      Picam_UninitializeLibrary();
+   }
+   else{
+      strcpy(g_DeviceName[0], "Error1");
+      strcpy(g_DeviceName[1], "Error2");
+      strcpy(g_DeviceName[2], "Error3");
+      strcpy(g_DeviceName[3], "Error4");
+      RegisterDevice(g_DeviceName[0], MM::CameraDevice, "Universal PICAM interface - camera 1");
+      RegisterDevice(g_DeviceName[1], MM::CameraDevice, "Universal PICAM interface - camera 2");
+      RegisterDevice(g_DeviceName[2], MM::CameraDevice, "Universal PICAM interface - camera 3");
+      RegisterDevice(g_DeviceName[3], MM::CameraDevice, "Universal PICAM interface - camera 4");
+   }
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
