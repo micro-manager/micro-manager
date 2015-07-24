@@ -160,6 +160,8 @@ Universal *gUniversal;
 
 ///////////////////////////////////////////////////////////////////////////////
 // &Universal constructor/destructor
+// The name parameter is only used to return the device name. The physical
+// camera to use is determined by the cameraId parameter.
 Universal::Universal(short cameraId, const char* name) :
    CCameraBase<Universal> (),
    initialized_(false),

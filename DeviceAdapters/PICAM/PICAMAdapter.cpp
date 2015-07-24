@@ -43,6 +43,8 @@
 #ifdef linux
 #endif
 
+#include <boost/lexical_cast.hpp>
+
 #include <string>
 #include <sstream>
 #include <iomanip>
@@ -51,8 +53,12 @@
 using namespace std;
 
 // global constants
-#define MIN_CAMERAS 4
-char g_DeviceName[MIN_CAMERAS][128];
+#define NUM_CAMERA_IDS 4
+// Device names here are derived from the model name and serial number.
+char g_DeviceName[NUM_CAMERA_IDS][128];
+// Also support existing config files that use just the model name as device
+// name.
+char g_LegacyDeviceName[NUM_CAMERA_IDS][128];
 
 const char* g_ReadoutRate = "ReadoutRate";
 const char* g_ReadoutRate_Slow = "Slow";
@@ -85,15 +91,14 @@ MODULE_API void InitializeModuleData()
       Picam_GetAvailableCameraIDs( &camID, &numCamsAvailable );
 
       // Add demo Camera
-      if( numCamsAvailable < MIN_CAMERAS )
+      if( numCamsAvailable < NUM_CAMERA_IDS )
       {
-         numDemos = MIN_CAMERAS - numCamsAvailable;
+         numDemos = NUM_CAMERA_IDS - numCamsAvailable;
          demoID = (PicamCameraID*) malloc( sizeof( PicamCameraID ) * numDemos );
       }
       piint count = 0;
-      while( numCamsAvailable < MIN_CAMERAS )
+      while( numCamsAvailable < NUM_CAMERA_IDS )
       {
-         //need a minimum of MIN_CAMERAS(2) for multi-camera example
          Picam_ConnectDemoCamera( (PicamModel)demoList[count], sn[count], &demoID[count] );
          ++numCamsAvailable;
          ++count;
@@ -102,30 +107,21 @@ MODULE_API void InitializeModuleData()
       // may get 4 cameras
       Picam_GetAvailableCameraIDs( &camID, &numCamsAvailable );
 
-      const pichar* string;
+      const pichar* modelName;
 
-      Picam_GetEnumerationString( PicamEnumeratedType_Model, camID[0].model, &string );
-      RegisterDevice(string, MM::CameraDevice, camID[0].serial_number);
-      strcpy(g_DeviceName[0], string);
-      Picam_DestroyString( string );
+      for (int i = 0; i < NUM_CAMERA_IDS; ++i)
+      {
+         Picam_GetEnumerationString(PicamEnumeratedType_Model, camID[i].model, &modelName);
+         strcpy(g_DeviceName[i],
+               (modelName + std::string(" - ") + camID[i].serial_number).c_str());
+         strcpy(g_LegacyDeviceName[i], modelName);
+         Picam_DestroyString(modelName);
 
-      Picam_GetEnumerationString( PicamEnumeratedType_Model, camID[1].model, &string );
-      RegisterDevice(string, MM::CameraDevice, camID[1].serial_number);
-      strcpy(g_DeviceName[1], string);
-      Picam_DestroyString( string );
+         RegisterDevice(g_DeviceName[i], MM::CameraDevice,
+               ("PICam camera " + boost::lexical_cast<std::string>(i)).c_str());
+      }
 
-
-      Picam_GetEnumerationString( PicamEnumeratedType_Model, camID[2].model, &string );
-      RegisterDevice(string, MM::CameraDevice, camID[2].serial_number);
-      strcpy(g_DeviceName[2], string);
-      Picam_DestroyString( string );
-
-      Picam_GetEnumerationString( PicamEnumeratedType_Model, camID[3].model, &string );
-      RegisterDevice(string, MM::CameraDevice, camID[3].serial_number);
-      strcpy(g_DeviceName[3], string);
-      Picam_DestroyString( string );
-
-      Picam_DestroyCameraIDs( camID );
+      Picam_DestroyCameraIDs(camID);
 
       Picam_UninitializeLibrary();
    }
@@ -152,6 +148,11 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    for (short i = 0; i < 4; ++i)
    {
       if (strcmp(deviceName, g_DeviceName[i]) == 0)
+         return new Universal(i, deviceName);
+   }
+   for (short i = 0; i < 4; ++i)
+   {
+      if (strcmp(deviceName, g_LegacyDeviceName[i]) == 0)
          return new Universal(i, deviceName);
    }
    return 0;
