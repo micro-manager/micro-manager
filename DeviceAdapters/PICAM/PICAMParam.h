@@ -166,7 +166,7 @@ class PvParam : public PvParamBase
                mMin=static_cast<T>(capable->minimum);
                mMax=static_cast<T>(capable->maximum);
 
-               mCount=		capable->excluded_values_count;
+               mCount= capable->excluded_values_count;
                mIncrement=capable->increment;
 
                Picam_DestroyRangeConstraints(capable);
@@ -182,8 +182,8 @@ class PvParam : public PvParamBase
                mMin=static_cast<T>(collection->values_array[0]);
                mMax=static_cast<T>(collection->values_array[collection->values_count-1]);
 
-               mCount=		collection->values_count;
-               mIncrement=	1.0;
+               mCount = collection->values_count;
+               mIncrement = 1.0;
 
                Picam_DestroyCollectionConstraints(collection);
                break;
@@ -404,7 +404,7 @@ class PvEnumParam : public PvParam<piint>
 
                   enumVal=(piint)capable->values_array[i];
 
-                  //if (enumVal==mCurrent)		mCurrentIndex=i;
+                  //if (enumVal==mCurrent) mCurrentIndex=i;
 
                   Picam_GetEnumerationString( type, enumVal, &string );
 

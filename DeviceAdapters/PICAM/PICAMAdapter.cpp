@@ -51,7 +51,7 @@
 using namespace std;
 
 // global constants
-#define	MIN_CAMERAS	4
+#define MIN_CAMERAS 4
 char g_DeviceName[MIN_CAMERAS][128];
 
 const char* g_ReadoutRate = "ReadoutRate";
@@ -77,11 +77,11 @@ MODULE_API void InitializeModuleData()
    PicamCameraID *demoID = NULL;
 
 
-   /*	Initialize PICAM */
+   /* Initialize PICAM */
    if (Picam_InitializeLibrary()==PicamError_None){
       Picam_GetAvailableCameraIDs( &camID, &numCamsAvailable );
 
-      //	Add demo Camera
+      // Add demo Camera
       if( numCamsAvailable < MIN_CAMERAS )
       {
          numDemos = MIN_CAMERAS - numCamsAvailable;

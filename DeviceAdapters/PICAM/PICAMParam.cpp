@@ -341,7 +341,7 @@ int PvUniversalParam::plGetParam( PvUniversalParamValue& aValueOut )
    switch (mType)
    {
       case PicamValueType_Integer:
-         pvRet=Picam_GetParameterIntegerValue(	mCamera->Handle(), mId, &aValueOut.int32_val);
+         pvRet=Picam_GetParameterIntegerValue(mCamera->Handle(), mId, &aValueOut.int32_val);
          break;
       case PicamValueType_Enumeration:
          pvRet = Picam_GetParameterIntegerValue( mCamera->Handle(), mId,  &aValueOut.enum_val );

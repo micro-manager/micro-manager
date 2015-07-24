@@ -148,7 +148,7 @@ typedef struct
    piint gainMax;         // Max gain index for this speed
    piint spdIndex;        // Speed index
    piint portIndex;       // Port index
-   piflt adcRate;			//	MHz
+   piflt adcRate;         // MHz
    pibln bEnable;
    std::string spdString; // A string that describes this choice in GUI
 } SpdTabEntry;

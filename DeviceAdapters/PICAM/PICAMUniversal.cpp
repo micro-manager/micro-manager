@@ -135,22 +135,22 @@ ParamNameIdPair g_UniversalParams[] = {
    //   {"ClearCycles",        PARAM_CLEAR_CYCLES},       // UNS16
    //   {"PMode",              },              // ENUM
    //   {"ClearMode",          PARAM_CLEAR_MODE},         // ENUM
-   {"CleanUntilTrigger",	PicamParameter_CleanUntilTrigger},
-   {"CleanBeforeExposure",	PicamParameter_CleanBeforeExposure},
-   {"CleanSerialRegister",	PicamParameter_CleanSerialRegister},
-   {"CleanHeight",			PicamParameter_CleanSectionFinalHeight},
-   {"CleanHeightCount",	PicamParameter_CleanSectionFinalHeightCount},
-   {"CleanCycleCount",		PicamParameter_CleanCycleCount},
-   {"ShutterMode",        	PicamParameter_ShutterTimingMode}, // ENUM
-   {"ShutterOpenDelay",   	PicamParameter_ShutterOpeningDelay},    // floating (milliseconds)
-   {"ShutterCloseDelay",  	PicamParameter_ShutterClosingDelay},    // floating (milliseconds)
+   {"CleanUntilTrigger", PicamParameter_CleanUntilTrigger},
+   {"CleanBeforeExposure", PicamParameter_CleanBeforeExposure},
+   {"CleanSerialRegister", PicamParameter_CleanSerialRegister},
+   {"CleanHeight", PicamParameter_CleanSectionFinalHeight},
+   {"CleanHeightCount", PicamParameter_CleanSectionFinalHeightCount},
+   {"CleanCycleCount", PicamParameter_CleanCycleCount},
+   {"ShutterMode", PicamParameter_ShutterTimingMode}, // ENUM
+   {"ShutterOpenDelay", PicamParameter_ShutterOpeningDelay},    // floating (milliseconds)
+   {"ShutterCloseDelay", PicamParameter_ShutterClosingDelay},    // floating (milliseconds)
    {"TriggerDetermination",PicamParameter_TriggerDetermination},
-   {"DisableCoolingFan",  	PicamParameter_DisableCoolingFan },
-   {"ReadoutControl", 		PicamParameter_ReadoutControlMode},
-   {"CorrectPixelBias", 	PicamParameter_CorrectPixelBias},
-   {"OutputSignal",		PicamParameter_OutputSignal},
-   {"InvertOutputSignal",	PicamParameter_InvertOutputSignal},
-   {"EMIccdGain", 			PicamParameter_EMIccdGain},
+   {"DisableCoolingFan", PicamParameter_DisableCoolingFan },
+   {"ReadoutControl", PicamParameter_ReadoutControlMode},
+   {"CorrectPixelBias", PicamParameter_CorrectPixelBias},
+   {"OutputSignal", PicamParameter_OutputSignal},
+   {"InvertOutputSignal", PicamParameter_InvertOutputSignal},
+   {"EMIccdGain", PicamParameter_EMIccdGain},
 };
 const int g_UniversalParamsCount = sizeof(g_UniversalParams)/sizeof(ParamNameIdPair);
 
@@ -255,8 +255,8 @@ Universal::~Universal()
 }
 
 ///////////////////////////////////////////////////////
-//	Picam_StartAcquisition発令後、Callbackされる関数
-//	hDataUpdatedEvent_をセットして、測定がされた事を告げる
+// Picam_StartAcquisition発令後、Callbackされる関数
+// hDataUpdatedEvent_をセットして、測定がされた事を告げる
 ///////////////////////////////////////////////////////
 PicamError GlobalAcquisitionUpdated(
       PicamHandle device,
@@ -293,13 +293,13 @@ PicamError Universal::AcquisitionUpdated(
 
       if( error != PicamError_None )
       {
-         //	std::cout << "Failed to read overrun " << available->readout_count << std::endl;
+         // std::cout << "Failed to read overrun " << available->readout_count << std::endl;
          ;
       }
       else{
          if( overran )
          {
-            //	std::cout << "Overrun " << available->readout_count << std::endl;
+            // std::cout << "Overrun " << available->readout_count << std::endl;
             dataUpdated_.bOverruned=true;
          }
          else{
@@ -313,9 +313,9 @@ PicamError Universal::AcquisitionUpdated(
                if (ret==DEVICE_OK)
                {
                   ret = PushImage( frame, &md );
-                  if (ret==DEVICE_OK)	{
+                  if (ret==DEVICE_OK) {
                      curImageCnt_++;
-                     dataUpdated_.readout_count=1;	//???
+                     dataUpdated_.readout_count=1; //???
                   }
                }
             }
@@ -325,7 +325,7 @@ PicamError Universal::AcquisitionUpdated(
 
                memcpy(pixBuffer, frame, frameStride_);
                curImageCnt_++;
-               dataUpdated_.readout_count=1;	//???
+               dataUpdated_.readout_count=1; //???
             }
 
          }
@@ -359,7 +359,7 @@ bool Universal::InitializeCalculatedBufferSize()
             &onlineReadoutRate );
 
    if( error != PicamError_None ){
-      //	std::cout << "Failed to get online readout rate." << std::endl;
+      // std::cout << "Failed to get online readout rate." << std::endl;
       return FALSE;
    }
 
@@ -370,7 +370,7 @@ bool Universal::InitializeCalculatedBufferSize()
          PicamParameter_ReadoutStride,
          &readoutStride );
    if( error != PicamError_None ){
-      //	std::cout << "Failed to get online readout stride." << std::endl;
+      // std::cout << "Failed to get online readout stride." << std::endl;
       return FALSE;
    }
    // - calculate the buffer size
@@ -379,7 +379,7 @@ bool Universal::InitializeCalculatedBufferSize()
 
    if( calculatedBufferSize == 0 )
    {
-      //	std::cout << "Cannot start with a circular buffer of no length."  << std::endl;
+      // std::cout << "Cannot start with a circular buffer of no length."  << std::endl;
       return false;
    }
 
@@ -396,7 +396,7 @@ bool Universal::InitializeCalculatedBufferSize()
    buffer.memory = circBuffer_;
    buffer.memory_size = circBufferSize_;
 
-   //	User Bufferを設定しないと、動作できなかった。
+   // User Bufferを設定しないと、動作できなかった。
    PicamAdvanced_SetAcquisitionBuffer( hPICAM_, &buffer );
 
    Picam_GetParameterIntegerValue(hPICAM_,  PicamParameter_ReadoutStride,    &readoutStride_ );
@@ -456,7 +456,7 @@ int Universal::Initialize()
    Picam_GetAvailableCameraIDs( &camID, &numCamsAvailable );
    Picam_DestroyCameraIDs( camID );
 
-   //	Add demo Camera
+   // Add demo Camera
    if( numCamsAvailable < MIN_CAMERAS )
    {
       numDemos = MIN_CAMERAS - numCamsAvailable;
@@ -490,13 +490,14 @@ int Universal::Initialize()
       nRet=DEVICE_ERR;
    Picam_DestroyCameraIDs( camID );
 
-   if (nRet!=DEVICE_OK)	return nRet;
+   if (nRet!=DEVICE_OK)
+      return nRet;
 
    // Open the camera
    if( PicamAdvanced_OpenCameraDevice( &CameraInfo_, &hPICAM_ )!= PicamError_None )
       return LogCamError(__LINE__, "Picam_OpenCamera" );
 
-   /*	Set camName_	*/
+   /* Set camName_*/
    const pichar* model_string;
    Picam_GetEnumerationString( PicamEnumeratedType_Model, CameraInfo_.model, &model_string);
    sprintf_s(camName_, sizeof(camName_), "%s", model_string);
@@ -635,8 +636,8 @@ int Universal::Initialize()
          nRet = CreateProperty(g_ReadoutPort, prmReadoutPort_->ToString().c_str(), MM::String, true, pAct);
 
 
-      //	find Electron Multiplied port
-      /*		const PicamCollectionConstraint* port_capable=NULL;
+      // find Electron Multiplied port
+      /*    const PicamCollectionConstraint* port_capable=NULL;
             Picam_GetParameterCollectionConstraint(
             hPICAM_, PicamParameter_AdcQuality,
             PicamConstraintCategory_Capable,
@@ -645,7 +646,7 @@ int Universal::Initialize()
             {
             if (PicamAdcQuality_ElectronMultiplied==(piint)(port_capable->values_array[portIndex]))
             {
-      //	Set ADC Quality
+      // Set ADC Quality
       Picam_SetParameterIntegerValue(
       hPICAM_, PicamParameter_AdcQuality,
       (piint)PicamAdcQuality_ElectronMultiplied);
@@ -709,7 +710,7 @@ int Universal::Initialize()
 
 
    /// FRAME TRANSFER MODE
-   ///		... Set by "UniversalParams"
+   /// ... Set by "UniversalParams"
 
    /// properties that allow to enable/disable/set various post processing features
    /// supported by Photometrics cameras. The parameter properties are read out from
@@ -761,9 +762,9 @@ int Universal::Initialize()
    // for callback function
    //
    //
-   hDataUpdatedEvent_	=CreateEvent( NULL, TRUE, FALSE, NULL );
+   hDataUpdatedEvent_ = CreateEvent( NULL, TRUE, FALSE, NULL );
 
-   //	Regist Update
+   // Regist Update
    gUniversal=this;
    PicamAdvanced_RegisterForAcquisitionUpdated(hPICAM_,  GlobalAcquisitionUpdated );
 
@@ -782,10 +783,10 @@ int Universal::Shutdown()
 {
    if (initialized_)
    {
-      //	Regist Update
+      // Regist Update
       PicamAdvanced_UnregisterForAcquisitionUpdated(hPICAM_,  GlobalAcquisitionUpdated );
 
-      //	Close Device
+      // Close Device
       PicamAdvanced_CloseCameraDevice( hPICAM_ );
       refCount_--;
       if (PICAM_initialized_ && refCount_ <= 0)
@@ -850,14 +851,14 @@ int Universal::initializeStaticCameraParams()
    nRet = CreateProperty(g_Keyword_SerialNumber, CameraInfo_.serial_number, MM::String, true);
 
    // Camera CCD size
-   const PicamRoisConstraint  *constraint;		 /* Constraints			*/
+   const PicamRoisConstraint  *constraint; /* Constraints */
 
-   /*	イメージサイズを取得しておく
+   /* イメージサイズを取得しておく
    /* Variables to compute central region in image */
-   PicamError					err;			 /* Error Code			*/
+   PicamError err; /* Error Code */
 
    /* Get dimensional constraints */
-   err = Picam_GetParameterRoisConstraint(	hPICAM_,
+   err = Picam_GetParameterRoisConstraint(hPICAM_,
          PicamParameter_Rois,
          PicamConstraintCategory_Required,
          &constraint);
@@ -1284,7 +1285,7 @@ int Universal::OnMultiplierGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    START_ONPROPERTY("Universal::OnMultiplierGain", eAct);
 
-   //	多分Picam_SetParameterIntegerValueOnlineが使えるので、PvParamを改造すべし
+   // 多分Picam_SetParameterIntegerValueOnlineが使えるので、PvParamを改造すべし
 
    if (eAct == MM::AfterSet)
    {
@@ -1564,7 +1565,7 @@ int Universal::SnapImage()
 
    }
 
-   //	Reset event handle
+   // Reset event handle
    ResetEvent(hDataUpdatedEvent_);
 
    snappingSingleFrame_ = true;
@@ -1583,7 +1584,7 @@ int Universal::SnapImage()
 
    MM::MMTime end = GetCurrentMMTime();
 
-   /*	Number of frames	*/
+   /* Number of frames */
    Picam_SetParameterLargeIntegerValue( hPICAM_, PicamParameter_ReadoutCount, 0);//numImages );
 
    const PicamParameter* failed_parameters;
@@ -1600,12 +1601,13 @@ int Universal::SnapImage()
    {
       if (WAIT_OBJECT_0==WaitForSingleObject( hDataUpdatedEvent_, timeout_ms+10000))
       {
-         //	maybe acquired!
-         //	numImages_=1
-         if (curImageCnt_>0)		nRet=DEVICE_OK;
+         // maybe acquired!
+         // numImages_=1
+         if (curImageCnt_>0)
+            nRet=DEVICE_OK;
       }
       else{
-         //	Timed out
+         // Timed out
          snappingSingleFrame_ = false;
          singleFrameModeReady_ = false;
          LogCamError( __LINE__, "Picam_StartAcquisition timed out" );
@@ -1844,11 +1846,11 @@ int Universal::buildSpdTable()
    /* Get the bit depth */
    Picam_CanReadParameter(hPICAM_, PicamParameter_PixelBitDepth, &readable );
    if (readable)
-      Picam_GetParameterIntegerValue(	hPICAM_,	PicamParameter_PixelBitDepth,  &depth);
+      Picam_GetParameterIntegerValue(hPICAM_, PicamParameter_PixelBitDepth,  &depth);
    else
       depth=16;
 
-   /*	Get ADC Quality	*/
+   /* Get ADC Quality */
    Picam_IsParameterRelevant(hPICAM_, PicamParameter_AdcQuality, &relevant);
 
    if (relevant){
@@ -1856,7 +1858,7 @@ int Universal::buildSpdTable()
             hPICAM_, PicamParameter_AdcQuality,
             PicamConstraintCategory_Capable,
             &port_capable);
-      /*	Read Default port	*/
+      /* Read Default port */
       Picam_GetParameterIntegerDefaultValue(
             hPICAM_, PicamParameter_AdcQuality,
             &nDefaultPort);
@@ -1873,7 +1875,7 @@ int Universal::buildSpdTable()
 
       if (port_capable){
          nPortNum=(piint)(port_capable->values_array[portIndex]);
-         /*	Set ADC Quality	*/
+         /* Set ADC Quality */
          Picam_SetParameterIntegerValue(
                hPICAM_, PicamParameter_AdcQuality,
                (piint)nPortNum);
@@ -1883,14 +1885,14 @@ int Universal::buildSpdTable()
 
       }
 
-      /*	Read Default ADC	*/
+      /* Read Default ADC */
       if (nPortNum==nDefaultPort){
          Picam_GetParameterFloatingPointDefaultValue(
                hPICAM_, PicamParameter_AdcSpeed,
                &dDefaultAdcSpeed);
       }
 
-      /*	Get Speed table	*/
+      /* Get Speed table */
       Picam_GetParameterCollectionConstraint(
             hPICAM_, PicamParameter_AdcSpeed,
             PicamConstraintCategory_Capable,
@@ -1900,11 +1902,11 @@ int Universal::buildSpdTable()
          stringstream tmp;
 
          spdEntry.bitDepth = depth;
-         spdEntry.portIndex = nPortNum;	//portIndex;
+         spdEntry.portIndex = nPortNum; //portIndex;
          spdEntry.spdIndex = spdIndex;
 
 
-         /*	This speed is default	*/
+         /* This speed is default */
          if (nPortNum==nDefaultPort){
             if ((spdEntry.adcRate>dDefaultAdcSpeed*0.9) && (spdEntry.adcRate<dDefaultAdcSpeed*1.1))
                nDefaultADC=spdIndex;
@@ -1921,7 +1923,7 @@ int Universal::buildSpdTable()
 
          Picam_DestroyCollectionConstraints(gain_capable);
 
-         //	values_array is MHz unit
+         // values_array is MHz unit
          spdEntry.pixTime=(piint)(1000.0f/speed_capable->values_array[spdIndex]);
 
 
@@ -1933,9 +1935,10 @@ int Universal::buildSpdTable()
             tmp << (speed_capable->values_array[spdIndex]*1000.0f) << "KHz " << spdEntry.bitDepth << "bit";
 
          }
-         if (port_capable)	tmp << " (" << adc_string << ")";
+         if (port_capable)
+            tmp << " (" << adc_string << ")";
 
-         /*	Can set the speed?
+         /* Can set the speed?
             It's depend on port
             If device was opened PicamAdvanced_OpenCameraDevice faunction, it can confirm Picam_CanSetParameterFloatingPointValue
             */
@@ -1983,7 +1986,8 @@ int Universal::buildSpdTable()
          Picam_DestroyString( adc_string );
       Picam_DestroyCollectionConstraints(speed_capable);
    }
-   if (port_capable)	Picam_DestroyCollectionConstraints(port_capable);
+   if (port_capable)
+      Picam_DestroyCollectionConstraints(port_capable);
 
    camCurrentSpeed_ = camSpdTable_[nDefaultPort][nDefaultADC];
 
@@ -2026,26 +2030,26 @@ int Universal::ResizeImageBufferContinuous()
 
       g_picamLock.Lock();
 
-      PicamError					err;			 /* Error Code			*/
-      PicamRois					region;
+      PicamError err; /* Error Code */
+      PicamRois region;
 
       Picam_GetParameterIntegerValue(hPICAM_,  PicamParameter_ReadoutStride,    &readoutStride_ );
       Picam_GetParameterIntegerValue(hPICAM_,  PicamParameter_FramesPerReadout, &framesPerReadout_ );
       Picam_GetParameterIntegerValue(hPICAM_,  PicamParameter_FrameStride,      &frameStride_ );
       Picam_GetParameterIntegerValue(hPICAM_,  PicamParameter_FrameSize,        &frameSize_ );
 
-      /*/	Set Exposure time	*/
+      /* Set Exposure time */
       Picam_SetParameterFloatingPointValue(
             hPICAM_,
-            PicamParameter_ExposureTime,	//	msec単位で設定する
+            PicamParameter_ExposureTime, // msec単位で設定する
             pvExposure );
 
-      /*	Set ROIs	*/
+      /* Set ROIs */
       region.roi_count=1;
       region.roi_array=&camRegion_;
 
       /* Set the region of interest */
-      err = Picam_SetParameterRoisValue(	hPICAM_,
+      err = Picam_SetParameterRoisValue(hPICAM_,
             PicamParameter_Rois,
             &region);
 
@@ -2070,7 +2074,7 @@ int Universal::ResizeImageBufferContinuous()
       g_picamLock.Unlock();
 
       frameSize=img_.Height() * img_.Width() * img_.Depth();
-      /*	if (img_.Height() * img_.Width() * img_.Depth() != frameSize)
+      /* if (img_.Height() * img_.Width() * img_.Depth() != frameSize)
          {
          return LogMMError(DEVICE_INTERNAL_INCONSISTENCY, __LINE__); // buffer sizes don't match ???
          }*/
@@ -2115,26 +2119,26 @@ int Universal::ResizeImageBufferSingle()
 
       g_picamLock.Lock();
 
-      PicamError					err;			 /* Error Code			*/
-      PicamRois					region;
+      PicamError err; /* Error Code */
+      PicamRois region;
 
       Picam_GetParameterIntegerValue(hPICAM_,  PicamParameter_ReadoutStride,    &readoutStride_ );
       Picam_GetParameterIntegerValue(hPICAM_,  PicamParameter_FramesPerReadout, &framesPerReadout_ );
       Picam_GetParameterIntegerValue(hPICAM_,  PicamParameter_FrameStride,      &frameStride_ );
       Picam_GetParameterIntegerValue(hPICAM_,  PicamParameter_FrameSize,        &frameSize_ );
 
-      /*/	Set Exposure time	*/
+      /* Set Exposure time */
       Picam_SetParameterFloatingPointValue(
             hPICAM_,
-            PicamParameter_ExposureTime,	//	msec単位で設定する
+            PicamParameter_ExposureTime, // msec単位で設定する
             pvExposure );
 
-      /*	Set ROIs	*/
+      /* Set ROIs */
       region.roi_count=1;
       region.roi_array=&camRegion_;
 
       /* Set the region of interest */
-      err = Picam_SetParameterRoisValue(	hPICAM_,
+      err = Picam_SetParameterRoisValue(hPICAM_,
             PicamParameter_Rois,
             &region);
 
@@ -2150,7 +2154,8 @@ int Universal::ResizeImageBufferSingle()
          Picam_CommitParameters( hPICAM_, &failed_parameter_array, &failed_parameter_count );
          if( failed_parameter_count ){
             for (int i=0;i<failed_parameter_count;i++){
-               if (failed_parameter_array[i]==	PicamParameter_Rois)	nRet=DEVICE_ERR;
+               if (failed_parameter_array[i] == PicamParameter_Rois)
+                  nRet = DEVICE_ERR;
             }
          }
       }
@@ -2212,15 +2217,15 @@ int Universal::ThreadRun(void)
 
          if (WAIT_OBJECT_0==WaitForSingleObject( hDataUpdatedEvent_, timeout_ms+(curImageCnt_==0 ? 10000:0)))
          {
-            //	maybe acquired!
-            //	numImages_=1
+            // maybe acquired!
+            // numImages_=1
             if (curImageCnt_>0){
                ret=DEVICE_OK;
                bRunning=!(dataUpdated_.bAcquisitionInactive);
             }
          }
          else{
-            //	Timed out
+            // Timed out
             bRunning=FALSE;
             StopSequenceAcquisition();
          }
@@ -2309,7 +2314,7 @@ int Universal::StartSequenceAcquisition(long numImages, double interval_ms, bool
    g_picamLock.Lock();
 
 
-   /*	Set user circular Buffer*/
+   /* Set user circular Buffer*/
    if (!InitializeCalculatedBufferSize())
    {
       g_picamLock.Unlock();
@@ -2319,7 +2324,7 @@ int Universal::StartSequenceAcquisition(long numImages, double interval_ms, bool
 
    }
 
-   /*	Set Number of Images*/
+   /* Set Number of Images*/
    //pi64s readouts = (numImages<100) ? numImages : 100;
 
    Picam_SetParameterLargeIntegerValue( hPICAM_, PicamParameter_ReadoutCount, 0);//numImages );
@@ -2341,7 +2346,7 @@ int Universal::StartSequenceAcquisition(long numImages, double interval_ms, bool
       }
    }
 
-   /*	Create Handle */
+   /* Create Handle */
    ResetEvent(hDataUpdatedEvent_);
 
    if (PicamError_None!= Picam_StartAcquisition( hPICAM_ ))
