@@ -156,8 +156,6 @@ ParamNameIdPair g_UniversalParams[] = {
 };
 const int g_UniversalParamsCount = sizeof(g_UniversalParams)/sizeof(ParamNameIdPair);
 
-HANDLE hDataUpdatedEvent_;
-
 Universal *gUniversal;
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -297,12 +297,14 @@ class Universal : public CCameraBase<Universal>
       MM::MMTime GetCurrentTime() { return GetCurrentMMTime();}
       bool InitializeCalculatedBufferSize();
 
+      static int      refCount_;             // This class reference counter
+      static bool     PICAM_initialized_;    // Global PICAM initialization status
+
       bool            initialized_;          // Driver initialization status in this class instance
       long            numImages_;            // Number of images to acquire
       long            curImageCnt_;          // Current number of images acquired
       PicamHandle     hPICAM_;               // Camera handle
-      static int      refCount_;             // This class reference counter
-      static bool     PICAM_initialized_;    // Global PICAM initialization status
+      HANDLE          hDataUpdatedEvent_;    // Win32 event to wait for data update
       ImgBuffer       img_;                  // Single image buffer
       ImgBuffer       colorImg_;             // color image buffer
       Debayer         debayer_;              // debayer processor
