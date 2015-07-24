@@ -315,6 +315,10 @@ PicamError Universal::AcquisitionUpdated(
       const PicamAvailableData* available,
       const PicamAcquisitionStatus* status )
 {
+   // Not sure if all of the following needs to be within lock acquisition, but
+   // keeping it that way for now.
+   MMThreadGuard g(g_picamLock);
+
    int ret;
 
    dataUpdated_.bOverruned=false;
@@ -1594,11 +1598,12 @@ int Universal::SnapImage()
 
    if(!singleFrameModeReady_)
    {
-      g_picamLock.Lock();
       LogMessage("Will stop any running acquisition", true);
-      Picam_StopAcquisition(hPICAM_);
+      {
+         MMThreadGuard g(g_picamLock);
+         Picam_StopAcquisition(hPICAM_);
+      }
       LogMessage("Did stop any running acquisition", true);
-      g_picamLock.Unlock();
 
       LogMessage("Will resize image buffer", true);
       nRet = ResizeImageBufferSingle();
@@ -1650,6 +1655,8 @@ int Universal::SnapImage()
    LogMessage("Starting acquisition", true);
    if (PicamError_None == Picam_StartAcquisition(hPICAM_))
    {
+      g_picamLock.Unlock();
+
       LogMessage(("Waiting for acquisition with timeout " +
             boost::lexical_cast<std::string>(timeout_ms) +
             " ms").c_str(), true);
@@ -1679,11 +1686,12 @@ int Universal::SnapImage()
    }
    else
    {
+      g_picamLock.Unlock();
+
       LogMessage("Failed to start acquisition");
       snappingSingleFrame_ = false;
       singleFrameModeReady_ = false;
    }
-   g_picamLock.Unlock();
 
    return nRet;
 }
@@ -2061,10 +2069,10 @@ int Universal::GetExposureValue(piflt& exposureValue)
 {
    int nRet = DEVICE_OK;
 
-   g_picamLock.Lock();
+   MMThreadGuard g(g_picamLock);
+
    // PICAM always use msec unit
    exposureValue = (double)exposure_;
-   g_picamLock.Unlock();
 
    return nRet;
 }
@@ -2087,7 +2095,7 @@ int Universal::ResizeImageBufferContinuous()
       if ( nRet != DEVICE_OK )
          return nRet;
 
-      g_picamLock.Lock();
+      MMThreadGuard g(g_picamLock);
 
       PicamError err; /* Error Code */
       PicamRois region;
@@ -2127,10 +2135,6 @@ int Universal::ResizeImageBufferContinuous()
             nRet=DEVICE_ERR;
          }
       }
-
-
-
-      g_picamLock.Unlock();
 
       frameSize=img_.Height() * img_.Width() * img_.Depth();
       /* if (img_.Height() * img_.Width() * img_.Depth() != frameSize)
@@ -2176,7 +2180,7 @@ int Universal::ResizeImageBufferSingle()
          return nRet;
       }
 
-      g_picamLock.Lock();
+      MMThreadGuard g(g_picamLock);
 
       PicamError err; /* Error Code */
       PicamRois region;
@@ -2218,16 +2222,6 @@ int Universal::ResizeImageBufferSingle()
             }
          }
       }
-
-
-      g_picamLock.Unlock();
-
-
-      /*if (img_.Height() * img_.Width() * img_.Depth() != frameSize)
-        {
-        return LogMMError(DEVICE_INTERNAL_INCONSISTENCY, __LINE__); // buffer sizes don't match ???
-        }*/
-
    }
    catch(...)
    {
@@ -2272,7 +2266,7 @@ int Universal::ThreadRun(void)
          MM::MMTime startTime = GetCurrentMMTime();
          MM::MMTime elapsed(0,0);
 
-         g_picamLock.Lock();
+         MMThreadGuard g(g_picamLock);
 
          if (WAIT_OBJECT_0==WaitForSingleObject( hDataUpdatedEvent_, timeout_ms+(curImageCnt_==0 ? 10000:0)))
          {
@@ -2288,10 +2282,8 @@ int Universal::ThreadRun(void)
             bRunning=FALSE;
             StopSequenceAcquisition();
          }
-         g_picamLock.Unlock();
+
          ResetEvent(hDataUpdatedEvent_);
-
-
       }
       while (!uniAcqThd_->getStop() && curImageCnt_ < numImages_ && bRunning && ret==DEVICE_OK);
 
@@ -2491,11 +2483,10 @@ void Universal::OnThreadExiting() throw ()
 {
    try
    {
-      g_picamLock.Lock();
-
-      Picam_StopAcquisition( hPICAM_ );
-
-      g_picamLock.Unlock();
+      {
+         MMThreadGuard g(g_picamLock);
+         Picam_StopAcquisition( hPICAM_ );
+      }
 
       sequenceModeReady_ = false;
       isAcquiring_       = false;
