@@ -16,6 +16,7 @@ public:
    static const std::string FAN_SPEED;
    static const std::string SENSOR_TEMPERATURE;
    static const std::string SPURIOUS_NOISE_FILTER;
+   static const std::string STATIC_BLEMISH_CORRECTION;
    static const std::string SENSOR_COOLING;
    static const std::string OVERLAP;
    static const std::string FRAME_RATE;
@@ -37,6 +38,7 @@ const std::string TAndorSDK3Strings::TEMPERATURE_STATUS("TemperatureStatus");
 const std::string TAndorSDK3Strings::FAN_SPEED("FanSpeed");
 const std::string TAndorSDK3Strings::SENSOR_TEMPERATURE("SensorTemperature");
 const std::string TAndorSDK3Strings::SPURIOUS_NOISE_FILTER("SpuriousNoiseFilter");
+const std::string TAndorSDK3Strings::STATIC_BLEMISH_CORRECTION("StaticBlemishCorrection");
 const std::string TAndorSDK3Strings::SENSOR_COOLING("SensorCooling");
 const std::string TAndorSDK3Strings::OVERLAP("Overlap");
 const std::string TAndorSDK3Strings::FRAME_RATE("FrameRate");

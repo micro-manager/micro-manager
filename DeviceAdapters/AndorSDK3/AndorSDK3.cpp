@@ -549,6 +549,10 @@ int CAndorSDK3Camera::Initialize()
                                                        cameraDevice->GetBool(L"SpuriousNoiseFilter"),
                                                        callbackManager_, false);
 
+   staticBlemishCorrection_property = new TBooleanProperty(TAndorSDK3Strings::STATIC_BLEMISH_CORRECTION,
+                                                       cameraDevice->GetBool(L"StaticBlemishCorrection"),
+                                                       callbackManager_, false);
+
    sensorCooling_property = new TBooleanProperty(TAndorSDK3Strings::SENSOR_COOLING, 
                                                  cameraDevice->GetBool(L"SensorCooling"), callbackManager_, false);
 
@@ -687,6 +691,7 @@ int CAndorSDK3Camera::Shutdown()
       delete frameRateLimits_property;
       delete fanSpeed_property;
       delete spuriousNoiseFilter_property;
+	  delete staticBlemishCorrection_property;
       delete aoi_property_;
       delete triggerMode_property;
       delete exposureTime_property;
