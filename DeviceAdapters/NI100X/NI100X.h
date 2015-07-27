@@ -116,16 +116,33 @@ public:
 
    // action interface
    // ----------------
+   int OnTriggeringEnabled(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnInputTrigger(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSequenceLength(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
+   static const int SAMPLES_PER_SEC = 1000;
+   std::string getNextEntry(std::string line, size_t& index);
+   void addPorts(std::string deviceName);
+   void addPort(std::string line);
+   int setupTask();
+   void cancelTask();
+   int testTriggering();
+   int setupTriggering(uInt32* sequence, long numVals);
+   int logError(int error, const char* func);
 
    bool initialized_;
    bool busy_;
    long numPos_;
-   std::string channel_;
    TaskHandle task_;
+   std::string deviceName_;
+   std::string channel_;
+   std::string inputTrigger_;
+   bool supportsTriggering_;
+   bool isTriggeringEnabled_;
+   long maxSequenceLength_;
    bool open_;
    int state_;
 };
