@@ -759,11 +759,17 @@ public class DefaultMetadata implements Metadata {
          ReportingUtils.logDebugMessage("Metadata failed to extract field positionName");
       }
 
+      // 1.4 puts this value under "Time".
       try {
          builder.receivedTime(tags.getString("receivedTime"));
       }
       catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Metadata failed to extract field receivedTime");
+         try {
+            builder.receivedTime(tags.getString("Time"));
+         }
+         catch (JSONException e2) {
+            ReportingUtils.logDebugMessage("Metadata failed to extract field receivedTime");
+         }
       }
 
       try {

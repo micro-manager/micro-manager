@@ -263,9 +263,12 @@ public interface Metadata {
     */
    String getPositionName();
    
-   /** 
-    * The time at which this image was received by Micro-Manager (TODO:
-    * difference from ElapsedTimeMs?) 
+   /**
+    * The time at which the Java layer of Micro-Manager receives the image from
+    * the Core, expressed as a date-time string. Depending on the parameters
+    * for your acquisition, there may be significant and/or variable delay
+    * between the time the image was actually acquired by the camera and the
+    * time in this field. It will always be at least a little behind.
     * @return Time at which this image was received by Micro-Manager
     */
    String getReceivedTime();
