@@ -23,8 +23,9 @@ package org.micromanager.asidispim.Utils;
 
 
 /**
- * Associative container for slice timing information.
- * Public elements so they can be get/set directly, like C++ struct
+ * Associative container or "plain old data structure" for slice timing information.
+ * Public elements so they can be get/set directly, like C/C++ struct
+ * Note that this container doesn't work with collections (https://www.artima.com/lejava/articles/equality.html)
  * @author Jon
  *
  */
@@ -50,6 +51,20 @@ public class SliceTiming {
       cameraDelay = 0;
       cameraDuration = 1;
       cameraExposure = 1;
+   }
+   
+   /**
+    * copy constructor (unused?)
+    */
+   public SliceTiming(SliceTiming orig) {
+      scanDelay = orig.scanDelay;
+      scanNum = orig.scanNum;
+      scanPeriod = orig.scanPeriod;
+      laserDelay = orig.laserDelay;
+      laserDuration = orig.laserDuration;
+      cameraDelay = orig.cameraDelay;
+      cameraDuration = orig.cameraDuration;
+      cameraExposure = orig.cameraExposure;
    }
    
    @Override
