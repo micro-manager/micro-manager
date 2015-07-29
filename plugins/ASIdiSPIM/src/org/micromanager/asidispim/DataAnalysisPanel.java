@@ -300,27 +300,35 @@ public class DataAnalysisPanel extends ListeningJPanel {
          if (exportFormat_ == 0) { // mipav
             
             ImageProcessor iProc = ip.getProcessor();
-            if (!mmW.getSummaryMetaData().getString("NumberOfSides").equals("2")) {
-               throw new SaveTaskException("mipav export only works with two-sided data for now.");  
+            int nrSides = 0;
+            if (mmW.getSummaryMetaData().getString("NumberOfSides").equals("2")) {
+               nrSides = 2;
+            } else if (mmW.getSummaryMetaData().getString("NumberOfSides").equals("1")) {
+               nrSides = 1;
+            } else {
+               throw new SaveTaskException("unsupported number of sides");  
             }
+            
             if (mmW.getNumberOfPositions() > 1) {
                throw new SaveTaskException("mipav export does not yet work with multiple positions");  
             }
             
-            boolean usesChannels = mmW.getNumberOfChannels() > 2;  // if have channels besides two cameras
+            boolean usesChannels = (mmW.getNumberOfChannels()/nrSides) > 1;  // if have channels besides two cameras
             String [] channelDirArray = new String[mmW.getNumberOfChannels()];
             if (usesChannels) {
                for (int c = 0; c < mmW.getNumberOfChannels(); c++) {
                   String chName = (String)mmW.getSummaryMetaData().getJSONArray("ChNames").get(c);
                   String colorName = chName.substring(chName.indexOf("-")+1);  // matches with AcquisitionPanel naming convention
                   channelDirArray[c] = targetDirectory_ + File.separator + baseName_ + File.separator
-                        + (((c % 2) == 0) ? "SPIMA" : "SPIMB") + File.separator + colorName;
+                        + (((c % nrSides) == 0) ? "SPIMA" : "SPIMB") + File.separator + colorName;
                }
-            } else {
+            } else {  // two channels are from two views, no need for separate folders for each channel
                channelDirArray[0] = targetDirectory_ + File.separator + baseName_ + 
                      File.separator + "SPIMA";
-               channelDirArray[1] = targetDirectory_ + File.separator + baseName_ + 
-                     File.separator + "SPIMB";
+               if (nrSides > 1) {
+                  channelDirArray[1] = targetDirectory_ + File.separator + baseName_ + 
+                        File.separator + "SPIMB";
+               }
             }
 
             for (String dir : channelDirArray) {
@@ -367,7 +375,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
                   ImagePlus ipN = new ImagePlus("tmp", stack);
                   ipN.setCalibration(ip.getCalibration());
                   ij.IJ.save(ipN, channelDirArray[c] + File.separator 
-                        + (((c % 2) == 0) ? "SPIMA" : "SPIMB")
+                        + (((c % nrSides) == 0) ? "SPIMA" : "SPIMB")
                         + "-" + t + ".tif");
                }
             }
