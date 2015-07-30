@@ -186,12 +186,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       histMaxLabel_ = "" + histMax_;
       initComponents();
       reloadDisplaySettings();
-      // HACK: Default to "camera depth" mode; only do the below math if it'll
-      // get us a value greater than 0.
+      // Default to "camera depth" mode.
       int index = 0;
-      if (contrastMax_ > 8) {
-         index = (int) (Math.ceil(Math.log(contrastMax_) / Math.log(2)) - 3);
-      }
       histRangeComboBox_.setSelectedIndex(index);
 
       haveInitialized_.set(true);
