@@ -204,11 +204,17 @@ public class InspectorFrame extends MMFrame implements Inspector {
             cleanup();
          }
       });
-      // Save the size when the user resizes the window.
+      // Save the size when the user resizes the window, and the
+      // position when the user moves it.
       addComponentListener(new ComponentAdapter() {
          @Override
          public void componentResized(ComponentEvent e) {
             setDefaultWidth((int) getSize().getWidth());
+         }
+
+         @Override
+         public void componentMoved(ComponentEvent e) {
+            savePosition();
          }
       });
    }
