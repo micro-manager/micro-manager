@@ -51,7 +51,7 @@ public class AcquisitionModes {
    public static enum Keys { 
       PIEZO_SLICE_SCAN("Synchronous piezo/slice scan", 1),
       SLICE_SCAN_ONLY( "Slice scan only (beam thickness)", 2),
-      NO_SCAN(         "No scan (vibration)", 3),
+      NO_SCAN(         "No scan (fixed sheet)", 3),
       STAGE_SCAN(      "Stage scan", 4),
       STAGE_SCAN_INTERLEAVED("Stage scan interleaved", 5),
       NONE(            "None", 0);
