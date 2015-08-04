@@ -484,6 +484,7 @@ public class MultipageTiffWriter {
          img.tags.remove("Summary");
       }
       byte[] mdBytes = getBytesFromString(img.tags.toString() + " ");
+      mdBytes[mdBytes.length - 1] = 0;
 
       //2 bytes for number of directory entries, 12 bytes per directory entry, 4 byte offset of next IFD
      //6 bytes for bits per sample if RGB, 16 bytes for x and y resolution, 1 byte per character of MD string
