@@ -18,6 +18,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/replace.hpp>
+#include <iostream>
 #include <sstream>
 #include "NI100X.h"
 #include "ModuleInterface.h"
@@ -87,7 +88,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 ///////////////////////////////////////////////////////////////////////////////
 
 DAQDevice::DAQDevice(): task_(NULL), channel_("undef"), isTriggeringEnabled_(true),
-    supportsTriggering_(true), maxSequenceLength_(1000)
+    supportsTriggering_(true), maxSequenceLength_(1000), amPreparedToTrigger_(false)
 {
 }
 
@@ -169,14 +170,14 @@ std::string DAQDevice::GetPort(std::string line)
    {
       // This should never happen. Note LogMessage is
       // not available at this time (still in the constructor)
-      printf("Attempted to add invalid line with no slashes in its name: %s\n", line);
+      std::cerr << "Attempted to add invalid line with no slashes in its name: " << line << endl;
       return "";
    }
    size_t secondIndex = line.find("/", firstIndex + 1);
    if (secondIndex == std::string::npos)
    {
       // This probably should never happen either.
-      printf("Attempted to add invalid line with only one slash in its name: %s\n", line);
+      std::cerr << "Attempted to add invalid line with only one slash in its name: " << line << endl;
       return "";
    }
    std::string channel = line.substr(0, secondIndex);
@@ -206,6 +207,16 @@ int DAQDevice::OnTriggeringEnabled(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int DAQDevice::OnSupportsTriggering(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   // This property is read-only
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(supportsTriggering_ ? "1" : "0");
+   }
+   return DEVICE_OK;
+}
+
 int DAQDevice::OnInputTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
@@ -218,9 +229,7 @@ int DAQDevice::OnInputTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
       // hardware triggering with our new setup.
       pProp->Get(inputTrigger_);
       int error = TestTriggering();
-      supportsTriggering_ = (error != 0);
-      device_->SetProperty(g_PropertyCanTrigger,
-         boost::lexical_cast<string>(supportsTriggering_).c_str());
+      supportsTriggering_ = (error == 0);
    }
    return DEVICE_OK;
 }
@@ -257,9 +266,12 @@ int DAQDevice::SetupClockInput(int numVals)
 // Cancel a running task.
 void DAQDevice::CancelTask()
 {
-    if (core_ != 0) {
-        core_->LogMessage(device_, ("Cancelling task for " + channel_).c_str(), false);
-    }
+   if (core_ != 0)
+   {
+      core_->LogMessage(device_, ("Cancelling task for " + channel_).c_str(), false);
+   }
+   // Automatically ends any triggering task.
+   amPreparedToTrigger_ = false;
    // Note we explicitly do not check for or log errors here
    // as we may try to redundantly stop tasks and/or try to
    // stop tasks that do not exist yet.
@@ -288,23 +300,22 @@ int DAQDevice::SetupTask()
 // Return the passed-in error code.
 int DAQDevice::LogError(int error, const char* func)
 {
-    std::string funcStr = boost::lexical_cast<string>(func);
-    // Note this call is only relevant for the most recent error.
-    int bufSize = DAQmxGetExtendedErrorInfo(NULL, 0);
-    char* message = new char[bufSize];
-    int messageError = DAQmxGetExtendedErrorInfo(message, bufSize);
-    if (messageError)
+   std::string funcStr = boost::lexical_cast<string>(func);
+   // Note this call is only relevant for the most recent error.
+   int bufSize = DAQmxGetExtendedErrorInfo(NULL, 0);
+   char* message = new char[bufSize];
+   int messageError = DAQmxGetExtendedErrorInfo(message, bufSize);
+   if (messageError)
    {
-        // Recurse
-        LogError(messageError, ("Unable to log error for " + funcStr).c_str());
-    }
-    else
+      // Recurse
+      LogError(messageError, ("Unable to log error for " + funcStr).c_str());
+   }
+   else
    {
-      printf("Error for func %s: %s\n", funcStr, message);
-        // Log the message.
-        core_->LogMessage(device_, ("Error calling " + funcStr + ": " + boost::lexical_cast<string>(message)).c_str(), false);
-    }
-    return error;
+      // Log the message.
+      core_->LogMessage(device_, ("Error calling " + funcStr + ": " + boost::lexical_cast<string>(message)).c_str(), false);
+   }
+   return error;
 }
 
 // Helper function: extract the next substring from a comma-separated
@@ -497,8 +508,9 @@ int DigitalIO::Initialize()
    // attempting to set up a triggering task and erroring if it
    // fails.
    supportsTriggering_ = (TestTriggering() == 0);
+   pAct = new CPropertyAction(this, &DAQDevice::OnSupportsTriggering);
    nRet = CreateIntegerProperty(g_PropertyCanTrigger,
-      supportsTriggering_, true);
+      supportsTriggering_, true, pAct);
    if (DEVICE_OK != nRet)
    {
       return nRet;
@@ -606,6 +618,11 @@ int DigitalIO::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterLoadSequence)
    {
+      if (amPreparedToTrigger_)
+      {
+         // We're already ready to go.
+         return DEVICE_OK;
+	  }
       // Load the sequence into NI's buffer, but don't start
       // the task.
       std::vector<std::string> sequence = pProp->GetSequence();
@@ -624,6 +641,7 @@ int DigitalIO::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       {
          return error;
       }
+	  amPreparedToTrigger_ = true;
    }
    else if (eAct == MM::StartSequence)
    {
@@ -676,7 +694,7 @@ int DigitalIO::LoadBuffer(uInt32* sequence, long numVals)
    }
    if (numWritten != numVals)
    {
-       LogMessage(("Didn't write all of sequence; wrote only " + boost::lexical_cast<string>(numWritten)).c_str());
+       LogMessage(("Didn't write all of sequence; wrote only " + boost::lexical_cast<std::string>(numWritten)).c_str());
        return 1;
    }
    return 0;
@@ -847,8 +865,9 @@ int AnalogIO::Initialize()
    // attempting to set up a triggering task and erroring if it
    // fails.
    supportsTriggering_ = (TestTriggering() == 0);
+   pAct = new CPropertyAction(this, &DAQDevice::OnSupportsTriggering);
    nRet = CreateIntegerProperty(g_PropertyCanTrigger,
-      supportsTriggering_, true);
+      supportsTriggering_, true, pAct);
    if (DEVICE_OK != nRet)
    {
       return nRet;
@@ -994,27 +1013,32 @@ int AnalogIO::ApplyVoltage(double v)
 
 int AnalogIO::StartDASequence()
 {
-   int error = SetupTask();
-   if (error)
+   int error;
+   if (!amPreparedToTrigger_)
    {
-       return error;
+      error = SetupTask();
+      if (error)
+      {
+   	     return error;
+      }
+      error = DAQmxCreateAOVoltageChan(task_, channel_.c_str(), "",
+         minV_, maxV_, DAQmx_Val_Volts, "");
+      if (error)
+      {
+   	     return LogError(error, "CreateAOVoltageChan");
+      }
+      error = SetupClockInput((int) sequence_.size());
+      if (error)
+      {
+   	    return error;
+      }
+      error = LoadBuffer();
+      if (error)
+      {
+         return error;
+      }
    }
-   error = DAQmxCreateAOVoltageChan(task_, channel_.c_str(), "",
-      minV_, maxV_, DAQmx_Val_Volts, "");
-   if (error)
-   {
-       return LogError(error, "CreateAOVoltageChan");
-   }
-   error = SetupClockInput((int) sequence_.size());
-   if (error)
-   {
-      return error;
-   }
-   error = LoadBuffer();
-   if (error)
-   {
-      return error;
-   }
+   amPreparedToTrigger_ = true;
    error = DAQmxStartTask(task_);
    if (error)
    {

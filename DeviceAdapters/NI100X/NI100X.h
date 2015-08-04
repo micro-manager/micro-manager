@@ -49,6 +49,7 @@ public:
    std::string GetPort(std::string line);
 
    int OnTriggeringEnabled(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSupportsTriggering(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnInputTrigger(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSequenceLength(MM::PropertyBase* pProp, MM::ActionType eAct);
    virtual int TestTriggering() = 0;
@@ -63,12 +64,22 @@ protected:
    std::string GetNextEntry(std::string line, size_t& index);
 
    TaskHandle task_;
+   // Name of card (e.g. in NI-MAX).
    std::string deviceName_;
+   // Output line or lines to use.
    std::string channel_;
+   // Input line to listen on for hardware triggers.
    std::string inputTrigger_;
+   // The user has allowed triggering to happen.
    bool isTriggeringEnabled_;
+   // Our current configuration is physically capable of
+   // triggering.
    bool supportsTriggering_;
+   // Maximum allowed sequence to load onto card.
    long maxSequenceLength_;
+   // Indicates if we have loaded a sequence onto the card and
+   // am waiting for trigger inputs.
+   bool amPreparedToTrigger_;
 
 private:
    static const int SAMPLES_PER_SEC = 1000;
@@ -187,7 +198,6 @@ private:
    bool initialized_;
    bool busy_;
    long numPos_;
-   long maxSequenceLength_;
    bool open_;
    int state_;
 };
