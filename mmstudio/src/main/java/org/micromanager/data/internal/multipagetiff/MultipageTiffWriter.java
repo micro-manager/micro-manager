@@ -874,18 +874,19 @@ public class MultipageTiffWriter {
       return new String(sb);
    }
 
-   private void writeImageDescription(String value, long imageDescriptionTagOffset) throws IOException {
-      ByteBuffer buffer = ByteBuffer.wrap(getBytesFromString(value));
-      int numBytes = buffer.array().length;
+   private void writeImageDescription(String text, long imageDescriptionTagOffset) throws IOException {
+      byte[] bytes = getBytesFromString(text + " ");
+      // Null-terminate string
+      bytes[bytes.length - 1] = 0;
       //write first image IFD
       ByteBuffer ifdCountAndValueBuffer = allocateByteBuffer(8);
-      ifdCountAndValueBuffer.putInt(0, numBytes);
+      ifdCountAndValueBuffer.putInt(0, bytes.length);
       ifdCountAndValueBuffer.putInt(4, (int) filePosition_);
       fileChannelWrite(ifdCountAndValueBuffer, imageDescriptionTagOffset + 4);
 
       //write String
-      fileChannelWrite(buffer, filePosition_);
-      filePosition_ += buffer.capacity();
+      fileChannelWrite(ByteBuffer.wrap(bytes), filePosition_);
+      filePosition_ += bytes.length;
    }
 
    private byte[] getBytesFromString(String s) {
