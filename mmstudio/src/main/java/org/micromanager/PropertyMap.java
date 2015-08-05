@@ -1,5 +1,7 @@
 package org.micromanager;
 
+import java.util.Set;
+
 /**
  * This interface is used for storing custom information in the Metadata,
  * SummaryMetadata, and DisplaySettings classes (in org.micromanager.data and
@@ -332,4 +334,18 @@ public interface PropertyMap {
     *         provided one.
     */
    public PropertyMap merge(PropertyMap alt);
+
+   /**
+    * Return a set of all keys of properties in the map.
+    */
+   public Set<String> getKeys();
+
+   /**
+    * Return the type of the specified property, or null if the property does
+    * not exist.
+    * @param key The key of the property in question.
+    * @return the class (e.g. String.class, Boolean.class, Double[].class) of
+    *         the property, or null if the property is not found.
+    */
+   public Class getPropertyType(String key);
 }

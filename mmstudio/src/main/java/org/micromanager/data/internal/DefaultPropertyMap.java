@@ -524,8 +524,17 @@ public class DefaultPropertyMap implements PropertyMap {
       return builder.build();
    }
 
+   @Override
    public Set<String> getKeys() {
       return propMap_.keySet();
+   }
+
+   @Override
+   public Class getPropertyType(String key) {
+      if (propMap_.containsKey(key)) {
+         return propMap_.get(key).getType();
+      }
+      return null;
    }
 
    public boolean hasProperty(String key) {
