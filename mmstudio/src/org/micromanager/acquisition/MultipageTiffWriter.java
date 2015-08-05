@@ -484,7 +484,7 @@ public class MultipageTiffWriter {
          img.tags.remove("Summary");
       }
       byte[] mdBytes = getBytesFromString(img.tags.toString() + " ");
-      mdBytes[mdBytes.length - 1] = 0;
+      mdBytes[mdBytes.length - 1] = 0; // null terminate TIFF ASCII string
 
       //2 bytes for number of directory entries, 12 bytes per directory entry, 4 byte offset of next IFD
      //6 bytes for bits per sample if RGB, 16 bytes for x and y resolution, 1 byte per character of MD string
@@ -854,18 +854,19 @@ public class MultipageTiffWriter {
       return new String(sb);
    }
 
-   private void writeImageDescription(String value, long imageDescriptionTagOffset) throws IOException {
-      ByteBuffer buffer = ByteBuffer.wrap(getBytesFromString(value));
-      int numBytes = buffer.array().length;
+   private void writeImageDescription(String text, long imageDescriptionTagOffset) throws IOException {
+      byte[] bytes = getBytesFromString(text + " ");
+      bytes[bytes.length - 1] = 0; // null terminate TIFF ASCII string
+
       //write first image IFD
       ByteBuffer ifdCountAndValueBuffer = allocateByteBuffer(8);
-      ifdCountAndValueBuffer.putInt(0, numBytes);
+      ifdCountAndValueBuffer.putInt(0, bytes.length);
       ifdCountAndValueBuffer.putInt(4, (int) filePosition_);
       fileChannelWrite(ifdCountAndValueBuffer, imageDescriptionTagOffset + 4);
 
       //write String
-      fileChannelWrite(buffer, filePosition_);
-      filePosition_ += buffer.capacity();
+      fileChannelWrite(ByteBuffer.wrap(bytes), filePosition_);
+      filePosition_ += bytes.length;
    }
 
    private byte[] getBytesFromString(String s) {
