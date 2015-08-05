@@ -787,6 +787,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       savePosition();
       displayBus_.post(new DisplayDestroyedEvent(this));
       DefaultEventManager.getInstance().unregisterForEvents(this);
+      // HACK: notify the DisplayManager that we're going away.
+      DefaultDisplayManager.stopTrackingDisplay(this);
       store_.unregisterForEvents(this);
       dispose();
       haveClosed_ = true;

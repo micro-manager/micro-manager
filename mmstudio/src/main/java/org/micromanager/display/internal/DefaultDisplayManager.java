@@ -348,8 +348,15 @@ public final class DefaultDisplayManager implements DisplayManager {
       if (getIsManaged(store)) {
          storeToDisplays_.get(store).remove(display);
       }
-      if (allDisplays_.contains(display)) {
-         allDisplays_.remove(display);
+      stopTrackingDisplay(display);
+   }
+
+   /**
+    * A display is going away, so we should stop listing it in allDisplays.
+    */
+   public static void stopTrackingDisplay(DisplayWindow display) {
+      if (staticInstance_.allDisplays_.contains(display)) {
+         staticInstance_.allDisplays_.remove(display);
       }
       else {
          // This should never happen.
