@@ -5,6 +5,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
+import ij.macro.MacroRunner;
 import ij.process.ImageProcessor;
 
 import java.awt.Cursor;
@@ -246,6 +247,21 @@ public class DataAnalysisPanel extends ListeningJPanel {
          }
       });
       imageJPanel_.add(zProjection, "wrap");
+      
+      JButton closeImages = new JButton("Close All Images");
+      closeImages.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            final String macro = 
+                  "while (nImages>0) { " +
+                  "selectImage(nImages); " +
+                  " close(); " + 
+                  "}";
+            ij.macro.MacroRunner m = new MacroRunner(macro);
+            m.run();
+         }
+      });
+      imageJPanel_.add(closeImages, "wrap");
       
       // end ImageJ sub-panel
             
