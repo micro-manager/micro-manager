@@ -1604,11 +1604,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          MyDialogUtils.showError("Must save data to disk if viewer is hidden");
          return false;
       }
-      if (hideCB_.isSelected() && separateTimePointsCB_.isSelected()) {
-         MyDialogUtils.showError("Cannot have hidden viewer with separate viewers per time point." +
-               " Pester the developers if you really need this.");
-         // TODO understand why this is a problem and fix it
+      if (hideCB_.isSelected()) {
+         MyDialogUtils.showError("Hiding option not working because of Micro-manager bug."
+               + " Pester the developers if you really need this.");
          return false;
+         // even single acquisition fails when hidden
+         // I suspect this is because the acquisition isn't closed properly
+         // due to a bug noted below
+         // hopefully this issue will simply disappear in MM2.0
       }
       
       // Autofocus settings
