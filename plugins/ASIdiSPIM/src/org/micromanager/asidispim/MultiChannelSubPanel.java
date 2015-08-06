@@ -346,6 +346,34 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    }
    
    /**
+    * @return MultichannelModes.Keys.NONE if channels are disabled, or actual 
+    * selection otherwise
+    */
+   public MultichannelModes.Keys getChannelMode() {
+      if (isMultiChannel()) {
+      return MultichannelModes.getKeyFromPrefCode(
+            props_.getPropValueInteger(Devices.Keys.PLUGIN, 
+                    Properties.Keys.PLUGIN_MULTICHANNEL_MODE));
+      } else {
+         return MultichannelModes.Keys.NONE;
+      }
+   }
+   
+   // could in theory do this from preferences but so much easier to do using multiChanelPanel_ object
+   public boolean isMultiChannel() {
+      return isPanelEnabled() && getUsedChannels().length > 1;
+   }
+   
+   // could in theory do this from preferences but so much easier to do using multiChanelPanel_ object
+   public int getNumChannels() {
+      if (isPanelEnabled()) {
+         return getUsedChannels().length;
+      } else {
+         return 1;
+      }
+   }
+   
+   /**
     * call before starting to cycle through channels using selectNextChannel()
     */
    public void initializeChannelCycle() {

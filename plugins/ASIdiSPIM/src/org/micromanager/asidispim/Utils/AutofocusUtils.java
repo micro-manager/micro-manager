@@ -41,10 +41,12 @@ import org.jfree.data.xy.XYSeries;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.asidispim.ASIdiSPIM;
 import org.micromanager.asidispim.Data.AcquisitionModes;
 import org.micromanager.asidispim.Data.AcquisitionSettings;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Data.Devices.Sides;
 import org.micromanager.asidispim.Data.Joystick.Directions;
 import org.micromanager.asidispim.Data.MultichannelModes;
 import org.micromanager.asidispim.Data.MyStrings;
@@ -193,22 +195,22 @@ public class AutofocusUtils {
           
             posUpdater_.pauseUpdates(true);
             
-            AcquisitionSettings acqSettings = new AcquisitionSettings();
-            acqSettings.hardwareTimepoints_ = false;
-            acqSettings.channelMode_ = MultichannelModes.Keys.NONE;
-            acqSettings.useChannels_ = false;
-            acqSettings.numChannels_ = 1;
-            acqSettings.numSlices_ = nrImages;
-            acqSettings.numTimepoints_ = 1;
-            acqSettings.timePointInterval_ = 1;
-            acqSettings.numSides_ = 1;
-            acqSettings.firstSide_ = side.toString();
-            acqSettings.useTimepoints_ = false;
-            acqSettings.spimMode_ = AcquisitionModes.Keys.SLICE_SCAN_ONLY;
-            acqSettings.centerAtCurrentZ_ = centerAtCurrentZ;
-            acqSettings.delayBeforeSide_ = 0.0f;
-            acqSettings.stepSizeUm_ = piezoStepSize;
-            acqSettings.sliceTiming_ = sliceTiming;
+            // start with current acquisition settings, then modify a few of them for the focus acquisition
+            AcquisitionSettings acqSettings = ASIdiSPIM.getFrame().getAcquisitionPanel().getCurrentAcquisitionSettings();
+            acqSettings.hardwareTimepoints = false;
+            acqSettings.channelMode = MultichannelModes.Keys.NONE;
+            acqSettings.useChannels = false;
+            acqSettings.numChannels = 1;
+            acqSettings.numSlices = nrImages;
+            acqSettings.numTimepoints = 1;
+            acqSettings.timepointInterval = 1;
+            acqSettings.numSides = 1;
+            acqSettings.firstSideIsA = side.equals(Sides.A);
+            acqSettings.useTimepoints = false;
+            acqSettings.spimMode = AcquisitionModes.Keys.SLICE_SCAN_ONLY;
+            acqSettings.centerAtCurrentZ = centerAtCurrentZ;
+            acqSettings.delayBeforeSide = 0.0f;
+            acqSettings.stepSizeUm = piezoStepSize;
 
             controller_.prepareControllerForAquisition(acqSettings);
             
@@ -408,7 +410,7 @@ public class AutofocusUtils {
                      gui_.promptToSaveAcquisition(acqName, false);
                   }
 
-                  controller_.cleanUpControllerAfterAcquisition(1, side.toString(), false);
+                  controller_.cleanUpControllerAfterAcquisition(1, acqSettings.firstSideIsA, false);
 
                   if (restoreCameraMode)
                      cameras_.setSPIMCamerasForAcquisition(false);
