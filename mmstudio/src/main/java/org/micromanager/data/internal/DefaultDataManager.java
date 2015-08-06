@@ -24,6 +24,8 @@ import java.awt.Window;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JFileChooser;
 
@@ -40,14 +42,19 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.Coords;
 import org.micromanager.data.internal.multipagetiff.MultipageTiffReader;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
+import org.micromanager.data.internal.pipeline.DefaultPipeline;
 import org.micromanager.data.internal.StorageRAM;
 import org.micromanager.data.internal.StorageSinglePlaneTiffSeries;
+import org.micromanager.data.Pipeline;
+import org.micromanager.data.Processor;
+import org.micromanager.data.ProcessorFactory;
 import org.micromanager.events.internal.DefaultEventManager;
 
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.FileDialogs;
 // TODO: this should be moved into the API.
 import org.micromanager.internal.utils.MMScriptException;
+import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.PropertyMap;
 
 /**
@@ -156,5 +163,20 @@ public class DefaultDataManager implements DataManager {
    @Override
    public PropertyMap.PropertyMapBuilder getPropertyMapBuilder() {
       return new DefaultPropertyMap.Builder();
+   }
+
+   @Override
+   public Pipeline createPipeline(List<ProcessorFactory> factories) {
+      ArrayList<Processor> processors = new ArrayList<Processor>();
+      for (ProcessorFactory factory : factories) {
+         processors.add(factory.createProcessor());
+      }
+      return new DefaultPipeline(processors);
+   }
+
+   @Override
+   public Pipeline copyApplicationPipeline() {
+      ReportingUtils.logError("TODO: Implement copyApplicationPipeline");
+      return null;
    }
 }

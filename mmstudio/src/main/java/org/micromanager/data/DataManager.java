@@ -22,6 +22,7 @@ package org.micromanager.data;
 
 import java.awt.Window;
 import java.io.IOException;
+import java.util.List;
 
 import mmcorej.TaggedImage;
 
@@ -204,4 +205,20 @@ public interface DataManager {
     * @return a PropertyMapBuilder for creating new PropertyMap instances.
     */
    public PropertyMap.PropertyMapBuilder getPropertyMapBuilder();
+
+   /**
+    * Create a new Pipeline using the provided list of ProcessorFactories.
+    * @param factories List of ProcessorFactories which will each be used, in
+    *        order, to create a Processor for the new Pipeline.
+    * @return a Pipeline containing Processors as specified by the input
+    *         factories.
+    */
+   public Pipeline createPipeline(List<ProcessorFactory> factories);
+
+   /**
+    * Create a copy of the current application Pipeline as configured in the
+    * "Data Processing Pipeline" window.
+    * @return a Pipeline based on the current GUI pipeline.
+    */
+   public Pipeline copyApplicationPipeline();
 }
