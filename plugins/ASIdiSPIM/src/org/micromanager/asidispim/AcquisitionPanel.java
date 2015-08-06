@@ -1606,7 +1606,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       if (hideCB_.isSelected() && separateTimePointsCB_.isSelected()) {
          MyDialogUtils.showError("Cannot have hidden viewer with separate viewers per time point." +
-               "Pester the developers if you really need this.");
+               " Pester the developers if you really need this.");
+         // TODO understand why this is a problem and fix it
          return false;
       }
       
@@ -1684,7 +1685,25 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       // do not want to return from within this loop => throw exception instead
       // loop is executed once per acquisition (i.e. once if separate viewers isn't selected)
+      long repeatStart = System.currentTimeMillis();
       for (int tp = 0; tp < nrRepeats; tp++) {
+         // handle intervals between (software-timed) repeats
+         // only applies when doing separate viewers for each timepoint
+         // and have multiple timepoints
+         long repeatNow = System.currentTimeMillis();
+         long repeatdelay = repeatStart + tp * timepointsIntervalMs - repeatNow;
+         while (repeatdelay > 0 && !cancelAcquisition_.get()) {
+            updateAcquisitionStatus(AcquisitionStatus.WAITING, (int) (repeatdelay / 1000));
+            long sleepTime = Math.min(1000, repeatdelay);
+            try {
+               Thread.sleep(sleepTime);
+            } catch (InterruptedException e) {
+               ReportingUtils.showError(e);
+            }
+            repeatNow = System.currentTimeMillis();
+            repeatdelay = repeatStart + tp * timepointsIntervalMs - repeatNow;
+         }
+         
          BlockingQueue<TaggedImage> bq = new LinkedBlockingQueue<TaggedImage>(10);
          String acqName;
          if (singleTimePointViewers) {
@@ -1792,11 +1811,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             sink.start();
 
             // Loop over all the times we trigger the controller's acquisition
+            // remember acquisition start time for software-timed timepoints
             // For hardware-timed timepoints we only trigger the controller once
             long acqStart = System.currentTimeMillis();
-            
             for (int timePoint = 0; timePoint < nrFrames; timePoint++) {
                // handle intervals between (software-timed) time points
+               // when we are within the same acquisition
+               // (if separate viewer is selected then nothing bad happens here
+               // but waiting during interval handled elsewhere)
                long acqNow = System.currentTimeMillis();
                long delay = acqStart + timePoint * timepointsIntervalMs - acqNow;
                while (delay > 0 && !cancelAcquisition_.get()) {
