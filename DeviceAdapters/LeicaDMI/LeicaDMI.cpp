@@ -910,6 +910,14 @@ bool ILTurret::Busy()
    if (ret != DEVICE_OK)  // This is bad and should not happen
       return false;
 
+   if (busy)
+      return true;
+
+   // We may have switched the Method, so we need to wait for it, too.
+   ret = g_ScopeModel.method_.GetBusy(busy);
+   if (ret != DEVICE_OK)
+      return false;
+
    return busy;
 }
 
