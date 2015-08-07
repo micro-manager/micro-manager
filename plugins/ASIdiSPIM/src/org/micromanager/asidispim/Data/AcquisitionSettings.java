@@ -44,7 +44,7 @@ public class AcquisitionSettings {
    // number of timepoints for this acquisition
    public int numTimepoints;
    
-   // time between starts of timepoints
+   // time between starts of timepoints in seconds
    public double timepointInterval;
    
    // if true, use multiple positions
