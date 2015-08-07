@@ -27,7 +27,6 @@ import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.geom.Point2D;
 
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
@@ -43,8 +42,6 @@ import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.asidispim.Utils.StoredFloatLabel;
 
-import mmcorej.CMMCore;
-
 import javax.swing.*;
 
 import net.miginfocom.swing.MigLayout;
@@ -54,7 +51,6 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Utils.AutofocusUtils;
 import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.MMFrame;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -73,7 +69,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private final Prefs prefs_;
    private final StagePositionUpdater posUpdater_;
    private final ScriptInterface gui_;
-   private final CMMCore core_;
    private final JoystickSubPanel joystickPanel_;
    private final CameraSubPanel cameraPanel_;
    private final BeamSubPanel beamPanel_;
@@ -129,7 +124,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       prefs_ = prefs;
       posUpdater_ = posUpdater;
       gui_ = gui;
-      core_ = gui_.getMMCore();
       PanelUtils pu = new PanelUtils(prefs_, props_, devices);
       final SetupPanel setupPanel = this;
 
