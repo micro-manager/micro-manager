@@ -8,12 +8,18 @@ import org.micromanager.api.Autofocus;
 public abstract class AutofocusBase implements Autofocus{
    //private Hashtable<String, PropertyItem> properties_;
    private ArrayList<PropertyItem> properties_;
-   Preferences prefs_;
+   protected final Preferences prefs_;
    private static final String AF_UNIMPLEMENTED_FUNCTION = "Operation not supported.";
 
    public AutofocusBase() {
-      Preferences root = Preferences.userNodeForPackage(this.getClass());
-      prefs_ = root.node(root.absolutePath() + "/settings");
+      // We want to store autofocus plugin settings under a node for each
+      // autofocus class. However, userNodeForPackage(this.getClass()) can
+      // return "<unnamed>" here (because some of the af plugin classes are not
+      // in a package). In any case, we want to avoid clashes between af
+      // plugins, so use a different prefs node for each af plugin class.
+      Preferences root = Preferences.userNodeForPackage(AutofocusBase.class);
+      prefs_ = root.node(root.absolutePath() + "/autofocus_plugin_settings/" +
+            this.getClass().getCanonicalName());
       properties_ = new ArrayList<PropertyItem>();
    }
 
