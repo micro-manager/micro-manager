@@ -1117,7 +1117,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
    /**
     * Compute the volume duration in ms based on controller's timing settings.
-    * Includes time for multiple channels.
+    * Includes time for multiple channels.  However, does not include for multiple positions.
     * @return duration in ms
     */
    public double computeActualVolumeDuration(AcquisitionSettings acqSettings) {
@@ -1131,21 +1131,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       // stackDuration is per-side, per-channel, per-position
       final double stackDuration = numCameraTriggers * acqSettings.sliceTiming.sliceDuration;
-      double positionDuration = 0;
       if (acqSettings.isStageScanning) {
          final double rampDuration = delayBeforeSide + acqSettings.accelerationX;
          // TODO double-check these calculations below, at least they are better than before ;-)
          if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN) {
             if (channelMode == MultichannelModes.Keys.SLICE_HW) {
-               positionDuration = (numSides * ((rampDuration * 2) + (stackDuration * numChannels)));
+               return (numSides * ((rampDuration * 2) + (stackDuration * numChannels)));
             } else {
-               positionDuration = (numSides * ((rampDuration * 2) + stackDuration) * numChannels);
+               return (numSides * ((rampDuration * 2) + stackDuration) * numChannels);
             }
          } else {  // interleaved mode
             if (channelMode == MultichannelModes.Keys.SLICE_HW) {
-               positionDuration = (rampDuration * 2 + stackDuration * numSides * numChannels);
+               return (rampDuration * 2 + stackDuration * numSides * numChannels);
             } else {
-               positionDuration = ((rampDuration * 2 + stackDuration * numSides) * numChannels);
+               return ((rampDuration * 2 + stackDuration * numSides) * numChannels);
             }
          }
       } else { // piezo scan
@@ -1155,14 +1154,23 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                // actual value will be hardware-dependent
          }
          if (channelMode == MultichannelModes.Keys.SLICE_HW) {
-            positionDuration = numSides * (delayBeforeSide + stackDuration * numChannels);  // channelSwitchDelay = 0
+            return numSides * (delayBeforeSide + stackDuration * numChannels);  // channelSwitchDelay = 0
          } else {
-            positionDuration = numSides * numChannels
+            return numSides * numChannels
                   * (delayBeforeSide + stackDuration)
                   + (numChannels - 1) * channelSwitchDelay;
          }
       }
-      
+   }
+   
+   /**
+    * Compute the timepoint duration in ms.  Only difference from computeActualVolumeDuration()
+    * is that it also takes into account the multiple positions, if any.
+    * @return duration in ms
+    */
+   private double computeTimepointDuration() {
+      AcquisitionSettings acqSettings = getCurrentAcquisitionSettings();
+      final double volumeDuration = computeActualVolumeDuration(acqSettings);
       if (acqSettings.useMultiPositions) {
          try {
             // use 1.5 seconds motor move between positions
@@ -1170,14 +1178,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // and then slightly padded to be conservative to avoid errors
             // where positions aren't completed in time for next position)
             return gui_.getPositionList().getNumberOfPositions() *
-                  (positionDuration + 1500 + PanelUtils.getSpinnerFloatValue(positionDelay_));
+                  (volumeDuration + 1500 + PanelUtils.getSpinnerFloatValue(positionDelay_));
          } catch (MMScriptException ex) {
             MyDialogUtils.showError(ex, "Error getting position list for multiple XY positions");
          }
       }
-      
-      return positionDuration;
-      
+      return volumeDuration;
    }
    
   /**
@@ -1198,13 +1204,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             " ms");
    }
    
+   
+   
    /**
     * Compute the time lapse duration
     * @return duration in s
     */
    private double computeActualTimeLapseDuration() {
       double duration = (getNumTimepoints() - 1) * getTimepointInterval() 
-            + computeActualVolumeDuration()/1000;
+            + computeTimepointDuration()/1000;
       return duration;
    }
    
@@ -1439,6 +1447,33 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       AcquisitionSettings acqSettings = getCurrentAcquisitionSettings();
       
+      double volumeDuration = computeActualVolumeDuration(acqSettings);
+      double timepointDuration = computeTimepointDuration();
+      long timepointIntervalMs = Math.round(acqSettings.timepointInterval*1000);
+      
+      // use hardware timing if < 1 second between timepoints
+      // experimentally need ~0.5 sec to set up acquisition, this gives a bit of cushion
+      // cannot do this in getCurrentAcquisitionSettings because of mutually recursive
+      // call with computeActualVolumeDuration()
+      if ( acqSettings.numTimepoints > 1
+            && timepointIntervalMs < (timepointDuration + 750)
+            && !acqSettings.isStageScanning) {
+         acqSettings.hardwareTimepoints = true;
+      }
+      
+      if (acqSettings.useMultiPositions) {
+         if (acqSettings.hardwareTimepoints
+               || ((acqSettings.numTimepoints > 1) 
+                     && (timepointIntervalMs < timepointDuration*1.2))) {
+            // change to not hardwareTimepoints and warn user
+            // but allow acquisition to continue
+            acqSettings.hardwareTimepoints = false;
+            MyDialogUtils.showError("Timepoint interval may not be sufficient "
+                  + "depending on actual time required to change positions. "
+                  + "Proceed at your own risk.");
+         }
+      }
+      
       // get MM device names for first/second cameras to acquire
       String firstCamera, secondCamera;
       boolean firstSideA = acqSettings.firstSideIsA; 
@@ -1494,6 +1529,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          case VOLUME_HW:
          case SLICE_HW:
             if (!controller_.setupHardwareChannelSwitching(acqSettings)) {
+               MyDialogUtils.showError("Couldn't set up slice hardware channel switching.");
                return false;
             }
             nrChannelsSoftware = 1;
@@ -1543,8 +1579,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          nrFrames = acqSettings.numTimepoints;
          nrRepeats = 1;
       }
-      long timepointsIntervalMs = Math.round(
-              PanelUtils.getSpinnerFloatValue(acquisitionInterval_) * 1000d);
       
       AcquisitionModes.Keys spimMode = acqSettings.spimMode;
       
@@ -1575,19 +1609,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return false;
       }
       
-      double volumeDuration = computeActualVolumeDuration(acqSettings);
-      
-      // use hardware timing if < 1 second between timepoints
-      // experimentally need ~0.5 sec to set up acquisition, this gives a bit of cushion
-      // cannot do this in getCurrentAcquisitionSettings because of mutually recursive
-      // call with computeActualVolumeDuration()
-      if ( acqSettings.numTimepoints > 1
-            && (acqSettings.timepointInterval*1000) < (volumeDuration + 750)
-            && !acqSettings.isStageScanning) {
-         acqSettings.hardwareTimepoints = true;
-      }
-      
       // if we want to do hardware timepoints make sure there's not a problem
+      // lots of different situations where hardware timepoints can't be used...
       if (acqSettings.hardwareTimepoints) {
          if (acqSettings.useChannels && channelMode == MultichannelModes.Keys.VOLUME_HW) {
             // both hardware time points and volume channel switching use SPIMNumRepeats property
@@ -1601,23 +1624,30 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   + " with stage scanning.");
             return false;
          }
-      }
-      
-      if (acqSettings.useMultiPositions) {
-         if (acqSettings.hardwareTimepoints
-               || ((acqSettings.numTimepoints > 1) 
-                     && (timepointsIntervalMs < volumeDuration*1.2))) {
-            // change to not hardwareTimepoints and warn user
-            // but allow acquisition to continue
-            acqSettings.hardwareTimepoints = false;
-            MyDialogUtils.showError("Timepoint interval may not be accurate "
-                  + "depending on actual time for changing positions. "
-                  + "Proceed at your own risk.");
+         if (singleTimePointViewers) {
+            MyDialogUtils.showError("Cannot use hardware time points (small time point interval)"
+                  + " with separate viewers/file for each time point.");
+            return false;
+         }
+         if (acqSettings.useAutofocus) {
+            MyDialogUtils.showError("Cannot use hardware time points (small time point interval)"
+                  + " with autofocus during acquisition.");
+            return false;
+         }
+         if (acqSettings.useChannels && acqSettings.channelMode == MultichannelModes.Keys.VOLUME) {
+            MyDialogUtils.showError("Cannot use hardware time points (small time point interval)"
+                  + " with software channels (need to use PLogic channel switching).");
+            return false;
+         }
+         if (spimMode == AcquisitionModes.Keys.NO_SCAN) {
+            MyDialogUtils.showError("Cannot do timepoints when no scan mode is used."
+                  + " Use the number of slices to set the number of images to acquire.");
+            return false;
          }
       }
       
       if (!acqSettings.useMultiPositions && acqSettings.numTimepoints > 1) {
-         if (timepointsIntervalMs < volumeDuration) {
+         if (timepointIntervalMs < volumeDuration) {
             MyDialogUtils.showError("Time point interval shorter than" +
                   " the time to collect a single volume.\n");
             return false;
@@ -1727,7 +1757,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          // only applies when doing separate viewers for each timepoint
          // and have multiple timepoints
          long repeatNow = System.currentTimeMillis();
-         long repeatdelay = repeatStart + tp * timepointsIntervalMs - repeatNow;
+         long repeatdelay = repeatStart + tp * timepointIntervalMs - repeatNow;
          while (repeatdelay > 0 && !cancelAcquisition_.get()) {
             updateAcquisitionStatus(AcquisitionStatus.WAITING, (int) (repeatdelay / 1000));
             long sleepTime = Math.min(1000, repeatdelay);
@@ -1737,7 +1767,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                ReportingUtils.showError(e);
             }
             repeatNow = System.currentTimeMillis();
-            repeatdelay = repeatStart + tp * timepointsIntervalMs - repeatNow;
+            repeatdelay = repeatStart + tp * timepointIntervalMs - repeatNow;
          }
          
          BlockingQueue<TaggedImage> bq = new LinkedBlockingQueue<TaggedImage>(10);
@@ -1856,13 +1886,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                // (if separate viewer is selected then nothing bad happens here
                // but waiting during interval handled elsewhere)
                long acqNow = System.currentTimeMillis();
-               long delay = acqStart + timePoint * timepointsIntervalMs - acqNow;
+               long delay = acqStart + timePoint * timepointIntervalMs - acqNow;
                while (delay > 0 && !cancelAcquisition_.get()) {
                   updateAcquisitionStatus(AcquisitionStatus.WAITING, (int) (delay / 1000));
                   long sleepTime = Math.min(1000, delay);
                   Thread.sleep(sleepTime);
                   acqNow = System.currentTimeMillis();
-                  delay = acqStart + timePoint * timepointsIntervalMs - acqNow;
+                  delay = acqStart + timePoint * timepointIntervalMs - acqNow;
                }
 
                // check for stop button before each time point
@@ -1929,6 +1959,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      // wait any extra time the user requests
                      Thread.sleep(Math.round(PanelUtils.getSpinnerFloatValue(positionDelay_)));
                   }
+                  
+                  if (acqSettings.hardwareTimepoints) {
+                     nrSlicesSoftware *= acqSettings.numTimepoints;
+                  }
 
                   // loop over all the times we trigger the controller
                   for (int channelNum = 0; channelNum < nrChannelsSoftware; channelNum++) {
@@ -1981,7 +2015,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
                         // grab all the images from the cameras, put them into the acquisition
                         int[] frNumber = new int[nrChannels*2];  // keep track of how many frames we have received for each "channel" (MM channel is our channel * 2 for the 2 cameras)
-                        int[] cameraFrNumber = new int[2];     // keep track of how many frames we have received from the camera
+                        int[] cameraFrNumber = new int[2];       // keep track of how many frames we have received from the camera
+                        int[] tpNumber = new int[nrChannels*2];    // keep track of which timepoint we are on
                         boolean done = false;
                         long timeout2;  // how long to wait between images before timing out
                         timeout2 = Math.max(2000, Math.round(5*sliceDuration));
@@ -2022,15 +2057,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                     channelIndex *= 2;
                                  }
                                  channelIndex += cameraIndex;
+                                 
+                                 int actualTimePoint = timePoint;
+                                 if (acqSettings.hardwareTimepoints) {
+                                    actualTimePoint = tpNumber[channelIndex];
+                                 }
 
                                  // add image to acquisition
                                  if (spimMode == AcquisitionModes.Keys.NO_SCAN && ! singleTimePointViewers) {
                                     // create time series for no scan
                                     addImageToAcquisition(acqName,
-                                          frNumber[channelIndex], channelIndex, timePoint, 
+                                          frNumber[channelIndex], channelIndex, actualTimePoint, 
                                           positionNum, now - acqStart, timg, bq);
                                  } else { // standard, create Z-stacks
-                                    addImageToAcquisition(acqName, timePoint, channelIndex,
+                                    addImageToAcquisition(acqName, actualTimePoint, channelIndex,
                                           frNumber[channelIndex], positionNum,
                                           now - acqStart, timg, bq);
                                  }
@@ -2038,6 +2078,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                  // update our counters
                                  frNumber[channelIndex]++;
                                  cameraFrNumber[cameraIndex]++;
+                                 // if hardware timepoints then we only send one trigger
+                                 // and we have to manually keep track of which timepoint we are on
+                                 if (acqSettings.hardwareTimepoints
+                                       && frNumber[channelIndex] >= nrSlices) {
+                                    frNumber[channelIndex] = 0;
+                                    tpNumber[channelIndex]++;
+                                 }
                                  last = now;  // keep track of last image timestamp
 
                               } else {  // no image ready yet
@@ -2067,6 +2114,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         } catch (InterruptedException iex) {
                            MyDialogUtils.showError(iex);
                         }
+                        
+                        if (acqSettings.hardwareTimepoints) {
+                           break;  // only trigger controller once
+                        }
+                        
                      } catch (Exception ex) {
                         MyDialogUtils.showError(ex);
                      } finally {
@@ -2085,6 +2137,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         }
                      }
                   }
+               }
+               if (acqSettings.hardwareTimepoints) {
+                  break;
                }
             }
          } catch (IllegalMonitorStateException ex) {
@@ -2160,7 +2215,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
       if (nonfatalError) {
-         MyDialogUtils.showError("Non-fatal error occurred during acquisition, see core log for details");
+         MyDialogUtils.showError("Missed some images during acquisition, see core log for details");
       }
 
       return true;
