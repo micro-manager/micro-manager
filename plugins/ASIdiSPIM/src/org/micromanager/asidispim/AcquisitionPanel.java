@@ -1563,7 +1563,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // cannot do this in getCurrentAcquisitionSettings because of mutually recursive
       // call with computeActualVolumeDuration()
       if (acqSettings.useTimepoints
-            && acqSettings.timepointInterval < (volumeDuration + 750)
+            && (acqSettings.timepointInterval*1000) < (volumeDuration + 750)
             && acqSettings.numTimepoints > 1
             && !acqSettings.isStageScanning) {
          acqSettings.hardwareTimepoints = true;
@@ -1581,6 +1581,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // stage scanning needs to be triggered for each time point
             MyDialogUtils.showError("Cannot use hardware time points (small time point interval)"
                   + " with stage scanning.");
+            return false;
+         }
+         if (acqSettings.useMultiPositions) {
+            MyDialogUtils.showError("Cannot use hardware time points (small time point interval)"
+                  + " with multi-position.");
             return false;
          }
       }
