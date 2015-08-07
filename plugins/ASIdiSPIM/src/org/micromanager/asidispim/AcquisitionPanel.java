@@ -1487,9 +1487,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // set up XY positions
       int nrPositions = 1;
-      boolean usePositions = acqSettings.useMultiPositions;
       PositionList positionList = new PositionList();
-      if (usePositions) {
+      if (acqSettings.useMultiPositions) {
          try {
             positionList = gui_.getPositionList();
             nrPositions = positionList.getNumberOfPositions();
@@ -1620,7 +1619,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
       // Autofocus settings
-      boolean useAutofocus = useAutofocusCB_.isSelected();
       boolean autofocusAtT0 = prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(), 
               Properties.Keys.PLUGIN_AUTOFOCUS_ACQBEFORESTART, false);
       int autofocusEachNFrames = props_.getPropValueInteger(Devices.Keys.PLUGIN, 
@@ -1875,7 +1873,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
                // loop over all positions
                for (int positionNum = 0; positionNum < nrPositions; positionNum++) {
-                  if (usePositions) {
+                  if (acqSettings.useMultiPositions) {
                      // blocking call; will wait for stages to move
                      MultiStagePosition.goToPosition(positionList.getPosition(positionNum), core_);
                      
