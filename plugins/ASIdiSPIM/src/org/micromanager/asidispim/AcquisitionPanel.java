@@ -1657,9 +1657,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // initialize stage scanning so we can restore state
       Point2D.Double xyPosUm = new Point2D.Double();
+      float origXSpeed = 1f;  // don't want 0 in case something goes wrong
       if (acqSettings.isStageScanning) {
          try {
             xyPosUm = core_.getXYStagePosition(devices_.getMMDevice(Devices.Keys.XYSTAGE));
+            origXSpeed = props_.getPropValueFloat(Devices.Keys.XYSTAGE,
+                  Properties.Keys.STAGESCAN_MOTOR_SPEED);
          } catch (Exception ex) {
             MyDialogUtils.showError("Could not get XY stage position for stage scan initialization");
             return false;
@@ -2081,10 +2084,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       //   maybe not at all since we move when we switch to setup tab, something else??)
       controller_.cleanUpControllerAfterAcquisition(acqSettings.numSides, acqSettings.firstSideIsA, true);
       
+      // if we did stage scanning restore its position and speed
       if (acqSettings.isStageScanning) {
          try {
             core_.setXYPosition(devices_.getMMDevice(Devices.Keys.XYSTAGE), 
                     xyPosUm.x, xyPosUm.y);
+            props_.setPropValue(Devices.Keys.XYSTAGE,
+                  Properties.Keys.STAGESCAN_MOTOR_SPEED, origXSpeed);
          } catch (Exception ex) {
             MyDialogUtils.showError("Could not restore XY stage position after acquisition");
          }
