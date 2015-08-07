@@ -107,6 +107,17 @@ int SpectralLMM5Interface::DetectLaserLines(MM::Device& device, MM::Core& core)
    if (laserLinesDetected_)
       return DEVICE_OK;
 
+   // see if we have old or new firmware
+   bool newFirmware = true;
+   if (!firmwareDetected_) 
+   {
+      std::string version;
+      GetFirmwareVersion(device, core, version);
+   }
+   if (majorFWV_ != 1 || minorFWV_ < 30) {  // the newer firmware emulates emulats the old firmware, but we do not want to confuse things or crash when we ask if the <100 lines have PWM (note that older majorversions are 2, 162, and 178)
+      newFirmware = false;
+   }
+
    const unsigned long bufLen = 1;
    unsigned char buf[bufLen];
    buf[0]=0x08;
@@ -131,17 +142,24 @@ int SpectralLMM5Interface::DetectLaserLines(MM::Device& device, MM::Core& core)
       if (*(lineP+i) == 0) {
          laserLines_[i].present = false;
       } else {
-         laserLines_[i].present = true;
-         std::ostringstream os;
-         if (laserLines_[i].waveLength > 100)
+         if (newFirmware && laserLines_[i].waveLength <= 100) 
          {
-            os << laserLines_[i].waveLength << "nm-" << i + 1;
-         } else
-         {
-            outputPort++;
-            os << "output-port " << outputPort;
+            laserLines_[i].present = false;
+            laserLines_[i].name = "Do not use";
          }
-         laserLines_[i].name = os.str();
+         else {
+            laserLines_[i].present = true;
+            std::ostringstream os;
+            if (laserLines_[i].waveLength > 100)
+            {
+               os << laserLines_[i].waveLength << "nm-" << i + 1;
+            } else
+            {
+               outputPort++;
+               os << "output-port " << outputPort;
+            }
+            laserLines_[i].name = os.str();
+         }
       }
    }
 
