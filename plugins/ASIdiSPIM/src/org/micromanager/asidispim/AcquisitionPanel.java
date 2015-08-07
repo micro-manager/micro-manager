@@ -1844,7 +1844,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                }
                
                // this is where we autofocus if requested
-               if (useAutofocus) {
+               if (acqSettings.useAutofocus) {
                   // Note that we will not autofocus as expected when using hardware
                   // timing.  Seems OK, since hardware timing will result in short
                   // acquisition times that do not need autofocus
@@ -1874,8 +1874,25 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                // loop over all positions
                for (int positionNum = 0; positionNum < nrPositions; positionNum++) {
                   if (acqSettings.useMultiPositions) {
+                     
+                     // between positions move stage fast
+                     // this will clobber stage scanning setting so need to restore it
+                     float scanXSpeed = 1f;
+                     if (acqSettings.isStageScanning) {
+                        scanXSpeed = props_.getPropValueFloat(Devices.Keys.XYSTAGE,
+                              Properties.Keys.STAGESCAN_MOTOR_SPEED);
+                        props_.setPropValue(Devices.Keys.XYSTAGE,
+                              Properties.Keys.STAGESCAN_MOTOR_SPEED, origXSpeed);
+                     }
+                     
                      // blocking call; will wait for stages to move
                      MultiStagePosition.goToPosition(positionList.getPosition(positionNum), core_);
+                     
+                     // restore speed for stage scanning
+                     if (acqSettings.isStageScanning) {
+                        props_.setPropValue(Devices.Keys.XYSTAGE,
+                              Properties.Keys.STAGESCAN_MOTOR_SPEED, scanXSpeed);
+                     }
                      
                      // wait any extra time the user requests
                      Thread.sleep(Math.round(PanelUtils.getSpinnerFloatValue(positionDelay_)));
