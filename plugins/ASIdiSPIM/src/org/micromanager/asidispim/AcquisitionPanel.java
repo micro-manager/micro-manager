@@ -669,6 +669,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             new ComponentTitledBorder(usePositionsCB_, positionPanel, 
                   BorderFactory.createLineBorder(ASIdiSPIM.borderColor)); 
       positionPanel.setBorder(componentBorder);
+      
+      usePositionsCB_.addChangeListener(recalculateTimingDisplayCL);
+      
       final JButton editPositionListButton = new JButton("Edit position list...");
       editPositionListButton.addActionListener(new ActionListener() {
          @Override
@@ -1126,22 +1129,23 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       if (acqSettings.cameraMode == CameraModes.Keys.OVERLAP) {
         numCameraTriggers += 1;
       }
-      // stackDuration is per-side, per-channel
+      // stackDuration is per-side, per-channel, per-position
       final double stackDuration = numCameraTriggers * acqSettings.sliceTiming.sliceDuration;
+      double positionDuration = 0;
       if (acqSettings.isStageScanning) {
          final double rampDuration = delayBeforeSide + acqSettings.accelerationX;
          // TODO double-check these calculations below, at least they are better than before ;-)
          if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN) {
             if (channelMode == MultichannelModes.Keys.SLICE_HW) {
-               return (numSides * ((rampDuration * 2) + (stackDuration * numChannels)));
+               positionDuration = (numSides * ((rampDuration * 2) + (stackDuration * numChannels)));
             } else {
-               return (numSides * ((rampDuration * 2) + stackDuration) * numChannels);
+               positionDuration = (numSides * ((rampDuration * 2) + stackDuration) * numChannels);
             }
          } else {  // interleaved mode
             if (channelMode == MultichannelModes.Keys.SLICE_HW) {
-               return (rampDuration * 2 + stackDuration * numSides * numChannels);
+               positionDuration = (rampDuration * 2 + stackDuration * numSides * numChannels);
             } else {
-               return ((rampDuration * 2 + stackDuration * numSides) * numChannels);
+               positionDuration = ((rampDuration * 2 + stackDuration * numSides) * numChannels);
             }
          }
       } else { // piezo scan
@@ -1151,13 +1155,29 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                // actual value will be hardware-dependent
          }
          if (channelMode == MultichannelModes.Keys.SLICE_HW) {
-            return numSides * (delayBeforeSide + stackDuration * numChannels);  // channelSwitchDelay = 0
+            positionDuration = numSides * (delayBeforeSide + stackDuration * numChannels);  // channelSwitchDelay = 0
          } else {
-            return numSides * numChannels
+            positionDuration = numSides * numChannels
                   * (delayBeforeSide + stackDuration)
                   + (numChannels - 1) * channelSwitchDelay;
          }
       }
+      
+      if (acqSettings.useMultiPositions) {
+         try {
+            // use 1.5 seconds motor move between positions
+            // (could be wildly off but was estimated using actual system
+            // and then slightly padded to be conservative to avoid errors
+            // where positions aren't completed in time for next position)
+            return gui_.getPositionList().getNumberOfPositions() *
+                  (positionDuration + 1500 + PanelUtils.getSpinnerFloatValue(positionDelay_));
+         } catch (MMScriptException ex) {
+            MyDialogUtils.showError(ex, "Error getting position list for multiple XY positions");
+         }
+      }
+      
+      return positionDuration;
+      
    }
    
   /**
@@ -1561,9 +1581,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // experimentally need ~0.5 sec to set up acquisition, this gives a bit of cushion
       // cannot do this in getCurrentAcquisitionSettings because of mutually recursive
       // call with computeActualVolumeDuration()
-      if (acqSettings.useTimepoints
+      if ( acqSettings.numTimepoints > 1
             && (acqSettings.timepointInterval*1000) < (volumeDuration + 750)
-            && acqSettings.numTimepoints > 1
             && !acqSettings.isStageScanning) {
          acqSettings.hardwareTimepoints = true;
       }
@@ -1582,14 +1601,22 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   + " with stage scanning.");
             return false;
          }
-         if (acqSettings.useMultiPositions) {
-            MyDialogUtils.showError("Cannot use hardware time points (small time point interval)"
-                  + " with multi-position.");
-            return false;
+      }
+      
+      if (acqSettings.useMultiPositions) {
+         if (acqSettings.hardwareTimepoints
+               || ((acqSettings.numTimepoints > 1) 
+                     && (timepointsIntervalMs < volumeDuration*1.2))) {
+            // change to not hardwareTimepoints and warn user
+            // but allow acquisition to continue
+            acqSettings.hardwareTimepoints = false;
+            MyDialogUtils.showError("Timepoint interval may not be accurate "
+                  + "depending on actual time for changing positions. "
+                  + "Proceed at your own risk.");
          }
       }
       
-      if (acqSettings.numTimepoints > 1) {
+      if (!acqSettings.useMultiPositions && acqSettings.numTimepoints > 1) {
          if (timepointsIntervalMs < volumeDuration) {
             MyDialogUtils.showError("Time point interval shorter than" +
                   " the time to collect a single volume.\n");
@@ -1874,6 +1901,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                // loop over all positions
                for (int positionNum = 0; positionNum < nrPositions; positionNum++) {
                   if (acqSettings.useMultiPositions) {
+                     
+                     // make sure user didn't stop things
+                     if (cancelAcquisition_.get()) {
+                        throw new IllegalMonitorStateException("User stopped the acquisition");
+                     }
                      
                      // between positions move stage fast
                      // this will clobber stage scanning setting so need to restore it
