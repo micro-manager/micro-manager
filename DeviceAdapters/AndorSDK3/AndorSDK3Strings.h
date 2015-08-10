@@ -25,6 +25,7 @@ public:
    static const std::string GAIN_TEXT;
    static const std::string GLOBAL_CLEAR;
    static const std::string AUX_SOURCE;
+   static const std::string AUX_SOURCE_TWO;
 };
 
 
@@ -47,6 +48,7 @@ const std::string TAndorSDK3Strings::TRIGGER_MODE("TriggerMode");
 const std::string TAndorSDK3Strings::GAIN_TEXT("Sensitivity/DynamicRange");
 const std::string TAndorSDK3Strings::GLOBAL_CLEAR("RollingShutterGlobalClear");
 const std::string TAndorSDK3Strings::AUX_SOURCE("AuxiliaryOutSource (TTL I/O)");
+const std::string TAndorSDK3Strings::AUX_SOURCE_TWO("AuxiliaryOutTwoSource (TTL I/O)");
 
 #endif //include only once
 

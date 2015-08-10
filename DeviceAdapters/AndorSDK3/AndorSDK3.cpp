@@ -591,6 +591,12 @@ int CAndorSDK3Camera::Initialize()
    auxOutSignal_property = new TEnumProperty(TAndorSDK3Strings::AUX_SOURCE, 
                                              cameraDevice->GetEnum(L"AuxiliaryOutSource"), 
                                              this, thd_, snapShotController_, false, false);
+   auxOutTwoSignal_property = new TEnumProperty(TAndorSDK3Strings::AUX_SOURCE_TWO, 
+                                             cameraDevice->GetEnum(L"AuxOutSourceTwo"), 
+                                             this, thd_, snapShotController_, false, false);
+   shutterOutputMode_property = new TBooleanProperty("ShutterOutputMode", 
+                                             cameraDevice->GetBool(L"ShutterOutputMode"), 
+                                             callbackManager_, false);
 
    LSPSensorReadoutMode_property = new TEnumProperty("LightScanPlus-SensorReadoutMode", 
                                             cameraDevice->GetEnum(L"SensorReadoutMode"), 
@@ -696,6 +702,8 @@ int CAndorSDK3Camera::Shutdown()
       delete triggerMode_property;
       delete exposureTime_property;
       delete auxOutSignal_property;
+      delete auxOutTwoSignal_property;
+      delete shutterOutputMode_property;
       delete LSPSensorReadoutMode_property;
       delete LSPSequentialPortReadoutMode_property;
       delete LSPExposedPixelHeight_property;
