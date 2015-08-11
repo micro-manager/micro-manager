@@ -493,7 +493,7 @@ int DiskoveryStateDev::Initialize()
    int nRet = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
    if (nRet != DEVICE_OK)
       return nRet;
-   for (int i = 0; i < numPos_; i++) 
+   for (unsigned i = 0; i < numPos_; i++)
    {
       std::ostringstream os;
       os << i;
