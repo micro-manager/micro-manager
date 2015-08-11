@@ -255,7 +255,6 @@ MM::DeviceDetectionStatus DiskoveryHub::DetectDevice(void )
          MM::Device* pS = GetCoreCallback()->GetDevice(this, port_.c_str());
          pS->Initialize();
          PurgeComPort(port_.c_str());
-         int v = 0;
          bool present = false;
          int ret = IsControllerPresent(port_, present);
          if (ret != DEVICE_OK)

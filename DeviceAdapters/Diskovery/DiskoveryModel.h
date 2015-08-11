@@ -174,7 +174,6 @@ class DiskoveryModel
       void WaitForDeviceBusy() 
       {
          boost::mutex::scoped_lock bLock(mutex_);
-         bool deviceBusy = false;
          while (deviceBusy_) {
             varCondition_.wait(bLock);
          }
