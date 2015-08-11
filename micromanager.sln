@@ -356,6 +356,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Usb3CamHS", "SecretDeviceAd
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MightexPolygon", "SecretDeviceAdapters\MightexPolygon\MightexPolygon.vcxproj", "{512D6313-BBE7-4ED0-92FF-A2B39817D059}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Diskovery", "DeviceAdapters\Diskovery\Diskovery.vcxproj", "{3B7D8A46-01A9-47E3-A431-F7DD7B5C7DD3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1753,6 +1755,14 @@ Global
 		{512D6313-BBE7-4ED0-92FF-A2B39817D059}.Release|Win32.Build.0 = Release|Win32
 		{512D6313-BBE7-4ED0-92FF-A2B39817D059}.Release|x64.ActiveCfg = Release|x64
 		{512D6313-BBE7-4ED0-92FF-A2B39817D059}.Release|x64.Build.0 = Release|x64
+		{3B7D8A46-01A9-47E3-A431-F7DD7B5C7DD3}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3B7D8A46-01A9-47E3-A431-F7DD7B5C7DD3}.Debug|Win32.Build.0 = Debug|Win32
+		{3B7D8A46-01A9-47E3-A431-F7DD7B5C7DD3}.Debug|x64.ActiveCfg = Debug|x64
+		{3B7D8A46-01A9-47E3-A431-F7DD7B5C7DD3}.Debug|x64.Build.0 = Debug|x64
+		{3B7D8A46-01A9-47E3-A431-F7DD7B5C7DD3}.Release|Win32.ActiveCfg = Release|Win32
+		{3B7D8A46-01A9-47E3-A431-F7DD7B5C7DD3}.Release|Win32.Build.0 = Release|Win32
+		{3B7D8A46-01A9-47E3-A431-F7DD7B5C7DD3}.Release|x64.ActiveCfg = Release|x64
+		{3B7D8A46-01A9-47E3-A431-F7DD7B5C7DD3}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
