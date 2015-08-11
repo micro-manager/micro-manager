@@ -188,7 +188,7 @@ private:
    TFloatStringProperty* frameRateLimits_property;
    TEnumProperty* auxOutSignal_property;
    TEnumProperty* auxOutTwoSignal_property;
-   TBooleanProperty* shutterOutputMode_property;
+   TEnumProperty* shutterOutputMode_property;
    
    // LightScanPlus properties
    TEnumProperty* LSPSensorReadoutMode_property;

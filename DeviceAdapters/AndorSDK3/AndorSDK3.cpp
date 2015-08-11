@@ -594,9 +594,9 @@ int CAndorSDK3Camera::Initialize()
    auxOutTwoSignal_property = new TEnumProperty(TAndorSDK3Strings::AUX_SOURCE_TWO, 
                                              cameraDevice->GetEnum(L"AuxOutSourceTwo"), 
                                              this, thd_, snapShotController_, false, false);
-   shutterOutputMode_property = new TBooleanProperty("ShutterOutputMode", 
-                                             cameraDevice->GetBool(L"ShutterOutputMode"), 
-                                             callbackManager_, false);
+   shutterOutputMode_property = new TEnumProperty("ShutterOutputMode", 
+                                             cameraDevice->GetEnum(L"ShutterOutputMode"), 
+                                             this, thd_, snapShotController_, false, false);
 
    LSPSensorReadoutMode_property = new TEnumProperty("LightScanPlus-SensorReadoutMode", 
                                             cameraDevice->GetEnum(L"SensorReadoutMode"), 
