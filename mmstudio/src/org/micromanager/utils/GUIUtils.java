@@ -206,17 +206,31 @@ public class GUIUtils {
    }
 
    // ******* Utility methods for persisting windows *******
-   
+
    private static HashSet<Class> windowsWithPersistedPositions = new HashSet<Class>();
-   
+
+   private static Preferences getWindowPrefs(final Window win) {
+      return Preferences.userNodeForPackage(GUIUtils.class).node("window_prefs").
+         node(win.getClass().getName());
+   }
+
    private static void storePosition(final Window win) {
-      Preferences prefs = Preferences.userRoot().node(win.getClass().getName());
+      Preferences prefs = getWindowPrefs(win);
       JavaUtils.putObjectInPrefs(prefs, DIALOG_POSITION, win.getLocation());
    }
-   
+
+   /**
+    * Restore previous position of window and set it up to save its position.
+    *
+    * The position is stored per Window class, so this works poorly if multiple
+    * windows of the same class are present.
+    *
+    * The position is saved when the window is moved, not when it is closed, so
+    * it doesn't matter how the window is closed.
+    */
    public static void recallPosition(final Window win) {
       if (!windowsWithPersistedPositions.contains(win.getClass())) {
-         Preferences prefs = Preferences.userRoot().node(win.getClass().getName());
+         Preferences prefs = getWindowPrefs(win);
          Point dialogPosition = JavaUtils.getObjectFromPrefs(prefs, DIALOG_POSITION, (Point) null);
          if (dialogPosition == null ||
                !isLocationInScreenBounds(dialogPosition)) {
