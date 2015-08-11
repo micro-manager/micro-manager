@@ -38,14 +38,6 @@ class DiskoveryModel
    public:
       DiskoveryModel(MM::Device* device, MM::Core& core) :
          lock_(),
-         hubDevice_(device),
-         sdDevice_(0),
-         wfDevice_(0),
-         tirfDevice_(0),
-         irisDevice_(0),
-         filterWDevice_(0),
-         filterTDevice_(0),
-         core_(core),
          deviceBusy_(false),
          logicalBusy_(false),
          presetSD_(0),
@@ -63,7 +55,15 @@ class DiskoveryModel
          hasP2_(false),
          hasIRIS_(false),
          hasFilterW_(false),
-         hasFilterT_(false)
+         hasFilterT_(false),
+         hubDevice_(device),
+         sdDevice_(0),
+         wfDevice_(0),
+         tirfDevice_(0),
+         irisDevice_(0),
+         filterWDevice_(0),
+         filterTDevice_(0),
+         core_(core)
       {
          // propertyname are stored in the model so that we can generate
          // callbacks indicating properties have changed
