@@ -1128,7 +1128,6 @@ public class MMStudio implements ScriptInterface {
       if (posListDlg_ == null) {
          posListDlg_ = new PositionListDlg(core_, studio_, posList_, 
                  acqControlWin_,options_);
-         GUIUtils.recallPosition(posListDlg_);
          posListDlg_.setBackground(getBackgroundColor());
          studio_.addMMBackgroundListener(posListDlg_);
          posListDlg_.addListeners();
