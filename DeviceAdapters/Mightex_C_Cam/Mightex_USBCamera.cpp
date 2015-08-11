@@ -41,6 +41,7 @@ using namespace std;
 const double CMightex_BUF_USBCCDCamera::nominalPixelSizeUm_ = 1.0;
 double g_IntensityFactor_ = 1.0;
 int OnExposureCnt = 0;
+//CMightex_BUF_USBCCDCamera *gMyCamera;
 
 // External names used used by the rest of the system
 // to load particular device from the "Mightex_USBCamera.dll" library
@@ -55,6 +56,7 @@ const char* g_Keyword_YStart = "Y_Offset";
 
 // constants for naming pixel types (allowed values of the "PixelType" property)
 const char* g_PixelType_8bit = "8bit";
+const char* g_PixelType_16bit = "16bit";
 const char* g_PixelType_32bitRGB = "32bitRGB";
 
 
@@ -104,7 +106,7 @@ const int  MAX_RESOLUTIONS_V032 = 3;
 const int  MAX_RESOLUTIONS_M001 = 13;
 const int  MAX_RESOLUTIONS_T001 = 14;
 const int  MAX_RESOLUTIONS_P001 = 15;
-const int  MAX_EXPOSURETIME[]={5, 10, 100, 750};
+//const int  MAX_EXPOSURETIME[]={5, 10, 100, 750};
 
 const int DEFAULT_WIDTH = 640;//1392;
 const int DEFAULT_HEIGHT = 480;//1040;
@@ -157,6 +159,42 @@ const char g_Res[MAX_RESOLUTIONS+1][10] =
 	{ "1616*1232"}, 
 };
 
+static struct { int width; int height;}
+frameSize_ICX424[] =
+{
+	{  640,  480}, 	
+	{  320,  240}, 
+	{  212,  160},
+	{  160,  120},
+};
+
+static struct { int width; int height;}
+frameSize_ICX445[] =
+{
+	{ 1280,  960},
+	{  640,  480}, 	
+	{  424,  320},
+	{  320,  240}, 
+};
+
+static struct { int width; int height;}
+frameSize_ICX205[] =
+{
+	{  1392, 1040}, 	
+	{  696,  520}, 
+	{  464,  344},
+	{  348,  256},
+};
+
+static struct { int width; int height;}
+frameSize_ICX274[] =
+{
+	{  1616, 1232}, 	
+	{  808,  616}, 
+	{  538,  410},
+	{  404,  308},
+};
+
 //////////////////////////////////////////////////////////////////////////
 //Camera API function pointer variables
 BUFCCDUSB_InitDevicePtr BUFCCDUSB_InitDevice;
@@ -206,6 +244,9 @@ void FrameCallBack(TProcessedDataProperty *Attributes, unsigned char *BytePtr)
 
 	MMThreadGuard g_g(g_imgPixelsLock_);
 	//memcpy(g_pImage, BytePtr, g_frameSize);
+	int bit = 1; //RGB Type
+	if(Attributes->FrameProcessType == 0) 
+		bit = 2; //RAW Type 12bit
 
 	{
 		bool isInROI;
@@ -232,23 +273,24 @@ void FrameCallBack(TProcessedDataProperty *Attributes, unsigned char *BytePtr)
 						isInROI = true;
 					if ( isInROI == true )
 					{
-						if (g_deviceColorType) // Color
+						if (g_deviceColorType&&bit==1) // Color
 							for(int j = 0; j < 3; j++)
 							{
 								*p = *q;
 								p++;
-								q++;
+								q++;								
 							}
 						else
-						{// Mono
-								*p = *q;
-								p++;
-								q++;
-						}
+							for(int n = 0; n < bit; n++)
+							{// Mono
+									*p = *q;
+									p++;
+									q++;
+							}
 					}
 					else
 					{
-						if (g_deviceColorType)
+						if (g_deviceColorType&&bit==1)
 							// Color
 						{
 							q++;
@@ -256,7 +298,8 @@ void FrameCallBack(TProcessedDataProperty *Attributes, unsigned char *BytePtr)
 							q++;
 						}
 						else // Mono
-							q++;
+							for(int m = 0; m < bit; m++)
+								q++;
 					}
 				}
 			}
@@ -264,6 +307,88 @@ void FrameCallBack(TProcessedDataProperty *Attributes, unsigned char *BytePtr)
 			q = NULL;
 			if ( Attributes->TriggerEventCount == 1 )
                                SetEvent( SingleFrameEvent );
+		}
+		else //bin = 1\2\3
+		{
+			BYTE *p = g_pImage;
+			BYTE *q = BytePtr;
+			int binCount = 0;
+			long tmpWord = 0;
+			long tmpWord1 = 0;
+			int tmpCol = 0;
+			int accumulateCount = Attributes->Bin + 1;
+			int kkk = (g_frameSize_width * 3) % 4;
+			//char msg[256];
+			//sprintf(msg, "%d,%d,%d,%d", Attributes->Bin, g_frameSize_width,  Attributes->Row,  Attributes->Column);
+			//gMyCamera->LogMessage(msg, false );
+			if (g_deviceColorType == 0)
+			{
+				// Mono
+				for(int i = 0; i < Attributes->Row; i++)
+				//for(int i = 0; i < 410; i++)
+				{
+					binCount = 0;
+					tmpWord = 0;
+					tmpCol = 0;
+					//q = (BYTE *)((unsigned long)BytePtr + i * Attributes->Column);
+                    q = BytePtr + i * Attributes->Column * bit;
+					for(int k = 0; k <= Attributes->Column; k++)
+					{// Must be "Attributes->Column", so the last byte will be put and break.
+						if (binCount == accumulateCount) 
+						{
+							if(bit == 1)
+							{
+								tmpWord = tmpWord / accumulateCount;
+								if (tmpWord >= 255)
+									tmpWord = 255;
+								//for(int j = 0; j < 3; j++)
+								{
+									*p = tmpWord;
+									p++;
+								}
+							}
+							else
+							{// 12 bit
+								if (tmpWord >= 0xFFF)
+									tmpWord = 0xFFF;
+								*p = tmpWord >> 4;
+								p++;
+								*p = tmpWord & 0x0F;
+								p++;
+							}
+							binCount = 0;
+							tmpWord = 0;
+							tmpCol++;							
+						}
+						if (tmpCol >= g_frameSize_width) 
+						{
+							if( kkk != 0 ) 
+							{
+								// Should padding (4-kkk) bytes.
+								for (int j=0;j<(4-kkk);j++)
+									*p++ = 0;
+							}
+							break;
+						}
+						if(bit == 1)
+						{
+							tmpWord += *q;
+							q++;
+						}
+						else
+						{// 12 bit
+							tmpWord1 = *q;
+							q++;
+							tmpWord += (tmpWord1 << 4) + (*q & 0x0F);
+							q++;
+						}
+						binCount++;
+					}
+				}
+			}
+			//memcpy(g_pImage, BytePtr, g_frameSize);
+			if ( Attributes->TriggerEventCount == 1 )
+                                    SetEvent( SingleFrameEvent ); 
 		}
 	}
 }
@@ -328,7 +453,7 @@ int CMightex_BUF_USBCCDCamera::InitCamera()
 		//BUFCCDUSB_ActiveDeviceInWorkingSet(1, 0);
 		BUFCCDUSB_ActiveDeviceInWorkingSet(1, 1);
 
-	BUFCCDUSB_StartCameraEngine( NULL, 8);
+	BUFCCDUSB_StartCameraEngine( NULL, 12);
 	BUFCCDUSB_InstallFrameHooker( 1, FrameCallBack );
 	BUFCCDUSB_InstallUSBDeviceHooker( CameraFaultCallBack );
 	BUFCCDUSB_SetCameraWorkMode( 1, 1 ); // TRIGGER MODE
@@ -408,10 +533,10 @@ int CMightex_BUF_USBCCDCamera::InitCamera()
 	if(deviceColorType)
 	{
 		g_frameSize = DEFAULT_SIZE*3;
-		frameSize = s_vidFrameSize[MAX_RESOLUTION].frameSize*3;
+		frameSize = s_vidFrameSize[MAX_RESOLUTION].frameSize * 3;
 	}
 	else
-		frameSize = s_vidFrameSize[MAX_RESOLUTION].frameSize;
+		frameSize = s_vidFrameSize[MAX_RESOLUTION].frameSize * 2; //RAW Type
 	g_pImage = new BYTE[frameSize];
 	ZeroMemory(g_pImage, frameSize);
 
@@ -421,6 +546,25 @@ int CMightex_BUF_USBCCDCamera::InitCamera()
 	yStart = 0;
 	h_Mirror = 0;
 	v_Flip = 0;
+	//bin = 1;
+
+     switch (deviceType) {
+        case ICX424M:
+			p_frmSize = (struct FrmSize *)frameSize_ICX424;
+			break;
+        case ICX205AL:
+        case ICX285AL:
+			p_frmSize = (struct FrmSize *)frameSize_ICX205;
+			break;
+        case ICX445AL:
+			p_frmSize = (struct FrmSize *)frameSize_ICX445;
+			break;
+        case ICX274AL:
+			p_frmSize = (struct FrmSize *)frameSize_ICX274;
+			break;
+       default: 
+			p_frmSize = NULL;
+	}
 
 	BUFCCDUSB_SetCustomizedResolution(1, 
 			s_vidFrameSize[MAX_RESOLUTION].width, DEFAULT_HEIGHT, 0, GetCameraBufferCount(DEFAULT_WIDTH, DEFAULT_HEIGHT));
@@ -506,6 +650,7 @@ CMightex_BUF_USBCCDCamera::CMightex_BUF_USBCCDCamera() :
 	g_InstanceCount++;
 	is_initCamera = false;
 	HDll = NULL;
+	//gMyCamera = this;
 }
 
 /**
@@ -583,9 +728,27 @@ int CMightex_BUF_USBCCDCamera::Initialize()
    nRet = CreateIntegerProperty(MM::g_Keyword_Binning, 1, false, pAct);
    assert(nRet == DEVICE_OK);
 
-   nRet = SetAllowedBinning();
+   nRet = SetAllowedBinning(!deviceColorType);
    if (nRet != DEVICE_OK)
       return nRet;
+
+   // bin
+   //pAct = new CPropertyAction (this, &CMightex_BUF_USBCCDCamera::OnBin);
+   //nRet = CreateIntegerProperty("Bin", 1, false, pAct);
+   //assert(nRet == DEVICE_OK);
+
+   //vector<string> binValues;
+   //binValues.push_back("1");
+
+   //if(deviceColorType == 0)
+   //{
+	  // binValues.push_back("2");
+	  // binValues.push_back("3");
+	  // binValues.push_back("4");
+   //}
+   //nRet = SetAllowedValues("Bin", binValues);
+   //if (nRet != DEVICE_OK)
+   //   return nRet;
 
    // pixel type
    pAct = new CPropertyAction (this, &CMightex_BUF_USBCCDCamera::OnPixelType);
@@ -607,34 +770,60 @@ int CMightex_BUF_USBCCDCamera::Initialize()
       return nRet;
 
    // Bit depth
-   nRet = CreateStringProperty("BitDepth", "8", true);
-   assert(nRet == DEVICE_OK);
-
-   //pAct = new CPropertyAction (this, &CMightex_BUF_USBCCDCamera::OnBitDepth);
-   //nRet = CreateIntegerProperty("BitDepth", 8, false, pAct);
+   //nRet = CreateStringProperty("BitDepth", "8", true);
    //assert(nRet == DEVICE_OK);
 
-   //vector<string> bitDepths;
-   //bitDepths.push_back("8");
+   pAct = new CPropertyAction (this, &CMightex_BUF_USBCCDCamera::OnBitDepth);
+   nRet = CreateIntegerProperty("BitDepth", 8, false, pAct);
+   assert(nRet == DEVICE_OK);
+
+   vector<string> bitDepths;
+   bitDepths.push_back("8");
    //bitDepths.push_back("10");
-   //bitDepths.push_back("12");
+   bitDepths.push_back("12");
    //bitDepths.push_back("14");
    //bitDepths.push_back("16");
    //bitDepths.push_back("32");
-   //nRet = SetAllowedValues("BitDepth", bitDepths);
+   nRet = SetAllowedValues("BitDepth", bitDepths);
+   if (nRet != DEVICE_OK)
+      return nRet;
+
+   // exposure
+   //nRet = CreateIntegerProperty(MM::g_Keyword_Exposure, 20, true);
+   //assert(nRet == DEVICE_OK);
+
+   // Exposure Time Value
+   //nRet = CreateStringProperty("Exposure Time Value", "20.00ms", false);
+   //assert(nRet == DEVICE_OK);
+   //vector<string> exposureTimeValue;
+   //exposureTimeValue.push_back("20.00ms");
+   //nRet = SetAllowedValues("Exposure Time Value", exposureTimeValue);
    //if (nRet != DEVICE_OK)
    //   return nRet;
 
-   // exposure
-   nRet = CreateIntegerProperty(MM::g_Keyword_Exposure, 20, true);
-   assert(nRet == DEVICE_OK);
+   // Maximum Exposure Time
+   //pAct = new CPropertyAction (this, &CMightex_BUF_USBCCDCamera::OnMaximumExposure);
+   //nRet = CreateStringProperty("Exposure Time Maximum", "100ms", false, pAct);
+   //assert(nRet == DEVICE_OK);
+   //MaximumExposureTime_index = 2;
 
+   //vector<string> exposureTimeValues;
+   //exposureTimeValues.push_back("5ms");
+   //exposureTimeValues.push_back("10ms");
+   //exposureTimeValues.push_back("100ms");
+   //exposureTimeValues.push_back("750ms");
+   //nRet = SetAllowedValues("Exposure Time Maximum", exposureTimeValues);
+   //if (nRet != DEVICE_OK)
+   //   return nRet;
+
+
+   // Exposure Time
    pAct = new CPropertyAction (this, &CMightex_BUF_USBCCDCamera::OnExposure);
-   //nRet = CreateIntegerProperty(MM::g_Keyword_Exposure, 20, false, pAct);
-   nRet = CreateIntegerProperty("Exposure Time", 20, false, pAct);
+   nRet = CreateIntegerProperty(MM::g_Keyword_Exposure, 20, false, pAct);
+   //nRet = CreateIntegerProperty("Exposure Time (%)", 20, false, pAct);
    assert(nRet == DEVICE_OK);
    //SetPropertyLimits(MM::g_Keyword_Exposure, 0, 100);
-   SetPropertyLimits("Exposure Time",1, 100);
+   //SetPropertyLimits("Exposure Time (%)",1, 100);
    
    // camera gain
    pAct = new CPropertyAction (this, &CMightex_BUF_USBCCDCamera::OnGain);
@@ -648,6 +837,22 @@ int CMightex_BUF_USBCCDCamera::Initialize()
    pAct = new CPropertyAction (this, &CMightex_BUF_USBCCDCamera::OnResolution);
    nRet = CreateStringProperty(g_Keyword_Resolution, g_Res[0], false, pAct);
    assert(nRet == DEVICE_OK);
+
+   vector<string> ResValues;
+   for(int i = 0; i <= s_MAX_RESOLUTION; i++)
+	   ResValues.push_back(g_Res[i]);
+   nRet = SetAllowedValues(g_Keyword_Resolution, ResValues);
+   if (nRet != DEVICE_OK)
+      return nRet;
+
+   // Binning Resolution
+   //nRet = CreateStringProperty("Binning Resolution", "640*480(1:1)", false);
+   //assert(nRet == DEVICE_OK);
+   //vector<string> resolutionValue;
+   //resolutionValue.push_back("640*480(1:1)");
+   //nRet = SetAllowedValues("Binning Resolution", resolutionValue);
+   //if (nRet != DEVICE_OK)
+   //   return nRet;
 
    // XStart
    pAct = new CPropertyAction (this, &CMightex_BUF_USBCCDCamera::OnXStart);
@@ -681,13 +886,6 @@ int CMightex_BUF_USBCCDCamera::Initialize()
    v_Flips.push_back("0");
    v_Flips.push_back("1");
    nRet = SetAllowedValues("V_Flip", v_Flips);
-   if (nRet != DEVICE_OK)
-      return nRet;
-
-   vector<string> ResValues;
-   for(int i = 0; i <= s_MAX_RESOLUTION; i++)
-	   ResValues.push_back(g_Res[i]);
-   nRet = SetAllowedValues(g_Keyword_Resolution, ResValues);
    if (nRet != DEVICE_OK)
       return nRet;
 
@@ -825,7 +1023,7 @@ int CMightex_BUF_USBCCDCamera::Shutdown()
 	//	 return DEVICE_OK;
 
 	if(HDll){
-                BUFCCDUSB_StopFrameGrab();
+        BUFCCDUSB_StopFrameGrab();
 		BUFCCDUSB_InstallFrameHooker( 1, NULL );
 		BUFCCDUSB_InstallUSBDeviceHooker( NULL );
         //LogMessage("Before BUFCCDUSB_StopCameraEngine\n");
@@ -926,6 +1124,13 @@ const unsigned char* CMightex_BUF_USBCCDCamera::GetImageBuffer()
    unsigned char *pB = (unsigned char*)(img_.GetPixels());
 
    MMThreadGuard g_g(g_imgPixelsLock_);
+   if(bitDepth_ == 12)
+   {
+	   //memcpy(img_.GetPixelsRW(), g_pImage, g_frameSize);
+	   RAWtoImageJ();
+	   return pB;
+   }
+
    if(deviceColorType == 0)
 		memcpy(img_.GetPixelsRW(), g_pImage, g_frameSize);
    else
@@ -935,6 +1140,26 @@ const unsigned char* CMightex_BUF_USBCCDCamera::GetImageBuffer()
 			RGB3toRGB1((char *)g_pImage, (char *) img_.GetPixelsRW(), img_.Width(), img_.Height());
 
    return pB;
+}
+
+/**
+* Converts RAW image to ImageJ
+*/
+void CMightex_BUF_USBCCDCamera::RAWtoImageJ()
+{
+	unsigned char tmp;
+	unsigned char *p = (unsigned char*)img_.GetPixelsRW();
+	//unsigned char *q = g_pImage + g_frameSize/2;
+	memcpy(img_.GetPixelsRW(), g_pImage, g_frameSize);
+   for(int i = 0; i < g_frameSize/2; i++)
+   {
+	   tmp = *p;
+	   *p = *(p+1);
+	   *(p+1) = tmp;
+	   *p = *p << 4;
+	   p++;
+	   p++;
+   }
 }
 
 /**
@@ -1225,11 +1450,19 @@ int CMightex_BUF_USBCCDCamera::SendExposureSequence() const {
    return DEVICE_OK;
 }
 
-int CMightex_BUF_USBCCDCamera::SetAllowedBinning() 
+int CMightex_BUF_USBCCDCamera::SetAllowedBinning(int isBinning) 
 {
 
    vector<string> binValues;
    binValues.push_back("1");
+
+   if(isBinning == 1)
+   {
+	   binValues.push_back("2");
+	   binValues.push_back("3");
+	   binValues.push_back("4");
+   }
+
 /*   binValues.push_back("2");
    if (scanMode_ < 3)
       binValues.push_back("4");
@@ -1521,8 +1754,8 @@ int CMightex_BUF_USBCCDCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType
    {
    case MM::AfterSet:
       {
-         //if(IsCapturing())
-         //   return DEVICE_CAMERA_BUSY_ACQUIRING;
+         if(IsCapturing())
+            return DEVICE_CAMERA_BUSY_ACQUIRING;
 
          // the user just set the new value for the property, so we have to
          // apply this value to the 'hardware'.
@@ -1535,19 +1768,158 @@ int CMightex_BUF_USBCCDCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType
             //std::ostringstream os;
             //os << binSize_;
             //OnPropertyChanged("Binning", os.str().c_str());
-				ret=DEVICE_OK;
+			char s_resolution[256];
+			if(binFactor == 1)
+			{
+				//if(BUFCCDUSB_SetCustomizedResolution(1, 
+				//	s_vidFrameSize[MAX_RESOLUTION].width, cameraCCDYSize_, 0, 
+				//	GetCameraBufferCount(s_vidFrameSize[MAX_RESOLUTION].width, cameraCCDYSize_)) > 0)
+				//{
+				//	img_.Resize(cameraCCDXSize_, cameraCCDYSize_);
+				//	g_frameSize = cameraCCDXSize_ * cameraCCDYSize_;
+				//	g_frameSize_width = cameraCCDXSize_;
+				//}
+				//else
+				//	 return DEVICE_ERR;
+				binSize_ = binFactor;
+
+				sprintf(s_resolution, "%d*%d", cameraCCDXSize_, cameraCCDYSize_);
+			   vector<string> ResValues;
+			   for(int i = 0; i <= s_MAX_RESOLUTION; i++)
+				   ResValues.push_back(g_Res[i]);
+			   ret = SetAllowedValues(g_Keyword_Resolution, ResValues);
+			   if (ret != DEVICE_OK)
+				  return ret;
+				SetProperty(g_Keyword_Resolution, s_resolution);
+
+			   //vector<string> bitDepths;
+			   //bitDepths.push_back("8");
+			   //bitDepths.push_back("12");
+			   //ret = SetAllowedValues("BitDepth", bitDepths);
+			   //if (ret != DEVICE_OK)
+				  //return ret;
+			}
+			else
+			{
+				if(BUFCCDUSB_SetCustomizedResolution(1, 
+					s_vidFrameSize[MAX_RESOLUTION].width, p_frmSize[binFactor-1].height,
+					0x80+binFactor-1, GetCameraBufferCount(s_vidFrameSize[MAX_RESOLUTION].width, p_frmSize[binFactor-1].height)) > 0)
+				{
+					//cameraCCDXSize_ = p_frmSize[binFactor-1].width;
+					//cameraCCDYSize_ = p_frmSize[binFactor-1].height;
+ 					unsigned int bytesPerPixel = 1;
+					if(bitDepth_ == 12)
+						bytesPerPixel = 2;
+					img_.Resize(p_frmSize[binFactor-1].width, p_frmSize[binFactor-1].height, bytesPerPixel);
+					g_frameSize = p_frmSize[binFactor-1].width * p_frmSize[binFactor-1].height * bytesPerPixel;
+					g_frameSize_width = p_frmSize[binFactor-1].width;
+				}
+				else
+					return DEVICE_ERR;
+				binSize_ = binFactor;
+
+				sprintf(s_resolution, "%d*%d(1:%d)", p_frmSize[binFactor-1].width, p_frmSize[binFactor-1].height, binFactor);
+				vector<string> resolutionValue;
+				resolutionValue.push_back(s_resolution);
+				ret = SetAllowedValues(g_Keyword_Resolution, resolutionValue);
+				if (ret != DEVICE_OK)
+					return ret;
+				SetProperty(g_Keyword_Resolution, s_resolution);
+
+				SetPropertyLimits(g_Keyword_XStart, 0, 0);
+				SetPropertyLimits(g_Keyword_YStart, 0, 0);
+				SetProperty(g_Keyword_XStart, "0");
+				SetProperty(g_Keyword_YStart, "0");
+				g_xStart = 0;
+				yStart = 0;
+
+			   //vector<string> bitDepths;
+			   //bitDepths.push_back("8");
+			   //bitDepths.push_back("12");
+			   //ret = SetAllowedValues("BitDepth", bitDepths);
+			   //if (ret != DEVICE_OK)
+				  //return ret;
+
+			}
+			//binSize_ = binFactor;
+			//vector<string> resolutionValue;
+			//resolutionValue.push_back(s_resolution);
+			//ret = SetAllowedValues("Binning Resolution", resolutionValue);
+			//if (ret != DEVICE_OK)
+			//	return ret;
+			//SetProperty("Binning Resolution", s_resolution);
+
+			ret=DEVICE_OK;
 			}
       }break;
    case MM::BeforeGet:
       {
          ret=DEVICE_OK;
-			pProp->Set(binSize_);
+		 pProp->Set(binSize_);
       }break;
    default:
       break;
    }
    return ret; 
 }
+
+/**
+* Handles "Bin" property.
+*/
+//int CMightex_BUF_USBCCDCamera::OnBin(MM::PropertyBase* pProp, MM::ActionType eAct)
+//{
+//
+//   int ret = DEVICE_ERR;
+//   switch(eAct)
+//   {
+//   case MM::AfterSet:
+//      {
+//         if(IsCapturing())
+//            return DEVICE_CAMERA_BUSY_ACQUIRING;
+//
+//         // the user just set the new value for the property, so we have to
+//         // apply this value to the 'hardware'.
+//         long binFactor;
+//         pProp->Get(binFactor);
+//			{
+//			char s_resolution[256];
+//			if(binFactor == 1)
+//				sprintf(s_resolution, "%d*%d(1:%d)", cameraCCDXSize_, cameraCCDYSize_, binFactor);
+//			else
+//			{
+//				if(BUFCCDUSB_SetCustomizedResolution(1, 
+//					s_vidFrameSize[MAX_RESOLUTION].width, p_frmSize[binFactor-1].height,
+//					0x80+binFactor-1, GetCameraBufferCount(s_vidFrameSize[MAX_RESOLUTION].width, p_frmSize[binFactor-1].height)) > 0 )
+//				{
+//					img_.Resize(p_frmSize[binFactor-1].width, p_frmSize[binFactor-1].height);
+//					g_frameSize = p_frmSize[binFactor-1].width * p_frmSize[binFactor-1].height;
+//					g_frameSize_width = p_frmSize[binFactor-1].width;
+//				}
+//				else
+//					return DEVICE_ERR;
+//				sprintf(s_resolution, "%d*%d(1:%d)", p_frmSize[binFactor-1].width, p_frmSize[binFactor-1].height, binFactor);
+//			}
+//			bin = binFactor;
+//			vector<string> resolutionValue;
+//			resolutionValue.push_back(s_resolution);
+//			ret = SetAllowedValues("Binning Resolution", resolutionValue);
+//			if (ret != DEVICE_OK)
+//				return ret;
+//			SetProperty("Binning Resolution", s_resolution);
+//
+//				ret=DEVICE_OK;
+//			}
+//      }break;
+//   case MM::BeforeGet:
+//      {
+//         ret=DEVICE_OK;
+//		 pProp->Set(bin);
+//      }break;
+//   default:
+//      break;
+//   }
+//   return ret; 
+//}
 
 /**
 * Handles "PixelType" property.
@@ -1570,15 +1942,21 @@ int CMightex_BUF_USBCCDCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionTy
          {
             nComponents_ = 1;
             img_.Resize(img_.Width(), img_.Height(), 1);
-            bitDepth_ = 8;
+            //bitDepth_ = 8;
             ret=DEVICE_OK;
          }
-			else if ( pixelType.compare(g_PixelType_32bitRGB) == 0)
-			{
-            nComponents_ = 4;
-            img_.Resize(img_.Width(), img_.Height(), 4);
-            ret=DEVICE_OK;
-			}
+		else if ( pixelType.compare(g_PixelType_32bitRGB) == 0)
+		{
+			nComponents_ = 4;
+			img_.Resize(img_.Width(), img_.Height(), 4);
+			ret=DEVICE_OK;
+		}
+		else if ( pixelType.compare(g_PixelType_16bit) == 0)
+		{
+			nComponents_ = 1;
+			img_.Resize(img_.Width(), img_.Height(), 2);
+			ret=DEVICE_OK;
+		}
          else
          {
             // on error switch to default pixel type
@@ -1601,6 +1979,133 @@ int CMightex_BUF_USBCCDCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionTy
 /**
 * Handles "BitDepth" property.
 */
+int CMightex_BUF_USBCCDCamera::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   int ret = DEVICE_ERR;
+   switch(eAct)
+   {
+   case MM::AfterSet:
+      {
+         if(IsCapturing())
+            return DEVICE_CAMERA_BUSY_ACQUIRING;
+
+         long bitDepth;
+         pProp->Get(bitDepth);
+
+			unsigned int bytesPerComponent;
+ 			unsigned int bytesPerPixel = 1;
+			vector<string> pixelTypeValues;
+        switch (bitDepth) {
+            case 8:
+					bytesPerComponent = 1;
+               bitDepth_ = 8;
+
+			   pixelTypeValues.push_back(g_PixelType_8bit);
+   				if(deviceColorType)
+					pixelTypeValues.push_back(g_PixelType_32bitRGB);
+				else
+					nComponents_ = 1;
+			   ret = SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
+			   if (ret != DEVICE_OK)
+				  return ret;
+   				if(deviceColorType)
+				{
+					SetProperty(MM::g_Keyword_PixelType, g_PixelType_32bitRGB);
+					g_frameSize = GetImageBufferSize()/4*3;
+				}
+				else
+				{
+					SetProperty(MM::g_Keyword_PixelType, g_PixelType_8bit);
+					g_frameSize = GetImageBufferSize();
+				}
+
+				BUFCCDUSB_StopFrameGrab();
+				BUFCCDUSB_InstallFrameHooker( 1, FrameCallBack ); //RGB Type
+				BUFCCDUSB_InstallUSBDeviceHooker( CameraFaultCallBack );
+				BUFCCDUSB_SetCameraWorkMode( 1, 1 ); // TRIGGER MODE
+				BUFCCDUSB_StartFrameGrab( GRAB_FRAME_FOREVER );
+
+			   //ret = SetAllowedBinning(!deviceColorType);
+			   //if (ret != DEVICE_OK)
+				//  return ret;
+
+			   ret=DEVICE_OK;
+            break;
+            case 10:
+					bytesPerComponent = 2;
+               bitDepth_ = 10;
+               ret=DEVICE_OK;
+            break;
+            case 12:
+					bytesPerComponent = 2;
+				bytesPerPixel = 2;
+				bitDepth_ = 12;
+
+			   pixelTypeValues.push_back(g_PixelType_16bit);
+			   ret = SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
+			   if (ret != DEVICE_OK)
+				  return ret;
+				SetProperty(MM::g_Keyword_PixelType, g_PixelType_16bit);
+
+				g_frameSize = GetImageBufferSize();
+
+				BUFCCDUSB_StopFrameGrab();
+				BUFCCDUSB_InstallFrameHooker( 0, FrameCallBack ); //RAW Type
+				BUFCCDUSB_InstallUSBDeviceHooker( CameraFaultCallBack );
+				BUFCCDUSB_SetCameraWorkMode( 1, 1 ); // TRIGGER MODE
+				BUFCCDUSB_StartFrameGrab( GRAB_FRAME_FOREVER );
+
+			   //ret = SetAllowedBinning(0);
+			   //if (ret != DEVICE_OK)
+				//  return ret;
+
+				//BUFCCDUSB_InstallFrameHooker( 1, NULL );
+				//BUFCCDUSB_InstallUSBDeviceHooker( NULL );
+				//BUFCCDUSB_StopCameraEngine();
+				//BUFCCDUSB_RemoveDeviceFromWorkingSet(1);
+				//BUFCCDUSB_UnInitDevice();
+				//BUFCCDUSB_InitDevice();
+				//BUFCCDUSB_AddDeviceToWorkingSet(1);
+				//BUFCCDUSB_ActiveDeviceInWorkingSet(1, 1);
+				//LogMessage("Before BUFCCDUSB_StartCameraEngine 12\n");
+				//if(BUFCCDUSB_StartCameraEngine( NULL, 12) == 1)
+				//	LogMessage("After BUFCCDUSB_StartCameraEngine 12\n");
+				//else
+				//{
+				//	LogMessage("Fail to BUFCCDUSB_StartCameraEngine 12\n");
+				//	return DEVICE_ERR;
+				//}
+				//BUFCCDUSB_StartFrameGrab( GRAB_FRAME_FOREVER );
+
+               ret=DEVICE_OK;
+            break;
+            default: 
+               // on error switch to default pixel type
+					bytesPerComponent = 1;
+
+               pProp->Set((long)8);
+               bitDepth_ = 8;
+               ret = ERR_UNKNOWN_MODE;
+            break;
+         }
+			//char buf[MM::MaxStrLength];
+			//GetProperty(MM::g_Keyword_PixelType, buf);
+			//std::string pixelType(buf);
+
+			//img_.Resize(img_.Width(), img_.Height(), bytesPerPixel);
+      } break;
+   case MM::BeforeGet:
+      {
+         pProp->Set((long)bitDepth_);
+         ret=DEVICE_OK;
+      } break;
+   default:
+      break;
+   }
+ 
+   return ret; 
+}
+
 /*
 int CMightex_BUF_USBCCDCamera::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -1929,6 +2434,10 @@ int CMightex_BUF_USBCCDCamera::ResizeImageBuffer()
    {
       byteDepth = 1;
    }
+	else if ( pixelType.compare(g_PixelType_16bit) == 0)
+	{
+      byteDepth = 2;
+	}
 	else if ( pixelType.compare(g_PixelType_32bitRGB) == 0)
 	{
       byteDepth = 4;
@@ -1954,6 +2463,65 @@ void CMightex_BUF_USBCCDCamera::TestResourceLocking(const bool recurse)
       TestResourceLocking(false);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+// new: OnMaximumExposure 
+///////////////////////////////////////////////////////////////////////////////
+//int CMightex_BUF_USBCCDCamera::OnMaximumExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
+//{
+//   int ret = DEVICE_ERR;
+//   switch(eAct)
+//   {
+//   case MM::AfterSet:
+//      {
+//	    long i;
+// 	    long exposure;
+//	    long exposure_pos;
+//		std::string MaximumExposure;
+//        pProp->Get(MaximumExposure);
+//		if(MaximumExposure == "5ms")
+//			i = 0;
+//		else if(MaximumExposure == "10ms")
+//			i = 1;
+//		else if(MaximumExposure == "100ms")
+//			i = 2;
+//		else
+//			i = 3;
+//		GetProperty("Exposure Time (%)", exposure_pos);
+//		exposure = MAX_EXPOSURETIME[i] * 1000 * exposure_pos/100 / 50;
+//		 if(BUFCCDUSB_SetExposureTime(1, exposure) == -1)
+//		    return DEVICE_ERR;
+//		MaximumExposureTime_index = i;
+//
+//		char s_exposure[256];
+//		//_ltoa(exposure * 50 /1000, s_exposure, 10);
+//		float f_frameTime = exposure * 50 /1000.000;
+//		sprintf(s_exposure, "%gms", f_frameTime);
+//	   vector<string> exposureTimeValue;
+//	   exposureTimeValue.push_back(s_exposure);
+//	   ret = SetAllowedValues("Exposure Time Value", exposureTimeValue);
+//	   if (ret != DEVICE_OK)
+//		  return ret;
+//		SetProperty("Exposure Time Value", s_exposure);
+//
+//         ret=DEVICE_OK;
+//      }break;
+//   case MM::BeforeGet:
+//      {
+//         ret=DEVICE_OK;
+//      } break;
+//   case MM::NoAction:
+//      break;
+//   case MM::IsSequenceable:
+//   case MM::AfterLoadSequence:
+//   case MM::StartSequence:
+//   case MM::StopSequence:
+//      return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
+//      break;
+//   }
+//   return ret; 
+//}
+
 ///////////////////////////////////////////////////////////////////////////////
 // new: OnExposure 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1965,12 +2533,25 @@ int CMightex_BUF_USBCCDCamera::OnExposure(MM::PropertyBase* pProp, MM::ActionTyp
    case MM::AfterSet:
       {
 	     long exposure;
-         pProp->Get(exposure);
-		 //OnExposureCnt++;
-		 //if (OnExposureCnt >= 10)
-		 //	MessageBox( NULL, "try", "test", MB_OK);
-		 if(BUFCCDUSB_SetExposureTime(1, exposure * 20) == -1)
+ 	     long exposure_pos;
+         pProp->Get(exposure_pos);
+		 
+		 //exposure = MAX_EXPOSURETIME[MaximumExposureTime_index] * 1000 * exposure_pos/100 / 50;
+		 exposure = 1000 * exposure_pos / 50;
+		 if(BUFCCDUSB_SetExposureTime(1, exposure) == -1)
 		    return DEVICE_ERR;
+
+		//char s_exposure[256];
+		//_ltoa(exposure * 50 /1000, s_exposure, 10);
+		//float f_frameTime = exposure * 50 /1000.000;
+		//sprintf(s_exposure, "%gms", f_frameTime);
+	 //  vector<string> exposureTimeValue;
+	 //  exposureTimeValue.push_back(s_exposure);
+	 //  ret = SetAllowedValues("Exposure Time Value", exposureTimeValue);
+	 //  if (ret != DEVICE_OK)
+		//  return ret;
+		//SetProperty("Exposure Time Value", s_exposure);
+
          ret=DEVICE_OK;
       }break;
    case MM::BeforeGet:
@@ -2027,6 +2608,7 @@ int CMightex_BUF_USBCCDCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eA
 int CMightex_BUF_USBCCDCamera::OnResolution(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    int ret = DEVICE_ERR;
+   if(binSize_ > 1) return DEVICE_OK;
    switch(eAct)
    {
    case MM::AfterSet:
@@ -2046,7 +2628,7 @@ int CMightex_BUF_USBCCDCamera::OnResolution(MM::PropertyBase* pProp, MM::ActionT
 		 long h = atoi(height.c_str());
 
 		if(BUFCCDUSB_SetCustomizedResolution(1, 
-			s_vidFrameSize[MAX_RESOLUTION].width, h, 0, GetCameraBufferCount(w, h)))
+			s_vidFrameSize[MAX_RESOLUTION].width, h, 0, GetCameraBufferCount(w, h)) > 0)
 		{
 			cameraCCDXSize_ = w;
 			cameraCCDYSize_ = h;
@@ -2054,6 +2636,8 @@ int CMightex_BUF_USBCCDCamera::OnResolution(MM::PropertyBase* pProp, MM::ActionT
 				g_frameSize = w * h * 3;
 			else
 				g_frameSize = w * h;
+			if(bitDepth_ == 12)
+				g_frameSize = w * h * 2;
 			g_frameSize_width = w;
 
 			SetPropertyLimits(g_Keyword_XStart, 0, s_vidFrameSize[MAX_RESOLUTION].width - w);
@@ -2062,6 +2646,15 @@ int CMightex_BUF_USBCCDCamera::OnResolution(MM::PropertyBase* pProp, MM::ActionT
 			SetProperty(g_Keyword_YStart, "0");
 			g_xStart = 0;
 			yStart = 0;
+
+			//char s_resolution[256];
+			//sprintf(s_resolution, "%d*%d(1:1)", cameraCCDXSize_, cameraCCDYSize_);
+			//vector<string> resolutionValue;
+			//resolutionValue.push_back(s_resolution);
+			//ret = SetAllowedValues("Binning Resolution", resolutionValue);
+			//if (ret != DEVICE_OK)
+			//	return ret;
+			//SetProperty("Binning Resolution", s_resolution);
 		}
 		else
 			 return DEVICE_ERR;
