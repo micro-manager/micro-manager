@@ -25,9 +25,6 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-/* JTZ: 2015/7/2: Check In Test 
-*/
-
 #ifndef _Mightex_USBCamera_H_
 #define _Mightex_USBCamera_H_
 
@@ -51,6 +48,7 @@
 
 const char* NoHubError = "Parent Hub not defined.";
 
+struct FrmSize{ int width; int height;};
 
 //////////////////////////////////////////////////////////////////////////////
 // CMightex_BUF_USBCCDCamera class
@@ -119,7 +117,7 @@ public:
 	//int OnSwitch(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
-   //int OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct);
    //int OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct);
    //int OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    //int OnErrorSimulation(MM::PropertyBase* , MM::ActionType );
@@ -137,6 +135,7 @@ public:
 	int GetCameraBufferCount(int width, int height);
    void RGB3toRGB4(const char* srcPixels, char* destPixels, int width, int height);
    void RGB3toRGB1(const char* srcPixels, char* destPixels, int width, int height);
+   //int OnMaximumExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnResolution(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -144,9 +143,11 @@ public:
 	int OnYStart(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnH_Mirror(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnV_Flip(MM::PropertyBase* pProp, MM::ActionType eAct);
+   //int OnBin(MM::PropertyBase* pProp, MM::ActionType eAct);
+   void RAWtoImageJ();
 
 private:
-   int SetAllowedBinning();
+   int SetAllowedBinning(int isBinning);
    void TestResourceLocking(const bool);
    void GenerateEmptyImage(ImgBuffer& img);
    int ResizeImageBuffer();
@@ -203,6 +204,9 @@ private:
 	long yStart;
 	long h_Mirror;
 	long v_Flip;
+	long MaximumExposureTime_index;
+	struct FrmSize *p_frmSize;
+	//long bin;
 };
 
 
