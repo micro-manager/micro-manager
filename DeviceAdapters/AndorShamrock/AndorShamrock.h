@@ -69,6 +69,7 @@
     void SetGratingsProperty();
     void SetCoefficientsProperty();
     void SetWavelengthProperty();
+	void SetRayleighWavelengthProperty();
     void SetPixelWidthProperty();
     void SetNumberPixelsProperty();
     void SetFilterProperty();
@@ -79,11 +80,11 @@
     void SetGratingOffsetProperty();
     void SetFlipperMirrorProperty();
     void SetFocusMirrorProperty();
+	int GetDetectorOffsetIndices(int *index1, int *index2);
   private:
     std::vector<std::string> mvGratings;
     std::vector<std::string> mvFilters;
     std::vector<std::string> mvShutters;
-    int GetDetectorOffsetIndices(int *index1, int *index2);
   };
 
   #endif _SHAMROCK_H_
