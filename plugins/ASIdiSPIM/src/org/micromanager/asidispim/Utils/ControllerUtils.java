@@ -301,6 +301,9 @@ public class ControllerUtils {
 
       // get the micro-mirror card ready
       // SA_AMPLITUDE_X_DEG and SA_OFFSET_X_DEG done by setup tabs
+      if (settings.spimMode.equals(AcquisitionModes.Keys.PIEZO_SCAN_ONLY)) {
+         sliceAmplitude = 0.0f;
+      }
       boolean triangleWave = prefs_.getBoolean(
             MyStrings.PanelNames.SETTINGS.toString(),  
             Properties.Keys.PREFS_SCAN_OPPOSITE_DIRECTIONS, false);
@@ -344,6 +347,11 @@ public class ControllerUtils {
             props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SLICES_PER_PIEZO,
                   settings.numChannels, skipScannerWarnings);
          }
+      }
+      if (settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED) {
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_PIEZO_HOME_ENABLE, Properties.Values.NO);
+      } else {
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_PIEZO_HOME_ENABLE, Properties.Values.YES);
       }
       
       // set interleaved sides flag low unless we are doing interleaved stage scan
