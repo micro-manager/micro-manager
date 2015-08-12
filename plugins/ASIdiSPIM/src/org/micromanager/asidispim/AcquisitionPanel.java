@@ -72,6 +72,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import mmcorej.CMMCore;
+import mmcorej.StrVector;
 import mmcorej.TaggedImage;
 
 import org.micromanager.api.MultiStagePosition;
@@ -1675,13 +1676,33 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          // hopefully this issue will simply disappear in MM2.0
       }
       
-      // Autofocus settings
-      boolean autofocusAtT0 = prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(), 
-              Properties.Keys.PLUGIN_AUTOFOCUS_ACQBEFORESTART, false);
-      int autofocusEachNFrames = props_.getPropValueInteger(Devices.Keys.PLUGIN, 
-              Properties.Keys.PLUGIN_AUTOFOCUS_EACHNIMAGES);
-      String autofocusChannel = props_.getPropValueString(Devices.Keys.PLUGIN,
-            Properties.Keys.PLUGIN_AUTOFOCUS_CHANNEL);
+      // Autofocus settings; only used if acqSettings.useAutofocus is true
+      boolean autofocusAtT0 = false;
+      int autofocusEachNFrames = 10;
+      String autofocusChannel = "";
+      if (acqSettings.useAutofocus) {
+         autofocusAtT0 = prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(), 
+               Properties.Keys.PLUGIN_AUTOFOCUS_ACQBEFORESTART, false);
+         autofocusEachNFrames = props_.getPropValueInteger(Devices.Keys.PLUGIN, 
+               Properties.Keys.PLUGIN_AUTOFOCUS_EACHNIMAGES);
+         autofocusChannel = props_.getPropValueString(Devices.Keys.PLUGIN,
+               Properties.Keys.PLUGIN_AUTOFOCUS_CHANNEL);
+         // double-check that selected channel is valid
+         String channelGroup  = props_.getPropValueString(Devices.Keys.PLUGIN,
+               Properties.Keys.PLUGIN_MULTICHANNEL_GROUP);
+         StrVector channels = gui_.getMMCore().getAvailableConfigs(channelGroup);
+         boolean found = false;
+         for (String channel : channels) {
+            if (channel.equals(autofocusChannel)) {
+               found = true;
+               break;
+            }
+         }
+         if (!found) {
+            MyDialogUtils.showError("Invalid autofocus channel selected on autofocus tab.");
+            return false;
+         }
+      }
       
       
       // it appears the circular buffer, which is used by both cameras, can only have one 
