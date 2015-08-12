@@ -54,6 +54,7 @@ public class AcquisitionModes {
       NO_SCAN(         "No scan (fixed sheet)", 3),
       STAGE_SCAN(      "Stage scan", 4),
       STAGE_SCAN_INTERLEAVED("Stage scan interleaved", 5),
+      PIEZO_SCAN_ONLY("Piezo scan only", 6), // only used for autofocus
       NONE(            "None", 0);
       private final String text;
       private final int prefCode;
