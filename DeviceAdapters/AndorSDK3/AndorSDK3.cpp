@@ -598,6 +598,10 @@ int CAndorSDK3Camera::Initialize()
                                              cameraDevice->GetEnum(L"ShutterOutputMode"), 
                                              this, thd_, snapShotController_, false, false);
 
+   shutterTransferTime_property = new TFloatProperty("ShutterTransferTime [s]", 
+                                             new TAndorFloatCache(cameraDevice->GetFloat(L"ShutterTransferTime")),  
+                                             callbackManager_, false, true);
+
    LSPSensorReadoutMode_property = new TEnumProperty("LightScanPlus-SensorReadoutMode", 
                                             cameraDevice->GetEnum(L"SensorReadoutMode"), 
                                             this, thd_, snapShotController_, false, false);
@@ -697,13 +701,14 @@ int CAndorSDK3Camera::Shutdown()
       delete frameRateLimits_property;
       delete fanSpeed_property;
       delete spuriousNoiseFilter_property;
-	  delete staticBlemishCorrection_property;
+	    delete staticBlemishCorrection_property;
       delete aoi_property_;
       delete triggerMode_property;
       delete exposureTime_property;
       delete auxOutSignal_property;
       delete auxOutTwoSignal_property;
       delete shutterOutputMode_property;
+      delete shutterTransferTime_property;
       delete LSPSensorReadoutMode_property;
       delete LSPSequentialPortReadoutMode_property;
       delete LSPExposedPixelHeight_property;

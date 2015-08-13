@@ -189,6 +189,7 @@ private:
    TEnumProperty* auxOutSignal_property;
    TEnumProperty* auxOutTwoSignal_property;
    TEnumProperty* shutterOutputMode_property;
+   TFloatProperty* shutterTransferTime_property;
    
    // LightScanPlus properties
    TEnumProperty* LSPSensorReadoutMode_property;
