@@ -239,9 +239,10 @@ public class RolesPage extends PagePanel {
       // Remove anything left in the focus direction panel, and reconstruct it
       // Note that the panel is constructed with a MigLayout
       focusDirectionPanel_.removeAll();
-      JLabel focusDirectionLabel = new JLabel("Stage focus directions");
-      focusDirectionPanel_.add(focusDirectionLabel, "wrap");
-      if (stages != null) {
+      if (stages != null && stages.size() > 0) {
+         JLabel focusDirectionLabel = new JLabel("Stage focus directions (advanced)");
+         focusDirectionPanel_.add(focusDirectionLabel, "wrap");
+
          try {
             model_.loadFocusDirectionsFromHardware(core_);
          }
