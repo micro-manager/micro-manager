@@ -466,12 +466,14 @@ int LeicaScope::OnAnswerTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct)
 ///////////////////////////////////////////////////////////////////////////////
 ILShutter::ILShutter (): 
    initialized_ (false),
-   state_(0)
+   state_(0),
+   changedTime_(0.0)
 {
    InitializeDefaultErrorMessages();
 
    SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Leica Scope is not initialized.  It is needed for the Leica Shutter to work");
    SetErrorText(ERR_MODULE_NOT_FOUND, "This shutter is not installed in this Leica microscope");
+   EnableDelay(); // signals that the delay setting will be used
 }
 
 ILShutter::~ILShutter ()
@@ -542,9 +544,20 @@ int ILShutter::Initialize()
 bool ILShutter::Busy()
 {
    bool busy;
+   MM::MMTime interval = GetCurrentMMTime() - changedTime_;
+   MM::MMTime delay(GetDelayMs()*1000.0);
+
    int ret = g_ScopeModel.ILShutter_.GetBusy(busy);
    if (ret != DEVICE_OK)  // This is bad and should not happen
+   {
+      std::ostringstream os;
+      os << "ILShutter did not respond to GetBusy: " << ret;
+      LogMessage(os.str().c_str(), false);
       return false;
+   }
+
+   if (interval < delay)
+       busy = true;
 
    return busy;
 }
@@ -565,6 +578,9 @@ int ILShutter::SetOpen(bool open)
       position = 1;
    else
       position = 0;
+
+   // Set timer for the Busy signal
+   changedTime_ = GetCurrentMMTime();
 
    int ret = g_ScopeInterface.SetILShutterPosition(*this, *GetCoreCallback(), position);
    if (ret != DEVICE_OK)
@@ -639,12 +655,14 @@ int ILShutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 ///////////////////////////////////////////////////////////////////////////////
 TLShutter::TLShutter (): 
    initialized_ (false),
-   state_(0)
+   state_(0),
+   changedTime_(0.0)
 {
    InitializeDefaultErrorMessages();
 
    SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Leica Scope is not initialized.  It is needed for the Leica Shutter to work");
    SetErrorText(ERR_MODULE_NOT_FOUND, "This shutter is not installed in this Leica microscope");
+   EnableDelay(); // signals that the delay setting will be used
 }
 
 TLShutter::~TLShutter ()
@@ -715,9 +733,20 @@ int TLShutter::Initialize()
 bool TLShutter::Busy()
 {
    bool busy;
+   MM::MMTime interval = GetCurrentMMTime() - changedTime_;
+   MM::MMTime delay(GetDelayMs()*1000.0);
+
    int ret = g_ScopeModel.TLShutter_.GetBusy(busy);
    if (ret != DEVICE_OK)  // This is bad and should not happen
+   {
+      std::ostringstream os;
+      os << "TLShutter did not respond to GetBusy: " << ret;
+      LogMessage(os.str().c_str(), false);
       return false;
+   }
+
+   if (interval < delay)
+       busy = true;
 
    return busy;
 }
@@ -738,6 +767,9 @@ int TLShutter::SetOpen(bool open)
       position = 1;
    else
       position = 0;
+
+   // Set timer for the Busy signal
+   changedTime_ = GetCurrentMMTime();
 
    int ret = g_ScopeInterface.SetTLShutterPosition(*this, *GetCoreCallback(), position);
    if (ret != DEVICE_OK)

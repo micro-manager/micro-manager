@@ -101,6 +101,7 @@ private:
    std::string name_;
    std::string description_;
    bool state_;
+   MM::MMTime changedTime_;
 };
 
 /*
@@ -131,6 +132,7 @@ private:
    std::string name_;
    std::string description_;
    bool state_;
+   MM::MMTime changedTime_;
 };
 
 
