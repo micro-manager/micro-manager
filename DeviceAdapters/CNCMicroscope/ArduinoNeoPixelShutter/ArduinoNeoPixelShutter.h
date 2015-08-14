@@ -59,7 +59,10 @@ public:
    bool IsPortAvailable() {return portAvailable_;}
 
    int PurgeComPortH() {return PurgeComPort(port_.c_str());}
-   int WriteToComPortH(const unsigned char* command, unsigned len) {return WriteToComPort(port_.c_str(), command, len);}
+   int WriteToComPortH(const unsigned char* command, size_t len)
+   {
+      return WriteToComPort(port_.c_str(), command, static_cast<unsigned>(len));
+   }
    int ReadFromComPortH(unsigned char* answer, unsigned maxLen, unsigned long& bytesRead)
    {
       return ReadFromComPort(port_.c_str(), answer, maxLen, bytesRead);
