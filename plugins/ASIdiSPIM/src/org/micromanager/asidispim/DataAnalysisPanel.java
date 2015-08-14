@@ -315,60 +315,66 @@ public class DataAnalysisPanel extends ListeningJPanel {
 
          if (exportFormat_ == 0) { // mipav
             
-            ImageProcessor iProc = ip.getProcessor();
-            int nrSides = 0;
-            if (mmW.getSummaryMetaData().getString("NumberOfSides").equals("2")) {
-               nrSides = 2;
-            } else if (mmW.getSummaryMetaData().getString("NumberOfSides").equals("1")) {
-               nrSides = 1;
-            } else {
-               throw new SaveTaskException("unsupported number of sides");  
-            }
-            
+            boolean multiPosition = false;
             if (mmW.getNumberOfPositions() > 1) {
-               throw new SaveTaskException("mipav export does not yet work with multiple positions");  
+               multiPosition = true;
             }
             
-            boolean usesChannels = (mmW.getNumberOfChannels()/nrSides) > 1;  // if have channels besides two cameras
-            String [] channelDirArray = new String[mmW.getNumberOfChannels()];
-            if (usesChannels) {
-               for (int c = 0; c < mmW.getNumberOfChannels(); c++) {
-                  String chName = (String)mmW.getSummaryMetaData().getJSONArray("ChNames").get(c);
-                  String colorName = chName.substring(chName.indexOf("-")+1);  // matches with AcquisitionPanel naming convention
-                  channelDirArray[c] = targetDirectory_ + File.separator + baseName_ + File.separator
-                        + (((c % nrSides) == 0) ? "SPIMA" : "SPIMB") + File.separator + colorName;
+            for (int position = 0; position < mmW.getNumberOfPositions(); position++) {
+               
+               ImageProcessor iProc = ip.getProcessor();
+               int nrSides = 0;
+               if (mmW.getSummaryMetaData().getString("NumberOfSides").equals("2")) {
+                  nrSides = 2;
+               } else if (mmW.getSummaryMetaData().getString("NumberOfSides").equals("1")) {
+                  nrSides = 1;
+               } else {
+                  throw new SaveTaskException("unsupported number of sides");
                }
-            } else {  // two channels are from two views, no need for separate folders for each channel
-               channelDirArray[0] = targetDirectory_ + File.separator + baseName_ + 
-                     File.separator + "SPIMA";
-               if (nrSides > 1) {
-                  channelDirArray[1] = targetDirectory_ + File.separator + baseName_ + 
-                        File.separator + "SPIMB";
-               }
-            }
 
-            for (String dir : channelDirArray) {
-               if (new File(dir).exists()) {
+               boolean usesChannels = (mmW.getNumberOfChannels()/nrSides) > 1;  // if have channels besides two cameras
+               String [] channelDirArray = new String[mmW.getNumberOfChannels()];
+               if (usesChannels) {
+                  for (int c = 0; c < mmW.getNumberOfChannels(); c++) {
+                     String chName = (String)mmW.getSummaryMetaData().getJSONArray("ChNames").get(c);
+                     String colorName = chName.substring(chName.indexOf("-")+1);  // matches with AcquisitionPanel naming convention
+                     channelDirArray[c] = targetDirectory_ + File.separator + baseName_ + File.separator
+                           + (multiPosition ? ("Pos" + position + File.separator) : "")
+                           + (((c % nrSides) == 0) ? "SPIMA" : "SPIMB") + File.separator + colorName;
+                  }
+               } else {  // two channels are from two views, no need for separate folders for each channel
+                  channelDirArray[0] = targetDirectory_ + File.separator + baseName_ + File.separator
+                        + (multiPosition ? ("Pos" + position + File.separator) : "")
+                        + "SPIMA";
+                  if (nrSides > 1) {
+                     channelDirArray[1] = targetDirectory_ + File.separator + baseName_ + File.separator
+                           + (multiPosition ? ("Pos" + position + File.separator) : "")
+                           + "SPIMB";
+                  }
+               }
+
+               for (String dir : channelDirArray) {
+                  if (new File(dir).exists()) {
                      throw new SaveTaskException("Output directory already exists");
+                  }
                }
-            }
 
-            for (String dir : channelDirArray) {
-               new File(dir).mkdirs();
-            }
+               for (String dir : channelDirArray) {
+                  new File(dir).mkdirs();
+               }
 
-            int totalNr = mmW.getNumberOfChannels() * mmW.getNumberOfFrames() * mmW.getNumberOfSlices();
-            int counter = 0;
-            
-            for (int c = 0; c < mmW.getNumberOfChannels(); c++) {  // for each channel
-               for (int t = 0; t < mmW.getNumberOfFrames(); t++) {  // for each timepoint
-                  ImageStack stack = new ImageStack(iProc.getWidth(), iProc.getHeight());
-                  for (int i = 0; i < mmW.getNumberOfSlices(); i++) {
-                     ImageProcessor iProc2;
-                     iProc2 = mmW.getImageProcessor(c, i, t, 1);
+               int totalNr = mmW.getNumberOfChannels() * mmW.getNumberOfFrames() * mmW.getNumberOfSlices();
+               int counter = 0;
 
-                     // optional transformation
-                     switch (transformIndex_) {
+               for (int c = 0; c < mmW.getNumberOfChannels(); c++) {  // for each channel
+                  for (int t = 0; t < mmW.getNumberOfFrames(); t++) {  // for each timepoint
+                     ImageStack stack = new ImageStack(iProc.getWidth(), iProc.getHeight());
+                     for (int i = 0; i < mmW.getNumberOfSlices(); i++) {
+                        ImageProcessor iProc2;
+                        iProc2 = mmW.getImageProcessor(c, i, t, 1);
+
+                        // optional transformation
+                        switch (transformIndex_) {
                         case 1: {
                            iProc2.rotate(90);
                            break;
@@ -381,18 +387,19 @@ public class DataAnalysisPanel extends ListeningJPanel {
                            iProc2.rotate(((c % 2) == 1) ? 90 : -90);
                            break;
                         }
-                     }
+                        }
 
-                     stack.addSlice(iProc2);
-                     counter++;
-                     double rate = ((double) counter / (double) totalNr) * 100.0;
-                     setProgress((int) Math.round(rate));
+                        stack.addSlice(iProc2);
+                        counter++;
+                        double rate = ((double) counter / (double) totalNr) * 100.0;
+                        setProgress((int) Math.round(rate));
+                     }
+                     ImagePlus ipN = new ImagePlus("tmp", stack);
+                     ipN.setCalibration(ip.getCalibration());
+                     ij.IJ.save(ipN, channelDirArray[c] + File.separator 
+                           + (((c % nrSides) == 0) ? "SPIMA" : "SPIMB")
+                           + "-" + t + ".tif");
                   }
-                  ImagePlus ipN = new ImagePlus("tmp", stack);
-                  ipN.setCalibration(ip.getCalibration());
-                  ij.IJ.save(ipN, channelDirArray[c] + File.separator 
-                        + (((c % nrSides) == 0) ? "SPIMA" : "SPIMB")
-                        + "-" + t + ".tif");
                }
             }
             
