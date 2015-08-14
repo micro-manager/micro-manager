@@ -88,6 +88,7 @@ SUBDIRS = \
 	Aquinas \
 	Arduino \
 	CARVII \
+	CNCMicroscope \
 	CSUW1 \
 	Cobolt \
 	CoherentCube \

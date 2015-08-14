@@ -382,6 +382,7 @@ AC_CHECK_FUNCS([memset])
 
 # Please keep the list of device adapter directories in ASCII-lexical order,
 # with an indent of 3 spaces (no tabs)! (Just pass through sort(1).)
+# This is the list of subdirectories containing a Makefile.am.
 m4_define([device_adapter_dirs], [m4_strip([
    AAAOTF
    AOTF
@@ -396,6 +397,9 @@ m4_define([device_adapter_dirs], [m4_strip([
    Aquinas
    Arduino
    CARVII
+   CNCMicroscope
+   CNCMicroscope/ArduinoNeoPixelShutter
+   CNCMicroscope/RAMPSStage
    CSUW1
    Cobolt
    CoherentCube
