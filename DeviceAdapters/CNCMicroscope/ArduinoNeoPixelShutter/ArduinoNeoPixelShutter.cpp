@@ -91,7 +91,7 @@ CArduinoNeoPixelHub::CArduinoNeoPixelHub() :
    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
 }
 
-CArduinoHub::~CArduinoNeoPixelHub()
+CArduinoNeoPixelHub::~CArduinoNeoPixelHub()
 {
    Shutdown();
 }
