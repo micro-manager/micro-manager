@@ -19,6 +19,8 @@ limitations under the License.
 #include <sstream>
 #include <cstdio>
 
+#include <boost/lexical_cast.hpp>
+
 #ifdef WIN32
    #define WIN32_LEAN_AND_MEAN
    #include <windows.h>
@@ -455,7 +457,7 @@ int CArduinoNeoPixelShutter::OnOnOff(MM::PropertyBase* pProp, MM::ActionType eAc
       long pos;
       pProp->Get(pos);
       int ret;
-      std::string command = "I" + std::to_string((long long)hub->GetIntensity());
+      std::string command = "I" + boost::lexical_cast<std::string>((long long)hub->GetIntensity());
       ret = hub->WriteToComPortH((const unsigned char*) command.c_str(), command.length());
       if (ret != DEVICE_OK)
 	return ret;
@@ -473,7 +475,7 @@ int CArduinoNeoPixelShutter::OnOnOff(MM::PropertyBase* pProp, MM::ActionType eAc
 	int multi = hub->GetMulti();
 	LogMessage("multi:");
 	if (multi & 0x1) {
-	  std::string command = "R" + std::to_string((long long)hub->GetRedBrightness()) + "\r";
+	  std::string command = "R" + boost::lexical_cast<std::string>((long long)hub->GetRedBrightness()) + "\r";
 	  int ret = hub->WriteToComPortH((const unsigned char*) command.c_str(), command.length());
 	  if (ret != DEVICE_OK)
 	    return ret;
@@ -485,7 +487,7 @@ int CArduinoNeoPixelShutter::OnOnOff(MM::PropertyBase* pProp, MM::ActionType eAc
 	}
 
 	if (multi & 0x2) {
-	  std::string command = "G" + std::to_string((long long)hub->GetGreenBrightness()) + "\r";
+	  std::string command = "G" + boost::lexical_cast<std::string>((long long)hub->GetGreenBrightness()) + "\r";
 	  int ret = hub->WriteToComPortH((const unsigned char*) command.c_str(), command.length());
 	  if (ret != DEVICE_OK)
 	    return ret;
@@ -496,7 +498,7 @@ int CArduinoNeoPixelShutter::OnOnOff(MM::PropertyBase* pProp, MM::ActionType eAc
 	    return ret;
 	}
 	if (multi & 0x4) {
-	  std::string command = "B" + std::to_string((long long)hub->GetBlueBrightness()) + "\r";
+	  std::string command = "B" + boost::lexical_cast<std::string>((long long)hub->GetBlueBrightness()) + "\r";
 	  int ret = hub->WriteToComPortH((const unsigned char*) command.c_str(), command.length());
 	  if (ret != DEVICE_OK)
 	    return ret;
@@ -527,7 +529,7 @@ int CArduinoNeoPixelShutter::OnIntensity(MM::PropertyBase* pProp, MM::ActionType
    {
       long intensity;
       pProp->Get(intensity);
-      std::string command = "I" + std::to_string((long long)intensity) + "\r";
+      std::string command = "I" + boost::lexical_cast<std::string>((long long)intensity) + "\r";
       int ret = hub->WriteToComPortH((const unsigned char*) command.c_str(), command.length());
       if (ret != DEVICE_OK)
 	return ret;
@@ -548,7 +550,7 @@ int CArduinoNeoPixelShutter::OnRedBrightness(MM::PropertyBase* pProp, MM::Action
    {
       long pos;
       pProp->Get(pos);
-      std::string command = "R" + std::to_string((long long)pos) + "\r";
+      std::string command = "R" + boost::lexical_cast<std::string>((long long)pos) + "\r";
       int ret = hub->WriteToComPortH((const unsigned char*) command.c_str(), command.length());
       if (ret != DEVICE_OK)
 	return ret;
@@ -569,7 +571,7 @@ int CArduinoNeoPixelShutter::OnGreenBrightness(MM::PropertyBase* pProp, MM::Acti
    {
       long pos;
       pProp->Get(pos);
-      std::string command = "G" + std::to_string((long long)pos) + "\r";
+      std::string command = "G" + boost::lexical_cast<std::string>((long long)pos) + "\r";
       int ret = hub->WriteToComPortH((const unsigned char*) command.c_str(), command.length());
       if (ret != DEVICE_OK)
 	return ret;
@@ -590,7 +592,7 @@ int CArduinoNeoPixelShutter::OnBlueBrightness(MM::PropertyBase* pProp, MM::Actio
    {
       long pos;
       pProp->Get(pos);
-      std::string command = "B" + std::to_string((long long)pos) + "\r";
+      std::string command = "B" + boost::lexical_cast<std::string>((long long)pos) + "\r";
       int ret = hub->WriteToComPortH((const unsigned char*) command.c_str(), command.length());
       if (ret != DEVICE_OK)
 	return ret;
