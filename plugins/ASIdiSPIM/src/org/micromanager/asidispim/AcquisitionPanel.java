@@ -748,7 +748,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       leftColumnPanel_.add(savePanel_, "wrap");
       leftColumnPanel_.add(new JLabel("Acquisition mode: "), "split 2, left");
       AcquisitionModes acqModes = new AcquisitionModes(devices_, prefs_);
-      spimMode_ = acqModes.getComboBox(); 
+      spimMode_ = acqModes.getComboBox();
       spimMode_.addActionListener(recalculateTimingDisplayAL);
       leftColumnPanel_.add(spimMode_, "wrap");
       leftColumnPanel_.add(buttonStart_, "split 2, left");
@@ -1931,7 +1931,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      multiChannelPanel_.selectChannel(autofocusChannel);
                      if (sideActiveA) {
                         AutofocusUtils.FocusResult score = autofocus_.runFocus(
-                                this, Devices.Sides.A, true,
+                                this, Devices.Sides.A, false,
                                 sliceTiming_, false, false);
                         updateCalibrationOffset(Devices.Sides.A, score);
                      }
