@@ -77,6 +77,14 @@ class DiskoveryModel
          irisPositionProp_ = "Iris Position";
          tirfPositionProp_ = "TIRF Position";
          motorRunningProp_ = "Motor Running";
+         for (int i = 0; i < 4; i++) {
+            std::ostringstream os;
+            os << "Preset-" << (i + 1);
+            buttonWFLabels_[i] = os.str();
+            buttonIrisLabels_[i] = os.str();
+            buttonFilterWLabels_[i] = os.str();
+            buttonFilterTLabels_[i] = os.str();
+         }
       };
       ~DiskoveryModel() 
       {
@@ -242,6 +250,41 @@ class DiskoveryModel
       void SetHasFilterT(bool h) {  MMThreadGuard g(lock_); hasFilterT_ = h; };
       bool GetHasFilterT() {  MMThreadGuard g(lock_); return hasFilterT_; };
 
+      void SetButtonWFLabel(uint16_t pos, const char* label) {  MMThreadGuard g(lock_); buttonWFLabels_[pos - 1] = label; };
+      const char* GetButtonWFLabel (uint16_t pos) {  
+         MMThreadGuard g(lock_); 
+         if (pos > 0 && pos < 5)
+            return buttonWFLabels_[pos - 1].c_str(); 
+         return 0;
+      };
+
+      void SetButtonIrisLabel(uint16_t pos, const char* label) {  
+         MMThreadGuard g(lock_); buttonIrisLabels_[pos - 1] = label; };
+      const char* GetButtonIrisLabel (uint16_t pos) {  
+         MMThreadGuard g(lock_); 
+         if (pos > 0 && pos < 5)
+            return buttonIrisLabels_[pos - 1].c_str(); 
+         return 0;
+      };
+
+      void SetButtonFilterWLabel(uint16_t pos, const char* label) {  
+         MMThreadGuard g(lock_); buttonFilterWLabels_[pos - 1] = label; };
+      const char* GetButtonFilterWLabel (uint16_t pos) {  
+         MMThreadGuard g(lock_); 
+         if (pos > 0 && pos < 5)
+            return buttonFilterWLabels_[pos - 1].c_str(); 
+         return 0;
+      };
+
+      void SetButtonFilterTLabel(uint16_t pos, const char* label) {  
+         MMThreadGuard g(lock_); buttonFilterTLabels_[pos - 1] = label; };
+      const char* GetButtonFilterTLabel (uint16_t pos) {  
+         MMThreadGuard g(lock_); 
+         if (pos > 0 && pos < 5)
+            return buttonFilterTLabels_[pos - 1].c_str(); 
+         return 0;
+      };
+
       const char* hardwareVersionProp_;
       const char* firmwareVersionProp_;
       const char* manufacturingDateProp_;
@@ -280,6 +323,10 @@ class DiskoveryModel
       bool hasWFX_, hasWFY_, hasSD_, hasROT_, hasLIN_, hasP1_, hasP2_, 
          hasIRIS_, hasFilterW_, hasFilterT_;
       bool motorRunningSD_;
+      std::string buttonWFLabels_[4];
+      std::string buttonIrisLabels_[4];
+      std::string buttonFilterWLabels_[4];
+      std::string buttonFilterTLabels_[4];
 
       MM::Device* hubDevice_;
       DiskoveryStateDev* sdDevice_;

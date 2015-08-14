@@ -148,6 +148,7 @@ int DiskoveryHub::Initialize()
    commander_ = new DiskoveryCommander(*this, *GetCoreCallback(), port_, model_);
    listener_->Start();
    RETURN_ON_MM_ERROR( commander_->Initialize() );
+   RETURN_ON_MM_ERROR( commander_->CheckCapabilities() );
 
    // Create properties storing information from the device 
   
@@ -251,7 +252,7 @@ MM::DeviceDetectionStatus DiskoveryHub::DetectDevice(void )
          GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_StopBits, "1");
          GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", "100.0");
          GetCoreCallback()->SetDeviceProperty(port_.c_str(), "DelayBetweenCharsMs", "0");
-         // Attempt to communicathe through the port
+         // Attempt to communicate through the port
          MM::Device* pS = GetCoreCallback()->GetDevice(this, port_.c_str());
          pS->Initialize();
          PurgeComPort(port_.c_str());
@@ -262,7 +263,7 @@ MM::DeviceDetectionStatus DiskoveryHub::DetectDevice(void )
          if (present)
          {
             result = MM::CanCommunicate;
-            // set the timeout to a value higher than the heartbeat ferquency
+            // set the timeout to a value higher than the heartbeat frequency
             // so that the logs will not overflow with errors
             GetCoreCallback()->SetDeviceProperty(port_.c_str(), 
                   "AnswerTimeout", "6000");
@@ -484,7 +485,22 @@ int DiskoveryStateDev::Initialize()
    for (unsigned int i = 0; i < numPos_; i++) {
       ostringstream os;
       os << "Preset-" << (i + firstPos_);
-      SetPositionLabel(i, os.str().c_str());
+      // set default label
+      const char* label = os.str().c_str();
+      if (devType_ == WF) 
+      {
+         label = hub_->GetModel()->GetButtonWFLabel(i + firstPos_);
+      } else if (devType_ == IRIS) 
+      {
+         label = hub_->GetModel()->GetButtonIrisLabel(i + firstPos_);
+      } else if (devType_ == FILTERW) 
+      {
+         label = hub_->GetModel()->GetButtonFilterWLabel(i + firstPos_);
+      } else if (devType_ == FILTERT) 
+      {
+         label = hub_->GetModel()->GetButtonFilterTLabel(i + firstPos_);
+      }
+       SetPositionLabel(i, label);
    }
 
    // State
@@ -506,6 +522,16 @@ int DiskoveryStateDev::Initialize()
    nRet = CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
    if (nRet != DEVICE_OK)
       return nRet;
+
+   /*
+   if (devType_ == WF) {
+      for (unsigned i = 0; i < numPos_; i++) {
+         const char* label = hub_->GetModel()->GetButtonWFLabel(i + firstPos_);
+         if (label != 0)
+            SetPositionLabel (i, label);
+      }
+   } //|| devType_ == IRIS || devType_ == FILTERW || devType == FILTERT) 
+   */
 
    // Register our instance for callbacks
    if (devType_ == SD)

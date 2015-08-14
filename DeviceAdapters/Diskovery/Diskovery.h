@@ -100,9 +100,14 @@ class DiskoveryCommander
       int SetPresetIris(uint16_t pos);
       int SetPresetTIRF(uint16_t pos);
       int SetMotorRunningSD(uint16_t pos);
+      int GetWFButtonName(uint16_t pos);
+      int GetIrisButtonName(uint16_t pos);
+      int GetFilterWButtonName(uint16_t pos);
+      int GetFilterTButtonName(uint16_t pos);
 
    private:
       inline int SendCommand(const char* command);
+      inline int SendSetCommand(const char* commandPart1, uint16_t pos, const char* commandPart2);
       inline int SendSetCommand(const char* command, uint16_t pos);
 
       BlockingQueue<std::string> blockingQueue_;

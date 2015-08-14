@@ -62,6 +62,12 @@ const char* g_HasIRIS = "Q:ACTIVE_IRIS";
 const char* g_HasFilterW = "Q:ACTIVE_FILTER_W";
 const char* g_HasFilterT = "Q:ACTIVE_FILTER_T";
 
+// commands to retrieve labels (as shown on the buttons
+const char* g_BNamePart2 = "_NAME";
+const char* g_ButtonWF = "Q:BUTTON_WF_";
+const char* g_ButtonIris = "Q:BUTTON_IRIS_";
+const char* g_ButtonFilterW = "Q:BUTTON_FILTER_W_";
+const char* g_ButtonFilterT = "Q:BUTTON_FILTER_T_";
 
 /**
  * Class that sends commands to the Diskovery1
@@ -120,6 +126,7 @@ int DiskoveryCommander::Initialize()
    RETURN_ON_MM_ERROR( SendCommand(g_GetMotorRunningSD) );
    CDeviceUtils::SleepMs(50);
 
+   // start looking at the blocking queue and send messages
    sender_->Start();
 
    return DEVICE_OK;
@@ -154,6 +161,18 @@ int DiskoveryCommander::CheckCapabilities()
    // give the device some time to actually send the command
    // so that other code can make use of the results
    CDeviceUtils::SleepMs(50);
+
+   if (model_->GetHasWFX()) 
+   {
+      for (uint16_t i = 1; i < 5; i++) {
+         GetWFButtonName(i);
+         GetIrisButtonName(i);
+         CDeviceUtils::SleepMs(50);
+         GetFilterWButtonName(i);
+         GetFilterTButtonName(i);
+         CDeviceUtils::SleepMs(50);
+      }
+   }
 
    return DEVICE_OK;
 }
@@ -200,6 +219,40 @@ int DiskoveryCommander::SetPresetTIRF(uint16_t pos)
 int DiskoveryCommander::SetMotorRunningSD(uint16_t pos)
 {
    return SendSetCommand(g_SetMotorRunningSD, pos);
+}
+
+int DiskoveryCommander::GetWFButtonName(uint16_t pos) {
+   if (pos > 0 && pos < 5)
+      return SendSetCommand(g_ButtonWF, pos, g_BNamePart2);
+   return ERR_UNKNOWN_POSITION;
+}
+
+int DiskoveryCommander::GetIrisButtonName(uint16_t pos) {
+   if (pos > 0 && pos < 5)
+      return SendSetCommand(g_ButtonIris, pos, g_BNamePart2);
+   return ERR_UNKNOWN_POSITION;
+}
+
+int DiskoveryCommander::GetFilterWButtonName(uint16_t pos) {
+   if (pos > 0 && pos < 5)
+      return SendSetCommand(g_ButtonFilterW, pos, g_BNamePart2);
+   return ERR_UNKNOWN_POSITION;
+}
+
+int DiskoveryCommander::GetFilterTButtonName(uint16_t pos) {
+   if (pos > 0 && pos < 5)
+      return SendSetCommand(g_ButtonFilterT, pos, g_BNamePart2);
+   return ERR_UNKNOWN_POSITION;
+}
+
+
+int DiskoveryCommander::SendSetCommand(const char* commandPart1, uint16_t pos, const char* commandPart2) 
+{
+   std::ostringstream os;
+   os << commandPart1 << pos << commandPart2;
+   SendCommand(os.str().c_str());
+
+   return DEVICE_OK;
 }
 
 /**

@@ -270,6 +270,24 @@ void DiskoveryListener::ParseMessage(std::string message)
          if (tokens[1] == "1")
             model_->SetHasFilterT(true);
       }
+      // 
+      else if (tokens[0].substr(0, 6) == "BUTTON") {
+         std::vector<std::string> button = split(tokens[0], '_');
+         if (button[1] == "WF") {
+            model_->SetButtonWFLabel(atoi(button[2].c_str()), tokens[1].c_str());
+         }
+         else if (button[1] == "IRIS") {
+            model_->SetButtonIrisLabel(atoi(button[2].c_str()), tokens[1].c_str());
+         }
+         else if (button[1] == "FILTER") {
+            if (button[2] == "W") {
+               model_->SetButtonFilterWLabel(atoi(button[3].c_str()), tokens[1].c_str());
+            } else if (button[2] == "T") {
+               model_->SetButtonFilterTLabel(atoi(button[3].c_str()), tokens[1].c_str());
+            }
+         }
+      }
+
 
    }
 } 
