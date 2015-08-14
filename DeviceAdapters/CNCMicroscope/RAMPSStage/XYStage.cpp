@@ -144,13 +144,15 @@ int RAMPSXYStage::SetPositionSteps(long x, long y)
   if (status == "Running") {
       return ERR_STAGE_MOVING;
   }
+
+  /*
   double newPosX = x * stepSize_um_;
   double newPosY = y * stepSize_um_;
   double difX = newPosX - posX_um_;
   double difY = newPosY - posY_um_;
   double distance = sqrt( (difX * difX) + (difY * difY) );
-     
-  
+  */
+
   posX_um_ = x * stepSize_um_;
   posY_um_ = y * stepSize_um_;
 

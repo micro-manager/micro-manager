@@ -59,7 +59,6 @@ int RAMPSZStage::Initialize()
   // parent ID display
   CreateHubIDProperty();
 
-    RAMPSHub* pHub = static_cast<RAMPSHub*>(GetParentHub());
   // set property list
   // ----------------
 
@@ -145,8 +144,11 @@ int RAMPSZStage::SetPositionSteps(long steps)
       return ERR_STAGE_MOVING;
   }
   posZ_um_ = steps * stepSize_um_;
+
+  /*
   double newPosZ = steps * stepSize_um_;
   double difZ = newPosZ - posZ_um_;
+  */
 
 
   char buff[100];
