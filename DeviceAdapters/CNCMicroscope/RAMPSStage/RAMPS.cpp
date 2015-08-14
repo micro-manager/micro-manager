@@ -389,7 +389,9 @@ int RAMPSHub::SendCommand(std::string command, std::string terminator)
 
   LogMessage("Write command.");
   ret = SetCommandComPortH(command.c_str(), terminator.c_str());
-  LogMessage("set command, ret=" + ret);
+  std::ostringstream retss;
+  retss << ret;
+  LogMessage("set command, ret=" + retss.str());
   if (ret != DEVICE_OK)
   {
     LogMessage("command write fail");
