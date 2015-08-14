@@ -68,6 +68,7 @@ const char* g_ButtonWF = "Q:BUTTON_WF_";
 const char* g_ButtonIris = "Q:BUTTON_IRIS_";
 const char* g_ButtonFilterW = "Q:BUTTON_FILTER_W_";
 const char* g_ButtonFilterT = "Q:BUTTON_FILTER_T_";
+const char* g_ButtonDisk = "Q:DISK_PATTERN_NAME,";
 
 /**
  * Class that sends commands to the Diskovery1
@@ -171,6 +172,11 @@ int DiskoveryCommander::CheckCapabilities()
          GetFilterWButtonName(i);
          GetFilterTButtonName(i);
          CDeviceUtils::SleepMs(50);
+         if (i < 4)
+         {
+            GetDiskButtonName(i);
+            CDeviceUtils::SleepMs(50);
+         }
       }
    }
 
@@ -245,6 +251,15 @@ int DiskoveryCommander::GetFilterTButtonName(uint16_t pos) {
    return ERR_UNKNOWN_POSITION;
 }
 
+int DiskoveryCommander::GetDiskButtonName(uint16_t pos) {
+   if (pos > 0 && pos < 4)
+   {
+      std::ostringstream os;
+      os << g_ButtonDisk << pos;
+      return SendCommand(os.str().c_str());
+   }
+   return ERR_UNKNOWN_POSITION;
+}
 
 int DiskoveryCommander::SendSetCommand(const char* commandPart1, uint16_t pos, const char* commandPart2) 
 {

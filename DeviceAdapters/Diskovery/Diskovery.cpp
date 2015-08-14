@@ -434,11 +434,9 @@ DiskoveryStateDev::DiskoveryStateDev(
    hub_(0)
 {
    firstPos_ = 1;
-   numPos_ = 5;
-   if (devType_ == WF || devType_ == IRIS || devType_ == FILTERW || devType == FILTERT) 
-      numPos_ = 4;
-   if (devType_ == IRIS) 
-      numPos_ = 4;
+   numPos_ = 4;
+   if (devType_ == SD || devType == TIRF) 
+      numPos_ = 5;
    if (devType_ == TIRF) 
       firstPos_ = 0;
 
@@ -499,8 +497,15 @@ int DiskoveryStateDev::Initialize()
       } else if (devType_ == FILTERT) 
       {
          label = hub_->GetModel()->GetButtonFilterTLabel(i + firstPos_);
+      } else if (devType_ == SD) {
+         if (i == 0)
+            label = "Disk Out";
+         else if (i == 1) 
+            label = "Exchange";
+         else
+            label = hub_->GetModel()->GetDiskLabel(i - 2 + firstPos_);
       }
-       SetPositionLabel(i, label);
+      SetPositionLabel(i, label);
    }
 
    // State

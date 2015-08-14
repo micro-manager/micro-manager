@@ -104,6 +104,7 @@ class DiskoveryCommander
       int GetIrisButtonName(uint16_t pos);
       int GetFilterWButtonName(uint16_t pos);
       int GetFilterTButtonName(uint16_t pos);
+      int GetDiskButtonName(uint16_t pos);
 
    private:
       inline int SendCommand(const char* command);

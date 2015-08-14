@@ -270,7 +270,14 @@ void DiskoveryListener::ParseMessage(std::string message)
          if (tokens[1] == "1")
             model_->SetHasFilterT(true);
       }
-      // 
+      else if (tokens[0] == "DISK_PATTERN_NAME")
+      {
+         std::vector<std::string> diskname = split(tokens[1],'~');
+         if (diskname.size() == 2) 
+            model_->SetDiskLabel(atoi(diskname[1].c_str()), diskname[0].c_str());
+
+      }
+      // Button names
       else if (tokens[0].substr(0, 6) == "BUTTON") {
          std::vector<std::string> button = split(tokens[0], '_');
          if (button[1] == "WF") {

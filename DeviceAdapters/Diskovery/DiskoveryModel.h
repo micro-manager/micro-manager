@@ -84,6 +84,7 @@ class DiskoveryModel
             buttonIrisLabels_[i] = os.str();
             buttonFilterWLabels_[i] = os.str();
             buttonFilterTLabels_[i] = os.str();
+            diskLabels_[i] = os.str();
          }
       };
       ~DiskoveryModel() 
@@ -285,6 +286,14 @@ class DiskoveryModel
          return 0;
       };
 
+      void SetDiskLabel(uint16_t pos, const char* label) {  
+         MMThreadGuard g(lock_); diskLabels_[pos - 1] = label; };
+      const char* GetDiskLabel (uint16_t pos) {  
+         MMThreadGuard g(lock_); 
+         if (pos > 0 && pos < 4)
+            return diskLabels_[pos - 1].c_str(); 
+         return 0;
+      };
       const char* hardwareVersionProp_;
       const char* firmwareVersionProp_;
       const char* manufacturingDateProp_;
@@ -327,6 +336,8 @@ class DiskoveryModel
       std::string buttonIrisLabels_[4];
       std::string buttonFilterWLabels_[4];
       std::string buttonFilterTLabels_[4];
+      // even though we use only 3, it is easier to declare 4
+      std::string diskLabels_[4];
 
       MM::Device* hubDevice_;
       DiskoveryStateDev* sdDevice_;
