@@ -30,9 +30,9 @@ using namespace std;
 
 // External names used used by the rest of the system
 // to load particular device from the "RAMPS.dll" library
-const char* g_XYStageDeviceName = "DXYStage";
-const char* g_ZStageDeviceName = "DZStage";
-const char* g_HubDeviceName = "DHub";
+const char* g_XYStageDeviceName = "RAMPSXYStage";
+const char* g_ZStageDeviceName = "RAMPSZStage";
+const char* g_HubDeviceName = "RAMPSHub";
 const char* g_versionProp = "Version";
 const char* g_XYVelocityProp = "Maximum Velocity";
 const char* g_XYAccelerationProp = "Acceleration";
@@ -46,7 +46,7 @@ MODULE_API void InitializeModuleData()
 {
   RegisterDevice(g_XYStageDeviceName, MM::XYStageDevice, "RAMPS XY stage");
   RegisterDevice(g_ZStageDeviceName, MM::StageDevice, "RAMPS Z stage");
-  RegisterDevice(g_HubDeviceName, MM::HubDevice, "DHub");
+  RegisterDevice(g_HubDeviceName, MM::HubDevice, "RAMPS hub");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
