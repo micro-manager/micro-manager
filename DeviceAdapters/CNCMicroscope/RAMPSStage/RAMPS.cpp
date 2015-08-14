@@ -103,10 +103,10 @@ RAMPSHub::RAMPSHub():
     target_y_(0.),
     target_z_(0.),
     status_("Idle"),
-    velocity_(10000),
-    acceleration_(10000),
+    timeOutTimer_(0),
     settle_time_(250),
-    timeOutTimer_(0)
+    velocity_(10000),
+    acceleration_(10000)
 {
   LogMessage("RAMPS Constructor");
   CPropertyAction* pAct  = new CPropertyAction(this, &RAMPSHub::OnPort);
