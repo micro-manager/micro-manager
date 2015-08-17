@@ -194,7 +194,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       // TODO make calibration be in degrees instead of um
       // calibrationPanel.add(new JLabel("\u00B0/\u00B5m"));
       calibrationPanel.add(new JLabel("\u00B5m/\u00B0"));
-      tmp_but = new JButton("Update");
+      tmp_but = new JButton("2-point");
       tmp_but.setMargin(new Insets(4,8,4,8));
       tmp_but.setToolTipText("Computes piezo vs. slice slope and offset from start and end positions");
       tmp_but.addActionListener(new ActionListener() {
