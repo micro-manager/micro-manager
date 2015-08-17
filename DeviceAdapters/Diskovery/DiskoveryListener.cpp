@@ -284,23 +284,26 @@ void DiskoveryListener::ParseMessage(std::string message)
       {
          std::vector<std::string> diskname = split(tokens[1],'~');
          if (diskname.size() == 2) 
-            model_->SetDiskLabel(atoi(diskname[1].c_str()), diskname[0].c_str());
+            model_->SetDiskLabel( (uint16_t) atoi(diskname[1].c_str()), 
+                  diskname[0].c_str());
 
       }
       // Button names
       else if (tokens[0].substr(0, 6) == "BUTTON") {
          std::vector<std::string> button = split(tokens[0], '_');
          if (button[1] == "WF") {
-            model_->SetButtonWFLabel(atoi(button[2].c_str()), tokens[1].c_str());
+            model_->SetButtonWFLabel( (uint16_t) atoi(button[2].c_str()), 
+                  tokens[1].c_str());
          }
          else if (button[1] == "IRIS") {
-            model_->SetButtonIrisLabel(atoi(button[2].c_str()), tokens[1].c_str());
+            model_->SetButtonIrisLabel( (uint16_t) atoi(button[2].c_str()), 
+                  tokens[1].c_str());
          }
          else if (button[1] == "FILTER") {
             if (button[2] == "W") {
-               model_->SetButtonFilterWLabel(atoi(button[3].c_str()), tokens[1].c_str());
+               model_->SetButtonFilterWLabel( (uint16_t) atoi(button[3].c_str()), tokens[1].c_str());
             } else if (button[2] == "T") {
-               model_->SetButtonFilterTLabel(atoi(button[3].c_str()), tokens[1].c_str());
+               model_->SetButtonFilterTLabel( (uint16_t) atoi(button[3].c_str()), tokens[1].c_str());
             }
          }
       }
