@@ -234,8 +234,8 @@ class DiskoveryStateDev : public CStateDeviceBase<DiskoveryStateDev>
       int OnPositionLin(MM::PropertyBase* pProp, MM::ActionType eAct); 
 
    private:
-      unsigned int numPos_;
-      unsigned int firstPos_;
+      uint16_t numPos_;
+      uint16_t firstPos_;
 
       std::string devName_;
       DevType devType_;

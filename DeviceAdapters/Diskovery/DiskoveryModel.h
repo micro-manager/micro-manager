@@ -221,11 +221,11 @@ class DiskoveryModel
 
       // TIRF positioner Rot
       void SetPositionRot(const uint32_t p);
-      uint16_t GetPositionRot() {  MMThreadGuard g(lock_); return tirfRotPos_; };
+      uint32_t GetPositionRot() {  MMThreadGuard g(lock_); return tirfRotPos_; };
 
       // TIRF positioner Lin
       void SetPositionLin(const uint32_t p);
-      uint16_t GetPositionLin() {  MMThreadGuard g(lock_); return tirfLinPos_; };
+      uint32_t GetPositionLin() {  MMThreadGuard g(lock_); return tirfLinPos_; };
 
       // Motor Running
       void SetMotorRunningSD(const bool p); 

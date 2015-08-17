@@ -480,7 +480,7 @@ int DiskoveryStateDev::Initialize()
    hub_->GetLabel(hubLabel);
    SetParentID(hubLabel); // for backward compatibility (delete?)
 
-   for (unsigned int i = 0; i < numPos_; i++) {
+   for (uint16_t i = 0; i < numPos_; i++) {
       ostringstream os;
       os << "Preset-" << (i + firstPos_);
       // set default label
