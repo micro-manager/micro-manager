@@ -82,6 +82,7 @@ const char* g_LeicaDICTurret = "DIC Turret";
 const char* g_LeicaCondensorTurret = "Condensor";
 const char* g_LeicaTransmittedLight = "Transmitted Light";
 const char* g_LeicaAFC = "Adaptive Focus Control";
+const char* g_LeicaAFCOffset = "Adaptive Focus Control Offset";
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -105,6 +106,7 @@ MODULE_API void InitializeModuleData()
    RegisterDevice(g_LeicaCondensorTurret, MM::StateDevice, "Condensor Turret");
    RegisterDevice(g_LeicaTransmittedLight, MM::ShutterDevice, "Transmitted Light");
    RegisterDevice(g_LeicaAFC, MM::AutoFocusDevice, "Adaptive Focus Control");
+   RegisterDevice(g_LeicaAFCOffset, MM::StageDevice, "Adaptive Focus Control Offset");
    RegisterDevice(g_LeicaSidePort, MM::StateDevice, "Side Port");
 }
 using namespace std;
@@ -154,6 +156,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 	   return new TransmittedLight();
    else if (strcmp(deviceName, g_LeicaAFC) == 0)
 	   return new AFC();
+   else if (strcmp(deviceName, g_LeicaAFCOffset) == 0)
+      return new AFCOffset();
 	else if (strcmp(deviceName, ::g_LeicaSidePort) ==0)
 		return new SidePort();
 
@@ -281,6 +285,7 @@ int LeicaScope::GetNumberOfDiscoverableDevices()
       AttemptToDiscover(g_Condensor, g_LeicaCondensorTurret);
       AttemptToDiscover(g_Lamp, g_LeicaTransmittedLight);
       AttemptToDiscover(g_AFC, g_LeicaAFC);
+      AttemptToDiscover(g_AFC, g_LeicaAFCOffset);
 
    return (int) discoveredDevices_.size();
 }
@@ -390,6 +395,7 @@ int LeicaScope::DetectInstalledDevices()
    AttemptToDiscover(g_Condensor, g_LeicaCondensorTurret);
    AttemptToDiscover(g_Lamp, g_LeicaTransmittedLight);
    AttemptToDiscover(g_AFC, g_LeicaAFC);
+   AttemptToDiscover(g_AFC, g_LeicaAFCOffset);
 
    for (size_t i=0; i<discoveredDevices_.size(); i++)
    {
@@ -3121,8 +3127,97 @@ int AFC::OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
 
    return DEVICE_OK;
 }
-// ...
 
+
+//
+// AFCOffset
+//
+
+AFCOffset::AFCOffset() :
+   initialized_(false),
+   name_(g_LeicaAFCOffset)
+{
+   CreateProperty(MM::g_Keyword_Name, g_LeicaAFCOffset, MM::String, true);
+   CreateProperty(MM::g_Keyword_Description, "Leica Adaptive Focus Control Offset",
+         MM::String, true);
+}
+
+AFCOffset::~AFCOffset()
+{
+   Shutdown();
+}
+
+int AFCOffset::Initialize()
+{
+   int ret = DEVICE_OK;
+   if (g_ScopeInterface.portInitialized_)
+      return ERR_SCOPE_NOT_ACTIVE;
+
+   if (!g_ScopeInterface.IsInitialized())
+      ret = g_ScopeInterface.Initialize(*this, *GetCoreCallback());
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (!g_ScopeModel.IsDeviceAvailable(g_AFC))
+      return ERR_MODULE_NOT_FOUND;
+
+   initialized_ = true;
+   return DEVICE_OK;
+}
+
+int AFCOffset::Shutdown()
+{
+   if (!initialized_)
+      return DEVICE_OK;
+
+   // Nothing to shut down
+
+   return DEVICE_OK;
+}
+
+void AFCOffset::GetName(char* name) const
+{
+   CDeviceUtils::CopyLimitedString(name, g_LeicaAFCOffset);
+}
+
+bool AFCOffset::AFCOffset::Busy()
+{
+   bool busy;
+   g_ScopeModel.afc_.GetBusy(busy);
+   return busy;
+}
+
+int AFCOffset::GetPositionUm(double& offset)
+{
+   return g_ScopeModel.afc_.GetOffset(offset);
+}
+
+int AFCOffset::SetPositionUm(double offset)
+{
+   return g_ScopeInterface.SetAFCOffset(*this, *GetCoreCallback(), offset);
+}
+
+int AFCOffset::GetPositionSteps(long& steps)
+{
+   // Arbitrarily define 1 step = 1 nm
+   double offset = 0.0;
+   int ret = g_ScopeModel.afc_.GetOffset(offset);
+   if (ret == DEVICE_OK)
+      steps = static_cast<long>(1000.0 * offset);
+   return ret;
+}
+
+int AFCOffset::SetPositionSteps(long steps)
+{
+   // 1 step = 1 nm
+   double offset = static_cast<double>(steps) / 1000.0;
+   return g_ScopeInterface.SetAFCOffset(*this, *GetCoreCallback(), offset);
+}
+
+
+//
+// SidePort
+//
 
 SidePort::SidePort():
    numPos_(3),
