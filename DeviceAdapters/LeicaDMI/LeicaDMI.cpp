@@ -3180,7 +3180,7 @@ void AFCOffset::GetName(char* name) const
    CDeviceUtils::CopyLimitedString(name, g_LeicaAFCOffset);
 }
 
-bool AFCOffset::AFCOffset::Busy()
+bool AFCOffset::Busy()
 {
    bool busy;
    g_ScopeModel.afc_.GetBusy(busy);
