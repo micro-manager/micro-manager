@@ -92,6 +92,9 @@ class DiskoveryCommander
       ~DiskoveryCommander();
       int Initialize();
       int CheckCapabilities();
+      int SetMotorRunningSD(uint16_t pos);
+      int SetPositionRot(uint32_t pos);
+      int SetPositionLin(uint32_t pos);
       int GetProductModel();
       int SetPresetSD(uint16_t pos);
       int SetPresetWF(uint16_t pos);
@@ -99,7 +102,6 @@ class DiskoveryCommander
       int SetPresetFilterT(uint16_t pos);
       int SetPresetIris(uint16_t pos);
       int SetPresetTIRF(uint16_t pos);
-      int SetMotorRunningSD(uint16_t pos);
       int GetWFButtonName(uint16_t pos);
       int GetIrisButtonName(uint16_t pos);
       int GetFilterWButtonName(uint16_t pos);
@@ -110,6 +112,7 @@ class DiskoveryCommander
       inline int SendCommand(const char* command);
       inline int SendSetCommand(const char* commandPart1, uint16_t pos, const char* commandPart2);
       inline int SendSetCommand(const char* command, uint16_t pos);
+      inline int SendSetCommand(const char* command, uint32_t pos);
 
       BlockingQueue<std::string> blockingQueue_;
       MM::Device& device_;
@@ -227,6 +230,8 @@ class DiskoveryStateDev : public CStateDeviceBase<DiskoveryStateDev>
       unsigned long GetNumberOfPositions() const {return numPos_;};
 
       int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+      int OnPositionRot(MM::PropertyBase* pProp, MM::ActionType eAct); 
+      int OnPositionLin(MM::PropertyBase* pProp, MM::ActionType eAct); 
 
    private:
       unsigned int numPos_;
@@ -237,5 +242,7 @@ class DiskoveryStateDev : public CStateDeviceBase<DiskoveryStateDev>
       bool initialized_;
       DiskoveryHub* hub_;
 };
+
+
 
 #endif // _Diskovery_H_

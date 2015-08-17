@@ -104,3 +104,17 @@ void DiskoveryModel::SetPresetFilterT(const uint16_t p)
       filterTDevice_->OnStateChanged(p - 1);
    }                                                                   
 }
+
+// TIRF slider Rot
+void DiskoveryModel::SetPositionRot(const uint32_t p)
+{
+   MMThreadGuard g(lock_);
+   tirfRotPos_ = p;
+}
+
+// TIRF slider Lin
+void DiskoveryModel::SetPositionLin(const uint32_t p)
+{
+   MMThreadGuard g(lock_);
+   tirfLinPos_ = p;
+}

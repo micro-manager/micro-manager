@@ -46,6 +46,8 @@ class DiskoveryModel
          presetPX_(0),
          presetFilterT_(0),
          presetFilterW_(0),
+         tirfLinPos_(0), 
+         tirfRotPos_(0),
          hasWFX_(false),
          hasWFY_(false),
          hasSD_(false),
@@ -217,6 +219,14 @@ class DiskoveryModel
       void SetPresetFilterT(const uint16_t p);
       uint16_t GetPresetFilterT() {  MMThreadGuard g(lock_); return presetFilterT_; };
 
+      // TIRF positioner Rot
+      void SetPositionRot(const uint32_t p);
+      uint16_t GetPositionRot() {  MMThreadGuard g(lock_); return tirfRotPos_; };
+
+      // TIRF positioner Lin
+      void SetPositionLin(const uint32_t p);
+      uint16_t GetPositionLin() {  MMThreadGuard g(lock_); return tirfLinPos_; };
+
       // Motor Running
       void SetMotorRunningSD(const bool p); 
       bool GetMotorRunningSD() {  MMThreadGuard g(lock_); return motorRunningSD_; };
@@ -326,6 +336,7 @@ class DiskoveryModel
       std::string firmwareVersion_;
       uint16_t fwmajor_, fwminor_, fwrevision_;
       uint16_t manYear_, manMonth_, manDay_;
+      uint32_t tirfLinPos_, tirfRotPos_;
       std::string serialNumber_;
       bool deviceBusy_, logicalBusy_;
       uint16_t presetSD_, presetWF_, presetIris_, presetPX_, presetFilterT_, presetFilterW_;

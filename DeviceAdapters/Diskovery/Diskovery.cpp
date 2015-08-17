@@ -424,7 +424,7 @@ int DiskoveryHub::OnMotorRunning(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// DiskoverStateDevy
+// DiskoverStateDev
 //
 DiskoveryStateDev::DiskoveryStateDev(
       const std::string devName, const std::string description, const DevType devType)  :
@@ -528,15 +528,16 @@ int DiskoveryStateDev::Initialize()
    if (nRet != DEVICE_OK)
       return nRet;
 
-   /*
-   if (devType_ == WF) {
-      for (unsigned i = 0; i < numPos_; i++) {
-         const char* label = hub_->GetModel()->GetButtonWFLabel(i + firstPos_);
-         if (label != 0)
-            SetPositionLabel (i, label);
-      }
-   } //|| devType_ == IRIS || devType_ == FILTERW || devType == FILTERT) 
-   */
+    // TIRF rotational and linear stages moving prisms
+    if (devType_ == TIRF)
+    {
+       pAct = new CPropertyAction(this, &DiskoveryStateDev::OnPositionRot);
+       RETURN_ON_MM_ERROR(  CreateProperty("PositionRot", "0", MM::Integer, false, pAct)) ;
+       RETURN_ON_MM_ERROR( SetPropertyLimits("PositionRot", 0, 900) );
+       pAct = new CPropertyAction(this, &DiskoveryStateDev::OnPositionLin);
+       RETURN_ON_MM_ERROR ( CreateProperty("Position Lin", "0", MM::Integer, false, pAct) );
+       RETURN_ON_MM_ERROR ( SetPropertyLimits("Position Lin", 0, 7600) );
+    }
 
    // Register our instance for callbacks
    if (devType_ == SD)
@@ -645,5 +646,36 @@ int DiskoveryStateDev::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
    }
 
+   return DEVICE_OK;
+}
+
+
+int DiskoveryStateDev::OnPositionRot(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set( (long) (hub_->GetModel()->GetPositionRot() ) );
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long pos;
+      pProp->Get(pos);
+      hub_->GetCommander()->SetPositionRot( (uint32_t) (pos) );
+   }
+   return DEVICE_OK;
+}
+
+int DiskoveryStateDev::OnPositionLin(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set( (long) (hub_->GetModel()->GetPositionLin() ) );
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long pos;
+      pProp->Get(pos);
+      hub_->GetCommander()->SetPositionLin( (uint32_t) (pos) );
+   }
    return DEVICE_OK;
 }

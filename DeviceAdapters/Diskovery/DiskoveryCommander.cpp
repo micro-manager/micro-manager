@@ -47,6 +47,10 @@ const char* g_SetPresetIris = "A:PRESET_IRIS,";
 const char* g_GetPresetIris = "Q:PRESET_IRIS";
 const char* g_SetPresetTIRF = "A:PRESET_PX,";
 const char* g_GetPresetTIRF = "Q:PRESET_PX";
+const char* g_SetPositionRot = "A:POSITION_ROT,";
+const char* g_GetPositionRot = "Q:POSITION_ROT";
+const char* g_SetPositionLin = "A:POSITION_LIN,";
+const char* g_GetPositionLin = "Q:POSITION_LIN";
 const char* g_SetMotorRunningSD = "A:MOTOR_RUNNING_SD,";
 const char* g_GetMotorRunningSD = "Q:MOTOR_RUNNING_SD";
 
@@ -222,6 +226,16 @@ int DiskoveryCommander::SetPresetTIRF(uint16_t pos)
    return SendSetCommand(g_SetPresetTIRF, pos);
 }
 
+int DiskoveryCommander::SetPositionLin(uint32_t pos)
+{
+   return SendSetCommand(g_SetPositionLin, pos);
+}
+
+int DiskoveryCommander::SetPositionRot(uint32_t pos)
+{
+   return SendSetCommand(g_SetPositionRot, pos);
+}
+
 int DiskoveryCommander::SetMotorRunningSD(uint16_t pos)
 {
    return SendSetCommand(g_SetMotorRunningSD, pos);
@@ -275,6 +289,20 @@ int DiskoveryCommander::SendSetCommand(const char* commandPart1, uint16_t pos, c
  * They will be send by the MessageSender whenever the device is not busy
  */
 int DiskoveryCommander::SendSetCommand(const char* command, uint16_t pos)
+{
+   model_->SetLogicalBusy(true);
+   std::ostringstream os;
+   os << command << pos;
+   blockingQueue_.push(os.str());
+
+   return DEVICE_OK;
+}
+
+/**
+ * Do not send commands directly, but queue them up
+ * They will be send by the MessageSender whenever the device is not busy
+ */
+int DiskoveryCommander::SendSetCommand(const char* command, uint32_t pos)
 {
    model_->SetLogicalBusy(true);
    std::ostringstream os;

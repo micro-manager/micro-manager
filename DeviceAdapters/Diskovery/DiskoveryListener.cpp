@@ -91,6 +91,7 @@ void DiskoveryListener::Start()
 void DiskoveryListener::ParseMessage(std::string message)
 {
    uint16_t number;
+   uint32_t number32;
    bool state;
 
    // split the message at the '=' sign
@@ -108,7 +109,16 @@ void DiskoveryListener::ParseMessage(std::string message)
          {
             model_->SetDeviceBusy(true);
          }
-
+      // Linear prism positioner for TIRF
+      } else if (tokens[0] == "POSITION_LIN")
+      {
+         std::istringstream(tokens[1].c_str()) >> number32;
+         model_->SetPositionLin(number32);
+      // Rotational prism positioner for TIRF
+      } else if (tokens[0] == "POSITION_ROT")
+      {
+         std::istringstream(tokens[1].c_str()) >> number32;
+         model_->SetPositionRot(number32);
       // Preset Spinning Disk
       } else if (tokens[0] == "PRESET_SD") 
       {
