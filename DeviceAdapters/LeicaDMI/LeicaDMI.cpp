@@ -3150,7 +3150,7 @@ AFCOffset::~AFCOffset()
 int AFCOffset::Initialize()
 {
    int ret = DEVICE_OK;
-   if (g_ScopeInterface.portInitialized_)
+   if (!g_ScopeInterface.portInitialized_)
       return ERR_SCOPE_NOT_ACTIVE;
 
    if (!g_ScopeInterface.IsInitialized())
