@@ -642,7 +642,7 @@ public class Properties {
    private String getPropValue(Devices.Keys device, Properties.Keys name,
          String propNameSubstitute) {
       String val;
-      if (device.equals(Devices.Keys.PLUGIN)) {
+      if (device == Devices.Keys.PLUGIN) {
          val = prefs_.getString(PLUGIN_PREF_NODE, name, "");
       } else {
          String mmDevice = devices_.getMMDevice(device);
