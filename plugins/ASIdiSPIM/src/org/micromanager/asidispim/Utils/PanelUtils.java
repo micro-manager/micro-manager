@@ -439,12 +439,15 @@ public class PanelUtils {
          public void actionPerformed(ActionEvent ae) {
             // unlike analogous int/float functions, this handler is called on any setSelectedItem 
             String boxValue = getBoxValue();
+            if (boxValue == null) {
+               boxValue = "";
+            }
             for (Devices.Keys devKey : devKeys_) {
                // property reads (core calls) are inexpensive compared to 
                //   property writes (serial comm) so only write if needed
                // however, this doesn't solve problem of properties that are really
                //    for the card (not for the axis) because other devices on same
-               //    card may have been changed but not refreshed in micro-Manager
+               //    card may have been changed but not refreshed in Micro-Manager
                if (!props_.getPropValueString(devKey, propKey_).equals(boxValue)) {
                   props_.setPropValue(devKey, propKey_, boxValue, true);
                }

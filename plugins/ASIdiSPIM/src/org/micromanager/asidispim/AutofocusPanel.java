@@ -149,7 +149,7 @@ public class AutofocusPanel extends ListeningJPanel{
       
       // end options subpanel
       
-      // start acquisiion optoinspanel
+      // start acquisition options panel
       acqOptionsPanel_ = new JPanel(new MigLayout(
             "",
             "[right]16[center]",
@@ -176,8 +176,7 @@ public class AutofocusPanel extends ListeningJPanel{
             Properties.Keys.PLUGIN_MULTICHANNEL_GROUP);
       StrVector channels = gui.getMMCore().getAvailableConfigs(channelGroup_);
       final JComboBox channelSelect = pu.makeDropDownBox(channels.toArray(), 
-              Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_AUTOFOCUS_CHANNEL,
-              channels.get(0));
+              Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_AUTOFOCUS_CHANNEL, "");
       // make sure to explicitly set it to something so pref gets written
       channelSelect.setSelectedIndex(channelSelect.getSelectedIndex());
       acqOptionsPanel_.add(new JLabel("Autofocus Channel: "));
