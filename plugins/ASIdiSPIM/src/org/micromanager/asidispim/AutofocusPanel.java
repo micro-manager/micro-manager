@@ -111,7 +111,7 @@ public class AutofocusPanel extends ListeningJPanel{
       
       // scan either piezo or sheet; select which one
       optionsPanel_.add(new JLabel("Mode:"));
-      String[] scanOptions = {"Fix piezo, sweep sheet", "Fix sheet, sweep piezo"};
+      String[] scanOptions = {"Fix piezo, sweep slice", "Fix slice, sweep piezo"};
       final JComboBox scanModeCB = pu.makeDropDownBox(scanOptions,
             Devices.Keys.PLUGIN, Properties.Keys.AUTOFOCUS_ACQUSITION_MODE,
             scanOptions[0]);

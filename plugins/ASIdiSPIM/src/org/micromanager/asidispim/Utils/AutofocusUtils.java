@@ -108,8 +108,8 @@ public class AutofocusUtils {
     * temporarily set the center position to the current position.  If the 
     * autofocus is successful (based on the goodness of fit of the focus curve),
     * either the scanner slice position will  be set to the in-focus position
-    * (for option "fix piezo, sweep sheet") or else the piezo position will be 
-    * set to the in-focus position (for option "fix sheet, sweep piezo").
+    * (for option "fix piezo, sweep slice") or else the piezo position will be 
+    * set to the in-focus position (for option "fix slice, sweep piezo").
     * Immediately following if the user calls updateCalibrationOffset() in the 
     * setup panel then the calibration offset will be changed to be in-focus.
     * If the goodness of fit is insufficient or else the best fit position is
@@ -196,7 +196,7 @@ public class AutofocusUtils {
             final double piezoCenter = centerAtCurrentZ ? originalPiezoPosition : imagingCenter;
             
             String acqModeString = props_.getPropValueString(Devices.Keys.PLUGIN, Properties.Keys.AUTOFOCUS_ACQUSITION_MODE);
-            final boolean isPiezoScan = acqModeString.equals("Fix sheet, sweep piezo");
+            final boolean isPiezoScan = acqModeString.equals("Fix slice, sweep piezo");
             boolean focusSuccess = false;
             
             posUpdater_.pauseUpdates(true);
