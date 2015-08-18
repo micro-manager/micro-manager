@@ -20,8 +20,6 @@
 
 package org.micromanager.data;
 
-import java.util.List;
-
 import org.micromanager.PropertyMap;
 
 /**
