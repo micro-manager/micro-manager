@@ -114,6 +114,7 @@ SUBDIRS = \
 	MaestroServo \
 	Marzhauser \
 	Marzhauser-LStep \
+	MarzhauserLStepOld \
 	MicroPoint \
 	Motic_mac \
 	Neos \

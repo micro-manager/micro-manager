@@ -426,8 +426,9 @@ m4_define([device_adapter_dirs], [m4_strip([
    LumencorSpectra
    MP285
    MaestroServo
-   Marzhauser-LStep
    Marzhauser
+   Marzhauser-LStep
+   MarzhauserLStepOld
    MicroPoint
    Motic_mac
    Neos
