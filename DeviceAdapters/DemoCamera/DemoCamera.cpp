@@ -939,8 +939,11 @@ int CDemoCamera::InsertImage()
       GetCoreCallback()->ClearImageBuffer(this);
       // don't process this same image again...
       return GetCoreCallback()->InsertImage(this, pI, w, h, b, md.Serialize().c_str(), false);
-   } else
+   }
+   else
+   {
       return ret;
+   }
 }
 
 /*
@@ -959,19 +962,22 @@ int CDemoCamera::RunSequenceOnThread(MM::MMTime startTime)
       	triggerDev->SetProperty("Trigger","+");
       }
    }
-   
+
+   double exposure = GetSequenceExposure();
+
    if (!fastImage_)
    {
-      GenerateSyntheticImage(img_, GetSequenceExposure());
+      GenerateSyntheticImage(img_, exposure);
    }
 
-   ret = InsertImage();
-     
-
-   while (((double) (this->GetCurrentMMTime() - startTime).getMsec() / imageCounter_) < this->GetSequenceExposure())
+   // Simulate exposure duration
+   double finishTime = exposure * (imageCounter_ + 1);
+   while ((GetCurrentMMTime() - startTime).getMsec() < finishTime)
    {
       CDeviceUtils::SleepMs(1);
    }
+
+   ret = InsertImage();
 
    if (ret != DEVICE_OK)
    {
