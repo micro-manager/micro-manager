@@ -160,9 +160,9 @@ int LStepOld::SetPositionUm(double x, double y)
    return DEVICE_OK;
 }
 
-int LStepOld::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax)
+int LStepOld::GetLimitsUm(double&, double&, double&, double&)
 {
-   return DEVICE_OK;
+   return DEVICE_UNSUPPORTED_COMMAND;
 }
 
 int LStepOld::SetPositionSteps(long x, long y)
@@ -176,11 +176,11 @@ int LStepOld::GetPositionSteps(long& x, long& y)
    int s = ExecuteCommand( g_cmd_get_pos_x, NULL, 0, &answer );
    if (s!=DEVICE_OK)
       return s;
-   x = atof( answer.c_str() );
+   x = static_cast<long>(atof(answer.c_str()));
    s = ExecuteCommand( g_cmd_get_pos_y, NULL, 0, &answer );
    if (s!=DEVICE_OK)
       return s;
-   y = atof( answer.c_str() );
+   y = static_cast<long>(atof(answer.c_str()));
    return DEVICE_OK;
 }
 
@@ -202,9 +202,9 @@ int LStepOld::SetOrigin()
    return DEVICE_OK;
 }
 
-int LStepOld::GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax)
+int LStepOld::GetStepLimits(long&, long&, long&, long&)
 {
-   return DEVICE_OK;
+   return DEVICE_UNSUPPORTED_COMMAND;
 }
 
 double LStepOld::GetStepSizeXUm()
