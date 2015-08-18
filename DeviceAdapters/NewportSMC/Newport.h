@@ -32,8 +32,10 @@
 //
 #define ERR_PORT_CHANGE_FORBIDDEN	10004
 #define ERR_UNRECOGNIZED_ANSWER		10009
-#define ERR_OFFSET					10100
-#define ERR_UNKNOWN_POSITION		103
+#define ERR_OFFSET					   10100
+#define ERR_POSITION_BEYOND_LIMITS  10300
+#define ERR_TIMEOUT                 10301
+#define CONTROLLER_ERROR            20000
 
 class NewportZStage : public CStageBase<NewportZStage>
 {
@@ -53,6 +55,7 @@ public:
 	// Stage API
 	// ---------
 	int SetPositionUm(double pos);
+	int SetRelativePositionUm(double pos);
 	int GetPositionUm(double& pos);
 	int SetPositionSteps(long steps);
 	int GetPositionSteps(long& steps);
@@ -61,8 +64,11 @@ public:
 
 	// action interface
 	// ----------------
+	int OnConversionFactor(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnControllerAddress(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    int IsStageSequenceable(bool& isSequenceable) const {
       isSequenceable = false;
@@ -71,12 +77,22 @@ public:
    bool IsContinuousFocusDrive() const {return false;}
 
 private:
+   int SetVelocity(double velocity);
+   int GetVelocity(double& velocity);
+   int GetError(bool& error, std::string& errorCode);
+   int WaitForBusy();
+   std::string MakeCommand(const char* cmd);
 
-	std::string port_;
-	double stepSizeUm_;
-	bool initialized_;
-	double lowerLimit_;
-	double upperLimit_;
+   std::string port_;
+   double stepSizeUm_;
+   double conversionFactor_;
+   int cAddress_;
+   bool initialized_;
+   double lowerLimit_; // limit in native coordinates
+   double upperLimit_; // limit in native coordinates
+   double velocity_;   // velocity in native coordinates
+   double velocityLowerLimit_; // limit in native coordinates
+   double velocityUpperLimit_; // limit in native coordinates
 };
 
 
