@@ -521,8 +521,9 @@ int SerialPort::Initialize()
    }
    catch (std::exception& e)
    {
+      SetErrorText(ERR_OPEN_FAILED, e.what());
       LogMessage(e.what());
-      return DEVICE_ERR;
+      return ERR_OPEN_FAILED;
    }
 
    try
@@ -532,8 +533,9 @@ int SerialPort::Initialize()
    }
    catch(std::exception& what)
    {
+      SetErrorText(ERR_OPEN_FAILED, what.what());
       LogMessage(what.what(), false);
-      return DEVICE_ERR;
+      return ERR_OPEN_FAILED;
    }
 
    ret = UpdateStatus();
