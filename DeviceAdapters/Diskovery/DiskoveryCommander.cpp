@@ -74,6 +74,17 @@ const char* g_ButtonFilterW = "Q:BUTTON_FILTER_W_";
 const char* g_ButtonFilterT = "Q:BUTTON_FILTER_T_";
 const char* g_ButtonDisk = "Q:DISK_PATTERN_NAME,";
 
+// queries to get calibration data from the device
+const char* g_TIRFFocalLength = "Q:TIRF_FOCAL_LENGTH"; // int32
+const char* g_ResolutionLinear = "Q:RESOLUTION_LINEAR"; // double
+const char* g_ResolutionRotation = "Q:RESOLUTION_ROTATION"; // double
+const char* g_OffsetLinear = "Q:OFFSET_LINEAR"; //int32
+const char* g_OffsetRotation = "Q:OFFSET_ROTATION"; //int32
+const char* g_LineStart = "Q:LINE_"; // 0 < x < 8
+const char* g_Wavelength = "_WAVELENGTH"; // int16
+const char* g_Enabled = "_ENABLED"; // Boolean (0 or 1)
+
+
 /**
  * Class that sends commands to the Diskovery1
  */
