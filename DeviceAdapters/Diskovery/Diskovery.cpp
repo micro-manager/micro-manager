@@ -504,6 +504,15 @@ int DiskoveryStateDev::Initialize()
             label = "Exchange";
          else
             label = hub_->GetModel()->GetDiskLabel(i - 2 + firstPos_);
+      } else if (devType_ == TIRF) {
+         if (i == 0)
+            label = "Disabled";
+         else 
+         {
+            std::ostringstream os;
+            os << "OM " << i; 
+            label = os.str().c_str();;
+         }
       }
       SetPositionLabel(i, label);
    }

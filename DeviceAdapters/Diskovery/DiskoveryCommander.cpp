@@ -167,21 +167,38 @@ int DiskoveryCommander::CheckCapabilities()
    // so that other code can make use of the results
    CDeviceUtils::SleepMs(50);
 
-   if (model_->GetHasWFX()) 
-   {
-      for (uint16_t i = 1; i < 5; i++) {
+   for (uint16_t i = 1; i < 5; i++) {
+      if (model_->GetHasWFX()) {
          GetWFButtonName(i);
-         GetIrisButtonName(i);
-         CDeviceUtils::SleepMs(50);
-         GetFilterWButtonName(i);
-         GetFilterTButtonName(i);
-         CDeviceUtils::SleepMs(50);
-         if (i < 4)
-         {
-            GetDiskButtonName(i);
-            CDeviceUtils::SleepMs(50);
-         }
+         CDeviceUtils::SleepMs(25);
       }
+      if (model_->GetHasIRIS()) {
+         GetIrisButtonName(i);
+         CDeviceUtils::SleepMs(25);
+      }
+      if (model_->GetHasFilterW()) {
+         GetFilterWButtonName(i);
+         CDeviceUtils::SleepMs(25);
+      }
+      if (model_->GetHasFilterT()) {
+         GetFilterTButtonName(i);
+         CDeviceUtils::SleepMs(25);
+      }
+      if (model_->GetHasSD() && i < 4)
+      {
+         GetDiskButtonName(i);
+         CDeviceUtils::SleepMs(50);
+      }
+   }
+
+   // get initial position of some devices
+   if (model_->GetHasLIN()) {
+      RETURN_ON_MM_ERROR( SendCommand(g_GetPositionLin) );
+      CDeviceUtils::SleepMs(25);
+   }
+   if (model_->GetHasROT()) {
+      RETURN_ON_MM_ERROR( SendCommand(g_GetPositionRot) );
+      CDeviceUtils::SleepMs(25);
    }
 
    return DEVICE_OK;
