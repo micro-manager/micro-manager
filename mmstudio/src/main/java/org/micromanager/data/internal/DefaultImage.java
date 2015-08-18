@@ -219,6 +219,33 @@ public class DefaultImage implements Image {
       return DirectBuffers.arrayFromBuffer(rawPixels_);
    }
 
+   @Override
+   public Object getRawPixelsCopy() {
+      Object original = getRawPixels();
+      Object copy;
+      int length;
+      if (original instanceof byte[]) {
+         byte[] tmp = (byte[]) original;
+         length = tmp.length;
+         copy = new byte[length];
+      }
+      else if (original instanceof short[]) {
+         short[] tmp = (short[]) original;
+         length = tmp.length;
+         copy = new short[length];
+      }
+      else if (original instanceof int[]) {
+         int[] tmp = (int[]) original;
+         length = tmp.length;
+         copy = new int[length];
+      }
+      else {
+         throw new RuntimeException("Unrecognized pixel type " + original.getClass());
+      }
+      System.arraycopy(original, 0, copy, 0, length);
+      return copy;
+   }
+
    public Buffer getPixelBuffer() {
       return rawPixels_;
    }
