@@ -76,9 +76,9 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 }
 
 LStepOld::LStepOld() : initialized_(false),
+   answerTimeoutMs_(5000),
    motor_speed_(5.0),
-   joystick_command_("False"),
-   answerTimeoutMs_(5000)
+   joystick_command_("False")
 {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
