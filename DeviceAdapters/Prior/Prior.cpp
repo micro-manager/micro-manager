@@ -528,7 +528,12 @@ int Wheel::Initialize()
 
    // set property list
    // -----------------
-   
+
+   // Gate closed position
+   ret = CreateStringProperty(MM::g_Keyword_Closed_Position, "", false);
+   if (ret != DEVICE_OK)
+      return ret;
+
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction (this, &Wheel::OnState);
@@ -590,6 +595,8 @@ int Wheel::Initialize()
       int errNo = atoi(answer.substr(2).c_str());
       return ERR_OFFSET + errNo;
    }
+
+   GetGateOpen(open_);
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
@@ -668,12 +675,10 @@ int Wheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
+      bool gateOpen;
+      GetGateOpen(gateOpen);
       long pos;
       pProp->Get(pos);
-
-      //check if we are already in that state
-      if ((unsigned) pos == curPos_)
-         return DEVICE_OK;
 
       if (pos >= (long)numPos_ || pos < 0)
       {
@@ -681,14 +686,41 @@ int Wheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
          return ERR_UNKNOWN_POSITION;
       }
 
-      // try to apply the value
-      int ret = SetWheelPosition(pos);
-      if (ret != DEVICE_OK)
+      if (gateOpen)
       {
-         pProp->Set((long)curPos_); // revert
-         return ret;
+         //check if we are already in that state
+         if (((unsigned) pos == curPos_) && open_)
+            return DEVICE_OK;
+
+         // try to apply the value
+         int ret = SetWheelPosition(pos);
+         if (ret != DEVICE_OK)
+         {
+            pProp->Set((long)curPos_); // revert
+            return ret;
+         }
+      }
+      else
+      {
+         if (!open_)
+         {
+            curPos_ = pos;
+            return DEVICE_OK;
+         }
+
+         char closedPos[MM::MaxStrLength];
+         GetProperty(MM::g_Keyword_Closed_Position, closedPos);
+         int gateClosedPos = atoi(closedPos);
+
+         int ret = SetWheelPosition(gateClosedPos);
+         if (ret != DEVICE_OK)
+         {
+            pProp->Set((long)curPos_); // revert
+            return ret;
+         }
       }
       curPos_ = pos;
+      open_ = gateOpen;
    }
 
    return DEVICE_OK;

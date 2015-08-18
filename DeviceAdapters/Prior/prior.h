@@ -110,6 +110,7 @@ private:
    std::string name_;
    std::string port_;
    unsigned curPos_;
+   bool open_;
    bool busy_;
    MM::MMTime changedTime_;
 
