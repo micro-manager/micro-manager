@@ -45,6 +45,7 @@ import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
+import org.micromanager.utils.WaitDialog;
 
 /*
  * Handles logic specific to the Snap/Live window.
@@ -102,19 +103,35 @@ public class SnapLiveManager {
       }
       if (liveModeTimer_ != null) {
          if (isOn) {
+            WaitDialog waitDlg = new WaitDialog("Starting Live...");
+            waitDlg.setAlwaysOnTop(true);
+            waitDlg.showDialog();
             try {
+
                liveModeTimer_.begin();
                callLiveModeListeners(true);
             }
             catch (Exception e) {
-               ReportingUtils.logError(e, "Couldn't start live mode.");
+               waitDlg.closeDialog();
+               ReportingUtils.showError(e, "Couldn't start live mode.");
+
+               waitDlg = new WaitDialog("Stopping Live...");
+               waitDlg.setAlwaysOnTop(true);
+               waitDlg.showDialog();
                liveModeTimer_.stop();
                callLiveModeListeners(false);
             }
+            finally {
+               waitDlg.closeDialog();
+            }
          }
          else {
+            WaitDialog waitDlg = new WaitDialog("Stopping Live...");
+            waitDlg.setAlwaysOnTop(true);
+            waitDlg.showDialog();
             liveModeTimer_.stop();
             callLiveModeListeners(false);
+            waitDlg.closeDialog();
          }
       }
    }

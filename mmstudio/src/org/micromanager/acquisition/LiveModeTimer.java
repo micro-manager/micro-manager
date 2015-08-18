@@ -356,15 +356,17 @@ public class LiveModeTimer {
 
       // Finally, make sure we block until the POISON passes through the image
       // processors, so that no images get stranded.
-      ReportingUtils.logMessage("Waiting for live mode display thread");
-      try {
-         displayThread_.join();
+      if (displayThread_ != null) {
+         ReportingUtils.logMessage("Waiting for live mode display thread");
+         try {
+            displayThread_.join();
+         }
+         catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+         }
+         ReportingUtils.logMessage("Finished waiting for live mode display thread");
+         displayThread_ = null;
       }
-      catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-      }
-      ReportingUtils.logMessage("Finished waiting for live mode display thread");
-      displayThread_ = null;
    }
 
    /**
