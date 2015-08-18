@@ -32,20 +32,30 @@ import org.micromanager.PropertyMap;
  */
 public interface Pipeline {
    /**
-    * Add an output Datastore to this Pipeline. As images are output from the
-    * last Processor in the chain, they will be inserted into this Datastore.
-    * @param store Datastore that should receive images from the Pipeline.
+    * Insert an Image into the Pipeline. The Image will be processed by the
+    * first Processor in the Pipeline, any Images output by that Processor
+    * will be processed by the second Processor, etc. until the Image sequence
+    * reaches the end of the Pipeline, at which point those result Images
+    * will be stored in any attached Datastores (see addDatastore, below).
+    * If the Pipeline is in synchronous mode, then this call will block until
+    * any generated images are in the Datastore; otherwise it will return
+    * immediately.
+    * @param image Image to be processed by the Pipeline.
     */
-   public void addDatastore(Datastore store);
+   public void insertImage(Image image);
 
    /**
-    * Remove the given Datastore from the list of output Datastores receiving
-    * images from this Pipeline. If the Datastore is not a valid target then
-    * nothing happens.
-    * @param store Datastore that should no longer receive images from the
-    *        Pipeline.
+    * Get the output Datastore for this Pipeline. This Datastore is the
+    * ultimate recipient of Images that have been processed by the Pipeline.
     */
-   public void removeDatastore(Datastore store);
+   public Datastore getDatastore();
+
+   /**
+    * Return whether the Pipeline is operating in synchronous or asynchronous
+    * modes. See DataManager.createPipeline() for more information.
+    * @return True if the Pipeline is synchronous, False otherwise.
+    */
+   public boolean getIsSynchronous();
 
    /**
     * Halt image processing, so that the Pipeline will not produce any more

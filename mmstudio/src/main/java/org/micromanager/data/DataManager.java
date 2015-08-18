@@ -210,10 +210,19 @@ public interface DataManager {
     * Create a new Pipeline using the provided list of ProcessorFactories.
     * @param factories List of ProcessorFactories which will each be used, in
     *        order, to create a Processor for the new Pipeline.
+    * @param store Datastore in which Images should be stored after making
+    *        their way through the Pipeline.
+    * @param isSynchronous If true, then every call to Pipeline.insertImage()
+    *        will block until the input Image has been "fully consumed" by
+    *        the pipeline (any result Image(s) have been added to the Datastore
+    *        the Pipeline is connected to). If false, Pipeline.insertImage()
+    *        will return immediately and the Images will arrive in the
+    *        Datastore at some indeterminate later time.
     * @return a Pipeline containing Processors as specified by the input
     *         factories.
     */
-   public Pipeline createPipeline(List<ProcessorFactory> factories);
+   public Pipeline createPipeline(List<ProcessorFactory> factories,
+         Datastore store, boolean isSynchronous);
 
    /**
     * Create a copy of the current application Pipeline as configured in the
