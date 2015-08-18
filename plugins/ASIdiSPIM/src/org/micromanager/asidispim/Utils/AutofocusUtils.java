@@ -87,16 +87,19 @@ public class AutofocusUtils {
    }
 
    public class FocusResult {
-      private final double r2_;
-      private final double galvoBestOffset_;
+      private final boolean focusSuccess_;
+      private final double galvoPosition_;
+      private final double piezoPosition_;
       
-      public FocusResult(double r2, double offset) {
-         r2_ = r2;
-         galvoBestOffset_ = offset;
+      public FocusResult(boolean focusSuccess, double galvoPosition, double piezoPosition) {
+         focusSuccess_ = focusSuccess;
+         galvoPosition_ = galvoPosition;
+         piezoPosition_ = piezoPosition;
       }
       
-      public double getR2() { return r2_;}
-      public double getGalvoBestOffset() { return galvoBestOffset_; }
+      public boolean getFocusSuccess() { return focusSuccess_; } 
+      public double getGalvoPosition() { return galvoPosition_; }
+      public double getPiezoPosition() { return piezoPosition_; }
    }
    
    /**
@@ -104,8 +107,14 @@ public class AutofocusUtils {
     * Acquires around the current piezo position. As a side effect, will
     * temporarily set the center position to the current position.  If the 
     * autofocus is successful (based on the goodness of fit of the focus curve),
-    * the scanner slice position will  be set to the in-focus position, otherwise
-    * it will be returned to the original position
+    * either the scanner slice position will  be set to the in-focus position
+    * (for option "fix piezo, sweep sheet") or else the piezo position will be 
+    * set to the in-focus position (for option "fix sheet, sweep piezo").
+    * Immediately following if the user calls updateCalibrationOffset() in the 
+    * setup panel then the calibration offset will be changed to be in-focus.
+    * If the goodness of fit is insufficient or else the best fit position is
+    * at the extreme of the sweep range then the piezo and sheet will be returned
+    * to their original positions. 
     *
     * @param caller - calling panel, used to restore settings after focusing
     * @param side - A or B
@@ -130,11 +139,10 @@ public class AutofocusUtils {
          @Override
          protected FocusResult doInBackground() throws Exception {
 
-            double bestGalvoPosition = 0;
-            
             // Score indicating goodness of the fit
             double r2 = 0;
-            double bestGalvoOffset = 0;
+            double bestGalvoPosition = 0;
+            double bestPiezoPosition = 0;
 
             if (gui_.getAutofocus() == null) {
                throw new ASIdiSPIMException("Please define an autofocus methods first");
@@ -176,7 +184,7 @@ public class AutofocusUtils {
                     Properties.Keys.PLUGIN_AUTOFOCUS_SHOWIMAGES, false);
             final boolean showPlot = prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(),
                     Properties.Keys.PLUGIN_AUTOFOCUS_SHOWPLOT, false);
-            final float piezoStepSize = props_.getPropValueFloat(Devices.Keys.PLUGIN,
+            float piezoStepSize = props_.getPropValueFloat(Devices.Keys.PLUGIN,
                     Properties.Keys.PLUGIN_AUTOFOCUS_STEPSIZE);  // user specifies step size in um, we translate to galvo and move only galvo
             final float imagingCenter = prefs_.getFloat(
                     MyStrings.PanelNames.SETUP.toString() + side.toString(),
@@ -184,15 +192,13 @@ public class AutofocusUtils {
             final float minimumRSquare =  props_.getPropValueFloat(Devices.Keys.PLUGIN,
                      Properties.Keys.PLUGIN_AUTOFOCUS_MINIMUMR2, null);
             final double originalPiezoPosition = positions_.getUpdatedPosition(piezoDevice);
-            final double originalGalvoPosition = positions_.getUpdatedPosition(galvoDevice);
+            final double originalGalvoPosition = positions_.getUpdatedPosition(galvoDevice, Directions.Y);
             final double piezoCenter = centerAtCurrentZ ? originalPiezoPosition : imagingCenter;
             
-            double piezoPosition = originalPiezoPosition;
-            if (!centerAtCurrentZ) {
-               positions_.setPosition(piezoDevice, piezoCenter);
-               piezoPosition = piezoCenter;
-            }
-          
+            String acqModeString = props_.getPropValueString(Devices.Keys.PLUGIN, Properties.Keys.AUTOFOCUS_ACQUSITION_MODE);
+            final boolean isPiezoScan = acqModeString.equals("Fix sheet, sweep piezo");
+            boolean focusSuccess = false;
+            
             posUpdater_.pauseUpdates(true);
             
             // start with current acquisition settings, then modify a few of them for the focus acquisition
@@ -207,9 +213,8 @@ public class AutofocusUtils {
             acqSettings.numSides = 1;
             acqSettings.firstSideIsA = side.equals(Sides.A);
             acqSettings.useTimepoints = false;
-            acqSettings.spimMode = AcquisitionModes.Keys.SLICE_SCAN_ONLY;
+            acqSettings.spimMode = isPiezoScan? AcquisitionModes.Keys.PIEZO_SCAN_ONLY : AcquisitionModes.Keys.SLICE_SCAN_ONLY;
             acqSettings.centerAtCurrentZ = centerAtCurrentZ;
-            acqSettings.delayBeforeSide = 0.0f;
             acqSettings.stepSizeUm = piezoStepSize;
 
             controller_.prepareControllerForAquisition(acqSettings);
@@ -217,15 +222,28 @@ public class AutofocusUtils {
             final float galvoRate = prefs_.getFloat(
                      MyStrings.PanelNames.SETUP.toString() + side.toString(), 
                      Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, 100);
-            // TODO remove below comments when fixed
-            // galvoOffset is named inappropriately for now
-            // will be changing with change in calibration representation later on
             final float galvoOffset = prefs_.getFloat(
                      MyStrings.PanelNames.SETUP.toString() + side.toString(),
                      Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0);
-            final double galvoStepSize = piezoStepSize / galvoRate;
+            final double galvoStepSize = isPiezoScan ? 0 : piezoStepSize / galvoRate;
             final double galvoCenter = (piezoCenter - galvoOffset) / galvoRate;
-            final double galvoStart = galvoCenter - 0.5 * (nrImages - 1) * galvoStepSize;
+            final double galvoRange = (nrImages - 1) * galvoStepSize;
+            final double piezoRange = (nrImages - 1) * piezoStepSize;
+            final double galvoStart = galvoCenter - 0.5 * galvoRange;
+            final double piezoStart = piezoCenter - 0.5 * piezoRange;
+            if (!isPiezoScan) {
+               // change this to 0 for calculating actual position if we aren't moving piezo
+               piezoStepSize = 0;
+            }
+            
+            double piezoPosition = originalPiezoPosition;
+            double galvoPosition = originalGalvoPosition;
+            if (!centerAtCurrentZ) {
+               positions_.setPosition(piezoDevice, piezoCenter);
+               piezoPosition = piezoCenter;
+               positions_.setPosition(galvoDevice, Directions.Y, galvoCenter);
+               galvoPosition = galvoCenter;
+            }
             
             double[] focusScores = new double[nrImages];
             TaggedImage[] imageStore = new TaggedImage[nrImages];
@@ -329,12 +347,13 @@ public class AutofocusUtils {
                              + ", score: " + focusScores[counter]);
                      
                      double galvoPos = galvoStart + counter * galvoStepSize;
-                     scoresToPlot[0].add(galvoPos, focusScores[counter]);
+                     double piezoPos = piezoStart + counter * piezoStepSize;
+                     scoresToPlot[0].add(isPiezoScan ? piezoPos : galvoPos, focusScores[counter]);
                      if (showImages) {
                         // we are using the slow way to insert images, should be OK
                         // as long as the circular buffer is big enough
                         timg.tags.put("SlicePosition", galvoPos);
-                        timg.tags.put("ZPositionUm", piezoCenter);
+                        timg.tags.put("ZPositionUm", piezoPos);
                         gui_.addImageToAcquisition(acqName, 0, 0, counter, 0, timg);
                      }
                      counter++;
@@ -361,13 +380,17 @@ public class AutofocusUtils {
                // fit the focus scores
                // limit the best position to the range of galvo range we used
                double[] fitParms = Fitter.fit(scoresToPlot[0], function, null);
-               bestGalvoPosition = Fitter.getXofMaxY(scoresToPlot[0], function, fitParms);
-               // TODO: Check this is right!
-               bestGalvoOffset = piezoPosition - galvoRate * bestGalvoPosition;
+               if (isPiezoScan) {
+                  bestPiezoPosition = Fitter.getXofMaxY(scoresToPlot[0], function, fitParms);
+                  highestIndex = Fitter.getIndex(scoresToPlot[0], bestPiezoPosition);
+                  
+               } else {
+                  bestGalvoPosition = Fitter.getXofMaxY(scoresToPlot[0], function, fitParms);
+                  highestIndex = Fitter.getIndex(scoresToPlot[0], bestGalvoPosition);
+               }
 
-               highestIndex = Fitter.getIndex(scoresToPlot[0], bestGalvoPosition);
                scoresToPlot[1] = Fitter.getFittedSeries(scoresToPlot[0], 
-                       function, fitParms);
+                        function, fitParms);
                r2 = Fitter.getRSquare(scoresToPlot[0], function, fitParms);
                
                // display the best scoring image in the debug stack if it exists
@@ -389,7 +412,7 @@ public class AutofocusUtils {
                   boolean[] showSymbols = {true, false};
                   plotter.plotDataN("Focus curve", 
                         scoresToPlot, 
-                        "Galvo position [\u00B0]", 
+                        isPiezoScan ? "Piezo position [\u00B5m]" : "Galvo position [\u00B0]", 
                         "Focus Score", 
                         showSymbols, 
                         "R^2 = " + NumberUtils.doubleToDisplayString(r2));
@@ -415,18 +438,38 @@ public class AutofocusUtils {
                   if (restoreCameraMode)
                      cameras_.setSPIMCamerasForAcquisition(false);
 
-                  // move piezo back to original position if needed
+                  // move back to original position if needed
                   if (!centerAtCurrentZ) {
                      positions_.setPosition(piezoDevice, originalPiezoPosition);
+                     positions_.setPosition(galvoDevice, Directions.Y, originalGalvoPosition);
                   }
                   
-                  // move galvo to maximal focus position if we found one
+                  // determine if we found a "maximal focus" position and move to it
+                  // cannot be outside the center 80% of the search range
+                  // R^2 value of fit must be greater than the minimum specified
                   // if for some reason we were unsuccessful then restore to original position
-                  // TODO: 
-                  if (highestIndex >= 0 && r2 > minimumRSquare) {
-                     positions_.setPosition(galvoDevice, Directions.Y, bestGalvoPosition);
-                  } else {
-                     positions_.setPosition(galvoDevice, Directions.Y, originalGalvoPosition);
+                  if (isPiezoScan) {
+                     final double end1 = piezoStart + 0.1*piezoRange;
+                     final double end2 = piezoStart + 0.9*piezoRange;
+                     if (r2 > minimumRSquare 
+                           && bestPiezoPosition > Math.min(end1, end2)
+                           && bestPiezoPosition < Math.max(end1, end2)) {
+                        positions_.setPosition(piezoDevice, bestPiezoPosition);
+                        focusSuccess = true;
+                     } else {
+                        positions_.setPosition(piezoDevice, originalPiezoPosition);
+                     }
+                  } else { // slice scan
+                     final double end1 = galvoStart + 0.1*galvoRange;
+                     final double end2 = galvoStart + 0.9*galvoRange;
+                     if (r2 > minimumRSquare 
+                           && bestGalvoPosition > Math.min(end1, end2)
+                           && bestGalvoPosition < Math.max(end1, end2)) {
+                        positions_.setPosition(galvoDevice, Directions.Y, bestGalvoPosition);
+                        focusSuccess = true;
+                     } else {
+                        positions_.setPosition(galvoDevice, Directions.Y, originalGalvoPosition);
+                     }
                   }
                   
                   // let the calling panel restore appropriate settings
@@ -444,7 +487,11 @@ public class AutofocusUtils {
                   throw new ASIdiSPIMException(ex, "Error while restoring hardware state after autofocus.");
                }
             }
-            return new FocusResult(r2, bestGalvoOffset);
+            if (isPiezoScan) {
+                return new FocusResult(focusSuccess, galvoPosition, bestPiezoPosition);
+            } else {
+               return new FocusResult(focusSuccess, bestGalvoPosition, piezoPosition);               
+            }
          }
 
          @Override
@@ -476,7 +523,7 @@ public class AutofocusUtils {
       }
       
       // we can only return a bogus score 
-      return new FocusResult(0.0, 0.0);
+      return new FocusResult(false, 0.0, 0.0);
    }
 
    public static ImageProcessor makeProcessor(TaggedImage taggedImage)

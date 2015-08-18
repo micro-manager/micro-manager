@@ -302,6 +302,12 @@ public class ControllerUtils {
       // get the micro-mirror card ready
       // SA_AMPLITUDE_X_DEG and SA_OFFSET_X_DEG done by setup tabs
       if (settings.spimMode.equals(AcquisitionModes.Keys.PIEZO_SCAN_ONLY)) {
+         // if we artificially shifted centers due to extra trigger and only moving piezo
+         // then move galvo center back to where it would have been
+         if (cameraMode == CameraModes.Keys.OVERLAP) {
+            float actualPiezoCenter = piezoCenter - piezoAmplitude/(2*(settings.numSlices-1));
+            sliceCenter = (actualPiezoCenter - sliceOffset) / sliceRate;
+         }
          sliceAmplitude = 0.0f;
       }
       boolean triangleWave = prefs_.getBoolean(
@@ -327,6 +333,11 @@ public class ControllerUtils {
          // if mode SLICE_SCAN_ONLY we have computed slice movement as if we
          //   were moving the piezo but now make piezo stay still
          if (settings.spimMode.equals(AcquisitionModes.Keys.SLICE_SCAN_ONLY)) {
+            // if we artificially shifted centers due to extra trigger and only moving piezo
+            // then move galvo center back to where it would have been
+            if (cameraMode == CameraModes.Keys.OVERLAP) {
+               piezoCenter -= piezoAmplitude/(2*(settings.numSlices-1));
+            }
             piezoAmplitude = 0.0f;
          }
          props_.setPropValue(piezoDevice,

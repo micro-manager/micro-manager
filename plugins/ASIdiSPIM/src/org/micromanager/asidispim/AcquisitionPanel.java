@@ -797,15 +797,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    
    private void updateCalibrationOffset(final Sides side, 
            final AutofocusUtils.FocusResult score) {
-      try {
-         final float minimumRSquare =  props_.getPropValueFloat(Devices.Keys.PLUGIN,
-                     Properties.Keys.PLUGIN_AUTOFOCUS_MINIMUMR2, null);
-         if (score.getR2() > minimumRSquare) {
-             ASIdiSPIM.getFrame().getSetupPanel(side).updateCalibrationOffset(score.getGalvoBestOffset());
-         }
-      } catch (Exception ex) {
-         MyDialogUtils.showError(ex);
-      }
+         ASIdiSPIM.getFrame().getSetupPanel(side).updateCalibrationOffset(score);
    }
    
    public SliceTiming getSliceTiming() {

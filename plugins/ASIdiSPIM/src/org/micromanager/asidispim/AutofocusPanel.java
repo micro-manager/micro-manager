@@ -25,6 +25,7 @@ import java.awt.Font;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -33,11 +34,11 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
+
 import mmcorej.StrVector;
-
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.api.ScriptInterface;
 
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
@@ -86,16 +87,16 @@ public class AutofocusPanel extends ListeningJPanel{
       
       // show images checkbox
       final JCheckBox showImagesCheckBox = pu.makeCheckBox("Show images",
-              Properties.Keys.PLUGIN_AUTOFOCUS_SHOWIMAGES, panelName_, false);     
-      optionsPanel_.add(showImagesCheckBox, "left, span 2, wrap");
+              Properties.Keys.PLUGIN_AUTOFOCUS_SHOWIMAGES, panelName_, false);
+      optionsPanel_.add(showImagesCheckBox);
       
       // show plot checkbox
       final JCheckBox showPlotCheckBox = pu.makeCheckBox("Show plot",
-              Properties.Keys.PLUGIN_AUTOFOCUS_SHOWPLOT, panelName_, false);     
-      optionsPanel_.add(showPlotCheckBox, "left, span 2, wrap");
+              Properties.Keys.PLUGIN_AUTOFOCUS_SHOWPLOT, panelName_, false);
+      optionsPanel_.add(showPlotCheckBox, "wrap");
  
       // spinner with number of images:
-      optionsPanel_.add(new JLabel("Number of Images:"));
+      optionsPanel_.add(new JLabel("Number of images:"));
       final JSpinner nrImagesSpinner = pu.makeSpinnerInteger(1, 1000,
             Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_AUTOFOCUS_NRIMAGES, 10);
@@ -108,7 +109,15 @@ public class AutofocusPanel extends ListeningJPanel{
             Properties.Keys.PLUGIN_AUTOFOCUS_STEPSIZE, 10);
       optionsPanel_.add(stepSizeSpinner, "wrap");
       
-      optionsPanel_.add(new JLabel("Algorithm:"));
+      // scan either piezo or sheet; select which one
+      optionsPanel_.add(new JLabel("Mode:"));
+      String[] scanOptions = {"Fix piezo, sweep sheet", "Fix sheet, sweep piezo"};
+      final JComboBox scanModeCB = pu.makeDropDownBox(scanOptions,
+            Devices.Keys.PLUGIN, Properties.Keys.AUTOFOCUS_ACQUSITION_MODE,
+            scanOptions[0]);
+      optionsPanel_.add(scanModeCB, "wrap");
+      
+      optionsPanel_.add(new JLabel("Scoring algorithm:"));
       JButton afcButton = new JButton();
             afcButton.setFont(new Font("Arial", Font.PLAIN, 10));
       afcButton.setMargin(new Insets(0, 0, 0, 0));

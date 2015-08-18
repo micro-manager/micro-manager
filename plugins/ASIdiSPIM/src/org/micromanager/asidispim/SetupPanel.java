@@ -597,7 +597,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
 
    /**
     * Performs "1-point" calibration updating the offset
-    * but not the slope.
+    * (but not the slope) based on current piezo/galvo positions.
     */
    private void updateCalibrationOffset() {
       try {
@@ -612,15 +612,26 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          MyDialogUtils.showError(ex);
       }
    }
-
+   
    /**
-    * Give autofocus and acquisition the opportunity to update the offset
+    * Give autofocus and acquisition the opportunity to update the offset.
+    * Only happens if the focus is deemed a "success" by autofocus
+    * (currently means R^2 value is sufficiently high and best focus
+    * position is in the middle 80% of the range sampled)
     * @param newValue - new value for the piezo/slice calibration offset
     */
-   public void updateCalibrationOffset(double newValue) {
-      offsetField_.setValue(newValue);
+   public void updateCalibrationOffset(AutofocusUtils.FocusResult score) {
+      if (!score.getFocusSuccess()) {
+         return;
+      }
+      double rate = (Double) rateField_.getValue();
+      double newOffset = score.getPiezoPosition() - rate * score.getGalvoPosition();         
+      offsetField_.setValue((Double) newOffset);
    }
+
    
+   
+
    /**
     * Performs "2-point" calibration updating the offset and slope.
     * Pops up a sub-window.
