@@ -232,6 +232,9 @@ class DiskoveryStateDev : public CStateDeviceBase<DiskoveryStateDev>
       int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
       int OnPositionRot(MM::PropertyBase* pProp, MM::ActionType eAct); 
       int OnPositionLin(MM::PropertyBase* pProp, MM::ActionType eAct); 
+      void SignalPropChanged(const char* propName, const char* val) {
+         OnPropertyChanged(propName, val);
+      }
 
    private:
       uint16_t numPos_;

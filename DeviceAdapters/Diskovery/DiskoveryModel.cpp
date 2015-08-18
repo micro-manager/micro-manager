@@ -110,6 +110,10 @@ void DiskoveryModel::SetPositionRot(const uint32_t p)
 {
    MMThreadGuard g(lock_);
    tirfRotPos_ = p;
+   if (tirfDevice_ != 0)
+   {
+      tirfDevice_->SignalPropChanged("PositionRot", CDeviceUtils::ConvertToString((int) p));
+   }
 }
 
 // TIRF slider Lin
@@ -117,4 +121,8 @@ void DiskoveryModel::SetPositionLin(const uint32_t p)
 {
    MMThreadGuard g(lock_);
    tirfLinPos_ = p;
+   if (tirfDevice_ != 0)
+   {
+      tirfDevice_->SignalPropChanged("PositionLin", CDeviceUtils::ConvertToString((int) p));
+   }
 }
