@@ -193,7 +193,6 @@ public interface Datastore extends Closeable {
     * scripts). Displays attached to the Datastore will automatically be closed,
     * with no prompt for data to be saved.
     */
-   @Override
    public void close();
 
    /**
