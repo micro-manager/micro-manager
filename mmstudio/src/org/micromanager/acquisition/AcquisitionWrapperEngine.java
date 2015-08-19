@@ -78,6 +78,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    protected ImageCache imageCache_;
    private ArrayList<AcqSettingsListener> settingsListeners_;
    private AcquisitionManager acqManager_;
+   private int cameraTimeout_;
 
    public AcquisitionWrapperEngine(AcquisitionManager mgr) {
       nameToProcessorClass_ = new HashMap<String, Class<? extends DataProcessor<TaggedImage>>>();
@@ -444,6 +445,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       }
       acquisitionSettings.comment = comment_;
       acquisitionSettings.usePositionList = this.useMultiPosition_;
+      acquisitionSettings.cameraTimeout = cameraTimeout_;
       return acquisitionSettings;
    }
 
@@ -518,6 +520,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       comment_ = ss.comment;
       
       useMultiPosition_ = ss.usePositionList;
+      cameraTimeout_ = ss.cameraTimeout;
    }
 
 //////////////////// Actions ///////////////////////////////////////////
