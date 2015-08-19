@@ -127,7 +127,7 @@ int NewportZStage::Initialize()
 	const char* command;
 
    // Ask for errors and controller state.  This will also clear errors from the
-   // controller, needed for my controller before homing is possible
+   // controller, needed for my controller before anything is possible
 	command = MakeCommand("TS").c_str();
 	int ret = SendSerialCommand(port_.c_str(), command, "\r\n");
 	if (ret != DEVICE_OK)
@@ -139,12 +139,7 @@ int NewportZStage::Initialize()
    LogMessage(answer.c_str(), true);
 
 	// Send the "homing" command to init stage
-	command = MakeCommand("OR").c_str();
-	ret = SendSerialCommand(port_.c_str(), command, "\r\n");
-	if (ret != DEVICE_OK)
-		return ret;
-
-   ret = WaitForBusy();
+   ret = SetOrigin();
    if (ret != DEVICE_OK)
       return ret;
 
@@ -154,6 +149,16 @@ int NewportZStage::Initialize()
    ret = GetError(error, errorCode);
    // do not return an error if we get one, since the user will never be able
    // to get out of the error if there is no other software
+
+   // get the lower software limit
+   ret = GetValue("SL?", lowerLimit_);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // get the upper software limit
+   ret = GetValue("SR?", upperLimit_);
+   if (ret != DEVICE_OK)
+      return ret;
 
 	// Position property
 	CPropertyAction* pAct = new CPropertyAction (this, &NewportZStage::OnPosition);
@@ -190,25 +195,6 @@ int NewportZStage::Shutdown()
 {
 	if (initialized_)
 	{
-		// Move home to avoid time-out with next initialisation
-		const char* command = MakeCommand("PA0").c_str();
-		int ret = SendSerialCommand(port_.c_str(), command, "\r\n");
-		if (ret != DEVICE_OK)
-		  return ret;
-		CDeviceUtils::SleepMs(10);
-
-		// Wait for the device to stop moving
-      WaitForBusy();
-
-      // NS: I don't not understand why the controller needs to be reset
-      // when quitting...  Delete this code?
-		// Send the reset command
-//		command = "1RS";
-//		ret = SendSerialCommand(port_.c_str(), command, "\r\n");
-//		if (ret != DEVICE_OK)
-//			return ret;
-
-
 		initialized_ = false;
 	}
 	return DEVICE_OK;
@@ -237,40 +223,6 @@ bool NewportZStage::Busy()
       return true;
 
    return false;
-
-   
-
-/*
-
-	const char* command;
-	string answer;
-	double setPos;
-	double curPos;
-	int ret;
-
-	// Ask for set point position
-	command = MakeCommand("TH").c_str();
-	SendSerialCommand(port_.c_str(), command, "\r\n");
-	ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)
-		return false;
-	setPos = atof(answer.substr(3,15).c_str());
-
-	// Ask for current position
-	command = MakeCommand("TP").c_str();
-	SendSerialCommand(port_.c_str(), command, "\r\n");
-   CDeviceUtils::SleepMs(10);
-	GetSerialAnswer(port_.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)
-		return false;
-	curPos = atof(answer.substr(3,15).c_str());
-
-	// Still moving if the positions are not equal
-	if (setPos != curPos)
-		return true;
-
-	return false;
-   */
 }
 
 int NewportZStage::SetPositionSteps(long steps)
@@ -382,7 +334,13 @@ int NewportZStage::GetPositionUm(double& pos)
 
 int NewportZStage::SetOrigin()
 {
-	return DEVICE_UNSUPPORTED_COMMAND;
+	// Send the "homing" command to init stage
+	const char* command = MakeCommand("OR").c_str();
+	int ret = SendSerialCommand(port_.c_str(), command, "\r\n");
+	if (ret != DEVICE_OK)
+		return ret;
+
+   return WaitForBusy();
 }
 
 int NewportZStage::GetLimits(double& lowerLimit, double& upperLimit)
@@ -439,6 +397,29 @@ int NewportZStage::WaitForBusy()
          return ERR_TIMEOUT;
       }
    }
+   return DEVICE_OK;
+}
+
+/**
+ * Utility function to read values that are returned with the command
+ * such as the software limits
+ */
+int NewportZStage::GetValue(const char* cmd, double& val)
+{
+   const char* command = MakeCommand(cmd).c_str();
+   int ret = SendSerialCommand(port_.c_str(), command, "\r\n");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // Receive answer
+   std::string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   if (ret != DEVICE_OK)
+   	return ret;
+
+	// Get the value from the reply string
+	val = atof(answer.substr(strlen(command) - 1).c_str());
+
    return DEVICE_OK;
 }
 

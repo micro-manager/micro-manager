@@ -6,7 +6,9 @@
 // DESCRIPTION:   Newport Controller Driver
 //
 // AUTHOR:        Liisa Hirvonen, 03/17/2009
+// AUTHOR:        Nico Stuurman 08/18/2005, added velocity, multiple addresses, enabling multiple controllers, relative position, easier busy check and multiple fixes for annoying behavior, see repository logs for complete list
 // COPYRIGHT:     University of Melbourne, Australia, 2009-2013
+// COPYRIGHT:     Regents of the University of California, 2015
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
 //
@@ -81,6 +83,7 @@ private:
    int GetVelocity(double& velocity);
    int GetError(bool& error, std::string& errorCode);
    int WaitForBusy();
+   int GetValue(const char* cmd, double& val);
    std::string MakeCommand(const char* cmd);
 
    std::string port_;
