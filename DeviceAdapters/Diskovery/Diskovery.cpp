@@ -428,6 +428,8 @@ int DiskoveryHub::OnMotorRunning(MM::PropertyBase* pProp, MM::ActionType eAct)
 //
 DiskoveryStateDev::DiskoveryStateDev(
       const std::string devName, const std::string description, const DevType devType)  :
+   wavelength1_(0),
+   wavelength2_(0),
    devName_(devName),
    devType_ (devType),
    initialized_(false),
@@ -546,6 +548,23 @@ int DiskoveryStateDev::Initialize()
        pAct = new CPropertyAction(this, &DiskoveryStateDev::OnPositionLin);
        RETURN_ON_MM_ERROR ( CreateProperty("Position Lin", "0", MM::Integer, false, pAct) );
        RETURN_ON_MM_ERROR ( SetPropertyLimits("Position Lin", 0, 7600) );
+       pAct = new CPropertyAction(this, &DiskoveryStateDev::OnWavelength1);
+       RETURN_ON_MM_ERROR ( CreateIntegerProperty("Wavelength1", 0, false, pAct) );
+       pAct = new CPropertyAction(this, &DiskoveryStateDev::OnWavelength2);
+       RETURN_ON_MM_ERROR ( CreateIntegerProperty("Wavelength2", 0, false, pAct) );
+       AddAllowedValue("Wavelength1", CDeviceUtils::ConvertToString(0));
+       AddAllowedValue("Wavelength2", CDeviceUtils::ConvertToString(0));
+       for (uint16_t i = 0; i < 7; i++) 
+       {
+          if (hub_->GetModel()->GetLineEnabled(i)) 
+          {
+             uint16_t wavelength = hub_->GetModel()->GetLineWavelength(i);
+             const char* val = CDeviceUtils::ConvertToString(wavelength);
+             AddAllowedValue("Wavelength1", val);
+             AddAllowedValue("Wavelength2", val);
+          }
+       }
+
     }
 
    // Register our instance for callbacks
@@ -685,6 +704,32 @@ int DiskoveryStateDev::OnPositionLin(MM::PropertyBase* pProp, MM::ActionType eAc
       long pos;
       pProp->Get(pos);
       hub_->GetCommander()->SetPositionLin( (uint32_t) (pos) );
+   }
+   return DEVICE_OK;
+}
+
+int DiskoveryStateDev::OnWavelength1(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set( wavelength1_ );
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get( wavelength1_);
+   }
+   return DEVICE_OK;
+}
+
+int DiskoveryStateDev::OnWavelength2(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set( wavelength2_ );
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get( wavelength2_);
    }
    return DEVICE_OK;
 }

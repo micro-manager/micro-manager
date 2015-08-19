@@ -58,6 +58,10 @@ class DiskoveryModel
          hasIRIS_(false),
          hasFilterW_(false),
          hasFilterT_(false),
+         tirfFocalLength_(150),
+         resolutionRotation_(0.0),
+         offsetLinear_ (0), 
+         offsetRotation_(0),
          hubDevice_(device),
          sdDevice_(0),
          wfDevice_(0),
@@ -87,6 +91,10 @@ class DiskoveryModel
             buttonFilterWLabels_[i] = os.str();
             buttonFilterTLabels_[i] = os.str();
             diskLabels_[i] = os.str();
+         }
+         for (int i = 0; i < 7; i++) {
+            lineWavelength_[i] = 0;
+            lineEnabled_[i] = false;
          }
       };
       ~DiskoveryModel() 
@@ -160,6 +168,30 @@ class DiskoveryModel
       // Serial number
       std::string GetSerialNumber() {  MMThreadGuard g(lock_); return serialNumber_; };
       void SetSerialNumber(const std::string serialNumber) {  MMThreadGuard g(lock_); serialNumber_ = serialNumber; };
+
+      // TIRF Focal Length
+      uint16_t GetTIRFFocalLength() { MMThreadGuard g(lock_); return tirfFocalLength_;};
+      void SetTirfFocalLength(const uint16_t val) { MMThreadGuard g(lock_); tirfFocalLength_ = val;};
+
+      // resolution Rotation
+      double GetResolutionRotation() { MMThreadGuard g(lock_); return resolutionRotation_;};
+      void SetResolutionRotation(double val) { MMThreadGuard g(lock_); resolutionRotation_ = val; };
+
+      // offset linear
+      uint32_t GetOffsetLinear() { MMThreadGuard g(lock_); return offsetLinear_;};
+      void SetOffsetLinear(uint32_t val) { MMThreadGuard g(lock_); offsetLinear_ = val; };
+
+      // offset Rotation
+      uint32_t GetOffsetRotation() { MMThreadGuard g(lock_); return offsetRotation_;};
+      void SetOffsetRotation(uint32_t val) { MMThreadGuard g(lock_); offsetRotation_ = val; };
+
+      // Line Wavelength
+      uint16_t GetLineWavelength(uint16_t line) { MMThreadGuard g(lock_); return lineWavelength_[line]; };
+      void SetLineWavelength(uint16_t line, uint16_t val) { MMThreadGuard g(lock_); lineWavelength_[line] = val; };
+
+      // Line enabled
+      bool GetLineEnabled(uint16_t line) { MMThreadGuard g(lock_); return lineEnabled_[line]; };
+      void SetLineEnabled(uint16_t line, uint16_t val) { MMThreadGuard g(lock_); lineEnabled_[line] = val; };
 
       // Busy
       // deviceBusy_ keeps track of the busy state as signalled by the
@@ -343,6 +375,12 @@ class DiskoveryModel
       bool hasWFX_, hasWFY_, hasSD_, hasROT_, hasLIN_, hasP1_, hasP2_, 
          hasIRIS_, hasFilterW_, hasFilterT_;
       bool motorRunningSD_;
+      uint16_t tirfFocalLength_;
+      double resolutionRotation_;
+      uint32_t offsetLinear_, offsetRotation_;
+      uint16_t lineWavelength_[7];
+      bool lineEnabled_[7];
+
       std::string buttonWFLabels_[4];
       std::string buttonIrisLabels_[4];
       std::string buttonFilterWLabels_[4];

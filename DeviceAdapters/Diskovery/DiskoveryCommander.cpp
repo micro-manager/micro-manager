@@ -156,23 +156,23 @@ int DiskoveryCommander::CheckCapabilities()
 {
    CDeviceUtils::SleepMs(50);
    RETURN_ON_MM_ERROR( SendCommand(g_HasWFX) );
-   CDeviceUtils::SleepMs(50);
+   CDeviceUtils::SleepMs(16);
    RETURN_ON_MM_ERROR( SendCommand(g_HasWFY) );
-   CDeviceUtils::SleepMs(50);
+   CDeviceUtils::SleepMs(16);
    RETURN_ON_MM_ERROR( SendCommand(g_HasSD) );
-   CDeviceUtils::SleepMs(50);
+   CDeviceUtils::SleepMs(16);
    RETURN_ON_MM_ERROR( SendCommand(g_HasROT) );
-   CDeviceUtils::SleepMs(50);
+   CDeviceUtils::SleepMs(16);
    RETURN_ON_MM_ERROR( SendCommand(g_HasLIN) );
-   CDeviceUtils::SleepMs(50);
+   CDeviceUtils::SleepMs(16);
    RETURN_ON_MM_ERROR( SendCommand(g_HasP1) );
-   CDeviceUtils::SleepMs(50);
+   CDeviceUtils::SleepMs(16);
    RETURN_ON_MM_ERROR( SendCommand(g_HasP2) );
-   CDeviceUtils::SleepMs(50);
+   CDeviceUtils::SleepMs(16);
    RETURN_ON_MM_ERROR( SendCommand(g_HasIRIS) );
-   CDeviceUtils::SleepMs(50);
+   CDeviceUtils::SleepMs(16);
    RETURN_ON_MM_ERROR( SendCommand(g_HasFilterW) );
-   CDeviceUtils::SleepMs(50);
+   CDeviceUtils::SleepMs(16);
    RETURN_ON_MM_ERROR( SendCommand(g_HasFilterT) );
    // give the device some time to actually send the command
    // so that other code can make use of the results
@@ -181,35 +181,56 @@ int DiskoveryCommander::CheckCapabilities()
    for (uint16_t i = 1; i < 5; i++) {
       if (model_->GetHasWFX()) {
          GetWFButtonName(i);
-         CDeviceUtils::SleepMs(25);
+         CDeviceUtils::SleepMs(16);
       }
       if (model_->GetHasIRIS()) {
          GetIrisButtonName(i);
-         CDeviceUtils::SleepMs(25);
+         CDeviceUtils::SleepMs(16);
       }
       if (model_->GetHasFilterW()) {
          GetFilterWButtonName(i);
-         CDeviceUtils::SleepMs(25);
+         CDeviceUtils::SleepMs(16);
       }
       if (model_->GetHasFilterT()) {
          GetFilterTButtonName(i);
-         CDeviceUtils::SleepMs(25);
+         CDeviceUtils::SleepMs(16);
       }
       if (model_->GetHasSD() && i < 4)
       {
          GetDiskButtonName(i);
-         CDeviceUtils::SleepMs(50);
+         CDeviceUtils::SleepMs(16);
       }
    }
 
    // get initial position of some devices
    if (model_->GetHasLIN()) {
       RETURN_ON_MM_ERROR( SendCommand(g_GetPositionLin) );
-      CDeviceUtils::SleepMs(25);
+      CDeviceUtils::SleepMs(16);
    }
    if (model_->GetHasROT()) {
       RETURN_ON_MM_ERROR( SendCommand(g_GetPositionRot) );
-      CDeviceUtils::SleepMs(25);
+      CDeviceUtils::SleepMs(16);
+   }
+
+   if (model_->GetHasP1() && model_->GetHasP2() && model_->GetHasROT() && model_->GetHasLIN())
+   {
+      RETURN_ON_MM_ERROR( SendCommand(g_TIRFFocalLength) );
+      CDeviceUtils::SleepMs(16);
+      RETURN_ON_MM_ERROR( SendCommand(g_ResolutionRotation) );
+      CDeviceUtils::SleepMs(16);
+      RETURN_ON_MM_ERROR( SendCommand(g_OffsetLinear) );
+      CDeviceUtils::SleepMs(16);
+      RETURN_ON_MM_ERROR( SendCommand(g_OffsetRotation) );
+      CDeviceUtils::SleepMs(16);
+      for (uint16_t i = 1; i < 8; i++) 
+      {
+         std::ostringstream os;
+         os << g_LineStart << i;
+         RETURN_ON_MM_ERROR( SendCommand( (os.str() + g_Wavelength).c_str() ) );
+         CDeviceUtils::SleepMs(16);
+         RETURN_ON_MM_ERROR( SendCommand( (os.str() + g_Enabled).c_str() ) );
+         CDeviceUtils::SleepMs(16);
+      }
    }
 
    return DEVICE_OK;

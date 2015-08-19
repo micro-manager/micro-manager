@@ -235,10 +235,13 @@ class DiskoveryStateDev : public CStateDeviceBase<DiskoveryStateDev>
       void SignalPropChanged(const char* propName, const char* val) {
          OnPropertyChanged(propName, val);
       }
+      int OnWavelength1(MM::PropertyBase* pProp, MM::ActionType eAct);
+      int OnWavelength2(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    private:
       uint16_t numPos_;
       uint16_t firstPos_;
+      long wavelength1_, wavelength2_;
 
       std::string devName_;
       DevType devType_;

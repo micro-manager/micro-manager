@@ -306,9 +306,29 @@ void DiskoveryListener::ParseMessage(std::string message)
                model_->SetButtonFilterTLabel( (uint16_t) atoi(button[3].c_str()), tokens[1].c_str());
             }
          }
+      } else if (tokens[0] == "TIRF_FOCAL_LENGTH")
+      {
+         model_->SetTirfFocalLength( (uint16_t) atoi( tokens[1].c_str() ) );
+      } else if (tokens[0] == "RESOLUTION_ROTATION")
+      {
+         model_->SetOffsetLinear( (uint32_t) atoi( tokens[1].c_str() )  );
+      } else if (tokens[0] == "OFFSET_ROTATION")
+      {
+         model_->SetOffsetRotation( (uint32_t) atoi(tokens[1].c_str() ) );
+      } else if (tokens[0].substr(0, 5) == "LINE_")
+      {
+         std::vector<std::string> t = split(tokens[0], '_');
+         if (t[2] == "WAVELENGTH")
+         {
+            model_->SetLineWavelength( (uint16_t) atoi(t[1].c_str()) - 1 , (uint16_t) atoi(tokens[1].c_str() ) );
+         } else if (t[2] == "ENABLED")
+         {
+            if (tokens[1] == "1")
+            {
+               model_->SetLineEnabled( (uint16_t) atoi(t[1].c_str()) - 1, true );
+            }
+         }
       }
-
-
    }
 } 
 
