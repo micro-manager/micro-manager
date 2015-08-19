@@ -503,8 +503,8 @@
               make-TaggedImage))))
       (finally (burst-cleanup)))))
 
-(defn collect-burst-images [event out-queue]
-  (let [pop-timeout-ms (+ 20000 (* 10 (:exposure event)))]
+(defn collect-burst-images [event out-queue settings]
+  (let [pop-timeout-ms (+ (:camera-timeout settings) (* 10 (:exposure event)))]
     (when (first-trigger-missing?)
       (pop-burst-image pop-timeout-ms)) ; drop first image if first trigger doesn't happen
     (swap! state assoc :burst-time-offset nil)
@@ -581,13 +581,13 @@
                          (:relative-z event))
       nil)))
 
-(defn collect [event out-queue]
+(defn collect [event out-queue settings]
   (log "collecting image(s)")
   (try
     (condp = (:task event)
       :snap (doseq [sub-event (make-multicamera-events event)]
               (collect-snap-image sub-event out-queue))
-      :burst (collect-burst-images event out-queue))
+      :burst (collect-burst-images event out-queue settings))
     (catch EOFException eat
       (log "halted image collection and output due to engine stop"))))
 
@@ -697,7 +697,7 @@
 
 ;; running events
 
-(defn make-event-fns [event out-queue]
+(defn make-event-fns [event out-queue settings]
   (let [current-position (:position event)
         z-drive (@state :default-z-drive)
         check-z-ref (and z-drive
@@ -754,7 +754,7 @@
                    (wait-for-pending-devices)
                    (log "BEGIN acquire")
                    (expose event)
-                   (collect event out-queue)
+                   (collect event out-queue settings)
                    (stop-triggering)
                    (log "END acquire"))
                 #(log "#####" "END acquisition event"))))))
@@ -776,7 +776,7 @@
       (def last-state state) ; for debugging
       (let [acq-seq (generate-acq-sequence settings @attached-runnables)]
         (def acq-sequence acq-seq) ; for debugging
-        (execute (mapcat #(make-event-fns % out-queue) acq-seq)))
+        (execute (mapcat #(make-event-fns % out-queue settings) acq-seq)))
       (catch Throwable t
              (def acq-error t) ; for debugging
              ; XXX There ought to be a way to get errors programmatically...
@@ -817,7 +817,8 @@
               :relativeZSlice          :relative-slices
               :intervalMs              :interval-ms
               :customIntervalsMs       :custom-intervals-ms
-              :usePositionList         :use-position-list 
+              :usePositionList         :use-position-list
+              :cameraTimeout           :camera-timeout
               :channelGroup            :channel-group
               )
             (assoc :frames (range (.numFrames settings))
@@ -898,6 +899,7 @@
         computer (try (.. InetAddress getLocalHost getHostName) (catch UnknownHostException e ""))]
      (JSONObject. {
       "BitDepth" (core getImageBitDepth)
+      "CameraTimeout" (:camera-timeout settings)
       "Channels" (max 1 (count super-channels))
       "ChNames" (JSONArray. ch-names)
       "ChColors" (JSONArray. (channel-colors simple-channels super-channels ch-names))

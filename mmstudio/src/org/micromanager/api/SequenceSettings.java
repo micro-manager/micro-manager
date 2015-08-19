@@ -56,6 +56,7 @@ public class SequenceSettings {
    public String comment = "";                                               // comment text
    public String channelGroup = "";                                          // which group is used to define fluorescence channels
    public boolean usePositionList = false;                                   // true if we want to have multiple positions
+   public int cameraTimeout = 20000; // Minimum camera timeout, in ms, for sequence acquisitions (actual timeout depends on exposure time and other factors)
       
    public static String toJSONStream(SequenceSettings settings) {
       Gson gson = new GsonBuilder().setPrettyPrinting().create();
