@@ -171,7 +171,7 @@ public class DefaultDatastore implements Datastore {
          }
          if (didAdd) {
             // Update summary metadata.
-            summary = getSummaryMetadata().copy().axisOrder(
+            summary = summary.copy().axisOrder(
                   axisOrderList.toArray(new String[] {})).build();
             setSummaryMetadata(summary);
          }
@@ -266,6 +266,10 @@ public class DefaultDatastore implements Datastore {
    @Override
    public boolean save(Datastore.SaveMode mode, String path) {
       SummaryMetadata summary = getSummaryMetadata();
+      if (summary == null) {
+         // Create dummy summary metadata just for saving.
+         summary = (new DefaultSummaryMetadata.Builder()).build();
+      }
       // Insert intended dimensions if they aren't already present.
       if (summary.getIntendedDimensions() == null) {
          DefaultCoords.Builder builder = new DefaultCoords.Builder();
