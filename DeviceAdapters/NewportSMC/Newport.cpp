@@ -24,8 +24,8 @@
 //
 
 #ifdef WIN32
-	#include <windows.h>
-	#define snprintf _snprintf
+   #include <windows.h>
+   #define snprintf _snprintf
 #endif
 
 #include "Newport.h"
@@ -43,26 +43,26 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-	RegisterDevice(g_Newport_ZStageDeviceName, MM::StageDevice, "Newport SMC100CC controller");
+   RegisterDevice(g_Newport_ZStageDeviceName, MM::StageDevice, "Newport SMC100CC controller");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
 {
-	if (deviceName == 0)
-		return 0;
+   if (deviceName == 0)
+      return 0;
 
-	if (strcmp(deviceName, g_Newport_ZStageDeviceName) == 0)
-	{
-		NewportZStage* s = new NewportZStage();
-		return s;
-	}
+   if (strcmp(deviceName, g_Newport_ZStageDeviceName) == 0)
+   {
+      NewportZStage* s = new NewportZStage();
+      return s;
+   }
 
-	return 0;
+   return 0;
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
 {
-	delete pDevice;
+   delete pDevice;
 }
 
 
@@ -70,75 +70,75 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // NewportZStage
 
 NewportZStage::NewportZStage() :
-	//port_("Undefined"),	;HCA 2013-02-15
-	port_("COM5"),			//need to recompile with COM5 listed.
-	stepSizeUm_(1),
+   //port_("Undefined"),   ;HCA 2013-02-15
+   port_("COM5"),         //need to recompile with COM5 listed.
+   stepSizeUm_(1),
    conversionFactor_(1000.0),    // divide request by this number
                  // to accomodate for units in mm rather than microns
    cAddress_(1),
-	initialized_(false),
-	lowerLimit_(0),  // limit in native coordinates
-	upperLimit_(25), // limit in native coordinates
+   initialized_(false),
+   lowerLimit_(0),  // limit in native coordinates
+   upperLimit_(25), // limit in native coordinates
    velocity_(5.0),
    velocityLowerLimit_(0.000001),
    velocityUpperLimit_(100000000000.0)
 {
-	InitializeDefaultErrorMessages();
+   InitializeDefaultErrorMessages();
 
    SetErrorText(ERR_POSITION_BEYOND_LIMITS, "Requested position is beyond the limits of this stage");
    SetErrorText(ERR_TIMEOUT, "Timed out waiting for command to complete.  Try increasing the Core-TimeoutMs property if this was premature");
 
-	// create properties
-	// ------------------------------------
+   // create properties
+   // ------------------------------------
 
-	// Name
-	CreateProperty(MM::g_Keyword_Name, g_Newport_ZStageDeviceName, MM::String, true);
+   // Name
+   CreateProperty(MM::g_Keyword_Name, g_Newport_ZStageDeviceName, MM::String, true);
 
-	// Description
-	CreateProperty(MM::g_Keyword_Description, "Newport SMC100CC controller adapter", MM::String, true);
+   // Description
+   CreateProperty(MM::g_Keyword_Description, "Newport SMC100CC controller adapter", MM::String, true);
 
-	// Port
-	CPropertyAction* pAct = new CPropertyAction (this, &NewportZStage::OnPort);
-	CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
+   // Port
+   CPropertyAction* pAct = new CPropertyAction (this, &NewportZStage::OnPort);
+   CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
 
-	// Conversion factor
-	pAct = new CPropertyAction (this, &NewportZStage::OnConversionFactor);
-	CreateFloatProperty("Conversion Factor", conversionFactor_, false, pAct, true);
+   // Conversion factor
+   pAct = new CPropertyAction (this, &NewportZStage::OnConversionFactor);
+   CreateFloatProperty("Conversion Factor", conversionFactor_, false, pAct, true);
 
-	// Controller address
-	pAct = new CPropertyAction (this, &NewportZStage::OnControllerAddress);
-	CreateIntegerProperty("Controller Address", cAddress_, false, pAct, true);
+   // Controller address
+   pAct = new CPropertyAction (this, &NewportZStage::OnControllerAddress);
+   CreateIntegerProperty("Controller Address", cAddress_, false, pAct, true);
    SetPropertyLimits("Controller Address", 1, 31);
 }
 
 
 NewportZStage::~NewportZStage()
 {
-	Shutdown();
+   Shutdown();
 }
 
 void NewportZStage::GetName(char* Name) const
 {
-	CDeviceUtils::CopyLimitedString(Name, g_Newport_ZStageDeviceName);
+   CDeviceUtils::CopyLimitedString(Name, g_Newport_ZStageDeviceName);
 }
 
 int NewportZStage::Initialize()
 {
-	const char* command;
+   const char* command;
 
    // Ask for errors and controller state.  This will also clear errors from the
    // controller, needed for my controller before anything is possible
-	command = MakeCommand("TS").c_str();
-	int ret = SendSerialCommand(port_.c_str(), command, "\r\n");
-	if (ret != DEVICE_OK)
-		return ret;
+   command = MakeCommand("TS").c_str();
+   int ret = SendSerialCommand(port_.c_str(), command, "\r\n");
+   if (ret != DEVICE_OK)
+      return ret;
    std::string answer;
-	ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)
-		return ret;
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   if (ret != DEVICE_OK)
+      return ret;
    LogMessage(answer.c_str(), true);
 
-	// Send the "homing" command to init stage
+   // Send the "homing" command to init stage
    ret = SetOrigin();
    if (ret != DEVICE_OK)
       return ret;
@@ -160,44 +160,44 @@ int NewportZStage::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
-	// Position property
-	CPropertyAction* pAct = new CPropertyAction (this, &NewportZStage::OnPosition);
-	CreateProperty(MM::g_Keyword_Position, "0", MM::Float, false, pAct);
+   // Position property
+   CPropertyAction* pAct = new CPropertyAction (this, &NewportZStage::OnPosition);
+   CreateProperty(MM::g_Keyword_Position, "0", MM::Float, false, pAct);
 
    // Velocity property
-	pAct = new CPropertyAction (this, &NewportZStage::OnVelocity);
+   pAct = new CPropertyAction (this, &NewportZStage::OnVelocity);
    const char* velPropName = "Velocity in mm per sec";
-	CreateProperty(velPropName, "0", MM::Float, false, pAct);
+   CreateProperty(velPropName, "0", MM::Float, false, pAct);
    SetPropertyLimits(velPropName, velocityLowerLimit_, velocityUpperLimit_);
 
 
    // Ask for controller version and report in read-only property
-	command = MakeCommand("VE").c_str();
+   command = MakeCommand("VE").c_str();
    ret = SendSerialCommand(port_.c_str(), command, "\r\n");
-	if (ret != DEVICE_OK)
-		return ret;
-	ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)
-		return ret;
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   if (ret != DEVICE_OK)
+      return ret;
 
    CreateProperty("Controller version", answer.substr(strlen(command)).c_str(),
          MM::String, true);
 
-	ret = UpdateStatus();
-	if (ret != DEVICE_OK)
-		return ret;
+   ret = UpdateStatus();
+   if (ret != DEVICE_OK)
+      return ret;
 
-	initialized_ = true;
-	return DEVICE_OK;
+   initialized_ = true;
+   return DEVICE_OK;
 }
 
 int NewportZStage::Shutdown()
 {
-	if (initialized_)
-	{
-		initialized_ = false;
-	}
-	return DEVICE_OK;
+   if (initialized_)
+   {
+      initialized_ = false;
+   }
+   return DEVICE_OK;
 }
 
 bool NewportZStage::Busy()
@@ -208,12 +208,12 @@ bool NewportZStage::Busy()
    if (ret != DEVICE_OK)
       return ret;
 
-	string answer;
-	ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)
-		return false;
-	// long tsResult = atol(answer.substr(cmd.size*()).c_str());
-	int ef = atoi(answer.substr(cmd.size() + 4).c_str());
+   string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   if (ret != DEVICE_OK)
+      return false;
+   // long tsResult = atol(answer.substr(cmd.size*()).c_str());
+   int ef = atoi(answer.substr(cmd.size() + 4).c_str());
 
    std::ostringstream os;
    os << answer << ", " << ef;
@@ -227,18 +227,18 @@ bool NewportZStage::Busy()
 
 int NewportZStage::SetPositionSteps(long steps)
 {
-	double pos = steps * stepSizeUm_;
-	return SetPositionUm(pos);
+   double pos = steps * stepSizeUm_;
+   return SetPositionUm(pos);
 }
 
 int NewportZStage::GetPositionSteps(long& steps)
 {
-	double pos;
-	int ret = GetPositionUm(pos);
-	if (ret != DEVICE_OK)
-		return ret;
-	steps = (long) (pos / stepSizeUm_);
-	return DEVICE_OK;
+   double pos;
+   int ret = GetPositionUm(pos);
+   if (ret != DEVICE_OK)
+      return ret;
+   steps = (long) (pos / stepSizeUm_);
+   return DEVICE_OK;
 }
 
 int NewportZStage::SetPositionUm(double pos)
@@ -249,17 +249,17 @@ int NewportZStage::SetPositionUm(double pos)
    pos /= conversionFactor_;
 
    // compare position to limits (in native units)
-	if (pos > upperLimit_ || lowerLimit_ > pos)
+   if (pos > upperLimit_ || lowerLimit_ > pos)
    {
       return ERR_POSITION_BEYOND_LIMITS;
    }
 
-	// Send the "move" command
-	ostringstream command;
-	string answer;
-	command << MakeCommand("PA") << pos;
-	int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r\n");
-	if (ret != DEVICE_OK)
+   // Send the "move" command
+   ostringstream command;
+   string answer;
+   command << MakeCommand("PA") << pos;
+   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r\n");
+   if (ret != DEVICE_OK)
       return ret;
 
    bool error;
@@ -274,7 +274,7 @@ int NewportZStage::SetPositionUm(double pos)
       return DEVICE_ERR;
    }
 
-	return DEVICE_OK;
+   return DEVICE_OK;
 }
 
 int NewportZStage::SetRelativePositionUm(double pos)
@@ -284,12 +284,12 @@ int NewportZStage::SetRelativePositionUm(double pos)
    // convert from micron to mm:
    pos /= conversionFactor_;
 
-	// Send the "relative move" command
-	ostringstream command;
-	string answer;
-	command << MakeCommand("PR") << pos;
-	int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r\n");
-	if (ret != DEVICE_OK)
+   // Send the "relative move" command
+   ostringstream command;
+   string answer;
+   command << MakeCommand("PR") << pos;
+   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r\n");
+   if (ret != DEVICE_OK)
       return ret;
 
    bool error;
@@ -304,41 +304,41 @@ int NewportZStage::SetRelativePositionUm(double pos)
       return DEVICE_ERR;
    }
 
-	return DEVICE_OK;
+   return DEVICE_OK;
 }
 
 int NewportZStage::GetPositionUm(double& pos)
 {
-	const char* command;
-	string answer;
+   const char* command;
+   string answer;
 
-	// Ask position
-	command = MakeCommand("TP").c_str();
-	int ret = SendSerialCommand(port_.c_str(), command, "\r\n");
-	if (ret != DEVICE_OK)
-		return ret;
+   // Ask position
+   command = MakeCommand("TP").c_str();
+   int ret = SendSerialCommand(port_.c_str(), command, "\r\n");
+   if (ret != DEVICE_OK)
+      return ret;
 
-	// Receive answer
-	ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)
-		return ret;
+   // Receive answer
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   if (ret != DEVICE_OK)
+      return ret;
 
-	// Get the value from the reply string
-	pos = atof(answer.substr(strlen(command),15).c_str());
+   // Get the value from the reply string
+   pos = atof(answer.substr(strlen(command),15).c_str());
 
    // convert from mm to microns:
    pos *= conversionFactor_;
 
-	return DEVICE_OK;
+   return DEVICE_OK;
 }
 
 int NewportZStage::SetOrigin()
 {
-	// Send the "homing" command to init stage
-	const char* command = MakeCommand("OR").c_str();
-	int ret = SendSerialCommand(port_.c_str(), command, "\r\n");
-	if (ret != DEVICE_OK)
-		return ret;
+   // Send the "homing" command to init stage
+   const char* command = MakeCommand("OR").c_str();
+   int ret = SendSerialCommand(port_.c_str(), command, "\r\n");
+   if (ret != DEVICE_OK)
+      return ret;
 
    return WaitForBusy();
 }
@@ -348,31 +348,31 @@ int NewportZStage::GetLimits(double& lowerLimit, double& upperLimit)
    lowerLimit = lowerLimit_ * conversionFactor_;
    upperLimit = upperLimit_ * conversionFactor_;
 
-	return DEVICE_OK;
+   return DEVICE_OK;
 }
 
 int NewportZStage::GetError(bool& error, std::string& errorCode) 
 {
-	// Ask for error message
+   // Ask for error message
    std::string cmd = MakeCommand("TE");
    LogMessage(cmd);
 
-	int ret = SendSerialCommand(port_.c_str(), cmd.c_str(), "\r\n");
-	if (ret != DEVICE_OK)
-		return ret;
+   int ret = SendSerialCommand(port_.c_str(), cmd.c_str(), "\r\n");
+   if (ret != DEVICE_OK)
+      return ret;
 
-	// Receive error message
+   // Receive error message
    std::string answer;
-	ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)
-		return ret;
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   if (ret != DEVICE_OK)
+      return ret;
 
-	// Check that there is no error
+   // Check that there is no error
    ostringstream dbg;
    errorCode = answer.substr(cmd.size(), 1);
 
    error = true;
-	if (answer.substr(cmd.size(), 1) == "@")
+   if (answer.substr(cmd.size(), 1) == "@")
    {
       error = false;
       return DEVICE_OK;
@@ -415,10 +415,10 @@ int NewportZStage::GetValue(const char* cmd, double& val)
    std::string answer;
    ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
    if (ret != DEVICE_OK)
-   	return ret;
+      return ret;
 
-	// Get the value from the reply string
-	val = atof(answer.substr(strlen(command) - 1).c_str());
+   // Get the value from the reply string
+   val = atof(answer.substr(strlen(command) - 1).c_str());
 
    return DEVICE_OK;
 }
@@ -433,8 +433,8 @@ int NewportZStage::SetVelocity(double velocity)
    std::ostringstream os;
    os << MakeCommand("VA") << velocity;
 
-	// Set Velocity
-	return SendSerialCommand(port_.c_str(), os.str().c_str(), "\r\n");
+   // Set Velocity
+   return SendSerialCommand(port_.c_str(), os.str().c_str(), "\r\n");
 }
 
 /**
@@ -443,19 +443,19 @@ int NewportZStage::SetVelocity(double velocity)
  */
 int NewportZStage::GetVelocity(double& velocity)
 {
-	// Ask about velocity
+   // Ask about velocity
    std::string cmd = MakeCommand("VA?");
-	int ret = SendSerialCommand(port_.c_str(), cmd.c_str(), "\r\n");
-	if (ret != DEVICE_OK)
-		return ret;
+   int ret = SendSerialCommand(port_.c_str(), cmd.c_str(), "\r\n");
+   if (ret != DEVICE_OK)
+      return ret;
 
-	// Receive answer
-	string answer;
-	ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-	if (ret != DEVICE_OK)
+   // Receive answer
+   string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   if (ret != DEVICE_OK)
       return DEVICE_OK;
 
-	velocity = atof( answer.substr(cmd.length() - 1).c_str() );
+   velocity = atof( answer.substr(cmd.length() - 1).c_str() );
 
    std::ostringstream os;
    os << answer << ", " << velocity;
@@ -482,43 +482,43 @@ std::string NewportZStage::MakeCommand(const char* cmd)
 
 int NewportZStage::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	if (eAct == MM::BeforeGet)
-	{
-		pProp->Set(port_.c_str());
-	}
-	else if (eAct == MM::AfterSet)
-	{
-		if (initialized_)
-		{
-			// revert
-			pProp->Set(port_.c_str());
-			return ERR_PORT_CHANGE_FORBIDDEN;
-		}
-		pProp->Get(port_);
-	}
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(port_.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      if (initialized_)
+      {
+         // revert
+         pProp->Set(port_.c_str());
+         return ERR_PORT_CHANGE_FORBIDDEN;
+      }
+      pProp->Get(port_);
+   }
 
-	return DEVICE_OK;
+   return DEVICE_OK;
 }
 
 int NewportZStage::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	if (eAct == MM::BeforeGet)
-	{
+   if (eAct == MM::BeforeGet)
+   {
       double pos;
       int ret = GetPositionUm(pos);
       if (ret != DEVICE_OK)
          return ret;
       pProp->Set(pos);
-	}
-	else if (eAct == MM::AfterSet)
-	{
-		double pos;
-		pProp->Get(pos);
-		int ret = SetPositionUm(pos);
-		if (ret != DEVICE_OK)
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double pos;
+      pProp->Get(pos);
+      int ret = SetPositionUm(pos);
+      if (ret != DEVICE_OK)
       {
-			pProp->Set(pos); // revert
-			return ret;
+         pProp->Set(pos); // revert
+         return ret;
       }
    }
 
@@ -527,14 +527,14 @@ int NewportZStage::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int NewportZStage::OnConversionFactor(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	if (eAct == MM::BeforeGet)
-	{
+   if (eAct == MM::BeforeGet)
+   {
       pProp->Set(conversionFactor_);
-	}
-	else if (eAct == MM::AfterSet)
-	{
-		double pos;
-		pProp->Get(pos);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double pos;
+      pProp->Get(pos);
       conversionFactor_ = pos;
    }
 
@@ -543,14 +543,14 @@ int NewportZStage::OnConversionFactor(MM::PropertyBase* pProp, MM::ActionType eA
 
 int NewportZStage::OnControllerAddress(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	if (eAct == MM::BeforeGet)
-	{
+   if (eAct == MM::BeforeGet)
+   {
       pProp->Set((long) cAddress_);
-	}
-	else if (eAct == MM::AfterSet)
-	{
-		long pos;
-		pProp->Get(pos);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long pos;
+      pProp->Get(pos);
       cAddress_ = (int) pos;
    }
 
@@ -559,16 +559,16 @@ int NewportZStage::OnControllerAddress(MM::PropertyBase* pProp, MM::ActionType e
 
 int NewportZStage::OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	if (eAct == MM::BeforeGet)
-	{
+   if (eAct == MM::BeforeGet)
+   {
       int ret = GetVelocity(velocity_);
       if (ret != DEVICE_OK)
          return DEVICE_OK;
       pProp->Set((double) velocity_);
-	}
-	else if (eAct == MM::AfterSet)
-	{
-		pProp->Get(velocity_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(velocity_);
       return SetVelocity(velocity_);
    }
 

@@ -32,9 +32,9 @@
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
 //
-#define ERR_PORT_CHANGE_FORBIDDEN	10004
-#define ERR_UNRECOGNIZED_ANSWER		10009
-#define ERR_OFFSET					   10100
+#define ERR_PORT_CHANGE_FORBIDDEN   10004
+#define ERR_UNRECOGNIZED_ANSWER      10009
+#define ERR_OFFSET                  10100
 #define ERR_POSITION_BEYOND_LIMITS  10300
 #define ERR_TIMEOUT                 10301
 #define CONTROLLER_ERROR            20000
@@ -43,34 +43,34 @@ class NewportZStage : public CStageBase<NewportZStage>
 {
 
 public:
-	NewportZStage();
-	~NewportZStage();
+   NewportZStage();
+   ~NewportZStage();
 
-	// Device API
-	// ----------
-	int Initialize();
-	int Shutdown();
+   // Device API
+   // ----------
+   int Initialize();
+   int Shutdown();
 
-	void GetName(char* pszName) const;
-	bool Busy();
+   void GetName(char* pszName) const;
+   bool Busy();
 
-	// Stage API
-	// ---------
-	int SetPositionUm(double pos);
-	int SetRelativePositionUm(double pos);
-	int GetPositionUm(double& pos);
-	int SetPositionSteps(long steps);
-	int GetPositionSteps(long& steps);
-	int SetOrigin();
-	int GetLimits(double& min, double& max);
+   // Stage API
+   // ---------
+   int SetPositionUm(double pos);
+   int SetRelativePositionUm(double pos);
+   int GetPositionUm(double& pos);
+   int SetPositionSteps(long steps);
+   int GetPositionSteps(long& steps);
+   int SetOrigin();
+   int GetLimits(double& min, double& max);
 
-	// action interface
-	// ----------------
-	int OnConversionFactor(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnControllerAddress(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct);
+   // action interface
+   // ----------------
+   int OnConversionFactor(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnControllerAddress(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    int IsStageSequenceable(bool& isSequenceable) const {
       isSequenceable = false;
