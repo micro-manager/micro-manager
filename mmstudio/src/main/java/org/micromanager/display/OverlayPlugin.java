@@ -17,30 +17,20 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager;
+package org.micromanager.display;
 
-import java.util.HashMap;
-
-import org.micromanager.data.ProcessorPlugin;
-import org.micromanager.display.OverlayPlugin;
+import org.micromanager.MMPlugin;
 
 /**
- * This class provides access to plugins that have been detected by
- * Micro-Manager at startup. You can access the PluginManager via
- * Studio.plugins() or Studio.getPluginManager().
+ * This interface must be implemented by plugins that want to appear in the
+ * menu of pattern overlays available in image display windows.
+ * Additionally, the plugin class must be annotated with the @Plugin
+ * annotation; see the MMPlugin documentation for more information.
+ * Note: names of overlay plugins must be unique.
  */
-public interface PluginManager {
+public interface OverlayPlugin extends MMPlugin {
    /**
-    * Return a HashMap that maps plugin names to ProcessorPlugin instances.
-    * ProcessorPlugins are used to construct pipelines that modify images
-    * as they are acquired (see DataManager.createPipeline()).
+    * Create a new OverlayPanelFactory object for creating OverlayPanels.
     */
-   public HashMap<String, ProcessorPlugin> getProcessorPlugins();
-
-   /**
-    * Return a HashMap that maps plugin names to OverlayPlugin instances.
-    * OverlayPlugins are used to draw on top of images in the image display
-    * window.
-    */
-   public HashMap<String, OverlayPlugin> getOverlayPlugins();
+   public OverlayPanelFactory createFactory();
 }

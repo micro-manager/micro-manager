@@ -28,9 +28,4 @@ public class TimestampOverlayFactory implements OverlayPanelFactory {
    public OverlayPanel createOverlayPanel() {
       return new TimestampOverlayPanel();
    }
-
-   @Override
-   public String getTitle() {
-      return "Timestamp display";
-   }
 }

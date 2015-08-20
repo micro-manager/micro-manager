@@ -4,54 +4,46 @@ import java.awt.Color;
 import java.awt.event.WindowEvent;
 
 import org.micromanager.Studio;
-import org.micromanager.MMPlugin;
+import org.micromanager.display.OverlayPanelFactory;
+import org.micromanager.display.OverlayPlugin;
+
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
 
 /**
  * Provides various overlays on the image display window. Adapted from the
  * original PatternOverlayPlugin written by Mathijs and Jon.
  * @author Chris
  */
-public class PatternOverlayPlugin implements MMPlugin {
-
-   public static String menuName = "Pattern Overlay";
-   public final static String tooltipDescription = "Overlay pattern on viewer window";
-   public final static Color borderColor = Color.gray;
+@Plugin(type = OverlayPlugin.class)
+public class PatternOverlayPlugin implements OverlayPlugin, SciJavaPlugin {
 
    private Studio studio_;
 
-
    @Override
-   public void setApp(Studio studio) {
+   public void setContext(Studio studio) {
       studio_ = studio;
-      studio_.displays().registerOverlay(new PatternOverlayFactory(studio));
-   }
-
-   /**
-    * The main app calls this method to remove the module window
-    */
-   @Override
-   public void dispose() {
-      studio_.logs().logError("TODO: allow unregistration of overlays");
    }
 
    @Override
-   public void show() {
+   public OverlayPanelFactory createFactory() {
+      return new PatternOverlayFactory(studio_);
    }
 
-   /**
-    * General purpose information members.
-    * @return
-    */
-   @Override public String getDescription() {
-      return "Add an overlay shape to the image window.";
+   @Override
+   public String getName() {
+      return "Pattern Overlay";
    }
-   @Override public String getInfo() {
-      return menuName;
+   @Override
+   public String getHelpText() {
+      return "Draw various overlays on the image window.";
    }
-   @Override public String getVersion() {
+   @Override
+   public String getVersion() {
       return "3";
    }
-   @Override public String getCopyright() {
+   @Override
+   public String getCopyright() {
       return "Applied Scientific Instrumentation, 2014";
    }
 }

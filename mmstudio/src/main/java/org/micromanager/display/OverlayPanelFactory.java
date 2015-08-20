@@ -33,12 +33,4 @@ public interface OverlayPanelFactory {
     * @return An OverlayPanel instance for controlling the overlay.
     */
    public OverlayPanel createOverlayPanel();
-
-   /**
-    * Provide a short textual description of the OverlayPanel this factory
-    * creates. This string must be unique across all OverlayPanelFactories
-    * registered with the program (see DisplayManager.registerOverlay()).
-    * @return A short description (2-3 words) of the overlay.
-    */
-   public String getTitle();
 }

@@ -28,9 +28,4 @@ public class ScaleBarOverlayFactory implements OverlayPanelFactory {
    public OverlayPanel createOverlayPanel() {
       return new ScaleBarOverlayPanel();
    }
-
-   @Override
-   public String getTitle() {
-      return "Scale bar";
-   }
 }

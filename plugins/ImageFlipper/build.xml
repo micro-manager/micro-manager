@@ -1,0 +1,4 @@
+<project name="ImageFlipper" default="jar">
+	<property name="plugin.path" value="On-The-Fly_Processors"/>
+	<import file="../javapluginbuild.xml"/>
+</project>

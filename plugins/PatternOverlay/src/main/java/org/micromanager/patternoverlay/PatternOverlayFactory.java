@@ -19,9 +19,4 @@ public class PatternOverlayFactory implements OverlayPanelFactory {
    public OverlayPanel createOverlayPanel() {
       return new PatternOverlayPanel(studio_);
    }
-
-   @Override
-   public String getTitle() {
-      return "Pattern overlay";
-   }
 }

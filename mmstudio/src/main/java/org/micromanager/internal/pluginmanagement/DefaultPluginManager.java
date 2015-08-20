@@ -25,11 +25,12 @@ import java.util.List;
 import javax.swing.JMenuBar;
 
 import org.micromanager.data.ProcessorPlugin;
+import org.micromanager.display.OverlayPlugin;
 import org.micromanager.PluginManager;
-
-import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.MMPlugin;
 import org.micromanager.Studio;
+
+import org.micromanager.internal.utils.ReportingUtils;
 
 public class DefaultPluginManager implements PluginManager {
 
@@ -44,6 +45,8 @@ public class DefaultPluginManager implements PluginManager {
       menuBar_ = menuBar;
       pluginTypeToPlugins_ = new HashMap<Class, ArrayList<MMPlugin>>();
       pluginTypeToPlugins_.put(ProcessorPlugin.class,
+            new ArrayList<MMPlugin>());
+      pluginTypeToPlugins_.put(OverlayPlugin.class,
             new ArrayList<MMPlugin>());
       loadingThread_ = new Thread(new Runnable() {
          @Override
@@ -79,8 +82,14 @@ public class DefaultPluginManager implements PluginManager {
       for (Class pluginClass : plugins) {
          try {
             MMPlugin plugin = (MMPlugin) pluginClass.newInstance();
+            ReportingUtils.logError("Found plugin " + plugin);
+            // TODO: ideally this enumeration (and the similar enumeration in
+            // the constructor) should not be needed.
             if (plugin instanceof ProcessorPlugin) {
                pluginTypeToPlugins_.get(ProcessorPlugin.class).add(plugin);
+            }
+            else if (plugin instanceof OverlayPlugin) {
+               pluginTypeToPlugins_.get(OverlayPlugin.class).add(plugin);
             }
          }
          catch (InstantiationException e) {
@@ -94,10 +103,18 @@ public class DefaultPluginManager implements PluginManager {
 
    @Override
    public HashMap<String, ProcessorPlugin> getProcessorPlugins() {
-      HashMap<String, ProcessorPlugin> result = new HashMap<String,
-         ProcessorPlugin>();
+      HashMap<String, ProcessorPlugin> result = new HashMap<String, ProcessorPlugin>();
       for (MMPlugin plugin : pluginTypeToPlugins_.get(ProcessorPlugin.class)) {
          result.put(plugin.getName(), (ProcessorPlugin) plugin);
+      }
+      return result;
+   }
+
+   @Override
+   public HashMap<String, OverlayPlugin> getOverlayPlugins() {
+      HashMap<String, OverlayPlugin> result = new HashMap<String, OverlayPlugin>();
+      for (MMPlugin plugin : pluginTypeToPlugins_.get(OverlayPlugin.class)) {
+         result.put(plugin.getName(), (OverlayPlugin) plugin);
       }
       return result;
    }

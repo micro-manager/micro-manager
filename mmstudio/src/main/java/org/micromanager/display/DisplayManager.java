@@ -187,18 +187,6 @@ public interface DisplayManager {
    public boolean closeDisplaysFor(Datastore store);
 
    /**
-    * Register an OverlayPanelFactory with the program, so that the
-    * OverlayPanels it generates can be attached to all current and future
-    * DisplayWindows.
-    * Note that the titles declared by OverlayPanelFactory.getTitle() must be
-    * unique; if a second OverlayPanelFactory attempts to register that has
-    * the same title as a pre-existing one, a RuntimeException will be thrown.
-    * @param factory An OverlayPanelFactory that generates the new
-    *        OverlayPanels.
-    */
-   public void registerOverlay(OverlayPanelFactory factory);
-
-   /**
     * Close all open image windows.
     * @param shouldPromptToSave If true, then any open windows for Datastores
     *        that have not been saved will show a prompt to save, and if the

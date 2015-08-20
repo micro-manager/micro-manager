@@ -43,6 +43,7 @@ import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.display.RequestToDrawEvent;
 import org.micromanager.display.OverlayPanel;
 import org.micromanager.display.OverlayPanelFactory;
+import org.micromanager.display.OverlayPlugin;
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
 import org.micromanager.display.internal.events.NewOverlayEvent;
 
@@ -63,17 +64,13 @@ public final class DefaultDisplayManager implements DisplayManager {
 
    private final MMStudio studio_;
    private final HashMap<Datastore, ArrayList<DisplayWindow>> storeToDisplays_;
-   private final LinkedHashMap<String, OverlayPanelFactory> titleToOverlay_;
+   private LinkedHashMap<String, OverlayPanelFactory> titleToOverlay_;
    private final ArrayList<DisplayWindow> allDisplays_;
 
    public DefaultDisplayManager(MMStudio studio) {
       studio_ = studio;
       storeToDisplays_ = new HashMap<Datastore, ArrayList<DisplayWindow>>();
-      titleToOverlay_ = new LinkedHashMap<String, OverlayPanelFactory>();
       allDisplays_ = new ArrayList<DisplayWindow>();
-      // HACK: start out with some hardcoded overlay options for now.
-      registerOverlay(new ScaleBarOverlayFactory());
-      registerOverlay(new TimestampOverlayFactory());
       studio_.events().registerForEvents(this);
       staticInstance_ = this;
    }
@@ -212,16 +209,6 @@ public final class DefaultDisplayManager implements DisplayManager {
       return true;
    }
 
-   @Override
-   public void registerOverlay(OverlayPanelFactory factory) {
-      String title = factory.getTitle();
-      if (titleToOverlay_.containsKey(title)) {
-         throw new RuntimeException("Overlay title " + title + " is already in use");
-      }
-      titleToOverlay_.put(title, factory);
-      DefaultEventManager.getInstance().post(new NewOverlayEvent(factory));
-   }
-
    public OverlayPanel createOverlayPanel(String title) {
       OverlayPanelFactory factory = titleToOverlay_.get(title);
       OverlayPanel panel = factory.createOverlayPanel();
@@ -229,7 +216,27 @@ public final class DefaultDisplayManager implements DisplayManager {
       return panel;
    }
 
+   /**
+    * Load all plugins of the OverlayPlugin type.
+    */
+   private void loadOverlayPlugins() {
+      HashMap<String, OverlayPlugin> plugins = studio_.plugins().getOverlayPlugins();
+      for (String key : plugins.keySet()) {
+         OverlayPlugin plugin = plugins.get(key);
+         plugin.setContext(studio_);
+         titleToOverlay_.put(key, plugin.createFactory());
+      }
+      // HACK: hardcode in the scalebar and timestamp overlays for now.
+      titleToOverlay_.put("Scale Bar", new ScaleBarOverlayFactory());
+      titleToOverlay_.put("Timestamp", new TimestampOverlayFactory());
+   }
+
    public String[] getOverlayTitles() {
+      if (titleToOverlay_ == null) {
+         // Time to load overlays now.
+         titleToOverlay_ = new LinkedHashMap<String, OverlayPanelFactory>();
+         loadOverlayPlugins();
+      }
       ArrayList<String> result = new ArrayList<String>();
       for (Map.Entry<String, OverlayPanelFactory> entry : titleToOverlay_.entrySet()) {
          result.add(entry.getKey());
