@@ -1,12 +1,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
-// DESCRIPTION:  API for MM plugins. Each module has to implement this interface.
 //
-// AUTHOR:       Nenad Amodaj, nenad@amodaj.com, 2008
+// AUTHOR:       Chris Weisiger, 2015
 //
-// COPYRIGHT:    100X Imaging Inc, www.100ximaging.com, 2008
+// COPYRIGHT:    University of California, San Francisco, 2015
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -21,29 +19,51 @@
 
 package org.micromanager;
 
+import org.micromanager.Studio;
+
+import org.scijava.plugin.SciJavaPlugin;
+
 /**
- * Implement this interface to create Micro-Manager plugins. Compiled jars
- * may be dropped into Micro-Manager's mmplugin directory, and if correctly
- * implemented, will appear in the Micro-Manager plugins menu.
- * You should look at the MMBasePlugin.java file as well for other functions
- * and member fields that should be implemented.
+ * This interface is the standard interface for all Micro-Manager plugins.
+ * If you want to make a new plugin for Micro-Manager, then you need to do
+ * the following:
+ * - Create a class that implements this interface (or one of the more
+ *   specific interfaces like org.micromanager.data.ProcessorPlugin)
+ * - Annotate that class with the org.scijava.plugin.Plugin annotation
+ * - Place your plugin's jar file in the mmplugins directory of your ImageJ
+ *   installation.
+ *
+ * The annotated plugin class should look something like this:
+ * @org.scijava.plugin.Plugin(type = MyPlugin.class)
+ * public class MyPlugin implements org.micromanager.Plugin, SciJavaPlugin {
+ *    ...plugin contents go here...
+ * }
+ *
+ * Note that all plugins must have a default (no-argument) constructor.
  */
-public interface MMPlugin extends MMBasePlugin {
+public interface MMPlugin extends SciJavaPlugin {
    /**
-    * The main app calls this method to remove the module window
+    * Receive the Studio object needed to make API calls.
     */
-   public void dispose();
-   
+   public void setContext(Studio studio);
+
    /**
-    * The main app passes its Studio to the module. This
-    * method is typically called after the module is instantiated.
-    * @param app - Studio implementation
+    * Provide a short string identifying the plugin.
     */
-   public void setApp(Studio app);
-   
+   public String getName();
+
    /**
-    * Open the module window
+    * Provide a longer string describing the purpose of the plugin.
     */
-   public void show();
-      
+   public String getHelpText();
+
+   /**
+    * Provide a version string.
+    */
+   public String getVersion();
+
+   /**
+    * Provide a copyright string.
+    */
+   public String getCopyright();
 }

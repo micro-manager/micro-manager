@@ -79,6 +79,8 @@ import org.micromanager.events.internal.MouseMovesStageEvent;
 import org.micromanager.IAcquisitionEngine2010;
 import org.micromanager.LogManager;
 import org.micromanager.MMListenerInterface;
+import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
+import org.micromanager.PluginManager;
 import org.micromanager.PositionList;
 import org.micromanager.ScriptController;
 import org.micromanager.Studio;
@@ -110,7 +112,6 @@ import org.micromanager.internal.navigation.CenterAndDragListener;
 import org.micromanager.internal.navigation.XYZKeyListener;
 import org.micromanager.internal.navigation.ZWheelListener;
 import org.micromanager.internal.pipelineinterface.PipelineFrame;
-import org.micromanager.internal.pluginmanagement.PluginManager;
 import org.micromanager.internal.positionlist.PositionListDlg;
 import org.micromanager.internal.script.ScriptPanel;
 import org.micromanager.internal.utils.AutofocusManager;
@@ -158,7 +159,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
    private AcqControlDlg acqControlWin_;
    private DataManager dataManager_;
    private DisplayManager displayManager_;
-   private PluginManager pluginManager_;
+   private DefaultPluginManager pluginManager_;
    private final SnapLiveManager snapLiveManager_;
    private final ToolsMenu toolsMenu_;
 
@@ -362,8 +363,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
       displayManager_ = new DefaultDisplayManager(this);
 
       afMgr_ = new AutofocusManager(studio_);
-      pluginManager_ = new PluginManager(studio_, menuBar_);
-      Thread pluginInitializer = pluginManager_.initializePlugins();
+      pluginManager_ = new DefaultPluginManager(studio_, menuBar_);
 
       frame_.paintToFront();
       
@@ -404,12 +404,12 @@ public class MMStudio implements Studio, CompatibilityInterface {
       waitDlg.setAlwaysOnTop(true);
       waitDlg.showDialog();
       try {
-         pluginInitializer.join(15000);
+         pluginManager_.waitForInitialization(15000);
       } catch (InterruptedException ex) {
          ReportingUtils.logError(ex,
                "Interrupted while waiting for plugin loading thread");
       }
-      if (pluginInitializer.isAlive()) {
+      if (!pluginManager_.isInitializationComplete()) {
          ReportingUtils.logMessage("Warning: Plugin loading did not finish within 15 seconds; continuing anyway");
       }
       else {
@@ -1108,8 +1108,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
          engine_.shutdown();
          engine_.disposeProcessors();
       }
-
-      pluginManager_.disposePlugins();
 
       synchronized (shutdownLock_) {
          try {
@@ -1844,6 +1842,16 @@ public class MMStudio implements Studio, CompatibilityInterface {
    @Override
    public EventManager getEventManager() {
       return events();
+   }
+
+   @Override
+   public PluginManager plugins() {
+      return pluginManager_;
+   }
+
+   @Override
+   public PluginManager getPluginManager() {
+      return plugins();
    }
 
    @Override

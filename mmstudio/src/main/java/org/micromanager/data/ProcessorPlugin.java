@@ -20,8 +20,8 @@
 
 package org.micromanager.data;
 
+import org.micromanager.MMPlugin;
 import org.micromanager.PropertyMap;
-import org.micromanager.Studio;
 
 /**
  * A ProcessorPlugin is the "root" class for creating Processors, which
@@ -29,12 +29,7 @@ import org.micromanager.Studio;
  * class provides access to the various components that allow for creation and
  * configuration of Processors.
  */
-public interface ProcessorPlugin {
-   /**
-    * Receive the Studio object needed to make API calls.
-    */
-   public void setContext(Studio studio);
-
+public interface ProcessorPlugin extends MMPlugin {
    /**
     * Generate any GUI needed to configure the plugin.
     * @return a PluginConfigurator object used to set parameters for the
@@ -53,24 +48,4 @@ public interface ProcessorPlugin {
     * @return a ProcessorFactory based on the provided settings.
     */
    public ProcessorFactory createFactory(PropertyMap settings);
-
-   /**
-    * Provide a short string identifying the plugin.
-    */
-   public String getName();
-
-   /**
-    * Provide a longer string describing the purpose of the plugin.
-    */
-   public String getHelpText();
-
-   /**
-    * Provide a version string.
-    */
-   public String getVersion();
-
-   /**
-    * Provide a copyright string.
-    */
-   public String getCopyright();
 }

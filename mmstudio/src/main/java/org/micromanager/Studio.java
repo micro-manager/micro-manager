@@ -181,4 +181,17 @@ public interface Studio {
     * @return UserProfile instance
     */
    public UserProfile getUserProfile();
+
+   /**
+    * Provides access to the PluginManager for accessing plugin instances.
+    * @return PluginManager instance.
+    */
+   public PluginManager plugins();
+
+   /**
+    * Provides access to the PluginManager for accessing plugin instances.
+    * Identical to plugins() except in name.
+    * @return PluginManager instance.
+    */
+   public PluginManager getPluginManager();
 }

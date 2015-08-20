@@ -166,12 +166,13 @@ public class DefaultDataManager implements DataManager {
    }
 
    @Override
-   public Pipeline createPipeline(List<ProcessorFactory> factories) {
+   public Pipeline createPipeline(List<ProcessorFactory> factories,
+         Datastore store, boolean isSynchronous) {
       ArrayList<Processor> processors = new ArrayList<Processor>();
       for (ProcessorFactory factory : factories) {
          processors.add(factory.createProcessor());
       }
-      return new DefaultPipeline(processors);
+      return new DefaultPipeline(processors, store, isSynchronous);
    }
 
    @Override
