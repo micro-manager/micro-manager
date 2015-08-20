@@ -599,7 +599,7 @@ int CAndorSDK3Camera::Initialize()
                                              this, thd_, snapShotController_, false, false);
 
    shutterTransferTime_property = new TFloatProperty("ShutterTransferTime [s]", 
-                                             new TAndorFloatCache(cameraDevice->GetFloat(L"ShutterTransferTime")),  
+                                             cameraDevice->GetFloat(L"ShutterTransferTime"),  
                                              callbackManager_, false, true);
 
    LSPSensorReadoutMode_property = new TEnumProperty("LightScanPlus-SensorReadoutMode", 
