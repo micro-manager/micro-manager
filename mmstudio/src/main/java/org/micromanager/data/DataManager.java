@@ -58,7 +58,7 @@ public interface DataManager {
     * return it. This format stores multiple 2D image planes in the same file,
     * up to 4GB per file. This Datastore will not be managed by Micro-Manager
     * by default (see the org.micromanager.api.display.DisplayManager.manage()
-    * method for more information). Be certain to call the save() method of
+    * method for more information). Be certain to call the freeze() method of
     * the Datastore when you have finished adding data to it, as the Storage
     * must finalize the dataset before it is properly saved to disk.
     *
@@ -85,9 +85,9 @@ public interface DataManager {
     * single-plane TIFF files. This Datastore will not be managed by
     * Micro-Manager by default (see the
     * org.micromanager.api.display.DisplayManager.manage() method for more
-    * information).  Be certain to call the save() method of the Datastore when
-    * you have finished adding data to it, as the Storage must finalize the
-    * dataset before it is properly saved to disk.
+    * information).  Be certain to call the freeze() method of the Datastore
+    * when you have finished adding data to it, as the Storage must finalize
+    * the dataset before it is properly saved to disk.
     *
     * Please note that the single-plane TIFF series storage system currently
     * only supports the time, Z, channel, and stage position axes for images.
