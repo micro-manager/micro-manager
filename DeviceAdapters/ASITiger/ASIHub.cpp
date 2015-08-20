@@ -97,11 +97,26 @@ int ASIHub::ClearComPort(void)
    return PurgeComPort(port_.c_str());
 }
 
-int ASIHub::SendCommand(const char *command)
-// changed from early implementation; calls QueryCommand
+/**
+   * Sends a command and gets the first reply character seen in readChar
+   * If a timeout occurs then readChar will contain the null string
+   */
+int ASIHub::QueryCommandGetFirstChar(const char *command, char& readChar, const long timeoutMs)
 {
-   RETURN_ON_MM_ERROR ( QueryCommand(command, serialTerminator_) );
-   return DEVICE_OK;
+   RETURN_ON_MM_ERROR ( ClearComPort() );
+   RETURN_ON_MM_ERROR ( SendSerialCommand(port_.c_str(), command, "\r") );
+   serialCommand_ = command;
+   char rcvBuf[MM::MaxStrLength];
+   rcvBuf[0] = g_NameInfoDelimiter;
+   unsigned long read = 0;
+   int ret = DEVICE_OK;
+   MM::TimeoutMs timerOut(GetCurrentMMTime(), timeoutMs);
+   while (ret == DEVICE_OK && read == 0 && !timerOut.expired(GetCurrentMMTime()))
+   {
+      ret = ReadFromComPort(port_.c_str(), (unsigned char*)rcvBuf, MM::MaxStrLength, read);
+   }
+   memcpy(&readChar, rcvBuf, 1);
+   return ret;
 }
 
 int ASIHub::QueryCommand(const char *command, const char *replyTerminator, const long delayMs)
@@ -506,7 +521,7 @@ int ASIHub::OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (!serialOnlySendChanged_ || (tmpstr.compare(last_command) != 0))
       {
          last_command = tmpstr;
-         SendCommand(tmpstr);
+         QueryCommand(tmpstr);
          // TODO add some sort of check if command was successful, update manualSerialAnswer_ accordingly (e.g. leave blank for invalid command like aoeu)
          manualSerialAnswer_ = serialAnswer_;  // remember this reply even if SendCommand is called elsewhere
       }
@@ -546,7 +561,7 @@ int ASIHub::OnSerialCommandRepeatDuration(MM::PropertyBase* pProp, MM::ActionTyp
 
       // keep repeating for the requested duration
       while ( (GetCurrentMMTime() - startTime) < duration ) {
-         SendCommand(command);
+         QueryCommand(command);
          CDeviceUtils::SleepMs(serialRepeatPeriod_);
       }
 

@@ -41,19 +41,23 @@ using namespace std;
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// CSlider
+// CFWheel
 //
+
+// initialize static member
+string CFWheel::selectedWheel_ = g_EmptyAxisLetterStr;
+
 CFWheel::CFWheel(const char* name) :
    ASIPeripheralBase< ::CStateDeviceBase, CFWheel >(name),
    numPositions_(0),  // will read actual number of positions
    curPosition_(0),   // will read actual position
    spinning_(0),
-   axisLetter_(g_EmptyAxisLetterStr)  // 0..9 for filter wheels instead of A..Z
+   wheelNumber_(g_EmptyAxisLetterStr)  // 0..9 for filter wheels instead of A..Z
 {
    if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
    {
-      axisLetter_ = GetAxisLetterFromExtName(name);
-      CreateProperty(g_AxisLetterPropertyName, axisLetter_.c_str(), MM::String, true);
+      wheelNumber_ = GetAxisLetterFromExtName(name);
+      CreateProperty(g_AxisLetterPropertyName, wheelNumber_.c_str(), MM::String, true);
    }
 }
 
@@ -72,7 +76,7 @@ int CFWheel::Initialize()
    //   addresses (e.g. with 3 cards now there will be 0..5) => no need for using card address
    // need to use SelectWheel before any query/command to filterwheel
    // if making multiple queries/commands in a row then once is enough
-   RETURN_ON_MM_ERROR ( SelectWheel() );
+   RETURN_ON_MM_ERROR ( SelectWheelOverride() );
 
    // get the firmware version and expose that as property plus store it
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify("VN","VN Version: v", g_SerialTerminatorFW) );
@@ -86,7 +90,7 @@ int CFWheel::Initialize()
 
    // create MM description; this doesn't work during hardware configuration wizard but will work afterwards
    command.str("");
-   command << g_FWheelDeviceDescription << " WheelNum=" << axisLetter_ << " HexAddr=" << addressString_;
+   command << g_FWheelDeviceDescription << " WheelNum=" << wheelNumber_ << " HexAddr=" << addressString_;
    CreateProperty(MM::g_Keyword_Description, command.str().c_str(), MM::String, true);
 
    // serial query to find out how many positions we have
@@ -171,13 +175,23 @@ bool CFWheel::Busy()
    // this is a firmware limitation
    if (SelectWheel() != DEVICE_OK)  // say we aren't busy if we can't communicate
       return false;
-   if (hub_->QueryCommand("?", g_SerialTerminatorFW) != DEVICE_OK)  // say we aren't busy if we can't communicate
+
+   // note special case: FW busy query won't reply with line terminator
+   // send query command and grab first character that comes (up to 200ms before timing out)
+   // anything other than 0 is still moving (other codes are apparently 12 and 16)
+   // errors are reported as "not busy"
+   char readChar = '\0';
+   if (hub_->QueryCommandGetFirstChar("?", readChar, 200) != DEVICE_OK)  // say we aren't busy if we can't communicate
+   {
+      LogMessage("ERROR: filterwheel didn't respond with status");
       return false;
-   unsigned int i;
-   if (hub_->ParseAnswerAfterPosition(0, i) != DEVICE_OK)  // say we aren't busy if we can't parse
+   }
+   if (readChar == '\0')
+   {
+      LogMessage("ERROR: failed to correctly read status of filterwheel");
       return false;
-   // ASI documentation seems to be out of date here, but we'll take codes 1-3 or 12 as moving
-   return (i==12 || (i>=1 && i<=3));
+   }
+   return (readChar != '0');
 }
 
 int CFWheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -220,15 +234,27 @@ int CFWheel::OnLabel(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int CFWheel::SelectWheel()
+int CFWheel::SelectWheelOverride()
 {
    ostringstream command; command.str("");
-   command << "FW" << axisLetter_;
+   command << "FW" << wheelNumber_;
    // if we sent an invalid address then Tiger responds with a <NAK>-terminated reply
    //   which leads to a timeout.  note this is different in Tiger than in stand-alone filterwheel
    if (hub_->QueryCommandVerify(command.str(),"FW", g_SerialTerminatorFW) != DEVICE_OK)
+   {
+      selectedWheel_ = g_EmptyAxisLetterStr;
       return ERR_FILTER_WHEEL_NOT_READY;
+   }
+   selectedWheel_ = wheelNumber_;
    return DEVICE_OK;
+}
+
+int CFWheel::SelectWheel()
+{
+   if (selectedWheel_ != wheelNumber_)
+      return SelectWheelOverride();
+   else
+      return DEVICE_OK;
 }
 
 ////////////////

@@ -61,8 +61,10 @@ private:
    unsigned int numPositions_;
    unsigned int curPosition_;
    unsigned int spinning_;
-   string axisLetter_;
+   string wheelNumber_;
+   static string selectedWheel_; // which wheel is currently selected, shared among all instances of this class
 
+   int SelectWheelOverride();
    int SelectWheel();
 };
 

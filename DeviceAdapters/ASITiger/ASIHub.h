@@ -50,12 +50,10 @@ public:
 	// Communication base functions
    int ClearComPort();
 
-   // SendCommand ignores response (currently implemented as call to QueryCommand
-   // TODO remove entirely and replace by call to QueryCommand
-	int SendCommand(const char *command);
-   int SendCommand(const string &command) { return SendCommand(command.c_str()); }
+   // gets the response to a command but waits a certain time for the response to come instead of looking for a terminator
+   int QueryCommandGetFirstChar(const char *command, char& readChar, const long timeoutMs);
 
-   // QueryCommand also gets the response (optional 2nd parameter is the response's termination string) (optional 3rd parameter is delay between sending and reading response)
+   // QueryCommand gets the response (optional 2nd parameter is the response's termination string) (optional 3rd parameter is delay between sending and reading response)
    int QueryCommand(const char *command, const char *replyTerminator, const long delayMs); // all variants call this
    int QueryCommand(const char *command) { return QueryCommand(command, g_SerialTerminatorDefault, (long)0); }
    int QueryCommand(const string &command) { return QueryCommand(command.c_str(), g_SerialTerminatorDefault, (long)0); }
