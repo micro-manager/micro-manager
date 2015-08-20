@@ -46,6 +46,13 @@ const char* g_DiskoveryTIRF = "Diskovery-TIRF-Position";
 const char* g_DiskoveryIris = "Diskovery-Objective-Select";
 const char* g_DiskoveryFilterW = "Diskovery-Filter-W";
 const char* g_DiskoveryFilterT = "Diskovery-Filter-T";
+
+// Constants for the TIRF device
+const char* g_TubeLens = "Tube Lens";
+const char* g_Leica = "Leica(200mm)";
+const char* g_Nikon = "Nikon(200mm)";
+const char* g_Olympus = "Olympus(180mm)";
+const char* g_Zeiss = "Zeiss(160mm)";
 ///////////////////////////////////////////////////////////////////////////////
 
 using namespace std;
@@ -430,6 +437,11 @@ DiskoveryStateDev::DiskoveryStateDev(
       const std::string devName, const std::string description, const DevType devType)  :
    wavelength1_(0),
    wavelength2_(0),
+   tubeLensFocalLength_(200),
+   depth_(100.0),
+   na_(1.45),
+   ri_(1.33),
+   exitTIRF_(false),
    devName_(devName),
    devType_ (devType),
    initialized_(false),
@@ -454,6 +466,16 @@ DiskoveryStateDev::DiskoveryStateDev(
 
    // parent ID display
    CreateHubIDProperty();
+
+   if (devType == TIRF)
+   {
+       CPropertyAction* pAct = new CPropertyAction(this, &DiskoveryStateDev::OnTubeLensFocalLength);
+       CreateProperty(g_TubeLens, g_Leica, MM::String, true, pAct);
+       AddAllowedValue(g_TubeLens, g_Leica);
+       AddAllowedValue(g_TubeLens, g_Nikon);
+       AddAllowedValue(g_TubeLens, g_Olympus);
+       AddAllowedValue(g_TubeLens, g_Zeiss);
+   }
 }
 
 DiskoveryStateDev::~DiskoveryStateDev() 
@@ -564,7 +586,19 @@ int DiskoveryStateDev::Initialize()
              AddAllowedValue("Wavelength2", val);
           }
        }
-
+       pAct = new CPropertyAction(this, &DiskoveryStateDev::OnExitTIRF);
+       RETURN_ON_MM_ERROR ( CreateProperty("ExitTIRF", "No", MM::String, false, pAct) );
+       AddAllowedValue("ExitTIRF", "No");
+       AddAllowedValue("ExitTIRF", "Yes");
+       pAct = new CPropertyAction(this, &DiskoveryStateDev::OnDepth);
+       RETURN_ON_MM_ERROR ( CreateFloatProperty("TIRF Depth", depth_, false, pAct) );
+       RETURN_ON_MM_ERROR ( SetPropertyLimits("TIRF Depth", 50, 1000) );
+       pAct = new CPropertyAction(this, &DiskoveryStateDev::OnNA);
+       RETURN_ON_MM_ERROR ( CreateFloatProperty("Num. Ap.", na_, false, pAct) );
+       RETURN_ON_MM_ERROR ( SetPropertyLimits("Num. Ap.", 1.40, 1.49) );
+       pAct = new CPropertyAction(this, &DiskoveryStateDev::OnRI);
+       RETURN_ON_MM_ERROR ( CreateFloatProperty("Refr. Index", ri_, false, pAct) );
+       RETURN_ON_MM_ERROR ( SetPropertyLimits("Refr. Index", 1.33, 1.40) );
     }
 
    // Register our instance for callbacks
@@ -730,6 +764,84 @@ int DiskoveryStateDev::OnWavelength2(MM::PropertyBase* pProp, MM::ActionType eAc
    else if (eAct == MM::AfterSet)
    {
       pProp->Get( wavelength2_);
+   }
+   return DEVICE_OK;
+}
+
+int DiskoveryStateDev::OnTubeLensFocalLength(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      std::string tubeLens;
+      pProp->Get( tubeLens );
+      if (tubeLens == g_Leica)
+         tubeLensFocalLength_ = 200;
+      else if (tubeLens == g_Nikon)
+         tubeLensFocalLength_ = 200;
+      else if (tubeLens == g_Olympus)
+         tubeLensFocalLength_ = 180;
+      else if (tubeLens == g_Zeiss)
+         tubeLensFocalLength_ = 150;
+   }
+   return DEVICE_OK;
+}
+
+int DiskoveryStateDev::OnExitTIRF(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      std::string msg = "No";
+      if (exitTIRF_)
+         msg = "Yes";
+      pProp->Set( msg.c_str() );
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string msg;
+      pProp->Get( msg );
+      if (msg == "Yes")
+         exitTIRF_ = true;
+      else
+         exitTIRF_ = false;
+   }
+   return DEVICE_OK;
+}
+
+int DiskoveryStateDev::OnDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set( depth_ );
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get( depth_);
+   }
+   return DEVICE_OK;
+}
+
+int DiskoveryStateDev::OnNA(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set( na_ );
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get( na_);
+   }
+   return DEVICE_OK;
+}
+
+int DiskoveryStateDev::OnRI(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set( ri_ );
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get( ri_);
    }
    return DEVICE_OK;
 }

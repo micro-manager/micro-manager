@@ -237,11 +237,20 @@ class DiskoveryStateDev : public CStateDeviceBase<DiskoveryStateDev>
       }
       int OnWavelength1(MM::PropertyBase* pProp, MM::ActionType eAct);
       int OnWavelength2(MM::PropertyBase* pProp, MM::ActionType eAct);
+      int OnTubeLensFocalLength(MM::PropertyBase* pProp, MM::ActionType eAct);
+      int OnExitTIRF(MM::PropertyBase* pProp, MM::ActionType eAct);
+      int OnDepth(MM::PropertyBase* pProp, MM::ActionType eAct);
+      int OnNA(MM::PropertyBase* pProp, MM::ActionType eAct);
+      int OnRI(MM::PropertyBase* pProp, MM::ActionType eAct);
+
 
    private:
+
       uint16_t numPos_;
       uint16_t firstPos_;
       long wavelength1_, wavelength2_;
+      double tubeLensFocalLength_, depth_, na_, ri_;
+      bool exitTIRF_;
 
       std::string devName_;
       DevType devType_;
