@@ -230,4 +230,17 @@ public interface DataManager {
     * @return a Pipeline based on the current GUI pipeline.
     */
    public Pipeline copyApplicationPipeline();
+
+   /**
+    * Provide access to the ImageJConverter() object.
+    * @return An implementation of the ImageJConverter interface.
+    */
+   public ImageJConverter ij();
+
+   /**
+    * Provide access to the ImageJConverter() object. Identical to ij()
+    * except in name.
+    * @return An implementation of the ImageJConverter interface.
+    */
+   public ImageJConverter getImageJConverter();
 }

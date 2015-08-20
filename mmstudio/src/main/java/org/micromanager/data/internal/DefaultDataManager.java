@@ -36,6 +36,7 @@ import org.json.JSONException;
 import org.micromanager.data.DataManager;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
+import org.micromanager.data.ImageJConverter;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
 
@@ -48,7 +49,6 @@ import org.micromanager.data.internal.StorageSinglePlaneTiffSeries;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorFactory;
-import org.micromanager.events.internal.DefaultEventManager;
 
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.FileDialogs;
@@ -62,8 +62,9 @@ import org.micromanager.PropertyMap;
  * access to Micro-Manager's data objects.
  */
 public class DefaultDataManager implements DataManager {
-   public DefaultDataManager() {
-      DefaultEventManager.getInstance().registerForEvents(this);
+   private static final DefaultDataManager staticInstance_;
+   static {
+      staticInstance_ = new DefaultDataManager();
    }
 
    @Override
@@ -179,5 +180,19 @@ public class DefaultDataManager implements DataManager {
    public Pipeline copyApplicationPipeline() {
       ReportingUtils.logError("TODO: Implement copyApplicationPipeline");
       return null;
+   }
+
+   @Override
+   public ImageJConverter ij() {
+      return DefaultImageJConverter.getInstance();
+   }
+
+   @Override
+   public ImageJConverter getImageJConverter() {
+      return ij();
+   }
+
+   public static DataManager getInstance() {
+      return staticInstance_;
    }
 }
