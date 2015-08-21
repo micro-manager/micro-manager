@@ -98,24 +98,27 @@ int ASIHub::ClearComPort(void)
 }
 
 /**
-   * Sends a command and gets the first reply character seen in readChar
-   * If a timeout occurs then readChar will contain the null string
+   * Sends a command and gets the serial buffer (doesn't try to verify end of transmission)
    */
-int ASIHub::QueryCommandGetFirstChar(const char *command, char& readChar, const long timeoutMs)
+int ASIHub::QueryCommandUnterminatedResponse(const char *command, const long timeoutMs)
 {
    RETURN_ON_MM_ERROR ( ClearComPort() );
    RETURN_ON_MM_ERROR ( SendSerialCommand(port_.c_str(), command, "\r") );
    serialCommand_ = command;
    char rcvBuf[MM::MaxStrLength];
-   rcvBuf[0] = g_NameInfoDelimiter;
+   memset(rcvBuf, 0, MM::MaxStrLength);
    unsigned long read = 0;
    int ret = DEVICE_OK;
    MM::TimeoutMs timerOut(GetCurrentMMTime(), timeoutMs);
+   serialAnswer_ = "";
    while (ret == DEVICE_OK && read == 0 && !timerOut.expired(GetCurrentMMTime()))
    {
       ret = ReadFromComPort(port_.c_str(), (unsigned char*)rcvBuf, MM::MaxStrLength, read);
    }
-   memcpy(&readChar, rcvBuf, 1);
+   if (read > 0)
+   {
+      serialAnswer_ = rcvBuf;
+   }
    return ret;
 }
 

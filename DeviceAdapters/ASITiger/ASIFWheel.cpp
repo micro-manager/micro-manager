@@ -51,7 +51,7 @@ CFWheel::CFWheel(const char* name) :
    ASIPeripheralBase< ::CStateDeviceBase, CFWheel >(name),
    numPositions_(0),  // will read actual number of positions
    curPosition_(0),   // will read actual position
-   spinning_(0),
+   spinning_(false),
    wheelNumber_(g_EmptyAxisLetterStr)  // 0..9 for filter wheels instead of A..Z
 {
    if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
@@ -68,14 +68,13 @@ int CFWheel::Initialize()
 
    ostringstream command;
 
-   // turn off prompts
+   // turn off prompt characters; this has the effect of always setting to a known verbose mode
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify("VB 6", "VB 6", g_SerialTerminatorFW) );
 
    // activate the correct filterwheel (will receive all subsequent commands)
    // Tiger controller recognizes multiple cards installed and gives them increasing FW
    //   addresses (e.g. with 3 cards now there will be 0..5) => no need for using card address
    // need to use SelectWheel before any query/command to filterwheel
-   // if making multiple queries/commands in a row then once is enough
    RETURN_ON_MM_ERROR ( SelectWheelOverride() );
 
    // get the firmware version and expose that as property plus store it
@@ -171,6 +170,13 @@ int CFWheel::Initialize()
 
 bool CFWheel::Busy()
 {
+   // say that spinning is "not busy"
+   // otherwise we get a timeout when waiting for device
+   // also if user put into spin mode then we are done with that action
+   // and awaiting further instructions
+   if (spinning_)
+      return false;
+
    // this actually will return status of the two wheels on the same card
    // this is a firmware limitation
    if (SelectWheel() != DEVICE_OK)  // say we aren't busy if we can't communicate
@@ -180,18 +186,18 @@ bool CFWheel::Busy()
    // send query command and grab first character that comes (up to 200ms before timing out)
    // anything other than 0 is still moving (other codes are apparently 12 and 16)
    // errors are reported as "not busy"
-   char readChar = '\0';
-   if (hub_->QueryCommandGetFirstChar("?", readChar, 200) != DEVICE_OK)  // say we aren't busy if we can't communicate
+   if (hub_->QueryCommandUnterminatedResponse("?", 200) != DEVICE_OK)  // say we aren't busy if we can't communicate
    {
       LogMessage("ERROR: filterwheel didn't respond with status");
       return false;
    }
-   if (readChar == '\0')
+   if (hub_->LastSerialAnswer().length() < 1)
    {
       LogMessage("ERROR: failed to correctly read status of filterwheel");
       return false;
    }
-   return (readChar != '0');
+   long code = atol(hub_->LastSerialAnswer().c_str());
+   return (code != 0);
 }
 
 int CFWheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -209,7 +215,7 @@ int CFWheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(pos);
       RETURN_ON_MM_ERROR ( SelectWheel() );
       command << "MP" << pos;
-      RETURN_ON_MM_ERROR ( hub_->QueryCommand(command.str(), g_SerialTerminatorFW) );
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), "MP", g_SerialTerminatorFW) );
       curPosition_ = pos;
    }
    return DEVICE_OK;
@@ -240,6 +246,9 @@ int CFWheel::SelectWheelOverride()
    command << "FW" << wheelNumber_;
    // if we sent an invalid address then Tiger responds with a <NAK>-terminated reply
    //   which leads to a timeout.  note this is different in Tiger than in stand-alone filterwheel
+   // note that we cannot check the response filterwheel because, for example, we have 2 Tiger cards
+   // then setting to wheel #3 will return FW1 because it's the 1st wheel on the card and the
+   // card doesn't know any better
    if (hub_->QueryCommandVerify(command.str(),"FW", g_SerialTerminatorFW) != DEVICE_OK)
    {
       selectedWheel_ = g_EmptyAxisLetterStr;
@@ -255,6 +264,16 @@ int CFWheel::SelectWheel()
       return SelectWheelOverride();
    else
       return DEVICE_OK;
+}
+
+void CFWheel::ForcePropertyRefresh()
+{
+   if (!refreshProps_)
+   {
+      refreshProps_ = true;
+      OnPropertiesChanged();
+      refreshProps_ = false;
+   }
 }
 
 ////////////////
@@ -277,8 +296,17 @@ int CFWheel::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
          command << "RR";
       else if (tmpstr.compare(g_SaveSettingsZ) == 0)
          command << "RW";
-      RETURN_ON_MM_ERROR ( hub_->QueryCommand(command.str(), g_SerialTerminatorFW, (long)200) );  // note added 200ms delay
+      // these commands elicit an echo response but not one with termination
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandUnterminatedResponse(command.str(), 400) );
+      if (hub_->LastSerialAnswer().substr(0, 2).compare(command.str().substr(0,2)) != 0)
+      {
+         return ERR_UNRECOGNIZED_ANSWER;
+      }
       pProp->Set(g_SaveSettingsDone);
+      // refresh properties if we just restored them
+      if (tmpstr.compare(g_SaveSettingsX) || tmpstr.compare(g_SaveSettingsY)) {
+         ForcePropertyRefresh();
+      }
    }
    return DEVICE_OK;
 }
@@ -311,12 +339,12 @@ int CFWheel::OnSpin(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (tmp)
       {
          success = pProp->Set(g_OnState);
-         spinning_ = tmp;
+         spinning_ = true;
       }
       else
       {
          success = pProp->Set(g_OffState);
-         spinning_ = 0;
+         spinning_ = false;
       }
       if (!success)
          return DEVICE_INVALID_PROPERTY_VALUE;
@@ -325,12 +353,27 @@ int CFWheel::OnSpin(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       string str;
       pProp->Get(str);
-      if (str.compare(g_OnState) == 0)
-         command << "SF1";
-      else
-         command << "SF0\rHO";  // make it stop at home
       RETURN_ON_MM_ERROR ( SelectWheel() );
-      RETURN_ON_MM_ERROR ( hub_->QueryCommand(command.str(), g_SerialTerminatorFW) );
+      if (str.compare(g_OnState) == 0)
+      {
+         command << "SF1";
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), "SF1", g_SerialTerminatorFW) );
+         spinning_ = true;
+      }
+      else
+      {
+         command << "SF0";
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), "SF0", g_SerialTerminatorFW) );
+         spinning_ = false;
+         command.str("");
+         command << "HO";  // make it stop at home
+         // HO command echoed but without termination
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandUnterminatedResponse(command.str(), 400) );
+         if (hub_->LastSerialAnswer().substr(0, 2).compare(command.str().substr(0,2)) != 0)
+         {
+            return ERR_UNRECOGNIZED_ANSWER;
+         }
+      }
       curPosition_ = 0;  // set position to be home during spin
       SetPosition("0");  //  (do at both start and stop but doesn't matter)
    }
@@ -353,10 +396,17 @@ int CFWheel::OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
+      if (spinning_)
+      {
+         RETURN_ON_MM_ERROR ( OnVelocity(pProp, MM::BeforeGet) );
+         return ERR_FILTER_WHEEL_SPINNING;
+      }
       pProp->Get(tmp);
       command << "VR " << tmp;
+      ostringstream response; response.str("");
+      response << tmp << "VR";  // echoed in reverse order
       RETURN_ON_MM_ERROR ( SelectWheel() );
-      RETURN_ON_MM_ERROR ( hub_->QueryCommand(command.str(), g_SerialTerminatorFW) );
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), response.str(), g_SerialTerminatorFW) );
    }
    return DEVICE_OK;
 }
@@ -377,11 +427,19 @@ int CFWheel::OnSpeedSetting(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
+      if (spinning_)
+      {
+         RETURN_ON_MM_ERROR ( OnSpeedSetting(pProp, MM::BeforeGet) );
+         return ERR_FILTER_WHEEL_SPINNING;
+      }
       pProp->Get(tmp);
       command << "SV " << tmp;
+      ostringstream response; response.str("");
+      response << tmp << "SV";  // echoed in reverse order
       RETURN_ON_MM_ERROR ( SelectWheel() );
-      RETURN_ON_MM_ERROR ( hub_->QueryCommand(command.str(), g_SerialTerminatorFW) );
-      OnPropertiesChanged(); // get all other properties again since this changes velocity
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), response.str(), g_SerialTerminatorFW) );
+      // this command changes velocity and possibly other settings; refresh all properties
+      ForcePropertyRefresh();
    }
    return DEVICE_OK;
 }
@@ -407,6 +465,11 @@ int CFWheel::OnLockMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
+      if (spinning_)
+      {
+         RETURN_ON_MM_ERROR ( OnLockMode(pProp, MM::BeforeGet) );
+         return ERR_FILTER_WHEEL_SPINNING;
+      }
       string str;
       pProp->Get(str);
       if (str.compare(g_OnState) == 0)
@@ -414,7 +477,8 @@ int CFWheel::OnLockMode(MM::PropertyBase* pProp, MM::ActionType eAct)
       else
          command << "LM0";
       RETURN_ON_MM_ERROR ( SelectWheel() );
-      RETURN_ON_MM_ERROR ( hub_->QueryCommand(command.str(), g_SerialTerminatorFW) );
+      // command itself is echoed
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), command.str(), g_SerialTerminatorFW) );
    }
    return DEVICE_OK;
 }
