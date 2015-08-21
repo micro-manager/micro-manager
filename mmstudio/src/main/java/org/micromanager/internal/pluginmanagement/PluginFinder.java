@@ -27,6 +27,10 @@ import java.io.IOException;
 
 import java.lang.ClassLoader;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.JarEntry;
@@ -89,7 +93,7 @@ public class PluginFinder {
             try {
                JSONObject json = new JSONObject(contents);
                String className = json.getString("class");
-               result.add(getClassFromJar(jar, className));
+               result.add(getClassFromJar(jarPath, className));
             }
             catch (JSONException e) {
                ReportingUtils.logError(e, "Error reading META-INF JSON");
@@ -106,59 +110,44 @@ public class PluginFinder {
     * Given a path to a jar and the name of a class within that jar, load the
     * jar and return the Class object for the named class.
     */
-   public static Class getClassFromJar(JarFile jarFile, String className) {
-      PluginLoader loader = new PluginLoader(jarFile);
+   public static Class getClassFromJar(String jarPath, String className) {
       try {
+         PluginLoader loader = new PluginLoader(new File(jarPath).toURI().toURL());
          return loader.loadClass(className);
       }
       catch (ClassNotFoundException e) {
-         ReportingUtils.logError(e, "Class " + className + " not found in jar " + jarFile);
+         ReportingUtils.logError(e, "Couldn't find class " + className + " in " + jarPath);
+      }
+      catch (MalformedURLException e) {
+         ReportingUtils.logError(e, "Couldn't construct URL for jar " + jarPath);
       }
       return null;
    }
 
    /**
-    * Custom class loader for loading plugin classes. Adapted from
-    * http://kalanir.blogspot.com/2010/01/how-to-write-custom-class-loader-to.html
+    * Custom class loader for loading plugin classes. It loads from the
+    * specified jar file, and if that fails then it falls back to
+    * Micro-Manager's own ClassLoader, so that plugins can depend on
+    * the same jars that Micro-Manager does.
     */
-   public static class PluginLoader extends ClassLoader {
-      private JarFile jarFile_;
-      public PluginLoader(JarFile jarFile) {
-         super(Thread.currentThread().getContextClassLoader());
-         jarFile_ = jarFile;
+   public static class PluginLoader extends URLClassLoader {
+      public PluginLoader(URL jarURL) {
+         super(new URL[] {jarURL});
       }
 
-      @Override
-      public Class findClass(String className) {
+      public Class loadClass(String className) throws ClassNotFoundException {
+         Class result;
          try {
-            // Replace "." with "/" for seeking through the jar.
-            String classPath = className.replace(".", "/") + ".class";
-            JarEntry entry = jarFile_.getJarEntry(classPath);
-            if (entry == null) {
-               // The required class is probably elsewhere in the classpath.
-               try {
-                  return MMStudio.getInstance().getClass().getClassLoader().loadClass(className);
-               }
-               catch (ClassNotFoundException e) {
-                  ReportingUtils.logError("Unable to find class " + className + " either in jar " + jarFile_.getName() + " or in the normal classpath");
-                  return null;
-               }
-            }
-            InputStream stream = jarFile_.getInputStream(entry);
-            String contents = CharStreams.toString(
-                  new InputStreamReader(stream));
-            stream.close();
-            byte[] bytes = contents.getBytes();
-            Class result = defineClass(className, bytes, 0, bytes.length);
-            return result;
+            result = super.loadClass(className);
          }
-         catch (IOException e) {
-            ReportingUtils.logError(e, "Unable to load jar file " + jarFile_);
+         catch (ClassNotFoundException e) {
+            // Fall back to Micro-Manager's classloader.
+            result = MMStudio.getInstance().getClass().getClassLoader().loadClass(className);
          }
-         catch (ClassFormatError e) {
-            ReportingUtils.logError(e, "Unable to read class data for class " + className + " from jar " + jarFile_);
+         if (result == null) {
+            ReportingUtils.logError("Couldn't load class " + className);
          }
-         return null;
+         return result;
       }
    }
 }
