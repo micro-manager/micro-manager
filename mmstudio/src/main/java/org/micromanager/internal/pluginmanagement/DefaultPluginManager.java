@@ -83,6 +83,7 @@ public class DefaultPluginManager implements PluginManager {
          try {
             MMPlugin plugin = (MMPlugin) pluginClass.newInstance();
             ReportingUtils.logError("Found plugin " + plugin);
+            plugin.setContext(studio_);
             // TODO: ideally this enumeration (and the similar enumeration in
             // the constructor) should not be needed.
             if (plugin instanceof ProcessorPlugin) {
