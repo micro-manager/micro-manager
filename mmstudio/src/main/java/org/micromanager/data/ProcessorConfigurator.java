@@ -31,6 +31,16 @@ import org.micromanager.PropertyMap;
  */
 public interface ProcessorConfigurator {
    /**
+    * Display any GUI needed for performing configuration.
+    */
+   public void showGUI();
+
+   /**
+    * Remove any GUI resources currently in use.
+    */
+   public void cleanup();
+
+   /**
     * Provide a PropertyMap fully encapsulating the settings needed to set up
     * a new DataProcessor.
     */
