@@ -389,9 +389,12 @@ public class AutofocusUtils {
                   highestIndex = Fitter.getIndex(scoresToPlot[0], bestGalvoPosition);
                }
 
-               scoresToPlot[1] = Fitter.getFittedSeries(scoresToPlot[0], 
-                        function, fitParms);
-               r2 = Fitter.getRSquare(scoresToPlot[0], function, fitParms);
+               scoresToPlot[1] = Fitter.getFittedSeries(scoresToPlot[0], function, fitParms);
+               if (function == Fitter.FunctionType.NoFit) {
+                  r2 = 1;
+               } else {
+                  r2 = Fitter.getRSquare(scoresToPlot[0], function, fitParms);
+               }
                
                // display the best scoring image in the debug stack if it exists
                // or if not then in the snap/live window if it exists

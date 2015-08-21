@@ -117,14 +117,14 @@ public class Fitter {
       double maxRange = data.getMaxX();
       double xStep = (maxRange - minRange) / (data.getItemCount() * 10);
       switch (type) {
-         case NoFit: {
+         case NoFit:
             try {
-               XYSeries resCopy = data.createCopy(0, data.getItemCount() - 1);
-               return resCopy;
+               result = data.createCopy(0, data.getItemCount() - 1);
+               result.setKey(data.getItemCount() * 10);
             } catch (CloneNotSupportedException ex) {
                return null;
             }
-         }
+            break;
          case Pol1:
          case Pol2:
          case Pol3:
