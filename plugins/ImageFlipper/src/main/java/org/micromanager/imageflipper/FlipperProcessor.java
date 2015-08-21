@@ -41,10 +41,10 @@ import org.micromanager.internal.utils.ImageUtils;
 public class FlipperProcessor implements Processor {
 
    // Valid rotation values.
-   private static final int R0 = 0;
-   private static final int R90 = 90;
-   private static final int R180 = 180;
-   private static final int R270 = 270;
+   public static final int R0 = 0;
+   public static final int R90 = 90;
+   public static final int R180 = 180;
+   public static final int R270 = 270;
 
    private Studio studio_;
    String camera_;
@@ -75,7 +75,8 @@ public class FlipperProcessor implements Processor {
          context.outputImage(image);
          return;
       }
-      context.outputImage(transformImage(image, isMirrored_, rotation_));
+      context.outputImage(
+            transformImage(studio_, image, isMirrored_, rotation_));
    }
 
    /**
@@ -87,12 +88,12 @@ public class FlipperProcessor implements Processor {
     * @param rotation Degrees to rotate by (R0, R90, R180, R270)
     * @return - Transformed Image, otherwise a copy of the input
     */
-   private Image transformImage(Image image, boolean isMirrored,
-         int rotation) {
+   public static Image transformImage(Studio studio, Image image,
+         boolean isMirrored, int rotation) {
       int width = image.getWidth();
       int height = image.getHeight();
       
-      ImageProcessor proc = studio_.data().ij().createProcessor(image);
+      ImageProcessor proc = studio.data().ij().createProcessor(image);
 
       if (isMirrored) {
          proc.flipHorizontal();
@@ -114,12 +115,12 @@ public class FlipperProcessor implements Processor {
          builder = userData.copy();
       }
       else {
-         builder = studio_.data().getPropertyMapBuilder();
+         builder = studio.data().getPropertyMapBuilder();
       }
       builder.putInt("ImageFlipper-Rotation", rotation);
       builder.putString("ImageFlipper-Mirror", isMirrored ? "On" : "Off");
       Metadata newMetadata = image.getMetadata().copy().userData(builder.build()).build();
-      Image result = studio_.data().ij().createImage(proc, image.getCoords(),
+      Image result = studio.data().ij().createImage(proc, image.getCoords(),
             newMetadata);
       return result;
    }
