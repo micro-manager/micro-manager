@@ -150,6 +150,18 @@ DiskoveryHub::~DiskoveryHub()
 
 int DiskoveryHub::Initialize() 
 {
+   // it is possible that the Controller was rebooting because the serial port just opened
+   // Check if the device is present, if not, wait up to 25 seconds
+   bool present = false;
+   IsControllerPresent(port_, present);
+   if (!present) 
+   {
+      CDeviceUtils::SleepMs(25000);
+      IsControllerPresent(port_, present);
+      if (!present)
+         return DEVICE_NOT_CONNECTED;
+   }
+
    model_ = new DiskoveryModel(this, *GetCoreCallback());
    listener_ = new DiskoveryListener(*this, *GetCoreCallback(), port_, model_);
    commander_ = new DiskoveryCommander(*this, *GetCoreCallback(), port_, model_);
@@ -625,6 +637,29 @@ bool DiskoveryStateDev::Busy()
       return hub_->Busy();
    }
    return false;
+}
+
+void DiskoveryStateDev::calculatePrismPositions(double& lin, double& rot)
+{
+   int nrWavelengths = 0;
+   if (wavelength1_ != 0)
+      nrWavelengths++;
+   if (wavelength2_ != 0)
+      nrWavelengths++;
+
+   DiskoveryModel* model = hub_->GetModel();
+   int objectiveMag = 100;
+   std::string objectiveLabel = model->GetButtonIrisLabel(model->GetPresetIris());
+   objectiveMag = atoi( objectiveLabel.substr(0, objectiveLabel.size() - 1).c_str()); 
+
+   double magFactor = tubeLensFocalLength_ / model->GetTIRFFocalLength();
+   double radialMaxBOA = (tubeLensFocalLength_ / objectiveMag) * na_;
+
+   if (nrWavelengths == 1)
+   {
+
+   }
+
 }
 
 int DiskoveryStateDev::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)

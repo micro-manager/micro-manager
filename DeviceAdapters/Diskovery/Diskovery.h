@@ -245,7 +245,7 @@ class DiskoveryStateDev : public CStateDeviceBase<DiskoveryStateDev>
 
 
    private:
-
+      void calculatePrismPositions(double& lin, double& rot);
       uint16_t numPos_;
       uint16_t firstPos_;
       long wavelength1_, wavelength2_;
