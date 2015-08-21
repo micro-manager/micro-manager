@@ -130,10 +130,12 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       plateIDCombo_.addItem(SBSPlate.SBS_6_WELL);
       plateIDCombo_.addItem(SBSPlate.SBS_12_WELL);
       plateIDCombo_.addItem(SBSPlate.SBS_24_WELL);
+      plateIDCombo_.addItem(SBSPlate.IBIDI_24_WELL);
       plateIDCombo_.addItem(SBSPlate.SBS_48_WELL);
       plateIDCombo_.addItem(SBSPlate.SBS_96_WELL);
       plateIDCombo_.addItem(SBSPlate.SBS_384_WELL);
       plateIDCombo_.addItem(SBSPlate.SLIDE_HOLDER);
+      
 
       //comboBox.addItem(SBSPlate.CUSTOM);
       plateIDCombo_.addActionListener(new ActionListener() {

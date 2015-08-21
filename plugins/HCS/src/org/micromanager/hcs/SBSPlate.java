@@ -72,6 +72,7 @@ public class SBSPlate {
    public static final String SBS_96_WELL= "96WELL";
    public static final String SBS_384_WELL= "384WELL";
    public static final String SLIDE_HOLDER ="SLIDES";
+   public static final String IBIDI_24_WELL = "Ibidi-24WELL";
    public static final String DEFAULT_XYSTAGE_NAME = "XYStage";
    public static final String CUSTOM = "CUSTOM";
    private static final String METADATA_SITE_PREFIX = "Site";
@@ -203,6 +204,18 @@ public class SBSPlate {
          wellSizeX_ = 25600.0;
          wellSizeY_ = 75000.0;
          circular_ = false;
+      } else if (id.equals(IBIDI_24_WELL)) {
+          numColumns_ = 6;
+          numRows_ = 4;
+          sizeXUm_ = 127700.0;
+          sizeYUm_ = 85500.0;
+          wellSpacingX_ = 19000.0;
+          wellSpacingY_ = 19000.0;
+          firstWellX_ = 16350.0;
+          firstWellY_ = 14250.0;
+          wellSizeX_ = 15500.0;
+          wellSizeY_ = 15500.0;
+          circular_ = true;
       }
 
       try {
@@ -284,6 +297,8 @@ public class SBSPlate {
     * Generate a list of well positions using 'snake' pattern.
     * Takes a list of sites and merges them into the well list.
     * Site XY coordinates are assumed to be relative to the well center.
+    * @param xyStageName name of the XY stage used to generate these sites
+    * @param sites 
     * @return - an array of well positions
     */
    public WellPositionList[] generatePositions(String xyStageName, PositionList sites) {
@@ -548,10 +563,7 @@ public class SBSPlate {
    }
 
    boolean isPointWithin(double x, double y) {
-      if (x >= 0.0 && x < sizeXUm_ && y >= 0.0 && y < sizeYUm_)
-         return true;
-      else
-         return false;
+      return x >= 0.0 && x < sizeXUm_ && y >= 0.0 && y < sizeYUm_;
 
    }
 
