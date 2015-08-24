@@ -1,3 +1,18 @@
+///////////////////////////////////////////////////////////////////////////////
+//PROJECT:       Micro-Manager
+//-----------------------------------------------------------------------------
+//AUTHOR:        Mark Tsuchida, Chris Weisiger
+//COPYRIGHT:     University of California, San Francisco, 2006-2015
+//               100X Imaging Inc, www.100ximaging.com, 2008
+//LICENSE:       This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.internal.pipelineinterface;
 
 import com.google.common.eventbus.Subscribe;
@@ -7,6 +22,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -19,21 +37,26 @@ import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+
 import mmcorej.TaggedImage;
+
 import net.miginfocom.swing.MigLayout;
+
+import org.micromanager.data.ProcessorConfigurator;
+import org.micromanager.data.ProcessorFactory;
+import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
-import org.micromanager.DataProcessor;
+import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
-import org.micromanager.events.internal.DefaultEventManager;
-import org.micromanager.events.internal.ProcessorEvent;
+import org.micromanager.events.internal.NewPluginEvent;
 import org.micromanager.internal.utils.MMFrame;
 
 
 final public class PipelineFrame extends MMFrame
       implements ListSelectionListener {
 
-   private final Studio gui_;
+   private final Studio studio_;
    private final AcquisitionEngine engine_;
 
    private final JPopupMenu addProcessorPopup_;
@@ -45,9 +68,9 @@ final public class PipelineFrame extends MMFrame
    private final JButton moveUpButton_;
    private final JButton moveDownButton_;
 
-   public PipelineFrame(Studio gui, AcquisitionEngine engine) {
+   public PipelineFrame(Studio studio, AcquisitionEngine engine) {
       super("On-The-Fly Processor Pipeline");
-      gui_ = gui;
+      studio_ = studio;
       engine_ = engine;
 
       setLayout(new MigLayout("fill, flowy, insets dialog",
@@ -61,7 +84,7 @@ final public class PipelineFrame extends MMFrame
       add(new JLabel("<html><b>Camera</b></html>"), "split 2");
       add(new JLabel(downwardsArrow));
 
-      pipelineTable_ = new PipelineTable(gui_, engine_);
+      pipelineTable_ = new PipelineTable();
       pipelineTable_.setRowHeight(pipelineTable_.getRowHeight() * 2);
       pipelineTable_.getSelectionModel().addListSelectionListener(this);
 
@@ -98,7 +121,7 @@ final public class PipelineFrame extends MMFrame
       removeButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            removeSelectedProcessor();
+            removeSelectedConfigurator();
          }
       });
       add(removeButton_, "sizegroup btns");
@@ -109,7 +132,7 @@ final public class PipelineFrame extends MMFrame
       moveUpButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            moveSelectedProcessor(-1);
+            moveSelectedConfigurator(-1);
          }
       });
       add(moveUpButton_, "sizegroup btns");
@@ -120,7 +143,7 @@ final public class PipelineFrame extends MMFrame
       moveDownButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            moveSelectedProcessor(+1);
+            moveSelectedConfigurator(+1);
          }
       });
       add(moveDownButton_, "sizegroup btns, gapbottom push");
@@ -153,7 +176,7 @@ final public class PipelineFrame extends MMFrame
       
       this.loadAndRestorePosition(200, 200);
 
-      DefaultEventManager.getInstance().registerForEvents(this);
+      studio_.events().registerForEvents(this);
       reloadProcessors();
       updateEditButtonStatus(pipelineTable_.getSelectionModel());
    }
@@ -180,8 +203,10 @@ final public class PipelineFrame extends MMFrame
     * @param event
     */
    @Subscribe
-   public void newProcessorRegistered(ProcessorEvent event) {
-      reloadProcessors();
+   public void onNewPlugin(NewPluginEvent event) {
+      if (event.getPlugin() instanceof ProcessorPlugin) {
+         reloadProcessors();
+      }
    }
 
    /**
@@ -192,15 +217,17 @@ final public class PipelineFrame extends MMFrame
     * know about.
     */
    private void reloadProcessors() {
-      List<String> names = engine_.getSortedDataProcessorNames();
+      final HashMap<String, ProcessorPlugin> plugins = studio_.plugins().getProcessorPlugins();
+      ArrayList<String> names = new ArrayList<String>(plugins.keySet());
+      Collections.sort(names);
       addProcessorPopup_.removeAll();
       for (final String name : names) {
          Action addAction = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-               // This will fire change events, so we need not directly update
-               // our pipeline display.
-               engine_.makeProcessor(name, gui_);
+               getTableModel().addConfigurator(
+                     new ConfiguratorWrapper(plugins.get(name),
+                        plugins.get(name).createConfigurator(), name));
             }
          };
          addAction.putValue(Action.NAME, name);
@@ -208,35 +235,35 @@ final public class PipelineFrame extends MMFrame
       }
    }
 
-   private void removeSelectedProcessor() {
-      DataProcessor<TaggedImage> processor
-            = pipelineTable_.getSelectedProcessor();
-      gui_.compat().removeImageProcessor(processor);
+   // Convenience function to type-convert the table model for us.
+   private PipelineTableModel getTableModel() {
+      return (PipelineTableModel) pipelineTable_.getModel();
    }
 
-   private void moveSelectedProcessor(int offset) {
+   private void removeSelectedConfigurator() {
+      ConfiguratorWrapper configurator = pipelineTable_.getSelectedConfigurator();
+      getTableModel().removeConfigurator(configurator);
+   }
+
+   private void moveSelectedConfigurator(int offset) {
       int i = pipelineTable_.getSelectedRow();
-      moveProcessor(pipelineTable_.getSelectedProcessor(), offset);
+      getTableModel().moveConfigurator(pipelineTable_.getSelectedConfigurator(), offset);
       // Retain the selection
       pipelineTable_.getSelectionModel().
             setSelectionInterval(i + offset, i + offset);
    }
 
-   private void moveProcessor(DataProcessor<TaggedImage> processor,
-         int offset) {
-      List<DataProcessor<TaggedImage>> pipeline
-            = gui_.compat().getImageProcessorPipeline();
-      int oldIndex = pipeline.indexOf(processor);
-      if (oldIndex < 0) {
-         return;
+   /**
+    * Generate a list of ProcessorFactories based on the currently-enabled
+    * configurators and their settings.
+    */
+   public ArrayList<ProcessorFactory> getPipelineFactories() {
+      ArrayList<ConfiguratorWrapper> configs = getTableModel().getEnabledConfigurators();
+      ArrayList<ProcessorFactory> result = new ArrayList<ProcessorFactory>();
+      for (ConfiguratorWrapper config : configs) {
+         PropertyMap settings = config.getConfigurator().getSettings();
+         result.add(config.getPlugin().createFactory(settings));
       }
-
-      int newIndex = oldIndex + offset;
-      newIndex = Math.max(0, newIndex);
-      newIndex = Math.min(newIndex, pipeline.size() - 1);
-      pipeline.remove(oldIndex);
-      pipeline.add(newIndex, processor);
-
-      gui_.compat().setImageProcessorPipeline(pipeline);
+      return result;
    }
 }

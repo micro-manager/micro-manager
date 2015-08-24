@@ -373,7 +373,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
       // load (but do no show) the scriptPanel
       createScriptPanel();
       // Ditto with the image pipeline panel.
-      createPipelinePanel();
+      createPipelineFrame();
 
       // Create an instance of HotKeys so that they can be read in from prefs
       hotKeys_ = new org.micromanager.internal.utils.HotKeys();
@@ -456,7 +456,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
       org.micromanager.internal.diagnostics.gui.ProblemReportController.startIfInterruptedOnExit();
    }
 
-   public void showPipelinePanel() {
+   public void showPipelineFrame() {
       pipelineFrame_.setVisible(true);
    }
 
@@ -785,10 +785,14 @@ public class MMStudio implements Studio, CompatibilityInterface {
       scriptPanel_.setParentGUI(studio_);
    }
 
-   private void createPipelinePanel() {
+   private void createPipelineFrame() {
       if (pipelineFrame_ == null) {
          pipelineFrame_ = new PipelineFrame(studio_, engine_);
       }
+   }
+
+   public PipelineFrame getPipelineFrame() {
+      return pipelineFrame_;
    }
 
    public void updateXYPos(double x, double y) {

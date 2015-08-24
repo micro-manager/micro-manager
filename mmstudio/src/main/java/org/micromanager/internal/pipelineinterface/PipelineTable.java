@@ -1,3 +1,18 @@
+///////////////////////////////////////////////////////////////////////////////
+//PROJECT:       Micro-Manager
+//-----------------------------------------------------------------------------
+//AUTHOR:        Mark Tsuchida, Chris Weisiger
+//COPYRIGHT:     University of California, San Francisco, 2006-2015
+//               100X Imaging Inc, www.100ximaging.com, 2008
+//LICENSE:       This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.internal.pipelineinterface;
 
 import java.awt.Component;
@@ -14,12 +29,9 @@ import javax.swing.table.TableColumn;
 import mmcorej.TaggedImage;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
-import org.micromanager.DataProcessor;
 import org.micromanager.Studio;
 
 public class PipelineTable extends JTable {
-
-   private final Studio gui_;
 
    private static final String buttonCellLayoutConstraints =
          "fill, insets 0, align center center";
@@ -52,7 +64,7 @@ public class PipelineTable extends JTable {
 
       private final JPanel panel_ = new JPanel();
       private final JButton button_ = new JButton("Configure...");
-      private DataProcessor<TaggedImage> processor_;
+      private ConfiguratorWrapper configurator_;
 
       public ConfigureButtonCellEditor() {
          panel_.setLayout(new MigLayout(buttonCellLayoutConstraints));
@@ -62,14 +74,14 @@ public class PipelineTable extends JTable {
 
       @Override
       public void actionPerformed(ActionEvent e) {
-         processor_.makeConfigurationGUI();
+         configurator_.getConfigurator().showGUI();
          // Since the config GUI is modeless, we're immediately "done" editing.
          fireEditingStopped();
       }
 
       @Override
       public Object getCellEditorValue() {
-         return processor_;
+         return configurator_;
       }
 
       @Override
@@ -77,8 +89,8 @@ public class PipelineTable extends JTable {
             Object cellValue, boolean isSelected, int row, int column) {
 
          @SuppressWarnings("unchecked")
-         DataProcessor<TaggedImage> dataProcessor = (DataProcessor) cellValue;
-         processor_ = dataProcessor;
+         ConfiguratorWrapper configurator = (ConfiguratorWrapper) cellValue;
+         configurator_ = configurator;
 
          if (isSelected) {
             panel_.setBackground(table.getSelectionBackground());
@@ -90,15 +102,15 @@ public class PipelineTable extends JTable {
       }
    }
 
-   PipelineTable(Studio gui, AcquisitionEngine engine) {
-      super(new PipelineTableModel(engine));
-      gui_ = gui;
+   PipelineTable() {
+      super(new PipelineTableModel());
 
       setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-      setDefaultRenderer(DataProcessor.class,
+      setDefaultRenderer(ConfiguratorWrapper.class,
             new ConfigureButtonCellRenderer());
-      setDefaultEditor(DataProcessor.class, new ConfigureButtonCellEditor());
+      setDefaultEditor(ConfiguratorWrapper.class,
+            new ConfigureButtonCellEditor());
 
       TableColumn enabledColumn = getColumnModel().
             getColumn(PipelineTableModel.ENABLED_COLUMN);
@@ -106,13 +118,13 @@ public class PipelineTable extends JTable {
       enabledColumn.setMaxWidth(enabledColumn.getPreferredWidth());
    }
 
-   DataProcessor<TaggedImage> getSelectedProcessor() {
+   ConfiguratorWrapper getSelectedConfigurator() {
       int i = getSelectedRow();
       if (i >= 0) {
          Object cellValue = getModel().getValueAt(i,
                PipelineTableModel.CONFIGURE_COLUMN);
          @SuppressWarnings("unchecked")
-         DataProcessor<TaggedImage> processor = (DataProcessor) cellValue;
+         ConfiguratorWrapper processor = (ConfiguratorWrapper) cellValue;
          return processor;
       }
       return null;

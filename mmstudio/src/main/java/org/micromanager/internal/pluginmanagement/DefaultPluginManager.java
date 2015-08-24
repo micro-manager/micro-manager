@@ -30,6 +30,7 @@ import org.micromanager.PluginManager;
 import org.micromanager.MMPlugin;
 import org.micromanager.Studio;
 
+import org.micromanager.events.internal.NewPluginEvent;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public class DefaultPluginManager implements PluginManager {
@@ -82,12 +83,13 @@ public class DefaultPluginManager implements PluginManager {
       for (Class pluginClass : plugins) {
          try {
             MMPlugin plugin = (MMPlugin) pluginClass.newInstance();
-            ReportingUtils.logError("Found plugin " + plugin);
+            ReportingUtils.logDebugMessage("Found plugin " + plugin);
             plugin.setContext(studio_);
             // TODO: ideally this enumeration (and the similar enumeration in
             // the constructor) should not be needed.
             if (plugin instanceof ProcessorPlugin) {
                pluginTypeToPlugins_.get(ProcessorPlugin.class).add(plugin);
+               studio_.events().post(new NewPluginEvent(plugin));
             }
             else if (plugin instanceof OverlayPlugin) {
                pluginTypeToPlugins_.get(OverlayPlugin.class).add(plugin);

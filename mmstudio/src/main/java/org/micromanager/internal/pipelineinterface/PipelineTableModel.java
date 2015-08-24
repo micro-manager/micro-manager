@@ -1,51 +1,75 @@
+///////////////////////////////////////////////////////////////////////////////
+//PROJECT:       Micro-Manager
+//-----------------------------------------------------------------------------
+//AUTHOR:        Mark Tsuchida, Chris Weisiger
+//COPYRIGHT:     University of California, San Francisco, 2006-2015
+//               100X Imaging Inc, www.100ximaging.com, 2008
+//LICENSE:       This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.internal.pipelineinterface;
 
-import com.google.common.eventbus.Subscribe;
-import java.util.List;
+import java.util.ArrayList;
 import javax.swing.table.AbstractTableModel;
-import mmcorej.TaggedImage;
-import org.micromanager.acquisition.internal.AcquisitionEngine;
-import org.micromanager.DataProcessor;
-import org.micromanager.events.internal.DefaultEventManager;
-import org.micromanager.events.internal.PipelineEvent;
-import org.micromanager.events.internal.ProcessorEnabledEvent;
 
 
+// TODO: currently we redraw the entire table any time it changes, rather than
+// only redrawing the row(s) that are modified.
 public class PipelineTableModel extends AbstractTableModel {
    static final int ENABLED_COLUMN = 0;
    static final int NAME_COLUMN = 1;
    static final int CONFIGURE_COLUMN = 2;
    private static final int NUM_COLUMNS = 3;
+   private ArrayList<ConfiguratorWrapper> pipelineConfigs_;
 
-   private final AcquisitionEngine engine_;
-   private List<DataProcessor<TaggedImage>> pipeline_;
-
-   PipelineTableModel(AcquisitionEngine engine) {
-      engine_ = engine;
-      pipeline_ = engine_.getImageProcessorPipeline();
-      DefaultEventManager.getInstance().registerForEvents(this);
+   PipelineTableModel() {
+      pipelineConfigs_ = new ArrayList<ConfiguratorWrapper>();
    }
 
-   @Subscribe
-   public void pipelineChanged(PipelineEvent event) {
-      pipeline_ = event.getPipeline();
-      // It is not ideal that we redraw the entire table, but since we don't
-      // (yet) have a way to receive insert/delete information as events, it
-      // is the simplest thing to do at the moment.
+   public void addConfigurator(ConfiguratorWrapper configurator) {
+      pipelineConfigs_.add(configurator);
       fireTableDataChanged();
    }
 
-   @Subscribe
-   public void processorEnabledChanged(ProcessorEnabledEvent event) {
-      int i = pipeline_.indexOf(event.getProcessor());
-      if (i >= 0) {
-         fireTableCellUpdated(i, ENABLED_COLUMN);
+   public void removeConfigurator(ConfiguratorWrapper configurator) {
+      pipelineConfigs_.remove(configurator);
+      fireTableDataChanged();
+   }
+
+   public void moveConfigurator(ConfiguratorWrapper configurator,
+         int offset) {
+      int oldIndex = pipelineConfigs_.indexOf(configurator);
+      if (oldIndex < 0) {
+         return;
       }
+
+      int newIndex = oldIndex + offset;
+      newIndex = Math.max(0, newIndex);
+      newIndex = Math.min(newIndex, pipelineConfigs_.size() - 1);
+      pipelineConfigs_.remove(configurator);
+      pipelineConfigs_.add(newIndex, configurator);
+      fireTableDataChanged();
+   }
+
+   public ArrayList<ConfiguratorWrapper> getEnabledConfigurators() {
+      ArrayList<ConfiguratorWrapper> result = new ArrayList<ConfiguratorWrapper>();
+      for (ConfiguratorWrapper config : pipelineConfigs_) {
+         if (config.getIsEnabled()) {
+            result.add(config);
+         }
+      }
+      return result;
    }
 
    @Override
    public int getRowCount() {
-      return pipeline_.size();
+      return pipelineConfigs_.size();
    }
 
    @Override
@@ -61,7 +85,7 @@ public class PipelineTableModel extends AbstractTableModel {
          case NAME_COLUMN:
             return String.class;
          case CONFIGURE_COLUMN:
-            return DataProcessor.class;
+            return ConfiguratorWrapper.class;
       }
       return Object.class;
    }
@@ -93,11 +117,11 @@ public class PipelineTableModel extends AbstractTableModel {
    public Object getValueAt(int row, int column) {
       switch (column) {
          case ENABLED_COLUMN:
-            return pipeline_.get(row).getIsEnabled();
+            return pipelineConfigs_.get(row).getIsEnabled();
          case NAME_COLUMN:
-            return getProcessorName(pipeline_.get(row));
+            return pipelineConfigs_.get(row).getName();
          case CONFIGURE_COLUMN:
-            return pipeline_.get(row);
+            return pipelineConfigs_.get(row);
       }
       return null;
    }
@@ -106,14 +130,7 @@ public class PipelineTableModel extends AbstractTableModel {
    public void setValueAt(Object value, int row, int column) {
       if (column == ENABLED_COLUMN) {
          boolean enabled = (Boolean) value;
-         pipeline_.get(row).setEnabled(enabled);
+         pipelineConfigs_.get(row).setIsEnabled(enabled);
       }
-   }
-
-   private String getProcessorName(DataProcessor<TaggedImage> processor) {
-      @SuppressWarnings("unchecked")
-      Class<? extends DataProcessor<TaggedImage>> procCls
-            = (Class) processor.getClass();
-      return engine_.getNameForProcessorClass(procCls);
    }
 }

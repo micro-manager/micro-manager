@@ -177,9 +177,11 @@ public class DefaultDataManager implements DataManager {
    }
 
    @Override
-   public Pipeline copyApplicationPipeline() {
-      ReportingUtils.logError("TODO: Implement copyApplicationPipeline");
-      return null;
+   public Pipeline copyApplicationPipeline(Datastore store,
+         boolean isSynchronous) {
+      return createPipeline(
+            MMStudio.getInstance().getPipelineFrame().getPipelineFactories(),
+            store, isSynchronous);
    }
 
    @Override
