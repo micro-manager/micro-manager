@@ -24,7 +24,6 @@ import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.data.ProcessorFactory;
 
-import org.micromanager.MMPlugin;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 
