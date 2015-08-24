@@ -241,6 +241,15 @@ public interface DataManager {
          boolean isSynchronous);
 
    /**
+    * Add a new instance of the given ProcessorPlugin to the current
+    * application image processing pipeline (as referenced in the
+    * "Plugins -> On-The-Fly Image Processing" menu). The Pipeline
+    * configuration window will be opened if it is not already open. The new
+    * processor will be inserted onto the end of the pipeline.
+    */
+   public void addAndConfigureProcessor(ProcessorPlugin plugin);
+
+   /**
     * Provide access to the ImageJConverter() object.
     * @return An implementation of the ImageJConverter interface.
     */

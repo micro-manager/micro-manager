@@ -18,16 +18,21 @@
 //
 package org.micromanager.internal.pluginmanagement;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 
 import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.display.OverlayPlugin;
-import org.micromanager.PluginManager;
+import org.micromanager.MenuPlugin;
 import org.micromanager.MMPlugin;
+import org.micromanager.PluginManager;
 import org.micromanager.Studio;
 
 import org.micromanager.events.internal.NewPluginEvent;
@@ -36,14 +41,21 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class DefaultPluginManager implements PluginManager {
 
    private Studio studio_;
-   private JMenuBar menuBar_;
+   private JMenu menu_;
    private Thread loadingThread_;
 
    private HashMap<Class, ArrayList<MMPlugin>> pluginTypeToPlugins_;
 
+   // Maps plugin submenu headers to the submenus themselves.
+   private HashMap<String, JMenu> subMenus_;
+
    public DefaultPluginManager(Studio studio, JMenuBar menuBar) {
       studio_ = studio;
-      menuBar_ = menuBar;
+      menu_ = new JMenu("Plugins");
+      menuBar.add(menu_);
+
+      subMenus_ = new HashMap<String, JMenu>();
+
       pluginTypeToPlugins_ = new HashMap<Class, ArrayList<MMPlugin>>();
       pluginTypeToPlugins_.put(ProcessorPlugin.class,
             new ArrayList<MMPlugin>());
@@ -84,16 +96,7 @@ public class DefaultPluginManager implements PluginManager {
          try {
             MMPlugin plugin = (MMPlugin) pluginClass.newInstance();
             ReportingUtils.logDebugMessage("Found plugin " + plugin);
-            plugin.setContext(studio_);
-            // TODO: ideally this enumeration (and the similar enumeration in
-            // the constructor) should not be needed.
-            if (plugin instanceof ProcessorPlugin) {
-               pluginTypeToPlugins_.get(ProcessorPlugin.class).add(plugin);
-               studio_.events().post(new NewPluginEvent(plugin));
-            }
-            else if (plugin instanceof OverlayPlugin) {
-               pluginTypeToPlugins_.get(OverlayPlugin.class).add(plugin);
-            }
+            addPlugin(plugin);
          }
          catch (InstantiationException e) {
             ReportingUtils.logError(e, "Error instantiating plugin class " + pluginClass);
@@ -102,6 +105,76 @@ public class DefaultPluginManager implements PluginManager {
             ReportingUtils.logError(e, "Access exception instantiating plugin class " + pluginClass);
          }
       }
+   }
+
+   /**
+    * Load the provided plugin. We set its context, add it to our
+    * pluginTypeToPlugins_ map, insert it into a submenu if appropriate,
+    * and post a NewPluginEvent.
+    */
+   private void addPlugin(final MMPlugin plugin) {
+      plugin.setContext(studio_);
+      // TODO: ideally this enumeration (and the similar enumeration in
+      // the constructor) should not be needed.
+      if (plugin instanceof ProcessorPlugin) {
+         pluginTypeToPlugins_.get(ProcessorPlugin.class).add(plugin);
+         // Add it to the "On-the-fly image processing" plugin menu.
+         addProcessorPluginToMenu((ProcessorPlugin) plugin);
+      }
+      else if (plugin instanceof OverlayPlugin) {
+         pluginTypeToPlugins_.get(OverlayPlugin.class).add(plugin);
+      }
+      if (plugin instanceof MenuPlugin) {
+         // Add it to the menu.
+         addSubMenuItem(((MenuPlugin) plugin).getSubMenu(),
+               plugin.getName(),
+               new Runnable() {
+                  @Override
+                  public void run() {
+                     ((MenuPlugin) plugin).onPluginSelected();
+                  }
+               }
+         );
+      }
+      studio_.events().post(new NewPluginEvent(plugin));
+   }
+
+   /**
+    * Create a new item in the specified submenu of the Plugins menu.
+    */
+   private void addSubMenuItem(String subMenu, String title,
+         final Runnable selectAction) {
+      JMenuItem item = new JMenuItem(title);
+      item.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            selectAction.run();
+         }
+      });
+      if (!subMenus_.containsKey(subMenu)) {
+         // Create a new menu.
+         JMenu menu = new JMenu(subMenu);
+         menu_.add(menu);
+         subMenus_.put(subMenu, menu);
+      }
+      subMenus_.get(subMenu).add(item);
+   }
+
+   /**
+    * Add a new ProcessorPlugin entry in the Plugins menu. ProcessorPlugins,
+    * when selected, will bring up the Pipeline window and add the processor
+    * to the current pipeline.
+    */
+   private void addProcessorPluginToMenu(final ProcessorPlugin plugin) {
+      addSubMenuItem("On-The-Fly Image Processing",
+            plugin.getName(),
+            new Runnable() {
+               @Override
+               public void run() {
+                  studio_.data().addAndConfigureProcessor(plugin);
+               }
+            }
+      );
    }
 
    @Override

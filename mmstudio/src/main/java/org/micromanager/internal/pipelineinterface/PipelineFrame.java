@@ -254,6 +254,17 @@ final public class PipelineFrame extends MMFrame
    }
 
    /**
+    * Add a new entry to the list of processors.
+    */
+   public void addAndConfigureProcessor(ProcessorPlugin plugin) {
+      ProcessorConfigurator configurator = plugin.createConfigurator();
+      getTableModel().addConfigurator(new ConfiguratorWrapper(plugin,
+            configurator, plugin.getName()));
+      setVisible(true);
+      configurator.showGUI();
+   }
+
+   /**
     * Generate a list of ProcessorFactories based on the currently-enabled
     * configurators and their settings.
     */
