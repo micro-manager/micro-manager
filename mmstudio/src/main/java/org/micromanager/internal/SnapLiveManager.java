@@ -273,6 +273,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       store_ = new DefaultDatastore();
       store_.registerForEvents(this);
       store_.setStorage(new StorageRAM(store_));
+      pipeline_.halt();
       pipeline_ = studio_.data().copyApplicationPipeline(store_, true);
    }
 
@@ -509,6 +510,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    @Subscribe
    public void onPipelineChanged(PipelineEvent event) {
       // New pipeline means we need to replace our old one.
+      pipeline_.halt();
       pipeline_ = studio_.data().createPipeline(
             event.getPipelineFactories(), store_, true);
    }
