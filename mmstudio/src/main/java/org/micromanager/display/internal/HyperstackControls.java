@@ -274,7 +274,6 @@ public class HyperstackControls extends JPanel {
                displayUpdates_ / deltaSec);
       }
       fpsLabel_.setText(newLabel);
-      validate();
       msSinceLastFPSUpdate_ = System.currentTimeMillis();
       imagesReceived_ = 0;
       displayUpdates_ = 0;
