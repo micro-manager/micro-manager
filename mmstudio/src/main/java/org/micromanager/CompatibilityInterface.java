@@ -294,42 +294,6 @@ public interface CompatibilityInterface {
    public boolean getHideMDADisplayOption();
    
    /**
-    * Adds an image processor to the DataProcessor pipeline.
-    * @param processor the processor to be added to the DataProcessor pipeline
-    */
-   public void addImageProcessor(DataProcessor<TaggedImage> processor);
-
-   /**
-    * Removes an image processor from the DataProcessor pipeline.
-    * @param taggedImageProcessor processor to be removed from the pipeline
-    */
-   public void removeImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor);
-
-   /**
-    * Retrieve a copy of the current DataProcessor pipeline.
-    * @return copy of the current DataProcessor pieline
-    */
-   public List<DataProcessor<TaggedImage>> getImageProcessorPipeline();
-
-   /**
-    * Replace the current DataProcessor pipeline with the provided one.
-    * @param pipeline pipeline that will be used from now on
-    */
-   public void setImageProcessorPipeline(List<DataProcessor<TaggedImage>> pipeline);
-
-   /**
-    * Register a new DataProcessor class with the Acquisition Engine. For
-    * example, if your processor class is named MyProcessor, then you would
-    * call this function as:
-    * gui.registerProcessorClass(MyProcessor.class, "My Processor");
-    * TODO: Explain what one achieves by registering a processor
-    * @param processorClass processor to be registered
-    * @param name name displayed to the user for this class
-    */
-   public void registerProcessorClass(Class<? extends DataProcessor<TaggedImage>> 
-           processorClass, String name);
-   
-   /**
     * Pause/Unpause a running acquisition
     * @param state true if paused, false if no longer paused
     */

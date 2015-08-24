@@ -20,14 +20,13 @@ import mmcorej.TaggedImage;
 
 import org.json.JSONObject;
 import org.micromanager.data.Datastore;
-import org.micromanager.DataProcessor;
+import org.micromanager.data.Pipeline;
 import org.micromanager.IAcquisitionEngine2010;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.SequenceSettings;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.PipelineEvent;
-import org.micromanager.events.internal.ProcessorEvent;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.utils.AcqOrderMode;
@@ -64,8 +63,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private int acqOrderMode_;
    private boolean useAutoFocus_;
    private int afSkipInterval_;
-   protected HashMap<String, Class<? extends DataProcessor<TaggedImage>>> nameToProcessorClass_;
-   protected List<DataProcessor<TaggedImage>> taggedImageProcessors_;
    private boolean absoluteZ_;
    private IAcquisitionEngine2010 acquisitionEngine2010;
    private ArrayList<Double> customTimeIntervalsMs_;
@@ -74,8 +71,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private ArrayList<AcqSettingsListener> settingsListeners_;
 
    public AcquisitionWrapperEngine() {
-      nameToProcessorClass_ = new HashMap<String, Class<? extends DataProcessor<TaggedImage>>>();
-      taggedImageProcessors_ = new ArrayList<DataProcessor<TaggedImage>>();
       useCustomIntervals_ = false;
       settingsListeners_ = new ArrayList<AcqSettingsListener>();
    }
@@ -142,18 +137,16 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
                  studio_.getAutofocusManager().getDevice());
          summaryMetadata_ = getAcquisitionEngine2010().getSummaryMetadata();
 
-         // Run the Acquisition Engine output through a pipeline of ImageProcessors
-         BlockingQueue<TaggedImage> procStackOutputQueue = ProcessorStack.run(
-                 engineOutputQueue, taggedImageProcessors_);
-
          MMAcquisition acq = new MMAcquisition("Acq",
                  summaryMetadata_, acquisitionSettings.save, this,
                  !AcqControlDlg.getShouldHideMDADisplay());
          Datastore store = acq.getDatastore();
+         Pipeline pipeline = studio_.data().copyApplicationPipeline(store,
+               false);
 
-         // Start pumping processed images into the ImageCache
+         // Start pumping images through the pipeline and into the datastore.
          DefaultTaggedImageSink sink = new DefaultTaggedImageSink(
-                 procStackOutputQueue, store);
+                 engineOutputQueue, pipeline);
          sink.start(new Runnable() {
             @Override
             public void run() {
@@ -258,103 +251,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
          return "";
-      }
-   }
-
-   @Override
-   public void addImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor) {
-      if (!taggedImageProcessors_.contains(taggedImageProcessor)) {
-         taggedImageProcessors_.add(taggedImageProcessor);
-         DefaultEventManager.getInstance().post(
-               new PipelineEvent(taggedImageProcessors_));
-      }
-   }
-
-   @Override
-   public void removeImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor) {
-      taggedImageProcessors_.remove(taggedImageProcessor);
-      taggedImageProcessor.dispose();
-      DefaultEventManager.getInstance().post(
-            new PipelineEvent(taggedImageProcessors_));
-   }
-
-   @Override
-   public void setImageProcessorPipeline(List<DataProcessor<TaggedImage>> pipeline) {
-      taggedImageProcessors_.clear();
-      taggedImageProcessors_.addAll(pipeline);
-      DefaultEventManager.getInstance().post(
-            new PipelineEvent(taggedImageProcessors_));
-   }
-
-   @Override
-   public ArrayList<DataProcessor<TaggedImage>> getImageProcessorPipeline() {
-      return new ArrayList<DataProcessor<TaggedImage>>(taggedImageProcessors_);
-   }
-
-   @Override
-   public void registerProcessorClass(Class<? extends DataProcessor<TaggedImage>> processorClass, String name) {
-      if (nameToProcessorClass_.get(name) != null) {
-         ReportingUtils.logError("Tried to register an additional DataProcessor under the name \"" + name + "\"; ignoring it.");
-      }
-      else {
-         nameToProcessorClass_.put(name, processorClass);
-         // Post an event informing listeners that there's a newly-registered
-         // DataProcessor class.
-         DefaultEventManager.getInstance().post(
-               new ProcessorEvent(name, processorClass));
-      }
-   }
-
-   @Override
-   public List<String> getSortedDataProcessorNames() {
-      Set<String> keys = nameToProcessorClass_.keySet();
-      ArrayList<String> sortedKeys = new ArrayList<String>();
-      sortedKeys.addAll(keys);
-      Collections.sort(sortedKeys);
-      return sortedKeys;
-   }
-
-   @Override
-   public DataProcessor<TaggedImage> makeProcessor(String name, Studio gui) {
-      Class<? extends DataProcessor<TaggedImage>> processorClass = nameToProcessorClass_.get(name);
-      DataProcessor<TaggedImage> newProcessor;
-      try {
-         newProcessor = processorClass.newInstance();
-         newProcessor.setApp(gui);
-         addImageProcessor(newProcessor);
-      }
-      catch (Exception ex) {
-         ReportingUtils.logError("Failed to create processor " + name + " mapped to class " + processorClass + ": " + ex);
-         newProcessor = null;
-      }
-      return newProcessor;
-   }
-
-   @Override
-   public DataProcessor<TaggedImage> getProcessorRegisteredAs(String name) {
-      Class<? extends DataProcessor<TaggedImage>> processorClass = nameToProcessorClass_.get(name);
-      for (DataProcessor<TaggedImage> processor : taggedImageProcessors_) {
-         if (processor.getClass() == processorClass) {
-            return processor;
-         }
-      }
-      return null;
-   }
-
-   @Override
-   public String getNameForProcessorClass(Class<? extends DataProcessor<TaggedImage>> processorClass) {
-      for (String name : nameToProcessorClass_.keySet()) {
-         if (nameToProcessorClass_.get(name) == processorClass) {
-            return name;
-         }
-      }
-      return null;
-   }
-
-   @Override
-   public void disposeProcessors() {
-      for (DataProcessor<TaggedImage> processor : taggedImageProcessors_) {
-         processor.dispose();
       }
    }
 
@@ -1145,14 +1041,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
       }
       return true;
-   }
-
-   /**
-    * @return the taggedImageProcessors_
-    */
-    @Override
-   public List<DataProcessor<TaggedImage>> getImageProcessors() {
-      return taggedImageProcessors_;
    }
 
    @Override

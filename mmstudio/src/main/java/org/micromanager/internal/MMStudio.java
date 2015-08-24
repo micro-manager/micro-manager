@@ -1110,7 +1110,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       
       if (engine_ != null) {
          engine_.shutdown();
-         engine_.disposeProcessors();
       }
 
       synchronized (shutdownLock_) {
@@ -1626,33 +1625,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       }
    }
    
-   @Override
-   public void addImageProcessor(DataProcessor<TaggedImage> processor) {
-      getAcquisitionEngine().addImageProcessor(processor);
-   }
-
-   @Override
-   public void removeImageProcessor(DataProcessor<TaggedImage> processor) {
-      getAcquisitionEngine().removeImageProcessor(processor);
-   }
-
-   @Override
-   public ArrayList<DataProcessor<TaggedImage>> getImageProcessorPipeline() {
-      return getAcquisitionEngine().getImageProcessorPipeline();
-   }
-
-   @Override
-   public void registerProcessorClass(Class<? extends DataProcessor<TaggedImage>> processorClass, String name) {
-      getAcquisitionEngine().registerProcessorClass(processorClass, name);
-   }
-
-   // NB will need @Override tags once these functions are exposed in the 
-   // Studio.
-   @Override
-   public void setImageProcessorPipeline(List<DataProcessor<TaggedImage>> pipeline) {
-      getAcquisitionEngine().setImageProcessorPipeline(pipeline);
-   }
-
    @Override
    public void setPause(boolean state) {
 	   getAcquisitionEngine().setPause(state);

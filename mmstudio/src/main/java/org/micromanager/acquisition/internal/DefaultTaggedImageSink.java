@@ -6,27 +6,32 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import mmcorej.TaggedImage;
 import org.micromanager.data.Datastore;
+import org.micromanager.data.Image;
 import org.micromanager.data.internal.DefaultImage;
+import org.micromanager.data.Pipeline;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * This object spawns a new thread that receives images from the acquisition
- * engine and sticks them into a Datastore. It's also responsible for posting
- * the AcquisitionEndedEvent, which it recognizes when it receives the
- * TaggedImageQueue.POISON object.
+ * engine and runs them through a Pipeline to the Datastore. It's also
+ * responsible for posting the AcquisitionEndedEvent, which it recognizes when
+ * it receives the TaggedImageQueue.POISON object.
+ * Functionally this is just glue code between the old acquisition engine and
+ * the 2.0 API.
  *
- * @author arthur
+ * @author arthur, modified by Chris Weisiger
  */
 public class DefaultTaggedImageSink  {
 
    private final BlockingQueue<TaggedImage> imageProducingQueue_;
    private Datastore store_;
+   private Pipeline pipeline_;
 
-   public DefaultTaggedImageSink(
-         BlockingQueue<TaggedImage> imageProducingQueue, Datastore store) {
-      imageProducingQueue_ = imageProducingQueue;
-      store_ = store;
+   public DefaultTaggedImageSink(BlockingQueue<TaggedImage> queue,
+         Pipeline pipeline) {
+      imageProducingQueue_ = queue;
+      pipeline_ = pipeline;
    }
 
    public void start() {
@@ -36,7 +41,7 @@ public class DefaultTaggedImageSink  {
    // sinkFullCallback is a way to stop production of images when/if the sink
    // can no longer accept images.
    public void start(final Runnable sinkFullCallback) {
-      Thread savingThread = new Thread("TaggedImage sink thread for " + store_.hashCode()) {
+      Thread savingThread = new Thread("TaggedImage sink thread") {
 
          @Override
          public void run() {
@@ -55,7 +60,9 @@ public class DefaultTaggedImageSink  {
                      ++imageCount;
                      DefaultImage image = new DefaultImage(tagged);
                      try {
-                        image.splitMultiComponentIntoStore(store_);
+                        for (Image subImage : image.splitMultiComponent()) {
+                           pipeline_.insertImage(subImage);
+                        }
                      }
                      catch (OutOfMemoryError e) {
                         handleOutOfMemory(e, sinkFullCallback);
@@ -68,7 +75,6 @@ public class DefaultTaggedImageSink  {
             }
             long t2 = System.currentTimeMillis();
             ReportingUtils.logMessage(imageCount + " images stored in " + (t2 - t1) + " ms.");
-//            store_.lock();
          }
       };
       savingThread.start();

@@ -266,4 +266,10 @@ final public class PipelineFrame extends MMFrame
       }
       return result;
    }
+
+   @Override
+   public void dispose() {
+      super.dispose();
+      getTableModel().cleanup();
+   }
 }

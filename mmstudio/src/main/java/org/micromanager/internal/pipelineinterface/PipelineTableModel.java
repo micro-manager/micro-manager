@@ -133,4 +133,13 @@ public class PipelineTableModel extends AbstractTableModel {
          pipelineConfigs_.get(row).setIsEnabled(enabled);
       }
    }
+
+   /**
+    * Remove all extant configurator GUIs.
+    */
+   public void cleanup() {
+      for (ConfiguratorWrapper config : pipelineConfigs_) {
+         config.getConfigurator().cleanup();
+      }
+   }
 }
