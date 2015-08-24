@@ -107,6 +107,7 @@ class DiskoveryCommander
       int GetFilterWButtonName(uint16_t pos);
       int GetFilterTButtonName(uint16_t pos);
       int GetDiskButtonName(uint16_t pos);
+      int SendTIRFGOTO();
 
    private:
       inline int SendCommand(const char* command);
@@ -245,12 +246,12 @@ class DiskoveryStateDev : public CStateDeviceBase<DiskoveryStateDev>
 
 
    private:
-      void calculatePrismPositions(double& lin, double& rot);
       uint16_t numPos_;
       uint16_t firstPos_;
       long wavelength1_, wavelength2_;
       double tubeLensFocalLength_, depth_, na_, ri_;
       bool exitTIRF_;
+      std::vector<uint16_t> irisValues_;
 
       std::string devName_;
       DevType devType_;

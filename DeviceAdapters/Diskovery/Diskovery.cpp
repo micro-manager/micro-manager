@@ -266,7 +266,7 @@ MM::DeviceDetectionStatus DiskoveryHub::DetectDevice(void )
          GetCoreCallback()->GetDeviceProperty(port_.c_str(), "AnswerTimeout", answerTO);
 
          // device specific default communication parameters
-         GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_Handshaking, "Off");
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_Handshaking, "Hardware");
          GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_BaudRate, "115200" );
          GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_StopBits, "1");
          GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", "100.0");
@@ -286,7 +286,6 @@ MM::DeviceDetectionStatus DiskoveryHub::DetectDevice(void )
             // so that the logs will not overflow with errors
             GetCoreCallback()->SetDeviceProperty(port_.c_str(), 
                   "AnswerTimeout", "6000");
-            // TODO: detected the devices behind this hub
          } else
          {
             GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", answerTO);
@@ -527,6 +526,12 @@ int DiskoveryStateDev::Initialize()
       } else if (devType_ == IRIS) 
       {
          label = hub_->GetModel()->GetButtonIrisLabel(i + firstPos_);
+         uint16_t val;
+         std::stringstream ss;
+         std::string strLabel(label);
+         ss << strLabel.substr(0, strLabel.size() - 1);
+         ss >> val;
+         irisValues_.push_back(val);
       } else if (devType_ == FILTERW) 
       {
          label = hub_->GetModel()->GetButtonFilterWLabel(i + firstPos_);
@@ -578,16 +583,18 @@ int DiskoveryStateDev::Initialize()
     {
        pAct = new CPropertyAction(this, &DiskoveryStateDev::OnPositionRot);
        RETURN_ON_MM_ERROR(  CreateProperty("PositionRot", "0", MM::Integer, false, pAct)) ;
-       RETURN_ON_MM_ERROR( SetPropertyLimits("PositionRot", 0, 900) );
+       RETURN_ON_MM_ERROR( SetPropertyLimits("PositionRot", 
+                hub_->GetModel()->GetMinRotation(), hub_->GetModel()->GetMaxRotation()) );
        pAct = new CPropertyAction(this, &DiskoveryStateDev::OnPositionLin);
-       RETURN_ON_MM_ERROR ( CreateProperty("Position Lin", "0", MM::Integer, false, pAct) );
-       RETURN_ON_MM_ERROR ( SetPropertyLimits("Position Lin", 0, 7600) );
+       RETURN_ON_MM_ERROR ( CreateProperty("PositionLin", "0", MM::Integer, false, pAct) );
+       RETURN_ON_MM_ERROR ( SetPropertyLimits("PositionLin", 
+                hub_->GetModel()->GetMinLinear(), hub_->GetModel()->GetMaxLinear()) );
        pAct = new CPropertyAction(this, &DiskoveryStateDev::OnWavelength1);
        RETURN_ON_MM_ERROR ( CreateIntegerProperty("Wavelength1", 0, false, pAct) );
        pAct = new CPropertyAction(this, &DiskoveryStateDev::OnWavelength2);
        RETURN_ON_MM_ERROR ( CreateIntegerProperty("Wavelength2", 0, false, pAct) );
-       AddAllowedValue("Wavelength1", CDeviceUtils::ConvertToString(0));
        AddAllowedValue("Wavelength2", CDeviceUtils::ConvertToString(0));
+       bool wavelengthSet = false;
        for (uint16_t i = 0; i < 7; i++) 
        {
           if (hub_->GetModel()->GetLineEnabled(i)) 
@@ -595,6 +602,12 @@ int DiskoveryStateDev::Initialize()
              uint16_t wavelength = hub_->GetModel()->GetLineWavelength(i);
              const char* val = CDeviceUtils::ConvertToString(wavelength);
              AddAllowedValue("Wavelength1", val);
+             // Set Wavelength1 to the first possible wavelength, leave #2 at 0
+             if (!wavelengthSet)
+             {
+                SetProperty("Wavelength1", val);
+                wavelengthSet = true;
+             }
              AddAllowedValue("Wavelength2", val);
           }
        }
@@ -603,8 +616,8 @@ int DiskoveryStateDev::Initialize()
        AddAllowedValue("ExitTIRF", "No");
        AddAllowedValue("ExitTIRF", "Yes");
        pAct = new CPropertyAction(this, &DiskoveryStateDev::OnDepth);
-       RETURN_ON_MM_ERROR ( CreateFloatProperty("TIRF Depth", depth_, false, pAct) );
-       RETURN_ON_MM_ERROR ( SetPropertyLimits("TIRF Depth", 50, 1000) );
+       RETURN_ON_MM_ERROR ( CreateFloatProperty("TIRFDepth", depth_, false, pAct) );
+       RETURN_ON_MM_ERROR ( SetPropertyLimits("TIRFDepth", 0.0, 1000.0) );
        pAct = new CPropertyAction(this, &DiskoveryStateDev::OnNA);
        RETURN_ON_MM_ERROR ( CreateFloatProperty("Num. Ap.", na_, false, pAct) );
        RETURN_ON_MM_ERROR ( SetPropertyLimits("Num. Ap.", 1.40, 1.49) );
@@ -627,6 +640,8 @@ int DiskoveryStateDev::Initialize()
    else if (devType_ == FILTERT)
       hub_->RegisterFILTERTDevice(this);
 
+   initialized_ = true;
+
    return DEVICE_OK;
 }
 
@@ -639,28 +654,6 @@ bool DiskoveryStateDev::Busy()
    return false;
 }
 
-void DiskoveryStateDev::calculatePrismPositions(double& lin, double& rot)
-{
-   int nrWavelengths = 0;
-   if (wavelength1_ != 0)
-      nrWavelengths++;
-   if (wavelength2_ != 0)
-      nrWavelengths++;
-
-   DiskoveryModel* model = hub_->GetModel();
-   int objectiveMag = 100;
-   std::string objectiveLabel = model->GetButtonIrisLabel(model->GetPresetIris());
-   objectiveMag = atoi( objectiveLabel.substr(0, objectiveLabel.size() - 1).c_str()); 
-
-   double magFactor = tubeLensFocalLength_ / model->GetTIRFFocalLength();
-   double radialMaxBOA = (tubeLensFocalLength_ / objectiveMag) * na_;
-
-   if (nrWavelengths == 1)
-   {
-
-   }
-
-}
 
 int DiskoveryStateDev::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -746,7 +739,6 @@ int DiskoveryStateDev::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-
 int DiskoveryStateDev::OnPositionRot(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
@@ -766,7 +758,8 @@ int DiskoveryStateDev::OnPositionLin(MM::PropertyBase* pProp, MM::ActionType eAc
 {
    if (eAct == MM::BeforeGet)
    {
-      pProp->Set( (long) (hub_->GetModel()->GetPositionLin() ) );
+      long pos = hub_->GetModel()->GetPositionLin();
+      pProp->Set( pos );
    }
    else if (eAct == MM::AfterSet)
    {
@@ -786,6 +779,9 @@ int DiskoveryStateDev::OnWavelength1(MM::PropertyBase* pProp, MM::ActionType eAc
    else if (eAct == MM::AfterSet)
    {
       pProp->Get( wavelength1_);
+      hub_->GetModel()->SetTIRFWavelength1(wavelength1_);
+      if (initialized_)
+         hub_->GetCommander()->SendTIRFGOTO();
    }
    return DEVICE_OK;
 }
@@ -799,6 +795,9 @@ int DiskoveryStateDev::OnWavelength2(MM::PropertyBase* pProp, MM::ActionType eAc
    else if (eAct == MM::AfterSet)
    {
       pProp->Get( wavelength2_);
+      hub_->GetModel()->SetTIRFWavelength2(wavelength2_);
+      if (initialized_)
+         hub_->GetCommander()->SendTIRFGOTO();
    }
    return DEVICE_OK;
 }
@@ -817,6 +816,8 @@ int DiskoveryStateDev::OnTubeLensFocalLength(MM::PropertyBase* pProp, MM::Action
          tubeLensFocalLength_ = 180;
       else if (tubeLens == g_Zeiss)
          tubeLensFocalLength_ = 150;
+
+      hub_->GetModel()->SetTubeLensFocalLength(tubeLensFocalLength_);
    }
    return DEVICE_OK;
 }
@@ -825,6 +826,7 @@ int DiskoveryStateDev::OnExitTIRF(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
+      exitTIRF_ = hub_->GetModel()->GetExitTIRF();
       std::string msg = "No";
       if (exitTIRF_)
          msg = "Yes";
@@ -838,6 +840,9 @@ int DiskoveryStateDev::OnExitTIRF(MM::PropertyBase* pProp, MM::ActionType eAct)
          exitTIRF_ = true;
       else
          exitTIRF_ = false;
+      hub_->GetModel()->SetExitTIRF(exitTIRF_);
+      if (initialized_)
+         hub_->GetCommander()->SendTIRFGOTO();
    }
    return DEVICE_OK;
 }
@@ -846,11 +851,15 @@ int DiskoveryStateDev::OnDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
+      depth_ = hub_->GetModel()->GetDepth();
       pProp->Set( depth_ );
    }
    else if (eAct == MM::AfterSet)
    {
-      pProp->Get( depth_);
+      pProp->Get( depth_ );
+      hub_->GetModel()->SetDepth( depth_ );
+      if (initialized_)
+         hub_->GetCommander()->SendTIRFGOTO();
    }
    return DEVICE_OK;
 }
@@ -859,11 +868,15 @@ int DiskoveryStateDev::OnNA(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
+      na_ = hub_->GetModel()->GetNA();
       pProp->Set( na_ );
    }
    else if (eAct == MM::AfterSet)
    {
       pProp->Get( na_);
+      hub_->GetModel()->SetNA(na_);
+      if (initialized_)
+         hub_->GetCommander()->SendTIRFGOTO();
    }
    return DEVICE_OK;
 }
@@ -872,11 +885,15 @@ int DiskoveryStateDev::OnRI(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
+      ri_ = hub_->GetModel()->GetRI();
       pProp->Set( ri_ );
    }
    else if (eAct == MM::AfterSet)
    {
       pProp->Get( ri_);
+      hub_->GetModel()->SetRI(ri_);
+      if (initialized_)
+         hub_->GetCommander()->SendTIRFGOTO();
    }
    return DEVICE_OK;
 }

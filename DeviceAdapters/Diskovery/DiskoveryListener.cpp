@@ -92,6 +92,7 @@ void DiskoveryListener::ParseMessage(std::string message)
 {
    uint16_t number;
    uint32_t number32;
+   double dnum;
    bool state;
 
    // split the message at the '=' sign
@@ -109,16 +110,25 @@ void DiskoveryListener::ParseMessage(std::string message)
          {
             model_->SetDeviceBusy(true);
          }
+        
       // Linear prism positioner for TIRF
       } else if (tokens[0] == "POSITION_LIN")
       {
          std::istringstream(tokens[1].c_str()) >> number32;
          model_->SetPositionLin(number32);
+
       // Rotational prism positioner for TIRF
       } else if (tokens[0] == "POSITION_ROT")
       {
          std::istringstream(tokens[1].c_str()) >> number32;
          model_->SetPositionRot(number32);
+
+      // TIRF Depth (this is a calculated number, depends on many variables
+      } else if (tokens[0] == "TIRF_DEPTH")
+      {
+         std::istringstream(tokens[1].c_str()) >> dnum;
+         model_->SetDepth(dnum);
+
       // Preset Spinning Disk
       } else if (tokens[0] == "PRESET_SD") 
       {
@@ -279,17 +289,15 @@ void DiskoveryListener::ParseMessage(std::string message)
       {
          if (tokens[1] == "1")
             model_->SetHasFilterT(true);
-      }
-      else if (tokens[0] == "DISK_PATTERN_NAME")
+      } else if (tokens[0] == "DISK_PATTERN_NAME")
       {
          std::vector<std::string> diskname = split(tokens[1],'~');
          if (diskname.size() == 2) 
             model_->SetDiskLabel( (uint16_t) atoi(diskname[1].c_str()), 
                   diskname[0].c_str());
 
-      }
       // Button names
-      else if (tokens[0].substr(0, 6) == "BUTTON") {
+      } else if (tokens[0].substr(0, 6) == "BUTTON") {
          std::vector<std::string> button = split(tokens[0], '_');
          if (button[1] == "WF") {
             model_->SetButtonWFLabel( (uint16_t) atoi(button[2].c_str()), 
@@ -308,10 +316,22 @@ void DiskoveryListener::ParseMessage(std::string message)
          }
       } else if (tokens[0] == "TIRF_FOCAL_LENGTH")
       {
-         model_->SetTirfFocalLength( (uint16_t) atoi( tokens[1].c_str() ) );
+         model_->SetTIRFFocalLength( (uint16_t) atoi( tokens[1].c_str() ) );
       } else if (tokens[0] == "RESOLUTION_ROTATION")
       {
          model_->SetOffsetLinear( (uint32_t) atoi( tokens[1].c_str() )  );
+      } else if (tokens[0] == "MIN_COUNT_ROT")
+      {
+         model_->SetMinRotation( (uint32_t) atoi(tokens[1].c_str() ) );
+      } else if (tokens[0] == "MAX_COUNT_ROT")
+      {
+         model_->SetMaxRotation( (uint32_t) atoi(tokens[1].c_str() ) );
+      } else if (tokens[0] == "MIN_COUNT_LIN")
+      {
+         model_->SetMinLinear( (uint32_t) atoi(tokens[1].c_str() ) );
+      } else if (tokens[0] == "MAX_COUNT_LIN")
+      {
+         model_->SetMaxLinear( (uint32_t) atoi(tokens[1].c_str() ) );
       } else if (tokens[0] == "OFFSET_ROTATION")
       {
          model_->SetOffsetRotation( (uint32_t) atoi(tokens[1].c_str() ) );

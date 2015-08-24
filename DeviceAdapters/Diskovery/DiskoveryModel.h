@@ -60,8 +60,17 @@ class DiskoveryModel
          hasFilterT_(false),
          tirfFocalLength_(150),
          resolutionRotation_(0.0),
+         minLinear_(0),
+         maxLinear_(0),
+         minRotation_(0),
+         maxRotation_(0),
          offsetLinear_ (0), 
          offsetRotation_(0),
+         wavelength1_(405), wavelength2_(0),
+         tubeLensFocalLength_(150), 
+         om_(100),
+         depth_(100.0), na_(1.45), ri_(1.36),
+         exitTIRF_(false),
          hubDevice_(device),
          sdDevice_(0),
          wfDevice_(0),
@@ -171,15 +180,31 @@ class DiskoveryModel
 
       // TIRF Focal Length
       uint16_t GetTIRFFocalLength() { MMThreadGuard g(lock_); return tirfFocalLength_;};
-      void SetTirfFocalLength(const uint16_t val) { MMThreadGuard g(lock_); tirfFocalLength_ = val;};
+      void SetTIRFFocalLength(const uint16_t val) { MMThreadGuard g(lock_); tirfFocalLength_ = val;};
 
       // resolution Rotation
       double GetResolutionRotation() { MMThreadGuard g(lock_); return resolutionRotation_;};
       void SetResolutionRotation(double val) { MMThreadGuard g(lock_); resolutionRotation_ = val; };
 
+      // min positionlinear
+      uint32_t GetMinLinear() { MMThreadGuard g(lock_); return minLinear_;};
+      void SetMinLinear(uint32_t val) { MMThreadGuard g(lock_); minLinear_ = val; };
+
+      // max positionlinear
+      uint32_t GetMaxLinear() { MMThreadGuard g(lock_); return maxLinear_;};
+      void SetMaxLinear(uint32_t val) { MMThreadGuard g(lock_); maxLinear_ = val; };
+
       // offset linear
       uint32_t GetOffsetLinear() { MMThreadGuard g(lock_); return offsetLinear_;};
       void SetOffsetLinear(uint32_t val) { MMThreadGuard g(lock_); offsetLinear_ = val; };
+
+      // min Rotation
+      uint32_t GetMinRotation() { MMThreadGuard g(lock_); return minRotation_;};
+      void SetMinRotation(uint32_t val) { MMThreadGuard g(lock_); minRotation_ = val; };
+
+      // max Rotation
+      uint32_t GetMaxRotation() { MMThreadGuard g(lock_); return maxRotation_;};
+      void SetMaxRotation(uint32_t val) { MMThreadGuard g(lock_); maxRotation_ = val; };
 
       // offset Rotation
       uint32_t GetOffsetRotation() { MMThreadGuard g(lock_); return offsetRotation_;};
@@ -263,6 +288,25 @@ class DiskoveryModel
       void SetMotorRunningSD(const bool p); 
       bool GetMotorRunningSD() {  MMThreadGuard g(lock_); return motorRunningSD_; };
 
+
+      // values for TIRF calculations, mainly set by the application
+      void SetTIRFWavelength1(long val) { MMThreadGuard g(lock_); wavelength1_ = val;};
+      long GetWavelength1() { MMThreadGuard g(lock_); return wavelength1_; };
+      void SetTIRFWavelength2(long val) { MMThreadGuard g(lock_); wavelength2_ = val;};
+      long GetWavelength2() { MMThreadGuard g(lock_); return wavelength2_; };
+      void SetTubeLensFocalLength(double val) { MMThreadGuard g(lock_); tubeLensFocalLength_ = val; };
+      uint16_t  GetTubeLensFocalLength() { MMThreadGuard g(lock_); return tubeLensFocalLength_; };
+      uint16_t GetOM(); // { MMThreadGuard g(lock_); return om_; };
+      void SetDepth(double val) { MMThreadGuard g(lock_); depth_ = val; };
+      double GetDepth() { MMThreadGuard g(lock_); return depth_; };
+      void SetNA(double val) { MMThreadGuard g(lock_); na_ = val; };
+      double GetNA() { MMThreadGuard g(lock_); return na_; };
+      void SetRI(double val) { MMThreadGuard g(lock_); ri_ = val; };
+      double GetRI() { MMThreadGuard g(lock_); return ri_; };
+      void SetExitTIRF(bool doIt) { MMThreadGuard g(lock_); exitTIRF_ = doIt; };
+      bool GetExitTIRF() { MMThreadGuard g(lock_); return exitTIRF_; };
+
+      // Whether or not the controller has the specified capabilities
       void SetHasWFX(bool h) {  MMThreadGuard g(lock_); hasWFX_ = h; };
       bool GetHasWFX() {  MMThreadGuard g(lock_); return hasWFX_; };
 
@@ -377,9 +421,14 @@ class DiskoveryModel
       bool motorRunningSD_;
       uint16_t tirfFocalLength_;
       double resolutionRotation_;
+      uint32_t minLinear_, maxLinear_, minRotation_, maxRotation_;
       uint32_t offsetLinear_, offsetRotation_;
       uint16_t lineWavelength_[7];
       bool lineEnabled_[7];
+      long wavelength1_, wavelength2_;
+      uint16_t tubeLensFocalLength_, om_;
+      double depth_, na_, ri_;
+      bool exitTIRF_;
 
       std::string buttonWFLabels_[4];
       std::string buttonIrisLabels_[4];

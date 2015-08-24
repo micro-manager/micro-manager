@@ -126,3 +126,16 @@ void DiskoveryModel::SetPositionLin(const uint32_t p)
       tirfDevice_->SignalPropChanged("PositionLin", CDeviceUtils::ConvertToString((int) p));
    }
 }
+
+// Extract the number of the Iris label and use it as objective magnification
+uint16_t DiskoveryModel::GetOM()
+{
+   uint16_t pos = GetPresetIris();
+   const char* label = GetButtonIrisLabel(pos);
+   std::string strLabel(label);
+   std::stringstream ss(strLabel.substr(0, strLabel.size() -1));
+   uint16_t val;
+   ss >> val;
+   return val;
+}
+

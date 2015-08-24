@@ -84,6 +84,11 @@ const char* g_LineStart = "Q:LINE_"; // 0 < x < 8
 const char* g_Wavelength = "_WAVELENGTH"; // int16
 const char* g_Enabled = "_ENABLED"; // Boolean (0 or 1)
 
+// commands to retrieve maximum and minimum positions of some devices
+const char* g_MinCountLin = "Q:MIN_COUNT_LIN";  //uint32_t
+const char* g_MaxCountLin = "Q:MAX_COUNT_LIN";  //uint32_t
+const char* g_MinCountRot = "Q:MIN_COUNT_ROT";  //uint32_t
+const char* g_MaxCountRot = "Q:MAX_COUNT_ROT";  //uint32_t
 
 /**
  * Class that sends commands to the Diskovery1
@@ -204,10 +209,18 @@ int DiskoveryCommander::CheckCapabilities()
 
    // get initial position of some devices
    if (model_->GetHasLIN()) {
+      RETURN_ON_MM_ERROR( SendCommand(g_MinCountLin) );
+      CDeviceUtils::SleepMs(16);
+      RETURN_ON_MM_ERROR( SendCommand(g_MaxCountLin) );
+      CDeviceUtils::SleepMs(16);
       RETURN_ON_MM_ERROR( SendCommand(g_GetPositionLin) );
       CDeviceUtils::SleepMs(16);
    }
    if (model_->GetHasROT()) {
+      RETURN_ON_MM_ERROR( SendCommand(g_MinCountRot) );
+      CDeviceUtils::SleepMs(16);
+      RETURN_ON_MM_ERROR( SendCommand(g_MaxCountRot) );
+      CDeviceUtils::SleepMs(16);
       RETURN_ON_MM_ERROR( SendCommand(g_GetPositionRot) );
       CDeviceUtils::SleepMs(16);
    }
@@ -322,6 +335,29 @@ int DiskoveryCommander::GetDiskButtonName(uint16_t pos) {
       return SendCommand(os.str().c_str());
    }
    return ERR_UNKNOWN_POSITION;
+}
+
+int DiskoveryCommander::SendTIRFGOTO() 
+{
+   double depth = model_->GetDepth();
+   if (depth < 50.0)
+      depth = 50.0;
+   if (depth > 1000.0)
+      depth = 1000.0;
+   std::ostringstream os;
+   os << "A:TIRF_GOTO,";
+   os << model_->GetNA() << "~" << model_->GetTubeLensFocalLength() << "~";
+   os << model_->GetOM() << "~" << model_->GetRI() << "~";
+   os << depth << "~" << model_->GetWavelength1() << "~";
+   os << model_->GetWavelength2() << "~";
+   if (model_->GetExitTIRF())
+      os << "1";
+   else
+      os << "0";
+    model_->SetLogicalBusy(true);
+    blockingQueue_.push(os.str());
+
+   return DEVICE_OK;
 }
 
 int DiskoveryCommander::SendSetCommand(const char* commandPart1, uint16_t pos, const char* commandPart2) 
