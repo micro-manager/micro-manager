@@ -35,6 +35,7 @@ import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.RequestToCloseEvent;
 
+import org.micromanager.data.Pipeline;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImage;
 
@@ -44,6 +45,9 @@ import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.events.LiveModeEvent;
 import org.micromanager.events.internal.DefaultLiveModeEvent;
 import org.micromanager.events.internal.DefaultEventManager;
+import org.micromanager.events.internal.PipelineEvent;
+
+import org.micromanager.Studio;
 
 import org.micromanager.internal.interfaces.LiveModeListener;
 import org.micromanager.internal.utils.GUIUtils;
@@ -55,9 +59,11 @@ import org.micromanager.internal.utils.ReportingUtils;
  * "snap image" display (which is the same display as that used for live mode).
  */
 public class SnapLiveManager implements org.micromanager.SnapLiveManager {
+   private final Studio studio_;
    private final CMMCore core_;
    private DisplayWindow display_;
    private DefaultDatastore store_;
+   private Pipeline pipeline_;
    private final ArrayList<LiveModeListener> listeners_;
    private boolean isOn_ = false;
    // Suspended means that we *would* be running except we temporarily need
@@ -69,10 +75,12 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    // Maps channel to the last image we have received for that channel.
    private final HashMap<Integer, DefaultImage> channelToLastImage_;
 
-   public SnapLiveManager(CMMCore core) {
+   public SnapLiveManager(Studio studio, CMMCore core) {
+      studio_ = studio;
       core_ = core;
       channelToLastImage_ = new HashMap<Integer, DefaultImage>();
       listeners_ = new ArrayList<LiveModeListener>();
+      studio_.events().registerForEvents(this);
    }
 
    @Override
@@ -265,13 +273,14 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       store_ = new DefaultDatastore();
       store_.registerForEvents(this);
       store_.setStorage(new StorageRAM(store_));
+      pipeline_ = studio_.data().copyApplicationPipeline(store_, true);
    }
 
    /**
     * We need to [re]create the display and its associated custom controls.
     */
    private synchronized void createDisplay() {
-      display_ = MMStudio.getInstance().displays().createDisplay(store_,
+      display_ = studio_.displays().createDisplay(store_,
          new ControlsFactory() {
             @Override
             public List<Component> makeControls(DisplayWindow display) {
@@ -409,9 +418,9 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          }
          channelToLastImage_.put(newImage.getCoords().getChannel(),
                newImage);
-         // This will put the images into the datastore, which in turn will
-         // cause them to be displayed.
-         newImage.splitMultiComponentIntoStore(store_);
+         for (Image subImage : newImage.splitMultiComponent()) {
+            pipeline_.insertImage(subImage);
+         }
       }
       catch (DatastoreFrozenException e) {
          // Datastore has been frozen (presumably the user saved a snapped
@@ -495,5 +504,12 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       // Closing is fine by us, but we need to stop live mode first.
       setLiveMode(false);
       event.getDisplay().forceClosed();
+   }
+
+   @Subscribe
+   public void onPipelineChanged(PipelineEvent event) {
+      // New pipeline means we need to replace our old one.
+      pipeline_ = studio_.data().createPipeline(
+            event.getPipelineFactories(), store_, true);
    }
 }

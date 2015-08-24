@@ -1,21 +1,18 @@
 package org.micromanager.events.internal;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import mmcorej.TaggedImage;
-
-import org.micromanager.DataProcessor;
+import org.micromanager.data.ProcessorFactory;
 
 
-// This class represents the modification of the DataProcessor image pipeline.
+// This class represents the modification of the image processing pipeline.
 public class PipelineEvent {
-   final private List<DataProcessor<TaggedImage>> pipeline_;
-   public PipelineEvent(List<DataProcessor<TaggedImage>> pipeline) {
-      pipeline_ = pipeline;
+   private final List<ProcessorFactory> factories_;
+   public PipelineEvent(List<ProcessorFactory> factories) {
+      factories_ = factories;
    }
 
-   public List<DataProcessor<TaggedImage>> getPipeline() {
-      return new ArrayList<DataProcessor<TaggedImage>>(pipeline_);
+   public List<ProcessorFactory> getPipelineFactories() {
+      return factories_;
    }
 }

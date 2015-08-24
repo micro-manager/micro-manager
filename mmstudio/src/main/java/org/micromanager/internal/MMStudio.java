@@ -70,7 +70,6 @@ import org.micromanager.CompatibilityInterface;
 import org.micromanager.data.DataManager;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
-import org.micromanager.DataProcessor;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
@@ -277,7 +276,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
 
       core_.enableStderrLog(true);
 
-      snapLiveManager_ = new SnapLiveManager(core_);
+      snapLiveManager_ = new SnapLiveManager(this, core_);
 
       frame_ = new MainFrame(this, core_, snapLiveManager_);
       ReportingUtils.SetContainingFrame(frame_);

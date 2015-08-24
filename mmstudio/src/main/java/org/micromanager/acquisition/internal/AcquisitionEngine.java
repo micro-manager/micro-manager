@@ -32,7 +32,6 @@ import mmcorej.TaggedImage;
 
 import org.json.JSONObject;
 import org.micromanager.data.Datastore;
-import org.micromanager.DataProcessor;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
