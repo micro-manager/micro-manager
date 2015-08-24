@@ -154,7 +154,9 @@ public interface Datastore extends Closeable {
 
    /**
     * Retrieve the summary metadata for the datastore. Will be null if no
-    * Storage has been provided yet.
+    * Storage has been provided yet. If the Storage has a null SummaryMetadata,
+    * then an empty SummaryMetadata (which is not null but returns null for
+    * all of its fields) will be provided instead.
     * 
     * @return Object giving access to the summary metadata
     */

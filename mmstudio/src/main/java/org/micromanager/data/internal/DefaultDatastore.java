@@ -32,6 +32,7 @@ import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.MMStudio;
@@ -209,10 +210,15 @@ public class DefaultDatastore implements Datastore {
 
    @Override
    public SummaryMetadata getSummaryMetadata() {
-      if (storage_ != null) {
-         return storage_.getSummaryMetadata();
+      if (storage_ == null) {
+         return null;
       }
-      return null;
+      SummaryMetadata result = storage_.getSummaryMetadata();
+      if (result == null) {
+         // Provide an empty summary metadata instead.
+         result = (new DefaultSummaryMetadata.Builder()).build();
+      }
+      return result;
    }
    
    @Override
