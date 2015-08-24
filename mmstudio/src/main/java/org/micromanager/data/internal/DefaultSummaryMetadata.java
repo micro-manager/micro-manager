@@ -664,10 +664,9 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
             }
             result.put("ChNames", names);
          }
-         // Manually set 0 for null Z-step since the parameter for setZStepUm
-         // is a lowercase-d double.
-         MDUtils.setZStepUm(result,
-               (zStepUm_ == null) ? 0 : zStepUm_);
+         if (zStepUm_ != null) {
+            MDUtils.setZStepUm(result, zStepUm_);
+         }
          result.put("WaitInterval", waitInterval_);
          if (customIntervalsMs_ != null) {
             JSONArray intervals = new JSONArray();
