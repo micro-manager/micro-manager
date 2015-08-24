@@ -33,7 +33,9 @@ package org.micromanager;
 public interface MenuPlugin extends MMPlugin {
    /**
     * Indicate which sub-menu of the Plugins menu this plugin should appear
-    * in.
+    * in. If that sub-menu does not exist, it will be created. If an empty
+    * string is returned, then the plugin will be inserted directly into the
+    * Plugins menu, instead of into a sub-menu.
     */
    public String getSubMenu();
 

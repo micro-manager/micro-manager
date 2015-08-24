@@ -151,13 +151,19 @@ public class DefaultPluginManager implements PluginManager {
             selectAction.run();
          }
       });
-      if (!subMenus_.containsKey(subMenu)) {
-         // Create a new menu.
-         JMenu menu = new JMenu(subMenu);
-         menu_.add(menu);
-         subMenus_.put(subMenu, menu);
+      if (subMenu.equals("")) {
+         // Add it to the root menu.
+         menu_.add(item);
       }
-      subMenus_.get(subMenu).add(item);
+      else {
+         if (!subMenus_.containsKey(subMenu)) {
+            // Create a new menu.
+            JMenu menu = new JMenu(subMenu);
+            menu_.add(menu);
+            subMenus_.put(subMenu, menu);
+         }
+         subMenus_.get(subMenu).add(item);
+      }
    }
 
    /**
