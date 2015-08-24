@@ -257,14 +257,8 @@ final public class PipelineFrame extends MMFrame
     * Generate a list of ProcessorFactories based on the currently-enabled
     * configurators and their settings.
     */
-   public ArrayList<ProcessorFactory> getPipelineFactories() {
-      ArrayList<ConfiguratorWrapper> configs = getTableModel().getEnabledConfigurators();
-      ArrayList<ProcessorFactory> result = new ArrayList<ProcessorFactory>();
-      for (ConfiguratorWrapper config : configs) {
-         PropertyMap settings = config.getConfigurator().getSettings();
-         result.add(config.getPlugin().createFactory(settings));
-      }
-      return result;
+   public List<ProcessorFactory> getPipelineFactories() {
+      return getTableModel().getPipelineFactories();
    }
 
    @Override

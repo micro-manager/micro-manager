@@ -16,8 +16,13 @@
 package org.micromanager.internal.pipelineinterface;
 
 import java.util.ArrayList;
+import java.util.List;
 import javax.swing.table.AbstractTableModel;
 
+import org.micromanager.data.ProcessorFactory;
+import org.micromanager.events.internal.PipelineEvent;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.PropertyMap;
 
 // TODO: currently we redraw the entire table any time it changes, rather than
 // only redrawing the row(s) that are modified.
@@ -55,6 +60,26 @@ public class PipelineTableModel extends AbstractTableModel {
       pipelineConfigs_.remove(configurator);
       pipelineConfigs_.add(newIndex, configurator);
       fireTableDataChanged();
+   }
+
+   @Override
+   public void fireTableDataChanged() {
+      super.fireTableDataChanged();
+      MMStudio.getInstance().events().post(new PipelineEvent(
+               getPipelineFactories()));
+   }
+
+   /**
+    * Provide a list of factories for all enabled processors.
+    */
+   public List<ProcessorFactory> getPipelineFactories() {
+      List<ConfiguratorWrapper> configs = getEnabledConfigurators();
+      ArrayList<ProcessorFactory> result = new ArrayList<ProcessorFactory>();
+      for (ConfiguratorWrapper config : configs) {
+         PropertyMap settings = config.getConfigurator().getSettings();
+         result.add(config.getPlugin().createFactory(settings));
+      }
+      return result;
    }
 
    public ArrayList<ConfiguratorWrapper> getEnabledConfigurators() {
