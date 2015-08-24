@@ -40,9 +40,13 @@ public interface Pipeline {
     * If the Pipeline is in synchronous mode, then this call will block until
     * any generated images are in the Datastore; otherwise it will return
     * immediately.
+    * Throws a DatastoreFrozenException if the Datastore is frozen at the
+    * time this method is called, or if this pipeline has no Processors in it
+    * and the Datastore is frozen. If the Datastore is frozen at some point
+    * after this method is called, then the exception will not be thrown.
     * @param image Image to be processed by the Pipeline.
     */
-   public void insertImage(Image image);
+   public void insertImage(Image image) throws DatastoreFrozenException;
 
    /**
     * Get the output Datastore for this Pipeline. This Datastore is the

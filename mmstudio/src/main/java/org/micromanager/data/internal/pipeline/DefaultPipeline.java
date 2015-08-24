@@ -56,18 +56,19 @@ public class DefaultPipeline implements Pipeline {
    }
 
    @Override
-   public void insertImage(Image image) {
+   public void insertImage(Image image) throws DatastoreFrozenException {
+      // Manually check for frozen; otherwise for asynchronous pipelines,
+      // there's no way for the caller to be informed when we later try to
+      // insert the image into the datastore.
+      if (store_.getIsFrozen()) {
+         throw new DatastoreFrozenException();
+      }
       if (contexts_.size() > 0) {
          contexts_.get(0).insertImage(image);
       }
       else {
          // Empty "pipeline".
-         try {
-            store_.putImage(image);
-         }
-         catch (DatastoreFrozenException e) {
-            ReportingUtils.logError(e, "Unable to add image to frozen store.");
-         }
+         store_.putImage(image);
       }
    }
 
