@@ -345,20 +345,18 @@ public class DefaultImage implements Image {
    }
 
    /**
-    * Split this multi-component Image into several single-component Images
-    * and add them to the Datastore. They will be positioned based on our
-    * current index, with the channel incrementing by 1 for each new
-    * component.
+    * Split this multi-component Image into several single-component Images.
+    * They will be positioned based on our current index, with the channel
+    * incrementing by 1 for each new component.
     * TODO: this will work horribly if there are any cameras located "after"
     * this camera along the channel axis, since it blindly inserts new images
     * at C, C+1...C+N where C is its channel index and N is the number of
     * components.
     */
-   public List<Image> splitMultiComponentIntoStore(Datastore store) throws DatastoreFrozenException {
+   public List<Image> splitMultiComponent() {
       ArrayList<Image> result = new ArrayList<Image>();
       if (numComponents_ == 1) {
-         // No need to do anything fancy.
-         store.putImage(this);
+         // Already only one component; just return us.
          result.add(this);
          return result;
       }
@@ -368,8 +366,21 @@ public class DefaultImage implements Image {
                bytesPerPixel_ / numComponents_, 1,
                coords_.copy().channel(coords_.getChannel() + i).build(),
                metadata_);
-         store.putImage(newImage);
          result.add(newImage);
+      }
+      return result;
+   }
+
+   /**
+    * Split this multi-component Image into several single-component Images
+    * and add them to the Datastore. They will be positioned based on our
+    * current index, with the channel incrementing by 1 for each new
+    * component.
+    */
+   public List<Image> splitMultiComponentIntoStore(Datastore store) throws DatastoreFrozenException {
+      List<Image> result = splitMultiComponent();
+      for (Image image : result) {
+         store.putImage(image);
       }
       return result;
    }
