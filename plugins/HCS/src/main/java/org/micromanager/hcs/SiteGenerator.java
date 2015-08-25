@@ -14,7 +14,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
 
-import org.micromanager.MMPlugin;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
@@ -41,7 +40,7 @@ import java.awt.event.FocusListener;
  * @author nenad
  *
  */
-public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
+public class SiteGenerator extends MMFrame implements ParentPlateGUI {
 
    private JTextField spacingField_;
    private JTextField columnsField_;
@@ -72,10 +71,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
    public static final String tooltipDescription =
            "Generate position list for multi-well plates";
    private final JLabel statusLabel_;
-   static private final String VERSION_INFO = "1.4.1";
-   static private final String COPYRIGHT_NOTICE = "Copyright by UCSF, 2013";
-   static private final String DESCRIPTION = "Generate imaging site positions for micro-well plates and slides";
-   static private final String INFO = "Not available";
    private final JCheckBox chckbxThreePt_;
    private final ButtonGroup toolButtonGroup = new ButtonGroup();
    private JRadioButton rdbtnSelectWells_;
@@ -88,8 +83,9 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
    /**
     *
     */
-   public SiteGenerator() {
+   public SiteGenerator(Studio app) {
       super();
+      app_ = app;
       setMinimumSize(new Dimension(815, 600));
       addWindowListener(new WindowAdapter() {
          @Override
@@ -111,7 +107,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       threePtList_ = null;
       focusPlane_ = null;
 
-      setTitle("HCS Site Generator " + VERSION_INFO);
+      setTitle("HCS Site Generator " + HCSPlugin.VERSION_INFO);
       loadAndRestorePosition(100, 100, 1000, 640);
 
       platePanel_ = new PlatePanel(plate_, null, this);
@@ -607,7 +603,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       platePanel_.repaint();
    }
 
-   @Override
    public void setApp(Studio app) {
       app_ = app;
       try {
@@ -622,26 +617,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 
    public void configurationChanged() {
       // TODO:
-   }
-
-   @Override
-   public String getCopyright() {
-      return COPYRIGHT_NOTICE;
-   }
-
-   @Override
-   public String getDescription() {
-      return DESCRIPTION;
-   }
-
-   @Override
-   public String getInfo() {
-      return INFO;
-   }
-
-   @Override
-   public String getVersion() {
-      return VERSION_INFO;
    }
 
    @Override
