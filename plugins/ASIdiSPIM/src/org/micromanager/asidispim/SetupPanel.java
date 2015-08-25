@@ -51,6 +51,7 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Utils.AutofocusUtils;
 import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.MMFrame;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -63,6 +64,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private final Devices devices_;
    private final Properties props_;
    private final Joystick joystick_;
+   private final Devices.Sides side_;
    private final Positions positions_;
    private final Cameras cameras_;
    private final AutofocusUtils autofocus_;
@@ -103,7 +105,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
            Devices devices, 
            Properties props, 
            Joystick joystick, 
-           final Devices.Sides side, 
+           Devices.Sides side, 
            Positions positions, 
            Cameras cameras, 
            Prefs prefs, 
@@ -118,6 +120,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       devices_ = devices;
       props_ = props;
       joystick_ = joystick;
+      side_ = side;
       positions_ = positions;
       cameras_ = cameras;
       autofocus_ = autofocus;
@@ -127,9 +130,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       PanelUtils pu = new PanelUtils(prefs_, props_, devices);
       final SetupPanel setupPanel = this;
 
-      piezoImagingDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side);
-      piezoIlluminationDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, Devices.getOppositeSide(side));
-      micromirrorDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side);
+      piezoImagingDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side_);
+      piezoIlluminationDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, Devices.getOppositeSide(side_));
+      micromirrorDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side_);
 
       sheetStartPositionLabel_ = new StoredFloatLabel(panelName_, 
               Properties.Keys.PLUGIN_SHEET_START_POS.toString(), -0.5f,
@@ -237,7 +240,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       tmp_but.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            autofocus_.runFocus(setupPanel, side, true,
+            autofocus_.runFocus(setupPanel, side_, true,
                     ASIdiSPIM.getFrame().getAcquisitionPanel().getSliceTiming(),
                     true, true);
          }
@@ -372,7 +375,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       tmp_but.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            autofocus_.runFocus(setupPanel, side, true,
+            autofocus_.runFocus(setupPanel, side_, true,
                     ASIdiSPIM.getFrame().getAcquisitionPanel().getSliceTiming(),
                     true, true);
          }
@@ -413,7 +416,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       
       // initialize the center position variable
       imagingCenterPos_ = prefs_.getFloat(
-            MyStrings.PanelNames.SETUP.toString() + side.toString(), 
+            MyStrings.PanelNames.SETUP.toString() + side_.toString(), 
             Properties.Keys.PLUGIN_PIEZO_CENTER_POS, 0);
       
       
@@ -580,17 +583,15 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       superPanel.add(sheetPanel, "span 3");
 
       // Layout of the SetupPanel
-      joystickPanel_ = new JoystickSubPanel(joystick_, devices_, panelName_, side, 
-              prefs_);
+      joystickPanel_ = new JoystickSubPanel(joystick_, devices_, panelName_, side_, prefs_);
       add(joystickPanel_, "center");
 
       add(superPanel, "center, aligny top, span 1 3, wrap");
 
-      beamPanel_ = new BeamSubPanel(gui_, devices_, panelName_, side, prefs_, props_);
+      beamPanel_ = new BeamSubPanel(gui_, devices_, panelName_, side_, prefs_, props_);
       add(beamPanel_, "center, wrap");
 
-      cameraPanel_ = new CameraSubPanel(gui_, cameras_, devices_, panelName_, 
-              side, prefs_, true);
+      cameraPanel_ = new CameraSubPanel(gui_, cameras_, devices_, panelName_, side_, prefs_, true);
       add(cameraPanel_, "center");
 
    }// end of SetupPanel constructor
@@ -622,11 +623,13 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     */
    public void updateCalibrationOffset(AutofocusUtils.FocusResult score) {
       if (!score.getFocusSuccess()) {
+         ReportingUtils.logMessage("autofocus offset for side " + side_ + " not updated because focus not successful");
          return;
       }
       double rate = (Double) rateField_.getValue();
       double newOffset = score.getPiezoPosition() - rate * score.getGalvoPosition();         
       offsetField_.setValue((Double) newOffset);
+      ReportingUtils.logMessage("autofocus updated offset for side " + side_ + "; new value is " + newOffset);
    }
 
    
