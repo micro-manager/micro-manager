@@ -37,7 +37,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
-import org.micromanager.MMPlugin;
+import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.acquisition.internal.TaggedImageQueue;
@@ -47,42 +47,37 @@ import org.micromanager.internal.utils.MMTags;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMScriptException;
 
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
 
-
-
-public class RecallPlugin implements MMPlugin {
+@Plugin(type = MenuPlugin.class)
+public class RecallPlugin implements MenuPlugin, SciJavaPlugin {
    public static final String menuName = "Live Replay";
    public static final String tooltipDescription =
       "Recalls (live) images left over in the internal sequence buffer";
    private CMMCore core_;
-   private MMStudio gui_;
+   private MMStudio studio_;
    // TODO: assign this name to the viewer window once the api has that ability
    private final String ACQ_NAME = "Live Replay";
    private int multiChannelCameraNrCh_;
    private Datastore store_;
    
   
-
    @Override
-   public void setApp(Studio app) {
-      gui_ = (MMStudio) app;                                        
-      core_ = app.getCMMCore(); 
+   public void setContext(Studio studio) {
+      studio_ = (MMStudio) studio;
+      core_ = studio.getCMMCore();
    }
 
    @Override
-   public void dispose() {
-      // nothing todo:
-   }
-   
-   @Override
-   public void show() {
-      store_ = gui_.data().createRAMDatastore();
-      gui_.getDisplayManager().createDisplay(store_);
-      gui_.getDisplayManager().manage(store_);
+   public void onPluginSelected() {
+      store_ = studio_.data().createRAMDatastore();
+      studio_.getDisplayManager().createDisplay(store_);
+      studio_.getDisplayManager().manage(store_);
 
       int remaining = core_.getRemainingImageCount();
       if (remaining < 1) {
-         gui_.logs().showMessage("There are no Images in the Micro-Manager buffer");
+         studio_.logs().showMessage("There are no Images in the Micro-Manager buffer");
          return;
       }
       
@@ -96,16 +91,16 @@ public class RecallPlugin implements MMPlugin {
                TaggedImage tImg = core_.popNextTaggedImage();
                normalizeTags(tImg, frameCounter);
                frameCounter++;
-               store_.putImage(gui_.data().convertTaggedImage(tImg));
+               store_.putImage(studio_.data().convertTaggedImage(tImg));
             }
             catch (DatastoreFrozenException e) { // Can't add to datastore.
-               gui_.logs().logError(e);
+               studio_.logs().logError(e);
             }
             catch (JSONException e) { // Error in TaggedImage tags
-               gui_.logs().logError(e);
+               studio_.logs().logError(e);
             }
             catch (Exception e) { // Error in popNextTaggedImage
-               gui_.logs().logError(e);
+               studio_.logs().logError(e);
             }
          }
       } else if (multiChannelCameraNrCh_ > 1) {
@@ -123,16 +118,16 @@ public class RecallPlugin implements MMPlugin {
                tImg.tags.put("ChannelIndex", channelIndex);
                normalizeTags(tImg, frameCounters[channelIndex]);
                frameCounters[channelIndex]++;
-               store_.putImage(gui_.data().convertTaggedImage(tImg));
+               store_.putImage(studio_.data().convertTaggedImage(tImg));
             }
             catch (DatastoreFrozenException e) { // Can't add to datastore.
-               gui_.logs().logError(e);
+               studio_.logs().logError(e);
             }
             catch (JSONException e) { // Error in TaggedImage tags
-               gui_.logs().logError(e);
+               studio_.logs().logError(e);
             }
             catch (Exception e) { // Error in popNextTaggedImage
-               gui_.logs().logError(e);
+               studio_.logs().logError(e);
             }
          }
       }        
@@ -155,7 +150,7 @@ public class RecallPlugin implements MMPlugin {
             ti.tags.put(MMTags.Image.FRAME, frameIndex);
 
          } catch (JSONException ex) {
-            gui_.logs().logError(ex);
+            studio_.logs().logError(ex);
          }
       }
    }
@@ -164,18 +159,23 @@ public class RecallPlugin implements MMPlugin {
    }
 
    @Override
-   public String getInfo () {
-      return "Recalls live images remaining in internal buffer.  Set size of the buffer in options (under Tools menu)";
+   public String getName() {
+      return menuName;
    }
 
    @Override
-   public String getDescription() {
-      return tooltipDescription;
+   public String getSubMenu() {
+      return "";
    }
-   
+
+   @Override
+   public String getHelpText() {
+      return "Recalls live images remaining in internal buffer.  Set size of the buffer in options (under Tools menu). Note that the buffer loops periodically, erasing all history, so the number of recalled images is hard to predict.";
+   }
+
    @Override
    public String getVersion() {
-      return "First version";
+      return "V1.0";
    }
    
    @Override
