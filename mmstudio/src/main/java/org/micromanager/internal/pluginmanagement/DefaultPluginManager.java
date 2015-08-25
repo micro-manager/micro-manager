@@ -121,7 +121,7 @@ public class DefaultPluginManager implements PluginManager {
          // Add it to the "On-the-fly image processing" plugin menu.
          addProcessorPluginToMenu((ProcessorPlugin) plugin);
       }
-      else if (plugin instanceof OverlayPlugin) {
+      if (plugin instanceof OverlayPlugin) {
          pluginTypeToPlugins_.get(OverlayPlugin.class).add(plugin);
       }
       if (plugin instanceof MenuPlugin) {
