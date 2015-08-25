@@ -24,18 +24,30 @@ import org.micromanager.Studio;
 import org.scijava.plugin.SciJavaPlugin;
 
 /**
- * This interface is the standard interface for all Micro-Manager plugins.
- * If you want to make a new plugin for Micro-Manager, then you need to do
- * the following:
- * - Create a class that implements this interface (or one of the more
- *   specific interfaces like org.micromanager.data.ProcessorPlugin)
+ * This interface is the standard interface for all Micro-Manager plugins. In
+ * practice, you will not use this interface directly, rather using one of the
+ * sub-interfaces, to wit:
+ * - org.micromanager.MenuPlugin, for plugins that should appear in the Plugins
+ *   menu.
+ * - org.micromanager.data.ProcessorPlugin, for processing images as they are
+ *   collected.
+ * - org.micromanager.display.OverlayPlugin, for drawing on top of image
+ *   windows.
+ * It is allowed to implement multiple of these interfaces, in which case the
+ * plugin will be available in all appropriate contexts in the program.
+ *
+ * To make your plugin show up when the program runs, you need to do the
+ * following:
+ * - Create a class that implements this interface (or more likely, one of the
+ *   other interfaces listed above) and the org.scijava.plugin.SciJavaPlugin
+ *   interface.
  * - Annotate that class with the org.scijava.plugin.Plugin annotation
  * - Place your plugin's jar file in the mmplugins directory of your ImageJ
  *   installation.
  *
  * The annotated plugin class should look something like this:
- * @org.scijava.plugin.Plugin(type = MyPlugin.class)
- * public class MyPlugin implements org.micromanager.Plugin, SciJavaPlugin {
+ * @org.scijava.plugin.Plugin(type = MMPlugin.class)
+ * public class MyPlugin implements org.micromanager.MMPlugin, SciJavaPlugin {
  *    ...plugin contents go here...
  * }
  *
