@@ -21,7 +21,15 @@
 
 package org.micromanager.splitview;
 
-import org.micromanager.MMProcessorPlugin;
+import org.micromanager.data.ProcessorConfigurator;
+import org.micromanager.data.ProcessorFactory;
+import org.micromanager.data.ProcessorPlugin;
+import org.micromanager.PropertyMap;
+
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
+
+import org.micromanager.Studio;
 
 /** 
  * Micro-Manager plugin that can split the acquired image top-down or left-right
@@ -29,25 +37,38 @@ import org.micromanager.MMProcessorPlugin;
  *
  * @author nico
  */
-public class SplitView implements MMProcessorPlugin {
+@Plugin(type = ProcessorPlugin.class)
+public class SplitView implements ProcessorPlugin, SciJavaPlugin {
    public static final String menuName = "Split View";
    public static final String tooltipDescription =
       "Split images vertically or horizontally into two channels";
+   private Studio studio_;
 
-   public static Class<?> getProcessorClass() {
-      return SplitViewProcessor.class;
+   @Override
+   public void setContext(Studio studio) {
+      studio_ = studio;
    }
 
    @Override
-   public String getInfo () {
-      return "SplitView Plugin";
+   public ProcessorConfigurator createConfigurator() {
+      return new SplitViewFrame(studio_);
    }
 
    @Override
-   public String getDescription() {
-      return tooltipDescription;
+   public ProcessorFactory createFactory(PropertyMap settings) {
+      return new SplitViewFactory(studio_, settings);
    }
    
+   @Override
+   public String getName() {
+      return "Split View";
+   }
+
+   @Override
+   public String getHelpText() {
+      return tooltipDescription;
+   }
+
    @Override
    public String getVersion() {
       return "0.2";

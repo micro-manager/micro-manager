@@ -8,7 +8,8 @@ nobase_mmplugin_DATA = \
 	ImageFlipper.jar \
 	PatternOverlay.jar \
 	Recall.jar \
-	SequenceBufferMonitor.jar
+	SequenceBufferMonitor.jar \
+	SplitView.jar
 
 # Note: temporaripy removed in 2.x: Beta/SlideExplorer2.jar
 

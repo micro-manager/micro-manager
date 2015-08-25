@@ -30,7 +30,11 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acquisition.internal.TaggedImageQueue;
-import org.micromanager.DataProcessor;
+import org.micromanager.data.Coords;
+import org.micromanager.data.Image;
+import org.micromanager.data.Metadata;
+import org.micromanager.data.Processor;
+import org.micromanager.data.ProcessorContext;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMScriptException;
@@ -41,33 +45,13 @@ import org.micromanager.internal.utils.ReportingUtils;
  *
  * @author nico
  */
-public class SplitViewProcessor extends DataProcessor<TaggedImage> {
+public class SplitViewProcessor implements Processor {
 
-   private SplitViewFrame myFrame_;
+   private Studio studio_;
    private String orientation_ = SplitViewFrame.LR;
 
-   @Override
-   public void makeConfigurationGUI() {
-      if (myFrame_ == null) {
-         try {
-            myFrame_ = new SplitViewFrame(this, gui_);
-         }
-         catch (Exception ex) {
-            ReportingUtils.logError("Failed to make GUI for SplitViewProcessor: " + ex);
-         }
-      }
-      myFrame_.setVisible(true);
-   }
-
-   @Override
-   public void dispose() {
-      if (myFrame_ != null) {
-         myFrame_.dispose();
-         myFrame_ = null;
-      }
-   }
-
-   public void setOrientation(String orientation) {
+   public SplitViewProcessor(Studio studio, String orientation) {
+      studio_ = studio;
       orientation_ = orientation;
    }
 
@@ -91,94 +75,56 @@ public class SplitViewProcessor extends DataProcessor<TaggedImage> {
    }
 
    @Override
-   public void process() {
+   public void processImage(Image image, ProcessorContext context) {
+      ImageProcessor proc = studio_.data().ij().createProcessor(image);
+      int channelIndex = image.getCoords().getChannel();
 
-      
-      TaggedImage taggedImage = poll();
-      try {
-         
-         if (TaggedImageQueue.isPoison(taggedImage)) {
-            produce(taggedImage);
-            return;
-         }
+      proc.setPixels(image.getRawPixels());
 
-         if (taggedImage != null && taggedImage.tags != null) {
-            ImageProcessor tmpImg;
-            int imgDepth = MDUtils.getDepth(taggedImage.tags);
-            int width = MDUtils.getWidth(taggedImage.tags);
-            int height = MDUtils.getHeight(taggedImage.tags);
-            int channelIndex = MDUtils.getChannelIndex(taggedImage.tags);
+      int height = image.getHeight();
+      int width = image.getWidth();
+      height = calculateHeight(height, orientation_);
+      width = calculateWidth(width, orientation_);
 
-            //System.out.println("Processed one");
+      proc.setRoi(0, 0, width, height);
 
-            if (imgDepth == 1) {
-               tmpImg = new ByteProcessor(width, height);
-            } else if (imgDepth == 2) {
-               tmpImg = new ShortProcessor(width, height);
-            } else // TODO throw error
-            {
-               produce(taggedImage);
-               return;
-            }
+      // first channel
+      Coords firstCoords = image.getCoords().copy().channel(channelIndex * 2).build();
+      Metadata firstMetadata = image.getMetadata();
+      firstMetadata = firstMetadata.copy().channelName(
+            firstMetadata.getChannelName() + getChannelSuffix(channelIndex * 2)).build();
+      Image first = studio_.data().createImage(proc.crop().getPixels(),
+            width, height, image.getBytesPerPixel(), image.getNumComponents(),
+            firstCoords, firstMetadata);
+      context.outputImage(first);
 
-            tmpImg.setPixels(taggedImage.pix);
-
-            height = calculateHeight(height);
-            width = calculateWidth(width);
-
-            tmpImg.setRoi(0, 0, width, height);
-            
-            
-            // first channel
-
-            // Weird way of copying a JSONObject
-            JSONObject tags = new JSONObject(taggedImage.tags.toString());
-            MDUtils.setWidth(tags, width);
-            MDUtils.setHeight(tags, height);
-            MDUtils.setChannelIndex(tags, channelIndex * 2);
-
-            tags.put("Channel", MDUtils.getChannelName(taggedImage.tags) + getChannelSuffix(channelIndex*2));
-            
-            TaggedImage firstIm = new TaggedImage(tmpImg.crop().getPixels(), tags);
-
-            // second channel
-            JSONObject tags2 = new JSONObject(tags.toString());
-            tags2.put("Channel", MDUtils.getChannelName(taggedImage.tags)  + getChannelSuffix(channelIndex*2+1));
-
-            if (orientation_.equals(SplitViewFrame.LR)) {
-               tmpImg.setRoi(width, 0, width, height);
-            } else if (orientation_.equals(SplitViewFrame.TB)) {
-               tmpImg.setRoi(0, height, width, height);
-            }
-            MDUtils.setWidth(tags2, width);
-            MDUtils.setHeight(tags2, height);
-            MDUtils.setChannelIndex(tags2, channelIndex * 2 + 1);
-
-            TaggedImage secondIm = new TaggedImage(tmpImg.crop().getPixels(), tags2);
-
-            produce(secondIm);
-            produce(firstIm);
-         }
-      } catch (MMScriptException ex) {
-         ReportingUtils.logError(ex);
-         produce(taggedImage);
-      } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
-         produce(taggedImage);
+      // second channel
+      if (orientation_.equals(SplitViewFrame.LR)) {
+         proc.setRoi(width, 0, width, height);
+      } else if (orientation_.equals(SplitViewFrame.TB)) {
+         proc.setRoi(0, height, width, height);
       }
+      Coords secondCoords = image.getCoords().copy().channel(channelIndex * 2 + 1).build();
+      Metadata secondMetadata = image.getMetadata();
+      secondMetadata = secondMetadata.copy().channelName(
+            secondMetadata.getChannelName() + getChannelSuffix(channelIndex * 2 + 1)).build();
+      Image second = studio_.data().createImage(proc.crop().getPixels(),
+            width, height, image.getBytesPerPixel(), image.getNumComponents(),
+            secondCoords, secondMetadata);
+      context.outputImage(second);
    }
 
-   public int calculateWidth(int width) {
+   public static int calculateWidth(int width, String orientation) {
       int newWidth = width;
-      if (orientation_.equals(SplitViewFrame.LR)) {
+      if (orientation.equals(SplitViewFrame.LR)) {
          newWidth = width / 2;
       }
       return newWidth;
    }
 
-   public int calculateHeight(int height) {
+   public static int calculateHeight(int height, String orientation) {
       int newHeight = height;
-      if (orientation_.equals(SplitViewFrame.TB)) {
+      if (orientation.equals(SplitViewFrame.TB)) {
          newHeight = height / 2;
       }
       return newHeight;
