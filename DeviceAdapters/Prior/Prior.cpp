@@ -1688,7 +1688,12 @@ bool ZStage::Busy()
 
 int ZStage::SetPositionUm(double pos)
 {
-   long steps = (long) (pos / stepSizeUm_ + 0.5);
+   double fsteps = pos / stepSizeUm_;
+   long steps;
+   if (pos >= 0)
+      steps = (long) (fsteps + 0.5);
+   else
+      steps = (long) (fsteps - 0.5);
    return SetPositionSteps(steps);
 }
 
@@ -2176,7 +2181,12 @@ bool NanoZStage::Busy()
 
 int NanoZStage::SetPositionUm(double pos)
 {
-   long steps = (long) (pos / stepSizeUm_ + 0.5);
+   double fsteps = pos / stepSizeUm_;
+   long steps;
+   if (pos >= 0)
+      steps = (long) (fsteps + 0.5);
+   else
+      steps = (long) (fsteps - 0.5);
    return SetPositionSteps(steps);
 }
 
