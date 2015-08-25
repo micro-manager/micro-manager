@@ -71,6 +71,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    // time). See setSuspended().
    private boolean isSuspended_ = false;
    private boolean shouldStopGrabberThread_ = false;
+   private boolean shouldForceReset_ = false;
    private Thread grabberThread_;
    // Maps channel to the last image we have received for that channel.
    private final HashMap<Integer, DefaultImage> channelToLastImage_;
@@ -380,12 +381,8 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    public synchronized void displayImage(Image image) {
       // Check for changes in the number of channels, indicating e.g. changing
       // multicamera.
-      boolean shouldReset = false;
+      boolean shouldReset = shouldForceReset_;
       long numChannels = core_.getNumberOfCameraChannels();
-      if (store_ != null &&
-            numChannels * image.getNumComponents() < store_.getAxisLength(Coords.CHANNEL)) {
-         shouldReset = true;
-      }
       try {
          DefaultImage newImage = new DefaultImage(image, image.getCoords(), image.getMetadata());
          // Find any image to compare against, at all.
@@ -394,20 +391,11 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
             int channel = new ArrayList<Integer>(channelToLastImage_.keySet()).get(0);
             lastImage = channelToLastImage_.get(channel);
          }
-         // Check for a change in the channel name.
-         boolean didChannelChange = false;
-         if (lastImage != null) {
-            String lastChannel = lastImage.getMetadata().getChannelName();
-            String newChannel = image.getMetadata().getChannelName();
-            didChannelChange = ((lastChannel == null && newChannel != null) ||
-                  (lastChannel != null && !lastChannel.equals(newChannel)));
-         }
          if (lastImage == null ||
                newImage.getWidth() != lastImage.getWidth() ||
                newImage.getHeight() != lastImage.getHeight() ||
                newImage.getNumComponents() != lastImage.getNumComponents() ||
-               newImage.getBytesPerPixel() != lastImage.getBytesPerPixel() ||
-               didChannelChange) {
+               newImage.getBytesPerPixel() != lastImage.getBytesPerPixel()) {
             // Format changing, channel changing, and/or we have no display; we
             // need to recreate everything.
             shouldReset = true;
@@ -449,6 +437,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          display_.getAsWindow().setLocation(displayLoc);
       }
       channelToLastImage_.clear();
+      shouldForceReset_ = false;
    }
 
    /**
@@ -507,15 +496,19 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       // Closing is fine by us, but we need to stop live mode first.
       setLiveMode(false);
       event.getDisplay().forceClosed();
+      // Force a reset for next time, in case of changes that we don't pick up
+      // on (e.g. a processor that failed to notify us of changes in image
+      // parameters.
+      shouldForceReset_ = true;
    }
 
    @Subscribe
    public void onPipelineChanged(PipelineEvent event) {
-      // New pipeline means we need to replace our old one.
+      // New pipeline means we need to replace our old one, and reset our
+      // datastore/display (as the image shape may have changed).
       if (pipeline_ != null) {
          pipeline_.halt();
       }
-      pipeline_ = studio_.data().createPipeline(
-            event.getPipelineFactories(), store_, true);
+      shouldForceReset_ = true;
    }
 }
