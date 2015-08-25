@@ -19,42 +19,41 @@
 
 package org.micromanager.plugins.sequencebuffermonitor;
 
-import org.micromanager.MMPlugin;
+import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
 
-public class SequenceBufferMonitor implements MMPlugin {
-   public static final String menuName = "Sequence Buffer Monitor";
-   public static final String tooltipDescription =
-      "Display sequence buffer usage";
-
-   private Studio app_;
+@Plugin(type = MenuPlugin.class)
+public class SequenceBufferMonitor implements MenuPlugin, SciJavaPlugin {
+   private Studio studio_;
 
    @Override
-   public void setApp(Studio app) {
-      app_ = app;
+   public void setContext(Studio studio) {
+      studio_ = studio;
    }
 
    @Override
-   public void dispose() {
-      app_ = null;
+   public String getSubMenu() {
+      return "Developer Tools";
    }
 
    @Override
-   public void show() {
-      SequenceBufferMonitorFrame frame = new SequenceBufferMonitorFrame(app_);
+   public void onPluginSelected() {
+      SequenceBufferMonitorFrame frame = new SequenceBufferMonitorFrame(studio_);
       frame.setVisible(true);
       frame.start();
    }
 
    @Override
-   public String getInfo () {
-      return tooltipDescription;
+   public String getName() {
+      return "Sequence Buffer Monitor";
    }
 
    @Override
-   public String getDescription() {
-      return tooltipDescription;
+   public String getHelpText() {
+      return "Display sequence buffer usage";
    }
 
    @Override
