@@ -319,22 +319,22 @@ void DiskoveryListener::ParseMessage(std::string message)
          model_->SetTIRFFocalLength( (uint16_t) atoi( tokens[1].c_str() ) );
       } else if (tokens[0] == "RESOLUTION_ROTATION")
       {
-         model_->SetOffsetLinear( (uint32_t) atoi( tokens[1].c_str() )  );
+         model_->SetOffsetLinear( (int32_t) atoi( tokens[1].c_str() )  );
       } else if (tokens[0] == "MIN_COUNT_ROT")
       {
-         model_->SetMinRotation( (uint32_t) atoi(tokens[1].c_str() ) );
+         model_->SetMinRotation( (int32_t) atoi(tokens[1].c_str() ) );
       } else if (tokens[0] == "MAX_COUNT_ROT")
       {
-         model_->SetMaxRotation( (uint32_t) atoi(tokens[1].c_str() ) );
+         model_->SetMaxRotation( (int32_t) atoi(tokens[1].c_str() ) );
       } else if (tokens[0] == "MIN_COUNT_LIN")
       {
-         model_->SetMinLinear( (uint32_t) atoi(tokens[1].c_str() ) );
+         model_->SetMinLinear( (int32_t) atoi(tokens[1].c_str() ) );
       } else if (tokens[0] == "MAX_COUNT_LIN")
       {
-         model_->SetMaxLinear( (uint32_t) atoi(tokens[1].c_str() ) );
+         model_->SetMaxLinear( (int32_t) atoi(tokens[1].c_str() ) );
       } else if (tokens[0] == "OFFSET_ROTATION")
       {
-         model_->SetOffsetRotation( (uint32_t) atoi(tokens[1].c_str() ) );
+         model_->SetOffsetRotation( (int32_t) atoi(tokens[1].c_str() ) );
       } else if (tokens[0].substr(0, 5) == "LINE_")
       {
          std::vector<std::string> t = split(tokens[0], '_');

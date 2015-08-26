@@ -187,28 +187,28 @@ class DiskoveryModel
       void SetResolutionRotation(double val) { MMThreadGuard g(lock_); resolutionRotation_ = val; };
 
       // min positionlinear
-      uint32_t GetMinLinear() { MMThreadGuard g(lock_); return minLinear_;};
-      void SetMinLinear(uint32_t val) { MMThreadGuard g(lock_); minLinear_ = val; };
+      int32_t GetMinLinear() { MMThreadGuard g(lock_); return minLinear_;};
+      void SetMinLinear(int32_t val) { MMThreadGuard g(lock_); minLinear_ = val; };
 
       // max positionlinear
-      uint32_t GetMaxLinear() { MMThreadGuard g(lock_); return maxLinear_;};
-      void SetMaxLinear(uint32_t val) { MMThreadGuard g(lock_); maxLinear_ = val; };
+      int32_t GetMaxLinear() { MMThreadGuard g(lock_); return maxLinear_;};
+      void SetMaxLinear(int32_t val) { MMThreadGuard g(lock_); maxLinear_ = val; };
 
       // offset linear
-      uint32_t GetOffsetLinear() { MMThreadGuard g(lock_); return offsetLinear_;};
-      void SetOffsetLinear(uint32_t val) { MMThreadGuard g(lock_); offsetLinear_ = val; };
+      int32_t GetOffsetLinear() { MMThreadGuard g(lock_); return offsetLinear_;};
+      void SetOffsetLinear(int32_t val) { MMThreadGuard g(lock_); offsetLinear_ = val; };
 
       // min Rotation
-      uint32_t GetMinRotation() { MMThreadGuard g(lock_); return minRotation_;};
-      void SetMinRotation(uint32_t val) { MMThreadGuard g(lock_); minRotation_ = val; };
+      int32_t GetMinRotation() { MMThreadGuard g(lock_); return minRotation_;};
+      void SetMinRotation(int32_t val) { MMThreadGuard g(lock_); minRotation_ = val; };
 
       // max Rotation
-      uint32_t GetMaxRotation() { MMThreadGuard g(lock_); return maxRotation_;};
-      void SetMaxRotation(uint32_t val) { MMThreadGuard g(lock_); maxRotation_ = val; };
+      int32_t GetMaxRotation() { MMThreadGuard g(lock_); return maxRotation_;};
+      void SetMaxRotation(int32_t val) { MMThreadGuard g(lock_); maxRotation_ = val; };
 
       // offset Rotation
-      uint32_t GetOffsetRotation() { MMThreadGuard g(lock_); return offsetRotation_;};
-      void SetOffsetRotation(uint32_t val) { MMThreadGuard g(lock_); offsetRotation_ = val; };
+      int32_t GetOffsetRotation() { MMThreadGuard g(lock_); return offsetRotation_;};
+      void SetOffsetRotation(int32_t val) { MMThreadGuard g(lock_); offsetRotation_ = val; };
 
       // Line Wavelength
       uint16_t GetLineWavelength(uint16_t line) { MMThreadGuard g(lock_); return lineWavelength_[line]; };
@@ -277,12 +277,12 @@ class DiskoveryModel
       uint16_t GetPresetFilterT() {  MMThreadGuard g(lock_); return presetFilterT_; };
 
       // TIRF positioner Rot
-      void SetPositionRot(const uint32_t p);
-      uint32_t GetPositionRot() {  MMThreadGuard g(lock_); return tirfRotPos_; };
+      void SetPositionRot(const int32_t p);
+      int32_t GetPositionRot() {  MMThreadGuard g(lock_); return tirfRotPos_; };
 
       // TIRF positioner Lin
-      void SetPositionLin(const uint32_t p);
-      uint32_t GetPositionLin() {  MMThreadGuard g(lock_); return tirfLinPos_; };
+      void SetPositionLin(const int32_t p);
+      int32_t GetPositionLin() {  MMThreadGuard g(lock_); return tirfLinPos_; };
 
       // Motor Running
       void SetMotorRunningSD(const bool p); 
@@ -412,7 +412,7 @@ class DiskoveryModel
       std::string firmwareVersion_;
       uint16_t fwmajor_, fwminor_, fwrevision_;
       uint16_t manYear_, manMonth_, manDay_;
-      uint32_t tirfLinPos_, tirfRotPos_;
+      int32_t tirfLinPos_, tirfRotPos_;
       std::string serialNumber_;
       bool deviceBusy_, logicalBusy_;
       uint16_t presetSD_, presetWF_, presetIris_, presetPX_, presetFilterT_, presetFilterW_;
@@ -421,8 +421,8 @@ class DiskoveryModel
       bool motorRunningSD_;
       uint16_t tirfFocalLength_;
       double resolutionRotation_;
-      uint32_t minLinear_, maxLinear_, minRotation_, maxRotation_;
-      uint32_t offsetLinear_, offsetRotation_;
+      int32_t minLinear_, maxLinear_, minRotation_, maxRotation_;
+      int32_t offsetLinear_, offsetRotation_;
       uint16_t lineWavelength_[7];
       bool lineEnabled_[7];
       long wavelength1_, wavelength2_;
