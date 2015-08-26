@@ -22,6 +22,7 @@
 package org.micromanager.hcs;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -32,6 +33,7 @@ import org.json.JSONObject;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
+import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public class SBSPlate {
@@ -62,18 +64,23 @@ public class SBSPlate {
    private static final String DESCRIPTION = "description";
    private static final String FIRST_WELL_X = "first_well_x";
    private static final String FIRST_WELL_Y = "first_well_y";
+   private static final String CIRCULAR = "circular";
 
-   public static final String SBS_6_WELL= "6WELL";
-   public static final String SBS_12_WELL= "12WELL";
-   public static final String SBS_24_WELL= "24WELL";
-   public static final String SBS_48_WELL= "48WELL";
-   public static final String SBS_96_WELL= "96WELL";
-   public static final String SBS_384_WELL= "384WELL";
-   public static final String SLIDE_HOLDER ="SLIDES";
+   public static final String SBS_6_WELL= "6-Well";
+   public static final String SBS_12_WELL= "12-Well";
+   public static final String SBS_24_WELL= "24-Well";
+   public static final String SBS_48_WELL= "48-Well";
+   public static final String SBS_96_WELL= "96-Well";
+   public static final String SBS_384_WELL= "384-Well";
+   public static final String SLIDE_HOLDER ="4 Slides";
    public static final String DEFAULT_XYSTAGE_NAME = "XYStage"; 
-   public static final String CUSTOM = "CUSTOM";
+   public static final String LOAD_CUSTOM = "Load custom...";
+   public static final String CUSTOM = "Custom";
    private static final String METADATA_SITE_PREFIX = "Site";
 
+   public static final FileDialogs.FileType PLATE_FILE = new FileDialogs.FileType(
+         "PLATE_FILE", "High-Content Screening plate definition files",
+         System.getProperty("user.home") + "/MyPlate.txt", true, "txt");
 
    private static final char rowAlphabet[] = { 'A','B','C','D','E',
       'F','G','H','I','J',
@@ -204,8 +211,19 @@ public class SBSPlate {
          wellSizeX_ = 25600.0;
          wellSizeY_ = 75000.0;
          circular_ = false;
+      } else if (id.equals(LOAD_CUSTOM)) {
+         File file = FileDialogs.openFile(null,
+               "Please select the file to load from", PLATE_FILE);
+         if (file != null) {
+            try {
+               load(file.getAbsolutePath());
+            }
+            catch (Exception e) {
+               ReportingUtils.showError(e, "There was an error loading the file");
+            }
+         }
       }
-
+      
       try {
          generateWells();
       } catch (HCSException e) {
@@ -243,18 +261,28 @@ public class SBSPlate {
    }
 
    public String serialize() throws HCSException {
+      return serialize(numRows_, numColumns_, wellSpacingX_, wellSpacingY_,
+            sizeXUm_, sizeYUm_, id_, description_, firstWellX_, firstWellY_,
+            circular_);
+   }
+
+   public static String serialize(int numRows, int numColumns,
+         double wellSpacingX, double wellSpacingY, double sizeXUm,
+         double sizeYUm, String id, String description, double firstWellX,
+         double firstWellY, boolean circular) throws HCSException {
       JSONObject plate = new JSONObject();
       try {
-         plate.put(ROWS, numRows_);
-         plate.put(COLS, numColumns_);
-         plate.put(WELL_SPACING_X, wellSpacingX_);
-         plate.put(WELL_SPACING_Y, wellSpacingY_);
-         plate.put(PLATE_SIZE_X, sizeXUm_);
-         plate.put(PLATE_SIZE_Y, sizeYUm_);
-         plate.put(ID, id_);
-         plate.put(DESCRIPTION, description_);
-         plate.put(FIRST_WELL_X, firstWellX_);
-         plate.put(FIRST_WELL_Y, firstWellY_);
+         plate.put(ROWS, numRows);
+         plate.put(COLS, numColumns);
+         plate.put(WELL_SPACING_X, wellSpacingX);
+         plate.put(WELL_SPACING_Y, wellSpacingY);
+         plate.put(PLATE_SIZE_X, sizeXUm);
+         plate.put(PLATE_SIZE_Y, sizeYUm);
+         plate.put(ID, id);
+         plate.put(DESCRIPTION, description);
+         plate.put(FIRST_WELL_X, firstWellX);
+         plate.put(FIRST_WELL_Y, firstWellY);
+         plate.put(CIRCULAR, circular);
          return plate.toString(3);
       } catch (JSONException e) {
          throw new HCSException(e);
@@ -262,7 +290,6 @@ public class SBSPlate {
    }
 
    public void restore(String ser) throws HCSException {
-
       JSONObject plate;
       try {
          plate = new JSONObject(ser);
@@ -276,6 +303,7 @@ public class SBSPlate {
          description_ = plate.getString(DESCRIPTION);
          firstWellX_ = plate.getDouble(FIRST_WELL_X);
          firstWellY_ = plate.getDouble(FIRST_WELL_Y);
+         circular_ = plate.getBoolean(CIRCULAR);
       } catch (JSONException e) {
          throw new HCSException(e);
       }

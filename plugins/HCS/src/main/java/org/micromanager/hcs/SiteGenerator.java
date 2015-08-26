@@ -5,6 +5,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
+import java.io.File;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -129,6 +130,19 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       plateIDCombo_.addItem(SBSPlate.SBS_96_WELL);
       plateIDCombo_.addItem(SBSPlate.SBS_384_WELL);
       plateIDCombo_.addItem(SBSPlate.SLIDE_HOLDER);
+      plateIDCombo_.addItem(SBSPlate.LOAD_CUSTOM);
+
+      JButton customButton = new JButton("Create Custom");
+      springLayout.putConstraint(SpringLayout.NORTH, customButton, 125, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, customButton, 6, SpringLayout.EAST, platePanel_);
+      springLayout.putConstraint(SpringLayout.EAST, customButton, -4, SpringLayout.EAST, getContentPane());
+      getContentPane().add(customButton);
+      customButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            new CustomSettingsFrame(SiteGenerator.this);
+         }
+      });
 
       //comboBox.addItem(SBSPlate.CUSTOM);
       plateIDCombo_.addActionListener(new ActionListener() {
@@ -369,7 +383,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
 
       PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()),
               Double.parseDouble(spacingField_.getText()));
-      plate_.initialize((String) plateIDCombo_.getSelectedItem());
       try {
          platePanel_.refreshImagingSites(sites);
       } catch (HCSException e1) {
@@ -636,5 +649,23 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       }
 
       return focusPlane_.getZPos(x, y);
+   }
+
+   public void loadCustom(File target) {
+      try {
+         plate_.load(target.getAbsolutePath());
+      } catch (HCSException e) {
+         app_.logs().logError(e);
+      }
+      PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()),
+              Double.parseDouble(spacingField_.getText()));
+      try {
+         platePanel_.refreshImagingSites(sites);
+      } catch (HCSException e1) {
+         if (app_ != null) {
+            app_.logs().logError(e1);
+         }
+      }
+      platePanel_.repaint();
    }
 }
