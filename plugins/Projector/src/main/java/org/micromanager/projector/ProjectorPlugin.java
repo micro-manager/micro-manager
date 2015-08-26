@@ -22,14 +22,14 @@ import java.awt.Checkbox;
 import java.awt.Panel;
 import java.awt.event.ItemEvent;
 import mmcorej.CMMCore;
-import org.micromanager.MMPlugin;
+import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 
 
 // The Projector plugin provides a user interface for calibration and control
 // of SLM- and Galvo-based phototargeting devices. Phototargeting can be
 // ad-hoc or planned as part of a multi-dimensional acquisition.
-public class ProjectorPlugin implements MMPlugin {
+public class ProjectorPlugin implements MenuPlugin {
    public static final String menuName = "Projector";
    public static final String tooltipDescription =
       "Control galvo or SLM devices that project a spot or pattern " +
@@ -51,7 +51,6 @@ public class ProjectorPlugin implements MMPlugin {
       return roiManager;
    }
    
-   @Override
    public void dispose() {
       ProjectorControlForm pcf = ProjectorControlForm.getSingleton();
       if (pcf != null) {
@@ -60,7 +59,7 @@ public class ProjectorPlugin implements MMPlugin {
    }
 
    @Override
-   public void setApp(Studio app) {
+   public void setContext(Studio app) {
       app_ = app;
       core_ = app_.getCMMCore();
    }
@@ -68,7 +67,7 @@ public class ProjectorPlugin implements MMPlugin {
    // Instantiate the ProjectorControlForm window if necessary, and show it
    // if it's not visible.
    @Override
-   public void show() {
+   public void onPluginSelected() {
       if (core_.getSLMDevice().length()==0 && core_.getGalvoDevice().length()==0) {
          app_.logs().showMessage("Please load an SLM (Spatial Light Modulator) " +
                "or a Galvo-based phototargeting device " +
@@ -83,23 +82,27 @@ public class ProjectorPlugin implements MMPlugin {
    }
 
    @Override
-   public String getDescription() {
+   public String getName() {
+      return menuName;
+   }
+
+   @Override
+   public String getSubMenu() {
+      return "Device Control";
+   }
+
+   @Override
+   public String getHelpText() {
       return tooltipDescription;
    }
 
    @Override
-   public String getInfo() {
-      throw new UnsupportedOperationException("Not supported yet.");
-   }
-
-   @Override
    public String getVersion() {
-      throw new UnsupportedOperationException("Not supported yet.");
+      return "V0.1";
    }
 
    @Override
    public String getCopyright() {
       throw new UnsupportedOperationException("Not supported yet.");
    }
-
 }
