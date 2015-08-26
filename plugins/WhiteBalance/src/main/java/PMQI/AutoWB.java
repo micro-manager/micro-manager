@@ -18,13 +18,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.Studio;
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *
  * @author Andrej
  */
-public class AutoWB implements org.micromanager.MMPlugin {
+public class AutoWB implements org.micromanager.MenuPlugin {
 
     public static String menuName = "PM/QI Auto White Balance";
     public static String tooltipDescription = "Runs automatic white balance algorithm";
@@ -32,38 +31,35 @@ public class AutoWB implements org.micromanager.MMPlugin {
     private WhiteBalance_UI wbForm_;
 
     @Override
-    public void dispose() {
-
+    public void setContext(Studio app) {
+        gui_ = (MMStudio) app;
     }
 
     @Override
-    public void setApp(Studio app) {
-        gui_ = (MMStudio) app;
+    public String getSubMenu() {
+        return "Device Control";
+    }
 
+    @Override
+    public void onPluginSelected() {
         try {
             wbForm_ = new WhiteBalance_UI(gui_);
-            gui_.addMMListener(wbForm_);
+            gui_.compat().addMMListener(wbForm_);
         } catch (Exception e) {
             Logger.getLogger(WhiteBalance_UI.class.getName()).log(Level.SEVERE, null, e);
-            ReportingUtils.showError(e);
+            gui_.logs().showError(e);
         }
         wbForm_.setVisible(true);
-
     }
 
     @Override
-    public void show() {
-        String msg = "PMQI White Balance";
+    public String getName() {
+        return menuName;
     }
 
     @Override
-    public String getDescription() {
+    public String getHelpText() {
         return "Automatic White Balance scaling calculator for PVCAM compatible Photometrics and QImaging cameras";
-    }
-
-    @Override
-    public String getInfo() {
-        return "PMQI Automatic White Balance";
     }
 
     @Override

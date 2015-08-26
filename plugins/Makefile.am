@@ -9,7 +9,8 @@ nobase_mmplugin_DATA = \
 	PatternOverlay.jar \
 	Recall.jar \
 	SequenceBufferMonitor.jar \
-	SplitView.jar
+	SplitView.jar \
+	WhiteBalance.jar
 
 # Note: temporaripy removed in 2.x: Beta/SlideExplorer2.jar
 
