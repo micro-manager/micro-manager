@@ -419,6 +419,10 @@ int CAndorSDK3Camera::Initialize()
          else
          {
             deviceManager->CloseDevice(cameraDevice);
+            cameraDevice = NULL;
+            if (temp_ws.compare(L"Andor Apogee") == 0) {
+              return DEVICE_NOT_SUPPORTED;
+            }
          }
       }
    }
