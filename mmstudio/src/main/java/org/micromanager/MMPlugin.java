@@ -36,7 +36,7 @@ import org.scijava.plugin.SciJavaPlugin;
  * It is allowed to implement multiple of these interfaces, in which case the
  * plugin will be available in all appropriate contexts in the program.
  *
- * To make your plugin show up when the program runs, you need to do the
+ * To cause your plugin to be loaded when the program runs, you need to do the
  * following:
  * - Create a class that implements this interface (or more likely, one of the
  *   other interfaces listed above) and the org.scijava.plugin.SciJavaPlugin
