@@ -265,7 +265,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       });
 
       minMaxLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
-      minMaxLabel_.setText("Min/Max/Mean:<br>00/00/00");
+      minMaxLabel_.setText("<html>Min/Max/Mean:<br>00/00/00</html>");
 
       histRangeComboBox_ = new JComboBox();
       histRangeComboBox_.setFont(new Font("", Font.PLAIN, 10));
