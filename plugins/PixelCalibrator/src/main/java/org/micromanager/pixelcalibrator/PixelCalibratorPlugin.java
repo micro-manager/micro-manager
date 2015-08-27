@@ -9,13 +9,17 @@ import mmcorej.CMMCore;
 import org.micromanager.internal.dialogs.CalibrationEditor;
 import org.micromanager.internal.dialogs.CalibrationListDlg;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.MMPlugin;
+import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
-public class PixelCalibratorPlugin implements MMPlugin {
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
+
+@Plugin(type = MenuPlugin.class)
+public class PixelCalibratorPlugin implements MenuPlugin, SciJavaPlugin {
    public static final String menuName = "Pixel Calibrator";
    public static final String tooltipDescription =
       "Calibrate pixel size by moving XY stage and computing " +
@@ -29,7 +33,6 @@ public class PixelCalibratorPlugin implements MMPlugin {
 
    double safeTravelRadiusUm_ = 1000;
 
-   @Override
    public void dispose() {
       stopCalibration();
       if (dialog_ != null) {
@@ -46,42 +49,41 @@ public class PixelCalibratorPlugin implements MMPlugin {
    }
 
    @Override
-   public String getDescription() {
+   public String getHelpText() {
       // TODO Auto-generated method stub
       return tooltipDescription;
    }
 
    @Override
-   public String getInfo() {
-      // TODO Auto-generated method stub
-      return null;
-   }
-
-   @Override
    public String getVersion() {
-      // TODO Auto-generated method stub
-      return null;
+      return "V1.0";
    }
 
    @Override
-   public void setApp(Studio app) {
+   public void setContext(Studio app) {
       app_ = (MMStudio) app;
       core_ = app.getCMMCore();
-
    }
 
    @Override
-   public void show() {
+   public String getName() {
+      return menuName;
+   }
+
+   @Override
+   public String getSubMenu() {
+      return "";
+   }
+
+   @Override
+   public void onPluginSelected() {
       if (dialog_ == null) {
          dialog_ = new PixelCalibratorDialog(this);
          dialog_.setVisible(true);
       } else {
          dialog_.setPlugin(this);
          dialog_.toFront();
-
-
       }
-
    }
 
    private double getPixelSize(AffineTransform cameraToStage) {

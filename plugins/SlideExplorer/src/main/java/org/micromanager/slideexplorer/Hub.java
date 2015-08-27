@@ -118,8 +118,8 @@ public class Hub {
          if (result == JOptionPane.YES_OPTION) {
             try {
                PixelCalibratorPlugin pc = new PixelCalibratorPlugin();
-               pc.setApp(Hub.appRef_);
-               pc.show();
+               pc.setContext(Hub.appRef_);
+               pc.onPluginSelected();
             } catch (Exception ex) {
                ReportingUtils.showError("Unable to load Pixel Calibrator Plugin.");
             }

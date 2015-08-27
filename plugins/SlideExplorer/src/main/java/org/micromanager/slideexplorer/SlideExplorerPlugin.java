@@ -2,11 +2,15 @@ package org.micromanager.slideexplorer;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.MMPlugin;
+import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.ReportingUtils;
 
-public class SlideExplorerPlugin implements MMPlugin {
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
+
+@Plugin(type = MenuPlugin.class)
+public class SlideExplorerPlugin implements MenuPlugin, SciJavaPlugin {
 	public static final String menuName = "Slide Explorer";
 	public static final String tooltipDescription =
 		"Automatically acquire images as you pan and zoom, " +
@@ -26,37 +30,44 @@ public class SlideExplorerPlugin implements MMPlugin {
 		hub_.shutdown();
 	}
 
+   @Override
+   public String getName() {
+      return menuName;
+   }
+
+   @Override
 	public String getCopyright() {
 		// TODO Auto-generated method stub
 		return "University of California, San Francisco, 2009. Author: Arthur Edelstein";
 	}
 
-	public String getDescription() {
+   @Override
+	public String getHelpText() {
 		// TODO Auto-generated method stub
 		return tooltipDescription;
 	}
 
-	public String getInfo() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
+   @Override
 	public String getVersion() {
-		// TODO Auto-generated method stub
-		return null;
+		return "V1.0";
 	}
 
-	public void setApp(Studio app) {
+   @Override
+	public void setContext(Studio app) {
 		app_ = app;
 	}
 
-	public void show() {
+   @Override
+   public String getSubMenu() {
+      return "Acquisition Tools";
+   }
+
+   @Override
+	public void onPluginSelected() {
       ReportingUtils.showMessage("Warning: the Slide Explorer plugin can move the XY-stage\n" +
               "long distances. Please be careful not to pan far from the slide\n" +
               "and make sure the objectives don't hit any other hardware.\n" +
               "Use at your own risk! ");
 		hub_ = new Hub(app_);
 	}
-	
-	
 }

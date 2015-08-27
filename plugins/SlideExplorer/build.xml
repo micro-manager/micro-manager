@@ -1,5 +1,4 @@
 <project name="SlideExplorer" default="jar">
-	<property name="plugin.path" value="Acquisition_Tools"/>
 	<import file="../javapluginbuild.xml"/>
 
 	<path id="plugin.classpath">
