@@ -56,7 +56,6 @@ import org.json.JSONException;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.MMPlugin;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.internal.MMStudio;
@@ -66,7 +65,10 @@ import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.TextUtils;
 
-public class TrackerControl extends MMFrame implements MMPlugin {
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
+
+public class TrackerControl extends MMFrame {
    public static final String menuName = "Live Tracking";
    public static final String tooltipDescription =
       "Use image correlation based tracking to countersteer the XY stage";
@@ -132,10 +134,6 @@ public class TrackerControl extends MMFrame implements MMPlugin {
    private final JButton topLeftButton_;
    private final JButton bottomRightButton_;
    
-   static private final String VERSION_INFO = "1.0";
-   static private final String COPYRIGHT_NOTICE = "Copyright by 100X Imaging Inc, 2009";
-   static private final String DESCRIPTION = "Live cell tracking module";
-   static private final String INFO = "Not available";
    private double firstX_;
    private double firstY_;
 
@@ -185,11 +183,12 @@ public class TrackerControl extends MMFrame implements MMPlugin {
    /**
     * Create the dialog
     */
-   public TrackerControl() {
+   public TrackerControl(Studio app) {
       super();
       imageCounter_ = 0;
       limits_ = new MMRect();
       initialize();
+      app_ = app;
       final UserProfile up  = MMStudio.getInstance().profile();
 
       addWindowListener(new WindowAdapter() {
@@ -683,13 +682,7 @@ public class TrackerControl extends MMFrame implements MMPlugin {
 
       imageCounter_++;
    }
-
-   @Override
-   public void setApp(Studio app) {
-      app_ = app;
-      initialize();
-   }
-   
+ 
    private void initialize() {
       if (app_ == null)
          return;
@@ -744,25 +737,5 @@ public class TrackerControl extends MMFrame implements MMPlugin {
    
    public void configurationChanged() {
       initialize();
-   }
-
-   @Override
-   public String getCopyright() {
-      return COPYRIGHT_NOTICE;
-   }
-
-   @Override
-   public String getDescription() {
-      return DESCRIPTION;
-   }
-
-   @Override
-   public String getInfo() {
-      return INFO;
-   }
-
-   @Override
-   public String getVersion() {
-      return VERSION_INFO;
    }
 }
