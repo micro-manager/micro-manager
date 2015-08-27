@@ -1,10 +1,13 @@
 package edu.umassmed.pgfocus;
 
 import mmcorej.CMMCore;
-import org.micromanager.MMPlugin;
+import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 
 import org.jfree.ui.RefineryUtilities;
+
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
 
 /**
  *
@@ -15,7 +18,8 @@ import org.jfree.ui.RefineryUtilities;
  * 
  */
 
-public class pgFocus implements MMPlugin {
+@Plugin(type = MenuPlugin.class)
+public class pgFocus implements MenuPlugin, SciJavaPlugin {
    public static final String menuName = "pgFocus";
    public static final String tooltipDescription =
       "Control the pgFocus open-source software and open hardware " +
@@ -25,10 +29,14 @@ public class pgFocus implements MMPlugin {
    private Studio gui_;
    private pgFocusFrame myFrame_;
 
-    @Override
-   public void setApp(Studio app) {
+   @Override
+   public void setContext(Studio app) {
       gui_ = app;
       setCore_(app.getCMMCore());
+   }
+
+   @Override
+   public void onPluginSelected() {
       if (myFrame_ == null) {
          try {
             myFrame_ = new pgFocusFrame(gui_);
@@ -42,25 +50,23 @@ public class pgFocus implements MMPlugin {
       myFrame_.setVisible(true);
    }
    
+   @Override
+   public String getName() {
+      return menuName;
+   }
 
-    @Override
+   @Override
+   public String getSubMenu() {
+      return "Device Control";
+   }
+
    public void dispose() {
       if (myFrame_ != null)
     	  myFrame_.safePrefs();
    }
 
-    @Override
-   public void show() {
-  //       String ig = "pgFocus focus stabilization";
-   }
-
-    @Override
-   public String getInfo () {
-      return "pgFocus Plugin";
-   }
-
-    @Override
-   public String getDescription() {
+   @Override
+   public String getHelpText() {
       return tooltipDescription;
    }
 
