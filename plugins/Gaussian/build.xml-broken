@@ -1,7 +1,0 @@
-<project name="Gaussian" basedir="." default="jar">
-	<!-- TODO Should just move 'source' to 'src' and remove this line -->
-	<property name="srcdir" location="source"/>
-	<property name="plugin.path" value="Acquisition_Tools"/>
-
-	<import file="../javapluginbuild.xml"/>
-</project>

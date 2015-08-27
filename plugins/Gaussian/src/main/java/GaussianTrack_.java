@@ -11,19 +11,32 @@
 import edu.valelab.gaussianfit.MainForm;
 
 import ij.plugin.*;
-import org.micromanager.MMPlugin;
+import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
+
+import org.scijava.plugin.SciJavaPlugin;
 
 /**
  *
  * @author nico
  */
-public class GaussianTrack_ implements PlugIn, MMPlugin {
+@org.scijava.plugin.Plugin(type = MenuPlugin.class)
+public class GaussianTrack_ implements PlugIn, MenuPlugin, SciJavaPlugin {
     public static final String menuName = "Localization Microscopy";
     public static final String tooltipDescription =
        "Toolbox for analyzing spots using Gaussian fitting";
 
     private MainForm theForm_;
+
+   @Override
+   public String getName() {
+      return menuName;
+   }
+
+   @Override
+   public String getSubMenu() {
+      return "Acquisition Tools";
+   }
 
     @Override
     public void run(String arg) {
@@ -43,42 +56,31 @@ public class GaussianTrack_ implements PlugIn, MMPlugin {
 
 
 
-    @Override
-   public void setApp(Studio app) {
-      
+   @Override
+   public void setContext(Studio app) {      
+   }
+
+   @Override
+   public void onPluginSelected() {
       run("");
    }
 
-    @Override
    public void dispose() {
       if (theForm_ != null)
          theForm_.dispose();
    }
 
-    @Override
-   public void show() {
-         String ig = "GaussianFit";
-   }
-
-   public void configurationChanged() {
-   }
-
-    @Override
-   public String getInfo () {
+   @Override
+   public String getHelpText() {
       return "Gaussian Fitting Plugin";
    }
 
-    @Override
-   public String getDescription() {
-      return "";
-   }
-
-    @Override
+   @Override
    public String getVersion() {
       return "0.32";
    }
 
-    @Override
+   @Override
    public String getCopyright() {
       return "University of California, 2010-2014";
    }
