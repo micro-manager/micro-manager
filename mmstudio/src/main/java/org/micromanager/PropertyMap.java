@@ -341,6 +341,11 @@ public interface PropertyMap {
    public Set<String> getKeys();
 
    /**
+    * Return true iff there is an entry in the property map for the given key.
+    */
+   public boolean containsKey(String key);
+
+   /**
     * Return the type of the specified property, or null if the property does
     * not exist.
     * @param key The key of the property in question.

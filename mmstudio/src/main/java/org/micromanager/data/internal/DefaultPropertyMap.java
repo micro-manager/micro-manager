@@ -530,6 +530,11 @@ public class DefaultPropertyMap implements PropertyMap {
    }
 
    @Override
+   public boolean containsKey(String key) {
+      return propMap_.containsKey(key);
+   }
+
+   @Override
    public Class getPropertyType(String key) {
       if (propMap_.containsKey(key)) {
          return propMap_.get(key).getType();
