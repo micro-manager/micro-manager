@@ -125,10 +125,10 @@ public class PluginFinder {
    }
 
    /**
-    * Custom class loader for loading plugin classes. It loads from the
-    * specified jar file, and if that fails then it falls back to
-    * Micro-Manager's own ClassLoader, so that plugins can depend on
-    * the same jars that Micro-Manager does.
+    * Custom class loader for loading plugin classes and resources. It loads
+    * from the specified jar file, and if that fails then it falls back to
+    * Micro-Manager's own ClassLoader, so that plugins can depend on the same
+    * jars that Micro-Manager does.
     */
    public static class PluginLoader extends URLClassLoader {
       public PluginLoader(URL jarURL) {
@@ -146,6 +146,19 @@ public class PluginFinder {
          }
          if (result == null) {
             ReportingUtils.logError("Couldn't load class " + className);
+         }
+         return result;
+      }
+
+      @Override
+      public URL getResource(String name) {
+         URL result = super.getResource(name);
+         if (result == null) {
+            // Fall back to our own jar.
+            result = MMStudio.getInstance().getClass().getClassLoader().getResource(name);
+         }
+         if (result == null) {
+            ReportingUtils.logError("Couldn't find resource " + name);
          }
          return result;
       }
