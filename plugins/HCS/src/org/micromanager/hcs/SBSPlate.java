@@ -205,17 +205,18 @@ public class SBSPlate {
          wellSizeY_ = 75000.0;
          circular_ = false;
       } else if (id.equals(IBIDI_24_WELL)) {
-          numColumns_ = 6;
-          numRows_ = 4;
-          sizeXUm_ = 127700.0;
-          sizeYUm_ = 85500.0;
-          wellSpacingX_ = 19000.0;
-          wellSpacingY_ = 19000.0;
-          firstWellX_ = 16350.0;
-          firstWellY_ = 14250.0;
-          wellSizeX_ = 15500.0;
-          wellSizeY_ = 15500.0;
-          circular_ = true;
+         id_ = IBIDI_24_WELL;
+         numColumns_ = 6;
+         numRows_ = 4;
+         sizeXUm_ = 127700.0;
+         sizeYUm_ = 85500.0;
+         wellSpacingX_ = 19000.0;
+         wellSpacingY_ = 19000.0;
+         firstWellX_ = 16350.0;
+         firstWellY_ = 14250.0;
+         wellSizeX_ = 15500.0;
+         wellSizeY_ = 15500.0;
+         circular_ = true;
       }
 
       try {
