@@ -1,13 +1,18 @@
 
 package org.micromanager.acquiremultipleregions;
 
+import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
+
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
 
 /**
  *
  * @author kthorn
  */
-public class AcquireMultipleRegions  implements org.micromanager.MMPlugin {
+@Plugin(type = MenuPlugin.class)
+public class AcquireMultipleRegions implements MenuPlugin, SciJavaPlugin {
    public static final String menuName = "Acquire Multiple Regions";
    public static final String tooltipDescription =
       "Automatically acquire multiple regions of a sample";
@@ -23,28 +28,29 @@ public class AcquireMultipleRegions  implements org.micromanager.MMPlugin {
        public static double shepardExponent = 2; 
    
     @Override
-    public void dispose() {
+    public void setContext(Studio si) {
+      gui_ = si;
     }
 
     @Override
-    public void setApp(Studio si) {
-      gui_ = si;                                        
+    public void onPluginSelected() {
       if (myFrame_ == null)
          myFrame_ = new AcquireMultipleRegionsForm(gui_);
       myFrame_.setVisible(true);
     }
 
     @Override
-    public void show() {
+    public String getName() {
+        return menuName;
     }
 
     @Override
-    public String getDescription() {
-        return tooltipDescription;
+    public String getSubMenu() {
+        return "Acquisition Tools";
     }
 
     @Override
-    public String getInfo() {
+    public String getHelpText() {
         return tooltipDescription;
     }
 
