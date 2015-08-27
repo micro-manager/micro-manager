@@ -29,121 +29,113 @@ import java.util.Iterator;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.TaggedImage;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.micromanager.acquisition.internal.TaggedImageQueue;
-import org.micromanager.DataProcessor;
+import org.micromanager.data.Coords;
+import org.micromanager.data.Image;
+import org.micromanager.data.Metadata;
+import org.micromanager.data.Processor;
+import org.micromanager.data.ProcessorContext;
+import org.micromanager.PropertyMap;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.ImageUtils;
-import org.micromanager.internal.utils.MDUtils;
-import org.micromanager.internal.utils.MMScriptException;
+import org.micromanager.internal.utils.MMException;
 
 /**
  *
- * @author nico
+ * @author nico, modified for MM2.0 by Chris Weisiger
  */
-public class ShadingProcessor extends DataProcessor<TaggedImage> {
-   private ShadingTableModel shadingTableModel_;
-   private MultiChannelShadingMigForm myFrame_;
+public class ShadingProcessor implements Processor {
+   private Studio studio_;
    private ImageCollection imageCollection_;
-    
-   
-   @Override
-   public void setEnabled(boolean enabled) {
-      super.setEnabled(enabled);
-      if (myFrame_ != null) {
-         myFrame_.updateProcessorEnabled(enabled);
-      }
-   }
-   
-   /**
-    * Polls for tagged images, and processes them if their size and type matches
-    * 
-    */
-   @Override
-   public void process() {
-      try {
-         TaggedImage nextImage = poll();
-         if (nextImage != TaggedImageQueue.POISON) {
-            try {
+   private String channelGroup_;
+   private String[] presets_;
 
-               produce(processTaggedImage(nextImage));
-
-            } catch (Exception ex) {
-               produce(nextImage);
-               myFrame_.setStatus(ex.getMessage());
-               gui_.logs().logError(ex);
-            }
-         } else {
-            // Must produce Poison (sentinel) image to terminate tagged image pipeline
-            produce(nextImage);
+   public ShadingProcessor(Studio studio, String channelGroup,
+         String backgroundFile, String[] presets,
+         String[] files) {
+      studio_ = studio;
+      channelGroup_ = channelGroup;
+      presets_ = presets;
+      imageCollection_ = new ImageCollection(studio_);
+      if (backgroundFile != null && !backgroundFile.equals("")) {
+         try {
+            imageCollection_.setBackground(backgroundFile);
          }
-      } catch (Exception ex) {
-         gui_.logs().logError(ex);
+         catch (MMException e) {
+            studio_.logs().logError(e, "Unable to set background file to " + backgroundFile);
+         }
+      }
+      try {
+         for (int i = 0; i < presets.length; ++i) {
+            imageCollection_.addFlatField(presets[i], files[i]);
+         }
+      }
+      catch (Exception e) {
+         studio_.logs().logError(e, "Error recreating ImageCollection");
       }
    }
 
-   /**
-    * Executes flat-fielding
-
-    * @param nextImage - image to be processed
-    * @return - Transformed tagged image, otherwise a copy of the input
-    * @throws JSONException
-    * @throws MMScriptException 
-    */
-   public  TaggedImage processTaggedImage(TaggedImage nextImage) throws 
-           JSONException, MMScriptException, Exception {     
-      myFrame_.setStatus("Processing image...");
-      int width = MDUtils.getWidth(nextImage.tags);
-      int height = MDUtils.getHeight(nextImage.tags);
-      TaggedImage newImage;
-      String type = MDUtils.getPixelType(nextImage.tags);
-      
-      int ijType = ImagePlus.GRAY8;
-      if (type.equals("GRAY16")) {
-         ijType = ImagePlus.GRAY16;
-      }
+   @Override
+   public void processImage(Image image, ProcessorContext context) {
+      int width = image.getWidth();
+      int height = image.getHeight();
       
       // For now, this plugin only works with 8 or 16 bit grayscale images
-      if (! (ijType == ImagePlus.GRAY8 || ijType == ImagePlus.GRAY16) ) {
+      if (image.getNumComponents() > 1 || image.getBytesPerPixel() > 2) {
          String msg = "Cannot flatfield correct images other than 8 or 16 bit grayscale";
-         myFrame_.setStatus(msg);
-         gui_.logs().logError(msg);
-         return nextImage;
+         studio_.logs().logError(msg);
+         context.outputImage(image);
+         return;
       }
-      JSONObject newTags = nextImage.tags;
-      TaggedImage bgSubtracted = nextImage;
-      
-      // subtract background
-      int binning;
-      try {
-        binning = newTags.getInt("Binning");
-      } catch (JSONException ex) {
-          // some cameras store binning as 1x1, etc..
-          String binString = newTags.getString("Binning");
-          binning = Integer.parseInt(binString.substring(0, 1));
-      }
-      Rectangle rect = ImageCollection.TagToRectangle(newTags.getString("ROI"));
-      ImagePlusInfo background = imageCollection_.getBackground(binning, 
-              rect);
-      if (background != null) {
-         ImageProcessor imp = ImageUtils.makeProcessor(nextImage);
-         ImageProcessor impBackground = background.getProcessor();
-         imp = ImageUtils.subtractImageProcessors(imp, impBackground);
-         bgSubtracted = new TaggedImage(imp.getPixels(), newTags);
-      }
-      
-      ImagePlusInfo flatFieldImage = getMatchingFlatFieldImage(newTags, binning, rect);       
 
-      //do not calculate flat field if we don't have a matching channel
-      if (flatFieldImage == null) {
-         String msg = "No matching flatfield image found";
-         myFrame_.setStatus(msg);
-         return bgSubtracted;
-      }  
+      Metadata metadata = image.getMetadata();
+      PropertyMap userData = metadata.getUserData();
+
+      Image bgSubtracted = image;
+      Image result;
+      // subtract background
+      Integer binning = metadata.getBinning();
+      if (binning == null) {
+         // Assume binning is 1
+         binning = 1;
+      }
+      Rectangle rect = metadata.getROI();
+      ImagePlusInfo background = null;
+      try {
+         background = imageCollection_.getBackground(binning, rect);
+      }
+      catch (MMException e) {
+         studio_.logs().logError(e, "Error getting background for bin mode " + binning + " and rect " + rect);
+      }
+      if (background != null) {
+         ImageProcessor ip = studio_.data().ij().createProcessor(image);
+         ImageProcessor ipBackground = background.getProcessor();
+         try {
+            ip = ImageUtils.subtractImageProcessors(ip, ipBackground);
+            userData = userData.copy().putBoolean("Background-corrected", true).build();
+         }
+         catch (MMException e) {
+            studio_.logs().logError(e, "Unable to subtract background");
+         }
+         bgSubtracted = studio_.data().ij().createImage(ip, image.getCoords(),
+               metadata.copy().userData(userData).build());
+      }
       
-      if (ijType == ImagePlus.GRAY8) {
+      ImagePlusInfo flatFieldImage = getMatchingFlatFieldImage(
+            metadata, binning, rect);       
+
+      // do not calculate flat field if we don't have a matching channel;
+      // just return the background-subtracted image (which is the unmodified
+      // image if we also don't have a background subtraction file).
+      if (flatFieldImage == null) {
+         context.outputImage(bgSubtracted);
+         return;
+      }
+
+      userData = userData.copy().putBoolean("Flatfield-corrected", true).build();
+      metadata = metadata.copy().userData(userData).build();
+      if (image.getBytesPerPixel() == 1) {
          byte[] newPixels = new byte[width * height];
-         byte[] oldPixels = (byte[]) bgSubtracted.pix;
+         byte[] oldPixels = (byte[]) image.getRawPixels();
          int length = oldPixels.length;
          float[] flatFieldPixels = (float[]) flatFieldImage.getProcessor().getPixels();
          for (int index = 0; index < length; index++){
@@ -154,13 +146,12 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
             }
             newPixels[index] = (byte) (newValue);
          }
-         newImage = new TaggedImage(newPixels, newTags);
-         myFrame_.setStatus("Done");
-         return newImage;
-       
-      } else if (ijType == ImagePlus.GRAY16) {
+         result = studio_.data().createImage(newPixels, width, height,
+               1, 1, image.getCoords(), metadata);
+         context.outputImage(result);       
+      } else if (image.getBytesPerPixel() == 2) {
          short[] newPixels = new short[width * height];
-         short[] oldPixels = (short[]) bgSubtracted.pix;
+         short[] oldPixels = (short[]) bgSubtracted.getRawPixels();
          int length = oldPixels.length;
          for (int index = 0; index < length; index++){
             // shorts are signed in java so have to do this conversion to get 
@@ -171,85 +162,52 @@ public class ShadingProcessor extends DataProcessor<TaggedImage> {
             if (newValue > 2 * Short.MAX_VALUE) {
                newValue = 2 * Short.MAX_VALUE;
             }
-            newPixels[index] = (short) newValue;
+            newPixels[index] = (short) (((int) newValue) & 0x0000ffff);
          }
-         newImage = new TaggedImage(newPixels, newTags);
-         myFrame_.setStatus("Done");
-         return newImage;         
-         
-      } 
-      
-      return nextImage;
-     
+         result = studio_.data().createImage(newPixels, width, height,
+               2, 1, image.getCoords(), metadata);
+         context.outputImage(result);       
+      }
    }
+
    /**
-    * Given the tags of the image currently being processed,
+    * Given the metadata of the image currently being processed,
     * find a matching preset from the channelgroup used by the tablemodel
-    * @param imgTags - image tags in JSON format
+    * @param metadata Metadata of image being processed
     * @return matching flat field image
     */
-   ImagePlusInfo getMatchingFlatFieldImage(JSONObject imgTags, int binning, 
+   ImagePlusInfo getMatchingFlatFieldImage(Metadata metadata, int binning, 
            Rectangle rect) {
-      String channelGroup = shadingTableModel_.getChannelGroup();
-      String[] presets = shadingTableModel_.getUsedPresets();
-      for (String preset : presets) {
+      PropertyMap scopeData = metadata.getScopeData();
+      for (String preset : presets_) {
          try {
-            Configuration config = gui_.getCMMCore().getConfigData(
-                    channelGroup, preset);
-            boolean presetMatch = true;
-            for (int i = 0; i < config.size() && presetMatch; i++) {
-               boolean settingMatch = false;
+            Configuration config = studio_.getCMMCore().getConfigData(
+                    channelGroup_, preset);
+            boolean presetMatch = false;
+            for (int i = 0; i < config.size(); i++) {
                PropertySetting ps = config.getSetting(i);
                String key = ps.getKey();
                String value = ps.getPropertyValue();
-               Iterator<String> tagIterator = imgTags.keys();
-               while (tagIterator.hasNext() && !settingMatch) {
-                  String tagKey = tagIterator.next();
-                  String tagValue = imgTags.optString(tagKey);
-                  if (key.equals(tagKey) && value.equals(tagValue)) {
-                     settingMatch = true;
+               if (scopeData.containsKey(key) &&
+                     scopeData.getPropertyType(key) == String.class) {
+                  String tagValue = scopeData.getString(key);
+                  if (value.equals(tagValue)) {
+                     presetMatch = true;
+                     break;
                   }
                }
-               // if we do not have a settingMatch, this config can not match
-               // so stop testing this config
-               presetMatch = settingMatch;
             }
             if (presetMatch) {
                return imageCollection_.getFlatField(preset, binning, rect);
             }
          } catch (Exception ex) {
-            gui_.logs().logError(ex, "Exception in tag matching");
+            studio_.logs().logError(ex, "Exception in tag matching");
          }
-      }
-      
+      }      
       return null;
-   }
-   
-   
-   @Override
-   public void makeConfigurationGUI() {
-      if (myFrame_ == null) {
-         imageCollection_ = new ImageCollection(gui_);
-         myFrame_ = new MultiChannelShadingMigForm(this, gui_);
-         shadingTableModel_ = myFrame_.getShadingTableModel();
-      }
-      myFrame_.setVisible(true);
    }
    
    public ImageCollection getImageCollection() {
       return imageCollection_;
    }
-   
-   public void setMyFrameToNull() {
-      myFrame_ = null;
-   }
-
-   @Override
-   public void dispose() {
-      if (myFrame_ != null) {
-         myFrame_.dispose();
-         myFrame_ = null;
-      }
-   }
-   
 }

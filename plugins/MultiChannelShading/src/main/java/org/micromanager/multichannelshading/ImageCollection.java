@@ -45,13 +45,16 @@ public class ImageCollection {
    private final Studio gui_;
    private final HashMap<String, ImagePlusInfo> background_;
    private final HashMap<String, HashMap<String, ImagePlusInfo>> flatFields_;
-   
+   private final HashMap<String, String> presetFiles_;
+   private String backgroundFilePath_;
+
    private final String BASEIMAGE = "base";
    
    public ImageCollection(Studio gui) {
       gui_ = gui;
       background_ = new HashMap<String, ImagePlusInfo>();
       flatFields_ = new HashMap<String, HashMap<String, ImagePlusInfo>>();
+      presetFiles_ = new HashMap<String, String>();
    }
    
    public void setBackground(String file) throws MMException {
@@ -65,9 +68,14 @@ public class ImageCollection {
          ImagePlusInfo bg = new ImagePlusInfo(ip); 
          background_.put(BASEIMAGE, bg);
          background_.put(makeKey(1, bg.getOriginalRoi()), bg);
+         backgroundFilePath_ = file;
       }
    }
-   
+
+   public String getBackgroundFile() {
+      return backgroundFilePath_;
+   }
+
    public ImagePlusInfo getBackground() {
       return background_.get(BASEIMAGE);
    }
@@ -169,6 +177,14 @@ public class ImageCollection {
          gui_.logs().logError("Shading plugin, addFlatField in ImageCollection: " + 
                  ex.getMessage());
       }
+      presetFiles_.put(preset, file);
+   }
+
+   public String getFileForPreset(String preset) {
+      if (presetFiles_.containsKey(preset)) {
+         return presetFiles_.get(preset);
+      }
+      return null;
    }
 
    public ImagePlusInfo getFlatField(String preset) {

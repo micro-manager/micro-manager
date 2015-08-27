@@ -6,6 +6,7 @@
 nobase_mmplugin_DATA = \
 	HCS.jar \
 	ImageFlipper.jar \
+	MultiChannelShading.jar \
 	PatternOverlay.jar \
 	Projector.jar \
 	Recall.jar \

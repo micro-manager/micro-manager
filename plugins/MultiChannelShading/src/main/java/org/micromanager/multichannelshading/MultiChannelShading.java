@@ -21,28 +21,49 @@
 
 package org.micromanager.multichannelshading;
 
+import org.micromanager.data.ProcessorConfigurator;
+import org.micromanager.data.ProcessorFactory;
+import org.micromanager.data.ProcessorPlugin;
+import org.micromanager.PropertyMap;
+import org.micromanager.Studio;
+
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
+
 /**
  *
  * @author kthorn
  */
-public class MultiChannelShading implements org.micromanager.MMProcessorPlugin {
+@Plugin(type = ProcessorPlugin.class)
+public class MultiChannelShading implements ProcessorPlugin, SciJavaPlugin {
    public static final String menuName = "Flat-Field Correction";
    public static final String tooltipDescription =
       "Apply dark subtraction and flat-field correction";
 
    public static String versionNumber = "0.2";
 
-   public static Class<?> getProcessorClass() {
-      return ShadingProcessor.class;
+   private Studio studio_;
+
+   @Override
+   public void setContext(Studio studio) {
+      studio_ = studio;
+   }
+
+   public ProcessorConfigurator createConfigurator() {
+      return new MultiChannelShadingMigForm(studio_);
+   }
+
+   public ProcessorFactory createFactory(PropertyMap settings) {
+      return new MultiChannelShadingFactory(studio_, settings);
    }
 
    @Override
-   public String getDescription() {
-      return tooltipDescription;
+   public String getName() {
+      return menuName;
    }
 
    @Override
-   public String getInfo() {
+   public String getHelpText() {
       return tooltipDescription;
    }
 
@@ -54,6 +75,5 @@ public class MultiChannelShading implements org.micromanager.MMProcessorPlugin {
    @Override
    public String getCopyright() {
       return "University of California, 2014";
-   }
-   
+   }   
 }
