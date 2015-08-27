@@ -45,9 +45,14 @@ import org.scijava.plugin.SciJavaPlugin;
  * - Place your plugin's jar file in the mmplugins directory of your ImageJ
  *   installation.
  *
- * The annotated plugin class should look something like this:
- * @org.scijava.plugin.Plugin(type = MMPlugin.class)
- * public class MyPlugin implements org.micromanager.MMPlugin, SciJavaPlugin {
+ * The annotated plugin class should look something like this (assuming you
+ * want a MenuPlugin; replace with a different type as appropriate):
+ * 
+ * import org.micromanager.MenuPlugin;
+ * import org.scijava.plugin.Plugin;
+ * import org.scijava.plugin.SciJavaPlugin
+ * @Plugin(type = MenuPlugin.class)
+ * public class MyPlugin implements MenuPlugin, SciJavaPlugin {
  *    ...plugin contents go here...
  * }
  *
