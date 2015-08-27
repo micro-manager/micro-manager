@@ -1,11 +1,14 @@
 package org.micromanager.multicamera;
 
 import mmcorej.CMMCore;
-import org.micromanager.MMPlugin;
+import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
 
-public class MultiCamera implements MMPlugin {
+@Plugin(type = MenuPlugin.class)
+public class MultiCamera implements MenuPlugin, SciJavaPlugin {
    public static final String menuName = "Multi-Andor Control";
    public static final String tooltipDescription =
       "Control settings for one or more Andor EM-CCD cameras via the " +
@@ -15,10 +18,24 @@ public class MultiCamera implements MMPlugin {
    private Studio gui_;
    private MultiCameraFrame myFrame_;
 
-    @Override
-   public void setApp(Studio app) {
+   @Override
+   public String getName() {
+      return menuName;
+   }
+
+   @Override
+   public String getSubMenu() {
+      return "Device Control";
+   }
+
+   @Override
+   public void setContext(Studio app) {
       gui_ = app;                                        
       core_ = app.getCMMCore();
+   }
+
+   @Override
+   public void onPluginSelected() {
       if (myFrame_ == null) {
          try {
             myFrame_ = new MultiCameraFrame(gui_);
@@ -32,27 +49,13 @@ public class MultiCamera implements MMPlugin {
    }
 
    @Override
-   public void dispose() {
-   }
-
-   @Override
-   public void show() {
-         String ig = "Andor Control";
-   }
-
-    @Override
-   public String getInfo () {
-      return "Multi Camera Plugin";
-   }
-
-    @Override
-   public String getDescription() {
+   public String getHelpText() {
       return tooltipDescription;
    }
    
     @Override
    public String getVersion() {
-      return "0.12";
+      return "0.13";
    }
    
     @Override

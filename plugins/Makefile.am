@@ -8,6 +8,7 @@ nobase_mmplugin_DATA = \
 	HCS.jar \
 	ImageFlipper.jar \
 	MMTracker.jar \
+	MultiAndor.jar \
 	MultiChannelShading.jar \
 	PatternOverlay.jar \
 	pgFocus.jar \
