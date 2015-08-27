@@ -163,8 +163,8 @@ public class DefaultImage implements Image {
       coords_ = coords;
 
       rawPixels_ = DirectBuffers.bufferFromArray(pixels);
-      if (rawPixels_.capacity() == 0) {
-         throw new IllegalArgumentException("Pixel data has length 0.");
+      if (rawPixels_ == null || rawPixels_.capacity() == 0) {
+         throw new IllegalArgumentException("Invalid pixel data " + pixels);
       }
       pixelWidth_ = width;
       pixelHeight_ = height;
