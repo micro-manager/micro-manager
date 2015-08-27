@@ -7,6 +7,7 @@ nobase_mmplugin_DATA = \
 	AcquireMultipleRegions.jar \
 	HCS.jar \
 	ImageFlipper.jar \
+	IntelligentAcquisition.jar \
 	MMTracker.jar \
 	MultiAndor.jar \
 	MultiChannelShading.jar \

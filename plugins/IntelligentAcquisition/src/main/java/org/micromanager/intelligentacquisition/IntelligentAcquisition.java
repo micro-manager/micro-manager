@@ -19,11 +19,14 @@
 package org.micromanager.intelligentacquisition;
 
 import mmcorej.CMMCore;
-import org.micromanager.MMPlugin;
+import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
 
-public class IntelligentAcquisition implements MMPlugin {
+@Plugin(type = MenuPlugin.class)
+public class IntelligentAcquisition implements MenuPlugin, SciJavaPlugin {
    public static final String menuName = "Intelligent Acquisition";
    public static final String tooltipDescription =
       "Use image analysis to drive image acquisition";
@@ -32,9 +35,23 @@ public class IntelligentAcquisition implements MMPlugin {
    private Studio gui_;
    private IntelligentAcquisitionFrame myFrame_;
 
-   public void setApp(Studio app) {
-      gui_ = app;                                        
+   public void setContext(Studio app) {
+      gui_ = app;
       core_ = app.getCMMCore();
+   }
+
+   @Override
+   public String getName() {
+      return menuName;
+   }
+
+   @Override
+   public String getSubMenu() {
+      return "Acquisition Tools";
+   }
+
+   @Override
+   public void onPluginSelected() {
       if (myFrame_ == null)
          myFrame_ = new IntelligentAcquisitionFrame(gui_);
       myFrame_.setVisible(true);
@@ -44,20 +61,11 @@ public class IntelligentAcquisition implements MMPlugin {
       myFrame_.closeWindow();
    }
 
-   public void show() {
-   }
-
-   public void configurationChanged() {
-   }
-
-   public String getInfo () {
+   @Override
+   public String getHelpText() {
       return tooltipDescription;
    }
 
-   public String getDescription() {
-      return tooltipDescription;
-   }
-   
    public String getVersion() {
       return "1.0";
    }
