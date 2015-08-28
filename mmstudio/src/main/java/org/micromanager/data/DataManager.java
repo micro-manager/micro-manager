@@ -215,9 +215,12 @@ public interface DataManager {
     * @param isSynchronous If true, then every call to Pipeline.insertImage()
     *        will block until the input Image has been "fully consumed" by
     *        the pipeline (any result Image(s) have been added to the Datastore
-    *        the Pipeline is connected to). If false, Pipeline.insertImage()
-    *        will return immediately and the Images will arrive in the
-    *        Datastore at some indeterminate later time.
+    *        the Pipeline is connected to). If false, then a separate thread
+    *        is created for each Processor in the Pipeline, in which that
+    *        Processor's work is done, and any call to Pipeline.insertImage()
+    *        will return as soon as the first processor in the pipeline begins
+    *        processing the image. The output images from the pipeline will
+    *        arrive in the Datastore at some indeterminate later time.
     * @return a Pipeline containing Processors as specified by the input
     *         factories.
     */

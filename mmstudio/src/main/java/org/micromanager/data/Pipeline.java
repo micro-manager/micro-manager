@@ -37,9 +37,13 @@ public interface Pipeline {
     * will be processed by the second Processor, etc. until the Image sequence
     * reaches the end of the Pipeline, at which point those result Images
     * will be stored in any attached Datastores (see addDatastore, below).
+    *
     * If the Pipeline is in synchronous mode, then this call will block until
-    * any generated images are in the Datastore; otherwise it will return
-    * immediately.
+    * any generated images are in the Datastore. If it is in asynchronous
+    * mode, then the call will return as soon as the first processor in the
+    * pipeline is ready to start processing (i.e. as soon as it is not busy
+    * processing a different image).
+    *
     * Throws a DatastoreFrozenException if the Datastore is frozen at the
     * time this method is called, or if this pipeline has no Processors in it
     * and the Datastore is frozen. If the Datastore is frozen at some point
@@ -64,7 +68,11 @@ public interface Pipeline {
    /**
     * Halt image processing, so that the Pipeline will not produce any more
     * images. Once halted, a Pipeline cannot be resumed; create a new one
-    * instead.
+    * instead. This method will block until all processors along the chain are
+    * known to be done doing any processing (that is, their processImage()
+    * calls have completed), regardless of whether or not the pipeline as a
+    * whole is synchronous. Consequently, once this method returns, it should
+    * be safe to freeze the Datastore and save it to disk.
     */
    public void halt();
 }

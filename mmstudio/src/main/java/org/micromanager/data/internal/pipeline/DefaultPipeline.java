@@ -37,7 +37,9 @@ public class DefaultPipeline implements Pipeline {
    private List<DefaultProcessorContext> contexts_;
    private Datastore store_;
    private boolean isSynchronous_;
+   private boolean isFlushComplete_ = false;
 
+   @SuppressWarnings("LeakingThisInConstructor")
    public DefaultPipeline(List<Processor> processors, Datastore store,
          boolean isSynchronous) {
       processors_ = processors;
@@ -45,7 +47,7 @@ public class DefaultPipeline implements Pipeline {
       contexts_ = new ArrayList<DefaultProcessorContext>();
       for (Processor processor : processors_) {
          contexts_.add(new DefaultProcessorContext(
-                  processor, store_, isSynchronous));
+                  processor, store_, isSynchronous, this));
       }
       // Chain the contexts together. The last one goes to the Datastore by
       // default as it has no sink.
@@ -57,6 +59,7 @@ public class DefaultPipeline implements Pipeline {
 
    @Override
    public void insertImage(Image image) throws DatastoreFrozenException {
+      isFlushComplete_ = false;
       // Manually check for frozen; otherwise for asynchronous pipelines,
       // there's no way for the caller to be informed when we later try to
       // insert the image into the datastore.
@@ -64,7 +67,7 @@ public class DefaultPipeline implements Pipeline {
          throw new DatastoreFrozenException();
       }
       if (contexts_.size() > 0) {
-         contexts_.get(0).insertImage(image);
+         contexts_.get(0).insertImage(new ImageWrapper(image));
       }
       else {
          // Empty "pipeline".
@@ -87,5 +90,26 @@ public class DefaultPipeline implements Pipeline {
       for (DefaultProcessorContext context : contexts_) {
          context.halt();
       }
+      // Flush the pipeline, so we know that there aren't any more images ready
+      // to be added to the datastore. If we're synchronous, then this will
+      // block until the pipeline is flushed; otherwise, we need to wait for
+      // our flushComplete method to be called.
+      contexts_.get(0).insertImage(new ImageWrapper(null));
+      if (!isSynchronous_) {
+         // Wait for our flushComplete() method to be called.
+         while (!isFlushComplete_) {
+            try {
+               Thread.sleep(1000);
+            }
+            catch (InterruptedException e) {
+               ReportingUtils.logError(e, "Interrupted while waiting for flush to complete.");
+               return;
+            }
+         }
+      }
+   }
+
+   public void flushComplete() {
+      isFlushComplete_ = true;
    }
 }
