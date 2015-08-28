@@ -4,23 +4,21 @@
 
 package org.micromanager.clojureeditor;
 
-import org.micromanager.MMPlugin;
+import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 
-public class ClojureEditorPlugin implements MMPlugin {
+public class ClojureEditorPlugin implements MenuPlugin {
    public static final String menuName = "Clojure editor";
    public static final String tooltipDescription =
       "Clojure script editor and REPL";
    
-   public void dispose() {
-      // do nothing
-   }
-
-   public void setApp(Studio app) {
+   @Override
+   public void setContext(Studio app) {
       // do nothing.
    }
 
-   public void show() {
+   @Override
+   public void onPluginSelected() {
       // The current thread's context class loader must be set for Clojure
       // class to load. We don't want to globally set the EDT's context class
       // loader, so let's spawn a new thread on which Clooj is loaded.
@@ -43,24 +41,24 @@ public class ClojureEditorPlugin implements MMPlugin {
       }
    }
 
-   public void configurationChanged() {
-      throw new UnsupportedOperationException("Not supported yet.");
+   public String getName() {
+      return menuName;
    }
 
-   public String getDescription() {
+   public String getSubMenu() {
+      return "Developer Tools";
+   }
+
+   public String getHelpText() {
       return tooltipDescription;
    }
 
-   public String getInfo() {
-      throw new UnsupportedOperationException("Not supported yet.");
-   }
-
    public String getVersion() {
-      throw new UnsupportedOperationException("Not supported yet.");
+      return "V0.1";
    }
 
    public String getCopyright() {
-      throw new UnsupportedOperationException("Not supported yet.");
+      return "Copyright University of California 2011-2015";
    }
 
 }
