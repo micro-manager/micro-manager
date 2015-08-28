@@ -76,7 +76,6 @@ class RAMPSXYStage : public CXYStageBase<RAMPSXYStage>
   double stepSize_um_;
   double posX_um_;
   double posY_um_;
-  bool busy_;
   bool initialized_;
   double lowerLimit_;
   double upperLimit_;

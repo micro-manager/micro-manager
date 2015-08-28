@@ -83,8 +83,6 @@ class RAMPSHub : public HubBase<RAMPSHub>
   int SetCommandComPortH(const char* command, const char* term);
   int GetSerialAnswerComPortH (std::string& ans,  const char* term);
   int GetStatus();
-  int SetTargetXY(double x, double y);
-  int SetTargetZ(double z);
   int GetXYPosition(double *x, double *y);
   std::string GetState();
   int GetControllerVersion(std::string& version);
@@ -93,7 +91,7 @@ class RAMPSHub : public HubBase<RAMPSHub>
   void GetPeripheralInventory();
   std::vector<std::string> peripherals_;
   bool initialized_;
-  bool busy_;
+  bool sent_busy_;
   std::string version_;
   MMThreadLock lock_;
   MMThreadLock executeLock_;
@@ -102,7 +100,6 @@ class RAMPSHub : public HubBase<RAMPSHub>
   std::string commandResult_;
   double MPos[3];
   double WPos[3];
-  double target_x_, target_y_, target_z_;
   std::string status_;
   MM::TimeoutMs* timeOutTimer_;
   long settle_time_;

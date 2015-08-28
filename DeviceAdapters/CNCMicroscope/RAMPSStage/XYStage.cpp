@@ -29,7 +29,6 @@ RAMPSXYStage::RAMPSXYStage() :
     stepSize_um_(0.025),
     posX_um_(0.0),
     posY_um_(0.0),
-    busy_(false),
     initialized_(false),
     lowerLimit_(0.0),
     upperLimit_(20000.0),
@@ -58,7 +57,6 @@ void RAMPSXYStage::GetName(char* Name) const
 
 int RAMPSXYStage::Initialize()
 {
-  LogMessage("XYStage: initialize");
   RAMPSHub* pHub = static_cast<RAMPSHub*>(GetParentHub());
   if (pHub)
   {
@@ -110,35 +108,15 @@ int RAMPSXYStage::Shutdown()
 
 bool RAMPSXYStage::Busy()
 {
-  LogMessage("XYStage: Busy called");
-  
   RAMPSHub* pHub = static_cast<RAMPSHub*>(GetParentHub());
-  std::string status = pHub->GetState();
 
-  LogMessage("Status is:");
-  LogMessage(status);
-  status_ = status;
-
-  if (status_ == "Idle") {
-	  LogMessage("idle, return false.");
-    return false;
-
-  }
-  else if (status_ == "Running") {
-    LogMessage("Running, return true.");
-    return true;
-  }
-  else {
-	  LogMessage("Unexpected status.");
-	  return false;
-  }
+  return pHub->Busy();
 }
 
 double RAMPSXYStage::GetStepSize() {return stepSize_um_;}
 
 int RAMPSXYStage::SetPositionSteps(long x, long y)
 {
-  LogMessage("XYStage: SetPositionSteps");
   RAMPSHub* pHub = static_cast<RAMPSHub*>(GetParentHub());
   std::string status = pHub->GetState();
   if (status == "Running") {
@@ -164,8 +142,6 @@ int RAMPSXYStage::SetPositionSteps(long x, long y)
   if (ret != DEVICE_OK)
     return ret;
 
-  pHub->SetTargetXY(posX_um_, posY_um_);
-
   ret = OnXYStagePositionChanged(posX_um_, posY_um_);
   if (ret != DEVICE_OK)
     return ret;
@@ -175,7 +151,8 @@ int RAMPSXYStage::SetPositionSteps(long x, long y)
 
 int RAMPSXYStage::GetPositionSteps(long& x, long& y)
 {
-  LogMessage("XYStage: GetPositionSteps");
+  RAMPSHub* pHub = static_cast<RAMPSHub*>(GetParentHub());
+  pHub->GetStatus();
   x = (long)(posX_um_ / stepSize_um_);
   y = (long)(posY_um_ / stepSize_um_);
   return DEVICE_OK;
@@ -183,37 +160,30 @@ int RAMPSXYStage::GetPositionSteps(long& x, long& y)
 
 int RAMPSXYStage::SetRelativePositionSteps(long x, long y)
 {
-  LogMessage("XYStage: SetRelativePositioNSteps");
   long xSteps, ySteps;
   GetPositionSteps(xSteps, ySteps);
 
   return this->SetPositionSteps(xSteps+x, ySteps+y);
 }
 
-int RAMPSXYStage::Home() {   LogMessage("RAMPS XYStage home.");
-return DEVICE_OK; }
-int RAMPSXYStage::Stop() { LogMessage("RAMPS XYStage stop.");
-return DEVICE_OK; }
+int RAMPSXYStage::Home() { return DEVICE_OK; }
+int RAMPSXYStage::Stop() { return DEVICE_OK; }
 
-int RAMPSXYStage::SetOrigin() { LogMessage("RAMPS XYStage set origin."); return DEVICE_OK; }
+int RAMPSXYStage::SetOrigin() { return DEVICE_OK; }
 
 int RAMPSXYStage::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax)
 {
-  LogMessage("RAMPS XYStage get limits um");
   xMin = lowerLimit_; xMax = upperLimit_;
   yMin = lowerLimit_; yMax = upperLimit_;
   return DEVICE_OK;
 }
 
 int RAMPSXYStage::GetStepLimits(long& /*xMin*/, long& /*xMax*/, long& /*yMin*/, long& /*yMax*/)
-{   LogMessage("RAMPS XYStage get limits um");
-return DEVICE_UNSUPPORTED_COMMAND; }
+{return DEVICE_UNSUPPORTED_COMMAND; }
 
-double RAMPSXYStage::GetStepSizeXUm() {   LogMessage("RAMPS XYStage get step size x um");
-return stepSize_um_; }
-double RAMPSXYStage::GetStepSizeYUm() {   LogMessage("RAMPS XYStage get step size y um");
-return stepSize_um_; }
-int RAMPSXYStage::Move(double /*vx*/, double /*vy*/) {LogMessage("RAMPS XYStage move"); return DEVICE_OK;}
+double RAMPSXYStage::GetStepSizeXUm() { return stepSize_um_; }
+double RAMPSXYStage::GetStepSizeYUm() { return stepSize_um_; }
+int RAMPSXYStage::Move(double /*vx*/, double /*vy*/) {return DEVICE_OK;}
 
 int RAMPSXYStage::IsXYStageSequenceable(bool& isSequenceable) const {isSequenceable = true; return DEVICE_OK;}
 
@@ -222,11 +192,8 @@ int RAMPSXYStage::IsXYStageSequenceable(bool& isSequenceable) const {isSequencea
 
 int RAMPSXYStage::OnStepSize(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-LogMessage("RAMPS XYStage OnStepSize");
   if (eAct == MM::BeforeGet)
   {
-        LogMessage("RAMPS XYStage OnStepSizex");
-
     pProp->Set(stepSize_um_);
   }
   else if (eAct == MM::AfterSet)
@@ -239,9 +206,6 @@ LogMessage("RAMPS XYStage OnStepSize");
     }
 
   }
-
-   
-  LogMessage("Set step size");
 
   return DEVICE_OK;
 }

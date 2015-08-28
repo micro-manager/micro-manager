@@ -97,18 +97,10 @@ int RAMPSZStage::Shutdown()
 
 bool RAMPSZStage::Busy()
 {
-	LogMessage("ZStage: Busy called");
   RAMPSHub* pHub = static_cast<RAMPSHub*>(GetParentHub());
-  std::string status = pHub->GetState();
-  LogMessage("Status is:");
-  LogMessage(status);
-  if (status == "Idle")
-    return false;
-  else
-    return true;
 
+  return pHub->Busy();
 }
-
 int RAMPSZStage::SetPositionUm(double pos)
 {
   long steps = (long)(pos / stepSize_um_ + 0.5);
@@ -118,7 +110,6 @@ int RAMPSZStage::SetPositionUm(double pos)
 
   return DEVICE_OK;
 }
-
 int RAMPSZStage::GetPositionUm(double& pos)
 {
   long steps;
@@ -130,26 +121,26 @@ int RAMPSZStage::GetPositionUm(double& pos)
   return DEVICE_OK;
 }
 
-double RAMPSZStage::GetStepSize() const {return stepSize_um_;}
+double RAMPSZStage::GetStepSize() const {
+	return stepSize_um_;
+}
 
 /*
  * Requests movement to new z postion from the controller.  This function does the actual communication
  */
 int RAMPSZStage::SetPositionSteps(long steps)
 {
-  LogMessage("ZStage: SetPositionSteps");
   RAMPSHub* pHub = static_cast<RAMPSHub*>(GetParentHub());
   std::string status = pHub->GetState();
   if (status == "Running") {
       return ERR_STAGE_MOVING;
   }
-  posZ_um_ = steps * stepSize_um_;
-
   /*
   double newPosZ = steps * stepSize_um_;
   double difZ = newPosZ - posZ_um_;
   */
 
+  posZ_um_ = steps * stepSize_um_;
 
   char buff[100];
   sprintf(buff, "G0 Z%f", posZ_um_/1000.);
@@ -157,9 +148,10 @@ int RAMPSZStage::SetPositionSteps(long steps)
   int ret = pHub->SendCommand(buffAsStdStr);
   if (ret != DEVICE_OK)
     return ret;
-  
 
-  pHub->SetTargetZ(posZ_um_);
+  ret = OnStagePositionChanged(posZ_um_);
+  if (ret != DEVICE_OK)
+    return ret;
 
   return DEVICE_OK;
 }
@@ -169,6 +161,8 @@ int RAMPSZStage::SetPositionSteps(long steps)
  */
 int RAMPSZStage::GetPositionSteps(long& steps)
 {
+  RAMPSHub* pHub = static_cast<RAMPSHub*>(GetParentHub());
+  pHub->GetStatus();
   steps = (long)(posZ_um_ / stepSize_um_);
 
   // TODO(dek): implement status to get Z position
