@@ -120,10 +120,6 @@ public class DefaultProcessorContext implements ProcessorContext {
     */
    @Override
    public void outputImage(Image image) {
-      if (isHalted_) {
-         // Nothing to be done.
-         return;
-      }
       if (sink_ == null) {
          // Send the image to the Datastore.
          try {
