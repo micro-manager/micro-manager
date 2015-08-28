@@ -82,6 +82,7 @@ public class DefaultProcessorContext implements ProcessorContext {
          }
          catch (InterruptedException e) {
             // Ignore it.
+            Thread.currentThread().interrupt();
          }
          if (wrapper == null) {
             // Queue is empty.
@@ -97,7 +98,7 @@ public class DefaultProcessorContext implements ProcessorContext {
          if (wrapper.getImage() == null) {
             // Flushing the queue; pass the empty wrapper along.
             if (sink_ != null) {
-               sink_.insertImage(null);
+               sink_.insertImage(wrapper);
             }
             else {
                // No sink, i.e. we're the end of the pipeline, so we're done
@@ -109,7 +110,14 @@ public class DefaultProcessorContext implements ProcessorContext {
          else {
             // Non-null image: process it.
             isFlushed_ = false;
-            processor_.processImage(wrapper.getImage(), this);
+            try {
+               processor_.processImage(wrapper.getImage(), this);
+            }
+            catch (Exception e) {
+               ReportingUtils.logError(e, "Processor failed to process image");
+               // Pass the exception to our parent.
+               parent_.exceptionOccurred(e);
+            }
          }
       }
    }
@@ -148,7 +156,14 @@ public class DefaultProcessorContext implements ProcessorContext {
             }
          }
          else {
-            processor_.processImage(wrapper.getImage(), this);
+            try {
+               processor_.processImage(wrapper.getImage(), this);
+            }
+            catch (Exception e) {
+               ReportingUtils.logError(e, "Processor failed to process image");
+               // Pass the exception to our parent.
+               parent_.exceptionOccurred(e);
+            }
          }
       }
       else { // Asynchronous mode

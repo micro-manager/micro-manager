@@ -44,13 +44,26 @@ public interface Pipeline {
     * pipeline is ready to start processing (i.e. as soon as it is not busy
     * processing a different image).
     *
+    * If the Pipeline has been halted, then the image will be silently
+    * discarded, and no processing of it will occur.
+    *
+    * If any of the Processors in the Pipeline throws an exception during
+    * processing, then the Pipeline will be put into an error state, and
+    * attempts to call insertImage() will throw a PipelineErrorException.
+    * You can retrieve the exception(s) that occurred by calling
+    * getExceptions(). If you wish to continue inserting images into the
+    * Pipeline (despite the fact that it may be in an inconsistent state,
+    * resulting in incorrect processed images), then you must call
+    * clearExceptions() first.
+    *
     * Throws a DatastoreFrozenException if the Datastore is frozen at the
     * time this method is called, or if this pipeline has no Processors in it
     * and the Datastore is frozen. If the Datastore is frozen at some point
     * after this method is called, then the exception will not be thrown.
+    *
     * @param image Image to be processed by the Pipeline.
     */
-   public void insertImage(Image image) throws DatastoreFrozenException;
+   public void insertImage(Image image) throws DatastoreFrozenException, PipelineErrorException;
 
    /**
     * Get the output Datastore for this Pipeline. This Datastore is the
@@ -75,4 +88,19 @@ public interface Pipeline {
     * be safe to freeze the Datastore and save it to disk.
     */
    public void halt();
+
+   /**
+    * Return a list containing any exceptions that have occurred during
+    * processing of images. If this list has any elements in it, then calls
+    * to insertImage() will provoke a PipelineErrorException.
+    */
+   public List<Exception> getExceptions();
+
+   /**
+    * Clear the list of exceptions that the pipeline has encountered, allowing
+    * insertImage() to be called again. Note that if exceptions have occurred,
+    * then the pipeline may be in an inconsistent state, causing processed
+    * image data to be incorrect.
+    */
+   public void clearExceptions();
 }

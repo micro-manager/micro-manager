@@ -27,6 +27,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Pipeline;
+import org.micromanager.data.PipelineErrorException;
 import org.micromanager.data.Processor;
 
 import org.micromanager.internal.utils.ReportingUtils;
@@ -37,7 +38,9 @@ public class DefaultPipeline implements Pipeline {
    private List<DefaultProcessorContext> contexts_;
    private Datastore store_;
    private boolean isSynchronous_;
+   private boolean isHalted_ = false;
    private boolean isFlushComplete_ = false;
+   private ArrayList<Exception> exceptions_;
 
    @SuppressWarnings("LeakingThisInConstructor")
    public DefaultPipeline(List<Processor> processors, Datastore store,
@@ -45,6 +48,7 @@ public class DefaultPipeline implements Pipeline {
       processors_ = processors;
       store_ = store;
       contexts_ = new ArrayList<DefaultProcessorContext>();
+      exceptions_ = new ArrayList<Exception>();
       for (Processor processor : processors_) {
          contexts_.add(new DefaultProcessorContext(
                   processor, store_, isSynchronous, this));
@@ -58,7 +62,15 @@ public class DefaultPipeline implements Pipeline {
    }
 
    @Override
-   public void insertImage(Image image) throws DatastoreFrozenException {
+   public void insertImage(Image image) throws DatastoreFrozenException, PipelineErrorException {
+      if (isHalted_) {
+         // Ignore it.
+         return;
+      }
+      if (exceptions_.size() > 0) {
+         // Currently in an error state.
+         throw new PipelineErrorException();
+      }
       isFlushComplete_ = false;
       // Manually check for frozen; otherwise for asynchronous pipelines,
       // there's no way for the caller to be informed when we later try to
@@ -87,6 +99,7 @@ public class DefaultPipeline implements Pipeline {
 
    @Override
    public void halt() {
+      isHalted_ = true;
       for (DefaultProcessorContext context : contexts_) {
          context.halt();
       }
@@ -107,6 +120,20 @@ public class DefaultPipeline implements Pipeline {
             }
          }
       }
+   }
+
+   @Override
+   public List<Exception> getExceptions() {
+      return exceptions_;
+   }
+
+   @Override
+   public void clearExceptions() {
+      exceptions_.clear();
+   }
+
+   public void exceptionOccurred(Exception e) {
+      exceptions_.add(e);
    }
 
    public void flushComplete() {
