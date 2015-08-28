@@ -1,6 +1,10 @@
 package ch.epfl.leb.autolase;
 
+import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
+
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
 
 /**
  * The plugin class for MicroManager which works as a bridge between AutoLase
@@ -10,33 +14,36 @@ import org.micromanager.Studio;
  * 
  * @see AutoLase
  */
-public class AutoLasePlugin implements org.micromanager.MMPlugin {
+@Plugin(type = MenuPlugin.class)
+public class AutoLasePlugin implements org.micromanager.MenuPlugin, SciJavaPlugin {
    public static final String menuName = "AutoLase";
    public static final String tooltipDescription =
       "Closed-loop imaged-based photoactivation control for PALM";
+   private Studio studio_;
 
     @Override
-    public void dispose() {
-        AutoLase.INSTANCE.dispose();
-    }
-
-    @Override
-    public void setApp(Studio app) {
+    public void setContext(Studio app) {
+       studio_ = app;
         AutoLase.INSTANCE.setup(app);
     }
 
     @Override
-    public void show() {
+    public void onPluginSelected() {
         AutoLase.INSTANCE.show();
     }
 
     @Override
-    public String getDescription() {
-        return "Automated single-molecule density control via activation laser power";
+    public String getName() {
+        return menuName;
     }
 
     @Override
-    public String getInfo() {
+    public String getSubMenu() {
+        return "Device Control";
+    }
+
+    @Override
+    public String getHelpText() {
         return "Automated single-molecule density control via activation laser power";
     }
 
