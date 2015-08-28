@@ -35,7 +35,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class DefaultPipeline implements Pipeline {
    
    private List<Processor> processors_;
-   private List<DefaultProcessorContext> contexts_;
+   private List<BaseContext> contexts_;
    private Datastore store_;
    private boolean isSynchronous_;
    private boolean isHalted_ = false;
@@ -47,11 +47,15 @@ public class DefaultPipeline implements Pipeline {
          boolean isSynchronous) {
       processors_ = processors;
       store_ = store;
-      contexts_ = new ArrayList<DefaultProcessorContext>();
+      contexts_ = new ArrayList<BaseContext>();
       exceptions_ = new ArrayList<Exception>();
       for (Processor processor : processors_) {
-         contexts_.add(new DefaultProcessorContext(
-                  processor, store_, isSynchronous, this));
+         if (isSynchronous) {
+            contexts_.add(new SynchronousContext(processor, store_, this));
+         }
+         else {
+            contexts_.add(new AsynchronousContext(processor, store_, this));
+         }
       }
       // Chain the contexts together. The last one goes to the Datastore by
       // default as it has no sink.
@@ -100,9 +104,6 @@ public class DefaultPipeline implements Pipeline {
    @Override
    public void halt() {
       isHalted_ = true;
-      for (DefaultProcessorContext context : contexts_) {
-         context.halt();
-      }
       // Flush the pipeline, so we know that there aren't any more images ready
       // to be added to the datastore. If we're synchronous, then this will
       // block until the pipeline is flushed; otherwise, we need to wait for
