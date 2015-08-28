@@ -8,6 +8,7 @@ nobase_mmplugin_DATA = \
 	AutoLase.jar \
 	ClojureEditor.jar \
 	CRISP.jar \
+	CRISPv2.jar \
 	Gaussian.jar \
 	HCS.jar \
 	ImageFlipper.jar \

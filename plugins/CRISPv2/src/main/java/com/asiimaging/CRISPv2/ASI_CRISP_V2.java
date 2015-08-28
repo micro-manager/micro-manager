@@ -11,12 +11,17 @@ package com.asiimaging.CRISPv2;
 import org.micromanager.Studio;
 import java.awt.event.WindowEvent;
 
+import org.micromanager.MenuPlugin;
+
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
+
 /**
  *
  * @author Vik
  */
-
-public class ASI_CRISP_V2 implements org.micromanager.MMPlugin {
+@Plugin(type = MenuPlugin.class)
+public class ASI_CRISP_V2 implements MenuPlugin, SciJavaPlugin {
 
    public static String menuName = "ASI CRISP V2[Beta]";
    public static String tooltipDescription = "Interface for ASIs CRISP Autofocus ";
@@ -24,15 +29,17 @@ public class ASI_CRISP_V2 implements org.micromanager.MMPlugin {
    private ASI_CRISP_Frame myFrame_;
 
    @Override
-   public void dispose() {
-      if (myFrame_ != null) {
-         myFrame_.safePrefs();
-      }
+   public void setContext(Studio app) {
+      gui_ = app;
+   }
+   
+   @Override
+   public String getSubMenu() {
+      return "Beta";
    }
 
    @Override
-   public void setApp(Studio app) {
-      gui_ = app;
+   public void onPluginSelected() {
       if (myFrame_ != null) {
          WindowEvent wev = new WindowEvent(myFrame_, WindowEvent.WINDOW_CLOSING);
          myFrame_.dispatchEvent(wev);
@@ -50,18 +57,13 @@ public class ASI_CRISP_V2 implements org.micromanager.MMPlugin {
    }
 
    @Override
-   public void show() {
-      String ig = "ASI CRISP Control";
+   public String getName() {
+      return menuName;
    }
 
    @Override
-   public String getDescription() {
-      return "Description: Interface for ASIs CRISP Autofocus. Written by ASI";
-   }
-
-   @Override
-   public String getInfo() {
-      return "Info: ASI CRISP V2";
+   public String getHelpText() {
+      return "Interface for ASIs CRISP Autofocus. Written by ASI";
    }
 
    @Override
