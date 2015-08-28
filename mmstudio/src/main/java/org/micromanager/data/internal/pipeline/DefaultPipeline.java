@@ -67,7 +67,7 @@ public class DefaultPipeline implements Pipeline {
    }
 
    @Override
-   public void insertImage(Image image) throws DatastoreFrozenException, PipelineErrorException {
+   public synchronized void insertImage(Image image) throws DatastoreFrozenException, PipelineErrorException {
       if (isHalted_) {
          // Ignore it.
          return;
@@ -103,7 +103,7 @@ public class DefaultPipeline implements Pipeline {
    }
 
    @Override
-   public void halt() {
+   public synchronized void halt() {
       isHalted_ = true;
       // Flush the pipeline, so we know that there aren't any more images ready
       // to be added to the datastore. We provide a latch for the contexts to
