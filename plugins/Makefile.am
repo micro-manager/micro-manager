@@ -7,6 +7,7 @@ nobase_mmplugin_DATA = \
 	AcquireMultipleRegions.jar \
 	AutoLase.jar \
 	ClojureEditor.jar \
+	CRISP.jar \
 	Gaussian.jar \
 	HCS.jar \
 	ImageFlipper.jar \

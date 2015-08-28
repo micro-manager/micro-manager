@@ -1,14 +1,17 @@
 package org.micromanager.CRISP;
 
-import org.micromanager.MMPlugin;
+import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
+
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
 
 /**
  *
  * @author Nico Stuurman
  */
-
-public class CRISP implements MMPlugin {
+@Plugin(type = MenuPlugin.class)
+public class CRISP implements MenuPlugin, SciJavaPlugin {
    public static final String menuName = "ASI CRISP Control";
    public static final String tooltipDescription =
       "Control the ASI CRISP Autofocus System";
@@ -17,8 +20,17 @@ public class CRISP implements MMPlugin {
    private CRISPFrame myFrame_;
 
     @Override
-   public void setApp(Studio app) {
+   public void setContext(Studio app) {
       gui_ = app;
+   }
+
+   @Override
+   public String getSubMenu() {
+      return "Device Control";
+   }
+
+   @Override
+   public void onPluginSelected() {
       if (myFrame_ == null) {
          try {
             myFrame_ = new CRISPFrame(gui_);
@@ -31,19 +43,13 @@ public class CRISP implements MMPlugin {
    }
 
    
-   @Override
-   public void show() {
-       @SuppressWarnings("unused")
-       String ig = "ASI CRISP Control";
-   }
-
     @Override
-   public String getInfo () {
+   public String getName() {
       return "ASI CRISP Plugin";
    }
 
     @Override
-   public String getDescription() {
+   public String getHelpText() {
       return tooltipDescription;
    }
 
@@ -55,10 +61,5 @@ public class CRISP implements MMPlugin {
     @Override
    public String getCopyright() {
       return "University of California, 20111";
-   }
-
-   @Override
-   public void dispose() {
-      // nothing to do....
    }
 }
