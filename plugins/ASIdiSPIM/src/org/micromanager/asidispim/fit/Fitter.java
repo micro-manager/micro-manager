@@ -32,16 +32,44 @@ import org.jfree.data.xy.XYSeries;
 /**
  *
  * @author nico
+ * @author Jon
  */
 public class Fitter {
    
-   private static final String NOFIT = "No fit";
+   private static final String NOFIT = "No fit (take max)";
    private static final String POL1 = "Polynomial 1";
    private static final String POL2 = "Polynomial 2";
    private static final String POL3 = "Polynomial 3";
    private static final String GAUSSIAN = "Gaussian";
    
    public static enum FunctionType {NoFit, Pol1, Pol2, Pol3, Gaussian};
+   public static enum Algorithm {
+      NONE("None", 0),
+      EDGES("Edges", 1),
+      STD_DEV("StdDev", 2),
+      MEAN("Mean", 3),
+      NORM_VARIANCE("NormalizedVariance", 4),
+      SHARP_EDGES("SharpEdges", 5),
+      REDONDO("Redondo", 6),
+      VOLATH("Volath", 7),
+      VOLATH5("Volath5", 8),
+      MEDIAN_EDGES("MedianEdges", 9),
+      FFT_BANDPASS("FFTBandpass", 10),
+      ;
+      private final String text;
+      private final int prefCode;
+      Algorithm(String text, int prefCode) {
+         this.text = text;
+         this.prefCode = prefCode;
+      }
+      @Override
+      public String toString() {
+         return text;
+      }
+      public int getPrefCode() {
+         return prefCode;
+      };
+   };
    
    /**
     * Utility to facilitate fitting data plotted in JFreeChart
@@ -93,6 +121,8 @@ public class Fitter {
                gf.withStartPoint(guess);
             }
             result = gf.fit(obs.toList());
+         default:
+            break;
       }
       
       return result;
@@ -346,6 +376,9 @@ public class Fitter {
                throw new IllegalArgumentException("Needs a double[] of size 4");
             }
             break;
+      case NoFit:
+      default:
+         break;
       }
    }
    
@@ -376,6 +409,43 @@ public class Fitter {
    
    public static String[] getFunctionTypes() {
       return new String[] {NOFIT, POL1, POL2, POL3, GAUSSIAN};
+   }
+   
+   public static Algorithm getAlgorithmFromPrefCode(int prefCode) {
+      for (Algorithm k : Algorithm.values()) {
+         if (k.getPrefCode() == prefCode) {
+            return k;
+         }
+      }
+      return null;
+   }
+   
+   public static Algorithm getAlgorithmFromString(String key) {
+      for (Algorithm k : Algorithm.values()) {
+         if (k.toString().equals(key)) {
+            return k;
+         }
+      }
+      return Algorithm.NONE;
+   }
+   
+   public static int getPrefCodeFromString(String key) {
+      return Fitter.getAlgorithmFromString(key).getPrefCode();
+   }
+   
+   public static String[] getAlgorithms() {
+      return new String[] {
+            Algorithm.EDGES.toString(),
+            Algorithm.STD_DEV.toString(),
+            Algorithm.MEAN.toString(),
+            Algorithm.NORM_VARIANCE.toString(),
+            Algorithm.SHARP_EDGES.toString(),
+            Algorithm.REDONDO.toString(),
+            Algorithm.VOLATH.toString(),
+            Algorithm.VOLATH5.toString(),
+//            Algorithm.MEDIAN_EDGES.toString(),
+//            Algorithm.FFT_BANDPASS.toString(),
+            };
    }
    
 }

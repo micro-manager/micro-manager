@@ -41,6 +41,7 @@ import org.jfree.data.xy.XYSeries;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.api.Autofocus;
 import org.micromanager.asidispim.ASIdiSPIM;
 import org.micromanager.asidispim.Data.AcquisitionModes;
 import org.micromanager.asidispim.Data.AcquisitionSettings;
@@ -56,6 +57,7 @@ import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.asidispim.fit.Fitter;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
+import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -143,13 +145,26 @@ public class AutofocusUtils {
             double r2 = 0;
             double bestGalvoPosition = 0;
             double bestPiezoPosition = 0;
+            
+            AutofocusManager afManager = gui_.getAutofocusManager();
+            afManager.selectDevice("OughtaFocus");
+            
+            Autofocus afDevice = gui_.getAutofocus();
 
-            if (gui_.getAutofocus() == null) {
-               throw new ASIdiSPIMException("Please define an autofocus methods first");
+            if (afDevice == null) {
+               throw new ASIdiSPIMException("Please define autofocus methods first");
             }
+            
+            // select the appropriate algorithm
+            afDevice.setPropertyValue("Maximize",
+                  Fitter.getAlgorithmFromPrefCode(
+                        prefs_.getInt(MyStrings.PanelNames.AUTOFOCUS.toString(),
+                        Properties.Keys.AUTOFOCUS_SCORING_ALGORITHM,
+                        Fitter.Algorithm.VOLATH.getPrefCode())).toString());
+            
             // make sure that the currently selected MM autofocus device uses the 
             // settings in its dialog
-            gui_.getAutofocus().applySettings();
+            afDevice.applySettings();
             
             // if the Snap/Live window has an ROI set, we will use the same 
             // ROI for our focus calculations
@@ -337,7 +352,7 @@ public class AutofocusUtils {
                         ip = ip.crop();
                      }
                      try {
-                        focusScores[counter] = gui_.getAutofocus().computeScore(ip);
+                        focusScores[counter] = afDevice.computeScore(ip);
                      } catch (Exception ex) {
                         done = true;
                         throw new ASIdiSPIMException("Selected autofocus device didn't return a focus score.");

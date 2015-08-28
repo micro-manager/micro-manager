@@ -20,15 +20,9 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 package org.micromanager.asidispim;
 
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -54,7 +48,6 @@ import org.micromanager.asidispim.fit.Fitter;
  */
 @SuppressWarnings("serial")
 public class AutofocusPanel extends ListeningJPanel{
-   final private ScriptInterface gui_;
    final private Properties props_;
    final private Prefs prefs_;
    final private Devices devices_;
@@ -71,7 +64,6 @@ public class AutofocusPanel extends ListeningJPanel{
               "",
               "[center]8[center]",
               "[]16[]16[]"));
-      gui_ = gui;
       prefs_ = prefs;
       props_ = props;
       devices_ = devices;
@@ -118,21 +110,22 @@ public class AutofocusPanel extends ListeningJPanel{
       optionsPanel_.add(scanModeCB, "wrap");
       
       optionsPanel_.add(new JLabel("Scoring algorithm:"));
-      JButton afcButton = new JButton();
-            afcButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      afcButton.setMargin(new Insets(0, 0, 0, 0));
-      afcButton.setIconTextGap(4);
-      Icon wrench = new ImageIcon(getClass().getResource(
-              "/org/micromanager/icons/wrench_orange.png"));
-      afcButton.setIcon(wrench);
-      afcButton.setMinimumSize(new Dimension(30, 15));
-      afcButton.addActionListener(new ActionListener() {
+      final JComboBox scoringAlgorithmCB = new JComboBox();
+      for (String scoringAlgorithm : Fitter.getAlgorithms()) {
+         scoringAlgorithmCB.addItem(scoringAlgorithm);
+      }
+      scoringAlgorithmCB.setSelectedItem(Fitter.getAlgorithmFromPrefCode(
+            prefs_.getInt(panelName_,
+            Properties.Keys.AUTOFOCUS_SCORING_ALGORITHM,
+            Fitter.Algorithm.VOLATH.getPrefCode())).toString());
+      scoringAlgorithmCB.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            gui_.showAutofocusDialog();
+            prefs_.putInt(panelName_, Properties.Keys.AUTOFOCUS_SCORING_ALGORITHM,
+                  Fitter.getPrefCodeFromString(scoringAlgorithmCB.getSelectedItem().toString()));
          }
       });
-      optionsPanel_.add(afcButton, "wrap");
+      optionsPanel_.add(scoringAlgorithmCB, "wrap");
       
       optionsPanel_.add(new JLabel("Fit using:"));
       final JComboBox fitFunctionSelection = new JComboBox();

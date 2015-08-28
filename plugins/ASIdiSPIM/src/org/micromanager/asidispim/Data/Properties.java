@@ -186,6 +186,7 @@ public class Properties {
       PREFS_MINIMIZE_SLICE_PERIOD("MinimizeSlicePeriod"),
       PLUGIN_ACQUSITION_MODE("AcquisitionMode"),
       AUTOFOCUS_ACQUSITION_MODE("AutofocusAcquisitionMode"),
+      AUTOFOCUS_SCORING_ALGORITHM("AutofocusScoringAlgorithm"),
       PLUGIN_ACQUSITION_USE_AUTOFOCUS("UseAutofocusInAcquisition"),
       PLUGIN_CAMERA_MODE("CameraMode"),
       PREFS_ENABLE_POSITION_UPDATES("EnablePositionUpdates"),
