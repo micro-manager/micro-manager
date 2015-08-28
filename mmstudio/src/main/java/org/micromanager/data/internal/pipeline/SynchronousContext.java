@@ -47,6 +47,9 @@ public class SynchronousContext extends BaseContext {
          if (sink_ != null) {
             sink_.insertImage(wrapper);
          }
+         if (flushLatch_ != null) {
+            flushLatch_.countDown();
+         }
       }
       else {
          try {

@@ -25,7 +25,7 @@ import org.micromanager.data.Image;
 /**
  * This class serves as a simple wrapper around Images for passing through the
  * pipeline. It exists predominantly so we can tell when we're being told to
- * stop processing (by getting an ImageWrapper with a null image).
+ * flush the pipeline (by creating an ImageWrapper with a null image).
  */
 public class ImageWrapper {
    private Image image_;

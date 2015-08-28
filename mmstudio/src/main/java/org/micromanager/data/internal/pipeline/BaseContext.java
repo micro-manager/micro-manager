@@ -20,8 +20,7 @@
 
 package org.micromanager.data.internal.pipeline;
 
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CountDownLatch;
 
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
@@ -36,6 +35,7 @@ public abstract class BaseContext implements ProcessorContext {
    protected Processor processor_;
    protected Datastore store_;
    protected DefaultPipeline parent_;
+   protected CountDownLatch flushLatch_;
 
    public BaseContext(Processor processor, Datastore store,
          DefaultPipeline parent) {
@@ -73,5 +73,15 @@ public abstract class BaseContext implements ProcessorContext {
       sink_ = sink;
    }
 
+   /**
+    * Set the CountDownLatch to count down when we flush ourselves.
+    */
+   public void setFlushLatch(CountDownLatch latch) {
+      flushLatch_ = latch;
+   }
+
+   /**
+    * Receive a new image for processing.
+    */
    abstract public void insertImage(ImageWrapper wrapper);
 }

@@ -80,12 +80,10 @@ public class AsynchronousContext extends BaseContext {
             if (sink_ != null) {
                sink_.insertImage(wrapper);
             }
-            else {
-               // No sink, i.e. we're the end of the pipeline, so we're done
-               // flushing.
-               parent_.flushComplete();
-            }
             isFlushed_ = true;
+            if (flushLatch_ != null) {
+               flushLatch_.countDown();
+            }
          }
          else {
             // Non-null image: process it.

@@ -21,6 +21,7 @@
 package org.micromanager.data.internal.pipeline;
 
 import java.util.ArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.List;
 
 import org.micromanager.data.Datastore;
@@ -105,21 +106,19 @@ public class DefaultPipeline implements Pipeline {
    public void halt() {
       isHalted_ = true;
       // Flush the pipeline, so we know that there aren't any more images ready
-      // to be added to the datastore. If we're synchronous, then this will
-      // block until the pipeline is flushed; otherwise, we need to wait for
-      // our flushComplete method to be called.
+      // to be added to the datastore. We provide a latch for the contexts to
+      // count down as they finish flushing themselves; when the latch hits
+      // zero we can return.
+      CountDownLatch latch = new CountDownLatch(contexts_.size());
+      for (BaseContext context : contexts_) {
+         context.setFlushLatch(latch);
+      }
       contexts_.get(0).insertImage(new ImageWrapper(null));
-      if (!isSynchronous_) {
-         // Wait for our flushComplete() method to be called.
-         while (!isFlushComplete_) {
-            try {
-               Thread.sleep(1000);
-            }
-            catch (InterruptedException e) {
-               ReportingUtils.logError(e, "Interrupted while waiting for flush to complete.");
-               return;
-            }
-         }
+      try {
+         latch.await();
+      }
+      catch (InterruptedException e) {
+         ReportingUtils.logError("Interrupted while waiting for flush to complete.");
       }
    }
 
