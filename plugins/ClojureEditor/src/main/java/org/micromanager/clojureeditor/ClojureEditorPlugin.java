@@ -7,7 +7,11 @@ package org.micromanager.clojureeditor;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 
-public class ClojureEditorPlugin implements MenuPlugin {
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
+
+@Plugin(type = MenuPlugin.class)
+public class ClojureEditorPlugin implements MenuPlugin, SciJavaPlugin {
    public static final String menuName = "Clojure editor";
    public static final String tooltipDescription =
       "Clojure script editor and REPL";
