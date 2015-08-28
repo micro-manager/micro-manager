@@ -2,7 +2,7 @@
 //FILE:          AutoWB.java
 //PROJECT:       PMQI_WhiteBalance
 //-----------------------------------------------------------------------------
-//AUTHOR:        Andrej Bencur, abencur@photometrics.com, April 14, 2015
+//AUTHOR:        Andrej Bencur, abencur@photometrics.com, August 28, 2015
 //COPYRIGHT:     QImaging, Surrey, BC, 2015
 //LICENSE:       This file is distributed under the BSD license.
 //               License text is included with the source distribution.

@@ -2,7 +2,7 @@
 //FILE:          AutoWB.java
 //PROJECT:       PMQI_WhiteBalance
 //-----------------------------------------------------------------------------
-//AUTHOR:        Andrej Bencur, abencur@photometrics.com, April 14, 2015
+//AUTHOR:        Andrej Bencur, abencur@photometrics.com, August 28, 2015
 //COPYRIGHT:     QImaging, Surrey, BC, 2015
 //LICENSE:       This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -62,14 +62,17 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
     private static final int DEPTH16BIT_MEAN_MAX = 33000;
     private static final int DEPTH14BIT_MEAN_MIN = 6600;
     private static final int DEPTH14BIT_MEAN_MAX = 8500;
-    private static final int DEPTH12BIT_MEAN_MIN = 1700;
-    private static final int DEPTH12BIT_MEAN_MAX = 2300;
+    private static final int DEPTH12BIT_MEAN_MIN = 1450;
+    private static final int DEPTH12BIT_MEAN_MAX = 1900;
     private static final int DEPTH10BIT_MEAN_MIN = 420;
     private static final int DEPTH10BIT_MEAN_MAX = 600;
+    private static final int DEPTH8BIT_MEAN_MIN = 85;
+    private static final int DEPTH8BIT_MEAN_MAX = 130;
     private static final int EXP_1MS = 1;
     private static final int EXP_100MS = 100;
     private static final int ADU_BIAS_16BIT = 500;
-    private static final int ADU_BIAS_LESS16BIT = 150;
+    private static final int ADU_BIAS_10TO16BIT = 150;
+    private static final int ADU_BIAS_QI8BIT = 20;
 
     private int WbMeanMin;
     private int WbMeanMax;
@@ -84,9 +87,10 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
     private double WBexposure;
     private String CameraModel;
     private boolean IsColorCamera;
+    private boolean IsPVCAMCamera = false;
+    private boolean IsQCamCamera = false;
 
-    private ShortProcessor CapturedImageShort;
-    private ByteProcessor CapturedImageByte;
+    private ImageProcessor CapturedImage;
     private double Rmean;
     private double Gmean;
     private double Bmean;
@@ -127,7 +131,6 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
         GetBitDepth();
         GetCFAPattern();
 
-        lblMeanTarget.setText("<" + String.valueOf(WbMeanMin) + "-" + String.valueOf(WbMeanMax) + ">");
     }
 
     //private void CheckIsCameraConnected()
@@ -148,12 +151,29 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
 
     private void GetCameraModel() throws Exception {
         String chipName;
+        String cameraName;
+        String pvcamVersion = "0";
+        String qcamVersion = "0";
         try {
-            chipName = core_.getProperty(CameraLabel, "ChipName");
+            pvcamVersion = core_.getProperty(CameraLabel, "PVCAM Version");
+            if (!"0".equals(pvcamVersion)) {
+                IsPVCAMCamera = true;
+            }
         } catch (Exception ex) {
-            throw new Exception("Failed to read camera model. A PVCAM compatible camera is required.");
+            try {
+                qcamVersion = core_.getProperty(CameraLabel, "QCam Version");
+                if (!"0".equals(qcamVersion)) {
+                    IsQCamCamera = true;
+        }
+            } catch (Exception ex2) {
+                if ("0".equals(pvcamVersion) && "0".equals(qcamVersion)) {
+                    throw new Exception("Failed to read camera model. A PVCAM or QCam compatible camera is required.");
+                }
+            }
         }
 
+        if (IsPVCAMCamera) {
+            chipName = core_.getProperty(CameraLabel, "ChipName");
         if (chipName.contains("QI_Retiga6000C")) {
             CameraModel = "QI Retiga 6000C";
         } else if (chipName.contains("QI_Retiga3000C")) {
@@ -162,6 +182,10 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
             CameraModel = "QI optiMOS color";
         } else {
             CameraModel = chipName;
+        }
+        } else if (IsQCamCamera) {
+            cameraName = core_.getProperty(CameraLabel, "CameraName");
+            CameraModel = cameraName;
         }
 
         lblCameraModel.setText(CameraModel);
@@ -173,8 +197,11 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
             cfaPattern = core_.getProperty(CameraLabel, "Color - Sensor CFA Pattern");
         } catch (Exception ex) {
             cfaPattern = "R-G-G-B";
-            Logger.getLogger(WhiteBalance_UI.class.getName()).log(Level.SEVERE, null, ex);
-            JOptionPane.showMessageDialog(this, "Failed to retrieve sensor mask pattern", "Error", JOptionPane.ERROR_MESSAGE);
+            Logger
+                    .getLogger(WhiteBalance_UI.class
+                            .getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(this,
+                    "Failed to retrieve sensor mask pattern", "Error", JOptionPane.ERROR_MESSAGE);
         }
         SetCFAPattern(cfaPattern);
     }
@@ -204,11 +231,19 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
             bitDepth = core_.getProperty(CameraLabel, "PixelType");
         } catch (Exception ex) {
             bitDepth = "N/A";
-            Logger.getLogger(WhiteBalance_UI.class.getName()).log(Level.SEVERE, null, ex);
-            JOptionPane.showMessageDialog(this, "Failed to retrieve camera bit depth", "Error", JOptionPane.ERROR_MESSAGE);
+            Logger
+                    .getLogger(WhiteBalance_UI.class
+                            .getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(this,
+                    "Failed to retrieve camera bit depth", "Error", JOptionPane.ERROR_MESSAGE);
         }
 
-        if (bitDepth.contains("10bit")) {
+        if (bitDepth.contains("8bit")) {
+            CameraBitDepth = DEPTH8BIT;
+            WbMeanMin = DEPTH8BIT_MEAN_MIN;
+            WbMeanMax = DEPTH8BIT_MEAN_MAX;
+            cbxBitDepth.setSelectedIndex(0);
+        } else if (bitDepth.contains("10bit")) {
             CameraBitDepth = DEPTH10BIT;
             WbMeanMin = DEPTH10BIT_MEAN_MIN;
             WbMeanMax = DEPTH10BIT_MEAN_MAX;
@@ -234,6 +269,7 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
             WbMeanMax = DEPTH16BIT_MEAN_MAX;
             cbxBitDepth.setSelectedIndex(4);
         }
+        lblMeanTarget.setText("<" + String.valueOf(WbMeanMin) + "-" + String.valueOf(WbMeanMax) + ">");
 
     }
 
@@ -546,6 +582,133 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void cbxCFAPatternActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxCFAPatternActionPerformed
+        CFApattern = cbxCFAPattern.getSelectedIndex();
+    }//GEN-LAST:event_cbxCFAPatternActionPerformed
+
+    private void cbxBitDepthActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxBitDepthActionPerformed
+        switch (cbxBitDepth.getSelectedIndex()) {
+            case 0:
+                CameraBitDepth = DEPTH8BIT;
+                break;
+            case 1:
+                CameraBitDepth = DEPTH10BIT;
+                break;
+            case 2:
+                CameraBitDepth = DEPTH12BIT;
+                break;
+            case 3:
+                CameraBitDepth = DEPTH14BIT;
+                break;
+            case 4:
+            default:
+                CameraBitDepth = DEPTH16BIT;
+                break;
+        }
+    }//GEN-LAST:event_cbxBitDepthActionPerformed
+
+    //start the WB algorithm
+    private void btnRunWBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRunWBActionPerformed
+
+        lblMean.setText("0");
+        lblMean.paintImmediately(lblMean.getVisibleRect());
+        lblRedMean.setText("0");
+        lblRedMean.paintImmediately(lblRedMean.getVisibleRect());
+        lblGreenMean.setText("0");
+        lblGreenMean.paintImmediately(lblGreenMean.getVisibleRect());
+        lblBlueMean.setText("0");
+        lblBlueMean.paintImmediately(lblBlueMean.getVisibleRect());
+        lblRedScale.setText("0");
+        lblRedScale.paintImmediately(lblRedScale.getVisibleRect());
+        lblGreenScale.setText("0");
+        lblGreenScale.paintImmediately(lblGreenScale.getVisibleRect());
+        lblBlueScale.setText("0");
+        lblBlueScale.paintImmediately(lblBlueScale.getVisibleRect());
+        btnRunWB.setText("In progress...");
+        btnRunWB.setEnabled(false);
+        btnRunWB.paintImmediately(btnRunWB.getVisibleRect());
+
+        //stop Live mode in MM if it is currently running
+        if (gui_.isLiveModeOn()) {
+            try {
+                gui_.enableLiveMode(false);
+                int slpCnt = 0;
+                while (slpCnt < 50 && gui_.isLiveModeOn()) {
+                    slpCnt++;
+                    Thread.sleep(10);
+                }
+                Thread.sleep(50);
+
+            } catch (InterruptedException ex) {
+                Logger.getLogger(WhiteBalance_UI.class
+                        .getName()).log(Level.SEVERE, null, ex);
+                JOptionPane.showMessageDialog(this,
+                        "Live mode could not be stopped.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
+        //disable color mode in MM before the WB algorithm
+        try {
+            core_.setProperty(CameraLabel, "Color", "OFF");
+            gui_.refreshGUI();
+            WBexposure = FindExposureForWB();
+
+        } catch (Exception ex) {
+            Logger.getLogger(WhiteBalance_UI.class
+                    .getName()).log(Level.SEVERE, null, ex);
+            btnRunWB.setText(
+                    "Run WB");
+            btnRunWB.setEnabled(
+                    true);
+            btnRunWB.paintImmediately(btnRunWB.getVisibleRect());
+            JOptionPane.showMessageDialog(this,
+                    "Finding exposure for White Balance algorithm failed.", "Error", JOptionPane.ERROR_MESSAGE);
+
+            return;
+        }
+
+        lblWBExposure.setText(String.valueOf(new BigDecimal(WBexposure).setScale(0, RoundingMode.HALF_EVEN)) + " ms");
+
+        lblMean.setText(String.valueOf(new BigDecimal(CapturedImage.getStatistics().mean).setScale(1, BigDecimal.ROUND_HALF_EVEN)));
+        lblMean.paintImmediately(lblMean.getVisibleRect());
+
+        //if the correct exposure time has been found snap an image in MM and
+        //calculate the RGB scales to balance the image
+        try {
+            if (WbResult == WB_SUCCESS) {
+                SnapImage(WBexposure);
+                DebayerImage(CapturedImage);
+                GetScales();
+                core_.setProperty(CameraLabel, RED_SCALE_LABEL, RedScale);
+                core_.setProperty(CameraLabel, GREEN_SCALE_LABEL, GreenScale);
+                core_.setProperty(CameraLabel, BLUE_SCALE_LABEL, BlueScale);
+                core_.setProperty(CameraLabel, "Color", "ON");
+                gui_.refreshGUI();
+                gui_.snapSingleImage();
+            } else {
+                core_.setProperty(CameraLabel, RED_SCALE_LABEL, 1.0);
+                core_.setProperty(CameraLabel, GREEN_SCALE_LABEL, 1.0);
+                core_.setProperty(CameraLabel, BLUE_SCALE_LABEL, 1.0);
+                core_.setProperty(CameraLabel, "Color", "ON");
+                gui_.refreshGUI();
+
+            }
+        } catch (Exception ex) {
+            Logger.getLogger(WhiteBalance_UI.class
+                    .getName()).log(Level.SEVERE, null, ex);
+            btnRunWB.setText(
+                    "Run WB");
+            btnRunWB.setEnabled(
+                    true);
+            btnRunWB.paintImmediately(btnRunWB.getVisibleRect());
+            JOptionPane.showMessageDialog(this,
+                    "Could not set White Balance scales as device properties.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+        btnRunWB.setText("Run WB");
+        btnRunWB.setEnabled(true);
+        btnRunWB.paintImmediately(btnRunWB.getVisibleRect());
+    }//GEN-LAST:event_btnRunWBActionPerformed
+
     private double FindExposureForWB() {
         double exposure = 5.0;
         int iterations = 0;
@@ -556,7 +719,7 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
 
             //first check if the image is not saturated by doing a short exposure
             SnapImage(EXP_1MS);
-            meanAt1ms = CapturedImageShort.getStatistics().mean;
+            meanAt1ms = CapturedImage.getStatistics().mean;
             if (meanAt1ms > (maxADUval - maxADUval / 7.0)) {
                 WbResult = WB_FAILED_SATURATED_FROM_START;
                 lblMean.setText(String.valueOf(new BigDecimal(meanAt1ms).setScale(1, BigDecimal.ROUND_HALF_EVEN)));
@@ -567,8 +730,9 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
 
             //then with a longer exposure check if the image is not too dark
             SnapImage(EXP_100MS);
-            meanAt100ms = CapturedImageShort.getStatistics().mean;
-            if ((meanAt100ms < ADU_BIAS_16BIT && CameraBitDepth == DEPTH16BIT) || (meanAt100ms < ADU_BIAS_LESS16BIT && CameraBitDepth < DEPTH16BIT)) {
+            meanAt100ms = CapturedImage.getStatistics().mean;
+            if ((meanAt100ms < ADU_BIAS_16BIT && CameraBitDepth == DEPTH16BIT) || (meanAt100ms < ADU_BIAS_10TO16BIT && (CameraBitDepth < DEPTH16BIT && CameraBitDepth > DEPTH8BIT))
+                    || (meanAt100ms < ADU_BIAS_QI8BIT && CameraBitDepth == DEPTH8BIT)) {
                 WbResult = WB_FAILED_TOO_DARK_FROM_START;
                 lblMean.setText(String.valueOf(new BigDecimal(meanAt100ms).setScale(1, BigDecimal.ROUND_HALF_EVEN)));
                 lblMean.paintImmediately(lblMean.getVisibleRect());
@@ -579,7 +743,7 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
             //start searching for exposre time with mean around the middle of the camera ADU range
             //later this value will be used for grabbing an image and calculating white balanc scales
             SnapImage(exposure);
-            exposure = exposure * WbMeanMin / CapturedImageShort.getStatistics().mean;
+            exposure = exposure * WbMeanMin / CapturedImage.getStatistics().mean;
 
             //keep snapping images and adjusting exposure time until desired mean value is reached
             while (iterations < WB_EXP_ITERATIONS_MAX && exposure < MAX_EXPOSURE) {
@@ -589,20 +753,20 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
                 lblWBExposure.paintImmediately(lblWBExposure.getVisibleRect());
                 iterations++;
 
-                if (CapturedImageShort.getStatistics().mean < WbMeanMin) {
-                    exposure = exposure * WbMeanMin / CapturedImageShort.getStatistics().mean;
-                } else if (CapturedImageShort.getStatistics().mean > WbMeanMax) {
-                    exposure = exposure * WbMeanMin / CapturedImageShort.getStatistics().mean;
-                } else if (CapturedImageShort.getStatistics().mean > WbMeanMin
-                        && CapturedImageShort.getStatistics().mean < WbMeanMax) {
+                if (CapturedImage.getStatistics().mean < WbMeanMin) {
+                    exposure = exposure * WbMeanMin / CapturedImage.getStatistics().mean;
+                } else if (CapturedImage.getStatistics().mean > WbMeanMax) {
+                    exposure = exposure * WbMeanMin / CapturedImage.getStatistics().mean;
+                } else if (CapturedImage.getStatistics().mean > WbMeanMin
+                        && CapturedImage.getStatistics().mean < WbMeanMax) {
                     break;
                 }
-                lblMean.setText(String.valueOf(new BigDecimal(CapturedImageShort.getStatistics().mean).setScale(1, BigDecimal.ROUND_HALF_EVEN)));
+                lblMean.setText(String.valueOf(new BigDecimal(CapturedImage.getStatistics().mean).setScale(1, BigDecimal.ROUND_HALF_EVEN)));
                 lblMean.paintImmediately(lblMean.getVisibleRect());
             }
         } catch (Exception ex) {
             WbResult = WB_FAILED_EXCEPTION;
-            lblMean.setText(String.valueOf(new BigDecimal(CapturedImageShort.getStatistics().mean).setScale(1, BigDecimal.ROUND_HALF_EVEN)));
+            lblMean.setText(String.valueOf(new BigDecimal(CapturedImage.getStatistics().mean).setScale(1, BigDecimal.ROUND_HALF_EVEN)));
             lblMean.paintImmediately(lblMean.getVisibleRect());
             JOptionPane.showMessageDialog(this, "Acquisition error occurred", "White Balance Failure", JOptionPane.ERROR_MESSAGE);
             return exposure;
@@ -612,25 +776,25 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
         //image too dark, image too bright etc. 
         if (iterations >= WB_EXP_ITERATIONS_MAX && exposure >= MAX_EXPOSURE) {
             WbResult = WB_FAILED_TOO_MANY_ITERATIONS_TOO_DARK;
-            lblMean.setText(String.valueOf(new BigDecimal(CapturedImageShort.getStatistics().mean).setScale(1, BigDecimal.ROUND_HALF_EVEN)));
+            lblMean.setText(String.valueOf(new BigDecimal(CapturedImage.getStatistics().mean).setScale(1, BigDecimal.ROUND_HALF_EVEN)));
             lblMean.paintImmediately(lblMean.getVisibleRect());
             JOptionPane.showMessageDialog(this, "Exceeded number of allowed iterations, image too dark.", "White Balance Failure", JOptionPane.ERROR_MESSAGE);
             return exposure;
         } else if (iterations >= WB_EXP_ITERATIONS_MAX && exposure < MIN_EXPOSURE) {
             WbResult = WB_FAILED_TOO_MANY_ITERATIONS_TOO_BRIGHT;
-            lblMean.setText(String.valueOf(new BigDecimal(CapturedImageShort.getStatistics().mean).setScale(1, BigDecimal.ROUND_HALF_EVEN)));
+            lblMean.setText(String.valueOf(new BigDecimal(CapturedImage.getStatistics().mean).setScale(1, BigDecimal.ROUND_HALF_EVEN)));
             lblMean.paintImmediately(lblMean.getVisibleRect());
             JOptionPane.showMessageDialog(this, "Exceeded number of allowed iterations, image too bright.", "White Balance Failure", JOptionPane.ERROR_MESSAGE);
             return exposure;
         } else if (iterations >= WB_EXP_ITERATIONS_MAX) {
             WbResult = WB_FAILED_TOO_MANY_ITERATIONS;
-            lblMean.setText(String.valueOf(new BigDecimal(CapturedImageShort.getStatistics().mean).setScale(1, BigDecimal.ROUND_HALF_EVEN)));
+            lblMean.setText(String.valueOf(new BigDecimal(CapturedImage.getStatistics().mean).setScale(1, BigDecimal.ROUND_HALF_EVEN)));
             lblMean.paintImmediately(lblMean.getVisibleRect());
             JOptionPane.showMessageDialog(this, "Exceeded number of allowed iterations, adjust your light level and try again", "White Balance Failure", JOptionPane.ERROR_MESSAGE);
             return exposure;
         } else if (exposure > MAX_EXPOSURE) {
             WbResult = WB_FAILED_EXP_TOO_LONG;
-            lblMean.setText(String.valueOf(new BigDecimal(CapturedImageShort.getStatistics().mean).setScale(1, BigDecimal.ROUND_HALF_EVEN)));
+            lblMean.setText(String.valueOf(new BigDecimal(CapturedImage.getStatistics().mean).setScale(1, BigDecimal.ROUND_HALF_EVEN)));
             lblMean.paintImmediately(lblMean.getVisibleRect());
             JOptionPane.showMessageDialog(this, "Light level seems to be too low, adjust your light level and try again", "White Balance Failure", JOptionPane.ERROR_MESSAGE);
             return exposure;
@@ -647,23 +811,38 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
             core_.setExposure(Math.round(exposure));
             core_.snapImage();
             Object newImage = core_.getImage();
-            CapturedImageShort = new ShortProcessor((int) core_.getImageWidth(), (int) core_.getImageHeight(), (short[]) newImage, null);
+            if (CameraBitDepth == DEPTH8BIT) {
+                CapturedImage = new ByteProcessor((int) core_.getImageWidth(), (int) core_.getImageHeight(), (byte[]) newImage, null);
+            } else {
+                CapturedImage = new ShortProcessor((int) core_.getImageWidth(), (int) core_.getImageHeight(), (short[]) newImage, null);
+
+            }
+
         } catch (Exception ex) {
-            Logger.getLogger(WhiteBalance_UI.class.getName()).log(Level.SEVERE, null, ex);
-            throw new Exception("Acquisition failed");
+            Logger.getLogger(WhiteBalance_UI.class
+                    .getName()).log(Level.SEVERE, null, ex);
+            throw new Exception(
+                    "Acquisition failed");
         }
     }
 
     //use Nearest Neighbor replication algorithm to debayer the image and obtain 
     //red, blue and green interpolated pixels and their mean values
-    private void DebayerImage(ShortProcessor imgToProcess) {
-        ImageProcessor r = new ShortProcessor(CapturedImageShort.getWidth(), getHeight());
-        ImageProcessor g = new ShortProcessor(CapturedImageShort.getWidth(), getHeight());
-        ImageProcessor b = new ShortProcessor(CapturedImageShort.getWidth(), getHeight());
+    private void DebayerImage(ImageProcessor imgToProcess) {
+        ImageProcessor r = null, g = null, b = null;
+        if (CameraBitDepth == DEPTH8BIT) {
+            r = new ByteProcessor(CapturedImage.getWidth(), CapturedImage.getHeight());
+            g = new ByteProcessor(CapturedImage.getWidth(), CapturedImage.getHeight());
+            b = new ByteProcessor(CapturedImage.getWidth(), CapturedImage.getHeight());
+        } else { //(CameraBitDepth >= DEPTH8BIT) 
+            r = new ShortProcessor(CapturedImage.getWidth(), CapturedImage.getHeight());
+            g = new ShortProcessor(CapturedImage.getWidth(), CapturedImage.getHeight());
+            b = new ShortProcessor(CapturedImage.getWidth(), CapturedImage.getHeight());
+        }
         ImageProcessor ip = imgToProcess;
 
-        int height = (int) CapturedImageShort.getHeight();
-        int width = (int) CapturedImageShort.getWidth();
+        int height = (int) CapturedImage.getHeight();
+        int width = (int) CapturedImage.getWidth();
         int one;
 
         if (CFApattern == CFA_GRBG || CFApattern == CFA_GBRG) {
@@ -791,160 +970,32 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
         //limit the scales to values hardcoded previously in Micro-Manager
         if (RedScale > 20.0) {
             JOptionPane.showMessageDialog(this, "Red scale greater than 20.0, limiting to 20.", "Warning", JOptionPane.WARNING_MESSAGE);
-            Logger.getLogger(WhiteBalance_UI.class.getName()).log(Level.WARNING, "Red scale greater than 20.0, limiting to 20.");
+            Logger
+                    .getLogger(WhiteBalance_UI.class
+                            .getName()).log(Level.WARNING, "Red scale greater than 20.0, limiting to 20.");
             RedScale = 20;        
         }
         
         if (BlueScale > 20.0) {
             JOptionPane.showMessageDialog(this, "Blue scale greater than 20.0, limiting to 20.", "Warning", JOptionPane.WARNING_MESSAGE);
-            Logger.getLogger(WhiteBalance_UI.class.getName()).log(Level.WARNING, "Blue scale greater than 20.0, limiting to 20.");
+            Logger
+                    .getLogger(WhiteBalance_UI.class
+                            .getName()).log(Level.WARNING, "Blue scale greater than 20.0, limiting to 20.");
             BlueScale = 20;        
         }
         
         if (GreenScale > 20.0) {
             JOptionPane.showMessageDialog(this, "Green scale greater than 20.0, limiting to 20.", "Warning", JOptionPane.WARNING_MESSAGE);
-            Logger.getLogger(WhiteBalance_UI.class.getName()).log(Level.WARNING, "Green scale greater than 20.0, limiting to 20.");
+            Logger
+                    .getLogger(WhiteBalance_UI.class
+                            .getName()).log(Level.WARNING, "Green scale greater than 20.0, limiting to 20.");
             GreenScale = 20;        
         }
             
-
         lblRedScale.setText(String.valueOf(new BigDecimal(RedScale).setScale(4, RoundingMode.HALF_EVEN)));
         lblGreenScale.setText(String.valueOf(new BigDecimal(GreenScale).setScale(4, RoundingMode.HALF_EVEN)));
         lblBlueScale.setText(String.valueOf(new BigDecimal(BlueScale).setScale(4, RoundingMode.HALF_EVEN)));
     }
-
-    //start the WB algorithm
-    private void btnRunWBActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRunWBActionPerformed
-        
-        lblMean.setText("0");
-        lblMean.paintImmediately(lblMean.getVisibleRect());
-        lblRedMean.setText("0");
-        lblRedMean.paintImmediately(lblRedMean.getVisibleRect());
-        lblGreenMean.setText("0");
-        lblGreenMean.paintImmediately(lblGreenMean.getVisibleRect());
-        lblBlueMean.setText("0");
-        lblBlueMean.paintImmediately(lblBlueMean.getVisibleRect());
-        lblRedScale.setText("0");
-        lblRedScale.paintImmediately(lblRedScale.getVisibleRect());
-        lblGreenScale.setText("0");
-        lblGreenScale.paintImmediately(lblGreenScale.getVisibleRect());
-        lblBlueScale.setText("0");
-        lblBlueScale.paintImmediately(lblBlueScale.getVisibleRect());
-        btnRunWB.setText("In progress...");
-        btnRunWB.setEnabled(false);
-        btnRunWB.paintImmediately(btnRunWB.getVisibleRect());
-
-        //stop Live mode in MM if it is currently running
-        if (gui_.isLiveModeOn()) {
-            try {
-                gui_.enableLiveMode(false);
-                Thread.sleep(500);
-            } catch (InterruptedException ex) {
-                Logger.getLogger(WhiteBalance_UI.class.getName()).log(Level.SEVERE, null, ex);
-                JOptionPane.showMessageDialog(this, "Live mode could not be stopped.", "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-
-        //disable color mode in MM before the WB algorithm
-        try {
-            core_.setProperty(CameraLabel, "Color", "OFF");
-            gui_.refreshGUI();
-            WBexposure = FindExposureForWB();
-        } catch (Exception ex) {
-            Logger.getLogger(WhiteBalance_UI.class.getName()).log(Level.SEVERE, null, ex);
-            btnRunWB.setText("Run WB");
-            btnRunWB.setEnabled(true);
-            btnRunWB.paintImmediately(btnRunWB.getVisibleRect());
-            JOptionPane.showMessageDialog(this, "Finding exposure for White Balance algorithm failed.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        lblWBExposure.setText(String.valueOf(new BigDecimal(WBexposure).setScale(0, RoundingMode.HALF_EVEN)) + " ms");
-
-        lblMean.setText(String.valueOf(new BigDecimal(CapturedImageShort.getStatistics().mean).setScale(1, BigDecimal.ROUND_HALF_EVEN)));
-        lblMean.paintImmediately(lblMean.getVisibleRect());
-
-        //if the correct exposure time has been found snap an image in MM and
-        //calculate the RGB scales to balance the image
-        try {
-            if (WbResult == WB_SUCCESS) {
-                SnapImage(WBexposure);
-                DebayerImage(CapturedImageShort);
-                GetScales();
-                core_.setProperty(CameraLabel, RED_SCALE_LABEL, RedScale);
-                core_.setProperty(CameraLabel, GREEN_SCALE_LABEL, GreenScale);
-                core_.setProperty(CameraLabel, BLUE_SCALE_LABEL, BlueScale);
-                core_.setProperty(CameraLabel, "Color", "ON");
-                gui_.refreshGUI();
-                gui_.snapSingleImage();
-            } else {
-                core_.setProperty(CameraLabel, RED_SCALE_LABEL, 1.0);
-                core_.setProperty(CameraLabel, GREEN_SCALE_LABEL, 1.0);
-                core_.setProperty(CameraLabel, BLUE_SCALE_LABEL, 1.0);
-                core_.setProperty(CameraLabel, "Color", "ON");
-                gui_.refreshGUI();
-            }
-        } catch (Exception ex) {
-            Logger.getLogger(WhiteBalance_UI.class.getName()).log(Level.SEVERE, null, ex);
-            btnRunWB.setText("Run WB");
-            btnRunWB.setEnabled(true);
-            btnRunWB.paintImmediately(btnRunWB.getVisibleRect());
-            JOptionPane.showMessageDialog(this, "Could not set White Balance scales as device properties.", "Error", JOptionPane.ERROR_MESSAGE);
-        }
-        btnRunWB.setText("Run WB");
-        btnRunWB.setEnabled(true);
-        btnRunWB.paintImmediately(btnRunWB.getVisibleRect());
-
-    }//GEN-LAST:event_btnRunWBActionPerformed
-
-    private void cbxBitDepthActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxBitDepthActionPerformed
-        switch (cbxBitDepth.getSelectedIndex()) {
-            case 0:
-                CameraBitDepth = DEPTH8BIT;
-                break;
-            case 1:
-                CameraBitDepth = DEPTH10BIT;
-                break;
-            case 2:
-                CameraBitDepth = DEPTH12BIT;
-                break;
-            case 3:
-                CameraBitDepth = DEPTH14BIT;
-                break;
-            case 4:
-                CameraBitDepth = DEPTH16BIT;
-                break;
-            default:
-                CameraBitDepth = DEPTH16BIT;
-        }
-    }//GEN-LAST:event_cbxBitDepthActionPerformed
-
-
-    private void cbxCFAPatternActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cbxCFAPatternActionPerformed
-
-        switch (cbxCFAPattern.getSelectedIndex()) {
-            case CFA_RGGB:
-                CFApattern = CFA_RGGB;
-                break;
-
-            case CFA_BGGR:
-                CFApattern = CFA_BGGR;
-                break;
-
-            case CFA_GRBG:
-                CFApattern = CFA_GRBG;
-                break;
-
-            case CFA_GBRG:
-                CFApattern = CFA_GBRG;
-                break;
-
-            default:
-                CFApattern = CFA_RGGB;
-                break;
-
-        }
-    }//GEN-LAST:event_cbxCFAPatternActionPerformed
 
 //    /**
 //     * @param args the command line arguments
@@ -1024,11 +1075,12 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
 
     //if user changes the CFA pattern in the MM UI select the same pattern also in the 
     //WB plugin
-
     @Override
     public void propertyChangedAlert(String string, String string1, String string2) {
         if (string1.equals("Color - Sensor CFA Pattern")) {
             SetCFAPattern(string2);
+        } else if (string1.equals("PixelType")) {
+            GetBitDepth();
         }
     }
 
