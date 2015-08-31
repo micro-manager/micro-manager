@@ -126,6 +126,7 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
             updateAddAndRemoveButtons(addButton, removeButton);
             studio_.profile().setString(MultiChannelShadingMigForm.class, 
                     CHANNELGROUP, groupName_);
+            studio_.data().notifyPipelineChanged();
          }
       });
       add(groupComboBox);
@@ -331,6 +332,7 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
          backgroundFileName_ = fileName;
          studio_.profile().setString(MultiChannelShadingMigForm.class,
                  DARKFIELDFILENAME, backgroundFileName_);
+         studio_.data().notifyPipelineChanged();
       } catch (MMException ex) {
          studio_.logs().showError(ex, "Failed to set background image");
          return "";
