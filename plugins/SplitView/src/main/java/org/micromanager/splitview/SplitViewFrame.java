@@ -218,11 +218,13 @@ public class SplitViewFrame extends MMFrame implements ProcessorConfigurator {
     private void lrRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lrRadioButtonActionPerformed
        orientation_ = LR;
        studio_.profile().setString(this.getClass(),ORIENTATION, LR);
+       studio_.data().notifyPipelineChanged();
     }//GEN-LAST:event_lrRadioButtonActionPerformed
 
     private void tbRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tbRadioButtonActionPerformed
        orientation_ = TB;
        studio_.profile().setString(this.getClass(),ORIENTATION, TB);
+       studio_.data().notifyPipelineChanged();
     }//GEN-LAST:event_tbRadioButtonActionPerformed
 
     private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
