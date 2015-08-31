@@ -36,6 +36,7 @@ import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.RequestToCloseEvent;
 
 import org.micromanager.data.Pipeline;
+import org.micromanager.data.PipelineErrorException;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImage;
 
@@ -410,7 +411,15 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          channelToLastImage_.put(newImage.getCoords().getChannel(),
                newImage);
          for (Image subImage : newImage.splitMultiComponent()) {
-            pipeline_.insertImage(subImage);
+            try {
+               pipeline_.insertImage(subImage);
+            }
+            catch (PipelineErrorException e) {
+               // Notify the user, then continue on.
+               studio_.logs().showError(e,
+                     "An error occurred while processing images.");
+               pipeline_.clearExceptions();
+            }
          }
       }
       catch (DatastoreFrozenException e) {

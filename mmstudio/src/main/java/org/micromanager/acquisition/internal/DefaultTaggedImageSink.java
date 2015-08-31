@@ -9,6 +9,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.Pipeline;
+import org.micromanager.data.PipelineErrorException;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -61,7 +62,17 @@ public class DefaultTaggedImageSink  {
                      DefaultImage image = new DefaultImage(tagged);
                      try {
                         for (Image subImage : image.splitMultiComponent()) {
-                           pipeline_.insertImage(subImage);
+                           try {
+                              pipeline_.insertImage(subImage);
+                           }
+                           catch (PipelineErrorException e) {
+                              // TODO: make showing the dialog optional.
+                              // TODO: allow user to cancel acquisition from
+                              // here.
+                              ReportingUtils.showError(e,
+                                    "There was an error in processing images.");
+                              pipeline_.clearExceptions();
+                           }
                         }
                      }
                      catch (OutOfMemoryError e) {
