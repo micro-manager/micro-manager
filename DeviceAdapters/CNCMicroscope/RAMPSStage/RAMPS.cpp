@@ -34,8 +34,12 @@ const char* g_XYStageDeviceName = "RAMPSXYStage";
 const char* g_ZStageDeviceName = "RAMPSZStage";
 const char* g_HubDeviceName = "RAMPSHub";
 const char* g_versionProp = "Version";
-const char* g_XYVelocityProp = "Maximum Velocity";
-const char* g_XYAccelerationProp = "Acceleration";
+const char* g_XVelocityProp = "Velocity X";
+const char* g_YVelocityProp = "Velocity Y";
+const char* g_ZVelocityProp = "Velocity Z";
+const char* g_XAccelerationProp = "Acceleration X";
+const char* g_YAccelerationProp = "Acceleration Y";
+const char* g_ZAccelerationProp = "Acceleration Z";
 const char* g_SettleTimeProp = "Settle Time";
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -100,8 +104,12 @@ RAMPSHub::RAMPSHub():
     initialized_(false),
     timeOutTimer_(0),
     settle_time_(250),
-    velocity_(10000),
-    acceleration_(10000),
+    velocity_x_(300),
+	velocity_y_(300),
+	velocity_z_(5),
+    acceleration_x_(10),
+	acceleration_y_(10),
+	acceleration_z_(10),
     sent_busy_(false)
 {
   CPropertyAction* pAct  = new CPropertyAction(this, &RAMPSHub::OnPort);
@@ -177,9 +185,9 @@ int RAMPSHub::Initialize()
   }
 
   PurgeComPortH();
-  SetVelocity(velocity_);
+  SetVelocity(velocity_x_, velocity_y_, velocity_z_);
   PurgeComPortH();
-  SetAcceleration(acceleration_);
+  SetAcceleration(acceleration_x_, acceleration_y_, acceleration_z_);
   PurgeComPortH();
 
   ret = GetStatus();
@@ -190,15 +198,27 @@ int RAMPSHub::Initialize()
   if (ret != DEVICE_OK)
     return ret;
 
-  // Max Speed
-  pAct = new CPropertyAction (this, &RAMPSHub::OnVelocity);
-  CreateProperty(g_XYVelocityProp, CDeviceUtils::ConvertToString(velocity_), MM::Float, false, pAct);
-  SetPropertyLimits(g_XYVelocityProp, 0.0, 10000000.0);
+  // Velocities
+  pAct = new CPropertyAction (this, &RAMPSHub::OnVelocityX);
+  CreateProperty(g_XVelocityProp, CDeviceUtils::ConvertToString(velocity_x_), MM::Float, false, pAct);
+  SetPropertyLimits(g_XVelocityProp, 0.0, 10000000.0);
+  pAct = new CPropertyAction (this, &RAMPSHub::OnVelocityY);
+  CreateProperty(g_YVelocityProp, CDeviceUtils::ConvertToString(velocity_y_), MM::Float, false, pAct);
+  SetPropertyLimits(g_YVelocityProp, 0.0, 10000000.0);
+  pAct = new CPropertyAction (this, &RAMPSHub::OnVelocityZ);
+  CreateProperty(g_ZVelocityProp, CDeviceUtils::ConvertToString(velocity_z_), MM::Float, false, pAct);
+  SetPropertyLimits(g_ZVelocityProp, 0.0, 10000000.0);
 
   // Acceleration
-  pAct = new CPropertyAction (this, &RAMPSHub::OnAcceleration);
-  CreateProperty(g_XYAccelerationProp, CDeviceUtils::ConvertToString(acceleration_), MM::Float, false, pAct);
-  SetPropertyLimits(g_XYAccelerationProp, 0.0, 1000000000);
+  pAct = new CPropertyAction (this, &RAMPSHub::OnAccelerationX);
+  CreateProperty(g_XAccelerationProp, CDeviceUtils::ConvertToString(acceleration_x_), MM::Float, false, pAct);
+  SetPropertyLimits(g_XAccelerationProp, 0.0, 1000000000);
+  pAct = new CPropertyAction (this, &RAMPSHub::OnAccelerationX);
+  CreateProperty(g_YAccelerationProp, CDeviceUtils::ConvertToString(acceleration_y_), MM::Float, false, pAct);\
+  pAct = new CPropertyAction (this, &RAMPSHub::OnAccelerationX);
+  SetPropertyLimits(g_YAccelerationProp, 0.0, 1000000000);
+  CreateProperty(g_ZAccelerationProp, CDeviceUtils::ConvertToString(acceleration_z_), MM::Float, false, pAct);
+  SetPropertyLimits(g_ZAccelerationProp, 0.0, 1000000000);
 
   pAct = new CPropertyAction (this, &RAMPSHub::OnSettleTime);
   CreateProperty(g_SettleTimeProp, CDeviceUtils::ConvertToString(settle_time_), MM::Integer, false, pAct);
@@ -601,11 +621,13 @@ int RAMPSHub::OnSettleTime(MM::PropertyBase* pProp, MM::ActionType eAct)
   return DEVICE_OK;
 }
 
-int RAMPSHub::SetVelocity(double velocity) {
+int RAMPSHub::SetVelocity(double x, double y, double z) {
   RAMPSHub* pHub = static_cast<RAMPSHub*>(GetParentHub());
 
-  std::string velStr = CDeviceUtils::ConvertToString(velocity);
-  std::string command = "M203 X" + velStr + " Y" + velStr + " Z" + velStr;
+  std::string xStr = CDeviceUtils::ConvertToString(x);
+  std::string yStr = CDeviceUtils::ConvertToString(y);
+  std::string zStr = CDeviceUtils::ConvertToString(z);
+  std::string command = "M203 X" + xStr + " Y" + yStr + " Z" + zStr;
   std::string result;
   PurgeComPortH();
   int ret = pHub->SendCommand(command);
@@ -619,10 +641,12 @@ int RAMPSHub::SetVelocity(double velocity) {
   return ret;
 }
 
-int RAMPSHub::SetAcceleration(double acceleration) {
+int RAMPSHub::SetAcceleration(double x, double y, double z) {
   RAMPSHub* pHub = static_cast<RAMPSHub*>(GetParentHub());
-  std::string accStr = CDeviceUtils::ConvertToString(acceleration);
-  std::string command = "M201 X" + accStr + " Y" + accStr + " Z" + accStr;
+  std::string xStr = CDeviceUtils::ConvertToString(x);
+  std::string yStr = CDeviceUtils::ConvertToString(y);
+  std::string zStr = CDeviceUtils::ConvertToString(z);
+  std::string command = "M201 X" + xStr + " Y" + yStr + " Z" + zStr;
   std::string result;
   PurgeComPortH();
   int ret = pHub->SendCommand(command);
@@ -637,21 +661,20 @@ int RAMPSHub::SetAcceleration(double acceleration) {
 }
 
 
-// TODO(dek): these should send actual commands to update the device
-int RAMPSHub::OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
+int RAMPSHub::OnVelocityX(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
   if (eAct == MM::BeforeGet)
   {
-    pProp->Set(velocity_);
+    pProp->Set(velocity_x_);
   }
   else if (eAct == MM::AfterSet)
   {
     if (initialized_)
     {
-      double velocity;
-      pProp->Get(velocity);
-      velocity_ = velocity;
-      SetVelocity(velocity);
+      double velocity_x;
+      pProp->Get(velocity_x);
+      velocity_x_ = velocity_x;
+      SetVelocity(velocity_x_, velocity_y_, velocity_z_);
     }
 
   }
@@ -659,22 +682,105 @@ int RAMPSHub::OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
   return DEVICE_OK;
 }
 
-int RAMPSHub::OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct)
+int RAMPSHub::OnVelocityY(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
   if (eAct == MM::BeforeGet)
   {
-    pProp->Set(acceleration_);
+    pProp->Set(velocity_y_);
   }
   else if (eAct == MM::AfterSet)
   {
     if (initialized_)
     {
-      double acceleration;
-      pProp->Get(acceleration);
-      acceleration_ = acceleration;
-      SetAcceleration(acceleration);
+      double velocity_y;
+      pProp->Get(velocity_y);
+      velocity_y_ = velocity_y;
+      SetVelocity(velocity_x_, velocity_y_, velocity_z_);
+    }
+
+  }
+
+  return DEVICE_OK;
+}
+
+int RAMPSHub::OnVelocityZ(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+  if (eAct == MM::BeforeGet)
+  {
+    pProp->Set(velocity_z_);
+  }
+  else if (eAct == MM::AfterSet)
+  {
+    if (initialized_)
+    {
+      double velocity_z;
+      pProp->Get(velocity_z);
+      velocity_z_ = velocity_z;
+      SetVelocity(velocity_x_, velocity_y_, velocity_z_);
+    }
+
+  }
+
+  return DEVICE_OK;
+}
+
+int RAMPSHub::OnAccelerationX(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+  if (eAct == MM::BeforeGet)
+  {
+    pProp->Set(acceleration_x_);
+  }
+  else if (eAct == MM::AfterSet)
+  {
+    if (initialized_)
+    {
+      double acceleration_x;
+      pProp->Get(acceleration_x);
+      acceleration_x_ = acceleration_x;
+      SetAcceleration(acceleration_x_, acceleration_y_, acceleration_z_);
     }
   }
 
   return DEVICE_OK;
 }
+
+int RAMPSHub::OnAccelerationY(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+  if (eAct == MM::BeforeGet)
+  {
+    pProp->Set(acceleration_y_);
+  }
+  else if (eAct == MM::AfterSet)
+  {
+    if (initialized_)
+    {
+      double acceleration_y;
+      pProp->Get(acceleration_y);
+      acceleration_y_ = acceleration_y;
+      SetAcceleration(acceleration_x_, acceleration_y_, acceleration_z_);
+    }
+  }
+
+  return DEVICE_OK;
+}
+
+int RAMPSHub::OnAccelerationZ(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+  if (eAct == MM::BeforeGet)
+  {
+    pProp->Set(acceleration_z_);
+  }
+  else if (eAct == MM::AfterSet)
+  {
+    if (initialized_)
+    {
+      double acceleration_z;
+      pProp->Get(acceleration_z);
+      acceleration_z_ = acceleration_z;
+      SetAcceleration(acceleration_x_, acceleration_y_, acceleration_z_);
+    }
+  }
+
+  return DEVICE_OK;
+}
+

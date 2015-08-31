@@ -65,11 +65,14 @@ class RAMPSHub : public HubBase<RAMPSHub>
   int OnPort(MM::PropertyBase* pPropt, MM::ActionType eAct);
   int OnCommand(MM::PropertyBase* pProp, MM::ActionType pAct);
   int OnSettleTime(MM::PropertyBase* pProp, MM::ActionType eAct);
-  int SetVelocity(double velocity);
-  int SetAcceleration(double acceleration);
-  int OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct);
-  int OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct);
-
+  int SetVelocity(double x, double y, double z);
+  int SetAcceleration(double x, double y, double z);
+  int OnVelocityX(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnVelocityY(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnVelocityZ(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnAccelerationX(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnAccelerationY(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnAccelerationZ(MM::PropertyBase* pProp, MM::ActionType eAct);
   // HUB api
   int DetectInstalledDevices();
 
@@ -103,8 +106,8 @@ class RAMPSHub : public HubBase<RAMPSHub>
   std::string status_;
   MM::TimeoutMs* timeOutTimer_;
   long settle_time_;
-  double velocity_;
-  double acceleration_;
+  double velocity_x_, velocity_y_, velocity_z_;
+  double acceleration_x_, acceleration_y_, acceleration_z_;
 };
 
 
