@@ -105,6 +105,10 @@ public class DefaultPipeline implements Pipeline {
    @Override
    public synchronized void halt() {
       isHalted_ = true;
+      if (contexts_.size() == 0) {
+         // Automatically done waiting.
+         return;
+      }
       // Flush the pipeline, so we know that there aren't any more images ready
       // to be added to the datastore. We provide a latch for the contexts to
       // count down as they finish flushing themselves; when the latch hits
