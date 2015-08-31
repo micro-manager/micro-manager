@@ -23,6 +23,7 @@ package org.micromanager.display.internal;
 import com.google.common.eventbus.Subscribe;
 
 import ij.ImagePlus;
+import ij.process.ImageProcessor;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -168,10 +169,11 @@ public class CanvasUpdateQueue {
    private void showImage(Image image) {
       // This null check protects us against harmless exception spew when
       // e.g. live mode is running and the user closes the window.
-      if (plus_.getProcessor() != null) {
+      ImageProcessor processor = plus_.getProcessor();
+      if (processor != null) {
          amWaitingForDraw_ = true;
          stack_.setCoords(image.getCoords());
-         plus_.getProcessor().setPixels(image.getRawPixels());
+         processor.setPixels(image.getRawPixels());
          plus_.updateAndDraw();
          display_.postEvent(new DefaultPixelsSetEvent(image, display_));
       }
