@@ -216,6 +216,7 @@ public class FlipperConfigurator extends MMFrame implements ProcessorConfigurato
           studio_.profile().setBoolean(FlipperConfigurator.class,
                 DEFAULT_MIRRORED + "-" + camera, mirrorCheckBox_.isSelected());
        }
+       studio_.data().notifyPipelineChanged();
     }//GEN-LAST:event_mirrorCheckBox_ActionPerformed
 
    private void rotateComboBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rotateComboBox_ActionPerformed
@@ -226,6 +227,7 @@ public class FlipperConfigurator extends MMFrame implements ProcessorConfigurato
                DEFAULT_ROTATION + "-" + camera,
                (String) rotateComboBox_.getSelectedItem());
       }
+      studio_.data().notifyPipelineChanged();
    }//GEN-LAST:event_rotateComboBox_ActionPerformed
 
    private void cameraComboBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cameraComboBox_ActionPerformed
@@ -240,6 +242,7 @@ public class FlipperConfigurator extends MMFrame implements ProcessorConfigurato
          studio_.profile().setString(FlipperConfigurator.class,
                DEFAULT_CAMERA, camera);
       }
+      studio_.data().notifyPipelineChanged();
    }//GEN-LAST:event_cameraComboBox_ActionPerformed
 
    public String getCamera() {
