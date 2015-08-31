@@ -70,6 +70,7 @@ public class CanvasUpdateQueue {
    private final Runnable consumer_;
 
    private final Object queueLock_ = new Object();
+   private final Object drawLock_;
    private final LinkedBlockingQueue<Coords> coordsQueue_;
    private boolean shouldAcceptNewCoords_ = true;
    // Unfortunately, even though we do all of our work in the EDT, there's
@@ -80,15 +81,24 @@ public class CanvasUpdateQueue {
    private boolean amWaitingForDraw_ = false;
 
    public static CanvasUpdateQueue makeQueue(DisplayWindow display,
-         MMVirtualStack stack) {
-      CanvasUpdateQueue queue = new CanvasUpdateQueue(display, stack);
+         MMVirtualStack stack, Object drawLock) {
+      CanvasUpdateQueue queue = new CanvasUpdateQueue(display, stack,
+            drawLock);
       display.registerForEvents(queue);
       return queue;
    }
 
-   private CanvasUpdateQueue(DisplayWindow display, MMVirtualStack stack) {
+   /**
+    * The drawLock parameter is a shared object between this class and the
+    * DisplayWindow, as the display is not allowed to close when we are in
+    * the middle of drawing anything (or equivalently, we are not allowed to
+    * draw when the display is closing).
+    */
+   private CanvasUpdateQueue(DisplayWindow display, MMVirtualStack stack,
+         Object drawLock) {
       display_ = display;
       stack_ = stack;
+      drawLock_ = drawLock;
       store_ = display_.getDatastore();
       plus_ = display_.getImagePlus();
       coordsQueue_ = new LinkedBlockingQueue<Coords>();
@@ -167,15 +177,25 @@ public class CanvasUpdateQueue {
     * Show an image -- set the pixels of the canvas and update the display.
     */
    private void showImage(Image image) {
-      // This null check protects us against harmless exception spew when
-      // e.g. live mode is running and the user closes the window.
-      ImageProcessor processor = plus_.getProcessor();
-      if (processor != null) {
-         amWaitingForDraw_ = true;
-         stack_.setCoords(image.getCoords());
-         processor.setPixels(image.getRawPixels());
-         plus_.updateAndDraw();
-         display_.postEvent(new DefaultPixelsSetEvent(image, display_));
+      // This synchronized block corresponds to one in
+      // DefaultDisplayWindow.forceClosed(), and ensures that we do not lose
+      // the objects needed to perform drawing operations while we are trying
+      // to do those operations.
+      synchronized(drawLock_) {
+         try {
+            if (plus_.getProcessor() == null) {
+               // Display went away since we last checked.
+               return;
+            }
+            amWaitingForDraw_ = true;
+            stack_.setCoords(image.getCoords());
+            plus_.getProcessor().setPixels(image.getRawPixels());
+            plus_.updateAndDraw();
+            display_.postEvent(new DefaultPixelsSetEvent(image, display_));
+         }
+         catch (Exception e) {
+            ReportingUtils.logError(e, "Error drawing image at " + image.getCoords());
+         }
       }
    }
 

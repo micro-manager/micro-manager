@@ -135,7 +135,12 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    private JPanel controlsPanel_;
    private HyperstackControls hyperstackControls_;
 
+   // Ensures that we don't try to make the GUI twice from separate threads.
+   // TODO: is this even still a concern?
    private final Object guiLock_ = new Object();
+   // Ensures that we don't try to close the window when in the middle of
+   // drawing.
+   private final Object drawLock_ = new Object();
    private boolean haveCreatedGUI_ = false;
 
    // Used by the pack() method to track changes in our size.
@@ -314,7 +319,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          ((MMCompositeImage) ijImage_).reset();
       }
 
-      canvasQueue_ = CanvasUpdateQueue.makeQueue(this, stack_);
+      canvasQueue_ = CanvasUpdateQueue.makeQueue(this, stack_, drawLock_);
 
       makeWindowControls();
       // This needs to be done after the canvas is created, but before we
@@ -790,8 +795,17 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       // HACK: notify the DisplayManager that we're going away.
       DefaultDisplayManager.stopTrackingDisplay(this);
       store_.unregisterForEvents(this);
-      dispose();
-      haveClosed_ = true;
+      // Closing the window immediately invalidates the ImagePlus
+      // ImageProcessor that we use for drawing, even if our CanvasUpdateQueue
+      // is in the middle of performing a drawing operation. This synchronized
+      // block corresponds to one in CanvasUpdateQueue.showImage(), and ensures
+      // that we don't potentially lock the EDT by destroying a window when
+      // we're trying to operate on it.
+      synchronized(drawLock_) {
+         canvasQueue_.halt();
+         dispose();
+         haveClosed_ = true;
+      }
    }
 
    @Override
