@@ -35,6 +35,7 @@ import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.RequestToCloseEvent;
 
+import org.micromanager.data.NewPipelineEvent;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.PipelineErrorException;
 import org.micromanager.data.internal.DefaultDatastore;
@@ -46,7 +47,6 @@ import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.events.LiveModeEvent;
 import org.micromanager.events.internal.DefaultLiveModeEvent;
 import org.micromanager.events.internal.DefaultEventManager;
-import org.micromanager.events.internal.PipelineEvent;
 
 import org.micromanager.Studio;
 
@@ -512,12 +512,17 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    }
 
    @Subscribe
-   public void onPipelineChanged(PipelineEvent event) {
-      // New pipeline means we need to replace our old one, and reset our
-      // datastore/display (as the image shape may have changed).
-      if (pipeline_ != null) {
-         pipeline_.halt();
+   public void onPipelineChanged(NewPipelineEvent event) {
+      try {
+         // New pipeline means we need to replace our old one, and reset our
+         // datastore/display (as the image shape may have changed).
+         if (pipeline_ != null) {
+            pipeline_.halt();
+         }
+         shouldForceReset_ = true;
       }
-      shouldForceReset_ = true;
+      catch (Exception e) {
+         ReportingUtils.logError(e);
+      }
    }
 }

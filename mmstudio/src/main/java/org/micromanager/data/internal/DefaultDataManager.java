@@ -38,6 +38,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.ImageJConverter;
 import org.micromanager.data.Metadata;
+import org.micromanager.data.NewPipelineEvent;
 import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.data.SummaryMetadata;
 
@@ -189,6 +190,11 @@ public class DefaultDataManager implements DataManager {
    public void addAndConfigureProcessor(ProcessorPlugin plugin) {
       MMStudio.getInstance().getPipelineFrame().addAndConfigureProcessor(
             plugin);
+   }
+
+   @Override
+   public void notifyPipelineChanged() {
+      MMStudio.getInstance().events().post(new NewPipelineEvent());
    }
 
    @Override

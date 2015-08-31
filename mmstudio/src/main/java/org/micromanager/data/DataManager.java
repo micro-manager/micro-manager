@@ -253,6 +253,15 @@ public interface DataManager {
    public void addAndConfigureProcessor(ProcessorPlugin plugin);
 
    /**
+    * Notify the application that the state of one of the processors in the
+    * pipeline has changed, and thus that entities that use the application
+    * pipeline should grab a new copy of it. This will cause a
+    * NewPipelineEvent event to be posted to the application event bus (which
+    * can be accessed via Studio.events()).
+    */
+   public void notifyPipelineChanged();
+
+   /**
     * Provide access to the ImageJConverter() object.
     * @return An implementation of the ImageJConverter interface.
     */

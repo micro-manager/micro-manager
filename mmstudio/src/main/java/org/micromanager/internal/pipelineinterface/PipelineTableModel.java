@@ -20,7 +20,7 @@ import java.util.List;
 import javax.swing.table.AbstractTableModel;
 
 import org.micromanager.data.ProcessorFactory;
-import org.micromanager.events.internal.PipelineEvent;
+import org.micromanager.data.NewPipelineEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.PropertyMap;
 
@@ -65,8 +65,7 @@ public class PipelineTableModel extends AbstractTableModel {
    @Override
    public void fireTableDataChanged() {
       super.fireTableDataChanged();
-      MMStudio.getInstance().events().post(new PipelineEvent(
-               getPipelineFactories()));
+      MMStudio.getInstance().events().post(new NewPipelineEvent());
    }
 
    /**

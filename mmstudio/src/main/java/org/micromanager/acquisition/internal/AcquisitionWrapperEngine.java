@@ -26,7 +26,6 @@ import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.SequenceSettings;
 import org.micromanager.events.internal.DefaultEventManager;
-import org.micromanager.events.internal.PipelineEvent;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.utils.AcqOrderMode;
