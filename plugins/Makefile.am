@@ -19,6 +19,7 @@ nobase_mmplugin_DATA = \
 	MultiChannelShading.jar \
 	PatternOverlay.jar \
 	pgFocus.jar \
+	PipelineSaver.jar \
 	PixelCalibrator.jar \
 	Projector.jar \
 	Recall.jar \

@@ -1,0 +1,3 @@
+<project name="PipelineSaver" default="jar">
+    <import file="../javapluginbuild.xml"/>
+</project>
