@@ -135,6 +135,11 @@ public class DefaultDataManager implements DataManager {
    }
 
    @Override
+   public Datastore.SaveMode getPreferredSaveMode() {
+      return DefaultDatastore.getPreferredSaveMode();
+   }
+
+   @Override
    public Image createImage(Object pixels, int width, int height,
          int bytesPerPixel, int numComponents, Coords coords,
          Metadata metadata) {

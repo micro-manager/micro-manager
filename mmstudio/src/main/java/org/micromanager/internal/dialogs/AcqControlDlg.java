@@ -43,6 +43,7 @@ import mmcorej.CMMCore;
 
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.data.Datastore;
+import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.AcqOrderMode;
@@ -859,7 +860,8 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       singleButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            setSaveMode(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
+            DefaultDatastore.setPreferredSaveMode(
+               Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
          }});
 
       multiButton_ = new JRadioButton("Image stack file");
@@ -869,7 +871,8 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       multiButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            setSaveMode(Datastore.SaveMode.MULTIPAGE_TIFF);
+            DefaultDatastore.setPreferredSaveMode(
+               Datastore.SaveMode.MULTIPAGE_TIFF);
          }});
       
       ButtonGroup buttonGroup = new ButtonGroup();
@@ -1097,7 +1100,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    }
    
    public final void updateSavingTypeButtons() {
-      Datastore.SaveMode mode = getSaveMode();
+      Datastore.SaveMode mode = studio_.data().getPreferredSaveMode();
       if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
          singleButton_.setSelected(true);
       }
@@ -1319,10 +1322,12 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
       // Save preferred save mode.
       if (singleButton_.isSelected()) {
-         setSaveMode(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
+         DefaultDatastore.setPreferredSaveMode(
+            Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
       }
       else if (multiButton_.isSelected()) {
-         setSaveMode(Datastore.SaveMode.MULTIPAGE_TIFF);
+         DefaultDatastore.setPreferredSaveMode(
+            Datastore.SaveMode.MULTIPAGE_TIFF);
       }
       else {
          ReportingUtils.logError("Unknown save mode button is selected, or no buttons are selected");
@@ -2097,20 +2102,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    public static void setShouldHideMDADisplay(boolean shouldHide) {
       DefaultUserProfile.getInstance().setBoolean(AcqControlDlg.class,
             SHOULD_HIDE_DISPLAY, shouldHide);
-   }
-
-   public static Datastore.SaveMode getSaveMode() {
-      // HACK: convert from Java enums to ints.
-      int mode = DefaultUserProfile.getInstance().getInt(
-            AcqControlDlg.class, SAVE_MODE,
-            SAVE_MODE_ARRAY.indexOf(Datastore.SaveMode.MULTIPAGE_TIFF));
-      return SAVE_MODE_ARRAY.get(mode);
-   }
-
-   public static void setSaveMode(Datastore.SaveMode saveMode) {
-      int mode = SAVE_MODE_ARRAY.indexOf(saveMode);
-      DefaultUserProfile.getInstance().setInt(AcqControlDlg.class,
-            SAVE_MODE, mode);
    }
 
    public static boolean getShouldCheckExposureSanity() {

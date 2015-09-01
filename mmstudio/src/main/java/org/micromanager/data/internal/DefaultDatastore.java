@@ -62,8 +62,8 @@ public class DefaultDatastore implements Datastore {
       }
    }
 
-   public static final String SINGLEPLANE_TIFF_SERIES = "Separate Image Files";
-   public static final String MULTIPAGE_TIFF = "Image Stack File";
+   private static final String SINGLEPLANE_TIFF_SERIES = "Separate Image Files";
+   private static final String MULTIPAGE_TIFF = "Image Stack File";
    // FileFilters for saving.
    private static final FileFilter singleplaneFilter_ = new SaveFileFilter(
          SINGLEPLANE_TIFF_SERIES);
@@ -295,7 +295,7 @@ public class DefaultDatastore implements Datastore {
       chooser.setAcceptAllFileFilterUsed(false);
       chooser.addChoosableFileFilter(singleplaneFilter_);
       chooser.addChoosableFileFilter(multipageFilter_);
-      if (getPreferredSaveFormat().equals(MULTIPAGE_TIFF)) {
+      if (getPreferredSaveMode().equals(Datastore.SaveMode.MULTIPAGE_TIFF)) {
          chooser.setFileFilter(multipageFilter_);
       }
       else {
@@ -315,17 +315,16 @@ public class DefaultDatastore implements Datastore {
       FileFilter filter = chooser.getFileFilter();
       Datastore.SaveMode mode = null;
       if (filter == singleplaneFilter_) {
-         setPreferredSaveFormat(SINGLEPLANE_TIFF_SERIES);
          mode = Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES;
       }
       else if (filter == multipageFilter_) {
-         setPreferredSaveFormat(MULTIPAGE_TIFF);
          mode = Datastore.SaveMode.MULTIPAGE_TIFF;
       }
       else {
          ReportingUtils.logError("Unrecognized file format filter " +
                filter.getDescription());
       }
+      setPreferredSaveMode(mode);
       return save(mode, file.getAbsolutePath());
    }
 
@@ -408,13 +407,34 @@ public class DefaultDatastore implements Datastore {
       return -1;
    }
 
-   private static String getPreferredSaveFormat() {
-      return MMStudio.getInstance().profile().getString(DefaultDatastore.class,
+   public static Datastore.SaveMode getPreferredSaveMode() {
+      String modeStr = MMStudio.getInstance().profile().getString(
+            DefaultDatastore.class,
             PREFERRED_SAVE_FORMAT, MULTIPAGE_TIFF);
+      if (modeStr.equals(MULTIPAGE_TIFF)) {
+         return Datastore.SaveMode.MULTIPAGE_TIFF;
+      }
+      else if (modeStr.equals(SINGLEPLANE_TIFF_SERIES)) {
+         return Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES;
+      }
+      else {
+         ReportingUtils.logError("Unrecognized save mode " + modeStr);
+         return null;
+      }
    }
 
-   private static void setPreferredSaveFormat(String format) {
+   public static void setPreferredSaveMode(Datastore.SaveMode mode) {
+      String modeStr = "";
+      if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
+         modeStr = MULTIPAGE_TIFF;
+      }
+      else if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
+         modeStr = SINGLEPLANE_TIFF_SERIES;
+      }
+      else {
+         ReportingUtils.logError("Unrecognized save mode " + mode);
+      }
       MMStudio.getInstance().profile().setString(DefaultDatastore.class,
-            PREFERRED_SAVE_FORMAT, format);
+            PREFERRED_SAVE_FORMAT, modeStr);
    }
 }

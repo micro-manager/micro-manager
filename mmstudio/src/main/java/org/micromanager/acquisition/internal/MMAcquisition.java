@@ -766,7 +766,7 @@ public class MMAcquisition {
 
    private static Storage getAppropriateStorage(DefaultDatastore store,
          String path, boolean isNew) throws IOException {
-      Datastore.SaveMode mode = AcqControlDlg.getSaveMode();
+      Datastore.SaveMode mode = DefaultDatastore.getPreferredSaveMode();
       if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
          return new StorageSinglePlaneTiffSeries(store, path, isNew);
       }

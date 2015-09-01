@@ -134,6 +134,12 @@ public interface DataManager {
    public Datastore loadData(String directory, boolean isVirtual) throws IOException;
 
    /**
+    * Return the save mode that the user prefers to use. This is automatically
+    * updated whenever the user saves a file.
+    */
+   public Datastore.SaveMode getPreferredSaveMode();
+
+   /**
     * Generate a new Image with the provided pixel data, rules for interpreting
     * that pixel data, coordinates, and metadata.
     * @param pixels A byte[] or short[] array of unsigned pixel data.
