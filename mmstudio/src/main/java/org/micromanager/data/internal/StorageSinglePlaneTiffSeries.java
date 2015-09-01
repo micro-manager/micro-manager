@@ -81,7 +81,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
    private boolean amLoading_;
    private HashMap<Integer, Writer> metadataStreams_;
    private boolean isDatasetWritable_;
-   private SummaryMetadata summaryMetadata_;
+   private SummaryMetadata summaryMetadata_ = (new DefaultSummaryMetadata.Builder()).build();
    private HashMap<Coords, String> coordsToFilename_;
    private HashMap<Integer, String> positionIndexToName_;
    private ArrayList<String> orderedChannelNames_;
