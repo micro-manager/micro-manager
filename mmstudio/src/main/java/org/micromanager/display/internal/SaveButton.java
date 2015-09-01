@@ -63,15 +63,6 @@ public class SaveButton extends JButton {
       });
       menu_.add(multistack);
 
-      JMenuItem movieExport = new JMenuItem("Export Images As Displayed");
-      movieExport.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            new ExportMovieDlg(display);
-         }
-      });
-      menu_.add(movieExport);
-
       final JButton staticThis = this;
       addMouseListener(new MouseInputAdapter() {
          @Override
