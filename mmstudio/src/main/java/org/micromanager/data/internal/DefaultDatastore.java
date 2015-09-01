@@ -26,6 +26,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.swing.filechooser.FileFilter;
+import javax.swing.JFileChooser;
+
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
@@ -42,6 +45,32 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 
 public class DefaultDatastore implements Datastore {
+   // Simple customization of the FileFilter class for choosing the save
+   // file format.
+   private static class SaveFileFilter extends FileFilter {
+      private String desc_;
+      public SaveFileFilter(String desc) {
+         desc_ = desc;
+      }
+
+      public boolean accept(File f) {
+         return true;
+      }
+
+      public String getDescription() {
+         return desc_;
+      }
+   }
+
+   public static final String SINGLEPLANE_TIFF_SERIES = "Separate Image Files";
+   public static final String MULTIPAGE_TIFF = "Image Stack File";
+   // FileFilters for saving.
+   private static final FileFilter singleplaneFilter_ = new SaveFileFilter(
+         SINGLEPLANE_TIFF_SERIES);
+   private static final FileFilter multipageFilter_ = new SaveFileFilter(
+         MULTIPAGE_TIFF);
+
+   private static final String PREFERRED_SAVE_FORMAT = "default format for saving data";
    private Storage storage_ = null;
    private PrioritizedEventBus bus_;
    private boolean isFrozen_ = false;
@@ -258,11 +287,44 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public boolean save(Datastore.SaveMode mode, Window window) {
-      File file = FileDialogs.save(window,
-            "Please choose a location for the data set", MMStudio.MM_DATA_SET);
+   public boolean save(Window window) {
+      // This replicates some logic from the FileDialogs class, but we want to
+      // use non-file-extension-based "filters" to let the user select the
+      // savefile format to use, and FileDialogs doesn't play nicely with that.
+      JFileChooser chooser = new JFileChooser();
+      chooser.setAcceptAllFileFilterUsed(false);
+      chooser.addChoosableFileFilter(singleplaneFilter_);
+      chooser.addChoosableFileFilter(multipageFilter_);
+      if (getPreferredSaveFormat().equals(MULTIPAGE_TIFF)) {
+         chooser.setFileFilter(multipageFilter_);
+      }
+      else {
+         chooser.setFileFilter(singleplaneFilter_);
+      }
+      chooser.setSelectedFile(
+            new File(FileDialogs.getSuggestedFile(MMStudio.MM_DATA_SET)));
+      chooser.showSaveDialog(window);
+      File file = chooser.getSelectedFile();
       if (file == null) {
+         // User cancelled.
          return false;
+      }
+      FileDialogs.storePath(MMStudio.MM_DATA_SET, file);
+
+      // Determine the mode the user selected.
+      FileFilter filter = chooser.getFileFilter();
+      Datastore.SaveMode mode = null;
+      if (filter == singleplaneFilter_) {
+         setPreferredSaveFormat(SINGLEPLANE_TIFF_SERIES);
+         mode = Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES;
+      }
+      else if (filter == multipageFilter_) {
+         setPreferredSaveFormat(MULTIPAGE_TIFF);
+         mode = Datastore.SaveMode.MULTIPAGE_TIFF;
+      }
+      else {
+         ReportingUtils.logError("Unrecognized file format filter " +
+               filter.getDescription());
       }
       return save(mode, file.getAbsolutePath());
    }
@@ -344,5 +406,15 @@ public class DefaultDatastore implements Datastore {
          return storage_.getNumImages();
       }
       return -1;
+   }
+
+   private static String getPreferredSaveFormat() {
+      return MMStudio.getInstance().profile().getString(DefaultDatastore.class,
+            PREFERRED_SAVE_FORMAT, MULTIPAGE_TIFF);
+   }
+
+   private static void setPreferredSaveFormat(String format) {
+      MMStudio.getInstance().profile().setString(DefaultDatastore.class,
+            PREFERRED_SAVE_FORMAT, format);
    }
 }

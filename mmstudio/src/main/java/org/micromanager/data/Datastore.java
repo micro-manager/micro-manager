@@ -228,17 +228,17 @@ public interface Datastore extends Closeable {
    }
 
    /**
-    * Prompts the user for a directory and filename, then pulls image data from
-    * the Storage and saves it according to the mode. After this method,
-    * getSavePath() will return the selected save path, unless the user cancels
-    * when prompted for directory/filename or there is an error while saving.
+    * Prompts the user for a location to save data to, then saves data there
+    * according to the mode parameter. After this method, getSavePath() will
+    * return the selected save path, unless the user cancels when prompted for
+    * directory/filename or there is an error while saving. Includes a file
+    * format selector in the save dialog, which defaults to the last format
+    * the user used.
     *
-    * @param mode
     * @param window Window  on top of which to display the dialog prompt; 
-    * may be null.
-    * @return true if saving succeeded, false otherwise.
+    *        may be null.
     */
-   public boolean save(SaveMode mode, Window window);
+   public boolean save(Window window);
 
    /**
     * As above, except uses the provided path (the last element of which is

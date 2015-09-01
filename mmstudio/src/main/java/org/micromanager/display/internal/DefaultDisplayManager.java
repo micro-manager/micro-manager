@@ -284,22 +284,17 @@ public final class DefaultDisplayManager implements DisplayManager {
 
    @Override
    public boolean promptToSave(Datastore store, DisplayWindow display) {
-      String[] options = {"Save as Separate Files", "Save as Single File",
-         "Discard", "Cancel"};
+      String[] options = {"Save", "Discard", "Cancel"};
       int result = JOptionPane.showOptionDialog(display.getAsWindow(),
             "Do you want to save this data set before closing?",
             "MicroManager", JOptionPane.DEFAULT_OPTION,
-            JOptionPane.QUESTION_MESSAGE, null, options, options[1]);
-      if (result == 3) {
+            JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+      if (result == 2) {
          // User cancelled.
          return false;
       }
-      Datastore.SaveMode mode = Datastore.SaveMode.MULTIPAGE_TIFF;
-      if (result == 0) {
-         mode = Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES;
-      }
-      if (result != 2) { // I.e. not the "discard" option
-         if (!store.save(mode, display.getAsWindow())) {
+      if (result == 0) { // I.e. not the "discard" option
+         if (!store.save(display.getAsWindow())) {
             // Don't close the window, as saving failed.
             return false;
          }

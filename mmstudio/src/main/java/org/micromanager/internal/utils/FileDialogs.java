@@ -174,8 +174,7 @@ public class FileDialogs {
 
    private static File promptForFile(Window parent, String title,
          FileType type, boolean selectDirectories, boolean load) {
-      String startFile = DefaultUserProfile.getInstance().getString(
-            FileDialogs.class, type.name, type.defaultFileName);
+      String startFile = getSuggestedFile(type);
       File startDir = null;
       if (startFile != null) {
          startDir = new File(startFile);
@@ -204,5 +203,10 @@ public class FileDialogs {
 
    public static File save(Window parent, String title, FileType type) {
       return promptForFile(parent, title, type, false, false);
+   }
+
+   public static String getSuggestedFile(FileType type) {
+      return DefaultUserProfile.getInstance().getString(
+            FileDialogs.class, type.name, type.defaultFileName);
    }
 }

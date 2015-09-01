@@ -39,35 +39,14 @@ import org.micromanager.display.DisplayWindow;
  * This class provides a button for saving the current datastore to TIFF.
  */
 public class SaveButton extends JButton {
-   private JPopupMenu menu_;
-
    public SaveButton(final Datastore store, final DisplayWindow display) {
       setToolTipText("Save data as a Micro-Manager dataset.");
-      menu_ = new JPopupMenu();
-      JMenuItem separateImages = new JMenuItem("Save to Separate Image Files");
-      separateImages.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            store.save(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES,
-               display.getAsWindow());
-         }
-      });
-      menu_.add(separateImages);
-      JMenuItem multistack = new JMenuItem("Save to Single Multistack Image");
-      multistack.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            store.save(Datastore.SaveMode.MULTIPAGE_TIFF,
-               display.getAsWindow());
-         }
-      });
-      menu_.add(multistack);
 
       final JButton staticThis = this;
       addMouseListener(new MouseInputAdapter() {
          @Override
          public void mousePressed(MouseEvent e) {
-            menu_.show(staticThis, e.getX(), e.getY());
+            store.save(display.getAsWindow());
          }
       });
 
