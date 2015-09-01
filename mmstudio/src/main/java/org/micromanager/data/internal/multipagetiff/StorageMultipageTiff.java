@@ -80,7 +80,7 @@ public final class StorageMultipageTiff implements Storage {
             Coords.STAGE_POSITION));
 
    private DefaultDatastore store_;
-   private DefaultSummaryMetadata summaryMetadata_;
+   private DefaultSummaryMetadata summaryMetadata_ = (new DefaultSummaryMetadata.Builder()).build();
    private String summaryMetadataString_ = null;
    private boolean amInWriteMode_;
    private int lastFrameOpenedDataSet_ = -1;
@@ -88,7 +88,6 @@ public final class StorageMultipageTiff implements Storage {
    final private boolean separateMetadataFile_;
    private boolean splitByXYPosition_ = true;
    private volatile boolean finished_ = false;
-   private int numChannels_, numSlices_;
    private OMEMetadata omeMetadata_;
    private int lastFrame_ = 0;
    private int lastAcquiredPosition_ = 0;
@@ -142,16 +141,14 @@ public final class StorageMultipageTiff implements Storage {
 
    @Subscribe
    public void onNewSummaryMetadata(NewSummaryMetadataEvent event) {
-      setSummaryMetadata(event.getSummaryMetadata());
-   }
-   
-   private void processSummaryMD() {
-      if (amInWriteMode_) {
-         numChannels_ = getIntendedSize("channel");
-         numSlices_ = getIntendedSize("z");
+      try {
+         setSummaryMetadata(event.getSummaryMetadata());
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error setting new summary metadata");
       }
    }
-
+   
    public ThreadPoolExecutor getWritingExecutor() {
       return writingExecutor_;
    }
@@ -534,9 +531,6 @@ public final class StorageMultipageTiff implements Storage {
          } else {
             coordsToReader_.putAll(oldImageMap);
          }
-         if (summaryJSON != null && summaryJSON.length() > 0) {
-            processSummaryMD();
-         }
       }
    }
 
@@ -584,14 +578,6 @@ public final class StorageMultipageTiff implements Storage {
 
    public void updateLastPosition(int pos) {
       lastAcquiredPosition_ = Math.max(pos, lastAcquiredPosition_);
-   }
-
-   public int getNumSlices() {
-      return numSlices_;
-   }
-
-   public int getNumChannels() {
-      return numChannels_;
    }
 
    public long getDataSetSize() {
@@ -654,10 +640,15 @@ public final class StorageMultipageTiff implements Storage {
       return getMaxIndices().getIndex(axis);
    }
 
+   // Convenience function.
+   public int getAxisLength(String axis) {
+      return getMaxIndex(axis) + 1;
+   }
+
    public Integer getIntendedSize(String axis) {
       if (summaryMetadata_.getIntendedDimensions() == null) {
-         ReportingUtils.logError("Can't get intended dimensions of dataset");
-         return null;
+         // Return the current size instead.
+         return getAxisLength(axis);
       }
       return summaryMetadata_.getIntendedDimensions().getIndex(axis);
    }

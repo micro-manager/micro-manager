@@ -341,20 +341,20 @@ class FileSet {
          //Figure out next expected indices
          if (masterStorage_.slicesFirst()) {
             nextExpectedSlice_ = slice + 1;
-            if (nextExpectedSlice_ == masterStorage_.getNumSlices()) {
+            if (nextExpectedSlice_ == masterStorage_.getIntendedSize(Coords.Z)) {
                nextExpectedSlice_ = 0;
                nextExpectedChannel_ = channel + 1;
-               if (nextExpectedChannel_ == masterStorage_.getNumChannels()) {
+               if (nextExpectedChannel_ == masterStorage_.getIntendedSize(Coords.CHANNEL)) {
                   nextExpectedChannel_ = 0;
                   nextExpectedFrame_ = frame + 1;
                }
             }
          } else {
             nextExpectedChannel_ = channel + 1;
-            if (nextExpectedChannel_ == masterStorage_.getNumChannels()) {
+            if (nextExpectedChannel_ == masterStorage_.getIntendedSize(Coords.CHANNEL)) {
                nextExpectedChannel_ = 0;
                nextExpectedSlice_ = slice + 1;
-               if (nextExpectedSlice_ == masterStorage_.getNumSlices()) {
+               if (nextExpectedSlice_ == masterStorage_.getIntendedSize(Coords.Z)) {
                   nextExpectedSlice_ = 0;
                   nextExpectedFrame_ = frame + 1;
                }

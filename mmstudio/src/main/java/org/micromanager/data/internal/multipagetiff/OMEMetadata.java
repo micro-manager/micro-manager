@@ -106,8 +106,8 @@ public class OMEMetadata {
       // We need to know bytes per pixel, which requires having an Image handy.
       // TODO: there's an implicit assumption here that all images in the
       // file have the same bytes per pixel.
-      numSlices_ = mptStorage_.getIntendedSize("z");
-      numChannels_ = mptStorage_.getIntendedSize("channel");
+      numSlices_ = mptStorage_.getIntendedSize(Coords.Z);
+      numChannels_ = mptStorage_.getIntendedSize(Coords.CHANNEL);
       Image repImage = mptStorage_.getAnyImage();
       //Last one is samples per pixel
       MetadataTools.populateMetadata(metadata_, seriesIndex, baseFileName,
