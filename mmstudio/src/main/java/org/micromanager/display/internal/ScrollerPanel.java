@@ -452,10 +452,10 @@ public class ScrollerPanel extends JPanel {
          display_.setDisplayedImageTo(displayedBuilder.build());
 
          // Set up snapping back to our current positions. 
+         if (snapbackTimer_ != null) {
+            snapbackTimer_.cancel();
+         }
          if (axisToSavedPosition_.size() > 0) {
-            if (snapbackTimer_ != null) {
-               snapbackTimer_.cancel();
-            }
             snapbackTimer_ = new Timer();
             TimerTask task = new TimerTask() {
                @Override
@@ -524,6 +524,9 @@ public class ScrollerPanel extends JPanel {
          else {
             // This axis is allowed to move and we don't need to snap it
             // back later.
+            if (axisToSavedPosition_.containsKey(axis)) {
+               axisToSavedPosition_.remove(axis);
+            }
             scrollbar.setValue(newPos);
          }
          shouldPostEvents_ = true;
