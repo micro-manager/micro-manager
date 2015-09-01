@@ -69,7 +69,6 @@ public class CanvasUpdateQueue {
    private final DisplayWindow display_;
    private final Runnable consumer_;
 
-   private final Object queueLock_ = new Object();
    private final Object drawLock_;
    private final LinkedBlockingQueue<Coords> coordsQueue_;
    private boolean shouldAcceptNewCoords_ = true;
@@ -205,9 +204,7 @@ public class CanvasUpdateQueue {
     */
    public synchronized void halt() {
       shouldAcceptNewCoords_ = false;
-      synchronized(queueLock_) {
-         coordsQueue_.clear();
-      }
+      coordsQueue_.clear();
    }
 
    /**
