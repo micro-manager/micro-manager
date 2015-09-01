@@ -155,6 +155,19 @@ public class ReportingUtils {
       }
    }
 
+   public static void logDebugMessage(Throwable e, String msg) {
+      if (e != null) {
+         String stackTrace = getStackTraceAsString(e);
+         msg = (msg + "\n" + e.toString() + " in " +
+               Thread.currentThread().toString() + "\n" + stackTrace + "\n");
+      }
+      if (core_ == null) {
+         System.out.println(msg);
+      } else {
+         core_.logMessage(msg, true);
+      }
+   }
+
    public static void showMessage(final String msg) {
       JOptionPane.showMessageDialog(null, msg);
    }
