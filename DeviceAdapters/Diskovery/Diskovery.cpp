@@ -481,7 +481,7 @@ DiskoveryStateDev::DiskoveryStateDev(
    if (devType == TIRF)
    {
        CPropertyAction* pAct = new CPropertyAction(this, &DiskoveryStateDev::OnTubeLensFocalLength);
-       CreateProperty(g_TubeLens, g_Leica, MM::String, true, pAct);
+       CreateProperty(g_TubeLens, g_Leica, MM::String, false, pAct, true);
        AddAllowedValue(g_TubeLens, g_Leica);
        AddAllowedValue(g_TubeLens, g_Nikon);
        AddAllowedValue(g_TubeLens, g_Olympus);
@@ -624,6 +624,8 @@ int DiskoveryStateDev::Initialize()
        pAct = new CPropertyAction(this, &DiskoveryStateDev::OnRI);
        RETURN_ON_MM_ERROR ( CreateFloatProperty("Refr. Index", ri_, false, pAct) );
        RETURN_ON_MM_ERROR ( SetPropertyLimits("Refr. Index", 1.33, 1.40) );
+
+       hub_->GetModel()->SetTubeLensFocalLength(tubeLensFocalLength_);
     }
 
    // Register our instance for callbacks
@@ -817,7 +819,6 @@ int DiskoveryStateDev::OnTubeLensFocalLength(MM::PropertyBase* pProp, MM::Action
       else if (tubeLens == g_Zeiss)
          tubeLensFocalLength_ = 150;
 
-      hub_->GetModel()->SetTubeLensFocalLength(tubeLensFocalLength_);
    }
    return DEVICE_OK;
 }
