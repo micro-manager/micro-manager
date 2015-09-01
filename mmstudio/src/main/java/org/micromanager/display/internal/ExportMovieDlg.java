@@ -94,7 +94,7 @@ public class ExportMovieDlg extends JDialog {
 
    private static final String FORMAT_PNG = "PNG";
    private static final String FORMAT_JPEG = "JPEG";
-   private static final String FORMAT_IMAGEJ = "ImageJ stack";
+   private static final String FORMAT_IMAGEJ = "ImageJ stack window";
    private static final String[] OUTPUT_FORMATS = {
       FORMAT_PNG, FORMAT_JPEG, FORMAT_IMAGEJ
    };
@@ -401,7 +401,7 @@ public class ExportMovieDlg extends JDialog {
 
       contentsPanel_ = new JPanel(new MigLayout("flowy"));
 
-      JLabel help = new JLabel("<html><body>Export a series of images from your dataset. The images will be exactly as currently<br>drawn on your display, including histogram scaling, zoom, overlays, etc.</body></html>");
+      JLabel help = new JLabel("<html><body>Export a series of images from your dataset. The images will be exactly as currently<br>drawn on your display, including histogram scaling, zoom, overlays, etc. Note that<br>this does not preserve the raw data, nor any metadata.</body></html>");
       contentsPanel_.add(help, "align center");
 
       if (getIsComposite()) {
