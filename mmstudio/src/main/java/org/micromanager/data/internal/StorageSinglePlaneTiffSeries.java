@@ -172,14 +172,6 @@ public class StorageSinglePlaneTiffSeries implements Storage {
             }
          }
 
-         File saveFile = new File(dir_, fileName);
-         if (saveFile.exists()) {
-            MMStudio.getInstance().stopAllActivity();
-            ReportingUtils.showError(
-                  "Image saving failed: file already exists: " +
-                  saveFile.getAbsolutePath());
-         }
-
          saveImageFile(image, dir_, fileName);
          writeFrameMetadata(image);
       }
