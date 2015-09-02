@@ -38,7 +38,7 @@ import org.micromanager.Studio;
 
 import org.micromanager.internal.utils.ImageUtils;
 
-public class FlipperProcessor implements Processor {
+public class FlipperProcessor extends Processor {
 
    // Valid rotation values.
    public static final int R0 = 0;

@@ -45,7 +45,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  *
  * @author nico
  */
-public class SplitViewProcessor implements Processor {
+public class SplitViewProcessor extends Processor {
 
    private Studio studio_;
    private String orientation_ = SplitViewFrame.LR;

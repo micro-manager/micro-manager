@@ -43,7 +43,7 @@ import org.micromanager.internal.utils.MMException;
  *
  * @author nico, modified for MM2.0 by Chris Weisiger
  */
-public class ShadingProcessor implements Processor {
+public class ShadingProcessor extends Processor {
    private Studio studio_;
    private ImageCollection imageCollection_;
    private String channelGroup_;
