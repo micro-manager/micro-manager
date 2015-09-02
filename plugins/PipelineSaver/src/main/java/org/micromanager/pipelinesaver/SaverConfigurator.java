@@ -43,8 +43,9 @@ import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.MMFrame;
 
 public class SaverConfigurator extends MMFrame implements ProcessorConfigurator {
-   private static String PREFERRED_FORMAT_INDEX = "preferred format for saving mid-pipeline datasets";
-   private static String SHOULD_DISPLAY_PIPELINE_DATA = "whether or not to display mid-pipeline datasets";
+   private static final String PREFERRED_FORMAT = "preferred format for saving mid-pipeline datasets";
+   private static final String SHOULD_DISPLAY_PIPELINE_DATA = "whether or not to display mid-pipeline datasets";
+   private static final String SAVE_PATH = "default save path for saving mid-pipeline datasets";
 
    private Studio studio_;
    private JCheckBox shouldDisplay_;
@@ -61,7 +62,7 @@ public class SaverConfigurator extends MMFrame implements ProcessorConfigurator 
       String[] formats = new String[] {SaverPlugin.RAM,
          SaverPlugin.MULTIPAGE_TIFF, SaverPlugin.SINGLEPLANE_TIFF_SERIES};
       saveFormat_ = new JComboBox(formats);
-      saveFormat_.setSelectedIndex(getPreferredSaveFormat());
+      saveFormat_.setSelectedItem(getPreferredSaveFormat());
       saveFormat_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -76,6 +77,7 @@ public class SaverConfigurator extends MMFrame implements ProcessorConfigurator 
 
       panel.add(new JLabel("Save path: "), "wrap");
       savePath_ = new JTextField(50);
+      savePath_.setText(getSavePath());
       panel.add(savePath_, "split 2, span");
       browseButton_ = new JButton("...");
       browseButton_.addActionListener(new ActionListener() {
@@ -117,8 +119,13 @@ public class SaverConfigurator extends MMFrame implements ProcessorConfigurator 
 
    @Override
    public PropertyMap getSettings() {
+      // Save preferences now.
+      String format = (String) saveFormat_.getSelectedItem();
+      setPreferredSaveFormat(format);
+      setShouldDisplay(shouldDisplay_.isSelected());
+      setSavePath(savePath_.getText());
       PropertyMap.PropertyMapBuilder builder = studio_.data().getPropertyMapBuilder();
-      builder.putString("format", (String) saveFormat_.getSelectedItem());
+      builder.putString("format", format);
       builder.putBoolean("shouldDisplay", shouldDisplay_.isSelected());
       builder.putString("savePath", savePath_.getText());
       return builder.build();
@@ -129,14 +136,14 @@ public class SaverConfigurator extends MMFrame implements ProcessorConfigurator 
       dispose();
    }
 
-   private int getPreferredSaveFormat() {
-      return studio_.profile().getInt(SaverConfigurator.class,
-            PREFERRED_FORMAT_INDEX, 0);
+   private String getPreferredSaveFormat() {
+      return studio_.profile().getString(SaverConfigurator.class,
+            PREFERRED_FORMAT, SaverPlugin.RAM);
    }
 
-   private void setPreferredSaveFormat(int index) {
-      studio_.profile().setInt(SaverConfigurator.class,
-            PREFERRED_FORMAT_INDEX, index);
+   private void setPreferredSaveFormat(String format) {
+      studio_.profile().setString(SaverConfigurator.class,
+            PREFERRED_FORMAT, format);
    }
 
    private boolean getShouldDisplay() {
@@ -147,5 +154,14 @@ public class SaverConfigurator extends MMFrame implements ProcessorConfigurator 
    private void setShouldDisplay(boolean shouldDisplay) {
       studio_.profile().setBoolean(SaverConfigurator.class,
             SHOULD_DISPLAY_PIPELINE_DATA, shouldDisplay);
+   }
+
+   private String getSavePath() {
+      return studio_.profile().getString(SaverConfigurator.class,
+            SAVE_PATH, "");
+   }
+
+   private void setSavePath(String path) {
+      studio_.profile().setString(SaverConfigurator.class, SAVE_PATH, path);
    }
 }

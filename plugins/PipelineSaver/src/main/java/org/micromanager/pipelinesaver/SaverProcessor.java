@@ -29,13 +29,17 @@ import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
 import org.micromanager.Studio;
 
-public class SaverProcessor implements Processor {
+public class SaverProcessor extends Processor {
    private Studio studio_;
-   private Datastore store_ = null;
+   private Datastore store_;
+   private final String format_;
+   private final String savePath_;
 
    public SaverProcessor(Studio studio, String format, String savePath,
          boolean shouldDisplay) {
       studio_ = studio;
+      format_ = format;
+      savePath_ = savePath;
       if (format.equals(SaverPlugin.MULTIPAGE_TIFF)) {
          // TODO: hardcoded whether or not to split positions.
          try {
@@ -55,6 +59,7 @@ public class SaverProcessor implements Processor {
       else {
          studio_.logs().logError("Unrecognized save format " + format);
       }
+
       studio_.displays().manage(store_);
 
       if (shouldDisplay) {
@@ -70,5 +75,12 @@ public class SaverProcessor implements Processor {
          studio_.logs().logError(e, "Unable to save data: datastore is frozen");
       }
       context.outputImage(image);
+   }
+
+   public void cleanup() {
+      store_.freeze();
+      if (!format_.equals(SaverPlugin.RAM)) {
+         store_.setSavePath(savePath_);
+      }
    }
 }
