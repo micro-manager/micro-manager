@@ -272,6 +272,13 @@ final public class PipelineFrame extends MMFrame
       return getTableModel().getPipelineFactories();
    }
 
+   /**
+    * Clear the pipeline table.
+    */
+   public void clearPipeline() {
+      getTableModel().clearPipeline();
+   }
+
    @Override
    public void dispose() {
       super.dispose();

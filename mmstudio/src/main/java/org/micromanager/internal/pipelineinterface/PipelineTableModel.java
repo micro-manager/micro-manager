@@ -44,7 +44,16 @@ public class PipelineTableModel extends AbstractTableModel {
 
    public void removeConfigurator(ConfiguratorWrapper configurator) {
       pipelineConfigs_.remove(configurator);
+      configurator.getConfigurator().cleanup();
       fireTableDataChanged();
+   }
+
+   public void clearPipeline() {
+      // Create a copy of the list as we'll be removing from it as we iterate
+      // over it.
+      for (ConfiguratorWrapper config : new ArrayList<ConfiguratorWrapper>(pipelineConfigs_)) {
+         removeConfigurator(config);
+      }
    }
 
    public void moveConfigurator(ConfiguratorWrapper configurator,

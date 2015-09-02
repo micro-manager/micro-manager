@@ -192,9 +192,22 @@ public class DefaultDataManager implements DataManager {
    }
 
    @Override
+   public void clearPipeline() {
+      MMStudio.getInstance().getPipelineFrame().clearPipeline();
+   }
+
+   @Override
    public void addAndConfigureProcessor(ProcessorPlugin plugin) {
       MMStudio.getInstance().getPipelineFrame().addAndConfigureProcessor(
             plugin);
+   }
+
+   @Override
+   public void setApplicationPipeline(List<ProcessorPlugin> plugins) {
+      clearPipeline();
+      for (ProcessorPlugin plugin : plugins) {
+         addAndConfigureProcessor(plugin);
+      }
    }
 
    @Override

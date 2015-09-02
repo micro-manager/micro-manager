@@ -250,13 +250,29 @@ public interface DataManager {
          boolean isSynchronous);
 
    /**
+    * Clear the current application pipeline, so that no on-the-fly image
+    * processing is performed.
+    */
+   public void clearPipeline();
+
+   /**
     * Add a new instance of the given ProcessorPlugin to the current
     * application image processing pipeline (as referenced in the
     * "Plugins -> On-The-Fly Image Processing" menu). The Pipeline
     * configuration window will be opened if it is not already open. The new
-    * processor will be inserted onto the end of the pipeline.
+    * processor will be inserted onto the end of the pipeline, and the
+    * appropriate ProcessorConfigurator for that plugin will be run.
     */
    public void addAndConfigureProcessor(ProcessorPlugin plugin);
+
+   /**
+    * Set the current application pipeline to be the provided list of
+    * ProcessorPlugins. The Pipeline configuration window will be opened if
+    * it is not already open, as will the ProcessorConfigurators for each
+    * of the ProcessorPlugins provided. Equivalent to calling clearPipeline()
+    * and then iteratively calling addAndConfigureProcessor().
+    */
+   public void setApplicationPipeline(List<ProcessorPlugin> plugins);
 
    /**
     * Notify the application that the state of one of the processors in the
