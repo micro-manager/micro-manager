@@ -27,7 +27,7 @@ import org.micromanager.PropertyMap;
 /**
  * Processors manipulate images before they are added to a Datastore.
  */
-public interface Processor {
+public abstract class Processor {
    /**
     * Process an Image. Instead of returning a result Image, the Image should
     * be "handed" to the provided ProcessorContext using its outputImage()
@@ -36,5 +36,13 @@ public interface Processor {
     * projections). However, it is not legal to output Images outside of this
     * function call (e.g. via thread-based systems).
     */
-   public void processImage(Image image, ProcessorContext context);
+   public abstract void processImage(Image image, ProcessorContext context);
+
+   /**
+    * Clean up when processing is finished. At this time no more images are
+    * going to be sent to the processImage method. If the Processor creates any
+    * resources external to it (like displays or datastores) then they should
+    * be cleaned up at this time.
+    */
+   public void cleanup() {};
 }

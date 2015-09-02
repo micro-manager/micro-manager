@@ -54,6 +54,7 @@ public class DefaultTaggedImageSink  {
                   if (tagged != null) {
                      if (TaggedImageQueue.isPoison(tagged)) {
                         // Acquisition has ended.
+                        pipeline_.halt();
                         DefaultEventManager.getInstance().post(
                               new AcquisitionEndedEvent());
                         break;
