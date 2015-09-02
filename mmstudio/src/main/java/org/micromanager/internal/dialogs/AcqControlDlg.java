@@ -83,12 +83,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    private static final String SHOULD_CHECK_EXPOSURE_SANITY = "whether to prompt the user if their exposure times seem excessively long";
    // This array allows us to convert from SaveModes to integers. Of course it
    // needs to be updated if any new save modes are added in the future.
-   private static final ArrayList<Datastore.SaveMode> SAVE_MODE_ARRAY;
-   static {
-      SAVE_MODE_ARRAY = new ArrayList<Datastore.SaveMode>();
-      SAVE_MODE_ARRAY.add(Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
-      SAVE_MODE_ARRAY.add(Datastore.SaveMode.MULTIPAGE_TIFF);
-   }
    private JComboBox channelGroupCombo_;
    private final JTextArea commentTextArea_;
    private final JComboBox zValCombo_;
