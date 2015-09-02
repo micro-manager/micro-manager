@@ -80,7 +80,8 @@ public class SaverProcessor extends Processor {
       context.outputImage(image);
    }
 
-   public void cleanup() {
+   @Override
+   public void cleanup(ProcessorContext context) {
       store_.freeze();
       if (!format_.equals(SaverPlugin.RAM)) {
          store_.setSavePath(savePath_);
