@@ -20,6 +20,7 @@
 
 package org.micromanager.pipelinesaver;
 
+import java.io.File;
 import java.io.IOException;
 
 import org.micromanager.data.Datastore;
@@ -39,19 +40,21 @@ public class SaverProcessor extends Processor {
          boolean shouldDisplay) {
       studio_ = studio;
       format_ = format;
-      savePath_ = savePath;
+      // Update save path to account for duplicates -- append a numerical
+      // suffix that's max of all suffices + 1.
+      savePath_ = findUniqueSavePath(savePath);
       if (format.equals(SaverPlugin.MULTIPAGE_TIFF)) {
          // TODO: hardcoded whether or not to split positions.
          try {
-            store_ = studio_.data().createMultipageTIFFDatastore(savePath,
+            store_ = studio_.data().createMultipageTIFFDatastore(savePath_,
                   true, true);
          }
          catch (IOException e) {
-            studio_.logs().showError(e, "Error creating datastore at " + savePath);
+            studio_.logs().showError(e, "Error creating datastore at " + savePath_);
          }
       }
       else if (format.equals(SaverPlugin.SINGLEPLANE_TIFF_SERIES)) {
-         store_ = studio.data().createSinglePlaneTIFFSeriesDatastore(savePath);
+         store_ = studio.data().createSinglePlaneTIFFSeriesDatastore(savePath_);
       }
       else if (format.equals(SaverPlugin.RAM)) {
          store_ = studio.data().createRAMDatastore();
@@ -82,5 +85,38 @@ public class SaverProcessor extends Processor {
       if (!format_.equals(SaverPlugin.RAM)) {
          store_.setSavePath(savePath_);
       }
+   }
+
+   /**
+    * Given a path including a final directory name, ensure that the path is
+    * unique, appending a numerical suffix if necessary.
+    */
+   public String findUniqueSavePath(String savePath) {
+      File dir = new File(savePath);
+      if (!(dir.exists())) {
+         // Path is already unique
+         return savePath;
+      }
+      // Not unique; figure out what suffix to apply.
+      int maxSuffix = 1;
+      String name = dir.getName();
+      for (String item : (new File(dir.getParent())).list()) {
+         if (item.startsWith(name)) {
+            try {
+               String[] fields = item.split("_");
+               maxSuffix = Math.max(maxSuffix,
+                     Integer.parseInt(fields[fields.length - 1]));
+            }
+            catch (NumberFormatException e) {
+               // No suffix available to use.
+            }
+         }
+      }
+      String result = savePath + "_" + (maxSuffix + 1);
+      if (new File(result).exists()) {
+         studio_.logs().logError("Unable to find unique save path at " + savePath);
+         return null;
+      }
+      return result;
    }
 }
