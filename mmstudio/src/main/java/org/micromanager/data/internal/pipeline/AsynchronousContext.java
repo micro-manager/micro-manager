@@ -76,7 +76,9 @@ public class AsynchronousContext extends BaseContext {
             }
          }
          if (wrapper.getImage() == null) {
-            // Flushing the queue; pass the empty wrapper along.
+            // Flushing the queue; cleanup the processor and pass the empty
+            // wrapper along.
+            processor_.cleanup(this);
             if (sink_ != null) {
                sink_.insertImage(wrapper);
             }

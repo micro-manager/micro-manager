@@ -40,9 +40,10 @@ public abstract class Processor {
 
    /**
     * Clean up when processing is finished. At this time no more images are
-    * going to be sent to the processImage method. If the Processor creates any
-    * resources external to it (like displays or datastores) then they should
-    * be cleaned up at this time.
+    * going to be sent to the processImage method. The ProcessorContext is
+    * made available in case any final images need to be generated. If the
+    * Processor creates any resources external to it (like displays or
+    * datastores) then they should be cleaned up at this time.
     */
-   public void cleanup() {};
+   public void cleanup(ProcessorContext context) {};
 }

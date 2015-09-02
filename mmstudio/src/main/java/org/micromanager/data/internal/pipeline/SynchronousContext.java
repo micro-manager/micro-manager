@@ -43,7 +43,9 @@ public class SynchronousContext extends BaseContext {
     */
    public void insertImage(ImageWrapper wrapper) {
       if (wrapper.getImage() == null) {
-         // Flushing the pipeline; bypass the processor.
+         // Flushing the pipeline. Cleanup the processor, then pass the flush
+         // along.
+         processor_.cleanup(this);
          if (sink_ != null) {
             sink_.insertImage(wrapper);
          }

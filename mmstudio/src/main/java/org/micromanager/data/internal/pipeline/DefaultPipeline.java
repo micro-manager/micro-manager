@@ -124,10 +124,6 @@ public class DefaultPipeline implements Pipeline {
       catch (InterruptedException e) {
          ReportingUtils.logError("Interrupted while waiting for flush to complete.");
       }
-      // Tell all processors in the pipeline to clean themselves up.
-      for (Processor processor : processors_) {
-         processor.cleanup();
-      }
    }
 
    @Override
