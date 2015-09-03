@@ -241,9 +241,16 @@ public class IntroDlg extends JDialog {
          public void actionPerformed(ActionEvent e) {
             String profileName = (String) profileSelect_.getSelectedItem();
             if (profileName.contentEquals(USERNAME_NEW)) {
+               profileSelect_.hidePopup();
                // Prompt the user for the new profile name.
                profileName = JOptionPane.showInputDialog("Please input the new profile name:");
-               if (profilesAsList.contains(profileName)) {
+               if (profileName == null || profileName.equals("")) {
+                  // User declined to provide a name; do nothing.
+                  profileSelect_.setSelectedItem(
+                     DefaultUserProfile.DEFAULT_USER);
+                  return;
+               }
+               else if (profilesAsList.contains(profileName)) {
                   ReportingUtils.showError("That profile name is already in use.");
                }
                else {
