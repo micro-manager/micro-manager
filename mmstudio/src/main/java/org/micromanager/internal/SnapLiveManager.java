@@ -66,7 +66,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    private DefaultDatastore store_;
    private Pipeline pipeline_;
    private final ArrayList<LiveModeListener> listeners_;
-   private boolean isOn_ = false;
+   private boolean isLiveOn_ = false;
    // Suspended means that we *would* be running except we temporarily need
    // to halt for the duration of some action (e.g. changing the exposure
    // time). See setSuspended().
@@ -87,20 +87,20 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
 
    @Override
    public void setLiveMode(boolean isOn) {
-      if (isOn_ == isOn) {
+      if (isLiveOn_ == isOn) {
          return;
       }
-      isOn_ = isOn;
-      if (isOn_) {
+      isLiveOn_ = isOn;
+      if (isLiveOn_) {
          startLiveMode();
       }
       else {
          stopLiveMode();
       }
       for (LiveModeListener listener : listeners_) {
-         listener.liveModeEnabled(isOn_);
+         listener.liveModeEnabled(isLiveOn_);
       }
-      DefaultEventManager.getInstance().post(new DefaultLiveModeEvent(isOn_));
+      DefaultEventManager.getInstance().post(new DefaultLiveModeEvent(isLiveOn_));
    }
 
    private void setLiveButtonMode(JButton button, boolean isOn) {
@@ -119,7 +119,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
     */
    @Override
    public void setSuspended(boolean shouldSuspend) {
-      if (shouldSuspend && isOn_) {
+      if (shouldSuspend && isLiveOn_) {
          // Need to stop now.`
          stopLiveMode();
          isSuspended_ = true;
@@ -260,7 +260,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
 
    @Override
    public boolean getIsLiveModeOn() {
-      return isOn_;
+      return isLiveOn_;
    }
 
    /**
@@ -342,14 +342,14 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       DefaultEventManager.getInstance().registerForEvents(liveButton);
       display.registerForEvents(liveButton);
       liveButton.setToolTipText("Continuously acquire new images");
-      setLiveButtonMode(liveButton, isOn_);
+      setLiveButtonMode(liveButton, isLiveOn_);
       liveButton.setPreferredSize(new Dimension(90, 28));
       liveButton.setFont(GUIUtils.buttonFont);
       liveButton.setMargin(zeroInsets);
       liveButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent event) {
-            setLiveMode(!isOn_);
+            setLiveMode(!isLiveOn_);
          }
       });
       controls.add(liveButton);
@@ -364,8 +364,13 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       toAlbumButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent event) {
-            List<Image> images = snap(false);
-            DefaultAlbum.getInstance().addImages(images);
+            // Send all images at current channel to the album.
+            Coords.CoordsBuilder builder = studio_.data().getCoordsBuilder();
+            for (int i = 0; i < store_.getAxisLength(Coords.CHANNEL); ++i) {
+               builder.channel(i);
+               DefaultAlbum.getInstance().addImages(store_.getImagesMatching(
+                     builder.build()));
+            }
          }
       });
       controls.add(toAlbumButton);
@@ -458,7 +463,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          ReportingUtils.showError("No camera configured.");
          return new ArrayList<Image>();
       }
-      if (isOn_) {
+      if (isLiveOn_) {
          // Just return the most recent images.
          ArrayList<Image> result = new ArrayList<Image>();
          ArrayList<Integer> keys = new ArrayList<Integer>(channelToLastImage_.keySet());
