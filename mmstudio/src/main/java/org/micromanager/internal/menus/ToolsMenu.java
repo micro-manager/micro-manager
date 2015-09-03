@@ -1,5 +1,7 @@
 package org.micromanager.internal.menus;
 
+import com.google.common.eventbus.Subscribe;
+
 import java.awt.Cursor;
 import java.io.File;
 import java.util.HashSet;
@@ -12,6 +14,7 @@ import javax.swing.JOptionPane;
 
 import mmcorej.CMMCore;
 
+import org.micromanager.events.internal.MouseMovesStageEvent;
 import org.micromanager.internal.conf2.ConfiguratorDlg2;
 import org.micromanager.internal.dialogs.IntroDlg;
 import org.micromanager.internal.dialogs.OptionsDlg;
@@ -33,11 +36,13 @@ public class ToolsMenu {
 
    private final MMStudio studio_;
    private final CMMCore core_;
-   
+
+   @SuppressWarnings("LeakingThisInConstructor")
    public ToolsMenu(MMStudio studio, CMMCore core) {
       studio_ = studio;
       core_ = core;
       switchConfigurationMenu_ = new JMenu();
+      studio_.events().registerForEvents(this);
    }
    
    public void initializeToolsMenu(JMenuBar menuBar) {
@@ -304,6 +309,11 @@ public class ToolsMenu {
          });
          seenConfigs.add(configFile);
       }
+   }
+
+   @Subscribe
+   public void onMouseMovesStage(MouseMovesStageEvent event) {
+      centerAndDragMenuItem_.setSelected(event.getIsEnabled());
    }
 
    public static boolean getMouseMovesStage() {
