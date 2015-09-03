@@ -43,6 +43,29 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 public class DefaultPluginManager implements PluginManager {
 
+   /**
+    * Simple extension of JMenu whose menu items remained alphabetically
+    * ordered.
+    */
+   private static class SortedMenu extends JMenu {
+      public SortedMenu(String title) {
+         super(title);
+      }
+
+      @Override
+      public JMenuItem add(JMenuItem item) {
+         // Find the insertion point.
+         for (int i = 0; i < getItemCount(); ++i) {
+            if (item.getText().compareTo(getItem(i).getText()) < 0) {
+               insert(item, i);
+               return item;
+            }
+         }
+         // Add it at the end instead.
+         return super.add(item);
+      }
+   }
+
    // Maps strings like "org.micromanager.data.ProcessorPlugin" to
    // classes like ProcessorPlugin.class.
    private static final HashMap<String, Class> PATH_TO_CLASS = new HashMap<String, Class>();
@@ -65,7 +88,7 @@ public class DefaultPluginManager implements PluginManager {
 
    public DefaultPluginManager(Studio studio, JMenuBar menuBar) {
       studio_ = studio;
-      menu_ = new JMenu("Plugins");
+      menu_ = new SortedMenu("Plugins");
       menuBar.add(menu_);
 
       subMenus_ = new HashMap<String, JMenu>();
@@ -179,7 +202,7 @@ public class DefaultPluginManager implements PluginManager {
       else {
          if (!subMenus_.containsKey(subMenu)) {
             // Create a new menu.
-            JMenu menu = new JMenu(subMenu);
+            JMenu menu = new SortedMenu(subMenu);
             menu_.add(menu);
             subMenus_.put(subMenu, menu);
          }
