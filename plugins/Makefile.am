@@ -14,7 +14,6 @@ nobase_mmplugin_DATA = \
 	HCS.jar \
 	ImageFlipper.jar \
 	IntelligentAcquisition.jar \
-	LiveDecon.jar \
 	MMTracker.jar \
 	MultiAndor.jar \
 	MultiChannelShading.jar \
