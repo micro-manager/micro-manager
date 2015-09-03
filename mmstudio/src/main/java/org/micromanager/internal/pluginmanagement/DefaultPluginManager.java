@@ -28,6 +28,9 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.display.OverlayPlugin;
 import org.micromanager.MenuPlugin;
@@ -39,6 +42,17 @@ import org.micromanager.events.internal.NewPluginEvent;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public class DefaultPluginManager implements PluginManager {
+
+   // Maps strings like "org.micromanager.data.ProcessorPlugin" to
+   // classes like ProcessorPlugin.class.
+   private static final HashMap<String, Class> PATH_TO_CLASS = new HashMap<String, Class>();
+   static {
+      PATH_TO_CLASS.put("org.micromanager.display.OverlayPlugin",
+            OverlayPlugin.class);
+      PATH_TO_CLASS.put("org.micromanager.data.ProcessorPlugin",
+            ProcessorPlugin.class);
+      PATH_TO_CLASS.put("org.micromanager.MenuPlugin", MenuPlugin.class);
+   }
 
    private Studio studio_;
    private JMenu menu_;
@@ -57,10 +71,9 @@ public class DefaultPluginManager implements PluginManager {
       subMenus_ = new HashMap<String, JMenu>();
 
       pluginTypeToPlugins_ = new HashMap<Class, ArrayList<MMPlugin>>();
-      pluginTypeToPlugins_.put(ProcessorPlugin.class,
-            new ArrayList<MMPlugin>());
-      pluginTypeToPlugins_.put(OverlayPlugin.class,
-            new ArrayList<MMPlugin>());
+      for (Class classType : PATH_TO_CLASS.values()) {
+         pluginTypeToPlugins_.put(classType, new ArrayList<MMPlugin>());
+      }
       loadingThread_ = new Thread(new Runnable() {
          @Override
          public void run() {
@@ -90,13 +103,13 @@ public class DefaultPluginManager implements PluginManager {
     * pluginTypeToPlugins_ structure.
     */
    private void loadPlugins() {
-      List<Class> plugins = PluginFinder.findPlugins(
+      HashMap<Class, JSONObject> pluginToTypeInfo = PluginFinder.findPlugins(
             System.getProperty("user.dir") + "/mmplugins");
-      for (Class pluginClass : plugins) {
+      for (Class pluginClass : pluginToTypeInfo.keySet()) {
          try {
             MMPlugin plugin = (MMPlugin) pluginClass.newInstance();
             ReportingUtils.logDebugMessage("Found plugin " + plugin);
-            addPlugin(plugin);
+            addPlugin(plugin, pluginToTypeInfo.get(pluginClass));
          }
          catch (InstantiationException e) {
             ReportingUtils.logError(e, "Error instantiating plugin class " + pluginClass);
@@ -112,19 +125,27 @@ public class DefaultPluginManager implements PluginManager {
     * pluginTypeToPlugins_ map, insert it into a submenu if appropriate,
     * and post a NewPluginEvent.
     */
-   private void addPlugin(final MMPlugin plugin) {
+   private void addPlugin(final MMPlugin plugin, JSONObject typeInfo) {
       plugin.setContext(studio_);
-      // TODO: ideally this enumeration (and the similar enumeration in
-      // the constructor) should not be needed.
-      if (plugin instanceof ProcessorPlugin) {
-         pluginTypeToPlugins_.get(ProcessorPlugin.class).add(plugin);
+      String className = "";
+      try {
+         className = typeInfo.getJSONObject("values").getString("type");
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Error loading plugin class info for plugin " + plugin + " with info " + typeInfo);
+         return;
+      }
+      if (!PATH_TO_CLASS.containsKey(className)) {
+         ReportingUtils.logError("Unrecognized plugin type " + className + " for plugin " + plugin);
+         return;
+      }
+      Class pluginClass = PATH_TO_CLASS.get(className);
+      pluginTypeToPlugins_.get(pluginClass).add(plugin);
+      if (pluginClass == ProcessorPlugin.class) {
          // Add it to the "On-the-fly image processing" plugin menu.
          addProcessorPluginToMenu((ProcessorPlugin) plugin);
       }
-      if (plugin instanceof OverlayPlugin) {
-         pluginTypeToPlugins_.get(OverlayPlugin.class).add(plugin);
-      }
-      if (plugin instanceof MenuPlugin) {
+      if (pluginClass == MenuPlugin.class) {
          // Add it to the menu.
          addSubMenuItem(((MenuPlugin) plugin).getSubMenu(),
                plugin.getName(),

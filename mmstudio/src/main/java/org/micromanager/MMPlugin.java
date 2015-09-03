@@ -24,7 +24,7 @@ import org.micromanager.Studio;
 import org.scijava.plugin.SciJavaPlugin;
 
 /**
- * This interface is the standard interface for all Micro-Manager plugins. In
+ * This interface is the base interface for all Micro-Manager plugins. In
  * practice, you will not use this interface directly, rather using one of the
  * sub-interfaces, to wit:
  * - org.micromanager.MenuPlugin, for plugins that should appear in the Plugins
@@ -33,15 +33,14 @@ import org.scijava.plugin.SciJavaPlugin;
  *   collected.
  * - org.micromanager.display.OverlayPlugin, for drawing on top of image
  *   windows.
- * It is allowed to implement multiple of these interfaces, in which case the
- * plugin will be available in all appropriate contexts in the program.
  *
  * To cause your plugin to be loaded when the program runs, you need to do the
  * following:
- * - Create a class that implements this interface (or more likely, one of the
- *   other interfaces listed above) and the org.scijava.plugin.SciJavaPlugin
- *   interface.
- * - Annotate that class with the org.scijava.plugin.Plugin annotation
+ * - Create a class that implements one of the interfaces listed above and the
+ *   org.scijava.plugin.SciJavaPlugin interface (which is an empty interface).
+ * - Annotate that class with the org.scijava.plugin.Plugin annotation, with
+ *   the "type" parameter of that annotation being the type of the interface
+ *   your plugin implements.
  * - Place your plugin's jar file in the mmplugins directory of your ImageJ
  *   installation.
  *

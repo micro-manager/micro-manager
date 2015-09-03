@@ -32,6 +32,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -73,10 +74,11 @@ public class PluginFinder {
    /**
     * Find all jars under the given root, check them for the META-INF file that
     * indicates that they're annotated with the @Plugin annotation, and
-    * return their class objects as appropriate.
+    * return a mapping of their class objects to the text from their META-INF
+    * JSON files.
     */
-   public static List<Class> findPlugins(String root) {
-      ArrayList<Class> result = new ArrayList<Class>();
+   public static HashMap<Class, JSONObject> findPlugins(String root) {
+      HashMap<Class, JSONObject> result = new HashMap<Class, JSONObject>();
       for (String jarPath : findPaths(root, ".jar")) {
          try {
             JarFile jar = new JarFile(jarPath);
@@ -93,7 +95,7 @@ public class PluginFinder {
             try {
                JSONObject json = new JSONObject(contents);
                String className = json.getString("class");
-               result.add(getClassFromJar(jarPath, className));
+               result.put(getClassFromJar(jarPath, className), json);
             }
             catch (JSONException e) {
                ReportingUtils.logError(e, "Error reading META-INF JSON");
