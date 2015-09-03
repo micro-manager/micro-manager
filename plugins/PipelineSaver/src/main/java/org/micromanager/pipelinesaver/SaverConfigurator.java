@@ -76,7 +76,7 @@ public class SaverConfigurator extends MMFrame implements ProcessorConfigurator 
       panel.add(shouldDisplay_, "wrap");
 
       panel.add(new JLabel("Save path: "), "wrap");
-      savePath_ = new JTextField(50);
+      savePath_ = new JTextField(30);
       savePath_.setText(getSavePath());
       panel.add(savePath_, "split 2, span");
       browseButton_ = new JButton("...");
