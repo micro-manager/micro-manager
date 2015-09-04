@@ -21,11 +21,11 @@
 package org.micromanager.events.internal;
 
 import org.micromanager.data.Datastore;
-import org.micromanager.events.AcquisitionEndedEvent
+import org.micromanager.events.AcquisitionEndedEvent;
 
 public class DefaultAcquisitionEndedEvent implements AcquisitionEndedEvent {
    private Datastore store_;
-   public DefaultAcquisitionEvent(Datastore store) {
+   public DefaultAcquisitionEndedEvent(Datastore store) {
       store_ = store;
    }
 

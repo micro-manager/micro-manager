@@ -68,6 +68,7 @@ import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.data.internal.StorageSinglePlaneTiffSeries;
 import org.micromanager.data.internal.StorageRAM;
 
+import org.micromanager.events.AcquisitionEndedEvent;
 import org.micromanager.events.internal.DefaultEventManager;
 
 import org.micromanager.internal.dialogs.AcqControlDlg;

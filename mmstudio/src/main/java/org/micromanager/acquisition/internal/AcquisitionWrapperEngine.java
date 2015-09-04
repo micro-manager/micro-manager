@@ -25,6 +25,7 @@ import org.micromanager.IAcquisitionEngine2010;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.SequenceSettings;
+import org.micromanager.events.internal.DefaultAcquisitionStartedEvent;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
@@ -140,6 +141,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
                  summaryMetadata_, acquisitionSettings.save, this,
                  !AcqControlDlg.getShouldHideMDADisplay());
          Datastore store = acq.getDatastore();
+         studio_.events().post(new DefaultAcquisitionStartedEvent(store,
+                  acquisitionSettings));
          Pipeline pipeline = studio_.data().copyApplicationPipeline(store,
                false);
 

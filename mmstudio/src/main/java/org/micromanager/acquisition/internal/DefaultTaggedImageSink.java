@@ -10,6 +10,7 @@ import org.micromanager.data.Image;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.PipelineErrorException;
+import org.micromanager.events.internal.DefaultAcquisitionEndedEvent;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -56,7 +57,7 @@ public class DefaultTaggedImageSink  {
                         // Acquisition has ended.
                         pipeline_.halt();
                         DefaultEventManager.getInstance().post(
-                              new AcquisitionEndedEvent());
+                              new DefaultAcquisitionEndedEvent(store_));
                         break;
                      }
                      ++imageCount;
