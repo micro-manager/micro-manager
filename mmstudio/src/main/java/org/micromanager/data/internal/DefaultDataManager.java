@@ -101,6 +101,9 @@ public class DefaultDataManager implements DataManager {
 
    @Override
    public String getUniqueSaveDirectory(String path) {
+      if (path == null) {
+         return null;
+      }
       File dir = new File(path);
       if (!(dir.exists())) {
          // Path is already unique
