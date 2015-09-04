@@ -101,6 +101,23 @@ public interface DataManager {
    public Datastore createSinglePlaneTIFFSeriesDatastore(String directory);
 
    /**
+    * Given a path string, create a guaranteed-unique string with that name.
+    * For example, if you want to repeatedly save datasets under
+    * "C:\AcquisitionData\beads", then you can pass "C:\AcquisitionData\beads"
+    * to this function, and you will get out, in order:
+    * - C:\AcquisitionData\beads
+    * - C:\AcquisitionData\beads_2
+    * - C:\AcquisitionData\beads_3
+    * - ...
+    * Micro-Manager will look at the contents of the directory, and append
+    * numerical suffixes as needed to ensure that no data gets overwritten. The
+    * path returned by this function will always be 1 greater than the largest
+    * suffix currently in use.
+    */
+   public String getUniqueSaveDirectory(String path);
+
+
+   /**
     * Display a dialog prompting the user to select a location on disk, and
     * invoke loadData() on that selection. If you then want that data to be
     * displayed in an image display window, use the

@@ -100,6 +100,36 @@ public class DefaultDataManager implements DataManager {
    }
 
    @Override
+   public String getUniqueSaveDirectory(String path) {
+      File dir = new File(path);
+      if (!(dir.exists())) {
+         // Path is already unique
+         return path;
+      }
+      // Not unique; figure out what suffix to apply.
+      int maxSuffix = 1;
+      String name = dir.getName();
+      for (String item : (new File(dir.getParent())).list()) {
+         if (item.startsWith(name)) {
+            try {
+               String[] fields = item.split("_");
+               maxSuffix = Math.max(maxSuffix,
+                     Integer.parseInt(fields[fields.length - 1]));
+            }
+            catch (NumberFormatException e) {
+               // No suffix available to use.
+            }
+         }
+      }
+      String result = path + "_" + (maxSuffix + 1);
+      if (new File(result).exists()) {
+         ReportingUtils.logError("Unable to find unique save path at " + path);
+         return null;
+      }
+      return result;
+   }
+
+   @Override
    public Datastore promptForDataToLoad(Window parent, boolean isVirtual) throws IOException {
       File file = FileDialogs.openDir(parent,
             "Please select an image data set", MMStudio.MM_DATA_SET);
