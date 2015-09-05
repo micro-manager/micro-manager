@@ -61,7 +61,8 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
-import org.micromanager.data.DatastoreSavedEvent;
+import org.micromanager.data.DatastoreFrozenEvent;
+import org.micromanager.data.DatastoreSavePathEvent;
 import org.micromanager.data.Image;
 import org.micromanager.data.NewImageEvent;
 import org.micromanager.data.NewSummaryMetadataEvent;
@@ -465,11 +466,11 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             (int) (canvas_.getMagnification() * 100));
       // HACK: don't display save status for the snap/live view.
       if (!title.contains("Snap/Live")) {
-         if (store_.getSavePath() == null) {
-            title += " (Not yet saved)";
+         if (store_.getIsFrozen()) {
+            title += " (Saved to Disk)";
          }
          else {
-            title += " (Saved)";
+            title += " (Not yet saved)";
          }
       }
       // Don't mindlessly change the title, as calling setStack can
@@ -1021,10 +1022,12 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     * title.
     */
    @Subscribe
-   public void onDatastoreSaved(DatastoreSavedEvent event) {
+   public void onDatastoreFrozenPath(DatastoreFrozenEvent event) {
       try {
-         String path = event.getPath();
-         displaySettings_.save(path);
+         String path = store_.getSavePath();
+         if (path != null) {
+            displaySettings_.save(path);
+         }
          resetTitle();
       }
       catch (Exception e) {

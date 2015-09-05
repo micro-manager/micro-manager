@@ -131,6 +131,7 @@ public final class StorageMultipageTiff implements Storage {
 
       amInWriteMode_ = amInWriteMode;
       directory_ = dir;
+      store_.setSavePath(directory_);
       coordsToReader_ = new TreeMap<Coords, MultipageTiffReader>();
 
       // TODO: throw error if no existing dataset
@@ -244,7 +245,6 @@ public final class StorageMultipageTiff implements Storage {
    public void onDatastoreFrozen(DatastoreFrozenEvent event) {
       try {
          finished();
-         store_.setSavePath(directory_);
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Failed to finish saving");

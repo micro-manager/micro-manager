@@ -196,9 +196,8 @@ public interface Datastore extends Closeable {
    public void close();
 
    /**
-    * Tell the Datastore that it has been saved to disk at the specified path.
-    * This will cause a DatastoreSavedEvent to be posted on the Datastore's
-    * event bus.
+    * Tell the Datastore where on disk it is being saved to. This will post a
+    * DatastoreSavePathEvent to the datastore's EventBus.
     * 
     * @param path The location on disk at which the data has been stored.
     */

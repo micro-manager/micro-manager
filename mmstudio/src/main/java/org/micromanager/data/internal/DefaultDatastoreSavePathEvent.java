@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     Data API
+//SUBSYSTEM:     Data API implementation
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
@@ -18,15 +18,17 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.data;
+package org.micromanager.data.internal;
 
-/**
- * This event signifies that the datastore has been saved to disk.
- */
-public interface DatastoreSavedEvent {
-   /**
-    * Return the location the Datastore was saved to.
-    * @return The path to the data stored on disk.
-    */
-   public String getPath();
+public class DefaultDatastoreSavePathEvent implements org.micromanager.data.DatastoreSavePathEvent {
+   private String path_;
+
+   public DefaultDatastoreSavePathEvent(String path) {
+      path_ = path;
+   }
+
+   @Override
+   public String getPath() {
+      return path_;
+   }
 }

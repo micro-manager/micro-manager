@@ -91,6 +91,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
          String directory, boolean newDataSet) {
       store_ = store;
       dir_ = directory;
+      store_.setSavePath(dir_);
       isDatasetWritable_ = newDataSet;
       // Must be informed of events before traditional consumers, so that we
       // can provide images on request.
@@ -542,7 +543,6 @@ public class StorageSinglePlaneTiffSeries implements Storage {
    private void finish() {
       closeMetadataStreams();
       isDatasetWritable_ = false;
-      store_.setSavePath(dir_);
    }
 
    private void closeMetadataStreams() {
