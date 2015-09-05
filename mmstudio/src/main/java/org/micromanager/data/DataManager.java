@@ -101,7 +101,10 @@ public interface DataManager {
    public Datastore createSinglePlaneTIFFSeriesDatastore(String directory);
 
    /**
-    * Given a path string, create a guaranteed-unique string with that name.
+    * Given a path string, create a unique string with that name.  In short,
+    * when creating a disk-backed datastore, you should use this method to
+    * calculate the save path, to ensure that you do not accidentally overwrite
+    * existing data.
     * For example, if you want to repeatedly save datasets under
     * "C:\AcquisitionData\beads", then you can pass "C:\AcquisitionData\beads"
     * to this function, and you will get out, in order:
