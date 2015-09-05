@@ -236,6 +236,29 @@ public class IntroDlg extends JDialog {
       }
       profileSelect_.setSelectedItem(DefaultUserProfile.DEFAULT_USER);
       profileSelect_.setBounds(5, 244, 342, 26);
+
+      final JButton deleteButton = new JButton("Delete");
+      deleteButton.setFont(stdFont);
+      deleteButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            String curName = (String) profileSelect_.getSelectedItem();
+            if (JOptionPane.showConfirmDialog(null,
+                  "Are you sure you want to delete the \"" + curName +
+                  "\" profile?", "Confirm Profile Deletion",
+                  JOptionPane.YES_NO_OPTION) == 1) {
+               // User backed out.
+               return;
+            }
+            DefaultUserProfile.getInstance().deleteProfile(curName);
+            profileSelect_.removeItem(curName);
+            profileSelect_.setSelectedItem(DefaultUserProfile.DEFAULT_USER);
+         }
+      });
+      deleteButton.setEnabled(false);
+      deleteButton.setBounds(350, 244, 36, 26);
+      getContentPane().add(deleteButton);
+
       profileSelect_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -264,6 +287,9 @@ public class IntroDlg extends JDialog {
             }
             // Set the current active profile.
             profile.setCurrentProfile(profileName);
+            // Enable/disable the "delete profile" button.
+            deleteButton.setEnabled(!(profileName.equals(USERNAME_NEW) ||
+                     profileName.equals(DefaultUserProfile.DEFAULT_USER)));
             // Update the list of hardware config files.
             setConfigFile(null);
          }

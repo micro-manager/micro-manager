@@ -725,6 +725,18 @@ public class DefaultUserProfile implements UserProfile {
       userProfile_ = (DefaultPropertyMap) (new DefaultPropertyMap.Builder().build());
    }
 
+   /**
+    * Delete the specified profile.
+    */
+   public void deleteProfile(String profileName) {
+      ReportingUtils.logDebugMessage("Deleting profile " + profileName +
+            " at " + nameToFile_.get(profileName));
+      new File(JavaUtils.getApplicationDataPath() + "/" +
+            nameToFile_.get(profileName)).delete();
+      nameToFile_.remove(profileName);
+      writeProfileMapping(nameToFile_);
+   }
+
    public static DefaultUserProfile getInstance() {
       return staticInstance_;
    }
