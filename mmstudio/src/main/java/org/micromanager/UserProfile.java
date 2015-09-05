@@ -31,6 +31,7 @@ import java.io.Serializable;
  * at login time, and thus allow multiple users of a microscope (who all use
  * the same system-level user account) to have different customizations of the
  * program.
+ * You can access this object via Studio.profile() or Studio.getUserProfile().
  */
 public interface UserProfile {
    /**
