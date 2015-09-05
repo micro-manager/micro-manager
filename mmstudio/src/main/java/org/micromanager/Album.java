@@ -29,7 +29,8 @@ import org.micromanager.data.Image;
 
 /**
  * Interface for interacting with the Album, an implicit Datastore that
- * Micro-Manager uses as a "scratch pad" for image data.
+ * Micro-Manager uses as a "scratch pad" for image data. You can access the
+ * album via Studio.album() or Studio.getAlbum().
  */
 public interface Album {
    /**
@@ -56,7 +57,8 @@ public interface Album {
    /**
     * Add the specified Images to the Album's datastore. If no Datastore exists
     * for the Album yet, or if the current Datastore is frozen, then a new one
-    * will be created, as well as a new DisplayWindow to go with it.
+    * will be created, as well as a new DisplayWindow to go with it. Equivalent
+    * to repeatedly calling addImage().
     *
     * @param images The Images to add to the album
     * @return True if a new Datastore and DisplayWindow were created as a
