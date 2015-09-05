@@ -29,7 +29,8 @@ import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
 
 /**
- * Interface for interacting with the Snap/Live display and live mode.
+ * Interface for interacting with the Snap/Live display and live mode. You can
+ * access this via Studio.live() or Studio.getSnapLiveManager().
  */
 public interface SnapLiveManager {
    /**
