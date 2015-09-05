@@ -66,9 +66,9 @@ public interface SnapLiveManager {
     * be re-started once the action is complete. Instead of calling
     * getIsLiveModeOn(), stopping it if necessary, and then re-starting it if
     * it was on, you can instead blindly do:
-    * setSuspended(true);
-    * do something that can't run when live mode is on
-    * setSuspended(false);
+    * - setSuspended(true);
+    * - do something that can't run when live mode is on;
+    * - setSuspended(false);
     * and live mode will only be re-started if it was on to begin with.
     * Note that suspending live mode does not produce LiveModeEvents, as the
     * expectation is that live mode is only suspended for very brief periods.
