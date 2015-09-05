@@ -1,6 +1,8 @@
 package org.micromanager.internal.utils;
 
+import com.google.common.base.Charsets;
 import com.google.common.io.BaseEncoding;
+import com.google.common.io.Files;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -149,8 +151,8 @@ public class DefaultUserProfile implements UserProfile {
          return (DefaultPropertyMap) (new DefaultPropertyMap.Builder().build());
       }
       try {
-         return DefaultPropertyMap.fromJSON(
-               new JSONObject(loadFileToString(path)));
+         String text = loadFileToString(path);
+         return DefaultPropertyMap.fromJSON(new JSONObject(text));
       }
       catch (Exception e) {
          ReportingUtils.showError(e, "There was an error when loading saved user preferences. Please delete the file at " + path + " and re-start Micro-Manager.");
@@ -164,31 +166,13 @@ public class DefaultUserProfile implements UserProfile {
     * TODO: should probably be moved into utils somewhere.
     */
    private String loadFileToString(String path) {
-      File propFile = new File(path);
-      if (!propFile.exists()) {
+      try {
+         return Files.toString(new File(path), Charsets.UTF_8);
+      }
+      catch (IOException e) {
+         ReportingUtils.logError(e, "Unable to read file at " + path);
          return null;
       }
-      StringBuilder contents = new StringBuilder((int) propFile.length());
-      Scanner scanner;
-      try {
-         scanner = new Scanner(propFile);
-      }
-      catch (FileNotFoundException e) {
-         // This should never happen since we checked if file exists.
-         ReportingUtils.logError(e,
-               "Somehow failed to open scanner for file at " + path);
-         return null;
-      }
-      String separator = System.getProperty("line.separator");
-      try {
-         while (scanner.hasNextLine()) {
-            contents.append(scanner.nextLine() + separator);
-         }
-      }
-      finally {
-         scanner.close();
-      }
-      return contents.toString();
    }
 
    private void startSaveThread() {
