@@ -599,13 +599,13 @@ public final class TaggedImageStorageMultipageTiff   {
          try {
             String prefix = summaryMetadata_.getString("Prefix");
             if (prefix.length() == 0) {
-               baseFilename = "MMStack";
+               baseFilename = "MagellanStack";
             } else {
-               baseFilename = prefix + "_MMStack";
+               baseFilename = prefix + "_MagellanStack";
             }
          } catch (JSONException ex) {
             Log.log("Can't find Prefix in summary metadata", true);
-            baseFilename = "MMStack";
+            baseFilename = "MagellanStack";
          }
 
          if (splitByXYPosition_) {
