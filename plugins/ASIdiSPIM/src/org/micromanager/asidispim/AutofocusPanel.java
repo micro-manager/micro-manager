@@ -170,7 +170,7 @@ public class AutofocusPanel extends ListeningJPanel{
             Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_AUTOFOCUS_EACHNIMAGES, 10);
       acqOptionsPanel_.add(eachNTimePointsSpinner);
-      acqOptionsPanel_.add(new JLabel( "Time points"), "wrap");
+      acqOptionsPanel_.add(new JLabel( "time points"), "wrap");
       
       // autofocus using this channel
       // TODO: need to update when the channel group changes

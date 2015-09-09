@@ -443,8 +443,8 @@ public class Fitter {
             Algorithm.REDONDO.toString(),
             Algorithm.VOLATH.toString(),
             Algorithm.VOLATH5.toString(),
-//            Algorithm.MEDIAN_EDGES.toString(),
-//            Algorithm.FFT_BANDPASS.toString(),
+            Algorithm.MEDIAN_EDGES.toString(),
+            Algorithm.FFT_BANDPASS.toString(),
             };
    }
    
