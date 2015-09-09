@@ -270,7 +270,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       histRangeComboBox_ = new JComboBox();
       histRangeComboBox_.setFont(new Font("", Font.PLAIN, 10));
       histRangeComboBox_.addActionListener(new ActionListener() {
-
          @Override
          public void actionPerformed(final ActionEvent e) {
             DisplaySettings settings = display_.getDisplaySettings();
@@ -394,6 +393,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       int index = histRangeComboBox_.getSelectedIndex();
       // Update the display settings.
       DisplaySettings settings = display_.getDisplaySettings();
+      boolean didMakeChanges = false;
       Integer[] curIndices = settings.getBitDepthIndices();
       if (curIndices == null || curIndices.length <= channelIndex_) {
          // Expand the array to contain our value.
@@ -402,10 +402,17 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             indices[i] = (curIndices != null && curIndices.length > i) ? curIndices[i] : 0;
          }
          curIndices = indices;
+         didMakeChanges = true;
       }
-      curIndices[channelIndex_] = index;
-      settings = settings.copy().bitDepthIndices(curIndices).build();
-      display_.setDisplaySettings(settings);
+      if (curIndices[channelIndex_] == null ||
+            curIndices[channelIndex_] != index) {
+         curIndices[channelIndex_] = index;
+         didMakeChanges = true;
+      }
+      if (didMakeChanges) {
+         settings = settings.copy().bitDepthIndices(curIndices).build();
+         display_.setDisplaySettings(settings);
+      }
 
       // Update the histogram display.
       histMax_ = (int) (Math.pow(2, index + 3) - 1);
