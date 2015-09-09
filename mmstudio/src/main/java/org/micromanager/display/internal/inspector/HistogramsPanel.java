@@ -335,7 +335,7 @@ public final class HistogramsPanel extends InspectorPanel {
       else {
          // Set up a timer to update the histograms at the right time.
          if (histogramUpdateTimer_ == null) {
-            histogramUpdateTimer_ = new Timer();
+            histogramUpdateTimer_ = new Timer("Histogram update delay");
          }
          TimerTask task = new TimerTask() {
             @Override

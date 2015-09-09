@@ -237,7 +237,7 @@ public class HyperstackControls extends JPanel {
          return;
       }
       if (blankingTimer_ == null) {
-         blankingTimer_ = new Timer();
+         blankingTimer_ = new Timer("FPS display blank");
       }
       if (imageFromLastFPS_ == null) {
          imageFromLastFPS_ = newImage;
@@ -285,7 +285,7 @@ public class HyperstackControls extends JPanel {
             fpsLabel_.setText("");
          }
       };
-      blankingTimer_ = new Timer();
+      blankingTimer_ = new Timer("FPS display blank");
       blankingTimer_.schedule(blankingTask, 1000);
    }
 
