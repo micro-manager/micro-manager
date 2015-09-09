@@ -120,7 +120,7 @@ int CScanner::Initialize()
    // set controller card to return positions with 1 decimal places (3 is max allowed currently, units are millidegrees)
    command.str("");
    command << addressChar_ << "VB Z=1";
-   RETURN_ON_MM_ERROR ( hub_->QueryCommand(command.str()) );
+   RETURN_ON_MM_ERROR ( hub_->QueryCommand(command.str()) );  // special case, no :A returned
 
    // create MM description; this doesn't work during hardware configuration wizard but will work afterwards
    command.str("");
@@ -379,12 +379,13 @@ int CScanner::Initialize()
 
    // turn the beam on and off
    // need to do this after finding the correct value for mmTarget_
+   // also after creating single-axis properties which we use when turning off beam
    pAct = new CPropertyAction (this, &CScanner::OnBeamEnabled);
    CreateProperty(g_ScannerBeamEnabledPropertyName, g_NoState, MM::String, false, pAct);
    AddAllowedValue(g_ScannerBeamEnabledPropertyName, g_NoState);
    AddAllowedValue(g_ScannerBeamEnabledPropertyName, g_YesState);
-   UpdateIlluminationState();
    UpdateProperty(g_ScannerBeamEnabledPropertyName);
+   UpdateIlluminationState();
    // always start with the beam off for safety
    SetProperty(g_ScannerBeamEnabledPropertyName, g_NoState);
 
@@ -796,8 +797,18 @@ int CScanner::SetIlluminationState(bool on)
       {
          // stop any single-axis action happening first; should go to position before single-axis was started
          // firmware will stop single-axis actions anyway but this gives us the right position
-         SetProperty(g_SAModeXPropertyName, g_SAMode_0);
-         SetProperty(g_SAModeYPropertyName, g_SAMode_0);
+         char SAModeX[MM::MaxStrLength];
+         RETURN_ON_MM_ERROR ( GetProperty(g_SAModeXPropertyName, SAModeX) );
+         if (strcmp(SAModeX, g_SAMode_0) != 0 )
+         {
+            SetProperty(g_SAModeXPropertyName, g_SAMode_0);
+         }
+         char SAModeY[MM::MaxStrLength];
+         RETURN_ON_MM_ERROR ( GetProperty(g_SAModeYPropertyName, SAModeY) );
+         if (strcmp(SAModeY, g_SAMode_0) != 0 )
+         {
+            SetProperty(g_SAModeYPropertyName, g_SAMode_0);
+         }
          GetPosition(lastX_, lastY_);  // read and store pre-off position so we can undo
          illuminationState_ = false;
          ostringstream command; command.str("");
@@ -873,13 +884,10 @@ int CScanner::RunPolygons()
       illuminationState_ = true;
       RETURN_ON_MM_ERROR ( SetIlluminationStateHelper(true) );
 
-      ostringstream command; command.str("");
-      command << addressChar_ << "RM";
-
       // trigger ring buffer requested number of times, sleeping until done
       // TODO support specified # of repeats in firmware directly
       for (int j=0; j<polygonRepetitions_; ++j) {
-         hub_->QueryCommandVerify(command.str(), ":A");
+         RETURN_ON_MM_ERROR ( SetProperty(g_RB_TriggerPropertyName, g_DoItState) );
          bool done = false;
          do {
             char propValue[MM::MaxStrLength];
@@ -928,7 +936,7 @@ int CScanner::RunSequence()
       // should consider ensuring that RM Y is set appropriately with axisIndexX_ and axisIndexY_
 
       // note that this simply sends a trigger, which will also turn it off if it's currently running
-      SetProperty(g_RB_TriggerPropertyName, g_DoItState);
+      RETURN_ON_MM_ERROR ( SetProperty(g_RB_TriggerPropertyName, g_DoItState) );
       return DEVICE_OK;
    }
    else
