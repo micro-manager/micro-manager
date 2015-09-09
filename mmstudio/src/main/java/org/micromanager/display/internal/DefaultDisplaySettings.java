@@ -62,6 +62,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
          Color.MAGENTA, Color.RED, Color.GREEN, Color.BLUE, Color.ORANGE};
       Integer[] defaultIntColors = colorsToInts(defaultColors);
 
+      builder.animationFPS(profile.getInt(
+               DefaultDisplaySettings.class, "animationFPS", 10));
       builder.channelColorMode(
             DisplaySettings.ColorMode.fromInt(profile.getInt(
             DefaultDisplaySettings.class, "channelColorMode", 0)));
@@ -89,6 +91,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
     */
    public static void setStandardSettings(DisplaySettings settings) {
       DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      profile.setInt(DefaultDisplaySettings.class, "animationFPS",
+            settings.getAnimationFPS());
       if (settings.getChannelColorMode() != null) {
          profile.setInt(DefaultDisplaySettings.class,
                "channelColorMode",
