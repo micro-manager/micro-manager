@@ -333,11 +333,13 @@ public class ColorModeCombo extends JButton {
    }
 
    /**
-    * Set the color or composite mode.
+    * Set the color or composite mode. This updates the ImageJ CompositeImage
+    * as needed, as well as the DisplaySettings as a whole.
     */
    private void setColoredMode(int index) {
       CompositeImage composite = (CompositeImage) (display_.getImagePlus());
-      DisplaySettings.DisplaySettingsBuilder builder = display_.getDisplaySettings().copy();
+      DisplaySettings origSettings = display_.getDisplaySettings();
+      DisplaySettings.DisplaySettingsBuilder builder = origSettings.copy();
       DisplaySettings.ColorMode mode = DisplaySettings.ColorMode.fromInt(index);
       if (mode == DisplaySettings.ColorMode.COMPOSITE) {
          if (display_.getDatastore().getAxisLength(Coords.CHANNEL) > 7) {
@@ -367,8 +369,10 @@ public class ColorModeCombo extends JButton {
       builder.channelColorMode(mode);
       composite.updateAndDraw();
       DisplaySettings settings = builder.build();
-      DefaultDisplaySettings.setStandardSettings(settings);
-      display_.setDisplaySettings(settings);
+      if (settings.getChannelColorMode() != origSettings.getChannelColorMode()) {
+         DefaultDisplaySettings.setStandardSettings(settings);
+         display_.setDisplaySettings(settings);
+      }
 
       setText(ICONS.get(index).text_);
       setIcon(ICONS.get(index).icon_);
