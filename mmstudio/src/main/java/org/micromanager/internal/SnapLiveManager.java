@@ -65,6 +65,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    private DisplayWindow display_;
    private DefaultDatastore store_;
    private Pipeline pipeline_;
+   private Object pipelineLock_ = new Object();
    private final ArrayList<LiveModeListener> listeners_;
    private boolean isLiveOn_ = false;
    // Suspended means that we *would* be running except we temporarily need
@@ -267,18 +268,21 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
     * We need to [re]create the Datastore and its backing storage.
     */
    private void createDatastore() {
-      if (store_ != null) {
-         store_.unregisterForEvents(this);
+      synchronized(pipelineLock_) {
+         if (store_ != null) {
+            store_.unregisterForEvents(this);
+         }
+         // Note that unlike in most situations, we do *not* ask the
+         // DataManager to track this Datastore for us.
+         store_ = new DefaultDatastore();
+         store_.registerForEvents(this);
+         store_.setStorage(new StorageRAM(store_));
+         if (pipeline_ != null) {
+            pipeline_.halt();
+         }
+         // Use a synchronous pipeline for live mode.
+         pipeline_ = studio_.data().copyApplicationPipeline(store_, true);
       }
-      // Note that unlike in most situations, we do *not* ask the DataManager
-      // to track this Datastore for us.
-      store_ = new DefaultDatastore();
-      store_.registerForEvents(this);
-      store_.setStorage(new StorageRAM(store_));
-      if (pipeline_ != null) {
-         pipeline_.halt();
-      }
-      pipeline_ = studio_.data().copyApplicationPipeline(store_, true);
    }
 
    /**
@@ -415,15 +419,17 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          }
          channelToLastImage_.put(newImage.getCoords().getChannel(),
                newImage);
-         for (Image subImage : newImage.splitMultiComponent()) {
-            try {
-               pipeline_.insertImage(subImage);
-            }
-            catch (PipelineErrorException e) {
-               // Notify the user, then continue on.
-               studio_.logs().showError(e,
-                     "An error occurred while processing images.");
-               pipeline_.clearExceptions();
+         synchronized(pipelineLock_) {
+            for (Image subImage : newImage.splitMultiComponent()) {
+               try {
+                  pipeline_.insertImage(subImage);
+               }
+               catch (PipelineErrorException e) {
+                  // Notify the user, then continue on.
+                  studio_.logs().showError(e,
+                        "An error occurred while processing images.");
+                  pipeline_.clearExceptions();
+               }
             }
          }
       }
@@ -518,16 +524,30 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
 
    @Subscribe
    public void onPipelineChanged(NewPipelineEvent event) {
-      try {
-         // New pipeline means we need to replace our old one, and reset our
-         // datastore/display (as the image shape may have changed).
-         if (pipeline_ != null) {
-            pipeline_.halt();
+      // HACK: put this on a separate thread. Reason being that our thread
+      // that inserts images into the pipeline acquires the pipelineLock_
+      // object, and also may need to create a new DisplayWindow (for the first
+      // image on a given pipeline), which in turn blocks on the EDT because
+      // it touches the GUI. So if the pipeline changes while we are creating
+      // a new DisplayWindow, we get an EDT hang...unless we do this logic
+      // outside of the EDT.
+      (new Thread(new Runnable() {
+         @Override
+         public void run() {
+            try {
+               // New pipeline means we need to replace our old one, and reset
+               // our datastore/display (as the image shape may have changed).
+               synchronized(pipelineLock_) {
+                  if (pipeline_ != null) {
+                     pipeline_.halt();
+                  }
+               }
+               shouldForceReset_ = true;
+            }
+            catch (Exception e) {
+               ReportingUtils.logError(e);
+            }
          }
-         shouldForceReset_ = true;
-      }
-      catch (Exception e) {
-         ReportingUtils.logError(e);
-      }
+      })).start();
    }
 }
