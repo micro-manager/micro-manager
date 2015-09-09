@@ -46,7 +46,7 @@ EscapedStringFromByteString(const std::vector<char>& bytes)
    for (std::vector<char>::const_iterator
          it = bytes.begin(), end = bytes.end(); it != end; ++it)
    {
-      if (*it >= 20 && *it < 127 && *it != '\\' &&
+      if (*it >= 0x20 && *it < 0x7f && *it != '\\' &&
             std::string(MM::g_FieldDelimiters).find(*it) == std::string::npos)
       {
          result.push_back(*it);
