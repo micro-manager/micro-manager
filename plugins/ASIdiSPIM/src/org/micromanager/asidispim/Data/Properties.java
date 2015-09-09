@@ -112,7 +112,6 @@ public class Properties {
       SAVE_CARD_SETTINGS("SaveCardSettings"),
       INPUT_MODE("InputMode"),
       PIEZO_MODE("PiezoMode"),
-      MOVE_TO_HOME("MoveToHome"),
       SET_HOME_HERE("SetHomeToCurrentPosition"),
       PLOGIC_MODE("PLogicMode"),
       PLOGIC_PRESET("SetCardPreset"),

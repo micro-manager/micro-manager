@@ -194,7 +194,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       
       calibrationPanel.add(new JLabel("Slope: "));
       calibrationPanel.add(rateField_, "span 2, right");
-      // TODO make calibration be in degrees instead of um
+      // TODO consider making calibration be in degrees instead of um
+      // originally thought it was best, now not sure because um gives
+      // user an idea of the drift and is convenient for autofocus inputs
       // calibrationPanel.add(new JLabel("\u00B0/\u00B5m"));
       calibrationPanel.add(new JLabel("\u00B5m/\u00B0"));
       tmp_but = new JButton("2-point");
@@ -517,8 +519,11 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          @Override
          public void actionPerformed(ActionEvent e) {
             if (devices_.isValidMMDevice(piezoIlluminationDeviceKey_)) {
-               props_.setPropValue(piezoIlluminationDeviceKey_,
-                     Properties.Keys.MOVE_TO_HOME, Properties.Values.DO_IT);
+               try {
+                  gui_.getMMCore().home(devices_.getMMDevice(piezoIlluminationDeviceKey_));
+               } catch (Exception e1) {
+                  ReportingUtils.showError(e1, "Could not move piezo to home");
+               }
             }
          }
       });
@@ -528,9 +533,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             Properties.Keys.PREFS_ENABLE_ILLUM_PIEZO_HOME, panelName_, false); 
       sheetPanel.add(illumPiezoHomeEnable_, "span 3, wrap");
 
-
+      // TODO calibrate the sheet axis and then set according to ROI and Bessel filter
       sheetPanel.add(new JLabel("Sheet width:"));
-      sheetPanel.add(new JLabel(""), "span 2");   // TODO update this label with current value and/or allow user to directly enter value
+      sheetPanel.add(new JLabel(""), "span 2");
       sheetPanel.add(makeIncrementButton(micromirrorDeviceKey_,
             Properties.Keys.SA_AMPLITUDE_X_DEG, "-", (float)-0.01),
             "split 2");
@@ -542,7 +547,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
               1000, // the scale factor between internal integer representation and float representation
               micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_X_DEG);
       sheetPanel.add(tmp_sl, "span 5, growx, center, wrap");
-
 
       sheetPanel.add(new JLabel("Sheet offset:"));
       sheetPanel.add(new JLabel(""), "span 2");   // TODO update this label with current value and/or allow user to directly enter value
@@ -773,8 +777,11 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       // moves illumination piezo to home
       if (illumPiezoHomeEnable_.isSelected() && 
             devices_.isValidMMDevice(piezoIlluminationDeviceKey_)) {
-         props_.setPropValue(piezoIlluminationDeviceKey_,
-               Properties.Keys.MOVE_TO_HOME, Properties.Values.DO_IT);
+         try {
+            gui_.getMMCore().home(devices_.getMMDevice(piezoIlluminationDeviceKey_));
+         } catch (Exception e) {
+            ReportingUtils.showError(e, "could not move illumination piezo to home");
+         }
       }
       
       // set scan waveform to be triangle
