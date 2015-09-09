@@ -200,7 +200,7 @@ public class ScrollerPanel extends JPanel {
          public void run() {
             runUpdateThread();
          }
-      });
+      }, "Scrollbar panel update thread");
       updateThread_.start();
       store_.registerForEvents(this);
       display_.registerForEvents(this);
@@ -456,7 +456,7 @@ public class ScrollerPanel extends JPanel {
             snapbackTimer_.cancel();
          }
          if (axisToSavedPosition_.size() > 0) {
-            snapbackTimer_ = new Timer();
+            snapbackTimer_ = new Timer("Scroller panel snapback");
             TimerTask task = new TimerTask() {
                @Override
                public void run() {
@@ -572,7 +572,7 @@ public class ScrollerPanel extends JPanel {
       animationStepSize_ = (int) Math.max(1,
             Math.round(updateFPS * animationFPS_ / 1000.0));
 
-      animationTimer_ = new Timer();
+      animationTimer_ = new Timer("Scroller panel animation");
       // This task simply pushes the scrollbars forward and then requests
       // drawing at the new coordinates.
       TimerTask task = new TimerTask() {
