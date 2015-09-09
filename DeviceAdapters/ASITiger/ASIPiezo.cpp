@@ -164,8 +164,6 @@ int CPiezo::Initialize()
    AddAllowedValue(g_PiezoModePropertyName, g_AdeptMode_1);
    AddAllowedValue(g_PiezoModePropertyName, g_AdeptMode_2);
    AddAllowedValue(g_PiezoModePropertyName, g_AdeptMode_3);
-   if (FirmwareVersionAtLeast(2.7)) AddAllowedValue(g_PiezoModePropertyName, g_AdeptMode_4);
-   UpdateProperty(g_PiezoModePropertyName);
 
    // Motor enable/disable (MC)
    pAct = new CPropertyAction (this, &CPiezo::OnMotorControl);
@@ -242,16 +240,6 @@ int CPiezo::Initialize()
    // everything below only supported in firmware 2.8 and prior
    // single-axis and SPIM function only supported in Micromanager with firmware 2.8 and above for simplicity
 
-   // overshoot and max time applicable to mode 4, which became available in firmware 2.8
-   pAct = new CPropertyAction (this, &CPiezo::OnModeFourOvershoot);
-   CreateProperty(g_PiezoModeFourOvershootPropertyName, "100", MM::Integer, false, pAct);
-   SetPropertyLimits(g_PiezoModeFourOvershootPropertyName, 0, 400);
-   UpdateProperty(g_PiezoModeFourOvershootPropertyName);
-   pAct = new CPropertyAction (this, &CPiezo::OnModeFourMaxTime);
-   CreateProperty(g_PiezoModeFourMaxTimePropertyName, "10", MM::Integer, false, pAct);
-   SetPropertyLimits(g_PiezoModeFourMaxTimePropertyName, 0, 50);
-   UpdateProperty(g_PiezoModeFourMaxTimePropertyName);
-
    // "do it" property to set home position
    pAct = new CPropertyAction (this, &CPiezo::OnSetHomeHere);
    CreateProperty(g_SetHomeHerePropertyName, g_IdleState, MM::String, false, pAct);
@@ -260,13 +248,15 @@ int CPiezo::Initialize()
    AddAllowedValue(g_SetHomeHerePropertyName, g_DoneState, 2);
    UpdateProperty(g_SetHomeHerePropertyName);
 
-   // "do it" property to go home
-   pAct = new CPropertyAction (this, &CPiezo::OnMoveToHome);
-   CreateProperty(g_MoveToHomePropertyName, g_IdleState, MM::String, false, pAct);
-   AddAllowedValue(g_MoveToHomePropertyName, g_IdleState, 0);
-   AddAllowedValue(g_MoveToHomePropertyName, g_DoItState, 1);
-   AddAllowedValue(g_MoveToHomePropertyName, g_DoneState, 2);
-   UpdateProperty(g_MoveToHomePropertyName);
+   // "do it" property to go home removed with addition of Home() API call
+   // will use API call in diSPIM plugin; anybody else using it contact author
+   // if you really need the property to continue to exist
+   //   pAct = new CPropertyAction (this, &CPiezo::OnMoveToHome);
+   //   CreateProperty(g_MoveToHomePropertyName, g_IdleState, MM::String, false, pAct);
+   //   AddAllowedValue(g_MoveToHomePropertyName, g_IdleState, 0);
+   //   AddAllowedValue(g_MoveToHomePropertyName, g_DoItState, 1);
+   //   AddAllowedValue(g_MoveToHomePropertyName, g_DoneState, 2);
+   //   UpdateProperty(g_MoveToHomePropertyName);
 
    // "do it" property to run piezo calibration (not normally required)
    pAct = new CPropertyAction (this, &CPiezo::OnRunPiezoCalibration);
@@ -387,6 +377,32 @@ int CPiezo::Initialize()
       ttl_trigger_supported_ = true;
    }
 
+   if (FirmwareVersionAtLeast(3.11))
+   {
+      // starting in firmware 2.8 there was a PM mode 4 which tried to drive the piezo
+      // faster but required user tuning of overshoot and max time
+      // PM mode 4 could not be set in MM due to a bug, so apparently nobody was using it ;-)
+      // starting in firmware v3.11 the same functionality is present but moved to the MA command (MA mode 1)
+      pAct = new CPropertyAction (this, &CPiezo::OnMaintainMode);
+      CreateProperty(g_PiezoMaintainStatePropertyName, g_PiezoMaintain_0, MM::String, false, pAct);
+      AddAllowedValue(g_PiezoMaintainStatePropertyName, g_PiezoMaintain_0);
+      AddAllowedValue(g_PiezoMaintainStatePropertyName, g_PiezoMaintain_1);
+      UpdateProperty(g_PiezoMaintainStatePropertyName);
+      pAct = new CPropertyAction (this, &CPiezo::OnMaintainOneOvershoot);
+      CreateProperty(g_PiezoMaintainOneOvershootPropertyName, "100", MM::Integer, false, pAct);
+      SetPropertyLimits(g_PiezoMaintainOneOvershootPropertyName, 0, 400);
+      UpdateProperty(g_PiezoMaintainOneOvershootPropertyName);
+      pAct = new CPropertyAction (this, &CPiezo::OnMaintainOneMaxTime);
+      CreateProperty(g_PiezoMaintainOneMaxTimePropertyName, "10", MM::Integer, false, pAct);
+      SetPropertyLimits(g_PiezoMaintainOneMaxTimePropertyName, 0, 50);
+      UpdateProperty(g_PiezoMaintainOneMaxTimePropertyName);
+
+      // piezo auto sleep feature added in v3.11
+      pAct = new CPropertyAction (this, &CPiezo::OnAutoSleepDelay);
+      CreateProperty(g_AutoSleepDelayPropertyName, "5", MM::Integer, false, pAct);
+      UpdateProperty(g_AutoSleepDelayPropertyName);
+   }
+
    initialized_ = true;
    return DEVICE_OK;
 }
@@ -456,6 +472,22 @@ int CPiezo::Stop()
    ostringstream command; command.str("");
    command << addressChar_ << "halt";
    return hub_->QueryCommand(command.str());
+}
+
+int CPiezo::Home()
+{
+   // turn off single-axis mode action if it's going on
+   // firmware will turn it off anyway, but this way settings will be saved/restored
+   char SAMode[MM::MaxStrLength];
+   RETURN_ON_MM_ERROR ( GetProperty(g_SAModePropertyName, SAMode) );
+   if (strcmp(SAMode, g_SAMode_0) != 0 )
+   {
+      SetProperty(g_SAModePropertyName, g_SAMode_0);
+   }
+   ostringstream command; command.str("");
+   command << "! " << axisLetter_;
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   return DEVICE_OK;
 }
 
 bool CPiezo::Busy()
@@ -1020,7 +1052,45 @@ int CPiezo::OnAxisPolarity(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int CPiezo::OnModeFourOvershoot(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CPiezo::OnMaintainMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "MA " << axisLetter_ << "?";
+      ostringstream response; response.str(""); response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      bool success = 0;
+      switch (tmp)
+      {
+         case 0: success = pProp->Set(g_PiezoMaintain_0); break;
+         case 1: success = pProp->Set(g_PiezoMaintain_1); break;
+         default: success = 0;                            break;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_PiezoMaintain_0) == 0)
+         tmp = 0;
+      else if (tmpstr.compare(g_PiezoMaintain_1) == 0)
+         tmp = 1;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      command << addressChar_ << "MA " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnMaintainOneOvershoot(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
    long tmp = 0;
@@ -1042,7 +1112,29 @@ int CPiezo::OnModeFourOvershoot(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int CPiezo::OnModeFourMaxTime(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CPiezo::OnMaintainOneMaxTime(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "PZ R?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), "R="));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "PZ R=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnAutoSleepDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
    long tmp = 0;
@@ -1514,27 +1606,6 @@ int CPiezo::OnSetHomeHere(MM::PropertyBase* pProp, MM::ActionType eAct)
          command << "HM " << axisLetter_ << "+";
          RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
          pProp->Set(g_DoneState);
-      }
-   }
-   return DEVICE_OK;
-}
-
-int CPiezo::OnMoveToHome(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   ostringstream command; command.str("");
-   if (eAct == MM::BeforeGet) {
-      pProp->Set(g_IdleState);
-   }
-   else  if (eAct == MM::AfterSet) {
-      string tmpstr;
-      pProp->Get(tmpstr);
-      if (tmpstr.compare(g_DoItState) == 0)
-      {
-         command << "! " << axisLetter_;
-         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-         pProp->Set(g_DoneState);
-         // set single-axis property to not running because firmware will do that
-         SetProperty(g_SAModePropertyName, g_SAMode_0);
       }
    }
    return DEVICE_OK;

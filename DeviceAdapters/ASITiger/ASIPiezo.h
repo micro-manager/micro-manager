@@ -43,6 +43,7 @@ public:
    // Piezo API
    // -----------
    int Stop();
+   int Home();
 
    // the step size is the programming unit for dimensions and is integer
    // see http://micro-manager.3463995.n2.nabble.com/what-are-quot-steps-quot-for-stages-td7580724.html
@@ -83,9 +84,11 @@ public:
    int OnWheelMirror          (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnMotorControl         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAxisPolarity         (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnModeFourOvershoot    (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnModeFourMaxTime      (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnMaintainMode         (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnMaintainOneOvershoot (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnMaintainOneMaxTime   (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnRunPiezoCalibration  (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAutoSleepDelay       (MM::PropertyBase* pProp, MM::ActionType eAct);
    // single axis properties
    int OnSAAmplitude          (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSAOffset             (MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -100,7 +103,6 @@ public:
    int OnSAPatternByte        (MM::PropertyBase* pProp, MM::ActionType eAct);
    // SPIM properties
    int OnSetHomeHere          (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnMoveToHome           (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMNumSlices        (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMState            (MM::PropertyBase* pProp, MM::ActionType eAct);
    // ring buffer properties
