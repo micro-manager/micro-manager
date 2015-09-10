@@ -80,6 +80,16 @@ public interface DisplaySettings {
     * @return Channel colors
     */
    public Color[] getChannelColors();
+
+   /**
+    * Safely retrieve the color for the specified channel. If the
+    * channelColors property is null, is too small to have a value for the
+    * given index, or has a value of null for that index, then the provided
+    * default value will be returned instead.
+    * @param index Channel index to get the color for
+    * @param defaultVal Default value to return if no color is available.
+    */
+   public Color getSafeChannelColor(int index, Color defaultVal);
    
    /** 
     * The value that is treated as "black" in the display window 
@@ -87,19 +97,49 @@ public interface DisplaySettings {
     */
    public Integer[] getChannelContrastMins();
    
+   /**
+    * Safely retrieve the contrast min for the specified channel. If the
+    * channelContrastMins property is null, is too small to have a value for
+    * the given index, or has a value of null for that index, then the provided
+    * default value will be returned instead.
+    * @param index Channel index to get the contrast min for
+    * @param defaultVal Default value to return if no contrast min is available.
+    */
+   public Integer getSafeChannelContrastMin(int index, Integer defaultVal);
+
    /** 
     * The value that is treated as "white" (or equivalent max intensity for
-     * colored displays) in the display window
+    * colored displays) in the display window
     * @return Lowest values that are shown as white in the display window 
     */
    public Integer[] getChannelContrastMaxes();
    
+   /**
+    * Safely retrieve the contrast max for the specified channel. If the
+    * channelContrastMaxes property is null, is too small to have a value for
+    * the given index, or has a value of null for that index, then the provided
+    * default value will be returned instead.
+    * @param index Channel index to get the contrast max for
+    * @param defaultVal Default value to return if no contrast max is available.
+    */
+   public Integer getSafeChannelContrastMax(int index, Integer defaultVal);
+
    /** 
     * The gamma curve modifier for each channel 
     * @return Gamma for each channel
     */
    public Double[] getChannelGammas();
    
+   /**
+    * Safely retrieve the contrast gamma for the specified channel. If the
+    * channelGammas property is null, is too small to have a value for
+    * the given index, or has a value of null for that index, then the provided
+    * default value will be returned instead.
+    * @param index Channel index to get the gamma for
+    * @param defaultVal Default value to return if no gamma is available.
+    */
+   public Double getSafeChannelGamma(int index, Double defaultVal);
+
    /** 
     * The magnification level of the canvas 
     * @return magnification level of the canvas 
