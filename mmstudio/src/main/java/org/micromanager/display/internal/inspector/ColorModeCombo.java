@@ -288,17 +288,11 @@ public class ColorModeCombo extends JButton {
          item.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+               setText(ICONS.get(index).text_);
+               setIcon(ICONS.get(index).icon_);
                setModeByIndex(index);
             }
          });
-         // HACK: disable the Color/Composite options for single-channel
-         // displays, as ImageJ doesn't support those combinations.
-         DisplaySettings.ColorMode mode = DisplaySettings.ColorMode.fromInt(i);
-         if (display_.getDatastore().getAxisLength(Coords.CHANNEL) <= 1 &&
-               (mode == DisplaySettings.ColorMode.COLOR ||
-               mode == DisplaySettings.ColorMode.COMPOSITE)) {
-            item.setEnabled(false);
-         }
          menu.add(item);
 
          // HACK: stick a separator after the Grayscale option.
@@ -317,18 +311,22 @@ public class ColorModeCombo extends JButton {
       boolean isColored = (
             index == DisplaySettings.ColorMode.COLOR.getIndex() ||
             index == DisplaySettings.ColorMode.COMPOSITE.getIndex());
-      if (isColored && !(display_.getImagePlus() instanceof CompositeImage)) {
-         // Non-composite ImagePlus objects don't support colored or composite
-         // view modes.
-         setModeByIndex(
-               DisplaySettings.ColorMode.GRAYSCALE.getIndex());
-         return;
-      }
+      DisplaySettings.ColorMode mode = DisplaySettings.ColorMode.fromInt(index);
       if (isColored) {
-         setColoredMode(index);
+         setColoredMode(mode);
       }
       else {
          setLUTMode(index);
+      }
+
+      // Update the display settings, only if something changed.
+      DisplaySettings origSettings = display_.getDisplaySettings();
+      DisplaySettings.DisplaySettingsBuilder builder = origSettings.copy();
+      builder.channelColorMode(DisplaySettings.ColorMode.fromInt(index));
+      DisplaySettings settings = builder.build();
+      if (settings.getChannelColorMode() != origSettings.getChannelColorMode()) {
+         DefaultDisplaySettings.setStandardSettings(settings);
+         display_.setDisplaySettings(settings);
       }
    }
 
@@ -336,46 +334,34 @@ public class ColorModeCombo extends JButton {
     * Set the color or composite mode. This updates the ImageJ CompositeImage
     * as needed, as well as the DisplaySettings as a whole.
     */
-   private void setColoredMode(int index) {
-      CompositeImage composite = (CompositeImage) (display_.getImagePlus());
+   private void setColoredMode(DisplaySettings.ColorMode mode) {
       DisplaySettings origSettings = display_.getDisplaySettings();
-      DisplaySettings.DisplaySettingsBuilder builder = origSettings.copy();
-      DisplaySettings.ColorMode mode = DisplaySettings.ColorMode.fromInt(index);
-      if (mode == DisplaySettings.ColorMode.COMPOSITE) {
-         if (display_.getDatastore().getAxisLength(Coords.CHANNEL) > 7) {
-            JOptionPane.showMessageDialog(null,
-               "Images with more than 7 channels cannot be displayed in Composite mode.");
-            // Send them back to Color mode.
-            mode = DisplaySettings.ColorMode.COLOR;
-            setModeByIndex(mode.getIndex());
-            return;
+      ImagePlus plus = display_.getImagePlus();
+      if (plus instanceof CompositeImage) {
+         CompositeImage composite = (CompositeImage) plus;
+         if (mode == DisplaySettings.ColorMode.COMPOSITE) {
+            if (display_.getDatastore().getAxisLength(Coords.CHANNEL) > 7) {
+               JOptionPane.showMessageDialog(null,
+                  "Images with more than 7 channels cannot be displayed in Composite mode.");
+               // Send them back to Color mode.
+               setModeByIndex(DisplaySettings.ColorMode.COLOR.getIndex());
+               return;
+            }
+            else {
+               composite.setMode(CompositeImage.COMPOSITE);
+            }
+         }
+         else if (mode == DisplaySettings.ColorMode.COLOR) {
+            composite.setMode(CompositeImage.COLOR);
+         }
+         else if (mode == DisplaySettings.ColorMode.GRAYSCALE) {
+            composite.setMode(CompositeImage.GRAYSCALE);
          }
          else {
-            mode = DisplaySettings.ColorMode.COMPOSITE;
-            composite.setMode(CompositeImage.COMPOSITE);
+            ReportingUtils.showError("Unsupported color mode " + mode);
          }
       }
-      else if (mode == DisplaySettings.ColorMode.COLOR) {
-         composite.setMode(CompositeImage.COLOR);
-         mode = DisplaySettings.ColorMode.COLOR;
-      }
-      else if (mode == DisplaySettings.ColorMode.GRAYSCALE) {
-         composite.setMode(CompositeImage.GRAYSCALE);
-         mode = DisplaySettings.ColorMode.GRAYSCALE;
-      }
-      else {
-         ReportingUtils.showError("Unsupported color mode " + mode);
-      }
-      builder.channelColorMode(mode);
-      composite.updateAndDraw();
-      DisplaySettings settings = builder.build();
-      if (settings.getChannelColorMode() != origSettings.getChannelColorMode()) {
-         DefaultDisplaySettings.setStandardSettings(settings);
-         display_.setDisplaySettings(settings);
-      }
-
-      setText(ICONS.get(index).text_);
-      setIcon(ICONS.get(index).icon_);
+      plus.updateAndDraw();
    }
 
    /**

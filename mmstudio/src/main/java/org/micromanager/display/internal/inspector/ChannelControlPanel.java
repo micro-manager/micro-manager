@@ -653,20 +653,14 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       // TODO: no autoscale checkbox for individual channels, so can't apply
       // the autoscale property of ChannelSettings.
 
-      if (store_.getAxisLength(Coords.CHANNEL) <= 1) {
-         // Default to white.
-         color_ = Color.WHITE;
-      }
-      else {
-         // Use the ChannelSettings value (which incorporates the hardcoded
-         // default when no color is set), or override with DisplaySettings
-         // if available.
-         color_ = channelSettings.getColor();
-         Color[] colors = settings.getChannelColors();
-         if (colors != null && colors.length > channelIndex_ &&
-               colors[channelIndex_] != null) {
-            color_ = colors[channelIndex_];
-         }
+      // Use the ChannelSettings value (which incorporates the hardcoded
+      // default when no color is set), or override with DisplaySettings
+      // if available.
+      color_ = channelSettings.getColor();
+      Color[] colors = settings.getChannelColors();
+      if (colors != null && colors.length > channelIndex_ &&
+            colors[channelIndex_] != null) {
+         color_ = colors[channelIndex_];
       }
 
       colorPickerLabel_.setBackground(color_);
@@ -742,6 +736,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    @Subscribe
    public void onLUTUpdate(LUTUpdateEvent event) {
       try {
+         // Receive new settings from the event, if applicable.
          if (event.getMin() != null) {
             contrastMin_ = event.getMin();
          }
@@ -766,68 +761,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          Runnable run = new Runnable() {
             @Override
             public void run() {
-               DisplaySettings.ColorMode mode = display_.getDisplaySettings().getChannelColorMode();
-               boolean hasCustomLUT = mode != null && mode.getIndex() > DisplaySettings.ColorMode.COMPOSITE.getIndex();
-               LUT lut = ImageUtils.makeLUT(color_, gamma_);
-               ImageProcessor processor = plus_.getProcessor();
-               if (hasCustomLUT) {
-                  // Get the current LUT from ImageJ instead.
-                  // TODO: Ignore gamma settings for custom LUTs.
-                  if (composite_ == null) {
-                     lut = processor.getLut();
-                  }
-                  else {
-                     // ImageJ is 1-indexed...
-                     try {
-                        lut = composite_.getChannelLut(channelIndex_ + 1);
-                     }
-                     catch (IllegalArgumentException e) {
-                        // This can happen sometimes before the display gets
-                        // set up properly, as the CompositeImage doesn't
-                        // have the required number of LUTs for
-                        // getChannelLut() to succeed. Just ignore it.
-                        // TODO: fix whatever race condition between this code
-                        // and ColorModeCombo.setLUTMode() causes this to
-                        // happen.
-                        return;
-                     }
-                  }
-               }
-               lut.min = contrastMin_;
-               lut.max = contrastMax_;
-               processor.setMinAndMax(contrastMin_, contrastMax_);
-               if (composite_ == null) {
-                  // Single-channel.
-                  if (!hasCustomLUT) {
-                     processor.setColorModel(lut);
-                  }
-               }
-               else {
-                  if (!hasCustomLUT) {
-                     try {
-                        composite_.setChannelLut(lut, channelIndex_ + 1);
-                     }
-                     catch (IllegalArgumentException e) {
-                        // See above catch of the same exception.
-                        return;
-                     }
-                  }
-
-                  if (composite_.getMode() != CompositeImage.COMPOSITE) {
-                     // ImageJ workaround: do this so the appropriate color
-                     // model gets applied in color or grayscale mode.
-                     // Otherwise we can end up with erroneously grayscale
-                     // images.
-                     try {
-                        JavaUtils.setRestrictedFieldValue(composite_, 
-                              CompositeImage.class, "currentChannel", -1);
-                     } catch (NoSuchFieldException ex) {
-                        ReportingUtils.logError(ex);
-                     }
-                     composite_.updateImage();
-                  }
-               } // End multi-channel case.
-               updateHistogram();
+               applyNewLUT();
             }
          };
          if (SwingUtilities.isEventDispatchThread()) {
@@ -839,6 +773,75 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       catch (Exception e) {
          ReportingUtils.logError(e, "Error updating LUT");
       }
+   }
+
+   private void applyNewLUT() {
+      DisplaySettings.ColorMode mode = display_.getDisplaySettings().getChannelColorMode();
+      boolean hasCustomLUT = mode != null && mode.getIndex() > DisplaySettings.ColorMode.COMPOSITE.getIndex();
+      Color color = color_;
+      if (mode == DisplaySettings.ColorMode.GRAYSCALE) {
+         color = Color.WHITE;
+      }
+      LUT lut = ImageUtils.makeLUT(color, gamma_);
+      ImageProcessor processor = plus_.getProcessor();
+      if (hasCustomLUT) {
+         // Get the current LUT from ImageJ instead.
+         // TODO: Ignore gamma settings for custom LUTs.
+         if (composite_ == null) {
+            lut = processor.getLut();
+         }
+         else {
+            // ImageJ is 1-indexed...
+            try {
+               lut = composite_.getChannelLut(channelIndex_ + 1);
+            }
+            catch (IllegalArgumentException e) {
+               // This can happen sometimes before the display gets
+               // set up properly, as the CompositeImage doesn't
+               // have the required number of LUTs for
+               // getChannelLut() to succeed. Just ignore it.
+               // TODO: fix whatever race condition between this code
+               // and ColorModeCombo.setLUTMode() causes this to
+               // happen.
+               return;
+            }
+         }
+      }
+      lut.min = contrastMin_;
+      lut.max = contrastMax_;
+      processor.setMinAndMax(contrastMin_, contrastMax_);
+      if (composite_ == null) {
+         // Single-channel.
+         if (!hasCustomLUT) {
+            processor.setColorModel(lut);
+         }
+      }
+      else {
+         if (!hasCustomLUT) {
+            try {
+               composite_.setChannelLut(lut, channelIndex_ + 1);
+            }
+            catch (IllegalArgumentException e) {
+               // See above catch of the same exception.
+               return;
+            }
+         }
+
+         if (composite_.getMode() != CompositeImage.COMPOSITE) {
+            // ImageJ workaround: do this so the appropriate color
+            // model gets applied in color or grayscale mode.
+            // Otherwise we can end up with erroneously grayscale
+            // images.
+            try {
+               JavaUtils.setRestrictedFieldValue(composite_, 
+                     CompositeImage.class, "currentChannel", -1);
+            } catch (NoSuchFieldException ex) {
+               ReportingUtils.logError(ex);
+            }
+            composite_.updateImage();
+         }
+      } // End multi-channel case.
+      updateHistogram();
    }
 
    public int getChannelIndex() {
@@ -1172,9 +1175,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    /**
     * A new image has arrived; if it's for our channel and we haven't set bit
-    * depth yet, then do so now. And if we're the first channel, our color is
-    * white (i.e. the default color for singlechannel displays), and an image
-    * for another channel arrives, then we need to re-load our color.
+    * depth yet, then do so now.
     * @param event
     */
    @Subscribe
@@ -1187,16 +1188,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
          // Only reload display settings if we really have to, as this forces
          // redraws which can slow the display way down.
-         if (channelIndex_ == 0 && channel != channelIndex_ &&
-               color_.equals(Color.WHITE)) {
-            Color[] channelColors = display_.getDisplaySettings().getChannelColors();
-            Color targetColor = null;
-            if (channelColors != null && channelColors.length > 0) {
-               targetColor = channelColors[0];
-            }
-            if (!color_.equals(targetColor)) {
-               reloadDisplaySettings();
-            }
+         Color[] channelColors = display_.getDisplaySettings().getChannelColors();
+         Color targetColor = null;
+         if (channelColors != null && channelColors.length > 0) {
+            targetColor = channelColors[0];
+         }
+         if (!color_.equals(targetColor)) {
+            reloadDisplaySettings();
          }
       }
       catch (Exception e) {
