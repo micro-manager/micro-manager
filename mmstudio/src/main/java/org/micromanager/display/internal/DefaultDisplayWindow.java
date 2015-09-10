@@ -471,7 +471,12 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       // HACK: don't display save status for the snap/live view.
       if (!title.contains("Snap/Live")) {
          if (store_.getIsFrozen()) {
-            title += " (Saved to Disk)";
+            if (store_.getSavePath() != null) {
+               title += " (Saved to Disk)";
+            }
+            else {
+               title += " (In Memory, Complete)";
+            }
          }
          else {
             title += " (Not yet saved)";
