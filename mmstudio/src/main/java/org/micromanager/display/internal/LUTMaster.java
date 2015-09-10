@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 import org.micromanager.data.Coords;
 
@@ -254,7 +255,19 @@ public class LUTMaster {
     * Cause any changes to the LUT parameters for the display to be applied
     * to it.
     */
-   public static void updateDisplayLUTs(DisplayWindow display) {
+   public static void updateDisplayLUTs(final DisplayWindow display) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         // Can't muck about with the display outside of the EDT. Re-call
+         // in the EDT instead.
+         Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+               updateDisplayLUTs(display);
+            }
+         };
+         SwingUtilities.invokeLater(runnable);
+         return;
+      }
       for (int i = 0; i < display.getDatastore().getAxisLength(Coords.CHANNEL); ++i) {
          updateDisplayLUTForChannel(display, i);
       }
@@ -345,7 +358,20 @@ public class LUTMaster {
     * Set the color mode of the given display by indexing into the ColorMode
     * aspect of the DisplaySettings using the given index.
     */
-   public static void setModeByIndex(DisplayWindow display, int index) {
+   public static void setModeByIndex(final DisplayWindow display,
+         final int index) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         // Can't muck about with the display outside of the EDT. Re-call
+         // in the EDT instead.
+         Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+               setModeByIndex(display, index);
+            }
+         };
+         SwingUtilities.invokeLater(runnable);
+         return;
+      }
       if (index < 0 || index >= ICONS.size()) {
          ReportingUtils.logError("Invalid color mode index selection " + index);
          return;
@@ -378,8 +404,20 @@ public class LUTMaster {
     * Set the color or composite mode. This updates the ImageJ CompositeImage
     * as needed.
     */
-   public static void setColoredMode(DisplayWindow display,
-         DisplaySettings.ColorMode mode) {
+   public static void setColoredMode(final DisplayWindow display,
+         final DisplaySettings.ColorMode mode) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         // Can't muck about with the display outside of the EDT. Re-call
+         // in the EDT instead.
+         Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+               setColoredMode(display, mode);
+            }
+         };
+         SwingUtilities.invokeLater(runnable);
+         return;
+      }
       DisplaySettings origSettings = display.getDisplaySettings();
       ImagePlus plus = display.getImagePlus();
       if (plus instanceof CompositeImage) {
@@ -412,7 +450,20 @@ public class LUTMaster {
    /**
     * Set a LUT-based mode.
     */
-   public static void setLUTMode(DisplayWindow display, LUT lut, int index) {
+   public static void setLUTMode(final DisplayWindow display,
+         final LUT lut, final int index) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         // Can't muck about with the display outside of the EDT. Re-call
+         // in the EDT instead.
+         Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+               setLUTMode(display, lut, index);
+            }
+         };
+         SwingUtilities.invokeLater(runnable);
+         return;
+      }
       ImagePlus plus = display.getImagePlus();
       plus.getProcessor().setColorModel(lut);
       if (plus instanceof CompositeImage) {
