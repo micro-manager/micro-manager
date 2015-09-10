@@ -20,15 +20,19 @@ public class AutoLasePlugin implements org.micromanager.MenuPlugin, SciJavaPlugi
    public static final String tooltipDescription =
       "Closed-loop imaged-based photoactivation control for PALM";
    private Studio studio_;
+   private boolean haveSetup_ = false;
 
     @Override
     public void setContext(Studio app) {
        studio_ = app;
-        AutoLase.INSTANCE.setup(app);
     }
 
     @Override
     public void onPluginSelected() {
+        if (!haveSetup_) {
+            AutoLase.INSTANCE.setup(studio_);
+            haveSetup_ = true;
+        }
         AutoLase.INSTANCE.show();
     }
 
