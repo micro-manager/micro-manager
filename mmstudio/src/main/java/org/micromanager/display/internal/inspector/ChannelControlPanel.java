@@ -80,6 +80,7 @@ import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.DisplayDestroyedEvent;
 import org.micromanager.display.internal.MMCompositeImage;
 import org.micromanager.display.internal.MMVirtualStack;
+import org.micromanager.display.internal.LUTMaster;
 
 import org.micromanager.internal.utils.HistogramUtils;
 import org.micromanager.internal.utils.ImageUtils;
@@ -756,27 +757,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             autostretch();
             isFirstLUTUpdate_ = false;
          }
-         // Need to put this on EDT to avoid index out of bounds because of
-         // setting currentChannel to -1
-         Runnable run = new Runnable() {
-            @Override
-            public void run() {
-               applyNewLUT();
-            }
-         };
-         if (SwingUtilities.isEventDispatchThread()) {
-            run.run();
-         } else {
-            SwingUtilities.invokeLater(run);
-         }
+         updateHistogram();
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Error updating LUT");
       }
-   }
-
-   private void applyNewLUT() {
-      updateHistogram();
    }
 
    public int getChannelIndex() {
@@ -1054,7 +1039,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          display_.postEvent(new LUTUpdateEvent(null, null, null));
       }
       if (shouldRedisplay) {
-         display_.requestRedraw();
+         LUTMaster.updateDisplayLUTs(display_);
       }
    }
 
