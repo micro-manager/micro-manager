@@ -728,35 +728,64 @@ int CScanner::SetIlluminationStateHelper(bool on)
       return DEVICE_OK;
    if(!laserTTLenabled_)
       return DEVICE_OK;
-   // need to know whether other scanner device is turned on => must query it anyway
-   // would be nice if there was some way this information could be stored in hub object
-   // and cut down on serial communication
-   command << addressChar_ << "LED X?";
-   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),"X=") );
-   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
-   tmp &= 0x03;  // strip all but the two LSBs
-   if (laser_side_ == 1)
-   {
-      if(on)
-         tmp |= 0x01;
-      else
-         tmp &= ~0x01;
-   }
-   else if (laser_side_ == 2)
-   {
-      if(on)
-         tmp |= 0x02;
-      else
-         tmp &= ~0x02;
-   }
-   else
+   if (laser_side_ != 1 && laser_side_ != 2)
    {
       // should only get here if laser_side_ didn't get properly read somehow
       return DEVICE_OK;
    }
-   command.str("");
-   command << addressChar_ << "LED X=" << tmp;
-   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   // starting with firmware v3.11 we have way of setting laser state without querying
+   // other scanner device on same card
+   if (FirmwareVersionAtLeast(3.11))
+   {
+      command.str("");
+      if (laser_side_ == 1)
+      {
+
+      }
+      else
+      {
+
+      }
+      command << addressChar_ << "LED ";
+      if (laser_side_ == 1)
+         command << "R";
+      else
+         command << "T";
+      command << "=";
+      if (on)
+         command << "1";
+      else
+         command << "0";
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   }
+   else
+   {
+      // need to know whether other scanner device is turned on => must query it
+      // would be nice if there was some way this information could be stored in hub object
+      // and cut down on serial communication
+      command << addressChar_ << "LED X?";
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),"X=") );
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp &= 0x03;  // strip all but the two LSBs
+      if (laser_side_ == 1)
+      {
+         if(on)
+            tmp |= 0x01;
+         else
+            tmp &= ~0x01;
+      }
+      else
+      {
+         if(on)
+            tmp |= 0x02;
+         else
+            tmp &= ~0x02;
+      }
+
+      command.str("");
+      command << addressChar_ << "LED X=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   }
    return DEVICE_OK;
 }
 
