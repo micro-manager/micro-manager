@@ -524,30 +524,8 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
 
    @Subscribe
    public void onPipelineChanged(NewPipelineEvent event) {
-      // HACK: put this on a separate thread. Reason being that our thread
-      // that inserts images into the pipeline acquires the pipelineLock_
-      // object, and also may need to create a new DisplayWindow (for the first
-      // image on a given pipeline), which in turn blocks on the EDT because
-      // it touches the GUI. So if the pipeline changes while we are creating
-      // a new DisplayWindow, we get an EDT hang...unless we do this logic
-      // outside of the EDT.
-      (new Thread(new Runnable() {
-         @Override
-         public void run() {
-            try {
-               // New pipeline means we need to replace our old one, and reset
-               // our datastore/display (as the image shape may have changed).
-               synchronized(pipelineLock_) {
-                  if (pipeline_ != null) {
-                     pipeline_.halt();
-                  }
-               }
-               shouldForceReset_ = true;
-            }
-            catch (Exception e) {
-               ReportingUtils.logError(e);
-            }
-         }
-      })).start();
+      // This will make us pick up the new pipeline the next time we get a
+      // chance.
+      shouldForceReset_ = true;
    }
 }
