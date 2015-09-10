@@ -289,8 +289,28 @@ public class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
+   public Color getSafeChannelColor(int index, Color defaultVal) {
+      if (channelColors_ == null ||
+            channelColors_.length <= index ||
+            channelColors_[index] == null) {
+         return defaultVal;
+      }
+      return channelColors_[index];
+   }
+
+   @Override
    public Integer[] getChannelContrastMins() {
       return channelContrastMins_;
+   }
+
+   @Override
+   public Integer getSafeChannelContrastMin(int index, Integer defaultVal) {
+      if (channelContrastMins_ == null ||
+            channelContrastMins_.length <= index ||
+            channelContrastMins_[index] == null) {
+         return defaultVal;
+      }
+      return channelContrastMins_[index];
    }
 
    @Override
@@ -299,8 +319,28 @@ public class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
+   public Integer getSafeChannelContrastMax(int index, Integer defaultVal) {
+      if (channelContrastMaxes_ == null ||
+            channelContrastMaxes_.length <= index ||
+            channelContrastMaxes_[index] == null) {
+         return defaultVal;
+      }
+      return channelContrastMaxes_[index];
+   }
+
+   @Override
    public Double[] getChannelGammas() {
       return channelGammas_;
+   }
+
+   @Override
+   public Double getSafeChannelGamma(int index, Double defaultVal) {
+      if (channelGammas_ == null ||
+            channelGammas_.length <= index ||
+            channelGammas_[index] == null) {
+         return defaultVal;
+      }
+      return channelGammas_[index];
    }
 
    @Override
