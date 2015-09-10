@@ -84,6 +84,7 @@ import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
 import org.micromanager.display.internal.events.DisplayActivatedEvent;
 import org.micromanager.display.internal.events.FullScreenEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
+import org.micromanager.display.internal.events.LUTUpdateEvent;
 import org.micromanager.display.internal.events.NewDisplaySettingsEvent;
 import org.micromanager.display.internal.events.RequestToCloseEvent;
 import org.micromanager.display.internal.events.StatusEvent;
@@ -337,6 +338,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       });
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
+      // Ensure we have the correct display mode set.
+      LUTMaster.initializeDisplay(this);
+
       // Set us to draw the first image in the dataset.
       // TODO: potentially there could be no image at these Coords, though
       // that seems unlikely. Such an edge case isn't all that harmful
@@ -570,6 +574,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          ijImage_ = new MMCompositeImage(ijImage_, 1, ijImage_.getTitle());
          ijImage_.setOpenAsHyperStack(true);
          MMCompositeImage composite = (MMCompositeImage) ijImage_;
+         // Ensure we have the correct display mode set for the new object.
+         LUTMaster.initializeDisplay(this);
          int numChannels = store_.getAxisLength(Coords.CHANNEL);
          composite.setNChannelsUnverified(numChannels);
          composite.reset();
@@ -664,6 +670,14 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       catch (Exception e) {
          ReportingUtils.logError(e, "Couldn't process RequestToDrawEvent");
       }
+   }
+
+   /**
+    * We need to refresh the LUT(s) for our display.
+    */
+   @Subscribe
+   public void onLUTUpdate(LUTUpdateEvent event) {
+      LUTMaster.updateDisplayLUTs(this);
    }
 
    /**
