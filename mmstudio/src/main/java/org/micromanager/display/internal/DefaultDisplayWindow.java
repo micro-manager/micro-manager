@@ -48,6 +48,7 @@ import java.awt.event.WindowEvent;
 
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
@@ -117,6 +118,11 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       new InspectorFrame(null);
    }
 
+   // Keeps track of unique names that we are forced to invent for anonymous
+   // datasets. Note we use hashCode here so we don't maintain a reference to
+   // the display itself, which would prevent garbage collection of displays.
+   private static final HashMap<Integer, String> displayHashToUniqueName_ =
+      new HashMap<Integer, String>();
    private final Datastore store_;
    private DisplaySettings displaySettings_;
    private MMVirtualStack stack_;
@@ -1126,21 +1132,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    @Override
    public String getName() {
       String name = getSpecifiedName();
-      if (name == null) {
-         // No metadata, no save path; use a fallback name. Then save that
-         // name into the SummaryMetadata so future calls to getName() don't
-         // call getUniqueDisplayName() again and get a new,
-         // further-incremented name.
-         name = getUniqueDisplayName(this);
-         SummaryMetadata summary = store_.getSummaryMetadata();
-         summary = summary.copy().name(name).build();
-         try {
-            store_.setSummaryMetadata(summary);
-         }
-         catch (DatastoreFrozenException e) {
-            ReportingUtils.logError("Unable to set name on anonymous dataset because store is frozen.");
-         }
-      }
       List<DisplayWindow> displays = DisplayGroupManager.getDisplaysForDatastore(store_);
       if (displays.size() > 1) {
          // Append a number so we can tell different displays for the
@@ -1173,6 +1164,16 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       if (name == null) {
          // Use the filename instead.
          name = store_.getSummaryMetadata().getName();
+      }
+      if (name == null) {
+         // Must be an anonymous RAM datastore. Invent a new name and store it
+         // in our static hashmap (because we can't count on storing it in
+         // the datastore, which may be frozen).
+         if (!displayHashToUniqueName_.containsKey(this.hashCode())) {
+            displayHashToUniqueName_.put(this.hashCode(),
+                  getUniqueDisplayName(this));
+         }
+         return displayHashToUniqueName_.get(this.hashCode());
       }
       // If it's null now, then it's an anonymous RAM datastore.
       return name;
