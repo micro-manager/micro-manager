@@ -48,6 +48,7 @@ import java.awt.event.WindowEvent;
 
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import javax.swing.event.MouseInputAdapter;
@@ -64,6 +65,7 @@ import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.DatastoreFrozenEvent;
 import org.micromanager.data.DatastoreSavePathEvent;
 import org.micromanager.data.Image;
+import org.micromanager.data.Metadata;
 import org.micromanager.data.NewImageEvent;
 import org.micromanager.data.NewSummaryMetadataEvent;
 import org.micromanager.data.SummaryMetadata;
@@ -120,6 +122,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    private MMVirtualStack stack_;
    private ImagePlus ijImage_;
    private final EventBus displayBus_;
+   // List of channel names we have seen, for ensuring our contrast settings
+   // are up-to-date.
+   private HashSet<String> knownChannels_;
 
    // This will be our intermediary with ImageJ.
    private DummyImageWindow dummyWindow_;
@@ -209,6 +214,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          String customName) {
       super("image display window");
       store_ = store;
+      knownChannels_ = new HashSet<String>();
       if (settings == null) {
          displaySettings_ = DefaultDisplaySettings.getStandardSettings();
       }
@@ -772,14 +778,14 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    public List<Image> getDisplayedImages() {
       ArrayList<Image> result = new ArrayList<Image>();
       Coords curCoords = stack_.getCurrentImageCoords();
-      for (int i = 0; i < store_.getAxisLength("channel"); ++i) {
-         Image tmp = store_.getImage(curCoords.copy().index("channel", i).build());
+      for (int i = 0; i < store_.getAxisLength(Coords.CHANNEL); ++i) {
+         Image tmp = store_.getImage(curCoords.copy().channel(i).build());
          if (tmp != null) {
             result.add(tmp);
          }
       }
       if (result.size() == 0) {
-         // No "channel" axis; just return the current image.
+         // No channel axis; just return the current image.
          Image tmp = store_.getImage(curCoords);
          if (tmp != null) {
             result.add(tmp);
@@ -1006,7 +1012,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       try {
          // Check if we're transitioning from grayscale to multi-channel at this
          // time.
-         int imageChannel = image.getCoords().getIndex("channel");
+         int imageChannel = image.getCoords().getChannel();
          if (!(ijImage_ instanceof MMCompositeImage) &&
                imageChannel > 0) {
             // Have multiple channels.
@@ -1015,14 +1021,47 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          }
          if (ijImage_ instanceof MMCompositeImage) {
             // Verify that ImageJ has the right number of channels.
-            int numChannels = store_.getAxisLength("channel");
+            int numChannels = store_.getAxisLength(Coords.CHANNEL);
             MMCompositeImage composite = (MMCompositeImage) ijImage_;
             composite.setNChannelsUnverified(numChannels);
             composite.reset();
          }
+         Metadata metadata = image.getMetadata();
+         if (!knownChannels_.contains(metadata.getChannelName())) {
+            // Update our display settings with the new channel.
+            updateChannelSettings();
+         }
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Couldn't display new image");
+      }
+   }
+
+   /**
+    * Update our channel display settings (color and contrast) to incorporate
+    * the new channel name.
+    */
+   private void updateChannelSettings() {
+      int numChannels = store_.getAxisLength(Coords.CHANNEL);
+      String[] names = new String[numChannels];
+      String[] officialNames = store_.getSummaryMetadata().getChannelNames();
+      // Construct a list of channel names.
+      for (int i = 0; i < store_.getAxisLength(Coords.CHANNEL); ++i) {
+         // HACK: this name must match the name derived in
+         // ChannelContrastPanel.java.
+         names[i] = "channel " + i;
+         if (officialNames != null && officialNames.length > i &&
+               officialNames[i] != null) {
+            names[i] = officialNames[i];
+         }
+         knownChannels_.add(names[i]);
+      }
+      DisplaySettings newSettings = ChannelSettings.updateSettings(names,
+            store_.getSummaryMetadata().getChannelGroup(),
+            displaySettings_);
+      if (newSettings != null) {
+         // There were new settings to load.
+         setDisplaySettings(newSettings);
       }
    }
 

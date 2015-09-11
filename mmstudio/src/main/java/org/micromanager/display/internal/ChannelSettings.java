@@ -25,6 +25,8 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.micromanager.display.DisplaySettings;
+
 import org.micromanager.internal.utils.DefaultUserProfile;
 
 /**
@@ -47,11 +49,11 @@ public class ChannelSettings {
    private final Color color_;
    private final Integer histogramMin_;
    private final Integer histogramMax_;
-   private final boolean shouldAutoscale_;
+   private final Boolean shouldAutoscale_;
 
    public ChannelSettings(String channelName, String channelGroup,
          Color color, Integer histogramMin, Integer histogramMax,
-         boolean shouldAutoscale) {
+         Boolean shouldAutoscale) {
       channelName_ = channelName;
       channelGroup_ = channelGroup;
       color_ = color;
@@ -64,15 +66,15 @@ public class ChannelSettings {
       return color_;
    }
 
-   public int getHistogramMin() {
+   public Integer getHistogramMin() {
       return histogramMin_;
    }
 
-   public int getHistogramMax() {
+   public Integer getHistogramMax() {
       return histogramMax_;
    }
 
-   public boolean getShouldAutoscale() {
+   public Boolean getShouldAutoscale() {
       return shouldAutoscale_;
    }
 
@@ -189,8 +191,8 @@ public class ChannelSettings {
     * settings if no saved entry can be found.
     */
    public static ChannelSettings loadSettings(String channelName,
-         String channelGroup, Color defaultColor, int histogramMin,
-         int histogramMax, boolean shouldAutoscale) {
+         String channelGroup, Color defaultColor, Integer histogramMin,
+         Integer histogramMax, Boolean shouldAutoscale) {
       // Don't try to do this when someone else is (potentially) modifying the
       // profile.
       synchronized(profileLock_) {
@@ -240,6 +242,47 @@ public class ChannelSettings {
                COLORS, new Integer[] {});
          return new Color(colors[index]);
       }
+   }
+
+   /**
+    * Given a list of channel names, a channel group, and a DisplaySettings
+    * object, record the appropriate color/min/max values into the
+    * DisplaySettings. Or return null if no changes need to be made.
+    */
+   public static DisplaySettings updateSettings(String[] channelNames,
+         String channelGroup, DisplaySettings settings) {
+      Color[] origColors = settings.getChannelColors();
+      Integer[] origMins = settings.getChannelContrastMins();
+      Integer[] origMaxes = settings.getChannelContrastMaxes();
+      Color[] colors = new Color[channelNames.length];
+      Integer[] mins = new Integer[channelNames.length];
+      Integer[] maxes = new Integer[channelNames.length];
+      boolean didChange = false;
+      for (int i = 0; i < channelNames.length; ++i) {
+         // Load this channel's settings, and compare it against the settings
+         // in the DisplaySettings for changes.
+         String name = channelNames[i];
+         ChannelSettings channel = loadSettings(name, channelGroup,
+               null, null, null, null);
+         colors[i] = channel.getColor();
+         mins[i] = channel.getHistogramMin();
+         maxes[i] = channel.getHistogramMax();
+         if (origColors == null || origColors.length != colors.length ||
+               origColors[i] != colors[i] ||
+               origMins == null || origMins.length != mins.length ||
+               origMins[i] != mins[i] ||
+               origMaxes == null || origMaxes.length != maxes.length ||
+               origMaxes[i] != maxes[i]) {
+            didChange = true;
+         }
+      }
+
+      if (didChange) {
+         settings = settings.copy().channelColors(colors)
+            .channelContrastMins(mins).channelContrastMaxes(maxes).build();
+         return settings;
+      }
+      return null;
    }
 
    @Override
