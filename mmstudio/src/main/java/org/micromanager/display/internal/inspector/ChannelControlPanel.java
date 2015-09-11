@@ -118,10 +118,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private double binSize_;
    private String histMaxLabel_;
    private int histMax_;
-   private int contrastMin_ = -1;
-   private int contrastMax_ = -1;
-   private double gamma_ = 1;
-   private boolean isFirstLUTUpdate_ = true;
+   private Integer contrastMin_ = -1;
+   private Integer contrastMax_ = -1;
+   private Double gamma_ = 1.0;
+   private Boolean isFirstLUTUpdate_ = true;
    private int minAfterRejectingOutliers_;
    private int maxAfterRejectingOutliers_;
    private int pixelMin_ = 0;
@@ -147,7 +147,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       // Default to a generic name based on our channel index.
       name_ = String.format("channel %d", channelIndex_);
       String[] allNames = store_.getSummaryMetadata().getChannelNames();
-      if (allNames != null && allNames.length > channelIndex_) {
+      if (allNames != null && allNames.length > channelIndex_ &&
+            allNames[channelIndex_] != null) {
          name_ = allNames[channelIndex_];
       }
 
@@ -977,7 +978,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    public void onGammaCurve(double gamma) {
       if (gamma != 0) {
          if (gamma > 0.9 & gamma < 1.1) {
-            gamma_ = 1;
+            gamma_ = 1.0;
          } else {
             gamma_ = gamma;
          }
@@ -1014,7 +1015,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          // DisplaySettings as our color should change if a new channel is
          // added.
          if (!(oldVals instanceof Color[]) ||
-               store_.getAxisLength("channel") > 1) {
+               store_.getAxisLength(Coords.CHANNEL) > 1) {
             oldVals[channelIndex_] = ourParams[i];
          }
          DefaultDisplaySettings.updateChannelArray(i, oldVals, builder);
