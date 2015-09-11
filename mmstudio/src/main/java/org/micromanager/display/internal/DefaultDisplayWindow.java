@@ -488,7 +488,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       // a better understanding of the ImageJ codebase).
       if (!title.contentEquals(getTitle())) {
          // Don't have multiple threads adjusting the GUI at the same time.
-         synchronized(this) {
+         synchronized(guiLock_) {
             setTitle(title);
             // Ensure that ImageJ's opinion of our name reflects our own; this
             // is important for ImageJ's "Windows" menu.
@@ -570,7 +570,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       // Don't want to run this from a separate thread when we're in the middle
       // of building our GUI, e.g. because a second image arrived while we're
       // still responding to the first one.
-      synchronized(this) {
+      synchronized(guiLock_) {
          // Don't draw anything while we're doing this.
          if (canvasQueue_ != null) {
             canvasQueue_.halt();
@@ -579,8 +579,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          ijImage_ = new MMCompositeImage(ijImage_, 1, ijImage_.getTitle());
          ijImage_.setOpenAsHyperStack(true);
          MMCompositeImage composite = (MMCompositeImage) ijImage_;
-         // Ensure we have the correct display mode set for the new object.
-         LUTMaster.initializeDisplay(this);
          int numChannels = store_.getAxisLength(Coords.CHANNEL);
          composite.setNChannelsUnverified(numChannels);
          composite.reset();
@@ -588,6 +586,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          if (canvasQueue_ != null) {
             canvasQueue_.resume();
          }
+         // Ensure we have the correct display mode set for the new object.
+         LUTMaster.initializeDisplay(this);
       }
       displayBus_.post(new DefaultNewImagePlusEvent(this, ijImage_));
    }
@@ -690,7 +690,11 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     */
    @Override
    public void setDisplayedImageTo(Coords coords) {
-      canvasQueue_.enqueue(coords);
+      // Synchronized so we don't try to change the display while we also
+      // change our UI (e.g. in shiftToCompositeImage).
+      synchronized(guiLock_) {
+         canvasQueue_.enqueue(coords);
+      }
    }
 
    /**
@@ -844,34 +848,37 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     * TODO: should this really be exposed in the API?
     */
    @Override
-   public synchronized void toggleFullScreen() {
-      // If the canvas decides to update while we are changing to/from
-      // fullscreen mode, then bad things can happen, so we halt updates
-      // first.
-      canvasQueue_.halt();
-      if (fullScreenFrame_ != null) {
-         // We're currently fullscreen, and our fullscreen frame needs to go
-         // away now. Retrieve our contents from it first, of course.
-         add(contentsPanel_);
-         fullScreenFrame_.dispose();
-         fullScreenFrame_ = null;
-         constrainWindowShape();
-         setVisible(true);
+   public void toggleFullScreen() {
+      // Don't try to do this while mucking with the GUI in other ways.
+      synchronized(guiLock_) {
+         // If the canvas decides to update while we are changing to/from
+         // fullscreen mode, then bad things can happen, so we halt updates
+         // first.
+         canvasQueue_.halt();
+         if (fullScreenFrame_ != null) {
+            // We're currently fullscreen, and our fullscreen frame needs to go
+            // away now. Retrieve our contents from it first, of course.
+            add(contentsPanel_);
+            fullScreenFrame_.dispose();
+            fullScreenFrame_ = null;
+            constrainWindowShape();
+            setVisible(true);
+         }
+         else {
+            // Transfer our contents to a new JFrame for the fullscreen mode.
+            setVisible(false);
+            fullScreenFrame_ = new JFrame();
+            fullScreenFrame_.setUndecorated(true);
+            fullScreenFrame_.setBounds(
+                  GUIUtils.getFullScreenBounds(getScreenConfig()));
+            fullScreenFrame_.setExtendedState(JFrame.MAXIMIZED_BOTH);
+            fullScreenFrame_.setResizable(false);
+            fullScreenFrame_.add(contentsPanel_);
+            fullScreenFrame_.setVisible(true);
+            constrainWindowShape();
+         }
+         canvasQueue_.resume();
       }
-      else {
-         // Transfer our contents to a new JFrame for the fullscreen mode.
-         setVisible(false);
-         fullScreenFrame_ = new JFrame();
-         fullScreenFrame_.setUndecorated(true);
-         fullScreenFrame_.setBounds(
-               GUIUtils.getFullScreenBounds(getScreenConfig()));
-         fullScreenFrame_.setExtendedState(JFrame.MAXIMIZED_BOTH);
-         fullScreenFrame_.setResizable(false);
-         fullScreenFrame_.add(contentsPanel_);
-         fullScreenFrame_.setVisible(true);
-         constrainWindowShape();
-      }
-      canvasQueue_.resume();
       displayBus_.post(
             new FullScreenEvent(getScreenConfig(), fullScreenFrame_ != null));
    }
