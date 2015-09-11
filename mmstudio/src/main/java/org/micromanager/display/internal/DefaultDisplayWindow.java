@@ -709,6 +709,10 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    @Override
    public void adjustZoom(double factor) {
       setMagnification(getMagnification() * factor);
+      // HACK: for some reason, changing the zoom level can cause us to
+      // "lose" our LUTs, reverting to grayscale or single-color mode. So we
+      // refresh our LUT status after changing the zoom.
+      LUTMaster.updateDisplayLUTs(this);
    }
 
    @Override
@@ -1150,6 +1154,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       DisplayWindow result = createDisplay(store_, controlsFactory_);
       result.setDisplaySettings(displaySettings_);
       result.setCustomTitle(customName_);
+      // HACK: for some unknown reason, duplicating the display causes our own
+      // LUTs to get "reset", so we have to re-apply them after duplicating.
+      LUTMaster.updateDisplayLUTs(this);
       return result;
    }
 
