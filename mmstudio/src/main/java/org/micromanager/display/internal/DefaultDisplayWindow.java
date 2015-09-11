@@ -936,10 +936,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          insets = fullScreenFrame_.getInsets();
       }
       Dimension controlsSize = controlsPanel_.getSize();
-      // Leave some padding in for safety.
       Dimension result = new Dimension(
-            ourSize.width - insets.left - insets.right - 4,
-            ourSize.height - insets.top - insets.bottom - controlsSize.height - 4);
+            ourSize.width - insets.left - insets.right,
+            ourSize.height - insets.top - insets.bottom - controlsSize.height);
       return result;
    }
 
