@@ -31,6 +31,7 @@ import javax.swing.JButton;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
+import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.LUTMaster;
 
@@ -46,9 +47,11 @@ public class ColorModeCombo extends JButton {
    private DisplayWindow display_;
 
    public ColorModeCombo(DisplayWindow display) {
-      super(LUTMaster.ICONS.get(0).text_,
-            LUTMaster.ICONS.get(0).icon_);
+      super();
       display_ = display;
+      int index = display_.getDisplaySettings().getChannelColorMode().getIndex();
+      setText(LUTMaster.ICONS.get(index).text_);
+      setIcon(LUTMaster.ICONS.get(index).icon_);
 
       setToolTipText("Set how the image display uses color");
 
@@ -76,6 +79,10 @@ public class ColorModeCombo extends JButton {
                setText(LUTMaster.ICONS.get(index).text_);
                setIcon(LUTMaster.ICONS.get(index).icon_);
                LUTMaster.setModeByIndex(display_, index);
+               DisplaySettings settings = display_.getDisplaySettings();
+               settings = settings.copy().channelColorMode(
+                  DisplaySettings.ColorMode.fromInt(index)).build();
+               display_.setDisplaySettings(settings);
             }
          });
          menu.add(item);

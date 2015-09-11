@@ -236,7 +236,8 @@ public class LUTMaster {
    }
 
    /**
-    * Ensure that the display's color mode is correctly-set.
+    * Ensure that the display's color mode is correctly-set, and apply the
+    * default LUTs to it.
     */
    public static void initializeDisplay(DisplayWindow display) {
       // Use saved settings, or default to composite.
