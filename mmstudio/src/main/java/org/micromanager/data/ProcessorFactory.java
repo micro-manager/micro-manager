@@ -20,10 +20,6 @@
 
 package org.micromanager.data;
 
-import java.util.List;
-
-import org.micromanager.PropertyMap;
-
 /**
  * A ProcessorFactory is an object that generates new DataProcessors. Each
  * ProcessorFactory is pre-configured to generate a DataProcessor with specific
@@ -35,6 +31,7 @@ import org.micromanager.PropertyMap;
 public interface ProcessorFactory {
    /**
     * Generate a new DataProcessor based on the configuration of the Factory.
+    * @return new DataProcessor based on the configuration of the Factory
     */
    public Processor createProcessor();
 }

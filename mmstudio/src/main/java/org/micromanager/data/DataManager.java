@@ -116,6 +116,8 @@ public interface DataManager {
     * numerical suffixes as needed to ensure that no data gets overwritten. The
     * path returned by this function will always be 1 greater than the largest
     * suffix currently in use.
+    * @param path String used to create a unique name
+    * @return String to a unique directory to be used to save data
     */
    public String getUniqueSaveDirectory(String path);
 
@@ -156,6 +158,7 @@ public interface DataManager {
    /**
     * Return the save mode that the user prefers to use. This is automatically
     * updated whenever the user saves a file.
+    * @return save mode that the user prefers to use
     */
    public Datastore.SaveMode getPreferredSaveMode();
 
@@ -282,6 +285,8 @@ public interface DataManager {
     * configuration window will be opened if it is not already open. The new
     * processor will be inserted onto the end of the pipeline, and the
     * appropriate ProcessorConfigurator for that plugin will be run.
+    * @param plugin  instance of a ProcessorPlugin that will be added to the 
+    * current application image processing pipeline
     */
    public void addAndConfigureProcessor(ProcessorPlugin plugin);
 
@@ -291,6 +296,8 @@ public interface DataManager {
     * it is not already open, as will the ProcessorConfigurators for each
     * of the ProcessorPlugins provided. Equivalent to calling clearPipeline()
     * and then iteratively calling addAndConfigureProcessor().
+    * @param plugins List of ProcessorPlugins that will henceforth be used as the
+    * application's processor pipeline
     */
    public void setApplicationPipeline(List<ProcessorPlugin> plugins);
 

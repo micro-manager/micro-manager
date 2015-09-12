@@ -20,7 +20,6 @@
 
 package org.micromanager.data;
 
-import ij.ImagePlus;
 import ij.process.ImageProcessor;
 
 /**
@@ -32,6 +31,8 @@ public interface ImageJConverter {
    /**
     * Create an ImageProcessor whose image pixel data is derived from the
     * provided Image.
+    * @param image Micro-Manager Image object
+    * @return ImageJ ImageProcessor with reference to input Image pixel data
     */
    public ImageProcessor createProcessor(Image image);
 

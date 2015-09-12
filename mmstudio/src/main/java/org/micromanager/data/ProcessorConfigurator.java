@@ -43,6 +43,8 @@ public interface ProcessorConfigurator {
    /**
     * Provide a PropertyMap fully encapsulating the settings needed to set up
     * a new DataProcessor.
+    * @return PropertyMap fully encapsulating the settings needed to set up
+    * a new DataProcessor
     */
    public PropertyMap getSettings();
 }

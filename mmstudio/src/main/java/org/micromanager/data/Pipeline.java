@@ -22,7 +22,6 @@ package org.micromanager.data;
 
 import java.util.List;
 
-import org.micromanager.PropertyMap;
 
 /**
  * Pipelines are used to apply a sequence of Processors to Images prior to
@@ -62,12 +61,15 @@ public interface Pipeline {
     * after this method is called, then the exception will not be thrown.
     *
     * @param image Image to be processed by the Pipeline.
+    * @throws org.micromanager.data.DatastoreFrozenException
+    * @throws org.micromanager.data.PipelineErrorException
     */
    public void insertImage(Image image) throws DatastoreFrozenException, PipelineErrorException;
 
    /**
     * Get the output Datastore for this Pipeline. This Datastore is the
     * ultimate recipient of Images that have been processed by the Pipeline.
+    * @return output Datastore for this Pipeline
     */
    public Datastore getDatastore();
 
@@ -93,6 +95,8 @@ public interface Pipeline {
     * Return a list containing any exceptions that have occurred during
     * processing of images. If this list has any elements in it, then calls
     * to insertImage() will provoke a PipelineErrorException.
+    * @return list containing any exceptions that have occurred during
+    * processing of images
     */
    public List<Exception> getExceptions();
 

@@ -29,6 +29,7 @@ public interface ProcessorContext {
     * Hand a newly-generated Image to the ProcessorContext. This method is the
     * only valid way for a Processor to "produce" an Image, and should only be
     * called from within the Processor's processImage() function.
+    * @param image Image to be handed to the ProcessorContext
     */
    public void outputImage(Image image);
 }
