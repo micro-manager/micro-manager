@@ -25,9 +25,6 @@ package org.micromanager;
 
 import java.awt.geom.AffineTransform;
 import java.awt.Rectangle;
-import java.util.List;
-
-import mmcorej.TaggedImage;
 
 import org.micromanager.data.Datastore;
 

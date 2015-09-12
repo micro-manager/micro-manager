@@ -77,7 +77,7 @@ public class StagePosition {
     * Compare us against the provided StagePosition and return true only if
     * we are equal in all respects.
     * @param alt Other StagePosition to compare against.
-    * @return true iff every field in alt equals our corresponding field.
+    * @return true if every field in alt equals our corresponding field.
     */
    @Override
    public boolean equals(Object alt) {

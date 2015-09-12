@@ -34,6 +34,7 @@ public interface PluginManager {
     * Return a HashMap that maps plugin names to ProcessorPlugin instances.
     * ProcessorPlugins are used to construct pipelines that modify images
     * as they are acquired (see DataManager.createPipeline()).
+    * @return HashMap that maps plugin names to ProcessorPlugin instances
     */
    public HashMap<String, ProcessorPlugin> getProcessorPlugins();
 
@@ -41,6 +42,7 @@ public interface PluginManager {
     * Return a HashMap that maps plugin names to OverlayPlugin instances.
     * OverlayPlugins are used to draw on top of images in the image display
     * window.
+    * @return HashMap that maps plugin names to OverlayPlugin instances
     */
    public HashMap<String, OverlayPlugin> getOverlayPlugins();
 }

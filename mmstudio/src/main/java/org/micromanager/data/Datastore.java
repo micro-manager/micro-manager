@@ -193,6 +193,7 @@ public interface Datastore extends Closeable {
     * scripts). Displays attached to the Datastore will automatically be closed,
     * with no prompt for data to be saved.
     */
+   @Override
    public void close();
 
    /**
@@ -236,6 +237,7 @@ public interface Datastore extends Closeable {
     *
     * @param window Window  on top of which to display the dialog prompt; 
     *        may be null.
+    * @return TODO WHAT DOES THE RETURN BOOLEAN MEAN?
     */
    public boolean save(Window window);
 

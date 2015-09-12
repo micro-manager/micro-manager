@@ -25,16 +25,16 @@ import ij.Executer;
 import ij.IJ;
 import ij.plugin.Duplicator;
 import ij.plugin.PlugIn;
+import java.lang.reflect.InvocationTargetException;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
-import mmcorej.CMMCore;
 
 import org.micromanager.internal.MMStudio;
 import org.micromanager.display.internal.MMVirtualStack;
-import org.micromanager.internal.utils.AutofocusManager;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -61,7 +61,13 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
                   }
                   try {
                      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                  } catch (Exception e) {
+                  } catch (ClassNotFoundException e) {
+                     ReportingUtils.logError(e);
+                  } catch (InstantiationException e) {
+                     ReportingUtils.logError(e);
+                  } catch (IllegalAccessException e) {
+                     ReportingUtils.logError(e);
+                  } catch (UnsupportedLookAndFeelException e) {
                      ReportingUtils.logError(e);
                   }
 
@@ -97,6 +103,7 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
       if (command.equalsIgnoreCase("Quit") && studio_ != null) {
          try {
             GUIUtils.invokeAndWait(new Runnable() {
+               @Override
                public void run() {
                   boolean result = true;
                   if (!studio_.closeSequence(true)) {
@@ -105,7 +112,9 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
                   setFrameClosingResult(result);
                }
             });
-         } catch (Exception ex) {
+         } catch (InterruptedException ex) {
+            // do nothing, just make sure to continue quitting
+         } catch (InvocationTargetException ex) {
             // do nothing, just make sure to continue quitting
          }
          if (!frameSuccessfullyClosed) {
