@@ -173,14 +173,79 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
+      public DisplaySettingsBuilder safeUpdateChannelColor(Color newColor,
+            int channelIndex) {
+         if (channelColors_ == null || channelColors_.length <= channelIndex) {
+            Color[] newArray = new Color[channelIndex + 1];
+            // Fill in nulls to start.
+            for (int i = 0; i < newArray.length; ++i) {
+               newArray[i] = null;
+            }
+            if (channelColors_ != null) {
+               // Copy old values across.
+               for (int i = 0; i < channelColors_.length; ++i) {
+                  newArray[i] = channelColors_[i];
+               }
+            }
+            channelColors_ = newArray;
+         }
+         channelColors_[channelIndex] = newColor;
+         return this;
+      }
+
+      @Override
       public DisplaySettingsBuilder channelContrastMins(Integer[] channelContrastMins) {
          channelContrastMins_ = (channelContrastMins == null) ? null : channelContrastMins.clone();
          return this;
       }
 
       @Override
+      public DisplaySettingsBuilder safeUpdateChannelContrastMin(
+            Integer newMin, int channelIndex) {
+         if (channelContrastMins_ == null ||
+               channelContrastMins_.length <= channelIndex) {
+            Integer[] newArray = new Integer[channelIndex + 1];
+            // Fill in nulls to start.
+            for (int i = 0; i < newArray.length; ++i) {
+               newArray[i] = null;
+            }
+            if (channelContrastMins_ != null) {
+               // Copy old values across.
+               for (int i = 0; i < channelContrastMins_.length; ++i) {
+                  newArray[i] = channelContrastMins_[i];
+               }
+            }
+            channelContrastMins_ = newArray;
+         }
+         channelContrastMins_[channelIndex] = newMin;
+         return this;
+      }
+
+      @Override
       public DisplaySettingsBuilder channelContrastMaxes(Integer[] channelContrastMaxes) {
          channelContrastMaxes_ = (channelContrastMaxes == null) ? null : channelContrastMaxes.clone();
+         return this;
+      }
+
+      @Override
+      public DisplaySettingsBuilder safeUpdateChannelContrastMax(
+            Integer newMax, int channelIndex) {
+         if (channelContrastMaxes_ == null ||
+               channelContrastMaxes_.length <= channelIndex) {
+            Integer[] newArray = new Integer[channelIndex + 1];
+            // Fill in nulls to start.
+            for (int i = 0; i < newArray.length; ++i) {
+               newArray[i] = null;
+            }
+            if (channelContrastMaxes_ != null) {
+               // Copy old values across.
+               for (int i = 0; i < channelContrastMaxes_.length; ++i) {
+                  newArray[i] = channelContrastMaxes_[i];
+               }
+            }
+            channelContrastMaxes_ = newArray;
+         }
+         channelContrastMaxes_[channelIndex] = newMax;
          return this;
       }
 

@@ -52,8 +52,41 @@ public interface DisplaySettings {
       // DisplaySettings. See the getters of the DisplaySettings, below,
       // for information on the meaning of these fields.
       DisplaySettingsBuilder channelColors(Color[] channelColors);
+      /**
+       * "Safely" update the channelColors property to include the new
+       * provided color at the specified index. If the channelColors
+       * property is null or is not large enough to incorporate the specified
+       * index, then a new array will be created that is long enough, values
+       * will be copied across, and any missing values will be null.
+       * @param newColor New color for the specified channel.
+       * @param channelIndex Index into the channelColors array.
+       */
+      DisplaySettingsBuilder safeUpdateChannelColor(Color newColor,
+            int channelIndex);
       DisplaySettingsBuilder channelContrastMins(Integer[] channelContrastMins);
+      /**
+       * "Safely" update the channelContrastMins property to include the new
+       * provided min at the specified index. If the channelContrastMins
+       * property is null or is not large enough to incorporate the specified
+       * index, then a new array will be created that is long enough, values
+       * will be copied across, and any missing values will be null.
+       * @param newMin New contrast min for the channel.
+       * @param channelIndex Index into the channelContrastMins array.
+       */
+      DisplaySettingsBuilder safeUpdateChannelContrastMin(Integer newMin,
+            int channelIndex);
       DisplaySettingsBuilder channelContrastMaxes(Integer[] channelContrastMaxes);
+      /**
+       * "Safely" update the channelContrastMaxes property to include the new
+       * provided max at the specified index. If the channelContrastMaxes
+       * property is null or is not large enough to incorporate the specified
+       * index, then a new array will be created that is long enough, values
+       * will be copied across, and any missing values will be null.
+       * @param newMax New contrast max for the channel.
+       * @param channelIndex Index into the channelContrastMaxes array.
+       */
+      DisplaySettingsBuilder safeUpdateChannelContrastMax(Integer newMax,
+            int channelIndex);
       DisplaySettingsBuilder channelGammas(Double[] channelGammas);
       DisplaySettingsBuilder magnification(Double magnification);
       DisplaySettingsBuilder animationFPS(Integer animationFPS);
