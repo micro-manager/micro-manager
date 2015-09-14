@@ -244,4 +244,13 @@ public class DefaultPluginManager implements PluginManager {
       }
       return result;
    }
+
+   @Override
+   public HashMap<String, MenuPlugin> getMenuPlugins() {
+      HashMap<String, MenuPlugin> result = new HashMap<String, MenuPlugin>();
+      for (MMPlugin plugin : pluginTypeToPlugins_.get(MenuPlugin.class)) {
+         result.put(plugin.getName(), (MenuPlugin) plugin);
+      }
+      return result;
+   }
 }

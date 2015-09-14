@@ -45,4 +45,12 @@ public interface PluginManager {
     * @return HashMap that maps plugin names to OverlayPlugin instances
     */
    public HashMap<String, OverlayPlugin> getOverlayPlugins();
+
+   /**
+    * Return a HashMap that maps plugin names to MenuPlugin instances.
+    * MenuPlugins are normally available under the "Plugins" menu; this method
+    * allows plugins to talk to each other without explicitly depending on
+    * each other.
+    */
+   public HashMap<String, MenuPlugin> getMenuPlugins();
 }
