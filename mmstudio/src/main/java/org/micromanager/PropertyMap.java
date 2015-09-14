@@ -337,11 +337,14 @@ public interface PropertyMap {
 
    /**
     * Return a set of all keys of properties in the map.
+    * @return set of all keys of properties in the PropertyMap
     */
    public Set<String> getKeys();
 
    /**
-    * Return true iff there is an entry in the property map for the given key.
+    * Return true if there is an entry in the property map for the given key.
+    * @param key Key to be tested
+    * @return true if this PropertyMap contains the key, false otherwise
     */
    public boolean containsKey(String key);
 

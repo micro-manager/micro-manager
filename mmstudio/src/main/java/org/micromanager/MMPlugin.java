@@ -19,7 +19,6 @@
 
 package org.micromanager;
 
-import org.micromanager.Studio;
 
 import org.scijava.plugin.SciJavaPlugin;
 
@@ -60,26 +59,31 @@ import org.scijava.plugin.SciJavaPlugin;
 public interface MMPlugin extends SciJavaPlugin {
    /**
     * Receive the Studio object needed to make API calls.
+    * @param studio instance of the Micro-Manager Studio object
     */
    public void setContext(Studio studio);
 
    /**
     * Provide a short string identifying the plugin.
+    * @return String identifying this plugin
     */
    public String getName();
 
    /**
     * Provide a longer string describing the purpose of the plugin.
+    * @return String describing this purpose of this plugin
     */
    public String getHelpText();
 
    /**
     * Provide a version string.
+    * @return Version String
     */
    public String getVersion();
 
    /**
     * Provide a copyright string.
+    * @return copyright information
     */
    public String getCopyright();
 }

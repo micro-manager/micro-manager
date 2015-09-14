@@ -20,7 +20,6 @@
 
 package org.micromanager.data;
 
-import java.lang.Iterable;
 import java.util.List;
 
 /**
@@ -39,6 +38,8 @@ import java.util.List;
 public interface Storage {
    /**
     * Retrieve the Image located at the specified coordinates.
+    * @param coords Coordinates specifying which image to retrieve
+    * @return desired Image
     */
    public Image getImage(Coords coords);
 
@@ -46,12 +47,15 @@ public interface Storage {
     * Return any Image, or null if there are no images. Only really useful if
     * you need a representative image to work with. No guarantees are made
     * about which image will be provided.
+    * @return any Image or null if there are no images
     */
    public Image getAnyImage();
 
    /**
     * Return an Iterable that provides access to all image coordinates in the
     * Storage, in arbitrary order.
+    * @return Iterable that provides access to all image coordinates in the
+    * Storage, in arbitrary order
     */
    public Iterable<Coords> getUnorderedImageCoords();
 
@@ -61,32 +65,41 @@ public interface Storage {
     * would return all Images whose position along the "z" axis is 9 (note that
     * this means that Images with no defined position along that axis will
     * not be returned). The result may be empty.
+    * @param coords Coordinates specifying images to match
+    * @return List with matching Images
     */
    public List<Image> getImagesMatching(Coords coords);
 
    /**
     * Return the largest stored position along the specified axis. Will be -1
     * if no images have a position along that axis.
+    * @param axis axis of interest
+    * @return Largest stored position along the specified axis or -1 when no images
+    * are found on the given axis
     */
    public Integer getMaxIndex(String axis);
 
    /**
     * Return a List of all axis names for Images we know about.
+    * @return List of all axis names for Images we know about
     */
    public List<String> getAxes();
 
    /**
     * Return a Coords that provides the maximum index along all available axes.
+    * @return Coords that provides the maximum index along all available axes
     */
    public Coords getMaxIndices();
 
    /**
     * Retrieve the SummaryMetadata associated with this dataset.
+    * @return SummaryMetadata associated with this dataset
     */
    public SummaryMetadata getSummaryMetadata();
 
    /**
     * Return the number of images in this dataset.
+    * @return number of images in this dataset
     */
    public int getNumImages();
 }
