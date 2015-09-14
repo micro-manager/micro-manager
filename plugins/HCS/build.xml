@@ -1,4 +1,13 @@
 <project name="HCS" default="jar">
 	<property name="plugin.path" value="Acquisition_Tools"/>
+
 	<import file="../javapluginbuild.xml"/>
+
+    <path id="plugin.classpath">
+        <pathelement location="${plugin.outdir}/PixelCalibrator.jar"/>
+    </path>
+
+    <target name="prerequisites" depends="mm.javabuild.prerequisites">
+        <ant dir="../PixelCalibrator" target="jar" inheritAll="false" useNativeBasedir="true"/>
+    </target>
 </project>
