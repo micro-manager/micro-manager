@@ -28,7 +28,7 @@ import org.scijava.plugin.SciJavaPlugin;
 @Plugin(type = MenuPlugin.class)
 public class HCSPlugin implements MenuPlugin, SciJavaPlugin {
    private Studio studio_;
-   static public final String VERSION_INFO = "1.4.1";
+   static public final String VERSION_INFO = "1.5.0";
    static private final String COPYRIGHT_NOTICE = "Copyright by UCSF, 2013";
    static private final String DESCRIPTION = "Generate imaging site positions for micro-well plates and slides";
    static private final String NAME = "High-Content Screening";
