@@ -24,6 +24,7 @@ import com.google.common.eventbus.DeadEvent;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 
+import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
 import ij.io.FileInfo;
@@ -798,15 +799,18 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       }
    }
 
-   // TODO: this method assumes we're in Composite view mode.
    @Override
    public List<Image> getDisplayedImages() {
       ArrayList<Image> result = new ArrayList<Image>();
       Coords curCoords = stack_.getCurrentImageCoords();
-      for (int i = 0; i < store_.getAxisLength(Coords.CHANNEL); ++i) {
-         Image tmp = store_.getImage(curCoords.copy().channel(i).build());
-         if (tmp != null) {
-            result.add(tmp);
+      if (ijImage_ instanceof CompositeImage &&
+            ((CompositeImage) ijImage_).getMode() == CompositeImage.COMPOSITE) {
+         // Return all channels at current coordinates.
+         for (int i = 0; i < store_.getAxisLength(Coords.CHANNEL); ++i) {
+            Image tmp = store_.getImage(curCoords.copy().channel(i).build());
+            if (tmp != null) {
+               result.add(tmp);
+            }
          }
       }
       if (result.size() == 0) {
