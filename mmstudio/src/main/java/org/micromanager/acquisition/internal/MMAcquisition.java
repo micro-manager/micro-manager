@@ -174,7 +174,6 @@ public class MMAcquisition {
       if (show_) {
          display_ = MMStudio.getInstance().displays().createDisplay(store_,
                makeControlsFactory());
-         display_.setDisplaySettings(DefaultDisplaySettings.legacyFromJSON(summaryMetadata));
          display_.registerForEvents(this);
       }
       DefaultEventManager.getInstance().registerForEvents(this);
