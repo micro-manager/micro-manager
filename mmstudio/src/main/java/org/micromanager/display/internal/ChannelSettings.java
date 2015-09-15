@@ -206,19 +206,28 @@ public class ChannelSettings {
 
          Integer[] colors = profile.getIntArray(ChannelSettings.class,
                COLORS, new Integer[] {});
-         Color color = new Color(colors[index]);
+         Color color = defaultColor;
+         if (colors != null && colors.length > index) {
+            color = new Color(colors[index]);
+         }
 
          Integer[] mins = profile.getIntArray(ChannelSettings.class,
                MINS, new Integer[] {});
-         histogramMin = mins[index];
+         if (mins != null && mins.length > index) {
+            histogramMin = mins[index];
+         }
 
          Integer[] maxes = profile.getIntArray(ChannelSettings.class,
                MAXES, new Integer[] {});
-         histogramMax = maxes[index];
+         if (maxes != null && maxes.length > index) {
+            histogramMax = maxes[index];
+         }
 
          Boolean[] autoscales = profile.getBooleanArray(ChannelSettings.class,
                AUTOSCALES, new Boolean[] {});
-         shouldAutoscale = autoscales[index];
+         if (autoscales != null && autoscales.length > index) {
+            shouldAutoscale = autoscales[index];
+         }
 
          return new ChannelSettings(channelName, channelGroup, color,
                histogramMin, histogramMax, shouldAutoscale);
@@ -240,6 +249,9 @@ public class ChannelSettings {
          DefaultUserProfile profile = DefaultUserProfile.getInstance();
          Integer[] colors = profile.getIntArray(ChannelSettings.class,
                COLORS, new Integer[] {});
+         if (colors == null || colors.length <= index) {
+            return defaultColor;
+         }
          return new Color(colors[index]);
       }
    }
