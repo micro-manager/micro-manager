@@ -24,12 +24,6 @@ import com.bulenkov.iconloader.IconLoader;
 
 import com.google.common.eventbus.Subscribe;
 
-import ij.CompositeImage;
-import ij.ImagePlus;
-import ij.process.ImageProcessor;
-import ij.process.ImageStatistics;
-import ij.process.LUT;
-
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -51,32 +45,27 @@ import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 
-
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
-import org.micromanager.data.NewImageEvent;
 import org.micromanager.data.NewSummaryMetadataEvent;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.NewDisplaySettingsEvent;
-import org.micromanager.display.NewImagePlusEvent;
 
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.internal.graph.GraphData;
 import org.micromanager.internal.graph.HistogramPanel;
 import org.micromanager.internal.graph.HistogramPanel.CursorListener;
-import org.micromanager.internal.MMStudio;
 
+import org.micromanager.display.internal.ChannelHistogramModel;
 import org.micromanager.display.internal.events.LUTUpdateEvent;
 import org.micromanager.display.internal.link.ContrastEvent;
-import org.micromanager.display.internal.link.ContrastLinker;
 import org.micromanager.display.internal.link.DisplayGroupManager;
 import org.micromanager.display.internal.link.LinkButton;
-import org.micromanager.display.internal.ChannelSettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
+import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.display.internal.DisplayDestroyedEvent;
 import org.micromanager.display.internal.MMCompositeImage;
 import org.micromanager.display.internal.MMVirtualStack;
@@ -93,16 +82,14 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class ChannelControlPanel extends JPanel implements CursorListener {
 
    public static final Dimension CONTROLS_SIZE = new Dimension(80, 80);
-   
-   private static final int NUM_BINS = 256;
+  
+   private ChannelHistogramModel model_;
    private final int channelIndex_;
    private HistogramPanel histogram_;
    private final HistogramsPanel parent_;
    private final Datastore store_;
-   private DisplayWindow display_;
+   private DefaultDisplayWindow display_;
    private final MMVirtualStack stack_;
-   private ImagePlus plus_;
-   private CompositeImage composite_;
 
    private JButton autoButton_;
    private JButton zoomInButton_;
@@ -115,82 +102,35 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private JComboBox histRangeComboBox_;
    private LinkButton linkButton_;
 
-   private double binSize_;
-   private String histMaxLabel_;
-   private int histMax_;
-   private Integer contrastMin_ = -1;
-   private Integer contrastMax_ = -1;
-   private Double gamma_ = 1.0;
-   private Boolean isFirstLUTUpdate_ = true;
-   private int minAfterRejectingOutliers_;
-   private int maxAfterRejectingOutliers_;
-   private int pixelMin_ = 0;
-   private int pixelMax_ = 255;
-   private int pixelMean_ = 0;
-   private int maxIntensity_;
-   private int bitDepth_;
-   private Color color_;
-   private String name_;
    private final AtomicBoolean haveInitialized_;
 
    public ChannelControlPanel(int channelIndex, HistogramsPanel parent,
-         Datastore store, DisplayWindow display, MMVirtualStack stack,
-         ImagePlus plus) {
+         Datastore store, DefaultDisplayWindow display, MMVirtualStack stack) {
       haveInitialized_ = new AtomicBoolean(false);
       channelIndex_ = channelIndex;
       parent_ = parent;
       store_ = store;
       display_ = display;
       stack_ = stack;
-      setImagePlus(plus);
-
-      // Default to a generic name based on our channel index.
-      name_ = String.format("channel %d", channelIndex_);
-      String[] allNames = store_.getSummaryMetadata().getChannelNames();
-      if (allNames != null && allNames.length > channelIndex_ &&
-            allNames[channelIndex_] != null) {
-         name_ = allNames[channelIndex_];
-      }
+      model_ = display_.getHistogramModel(channelIndex_);
 
       // Must be registered for events before we start modifying images, since
       // that relies on LUTUpdateEvent.
       store.registerForEvents(this);
       display.registerForEvents(this);
-      // This won't be available until there's at least one image in the 
-      // Datastore for our channel.
-      bitDepth_ = -1;
       List<Image> images = store_.getImagesMatching(
-            new DefaultCoords.Builder().channel(channelIndex_).build()
-      );
+            (new DefaultCoords.Builder()).channel(channelIndex_).build());
       if (images != null && images.size() > 0) {
          // Found an image for our channel
-         bitDepth_ = images.get(0).getMetadata().getBitDepth();
          initialize();
       }
    }
 
-   private void setImagePlus(ImagePlus plus) {
-      plus_ = plus;
-
-      // We may be for a single-channel system or a multi-channel one; the two
-      // require different backing objects (ImagePlus vs. CompositeImage).
-      // Hence why we have both the plus_ and composite_ objects, and use the
-      // appropriate one depending on context.
-      if (plus_ instanceof CompositeImage) {
-         composite_ = (CompositeImage) plus_;
-      }
-   }
-
    private void initialize() {
-      maxIntensity_ = (int) Math.pow(2, bitDepth_) - 1;
-      histMax_ = maxIntensity_ + 1;
-      binSize_ = histMax_ / NUM_BINS;
-      histMaxLabel_ = "" + histMax_;
       initComponents();
       reloadDisplaySettings();
       // Default to "camera depth" mode.
-      int index = 0;
-      histRangeComboBox_.setSelectedIndex(index);
+      histRangeComboBox_.setSelectedIndex(0);
 
       haveInitialized_.set(true);
    }
@@ -254,7 +194,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       });
       isEnabledButton_.setSize(smallButtonSize);
 
-      colorPickerLabel_.setBackground(color_);
+      colorPickerLabel_.setBackground(model_.getColor());
       colorPickerLabel_.setMinimumSize(smallButtonSize);
       colorPickerLabel_.setToolTipText("Change the color for displaying this channel");
       colorPickerLabel_.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
@@ -317,7 +257,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       JPanel firstColumn = new JPanel(
             new MigLayout("novisualpadding, insets 0, flowy",
                "[]", "[][][]0[]"));
-      nameLabel_ = new JLabel(name_);
+      nameLabel_ = new JLabel(model_.getName());
       firstColumn.add(nameLabel_, "alignx center");
       firstColumn.add(isEnabledButton_, "split 3, flowx");
       firstColumn.add(colorPickerLabel_, "aligny center");
@@ -361,10 +301,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       histRangeComboBox_.setSelectedIndex(index);
    }
    
-   public int getDisplayComboIndex() {
-      return histRangeComboBox_.getSelectedIndex();
-   }
-   
    /**
     * Do a logarithmic (powers of 2) zoom, which in turn updates our displayed
     * bit depth.
@@ -372,7 +308,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private void zoomInAction() {
       int selected = histRangeComboBox_.getSelectedIndex();
       if (selected == 0) {
-         selected = bitDepth_ - 3;
+         selected = model_.getHistRangeIndex() - 3;
       }
       if (selected != 1) {
          selected--;
@@ -383,7 +319,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private void zoomOutAction() {
       int selected = histRangeComboBox_.getSelectedIndex();
       if (selected == 0) {
-         selected = bitDepth_ - 3;
+         selected = model_.getHistRangeIndex() - 3;
       }
       if (selected < histRangeComboBox_.getModel().getSize() - 1) {
          selected++;
@@ -416,14 +352,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          display_.setDisplaySettings(settings);
       }
 
-      // Update the histogram display.
-      histMax_ = (int) (Math.pow(2, index + 3) - 1);
-      if (index == 0) {
-         // User selected the "Camera depth" option.
-         histMax_ = maxIntensity_;
-      }
-      binSize_ = ((double) (histMax_ + 1)) / ((double) NUM_BINS);
-      histMaxLabel_ = histMax_ + "";
       updateHistogram();
       calcAndDisplayHistAndStats(true);
    }
@@ -434,26 +362,31 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          // multi-channel situations.
          return;
       }
-      histogram_.setCursorText(contrastMin_ + "", contrastMax_ + "");
-      histogram_.setCursors(contrastMin_ / binSize_, (contrastMax_+1) / binSize_, gamma_);
+      histogram_.setCursorText(model_.getContrastMin() + "",
+            model_.getContrastMax() + "");
+      histogram_.setCursors(model_.getContrastMin() / model_.getBinSize(),
+            (model_.getContrastMax() + 1) / model_.getBinSize(),
+            model_.getContrastGamma());
       histogram_.repaint();
    }
 
    private void fullButtonAction() {
+      model_.disableAutostretch();
       DisplaySettings settings = display_.getDisplaySettings();
       if (settings.getShouldSyncChannels() != null &&
             settings.getShouldSyncChannels()) {
          parent_.fullScaleChannels();
       } else {
-         setFullScale();
-         applyLUT(true);
+         model_.setFullScale();
       }
-      disableAutostretch();
+   }
+
+   public ChannelHistogramModel getModel() {
+      return model_;
    }
 
    public void autoButtonAction() {
-      autostretch();
-      applyLUT(true);
+      model_.autostretch();
    }
 
    /**
@@ -469,7 +402,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
       // Pick the default color to start with.
       DisplaySettings settings = display_.getDisplaySettings();
-      Color defaultColor = color_;
+      Color defaultColor = model_.getColor();
       Color[] channelColors = settings.getChannelColors();
       if (channelColors != null && channelColors.length > channelIndex_) {
          defaultColor = channelColors[channelIndex_];
@@ -499,7 +432,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
          newColors[channelIndex_] = newColor;
          DisplaySettings newSettings = settings.copy().channelColors(newColors).build();
-         // This will update our color_ field via onNewDisplaySettings().
          display_.setDisplaySettings(newSettings);
       }
       reloadDisplaySettings();
@@ -515,10 +447,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void isEnabledAction() {
-      if (composite_ == null) {
-         // Not multi-channel; ignore.
-         return;
-      }
       // These icons are adapted from the public-domain icon at
       // https://openclipart.org/detail/182888/eye-icon
       isEnabledButton_.setIcon(isEnabledButton_.isSelected() ?
@@ -526,62 +454,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                   "/org/micromanager/icons/eye.png")) :
             new ImageIcon(getClass().getResource(
                   "/org/micromanager/icons/eye-out.png")));
-      boolean[] active = composite_.getActiveChannels();
-      if (composite_.getMode() != CompositeImage.COMPOSITE) {
-         if (active[channelIndex_]) {
-            isEnabledButton_.setSelected(true);
-            return;
-         } else {
-            // Change which channel the stack is pointing at.
-            stack_.setCoords(stack_.getCurrentImageCoords().copy().channel(channelIndex_).build());
-            composite_.updateAndDraw();
-         }
-      }
-
-      composite_.getActiveChannels()[channelIndex_] = isEnabledButton_.isSelected();
-      composite_.updateAndDraw();
-   }
-
-   public void setFullScale() {
-      int origMin = contrastMin_;
-      int origMax = contrastMax_;
-      contrastMin_ = 0;
-      contrastMax_ = histMax_;
-      // Only send an event if we actually changed anything; otherwise we get
-      // into an infinite loop.
-      if (origMin != contrastMin_ || origMax != contrastMax_) {
-         postNewSettings();
-      }
-   }
-
-   public void autostretch() {
-      int origMin = contrastMin_;
-      int origMax = contrastMax_;
-
-      contrastMin_ = pixelMin_;
-      contrastMax_ = pixelMax_;
-      if (pixelMin_ == pixelMax_) {
-          if (pixelMax_ > 0) {
-              contrastMin_--;
-          } else {
-              contrastMax_++;
-          }
-      }
-      contrastMin_ = Math.max(0,
-            Math.max(contrastMin_, minAfterRejectingOutliers_));
-      contrastMax_ = Math.min(contrastMax_, maxAfterRejectingOutliers_);
-      if (contrastMax_ <= contrastMin_) {
-          if (contrastMax_ > 0) {
-              contrastMin_ = contrastMax_ - 1;
-          } else {
-              contrastMax_ = contrastMin_ + 1;
-          }
-      }
-      // Only send an event if we actually changed anything; otherwise we get
-      // into an infinite loop.
-      if (origMin != contrastMin_ || origMax != contrastMax_) {
-         postNewSettings();
-      }
+      model_.setChannelEnabled(isEnabledButton_.isSelected());
    }
 
    private HistogramPanel makeHistogramPanel() {
@@ -592,12 +465,14 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             //For drawing max label
             g.setColor(Color.black);
             g.setFont(new Font("Lucida Grande", 0, 10));
-            g.drawString(histMaxLabel_, this.getSize().width - 8 * histMaxLabel_.length(), this.getSize().height);
+            g.drawString(model_.getHistMaxLabel(),
+                  this.getSize().width - 8 * model_.getHistMaxLabel().length(),
+                  this.getSize().height);
          }
       };
 
       hp.setMargins(12, 12);
-      hp.setTraceStyle(true, color_);
+      hp.setTraceStyle(true, model_.getColor());
       hp.setToolTipText("Click and drag curve to adjust gamma");
       hp.addCursorListener(this);
       return hp;
@@ -615,149 +490,35 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     * 4) If *those* values aren't available, use hardcoded defaults.
     */
    public void reloadDisplaySettings() {
-      DisplaySettings settings = display_.getDisplaySettings();
-      Integer[] bitDepthIndices = settings.getBitDepthIndices();
-      if (bitDepthIndices != null && bitDepthIndices.length > channelIndex_ &&
-            bitDepthIndices[channelIndex_] != histRangeComboBox_.getSelectedIndex()) {
-         histRangeComboBox_.setSelectedIndex(bitDepthIndices[channelIndex_]);
-      }
-      // HACK: use a color based on the channel index: specifically, use the
-      // colorblind-friendly color set.
-      Color defaultColor = Color.WHITE;
-      if (channelIndex_ < HistogramsPanel.COLORBLIND_COLORS.length) {
-         defaultColor = HistogramsPanel.COLORBLIND_COLORS[channelIndex_];
-      }
-      ChannelSettings channelSettings = ChannelSettings.loadSettings(
-            name_, store_.getSummaryMetadata().getChannelGroup(),
-            defaultColor, contrastMin_, contrastMax_, true);
+      model_.reloadDisplaySettings();
 
-      contrastMin_ = channelSettings.getHistogramMin();
-      Integer[] mins = settings.getChannelContrastMins();
-      if (mins != null && mins.length > channelIndex_ &&
-            mins[channelIndex_] != null) {
-         contrastMin_ = mins[channelIndex_];
+      if (histRangeComboBox_.getSelectedIndex() != model_.getHistRangeIndex()) {
+         histRangeComboBox_.setSelectedIndex(model_.getHistRangeIndex());
       }
 
-      contrastMax_ = channelSettings.getHistogramMax();
-      Integer[] maxes = settings.getChannelContrastMaxes();
-      if (maxes != null && maxes.length > channelIndex_ &&
-            maxes[channelIndex_] != null) {
-         contrastMax_ = maxes[channelIndex_];
-      }
+      Color color = model_.getColor();
+      colorPickerLabel_.setBackground(color);
+      histogram_.setTraceStyle(true, color);
 
-      // TODO: gamma not stored in channel settings.
-      Double[] gammas = settings.getChannelGammas();
-      if (gammas != null && gammas.length > channelIndex_ &&
-            gammas[channelIndex_] != null) {
-         gamma_ = gammas[channelIndex_];
-      }
-
-      // TODO: no autoscale checkbox for individual channels, so can't apply
-      // the autoscale property of ChannelSettings.
-
-      // Use the ChannelSettings value (which incorporates the hardcoded
-      // default when no color is set), or override with DisplaySettings
-      // if available.
-      color_ = channelSettings.getColor();
-      Color[] colors = settings.getChannelColors();
-      if (colors != null && colors.length > channelIndex_ &&
-            colors[channelIndex_] != null) {
-         color_ = colors[channelIndex_];
-      }
-
-      colorPickerLabel_.setBackground(color_);
-      histogram_.setTraceStyle(true, color_);
-
-      if (contrastMin_ == -1 || contrastMax_ == -1) {
-         // Invalid settings; we'll have to autoscale.
-         autostretch();
-      }
-
+      DisplaySettings.ColorMode mode = display_.getDisplaySettings().getChannelColorMode();
       // Eye buttons are only enabled when in composite mode.
-      if (settings.getChannelColorMode() != null) {
+      if (mode != null) {
          isEnabledButton_.setEnabled(
-               settings.getChannelColorMode() == DisplaySettings.ColorMode.COMPOSITE);
+               mode == DisplaySettings.ColorMode.COMPOSITE);
       }
 
-      saveChannelSettings();
       updateHistogram();
       calcAndDisplayHistAndStats(true);
-      applyLUT(true);
-   }
-
-   /**
-    * Save our current settings into the profile, so they'll be used by default
-    * by future displays for our channel name/group.
-    */
-   private void saveChannelSettings() {
-      // HACK: because we override colors to white for singlechannel displays,
-      // we need to try to "recover" the actual color from the profile or
-      // display settings here; otherwise the first channel in every new
-      // acquisition will always be white.
-      Color color = color_;
-      if (display_.getDatastore().getAxisLength(Coords.CHANNEL) == 1) {
-         ChannelSettings channelSettings = ChannelSettings.loadSettings(
-               name_, store_.getSummaryMetadata().getChannelGroup(),
-               null, -1, -1, true);
-         color = channelSettings.getColor();
-         if (color == null) {
-            Color[] colors = display_.getDisplaySettings().getChannelColors();
-            if (colors != null && colors.length > channelIndex_) {
-               color = colors[channelIndex_];
-            }
-         }
-      }
-      if (color == null) {
-         color = Color.WHITE;
-      }
-      // TODO: no per-channel autoscale controls, so defaulting to true here.
-      ChannelSettings settings = new ChannelSettings(name_,
-            store_.getSummaryMetadata().getChannelGroup(),
-            color, contrastMin_, contrastMax_, true);
-      settings.saveToProfile();
-   }
-
-   public int getContrastMin() {
-      return contrastMin_;
-   }
-
-   public int getContrastMax() {
-      return contrastMax_;
-   }
-
-   public double getContrastGamma() {
-      return gamma_;
+      model_.applyLUT(true);
    }
 
    public void setContrast(int min, int max, double gamma) {
-      contrastMin_ = min;
-      contrastMax_ = Math.min(maxIntensity_, max);
-      gamma_ = gamma;
+      model_.setContrast(min, max, gamma);
    }
 
    @Subscribe
    public void onLUTUpdate(LUTUpdateEvent event) {
       try {
-         // Receive new settings from the event, if applicable.
-         if (event.getMin() != null) {
-            contrastMin_ = event.getMin();
-         }
-         if (event.getMax() != null) {
-            contrastMax_ = event.getMax();
-         }
-         if (event.getGamma() != null) {
-            gamma_ = event.getGamma();
-         }
-         if (color_ == null) {
-            // Can't do anything about this yet.
-            return;
-         }
-
-         if (isFirstLUTUpdate_) {
-            // Haven't initialized contrast yet; do so by autostretching.
-            autostretch();
-            isFirstLUTUpdate_ = false;
-         }
          updateHistogram();
       }
       catch (Exception e) {
@@ -765,291 +526,30 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
    }
 
-   public int getChannelIndex() {
-      return channelIndex_;
-   }
-
-   /**
-    * @param shouldDrawHistogram - set true if hist and stats calculated
-    * successfully.
-    */
-   public void calcAndDisplayHistAndStats(boolean shouldDrawHistogram) {
-      if (plus_ == null || plus_.getProcessor() == null) {
-         // No image to work with.
-         return;
-      }
-      if (histogram_ == null) {
-         // No histogram to control.
-         return;
-      }
-      ImageProcessor processor;
-      if (composite_ == null) {
-         // Single-channel mode.
-         processor = plus_.getProcessor();
-      }
-      else {
-         // Multi-channel mode.
-         if (composite_.getMode() == CompositeImage.COMPOSITE) {
-            processor = composite_.getProcessor(channelIndex_ + 1);
-            if (processor != null) {
-               processor.setRoi(composite_.getRoi());
-            }
-         } else {
-            MMCompositeImage ci = (MMCompositeImage) composite_;
-            int flatIndex = 1 + channelIndex_ + 
-                  (composite_.getSlice() - 1) * ci.getNChannelsUnverified() +
-                  (composite_.getFrame() - 1) * ci.getNSlicesUnverified() * ci.getNChannelsUnverified();
-            processor = composite_.getStack().getProcessor(flatIndex);
-         }
-      }
-      if (processor == null ) {
-         // Tried to get an image that doesn't exist.
-         return;
-      }
-
-      if (composite_ != null) {
-         if (((MMCompositeImage) composite_).getNChannelsUnverified() <= 7) {
-            boolean active = composite_.getActiveChannels()[channelIndex_];
-            isEnabledButton_.setSelected(active);
-            if (!active) {
-               shouldDrawHistogram = false;
-            }
-         }
-         if (((MMCompositeImage) composite_).getMode() != CompositeImage.COMPOSITE &&
-               composite_.getChannel() - 1 != channelIndex_) {
-            shouldDrawHistogram = false;
-         }
-      }
-
-      int[] rawHistogram = processor.getHistogram();
-      int imgWidth = plus_.getWidth();
-      int imgHeight = plus_.getHeight();
-
-      if (rawHistogram[0] == imgWidth * imgHeight) {
-         // Image data is invalid/blank.
-         return;
-      }
-
-      DisplaySettings settings = display_.getDisplaySettings();
-      // Determine what percentage of the histogram range to autotrim.
-      maxAfterRejectingOutliers_ = rawHistogram.length;
-      int totalPoints = imgHeight * imgWidth;
-      Double extremaPercentage = settings.getExtremaPercentage();
-      if (extremaPercentage == null) {
-         extremaPercentage = 0.0;
-      }
-      HistogramUtils hu = new HistogramUtils(rawHistogram, totalPoints, 
-            0.01 * extremaPercentage);
-      minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
-      maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
-
-      GraphData histogramData = new GraphData();
-
-      pixelMin_ = -1;
-      pixelMax_ = 0;
-      pixelMean_ = (int) plus_.getStatistics(ImageStatistics.MEAN).mean;
-
-      int numBins = (int) Math.min(rawHistogram.length / binSize_, NUM_BINS);
-      int[] histogram = new int[NUM_BINS];
-      int total = 0;
-      for (int i = 0; i < numBins; i++) {
-         histogram[i] = 0;
-         for (int j = 0; j < binSize_; j++) {
-            int rawHistIndex = (int) (i * binSize_ + j);
-            int rawHistVal = rawHistogram[rawHistIndex];
-            histogram[i] += rawHistVal;
-            if (rawHistVal > 0) {
-               pixelMax_ = rawHistIndex;
-               if (pixelMin_ == -1) {
-                  pixelMin_ = rawHistIndex;
-               }
-            }
-         }
-         total += histogram[i];
-         if (settings.getShouldUseLogScale() != null &&
-               settings.getShouldUseLogScale()) {
-            histogram[i] = histogram[i] > 0 ? (int) (1000 * Math.log(histogram[i])) : 0;
-         }
-      }
-      //Make sure max has correct value is hist display mode isnt auto
-      if (histRangeComboBox_.getSelectedIndex() != -1) {
-         pixelMin_ = rawHistogram.length-1;
-         for (int i = rawHistogram.length-1; i > 0; i--) {
-            if (rawHistogram[i] > 0 && i > pixelMax_ ) {
-               pixelMax_ = i;
-            }
-            if (rawHistogram[i] > 0 && i < pixelMin_ ) {
-               pixelMin_ = i;
-            }
-         }
-      }
-
-      // Autostretch, if necessary.
-      if (settings.getShouldAutostretch() != null &&
-            settings.getShouldAutostretch()) {
-         autostretch();
-         applyLUT(false);
-      }
-
-      // work around what is apparently a bug in ImageJ
-      if (total == 0) {
-         if (plus_.getProcessor().getMin() == 0) {
-            histogram[0] = imgWidth * imgHeight;
-         } else {
-            histogram[numBins - 1] = imgWidth * imgHeight;
-         }
-      }
-      
-      if (shouldDrawHistogram) {
-         histogram_.setVisible(true);
-         //Draw histogram and stats
-         histogramData.setData(histogram);
-         histogram_.setData(histogramData);
-         histogram_.setAutoScale();
-         histogram_.repaint();
-
-         minMaxLabel_.setText(String.format("<html>Min/Max/Mean:<br>%d/%d/%d</html>", pixelMin_, pixelMax_, pixelMean_));
-      } else {
-          histogram_.setVisible(false);
-      }
-   }
-   
    @Override
    public void contrastMaxInput(int max) {
-      disableAutostretch();
-      contrastMax_ = max;
-      if (contrastMax_ > maxIntensity_ ) {
-         contrastMax_ = maxIntensity_;
-      }
-      if (contrastMax_ < 0) {
-         contrastMax_ = 0;
-      }
-      if (contrastMin_ > contrastMax_) {
-         contrastMin_ = contrastMax_;
-      }
-      applyLUT(true);
-      postNewSettings();
+      model_.setContrastMax(max);
    }
    
    @Override
    public void contrastMinInput(int min) {    
-      disableAutostretch();
-      contrastMin_ = min;
-      if (contrastMin_ >= maxIntensity_)
-          contrastMin_ = maxIntensity_ - 1;
-      if(contrastMin_ < 0 ) {
-         contrastMin_ = 0;
-      }
-      if (contrastMax_ < contrastMin_) {
-         contrastMax_ = contrastMin_ + 1;
-      }
-      applyLUT(true);
-      postNewSettings();
+      model_.setContrastMin(min);
    }
 
    @Override
    public void onLeftCursor(double pos) {
-      disableAutostretch();
-      contrastMin_ = (int) (Math.max(0, pos) * binSize_);
-      if (contrastMin_ >= maxIntensity_)
-          contrastMin_ = maxIntensity_ - 1;
-      if (contrastMax_ < contrastMin_) {
-         contrastMax_ = contrastMin_ + 1;
-      }
-      applyLUT(true);
-      postNewSettings();
+      model_.setContrastMin((int) (Math.max(0, pos) * model_.getBinSize()));
    }
 
    @Override
    public void onRightCursor(double pos) {
-      disableAutostretch();
-      contrastMax_ = (int) (Math.min(NUM_BINS - 1, pos) * binSize_);
-      if (contrastMax_ < 1) {
-         contrastMax_ = 1;
-      }
-      if (contrastMin_ > contrastMax_) {
-         contrastMin_ = contrastMax_;
-      }
-      applyLUT(true);
-      postNewSettings();
+      model_.setContrastMax(
+            (int) (Math.min(ChannelHistogramModel.NUM_BINS - 1, pos) * model_.getBinSize()));
    }
 
    @Override
    public void onGammaCurve(double gamma) {
-      if (gamma != 0) {
-         if (gamma > 0.9 & gamma < 1.1) {
-            gamma_ = 1.0;
-         } else {
-            gamma_ = gamma;
-         }
-         applyLUT(true);
-         postNewSettings();
-      }
-   }
-
-   /**
-    * Update our parent's DisplaySettings, post a ContrastEvent, and save
-    * our new settings to the profile (via the ChannelSettings).
-    */
-   private void postNewSettings() {
-      if (!haveInitialized_.get()) {
-         // Don't send out anything until after we're done initializing, since
-         // our settings are probably in an inconsistent state right now.
-         return;
-      }
-      DisplaySettings settings = display_.getDisplaySettings();
-      DisplaySettings.DisplaySettingsBuilder builder = settings.copy();
-
-      Object[] channelSettings = DefaultDisplaySettings.getPerChannelArrays(settings);
-      // TODO: ordering of these values is closely tied to the above function!
-      Object[] ourParams = new Object[] {color_, contrastMin_, contrastMax_,
-         gamma_};
-      // For each of the above parameters, ensure that there's an array in
-      // the display settings that's at least long enough to hold our channel,
-      // and that our values are represented in that array.
-      for (int i = 0; i < channelSettings.length; ++i) {
-         Object[] oldVals = DefaultDisplaySettings.makePerChannelArray(i,
-               (Object[]) channelSettings[i], channelIndex_ + 1);
-         // HACK: for the specific case of a single-channel setup, our nominal
-         // color is white -- but we should not force this into the
-         // DisplaySettings as our color should change if a new channel is
-         // added.
-         if (!(oldVals instanceof Color[]) ||
-               store_.getAxisLength(Coords.CHANNEL) > 1) {
-            oldVals[channelIndex_] = ourParams[i];
-         }
-         DefaultDisplaySettings.updateChannelArray(i, oldVals, builder);
-      }
-      settings = builder.build();
-      display_.setDisplaySettings(settings);
-      saveChannelSettings();
-      postContrastEvent(settings);
-   }
-
-   /**
-    * We provide the boolean mostly so that we don't get into cyclic draw
-    * events when our drawing code calls this method.
-    */
-   private void applyLUT(boolean shouldRedisplay) {
-      DisplaySettings settings = display_.getDisplaySettings();
-      if (settings.getShouldSyncChannels() != null &&
-            settings.getShouldSyncChannels()) {
-         display_.postEvent(
-               new LUTUpdateEvent(contrastMin_, contrastMax_, gamma_));
-      } else {
-         display_.postEvent(new LUTUpdateEvent(null, null, null));
-      }
-      if (shouldRedisplay) {
-         LUTMaster.updateDisplayLUTs(display_);
-      }
-   }
-
-   private void disableAutostretch() {
-      DisplaySettings settings = display_.getDisplaySettings();
-      if (settings.getShouldAutostretch() != null &&
-            settings.getShouldAutostretch()) {
-         display_.setDisplaySettings(display_.getDisplaySettings().copy().shouldAutostretch(false).build());
-      }
+      model_.setContrastGamma(gamma);
    }
 
    /**
@@ -1072,11 +572,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
    }
 
-   @Subscribe
-   public void onNewImagePlus(NewImagePlusEvent event) {
-      setImagePlus(event.getImagePlus());
-   }
-
    /**
     * Summary metadata has changed; check for change in channel name.
     * @param event
@@ -1089,37 +584,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
       String[] names = event.getSummaryMetadata().getChannelNames();
       if (names != null && names.length > channelIndex_) {
-         name_ = names[channelIndex_];
-         nameLabel_.setText(name_);
-      }
-   }
-
-   /**
-    * A new image has arrived; if it's for our channel and we haven't set bit
-    * depth yet, then do so now.
-    * @param event
-    */
-   @Subscribe
-   public void onNewImage(NewImageEvent event) {
-      try {
-         int channel = event.getCoords().getChannel();
-         if (bitDepth_ == -1 && channel == channelIndex_) {
-            bitDepth_ = event.getImage().getMetadata().getBitDepth();
-            initialize();
-         }
-         // Only reload display settings if we really have to, as this forces
-         // redraws which can slow the display way down.
-         Color[] channelColors = display_.getDisplaySettings().getChannelColors();
-         Color targetColor = null;
-         if (channelColors != null && channelColors.length > 0) {
-            targetColor = channelColors[0];
-         }
-         if (!color_.equals(targetColor)) {
-            reloadDisplaySettings();
-         }
-      }
-      catch (Exception e) {
-         ReportingUtils.logError(e, "Error handling new image in histogram for channel " + channelIndex_);
+         nameLabel_.setText(names[channelIndex_]);
       }
    }
 
@@ -1134,7 +599,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    public void cleanup() {
-      store_.unregisterForEvents(this);
       if (display_ != null) {
          try {
             display_.unregisterForEvents(this);
@@ -1146,5 +610,21 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       }
       linkButton_.cleanup();
+   }
+
+   public void calcAndDisplayHistAndStats(boolean shouldDrawHistogram) {
+      int[] histogram = model_.calcHistogramStats();
+      if (histogram == null || !model_.getChannelEnabled() ||
+            !shouldDrawHistogram) {
+         histogram_.setVisible(false);
+         return;
+      }
+      histogram_.setVisible(true);
+      //Draw histogram and stats
+      GraphData histogramData = new GraphData();
+      histogramData.setData(histogram);
+      histogram_.setData(histogramData);
+      histogram_.setAutoScale();
+      histogram_.repaint();
    }
 }

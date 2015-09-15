@@ -267,8 +267,7 @@ public final class HistogramsPanel extends InspectorPanel {
 
    private void addPanel(DefaultDisplayWindow display, int channelIndex) {
       ChannelControlPanel panel = new ChannelControlPanel(channelIndex, this,
-            display.getDatastore(), display, display.getStack(),
-            display.getImagePlus());
+            display.getDatastore(), display, display.getStack());
       displayToPanels_.get(display).add(panel);
       if (display == display_) {
          // Also add the panel to our contents, and tell our inspector frame
@@ -284,7 +283,7 @@ public final class HistogramsPanel extends InspectorPanel {
          return;
       }
       for (ChannelControlPanel panel : channelPanels_) {
-         panel.setFullScale();
+         panel.getModel().setFullScale();
       }
       display_.postEvent(new LUTUpdateEvent(null, null, null));
       display_.postEvent(new DefaultRequestToDrawEvent());

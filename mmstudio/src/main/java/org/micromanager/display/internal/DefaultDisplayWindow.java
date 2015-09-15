@@ -103,7 +103,9 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * This class is the window that handles image viewing: it contains the
- * canvas and controls for determining which channel, Z-slice, etc. is shown. 
+ * canvas and controls for determining which channel, Z-slice, etc, is shown,
+ * and also acts as the central location for all management of display
+ * resources.
  * Note that it is *not* an ImageJ ImageWindow; instead, it creates a
  * DummyImageWindow instance for liaising with ImageJ. See that class for
  * more information on why we do this.
@@ -123,6 +125,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    // the display itself, which would prevent garbage collection of displays.
    private static final HashMap<Integer, String> displayHashToUniqueName_ =
       new HashMap<Integer, String>();
+
    private final Datastore store_;
    private DisplaySettings displaySettings_;
    private MMVirtualStack stack_;
@@ -131,6 +134,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    // List of channel names we have seen, for ensuring our contrast settings
    // are up-to-date.
    private HashSet<String> knownChannels_;
+   // Keeps track of ChannelHistogramModel objects for us.
+   private HashMap<Integer, ChannelHistogramModel> channelToModel_;
 
    // This will be our intermediary with ImageJ.
    private DummyImageWindow dummyWindow_;
@@ -221,6 +226,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       super("image display window");
       store_ = store;
       knownChannels_ = new HashSet<String>();
+      channelToModel_ = new HashMap<Integer, ChannelHistogramModel>();
       if (settings == null) {
          displaySettings_ = DefaultDisplaySettings.getStandardSettings();
       }
@@ -463,6 +469,19 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             .build();
          displayBus_.post(new NewDisplaySettingsEvent(displaySettings_, this));
       }
+   }
+
+   /**
+    * Retrieve the ChannelHistogramModel for the specified channel. Create it
+    * if it does not already exist.
+    */
+   public ChannelHistogramModel getHistogramModel(int index) {
+      if (!channelToModel_.containsKey(index)) {
+         channelToModel_.put(index,
+               new ChannelHistogramModel(index, store_, this, stack_,
+                  ijImage_));
+      }
+      return channelToModel_.get(index);
    }
 
    /**
