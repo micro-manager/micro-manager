@@ -156,6 +156,17 @@ public interface SummaryMetadata {
    public String[] getChannelNames();
 
    /**
+    * Retrieve the name of the specified channel. Ordinarily this is simply
+    * an index into the channelNames array (per getChannelNames()), but if
+    * there is no name there (channelNames is unset, or not long enough, or
+    * contains a null), then the name will be "channel N" where N is the
+    * channel index.
+    * @param index Channel index to get the name for.
+    * @return Name of the channel.
+    */
+   public String getSafeChannelName(int index);
+
+   /**
     * Distance between slices in a volume of data, in microns
     * @return distance between slices in a volume of data, in microns
     */

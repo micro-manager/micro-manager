@@ -100,13 +100,7 @@ public class ChannelHistogramModel {
       stack_ = stack;
       setImagePlus(plus);
 
-      // Default to a generic name based on our channel index.
-      name_ = String.format("channel %d", channelIndex_);
-      String[] allNames = store_.getSummaryMetadata().getChannelNames();
-      if (allNames != null && allNames.length > channelIndex_ &&
-            allNames[channelIndex_] != null) {
-         name_ = allNames[channelIndex_];
-      }
+      name_ = store_.getSummaryMetadata().getSafeChannelName(channelIndex_);
 
       // Must be registered for events before we start modifying images, since
       // that relies on LUTUpdateEvent.

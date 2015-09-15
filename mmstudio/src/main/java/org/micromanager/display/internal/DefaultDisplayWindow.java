@@ -1050,8 +1050,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             composite.setNChannelsUnverified(numChannels);
             composite.reset();
          }
-         Metadata metadata = image.getMetadata();
-         if (!knownChannels_.contains(metadata.getChannelName())) {
+         String name = store_.getSummaryMetadata().getSafeChannelName(imageChannel);
+         if (!knownChannels_.contains(name)) {
             // Update our display settings with the new channel.
             updateChannelSettings();
          }
@@ -1069,23 +1069,26 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       int numChannels = store_.getAxisLength(Coords.CHANNEL);
       String[] names = new String[numChannels];
       String[] officialNames = store_.getSummaryMetadata().getChannelNames();
+      boolean didChange = false;
       // Construct a list of channel names.
       for (int i = 0; i < store_.getAxisLength(Coords.CHANNEL); ++i) {
          // HACK: this name must match the name derived in
          // ChannelContrastPanel.java.
-         names[i] = "channel " + i;
-         if (officialNames != null && officialNames.length > i &&
-               officialNames[i] != null) {
-            names[i] = officialNames[i];
+         names[i] = store_.getSummaryMetadata().getSafeChannelName(i);
+         if (!knownChannels_.contains(names[i])) {
+            knownChannels_.add(names[i]);
+            didChange = true;
          }
-         knownChannels_.add(names[i]);
       }
-      DisplaySettings newSettings = ChannelSettings.updateSettings(names,
-            store_.getSummaryMetadata().getChannelGroup(),
-            displaySettings_);
-      if (newSettings != null) {
-         // There were new settings to load.
-         setDisplaySettings(newSettings);
+      if (didChange) {
+         DisplaySettings newSettings = ChannelSettings.updateSettings(names,
+               store_.getSummaryMetadata().getChannelGroup(),
+               displaySettings_);
+         if (newSettings != null) {
+            // There were new settings to load, i.e. we actually do have new
+            // names
+            setDisplaySettings(newSettings);
+         }
       }
    }
 
