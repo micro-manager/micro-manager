@@ -22,6 +22,8 @@ package org.micromanager.data.internal.multipagetiff;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.LinkedList;
 import java.util.TreeSet;
 import java.util.UUID;
@@ -339,7 +341,12 @@ class FileSet {
             expectedImageOrder_ = false;
          }
          //Figure out next expected indices
-         if (masterStorage_.slicesFirst()) {
+         boolean areSlicesFirst = true;
+         if (masterStorage_.getSummaryMetadata().getAxisOrder() != null) {
+            List<String> order = Arrays.asList(masterStorage_.getSummaryMetadata().getAxisOrder());
+            areSlicesFirst = order.indexOf(Coords.Z) < order.indexOf(Coords.CHANNEL);
+         }
+         if (areSlicesFirst) {
             nextExpectedSlice_ = slice + 1;
             if (nextExpectedSlice_ == masterStorage_.getIntendedSize(Coords.Z)) {
                nextExpectedSlice_ = 0;
