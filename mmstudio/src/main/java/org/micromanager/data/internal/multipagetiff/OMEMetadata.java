@@ -24,6 +24,8 @@ package org.micromanager.data.internal.multipagetiff;
 // Note: java.awt.Color and ome.xml.model.primitives.Color used with
 // fully-qualified class names
 import java.nio.ByteOrder;
+import java.util.Arrays;
+import java.util.List;
 import java.util.TreeMap;
 import loci.common.DateTools;
 import loci.common.services.ServiceFactory;
@@ -109,10 +111,23 @@ public class OMEMetadata {
       numSlices_ = mptStorage_.getIntendedSize(Coords.Z);
       numChannels_ = mptStorage_.getIntendedSize(Coords.CHANNEL);
       Image repImage = mptStorage_.getAnyImage();
+      // Get the axis order.
+      // TODO: Note that OME metadata *only* allows axis orders that contain
+      // the letters XYZCT (and as far as I can tell it must contain each
+      // letter once).
+      String axisOrder = "XY";
+      if (mptStorage_.getSummaryMetadata().getAxisOrder() != null) {
+         List<String> order = Arrays.asList(mptStorage_.getSummaryMetadata().getAxisOrder());
+         axisOrder += (order.indexOf(Coords.Z) < order.indexOf(Coords.CHANNEL)) ? "ZCT" : "CZT";
+      }
+      else {
+         // Make something up to have a valid string.
+         axisOrder += "CZT";
+      }
       //Last one is samples per pixel
       MetadataTools.populateMetadata(metadata_, seriesIndex, baseFileName,
             MultipageTiffWriter.BYTE_ORDER.equals(ByteOrder.LITTLE_ENDIAN),
-            mptStorage_.slicesFirst() ? "XYZCT" : "XYCZT",
+            axisOrder,
             "uint" + repImage.getBytesPerPixel() * 8,
             repImage.getWidth(), repImage.getHeight(),
             numSlices_, numChannels_,
