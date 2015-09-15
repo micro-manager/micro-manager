@@ -273,6 +273,10 @@ public class ControllerUtils {
          piezoAmplitude = (settings.numSlices - 1) * settings.stepSizeUm;
       }
       
+      // use this instead of settings.numSlices from here on out because
+      // we modify it if we are taking "extra slice" for synchronous/overlap
+      int numSlices = settings.numSlices;
+      
       // tweak the parameters if we are using synchronous/overlap mode
       // object is to get exact same piezo/scanner positions in first
       // N frames (piezo/scanner will move to N+1st position but no image taken)
@@ -280,9 +284,9 @@ public class ControllerUtils {
             prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
                   Properties.Keys.PLUGIN_CAMERA_MODE, 0));
       if (cameraMode == CameraModes.Keys.OVERLAP) {
-         piezoAmplitude *= ((float)settings.numSlices)/(settings.numSlices-1);
-         piezoCenter += piezoAmplitude/(2*settings.numSlices);
-         settings.numSlices += 1;
+         piezoAmplitude *= ((float)numSlices)/((float)numSlices-1f);
+         piezoCenter += piezoAmplitude/(2*numSlices);
+         numSlices += 1;
       }
       
       float sliceRate = prefs_.getFloat(
@@ -305,7 +309,7 @@ public class ControllerUtils {
          // if we artificially shifted centers due to extra trigger and only moving piezo
          // then move galvo center back to where it would have been
          if (cameraMode == CameraModes.Keys.OVERLAP) {
-            float actualPiezoCenter = piezoCenter - piezoAmplitude/(2*(settings.numSlices-1));
+            float actualPiezoCenter = piezoCenter - piezoAmplitude/(2*(numSlices-1));
             sliceCenter = (actualPiezoCenter - sliceOffset) / sliceRate;
          }
          sliceAmplitude = 0.0f;
@@ -322,7 +326,7 @@ public class ControllerUtils {
       props_.setPropValue(galvoDevice, Properties.Keys.SA_OFFSET_Y_DEG,
             sliceCenter, skipScannerWarnings);
       props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SLICES,
-            settings.numSlices, skipScannerWarnings);
+            numSlices, skipScannerWarnings);
       props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SIDES,
             settings.numSides, skipScannerWarnings);
       props_.setPropValue(galvoDevice, Properties.Keys.SPIM_FIRSTSIDE,
@@ -336,7 +340,7 @@ public class ControllerUtils {
             // if we artificially shifted centers due to extra trigger and only moving piezo
             // then move galvo center back to where it would have been
             if (cameraMode == CameraModes.Keys.OVERLAP) {
-               piezoCenter -= piezoAmplitude/(2*(settings.numSlices-1));
+               piezoCenter -= piezoAmplitude/(2*(numSlices-1));
             }
             piezoAmplitude = 0.0f;
          }
@@ -345,7 +349,7 @@ public class ControllerUtils {
          props_.setPropValue(piezoDevice,
                Properties.Keys.SA_OFFSET, piezoCenter);
          props_.setPropValue(piezoDevice,
-               Properties.Keys.SPIM_NUM_SLICES, settings.numSlices);
+               Properties.Keys.SPIM_NUM_SLICES, numSlices);
          props_.setPropValue(piezoDevice,
                Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED);
       }
