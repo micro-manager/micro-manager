@@ -185,6 +185,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
       isEnabledButton_.setSize(smallButtonSize);
+      isEnabledButton_.setSelected(true);
 
       colorPickerLabel_.setBackground(model_.getColor());
       colorPickerLabel_.setMinimumSize(smallButtonSize);
