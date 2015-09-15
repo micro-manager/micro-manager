@@ -23,22 +23,16 @@
 
 package org.micromanager.splitview;
 
-import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
-import mmcorej.TaggedImage;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.micromanager.acquisition.internal.TaggedImageQueue;
+
 import org.micromanager.data.Coords;
+import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
-import org.micromanager.data.Metadata;
 import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
+import org.micromanager.data.SummaryMetadata;
+
 import org.micromanager.Studio;
-import org.micromanager.internal.utils.MDUtils;
-import org.micromanager.internal.utils.MMScriptException;
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * DataProcessor that splits images as instructed in SplitViewFrame
@@ -49,6 +43,7 @@ public class SplitViewProcessor extends Processor {
 
    private Studio studio_;
    private String orientation_ = SplitViewFrame.LR;
+   private boolean haveUpdatedMetadata_ = false;
 
    public SplitViewProcessor(Studio studio, String orientation) {
       studio_ = studio;
@@ -79,6 +74,30 @@ public class SplitViewProcessor extends Processor {
       ImageProcessor proc = studio_.data().ij().createProcessor(image);
       int channelIndex = image.getCoords().getChannel();
 
+      // Update channel names in summary metadata.
+      if (!haveUpdatedMetadata_) {
+         SummaryMetadata summary = context.getSummaryMetadata();
+         String[] names = summary.getChannelNames();
+         if (names == null) {
+            names = new String[image.getCoords().getChannel() + 1];
+         }
+         String[] newNames = new String[names.length * 2];
+         for (int i = 0; i < names.length; ++i) {
+            newNames[i] = names[i];
+         }
+         String base = summary.getSafeChannelName(channelIndex);
+         newNames[channelIndex * 2] = base + getChannelSuffix(channelIndex * 2);
+         newNames[channelIndex * 2 + 1] = base + getChannelSuffix(channelIndex * 2 + 1);
+         summary = summary.copy().channelNames(newNames).build();
+         try {
+            context.setSummaryMetadata(summary);
+         }
+         catch (DatastoreFrozenException e) {
+            studio_.logs().logError("Unable to update channel names because datastore is frozen.");
+         }
+         haveUpdatedMetadata_ = true;
+      }
+
       proc.setPixels(image.getRawPixels());
 
       int height = image.getHeight();
@@ -90,12 +109,9 @@ public class SplitViewProcessor extends Processor {
 
       // first channel
       Coords firstCoords = image.getCoords().copy().channel(channelIndex * 2).build();
-      Metadata firstMetadata = image.getMetadata();
-      firstMetadata = firstMetadata.copy().channelName(
-            firstMetadata.getChannelName() + getChannelSuffix(channelIndex * 2)).build();
       Image first = studio_.data().createImage(proc.crop().getPixels(),
             width, height, image.getBytesPerPixel(), image.getNumComponents(),
-            firstCoords, firstMetadata);
+            firstCoords, image.getMetadata());
       context.outputImage(first);
 
       // second channel
@@ -105,12 +121,9 @@ public class SplitViewProcessor extends Processor {
          proc.setRoi(0, height, width, height);
       }
       Coords secondCoords = image.getCoords().copy().channel(channelIndex * 2 + 1).build();
-      Metadata secondMetadata = image.getMetadata();
-      secondMetadata = secondMetadata.copy().channelName(
-            secondMetadata.getChannelName() + getChannelSuffix(channelIndex * 2 + 1)).build();
       Image second = studio_.data().createImage(proc.crop().getPixels(),
             width, height, image.getBytesPerPixel(), image.getNumComponents(),
-            secondCoords, secondMetadata);
+            secondCoords, image.getMetadata());
       context.outputImage(second);
    }
 
