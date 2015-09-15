@@ -58,7 +58,6 @@ public interface Metadata {
       MetadataBuilder binning(Integer binning);
       MetadataBuilder bitDepth(Integer bitDepth);
       MetadataBuilder camera(String camera);
-      MetadataBuilder channelName(String channelName);
       MetadataBuilder comments(String comments);
       MetadataBuilder elapsedTimeMs(Double elapsedTimeMs);
       MetadataBuilder emissionLabel(String emissionLabel);
@@ -223,12 +222,6 @@ public interface Metadata {
     * @return Camera name
     */
    String getCamera();
-   
-   /** 
-    * The name of the channel for this image (e.g. DAPI or GFP) 
-    * @return Channel name
-    */
-   String getChannelName();
    
    /** 
     * Any user-supplied comments for this specific image 

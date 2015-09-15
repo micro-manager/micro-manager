@@ -59,7 +59,6 @@ public class DefaultMetadata implements Metadata {
       private String pixelType_ = null;
       private Integer bitDepth_ = null;
       private Integer ijType_ = null;
-      private String channelName_ = null;
       private Double exposureMs_ = null;
       private Double elapsedTimeMs_ = null;
       private Double startTimeMs_ = null;
@@ -136,12 +135,6 @@ public class DefaultMetadata implements Metadata {
       @Override
       public MetadataBuilder ijType(Integer ijType) {
          ijType_ = ijType;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder channelName(String channelName) {
-         channelName_ = channelName;
          return this;
       }
 
@@ -283,7 +276,6 @@ public class DefaultMetadata implements Metadata {
    private String pixelType_ = null;
    private Integer bitDepth_ = null;
    private Integer ijType_ = null;
-   private String channelName_ = null;
    private Double exposureMs_ = null;
    private Double elapsedTimeMs_ = null;
    private Double startTimeMs_ = null;
@@ -322,7 +314,6 @@ public class DefaultMetadata implements Metadata {
       pixelType_ = builder.pixelType_;
       bitDepth_ = builder.bitDepth_;
       ijType_ = builder.ijType_;
-      channelName_ = builder.channelName_;
       exposureMs_ = builder.exposureMs_;
       elapsedTimeMs_ = builder.elapsedTimeMs_;
       startTimeMs_ = builder.startTimeMs_;
@@ -361,7 +352,6 @@ public class DefaultMetadata implements Metadata {
             .pixelType(pixelType_)
             .bitDepth(bitDepth_)
             .ijType(ijType_)
-            .channelName(channelName_)
             .exposureMs(exposureMs_)
             .elapsedTimeMs(elapsedTimeMs_)
             .startTimeMs(startTimeMs_)
@@ -421,11 +411,6 @@ public class DefaultMetadata implements Metadata {
    @Override
    public Integer getIjType() {
       return ijType_;
-   }
-
-   @Override
-   public String getChannelName() {
-      return channelName_;
    }
 
    @Override
@@ -549,7 +534,6 @@ public class DefaultMetadata implements Metadata {
                (getBinning() == null) ? 0 : getBinning());
          MDUtils.setBitDepth(result, getBitDepth());
          result.put("Camera", getCamera());
-         MDUtils.setChannelName(result, getChannelName());
          MDUtils.setComments(result, getComments());
          MDUtils.setElapsedTimeMs(result, 
                (getElapsedTimeMs() == null) ? 0 : getElapsedTimeMs());
@@ -636,13 +620,6 @@ public class DefaultMetadata implements Metadata {
       }
       catch (JSONException e) {
          ReportingUtils.logDebugMessage("Metadata failed to extract field camera");
-      }
-
-      try {
-         builder.channelName(MDUtils.getChannelName(tags));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Metadata failed to extract field channelName");
       }
 
       try {
