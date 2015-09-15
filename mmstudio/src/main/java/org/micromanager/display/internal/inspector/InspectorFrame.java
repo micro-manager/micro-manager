@@ -42,6 +42,7 @@ import java.awt.event.WindowAdapter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Stack;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -110,6 +111,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
    private static final String CONTRAST_TITLE = "Histograms and Settings";
    private static final String WINDOW_WIDTH = "width of the inspector frame";
    private DisplayWindow display_;
+   private Stack<DisplayWindow> displayHistory_;
    private ArrayList<InspectorPanel> panels_;
    private JPanel contents_;
    private JComboBox displayChooser_;
@@ -118,6 +120,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
 
    public InspectorFrame(DisplayWindow display) {
       super();
+      displayHistory_ = new Stack<DisplayWindow>();
       setTitle("Image Inspector");
       setAlwaysOnTop(true);
       // Use a small title bar.
@@ -240,6 +243,9 @@ public class InspectorFrame extends MMFrame implements Inspector {
       displayChooser_.addItem(nullItem);
       List<DisplayWindow> allDisplays = DefaultDisplayManager.getInstance().getAllImageWindows();
       for (DisplayWindow display : allDisplays) {
+         if (!displayHistory_.contains(display)) {
+            displayHistory_.push(display);
+         }
          DisplayMenuItem newItem = new DisplayMenuItem(display);
          displayChooser_.addItem(newItem);
          if (display_ == display && curItem.getDisplay() != null) {
@@ -387,6 +393,21 @@ public class InspectorFrame extends MMFrame implements Inspector {
    }
 
    private void setDisplay(DisplayWindow display) {
+      if (display == null) {
+         // Remove the top display from the history, and switch to the most
+         // recent next one, if possible.
+         displayHistory_.remove(display_);
+         if (!displayHistory_.empty()) {
+            display = displayHistory_.peek();
+         }
+      }
+      // Update the display history so the new display is in front.
+      if (display != null) {
+         if (displayHistory_.contains(display)) {
+            displayHistory_.remove(display);
+         }
+         displayHistory_.push(display_);
+      }
       display_ = display;
       for (InspectorPanel panel : panels_) {
          try {
