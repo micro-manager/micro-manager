@@ -67,13 +67,7 @@ import org.micromanager.display.internal.link.LinkButton;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.display.internal.DisplayDestroyedEvent;
-import org.micromanager.display.internal.MMCompositeImage;
-import org.micromanager.display.internal.MMVirtualStack;
-import org.micromanager.display.internal.LUTMaster;
 
-import org.micromanager.internal.utils.HistogramUtils;
-import org.micromanager.internal.utils.ImageUtils;
-import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -89,7 +83,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private final HistogramsPanel parent_;
    private final Datastore store_;
    private DefaultDisplayWindow display_;
-   private final MMVirtualStack stack_;
 
    private JButton autoButton_;
    private JButton zoomInButton_;
@@ -105,13 +98,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private final AtomicBoolean haveInitialized_;
 
    public ChannelControlPanel(int channelIndex, HistogramsPanel parent,
-         Datastore store, DefaultDisplayWindow display, MMVirtualStack stack) {
+         Datastore store, DefaultDisplayWindow display) {
       haveInitialized_ = new AtomicBoolean(false);
       channelIndex_ = channelIndex;
       parent_ = parent;
       store_ = store;
       display_ = display;
-      stack_ = stack;
       model_ = display_.getHistogramModel(channelIndex_);
 
       // Must be registered for events before we start modifying images, since

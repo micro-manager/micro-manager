@@ -20,23 +20,14 @@
 
 package org.micromanager.display.internal;
 
-import com.bulenkov.iconloader.IconLoader;
-
 import com.google.common.eventbus.Subscribe;
 
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
-import ij.process.LUT;
 
 import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.List;
 
@@ -44,23 +35,16 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.NewImageEvent;
-import org.micromanager.data.NewSummaryMetadataEvent;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.NewDisplaySettingsEvent;
 import org.micromanager.display.NewImagePlusEvent;
 
 import org.micromanager.data.internal.DefaultCoords;
-import org.micromanager.internal.graph.GraphData;
-import org.micromanager.internal.graph.HistogramPanel;
-import org.micromanager.internal.graph.HistogramPanel.CursorListener;
-import org.micromanager.internal.MMStudio;
 
 import org.micromanager.display.internal.events.LUTUpdateEvent;
 import org.micromanager.display.internal.link.ContrastEvent;
 import org.micromanager.display.internal.link.ContrastLinker;
-import org.micromanager.display.internal.link.DisplayGroupManager;
-import org.micromanager.display.internal.link.LinkButton;
 import org.micromanager.display.internal.ChannelSettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.DisplayDestroyedEvent;
@@ -70,8 +54,6 @@ import org.micromanager.display.internal.MMVirtualStack;
 import org.micromanager.display.internal.LUTMaster;
 
 import org.micromanager.internal.utils.HistogramUtils;
-import org.micromanager.internal.utils.ImageUtils;
-import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -694,7 +676,6 @@ public class ChannelHistogramModel {
          }
          // Only reload display settings if we really have to, as this forces
          // redraws which can slow the display way down.
-         // TODO: replicated in ChannelControlPanel; which one needs it?
          Color targetColor = display_.getDisplaySettings().getSafeChannelColor(
                channelIndex_, null);
          if (!color_.equals(targetColor)) {
