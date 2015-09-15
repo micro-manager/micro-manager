@@ -448,6 +448,17 @@ public class DefaultDisplaySettings implements DisplaySettings {
       return bitDepthIndices_;
    }
 
+
+   @Override
+   public Integer getSafeBitDepthIndex(int index, Integer defaultVal) {
+      if (bitDepthIndices_ == null ||
+            bitDepthIndices_.length <= index ||
+            bitDepthIndices_[index] == null) {
+         return defaultVal;
+      }
+      return bitDepthIndices_[index];
+   }
+
    @Override
    public Boolean getShouldUseLogScale() {
       return shouldUseLogScale_;

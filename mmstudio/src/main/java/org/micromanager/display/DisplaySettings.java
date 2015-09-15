@@ -255,6 +255,17 @@ public interface DisplaySettings {
     * @return Index into dropdown menu
     */
    public Integer[] getBitDepthIndices();
+
+   /**
+    * Safely retrieve the bit depth index for the specified channel. If the
+    * bitDepthIndices property is null, is too small to have a value for the
+    * given index, or has a value of null for that index, then the provided
+    * default value will be returned instead.
+    * @param index Channel index to get the bit depth index for
+    * @param defaultVal Default value to return if no bit depth index is
+    *        available.
+    */
+   public Integer getSafeBitDepthIndex(int index, Integer defaultVal);
    
    /** 
     * Whether or not to display the histograms using a logarithmic scale 
