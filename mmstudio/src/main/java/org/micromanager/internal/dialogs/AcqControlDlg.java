@@ -44,6 +44,7 @@ import mmcorej.CMMCore;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.internal.DefaultDatastore;
+import org.micromanager.display.internal.ChannelSettings;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.AcqOrderMode;
@@ -2068,14 +2069,19 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
    public static Integer getChannelColor(String channelGroup,
          String channel, int defaultVal) {
-      return DefaultUserProfile.getInstance().getInt(AcqControlDlg.class,
-            "Color_" + channelGroup + "_" + channel, defaultVal);
+      return ChannelSettings.getColorForChannel(channel, channelGroup,
+            new Color(defaultVal)).getRGB();
    }
 
    public static void setChannelColor(String channelGroup, String channel,
          int color) {
-      DefaultUserProfile.getInstance().setInt(AcqControlDlg.class,
-            "Color_" + channelGroup + "_" + channel, color);
+      // TODO: this is kind of an ugly way to do this.
+      ChannelSettings settings = ChannelSettings.loadSettings(channel,
+            channelGroup, Color.WHITE, 0, -1, true);
+      settings = new ChannelSettings(channel, channelGroup,
+            new Color(color), settings.getHistogramMin(),
+            settings.getHistogramMax(), settings.getShouldAutoscale());
+      settings.saveToProfile();
    }
 
    public static boolean getShouldSyncExposure() {
