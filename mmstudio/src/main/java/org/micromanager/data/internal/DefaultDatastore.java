@@ -251,7 +251,7 @@ public class DefaultDatastore implements Datastore {
    }
    
    @Override
-   public void setSummaryMetadata(SummaryMetadata metadata) throws DatastoreFrozenException {
+   public synchronized void setSummaryMetadata(SummaryMetadata metadata) throws DatastoreFrozenException {
       if (isFrozen_) {
          throw new DatastoreFrozenException();
       }
@@ -259,9 +259,11 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public void freeze() {
-      isFrozen_ = true;
-      bus_.post(new DefaultDatastoreFrozenEvent());
+   public synchronized void freeze() {
+      if (!isFrozen_) {
+         isFrozen_ = true;
+         bus_.post(new DefaultDatastoreFrozenEvent());
+      }
    }
 
    @Override
