@@ -89,7 +89,9 @@ public class ImageCoordsLinker extends SettingsLinker {
     */
    @Override
    public void pushState(DisplayWindow display) {
-      Coords coords = parent_.getDisplayedImages().get(0).getCoords();
+      // Get the coordinates of the displayed image in the target display,
+      // then tweak them along our axis.
+      Coords coords = display.getDisplayedImages().get(0).getCoords();
       // Manually override our own position in the Coords, as it may not match
       // what's in the above object (e.g. if we're linking the channel index).
       coords = coords.copy().index(axis_, scrollerPanel_.getIndex(axis_)).build();
