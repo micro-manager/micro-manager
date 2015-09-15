@@ -27,6 +27,7 @@ import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
+import org.micromanager.data.SummaryMetadata;
 
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -84,4 +85,14 @@ public abstract class BaseContext implements ProcessorContext {
     * Receive a new image for processing.
     */
    abstract public void insertImage(ImageWrapper wrapper);
+
+   @Override
+   public SummaryMetadata getSummaryMetadata() {
+      return store_.getSummaryMetadata();
+   }
+
+   @Override
+   public void setSummaryMetadata(SummaryMetadata metadata) throws DatastoreFrozenException {
+      store_.setSummaryMetadata(metadata);
+   }
 }
