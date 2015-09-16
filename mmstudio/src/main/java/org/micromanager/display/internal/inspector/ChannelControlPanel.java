@@ -299,25 +299,30 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     * bit depth.
     */
    private void zoomInAction() {
-      int selected = histRangeComboBox_.getSelectedIndex();
-      if (selected == 0) {
-         selected = model_.getHistRangeIndex() - 3;
-      }
-      if (selected != 1) {
-         selected--;
-      }
-      histRangeComboBox_.setSelectedIndex(selected);
+      updateZoom(-1);
    }
-   
+
    private void zoomOutAction() {
-      int selected = histRangeComboBox_.getSelectedIndex();
-      if (selected == 0) {
-         selected = model_.getHistRangeIndex() - 3;
+      updateZoom(1);
+   }
+
+   private void updateZoom(int modifier) {
+      int index = histRangeComboBox_.getSelectedIndex();
+      int power = 0;
+      if (index == 0) {
+         // Currently on "camera bit depth" mode; adjust from there.
+         power = Math.max(0, model_.getBitDepth() + modifier);
       }
-      if (selected < histRangeComboBox_.getModel().getSize() - 1) {
-         selected++;
+      else {
+         // Indices correspond to powers + 3
+         power = index + 3 + modifier;
       }
-      histRangeComboBox_.setSelectedIndex(selected);  
+      // TODO: hardcoded minimum/maximum power here.
+      power = Math.max(4, Math.min(16, power));
+      model_.updateHistMax(power);
+      // Reflect the current power setting.
+      histRangeComboBox_.setSelectedIndex(power - 3);
+      updateHistogram();
    }
    
    public void displayComboAction() {

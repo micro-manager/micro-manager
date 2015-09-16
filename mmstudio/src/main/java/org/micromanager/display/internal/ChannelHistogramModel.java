@@ -143,10 +143,14 @@ public class ChannelHistogramModel {
       haveInitialized_.set(true);
    }
 
-   public void updateHistMax(int index) {
+   // Update the maximum value of the histogram to be the specified power of 2.
+   public void updateHistMax(int power) {
+      if (power == 0) {
+         power = bitDepth_;
+      }
       // Update the histogram display.
-      histMax_ = (int) (Math.pow(2, index + 3) - 1);
-      if (index == 0) {
+      histMax_ = (int) (Math.pow(2, power) - 1);
+      if (power == 0) {
          // User selected the "Camera depth" option.
          histMax_ = maxIntensity_;
       }
@@ -342,6 +346,10 @@ public class ChannelHistogramModel {
 
    public String getHistMaxLabel() {
       return histMaxLabel_;
+   }
+
+   public int getBitDepth() {
+      return bitDepth_;
    }
 
    public Color getColor() {
