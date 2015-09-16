@@ -191,7 +191,7 @@ public class AutofocusPropertyEditor extends MMDialog {
             methodCombo_.addItem(devName);
          }
          if (afMgr_.getDevice() != null) {
-            methodCombo_.setSelectedItem(afMgr_.getDevice().getDeviceName());
+            methodCombo_.setSelectedItem(afMgr_.getDevice().getName());
          } 
          methodCombo_.addActionListener(new ActionListener() {
             @Override
@@ -224,7 +224,7 @@ public class AutofocusPropertyEditor extends MMDialog {
    }
 
    public void rebuild() {
-      String afDevice = afMgr_.getDevice().getDeviceName();
+      String afDevice = afMgr_.getDevice().getName();
       ActionListener l = methodCombo_.getActionListeners()[0];
       
       try {
@@ -250,7 +250,7 @@ public class AutofocusPropertyEditor extends MMDialog {
             methodCombo_.setSelectedItem(afDevice);
          else
             if (afMgr_.getDevice() != null) {
-               methodCombo_.setSelectedItem(afMgr_.getDevice().getDeviceName());
+               methodCombo_.setSelectedItem(afMgr_.getDevice().getName());
          }
       }
    }

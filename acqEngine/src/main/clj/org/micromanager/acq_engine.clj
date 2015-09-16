@@ -262,7 +262,7 @@
   (let [z-drive (@state :default-z-drive)
         z0 (get-z-stage-position z-drive)]
   (try
-    (log "running autofocus" (-> @state :autofocus-device .getDeviceName))
+    (log "running autofocus" (-> @state :autofocus-device .getName))
     (let [z (-> @state :autofocus-device .fullFocus)]
       (swap! state assoc-in [:last-stage-positions (@state :default-z-drive)] z))
     (catch Exception e

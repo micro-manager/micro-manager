@@ -12,13 +12,16 @@ import java.awt.Rectangle;
 
 import mmcorej.StrVector;
 
-import org.micromanager.Autofocus;
+import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.PropertyItem;
 
 import mmcorej.CMMCore;
+
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
 
 /*
 *  Created on June 2nd 2007
@@ -28,7 +31,8 @@ import mmcorej.CMMCore;
 /*
 *  This plugin take a stack of snapshots and computes their sharpness
 */
-public class AutofocusTB extends AutofocusBase implements Autofocus {
+@Plugin(type = AutofocusPlugin.class)
+public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJavaPlugin {
 
    private final static String KEY_SIZE_FIRST = "1st step size";
    private final static String KEY_NUM_FIRST = "1st setp number";
@@ -645,13 +649,28 @@ public class AutofocusTB extends AutofocusBase implements Autofocus {
    }
 
    @Override
-   public String getDeviceName() {
-      return AF_DEVICE_NAME;
-   }
-
-   public void setApp(Studio app) {
+   public void setContext(Studio app) {
       app_ = app;
       core_ = app.getCMMCore();
    }
 
+   @Override
+   public String getName() {
+      return AF_DEVICE_NAME;
+   }
+
+   @Override
+   public String getHelpText() {
+      return AF_DEVICE_NAME;
+   }
+
+   @Override
+   public String getVersion() {
+      return "1.0";
+   }
+
+   @Override
+   public String getCopyright() {
+      return "Pakpoom Subsoontorn & Hernan Garcia, 2007";
+   }
 }

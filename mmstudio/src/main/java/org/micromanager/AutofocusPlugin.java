@@ -27,20 +27,15 @@ import org.micromanager.internal.utils.PropertyItem;
 
 /*
  * This interface is used for a java-based autofocus plugin. Properly
- * compiled jars can be added to the mmautofocus directory of Micro-Manager
+ * compiled jars can be added to the mmplugins directory of Micro-Manager
  * and they will be loaded into the autofocus menu. It also wraps
  * autofocus devices implemented in C++ and exposed by the core, so both
  * java and C++ based autofocus plugins can be used by this common interface.
  */
-public interface Autofocus {
+public interface AutofocusPlugin extends MMPlugin {
 
    public void applySettings();
    public void saveSettings();
-
-   /*
-    * Provides the autofocus plugin with a reference to the Micro-Manager GUI.
-    */
-   public void setApp(Studio app);
 
    /*
     * Run a full, one-shot autofocus protocol. Blocks until focusing is
@@ -99,11 +94,6 @@ public interface Autofocus {
    public double getCurrentFocusScore();
 
    /*
-    * Returns the name of the autofocus device.
-    */
-   public String getDeviceName();
-
-   /*
     * Turns on continuous autofocus. Typically used by hardware autofocus
     * devices such as the Nikon Perfect Focus (PFS).
     */
@@ -128,10 +118,4 @@ public interface Autofocus {
     * @return calculated score
     */
    public double computeScore(final ImageProcessor impro);
-
-   /**
-    * OBSOLETE - do not use this method.
-    */
-   public void focus(double coarseStep, int numCoarse, double fineStep, int numFine) throws MMException;
-   
 }

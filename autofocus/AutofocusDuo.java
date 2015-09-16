@@ -26,12 +26,15 @@ import java.util.prefs.Preferences;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.Autofocus;
+import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.ReportingUtils;
+
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
 
 /**
  * ImageJ plugin wrapper for uManager.
@@ -40,7 +43,8 @@ import org.micromanager.internal.utils.ReportingUtils;
 /* This plugin take a stack of snapshots and computes their sharpness
 
  */
-public class AutofocusDuo extends AutofocusBase implements Autofocus  {
+@Plugin(type = AutofocusPlugin.class)
+public class AutofocusDuo extends AutofocusBase implements AutofocusPlugin, SciJavaPlugin  {
 
    //private static final String AF_SETTINGS_NODE = "micro-manager/extensions/autofocus";
    private static final String KEY_AUTOFOCUS1 = "AutoFocus-1";
@@ -140,11 +144,6 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
    }
 
    @Override
-   public void focus(double coarseStep, int numCoarse, double fineStep, int numFine) {
-      run("silent");
-   }
-
-   @Override
    public PropertyItem[] getProperties() {
       // use default dialog
             
@@ -203,14 +202,28 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
    }
 
    @Override
-   public String getDeviceName() {
-      return AF_DEVICE_NAME;
-   }
-   
-   @Override
-   public void setApp(Studio app) {
+   public void setContext(Studio app) {
       app_ = app;
       core_ = app.getCMMCore();
    }
 
+   @Override
+   public String getName() {
+      return AF_DEVICE_NAME;
+   }
+
+   @Override
+   public String getHelpText() {
+      return AF_DEVICE_NAME;
+   }
+
+   @Override
+   public String getVersion() {
+      return "1.0";
+   }
+
+   @Override
+   public String getCopyright() {
+      return "University of California, 2009";
+   }
 }   

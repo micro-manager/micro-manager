@@ -65,7 +65,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 
 import org.micromanager.Album;
-import org.micromanager.Autofocus;
+import org.micromanager.AutofocusPlugin;
 import org.micromanager.CompatibilityInterface;
 import org.micromanager.data.DataManager;
 import org.micromanager.data.Datastore;
@@ -1133,7 +1133,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
       // NOTE: do not save auto shutter state
       if (afMgr_ != null && afMgr_.getDevice() != null) {
          profile().setString(MMStudio.class,
-               AUTOFOCUS_DEVICE, afMgr_.getDevice().getDeviceName());
+               AUTOFOCUS_DEVICE, afMgr_.getDevice().getName());
       }
    }
 
@@ -1677,7 +1677,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
    }
    
    @Override
-   public Autofocus getAutofocus() {
+   public AutofocusPlugin getAutofocus() {
       return afMgr_.getDevice();
    }
 

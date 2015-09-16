@@ -32,6 +32,7 @@ import javax.swing.JMenuItem;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import org.micromanager.AutofocusPlugin;
 import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.display.OverlayPlugin;
 import org.micromanager.MenuPlugin;
@@ -94,6 +95,8 @@ public class DefaultPluginManager implements PluginManager {
       PATH_TO_CLASS.put("org.micromanager.data.ProcessorPlugin",
             ProcessorPlugin.class);
       PATH_TO_CLASS.put("org.micromanager.MenuPlugin", MenuPlugin.class);
+      PATH_TO_CLASS.put("org.micromanager.AutofocusPlugin",
+            AutofocusPlugin.class);
    }
 
    private static final String PROCESSOR_MENU = "On-The-Fly Image Processing";
@@ -143,12 +146,26 @@ public class DefaultPluginManager implements PluginManager {
    }
 
    /**
-    * Scan the mmplugins directory for plugins, and insert them into the
-    * pluginTypeToPlugins_ structure.
+    * Load all plugins.
+    * TODO: for now, autofocus plugins are in a separate directory from
+    * regular plugins.
     */
    private void loadPlugins() {
+      loadPluginsFromDir(
+            System.getProperty("org.micromanager.plugin.path",
+               System.getProperty("user.dir") + "/mmplugins"));
+      loadPluginsFromDir(
+            System.getProperty("org.micromanager.autofocus.path",
+               System.getProperty("user.dir") + "/mmautofocus"));
+   }
+
+   /**
+    * Scan the specified directory for plugins and insert them into the
+    * pluginTypeToPlugins_ structure.
+    */
+   private void loadPluginsFromDir(String dir) {
       HashMap<Class, JSONObject> pluginToTypeInfo = PluginFinder.findPlugins(
-            System.getProperty("user.dir") + "/mmplugins");
+            dir);
       for (Class pluginClass : pluginToTypeInfo.keySet()) {
          try {
             MMPlugin plugin = (MMPlugin) pluginClass.newInstance();
@@ -286,4 +303,14 @@ public class DefaultPluginManager implements PluginManager {
       }
       return result;
    }
+
+   @Override
+   public HashMap<String, AutofocusPlugin> getAutofocusPlugins() {
+      HashMap<String, AutofocusPlugin> result = new HashMap<String, AutofocusPlugin>();
+      for (MMPlugin plugin : pluginTypeToPlugins_.get(AutofocusPlugin.class)) {
+         result.put(plugin.getName(), (AutofocusPlugin) plugin);
+      }
+      return result;
+   }
+
 }

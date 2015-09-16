@@ -43,10 +43,10 @@ public interface IAcquisitionEngine2010 {
    /*
     * When run is called, the implementing class should run a multi-dimensional
     * acquisition according to the specifications in the argument sequenceSettings.
-    * The specified PositionList and Autofocus device are used.
+    * The specified PositionList and AutofocusPlugin device are used.
     * Everything is returned to initial state after the acquisition is run.
     */
-   public BlockingQueue<TaggedImage> run(SequenceSettings sequenceSettings, boolean cleanup, PositionList positionList, Autofocus device);
+   public BlockingQueue<TaggedImage> run(SequenceSettings sequenceSettings, boolean cleanup, PositionList positionList, AutofocusPlugin device);
 
    /*
     * When run is called, the implementing class should run a multi-dimensional

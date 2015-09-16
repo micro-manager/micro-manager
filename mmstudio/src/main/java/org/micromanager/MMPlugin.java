@@ -28,6 +28,8 @@ import org.scijava.plugin.SciJavaPlugin;
  * sub-interfaces, to wit:
  * - org.micromanager.MenuPlugin, for plugins that should appear in the Plugins
  *   menu.
+ * - org.micromanager.AutofocusPlugin, for plugins that are used to perform
+ *   autofocus actions.
  * - org.micromanager.data.ProcessorPlugin, for processing images as they are
  *   collected.
  * - org.micromanager.display.OverlayPlugin, for drawing on top of image

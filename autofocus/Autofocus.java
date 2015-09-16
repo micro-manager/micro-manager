@@ -39,10 +39,14 @@ import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
+import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.PropertyItem;
+
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
 
 /*
  * Created on June 2nd 2007
@@ -56,7 +60,8 @@ import org.micromanager.internal.utils.PropertyItem;
 /* This plugin take a stack of snapshots and computes their sharpness
 
  */
-public class Autofocus extends AutofocusBase implements org.micromanager.Autofocus  {
+@Plugin(type = AutofocusPlugin.class)
+public class Autofocus extends AutofocusBase implements AutofocusPlugin, SciJavaPlugin  {
 
    private static final String KEY_SIZE_FIRST = "1st step size";
    private static final String KEY_NUM_FIRST = "1st step number";
@@ -470,16 +475,6 @@ public class Autofocus extends AutofocusBase implements org.micromanager.Autofoc
    }
 
    @Override
-   public void focus(double coarseStep, int numCoarse, double fineStep, int numFine) {
-      SIZE_FIRST = coarseStep;
-      NUM_FIRST = numCoarse;
-      SIZE_SECOND = fineStep;
-      NUM_SECOND = numFine;
-
-      run("silent");
-   }
-
-   @Override
    public PropertyItem[] getProperties() {
       // use default dialog
       // make sure we have the right list of channels
@@ -529,13 +524,28 @@ public class Autofocus extends AutofocusBase implements org.micromanager.Autofoc
       return 0;
    }
 
+   public void setContext(Studio app) {
+      app_ = app;
+      core_ = app.getCMMCore();
+   }
+
    @Override
-   public String getDeviceName() {
+   public String getName() {
       return AF_DEVICE_NAME;
    }
 
-   public void setApp(Studio app) {
-      app_ = app;
-      core_ = app.getCMMCore();
+   @Override
+   public String getHelpText() {
+      return AF_DEVICE_NAME;
+   }
+
+   @Override
+   public String getCopyright() {
+      return "Copyright UCSF, 100x Imaging 2007";
+   }
+
+   @Override
+   public String getVersion() {
+      return "1.0";
    }
 }   

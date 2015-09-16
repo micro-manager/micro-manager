@@ -31,18 +31,21 @@ import org.micromanager.internal.MMStudio;
 
 import org.micromanager.Studio;
 
+import org.micromanager.AutofocusPlugin;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
-
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
 
 /**
  *
  * @author nico
  */
-public class HardwareFocusExtender extends AutofocusBase implements org.micromanager.Autofocus {
+@Plugin(type = AutofocusPlugin.class)
+public class HardwareFocusExtender extends AutofocusBase implements AutofocusPlugin, SciJavaPlugin {
 
    private static final String AF_DEVICE_NAME = "HardwareFocusExtender";
    private static final String HARDWARE_AUTOFOCUS = "HardwareFocusDevice";
@@ -111,7 +114,7 @@ public class HardwareFocusExtender extends AutofocusBase implements org.microman
    }
 
    @Override
-   public void setApp(Studio app) {
+   public void setContext(Studio app) {
       if (!hardwareDeviceAvailable_) {
          return;
       }
@@ -223,18 +226,27 @@ public class HardwareFocusExtender extends AutofocusBase implements org.microman
    }
 
    @Override
-   public String getDeviceName() {
-      return AF_DEVICE_NAME;
-   }
-
-   @Override
    public double computeScore(ImageProcessor impro) {
       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
    }
 
    @Override
-   public void focus(double coarseStep, int numCoarse, double fineStep, int numFine) throws MMException {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+   public String getName() {
+      return AF_DEVICE_NAME;
    }
-   
+
+   @Override
+   public String getHelpText() {
+      return AF_DEVICE_NAME;
+   }
+
+   @Override
+   public String getVersion() {
+      return "1.0";
+   }
+
+   @Override
+   public String getCopyright() {
+      return "University of California, 2015";
+   }
 }

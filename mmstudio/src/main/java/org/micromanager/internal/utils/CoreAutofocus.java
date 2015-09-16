@@ -6,7 +6,7 @@ import java.util.Vector;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
-import org.micromanager.Autofocus;
+import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
 
 /**
@@ -15,19 +15,12 @@ import org.micromanager.Studio;
  * 
  * 
  */
-public class CoreAutofocus implements Autofocus {
+public class CoreAutofocus implements AutofocusPlugin {
 
    private CMMCore core_;
    private String devName_;
    
    public CoreAutofocus() {
-   }
-
-   @Override
-   public void focus(double coarseStep, int numCoarse, double fineStep,
-         int numFine) throws MMException {
-      throw new MMException(
-            "Obsolete command. Use setProperty() to specify parameters.");
    }
 
    @Override
@@ -196,11 +189,6 @@ public class CoreAutofocus implements Autofocus {
    }
 
    @Override
-   public String getDeviceName() {
-      return devName_;
-   }
-
-   @Override
    public void setProperty(PropertyItem p) throws MMException {
       try {
          core_.setProperty(devName_, p.name, p.value);
@@ -240,7 +228,7 @@ public class CoreAutofocus implements Autofocus {
    }
 
    @Override
-   public void setApp(Studio app) {
+   public void setContext(Studio app) {
       core_ = app.getCMMCore();
       devName_ = core_.getAutoFocusDevice();      
    }
@@ -250,4 +238,23 @@ public class CoreAutofocus implements Autofocus {
       throw new UnsupportedOperationException("Not supported yet."); 
    }
 
+   @Override
+   public String getName() {
+      return devName_;
+   }
+
+   @Override
+   public String getHelpText() {
+      return devName_;
+   }
+
+   @Override
+   public String getVersion() {
+      return "1.0";
+   }
+
+   @Override
+   public String getCopyright() {
+      return "University of California, 2015";
+   }
 }

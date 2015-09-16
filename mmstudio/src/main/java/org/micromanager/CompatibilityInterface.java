@@ -144,7 +144,7 @@ public interface CompatibilityInterface {
     * Currently active autofocus device (can be either a Java or C++ coded device).
     * @return currently active autofocus device
     */
-   public Autofocus getAutofocus();
+   public AutofocusPlugin getAutofocus();
 
    /**
     * Shows the dialog with options for the currently active autofocus device.

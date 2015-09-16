@@ -2,10 +2,10 @@ package org.micromanager.internal.utils;
 
 import java.util.ArrayList;
 
-import org.micromanager.Autofocus;
+import org.micromanager.AutofocusPlugin;
 
-public abstract class AutofocusBase implements Autofocus{
-   //private Hashtable<String, PropertyItem> properties_;
+public abstract class AutofocusBase implements AutofocusPlugin {
+
    private ArrayList<PropertyItem> properties_;
    private static final String AF_UNIMPLEMENTED_FUNCTION = "Operation not supported.";
 
@@ -16,14 +16,14 @@ public abstract class AutofocusBase implements Autofocus{
    protected void createProperty(String name) {
       PropertyItem p = new PropertyItem();
       p.name = name;
-      p.device = getDeviceName();
+      p.device = getName();
       properties_.add(p);
    }
    protected void createProperty(String name, String value) {
       PropertyItem p = new PropertyItem();
       p.name = name;
       p.value = value;
-      p.device = getDeviceName();
+      p.device = getName();
       properties_.add(p);
    }
 
@@ -32,7 +32,7 @@ public abstract class AutofocusBase implements Autofocus{
       p.allowed = allowed;
       p.name = name;
       p.value = value;
-      p.device = getDeviceName();
+      p.device = getName();
       properties_.add(p);
    }
 

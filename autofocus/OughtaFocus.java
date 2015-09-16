@@ -42,6 +42,7 @@ import org.apache.commons.math.analysis.UnivariateRealFunction;
 import org.apache.commons.math.optimization.GoalType;
 import org.apache.commons.math.optimization.univariate.BrentOptimizer;
 import org.json.JSONException;
+import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.ImageUtils;
@@ -53,7 +54,10 @@ import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TextUtils;
 
-public class OughtaFocus extends AutofocusBase implements org.micromanager.Autofocus {
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
+
+public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJavaPlugin {
 
    private Studio app_;
    private static final String AF_DEVICE_NAME = "OughtaFocus";
@@ -107,11 +111,6 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.Autof
       } catch (ParseException ex) {
          ReportingUtils.logError(ex);
       }
-   }
-
-   @Override
-   public String getDeviceName() {
-      return AF_DEVICE_NAME;
    }
 
    @Override
@@ -316,11 +315,6 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.Autof
       return score;
    }
 
-   @Override
-   public void focus(double coarseStep, int numCoarse, double fineStep, int numFine) throws MMException {
-      throw new UnsupportedOperationException("Not supported yet.");
-   }
-
    private double computeEdges(ImageProcessor proc) {
       // mean intensity for the original image
       double meanIntensity = proc.getStatistics().mean;
@@ -461,7 +455,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.Autof
    }
 
    @Override
-   public void setApp(Studio app) {
+   public void setContext(Studio app) {
       app_ = app;
       CMMCore core = app_.getCMMCore();
       String chanGroup = core.getChannelGroup();
@@ -478,5 +472,25 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.Autof
          super.loadSettings();
          settingsLoaded_ = true;
       }
+   }
+
+   @Override
+   public String getName() {
+      return AF_DEVICE_NAME;
+   }
+
+   @Override
+   public String getHelpText() {
+      return AF_DEVICE_NAME;
+   }
+
+   @Override
+   public String getVersion() {
+      return "1.0";
+   }
+
+   @Override
+   public String getCopyright() {
+      return "University of California, 2010";
    }
 }

@@ -27,7 +27,8 @@ import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
-import org.micromanager.Autofocus;
+import org.micromanager.AutofocusPlugin;
+import org.micromanager.MMPlugin;
 import org.micromanager.Studio;
 
 /**
@@ -37,13 +38,13 @@ import org.micromanager.Studio;
  */
 public class AutofocusManager {
    private Studio app_;
-   private Vector<Autofocus> afs_;
+   private Vector<AutofocusPlugin> afs_;
    private Vector<String> afPluginClassNames_;
-   private Autofocus currentAfDevice_;
+   private AutofocusPlugin currentAfDevice_;
    private AutofocusPropertyEditor afDlg_;
    
    public AutofocusManager(Studio app) {
-      afs_ = new Vector<Autofocus>();
+      afs_ = new Vector<AutofocusPlugin>();
       afPluginClassNames_ = new Vector<String>();
       currentAfDevice_ = null;
       app_ = app;
@@ -55,8 +56,8 @@ public class AutofocusManager {
     * @throws MMException
     */
    public void selectDevice(String name) throws MMException {
-      for (Autofocus af : afs_) {
-         if (af.getDeviceName().equals(name)) {
+      for (AutofocusPlugin af : afs_) {
+         if (af.getName().equals(name)) {
             currentAfDevice_ = af;
             return;
          }
@@ -72,8 +73,8 @@ public class AutofocusManager {
     * @param className - plugin class name
     */
    public void setAFPluginClassName(String className) {
-	   if (! afPluginClassNames_.contains(className))
-		   afPluginClassNames_.add(className);
+      if (! afPluginClassNames_.contains(className))
+         afPluginClassNames_.add(className);
    }
 
    /**
@@ -82,7 +83,7 @@ public class AutofocusManager {
     * of storing the af device reference directly.
     * @return - current AutoFocus device or null if none was loaded
     */
-   public Autofocus getDevice() {
+   public AutofocusPlugin getDevice() {
       return currentAfDevice_;
    }
    
@@ -102,8 +103,8 @@ public class AutofocusManager {
          CoreAutofocus caf = new CoreAutofocus();
          try {
             core.setAutoFocusDevice(afDevs.get(i));
-            caf.setApp(app_);
-            if (caf.getDeviceName().length() != 0) {
+            caf.setContext(app_);
+            if (caf.getName().length() != 0) {
                afs_.add(caf);
                if (currentAfDevice_ == null)
                   currentAfDevice_ = caf;
@@ -114,37 +115,14 @@ public class AutofocusManager {
       }
 
       // then check Java
-      try {
-
-    	  for (int i=0; i<afPluginClassNames_.size(); i++) {
-    		  String name = afPluginClassNames_.get(i);
-    		  if (name.length() != 0) {
-
-    			  Autofocus jaf = null;
-    			  try {
-    				  jaf = loadAutofocusPlugin(name);
-    			  } catch (Exception e) {
-                      ReportingUtils.logError(e);
-    				  afPluginClassNames_.remove(name);
-    				  i--;
-    			  }
-
-    			  if (jaf != null) {
-    				  afs_.add(jaf);
-    				  if (currentAfDevice_ == null)
-    					  currentAfDevice_ = jaf;
-    				  jaf.setApp(app_);
-    			  }
-    		  }
-    	  }
-      } catch (Exception e) {
-    	  ReportingUtils.logError(e);
+      for (MMPlugin plugin : app_.plugins().getAutofocusPlugins().values()) {
+         afs_.add((AutofocusPlugin) plugin);
       }
 
       // make sure the current autofocus is still in the list, otherwise set it to something...
       boolean found = false;
-      for (Autofocus af : afs_) {
-         if (af.getDeviceName().equals(currentAfDevice_.getDeviceName())) {
+      for (AutofocusPlugin af : afs_) {
+         if (af.getName().equals(currentAfDevice_.getName())) {
             found = true;
             currentAfDevice_ = af;
          }
@@ -180,27 +158,27 @@ public class AutofocusManager {
    public String[] getAfDevices() {
       String afDevs[] = new String[afs_.size()];
       int count = 0;
-      for (Autofocus af : afs_) {
-         afDevs[count++] = af.getDeviceName();
+      for (AutofocusPlugin af : afs_) {
+         afDevs[count++] = af.getName();
       }
       return afDevs;
    }
 
    @SuppressWarnings("unchecked")
-   private Autofocus loadAutofocusPlugin(String className) throws MMException {
+   private AutofocusPlugin loadAutofocusPlugin(String className) throws MMException {
       String msg = new String(className + " module.");
       // instantiate auto-focusing module
-      Autofocus af = null;
+      AutofocusPlugin af = null;
       try {
          Class cl = Class.forName(className);
-         af = (Autofocus) cl.newInstance();
+         af = (AutofocusPlugin) cl.newInstance();
          return af;
       } catch (ClassNotFoundException e) {
          ReportingUtils.logError(e);
          msg = className + " autofocus plugin not found.";
       } catch (InstantiationException e) {
           ReportingUtils.logError(e);
-          msg = className + " instantiation to Autofocus interface failed.";
+          msg = className + " instantiation to AutofocusPlugin interface failed.";
       } catch (IllegalAccessException e) {
           ReportingUtils.logError(e);
           msg = "Illegal access exception!";
@@ -215,8 +193,8 @@ public class AutofocusManager {
    }
    
    public boolean hasDevice(String dev) {
-      for (Autofocus af : afs_) {
-         if (af.getDeviceName().equals(dev))
+      for (AutofocusPlugin af : afs_) {
+         if (af.getName().equals(dev))
             return true;
       }
       return false;

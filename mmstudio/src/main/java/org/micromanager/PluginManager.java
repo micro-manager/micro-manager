@@ -53,4 +53,10 @@ public interface PluginManager {
     * each other.
     */
    public HashMap<String, MenuPlugin> getMenuPlugins();
+
+   /**
+    * Return a HashMap that maps plugin names to AutofocusPlugin instances.
+    * AutofocusPlugins are used to perform autofocus operations.
+    */
+   public HashMap<String, AutofocusPlugin> getAutofocusPlugins();
 }
