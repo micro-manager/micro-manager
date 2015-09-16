@@ -478,11 +478,18 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     */
    public ChannelHistogramModel getHistogramModel(int index) {
       if (!channelToModel_.containsKey(index)) {
-         channelToModel_.put(index,
-               new ChannelHistogramModel(index, store_, this, stack_,
-                  ijImage_));
+         createHistogramModel(index);
       }
       return channelToModel_.get(index);
+   }
+
+   /**
+    * Create a new ChannelHistogramModel for the specified channel index.
+    */
+   private void createHistogramModel(int index) {
+      channelToModel_.put(index,
+            new ChannelHistogramModel(index, store_, this, stack_,
+               ijImage_));
    }
 
    /**
@@ -1038,9 +1045,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     */
    private void receiveNewImage(Image image) {
       try {
+         int imageChannel = image.getCoords().getChannel();
          // Check if we're transitioning from grayscale to multi-channel at this
          // time.
-         int imageChannel = image.getCoords().getChannel();
          if (!(ijImage_ instanceof MMCompositeImage) &&
                imageChannel > 0) {
             // Have multiple channels.
@@ -1053,6 +1060,10 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             MMCompositeImage composite = (MMCompositeImage) ijImage_;
             composite.setNChannelsUnverified(numChannels);
             composite.reset();
+         }
+         if (!channelToModel_.containsKey(imageChannel)) {
+            // Create the entity that will handle display of this channel.
+            createHistogramModel(imageChannel);
          }
          String name = store_.getSummaryMetadata().getSafeChannelName(imageChannel);
          if (!knownChannels_.contains(name)) {
