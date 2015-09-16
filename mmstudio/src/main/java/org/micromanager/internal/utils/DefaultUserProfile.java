@@ -79,7 +79,7 @@ public class DefaultUserProfile implements UserProfile {
                loadFileToString(JavaUtils.getApplicationDataPath() +
                   "/" + USERNAME_MAPPING_FILE));
       }
-      catch (JSONException e) {
+      catch (Exception e) { // JSONException, IOException
          ReportingUtils.logError(e, "Unable to load user profiles mapping file");
       }
       for (String key : MDUtils.getKeys(mapping)) {
@@ -143,8 +143,11 @@ public class DefaultUserProfile implements UserProfile {
    }
 
    private DefaultPropertyMap loadPropertyMap(String path) {
-      String contents = loadFileToString(path);
-      if (contents == null) {
+      String contents;
+      try {
+         contents = loadFileToString(path);
+      }
+      catch (IOException e) {
          // That file doesn't exist yet; create a new empty user.
          ReportingUtils.logMessage("Asked to load file at path " + path +
                " which doesn't exist; instead providing a default empty PropertyMap.");
@@ -165,14 +168,8 @@ public class DefaultUserProfile implements UserProfile {
     * http://stackoverflow.com/questions/326390/how-to-create-a-java-string-from-the-contents-of-a-file
     * TODO: should probably be moved into utils somewhere.
     */
-   private String loadFileToString(String path) {
-      try {
-         return Files.toString(new File(path), Charsets.UTF_8);
-      }
-      catch (IOException e) {
-         ReportingUtils.logError(e, "Unable to read file at " + path);
-         return null;
-      }
+   private String loadFileToString(String path) throws IOException {
+      return Files.toString(new File(path), Charsets.UTF_8);
    }
 
    private void startSaveThread() {
