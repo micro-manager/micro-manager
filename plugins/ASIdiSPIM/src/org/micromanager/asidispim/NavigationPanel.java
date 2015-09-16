@@ -527,7 +527,11 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
    /**
     * created so that Navigation panel's joystick settings could be invoked from elsewhere
     */
-   public void doJoystickSettings() {
-      joystickPanel_.gotSelected();
+   public void doJoystickSettings(boolean selected) {
+      if (selected) {
+         joystickPanel_.gotSelected();
+      } else {
+         joystickPanel_.gotDeSelected();
+      }
    }
 }

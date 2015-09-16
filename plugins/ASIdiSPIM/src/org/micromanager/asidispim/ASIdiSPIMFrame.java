@@ -63,8 +63,7 @@ import org.micromanager.utils.MMFrame;
 //TODO make it easy to look through series of data sets
 //TODO hardware Z-projection
 //TODO camera control tab: set ROI, set separate acquisition/alignment exposure times and sweep rate, etc.
-//TODO track Z/F for sample finding
-//TODO Z/F position dropdown for often-used positions
+//TODO method to move sample diagonally (move X and F at same time) for sample finding
 //TODO factor out common code for JComboBoxes like MulticolorModes, CameraModes, AcquisitionModes, etc.
 //TODO cleanup prefs vs. props... maybe add boolean support for plugin device use only?
 //TODO finish eliminating Prefs.Keys in favor of Properties.Keys with plugin values
@@ -72,6 +71,10 @@ import org.micromanager.utils.MMFrame;
 //TODO improve efficiency of camera code by pre-calculating key factors and updating when needed instead of calculating every time
 //TODO add check for correct Hamamatsu model
 //TODO execute autofocus during acquisition before the desired time point is reached instead of waiting until a timepoint should be collected
+//       or else do autofocus after acquisition instead of before
+//TODO smart default joystick settings (e.g. different defaults different panels/wheels)
+//TODO buttons to easily swap cameras within plugin
+//TODO easily take "test acquisition" that wouldn't need to be saved, only do 1 timepoint, etc. From both acquisition and setup tabs (setup tab would only do that side)
 
 
 /**
@@ -130,8 +133,8 @@ public class ASIdiSPIMFrame extends MMFrame
       autofocus_ = new AutofocusUtils(gui, devices_, props_, prefs_,
             cameras_, stagePosUpdater_, positions_, controller_);
       
-      acquisitionPanel_ = new AcquisitionPanel(gui, devices_, props_, joystick_, 
-            cameras_, prefs_, stagePosUpdater_, positions_, controller_, autofocus_);
+      acquisitionPanel_ = new AcquisitionPanel(gui, devices_, props_, cameras_, 
+            prefs_, stagePosUpdater_, positions_, controller_, autofocus_);
       setupPanelA_ = new SetupPanel(gui, devices_, props_, joystick_, 
             Devices.Sides.A, positions_, cameras_, prefs_, stagePosUpdater_,
             autofocus_);

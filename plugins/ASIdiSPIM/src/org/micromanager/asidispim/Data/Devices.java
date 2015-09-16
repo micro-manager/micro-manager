@@ -477,8 +477,8 @@ public class Devices {
       case GALVOA:
       case GALVOB:
          switch (dir) {
-         case X: ret += ", sheet"; break;
-         case Y: ret += ", slice"; break;
+         case X: ret += " Sheet"; break;
+         case Y: ret += " Slice"; break;
          default: break;
          }
          break;
@@ -519,9 +519,9 @@ public class Devices {
       case GALVOA:
       case GALVOB:
         if (side == d.side) {
-           ret = "Imaging Beam";
+           ret = "Imaging";
         } else if (side == Devices.getOppositeSide(d.side)) {
-           ret = "Epi Beam";
+           ret = "Epi";
         } else {
            ret = getDeviceDisplay(key);
         }

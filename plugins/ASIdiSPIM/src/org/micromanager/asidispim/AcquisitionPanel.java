@@ -26,7 +26,6 @@ import org.micromanager.asidispim.Data.AcquisitionModes;
 import org.micromanager.asidispim.Data.CameraModes;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.Joystick;
 import org.micromanager.asidispim.Data.MultichannelModes;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Positions;
@@ -122,7 +121,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
    private final Devices devices_;
    private final Properties props_;
-   private final Joystick joystick_;
    private final Cameras cameras_;
    private final Prefs prefs_;
    private final ControllerUtils controller_;
@@ -187,7 +185,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    public AcquisitionPanel(ScriptInterface gui, 
            Devices devices, 
            Properties props, 
-           Joystick joystick,
            Cameras cameras, 
            Prefs prefs,
            StagePositionUpdater posUpdater,
@@ -202,7 +199,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       gui_ = gui;
       devices_ = devices;
       props_ = props;
-      joystick_ = joystick;
       cameras_ = cameras;
       prefs_ = prefs;
       posUpdater_ = posUpdater;
@@ -711,9 +707,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          @Override
          public void actionPerformed(ActionEvent e) {
             updateJoysticks();
-            if (!navigationJoysticksCB_.isSelected()) {
-               joystick_.unsetAllJoysticks();
-            }
             prefs_.putBoolean(panelName_, Properties.Keys.PLUGIN_USE_NAVIGATION_JOYSTICKS,
                   navigationJoysticksCB_.isSelected());
          }
@@ -780,13 +773,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }//end constructor
    
    private void updateJoysticks() {
-      if (navigationJoysticksCB_.isSelected()) {
-         if (ASIdiSPIM.getFrame() != null) {
-            ASIdiSPIM.getFrame().getNavigationPanel().doJoystickSettings();
-         }
+      if (ASIdiSPIM.getFrame() != null) {
+         ASIdiSPIM.getFrame().getNavigationPanel().
+         doJoystickSettings(navigationJoysticksCB_.isSelected());
       }
-      // unsetAllJoysticks() should have been called when leaving last tab
-      // so no need to do it again now
    }
    
    public final void updateDurationLabels() {
@@ -1512,7 +1502,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             MyDialogUtils.showError("\"Channels\" is checked, but no channels are selected");
             return false;
          }
-         // get current channel so that we can restore it
+         // get current channel so that we can restore it, then set channel appropriately
          originalChannelConfig = multiChannelPanel_.getCurrentConfig();
          switch (channelMode) {
          case VOLUME:
@@ -2263,7 +2253,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // TODO figure out why posUpdater_ is paused and then unpaused here
       posUpdater_.pauseUpdates(true);
       props_.callListeners();
-      updateJoysticks();
+      // old joystick associations were cleared when leaving
+      //   last tab so only do it if joystick settings need to be applied
+      if (navigationJoysticksCB_.isSelected()) {
+         updateJoysticks();
+      }
       sliceFrameAdvanced_.setVisible(advancedSliceTimingCB_.isSelected());
       posUpdater_.pauseUpdates(false);
    }

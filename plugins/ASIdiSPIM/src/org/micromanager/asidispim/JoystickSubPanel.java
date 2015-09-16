@@ -25,7 +25,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.HashMap;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
@@ -33,10 +32,13 @@ import javax.swing.JLabel;
 
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
+import org.micromanager.asidispim.Data.Joystick.Directions;
+import org.micromanager.asidispim.Data.Joystick.JSAxisData;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
+import org.micromanager.asidispim.Utils.MyDialogUtils;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -94,8 +96,7 @@ public final class JoystickSubPanel extends ListeningJPanel {
       add(leftWheelBox_, "wrap");
       
       add(new JLabel(Joystick.Keys.RIGHT_WHEEL.toString() + ":"));
-      rightWheelBox_ = makeJoystickSelectionBox(
-            Joystick.Keys.RIGHT_WHEEL);
+      rightWheelBox_ = makeJoystickSelectionBox(Joystick.Keys.RIGHT_WHEEL);
       add(rightWheelBox_, "wrap");
    }
    
@@ -106,9 +107,16 @@ public final class JoystickSubPanel extends ListeningJPanel {
       jcb.addItemListener(ssbl);
       devices_.addListener(ssbl);
       // intentionally set from prefs after adding listeners so programmatic change from prefs will be handled like user change
-      String selectedItem = prefs_.getString(instanceLabel_, jkey.toString(),
-            Joystick.Keys.NONE.toString());
-      jcb.setSelectedItem(selectedItem);
+      // we store string in prefs but have associative object as combo box items
+      // could simplify the equals method of JSAxisData to only look at the display string but afraid of unintended consequences
+      // so we look through combo box strings and select a match
+      String selectedItem = prefs_.getString(instanceLabel_, jkey.toString(), Joystick.Keys.NONE.toString());
+      for (int index = 0; index < jcb.getItemCount(); index++) {
+         if (jcb.getItemAt(index).toString().equals(selectedItem)) {
+            jcb.setSelectedIndex(index);
+            break;
+         }
+      }
       return jcb;
    }
    
@@ -118,14 +126,12 @@ public final class JoystickSubPanel extends ListeningJPanel {
    private class StageSelectionBoxListener implements ItemListener,
    ActionListener, DevicesListenerInterface {
       Joystick.Keys jkey_;
-      JComboBox jc_;
-      HashMap<String, Joystick.JSAxisData> JSAxisDataHash_;
+      JComboBox cb_;
       boolean updatingList_;
 
       public StageSelectionBoxListener(Joystick.Keys jkey, JComboBox jc) {
          jkey_ = jkey;
-         jc_ = jc;
-         JSAxisDataHash_ = new HashMap<String, Joystick.JSAxisData>();
+         cb_ = jc;
          this.updateStageSelections();  // do initial rendering
       }    
 
@@ -141,16 +147,18 @@ public final class JoystickSubPanel extends ListeningJPanel {
          if (updatingList_ == true) {
             return;  // don't go through this if we are rebuilding selections
          }
-         Joystick.JSAxisData axis = JSAxisDataHash_.get( (String) jc_.getSelectedItem());
-         if (axis != null) {
-            if (axis.deviceKey != Devices.Keys.NONE) {
-               joystick_.setJoystick(jkey_, axis);
-            }
-            else {
-               joystick_.unsetJoystick(jkey_, axis);
-            }
-            prefs_.putString(instanceLabel_, jkey_.toString(), (String) jc_.getSelectedItem());
+         Joystick.JSAxisData axisData = (JSAxisData) cb_.getSelectedItem();
+         if (axisData == null) {
+            MyDialogUtils.showError("Problem getting joystick value for joystick combobox.");
+            return;
          }
+         if (axisData.deviceKey != Devices.Keys.NONE) {
+            joystick_.setJoystick(jkey_, axisData);
+         }
+         else {
+            joystick_.unsetJoystick(jkey_, axisData);
+         }
+         prefs_.putString(instanceLabel_, jkey_.toString(), ((JSAxisData) cb_.getSelectedItem()).toString());
       }
       
       // have both actionlistener and itemlistener because need to do deselect operation
@@ -160,10 +168,8 @@ public final class JoystickSubPanel extends ListeningJPanel {
             return;  // don't go through this if we are rebuilding selections
          }
          if (e.getStateChange() == ItemEvent.DESELECTED) {  // clear the old association
-            Joystick.JSAxisData axis = JSAxisDataHash_.get( (String) e.getItem());  // gets deselected item
-            if (axis.deviceKey != Devices.Keys.NONE) {
-               joystick_.unsetJoystick(jkey_, axis);
-            }
+            Joystick.JSAxisData axisData = (JSAxisData) e.getItem();  // gets deselected item
+            joystick_.unsetJoystick(jkey_, axisData);
          }
       }
       
@@ -181,28 +187,35 @@ public final class JoystickSubPanel extends ListeningJPanel {
        */
       private void updateStageSelections() {
          // save the existing selection if it exists
-         String itemOrig = (String) jc_.getSelectedItem();
+         // if we are making combobox for first time itemOrig will be null; we set
+         // it later from the preference value in makeJoystickSelectionBox()
+         JSAxisData itemOrig = (JSAxisData) cb_.getSelectedItem();
+         if (itemOrig == null) {
+            itemOrig = new JSAxisData(devices_.getDeviceDisplayVerbose(Devices.Keys.NONE), Devices.Keys.NONE, Directions.NONE);
+         }
          joystick_.unsetAllDevicesFromJoystick(jkey_);
          
          // get the appropriate list of strings (in form of JSAxisData array) depending on joystick device type
+         // already includes "None" at the top of each list
          Joystick.JSAxisData[] JSAxisDataItems = null;
-         JSAxisDataHash_.clear();
          if (jkey_==Joystick.Keys.LEFT_WHEEL || jkey_==Joystick.Keys.RIGHT_WHEEL) {
             JSAxisDataItems = joystick_.getWheelJSAxisData(side_);
          }
          else if (jkey_==Joystick.Keys.JOYSTICK) {
             JSAxisDataItems = joystick_.getStickJSAxisData(side_);
          }
+         else {
+            MyDialogUtils.showError("Unknown joystick device type.");
+            return;
+         }
          
          // repopulate the combo box with items
          updatingList_ = true;  // make sure itemStateChanged isn't fired until we rebuild list
          boolean itemInNew = false;
-         jc_.removeAllItems();
-         for (Joystick.JSAxisData a : JSAxisDataItems) {
-            String s = a.displayString;
-            jc_.addItem(s);
-            JSAxisDataHash_.put(s, a);
-            if (s.equals(itemOrig)) {
+         cb_.removeAllItems();
+         for (Joystick.JSAxisData item : JSAxisDataItems) {
+            cb_.addItem(item);
+            if (item.equals(itemOrig)) {
                itemInNew = true;
             }
          }
@@ -210,10 +223,11 @@ public final class JoystickSubPanel extends ListeningJPanel {
          
          // restore the original selection if it's still present
          if (itemInNew) {
-            jc_.setSelectedItem(itemOrig);
+            cb_.setSelectedItem(itemOrig);
          }
          else {
-            jc_.setSelectedItem(Joystick.Keys.NONE.toString());
+            cb_.setSelectedItem(new JSAxisData(devices_.getDeviceDisplayVerbose(Devices.Keys.NONE),
+                  Devices.Keys.NONE, Directions.NONE));
          }
       }//updateStageSelections
 
@@ -225,9 +239,9 @@ public final class JoystickSubPanel extends ListeningJPanel {
     */
    @Override
    public void gotSelected() {
-      joystickBox_.setSelectedItem(joystickBox_.getSelectedItem());
-      rightWheelBox_.setSelectedItem(rightWheelBox_.getSelectedItem());      
-      leftWheelBox_.setSelectedItem(leftWheelBox_.getSelectedItem());
+      joystickBox_.setSelectedItem((JSAxisData) joystickBox_.getSelectedItem());
+      rightWheelBox_.setSelectedItem((JSAxisData) rightWheelBox_.getSelectedItem());      
+      leftWheelBox_.setSelectedItem((JSAxisData) leftWheelBox_.getSelectedItem());
    }
 
    /**
@@ -235,13 +249,9 @@ public final class JoystickSubPanel extends ListeningJPanel {
     */
    @Override
    public void gotDeSelected() {
-      // TODO change to using joystick_.unsetJoystick() for relevant associations
-      // need to change internal representation of ComboBox to using objects instead of strings
-      // to store associations, then this will be easy
-      // also could use JSAxisDataHash_
-      // alternatively could send single long command which will unset all joysticks
-      // but then would need to keep track of all axes
-      joystick_.unsetAllJoysticks();
+      joystick_.unsetJoystick(Joystick.Keys.JOYSTICK, (JSAxisData) joystickBox_.getSelectedItem());
+      joystick_.unsetJoystick(Joystick.Keys.RIGHT_WHEEL, (JSAxisData) rightWheelBox_.getSelectedItem());
+      joystick_.unsetJoystick(Joystick.Keys.LEFT_WHEEL, (JSAxisData) leftWheelBox_.getSelectedItem());
    }
 
 }
