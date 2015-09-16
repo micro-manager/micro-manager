@@ -152,34 +152,6 @@ public class AutofocusManager {
       return afDevs;
    }
 
-   @SuppressWarnings("unchecked")
-   private AutofocusPlugin loadAutofocusPlugin(String className) throws MMException {
-      String msg = new String(className + " module.");
-      // instantiate auto-focusing module
-      AutofocusPlugin af = null;
-      try {
-         Class cl = Class.forName(className);
-         af = (AutofocusPlugin) cl.newInstance();
-         return af;
-      } catch (ClassNotFoundException e) {
-         ReportingUtils.logError(e);
-         msg = className + " autofocus plugin not found.";
-      } catch (InstantiationException e) {
-          ReportingUtils.logError(e);
-          msg = className + " instantiation to AutofocusPlugin interface failed.";
-      } catch (IllegalAccessException e) {
-          ReportingUtils.logError(e);
-          msg = "Illegal access exception!";
-      } catch (NoClassDefFoundError e) {
-          ReportingUtils.logError(e);
-          msg = className + " class definition nor found.";
-      }
-      
-      // not found
-      ReportingUtils.logMessage(msg);
-      throw new MMException(msg);
-   }
-   
    public boolean hasDevice(String dev) {
       for (AutofocusPlugin af : afs_) {
          if (af.getName().equals(dev))
