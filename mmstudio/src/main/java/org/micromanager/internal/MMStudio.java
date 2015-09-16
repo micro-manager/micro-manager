@@ -1561,33 +1561,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       return engine_;
    }
 
-   @Override
-   public String installAutofocusPlugin(String className) {
-      try {
-         return installAutofocusPlugin(Class.forName(className));
-      } catch (ClassNotFoundException e) {
-         String msg = "Internal error: AF manager not instantiated.";
-         ReportingUtils.logError(e, msg);
-         return msg;
-      }
-   }
-
-   public String installAutofocusPlugin(Class<?> autofocus) {
-      String msg = autofocus.getSimpleName() + " module loaded.";
-      if (afMgr_ != null) {
-         afMgr_.setAFPluginClassName(autofocus.getSimpleName());
-         try {
-            afMgr_.refresh();
-         } catch (MMException e) {
-            msg = e.getMessage();
-            ReportingUtils.logError(e);
-         }
-      } else {
-         msg = "Internal error: AF manager not instantiated.";
-      }
-      return msg;
-   }
-
    public CMMCore getCore() {
       return core_;
    }

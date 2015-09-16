@@ -39,13 +39,11 @@ import org.micromanager.Studio;
 public class AutofocusManager {
    private Studio app_;
    private Vector<AutofocusPlugin> afs_;
-   private Vector<String> afPluginClassNames_;
    private AutofocusPlugin currentAfDevice_;
    private AutofocusPropertyEditor afDlg_;
    
    public AutofocusManager(Studio app) {
       afs_ = new Vector<AutofocusPlugin>();
-      afPluginClassNames_ = new Vector<String>();
       currentAfDevice_ = null;
       app_ = app;
    }
@@ -66,16 +64,6 @@ public class AutofocusManager {
       throw new MMException(name + " not loaded.");
    }
    
-   /**
-    * Sets a class name for a Java af plugin.
-
-    * TODO: add multiple plugin devices 
-    * @param className - plugin class name
-    */
-   public void setAFPluginClassName(String className) {
-      if (! afPluginClassNames_.contains(className))
-         afPluginClassNames_.add(className);
-   }
 
    /**
     * Returns the current af device or null if none loaded.

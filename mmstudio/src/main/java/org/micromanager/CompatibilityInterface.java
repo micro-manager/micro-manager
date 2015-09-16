@@ -134,13 +134,6 @@ public interface CompatibilityInterface {
    public void saveConfigPresets();
 
    /**
-    * Installs an autofocus plugin class from the class path.
-    * @param className
-    * @return ???
-   */
-   public String installAutofocusPlugin(String className);
-
-   /**
     * Currently active autofocus device (can be either a Java or C++ coded device).
     * @return currently active autofocus device
     */
