@@ -306,6 +306,7 @@ public class ChannelHistogramModel {
       }
 
       saveChannelSettings();
+      applyLUT(true);
    }
 
    /**
@@ -436,25 +437,31 @@ public class ChannelHistogramModel {
    @Subscribe
    public void onLUTUpdate(LUTUpdateEvent event) {
       try {
+         boolean didChange = false;
+         Integer eventMin = event.getMin();
+         Integer eventMax = event.getMax();
+         Double eventGamma = event.getGamma();
          // Receive new settings from the event, if applicable.
-         if (event.getMin() != null) {
-            contrastMin_ = event.getMin();
+         if (eventMin != null && eventMin != contrastMin_) {
+            contrastMin_ = eventMin;
+            didChange = true;
          }
-         if (event.getMax() != null) {
-            contrastMax_ = event.getMax();
+         if (eventMax != null && eventMax != contrastMax_) {
+            contrastMax_ = eventMax;
+            didChange = true;
          }
-         if (event.getGamma() != null) {
-            gamma_ = event.getGamma();
-         }
-         if (color_ == null) {
-            // Can't do anything about this yet.
-            return;
+         if (eventGamma != null && eventGamma != gamma_) {
+            gamma_ = eventGamma;
+            didChange = true;
          }
 
          if (isFirstLUTUpdate_) {
             // Haven't initialized contrast yet; do so by autostretching.
             autostretch();
             isFirstLUTUpdate_ = false;
+         }
+         if (didChange) {
+            applyLUT(true);
          }
       }
       catch (Exception e) {
@@ -683,6 +690,7 @@ public class ChannelHistogramModel {
          if (!color_.equals(targetColor)) {
             reloadDisplaySettings();
          }
+         applyLUT(true);
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Error handling new image in histogram for channel " + channelIndex_);

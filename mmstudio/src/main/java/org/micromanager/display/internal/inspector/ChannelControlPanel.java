@@ -507,7 +507,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
       updateHistogram();
       calcAndDisplayHistAndStats(true);
-      model_.applyLUT(true);
    }
 
    public void setContrast(int min, int max, double gamma) {
