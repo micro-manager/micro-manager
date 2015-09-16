@@ -22,6 +22,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import javax.swing.JMenu;
@@ -39,6 +40,7 @@ import org.micromanager.PluginManager;
 import org.micromanager.Studio;
 
 import org.micromanager.events.internal.NewPluginEvent;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public class DefaultPluginManager implements PluginManager {
@@ -48,15 +50,32 @@ public class DefaultPluginManager implements PluginManager {
     * ordered.
     */
    private static class SortedMenu extends JMenu {
+      private HashSet<JMenuItem> unsortedItems_;
       public SortedMenu(String title) {
          super(title);
+         unsortedItems_ = new HashSet<JMenuItem>();
+      }
+
+      // Allow users to bypass the sorted nature
+      public JMenuItem addUnsorted(JMenuItem item) {
+         unsortedItems_.add(item);
+         return super.add(item);
       }
 
       @Override
       public JMenuItem add(JMenuItem item) {
          // Find the insertion point.
          for (int i = 0; i < getItemCount(); ++i) {
-            if (item.getText().compareTo(getItem(i).getText()) < 0) {
+            JMenuItem curItem = getItem(i);
+            if (unsortedItems_.contains(curItem)) {
+               // Skip this item because it's outside the sorted logic.
+               continue;
+            }
+            if (curItem == null) {
+               // Separator.
+               continue;
+            }
+            if (item.getText().compareTo(curItem.getText()) < 0) {
                insert(item, i);
                return item;
             }
@@ -76,6 +95,8 @@ public class DefaultPluginManager implements PluginManager {
             ProcessorPlugin.class);
       PATH_TO_CLASS.put("org.micromanager.MenuPlugin", MenuPlugin.class);
    }
+
+   private static final String PROCESSOR_MENU = "On-The-Fly Image Processing";
 
    private Studio studio_;
    private JMenu menu_;
@@ -202,7 +223,20 @@ public class DefaultPluginManager implements PluginManager {
       else {
          if (!subMenus_.containsKey(subMenu)) {
             // Create a new menu.
-            JMenu menu = new SortedMenu(subMenu);
+            SortedMenu menu = new SortedMenu(subMenu);
+            // HACK: if this is the processor menu, add a couple of items
+            // to it first.
+            if (subMenu.equals(PROCESSOR_MENU)) {
+               JMenuItem configure = new JMenuItem("Configure Processors...");
+               configure.addActionListener(new ActionListener() {
+                  @Override
+                  public void actionPerformed(ActionEvent e) {
+                     ((MMStudio) studio_).showPipelineFrame();
+                  }
+               });
+               menu.addUnsorted(configure);
+               menu.addSeparator();
+            }
             menu_.add(menu);
             subMenus_.put(subMenu, menu);
          }
@@ -216,8 +250,7 @@ public class DefaultPluginManager implements PluginManager {
     * to the current pipeline.
     */
    private void addProcessorPluginToMenu(final ProcessorPlugin plugin) {
-      addSubMenuItem("On-The-Fly Image Processing",
-            plugin.getName(),
+      addSubMenuItem(PROCESSOR_MENU, plugin.getName(),
             new Runnable() {
                @Override
                public void run() {
