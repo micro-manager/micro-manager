@@ -49,7 +49,11 @@ public class ColorModeCombo extends JButton {
    public ColorModeCombo(DisplayWindow display) {
       super();
       display_ = display;
-      int index = display_.getDisplaySettings().getChannelColorMode().getIndex();
+      int index = DisplaySettings.ColorMode.COLOR.getIndex();
+      DisplaySettings.ColorMode mode = display_.getDisplaySettings().getChannelColorMode();
+      if (mode != null) {
+         index = mode.getIndex();
+      }
       setText(LUTMaster.ICONS.get(index).text_);
       setIcon(LUTMaster.ICONS.get(index).icon_);
 
