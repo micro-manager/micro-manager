@@ -78,6 +78,7 @@ public class CanvasUpdateQueue {
    // to recognize when we're waiting for such a draw to process, so we don't
    // spam up the EDT with lots of excess draw requests.
    private boolean amWaitingForDraw_ = false;
+   private boolean shouldReapplyLUTs_ = true;
 
    public static CanvasUpdateQueue makeQueue(DisplayWindow display,
          MMVirtualStack stack, Object drawLock) {
@@ -189,6 +190,11 @@ public class CanvasUpdateQueue {
             amWaitingForDraw_ = true;
             stack_.setCoords(image.getCoords());
             plus_.getProcessor().setPixels(image.getRawPixels());
+            if (shouldReapplyLUTs_) {
+               // Must apply LUTs to the display now that it has pixels.
+               LUTMaster.initializeDisplay(display_);
+               shouldReapplyLUTs_ = false;
+            }
             plus_.updateAndDraw();
             display_.postEvent(new DefaultPixelsSetEvent(image, display_));
          }
@@ -215,6 +221,19 @@ public class CanvasUpdateQueue {
    public void resume() {
       shouldAcceptNewCoords_ = true;
       display_.requestRedraw();
+   }
+
+   /**
+    * Force the display to reapply LUTs. This is used to deal with certain
+    * bizarre situations in which the LUTs are "lost" for unknown reasons,
+    * defaulting the display to grayscale.
+    */
+   public void reapplyLUTs() {
+      shouldReapplyLUTs_ = true;
+      if (coordsQueue_.isEmpty() && shouldAcceptNewCoords_) {
+         // Force refresh of the display.
+         enqueue(display_.getDisplayedImages().get(0).getCoords());
+      }
    }
 
    @Subscribe

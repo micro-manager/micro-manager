@@ -87,6 +87,7 @@ import org.micromanager.display.internal.events.DefaultNewImagePlusEvent;
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
 import org.micromanager.display.internal.events.DisplayActivatedEvent;
 import org.micromanager.display.internal.events.FullScreenEvent;
+import org.micromanager.display.internal.events.GlobalDisplayDestroyedEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.display.internal.events.LUTUpdateEvent;
 import org.micromanager.display.internal.events.NewDisplaySettingsEvent;
@@ -357,9 +358,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       });
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
-      // Ensure we have the correct display mode set.
-      LUTMaster.initializeDisplay(this);
-
       // Set us to draw the first image in the dataset.
       // TODO: potentially there could be no image at these Coords, though
       // that seems unlikely. Such an edge case isn't all that harmful
@@ -624,9 +622,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          setImagePlusMetadata(ijImage_);
          if (canvasQueue_ != null) {
             canvasQueue_.resume();
+            // Ensure we have the correct display mode set for the new object.
+            canvasQueue_.reapplyLUTs();
          }
-         // Ensure we have the correct display mode set for the new object.
-         LUTMaster.initializeDisplay(this);
       }
       displayBus_.post(new DefaultNewImagePlusEvent(this, ijImage_));
    }
@@ -861,8 +859,12 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       }
       savePosition();
       displayBus_.post(new DisplayDestroyedEvent(this));
+      DefaultEventManager.getInstance().post(
+            new GlobalDisplayDestroyedEvent(this));
       DefaultEventManager.getInstance().unregisterForEvents(this);
       // HACK: notify the DisplayManager that we're going away.
+      // TODO: is this necessary? DisplayManager already listens for display
+      // events.
       DefaultDisplayManager.stopTrackingDisplay(this);
       store_.unregisterForEvents(this);
       // Closing the window immediately invalidates the ImagePlus
@@ -875,6 +877,18 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          canvasQueue_.halt();
          dispose();
          haveClosed_ = true;
+      }
+   }
+
+   /**
+    * For unknown reasons, when a display gets closed, other displays may
+    * spontaneously shift to grayscale. So whenever a display goes away, we
+    * force all other displays to refresh their LUTs.
+    */
+   @Subscribe
+   public void onDisplayDestroyed(GlobalDisplayDestroyedEvent event) {
+      if (event.getDisplay() != this) {
+         canvasQueue_.reapplyLUTs();
       }
    }
 
