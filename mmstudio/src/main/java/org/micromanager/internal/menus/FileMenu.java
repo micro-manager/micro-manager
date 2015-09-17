@@ -104,22 +104,17 @@ public class FileMenu {
    }
 
    private void promptToOpenFile(final boolean isVirtual) {
-      new Thread() {
-         @Override
-         public void run() {
-            try {
-               Datastore store = studio_.data().promptForDataToLoad(
-                     MMStudio.getInstance().getFrame(), isVirtual);
-               if (store != null) {
-                  studio_.displays().loadDisplays(store);
-                  updateFileHistory(store.getSavePath());
-               }
-            }
-            catch (IOException e) {
-               ReportingUtils.showError(e, "There was an error when opening data");
-            }
+      try {
+         Datastore store = studio_.data().promptForDataToLoad(
+               MMStudio.getInstance().getFrame(), isVirtual);
+         if (store != null) {
+            studio_.displays().loadDisplays(store);
+            updateFileHistory(store.getSavePath());
          }
-      }.start();
+      }
+      catch (IOException e) {
+         ReportingUtils.showError(e, "There was an error when opening data");
+      }
    }
 
    private void promptToCloseWindows() {
