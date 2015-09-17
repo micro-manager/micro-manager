@@ -29,6 +29,7 @@ import org.micromanager.api.SequenceSettings;
 import org.micromanager.events.EventManager;
 import org.micromanager.events.PipelineEvent;
 import org.micromanager.events.ProcessorEvent;
+import org.micromanager.events.SummaryMetadataEvent;
 import org.micromanager.internalinterfaces.AcqSettingsListener;
 import org.micromanager.utils.AcqOrderMode;
 import org.micromanager.utils.AutofocusManager;
@@ -156,6 +157,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
                  studio_.getPositionList(),
                  studio_.getAutofocusManager().getDevice());
          summaryMetadata_ = getAcquisitionEngine2010().getSummaryMetadata();
+         org.micromanager.events.EventManager.post(
+               new SummaryMetadataEvent(summaryMetadata_));
 
          // Run the Acquisition Engine output through a pipeline of ImageProcessors
          BlockingQueue<TaggedImage> procStackOutputQueue = ProcessorStack.run(

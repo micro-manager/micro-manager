@@ -23,10 +23,13 @@
 
 package org.micromanager.splitview;
 
+import com.google.common.eventbus.Subscribe;
+
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import mmcorej.TaggedImage;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acquisition.TaggedImageQueue;
@@ -35,6 +38,7 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
+import org.micromanager.events.SummaryMetadataEvent;
 
 /**
  * DataProcessor that splits images as instructed in SplitViewFrame
@@ -58,6 +62,7 @@ public class SplitViewProcessor extends DataProcessor<TaggedImage> {
          }
       }
       myFrame_.setVisible(true);
+      gui_.registerForEvents(this);
    }
 
    @Override
@@ -66,6 +71,7 @@ public class SplitViewProcessor extends DataProcessor<TaggedImage> {
          myFrame_.dispose();
          myFrame_ = null;
       }
+      gui_.unregisterForEvents(this);
    }
 
    public void setOrientation(String orientation) {
@@ -183,5 +189,52 @@ public class SplitViewProcessor extends DataProcessor<TaggedImage> {
          newHeight = height / 2;
       }
       return newHeight;
+   }
+
+   /**
+    * HACK: we need to adjust acquisition summary metadata to reflect the
+    * changed image dimensions and number of channels.
+    */
+   @Subscribe
+   public void onSummaryMetadata(SummaryMetadataEvent event) {
+      try {
+         // Adjust the image size and number of channels.
+         JSONObject summary = event.getSummaryMetadata();
+         // Pad arrays to have twice as many elements by copying earlier
+         // elements over.
+         for (String arrTag : new String[] {"ChContrastMin", "ChContrastMax",
+            "ChNames", "ChColors"}) {
+            JSONArray contents = summary.getJSONArray(arrTag);
+            int len = contents.length();
+            for (int i = 0; i < len; ++i) {
+               contents.put(contents.get(i));
+            }
+         }
+         // Adjust channel colors. Note color array length has already been
+         // padded by the above block.
+         JSONArray colors = summary.getJSONArray("ChColors");
+         for (int i = 0; i < colors.length(); ++i) {
+            if (i % 2 == 0) {
+               colors.put(i, myFrame_.getColor1().getRGB());
+            }
+            else {
+               colors.put(i, myFrame_.getColor2().getRGB());
+            }
+         }
+         summary.put("Channels", summary.getInt("Channels") * 2);
+         // Adjust image dimensions and ROI.
+         JSONArray roi = summary.getJSONArray("ROI");
+         if (orientation_.equals(SplitViewFrame.TB)) {
+            summary.put("Height", summary.getInt("Height") / 2);
+            roi.put(3, roi.getInt(3) / 2);
+         }
+         else {
+            summary.put("Width", summary.getInt("Width") / 2);
+            roi.put(2, roi.getInt(2) / 2);
+         }
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Error updating summary metadata");
+      }
    }
 }

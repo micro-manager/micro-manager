@@ -518,4 +518,12 @@ public class SplitViewFrame extends javax.swing.JFrame {
    private javax.swing.JRadioButton tbRadioButton;
    private javax.swing.JButton topLeftColorButton;
    // End of variables declaration//GEN-END:variables
+
+   public Color getColor1() {
+      return col1_;
+   }
+
+   public Color getColor2() {
+      return col2_;
+   }
 }
