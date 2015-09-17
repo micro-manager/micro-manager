@@ -443,8 +443,11 @@ public class MainFrame extends MMFrame implements LiveModeListener {
             new Runnable() {
                @Override
                public void run() {
-                  studio_.updateCenterAndDragListener(
-                     handMovesButton_.isSelected());
+                  boolean isSelected = handMovesButton_.isSelected();
+                  studio_.updateCenterAndDragListener(isSelected);
+                  String path = isSelected ? "move_hand_on.png" : "move_hand.png";
+                  handMovesButton_.setIcon(IconLoader.getIcon(
+                        "/org/micromanager/icons/" + path));
                }
             },
             // This icon is based on the public-domain icons at
