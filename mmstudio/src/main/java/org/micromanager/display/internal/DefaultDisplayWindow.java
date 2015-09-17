@@ -1253,7 +1253,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       result.setCustomTitle(customName_);
       // HACK: for some unknown reason, duplicating the display causes our own
       // LUTs to get "reset", so we have to re-apply them after duplicating.
-      LUTMaster.updateDisplayLUTs(this);
+      canvasQueue_.reapplyLUTs();
       return result;
    }
 
