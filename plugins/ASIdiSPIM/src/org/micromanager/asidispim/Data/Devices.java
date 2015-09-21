@@ -97,6 +97,8 @@ public class Devices {
    public final static Set<Devices.Keys> STAGES1D = EnumSet.of(
          Devices.Keys.LOWERZDRIVE, Devices.Keys.UPPERZDRIVE,
          Devices.Keys.PIEZOA, Devices.Keys.PIEZOB);
+   public final static Set<Devices.Keys> PIEZOS = EnumSet.of(
+         Devices.Keys.PIEZOA, Devices.Keys.PIEZOB);
    public final static Set<Devices.Keys> STAGES2D = EnumSet.of(
          Devices.Keys.XYSTAGE, Devices.Keys.GALVOA, Devices.Keys.GALVOB);
    public final static Set<Devices.Keys> GALVOS = EnumSet.of(

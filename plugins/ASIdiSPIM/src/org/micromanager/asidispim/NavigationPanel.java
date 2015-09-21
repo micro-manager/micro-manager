@@ -332,7 +332,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       this.add(beamPanel_, "wrap");
 
       cameraPanel_ = new CameraSubPanel(gui_, cameras_, devices_, panelName_, 
-            Devices.Sides.NONE, prefs_, true);
+            Devices.Sides.NONE, prefs_);
       this.add(cameraPanel_);
       
       xPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));

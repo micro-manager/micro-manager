@@ -31,6 +31,7 @@ import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.ListeningJTabbedPane;
+import org.micromanager.asidispim.Utils.MyDialogUtils;
 
 import java.awt.Container;
 import java.util.prefs.Preferences;
@@ -45,7 +46,9 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.MMStudio;
 import org.micromanager.asidispim.Utils.AutofocusUtils;
 import org.micromanager.asidispim.Utils.ControllerUtils;
+
 import static org.micromanager.asidispim.Utils.MyJavaUtils.isMac;
+
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.internalinterfaces.LiveModeListener; 
 import org.micromanager.utils.MMFrame;
@@ -86,6 +89,7 @@ import org.micromanager.utils.MMFrame;
 public class ASIdiSPIMFrame extends MMFrame  
       implements MMListenerInterface {
    
+   private final ScriptInterface gui_;
    private final Properties props_; 
    private final Prefs prefs_;
    private final Devices devices_;
@@ -117,35 +121,36 @@ public class ASIdiSPIMFrame extends MMFrame
    public ASIdiSPIMFrame(ScriptInterface gui)  {
 
       // create interface objects used by panels
+      gui_ = gui;
       prefs_ = new Prefs(Preferences.userNodeForPackage(this.getClass()));
-      devices_ = new Devices(gui, prefs_);
-      props_ = new Properties(gui, devices_, prefs_);
-      positions_ = new Positions(gui, devices_);
+      devices_ = new Devices(gui_, prefs_);
+      props_ = new Properties(gui_, devices_, prefs_);
+      positions_ = new Positions(gui_, devices_);
       joystick_ = new Joystick(devices_, props_);
-      cameras_ = new Cameras(gui, devices_, props_, prefs_);
-      controller_ = new ControllerUtils(gui, props_, prefs_, devices_, positions_);
+      cameras_ = new Cameras(gui_, devices_, props_, prefs_);
+      controller_ = new ControllerUtils(gui_, props_, prefs_, devices_, positions_);
       
       // create the panels themselves
       // in some cases dependencies create required ordering
-      devicesPanel_ = new DevicesPanel(gui, devices_, props_);
+      devicesPanel_ = new DevicesPanel(gui_, devices_, props_);
       stagePosUpdater_ = new StagePositionUpdater(positions_, props_);  // needed for setup and navigation
       
-      autofocus_ = new AutofocusUtils(gui, devices_, props_, prefs_,
+      autofocus_ = new AutofocusUtils(gui_, devices_, props_, prefs_,
             cameras_, stagePosUpdater_, positions_, controller_);
       
-      acquisitionPanel_ = new AcquisitionPanel(gui, devices_, props_, cameras_, 
+      acquisitionPanel_ = new AcquisitionPanel(gui_, devices_, props_, cameras_, 
             prefs_, stagePosUpdater_, positions_, controller_, autofocus_);
-      setupPanelA_ = new SetupPanel(gui, devices_, props_, joystick_, 
+      setupPanelA_ = new SetupPanel(gui_, devices_, props_, joystick_, 
             Devices.Sides.A, positions_, cameras_, prefs_, stagePosUpdater_,
             autofocus_);
-      setupPanelB_ = new SetupPanel(gui, devices_, props_, joystick_,
+      setupPanelB_ = new SetupPanel(gui_, devices_, props_, joystick_,
             Devices.Sides.B, positions_, cameras_, prefs_, stagePosUpdater_,
             autofocus_);
-      navigationPanel_ = new NavigationPanel(gui, devices_, props_, joystick_,
+      navigationPanel_ = new NavigationPanel(gui_, devices_, props_, joystick_,
             positions_, prefs_, cameras_, stagePosUpdater_);
 
-      dataAnalysisPanel_ = new DataAnalysisPanel(gui, prefs_);
-      autofocusPanel_ = new AutofocusPanel(gui, devices_, props_, prefs_, autofocus_);
+      dataAnalysisPanel_ = new DataAnalysisPanel(gui_, prefs_);
+      autofocusPanel_ = new AutofocusPanel(gui_, devices_, props_, prefs_, autofocus_);
       settingsPanel_ = new SettingsPanel(devices_, props_, prefs_, stagePosUpdater_);
       stagePosUpdater_.oneTimeUpdate();  // needed for NavigationPanel
       helpPanel_ = new HelpPanel();
@@ -183,6 +188,25 @@ public class ASIdiSPIMFrame extends MMFrame
       MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelB_);
       MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelA_);
       MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) navigationPanel_);
+      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener(new LiveModeListener() {
+         // make sure to "wake up" any piezos with autosleep enabled before we start imaging 
+         @Override
+         public void liveModeEnabled(boolean enabled) {
+            if (enabled) {
+               try {
+                  for (Devices.Keys piezoKey : Devices.PIEZOS) {
+                     if (devices_.isValidMMDevice(piezoKey)) {
+                        if (props_.getPropValueInteger(piezoKey, Properties.Keys.AUTO_SLEEP_DELAY) > 0) {
+                           gui_.getMMCore().setRelativePosition(devices_.getMMDevice(piezoKey), 0);
+                        }
+                     }
+                  }
+               } catch (Exception e) {
+                  MyDialogUtils.showError("Could not reset piezo's positions");
+               }
+            }
+         }
+      });
       
       // make sure gotDeSelected() and gotSelected() get called whenever we switch tabs
       tabbedPane_.addChangeListener(new ChangeListener() {

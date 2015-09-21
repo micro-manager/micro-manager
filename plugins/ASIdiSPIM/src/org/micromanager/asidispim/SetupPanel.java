@@ -595,7 +595,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       beamPanel_ = new BeamSubPanel(gui_, devices_, panelName_, side_, prefs_, props_);
       add(beamPanel_, "center, wrap");
 
-      cameraPanel_ = new CameraSubPanel(gui_, cameras_, devices_, panelName_, side_, prefs_, true);
+      cameraPanel_ = new CameraSubPanel(gui_, cameras_, devices_, panelName_, side_, prefs_);
       add(cameraPanel_, "center");
 
    }// end of SetupPanel constructor
