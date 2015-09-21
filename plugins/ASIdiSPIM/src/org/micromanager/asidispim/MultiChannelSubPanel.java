@@ -360,8 +360,9 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    }
    
    // could in theory do this from preferences but so much easier to do using multiChanelPanel_ object
+   // originally this was false if panel was enabled and only 1 channel was selected
    public boolean isMultiChannel() {
-      return isPanelEnabled() && getUsedChannels().length > 1;
+      return isPanelEnabled();
    }
    
    // could in theory do this from preferences but so much easier to do using multiChanelPanel_ object

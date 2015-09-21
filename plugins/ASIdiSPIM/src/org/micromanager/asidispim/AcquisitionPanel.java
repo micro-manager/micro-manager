@@ -1511,7 +1511,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             break;
          case VOLUME_HW:
          case SLICE_HW:
-            if (!controller_.setupHardwareChannelSwitching(acqSettings)) {
+            boolean success = controller_.setupHardwareChannelSwitching(acqSettings);
+            if (!success) {
                MyDialogUtils.showError("Couldn't set up slice hardware channel switching.");
                return false;
             }
@@ -1629,6 +1630,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
       
+      if (acqSettings.useChannels && acqSettings.channelMode == MultichannelModes.Keys.VOLUME_HW
+            && acqSettings.numSides < 2) {
+         MyDialogUtils.showError("Cannot do PLogic channel switching of volume when only one"
+               + " side is selected. Pester the developers if you need this.");
+         return false;
+      }
+      
+      // make sure we aren't trying to collect timepoints faster than we can
       if (!acqSettings.useMultiPositions && acqSettings.numTimepoints > 1) {
          if (timepointIntervalMs < volumeDuration) {
             MyDialogUtils.showError("Time point interval shorter than" +
@@ -1636,6 +1645,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             return false;
          }
       }
+      
       if (nrRepeats > 10 && separateTimePointsCB_.isSelected()) {
          if (!MyDialogUtils.getConfirmDialogResult(
                "This will generate " + nrRepeats + " separate windows. "
@@ -1644,6 +1654,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             return false;
          }
       }
+      
       if (hideCB_.isSelected() && !saveCB_.isSelected()) {
          MyDialogUtils.showError("Must save data to disk if viewer is hidden");
          return false;
@@ -1802,7 +1813,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                core_.setExposure(secondCamera, exposureTime);
             }
             
-            // Use this to build metadata for MultiViewRegistration plugin
+            // build metadata for MultiViewRegistration plugin
             String viewString = "";
             final String SEPARATOR = "_";
             // set up channels (side A/B is treated as channel too)
@@ -1907,7 +1918,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                if (acqSettings.useAutofocus) {
                   // Note that we will not autofocus as expected when using hardware
                   // timing.  Seems OK, since hardware timing will result in short
-                  // acquisition times that do not need autofocus
+                  // acquisition times that do not need autofocus.  We have already
+                  // ensured that we aren't doing both
                   if ( (autofocusAtT0 && timePoint == 0) || ( (timePoint > 0) && 
                           (timePoint % autofocusEachNFrames == 0 ) ) ) {
                      multiChannelPanel_.selectChannel(autofocusChannel);
@@ -1925,6 +1937,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      }
                      // Restore settings of the controller
                      controller_.prepareControllerForAquisition(acqSettings);
+                     if (acqSettings.useChannels && acqSettings.channelMode != MultichannelModes.Keys.VOLUME) {
+                        controller_.setupHardwareChannelSwitching(acqSettings);
+                     }
                   }
                }
 

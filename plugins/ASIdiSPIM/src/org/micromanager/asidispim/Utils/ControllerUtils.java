@@ -523,7 +523,9 @@ public class ControllerUtils {
       
       // speed things up by turning off updates, will restore value later
       String editCellUpdates = props_.getPropValueString(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES);
-      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, Properties.Values.NO);
+      if (!editCellUpdates.equals(Properties.Values.NO)) {
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, Properties.Values.NO);
+      }
       
       // initialize cells 13-16 which control BNCs 5-8
       for (int cellNum=13; cellNum<=16; cellNum++) {
@@ -574,11 +576,12 @@ public class ControllerUtils {
             Properties.Values.PLOGIC_PRESET_BNC5_8_ON_13_16);
       
       // restore update setting
-      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, editCellUpdates);
+      if (!editCellUpdates.equals(Properties.Values.NO)) {
+         props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, editCellUpdates);
+      }
       
       return true;
    }
-   
    
    /**
     * Triggers the Tiger controller
