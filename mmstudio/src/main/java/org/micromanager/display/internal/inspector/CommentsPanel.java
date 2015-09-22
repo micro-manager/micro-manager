@@ -75,7 +75,8 @@ public class CommentsPanel extends InspectorPanel {
    }
 
    private void initialize() {
-      JPanel summaryPanel = new JPanel(new MigLayout("flowy, insets 0"));
+      JPanel summaryPanel = new JPanel(
+            new MigLayout("flowy, insets 0, fillx"));
 
       summaryPanel.add(new JLabel("Acquisition comments:"));
 
@@ -84,7 +85,8 @@ public class CommentsPanel extends InspectorPanel {
 
       summaryPanel.add(new JScrollPane(summaryCommentsTextArea_), "grow");
 
-      JPanel commentsPanel = new JPanel(new MigLayout("flowy"));
+      JPanel commentsPanel = new JPanel(
+            new MigLayout("flowy, insets 0, fillx"));
 
       commentsPanel.add(new JLabel("Per-image comments:"));
 
@@ -93,7 +95,7 @@ public class CommentsPanel extends InspectorPanel {
 
       commentsPanel.add(new JScrollPane(imageCommentsTextArea_), "grow");
 
-      setLayout(new MigLayout());
+      setLayout(new MigLayout("fillx"));
       JSplitPane splitter = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
             summaryPanel, commentsPanel);
       // Don't draw a border around the outside of the SplitPane.
