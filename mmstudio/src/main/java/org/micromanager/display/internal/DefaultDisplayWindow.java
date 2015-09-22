@@ -934,9 +934,13 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             constrainWindowShape();
          }
          canvasQueue_.resume();
+         displayBus_.post(
+               new FullScreenEvent(getScreenConfig(), fullScreenFrame_ != null));
+         if (fullScreenFrame_ == null) {
+            // Our non-fullscreened self should be on top.
+            toFront();
+         }
       }
-      displayBus_.post(
-            new FullScreenEvent(getScreenConfig(), fullScreenFrame_ != null));
    }
 
    @Override
