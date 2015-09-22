@@ -266,9 +266,13 @@ public class DisplayGroupManager {
          screenToDisplay_.put(sourceConfig, source);
       }
       for (GraphicsConfiguration altConfig : screenToDisplay_.keySet()) {
-         // There's a fullscreen display on this monitor, so we can't show
-         // other displays on it.
-         bannedConfigs.add(altConfig);
+         // This conditional ensures we don't ban showing displays that are
+         // on the same screen as a display that is leaving fullscreen mode.
+         if (isFullScreen || altConfig != event.getConfig()) {
+            // There's a fullscreen display on this monitor, so we can't show
+            // other displays on it.
+            bannedConfigs.add(altConfig);
+         }
       }
       // These displays are already fullscreened; thus we shouldn't change
       // their visibility.
