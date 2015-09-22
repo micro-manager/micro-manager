@@ -426,6 +426,9 @@ public class MMStudio implements Studio, CompatibilityInterface {
       }
 
       // Done with main startup logic; show the main frame now.
+      // Reset its position as the current profile may have a different default
+      // as the one that was active when the frame was created.
+      frame_.resetPosition();
       frame_.setVisible(true);
       executeStartupScript();
 
