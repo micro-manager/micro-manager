@@ -31,13 +31,18 @@ import org.micromanager.internal.utils.NumberUtils;
 
 public class StagePosition {
    /**
-    * NOTE: despite what the name fields in this class may suggest, every 
-    * StagePosition in practice has only 1 or 2 axes, and thus only uses either
-    * the x, or the x and y fields. That is, the "x" field means "z" when
-    * using a 1-axis positioner! 
+    * For two-axis stages, the X position; for one-axis stages, the only stage
+    * position. For example, if using a Z focus drive, its position would be
+    * given by the "x" parameter.
     */
    public double x;
+   /**
+    * The Y position for two-axis stages.
+    */
    public double y;
+   /**
+    * RESERVED: do not use.
+    */
    public double z;
    public String stageName;
    public int numAxes;
