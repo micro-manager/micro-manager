@@ -107,7 +107,7 @@ import org.micromanager.internal.logging.LogFileManager;
 import org.micromanager.internal.menus.FileMenu;
 import org.micromanager.internal.menus.HelpMenu;
 import org.micromanager.internal.menus.ToolsMenu;
-import org.micromanager.internal.navigation.CenterAndDragListener;
+import org.micromanager.internal.navigation.ClickToMoveManager;
 import org.micromanager.internal.navigation.XYZKeyListener;
 import org.micromanager.internal.navigation.ZWheelListener;
 import org.micromanager.internal.pipelineinterface.PipelineFrame;
@@ -176,12 +176,12 @@ public class MMStudio implements Studio, CompatibilityInterface {
    private String openAcqDirectory_ = "";
    private boolean isProgramRunning_;
    private boolean configChanged_ = false;
+   private boolean isClickToMoveEnabled_ = false;
    private StrVector shutters_ = null;
 
    private ScriptPanel scriptPanel_;
    private PipelineFrame pipelineFrame_;
    private org.micromanager.internal.utils.HotKeys hotKeys_;
-   private CenterAndDragListener centerAndDragListener_;
    private ZWheelListener zWheelListener_;
    private XYZKeyListener xyzKeyListener_;
    public static final FileType MM_CONFIG_FILE
@@ -276,6 +276,9 @@ public class MMStudio implements Studio, CompatibilityInterface {
 
       core_.enableStderrLog(true);
 
+      // The ClickToMoveManager manages itself; don't need to retain a
+      // reference to it.
+      new ClickToMoveManager(this, core_);
       snapLiveManager_ = new SnapLiveManager(this, core_);
 
       frame_ = new MainFrame(this, core_, snapLiveManager_);
@@ -443,7 +446,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
          }
       }
 
-      centerAndDragListener_ = new CenterAndDragListener(studio_);
       zWheelListener_ = new ZWheelListener(core_, studio_);
       snapLiveManager_.addLiveModeListener(zWheelListener_);
       xyzKeyListener_ = new XYZKeyListener(core_, studio_);
@@ -817,14 +819,16 @@ public class MMStudio implements Studio, CompatibilityInterface {
    }
 
    public void updateCenterAndDragListener(boolean isEnabled) {
+      isClickToMoveEnabled_ = isEnabled;
       if (isEnabled) {
-         centerAndDragListener_.start();
-      } else {
-         centerAndDragListener_.stop();
+         IJ.setTool(Toolbar.HAND);
+         toolsMenu_.setMouseMovesStage(isEnabled);
       }
-      IJ.setTool(Toolbar.HAND);
-      toolsMenu_.setMouseMovesStage(isEnabled);
       events().post(new MouseMovesStageEvent(isEnabled));
+   }
+
+   public boolean getIsClickToMoveEnabled() {
+      return isClickToMoveEnabled_;
    }
    
    // Ensure that the "XY list..." dialog exists.

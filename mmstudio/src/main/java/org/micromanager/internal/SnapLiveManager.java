@@ -51,6 +51,7 @@ import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.Studio;
 
 import org.micromanager.internal.interfaces.LiveModeListener;
+import org.micromanager.internal.navigation.ClickToMoveManager;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -300,7 +301,14 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       display_.setCustomTitle("Snap/Live View");
    }
 
+   /**
+    * HACK: in addition to providing the snap/live/album buttons for the
+    * display, we also set it up for click-to-move at this point.
+    * We do this because duplicates of the snap/live window also need
+    * click-to-move to be enabled.
+    */
    private List<Component> createControls(final DisplayWindow display) {
+      ClickToMoveManager.getInstance().activate((DefaultDisplayWindow) display);
       ArrayList<Component> controls = new ArrayList<Component>();
       Insets zeroInsets = new Insets(0, 0, 0, 0);
       // This button needs to be enabled/disabled when live mode is turned
