@@ -54,6 +54,10 @@ public class Cameras {
       prefs_ = prefs;
       gui_ = gui;
       core_ = gui_.getMMCore();
+      
+      // try to initialize currentCameraKey_ with camera selected in main UI
+      currentCameraKey_ = getCurrentCamera();
+      
    }// constructor
 
    /**
@@ -159,12 +163,28 @@ public class Cameras {
    }
 
    /**
+    * Get the device key of the selected camera after making sure the plugin's
+    *   representation of the current camera matches the core (core is master)
     * @return device key, e.g. CAMERAA or CAMERALOWER
     */
    public Devices.Keys getCurrentCamera() {
+      String camera = core_.getCameraDevice();
+      // if we haven't initialized it yet or there is a mismatch
+      // then try to find the key (based on core's settings)
+      // un-initialize if not found
+      if (currentCameraKey_ == null ||
+            !camera.equals(devices_.getMMDevice(currentCameraKey_))) {
+         currentCameraKey_ = null;
+         for (Devices.Keys camKey : Devices.CAMERAS) {
+            if (devices_.getMMDevice(camKey).equals(camera)) {
+               setCamera(camKey);  // updates currentCameraKey_
+               break;
+            }
+         }
+      }
       return currentCameraKey_;
    }
-
+   
    /**
     * @return false if and only if a camera is not set (checks this class, not
     *         Core-Camera)

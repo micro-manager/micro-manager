@@ -27,15 +27,21 @@ import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
+import org.micromanager.asidispim.Utils.UpdateFromPropertyListenerInterface;
 
+import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
 import org.micromanager.api.ScriptInterface;
@@ -61,7 +67,13 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
    private final Devices.Sides side_;
    private final String instanceLabel_;
    private final JComboBox cameraBox_;
+   private final JToggleButton camAButton_;
+   private final JToggleButton camBButton_;
+   private final JToggleButton camMultiButton_;
+   private final JToggleButton camBotButton_;
+//   private final JToggleButton testAcqButton_;
    private final JToggleButton toggleButtonLive_;
+   private List<UpdateFromPropertyListenerInterface> privateListeners_;
    
    /**
     * 
@@ -82,10 +94,12 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
       super (MyStrings.PanelNames.CAMERA_SUBPANEL.toString() + instanceLabel,
             new MigLayout(
               "", 
-              "[right]8[align center]",
+              "[right]8[center]",
               "[]8[]"));
       setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
 
+      final int columnWidth = 105;
+      
       cameras_ = cameras;
       devices_ = devices;
       side_ = side;
@@ -93,12 +107,59 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
       instanceLabel_ = instanceLabel;
       gui_ = gui;
       
-      add(new JLabel("Camera:"));
-      cameraBox_ = makeCameraSelectionBox();
+      privateListeners_ = new ArrayList<UpdateFromPropertyListenerInterface>();
+
+      JPanel camButtonPanel = new JPanel(new MigLayout(
+            "",
+            "0[center]4[center]4[center]4[center]0",
+            "0[]0"));
+      
+      switch (side_) {
+      case A:
+         camAButton_ = makeCameraButton("Imaging", Devices.Keys.CAMERAA);
+         camBButton_ = makeCameraButton("  Epi  ", Devices.Keys.CAMERAB);
+         break;
+      case B:
+         camAButton_ = makeCameraButton("Imaging", Devices.Keys.CAMERAB);
+         camBButton_ = makeCameraButton("  Epi  ", Devices.Keys.CAMERAA);
+         break;
+      case NONE:
+      default:
+         camAButton_ = makeCameraButton("Path A", Devices.Keys.CAMERAA);
+         camBButton_ = makeCameraButton("Path B", Devices.Keys.CAMERAB);
+         break;
+      }
+
+      camMultiButton_ = makeCameraButton("Multi", Devices.Keys.MULTICAMERA); 
+      camBotButton_ = makeCameraButton("Bottom", Devices.Keys.CAMERALOWER);
+
+      camButtonPanel.add(camAButton_);
+      camButtonPanel.add(camMultiButton_);
+      camButtonPanel.add(camBButton_);
+      camButtonPanel.add(camBotButton_);
+      
+      // make sure only one can be selected at a time
+      ButtonGroup group = new ButtonGroup();
+      group.add(camAButton_);
+      group.add(camBButton_);
+      group.add(camMultiButton_);
+      group.add(camBotButton_);
+
+      add(camButtonPanel, "span 2, wrap");
+      
+      add(new JLabel("On tab activate:"));
+      cameraBox_ = makeCameraSelectionBox(columnWidth);
       add(cameraBox_, "wrap");
       
+      JPanel liveButtonPanel = new JPanel(new MigLayout(
+            "",
+            "[left]8[right]",
+            "0[]0"));
+      
+//      testAcqButton_ = new JToggleButton("Test Acq.");
+            
       toggleButtonLive_ = new JToggleButton();
-      toggleButtonLive_.setMargin(new Insets(0, 10, 0, 10));
+      toggleButtonLive_.setMargin(new Insets(2, 15, 2, 15));
       toggleButtonLive_.setIconTextGap(6);
       toggleButtonLive_.setToolTipText("Continuous live view");
       setLiveButtonAppearance(gui_.isLiveModeOn());
@@ -109,7 +170,11 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
             cameras_.enableLiveMode(!gui_.isLiveModeOn());
          }
       });
-      add(toggleButtonLive_, "width 100px, skip 1");
+      
+//      liveButtonPanel.add(testAcqButton_, "growy, shrinky");
+      liveButtonPanel.add(toggleButtonLive_, "width " + columnWidth + "px");
+      
+      add(liveButtonPanel, "skip 1");
    }
    
    /**
@@ -136,8 +201,9 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
    }
    
    
-   private JComboBox makeCameraSelectionBox() {
+   private JComboBox makeCameraSelectionBox(int maxBoxWidth) {
       JComboBox cameraBox = new JComboBox();
+      cameraBox.setMaximumSize(new Dimension(maxBoxWidth, 30));
       CameraSelectionBoxListener csbl = new CameraSelectionBoxListener(cameraBox);
       cameraBox.addActionListener(csbl);
       devices_.addListener(csbl);
@@ -150,7 +216,7 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
    }
    
    /**
-    * Listener for Selection boxes that attach cameras
+    * Listener for selection boxes that attach cameras
     */
    private class CameraSelectionBoxListener implements ActionListener, DevicesListenerInterface {
       JComboBox box_;
@@ -242,7 +308,51 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
    @Override
   public void gotSelected() {
       cameraBox_.setSelectedItem(cameraBox_.getSelectedItem());
+      // update which camera button is selected based on current camera
+      for (UpdateFromPropertyListenerInterface listener : privateListeners_) {
+         listener.updateFromProperty();
+      }
   }
-   
+
+   private JToggleButton makeCameraButton(String label, Devices.Keys devKey) {
+
+      class setCameraListener implements ActionListener,
+      UpdateFromPropertyListenerInterface, DevicesListenerInterface {
+         private final JToggleButton jtb_;
+         private final Devices.Keys devKey_;
+         
+         public setCameraListener(JToggleButton jtb, Devices.Keys devKey) {
+            jtb_ = jtb;
+            devKey_ = devKey;
+         }
+         
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            if (cameras_.getCurrentCamera() != devKey_) {
+               cameras_.setCamera(devKey_);
+            }
+         }
+
+         @Override
+         public void updateFromProperty() {
+            Devices.Keys currentCam = cameras_.getCurrentCamera();
+            jtb_.setSelected(currentCam == devKey_);
+         }
+
+         @Override
+         public void devicesChangedAlert() {
+            jtb_.setEnabled(devices_.isValidMMDevice(devKey_));
+         }
+      }
+
+      JToggleButton jtb = new JToggleButton(label);
+      jtb.setMargin(new Insets(4,4,4,4));
+      setCameraListener l = new setCameraListener(jtb, devKey);
+      jtb.addActionListener(l);
+      privateListeners_.add((UpdateFromPropertyListenerInterface)l);
+      devices_.addListener((DevicesListenerInterface) l);
+      jtb.setEnabled(devices_.isValidMMDevice(devKey));
+      return jtb;
+   }
    
 }
