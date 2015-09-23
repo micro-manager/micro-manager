@@ -25,11 +25,14 @@ import mmcorej.CMMCore;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
 
 // The Projector plugin provides a user interface for calibration and control
 // of SLM- and Galvo-based phototargeting devices. Phototargeting can be
 // ad-hoc or planned as part of a multi-dimensional acquisition.
-public class ProjectorPlugin implements MenuPlugin {
+@Plugin(type = MenuPlugin.class)
+public class ProjectorPlugin implements MenuPlugin, SciJavaPlugin {
    public static final String menuName = "Projector";
    public static final String tooltipDescription =
       "Control galvo or SLM devices that project a spot or pattern " +
