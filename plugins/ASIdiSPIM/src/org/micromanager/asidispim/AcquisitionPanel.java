@@ -755,7 +755,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       centerColumnPanel_.add(positionPanel, "growx, wrap");
       centerColumnPanel_.add(multiChannelPanel_, "wrap");
       centerColumnPanel_.add(navigationJoysticksCB_, "wrap");
-      centerColumnPanel_.add(useAutofocusCB_, "wrap");
+      centerColumnPanel_.add(useAutofocusCB_);
       
       // add the column panels to the main panel
       this.add(leftColumnPanel_);

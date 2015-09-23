@@ -114,7 +114,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       super(MyStrings.PanelNames.SETUP.toString() + side.toString(),
               new MigLayout(
               "",
-              "[center]8[center]",
+              "8[center]8[center]0",
               "[]16[]16[]"));
       
       devices_ = devices;

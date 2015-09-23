@@ -97,7 +97,7 @@ public final class JoystickSubPanel extends ListeningJPanel {
       
       add(new JLabel(Joystick.Keys.RIGHT_WHEEL.toString() + ":"));
       rightWheelBox_ = makeJoystickSelectionBox(Joystick.Keys.RIGHT_WHEEL);
-      add(rightWheelBox_, "wrap");
+      add(rightWheelBox_);
    }
    
    private JComboBox makeJoystickSelectionBox(Joystick.Keys jkey) {
