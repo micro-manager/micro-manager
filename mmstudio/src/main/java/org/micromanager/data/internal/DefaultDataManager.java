@@ -144,6 +144,12 @@ public class DefaultDataManager implements DataManager {
 
    @Override
    public Datastore loadData(String directory, boolean isVirtual) throws IOException {
+      // If the user selected a TIFF file, select the directory the file is
+      // in.
+      File dirFile = new File(directory);
+      if (!dirFile.isDirectory()) {
+         directory = dirFile.getParent();
+      }
       DefaultDatastore result = new DefaultDatastore();
       // TODO: future additional file formats will need to be handled here.
       // For now we just choose between StorageMultipageTiff and
