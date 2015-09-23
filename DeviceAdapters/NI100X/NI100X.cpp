@@ -33,6 +33,7 @@ const char* g_PropertyMaxVolts = "MaxVolts";
 const char* g_PropertyChannel = "IOChannel";
 const char* g_PropertyCanTrigger = "SupportsTriggering";
 const char* g_PropertyTriggeringEnabled = "Sequenceable";
+const char* g_PropertySampleRate = "TriggerSampleRate";
 const char* g_PropertySequenceLength = "TriggerSequenceLength";
 const char* g_PropertyTriggerInput = "TriggerInputLine";
 //used for disabling EOMs temporariliy for laser switching
@@ -87,8 +88,10 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // DAQDevice functions
 ///////////////////////////////////////////////////////////////////////////////
 
-DAQDevice::DAQDevice(): task_(NULL), channel_("undef"), isTriggeringEnabled_(true),
-    supportsTriggering_(true), maxSequenceLength_(1000), amPreparedToTrigger_(false)
+DAQDevice::DAQDevice(): task_(NULL), channel_("undef"),
+    isTriggeringEnabled_(true), samplesPerSec_(100000),
+    supportsTriggering_(true), maxSequenceLength_(1000),
+    amPreparedToTrigger_(false)
 {
 }
 
@@ -248,12 +251,26 @@ int DAQDevice::OnSequenceLength(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int DAQDevice::OnSampleRate(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(boost::lexical_cast<std::string>(samplesPerSec_).c_str());
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        pProp->Get(samplesPerSec_);
+    }
+
+    return DEVICE_OK;
+}
+
 int DAQDevice::SetupClockInput(int numVals)
 {
    // Samples per sec is the "maximum expected rate of the clock",
    // where clock is the input trigger signal
    int error = DAQmxCfgSampClkTiming(task_, inputTrigger_.c_str(),
-      SAMPLES_PER_SEC,
+      samplesPerSec_,
       DAQmx_Val_Rising, DAQmx_Val_ContSamps, numVals);
    if (error)
    {
@@ -438,11 +455,20 @@ int DigitalIO::Initialize()
       return nRet;
    }
 
-   // TODO: this and the following property are copy/pasted in the DigitalIO
-   // and AnalogIO classes.
+   // TODO: this and the following two properties are copy/pasted in the
+   // DigitalIO and AnalogIO classes.
    // Manual triggering override.
    CPropertyAction* pAct = new CPropertyAction(this, &DAQDevice::OnTriggeringEnabled);
    nRet = CreateIntegerProperty(g_PropertyTriggeringEnabled, 1, false, pAct, false);
+   if (DEVICE_OK != nRet)
+   {
+      return nRet;
+   }
+
+   // Input trigger sample rate.
+   pAct = new CPropertyAction(this, &DAQDevice::OnSampleRate);
+   nRet = CreateIntegerProperty(g_PropertySampleRate, samplesPerSec_, false,
+         pAct, false);
    if (DEVICE_OK != nRet)
    {
       return nRet;
@@ -457,7 +483,7 @@ int DigitalIO::Initialize()
       return nRet;
    }
    char terminalsBuf[2048];
-    int error = DAQmxGetDevTerminals(deviceName_.c_str(), terminalsBuf, 2048);
+   int error = DAQmxGetDevTerminals(deviceName_.c_str(), terminalsBuf, 2048);
    if (error)
    {
       return LogError(error, "GetDevTerminals");
@@ -829,6 +855,15 @@ int AnalogIO::Initialize()
    // Manual triggering override.
    CPropertyAction* pAct = new CPropertyAction(this, &DAQDevice::OnTriggeringEnabled);
    nRet = CreateIntegerProperty(g_PropertyTriggeringEnabled, 1, false, pAct, false);
+   if (DEVICE_OK != nRet)
+   {
+      return nRet;
+   }
+
+   // Input trigger sample rate.
+   pAct = new CPropertyAction(this, &DAQDevice::OnSampleRate);
+   nRet = CreateIntegerProperty(g_PropertySampleRate, samplesPerSec_, false,
+         pAct, false);
    if (DEVICE_OK != nRet)
    {
       return nRet;
