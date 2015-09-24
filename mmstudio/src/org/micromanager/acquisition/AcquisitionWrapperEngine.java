@@ -382,7 +382,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
       // Frames
       if (useFrames_) {
-         if (useCustomIntervals_) {
+         if (useCustomIntervals_ && customTimeIntervalsMs_ != null) {
             acquisitionSettings.customIntervalsMs = customTimeIntervalsMs_;
             acquisitionSettings.numFrames = acquisitionSettings.customIntervalsMs.size();
          } else {
@@ -1002,7 +1002,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       long totalMB = getTotalMB();
 
       double totalDurationSec = 0;
-      if (!useCustomIntervals_) {
+      if (!useCustomIntervals_ || customTimeIntervalsMs_ == null) {
          totalDurationSec = interval_ * numFrames / 1000.0;
       } else {
          for (Double d : customTimeIntervalsMs_) {
