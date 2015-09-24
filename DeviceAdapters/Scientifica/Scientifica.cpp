@@ -328,7 +328,7 @@ int XYStage::Stop()
    return ERR_UNRECOGNIZED_ANSWER;
 }
 
-//Moves stage to 0,0 coordinates
+//Zeros XY position
 int XYStage::SetOrigin()
 {
    MMThreadGuard guard(lock_);
@@ -337,7 +337,7 @@ int XYStage::SetOrigin()
    if (ret != DEVICE_OK)
       return ret;
 
-   ret = SendSerialCommand(port_.c_str(), "abs 0 0", "\r");
+   ret = SendSerialCommand(port_.c_str(), "PX 0", "\r");
    if (ret != DEVICE_OK)
       return ret;
 
@@ -348,7 +348,23 @@ int XYStage::SetOrigin()
 
    if (answer.substr(0,1).compare("A") == 0)
    {
-      return DEVICE_OK;
+		ret = ClearPort(*this, *GetCoreCallback(), port_);
+	   if (ret != DEVICE_OK)
+		  return ret;
+
+	   ret = SendSerialCommand(port_.c_str(), "PY 0", "\r");
+	   if (ret != DEVICE_OK)
+		  return ret;
+
+	   std::string answer2;
+	   ret = GetSerialAnswer(port_.c_str(), "\r", answer2);
+	   if (ret != DEVICE_OK)
+		  return ret;
+
+	   if (answer2.substr(0,1).compare("A") == 0)
+	   {
+		  return DEVICE_OK;
+	   }
    }
    return ERR_UNRECOGNIZED_ANSWER; 
 }
@@ -715,14 +731,14 @@ int ZStage::GetPositionSteps(long& steps)
    return ERR_UNRECOGNIZED_ANSWER;
 }
 
-//Moves stage to 0 coordinate
+//Zeros z position
 int ZStage::SetOrigin()
 {
    int ret = ClearPort(*this, *GetCoreCallback(), port_);
    if (ret != DEVICE_OK)
       return ret;
 
-   ret = SendSerialCommand(port_.c_str(), "absz 0 ", "\r");
+   ret = SendSerialCommand(port_.c_str(), "pz 0 ", "\r");
    if (ret != DEVICE_OK)
       return ret;
 
