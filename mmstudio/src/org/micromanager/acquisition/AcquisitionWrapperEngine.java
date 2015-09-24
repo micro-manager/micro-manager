@@ -458,10 +458,12 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
       // Frames
       useFrames_ = true;
-      if (useCustomIntervals_) {
+      if (ss.customIntervalsMs != null && ss.customIntervalsMs.size() > 0) {
+         useCustomIntervals_ = true;
          customTimeIntervalsMs_ = ss.customIntervalsMs;
          numFrames_ = ss.customIntervalsMs.size();
       } else {
+         useCustomIntervals_ = false;
          numFrames_ = ss.numFrames;
          interval_ = ss.intervalMs;
       }
