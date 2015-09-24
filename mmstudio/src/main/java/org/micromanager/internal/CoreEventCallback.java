@@ -57,7 +57,7 @@ public class CoreEventCallback extends MMEventCallback {
    public void onPropertiesChanged() {
       // TODO: remove test once acquisition engine is fully multithreaded
       if (engine_ != null && engine_.isAcquisitionRunning()) {
-         core_.logMessage("Notification from MMCore ignored because acquistion is running!", true);
+         core_.logMessage("Notification from MMCore ignored because acquisition is running!", true);
       } else {
          if (ignorePropertyChanges_) {
             core_.logMessage("Notification from MMCore ignored since the system is still loading", true);
