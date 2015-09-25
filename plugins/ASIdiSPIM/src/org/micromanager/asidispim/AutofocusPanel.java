@@ -173,7 +173,7 @@ public class AutofocusPanel extends ListeningJPanel{
       acqOptionsPanel_.add(new JLabel( "time points"), "wrap");
       
       // autofocus using this channel
-      // TODO: need to update when the channel group changes
+      // TODO: need to update combobox when the channel group changes
       String channelGroup_  = props_.getPropValueString(Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_MULTICHANNEL_GROUP);
       StrVector channels = gui.getMMCore().getAvailableConfigs(channelGroup_);
@@ -182,8 +182,14 @@ public class AutofocusPanel extends ListeningJPanel{
       // make sure to explicitly set it to something so pref gets written
       channelSelect.setSelectedIndex(channelSelect.getSelectedIndex());
       acqOptionsPanel_.add(new JLabel("Autofocus Channel: "));
-      acqOptionsPanel_.add(channelSelect, "wrap");
-
+      acqOptionsPanel_.add(channelSelect, "left, span 2, wrap");
+      
+      acqOptionsPanel_.add(new JLabel("Max offset change:"));
+      final JSpinner maxOffsetChangeSpinner = pu.makeSpinnerFloat(0, 10, 1,
+            Devices.Keys.PLUGIN,
+            Properties.Keys.PLUGIN_AUTOFOCUS_MAXOFFSETCHANGE, 2);
+      acqOptionsPanel_.add(maxOffsetChangeSpinner);
+      acqOptionsPanel_.add(new JLabel("\u00B5m (\u00B1)"), "left, wrap");
       
       // construct the main panel
       add(optionsPanel_);
