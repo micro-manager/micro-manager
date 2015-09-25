@@ -354,32 +354,40 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    
    // ## Generating, loading and saving calibration mappings
    
-   /**
-    * Returns the java Preferences node where we store the Calibration mapping.
-    * Each channel/camera combination is assigned a different node.
-    */
-   private Preferences getCalibrationNode() {
-      return Preferences.userNodeForPackage(ProjectorPlugin.class)
-            .node("calibration")
-            .node(dev_.getChannel())
-            .node(core_.getCameraDevice());
-   }
+    /**
+     * Returns the java Preferences node where we store the Calibration mapping.
+     * Each channel/camera combination is assigned a different node.
+     */
+    private Preferences getCalibrationNode() {
+        try {
+            return Preferences.userNodeForPackage(ProjectorPlugin.class)
+                    .node("calibration")
+                    .node(dev_.getChannel())
+                    .node(core_.getCameraDevice());
+        } catch (NullPointerException npe) {
+            return null;
+        }
+    }
    
-   /**
-    * Load the mapping for the current calibration node. The mapping
-    * maps each polygon cell to an AffineTransform.
-    */
-   private Map<Polygon, AffineTransform> loadMapping() {
-      String nodeStr = getCalibrationNode().toString();
-      if (mappingNode_ == null || !nodeStr.contentEquals(mappingNode_)) {
-         mappingNode_ = nodeStr;
-         mapping_ = (Map<Polygon, AffineTransform>) JavaUtils.getObjectFromPrefs(
-                 getCalibrationNode(), 
-                 dev_.getName(), 
-                 new HashMap<Polygon, AffineTransform>());
-      }
-      return  mapping_;
-   }
+    /**
+     * Load the mapping for the current calibration node. The mapping maps each
+     * polygon cell to an AffineTransform.
+     */
+    private Map<Polygon, AffineTransform> loadMapping() {
+        Preferences prefs = getCalibrationNode();
+        if (prefs == null) {
+            return null;
+        }
+        String nodeStr = prefs.toString();
+        if (mappingNode_ == null || !nodeStr.contentEquals(mappingNode_)) {
+            mappingNode_ = nodeStr;
+            mapping_ = (Map<Polygon, AffineTransform>) JavaUtils.getObjectFromPrefs(
+                    prefs,
+                    dev_.getName(),
+                    new HashMap<Polygon, AffineTransform>());
+        }
+        return mapping_;
+    }
 
    /**
     * Save the mapping for the current calibration node. The mapping

@@ -39,6 +39,7 @@ public class ProjectorPlugin implements MMPlugin {
    
    private ScriptInterface app_;
    private CMMCore core_;
+   private ProjectorControlForm form_;
 
   // Show the ImageJ Roi Manager and return a reference to it.   
    public static RoiManager showRoiManager() {
@@ -54,11 +55,12 @@ public class ProjectorPlugin implements MMPlugin {
       return roiManager;
    }
    
-   @Override
-   public void dispose() {
-      ProjectorControlForm.showSingleton(core_, app_).dispose();
-      
-   }
+    @Override
+    public void dispose() {
+        if (form_ != null) {
+            form_.dispose();
+        }
+    }
 
    @Override
    public void setApp(ScriptInterface app) {
@@ -76,7 +78,7 @@ public class ProjectorPlugin implements MMPlugin {
                "before using the Projector plugin.");
          return;
       }
-      ProjectorControlForm.showSingleton(core_, app_);
+      form_ = ProjectorControlForm.showSingleton(core_, app_);
    }
 
    public void configurationChanged() {
