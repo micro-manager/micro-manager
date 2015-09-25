@@ -69,6 +69,8 @@ protected:
    std::string deviceName_;
    // Output line or lines to use.
    std::string channel_;
+   // Auto-detected output port to use.
+   std::string port_;
    // Input line to listen on for hardware triggers.
    std::string inputTrigger_;
    // Frequency at which to sample the input trigger line.
@@ -138,6 +140,7 @@ public:
    // action interface
    // ----------------
    int OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnVolts(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPercent(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnMinVolts(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -188,6 +191,7 @@ public:
    // ----------------
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSequenceLength(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
