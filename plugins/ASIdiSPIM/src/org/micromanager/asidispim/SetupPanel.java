@@ -636,9 +636,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       ReportingUtils.logMessage("autofocus updated offset for side " + side_ + "; new value is " + newOffset);
    }
 
-   
-   
-
    /**
     * Performs "2-point" calibration updating the offset and slope.
     * Pops up a sub-window.

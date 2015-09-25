@@ -471,7 +471,7 @@ public class AutofocusUtils {
                   if (isPiezoScan) {
                      final double end1 = piezoStart + 0.1*piezoRange;
                      final double end2 = piezoStart + 0.9*piezoRange;
-                     if (r2 > minimumRSquare 
+                     if (r2 > minimumRSquare
                            && bestPiezoPosition > Math.min(end1, end2)
                            && bestPiezoPosition < Math.max(end1, end2)) {
                         // if during acquisition then make sure we are within allowed delta
