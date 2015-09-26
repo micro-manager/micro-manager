@@ -145,7 +145,7 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
       group.add(camMultiButton_);
       group.add(camBotButton_);
 
-      add(camButtonPanel, "span 2, wrap");
+      add(camButtonPanel, "span 2, center, wrap");
       
       add(new JLabel("On tab activate:"));
       cameraBox_ = makeCameraSelectionBox(columnWidth);
@@ -153,7 +153,7 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
       
       JPanel liveButtonPanel = new JPanel(new MigLayout(
             "",
-            "[left]8[right]",
+            "0[left]8[right]0",
             "0[]0"));
       
 //      testAcqButton_ = new JToggleButton("Test Acq.");
