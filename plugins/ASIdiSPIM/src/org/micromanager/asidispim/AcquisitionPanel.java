@@ -167,7 +167,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JCheckBox minSlicePeriodCB_;
    private final JCheckBox separateTimePointsCB_;
    private final JCheckBox saveCB_;
-   private final JCheckBox hideCB_;
    private final JComboBox spimMode_;
    private final JCheckBox navigationJoysticksCB_;
    private final JCheckBox usePositionsCB_;
@@ -195,7 +194,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               new MigLayout(
               "",
               "[center]0[center]0[center]",
-              "[top]0[]"));
+              "0[top]0[]0"));
       gui_ = gui;
       devices_ = devices;
       props_ = props;
@@ -537,31 +536,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             Properties.Keys.PREFS_SEPARATE_VIEWERS_FOR_TIMEPOINTS, panelName_, false); 
       savePanel_.add(separateTimePointsCB_, "span 3, left, wrap");
       
-      hideCB_ = pu.makeCheckBox("Hide viewer",
-            Properties.Keys.PREFS_HIDE_WHILE_ACQUIRING, panelName_, false); 
-      savePanel_.add(hideCB_, "left");
-      hideCB_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent ae) {
-            // if viewer is hidden then force saving to disk
-            if (hideCB_.isSelected()) {
-               if (!saveCB_.isSelected()) {
-                  saveCB_.doClick();
-               }
-               saveCB_.setEnabled(false);
-            } else {
-               saveCB_.setEnabled(true);
-            }
-         }
-      });
-      
       saveCB_ = pu.makeCheckBox("Save while acquiring",
             Properties.Keys.PREFS_SAVE_WHILE_ACQUIRING, panelName_, false);
       // init the save while acquiring CB; could also do two doClick() calls
-      if (hideCB_.isSelected()) {
-         saveCB_.setEnabled(false);
-      }
-      savePanel_.add(saveCB_, "span 2, center, wrap");
+      // TODO check that it's initialized now
+      savePanel_.add(saveCB_, "skip 1, span 2, center, wrap");
 
       JLabel dirRootLabel = new JLabel ("Directory root:");
       savePanel_.add(dirRootLabel);
@@ -648,6 +627,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       updateStartButton();  // call once to initialize, isSelected() will be false
 
       acquisitionStatusLabel_ = new JLabel("");
+      acquisitionStatusLabel_.setBackground(nameField_.getBackground());
+      acquisitionStatusLabel_.setOpaque(true);
       updateAcquisitionStatus(AcquisitionStatus.NONE);
       
       // Channel Panel (separate file for code)
@@ -739,12 +720,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       leftColumnPanel_.add(durationPanel_, "split 2");
       leftColumnPanel_.add(timepointPanel_, "wrap, growx");
       leftColumnPanel_.add(savePanel_, "wrap");
-      leftColumnPanel_.add(new JLabel("Acquisition mode: "), "split 2, left");
+      leftColumnPanel_.add(new JLabel("Acquisition mode: "), "split 2, right");
       AcquisitionModes acqModes = new AcquisitionModes(devices_, prefs_);
       spimMode_ = acqModes.getComboBox();
       spimMode_.addActionListener(recalculateTimingDisplayAL);
-      leftColumnPanel_.add(spimMode_, "wrap");
-      leftColumnPanel_.add(buttonStart_, "split 2, left");
+      leftColumnPanel_.add(spimMode_, "left, wrap");
+      leftColumnPanel_.add(buttonStart_, "split 2, left, wrap");
+      leftColumnPanel_.add(new JLabel("Status:"), "split 2, left");
       leftColumnPanel_.add(acquisitionStatusLabel_);
       
       centerColumnPanel_ = new JPanel(new MigLayout(
@@ -800,7 +782,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @param acqName
     */
    public void setAcquisitionNamePrefix(String acqName) {
-      nameField_.setText(acqName);
+      .setText(acqName);
    }
    
    private void updateStartButton() {
@@ -1549,7 +1531,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       float cameraReadoutTime = computeCameraReadoutTime();
       double exposureTime = acqSettings.sliceTiming.cameraExposure;
       
-      boolean show = !hideCB_.isSelected();
       boolean save = saveCB_.isSelected();
       boolean singleTimePointViewers = separateTimePointsCB_.isSelected();
       String rootDir = rootField_.getText();
@@ -1653,20 +1634,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                JOptionPane.OK_CANCEL_OPTION)) {
             return false;
          }
-      }
-      
-      if (hideCB_.isSelected() && !saveCB_.isSelected()) {
-         MyDialogUtils.showError("Must save data to disk if viewer is hidden");
-         return false;
-      }
-      if (hideCB_.isSelected()) {
-         MyDialogUtils.showError("Hiding option not working because of Micro-manager bug."
-               + " Pester the developers if you really need this.");
-         return false;
-         // even single acquisition fails when hidden
-         // I suspect this is because the acquisition isn't closed properly
-         // due to a bug noted below
-         // hopefully this issue will simply disappear in MM2.0
       }
       
       // Autofocus settings; only used if acqSettings.useAutofocus is true
@@ -1802,10 +1769,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             if (spimMode == AcquisitionModes.Keys.NO_SCAN && ! singleTimePointViewers) {
                // swap nrFrames and nrSlices
                gui_.openAcquisition(acqName, rootDir, nrSlices, nrSides * nrChannels,
-                  nrFrames, nrPositions, show, save);
+                  nrFrames, nrPositions, true, save);
             } else {
                gui_.openAcquisition(acqName, rootDir, nrFrames, nrSides * nrChannels,
-                  nrSlices, nrPositions, show, save);
+                  nrSlices, nrPositions, true, save);
             }
             
             core_.setExposure(firstCamera, exposureTime);
