@@ -782,7 +782,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @param acqName
     */
    public void setAcquisitionNamePrefix(String acqName) {
-      .setText(acqName);
+      nameField_.setText(acqName);
    }
    
    private void updateStartButton() {
