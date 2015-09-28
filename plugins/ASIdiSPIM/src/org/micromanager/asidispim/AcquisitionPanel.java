@@ -261,7 +261,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       delaySide_.addChangeListener(recalculateTimingDisplayCL);
       volPanel_.add(delaySide_, "wrap");
 
-      volPanel_.add(new JLabel("Slices per volume:"));
+      volPanel_.add(new JLabel("Slices per side:"));
       numSlices_ = pu.makeSpinnerInteger(1, 65000,
               Devices.Keys.PLUGIN,
               Properties.Keys.PLUGIN_NUM_SLICES, 20);
