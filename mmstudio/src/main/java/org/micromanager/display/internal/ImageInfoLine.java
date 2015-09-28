@@ -52,10 +52,10 @@ public class ImageInfoLine extends JLabel {
          text += String.format("%.2fx%.2f \u00b5m ",
                pixelSize * width, pixelSize * height);
       }
-      text += String.format("(%dx%d); ", width, height);
+      text += String.format("(%dx%d px), ", width, height);
       Integer depth = metadata.getBitDepth();
       if (depth != null) {
-         text += depth + "-bit; ";
+         text += depth + "-bit, ";
       }
       text += (image.getBytesPerPixel() * width * height / 1024) + "K";
       setText(text);
