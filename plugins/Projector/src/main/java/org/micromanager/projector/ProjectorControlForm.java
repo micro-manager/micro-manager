@@ -378,6 +378,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       String nodeStr = getCalibrationNode();
       if (mappingNode_ == null || !nodeStr.contentEquals(mappingNode_)) {
          ObjectInputStream oInputStream = null;
+         boolean succeeded = true;
          try {
             mappingNode_ = nodeStr;
             String map = app_.profile().getString(this.getClass(),
@@ -388,8 +389,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             oInputStream.close();
          } catch (IOException ex) {
             app_.logs().logError(ex, "Error loading object from profile");
+            succeeded = false;
          } catch (ClassNotFoundException ex) {
             app_.logs().logError(ex, "Failed to find object in profile stream");
+            succeeded = false;
          } 
          finally {
             try {
@@ -397,7 +400,12 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   oInputStream.close();
             } catch (IOException ex) {
                app_.logs().logError(ex, "Failed to close inputStream");
+               succeeded = false;
             }
+         }
+         if (!succeeded) {
+            // Blow away the profile string so we don't try to load this again.
+            app_.profile().setString(this.getClass(), getCalibrationKey(), "");
          }
       }
       return  mapping_;
