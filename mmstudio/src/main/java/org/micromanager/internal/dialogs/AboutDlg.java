@@ -25,6 +25,8 @@ package org.micromanager.internal.dialogs;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.Toolkit;
@@ -41,6 +43,7 @@ import javax.swing.border.BevelBorder;
 import javax.swing.border.LineBorder;
 
 import org.micromanager.internal.MMVersion;
+import org.micromanager.internal.utils.GUIUtils;
 
 /**
  * Help | About dialog for MMStudio.
@@ -87,14 +90,19 @@ public class AboutDlg extends JDialog {
       openSourceAutomatedLabel.setBounds(44, 30, 329, 18);
       getContentPane().add(openSourceAutomatedLabel);
 
-      final JTextArea citeUs = new JTextArea();
+      final JLabel citeUs = new JLabel();
       citeUs.setFont(new Font("Arial", Font.PLAIN, 10));
-      citeUs.setEditable(false);
-      citeUs.setLineWrap(true);
-      citeUs.setWrapStyleWord(true);
       citeUs.setBorder(new LineBorder(Color.black, 1, false));
-      citeUs.setText("If you've found this software useful, please cite Micro-Manager in your publications.");
+      citeUs.setText("<html>If you've found this software useful, please <a href=\"https://micro-manager.org/wiki/Citing_Micro-Manager\">cite Micro-Manager</a> in your publications.");
       citeUs.setBounds(5, 277, 368, 40);
+      // When users click on the citation plea, we spawn a new thread to send
+      // their browser to the MM wiki.
+      citeUs.addMouseListener(new MouseAdapter() {
+         @Override
+         public void mousePressed(MouseEvent e) {
+            new Thread(GUIUtils.makeURLRunnable("https://micro-manager.org/wiki/Citing_Micro-Manager")).start();
+         }
+      });
       getContentPane().add(citeUs);
 
 
