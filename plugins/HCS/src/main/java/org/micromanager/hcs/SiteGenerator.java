@@ -174,7 +174,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       setTitle("HCS Site Generator " + HCSPlugin.VERSION_INFO);
       loadAndRestorePosition(100, 100, 1000, 640);
 
-      platePanel_ = new PlatePanel(plate_, null, this);
+      platePanel_ = new PlatePanel(plate_, null, this, app);
       springLayout.putConstraint(SpringLayout.NORTH, platePanel_, 5, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.EAST, platePanel_, -136, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, platePanel_, 5, SpringLayout.WEST, getContentPane());
@@ -771,18 +771,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       
       platePanel_.setSelectedWells(selectedWells);
       platePanel_.repaint();
-   }
-
-   public void setApp(Studio app) {
-      app_ = app;
-      try {
-         loadSettings();
-         platePanel_.setApp(app);
-         regenerate();
-      } catch (HCSException e) {
-         // commented out to avod displaying this error at startup
-         displayError(e.getMessage());
-      }
    }
 
    public void configurationChanged() {
