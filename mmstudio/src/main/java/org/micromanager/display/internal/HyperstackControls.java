@@ -44,6 +44,7 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.display.DisplayWindow;
 
+import org.micromanager.data.internal.IncomingImageEvent;
 import org.micromanager.data.internal.NewImageEvent;
 import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
 import org.micromanager.display.internal.events.FPSEvent;
@@ -208,6 +209,47 @@ public class HyperstackControls extends JPanel {
    public void onNewImage(NewImageEvent event) {
       imagesReceived_++;
       updateFPS(event.getImage());
+   }
+
+   /**
+    * Create a timer to show the countdown for incoming images.
+    */
+   @Subscribe
+   public void onIncomingImage(IncomingImageEvent event) {
+      try {
+         final Timer countdownTimer = new Timer("Next image countdown");
+
+         final double nextTime = event.getNextImageTime();
+         TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+               double remainingMs = nextTime - System.currentTimeMillis();
+               if (remainingMs <= 0) {
+                  // Cancel the timer, so we don't show negative values.
+                  countdownTimer.cancel();
+                  countdownLabel_.setText("");
+                  return;
+               }
+               int hours = (int) (remainingMs / 3600000);
+               remainingMs -= hours * 3600000;
+               int minutes = (int) (remainingMs / 60000);
+               remainingMs -= minutes * 60000;
+               String text = "";
+               if (hours > 0) {
+                  text += hours + "h ";
+               }
+               if (minutes > 0) {
+                  text += minutes + "m ";
+               }
+               text += String.format("%.1fs", remainingMs / 1000);
+               countdownLabel_.setText("Next image: " + text);
+            }
+         };
+         countdownTimer.schedule(task, 500, 100);
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error setting up countdown");
+      }
    }
 
    /**

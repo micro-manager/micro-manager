@@ -1,6 +1,8 @@
 
 package org.micromanager.acquisition.internal;
 
+import com.google.common.eventbus.Subscribe;
+
 import java.awt.Color;
 import java.io.File;
 import java.util.ArrayList;
@@ -21,6 +23,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
+import org.micromanager.data.internal.IncomingImageEvent;
 import org.micromanager.IAcquisitionEngine2010;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
@@ -69,6 +72,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private boolean useCustomIntervals_;
    protected JSONObject summaryMetadata_;
    private ArrayList<AcqSettingsListener> settingsListeners_;
+   private Datastore curStore_;
 
    public AcquisitionWrapperEngine() {
       useCustomIntervals_ = false;
@@ -140,15 +144,15 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          MMAcquisition acq = new MMAcquisition("Acq",
                  summaryMetadata_, acquisitionSettings.save, this,
                  !AcqControlDlg.getShouldHideMDADisplay());
-         Datastore store = acq.getDatastore();
-         studio_.events().post(new DefaultAcquisitionStartedEvent(store,
+         curStore_ = acq.getDatastore();
+         studio_.events().post(new DefaultAcquisitionStartedEvent(curStore_,
                   acquisitionSettings));
-         Pipeline pipeline = studio_.data().copyApplicationPipeline(store,
+         Pipeline pipeline = studio_.data().copyApplicationPipeline(curStore_,
                false);
 
          // Start pumping images through the pipeline and into the datastore.
          DefaultTaggedImageSink sink = new DefaultTaggedImageSink(
-                 engineOutputQueue, pipeline);
+                 engineOutputQueue, pipeline, curStore_, this);
          sink.start(new Runnable() {
             @Override
             public void run() {
@@ -156,7 +160,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
             }
          });
         
-         return store;
+         return curStore_;
 
       } catch (Throwable ex) {
          ReportingUtils.showError(ex);
@@ -501,6 +505,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    @Override
    public void setParentGUI(Studio parent) {
       studio_ = parent;
+      studio_.events().registerForEvents(this);
    }
 
    @Override
@@ -1090,9 +1095,15 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       return summaryMetadata_;
    }
 
-    @Override
-    public String getComment() {
-        return this.comment_;
-    }
+   @Override
+   public String getComment() {
+       return this.comment_;
+   }
 
+   @Subscribe
+   public void onAcquisitionSleep(AcquisitionSleepEvent event) {
+      if (curStore_ != null) {
+         curStore_.publishEvent(new IncomingImageEvent(event.getWakeTime()));
+      }
+   }
 }

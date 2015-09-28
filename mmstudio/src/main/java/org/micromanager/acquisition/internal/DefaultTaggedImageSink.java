@@ -29,11 +29,14 @@ public class DefaultTaggedImageSink  {
    private final BlockingQueue<TaggedImage> imageProducingQueue_;
    private Datastore store_;
    private Pipeline pipeline_;
+   private AcquisitionEngine engine_;
 
    public DefaultTaggedImageSink(BlockingQueue<TaggedImage> queue,
-         Pipeline pipeline) {
+         Pipeline pipeline, Datastore store, AcquisitionEngine engine) {
       imageProducingQueue_ = queue;
       pipeline_ = pipeline;
+      store_ = store;
+      engine_ = engine;
    }
 
    public void start() {
