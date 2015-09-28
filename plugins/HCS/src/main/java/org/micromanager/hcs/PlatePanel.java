@@ -155,8 +155,10 @@ public class PlatePanel extends JPanel {
       }
    }
 
-   public PlatePanel(SBSPlate plate, PositionList pl, ParentPlateGUI gui) {
+   public PlatePanel(SBSPlate plate, PositionList pl, ParentPlateGUI gui,
+         Studio app) {
       gui_ = gui;
+      app_ = app;
       plate_ = plate;
       mode_ = Tool.SELECT;
       lockAspect_ = true;
@@ -288,6 +290,9 @@ public class PlatePanel extends JPanel {
       drawSelRect(previous_);
       Rectangle selRect = new Rectangle(anchor_.x, anchor_.y, 
               e.getX()- anchor_.x, e.getY() - anchor_.y);
+      // Don't allow one-dimensional selection rectangles.
+      selRect.width = Math.max(1, selRect.width);
+      selRect.height = Math.max(1, selRect.height);
       for (WellBox wellBoxes_1 : wellBoxes_) {
          if (wellBoxes_1.wellRect.intersects(selRect)) {
             wellBoxes_1.selected = true;
