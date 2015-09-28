@@ -25,10 +25,12 @@
  */
 package org.micromanager.display.internal;
 
+import com.google.common.base.Joiner;
 import com.google.common.eventbus.Subscribe;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -209,6 +211,7 @@ public class HyperstackControls extends JPanel {
    public void onNewImage(NewImageEvent event) {
       imagesReceived_++;
       updateFPS(event.getImage());
+      updateStatus(event.getImage());
    }
 
    /**
@@ -304,13 +307,13 @@ public class HyperstackControls extends JPanel {
             oldMetadata.getImageNumber() != null) {
          elapsedImages = newMetadata.getImageNumber() - oldMetadata.getImageNumber();
       }
-      if (elapsedImages != 0) {
+      if (elapsedImages != 0 && elapsedImages / deltaSec >= 1) {
          // Show both data FPS (number of new images) and display FPS
          // (rate at which display updates).
          newLabel = String.format("FPS: %.1f (display %.1f)",
                elapsedImages / deltaSec, displayUpdates_ / deltaSec);
       }
-      else if (displayUpdates_ != 0) {
+      else if (displayUpdates_ != 0 && displayUpdates_ / deltaSec >= 1) {
          // Show just the display FPS.
          newLabel = String.format("Display FPS: %.1f",
                displayUpdates_ / deltaSec);
@@ -334,6 +337,28 @@ public class HyperstackControls extends JPanel {
    @Subscribe
    public void onStatus(StatusEvent event) {
       statusLabel_.setText(event.getStatus());
+   }
+
+   /**
+    * Update our status line to show some information about the image:
+    * position name, acquisition time, Z altitude, and camera name.
+    */
+   private void updateStatus(Image image) {
+      ArrayList<String> tokens = new ArrayList<String>();
+      Metadata metadata = image.getMetadata();
+      if (metadata.getPositionName() != null) {
+         tokens.add(metadata.getPositionName());
+      }
+      if (metadata.getElapsedTimeMs() != null) {
+         tokens.add(String.format("%.2fs", metadata.getElapsedTimeMs()));
+      }
+      if (metadata.getZPositionUm() != null) {
+         tokens.add(String.format("z: %.2f\u00b5m", metadata.getZPositionUm()));
+      }
+      if (metadata.getCamera() != null && !metadata.getCamera().equals("")) {
+         tokens.add(metadata.getCamera());
+      }
+      statusLabel_.setText(Joiner.on(", ").join(tokens));
    }
 
    public static String elapsedTimeDisplayString(double seconds) {
