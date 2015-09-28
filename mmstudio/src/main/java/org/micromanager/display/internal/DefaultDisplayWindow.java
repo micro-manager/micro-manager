@@ -397,6 +397,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       contentsPanel_.setLayout(new MigLayout("insets 1, fillx, filly",
          "[grow, fill]", "[grow, fill]related[]"));
 
+      contentsPanel_.add(new ImageInfoLine(this), "wrap");
       recreateCanvas();
       contentsPanel_.add(canvasPanel_, "align center, wrap, grow");
 
