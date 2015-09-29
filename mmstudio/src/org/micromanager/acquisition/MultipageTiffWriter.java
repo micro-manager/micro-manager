@@ -170,6 +170,12 @@ public class MultipageTiffWriter {
    private int currentImageByteBufferCapacity_ = 0;
            
    private ByteBuffer allocateByteBufferMemo(int capacity) {
+       // HACK: if we are running on 32-bit mode, then we don't want to cache
+       // our direct buffers, due to increased memory constraints on 32-bit
+       // systems.
+       if (System.getProperty("sun.arch.data.model").equals("32")) {
+           return allocateByteBuffer(capacity);
+       }
        if (capacity != currentImageByteBufferCapacity_) {
            currentImageByteBuffers_.clear();
            currentImageByteBufferCapacity_ = capacity;
