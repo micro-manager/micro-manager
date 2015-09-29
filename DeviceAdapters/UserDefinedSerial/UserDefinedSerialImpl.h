@@ -81,6 +81,8 @@ UserDefSerialBase<TBasicDevice, UConcreteDevice>::Shutdown()
    if (err != DEVICE_OK)
       return err;
 
+   initialized_ = false;
+
    return DEVICE_OK;
 }
 
