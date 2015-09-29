@@ -48,12 +48,14 @@ import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.text.ParseException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
+import javax.swing.JFormattedTextField;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.JButton;
@@ -64,6 +66,7 @@ import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.text.DefaultFormatter;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -102,6 +105,8 @@ import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 import javax.swing.BorderFactory;
 
@@ -110,6 +115,7 @@ import org.micromanager.asidispim.Data.ChannelSpec;
 import org.micromanager.asidispim.Data.Devices.Sides;
 import org.micromanager.asidispim.Utils.ControllerUtils;
 import org.micromanager.asidispim.Utils.AutofocusUtils;
+import org.micromanager.asidispim.api.ASIdiSPIMException;
 
 /**
  *
@@ -152,8 +158,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JPanel timepointPanel_;
    private final JPanel savePanel_;
    private final JPanel durationPanel_;
-   private final JTextField rootField_;
-   private final JTextField nameField_;
+   private final JFormattedTextField rootField_;
+   private final JFormattedTextField prefixField_;
    private final JLabel acquisitionStatusLabel_;
    private int numTimePointsDone_;
    private final AtomicBoolean cancelAcquisition_ = new AtomicBoolean(false);  // true if we should stop acquisition
@@ -175,11 +181,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JCheckBox useAutofocusCB_;
    private final JPanel leftColumnPanel_;
    private final JPanel centerColumnPanel_;
+   private final JPanel rightColumnPanel_;
    private final MMFrame sliceFrameAdvanced_;
    private SliceTiming sliceTiming_;
    private final MultiChannelSubPanel multiChannelPanel_;
    private final Color[] colors = {Color.RED, Color.GREEN, Color.BLUE, Color.MAGENTA,
             Color.PINK, Color.CYAN, Color.YELLOW, Color.ORANGE};
+   private String pathToLastAcquisition_;
    
    public AcquisitionPanel(ScriptInterface gui, 
            Devices devices, 
@@ -194,7 +202,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               new MigLayout(
               "",
               "[center]0[center]0[center]",
-              "0[top]0[]0"));
+              "0[top]0"));
       gui_ = gui;
       devices_ = devices;
       props_ = props;
@@ -207,6 +215,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       core_ = gui_.getMMCore();
       numTimePointsDone_ = 0;
       sliceTiming_ = new SliceTiming();
+      pathToLastAcquisition_ = "";
       
       PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
       
@@ -545,9 +554,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       JLabel dirRootLabel = new JLabel ("Directory root:");
       savePanel_.add(dirRootLabel);
 
-      rootField_ = new JTextField();
+      DefaultFormatter formatter = new DefaultFormatter();
+      rootField_ = new JFormattedTextField(formatter);
       rootField_.setText( prefs_.getString(panelName_, 
               Properties.Keys.PLUGIN_DIRECTORY_ROOT, "") );
+      rootField_.addPropertyChangeListener(new PropertyChangeListener() {
+         // will respond to commitEdit() as well as GUI edit on commit
+         @Override
+         public void propertyChange(PropertyChangeEvent evt) {
+            prefs_.putString(panelName_, Properties.Keys.PLUGIN_DIRECTORY_ROOT,
+                  rootField_.getText());
+         }
+      });
       rootField_.setColumns(textFieldWidth);
       savePanel_.add(rootField_, "span 2");
 
@@ -568,11 +586,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       namePrefixLabel.setText("Name prefix:");
       savePanel_.add(namePrefixLabel);
 
-      nameField_ = new JTextField("acq");
-      nameField_.setText( prefs_.getString(panelName_,
+      prefixField_ = new JFormattedTextField(formatter);
+      prefixField_.setText( prefs_.getString(panelName_,
               Properties.Keys.PLUGIN_NAME_PREFIX, "acq"));
-      nameField_.setColumns(textFieldWidth);
-      savePanel_.add(nameField_, "span 2, wrap");
+      prefixField_.addPropertyChangeListener(new PropertyChangeListener() {
+         @Override
+         public void propertyChange(PropertyChangeEvent evt) {
+            prefs_.putString(panelName_, Properties.Keys.PLUGIN_NAME_PREFIX,
+                  prefixField_.getText());
+         }
+      });
+      prefixField_.setColumns(textFieldWidth);
+      savePanel_.add(prefixField_, "span 2, wrap");
       
       // since we use the name field even for acquisitions in RAM, 
       // we only need to gray out the directory-related components
@@ -617,8 +642,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       buttonStart_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            if (acquisitionRunning_.get()) {
-               cancelAcquisition_.set(true);
+            if (isAcquisitionRunning()) {
+               stopAcquisition();
             } else {
                runAcquisition();
             }
@@ -627,7 +652,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       updateStartButton();  // call once to initialize, isSelected() will be false
 
       acquisitionStatusLabel_ = new JLabel("");
-      acquisitionStatusLabel_.setBackground(nameField_.getBackground());
+      acquisitionStatusLabel_.setBackground(prefixField_.getBackground());
       acquisitionStatusLabel_.setOpaque(true);
       updateAcquisitionStatus(AcquisitionStatus.NONE);
       
@@ -739,10 +764,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       centerColumnPanel_.add(navigationJoysticksCB_, "wrap");
       centerColumnPanel_.add(useAutofocusCB_);
       
+      rightColumnPanel_ = new JPanel(new MigLayout(
+            "",
+            "[]",
+            "[]"));
+      
+      rightColumnPanel_.add(volPanel_);
+      
       // add the column panels to the main panel
       this.add(leftColumnPanel_);
       this.add(centerColumnPanel_);
-      this.add(volPanel_);
+      this.add(rightColumnPanel_);
       
       // properly initialize the advanced slice timing
       advancedSliceTimingCB_.addItemListener(sliceTimingDisableGUIInputs);
@@ -782,11 +814,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @param acqName
     */
    public void setAcquisitionNamePrefix(String acqName) {
-      nameField_.setText(acqName);
+      prefixField_.setText((acqName + "_hello"));
+//      prefixField_.setText(acqName);
    }
    
    private void updateStartButton() {
-      boolean started = acquisitionRunning_.get();
+      boolean started = isAcquisitionRunning();
       buttonStart_.setSelected(started);
       buttonStart_.setText(started ? "Stop!" : "Start!");
       buttonStart_.setBackground(started ? Color.red : Color.green);
@@ -1347,6 +1380,31 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    /**
+    * @return pathname on filesystem to last completed acquisition
+    *   (even if it was stopped pre-maturely)
+    */
+   public String getPathToLastAcquisition() {
+      return pathToLastAcquisition_;
+   }
+   
+   /**
+    * @return true if an acquisition is currently underway
+    */
+   public boolean isAcquisitionRunning() {
+      return acquisitionRunning_.get();
+   }
+   
+   /**
+    * Stops the acquisition by setting an Atomic boolean indicating that we should
+    *   halt.  Does nothing if an acquisition isn't running.
+    */
+   public void stopAcquisition() {
+      if (isAcquisitionRunning()) {
+         cancelAcquisition_.set(true);
+      }
+   }
+   
+   /**
     * Implementation of acquisition that orchestrates image
     * acquisition itself rather than using the acquisition engine.
     * 
@@ -1754,9 +1812,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          BlockingQueue<TaggedImage> bq = new LinkedBlockingQueue<TaggedImage>(10);
          String acqName;
          if (singleTimePointViewers) {
-            acqName = gui_.getUniqueAcquisitionName(nameField_.getText() + "_" + tp);
+            acqName = gui_.getUniqueAcquisitionName(prefixField_.getText() + "_" + tp);
          } else {
-            acqName = gui_.getUniqueAcquisitionName(nameField_.getText());
+            acqName = gui_.getUniqueAcquisitionName(prefixField_.getText());
          }
          try {
             // check for stop button before each acquisition
@@ -1847,6 +1905,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // TODO: use new acquisition interface that goes through the pipeline
             //gui_.setAcquisitionAddImageAsynchronous(acqName); 
             MMAcquisition acq = gui_.getAcquisition(acqName);
+            
+            // patterned after implementation in MMStudio.java
+            pathToLastAcquisition_ = acq.getImageCache().getDiskLocation();
         
             // Dive into MM internals since script interface does not support pipelines
             ImageCache imageCache = acq.getImageCache();
@@ -2208,11 +2269,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
    @Override
    public void saveSettings() {
-      prefs_.putString(panelName_, Properties.Keys.PLUGIN_DIRECTORY_ROOT,
-              rootField_.getText());
-      prefs_.putString(panelName_, Properties.Keys.PLUGIN_NAME_PREFIX,
-              nameField_.getText());
-
       // save controller settings
       props_.setPropValue(Devices.Keys.PIEZOA, Properties.Keys.SAVE_CARD_SETTINGS,
               Properties.Values.DO_SSZ, true);
@@ -2365,5 +2421,55 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       bq.put(taggedImg);
    }
    
+   public String getSavingDirectoryRoot() {
+      return rootField_.getText();
+   }
+
+   public void setSavingDirectoryRoot(String directory) throws ASIdiSPIMException {
+      rootField_.setText(directory);
+      try {
+         rootField_.commitEdit();
+      } catch (ParseException e) {
+         throw new ASIdiSPIMException(e);
+      }
+   }
+
+   public String getSavingNamePrefix() {
+      return prefixField_.getText();
+   }
+
+   public void setSavingNamePrefix(String acqPrefix) throws ASIdiSPIMException {
+      prefixField_.setText(acqPrefix);
+      try {
+         prefixField_.commitEdit();
+      } catch (ParseException e) {
+         throw new ASIdiSPIMException(e);
+      }
+   }
+
+   public boolean getSavingSeparateFile() {
+      return separateTimePointsCB_.isSelected();
+   }
+
+   public void setSavingSeparateFile(boolean separate) {
+      separateTimePointsCB_.setSelected(separate);
+   }
+
+   public boolean getSavingSaveWhileAcquiring() {
+      return saveCB_.isSelected();
+   }
+
+   public void setSavingSaveWhileAcquiring(boolean save) {
+      saveCB_.setSelected(save);
+   }
+
+   public org.micromanager.asidispim.Data.AcquisitionModes.Keys getAcquisitionMode() {
+      return (org.micromanager.asidispim.Data.AcquisitionModes.Keys) spimMode_.getSelectedItem();
+   }
+
+   public void setAcquisitionMode(org.micromanager.asidispim.Data.AcquisitionModes.Keys mode) {
+      spimMode_.setSelectedItem(mode);
+   }
+
    
 }
