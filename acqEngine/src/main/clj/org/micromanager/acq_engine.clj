@@ -36,10 +36,12 @@
     [java.util.concurrent CountDownLatch LinkedBlockingQueue TimeUnit]
     [mmcorej Configuration Metadata TaggedImage]
     [org.json JSONArray JSONObject]
+    [org.micromanager.acquisition.internal AcquisitionSleepEvent]
     [org.micromanager.acquisition.internal TaggedImageQueue]
     [org.micromanager.data.internal DefaultSummaryMetadata]
     [org.micromanager.display.internal ChannelSettings]
     [org.micromanager PositionList SequenceSettings]
+    [org.micromanager.internal MMStudio]
     [org.micromanager.internal.utils MDUtils ReportingUtils])
   (:gen-class
     :name org.micromanager.internal.AcquisitionEngine2010
@@ -543,6 +545,9 @@
 
 (defn interruptible-sleep [time-ms]
   (let [sleepy (CountDownLatch. 1)]
+    (when gui
+      (let [event (AcquisitionSleepEvent. (+ (jvm-time-ms) time-ms))]
+        (.post (.events gui) event)))
     (swap! state assoc :sleepy sleepy :next-wake-time (+ (jvm-time-ms) time-ms))
     (.await sleepy time-ms TimeUnit/MILLISECONDS)))
 
