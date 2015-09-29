@@ -21,9 +21,18 @@
 
 package org.micromanager.asidispim.api;
 
+import java.awt.geom.Point2D.Double;
+
+import org.micromanager.api.MultiStagePosition;
+import org.micromanager.api.PositionList;
 import org.micromanager.asidispim.ASIdiSPIM;
 import org.micromanager.asidispim.ASIdiSPIMFrame;
 import org.micromanager.asidispim.AcquisitionPanel;
+import org.micromanager.asidispim.AutofocusPanel;
+import org.micromanager.asidispim.AutofocusPanel.Modes;
+import org.micromanager.asidispim.NavigationPanel;
+import org.micromanager.asidispim.Data.AcquisitionModes.Keys;
+import org.micromanager.asidispim.Data.AcquisitionSettings;
 
 /**
  * Implementation of the ASidiSPIMInterface
@@ -31,7 +40,11 @@ import org.micromanager.asidispim.AcquisitionPanel;
  * to the ASIdiSPIMInterface, always cast the instance of this class to ASIdiSPIMInterface
  * e.g.: 
  * 
+ * import org.micromanager.asidispim.api.ASIdiSPIMInterface;
+ * import org.micromanager.asidispim.api.ASIdiSPIMImplementation;
+ *
  * ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
+ * diSPIM.runAcquisition(); 
  * 
  * @author nico
  * @author Jon
@@ -44,9 +57,77 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    }
    
    @Override
+   public void stopAcquisition() throws ASIdiSPIMException {
+      getAcquisitionPanel().stopAcquisition();
+   }
+   
+   @Override
+   public boolean isAcquisitionRunning() throws ASIdiSPIMException {
+      return getAcquisitionPanel().isAcquisitionRunning();
+   }
+   
+   @Override
+   public String getPathToLastAcquisition() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getPathToLastAcquisition();
+   }
+   
+   @Override
    public void setAcquisitionNamePrefix(String acqName) throws ASIdiSPIMException {
       getAcquisitionPanel().setAcquisitionNamePrefix(acqName);
    }
+   
+   @Override
+   public String getSavingDirectoryRoot() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getSavingDirectoryRoot();
+   }
+   
+   @Override
+   public void setSavingDirectoryRoot(String directory) throws ASIdiSPIMException {
+      getAcquisitionPanel().setSavingDirectoryRoot(directory);
+   }
+   
+   @Override
+   public String getSavingNamePrefix() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getSavingNamePrefix();
+   }
+
+   @Override
+   public void setSavingNamePrefix(String acqPrefix) throws ASIdiSPIMException {
+      getAcquisitionPanel().setSavingNamePrefix(acqPrefix);
+   }
+   
+   @Override
+   public boolean getSavingSeparateFile() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getSavingSeparateFile();
+   }
+
+   @Override
+   public void setSavingSeparateFile(boolean separate) throws ASIdiSPIMException {
+      getAcquisitionPanel().setSavingSeparateFile(separate);
+   }
+   
+   @Override
+   public boolean getSavingSaveWhileAcquiring() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getSavingSaveWhileAcquiring();
+   }
+
+   @Override
+   public void setSavingSaveWhileAcquiring(boolean save) throws ASIdiSPIMException {
+      getAcquisitionPanel().setSavingSaveWhileAcquiring(save);
+   }
+   
+   @Override
+   public Keys getAcquisitionMode() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getAcquisitionMode();
+   }
+
+   @Override
+   public void setAcquisitionMode(org.micromanager.asidispim.Data.AcquisitionModes.Keys mode) throws ASIdiSPIMException {
+      getAcquisitionPanel().setAcquisitionMode(mode);
+      
+   }
+   
+   
    
    //** Private methods.  Only for internal use **//
    
@@ -64,6 +145,441 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
          throw new ASIdiSPIMException ("AcquisitionPanel is not open");
       }
       return acquisitionPanel;
+   }
+   
+   private NavigationPanel getNavigationPanel() throws ASIdiSPIMException {
+      NavigationPanel navigationPanel = getFrame().getNavigationPanel();
+      if (navigationPanel == null) {
+         throw new ASIdiSPIMException ("NavigationPanel is not open");
+      }
+      return navigationPanel;
+   }
+   
+   private AutofocusPanel getAutofocusPanel() throws ASIdiSPIMException {
+      AutofocusPanel autofocusPanel = getFrame().getAutofocusPanel();
+      if (autofocusPanel == null) {
+         throw new ASIdiSPIMException ("AutofocusPanel is not open");
+      }
+      return autofocusPanel;
+   }
+
+
+
+
+
+
+
+
+
+   @Override
+   public boolean getTimepointsEnabled() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return false;
+   }
+
+   @Override
+   public void setTimepointsEnabled(boolean enabled) throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public int getNumberofTimepoints() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+
+   @Override
+   public void setNumberofTimepoints(int numTimepoints)
+         throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public double getTimepointInterval() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+
+   @Override
+   public void setTimepointInterval(double intervalTimepoints)
+         throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public boolean getMultiplePositionsEnabled() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return false;
+   }
+
+   @Override
+   public void setMultiplePositionsEnabled(boolean enabled)
+         throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public double getMultiplePositionsPostMoveDelay() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+
+   @Override
+   public void setMultiplePositionsPostMoveDelay(double delayMs)
+         throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public PositionList getPositionList() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return null;
+   }
+
+   @Override
+   public int getNumberOfPositions() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+
+   @Override
+   public MultiStagePosition getPositionFromIndex(int idx)
+         throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return null;
+   }
+
+   @Override
+   public void moveToPositionFromIndex(int idx) throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public boolean getChannelsEnabled() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return false;
+   }
+
+   @Override
+   public void setChannelsEnabled(boolean enabled) throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public String getChannelGroup() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return null;
+   }
+
+   @Override
+   public void setChannelGroup(String channelGroup) throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public boolean getChannelPresetEnabled(String channelPreset)
+         throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return false;
+   }
+
+   @Override
+   public void setChannelPresetEnabled(String channelPreset, boolean enabled)
+         throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public org.micromanager.asidispim.Data.MultichannelModes.Keys getChannelChangeMode()
+         throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return null;
+   }
+
+   @Override
+   public void setChannelChangeMode(
+         org.micromanager.asidispim.Data.MultichannelModes.Keys mode)
+         throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public int getVolumeNumberOfSides() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+
+   @Override
+   public void setVolumeNumberOfSides(int numSides) throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public String getVolumeFirstSide() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return null;
+   }
+
+   @Override
+   public void setVolumeFirstSide(String firstSide) throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public double getVolumeDelayBeforeSide() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+
+   @Override
+   public void setVolumeDelayBeforeSide(double delayMs)
+         throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public int getVolumeSlicesPerVolume() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+
+   @Override
+   public void setVolumeSlicesPerVolume(int slices) throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public double getVolumeSliceStepSize() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+
+   @Override
+   public void setVolumeSliceStepSize(double stepSizeUm)
+         throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public boolean getVolumeMinimizeSlicePeriod() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return false;
+   }
+
+   @Override
+   public void setVolumeMinimizeSlicePeriod(boolean minimize)
+         throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public double getVolumeSlicePeriod() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+
+   @Override
+   public void setVolumeSlicePeriod(double periodMs) throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public double getVolumeSampleExposure() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+
+   @Override
+   public void setVolumeSampleExposure(double exposureMs)
+         throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public boolean getAutofocusDuringAcquisition() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return false;
+   }
+
+   @Override
+   public void setAutofocusDuringAcquisition(boolean enable)
+         throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public int getAutofocusNumImages() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+
+   @Override
+   public void setAutofocusNumImages(int numImages) throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public double getAutofocusStepSize() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+
+   @Override
+   public void setAutofocusStepSize(double stepSizeUm)
+         throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public Modes getAutofocusMode() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return null;
+   }
+
+   @Override
+   public void setAutofocusMode(Modes mode) throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public boolean getAutofocusBeforeAcquisition() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return false;
+   }
+
+   @Override
+   public void setAutofocusBeforeAcquisition(boolean enable)
+         throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public int getAutofocusInterval() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+
+   @Override
+   public void setAutofocusInterval(int numTimepoints)
+         throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public String getAutofocusChannel() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return null;
+   }
+
+   @Override
+   public void setAutofocusChannel(String channel) throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public void setXYPosition(double x, double y) throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public Double getXYPosition() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return null;
+   }
+
+   @Override
+   public void setLowerZPosition(double z) throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public double getLowerZPosition() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+
+   @Override
+   public void setSPIMHeadPosition(double z) throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public double getSPIMHeadPosition() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+
+   @Override
+   public void raiseSPIMHead() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public void setSPIMHeadRaisedPosition(double raised)
+         throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public double getSPIMHeadRaisedPosition() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+
+   @Override
+   public void lowerSPIMHead() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public void setSPIMHeadLoweredPosition(double raised)
+         throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+
+   @Override
+   public double getSPIMHeadLoweredPosition() throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+
+   @Override
+   public AcquisitionSettings getAcquisitionSettings()
+         throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return null;
    }
 
 }
