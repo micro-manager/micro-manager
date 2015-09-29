@@ -380,7 +380,6 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          ObjectInputStream oInputStream = null;
          boolean succeeded = true;
          try {
-            mappingNode_ = nodeStr;
             String map = app_.profile().getString(this.getClass(),
                     getCalibrationKey(), "");
             ByteArrayInputStream bis = new ByteArrayInputStream(map.getBytes());
@@ -388,10 +387,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             mapping_ = (Map<Polygon, AffineTransform>) oInputStream.readObject();
             oInputStream.close();
          } catch (IOException ex) {
-            app_.logs().logError(ex, "Error loading object from profile");
+            app_.logs().logError(ex, "Error loading object from profile using key " + getCalibrationKey());
             succeeded = false;
          } catch (ClassNotFoundException ex) {
-            app_.logs().logError(ex, "Failed to find object in profile stream");
+            app_.logs().logError(ex, "Failed to find object in profile stream using key " + getCalibrationKey());
             succeeded = false;
          } 
          finally {
@@ -403,8 +402,13 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                succeeded = false;
             }
          }
-         if (!succeeded) {
+         if (succeeded) {
+            // Save us from trying to reload this mapping later.
+            mappingNode_ = nodeStr;
+         }
+         else {
             // Blow away the profile string so we don't try to load this again.
+            app_.logs().logError("Deleting invalid mapping entry for key " + getCalibrationKey());
             app_.profile().setString(this.getClass(), getCalibrationKey(), "");
          }
       }
@@ -689,6 +693,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   app_.live().setSuspended(false);
                   JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration "
                         + (!stopRequested_.get() ? "finished." : "canceled."));
+                  loadMapping();
                   IJ.getImage().setRoi(originalROI);
                } catch (HeadlessException e) {
                   ReportingUtils.showError(e);
@@ -757,8 +762,11 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          return false;
       }
       Datastore store = ((MMVirtualStack) imgp.getStack()).getDatastore();
+      if (store.getSummaryMetadata().getUserData() == null) {
+         return false;
+      }
       String mirrorString = store.getSummaryMetadata().getUserData().getString("ImageFlipper-Mirror");
-      return mirrorString.contentEquals("On");
+      return (mirrorString != null && mirrorString.contentEquals("On"));
    }
 
    // Flips a point if it has been mirrored.
