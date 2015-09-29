@@ -103,7 +103,7 @@ public class AutofocusPanel extends ListeningJPanel{
       
       // scan either piezo or sheet; select which one
       optionsPanel_.add(new JLabel("Mode:"));
-      String[] scanOptions = {"Fix piezo, sweep slice", "Fix slice, sweep piezo"};
+      String[] scanOptions = getModeStrings();
       final JComboBox scanModeCB = pu.makeDropDownBox(scanOptions,
             Devices.Keys.PLUGIN, Properties.Keys.AUTOFOCUS_ACQUSITION_MODE,
             scanOptions[0]);
@@ -194,9 +194,43 @@ public class AutofocusPanel extends ListeningJPanel{
       // construct the main panel
       add(optionsPanel_);
       add (acqOptionsPanel_);
-       
-      
-      
+   }//constructor
+   
+   
+   // not using the pref code for now, but now at least we have a way to refer
+   //   to the possible options by the enum instead of a hard-coded string
+   public static enum Modes {
+      FIX_PIEZO("Fix piezo, sweep slice", 1),
+      FIX_SLICE("Fix slice, sweep piezo", 2),
+      NONE("None", 0);
+      private final String text;
+      private final int prefCode;
+      Modes(String text, int prefCode) {
+         this.text = text;
+         this.prefCode = prefCode;
+      }
+      @Override
+      public String toString() {
+         return text;
+      }
+      public int getPrefCode() {
+         return prefCode;
+      }
+   };
+   
+   private static String[] getModeStrings() {
+      return new String[] {Modes.FIX_PIEZO.toString(), Modes.FIX_SLICE.toString()};
    }
+   
+   public Modes getModeFromString(String str) {
+      if (str.equals(Modes.FIX_PIEZO.toString())) {
+         return Modes.FIX_PIEZO;
+      } else if (str.equals(Modes.FIX_SLICE.toString())) {
+         return Modes.FIX_SLICE;
+      } else {
+         return Modes.NONE;
+      }
+   }
+   
    
 }
