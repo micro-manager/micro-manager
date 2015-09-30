@@ -63,9 +63,9 @@ public class DefaultTaggedImageSink  {
                               new DefaultAcquisitionEndedEvent(store_));
                         break;
                      }
-                     ++imageCount;
-                     DefaultImage image = new DefaultImage(tagged);
                      try {
+                        ++imageCount;
+                        DefaultImage image = new DefaultImage(tagged);
                         for (Image subImage : image.splitMultiComponent()) {
                            try {
                               pipeline_.insertImage(subImage);
