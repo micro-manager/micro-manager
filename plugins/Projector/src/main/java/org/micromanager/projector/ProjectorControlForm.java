@@ -88,6 +88,7 @@ import org.micromanager.Studio;
 import org.micromanager.display.internal.MMVirtualStack;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.MMListenerAdapter;
+import org.micromanager.PropertyMap;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.MathFunctions;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -106,7 +107,6 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private final boolean isSLM_;
    private Roi[] individualRois_ = {};
    private Map<Polygon, AffineTransform> mapping_ = null;
-   private String mappingNode_ = null;
    private String targetingChannel_;
    AtomicBoolean stopRequested_ = new AtomicBoolean(false);
    AtomicBoolean isRunning_ = new AtomicBoolean(false);
@@ -375,44 +375,26 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * maps each polygon cell to an AffineTransform.
     */
    private Map<Polygon, AffineTransform> loadMapping() {
-      String nodeStr = getCalibrationNode();
-      if (mappingNode_ == null || !nodeStr.contentEquals(mappingNode_)) {
-         ObjectInputStream oInputStream = null;
-         boolean succeeded = true;
+      try {
+         mapping_ = app_.profile().getObject(this.getClass(),
+               getCalibrationKey(),
+               (HashMap<Polygon, AffineTransform>) null);
+         return mapping_;
+      }
+      catch (IOException e) {
+         app_.logs().logError(e, "Unable to load mapping");
+      }
+      catch (PropertyMap.TypeMismatchException e) {
+         // Old mapping that needs to be deleted.
          try {
-            String map = app_.profile().getString(this.getClass(),
-                    getCalibrationKey(), "");
-            ByteArrayInputStream bis = new ByteArrayInputStream(map.getBytes());
-            oInputStream = new ObjectInputStream(bis);
-            mapping_ = (Map<Polygon, AffineTransform>) oInputStream.readObject();
-            oInputStream.close();
-         } catch (IOException ex) {
-            app_.logs().logError(ex, "Error loading object from profile using key " + getCalibrationKey());
-            succeeded = false;
-         } catch (ClassNotFoundException ex) {
-            app_.logs().logError(ex, "Failed to find object in profile stream using key " + getCalibrationKey());
-            succeeded = false;
-         } 
-         finally {
-            try {
-               if (oInputStream != null)
-                  oInputStream.close();
-            } catch (IOException ex) {
-               app_.logs().logError(ex, "Failed to close inputStream");
-               succeeded = false;
-            }
+            app_.profile().setObject(this.getClass(), getCalibrationKey(),
+                  null);
          }
-         if (succeeded) {
-            // Save us from trying to reload this mapping later.
-            mappingNode_ = nodeStr;
-         }
-         else {
-            // Blow away the profile string so we don't try to load this again.
-            app_.logs().logError("Deleting invalid mapping entry for key " + getCalibrationKey());
-            app_.profile().setString(this.getClass(), getCalibrationKey(), "");
+         catch (IOException e2) {
+            app_.logs().logError(e2, "Unable to delete invalid mapping");
          }
       }
-      return  mapping_;
+      return null;
    }
 
    /**
@@ -421,23 +403,12 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     */
    // TODO: debug and test this code!
    private void saveMapping(HashMap<Polygon, AffineTransform> mapping) {
-      ObjectOutputStream os = null;
       try {
-         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-         os = new ObjectOutputStream(bos);
-         os.writeObject(mapping);
-         String serialized_mapping = bos.toString();
-         os.close();
-         app_.profile().setString(this.getClass(), getCalibrationKey(),
-                 serialized_mapping);
-      } catch (IOException ex) {
-         app_.logs().logError(ex, "Error storing an object in UserProfile"); 
-      } finally {
-         try {
-            if (os != null)
-            os.close();
-         } catch (IOException ex) {
-            app_.logs().logError(ex, "Failed to close outputStream");}
+         app_.profile().setObject(this.getClass(), getCalibrationKey(),
+               mapping);
+      }
+      catch (IOException e) {
+         app_.logs().logError(e, "Unable to save mapping");
       }
    }
    
