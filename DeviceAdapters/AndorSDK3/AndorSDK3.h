@@ -181,11 +181,15 @@ private:
    TEnumProperty* triggerMode_property;
    TEnumProperty* fanSpeed_property;
    TBooleanProperty* spuriousNoiseFilter_property;
+   TBooleanProperty* staticBlemishCorrection_property;
    TBooleanProperty* rollingShutterGlobalClear_property;
    TExposureProperty* exposureTime_property;
    TFloatProperty* frameRate_property;
    TFloatStringProperty* frameRateLimits_property;
    TEnumProperty* auxOutSignal_property;
+   TEnumProperty* auxOutTwoSignal_property;
+   TEnumProperty* shutterOutputMode_property;
+   TFloatProperty* shutterTransferTime_property;
    
    // LightScanPlus properties
    TEnumProperty* LSPSensorReadoutMode_property;

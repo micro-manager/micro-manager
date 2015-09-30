@@ -24,10 +24,10 @@
 
 #ifdef WIN32
    #include <winsock.h>
-
 #else
    #include <netinet/in.h>
 #endif
+#include <sstream>
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
@@ -78,9 +78,12 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 ////////////////////////////////
 
 LMM5Hub::LMM5Hub() :
+majorFWV_('0'),
+minorFWV_('0'),
 triggerOutConfig_ (0),
 port_ ("Undefined"),
-initialized_ (false)
+initialized_ (false),
+flicrAvailable_(false)
 {
    InitializeDefaultErrorMessages();
 
@@ -124,11 +127,16 @@ int LMM5Hub::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
-   // Power monitor
-   /*
-   CPropertyAction* pAct = new CPropertyAction(this, &LMM5Hub::OnPowerMonitor);
-   CreateProperty("PowerMonitor", "0", MM::Float, false, pAct);
-   */
+   // Does this controller support FLICR (i.e PWM)?
+   ret = g_Interface->GetFLICRAvailable(*this, *GetCoreCallback(), flicrAvailable_);
+   if (ret != DEVICE_OK)
+      return ret;
+   std::string msg = "This controller does not support FLICR";
+   if (flicrAvailable_) 
+   {
+      msg = "This controller supports FLICR";
+   }
+   LogMessage(msg.c_str());
 
    // For each laser line, create transmission properties 
    availableLines* lines = g_Interface->getAvailableLaserLines();
@@ -136,15 +144,52 @@ int LMM5Hub::Initialize()
    {
       if (lines[i].present) 
       {
-         CPropertyActionEx *pEx = new CPropertyActionEx(this, &LMM5Hub::OnTransmission, (long) i);
-         std::ostringstream propName;
-         propName << "Transmission (%) " << lines[i].name; 
-         ret = CreateProperty(propName.str().c_str(), "100.0", MM::Float, false, pEx);
-         if (ret != DEVICE_OK)
-            return ret;
-         SetPropertyLimits(propName.str().c_str(), 0.0, 100.0);
+			if (lines[i].waveLength >= 100) 
+			{
+			   CPropertyActionEx *pEx = new CPropertyActionEx(this, &LMM5Hub::OnTransmission, (long) i);
+			   std::ostringstream propName;
+			   propName << "Transmission (%) " << lines[i].name; 
+			   ret = CreateProperty(propName.str().c_str(), "100.0", MM::Float, false, pEx);
+			   if (ret != DEVICE_OK)
+				   return ret;
+			   SetPropertyLimits(propName.str().c_str(), 0.0, 100.0);
+			}
+         if (flicrAvailable_) 
+         {
+            // check if this line has flicr available
+            ret = g_Interface->GetFLICRAvailableByLine(*this, *GetCoreCallback(), i, lines[i].flicrAvailable);
+            if (ret != DEVICE_OK)
+               return ret;
+            if (lines[i].flicrAvailable) 
+            {
+               // check for maximum FLICR value
+               ret = g_Interface->GetMaxFLICRValue(*this, *GetCoreCallback(), i, lines[i].maxFLICR);
+               if (ret != DEVICE_OK)
+                  return ret;
+               std::ostringstream os;
+               os << "Max FLICR for line " << i << " is: " << lines[i].maxFLICR;
+               LogMessage(os.str().c_str());
+               // ad FLICR/PWM property
+               CPropertyActionEx *pEx = new CPropertyActionEx(this, &LMM5Hub::OnFlicr, (long) i);
+               std::ostringstream fPropName;
+               fPropName << "PWM (%) " << lines[i].name;
+               ret = CreateProperty(fPropName.str().c_str(), "1.0", MM::String, false, pEx);
+               if (ret != DEVICE_OK)
+                  return ret;
+               // populate with presets
+               uint16_t val = 1;
+               while (val <= lines[i].maxFLICR) 
+               {
+                  std::string valStr;
+                  IntToPerc(val, valStr);
+                  AddAllowedValue(fPropName.str().c_str(), valStr.c_str());
+                  val = val * 10;
+               }
+            }
+         }
       }
    }
+   
    
    // Exposure Configuration
    /*
@@ -231,6 +276,55 @@ int LMM5Hub::OnTransmission(MM::PropertyBase* pProp, MM::ActionType pAct, long l
 
    return DEVICE_OK;
 }
+
+int LMM5Hub::OnFlicr(MM::PropertyBase* pProp, MM::ActionType pAct, long line)
+{  
+   uint16_t flicr;
+   if (pAct == MM::BeforeGet)
+   {
+      int ret = g_Interface->GetFLICRValue(*this, *GetCoreCallback(), line, flicr);
+      if (ret != DEVICE_OK)
+         return ret;
+      // present to the user as a fraction
+      std::string val;
+      IntToPerc(flicr, val);
+      pProp->Set(val.c_str());
+   }
+   else if (pAct == MM::AfterSet)
+   {
+      std::string val;
+      pProp->Get(val);
+      uint16_t flicr;
+      PercToInt(val, flicr); 
+      int ret = g_Interface->SetFLICRValue(*this, *GetCoreCallback(), line, flicr);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+
+   return DEVICE_OK;
+
+
+}
+
+// converts integer to a percentage (i.e. 100 becomes 1%, 1000 becomes 0.1%, etc...
+void LMM5Hub::IntToPerc(uint16_t value, std::string& result)
+{
+   double perc = 100.0 * 1.0 / (double) value;
+   std::ostringstream os;
+   os << perc << "%";
+   result = os.str();
+}
+
+void LMM5Hub::PercToInt(std::string in, uint16_t& result) 
+{
+   std::string n = in.substr(0, in.size() - 1);
+   double val;
+   std::stringstream convert(n);
+   convert >> val;
+   val = val / 100.0;
+   result = (uint16_t) (1.0 / val);
+}
+
 
 int LMM5Hub::OnExposureConfig(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
@@ -331,6 +425,7 @@ int LMM5Hub::OnTriggerOutExposureTime(MM::PropertyBase* pProp, MM::ActionType pA
    return DEVICE_OK;
 }
 
+
 /*
 int LMM5Hub::OnPowerMonitor(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -343,7 +438,8 @@ int LMM5Hub::OnPowerMonitor(MM::PropertyBase* pProp, MM::ActionType eAct)
 LMM5Shutter::LMM5Shutter() :
    changedTime_(0.0),
    state_(0),
-   open_ (false)
+   open_ (false),
+   nrOutputs_(0)
 {
    InitializeDefaultErrorMessages();
 
@@ -376,7 +472,19 @@ int LMM5Shutter::Initialize()
       if (lines[i].present) 
          lineMask = lineMask | (1 << i);
    
-   printf ("LineMask: %lx\n", lineMask);
+   
+   // outputs are available only since firmware 1.30.  Our interface will always return 1 for firmware that is older
+   ret = g_Interface->GetNumberOfOutputs(*this, *GetCoreCallback(), nrOutputs_);
+   if (nrOutputs_ > 1) 
+   {
+      CPropertyAction *pAct = new CPropertyAction(this, &LMM5Shutter::OnOutputSelect);
+      CreateProperty("FiberOutput", "0", MM::Integer, false, pAct);
+      for (int i = 0; i < nrOutputs_; i++) {
+         std::ostringstream os;
+         os << i;
+         AddAllowedValue("FiberOutput", os.str().c_str());
+      }
+   }
 
    // We roll our own implementation of State and Label here (since we are a Shutter device, not a State Device
    // State
@@ -413,9 +521,12 @@ int LMM5Shutter::Initialize()
    {
       if (lines[i].present) 
       {
-         CPropertyActionEx *pActEx = new CPropertyActionEx(this, &LMM5Shutter::OnStateEx, i);
-         CreateProperty(lines[i].name.c_str(), "0", MM::Integer, false, pActEx);
-         SetPropertyLimits(lines[i].name.c_str(), 0, 1);
+         if (lines[i].waveLength >= 100 || nrOutputs_ == 1)
+         {
+            CPropertyActionEx *pActEx = new CPropertyActionEx(this, &LMM5Shutter::OnStateEx, i);
+            CreateProperty(lines[i].name.c_str(), "0", MM::Integer, false, pActEx);
+            SetPropertyLimits(lines[i].name.c_str(), 0, 1);
+         }
       }
    }
 
@@ -494,13 +605,13 @@ std::string LMM5Shutter::StateToLabel(int state)
       if (state & (1 << j)) 
          label += lines[j].name + "_";
    }
-   printf ("StateToLabel: state %d label %s\n", state, label.c_str());
+   // printf ("StateToLabel: state %d label %s\n", state, label.c_str());
    return label.substr(0,label.length()-1);
 }
 
 int LMM5Shutter::LabelToState(std::string label)
 {
-   printf ("LabelToState!!!!!!!!!!!!!!!!!!!!!!!!: label %s\n", label.c_str());
+   // printf ("LabelToState!!!!!!!!!!!!!!!!!!!!!!!!: label %s\n", label.c_str());
    int state = 0;
    availableLines* lines = g_Interface->getAvailableLaserLines();
    // tokenize the label string on "/"
@@ -580,6 +691,29 @@ int LMM5Shutter::OnStateEx(MM::PropertyBase* pProp, MM::ActionType pAct, long li
          state_ = ~invState;
       }
       SetOpen(open_);
+   }
+
+   return DEVICE_OK;
+}
+
+
+int LMM5Shutter::OnOutputSelect(MM::PropertyBase* pProp, MM::ActionType pAct)
+{
+   uint16_t output;
+   if (pAct == MM::BeforeGet)
+   {
+      int ret = g_Interface->GetOutput(*this, *GetCoreCallback(), output);
+      if (ret != DEVICE_OK)
+         return ret;
+      pProp->Set((long) output);
+   }
+   else if (pAct == MM::AfterSet)
+   {
+      long output;
+      pProp->Get(output);
+      int ret = g_Interface->SetOutput(*this, *GetCoreCallback(), (uint16_t) output);
+      if (ret != DEVICE_OK)
+         return ret;
    }
 
    return DEVICE_OK;

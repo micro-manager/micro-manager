@@ -64,7 +64,7 @@ MODULE_API void InitializeModuleData()
    RegisterDevice(g_CSU22NDFilter, MM::StateDevice, "Neutral Density Filter");
    RegisterDevice(g_CSU22FilterSet, MM::StateDevice, "Filter Set (Dichroics)");
    RegisterDevice(g_CSU22Shutter, MM::ShutterDevice, "Shutter");
-   RegisterDevice(g_CSU22DriveSpeed, MM::StateDevice, "DriveSpeed");
+   RegisterDevice(g_CSU22DriveSpeed, MM::GenericDevice, "DriveSpeed");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -689,8 +689,8 @@ int DriveSpeed::Initialize()
       current_ = max_;
    char speed[5];
    sprintf(speed,"%d", current_);
-   // State
-   CPropertyAction* pAct = new CPropertyAction (this, &DriveSpeed::OnState);
+   // Speed
+   CPropertyAction* pAct = new CPropertyAction (this, &DriveSpeed::OnSpeed);
    ret = CreateProperty(MM::g_Keyword_State, speed, MM::Integer, false, pAct); 
    if (ret != DEVICE_OK) 
       return ret; 
@@ -725,7 +725,7 @@ int DriveSpeed::Shutdown()
 /*
  * Speed is read back from the device
  */
-int DriveSpeed::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+int DriveSpeed::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
@@ -738,17 +738,17 @@ int DriveSpeed::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
-      long pos;
-      pProp->Get(pos);
-      if (pos == current_)
+      long speed;
+      pProp->Get(speed);
+      if (speed == current_)
          return DEVICE_OK;
-      if (pos < min_)
-         pos = min_;
-      else if (pos > max_)
-         pos = max_;
-      int ret = g_hub.SetDriveSpeedPosition(*this, *GetCoreCallback(), pos);
+      if (speed < min_)
+         speed = min_;
+      else if (speed > max_)
+         speed = max_;
+      int ret = g_hub.SetDriveSpeedPosition(*this, *GetCoreCallback(), speed);
       if (ret == DEVICE_OK) {
-         current_ = pos;
+         current_ = speed;
          return DEVICE_OK;
       }
       else

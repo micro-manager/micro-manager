@@ -71,7 +71,7 @@ MODULE_API void InitializeModuleData()
    RegisterDevice(g_CSUW1FilterWheel, MM::StateDevice, "Filter Wheel");
    RegisterDevice(g_CSUW1Dichroic, MM::StateDevice, "Dichroic Mirror");
    RegisterDevice(g_CSUW1Shutter, MM::ShutterDevice, "Shutter");
-   RegisterDevice(g_CSUW1DriveSpeed, MM::StateDevice, "Drive Speed");
+   RegisterDevice(g_CSUW1DriveSpeed, MM::GenericDevice, "Drive Speed");
    RegisterDevice(g_CSUW1BrightField, MM::StateDevice, "Bright Field");
    RegisterDevice(g_CSUW1Disk, MM::StateDevice, "Disk");
    RegisterDevice(g_CSUW1Port, MM::StateDevice, "Port");
@@ -710,7 +710,6 @@ int Shutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 // CSUW1 DriveSpeed
 ///////////////////////////////////////////////////////////////////////////////
 DriveSpeed::DriveSpeed () :
-   numPos_ (0),
    initialized_ (false),
    name_ (g_CSUW1DriveSpeed)
 {
@@ -740,8 +739,8 @@ int DriveSpeed::Initialize()
    if (DEVICE_OK != ret)
       return ret;
 
-   // State
-   CPropertyAction* pAct = new CPropertyAction (this, &DriveSpeed::OnState);
+   // Speed
+   CPropertyAction* pAct = new CPropertyAction (this, &DriveSpeed::OnSpeed);
    ret = CreateProperty(MM::g_Keyword_State, "4000", MM::Integer, false, pAct); 
    if (ret != DEVICE_OK) 
       return ret; 
@@ -783,7 +782,7 @@ int DriveSpeed::Shutdown()
 // Action handlers                                                           
 ///////////////////////////////////////////////////////////////////////////////
 
-int DriveSpeed::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+int DriveSpeed::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
@@ -791,9 +790,9 @@ int DriveSpeed::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
-      long pos;
-      pProp->Get(pos);
-      int ret = g_hub.SetDriveSpeed(*this, *GetCoreCallback(), pos);
+      long speed;
+      pProp->Get(speed);
+      int ret = g_hub.SetDriveSpeed(*this, *GetCoreCallback(), speed);
       if (ret != DEVICE_OK) {
          return ret;
       }

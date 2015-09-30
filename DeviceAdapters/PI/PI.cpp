@@ -134,6 +134,22 @@ void PIZStage::GetName(char* Name) const
 
 int PIZStage::Initialize()
 {
+   // Guard against the possibility that invalid input remains in the device's
+   // receive buffer. Since the device may not respond at all to an invalid
+   // command, without the following there is a chance that a timeout error can
+   // occur if garbage got sent to the device before we talk to it.
+   int ret = SendSerialCommand(port_.c_str(), "ERR?", "\n");
+   if (ret != DEVICE_OK)
+      return ret;
+   std::string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\n", answer);
+   // Ignore errors
+   ret = SendSerialCommand(port_.c_str(), "ERR?", "\n");
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = GetSerialAnswer(port_.c_str(), "\n", answer);
+   // Ignore errors
+
    // switch on servo, otherwise "MOV" will fail
    /*
    ostringstream command;
@@ -144,7 +160,7 @@ int PIZStage::Initialize()
 
    CDeviceUtils::SleepMs(10);
    */
-   int ret = GetPositionSteps(curSteps_);
+   ret = GetPositionSteps(curSteps_);
    if (ret != DEVICE_OK)
       return ret;
 

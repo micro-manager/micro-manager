@@ -106,7 +106,7 @@ using namespace std;
  * (Keep the 3 numbers on one line to make it easier to look at diffs when
  * merging/rebasing.)
  */
-const int MMCore_versionMajor = 8, MMCore_versionMinor = 1, MMCore_versionPatch = 0;
+const int MMCore_versionMajor = 8, MMCore_versionMinor = 1, MMCore_versionPatch = 1;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1885,6 +1885,7 @@ void CMMCore::setAdapterOriginXY(double newXUm, double newYUm) throw (CMMError)
     setAdapterOriginXY(getXYStageDevice().c_str(), newXUm, newYUm);
 }
 
+
 /**
  * \brief Get the focus direction of a stage.
  *
@@ -3424,6 +3425,20 @@ void CMMCore::setXYStageDevice(const char* xyDeviceLabel) throw (CMMError)
  */
 void CMMCore::setCameraDevice(const char* cameraLabel) throw (CMMError)
 {
+   // If a sequence acquisition is running, the camera cannot be switched. (In
+   // order to start sequences for multiple cameras, one must instead use the
+   // version of startSequenceAcquisition() that takes the camera label.)
+
+   // Note: there is a blatant race condition between this and the
+   // starting/stopping of sequence acquisitions. This is hard to fix it at the
+   // moment, as we would need a way to safely lock two cameras at the same
+   // time.
+   if (isSequenceRunning())
+   {
+      throw CMMError("Cannot switch camera device while sequence acquisition "
+            "is running");
+   }
+
    if (cameraLabel && strlen(cameraLabel) > 0)
    {
       currentCameraDevice_ =
@@ -6631,7 +6646,7 @@ void CMMCore::InitializeErrorMessages()
    errorText_[MMERR_DuplicateConfigGroup] = "Group name already in use.";
    errorText_[MMERR_CameraBufferReadFailed] = "Camera image buffer read failed.";
    errorText_[MMERR_CircularBufferFailedToInitialize] =
-      "Failed to allocate RAM for sequence buffer; please check your memory settings.";
+      "Failed to initialize circular buffer - memory requirements not adequate.";
    errorText_[MMERR_CircularBufferEmpty] = "Circular buffer is empty.";
    errorText_[MMERR_ContFocusNotAvailable] = "Auto-focus focus device not defined.";
    errorText_[MMERR_BadConfigName] = "Configuration name contains illegale characters (/\\*!')";

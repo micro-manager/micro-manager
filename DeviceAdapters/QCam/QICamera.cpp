@@ -547,6 +547,11 @@ QICamera::QICamera()
 ,m_frameBuffs(NULL)
 ,m_frameBuffsAvail(NULL)
 ,m_frameDoneBuff(-1)
+,m_redScale(1.0)
+,m_greenScale(1.0)
+,m_blueScale(1.0)
+,m_selectedCFAmask(CFA_RGGB)
+,m_selectedInterpolationAlgorithm(ALG_REPLICATION)
 {
    START_METHOD("QICamera::QICamera");
 
@@ -693,9 +698,11 @@ int QICamera::Initialize()
       }
 
       sprintf(qcamVersionStr, "QCam %u.%u.%u", major, minor, build);
+      nRet = CreateProperty("QCam Version", qcamVersionStr, MM::String, true);
       m_nDriverBuild = major * 100 + minor * 10 + build;
 
-      nRet = CreateProperty(MM::g_Keyword_Description, qcamVersionStr, MM::String, true);
+      nRet = CreateProperty(MM::g_Keyword_Description, "QCam API device adapter", MM::String, true);
+
       if (DEVICE_OK != nRet) {
          throw nRet;
       }
@@ -753,6 +760,34 @@ int QICamera::Initialize()
          CreateProperty(g_Keyword_Color_Mode, g_Value_OFF, MM::String, false, pAct);
          AddAllowedValue(g_Keyword_Color_Mode, g_Value_ON);
          AddAllowedValue(g_Keyword_Color_Mode, g_Value_OFF);
+
+         pAct = new CPropertyAction(this, &QICamera::OnInterpolationAlgorithm);
+         CreateProperty(g_Keyword_InterpolationAlgorithm, g_Keyword_Replication, MM::String, false, pAct);
+         AddAllowedValue(g_Keyword_InterpolationAlgorithm, g_Keyword_Replication);
+         AddAllowedValue(g_Keyword_InterpolationAlgorithm, g_Keyword_Bilinear);
+         AddAllowedValue(g_Keyword_InterpolationAlgorithm, g_Keyword_SmoothHue);
+         AddAllowedValue(g_Keyword_InterpolationAlgorithm, g_Keyword_AdaptiveSmoothHue);
+
+         pAct = new CPropertyAction (this, &QICamera::OnRedScale);
+         CreateProperty(g_Keyword_RedScale, "1.0", MM::Float, false, pAct);
+         nRet = SetPropertyLimits(g_Keyword_RedScale, 0, 20);
+
+         pAct = new CPropertyAction (this, &QICamera::OnGreenScale);
+         CreateProperty(g_Keyword_GreenScale, "1.0", MM::Float, false, pAct);
+         nRet = SetPropertyLimits(g_Keyword_GreenScale, 0, 20);
+         
+         pAct = new CPropertyAction (this, &QICamera::OnBlueScale);
+         CreateProperty(g_Keyword_BlueScale, "1.0", MM::Float, false, pAct);
+         nRet = SetPropertyLimits(g_Keyword_BlueScale, 0, 20);
+
+         pAct = new CPropertyAction (this, &QICamera::OnCFAmask);
+         CreateProperty(g_Keyword_CFAmask, g_Keyword_RGGB, MM::String, false, pAct);
+         
+         AddAllowedValue(g_Keyword_CFAmask, g_Keyword_RGGB);
+         AddAllowedValue(g_Keyword_CFAmask, g_Keyword_BGGR);
+         AddAllowedValue(g_Keyword_CFAmask, g_Keyword_GRBG);
+         AddAllowedValue(g_Keyword_CFAmask, g_Keyword_GBRG);
+
       } else {
          LogMessage("Unsupported camera type", false);
          throw DEVICE_NOT_SUPPORTED;
@@ -1041,6 +1076,11 @@ int QICamera::Shutdown()
    }
    if (m_frameBuffsAvail != NULL) {
       delete m_frameBuffsAvail;
+   }
+
+   if (m_processedFrame != NULL) {
+      delete[] m_processedFrame->pBuffer;
+      delete m_processedFrame;
    }
 
    m_isInitialized = false;
@@ -2104,6 +2144,8 @@ int QICamera::SetupFrames()
       m_frameBuffs[i]->bufferSize = 0;
       m_frameBuffsAvail[i] = true;
    }
+   m_processedFrame = new QCam_Frame;
+   memset(m_processedFrame, 0, sizeof(*m_processedFrame));
 
    return DEVICE_OK;
 }
@@ -2353,9 +2395,21 @@ int QICamera::SnapImage()
       // input format is: qfmtBayer8
       // output format should be: qfmtBgrx32
       if (m_bitDepth > 8)
+      {
          m_debayer.Process(m_colorBuffer, (unsigned short*)m_frameBuffs[0]->pBuffer, m_frameBuffs[0]->width, m_frameBuffs[0]->height, m_bitDepth);
+      }
       else
-         m_debayer.Process(m_colorBuffer, (unsigned char*)m_frameBuffs[0]->pBuffer, m_frameBuffs[0]->width, m_frameBuffs[0]->height, m_bitDepth);
+      {
+           err = QCam_PostProcessSingleFrame(m_camera, (QCam_Settings *)m_settings, m_frameBuffs[0], m_processedFrame);
+           if (err != qerrSuccess) {
+              REPORT_QERR(err);
+              return DEVICE_SNAP_IMAGE_FAILED;
+           }
+           m_colorBuffer.Resize(m_processedFrame->width, m_processedFrame->height, 4);
+           memcpy((void *)m_colorBuffer.GetPixels(), m_processedFrame->pBuffer, m_processedFrame->bufferSize);  
+
+      }
+        
    }
    return DEVICE_OK;
 }
@@ -3702,6 +3756,206 @@ int QICamera::OnColorMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK; 
 }
 
+int QICamera::OnRedScale(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   START_ONPROPERTY("QICamera::OnRedScale", eAct);
+   QCam_Err err;
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(m_redScale);
+      err = QCam_SetParam((QCam_Settings *)m_settings, qprmPostProcessGainRed, (unsigned long)(m_redScale*1000)); 
+      if (err != qerrSuccess) {
+         REPORT_QERR(err);
+         return DEVICE_ERR;
+      }
+
+      // commit it
+      int nRet = SendSettingsToCamera((QCam_Settings *)m_settings);
+      if (nRet != DEVICE_OK) {
+         REPORT_MMERR(nRet);
+         return DEVICE_ERR;
+      }
+      RGBscales rgbScales = {m_redScale, m_greenScale, m_blueScale};
+      m_debayer.SetRGBScales(rgbScales);
+
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(m_redScale);
+   }
+   return DEVICE_OK;
+}
+
+int QICamera::OnGreenScale(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   START_ONPROPERTY("QICamera::OnGreenScale", eAct);
+   QCam_Err err;
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(m_greenScale);
+      err = QCam_SetParam((QCam_Settings *)m_settings, qprmPostProcessGainGreen, (unsigned long)(m_greenScale*1000)); 
+      if (err != qerrSuccess) {
+         REPORT_QERR(err);
+         return DEVICE_ERR;
+      }
+
+      // commit it
+      int nRet = SendSettingsToCamera((QCam_Settings *)m_settings);
+      if (nRet != DEVICE_OK) {
+         REPORT_MMERR(nRet);
+         return DEVICE_ERR;
+      }
+      RGBscales rgbScales = {m_redScale, m_greenScale, m_blueScale};
+      m_debayer.SetRGBScales(rgbScales);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(m_greenScale);
+   }
+   return DEVICE_OK;
+}
+
+int QICamera::OnBlueScale(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   START_ONPROPERTY("QICamera::OnBlueScale", eAct);
+   QCam_Err err;
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(m_blueScale);
+      err = QCam_SetParam((QCam_Settings *)m_settings, qprmPostProcessGainBlue, (unsigned long)(m_blueScale*1000)); 
+      if (err != qerrSuccess) {
+         REPORT_QERR(err);
+         return DEVICE_ERR;
+      }
+
+      // commit it
+      int nRet = SendSettingsToCamera((QCam_Settings *)m_settings);
+      if (nRet != DEVICE_OK) {
+         REPORT_MMERR(nRet);
+         return DEVICE_ERR;
+      }
+      RGBscales rgbScales = {m_redScale, m_greenScale, m_blueScale};
+      m_debayer.SetRGBScales(rgbScales);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(m_blueScale);
+   }
+   return DEVICE_OK;
+}
+
+
+int QICamera::OnCFAmask(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   START_ONPROPERTY("QICamera::OnCFAmask", eAct);
+   if (eAct == MM::AfterSet)
+   {
+      string val;
+      pProp->Get(val);
+      if (val == g_Keyword_RGGB)
+         m_selectedCFAmask = CFA_RGGB;
+      else if (val == g_Keyword_BGGR)
+         m_selectedCFAmask = CFA_BGGR;
+      else if (val == g_Keyword_GRBG)
+         m_selectedCFAmask = CFA_GRBG;
+      else if (val == g_Keyword_GBRG)
+         m_selectedCFAmask = CFA_GBRG;
+      else
+         m_selectedCFAmask = CFA_RGGB;
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      switch (m_selectedCFAmask)
+      {
+          case CFA_BGGR:
+          pProp->Set(g_Keyword_BGGR);
+          m_debayer.SetOrderIndex(CFA_BGGR);
+          OnPropertyChanged(g_Keyword_CFAmask, g_Keyword_BGGR);
+          break;
+
+          case CFA_GRBG:
+          pProp->Set(g_Keyword_GRBG);
+          m_debayer.SetOrderIndex(CFA_GRBG);
+          OnPropertyChanged(g_Keyword_CFAmask, g_Keyword_GRBG);
+          break;
+
+          case CFA_GBRG:
+          pProp->Set(g_Keyword_GBRG);
+          m_debayer.SetOrderIndex(CFA_GBRG);
+          OnPropertyChanged(g_Keyword_CFAmask, g_Keyword_GBRG);
+          break;
+          
+          case CFA_RGGB:
+          default:
+          pProp->Set(g_Keyword_RGGB);
+          m_debayer.SetOrderIndex(CFA_RGGB);
+          OnPropertyChanged(g_Keyword_CFAmask, g_Keyword_RGGB);
+          break;
+      }
+      
+   }
+   return DEVICE_OK;
+}
+
+int QICamera::OnInterpolationAlgorithm(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   START_ONPROPERTY("QICamera::OnInterpolationAlgorithm", eAct);
+
+   // see if the user wants to get or set the property
+   if (eAct == MM::AfterSet) 
+   {	
+          string val;
+          pProp->Get(val);
+
+          if (val == g_Keyword_Replication)
+              m_selectedInterpolationAlgorithm =  ALG_REPLICATION;
+          else if (val == g_Keyword_Bilinear)
+              m_selectedInterpolationAlgorithm = ALG_BILINEAR;
+          else if (val == g_Keyword_SmoothHue)
+              m_selectedInterpolationAlgorithm =  ALG_SMOOTH_HUE;
+          else if (val == g_Keyword_AdaptiveSmoothHue)
+              m_selectedInterpolationAlgorithm =  ALG_ADAPTIVE_SMOOTH_HUE;
+          else 
+              m_selectedInterpolationAlgorithm =  ALG_REPLICATION;
+   } 
+   else if (eAct == MM::BeforeGet) 
+   {
+        switch (m_selectedInterpolationAlgorithm)
+        {
+          case ALG_BILINEAR:
+          pProp->Set(g_Keyword_Bilinear);
+          m_debayer.SetAlgorithmIndex(ALG_BILINEAR);
+          QCam_SetParam((QCam_Settings *)m_settings, qprmPostProcessBayerAlgorithm, qcBayerInterpFast);
+          break;
+
+          case ALG_SMOOTH_HUE:
+          pProp->Set(g_Keyword_SmoothHue);
+          m_debayer.SetAlgorithmIndex(ALG_SMOOTH_HUE);
+          QCam_SetParam((QCam_Settings *)m_settings, qprmPostProcessBayerAlgorithm, qcBayerBiCubic_Faster);
+          break;
+
+          case ALG_ADAPTIVE_SMOOTH_HUE:
+          pProp->Set(g_Keyword_AdaptiveSmoothHue);
+          m_debayer.SetAlgorithmIndex(ALG_ADAPTIVE_SMOOTH_HUE);
+          QCam_SetParam((QCam_Settings *)m_settings, qprmPostProcessBayerAlgorithm, qcBayerBiCubic);
+          break;
+          
+          case ALG_REPLICATION:
+          default:
+          pProp->Set(g_Keyword_Replication);
+          m_debayer.SetAlgorithmIndex(ALG_REPLICATION);
+          QCam_SetParam((QCam_Settings *)m_settings, qprmPostProcessBayerAlgorithm, qcBayerInterpFast);
+          break;
+
+        }
+        QCam_SetParam((QCam_Settings *)m_settings, qprmPostProcessImageFormat, qfmtBgrx32);
+        QCam_SendSettingsToCam(m_camera, (QCam_Settings *)m_settings);
+
+   }
+   
+   return DEVICE_OK; 
+}
+
 
 unsigned QICamera::GetNumberOfComponents() const 
 {
@@ -3763,6 +4017,16 @@ int QICamera::ResizeImageBuffer()
    // Bad driver! No Biscuit.
    // Therefore, we will just reallocate all of the image the 
    // buffers if the required size changes.
+
+   int requiredColorSize = QCam_CalcImageSize(qfmtBgrx32, imageWidth, imageHeight);
+      if (requiredColorSize > 0) {
+        if (m_processedFrame->pBuffer != NULL) {
+            delete[] m_processedFrame->pBuffer;
+        }
+        m_processedFrame->pBuffer = new unsigned char[requiredColorSize];
+        m_processedFrame->bufferSize = requiredColorSize;
+        m_processedFrame->format = qfmtBgrx32;
+      }
 
    if (m_frameBuffs[0]->bufferSize != requiredSize) {
       // reallocate the frame storage buffers but only if necessary
@@ -4054,9 +4318,24 @@ int QICamera::InsertImage(int iFrameBuff)
       // output format should be: qfmtBgrx32
       
       if (m_bitDepth > 8)
+      {
          m_debayer.Process(m_colorBuffer, (unsigned short*)pFrame->pBuffer, pFrame->width, pFrame->height, m_bitDepth);
+      }
       else
-         m_debayer.Process(m_colorBuffer, (unsigned char*)pFrame->pBuffer, pFrame->width, pFrame->height, m_bitDepth);
+      {
+          QCam_Err err;            
+
+          err = QCam_PostProcessSingleFrame(m_camera, (QCam_Settings *)m_settings, pFrame, m_processedFrame);
+          if (err != qerrSuccess) {
+              REPORT_QERR(err);
+              return ERR_POSTPROCESSING_FAILED;
+          } 
+
+          m_colorBuffer.Resize(m_processedFrame->width, m_processedFrame->height, 4);
+          memcpy((void *)m_colorBuffer.GetPixels(), m_processedFrame->pBuffer, m_processedFrame->bufferSize);  
+
+      }
+
 
       ret = GetCoreCallback()->InsertImage(this, (unsigned char*) m_colorBuffer.GetPixelsRW(), 
          m_colorBuffer.Width(), m_colorBuffer.Height(), m_colorBuffer.Depth());

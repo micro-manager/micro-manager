@@ -174,17 +174,21 @@ int CApogeeCamera::Initialize()
         printf("Successfully created the ICamera2 object\n" );
     }else{
         printf("Failed to create the ICamera2 object\n" );
+        ApgCam = NULL;
         CoUninitialize();           // Close the COM library
         return DEVICE_ERR;
     }
 
     // Try to open the pre-configured device
-	if(m_nInterfaceType!=999 && m_nCamIdOne!=-1){
+    if(m_nInterfaceType!=999 && m_nCamIdOne!=-1){
         // Initialize camera using the ICamDiscover properties
-        hr = ApgCam->Init((Apn_Interface)m_nInterfaceType, m_nCamIdOne, m_nCamIdTwo, 0x0 );
-        if(!SUCCEEDED(hr)){
-            assert(!"Failed to connect to pre-configured camera" );
-            m_nCamIdOne = -1;
+        try {
+            hr = ApgCam->Init((Apn_Interface)m_nInterfaceType, m_nCamIdOne, m_nCamIdTwo, 0x0 );
+        } catch(_com_error& e) {
+            printf("Failed to connect to pre-configured camera\n" );
+            ApgCam = NULL;
+            CoUninitialize();
+            return DEVICE_ERR;
         }
     }
     
@@ -2003,11 +2007,11 @@ int CApogeeCamera::ClearROI()
 
 int CApogeeCamera::ResizeImageBuffer()
 {
-    // get image size
-    int nWidth = GetImageWidth();
-    int nHeight = GetImageHeight();
-    img_.Resize(nWidth, nHeight, 2);
-    return DEVICE_OK;
+   // get image size
+   int nWidth = GetImageWidth();
+   int nHeight = GetImageHeight();
+   img_.Resize(nWidth, nHeight, 2);
+   return DEVICE_OK;
 }
 
 // Sequence acquisition methods
@@ -2028,18 +2032,24 @@ int CApogeeCamera::StartSequenceAcquisition(double interval)
 	return StartSequenceAcquisition(65534, interval, false);
 }
 
+bool CApogeeCamera::UseSnapForSequenceAcquisition()
+{
+   return Apn_Platform_Aspen == ApgCam->PlatformType;
+}
+
 int CApogeeCamera::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
 {
 	SequenceCheckImageBuffer();
 	m_sequenceLengthRequested = numImages;
    m_stopOnOverflow = stopOnOverflow;
-	ApgCam->SequenceBulkDownload = false; 
-	ApgCam->ImageCount = numImages;
-   ApgCam->SequenceDelay = interval_ms / 1000.0;
-   ApgCam->Expose(m_dExposure/1000, m_nLightImgMode);
-
+   if( !UseSnapForSequenceAcquisition() ) {
+      ApgCam->SequenceBulkDownload = false; 
+      ApgCam->ImageCount = numImages;
+      ApgCam->SequenceDelay = interval_ms / 1000.0;
+      ApgCam->Expose(m_dExposure/1000, m_nLightImgMode);
+   }
    m_sequenceCount = 0;
-	m_acqSequenceThread->Start();
+   m_acqSequenceThread->Start();
 	return DEVICE_OK;
 }
 
@@ -2055,37 +2065,57 @@ bool CApogeeCamera::IsCapturing()
 	return m_acqSequenceThread->IsRunning();
 }
 
-int CApogeeCamera::TransferImage()
+int CApogeeCamera::SequenceSnapImage()
 {
-	if (m_sequenceCount >= m_sequenceLengthRequested)
-		return -1;
+   ++m_sequenceCount;
 
-	if (ApgCam->SequenceCounter >= m_sequenceCount)
+   SnapImage();
+
+   return TransferSequenceImage();
+}
+
+int CApogeeCamera::TransferSequenceImage()
+{
+  unsigned short* pBuf = (unsigned short*) const_cast<unsigned char*>(img_.GetPixels());
+	HRESULT hr = ApgCam->GetImage((long) pBuf);
+	if (SUCCEEDED(hr))
+	{
+      int ret = GetCoreCallback()->InsertImage(this, (const unsigned char *) pBuf, m_sequenceWidth, m_sequenceHeight, 2);
+      if (!m_stopOnOverflow && ret == DEVICE_BUFFER_OVERFLOW)
+      {
+         // do not stop on overflow - just reset the buffer
+         GetCoreCallback()->ClearImageBuffer(this);
+      } 
+      else
+         return ret;
+   }
+   else
+   {
+      return DEVICE_ERR;
+   }
+}
+
+int CApogeeCamera::AcquireSequenceImage()
+{
+   if (m_sequenceCount >= m_sequenceLengthRequested)
+      return -1;
+
+   if( UseSnapForSequenceAcquisition() ) 
+   {
+      return SequenceSnapImage();
+   }
+
+   if (ApgCam->SequenceCounter >= m_sequenceCount)
 	{
       ++m_sequenceCount;
-      unsigned short* pBuf = (unsigned short*) const_cast<unsigned char*>(img_.GetPixels());
-	   HRESULT hr = ApgCam->GetImage((long) pBuf);
-	   if (SUCCEEDED(hr))
-	   {
-	      int ret = GetCoreCallback()->InsertImage(this, (const unsigned char *) pBuf, m_sequenceWidth, m_sequenceHeight, 2);
-         if (!m_stopOnOverflow && ret == DEVICE_BUFFER_OVERFLOW)
-         {
-            // do not stop on overflow - just reset the buffer
-            GetCoreCallback()->ClearImageBuffer(this);
-         } else
-            return ret;
-	      }
-      else
-      {
-         return DEVICE_ERR;
-      }
+      return TransferSequenceImage();
 	}
 	return DEVICE_OK;
 }
 
 int CApogeeCamera::CleanupAfterSequence()
 {
-   ApgCam->StopExposure(true); 
+   ApgCam->StopExposure(false); 
    ApgCam->ImageCount = 1;
 	return DEVICE_OK;
 }
@@ -2096,12 +2126,12 @@ int AcqSequenceThread::Run()
 {
 	int ret = DEVICE_OK;
 	while (! StopRequested() && (ret == DEVICE_OK))
-	{  
-		ret = camera_->TransferImage();
+   {  
+      ret = camera_->AcquireSequenceImage();
       CDeviceUtils::SleepMs(5);
 	}
 	if (ret == -1)
-		ret = DEVICE_OK;
-	camera_->CleanupAfterSequence();
+      ret = DEVICE_OK;
+   camera_->CleanupAfterSequence();
 	return ret;
 }

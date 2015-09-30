@@ -319,7 +319,8 @@ int BitFlowCamera::Shutdown()
  */
 int BitFlowCamera::SnapImage()
 {
-	if (expNumFrames_ <= 0)
+	int numFrames = expNumFrames_;
+	if (numFrames <= 0)
 		return DEVICE_OK;
 
 	// clear all accumulators (set to zero)
@@ -332,11 +333,13 @@ int BitFlowCamera::SnapImage()
 	if (!bfDev_.isInitialized())
 		return ERR_HARDWARE_NOT_INITIALIZED;
 	bfDev_.StartSequence(); // start streaming mode
-	for (int k=0; k<expNumFrames_; k++) {
-		//char message[100];
-		//strcpy(message,"Frame number ");
-		//strcat(message,CDeviceUtils::ConvertToString(k));
-		//GetCoreCallback()->LogMessage(this, message,false);
+	for (int k=0; k < numFrames; k++) {
+
+		char message[100];
+		strcpy(message,"Frame number ");
+		strcat(message,CDeviceUtils::ConvertToString(k));
+		GetCoreCallback()->LogMessage(this, message,true);
+
 		unsigned char* buf = const_cast<unsigned char*>(bfDev_.GetImageCont());      
 		if (buf == 0) {
 			ostringstream txt;
@@ -555,6 +558,8 @@ void BitFlowCamera::SetExposure(double exp)
 
    for (unsigned i=0; i<img_.size(); i++)
       img_[i].SetLength(expNumFrames_);
+   //callback to GUI
+   this->GetCoreCallback()->OnExposureChanged(this,expNumFrames_);
 }
 
 /**
@@ -1288,7 +1293,7 @@ void BitFlowCamera::ConstructImage(unsigned char* buf, int bufLen, unsigned rawW
          // select the output frame
          for (int k=0; k<lineWidth; k++)
          {
-            int srcIdx = fullWidth/2 - lineWidth/2 /* + warpOffset_ */ + warpOffsetBase + k;
+            int srcIdx = fullWidth/2 - lineWidth/2  + warpOffsetBase + k;
             if (srcIdx < 0 || srcIdx > (int)fullWidth - 1)
                destPtr[k] = 0;
             else

@@ -121,8 +121,7 @@ int BFCamera::Initialize(MM::Device* caller, MM::Core* core) {
 		if (ret != BF_OK)
 			return ret;
 
-		if (width_==0 && height_==0 && depth_ == 0)
-		{
+		if (width_==0 && height_==0 && depth_ == 0) {
 			// first time
 			width_ = width;
 			height_ = height;
@@ -168,6 +167,8 @@ int BFCamera::Initialize(MM::Device* caller, MM::Core* core) {
 	return DEVICE_OK;
 }
 
+
+
 int BFCamera::Shutdown() {
 	for (int i = 0; i < eofSignals_.size(); i++) {
 		CiSignalFree(boards_[i], eofSignals_[i]); //shut down end of frame signals
@@ -203,7 +204,7 @@ void BFCamera::LogInterrupts() {
 		strcat(message, CDeviceUtils::ConvertToString(numI));
 		strcat(message," ");
 	}
-	core_->LogMessage(caller_,message, false );
+	core_->LogMessage(caller_,message, true );
 }
 
 const unsigned char* BFCamera::GetImageCont() {
@@ -225,20 +226,20 @@ const unsigned char* BFCamera::GetImageCont() {
 		//---For this reason, creat and start the signals on initialization of the camera, to eliminate the possibility of 
 		//unneccesary waiting at the start of acq
 
-		//char message[200];
-		//strcpy(message,"interrupts before wait for channel ");
-		//strcat(message,  CDeviceUtils::ConvertToString(i));
-		//core_->LogMessage(caller_,message, false );
-		//LogInterrupts();
+		char message[200];
+		strcpy(message,"interrupts before wait for channel ");
+		strcat(message,  CDeviceUtils::ConvertToString(i));
+		core_->LogMessage(caller_,message, true );
+		LogInterrupts();
 
 		BFU32 numInterrupts;
 		BFRC ret = CiSignalWait(boards_[i], eofSignals_[i], timeoutMs_, &numInterrupts);
 
-		//char message2[200];
-		//strcpy(message2,"Interrupts after wait for channel ");
-		//strcat(message2,  CDeviceUtils::ConvertToString(i));
-		//core_->LogMessage(caller_,message2, false );
-		//LogInterrupts();
+		char message2[200];
+		strcpy(message2,"Interrupts after wait for channel ");
+		strcat(message2,  CDeviceUtils::ConvertToString(i));
+		core_->LogMessage(caller_,message2, true );
+		LogInterrupts();
 
 		if (SignalWaitErrorInterpret(ret) == 0) {
 			return 0;
@@ -247,12 +248,23 @@ const unsigned char* BFCamera::GetImageCont() {
 	return buf_;
 }
 
+void BFCamera::ReloadBoardsAfterTimeoutError() {
+	//close shutter
+	//core_->SetDeviceProperty("EOMShutter","State",0);
+	VirtualShutter* shutter = (VirtualShutter*) (core_->GetDevice(caller_,"EOMShutter"));
+	shutter->SetOpen(false);
+	//reinitialize to recreate signals (initialize will cll sutdown)
+	Initialize(caller_, core_);
+	//after this function an error is still thrown, but this should ensure that on a retry, the image can be snapped
+}
+
 int BFCamera::SignalWaitErrorInterpret(BFRC ret) {
 	if (ret != BF_OK) {
 		if (ret == CISYS_ERROR_BAD_BOARDPTR){ 
 			core_->LogMessage(caller_,"BF Get image error: An invalid board handle was passed to the function",false);	
 		} else if (ret == BF_SIGNAL_TIMEOUT) { 
 			core_->LogMessage(caller_,"BF Get image error: Timeout has expired before interrupt occurred",false);
+			ReloadBoardsAfterTimeoutError();
 		} else if (ret == BF_SIGNAL_CANCEL ) {
 			core_->LogMessage(caller_,"BF Get image error: Signal was canceled by another thread (see CiSignalCancel)",false);	
 		} else if (ret == BF_BAD_SIGNAL ) {

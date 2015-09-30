@@ -52,11 +52,15 @@
 # Assume we are in DeviceAdapters/SimpleCam and compiled driver is in .libs/libmmgr_dal_GPhoto.so
 #
 DESTDIR=/Applications/Micro-Manager1.4
+LIBGPHOTO2LIBDIR=/usr/local/lib
+LIBGPHOTO2=libgphoto2.dylib
+LIBGPHOTO2PORT=libgphoto2_port.dylib
 
 GPHOTO2_VERSION=`pkg-config libgphoto2 --variable=VERSION`
 GPHOTO2_PORT_VERSION=`pkg-config libgphoto2_port --variable=VERSION`
 
-cp .libs/libmmgr_dal_GPhoto.so $DESTDIR/libmmgr_dal_GPhoto
+
+cp ../.libs/libmmgr_dal_GPhoto $DESTDIR/libmmgr_dal_GPhoto
 
 cd $DESTDIR
 
@@ -64,33 +68,33 @@ rm -rf libgphoto2
 
 mkdir libgphoto2
 
-cp /opt/local/lib/libgphoto2.2.dylib libgphoto2
-install_name_tool -id @loader_path/libgphoto2/libgphoto2.2.dylib libgphoto2/libgphoto2.2.dylib
+cp $LIBGPHOTO2LIBDIR/$LIBGPHOTO2 libgphoto2/
+install_name_tool -id @loader_path/libgphoto2/$LIBGPHOTO2 libgphoto2/$LIBGPHOTO2
 
 # Change dynamic linkage in libgphoto2.2.dylib from /opt/local/lib/libgphoto2_port.0.dylib to Micro-Manager/libgphoto2/libgphoto2_port.0.dylib
-install_name_tool -change /opt/local/lib/libgphoto2_port.0.dylib @loader_path/libgphoto2_port.0.dylib libgphoto2/libgphoto2.2.dylib
+install_name_tool -change $LIBGPHOTO2LIBDIR/$LIBGPHOTO2PORT @loader_path/$LIBGPHOTO2PORT libgphoto2/$LIBGPHOTO2
 
-cp /opt/local/lib/libgphoto2_port.0.dylib libgphoto2
-install_name_tool -id @loader_path/libgphoto2/libgphoto2_port.0.dylib libgphoto2/libgphoto2_port.0.dylib
+cp $LIBGPHOTO2LIBDIR/$LIBGPHOTO2PORT libgphoto2/
+install_name_tool -id @loader_path/libgphoto2/$LIBGPHOTO2 libgphoto2/$LIBGPHOTO2
 
 # Copy camera drivers
 mkdir libgphoto2/libgphoto2
-cp /opt/local/lib/libgphoto2/$GPHOTO2_VERSION/*.so libgphoto2/libgphoto2/
+cp $LIBGPHOTO2LIBDIR/libgphoto2/$GPHOTO2_VERSION/*.so libgphoto2/libgphoto2/
 
 # Copy io drivers
 mkdir libgphoto2/libgphoto2_port
-cp /opt/local/lib/libgphoto2_port/$GPHOTO2_PORT_VERSION/*.so libgphoto2/libgphoto2_port/
+cp $LIBGPHOTO2LIBDIR/libgphoto2_port/$GPHOTO2_PORT_VERSION/*.so libgphoto2/libgphoto2_port/
 
 # Change all dynamic linkages in Micro-Manager/libgphoto2/libgphoto2 and Micro-Manager/libgphoto2/libgphoto2_port
 for SO in libgphoto2/libgphoto2/*.so libgphoto2/libgphoto2_port/*.so 
 do
-   install_name_tool -change /opt/local/lib/libgphoto2.2.dylib @loader_path/../libgphoto2.2.dylib $SO
-   install_name_tool -change /opt/local/lib/libgphoto2_port.0.dylib @loader_path/../libgphoto2_port.0.dylib $SO
+   install_name_tool -change $LIBGPHOTO2LIBDIR/$LIBGPHOTO2 @loader_path/../$LIBGPHOTO2 $SO
+   install_name_tool -change $LIBGPHOTO2LIBDIR/$LIBGPHOTO2PORT @loader_path/../$LIBGPHOTO2PORT $SO
 done
 
 # Change dynamic linkages in Micro-Manager/libmmgr_dal_GPhoto 
-install_name_tool -change /opt/local/lib/libgphoto2.2.dylib @loader_path/libgphoto2/libgphoto2.2.dylib libmmgr_dal_GPhoto
-install_name_tool -change /opt/local/lib/libgphoto2_port.0.dylib @loader_path/libgphoto2/libgphoto2_port.0.dylib libmmgr_dal_GPhoto
+install_name_tool -change $LIBGPHOTO2LIBDIR/$LIBGPHOTO2 @loader_path/libgphoto2/$LIBGPHOTO2 libmmgr_dal_GPhoto
+install_name_tool -change $LIBGPHOTO2LIBDIR/$LIBGPHOTO2PORT @loader_path/libgphoto2/$LIBGPHOTO2PORT libmmgr_dal_GPhoto
 
 # Add killptpcamera app
 osacompile -e 'tell application "PTPCamera" to quit' -o libgphoto2/KillPtpCamera.app

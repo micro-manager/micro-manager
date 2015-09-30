@@ -217,13 +217,23 @@ void Shutter::GetName(char* name) const
 
 int Shutter::Initialize()
 {
+   // Ensure we are in Standard mode (not Compatibility mode)
+   int ret = SendSerialCommand(port_.c_str(), "COMP 0", "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+   std::string compAnswer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", compAnswer);
+   // (compAnswer should be "0")
+   if (ret != DEVICE_OK)
+      return false;
+
    // set property list
    // -----------------
    
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction (this, &Shutter::OnState);
-   int ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -505,14 +515,29 @@ bool Wheel::Busy()
 
 int Wheel::Initialize()
 {
+   // Ensure we are in Standard mode (not Compatibility mode)
+   int ret = SendSerialCommand(port_.c_str(), "COMP 0", "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+   std::string compAnswer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", compAnswer);
+   // (compAnswer should be "0")
+   if (ret != DEVICE_OK)
+      return false;
+
 
    // set property list
    // -----------------
-   
+
+   // Gate closed position
+   ret = CreateStringProperty(MM::g_Keyword_Closed_Position, "", false);
+   if (ret != DEVICE_OK)
+      return ret;
+
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction (this, &Wheel::OnState);
-   int ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -570,6 +595,8 @@ int Wheel::Initialize()
       int errNo = atoi(answer.substr(2).c_str());
       return ERR_OFFSET + errNo;
    }
+
+   GetGateOpen(open_);
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
@@ -648,12 +675,10 @@ int Wheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
+      bool gateOpen;
+      GetGateOpen(gateOpen);
       long pos;
       pProp->Get(pos);
-
-      //check if we are already in that state
-      if ((unsigned) pos == curPos_)
-         return DEVICE_OK;
 
       if (pos >= (long)numPos_ || pos < 0)
       {
@@ -661,14 +686,41 @@ int Wheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
          return ERR_UNKNOWN_POSITION;
       }
 
-      // try to apply the value
-      int ret = SetWheelPosition(pos);
-      if (ret != DEVICE_OK)
+      if (gateOpen)
       {
-         pProp->Set((long)curPos_); // revert
-         return ret;
+         //check if we are already in that state
+         if (((unsigned) pos == curPos_) && open_)
+            return DEVICE_OK;
+
+         // try to apply the value
+         int ret = SetWheelPosition(pos);
+         if (ret != DEVICE_OK)
+         {
+            pProp->Set((long)curPos_); // revert
+            return ret;
+         }
+      }
+      else
+      {
+         if (!open_)
+         {
+            curPos_ = pos;
+            return DEVICE_OK;
+         }
+
+         char closedPos[MM::MaxStrLength];
+         GetProperty(MM::g_Keyword_Closed_Position, closedPos);
+         int gateClosedPos = atoi(closedPos);
+
+         int ret = SetWheelPosition(gateClosedPos);
+         if (ret != DEVICE_OK)
+         {
+            pProp->Set((long)curPos_); // revert
+            return ret;
+         }
       }
       curPos_ = pos;
+      open_ = gateOpen;
    }
 
    return DEVICE_OK;
@@ -757,19 +809,16 @@ void XYStage::GetName(char* name) const
 
 int XYStage::Initialize()
 {
-   // make sure that we are in compatiblity mode
-   std::ostringstream command;
-   command << "comp,0";
-
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+   // Ensure we are in Standard mode (not Compatibility mode)
+   int ret = SendSerialCommand(port_.c_str(), "COMP 0", "\r");
    if (ret != DEVICE_OK)
       return ret;
-
-   std::string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   std::string compAnswer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", compAnswer);
+   // (compAnswer should be "0")
    if (ret != DEVICE_OK)
       return false;
+
 
    // Some individual stages start up with the SAS, SCS, SMS, SAZ, SCZ, SMZ
    // parameters set to > 100 (the maximum stated in the manual). We may allow
@@ -1501,6 +1550,17 @@ void ZStage::GetName(char* Name) const
 
 int ZStage::Initialize()
 {
+   // Ensure we are in Standard mode (not Compatibility mode)
+   int ret = SendSerialCommand(port_.c_str(), "COMP 0", "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+   std::string compAnswer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", compAnswer);
+   // (compAnswer should be "0")
+   if (ret != DEVICE_OK)
+      return false;
+
+
    // Some individual stages start up with the SAS, SCS, SMS, SAZ, SCZ, SMZ
    // parameters set to > 100 (the maximum stated in the manual). We may allow
    // higher values in the future, but for now, set everything > 100 to 100
@@ -1539,7 +1599,7 @@ int ZStage::Initialize()
 
    // set stage step size and resolution
    double res;
-   int ret = GetResolution(res);
+   ret = GetResolution(res);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -1628,7 +1688,12 @@ bool ZStage::Busy()
 
 int ZStage::SetPositionUm(double pos)
 {
-   long steps = (long) (pos / stepSizeUm_ + 0.5);
+   double fsteps = pos / stepSizeUm_;
+   long steps;
+   if (pos >= 0)
+      steps = (long) (fsteps + 0.5);
+   else
+      steps = (long) (fsteps - 0.5);
    return SetPositionSteps(steps);
 }
 
@@ -2042,8 +2107,19 @@ void NanoZStage::GetName(char* Name) const
 
 int NanoZStage::Initialize()
 {
+   // Ensure we are in Standard mode (not Compatibility mode)
+   int ret = SendSerialCommand(port_.c_str(), "COMP 0", "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+   std::string compAnswer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", compAnswer);
+   // (compAnswer should be "0")
+   if (ret != DEVICE_OK)
+      return false;
+
+
    // set stage step size and resolution
-   int ret = GetPositionSteps(curSteps_);
+   ret = GetPositionSteps(curSteps_);
    if (ret != DEVICE_OK)
       ret = GetPositionSteps(curSteps_);
       if (ret != DEVICE_OK)
@@ -2105,7 +2181,12 @@ bool NanoZStage::Busy()
 
 int NanoZStage::SetPositionUm(double pos)
 {
-   long steps = (long) (pos / stepSizeUm_ + 0.5);
+   double fsteps = pos / stepSizeUm_;
+   long steps;
+   if (pos >= 0)
+      steps = (long) (fsteps + 0.5);
+   else
+      steps = (long) (fsteps - 0.5);
    return SetPositionSteps(steps);
 }
 
