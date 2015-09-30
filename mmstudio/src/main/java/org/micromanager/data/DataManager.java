@@ -273,6 +273,15 @@ public interface DataManager {
          boolean isSynchronous);
 
    /**
+    * Return a list of the ProcessorConfigurators currently being used by the
+    * application pipeline interface. This only returns those configurators that are
+    * currently enabled; if a processor is part of the pipeline but has been disabled,
+    * then it will not be in this list.
+    * @return An ordered list of ProcessorConfigurators.
+    */
+   public List<ProcessorConfigurator> getApplicationPipelineConfigurators();
+
+   /**
     * Clear the current application pipeline, so that no on-the-fly image
     * processing is performed.
     */

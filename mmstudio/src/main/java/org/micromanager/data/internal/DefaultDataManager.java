@@ -50,6 +50,7 @@ import org.micromanager.data.internal.StorageRAM;
 import org.micromanager.data.internal.StorageSinglePlaneTiffSeries;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.Processor;
+import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.data.ProcessorFactory;
 
 import org.micromanager.internal.MMStudio;
@@ -228,6 +229,11 @@ public class DefaultDataManager implements DataManager {
       return createPipeline(
             MMStudio.getInstance().getPipelineFrame().getPipelineFactories(),
             store, isSynchronous);
+   }
+
+   @Override
+   public List<ProcessorConfigurator> getApplicationPipelineConfigurators() {
+      return MMStudio.getInstance().getPipelineFrame().getPipelineConfigurators();
    }
 
    @Override

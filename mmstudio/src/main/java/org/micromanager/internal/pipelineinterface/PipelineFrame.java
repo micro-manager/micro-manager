@@ -273,6 +273,13 @@ final public class PipelineFrame extends MMFrame
    }
 
    /**
+    * Return a list of the currently-active configurators.
+    */
+   public List<ProcessorConfigurator> getPipelineConfigurators() {
+      return getTableModel().getPipelineConfigurators();
+   }
+
+   /**
     * Clear the pipeline table.
     */
    public void clearPipeline() {

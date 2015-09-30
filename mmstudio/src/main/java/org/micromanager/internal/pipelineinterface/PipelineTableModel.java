@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.table.AbstractTableModel;
 
+import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.data.ProcessorFactory;
 import org.micromanager.data.NewPipelineEvent;
 import org.micromanager.internal.MMStudio;
@@ -86,6 +87,19 @@ public class PipelineTableModel extends AbstractTableModel {
       for (ConfiguratorWrapper config : configs) {
          PropertyMap settings = config.getConfigurator().getSettings();
          result.add(config.getPlugin().createFactory(settings));
+      }
+      return result;
+   }
+
+   /**
+    * Provide a list of configurators for all enabled processors.
+    */
+   public List<ProcessorConfigurator> getPipelineConfigurators() {
+      ArrayList<ProcessorConfigurator> result = new ArrayList<ProcessorConfigurator>();
+      for (ConfiguratorWrapper config : pipelineConfigs_) {
+         if (config.getIsEnabled()) {
+            result.add(config.getConfigurator());
+         }
       }
       return result;
    }
