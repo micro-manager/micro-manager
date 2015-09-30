@@ -510,45 +510,27 @@ public class DefaultUserProfile implements UserProfile {
       }
    }
 
-   /**
-    * Adapted from the old JavaUtils.getObjectFromPrefs() method, which was
-    * removed when we moved over to the Profile-based system. We store
-    * objects as base64-encoded Strings, so we have to reverse that process
-    * to retrieve the original Object.
-    */
    @Override
-   public Object getObject(Class<?> c, String key, Object fallback) throws IOException {
-      String encoded = getString(c, key, null);
-      if (encoded == null) {
-         return fallback;
+   public <T> T getObject(Class<?> c, String key, T fallback) throws IOException {
+      key = genKey(c, key);
+      synchronized(lockObject_) {
+         T result = userProfile_.getObject(key, (T) null);
+         if (result != null) {
+            return result;
+         }
       }
-      byte[] bytes = BaseEncoding.base64().decode(encoded);
-      ByteArrayInputStream byteStream = new ByteArrayInputStream(bytes);
-      ObjectInputStream objectStream = new ObjectInputStream(byteStream);
-      try {
-         return objectStream.readObject();
-      }
-      catch (ClassNotFoundException e) {
-         throw new IOException(e);
+      // Try the global profile.
+      synchronized(globalProfile_) {
+         return globalProfile_.getObject(key, fallback);
       }
    }
 
-   /**
-    * Adapted from the old JavaUtils.putObjectInPrefs() method, which was
-    * removed when we moved over to the Profile-based system. We convert the
-    * Object into a base64-encoded String and store it that way.
-    */
    @Override
-   public void setObject(Class<?> c, String key, Serializable value) throws IOException {
-      ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-      try {
-         ObjectOutputStream objectStream = new ObjectOutputStream(byteStream);
-         objectStream.writeObject(value);
-      } catch (Exception e) {
-         throw new IOException("Failed to serialize object");
+   public <T> void setObject(Class<?> c, String key, T value) throws IOException {
+      synchronized(lockObject_) {
+         userProfile_ = (DefaultPropertyMap) userProfile_.copy().putObject(
+               genKey(c, key), value).build();
       }
-      String encoded = BaseEncoding.base64().encode(byteStream.toByteArray());
-      setString(c, key, encoded);
    }
 
    @Override

@@ -20,6 +20,14 @@
 
 package org.micromanager.data.internal;
 
+import com.google.common.io.BaseEncoding;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Set;
@@ -45,6 +53,7 @@ public class DefaultPropertyMap implements PropertyMap {
    private static final String DOUBLE_ARRAY = "Double array";
    private static final String BOOLEAN = "Boolean";
    private static final String BOOLEAN_ARRAY = "Boolean array";
+   private static final String OBJECT = "Object";
 
    // This gets thrown when someone tries to retrieve a value as the wrong type
    public static class PropertyValueMismatchException extends RuntimeException {
@@ -101,6 +110,12 @@ public class DefaultPropertyMap implements PropertyMap {
       public PropertyValue(Boolean[] val) {
          val_ = val;
          type_ = Boolean[].class;
+      }
+
+      // Used for storing generic objects.
+      public PropertyValue(byte[] val) {
+         val_ = val;
+         type_ = byte[].class;
       }
 
       public String getAsString() {
@@ -166,6 +181,13 @@ public class DefaultPropertyMap implements PropertyMap {
             throw new PropertyValueMismatchException("Type of value is not Boolean[]");
          }
          return (Boolean[]) val_;
+      }
+
+      public byte[] getAsByteArray() {
+         if (type_ != byte[].class) {
+            throw new PropertyValueMismatchException("Type of value is not byte[]");
+         }
+         return (byte[]) val_;
       }
 
       public JSONObject serialize() {
@@ -238,6 +260,12 @@ public class DefaultPropertyMap implements PropertyMap {
                   tmp.put(vals[i]);
                }
                result.put(VALUE, tmp);
+            }
+            else if (type_ == byte[].class) {
+               result.put(TYPE, OBJECT);
+               // Store as base64-encoded string.
+               String val = BaseEncoding.base64().encode((byte[]) val_);
+               result.put(VALUE, val);
             }
             else {
                throw new PropertyMap.TypeMismatchException("Unexpected property value type " + type_);
@@ -342,6 +370,35 @@ public class DefaultPropertyMap implements PropertyMap {
       @Override
       public PropertyMap.PropertyMapBuilder putBooleanArray(String key, Boolean[] values) {
          propMap_.put(key, new PropertyValue(values));
+         return this;
+      }
+
+      @Override
+      public PropertyMap.PropertyMapBuilder putObject(String key, Object val) {
+         // Convert the object to a byte array.
+         ObjectOutputStream objectStream = null;
+         try {
+            ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+            objectStream = new ObjectOutputStream(byteStream);
+            objectStream.writeObject(val);
+            byte[] bytes = byteStream.toByteArray();
+            objectStream.close();
+            propMap_.put(key, new PropertyValue(bytes));
+         }
+         catch (IOException e) {
+            ReportingUtils.logError(e, "Error converting object " + val +
+                  " to byte array");
+         }
+         finally {
+            try {
+               if (objectStream != null) {
+                  objectStream.close();
+               }
+            }
+            catch (IOException e) {
+               ReportingUtils.logError(e, "Failed to close outputStream");
+            }
+         }
          return this;
       }
 
@@ -514,6 +571,42 @@ public class DefaultPropertyMap implements PropertyMap {
    }
 
    @Override
+   public <T> T getObject(String key, T defaultVal) {
+      if (propMap_.containsKey(key)) {
+         byte[] bytes = propMap_.get(key).getAsByteArray();
+         ObjectInputStream oInputStream = null;
+         try {
+            ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+            oInputStream = new ObjectInputStream(bis);
+            @SuppressWarnings("unchecked")
+            T result = (T) oInputStream.readObject();
+            oInputStream.close();
+            return result;
+         }
+         catch (IOException e) {
+            ReportingUtils.logError(e, "Error loading object of type " +
+                  defaultVal.getClass() + " from PropertyMap");
+         }
+         catch (ClassNotFoundException e) {
+            ReportingUtils.logError(e,
+                  "Object with key " + key + " does not have type " +
+                  defaultVal.getClass());
+         }
+         finally {
+            try {
+               if (oInputStream != null) {
+                  oInputStream.close();
+               }
+            }
+            catch (IOException e) {
+               ReportingUtils.logError(e, "Failed to close inputStream");
+            }
+         }
+      }
+      return defaultVal;
+   }
+
+   @Override
    public PropertyMap merge(PropertyMap alt) {
       // We need access to "internal" methods that aren't exposed in the API.
       DefaultPropertyMap defaultAlt = (DefaultPropertyMap) alt;
@@ -666,6 +759,11 @@ public class DefaultPropertyMap implements PropertyMap {
                   valArr[j] = tmp.getBoolean(j);
                }
                builder.putBooleanArray(key, valArr);
+            }
+            else if (type.contentEquals(OBJECT)) {
+               String tmp = property.getString(VALUE);
+               byte[] bytes = BaseEncoding.base64().decode(tmp);
+               builder.putProperty(key, new PropertyValue(bytes));
             }
             else {
                throw new PropertyMap.TypeMismatchException(

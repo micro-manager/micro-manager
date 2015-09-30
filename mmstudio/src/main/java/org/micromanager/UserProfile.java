@@ -244,7 +244,7 @@ public interface UserProfile {
     * @return The stored object, or the fallback if that value is not found.
     * @throws IOException if deserialization of the object fails
     */
-   public Object getObject(Class<?> c, String key, Object fallback) throws IOException;
+   public <T> T getObject(Class<?> c, String key, T fallback) throws IOException;
 
    /**
     * Save a serializable object in the profile. The object will be serialized
@@ -254,10 +254,10 @@ public interface UserProfile {
     * to save/load.
     * @param c class providing scope for the key
     * @param key Identifier for the parameter
-    * @param value Serializable Object to be stored
+    * @param value Object to be stored
     * @throws IOException if the serialization fails for any reason
     */
-   public void setObject(Class<?> c, String key, Serializable value) throws IOException;
+   public <T> void setObject(Class<?> c, String key, T value) throws IOException;
 
    /**
     * The UserProfile normally routinely saves changes

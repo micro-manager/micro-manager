@@ -129,6 +129,17 @@ public interface PropertyMap {
        * @return The PropertyMapBuilder, so that puts can be chained together
        */
       PropertyMapBuilder putBooleanArray(String key, Boolean[] values);
+
+      /**
+       * Put a generic object into the mapping. The object will be internally
+       * converted into a byte array and serialized with a base64 encoding.
+       * @param key a string identifying this property. If there is already
+       *        a property with this key in the builder, that property will
+       *        be overwritten.
+       * @param value Object to serialize and associate with the key.
+       * @return The PropertyMapBuilder, so that puts can be chained together
+       */
+      PropertyMapBuilder putObject(String key, Object value);
    }
 
    /**
@@ -323,6 +334,17 @@ public interface PropertyMap {
     *         if the key is not found.
     */
    public Boolean[] getBooleanArray(String key, Boolean[] defaultVal);
+
+   /**
+    * Retrieve an object from the mapping. If the key is not found, then the
+    * provided default value will be returned. If the mapped value does not
+    * have the specified type, then a TypeMismatchException will be thrown.
+    * @param key
+    * @param defaultVal the default vaule to use if the key is not found.
+    * @return the T corresponding to the provided key, or defaultVal if the
+    *         key is not found.
+    */
+   public <T> T getObject(String key, T defaultVal);
 
    /**
     * Create a new PropertyMap that is this map but with values copied across
