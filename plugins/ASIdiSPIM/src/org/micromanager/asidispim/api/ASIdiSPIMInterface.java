@@ -36,16 +36,19 @@ import org.micromanager.api.PositionList;
 public interface ASIdiSPIMInterface {
    
    /**
-    * Runs an acquisition using the current settings, i.e., the settings
+    * Requests an acquisition using the current settings, i.e., the settings
     * as visible in the acquisition panel.  The definition of current
     * settings may change in the future.  Does nothing if an acquisition
-    * is currently running.
+    * is currently running or has been requested.
+    * @see stopAcquisition()
     * @throws org.micromanager.asidispim.api.ASIdiSPIMException
     */
    public void runAcquisition() throws ASIdiSPIMException;
    
    /**
-    * Stops an acquisition, if one is currently running.
+    * Stops an acquisition, if one is currently running.  Also cancels a 
+    *   requested acquisition that is not yet running.
+    * @see startAcquisition()
     * @throws ASIdiSPIMException
     */
    public void stopAcquisition() throws ASIdiSPIMException;
@@ -53,17 +56,59 @@ public interface ASIdiSPIMInterface {
    /**
     * @return true if acquisition is currently running.
     *   "Downtime" during a multi-timepoint acquisition is considered running.
-    *   False indicates that an acquisition is currently underway.
+    *   There is a delay between requesting an acquisition and actually
+    *     starting to run it due to time to perform sanity checks, initialize
+    *     the controller and cameras, etc.
+    * @see isAcquisitionRequested(), runAcquisition(), stopAcquisition()
     * @throws ASIdiSPIMException
     */
    public boolean isAcquisitionRunning() throws ASIdiSPIMException;
+   
+   /**
+    * @return true if acquisition has been requested or is currently running.
+    *   There is a delay between requesting an acquisition and actually
+    *     starting to run it due to time to perform sanity checks, initialize
+    *     the controller and cameras, etc.  It is possible for the acquisition
+    *     to be stopped before being started during this interval when
+    *     it has been requested but not actually started.
+    * @see isAcquisitionRunning(), runAcquisition(), stopAcquisition()
+    * @throws ASIdiSPIMException
+    */
+   public boolean isAcquisitionRequested() throws ASIdiSPIMException;
 
    /**
     * @return pathname on filesystem to last completed acquisition
-    *   (even if it was stopped pre-maturely)
+    *   (even if it was stopped pre-maturely).  Will return an empty
+    *   string if no acquisition has run, or null if the last acquisition
+    *   was not saved to disk.
     * @throws ASIdiSPIMException
     */
-   public String getPathToLastAcquisition() throws ASIdiSPIMException;
+   public String getLastAcquisitionPath() throws ASIdiSPIMException;
+
+   /**
+    * @return the internal Micro-Manager name for the last acquisition.
+    *   Will start with the prefix specified previously, though may have
+    *   appended characters.
+    * @throws ASIdiSPIMException
+    */
+   public String getLastAcquisitionName() throws ASIdiSPIMException;
+   
+   /**
+    * Closes the window associated with the last acquisition.
+    * Equivalent to closeAcquisitionWindow(getLastAcquisitionName()).
+    * @throws ASIdiSPIMException
+    */
+   public void closeLastAcquisitionWindow() throws ASIdiSPIMException;
+   
+   /**
+    * Closes the acquisition window corresponding to the specified acquisition
+    *   name.  Note that the acquisition name may be different from the
+    *   prefix and also from the final field of the filesystem's pathname
+    *   if it was saved to disk.
+    * @param acquisitionName
+    * @throws ASIdiSPIMException
+    */
+   public void closeAcquisitionWindow(String acquisitionName) throws ASIdiSPIMException;
    
    /**
     * @return directory is a string comprising the pathname on filesystem
@@ -87,8 +132,8 @@ public interface ASIdiSPIMInterface {
    public String getSavingNamePrefix() throws ASIdiSPIMException;
    
    /**
-    * Changes the name of the acquisition.  This is the "prefix" in
-    *   Micro-Manager's terminology, as numbers may be appended to avoid
+    * Changes the name of the next acquisition.  This is the "prefix" in
+    *   Micro-Manager's terminology.  Numbers may be appended to avoid
     *   duplicate filenames.
     * @param acqPrefix
     * @throws ASIdiSPIMException

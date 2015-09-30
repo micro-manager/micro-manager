@@ -163,7 +163,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JLabel acquisitionStatusLabel_;
    private int numTimePointsDone_;
    private final AtomicBoolean cancelAcquisition_ = new AtomicBoolean(false);  // true if we should stop acquisition
-   private final AtomicBoolean acquisitionRunning_ = new AtomicBoolean(false);  // true if acquisition is in progress
+   private final AtomicBoolean acquisitionRequested_ = new AtomicBoolean(false);  // true if acquisition has been requested to start or is underway
+   private final AtomicBoolean acquisitionRunning_ = new AtomicBoolean(false);   // true if the acquisition is actually underway
    private final StagePositionUpdater posUpdater_;
    private final JSpinner stepSize_;
    private final JLabel desiredSlicePeriodLabel_;
@@ -187,7 +188,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final MultiChannelSubPanel multiChannelPanel_;
    private final Color[] colors = {Color.RED, Color.GREEN, Color.BLUE, Color.MAGENTA,
             Color.PINK, Color.CYAN, Color.YELLOW, Color.ORANGE};
-   private String pathToLastAcquisition_;
+   private String lastAcquisitionPath_;
+   private String lastAcquisitionName_;
    
    public AcquisitionPanel(ScriptInterface gui, 
            Devices devices, 
@@ -215,7 +217,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       core_ = gui_.getMMCore();
       numTimePointsDone_ = 0;
       sliceTiming_ = new SliceTiming();
-      pathToLastAcquisition_ = "";
+      lastAcquisitionPath_ = "";
+      lastAcquisitionName_ = "";
       
       PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
       
@@ -642,7 +645,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       buttonStart_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            if (isAcquisitionRunning()) {
+            if (isAcquisitionRequested()) {
                stopAcquisition();
             } else {
                runAcquisition();
@@ -819,9 +822,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    private void updateStartButton() {
-      boolean started = isAcquisitionRunning();
+      boolean started = isAcquisitionRequested();
       buttonStart_.setSelected(started);
-      buttonStart_.setText(started ? "Stop!" : "Start!");
+      buttonStart_.setText(started ? "Stop Acquisition!" : "Start Acquisition!");
       buttonStart_.setBackground(started ? Color.red : Color.green);
       buttonStart_.setIcon(started ?
             SwingResourceManager.
@@ -1380,31 +1383,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    /**
-    * @return pathname on filesystem to last completed acquisition
-    *   (even if it was stopped pre-maturely)
-    */
-   public String getPathToLastAcquisition() {
-      return pathToLastAcquisition_;
-   }
-   
-   /**
-    * @return true if an acquisition is currently underway
-    */
-   public boolean isAcquisitionRunning() {
-      return acquisitionRunning_.get();
-   }
-   
-   /**
-    * Stops the acquisition by setting an Atomic boolean indicating that we should
-    *   halt.  Does nothing if an acquisition isn't running.
-    */
-   public void stopAcquisition() {
-      if (isAcquisitionRunning()) {
-         cancelAcquisition_.set(true);
-      }
-   }
-   
-   /**
     * Implementation of acquisition that orchestrates image
     * acquisition itself rather than using the acquisition engine.
     * 
@@ -1424,12 +1402,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          public void run() {
             ReportingUtils.logDebugMessage("User requested start of diSPIM acquisition.");
             cancelAcquisition_.set(false);
-            acquisitionRunning_.set(true);
+            acquisitionRequested_.set(true);
             updateStartButton();
             boolean success = runAcquisitionPrivate();
             if (!success) {
                ReportingUtils.logError("Fatal error running diSPIM acquisition.");
             }
+            acquisitionRequested_.set(false);
             acquisitionRunning_.set(false);
             updateStartButton();
          }
@@ -1450,6 +1429,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     */
    private boolean runAcquisitionPrivate() {
       
+      // sanity check, shouldn't call this unless we aren't running an acquisition
       if (gui_.isAcquisitionRunning()) {
          MyDialogUtils.showError("An acquisition is already running");
          return false;
@@ -1906,9 +1886,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             //gui_.setAcquisitionAddImageAsynchronous(acqName); 
             MMAcquisition acq = gui_.getAcquisition(acqName);
             
-            // patterned after implementation in MMStudio.java
-            pathToLastAcquisition_ = acq.getImageCache().getDiskLocation();
-        
             // Dive into MM internals since script interface does not support pipelines
             ImageCache imageCache = acq.getImageCache();
             VirtualAcquisitionDisplay vad = acq.getAcquisitionWindow();
@@ -1917,6 +1894,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // Start pumping images into the ImageCache
             DefaultTaggedImageSink sink = new DefaultTaggedImageSink(bq, imageCache);
             sink.start();
+            
+            // patterned after implementation in MMStudio.java
+            // will be null if not saving to disk
+            lastAcquisitionPath_ = acq.getImageCache().getDiskLocation();
+            
+            lastAcquisitionName_ = acqName;
+            
+            // flag that we are actually running acquisition now
+            acquisitionRunning_.set(true);
 
             // Loop over all the times we trigger the controller's acquisition
             // remember acquisition start time for software-timed timepoints
@@ -2419,6 +2405,48 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
 
       bq.put(taggedImg);
+   }
+   
+   
+   /***************** API  *******************/
+   
+   
+   /**
+    * @return true if an acquisition is currently underway
+    *   (e.g. all checks passed, controller set up, MM acquisition object created, etc.)
+    */
+   public boolean isAcquisitionRunning() {
+      return acquisitionRunning_.get();
+   }
+   
+   /**
+    * @return true if an acquisition has been requested by user.  Will
+    *   also return true if acquisition is running.
+    */
+   public boolean isAcquisitionRequested() {
+      return acquisitionRequested_.get();
+   }
+   
+   /**
+    * Stops the acquisition by setting an Atomic boolean indicating that we should
+    *   halt.  Does nothing if an acquisition isn't running.
+    */
+   public void stopAcquisition() {
+      if (isAcquisitionRequested()) {
+         cancelAcquisition_.set(true);
+      }
+   }
+   
+   /**
+    * @return pathname on filesystem to last completed acquisition
+    *   (even if it was stopped pre-maturely).  Null if not saved to disk.
+    */
+   public String getLastAcquisitionPath() {
+      return lastAcquisitionPath_;
+   }
+
+   public String getLastAcquisitionName() {
+      return lastAcquisitionName_;
    }
    
    public String getSavingDirectoryRoot() {

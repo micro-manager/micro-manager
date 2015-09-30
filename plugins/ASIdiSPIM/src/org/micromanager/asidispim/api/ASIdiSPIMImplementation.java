@@ -23,6 +23,10 @@ package org.micromanager.asidispim.api;
 
 import java.awt.geom.Point2D.Double;
 
+import mmcorej.CMMCore;
+import mmcorej.MMCoreJ;
+
+import org.micromanager.MMStudio;
 import org.micromanager.api.MultiStagePosition;
 import org.micromanager.api.PositionList;
 import org.micromanager.asidispim.ASIdiSPIM;
@@ -33,6 +37,7 @@ import org.micromanager.asidispim.AutofocusPanel.Modes;
 import org.micromanager.asidispim.NavigationPanel;
 import org.micromanager.asidispim.Data.AcquisitionModes.Keys;
 import org.micromanager.asidispim.Data.AcquisitionSettings;
+import org.micromanager.utils.MMScriptException;
 
 /**
  * Implementation of the ASidiSPIMInterface
@@ -62,13 +67,37 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    }
    
    @Override
+   public boolean isAcquisitionRequested() throws ASIdiSPIMException {
+      return getAcquisitionPanel().isAcquisitionRequested();
+   }
+   
+   @Override
    public boolean isAcquisitionRunning() throws ASIdiSPIMException {
       return getAcquisitionPanel().isAcquisitionRunning();
    }
    
    @Override
-   public String getPathToLastAcquisition() throws ASIdiSPIMException {
-      return getAcquisitionPanel().getPathToLastAcquisition();
+   public String getLastAcquisitionPath() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getLastAcquisitionPath();
+   }
+   
+   @Override
+   public String getLastAcquisitionName() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getLastAcquisitionName();
+   }
+
+   @Override
+   public void closeLastAcquisitionWindow() throws ASIdiSPIMException {
+      closeAcquisitionWindow(getLastAcquisitionName());
+   }
+
+   @Override
+   public void closeAcquisitionWindow(String acquisitionName) throws ASIdiSPIMException {
+      try {
+         getGui().closeAcquisitionWindow(acquisitionName);
+      } catch (MMScriptException e) {
+         throw new ASIdiSPIMException(e);
+      }
    }
    
    @Override
@@ -130,6 +159,23 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    
    
    //** Private methods.  Only for internal use **//
+
+   private MMStudio getGui() throws ASIdiSPIMException {
+      MMStudio studio = MMStudio.getInstance();
+      if (studio == null) {
+         throw new ASIdiSPIMException ("MM Studio is not open"); 
+      }
+      return studio;
+  }
+   
+   
+   private CMMCore getCore() throws ASIdiSPIMException {
+       CMMCore core = getGui().getCore();
+       if (core == null) {
+          throw new ASIdiSPIMException("Core is not open");
+       }
+       return core;
+   }
    
    private ASIdiSPIMFrame getFrame() throws ASIdiSPIMException {
       ASIdiSPIMFrame frame = ASIdiSPIM.getFrame();
