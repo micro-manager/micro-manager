@@ -67,6 +67,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private boolean useAutoFocus_;
    private int afSkipInterval_;
    private boolean absoluteZ_;
+   private int cameraTimeout_;
    private IAcquisitionEngine2010 acquisitionEngine2010;
    private ArrayList<Double> customTimeIntervalsMs_;
    private boolean useCustomIntervals_;
@@ -333,6 +334,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       }
       acquisitionSettings.comment = comment_;
       acquisitionSettings.usePositionList = this.useMultiPosition_;
+      acquisitionSettings.cameraTimeout = this.cameraTimeout_;
       return acquisitionSettings;
    }
 
@@ -407,6 +409,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       comment_ = ss.comment;
       
       useMultiPosition_ = ss.usePositionList;
+      cameraTimeout_ = ss.cameraTimeout;
    }
 
 //////////////////// Actions ///////////////////////////////////////////
