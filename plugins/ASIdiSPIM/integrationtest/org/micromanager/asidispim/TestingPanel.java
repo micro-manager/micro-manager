@@ -28,6 +28,7 @@ import java.io.File;
 
 import javax.swing.JButton;
 
+import org.micromanager.asidispim.Data.AcquisitionModes.Keys;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
@@ -72,6 +73,9 @@ public class TestingPanel extends ListeningJPanel {
                      // there is a logical order to running these tests
                      testSavingNamePrefix();
                      testSavingDirectoryRoot();
+                     testSavingSeparateFile();
+                     testSavingSaveWhileAcquiring();
+                     testAcquisitionMode();
                      testRunAcquisition();
                      testLastAcquisitionPathAndName();
                      MyDialogUtils.showError("all tests passed successfully");
@@ -159,6 +163,45 @@ public class TestingPanel extends ListeningJPanel {
       diSPIM.setSavingDirectoryRoot(rootTest);
       assertEquals(rootTest, diSPIM.getSavingDirectoryRoot());
       diSPIM.setSavingDirectoryRoot(rootOrig);
+   }
+   
+   private void testSavingSeparateFile() throws ASIdiSPIMException, Error {
+      ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
+      boolean settingOrig = diSPIM.getSavingSeparateFile();
+      diSPIM.setSavingSeparateFile(true);
+      assertEquals(true, diSPIM.getSavingSeparateFile());
+      diSPIM.setSavingSeparateFile(false);
+      assertEquals(false, diSPIM.getSavingSeparateFile());
+      diSPIM.setSavingSeparateFile(settingOrig);
+   }
+   
+   private void testSavingSaveWhileAcquiring() throws ASIdiSPIMException, Error {
+      ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
+      boolean settingOrig = diSPIM.getSavingSaveWhileAcquiring();
+      diSPIM.setSavingSaveWhileAcquiring(true);
+      assertEquals(true, diSPIM.getSavingSaveWhileAcquiring());
+      diSPIM.setSavingSaveWhileAcquiring(false);
+      assertEquals(false, diSPIM.getSavingSaveWhileAcquiring());
+      diSPIM.setSavingSaveWhileAcquiring(settingOrig);
+   }
+   
+   private void testAcquisitionMode() throws ASIdiSPIMException, Error {
+      ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
+      org.micromanager.asidispim.Data.AcquisitionModes.Keys settingOrig = diSPIM.getAcquisitionMode();
+      org.micromanager.asidispim.Data.AcquisitionModes.Keys[] keys = 
+            new org.micromanager.asidispim.Data.AcquisitionModes.Keys[] {
+            org.micromanager.asidispim.Data.AcquisitionModes.Keys.NO_SCAN,
+            org.micromanager.asidispim.Data.AcquisitionModes.Keys.PIEZO_SCAN_ONLY,
+            org.micromanager.asidispim.Data.AcquisitionModes.Keys.PIEZO_SLICE_SCAN,
+            org.micromanager.asidispim.Data.AcquisitionModes.Keys.SLICE_SCAN_ONLY,
+            org.micromanager.asidispim.Data.AcquisitionModes.Keys.STAGE_SCAN,
+            org.micromanager.asidispim.Data.AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED,
+      };
+      for (org.micromanager.asidispim.Data.AcquisitionModes.Keys key : keys) {
+         diSPIM.setAcquisitionMode(key);
+         assertEquals(key, diSPIM.getAcquisitionMode());
+      }
+      diSPIM.setAcquisitionMode(settingOrig);
    }
    
    
