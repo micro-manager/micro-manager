@@ -154,6 +154,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    private MMImageCanvas canvas_;
    private JPanel controlsPanel_;
    private HyperstackControls hyperstackControls_;
+   private ImageInfoLine infoLine_;
 
    // Ensures that we don't try to make the GUI twice from separate threads.
    // TODO: is this even still a concern?
@@ -395,9 +396,12 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       }
       contentsPanel_.removeAll();
       contentsPanel_.setLayout(new MigLayout("insets 1, fillx, filly",
-         "[grow, fill]", "[grow, fill]related[]"));
+         "[grow, fill]", "0[]0[grow, fill]related[]"));
 
-      contentsPanel_.add(new ImageInfoLine(this), "wrap");
+      // Text at the top of the window for image information.
+      infoLine_ = new ImageInfoLine(this);
+      contentsPanel_.add(infoLine_, "wrap");
+
       recreateCanvas();
       contentsPanel_.add(canvasPanel_, "align center, wrap, grow");
 
@@ -593,9 +597,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       int maxWidth = maxBounds.x + maxBounds.width - location.x;
       int maxHeight = maxBounds.y + maxBounds.height - location.y;
       // Derive the available size for the image display by subtracting off
-      // the size of our insets and controls.
+      // the size of our insets, controls, and info text.
       maxWidth -= insets.left + insets.right;
-      maxHeight -= insets.top + insets.bottom + controlsPanel_.getHeight();
+      maxHeight -= insets.top + insets.bottom + controlsPanel_.getHeight() + infoLine_.getHeight();
       canvas_.updateSize(new Dimension(maxWidth, maxHeight));
       setSize(getMaxSafeSizeFromHere());
       pack();
@@ -993,7 +997,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       Dimension controlsSize = controlsPanel_.getSize();
       Dimension result = new Dimension(
             ourSize.width - insets.left - insets.right,
-            ourSize.height - insets.top - insets.bottom - controlsSize.height);
+            ourSize.height - insets.top - insets.bottom - controlsSize.height -
+            infoLine_.getHeight());
       return result;
    }
 
