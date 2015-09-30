@@ -79,7 +79,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    protected ImageCache imageCache_;
    private ArrayList<AcqSettingsListener> settingsListeners_;
    private AcquisitionManager acqManager_;
-   private int cameraTimeout_;
+   private int cameraTimeout_ = 20000;
 
    public AcquisitionWrapperEngine(AcquisitionManager mgr) {
       nameToProcessorClass_ = new HashMap<String, Class<? extends DataProcessor<TaggedImage>>>();
