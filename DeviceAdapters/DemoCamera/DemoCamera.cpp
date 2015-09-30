@@ -476,6 +476,13 @@ int CDemoCamera::Initialize()
    AddAllowedValue(propName.c_str(), g_Sine_Wave);
    AddAllowedValue(propName.c_str(), g_Norm_Noise);
 
+   // Simulate application crash
+   pAct = new CPropertyAction(this, &CDemoCamera::OnCrash);
+   CreateStringProperty("SimulateCrash", "", false, pAct);
+   AddAllowedValue("SimulateCrash", "");
+   AddAllowedValue("SimulateCrash", "Dereference Null Pointer");
+   AddAllowedValue("SimulateCrash", "Divide by Zero");
+
    // synchronize all properties
    // --------------------------
    nRet = UpdateStatus();
@@ -932,8 +939,11 @@ int CDemoCamera::InsertImage()
       GetCoreCallback()->ClearImageBuffer(this);
       // don't process this same image again...
       return GetCoreCallback()->InsertImage(this, pI, w, h, b, md.Serialize().c_str(), false);
-   } else
+   }
+   else
+   {
       return ret;
+   }
 }
 
 /*
@@ -952,19 +962,22 @@ int CDemoCamera::RunSequenceOnThread(MM::MMTime startTime)
       	triggerDev->SetProperty("Trigger","+");
       }
    }
-   
+
+   double exposure = GetSequenceExposure();
+
    if (!fastImage_)
    {
-      GenerateSyntheticImage(img_, GetSequenceExposure());
+      GenerateSyntheticImage(img_, exposure);
    }
 
-   ret = InsertImage();
-     
-
-   while (((double) (this->GetCurrentMMTime() - startTime).getMsec() / imageCounter_) < this->GetSequenceExposure())
+   // Simulate exposure duration
+   double finishTime = exposure * (imageCounter_ + 1);
+   while ((GetCurrentMMTime() - startTime).getMsec() < finishTime)
    {
       CDeviceUtils::SleepMs(1);
    }
+
+   ret = InsertImage();
 
    if (ret != DEVICE_OK)
    {
@@ -1635,6 +1648,35 @@ int CDemoCamera::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    return DEVICE_OK;
 }
+
+
+int CDemoCamera::OnCrash(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   AddAllowedValue("SimulateCrash", "");
+   AddAllowedValue("SimulateCrash", "Dereference Null Pointer");
+   AddAllowedValue("SimulateCrash", "Divide by Zero");
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set("");
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string choice;
+      pProp->Get(choice);
+      if (choice == "Dereference Null Pointer")
+      {
+         int* p = 0;
+         volatile int i = *p;
+      }
+      else if (choice == "Divide by Zero")
+      {
+         volatile int i = 1, j = 0, k;
+         k = i / j;
+      }
+   }
+   return DEVICE_OK;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Private CDemoCamera methods
 ///////////////////////////////////////////////////////////////////////////////

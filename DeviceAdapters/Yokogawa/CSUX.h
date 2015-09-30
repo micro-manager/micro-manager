@@ -163,7 +163,7 @@ private:
 };
 
 
-class DriveSpeed : public CStateDeviceBase<DriveSpeed>
+class DriveSpeed : public CGenericBase<DriveSpeed>
 {
 public:
    DriveSpeed();
@@ -176,18 +176,16 @@ public:
                                                                              
    void GetName(char* pszName) const; 
    bool Busy();
-   unsigned long GetNumberOfPositions()const {return numPos_;}
 
    // action interface
    // ---------------- 
-   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnRun(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAutoAdjust(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    bool initialized_;
    bool running_;
-   unsigned numPos_; 
    std::string name_;
    long min_, max_;
    double autoAdjustMs_;

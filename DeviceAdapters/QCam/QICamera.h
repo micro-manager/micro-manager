@@ -28,7 +28,7 @@
 
 #include "DeviceBase.h"
 #include "ImgBuffer.h"
-#include "Debayer.h"
+#include "PvDebayer.h"
 #include "ModuleInterface.h"
 #include "DeviceThreads.h"
 #include "DeviceEvents.h"
@@ -53,6 +53,7 @@
 #define ERR_SOFTWARE_TRIGGER_FAILED         1004
 #define ERR_BUSY_ACQUIRING                  1003
 #define ERR_NO_CAMERA_FOUND                 1005
+#define ERR_POSTPROCESSING_FAILED           1006
 
 //Unused error codes - reserved for future expansion
 //#define ERR_INTERNAL_BUFFER_FULL            1004
@@ -83,9 +84,22 @@
 #define g_Keyword_TriggerDelay              "TriggerDelay"
 #define g_Keyword_TriggerDelay_Min          "TriggerDelayMin"
 #define g_Keyword_TriggerDelay_Max          "TriggerDelayMax"
-#define g_Keyword_Color_Mode                "ColorMode"
+#define g_Keyword_Color_Mode                "Color"
 #define g_Value_ON                            "ON"
 #define g_Value_OFF                           "OFF"
+#define g_Keyword_RedScale                  "Color - Red scale"
+#define g_Keyword_BlueScale                 "Color - Blue scale"
+#define g_Keyword_GreenScale                "Color - Green scale"
+#define g_Keyword_CFAmask                   "Color - Sensor CFA Pattern"
+#define g_Keyword_InterpolationAlgorithm    "Color - zInterpolation algorithm"
+#define g_Keyword_Replication               "8-bit: Nearest Neighbor Replication OR >8-bit: Nearest Neighbor Replication"
+#define g_Keyword_Bilinear                  "8-bit: Bilinear OR >8-bit: Average 4 pixels"
+#define g_Keyword_SmoothHue                 "8-bit: Smooth Hue OR >8-bit: Bicubic Fast"
+#define g_Keyword_AdaptiveSmoothHue         "8-bit: Adaptive Smooth Hue (edge detecting) OR >8-bit: Bicubic"
+#define g_Keyword_RGGB                      "R-G-G-B"
+#define g_Keyword_BGGR                      "B-G-G-R"
+#define g_Keyword_GRBG                      "G-R-B-G"
+#define g_Keyword_GBRG                      "G-B-R-G"
 
 //////////////////////////////////////////////////////////////////////////////
 // Other constants
@@ -203,6 +217,11 @@ public:
     int OnTriggerType(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnTriggerDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnColorMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnInterpolationAlgorithm(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnRedScale(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnGreenScale(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnBlueScale(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnCFAmask(MM::PropertyBase* pProp, MM::ActionType eAct);
     int LogError(std::string message, int err, char* file=NULL, int line=0) const;
 
 private:
@@ -296,6 +315,14 @@ private:
     MMEvent             m_frameDoneEvent;   // Signals the sequence thread when a frame was captured
     int		            m_frameDoneBuff;    // Tells the sequence thread which frame was just captured
     MMThreadLock        m_frameDoneLock;    // Locks access to m_frameDoneBuff
+    QCam_Frame*         m_processedFrame;   
+    
+    double           m_redScale;
+    double           m_greenScale;
+    double           m_blueScale;
+   
+    int              m_selectedCFAmask;
+    int              m_selectedInterpolationAlgorithm;
 };
 
 #endif //_QICAMERA_H_                                               

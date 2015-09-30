@@ -1642,7 +1642,8 @@ int AndorCamera::GetListOfAvailableCameras()
 
          ActualInterval_ms_str_ += " (minimum)";
       }
-
+	  
+	  SetProperty(MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(fExposure));
       OnPropertyChanged(MM::g_Keyword_ReadoutTime, CDeviceUtils::ConvertToString(ReadoutTime_));
       OnPropertyChanged(g_Keyword_KeepCleanTime, CDeviceUtils::ConvertToString(KeepCleanTime_));
       OnPropertyChanged(MM::g_Keyword_ActualInterval_ms,ActualInterval_ms_str_.c_str());

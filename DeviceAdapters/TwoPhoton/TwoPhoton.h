@@ -126,7 +126,7 @@ public:
 
 private:
    static const int imageWidth_ = 410;
-   static const int maxFrames_ = 100;
+   static const int maxFrames_ = 200;
 
    std::vector<ImgAccumulator> img_;
    unsigned int numChannels_;

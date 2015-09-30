@@ -56,7 +56,6 @@ public:
    int RunSequence();
    int StopSequence() { return DEVICE_UNSUPPORTED_COMMAND; }  // doesn't appear to be used in MMCore.cpp anyway
 
-   // below aren't really implemented but we do the closest thing we can with our hardware
    int PointAndFire(double x, double y, double time_us);
    int SetSpotInterval(double pulseInterval_us);
    int SetIlluminationState(bool on);  // we can't turn off beam but we can steer beam to corner where hopefully it is blocked internally
@@ -139,6 +138,9 @@ public:
    // laser TTL properties
    int OnLaserOutputMode      (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnLaserSwitchTime      (MM::PropertyBase* pProp, MM::ActionType eAct);
+   // phototargeting properties
+   int OnTargetExposureTime   (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnTargetSettlingTime   (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    string axisLetterX_;
@@ -155,6 +157,11 @@ private:
    double lastY_;    // used to cache position (in degrees)
    bool illuminationState_;  // true if on, false if beam is turned off
    bool refreshOverride_;  // true temporarily if refreshing property
+   bool mmTarget_;    // true iff MM_TARGET firmware in place for phototargeting
+   long targetExposure_;  // exposure time for targeting, stored locally
+   long targetSettling_;  // settling time for targeting, stored locally
+   unsigned int axisIndexX_;
+   unsigned int axisIndexY_;
 
    struct saStateType {
       long mode;
@@ -167,7 +174,6 @@ private:
    // for polygons
    vector< pair<double,double> > polygons_;
    long polygonRepetitions_;
-   long sequenceIntervalMs_;
    bool ring_buffer_supported_;
 
    unsigned char laser_side_;  // code for corresponding laser line: 0 for none, 1 for side0, 2 for side1

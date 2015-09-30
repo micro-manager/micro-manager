@@ -88,14 +88,17 @@ SUBDIRS = \
 	Aquinas \
 	Arduino \
 	CARVII \
+	CNCMicroscope \
 	CSUW1 \
 	Cobolt \
 	CoherentCube \
 	CoherentOBIS \
 	Conix \
 	Corvus \
-	DTOpenLayer \
 	DemoCamera \
+	Diskovery \
+	DTOpenLayer \
+	Diskovery \
 	FocalPoint \
 	FreeSerialPort \
 	ImageProcessorChain \
@@ -111,6 +114,7 @@ SUBDIRS = \
 	MaestroServo \
 	Marzhauser \
 	Marzhauser-LStep \
+	MarzhauserLStepOld \
 	MicroPoint \
 	Motic_mac \
 	Neos \

@@ -480,6 +480,8 @@ bool CXYStage::Busy()
          return true;
       command.str("");
       command << "RS " << axisLetterY_ << "?";
+      if (hub_->QueryCommandVerify(command.str(),":A") != DEVICE_OK)  // say we aren't busy if we can't communicate
+         return false;
       if (hub_->GetAnswerCharAtPosition3(c) != DEVICE_OK)
          return false;
       return (c == 'B');

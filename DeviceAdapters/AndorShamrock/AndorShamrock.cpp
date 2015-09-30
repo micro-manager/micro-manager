@@ -9,6 +9,7 @@ const char* g_ShamrockName = "Andor Shamrock";
 const char* g_DeviceDescription = "Device Adapter for Andor Shamrock Spectrographs";
 const char* gsz_SerialNo = "Shamrock Serial No.";;
 const char* gsz_CentreWavelength = "Centre wavelength";
+const char* gsz_RayleighWavelength = "Rayleigh wavelength";
 const char* gsz_Grating = "Grating";
 const char* gsz_Filter = "Filter";
 const char* gsz_Shutter = "Shutter";
@@ -91,6 +92,7 @@ int AndorShamrock::Initialize()
       SetCoefficientsProperty();
       SetGratingsProperty();
       SetWavelengthProperty();
+	  SetRayleighWavelengthProperty();
       SetPixelWidthProperty();
       SetNumberPixelsProperty();
       SetFilterProperty();
@@ -121,18 +123,21 @@ void AndorShamrock::GetName(char* pszName) const
 int AndorShamrock::OnSetWavelength(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    int retVal=DEVICE_OK;
+   unsigned int rc;
    if (eAct == MM::BeforeGet)
    {
       float currentwavelength(0.0f);
-      ShamrockGetWavelength(0,&currentwavelength);
-      pProp->Set(currentwavelength);
+      rc = ShamrockGetWavelength(0,&currentwavelength);
+	  if( SHAMROCK_SUCCESS == rc) {
+         pProp->Set(currentwavelength);
+	  }
    }
    else if (eAct == MM::AfterSet)
    {
       double wavelength;
       pProp->Get(wavelength);
-      unsigned ret = ShamrockSetWavelength(0, static_cast<float>(wavelength));
-      if (SHAMROCK_SUCCESS != ret) {
+      rc = ShamrockSetWavelength(0, static_cast<float>(wavelength));
+      if (SHAMROCK_SUCCESS != rc) {
          retVal = DEVICE_CAN_NOT_SET_PROPERTY;
    }
    OnPropertyChanged(gsz_CentreWavelength, CDeviceUtils::ConvertToString(wavelength));
@@ -285,7 +290,7 @@ void AndorShamrock::SetCoefficientsProperty()
 {
    float A,B,C,D;
    int nRet(0);
-   ShamrockGetPixelCalibrationCoefficients(0,&A,&B,&C,&D);
+   unsigned int rc = ShamrockGetPixelCalibrationCoefficients(0,&A,&B,&C,&D);
    stringstream ss("");
    ss << A << " " << B << " " << C << " " << D;
    if(!HasProperty(gsz_Coefficients)) {
@@ -293,8 +298,9 @@ void AndorShamrock::SetCoefficientsProperty()
       nRet = CreateProperty(gsz_Coefficients,ss.str().c_str(),MM::String,false,0);
    }
    else {
-    
-      nRet = SetProperty(gsz_Coefficients,ss.str().c_str()); 
+      if(rc == SHAMROCK_SUCCESS) {
+         nRet = SetProperty(gsz_Coefficients,ss.str().c_str()); 
+      }
    }
 }
 
@@ -319,6 +325,24 @@ void AndorShamrock::SetWavelengthProperty()
       SetPropertyLimits(gsz_CentreWavelength, Min, Max);
    }
    SetCoefficientsProperty();
+}
+
+void AndorShamrock::SetRayleighWavelengthProperty()
+{
+   float rayleigh_wavelength(0.0f);
+   int nRet(0);
+
+   stringstream ss("");
+   ss << rayleigh_wavelength;
+   if(HasProperty(gsz_RayleighWavelength)) {
+      nRet = SetProperty(gsz_RayleighWavelength,ss.str().c_str()); 
+   }
+   else {
+      nRet = CreateProperty(gsz_RayleighWavelength,ss.str().c_str(), MM::Float, false);
+      float Min(0.0f);
+      float Max(2000.0f);
+      SetPropertyLimits(gsz_RayleighWavelength, Min, Max);
+   }
 }
 
 void AndorShamrock::SetNumberPixelsProperty()
@@ -401,6 +425,7 @@ void AndorShamrock::SetShutterProperty()
    mvShutters.clear();
    mvShutters.push_back("Closed");
    mvShutters.push_back("Open");
+   
    int shutterPresent(0);
    unsigned int sham_status=ShamrockShutterIsPresent(0, &shutterPresent);
    if((sham_status==SHAMROCK_SUCCESS) && shutterPresent==1){
@@ -411,7 +436,11 @@ void AndorShamrock::SetShutterProperty()
          mode = 0;
          ShamrockSetShutter(0,mode);
       }
-
+	  unsigned int rc = ShamrockSetShutter(0,2);
+	  if(rc == SHAMROCK_SUCCESS) {
+		  mvShutters.push_back("External BNC");
+		  ShamrockSetShutter(0,mode);
+	  }
       CPropertyAction *pAct = new CPropertyAction (this, &AndorShamrock::OnSetShutter);
       CreateProperty(gsz_Shutter,mvShutters[mode].c_str() , MM::String, false, pAct);
       SetAllowedValues(gsz_Shutter, mvShutters);

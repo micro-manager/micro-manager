@@ -74,6 +74,7 @@
 #define ERR_STREAM_MODE_NOT_SUPPORTED 10005
 #define ERR_CAMERA_NOT_FOUND          10006
 #define ERR_ROI_SIZE_NOT_SUPPORTED    10007
+#define ERR_BUFFER_TOO_LARGE          10008
 
 //////////////////////////////////////////////////////////////////////////////
 // Constants

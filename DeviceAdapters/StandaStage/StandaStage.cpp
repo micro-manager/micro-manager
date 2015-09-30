@@ -299,12 +299,12 @@ bool CStandaStage::initAxis(DWORD Dev, USMC_StartParameters StPrms){
    //if( USMC_SetCurrentPosition(Dev, 0) ) return DEVICE_ERR;
 
    // set the limit switches as active
-
+   /*
    Mode.Tr1En = true;// enabled.
    Mode.Tr2En = true;
    Mode.Tr1T = true;// active high, possibly not right here..
    Mode.Tr2T = true;
-
+   */
    if( USMC_SetMode(Dev, Mode))
         return DEVICE_ERR;
 
@@ -816,12 +816,12 @@ bool CStandaXYStage::initAxis(DWORD Dev, USMC_StartParameters StPrms, USMC_Mode 
    StPrms.WSyncIN = false;
 
    // set the limit switches as active
-
+   /*
    Mode.Tr1En = true;// enabled.
    Mode.Tr2En = true;
    Mode.Tr1T = true;// active high, possibly not right here..
    Mode.Tr2T = true;
-
+   */
    if( USMC_SetMode(Dev, Mode))
         return DEVICE_ERR;
         

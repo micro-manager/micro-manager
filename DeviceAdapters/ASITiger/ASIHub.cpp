@@ -97,11 +97,29 @@ int ASIHub::ClearComPort(void)
    return PurgeComPort(port_.c_str());
 }
 
-int ASIHub::SendCommand(const char *command)
-// changed from early implementation; calls QueryCommand
+/**
+   * Sends a command and gets the serial buffer (doesn't try to verify end of transmission)
+   */
+int ASIHub::QueryCommandUnterminatedResponse(const char *command, const long timeoutMs)
 {
-   RETURN_ON_MM_ERROR ( QueryCommand(command, serialTerminator_) );
-   return DEVICE_OK;
+   RETURN_ON_MM_ERROR ( ClearComPort() );
+   RETURN_ON_MM_ERROR ( SendSerialCommand(port_.c_str(), command, "\r") );
+   serialCommand_ = command;
+   char rcvBuf[MM::MaxStrLength];
+   memset(rcvBuf, 0, MM::MaxStrLength);
+   unsigned long read = 0;
+   int ret = DEVICE_OK;
+   MM::TimeoutMs timerOut(GetCurrentMMTime(), timeoutMs);
+   serialAnswer_ = "";
+   while (ret == DEVICE_OK && read == 0 && !timerOut.expired(GetCurrentMMTime()))
+   {
+      ret = ReadFromComPort(port_.c_str(), (unsigned char*)rcvBuf, MM::MaxStrLength, read);
+   }
+   if (read > 0)
+   {
+      serialAnswer_ = rcvBuf;
+   }
+   return ret;
 }
 
 int ASIHub::QueryCommand(const char *command, const char *replyTerminator, const long delayMs)
@@ -422,6 +440,19 @@ bool ASIHub::IsDefinePresent(const build_info_type build, const string defineToL
    return (it != build.defines.end());
 }
 
+string ASIHub::GetDefineString(const build_info_type build, const string substringToLookFor)
+{
+   vector<string>::const_iterator it;
+   for (it = build.defines.begin(); it != build.defines.end(); ++it)
+   {
+      if ((*it).find(substringToLookFor)!=std::string::npos)
+      {
+         return *it;
+      }
+   }
+   return "";
+}
+
 int ASIHub::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
@@ -493,7 +524,7 @@ int ASIHub::OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (!serialOnlySendChanged_ || (tmpstr.compare(last_command) != 0))
       {
          last_command = tmpstr;
-         SendCommand(tmpstr);
+         QueryCommand(tmpstr);
          // TODO add some sort of check if command was successful, update manualSerialAnswer_ accordingly (e.g. leave blank for invalid command like aoeu)
          manualSerialAnswer_ = serialAnswer_;  // remember this reply even if SendCommand is called elsewhere
       }
@@ -533,7 +564,7 @@ int ASIHub::OnSerialCommandRepeatDuration(MM::PropertyBase* pProp, MM::ActionTyp
 
       // keep repeating for the requested duration
       while ( (GetCurrentMMTime() - startTime) < duration ) {
-         SendCommand(command);
+         QueryCommand(command);
          CDeviceUtils::SleepMs(serialRepeatPeriod_);
       }
 

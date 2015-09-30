@@ -86,8 +86,10 @@ private:
    MM::Core* core_;
    std::vector<int> useVFGs_;
 
+
    int StartAcquiring();
    int StopAcquiring();
    void LogInterrupts();
    int SignalWaitErrorInterpret(BFRC ret);
+   void ReloadBoardsAfterTimeoutError();
 };

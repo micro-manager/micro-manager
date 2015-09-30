@@ -419,6 +419,10 @@ int CAndorSDK3Camera::Initialize()
          else
          {
             deviceManager->CloseDevice(cameraDevice);
+            cameraDevice = NULL;
+            if (temp_ws.compare(L"Andor Apogee") == 0) {
+              return DEVICE_NOT_SUPPORTED;
+            }
          }
       }
    }
@@ -549,6 +553,10 @@ int CAndorSDK3Camera::Initialize()
                                                        cameraDevice->GetBool(L"SpuriousNoiseFilter"),
                                                        callbackManager_, false);
 
+   staticBlemishCorrection_property = new TBooleanProperty(TAndorSDK3Strings::STATIC_BLEMISH_CORRECTION,
+                                                       cameraDevice->GetBool(L"StaticBlemishCorrection"),
+                                                       callbackManager_, false);
+
    sensorCooling_property = new TBooleanProperty(TAndorSDK3Strings::SENSOR_COOLING, 
                                                  cameraDevice->GetBool(L"SensorCooling"), callbackManager_, false);
 
@@ -575,7 +583,6 @@ int CAndorSDK3Camera::Initialize()
 
    exposureTime_property = new TExposureProperty(MM::g_Keyword_Exposure,
                                        new TAndorFloatValueMapper(cameraDevice->GetFloat(L"ExposureTime"), 1000),
-                                       cameraDevice->GetFloat(L"ReadoutTime"),
                                        callbackManager_, false, false);
    
    frameRateLimits_property = new TFloatStringProperty(TAndorSDK3Strings::FRAME_RATE_LIMITS, 
@@ -588,6 +595,16 @@ int CAndorSDK3Camera::Initialize()
    auxOutSignal_property = new TEnumProperty(TAndorSDK3Strings::AUX_SOURCE, 
                                              cameraDevice->GetEnum(L"AuxiliaryOutSource"), 
                                              this, thd_, snapShotController_, false, false);
+   auxOutTwoSignal_property = new TEnumProperty(TAndorSDK3Strings::AUX_SOURCE_TWO, 
+                                             cameraDevice->GetEnum(L"AuxOutSourceTwo"), 
+                                             this, thd_, snapShotController_, false, false);
+   shutterOutputMode_property = new TEnumProperty("ShutterOutputMode", 
+                                             cameraDevice->GetEnum(L"ShutterOutputMode"), 
+                                             this, thd_, snapShotController_, false, false);
+
+   shutterTransferTime_property = new TFloatProperty("ShutterTransferTime [s]", 
+                                             cameraDevice->GetFloat(L"ShutterTransferTime"),  
+                                             callbackManager_, false, true);
 
    LSPSensorReadoutMode_property = new TEnumProperty("LightScanPlus-SensorReadoutMode", 
                                             cameraDevice->GetEnum(L"SensorReadoutMode"), 
@@ -688,10 +705,14 @@ int CAndorSDK3Camera::Shutdown()
       delete frameRateLimits_property;
       delete fanSpeed_property;
       delete spuriousNoiseFilter_property;
+	    delete staticBlemishCorrection_property;
       delete aoi_property_;
       delete triggerMode_property;
       delete exposureTime_property;
       delete auxOutSignal_property;
+      delete auxOutTwoSignal_property;
+      delete shutterOutputMode_property;
+      delete shutterTransferTime_property;
       delete LSPSensorReadoutMode_property;
       delete LSPSequentialPortReadoutMode_property;
       delete LSPExposedPixelHeight_property;

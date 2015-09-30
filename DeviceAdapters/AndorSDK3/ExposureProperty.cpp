@@ -7,11 +7,10 @@
 using namespace andor;
 using namespace std;
 
-TExposureProperty::TExposureProperty(const string & MM_name, IFloat * float_feature, IFloat* readoutTimeFeature, ICallBackManager* callback,
+TExposureProperty::TExposureProperty(const string & MM_name, IFloat * float_feature, ICallBackManager* callback,
                                 bool readOnly, bool needsCallBack)
 : MM_name_(MM_name),
   float_feature_(float_feature),
-  readoutTimeFeature_(readoutTimeFeature),
   callback_(callback),
   callbackRegistered_(needsCallBack)
 {
@@ -92,6 +91,20 @@ void TExposureProperty::setFeatureWithinLimits(double new_value)
    }
 }
 
+bool TExposureProperty::valueIsWithinLimits(double new_value)
+{
+   try
+   {
+      return new_value > float_feature_->Min() && new_value < float_feature_->Max();
+   }
+   catch (exception & e)
+   {
+      callback_->CPCLog(e.what());
+      return false;
+   }
+}
+
+
 
 inline bool almostEqual(double val1, double val2, int precisionFactor)
 {
@@ -127,11 +140,7 @@ int TExposureProperty::OnFloat(MM::PropertyBase * pProp, MM::ActionType eAct)
       }
       if (!almostEqual(new_value, current_value, DEC_PLACES_ERROR))
       {
-         double readoutTime = readoutTimeFeature_->Get()*1000;
-
-         bool fastExposureSwitchPossible = new_value > readoutTime && current_value > readoutTime;
-
-         if(fastExposureSwitchPossible)
+         if(valueIsWithinLimits(new_value))
          {
            setFeatureWithinLimits(new_value);
          }

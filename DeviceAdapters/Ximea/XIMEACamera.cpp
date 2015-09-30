@@ -224,7 +224,8 @@ XIMEACamera::XIMEACamera(const char* name) :
 	sequenceStartTime_(0),
 	imageCounter_(0),
 	stopOnOverflow_(false),
-	isAcqRunning(false)
+	isAcqRunning(false),
+	family(0)
 {
 	// call the base class method to set-up default error codes/messages
 	InitializeDefaultErrorMessages();
@@ -273,13 +274,6 @@ int XIMEACamera::Initialize()
 	if(ret != XI_OK) 
 		return DEVICE_ERR;
 
-	// reset camera timestamp
-	ret = xiSetParamInt(handle, XI_PRM_TS_RST_SOURCE, XI_TS_RST_SRC_SW);
-	if (ret != XI_OK) return DEVICE_ERR;
-
-	ret = xiSetParamInt(handle, XI_PRM_TS_RST_MODE, XI_TS_RST_ARM_ONCE);
-	if (ret != XI_OK) return DEVICE_ERR;
-	
 	// -------------------------------------------------------------------------------------
 	// Set property list
 	// -------------------------------------------------------------------------------------
@@ -340,8 +334,7 @@ int XIMEACamera::Initialize()
 
 	// -------------------------------------------------------------------------------------
 	// data format
-	int isColor  = 0;
-	DWORD family=0;
+	int isColor  = 0;	
 	xiGetParamInt( handle, XI_PRM_IMAGE_IS_COLOR, &isColor);
 	mmGetModelFamily( handle, &family);
 	xiGetParamInt(handle, XI_PRM_OUTPUT_DATA_BIT_DEPTH, &adc_);
@@ -369,6 +362,18 @@ int XIMEACamera::Initialize()
 
 	ret = SetAllowedValues(g_Data_Format, pixelTypeValues);
 	assert(ret == DEVICE_OK);
+
+	// -------------------------------------------------------------------------------------
+	// reset timestamp for MQ and MD cameras
+	if (family == FAMILY_MD || family == FAMILY_MQ)
+	{
+		// reset camera timestamp
+		ret = xiSetParamInt(handle, XI_PRM_TS_RST_SOURCE, XI_TS_RST_SRC_SW);
+		if (ret != XI_OK) return DEVICE_ERR;
+
+		ret = xiSetParamInt(handle, XI_PRM_TS_RST_MODE, XI_TS_RST_ARM_ONCE);
+		if (ret != XI_OK) return DEVICE_ERR;
+	}
 
 	// -------------------------------------------------------------------------------------
 	// sensor taps for MD cameras
@@ -464,8 +469,7 @@ int XIMEACamera::Initialize()
 		gpoTypeValues.push_back(g_Gpo_FrmTrgWaitNeg);
 		gpoTypeValues.push_back(g_Gpo_ExpPulse);
 		gpoTypeValues.push_back(g_Gpo_ExpPulseNeg);
-		gpoTypeValues.push_back(g_Gpo_Busy);
-		gpoTypeValues.push_back(g_Gpo_BusyNeg);
+		
 		// init GPI1
 		pAct = new CPropertyAction (this, &XIMEACamera::OnGpi1);
 		ret = CreateProperty(g_Gpi_1, g_Gpi_Off, MM::String, false, pAct);
@@ -486,6 +490,9 @@ int XIMEACamera::Initialize()
 		// MD cameras have additional input and output
 		if(family == FAMILY_MD)
 		{
+			gpoTypeValues.push_back(g_Gpo_Busy);
+			gpoTypeValues.push_back(g_Gpo_BusyNeg);
+
 			pAct = new CPropertyAction (this, &XIMEACamera::OnGpi2);
 			ret = CreateProperty(g_Gpi_2, g_Gpi_Off, MM::String, false, pAct);
 			assert(ret == DEVICE_OK);
@@ -505,6 +512,15 @@ int XIMEACamera::Initialize()
 			gpoTypeValues.push_back(g_Gpo_Off);
 			gpoTypeValues.push_back(g_Gpo_On);
 			gpoTypeValues.push_back(g_Gpo_FrameActive);
+			gpoTypeValues.push_back(g_Gpo_FrameActiveNeg);
+			gpoTypeValues.push_back(g_Gpo_ExpActive);
+			gpoTypeValues.push_back(g_Gpo_ExpActiveNeg);
+			gpoTypeValues.push_back(g_Gpo_FrmTrgWait);
+			gpoTypeValues.push_back(g_Gpo_FrmTrgWaitNeg);
+			gpoTypeValues.push_back(g_Gpo_ExpPulse);
+			gpoTypeValues.push_back(g_Gpo_ExpPulseNeg);
+			gpoTypeValues.push_back(g_Gpo_Busy);
+			gpoTypeValues.push_back(g_Gpo_BusyNeg);
 		} else {
 			gpoTypeValues.push_back(g_Gpo_Off);
 			gpoTypeValues.push_back(g_Gpo_On);
@@ -1096,12 +1112,15 @@ int XIMEACamera::StartSequenceAcquisition(long numImages, double interval_ms, bo
 	if (ret != DEVICE_OK)
 		return ret;
 
-	// reset camera timestamp
-	ret = xiSetParamInt(handle, XI_PRM_TS_RST_SOURCE, XI_TS_RST_SRC_SW);
-	if (ret != XI_OK) return DEVICE_ERR;
+	// reset camera timestamp for MQ/MD cameras
+	if (family == FAMILY_MD || family == FAMILY_MQ)
+	{
+		ret = xiSetParamInt(handle, XI_PRM_TS_RST_SOURCE, XI_TS_RST_SRC_SW);
+		if (ret != XI_OK) return DEVICE_ERR;
 
-	ret = xiSetParamInt(handle, XI_PRM_TS_RST_MODE, XI_TS_RST_ARM_ONCE);
-	if (ret != XI_OK) return DEVICE_ERR;
+		ret = xiSetParamInt(handle, XI_PRM_TS_RST_MODE, XI_TS_RST_ARM_ONCE);
+		if (ret != XI_OK) return DEVICE_ERR;
+	}
 
 	// start image acquisition	
 	ret = xiStartAcquisition(handle);

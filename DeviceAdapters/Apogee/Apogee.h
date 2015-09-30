@@ -63,6 +63,7 @@ public:
     // MMCamera API
     // ------------
     int SnapImage();
+    int SequenceSnapImage();
     const unsigned char* GetImageBuffer();
     unsigned GetImageWidth() const;
     unsigned GetImageHeight() const;
@@ -83,7 +84,7 @@ public:
     int StartSequenceAcquisition(double interval);
     int StopSequenceAcquisition();
     bool IsCapturing();
-	int TransferImage();
+	int AcquireSequenceImage();
 	int CleanupAfterSequence();
 
     // action interface
@@ -184,6 +185,8 @@ private:
 
 	int InitiateGenericSequence();
 	void SequenceCheckImageBuffer();
+	bool UseSnapForSequenceAcquisition();
+	int TransferSequenceImage();
 
     std::map<std::string, int> m_SpeedMap;
 
