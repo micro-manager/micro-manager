@@ -22,14 +22,14 @@
 ;;
 
 [Setup]
-AppName=Micro-Manager-2.0alpha
-AppVerName=Micro-Manager-2.0alpha
+AppName=Micro-Manager-2.0beta
+AppVerName=Micro-Manager-2.0beta
 AppPublisher=UCSF
 AppPublisherURL=http://www.micro-manager.org
 AppSupportURL=http://www.micro-manager.org
 AppUpdatesURL=http://www.micro-manager.org
-DefaultDirName=C:/Program Files/Micro-Manager-2.0alpha
-DefaultGroupName=Micro-Manager-2.0alpha
+DefaultDirName=C:/Program Files/Micro-Manager-2.0beta
+DefaultGroupName=Micro-Manager-2.0beta
 OutputBaseFilename=MMSetup_{#MMArch_bits}bit
 Compression=lzma
 SolidCompression=true
@@ -38,7 +38,7 @@ VersionInfoCompany=(c)University of California San Francisco
 VersionInfoCopyright=(c)University of California San Francisco, (c)100XImaging Inc
 AppCopyright=University of California San Francisco, 100XImaging Inc
 ShowLanguageDialog=yes
-AppVersion=2.0alpha
+AppVersion=2.0beta
 AppID=fc0550d5-cb09-4d4f-ad9c-3538b1c12d29
 
 #if MMArch == "x64"
@@ -204,9 +204,9 @@ Name: "{app}\mmplugins"; Permissions: users-modify
 Name: "{app}\mmautofocus"; Permissions: users-modify
 
 [Icons]
-Name: {group}\Micro-Manager-2.0alpha; Filename: {app}\ImageJ.exe; WorkingDir: {app}
-Name: {group}\{cm:UninstallProgram,Micro-Manager-2.0alpha}; Filename: {uninstallexe}
-Name: {commondesktop}\Micro-Manager 2.0alpha; Filename: {app}\ImageJ.exe; Tasks: desktopicon; WorkingDir: {app}; IconIndex: 0
+Name: {group}\Micro-Manager-2.0beta; Filename: {app}\ImageJ.exe; WorkingDir: {app}
+Name: {group}\{cm:UninstallProgram,Micro-Manager-2.0beta}; Filename: {uninstallexe}
+Name: {commondesktop}\Micro-Manager 2.0beta; Filename: {app}\ImageJ.exe; Tasks: desktopicon; WorkingDir: {app}; IconIndex: 0
 
 [Run]
-Filename: "{app}\ImageJ.exe"; WorkingDir: "{app}"; Description: {cm:LaunchProgram,Micro-Manager-2.0alpha}; Flags: nowait postinstall skipifsilent
+Filename: "{app}\ImageJ.exe"; WorkingDir: "{app}"; Description: {cm:LaunchProgram,Micro-Manager-2.0beta}; Flags: nowait postinstall skipifsilent
