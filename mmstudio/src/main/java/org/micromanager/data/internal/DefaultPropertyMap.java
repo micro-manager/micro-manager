@@ -55,13 +55,6 @@ public class DefaultPropertyMap implements PropertyMap {
    private static final String BOOLEAN_ARRAY = "Boolean array";
    private static final String OBJECT = "Object";
 
-   // This gets thrown when someone tries to retrieve a value as the wrong type
-   public static class PropertyValueMismatchException extends RuntimeException {
-      public PropertyValueMismatchException(String message) {
-         super(message);
-      }
-   }
-
    // This class stores one value in the mapping.
    private static class PropertyValue {
       private Object val_;
@@ -120,72 +113,72 @@ public class DefaultPropertyMap implements PropertyMap {
 
       public String getAsString() {
          if (type_ != String.class) {
-            throw new PropertyValueMismatchException("Type of value is not String");
+            throw new PropertyMap.TypeMismatchException("Type of value is not String");
          }
          return (String) val_;
       }
       public String[] getAsStringArray() {
          if (type_ != String[].class) {
-            throw new PropertyValueMismatchException("Type of value is not String[]");
+            throw new PropertyMap.TypeMismatchException("Type of value is not String[]");
          }
          return (String[]) val_;
       }
 
       public Integer getAsInteger() {
          if (type_ != Integer.class) {
-            throw new PropertyValueMismatchException("Type of value is not Integer");
+            throw new PropertyMap.TypeMismatchException("Type of value is not Integer");
          }
          return (Integer) val_;
       }
       public Integer[] getAsIntegerArray() {
          if (type_ != Integer[].class) {
-            throw new PropertyValueMismatchException("Type of value is not Integer[]");
+            throw new PropertyMap.TypeMismatchException("Type of value is not Integer[]");
          }
          return (Integer[]) val_;
       }
 
       public Long getAsLong() {
          if (type_ != Long.class) {
-            throw new PropertyValueMismatchException("Type of value is not Long");
+            throw new PropertyMap.TypeMismatchException("Type of value is not Long");
          }
          return (Long) val_;
       }
       public Long[] getAsLongArray() {
          if (type_ != Long[].class) {
-            throw new PropertyValueMismatchException("Type of value is not Long[]");
+            throw new PropertyMap.TypeMismatchException("Type of value is not Long[]");
          }
          return (Long[]) val_;
       }
 
       public Double getAsDouble() {
          if (type_ != Double.class) {
-            throw new PropertyValueMismatchException("Type of value is not Double");
+            throw new PropertyMap.TypeMismatchException("Type of value is not Double");
          }
          return (Double) val_;
       }
       public Double[] getAsDoubleArray() {
          if (type_ != Double[].class) {
-            throw new PropertyValueMismatchException("Type of value is not Double[]");
+            throw new PropertyMap.TypeMismatchException("Type of value is not Double[]");
          }
          return (Double[]) val_;
       }
 
       public Boolean getAsBoolean() {
          if (type_ != Boolean.class) {
-            throw new PropertyValueMismatchException("Type of value is not Boolean");
+            throw new PropertyMap.TypeMismatchException("Type of value is not Boolean");
          }
          return (Boolean) val_;
       }
       public Boolean[] getAsBooleanArray() {
          if (type_ != Boolean[].class) {
-            throw new PropertyValueMismatchException("Type of value is not Boolean[]");
+            throw new PropertyMap.TypeMismatchException("Type of value is not Boolean[]");
          }
          return (Boolean[]) val_;
       }
 
       public byte[] getAsByteArray() {
          if (type_ != byte[].class) {
-            throw new PropertyValueMismatchException("Type of value is not byte[]");
+            throw new PropertyMap.TypeMismatchException("Type of value is not byte[]");
          }
          return (byte[]) val_;
       }
