@@ -40,6 +40,7 @@ public class MyStrings {
      DATAANALYSIS("Data Analysis"),
      CHANNELS_SUBPANEL("Channels_"),
      HELP("Help"),
+     TESTING("Testing"),
      BEAM_SUBPANEL("Beam_"),
      CAMERA_SUBPANEL("Camera_"),
      JOYSTICK_SUBPANEL("Joystick_"),

@@ -77,6 +77,7 @@ import org.micromanager.utils.MMFrame;
 //       or else do autofocus after acquisition instead of before
 //TODO smart default joystick settings (e.g. different defaults different panels/wheels)
 //TODO easily take "test acquisition" that wouldn't need to be saved, only do 1 timepoint, etc. From both acquisition and setup tabs (setup tab would only do that side)
+//TODO calculate and show estimated disk space as part of "durations"
 
 
 /**
@@ -110,6 +111,10 @@ public class ASIdiSPIMFrame extends MMFrame
    private final StatusSubPanel statusSubPanel_;
    private final StagePositionUpdater stagePosUpdater_;
    private final ListeningJTabbedPane tabbedPane_;
+   private final TestingPanel testingPanel_;
+   
+   // modify following line to turn on the integration testing tab
+   private static final boolean enableIntegrationTesting = false;
    
    private static final String MAIN_PREF_NODE = "Main"; 
    
@@ -175,7 +180,6 @@ public class ASIdiSPIMFrame extends MMFrame
       tabbedPane_.addLTab(settingsPanel_);    // tabIndex = 7
       tabbedPane_.addLTab(helpPanel_);        // tabIndex = 8
       final int helpTabIndex = tabbedPane_.getTabCount() - 1;
-      
 
       // attach position updaters
       stagePosUpdater_.addPanel(setupPanelA_);
@@ -245,10 +249,17 @@ public class ASIdiSPIMFrame extends MMFrame
             "[" + this.getWidth() + "]",
             "[" + this.getHeight() + "]"));
       glassPane.add(statusSubPanel_, "dock south");
+      
+      // add the testing panel only explicitly
+      if (enableIntegrationTesting) {
+         testingPanel_ = new TestingPanel();
+         tabbedPane_.addLTab(testingPanel_);
+      } else {
+         testingPanel_ = null;
+      }
    }
    
    /**
-    * This accessor function should really only be used by the ScriptInterface
     * Do not get into the internals of this plugin without relying on
     * ASIdiSPIM.api
     * @return 

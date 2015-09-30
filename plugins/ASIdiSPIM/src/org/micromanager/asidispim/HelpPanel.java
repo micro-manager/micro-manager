@@ -98,7 +98,6 @@ public class HelpPanel extends ListeningJPanel {
       editScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
       editScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
       add(editScroll, "center, grow");
-   }
-   
+   }//constructor
    
 }
