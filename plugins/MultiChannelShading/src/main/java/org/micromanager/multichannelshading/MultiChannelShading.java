@@ -49,8 +49,8 @@ public class MultiChannelShading implements ProcessorPlugin, SciJavaPlugin {
       studio_ = studio;
    }
 
-   public ProcessorConfigurator createConfigurator() {
-      return new MultiChannelShadingMigForm(studio_);
+   public ProcessorConfigurator createConfigurator(PropertyMap settings) {
+      return new MultiChannelShadingMigForm(settings, studio_);
    }
 
    public ProcessorFactory createFactory(PropertyMap settings) {

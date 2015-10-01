@@ -16,16 +16,19 @@
 package org.micromanager.internal.pipelineinterface;
 
 import com.google.common.eventbus.Subscribe;
+
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
@@ -45,11 +48,16 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.data.ProcessorFactory;
 import org.micromanager.data.ProcessorPlugin;
+
 import org.micromanager.internal.MMStudio;
-import org.micromanager.acquisition.internal.AcquisitionEngine;
+
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
+
 import org.micromanager.events.internal.NewPluginEvent;
+import org.micromanager.events.ShutdownCommencingEvent;
+import org.micromanager.events.StartupCompleteEvent;
+
 import org.micromanager.internal.utils.MMFrame;
 
 
@@ -57,7 +65,6 @@ final public class PipelineFrame extends MMFrame
       implements ListSelectionListener {
 
    private final Studio studio_;
-   private final AcquisitionEngine engine_;
 
    private final JPopupMenu addProcessorPopup_;
 
@@ -68,10 +75,9 @@ final public class PipelineFrame extends MMFrame
    private final JButton moveUpButton_;
    private final JButton moveDownButton_;
 
-   public PipelineFrame(Studio studio, AcquisitionEngine engine) {
+   public PipelineFrame(Studio studio) {
       super("On-The-Fly Processor Pipeline");
       studio_ = studio;
-      engine_ = engine;
 
       setLayout(new MigLayout("fill, flowy, insets dialog",
             "[align center, grow]unrelated[align left]",
@@ -210,7 +216,26 @@ final public class PipelineFrame extends MMFrame
    }
 
    /**
-    * Re-acquire the entire list of registered processors from the engine. We do
+    * User has logged in and startup is complete; restore their pipeline.
+    */
+   @Subscribe
+   public void onStartupComplete(StartupCompleteEvent event) {
+      if (getTableModel().restorePipelineFromProfile(studio_)) {
+         setVisible(true);
+      }
+   }
+
+   /**
+    * When shutdown starts, we record the current processing pipeline, so it
+    * can be restored later.
+    */
+   @Subscribe
+   public void onShutdownCommencing(ShutdownCommencingEvent event) {
+      getTableModel().savePipelineToProfile(studio_);
+   }
+
+   /**
+    * Re-acquire the entire list of registered processors. We do
     * things this way because we have no idea when we are created vs. when all
     * the plugins are registered (they happen in different threads), thus we
     * have no idea currently how many processors are registered that we don't
@@ -221,13 +246,15 @@ final public class PipelineFrame extends MMFrame
       ArrayList<String> names = new ArrayList<String>(plugins.keySet());
       Collections.sort(names);
       addProcessorPopup_.removeAll();
+      final PropertyMap blankSettings = studio_.data().getPropertyMapBuilder().build();
       for (final String name : names) {
          Action addAction = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                getTableModel().addConfigurator(
                      new ConfiguratorWrapper(plugins.get(name),
-                        plugins.get(name).createConfigurator(), name));
+                        plugins.get(name).createConfigurator(blankSettings),
+                        name));
             }
          };
          addAction.putValue(Action.NAME, name);
@@ -257,11 +284,25 @@ final public class PipelineFrame extends MMFrame
     * Add a new entry to the list of processors.
     */
    public void addAndConfigureProcessor(ProcessorPlugin plugin) {
-      ProcessorConfigurator configurator = plugin.createConfigurator();
+      // Create it with a blank set of settings.
+      ProcessorConfigurator configurator = plugin.createConfigurator(
+            studio_.data().getPropertyMapBuilder().build());
       getTableModel().addConfigurator(new ConfiguratorWrapper(plugin,
             configurator, plugin.getName()));
       setVisible(true);
       configurator.showGUI();
+   }
+
+   /**
+    * Add a new entry to the list of processors, which has already been
+    * configured.
+    */
+   public void addConfiguredProcessor(ProcessorConfigurator config,
+         ProcessorPlugin plugin) {
+      getTableModel().addConfigurator(new ConfiguratorWrapper(plugin,
+               config, plugin.getName()));
+      setVisible(true);
+      config.showGUI();
    }
 
    /**

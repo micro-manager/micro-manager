@@ -95,11 +95,12 @@ public class SplitViewFrame extends MMFrame implements ProcessorConfigurator {
    private String shutterLabel_;
    private boolean shutterOrg_;
 
-   public SplitViewFrame(Studio studio) {
+   public SplitViewFrame(PropertyMap settings, Studio studio) {
       studio_ = studio;
       core_ = studio_.getCMMCore();
 
-      orientation_ = studio_.profile().getString(this.getClass(), ORIENTATION, LR);
+      orientation_ = settings.getString("orientation",
+            studio_.profile().getString(this.getClass(), ORIENTATION, LR));
 
       Font buttonFont = new Font("Arial", Font.BOLD, 10);
 

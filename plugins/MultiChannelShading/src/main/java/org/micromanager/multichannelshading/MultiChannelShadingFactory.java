@@ -42,9 +42,11 @@ public class MultiChannelShadingFactory implements ProcessorFactory {
 
    public MultiChannelShadingFactory(Studio studio, PropertyMap settings) {
       studio_ = studio;
-      channelGroup_ = settings.getString("ChannelGroup");
+      channelGroup_ = settings.getString(
+            MultiChannelShadingMigForm.CHANNELGROUP);
       presets_ = settings.getStringArray("Presets");
-      backgroundFile_ = settings.getString("Background");
+      backgroundFile_ = settings.getString(
+            MultiChannelShadingMigForm.DARKFIELDFILENAME);
       files_ = settings.getStringArray("PresetFiles");
    }
 

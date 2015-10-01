@@ -24,6 +24,7 @@ import org.micromanager.data.ProcessorFactory;
 import org.micromanager.data.NewPipelineEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.PropertyMap;
+import org.micromanager.Studio;
 
 // TODO: currently we redraw the entire table any time it changes, rather than
 // only redrawing the row(s) that are modified.
@@ -32,6 +33,8 @@ public class PipelineTableModel extends AbstractTableModel {
    static final int NAME_COLUMN = 1;
    static final int CONFIGURE_COLUMN = 2;
    private static final int NUM_COLUMNS = 3;
+   private static final String SAVED_PIPELINE = "saved pipeline configuration";
+
    private ArrayList<ConfiguratorWrapper> pipelineConfigs_;
 
    PipelineTableModel() {
@@ -188,5 +191,35 @@ public class PipelineTableModel extends AbstractTableModel {
       for (ConfiguratorWrapper config : pipelineConfigs_) {
          config.getConfigurator().cleanup();
       }
+   }
+
+   /**
+    * Record the current pipeline to the user's profile, so it can be
+    * restored later.
+    */
+   public void savePipelineToProfile(Studio studio) {
+      ArrayList<String> serializedConfigs = new ArrayList<String>();
+      for (ConfiguratorWrapper config : pipelineConfigs_) {
+         serializedConfigs.add(config.toString());
+      }
+      studio.profile().setStringArray(PipelineTableModel.class,
+            SAVED_PIPELINE, serializedConfigs.toArray(new String[] {}));
+   }
+
+   /**
+    * Restore the pipeline from the user's profile. Return true if we actually
+    * updated the model.
+    */
+   public boolean restorePipelineFromProfile(Studio studio) {
+      String[] serializedConfigs = studio.profile().getStringArray(
+            PipelineTableModel.class, SAVED_PIPELINE,
+            new String[] {});
+      for (String configString : serializedConfigs) {
+         ConfiguratorWrapper config = ConfiguratorWrapper.fromString(
+               configString, studio);
+         config.getConfigurator().showGUI();
+         pipelineConfigs_.add(config);
+      }
+      return (serializedConfigs.length > 0);
    }
 }

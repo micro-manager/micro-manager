@@ -248,6 +248,12 @@ public class DefaultDataManager implements DataManager {
    }
 
    @Override
+   public void addConfiguredProcessor(ProcessorConfigurator config,
+         ProcessorPlugin plugin) {
+      MMStudio.getInstance().getPipelineFrame().addConfiguredProcessor(config, plugin);
+   }
+
+   @Override
    public void setApplicationPipeline(List<ProcessorPlugin> plugins) {
       clearPipeline();
       for (ProcessorPlugin plugin : plugins) {

@@ -47,8 +47,8 @@ public class SaverPlugin implements ProcessorPlugin, SciJavaPlugin {
    }
 
    @Override
-   public ProcessorConfigurator createConfigurator() {
-      return new SaverConfigurator(studio_);
+   public ProcessorConfigurator createConfigurator(PropertyMap settings) {
+      return new SaverConfigurator(settings, studio_);
    }
 
    @Override

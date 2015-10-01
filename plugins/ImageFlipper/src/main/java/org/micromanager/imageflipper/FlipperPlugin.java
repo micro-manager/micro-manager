@@ -20,6 +20,8 @@
 
 package org.micromanager.imageflipper;
 
+import com.google.common.eventbus.Subscribe;
+
 import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.data.ProcessorFactory;
@@ -40,8 +42,8 @@ public class FlipperPlugin implements ProcessorPlugin, SciJavaPlugin {
    }
 
    @Override
-   public ProcessorConfigurator createConfigurator() {
-      return new FlipperConfigurator(studio_);
+   public ProcessorConfigurator createConfigurator(PropertyMap settings) {
+      return new FlipperConfigurator(studio_, settings);
    }
 
    @Override

@@ -61,9 +61,8 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
    private final Studio studio_;
    private final mmcorej.CMMCore mmc_;
    
-   private static final String DARKFIELDFILENAME = "BackgroundFileName";
-   private static final String CHANNELGROUP = "ChannelGroup";
-   private static final String USECHECKBOX = "UseCheckBox";
+   public static final String DARKFIELDFILENAME = "BackgroundFileName";
+   public static final String CHANNELGROUP = "ChannelGroup";
    private static final String EMPTY_FILENAME_INDICATOR = "None";
    private final String[] IMAGESUFFIXES = {"tif", "tiff", "jpg", "png"};
    private String backgroundFileName_;
@@ -82,7 +81,7 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
      * @param studio
      */
    @SuppressWarnings("LeakingThisInConstructor")
-   public MultiChannelShadingMigForm(Studio studio) {
+   public MultiChannelShadingMigForm(PropertyMap settings, Studio studio) {
       studio_ = studio;
       imageCollection_ = new ImageCollection(studio_);
       mmc_ = studio_.getCMMCore();
@@ -115,8 +114,9 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
       String[] channelGroups = mmc_.getAvailableConfigGroups().toArray();
       groupComboBox.setModel(new javax.swing.DefaultComboBoxModel(
               channelGroups));
-      groupName_ = studio_.profile().getString(MultiChannelShadingMigForm.class, 
-              CHANNELGROUP, "");
+      groupName_ = settings.getString(CHANNELGROUP,
+            studio_.profile().getString(MultiChannelShadingMigForm.class, 
+            CHANNELGROUP, ""));
       groupComboBox.setSelectedItem(groupName_);
       groupComboBox.addActionListener(new java.awt.event.ActionListener() {
          @Override
@@ -148,9 +148,10 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
       
       final JTextField darkFieldTextField = new JTextField(50);
       darkFieldTextField.setFont(arialSmallFont_);
-      //populate darkFieldName from preferences and process it.
-      darkFieldTextField.setText(studio_.profile().getString(
-              MultiChannelShadingMigForm.class, DARKFIELDFILENAME, ""));
+      //populate darkFieldName from profile and process it.
+      darkFieldTextField.setText(settings.getString(DARKFIELDFILENAME,
+               studio_.profile().getString(
+               MultiChannelShadingMigForm.class, DARKFIELDFILENAME, "")));
       darkFieldTextField.setHorizontalAlignment(JTextField.RIGHT);
       darkFieldTextField.addActionListener(new java.awt.event.ActionListener() {
          @Override
@@ -261,9 +262,9 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
    @Override
    public PropertyMap getSettings() {
       PropertyMap.PropertyMapBuilder builder = studio_.data().getPropertyMapBuilder();
-      builder.putString("ChannelGroup", shadingTableModel_.getChannelGroup());
+      builder.putString(CHANNELGROUP, shadingTableModel_.getChannelGroup());
       builder.putStringArray("Presets", shadingTableModel_.getUsedPresets());
-      builder.putString("Background", imageCollection_.getBackgroundFile());
+      builder.putString(DARKFIELDFILENAME, imageCollection_.getBackgroundFile());
       ArrayList<String> files = new ArrayList<String>();
       for (String preset : shadingTableModel_.getUsedPresets()) {
          files.add(imageCollection_.getFileForPreset(preset));

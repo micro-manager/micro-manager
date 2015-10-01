@@ -14,8 +14,17 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 package org.micromanager.internal.pipelineinterface;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.data.ProcessorPlugin;
+
+import org.micromanager.Studio;
+
+import org.micromanager.internal.utils.ReportingUtils;
+
 
 /**
  * This class wraps around a ProcessorConfigurator, allowing it to be easily
@@ -55,5 +64,46 @@ public class ConfiguratorWrapper {
 
    public void setIsEnabled(boolean isEnabled) {
       isEnabled_ = isEnabled;
+   }
+
+   /**
+    * Serialize ourselves into JSON for storage.
+    */
+   @Override
+   public String toString() {
+      try {
+         JSONObject json = new JSONObject();
+         json.put("name", name_);
+         json.put("isEnabled", isEnabled_);
+         json.put("pluginName", plugin_.getName());
+         json.put("configSettings", configurator_.getSettings().toString());
+         return json.toString();
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Unable to serialize ConfiguratorWrapper");
+         return null;
+      }
+   }
+
+   /**
+    * Return a deserialized ConfiguratorWrapper based on the provided string.
+    */
+   public static ConfiguratorWrapper fromString(String contents, Studio studio) {
+      try {
+         JSONObject json = new JSONObject(contents);
+         ProcessorPlugin plugin = studio.plugins().getProcessorPlugins().get(
+               json.getString("pluginName"));
+         DefaultPropertyMap settings = DefaultPropertyMap.fromJSON(
+               new JSONObject(json.getString("configSettings")));
+         ProcessorConfigurator configurator = plugin.createConfigurator(settings);
+         ConfiguratorWrapper result = new ConfiguratorWrapper(plugin,
+               configurator, json.getString("name"));
+         result.setIsEnabled(json.getBoolean("isEnabled"));
+         return result;
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Error deserializing ConfiguratorWrapper from [" + contents + "]");
+         return null;
+      }
    }
 }

@@ -53,7 +53,7 @@ public class SaverConfigurator extends MMFrame implements ProcessorConfigurator 
    private JTextField savePath_;
    private JButton browseButton_;
 
-   public SaverConfigurator(Studio studio) {
+   public SaverConfigurator(PropertyMap settings, Studio studio) {
       studio_ = studio;
       JPanel panel = new JPanel(new MigLayout("flowx"));
       panel.add(new JLabel("<html>This \"processor\" will save images at this point in the pipeline.</html>"), "span, wrap");
@@ -62,7 +62,8 @@ public class SaverConfigurator extends MMFrame implements ProcessorConfigurator 
       String[] formats = new String[] {SaverPlugin.RAM,
          SaverPlugin.MULTIPAGE_TIFF, SaverPlugin.SINGLEPLANE_TIFF_SERIES};
       saveFormat_ = new JComboBox(formats);
-      saveFormat_.setSelectedItem(getPreferredSaveFormat());
+      saveFormat_.setSelectedItem(
+            settings.getString("format", getPreferredSaveFormat()));
       saveFormat_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -72,12 +73,13 @@ public class SaverConfigurator extends MMFrame implements ProcessorConfigurator 
       panel.add(saveFormat_, "wrap");
 
       shouldDisplay_ = new JCheckBox("Display saved images in new window");
-      shouldDisplay_.setSelected(getShouldDisplay());
+      shouldDisplay_.setSelected(
+            settings.getBoolean("shouldDisplay", getShouldDisplay()));
       panel.add(shouldDisplay_, "wrap");
 
       panel.add(new JLabel("Save path: "), "wrap");
       savePath_ = new JTextField(30);
-      savePath_.setText(getSavePath());
+      savePath_.setText(settings.getString("savePath", getSavePath()));
       panel.add(savePath_, "split 2, span");
       browseButton_ = new JButton("...");
       browseButton_.addActionListener(new ActionListener() {

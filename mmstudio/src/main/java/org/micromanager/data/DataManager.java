@@ -300,6 +300,16 @@ public interface DataManager {
    public void addAndConfigureProcessor(ProcessorPlugin plugin);
 
    /**
+    * Add the provide ProcessorConfigurator onto the end of the application
+    * image processing pipeline.
+    * @param config The ProcessorConfigurator that is responsible for configuring this
+    *        processor.
+    * @param plugin The ProcessorPlugin that the ProcessorConfigurator came from.
+    */
+   public void addConfiguredProcessor(ProcessorConfigurator config,
+         ProcessorPlugin plugin);
+
+   /**
     * Set the current application pipeline to be the provided list of
     * ProcessorPlugins. The Pipeline configuration window will be opened if
     * it is not already open, as will the ProcessorConfigurators for each

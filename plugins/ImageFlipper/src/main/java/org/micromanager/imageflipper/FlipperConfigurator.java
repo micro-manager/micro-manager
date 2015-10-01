@@ -24,6 +24,9 @@ import com.bulenkov.iconloader.IconLoader;
 
 import ij.process.ByteProcessor;
 
+import java.util.Arrays;
+import java.util.List;
+
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
@@ -40,8 +43,6 @@ import org.micromanager.Studio;
 import org.micromanager.internal.utils.MMFrame;
 
 public class FlipperConfigurator extends MMFrame implements ProcessorConfigurator {
-   private Studio studio_;
-   private final String selectedCamera_;
 
    private static final String DEFAULT_CAMERA = "Default camera for image flipper";
    private static final String DEFAULT_MIRRORED = "Whether or not to mirror the image flipper";
@@ -51,6 +52,9 @@ public class FlipperConfigurator extends MMFrame implements ProcessorConfigurato
    private static final String R180 = "180" + "\u00B0";
    private static final String R270 = "270" + "\u00B0";
    private static final String[] RS = {R0, R90, R180, R270};
+   private static final List<Integer> R_INTS =
+      Arrays.asList(new Integer[] {FlipperProcessor.R0,
+         FlipperProcessor.R90, FlipperProcessor.R180, FlipperProcessor.R270});
    private static final String ROTATE = "_Rotation";
    private static final String MIRRORED = "_Mirror";
    private static final String SELECTEDCAMERA = "SelectedCamera";
@@ -61,6 +65,9 @@ public class FlipperConfigurator extends MMFrame implements ProcessorConfigurato
    private final int frameXPos_ = 300;
    private final int frameYPos_ = 300;
 
+   private Studio studio_;
+   private final String selectedCamera_;
+
    private javax.swing.JComboBox cameraComboBox_;
    private javax.swing.JLabel exampleImageSource_;
    private javax.swing.JLabel exampleImageTarget_;
@@ -68,21 +75,26 @@ public class FlipperConfigurator extends MMFrame implements ProcessorConfigurato
    private javax.swing.JCheckBox mirrorCheckBox_;
    private javax.swing.JComboBox rotateComboBox_;
 
-   public FlipperConfigurator(Studio studio) {
+   public FlipperConfigurator(Studio studio, PropertyMap settings) {
       studio_ = studio;
       initComponents();
-      selectedCamera_ = studio_.profile().getString(FlipperConfigurator.class,
-            DEFAULT_CAMERA, studio_.core().getCameraDevice());
-      mirrorCheckBox_.setSelected(studio_.profile().getBoolean(
+      selectedCamera_ = settings.getString("camera",
+            studio_.profile().getString(
+               FlipperConfigurator.class, DEFAULT_CAMERA,
+               studio_.core().getCameraDevice()));
+      Boolean shouldMirror = settings.getBoolean("shouldMirror",
+            studio_.profile().getBoolean(
                FlipperConfigurator.class, DEFAULT_MIRRORED, false));
+      Integer rotation = settings.getInt("rotation",
+            studio_.profile().getInt(
+               FlipperConfigurator.class, DEFAULT_ROTATION, FlipperProcessor.R0));
 
+      mirrorCheckBox_.setSelected(shouldMirror);
       rotateComboBox_.removeAllItems();
       for (String item: RS) {
          rotateComboBox_.addItem(item);
       }
-      rotateComboBox_.setSelectedItem(studio_.profile().getString(
-            FlipperConfigurator.class, DEFAULT_ROTATION, R0));
-
+      rotateComboBox_.setSelectedIndex(R_INTS.indexOf(rotation));
       this.loadAndRestorePosition(frameXPos_, frameYPos_);
       updateCameras();
    }

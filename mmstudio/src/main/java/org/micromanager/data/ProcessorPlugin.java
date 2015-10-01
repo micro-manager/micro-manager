@@ -31,12 +31,15 @@ import org.micromanager.PropertyMap;
  */
 public interface ProcessorPlugin extends MMPlugin {
    /**
-    * Generate any GUI needed to configure the plugin.
+    * Generate any GUI needed to configure the plugin, using the provided settings to
+    * initialize the GUI. Note that the provided settings may be empty but will never
+    * be null.
+    * @param settings Default values to use to set up the configurator.
     * @return a PluginConfigurator object used to set parameters for the
     *         plugin. This should be a new object each time this method is
     *         called.
     */
-   public ProcessorConfigurator createConfigurator();
+   public ProcessorConfigurator createConfigurator(PropertyMap settings);
 
    /**
     * Generate a ProcessorFactory that can be used to generate Processor

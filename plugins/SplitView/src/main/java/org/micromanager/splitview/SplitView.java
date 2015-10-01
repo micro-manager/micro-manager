@@ -50,8 +50,8 @@ public class SplitView implements ProcessorPlugin, SciJavaPlugin {
    }
 
    @Override
-   public ProcessorConfigurator createConfigurator() {
-      return new SplitViewFrame(studio_);
+   public ProcessorConfigurator createConfigurator(PropertyMap settings) {
+      return new SplitViewFrame(settings, studio_);
    }
 
    @Override
