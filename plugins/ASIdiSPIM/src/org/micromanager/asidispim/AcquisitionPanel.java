@@ -874,9 +874,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    /**
-    * convenience method to avoid having to regenerate acquisition settings
+    * convenience method to avoid having to regenerate acquisition settings.
+    * public for external use
     */
-   private double getTimepointInterval() {
+   public double getTimepointInterval() {
       return PanelUtils.getSpinnerFloatValue(acquisitionInterval_);
    }
 
@@ -2497,6 +2498,53 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
    public void setAcquisitionMode(org.micromanager.asidispim.Data.AcquisitionModes.Keys mode) {
       spimMode_.setSelectedItem(mode);
+   }
+
+   public boolean getTimepointsEnabled() {
+      return useTimepointsCB_.isSelected();
+   }
+
+   public void setTimepointsEnabled(boolean enabled) {
+      useTimepointsCB_.setSelected(enabled);
+   }
+
+   public int getNumberOfTimepoints() {
+      return (Integer) numTimepoints_.getValue();
+   }
+
+   public void setNumberOfTimepoints(int numTimepoints) throws ASIdiSPIMException {
+      if (numTimepoints < 1 || numTimepoints > 32000) {
+         throw new ASIdiSPIMException("illegal value for number of time points");
+      }
+      numTimepoints_.setValue(numTimepoints);
+   }
+   
+   // getTimepointInterval already existed
+
+   public void setTimepointInterval(double intervalTimepoints) throws ASIdiSPIMException {
+      if (intervalTimepoints < 0.1 || intervalTimepoints > 32000) {
+         throw new ASIdiSPIMException("illegal value for time point interval");
+      }
+      acquisitionInterval_.setValue(intervalTimepoints);
+   }
+
+   public boolean getMultiplePositionsEnabled() {
+      return usePositionsCB_.isSelected();
+   }
+
+   public void setMultiplePositionsEnabled(boolean enabled) {
+      usePositionsCB_.setSelected(enabled);
+   }
+
+   public double getMultiplePositionsPostMoveDelay() {
+      return (Double) positionDelay_.getValue();
+   }
+
+   public void setMultiplePositionsPostMoveDelay(double delayMs) throws ASIdiSPIMException {
+      if (delayMs < 0d || delayMs > 10000d) {
+         throw new ASIdiSPIMException("illegal value for post move delay");
+      }
+      positionDelay_.setValue(delayMs);
    }
 
    

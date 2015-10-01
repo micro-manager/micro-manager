@@ -77,6 +77,11 @@ public class TestingPanel extends ListeningJPanel {
                      testAcquisitionMode();
                      testRunAcquisition();
                      testLastAcquisitionPathAndName();
+                     testTimepointsEnabled();
+                     testNumTimepoints();
+                     testTimepointInterval();
+                     testMultiplePositionsEnabled();
+                     testMultiplePositionDelayInterval();
                      MyDialogUtils.showError("all tests passed successfully");
                   } catch (Exception ex) {
                      MyDialogUtils.showError(ex);
@@ -201,6 +206,89 @@ public class TestingPanel extends ListeningJPanel {
          assertEquals(key, diSPIM.getAcquisitionMode());
       }
       diSPIM.setAcquisitionMode(settingOrig);
+   }
+   
+   private void testTimepointsEnabled() throws ASIdiSPIMException, Error {
+      ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
+      boolean settingOrig = diSPIM.getTimepointsEnabled();
+      diSPIM.setTimepointsEnabled(true);
+      assertEquals(true, diSPIM.getTimepointsEnabled());
+      diSPIM.setTimepointsEnabled(false);
+      assertEquals(false, diSPIM.getTimepointsEnabled());
+      diSPIM.setTimepointsEnabled(settingOrig);
+   }
+   
+   private void testNumTimepoints() throws ASIdiSPIMException, Error {
+      ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
+      int settingOrig = diSPIM.getTimepointsNumber();
+      // throws exception if not between 1 and 32000
+      try {
+         diSPIM.setTimepointsNumber(0);
+         fail("didn't catch exception");
+      } catch (ASIdiSPIMException ex) {
+      }
+      try {
+         diSPIM.setTimepointsNumber(32001);
+         fail("didn't catch exception");
+      } catch (ASIdiSPIMException ex) {
+      }
+      diSPIM.setTimepointsNumber(10);
+      assertEquals(10, diSPIM.getTimepointsNumber());
+      diSPIM.setTimepointsNumber(100);
+      assertEquals(100, diSPIM.getTimepointsNumber());
+      diSPIM.setTimepointsNumber(settingOrig);
+   }
+   
+   private void testTimepointInterval() throws ASIdiSPIMException, Error {
+      ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
+      double settingOrig = diSPIM.getTimepointInterval();
+      // throws exception if not between 0.1 and 32000
+      try {
+         diSPIM.setTimepointInterval(0d);
+         fail("didn't catch exception");
+      } catch (ASIdiSPIMException ex) {
+      }
+      try {
+         diSPIM.setTimepointInterval(32001d);
+         fail("didn't catch exception");
+      } catch (ASIdiSPIMException ex) {
+      }
+      diSPIM.setTimepointInterval(10);
+      assertEquals(10, diSPIM.getTimepointInterval(), 1e-6);
+      diSPIM.setTimepointInterval(1);
+      assertEquals(1, diSPIM.getTimepointInterval(), 1e-6);
+      diSPIM.setTimepointInterval(settingOrig);
+   }
+   
+   private void testMultiplePositionsEnabled() throws ASIdiSPIMException, Error {
+      ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
+      boolean settingOrig = diSPIM.getMultiplePositionsEnabled();
+      diSPIM.setMultiplePositionsEnabled(true);
+      assertEquals(true, diSPIM.getMultiplePositionsEnabled());
+      diSPIM.setMultiplePositionsEnabled(false);
+      assertEquals(false, diSPIM.getMultiplePositionsEnabled());
+      diSPIM.setMultiplePositionsEnabled(settingOrig);
+   }
+   
+   private void testMultiplePositionDelayInterval() throws ASIdiSPIMException, Error {
+      ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
+      double settingOrig = diSPIM.getMultiplePositionsPostMoveDelay();
+      // throws exception if not between 0 and 10000
+      try {
+         diSPIM.setMultiplePositionsPostMoveDelay(-0.1);
+         fail("didn't catch exception");
+      } catch (ASIdiSPIMException ex) {
+      }
+      try {
+         diSPIM.setMultiplePositionsPostMoveDelay(10000.1);
+         fail("didn't catch exception");
+      } catch (ASIdiSPIMException ex) {
+      }
+      diSPIM.setMultiplePositionsPostMoveDelay(10);
+      assertEquals(10, diSPIM.getMultiplePositionsPostMoveDelay(), 1e-6);
+      diSPIM.setMultiplePositionsPostMoveDelay(100);
+      assertEquals(100, diSPIM.getMultiplePositionsPostMoveDelay(), 1e-6);
+      diSPIM.setMultiplePositionsPostMoveDelay(settingOrig);
    }
    
    

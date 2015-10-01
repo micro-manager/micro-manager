@@ -153,7 +153,56 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    @Override
    public void setAcquisitionMode(org.micromanager.asidispim.Data.AcquisitionModes.Keys mode) throws ASIdiSPIMException {
       getAcquisitionPanel().setAcquisitionMode(mode);
-      
+   }
+   
+   @Override
+   public boolean getTimepointsEnabled() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getTimepointsEnabled();
+   }
+
+   @Override
+   public void setTimepointsEnabled(boolean enabled) throws ASIdiSPIMException {
+      getAcquisitionPanel().setTimepointsEnabled(enabled);
+   }
+   
+   @Override
+   public int getTimepointsNumber() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getNumberOfTimepoints();
+   }
+
+   @Override
+   public void setTimepointsNumber(int numTimepoints) throws ASIdiSPIMException {
+      getAcquisitionPanel().setNumberOfTimepoints(numTimepoints);
+   }
+   
+   @Override
+   public double getTimepointInterval() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getTimepointInterval();
+   }
+
+   @Override
+   public void setTimepointInterval(double intervalTimepoints) throws ASIdiSPIMException {
+      getAcquisitionPanel().setTimepointInterval(intervalTimepoints);
+   }
+   
+   @Override
+   public boolean getMultiplePositionsEnabled() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getMultiplePositionsEnabled();
+   }
+
+   @Override
+   public void setMultiplePositionsEnabled(boolean enabled) throws ASIdiSPIMException {
+      getAcquisitionPanel().setMultiplePositionsEnabled(enabled);
+   }
+   
+   @Override
+   public double getMultiplePositionsPostMoveDelay() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getMultiplePositionsPostMoveDelay();
+   }
+
+   @Override
+   public void setMultiplePositionsPostMoveDelay(double delayMs) throws ASIdiSPIMException {
+      getAcquisitionPanel().setMultiplePositionsPostMoveDelay(delayMs);
    }
    
    
@@ -216,70 +265,6 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
 
 
 
-
-   @Override
-   public boolean getTimepointsEnabled() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return false;
-   }
-
-   @Override
-   public void setTimepointsEnabled(boolean enabled) throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public int getNumberofTimepoints() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return 0;
-   }
-
-   @Override
-   public void setNumberofTimepoints(int numTimepoints)
-         throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public double getTimepointInterval() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return 0;
-   }
-
-   @Override
-   public void setTimepointInterval(double intervalTimepoints)
-         throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public boolean getMultiplePositionsEnabled() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return false;
-   }
-
-   @Override
-   public void setMultiplePositionsEnabled(boolean enabled)
-         throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public double getMultiplePositionsPostMoveDelay() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return 0;
-   }
-
-   @Override
-   public void setMultiplePositionsPostMoveDelay(double delayMs)
-         throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
 
    @Override
    public PositionList getPositionList() throws ASIdiSPIMException {

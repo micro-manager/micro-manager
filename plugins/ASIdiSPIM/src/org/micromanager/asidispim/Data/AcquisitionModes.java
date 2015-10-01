@@ -50,11 +50,11 @@ public class AcquisitionModes {
     */
    public static enum Keys { 
       PIEZO_SLICE_SCAN("Synchronous piezo/slice scan", 1),
-      SLICE_SCAN_ONLY( "Slice scan only (beam thickness)", 2),
       NO_SCAN(         "No scan (fixed sheet)", 3),
       STAGE_SCAN(      "Stage scan", 4),
       STAGE_SCAN_INTERLEAVED("Stage scan interleaved", 5),
-      PIEZO_SCAN_ONLY("Piezo scan only", 6), // only used for autofocus
+      SLICE_SCAN_ONLY( "Slice scan only (unusual)", 2),
+      PIEZO_SCAN_ONLY("Piezo scan only (unusual)", 6),
       NONE(            "None", 0);
       private final String text;
       private final int prefCode;
@@ -167,10 +167,11 @@ public class AcquisitionModes {
       private List<Keys> getValidModeKeys() {
          List<Keys> keyList = new ArrayList<Keys>();
          keyList.add(Keys.PIEZO_SLICE_SCAN);
-         keyList.add(Keys.SLICE_SCAN_ONLY);
          keyList.add(Keys.NO_SCAN);
          keyList.add(Keys.STAGE_SCAN);
          keyList.add(Keys.STAGE_SCAN_INTERLEAVED);
+         keyList.add(Keys.SLICE_SCAN_ONLY);
+         keyList.add(Keys.PIEZO_SCAN_ONLY);
          return keyList;
       }
 

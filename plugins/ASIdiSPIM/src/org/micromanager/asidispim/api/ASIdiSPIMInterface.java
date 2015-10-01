@@ -204,23 +204,25 @@ public interface ASIdiSPIMInterface {
     *   have been disabled.
     * @throws ASIdiSPIMException
     */
-   public int getNumberofTimepoints() throws ASIdiSPIMException;
+   public int getTimepointsNumber() throws ASIdiSPIMException;
    
    /**
     * @param numTimepoints sets the number of time points.  Works even if time
     *   point have been disabled, though in that case the number is meaningless.
+    *   If numTimepoints is not between 1 and 32000 then ASIdiSPIMException is thrown.
     * @throws ASIdiSPIMException
     */
-   public void setNumberofTimepoints(int numTimepoints) throws ASIdiSPIMException;
+   public void setTimepointsNumber(int numTimepoints) throws ASIdiSPIMException;
    
    /**
-    * @return interval between time points in seconds
+    * @return interval between time points in seconds.
     * @throws ASIdiSPIMException
     */
    public double getTimepointInterval() throws ASIdiSPIMException; 
    
    /**
-    * @param intervalTimepoints sets the interval between time points in seconds
+    * @param intervalTimepoints sets the interval between time points in seconds.
+    * If intervalTimepoints is not between 0.1 and 32000 then ASIdiSPIMException is thrown.
     * @throws ASIdiSPIMException
     */
    public void setTimepointInterval(double intervalTimepoints) throws ASIdiSPIMException; 
@@ -246,7 +248,8 @@ public interface ASIdiSPIMInterface {
    
    /**
     * @param delayMs sets the additional delay in milliseconds after each move
-    *   completes before imaging begins (e.g. to let system settle mechanically). 
+    *   completes before imaging begins (e.g. to let system settle mechanically).
+    *   If delayMs is not between 0 and 10000 then ASIdiSPIMException is thrown.
     * @throws ASIdiSPIMException
     */
    public void setMultiplePositionsPostMoveDelay(double delayMs) throws ASIdiSPIMException;
