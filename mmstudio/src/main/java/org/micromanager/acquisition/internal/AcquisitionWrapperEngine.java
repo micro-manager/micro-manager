@@ -30,6 +30,7 @@ import org.micromanager.Studio;
 import org.micromanager.SequenceSettings;
 import org.micromanager.events.internal.DefaultAcquisitionStartedEvent;
 import org.micromanager.events.internal.DefaultEventManager;
+import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.utils.AcqOrderMode;
@@ -68,7 +69,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private int afSkipInterval_;
    private boolean absoluteZ_;
    private int cameraTimeout_;
-   private IAcquisitionEngine2010 acquisitionEngine2010;
+   private IAcquisitionEngine2010 acquisitionEngine2010_;
    private ArrayList<Double> customTimeIntervalsMs_;
    private boolean useCustomIntervals_;
    protected JSONObject summaryMetadata_;
@@ -102,10 +103,10 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
    
    protected IAcquisitionEngine2010 getAcquisitionEngine2010() {
-      if (acquisitionEngine2010 == null) {
-         acquisitionEngine2010 = studio_.compat().getAcquisitionEngine2010();
+      if (acquisitionEngine2010_ == null) {
+         acquisitionEngine2010_ = studio_.compat().getAcquisitionEngine2010();
       }
-      return acquisitionEngine2010;
+      return acquisitionEngine2010_;
    }
 
    protected Datastore runAcquisition(SequenceSettings acquisitionSettings) {
@@ -416,8 +417,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    @Override
    public void stop(boolean interrupted) {
       try {
-         if (acquisitionEngine2010 != null) {
-            acquisitionEngine2010.stop();
+         if (acquisitionEngine2010_ != null) {
+            acquisitionEngine2010_.stop();
          }
       } catch (Exception ex) {
          ReportingUtils.showError(ex, "Acquisition engine stop request failed");
@@ -447,7 +448,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    @Override
    public boolean abortRequested() {
-      return acquisitionEngine2010.stopHasBeenRequested();
+      return acquisitionEngine2010_.stopHasBeenRequested();
    }
 
    @Override
@@ -458,17 +459,17 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    @Override
    public void setPause(boolean state) {
       if (state) {
-         acquisitionEngine2010.pause();
+         acquisitionEngine2010_.pause();
       } else {
-         acquisitionEngine2010.resume();
+         acquisitionEngine2010_.resume();
       }
    }
 
 //// State Queries /////////////////////////////////////////////////////
    @Override
    public boolean isAcquisitionRunning() {
-      if (acquisitionEngine2010 != null) {
-         return acquisitionEngine2010.isRunning();
+      if (acquisitionEngine2010_ != null) {
+         return acquisitionEngine2010_.isRunning();
       } else {
          return false;
       }
@@ -476,8 +477,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    @Override
    public boolean isFinished() {
-      if (acquisitionEngine2010 != null) {
-         return acquisitionEngine2010.isFinished();
+      if (acquisitionEngine2010_ != null) {
+         return acquisitionEngine2010_.isFinished();
       } else {
          return false;
       }
@@ -490,7 +491,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    @Override
    public long getNextWakeTime() {
-      return acquisitionEngine2010.nextWakeTime();
+      return acquisitionEngine2010_.nextWakeTime();
    }
 
 
@@ -1015,7 +1016,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    @Override
    public boolean isPaused() {
-      return acquisitionEngine2010.isPaused();
+      return acquisitionEngine2010_.isPaused();
    }
 
    public void restoreSystem() {
@@ -1107,6 +1108,23 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    public void onAcquisitionSleep(AcquisitionSleepEvent event) {
       if (curStore_ != null) {
          curStore_.publishEvent(new IncomingImageEvent(event.getWakeTime()));
+      }
+   }
+
+   @Subscribe
+   public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
+      if (!event.getIsCancelled() && isAcquisitionRunning()) {
+         int result = JOptionPane.showConfirmDialog(null,
+               "Acquisition in progress. Are you sure you want to exit and discard all data?",
+               "Micro-Manager", JOptionPane.YES_NO_OPTION,
+               JOptionPane.INFORMATION_MESSAGE);
+
+         if (result == JOptionPane.NO_OPTION) {
+            event.cancelShutdown();
+         }
+         else {
+            getAcquisitionEngine2010().stop();
+         }
       }
    }
 }

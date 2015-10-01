@@ -47,6 +47,7 @@ import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.events.LiveModeEvent;
 import org.micromanager.events.internal.DefaultLiveModeEvent;
 import org.micromanager.events.internal.DefaultEventManager;
+import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 
 import org.micromanager.Studio;
 
@@ -535,5 +536,12 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       // This will make us pick up the new pipeline the next time we get a
       // chance.
       shouldForceReset_ = true;
+   }
+
+   @Subscribe
+   public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
+      if (!event.getIsCancelled()) {
+         setLiveMode(false);
+      }
    }
 }

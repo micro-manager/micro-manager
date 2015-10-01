@@ -49,6 +49,7 @@ import org.micromanager.display.internal.events.NewOverlayEvent;
 
 import org.micromanager.events.DatastoreClosingEvent;
 import org.micromanager.events.internal.DefaultEventManager;
+import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.events.NewDisplayEvent;
 
 import org.micromanager.internal.MMStudio;
@@ -127,6 +128,18 @@ public final class DefaultDisplayManager implements DisplayManager {
             display.forceClosed();
          }
          storeToDisplays_.remove(store);
+      }
+   }
+
+   /**
+    * At shutdown, we give the user the opportunity to save data, and to cancel
+    * shutdown if they don't want to decide yet.
+    */
+   @Subscribe
+   public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
+      // If shutdown is already cancelled, don't do anything.
+      if (!event.getIsCancelled() && !closeAllDisplayWindows(true)) {
+         event.cancelShutdown();
       }
    }
 

@@ -62,6 +62,7 @@ import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.StagePosition;
+import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
 import org.micromanager.internal.dialogs.AcqControlDlg;
@@ -143,10 +144,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent arg0) {
-            int posCol0Width = posTable_.getColumnModel().getColumn(0).getWidth();
-            profile.setInt(PositionListDlg.class, POS_COL0_WIDTH, posCol0Width);
-            int axisCol0Width = axisTable_.getColumnModel().getColumn(0).getWidth();
-            profile.setInt(PositionListDlg.class, AXIS_COL0_WIDTH, axisCol0Width);
+            saveDims();
          }
       });
       core_ = core;
@@ -1167,5 +1165,22 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       }
       positionModel_.fireTableDataChanged();
       acqControlDlg_.updateGUIContents();
+   }
+
+   @Subscribe
+   public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
+      if (!event.getIsCancelled()) {
+         saveDims();
+         dispose();
+      }
+   }
+
+   private void saveDims() {
+      int posCol0Width = posTable_.getColumnModel().getColumn(0).getWidth();
+      studio_.profile().setInt(PositionListDlg.class, POS_COL0_WIDTH,
+            posCol0Width);
+      int axisCol0Width = axisTable_.getColumnModel().getColumn(0).getWidth();
+      studio_.profile().setInt(PositionListDlg.class, AXIS_COL0_WIDTH,
+            axisCol0Width);
    }
 }

@@ -76,6 +76,7 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.EventManager;
 import org.micromanager.events.ForcedShutdownEvent;
 import org.micromanager.events.internal.MouseMovesStageEvent;
+import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.events.StartupCompleteEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.IAcquisitionEngine2010;
@@ -1049,14 +1050,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       frame_.updateTitle(sysConfigFile_);
    }
 
-   // Cancel acquisitions and stop live mode.
-   public void stopAllActivity() {
-      if (acquisitionEngine2010_ != null) {
-         acquisitionEngine2010_.stop();
-      }
-      live().setLiveMode(false);
-   }
-
    /**
     * Cleans up resources while shutting down 
     * 
@@ -1082,7 +1075,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
             }
          }
       }
-      live().setLiveMode(false);
 
       // check needed to avoid deadlock
       if (!calledByImageJ) {
@@ -1091,12 +1083,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
          }
       }
   
-      if (posListDlg_ != null) {
-         posListDlg_.getToolkit().getSystemEventQueue().postEvent(
-                 new WindowEvent(posListDlg_, WindowEvent.WINDOW_CLOSING));
-         posListDlg_.dispose();
-      }
-      
       if (scriptPanel_ != null) {
          scriptPanel_.closePanel();
       }
@@ -1156,28 +1142,18 @@ public class MMStudio implements Studio, CompatibilityInterface {
          }
          return true;
       }
-      ShutdownCommencingEvent event = new ShutdownCommencingEvent();
-      events().post(event);
-      if (event.getIsCancelled()) {
+      // Send two shutdown events: one that our internal logic consumes, and
+      // one that's accessible in the API.
+      InternalShutdownCommencingEvent internalEvent = new InternalShutdownCommencingEvent();
+      events().post(internalEvent);
+      if (internalEvent.getIsCancelled()) {
          // Shutdown cancelled by user.
          return false;
       }
-      
-      if (engine_ != null && engine_.isAcquisitionRunning()) {
-         int result = JOptionPane.showConfirmDialog(frame_,
-               "Acquisition in progress. Are you sure you want to exit and discard all data?",
-               "Micro-Manager", JOptionPane.YES_NO_OPTION,
-               JOptionPane.INFORMATION_MESSAGE);
-
-         if (result == JOptionPane.NO_OPTION) {
-            return false;
-         }
-      }
-
-      stopAllActivity();
-
-      if (!displays().closeAllDisplayWindows(true)) {
-         // The user canceled out of closing a display window.
+      ShutdownCommencingEvent externalEvent = new ShutdownCommencingEvent();
+      events().post(externalEvent);
+      if (externalEvent.getIsCancelled()) {
+         // Shutdown cancelled by user.
          return false;
       }
 
