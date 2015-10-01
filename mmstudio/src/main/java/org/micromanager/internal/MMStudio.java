@@ -74,7 +74,10 @@ import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.EventManager;
+import org.micromanager.events.ForcedShutdownEvent;
 import org.micromanager.events.internal.MouseMovesStageEvent;
+import org.micromanager.events.StartupCompleteEvent;
+import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.IAcquisitionEngine2010;
 import org.micromanager.LogManager;
 import org.micromanager.MMListenerInterface;
@@ -458,6 +461,8 @@ public class MMStudio implements Studio, CompatibilityInterface {
       ReportingUtils.showErrorOn(true);
 
       org.micromanager.internal.diagnostics.gui.ProblemReportController.startIfInterruptedOnExit();
+
+      events().post(new StartupCompleteEvent());
    }
 
    public void showPipelineFrame() {
@@ -791,7 +796,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
 
    private void createPipelineFrame() {
       if (pipelineFrame_ == null) {
-         pipelineFrame_ = new PipelineFrame(studio_, engine_);
+         pipelineFrame_ = new PipelineFrame(studio_);
       }
    }
 
@@ -1151,6 +1156,12 @@ public class MMStudio implements Studio, CompatibilityInterface {
          }
          return true;
       }
+      ShutdownCommencingEvent event = new ShutdownCommencingEvent();
+      events().post(event);
+      if (event.getIsCancelled()) {
+         // Shutdown cancelled by user.
+         return false;
+      }
       
       if (engine_ != null && engine_.isAcquisitionRunning()) {
          int result = JOptionPane.showConfirmDialog(frame_,
@@ -1175,6 +1186,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
       }
 
       isProgramRunning_ = false;
+      events().post(new ForcedShutdownEvent());
 
       saveSettings();
       try {
