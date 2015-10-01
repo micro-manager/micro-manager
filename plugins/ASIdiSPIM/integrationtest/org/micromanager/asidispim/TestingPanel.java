@@ -28,7 +28,6 @@ import java.io.File;
 
 import javax.swing.JButton;
 
-import org.micromanager.asidispim.Data.AcquisitionModes.Keys;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.MyDialogUtils;

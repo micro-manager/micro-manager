@@ -111,10 +111,6 @@ public class ASIdiSPIMFrame extends MMFrame
    private final StatusSubPanel statusSubPanel_;
    private final StagePositionUpdater stagePosUpdater_;
    private final ListeningJTabbedPane tabbedPane_;
-   private final TestingPanel testingPanel_;
-   
-   // modify following line to turn on the integration testing tab
-   private static final boolean enableIntegrationTesting = false;
    
    private static final String MAIN_PREF_NODE = "Main"; 
    
@@ -180,6 +176,11 @@ public class ASIdiSPIMFrame extends MMFrame
       tabbedPane_.addLTab(settingsPanel_);    // tabIndex = 7
       tabbedPane_.addLTab(helpPanel_);        // tabIndex = 8
       final int helpTabIndex = tabbedPane_.getTabCount() - 1;
+      
+      // add the testing panel explicitly by uncommenting following lines
+      // intended to only be done in short term for testing
+      // TestingPanel testingPanel = new TestingPanel();
+      // tabbedPane_.addLTab(testingPanel);
 
       // attach position updaters
       stagePosUpdater_.addPanel(setupPanelA_);
@@ -250,13 +251,6 @@ public class ASIdiSPIMFrame extends MMFrame
             "[" + this.getHeight() + "]"));
       glassPane.add(statusSubPanel_, "dock south");
       
-      // add the testing panel only explicitly
-      if (enableIntegrationTesting) {
-         testingPanel_ = new TestingPanel();
-         tabbedPane_.addLTab(testingPanel_);
-      } else {
-         testingPanel_ = null;
-      }
    }
    
    /**
