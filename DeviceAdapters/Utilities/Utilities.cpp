@@ -1747,33 +1747,7 @@ DAXYStage::DAXYStage() :
    // Description                                                            
    CreateProperty(MM::g_Keyword_Description, "XYStage controlled with voltage provided by two Digital to Analog outputs", MM::String, true);
 
-   // min volts
-   CPropertyAction* pAct = new CPropertyAction (this, &DAXYStage::OnStageMinVoltX);      
-   CreateProperty("Stage X Low Voltage", "0", MM::Float, false, pAct, true);         
-
-   pAct = new CPropertyAction (this, &DAXYStage::OnStageMinVoltY);      
-   CreateProperty("Stage Y Low Voltage", "0", MM::Float, false, pAct, true);    
-   //max volts
-   pAct = new CPropertyAction (this, &DAXYStage::OnStageMaxVoltX);      
-   CreateProperty("Stage X High Voltage", "5", MM::Float, false, pAct, true);        
-
-   pAct = new CPropertyAction (this, &DAXYStage::OnStageMaxVoltY);      
-   CreateProperty("Stage Y High Voltage", "5", MM::Float, false, pAct, true);   
-
-   // min pos
-   pAct = new CPropertyAction (this, &DAXYStage::OnStageMinPosX);
-   CreateProperty("Stage X Minimum Position","0", MM::Float, false, pAct, true);
-
-   pAct = new CPropertyAction (this, &DAXYStage::OnStageMinPosY);
-   CreateProperty("Stage Y Minimum Position", "0", MM::Float, false, pAct, true);
-
-   //max pos
-   pAct = new CPropertyAction (this, &DAXYStage::OnStageMaxPosX);
-   CreateProperty("Stage X Maximum Position", "200", MM::Float, false, pAct, true);
-
-   pAct = new CPropertyAction (this, &DAXYStage::OnStageMaxPosY);
-   CreateProperty("Stage Y Maximum Position", "200", MM::Float, false, pAct, true);
-}  
+}
  
 DAXYStage::~DAXYStage()
 {
@@ -1816,7 +1790,7 @@ int DAXYStage::Initialize()
 
    pAct = new CPropertyAction (this, &DAXYStage::OnDADeviceY);      
    std::string defaultYDA = "Undefined";
-   if (availableDAs_.size() >= 1)
+   if (availableDAs_.size() >= 2)
       defaultYDA = availableDAs_[1];
    CreateProperty("Y DA Device", defaultYDA.c_str(), MM::String, false, pAct, false);         
    if (availableDAs_.size() >= 1)
@@ -1829,20 +1803,6 @@ int DAXYStage::Initialize()
    // This could lead to strange problems if multiple DA devices are loaded
    SetProperty("X DA Device", defaultXDA.c_str());
    SetProperty("Y DA Device", defaultYDA.c_str());
-   /*
-   pAct = new CPropertyAction (this, &DAXYStage::OnPosition);
-   CreateProperty(MM::g_Keyword_Position, "0.0", MM::Float, false, pAct);
-   double minPos = 0.0;
-   int ret = GetProperty(g_PropertyMinUm, minPos);
-   assert(ret == DEVICE_OK);
-   double maxPos = 0.0;
-   ret = GetProperty(g_PropertyMaxUm, maxPos);
-   assert(ret == DEVICE_OK);
-   SetPropertyLimits(MM::g_Keyword_Position, minPos, maxPos);
-   */
-   int ret = UpdateStatus();
-   if (ret != DEVICE_OK)
-      return ret;
 
    std::ostringstream tmp;
    tmp << DADeviceX_;
@@ -1854,6 +1814,30 @@ int DAXYStage::Initialize()
    if (DADeviceY_ != 0)
       DADeviceY_->GetLimits(minDAVoltY_, maxDAVoltY_);
 
+   // Min volts
+   pAct = new CPropertyAction (this, &DAXYStage::OnStageMinVoltX);      
+   CreateProperty("Stage X Low Voltage", "0", MM::Float, false, pAct, false); 
+   pAct = new CPropertyAction (this, &DAXYStage::OnStageMinVoltY);      
+   CreateProperty("Stage Y Low Voltage", "0", MM::Float, false, pAct, false);    
+   
+   // Max volts
+   pAct = new CPropertyAction (this, &DAXYStage::OnStageMaxVoltX);      
+   CreateProperty("Stage X High Voltage", "5", MM::Float, false, pAct, false);
+   pAct = new CPropertyAction (this, &DAXYStage::OnStageMaxVoltY);
+   CreateProperty("Stage Y High Voltage", "5", MM::Float, false, pAct, false);   
+
+   // Min pos
+   pAct = new CPropertyAction (this, &DAXYStage::OnStageMinPosX);
+   CreateProperty("Stage X Minimum Position","0", MM::Float, false, pAct, false);
+   pAct = new CPropertyAction (this, &DAXYStage::OnStageMinPosY);
+   CreateProperty("Stage Y Minimum Position", "0", MM::Float, false, pAct, false);
+
+   // Max pos
+   pAct = new CPropertyAction (this, &DAXYStage::OnStageMaxPosX);
+   CreateProperty("Stage X Maximum Position", "200", MM::Float, false, pAct, false);
+   pAct = new CPropertyAction (this, &DAXYStage::OnStageMaxPosY);
+   CreateProperty("Stage Y Maximum Position", "200", MM::Float, false, pAct, false);
+
    if (minStageVoltX_ < minDAVoltX_)
       return ERR_VOLT_OUT_OF_RANGE;
 
@@ -1863,6 +1847,9 @@ int DAXYStage::Initialize()
    originPosX_ = minStagePosX_;
    originPosY_ = minStagePosY_;
 
+   int ret = UpdateStatus();
+   if (ret != DEVICE_OK)
+      return ret;
 
    initialized_ = true;
 
@@ -1949,23 +1936,23 @@ int DAXYStage::GetPositionSteps(long& stepsX, long& stepsY)
    return DEVICE_OK;
 }
 
-int DAXYStage::SetRelativePositionSteps(long x, long y)                                                           
-   {                                                                                                      
-      long xSteps, ySteps;                                                                                
-      GetPositionSteps(xSteps, ySteps);                                                   
+int DAXYStage::SetRelativePositionSteps(long x, long y)
+{ 
+   long xSteps, ySteps;
+   GetPositionSteps(xSteps, ySteps);
 
-      return this->SetPositionSteps(xSteps+x, ySteps+y);                                                  
-   }
+   return this->SetPositionSteps(xSteps+x, ySteps+y);
+}
 
 int DAXYStage::SetPositionUm(double x, double y)
 {
    if (DADeviceX_ == 0 || DADeviceY_ == 0 )
       return ERR_NO_DA_DEVICE;
 
-   double voltX = ( (x + originPosX_) / (maxStagePosX_ - minStagePosX_)) * (maxStageVoltX_ - minStageVoltX_);
+   double voltX = ( (x - originPosX_) / (maxStagePosX_ - minStagePosX_)) * (maxStageVoltX_ - minStageVoltX_);
    if (voltX > maxStageVoltX_ || voltX < minStageVoltX_)
       return ERR_POS_OUT_OF_RANGE;
-   double voltY = ( (y + originPosY_) / (maxStagePosY_ - minStagePosY_)) * (maxStageVoltY_ - minStageVoltY_);
+   double voltY = ( (y - originPosY_) / (maxStagePosY_ - minStagePosY_)) * (maxStageVoltY_ - minStageVoltY_);
    if (voltY > maxStageVoltY_ || voltY < minStageVoltY_)
       return ERR_POS_OUT_OF_RANGE;
    
@@ -2029,9 +2016,13 @@ int DAXYStage::SetOrigin()
    return DEVICE_OK;
 }
 
-int DAXYStage::GetLimitsUm(double& /*xMin*/, double& /*xMax*/, double& /*yMin*/, double& /*yMax*/)
+int DAXYStage::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax)
 {
-	return DEVICE_UNSUPPORTED_COMMAND;
+   xMin = minStagePosX_;
+   xMax = maxStagePosX_;
+   yMin = minStagePosY_;
+   yMax = maxStagePosY_;
+	return DEVICE_OK;
 }
 
 int DAXYStage::GetStepLimits(long& /*xMin*/, long& /*xMax*/, long& /*yMin*/, long& /*yMax*/)
@@ -2121,6 +2112,15 @@ int DAXYStage::SendXYStageSequence()
    return ret;
 }
 
+void DAXYStage::UpdateStepSize() 
+{
+   stepSizeXUm_ =  (maxStagePosX_ - minStagePosX_) / (maxStageVoltX_ - minStageVoltX_) / 1000.0;
+   stepSizeYUm_ = (maxStagePosY_ - minStagePosY_) / (maxStageVoltY_ - minStageVoltY_) / 1000.0;
+
+   std::ostringstream tmp;
+   tmp << "Updated stepsize of DA XY stage to x: " << stepSizeXUm_ << " y: " << stepSizeYUm_;
+   LogMessage(tmp.str().c_str());
+}
 
 
 ///////////////////////////////////////
@@ -2143,7 +2143,10 @@ int DAXYStage::OnDADeviceX(MM::PropertyBase* pProp, MM::ActionType eAct)
       } else
          return ERR_INVALID_DEVICE_NAME;
       if (initialized_)
+      {
          DADeviceX_->GetLimits(minDAVoltX_, maxDAVoltX_);
+         UpdateStepSize();
+      }
    }
    return DEVICE_OK;
 }
@@ -2165,7 +2168,10 @@ int DAXYStage::OnDADeviceY(MM::PropertyBase* pProp, MM::ActionType eAct)
       } else
          return ERR_INVALID_DEVICE_NAME;
       if (initialized_)
+      {
          DADeviceY_->GetLimits(minDAVoltY_, maxDAVoltY_);
+         UpdateStepSize();
+      }
    }
    return DEVICE_OK;
 }
@@ -2186,6 +2192,7 @@ int DAXYStage::OnStageMinVoltX(MM::PropertyBase* pProp, MM::ActionType eAct)
          minStageVoltX_ = minStageVolt;
       else
          return ERR_VOLT_OUT_OF_RANGE;
+      UpdateStepSize();
    }
    return DEVICE_OK;
 }
@@ -2204,6 +2211,7 @@ int DAXYStage::OnStageMaxVoltX(MM::PropertyBase* pProp, MM::ActionType eAct)
          maxStageVoltX_ = maxStageVolt;
       else
          return ERR_VOLT_OUT_OF_RANGE;
+      UpdateStepSize();
    }
    return DEVICE_OK;
 }
@@ -2222,6 +2230,7 @@ int DAXYStage::OnStageMinVoltY(MM::PropertyBase* pProp, MM::ActionType eAct)
          minStageVoltY_ = minStageVolt;
       else
          return ERR_VOLT_OUT_OF_RANGE;
+      UpdateStepSize();
    }
    return DEVICE_OK;
 }
@@ -2240,6 +2249,7 @@ int DAXYStage::OnStageMaxVoltY(MM::PropertyBase* pProp, MM::ActionType eAct)
          maxStageVoltY_ = maxStageVolt;
       else
          return ERR_VOLT_OUT_OF_RANGE;
+      UpdateStepSize();
    }
    return DEVICE_OK;
 }
@@ -2255,7 +2265,9 @@ int DAXYStage::OnStageMinPosX(MM::PropertyBase* pProp, MM::ActionType eAct)
       double minStagePos;
       pProp->Get(minStagePos);
       minStagePosX_ = minStagePos;
+      UpdateStepSize();
    }
+
    return DEVICE_OK;
 }
 
@@ -2270,6 +2282,7 @@ int DAXYStage::OnStageMinPosY(MM::PropertyBase* pProp, MM::ActionType eAct)
       double minStagePos;
       pProp->Get(minStagePos);
       minStagePosY_ = minStagePos;
+      UpdateStepSize();
    }
    return DEVICE_OK;
 }
@@ -2285,6 +2298,7 @@ int DAXYStage::OnStageMaxPosX(MM::PropertyBase* pProp, MM::ActionType eAct)
       double maxStagePos;
       pProp->Get(maxStagePos);
       maxStagePosX_ = maxStagePos;
+      UpdateStepSize();
    }
    return DEVICE_OK;
 }
@@ -2300,6 +2314,7 @@ int DAXYStage::OnStageMaxPosY(MM::PropertyBase* pProp, MM::ActionType eAct)
       double maxStagePos;
       pProp->Get(maxStagePos);
       maxStagePosY_ = maxStagePos;
+      UpdateStepSize();
    }
    return DEVICE_OK;
 }
