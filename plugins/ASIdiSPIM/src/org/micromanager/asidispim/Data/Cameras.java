@@ -176,7 +176,8 @@ public class Cameras {
             !camera.equals(devices_.getMMDevice(currentCameraKey_))) {
          currentCameraKey_ = null;
          for (Devices.Keys camKey : Devices.CAMERAS) {
-            if (devices_.getMMDevice(camKey).equals(camera)) {
+            if (devices_.isValidMMDevice(camKey) &&
+                  devices_.getMMDevice(camKey).equals(camera)) {
                setCamera(camKey);  // updates currentCameraKey_
                break;
             }
