@@ -50,6 +50,7 @@ const char* g_XYStageDeviceName = "DXYStage";
 const char* g_AutoFocusDeviceName = "DAutoFocus";
 const char* g_ShutterDeviceName = "DShutter";
 const char* g_DADeviceName = "D-DA";
+const char* g_DA2DeviceName = "D-DA2";
 const char* g_GalvoDeviceName = "DGalvo";
 const char* g_MagnifierDeviceName = "DOptovar";
 const char* g_HubDeviceName = "DHub";
@@ -81,6 +82,7 @@ MODULE_API void InitializeModuleData()
    RegisterDevice(g_AutoFocusDeviceName, MM::AutoFocusDevice, "Demo auto focus");
    RegisterDevice(g_ShutterDeviceName, MM::ShutterDevice, "Demo shutter");
    RegisterDevice(g_DADeviceName, MM::SignalIODevice, "Demo DA");
+   RegisterDevice(g_DA2DeviceName, MM::SignalIODevice, "Demo DA-2");
    RegisterDevice(g_MagnifierDeviceName, MM::MagnifierDevice, "Demo Optovar");
    RegisterDevice(g_GalvoDeviceName, MM::GalvoDevice, "Demo Galvo");
    RegisterDevice("TransposeProcessor", MM::ImageProcessorDevice, "TransposeProcessor");
@@ -139,7 +141,12 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    else if (strcmp(deviceName, g_DADeviceName) == 0)
    {
       // create DA
-      return new DemoDA();
+      return new DemoDA(0);
+   }
+   else if (strcmp(deviceName, g_DA2DeviceName) == 0)
+   {
+      // create DA
+      return new DemoDA(1);
    }
    else if (strcmp(deviceName, g_AutoFocusDeviceName) == 0)
    {
@@ -3340,7 +3347,8 @@ int DemoMagnifier::OnHighMag(MM::PropertyBase* pProp, MM::ActionType eAct)
 * Demo DA device
 */
 
-DemoDA::DemoDA () : 
+DemoDA::DemoDA (uint8_t n) : 
+n_(n),
 volt_(0), 
 gatedVolts_(0), 
 open_(true),
@@ -3360,7 +3368,12 @@ DemoDA::~DemoDA() {
 
 void DemoDA::GetName(char* name) const
 {
-   CDeviceUtils::CopyLimitedString(name, g_DADeviceName);
+   if (n_ == 0)
+      CDeviceUtils::CopyLimitedString(name, g_DADeviceName);
+   else if (n_ == 1)
+      CDeviceUtils::CopyLimitedString(name, g_DA2DeviceName);
+   else // bad!
+      CDeviceUtils::CopyLimitedString(name, "ERROR");
 }
 
 int DemoDA::Initialize()
