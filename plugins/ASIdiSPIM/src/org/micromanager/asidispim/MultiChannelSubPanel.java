@@ -193,9 +193,15 @@ public class MultiChannelSubPanel extends ListeningJPanel {
          public void itemStateChanged(ItemEvent e) {
             // clear configs when changing the channel group
             if (e.getStateChange() == ItemEvent.SELECTED) {
-               channelTableModel_.setChannelGroup((String) 
-                       channelGroup_.getSelectedItem());
+               String selected = (String) channelGroup_.getSelectedItem();
+               channelTableModel_.setChannelGroup(selected);
                channelTableModel_.fireTableDataChanged();
+               try {
+                  core_.setChannelGroup(selected);
+               } catch (Exception ex) {
+                  // fail silently, this isn't crucial but we do to be consistent
+                  //   with usual MM operation
+               }
             }
          }
       });
@@ -297,6 +303,14 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    public boolean isPanelEnabled() {
       return useChannelsCB_.isSelected();
    }
+   
+   /**
+    * used to externally (e.g. from API) enable or disable channels
+    * @param enabled
+    */
+   public void setPanelEnabled(boolean enabled) {
+      useChannelsCB_.setSelected(enabled);
+   }
 
    /**
     * Sets up the combo box for channel group.
@@ -315,7 +329,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
     * gets all valid groups from Core-ChannelGroup that have more than 1 preset 
     * ("config").  Different from the MDA method of getting valid groups.
     */
-   private String[] getAvailableGroups() {
+   public String[] getAvailableGroups() {
       StrVector groups;
       try {
          groups = core_.getAllowedPropertyValues("Core", "ChannelGroup");
@@ -335,6 +349,10 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    
    public String getChannelGroup() {
       return channelGroup_.getSelectedItem().toString();
+   }
+   
+   public void setChannelGroup(String channelGroup) {
+      channelGroup_.setSelectedItem(channelGroup);
    }
    
    /**
@@ -412,8 +430,9 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    /**
     * Gets the current configuration/preset from the selected channel group, even if that
     * preset isn't represented in the channel table.  Thus we can go back to the original
-    * preset after changing it via selectNextChannel.
+    * preset after changing it via selectNextChannel using setConfig().
     * @return
+    * @see MultiChannelSubPanel#setConfig(String)
     */
    public String getCurrentConfig() {
       try {
@@ -424,6 +443,11 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       return null;
    }
    
+   /**
+    * Sets the channel group preset, even if that preset isn't represented in the channel table
+    * @param config
+    * @see MultiChannelSubPanel#getCurrentConfig()
+    */
    public void setConfig(String config) {
       try {
          core_.setConfig(channelGroup_.getSelectedItem().toString(), config);
@@ -431,7 +455,38 @@ public class MultiChannelSubPanel extends ListeningJPanel {
          ReportingUtils.logError(e, "Failed to set config.");
       }
    }
+   
+   /**
+    * @return list of all channels/presets available for selected channel group
+    */
+   public String[] getAvailableChannels() {
+      return core_.getAvailableConfigs(channelGroup_.getSelectedItem().toString()).toArray();
+   }
 
+   /**
+    * Adds an entry to the table for the specified channel if it doesn't already exist.
+    * Marks that channel enabled/disabled as asked
+    * @param channel
+    * @param enabled
+    */
+   public void setChannelEnabled(String channel, boolean enabled) {
+      boolean found = false;
+      for (int i = 0; i < channelTableModel_.getRowCount(); i++) {
+         // hard-coding column indices here
+         if (((String) channelTableModel_.getValueAt(i, 1)).equals(channel)) {
+            found = true;
+            channelTableModel_.setValueAt(enabled, i, 0);
+            channelTableModel_.fireTableDataChanged();
+            break;
+         }
+      }
+      if (!found) {
+         channelTableModel_.addChannel((String) channelGroup_.getSelectedItem());
+         channelTableModel_.setValueAt(channel, channelTableModel_.getRowCount()-1, 1);
+         channelTableModel_.setValueAt(enabled, channelTableModel_.getRowCount()-1, 0);
+         channelTableModel_.fireTableDataChanged();
+      }
+   }
    
    @Override
    public void saveSettings() {
@@ -453,5 +508,6 @@ public class MultiChannelSubPanel extends ListeningJPanel {
          panel.refreshDisplay();
       }
    }
+
 
 }
