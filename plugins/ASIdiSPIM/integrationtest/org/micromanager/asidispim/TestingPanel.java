@@ -28,6 +28,7 @@ import java.io.File;
 
 import javax.swing.JButton;
 
+import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
@@ -82,6 +83,15 @@ public class TestingPanel extends ListeningJPanel {
                      testTimepointInterval();
                      testMultiplePositionsEnabled();
                      testMultiplePositionDelayInterval();
+                     testChannelsEnabled();
+                     testChannelGroup();
+                     testChannelEnabled();
+                     testVolumeNumberOfSides();
+                     testVolumeFirstSide();
+                     testVolumeDelayBeforeSide();
+                     testVolumeSlicesPerVolume();
+                     testVolumeSliceStepSize();
+                     testVolumeMinimizeSlicePeriod();
                      MyDialogUtils.showError("all tests passed successfully");
                   } catch (Exception ex) {
                      MyDialogUtils.showError(ex);
@@ -176,6 +186,8 @@ public class TestingPanel extends ListeningJPanel {
       assertEquals(true, diSPIM.getSavingSeparateFile());
       diSPIM.setSavingSeparateFile(false);
       assertEquals(false, diSPIM.getSavingSeparateFile());
+      diSPIM.setSavingSeparateFile(true);
+      assertEquals(true, diSPIM.getSavingSeparateFile());
       diSPIM.setSavingSeparateFile(settingOrig);
    }
    
@@ -186,6 +198,8 @@ public class TestingPanel extends ListeningJPanel {
       assertEquals(true, diSPIM.getSavingSaveWhileAcquiring());
       diSPIM.setSavingSaveWhileAcquiring(false);
       assertEquals(false, diSPIM.getSavingSaveWhileAcquiring());
+      diSPIM.setSavingSaveWhileAcquiring(true);
+      assertEquals(true, diSPIM.getSavingSaveWhileAcquiring());
       diSPIM.setSavingSaveWhileAcquiring(settingOrig);
    }
    
@@ -215,6 +229,8 @@ public class TestingPanel extends ListeningJPanel {
       assertEquals(true, diSPIM.getTimepointsEnabled());
       diSPIM.setTimepointsEnabled(false);
       assertEquals(false, diSPIM.getTimepointsEnabled());
+      diSPIM.setTimepointsEnabled(true);
+      assertEquals(true, diSPIM.getTimepointsEnabled());
       diSPIM.setTimepointsEnabled(settingOrig);
    }
    
@@ -267,29 +283,190 @@ public class TestingPanel extends ListeningJPanel {
       assertEquals(true, diSPIM.getMultiplePositionsEnabled());
       diSPIM.setMultiplePositionsEnabled(false);
       assertEquals(false, diSPIM.getMultiplePositionsEnabled());
+      diSPIM.setMultiplePositionsEnabled(true);
+      assertEquals(true, diSPIM.getMultiplePositionsEnabled());
       diSPIM.setMultiplePositionsEnabled(settingOrig);
    }
    
    private void testMultiplePositionDelayInterval() throws ASIdiSPIMException, Error {
       ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
-      double settingOrig = diSPIM.getMultiplePositionsPostMoveDelay();
+      double settingOrig = diSPIM.getMultiplePositionsDelay();
       // throws exception if not between 0 and 10000
       try {
-         diSPIM.setMultiplePositionsPostMoveDelay(-0.1);
+         diSPIM.setMultiplePositionsDelay(-0.1);
          fail("didn't catch exception");
       } catch (ASIdiSPIMException ex) {
       }
       try {
-         diSPIM.setMultiplePositionsPostMoveDelay(10000.1);
+         diSPIM.setMultiplePositionsDelay(10000.1);
          fail("didn't catch exception");
       } catch (ASIdiSPIMException ex) {
       }
-      diSPIM.setMultiplePositionsPostMoveDelay(10);
-      assertEquals(10, diSPIM.getMultiplePositionsPostMoveDelay(), 1e-6);
-      diSPIM.setMultiplePositionsPostMoveDelay(100);
-      assertEquals(100, diSPIM.getMultiplePositionsPostMoveDelay(), 1e-6);
-      diSPIM.setMultiplePositionsPostMoveDelay(settingOrig);
+      diSPIM.setMultiplePositionsDelay(10);
+      assertEquals(10, diSPIM.getMultiplePositionsDelay(), 1e-6);
+      diSPIM.setMultiplePositionsDelay(100);
+      assertEquals(100, diSPIM.getMultiplePositionsDelay(), 1e-6);
+      diSPIM.setMultiplePositionsDelay(settingOrig);
    }
    
+   private void testChannelsEnabled() throws ASIdiSPIMException, Error {
+      ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
+      boolean settingOrig = diSPIM.getChannelsEnabled();
+      diSPIM.setChannelsEnabled(true);
+      assertEquals(true, diSPIM.getChannelsEnabled());
+      diSPIM.setChannelsEnabled(false);
+      assertEquals(false, diSPIM.getChannelsEnabled());
+      diSPIM.setChannelsEnabled(true);
+      assertEquals(true, diSPIM.getChannelsEnabled());
+      diSPIM.setChannelsEnabled(settingOrig);
+   }
+   
+   private void testChannelGroup() throws ASIdiSPIMException, Error {
+      ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
+      String settingOrig = diSPIM.getChannelGroup();
+      String[] keys = diSPIM.getAvailableChannelGroups();
+      for (String key : keys) {
+         diSPIM.setChannelGroup(key);
+         assertEquals(key, diSPIM.getChannelGroup());
+      }
+      try {
+         diSPIM.setChannelGroup("aoeutest1234");
+         fail("didn't catch exception");
+      } catch (ASIdiSPIMException ex) {
+      }
+      diSPIM.setChannelGroup(settingOrig);
+   }
+   
+   // note that this adds rows to the table and there is no API method
+   //   to remove them
+   private void testChannelEnabled() throws ASIdiSPIMException, Error {
+      ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
+      String[] keys = diSPIM.getAvailableChannels();
+      for (String key : keys) {
+         boolean origSetting = diSPIM.getChannelEnabled(key);
+         diSPIM.setChannelEnabled(key, true);
+         assertEquals(true, diSPIM.getChannelEnabled(key));
+         diSPIM.setChannelEnabled(key, false);
+         assertEquals(false, diSPIM.getChannelEnabled(key));
+         diSPIM.setChannelEnabled(key, true);
+         assertEquals(true, diSPIM.getChannelEnabled(key));
+         diSPIM.setChannelEnabled(key, origSetting);
+      }
+      try {
+         diSPIM.getChannelEnabled("aoeutest1234");
+         fail("didn't catch exception");
+      } catch (ASIdiSPIMException ex) {
+      }
+   }
+   
+   private void testVolumeNumberOfSides() throws ASIdiSPIMException, Error {
+      ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
+      int settingOrig = diSPIM.getVolumeNumberOfSides();
+      diSPIM.setVolumeNumberOfSides(1);
+      assertEquals(1, diSPIM.getVolumeNumberOfSides());
+      diSPIM.setVolumeNumberOfSides(2);
+      assertEquals(2, diSPIM.getVolumeNumberOfSides());
+      try {
+         diSPIM.setVolumeNumberOfSides(0);
+         fail("didn't catch exception");
+      } catch (ASIdiSPIMException ex) {
+      }
+      try {
+         diSPIM.setVolumeNumberOfSides(3);
+         fail("didn't catch exception");
+      } catch (ASIdiSPIMException ex) {
+      }
+      diSPIM.setVolumeNumberOfSides(settingOrig);
+   }
+   
+   private void testVolumeFirstSide() throws ASIdiSPIMException, Error {
+      ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
+      Devices.Sides settingOrig = diSPIM.getVolumeFirstSide();
+      diSPIM.setVolumeFirstSide(Devices.Sides.A);
+      assertEquals(Devices.Sides.A, diSPIM.getVolumeFirstSide());
+      diSPIM.setVolumeFirstSide(Devices.Sides.B);
+      assertEquals(Devices.Sides.B, diSPIM.getVolumeFirstSide());
+      try {
+         diSPIM.setVolumeFirstSide(Devices.Sides.NONE);
+         fail("didn't catch exception");
+      } catch (ASIdiSPIMException ex) {
+      }
+      diSPIM.setVolumeFirstSide(settingOrig);
+   }
+   
+   private void testVolumeDelayBeforeSide() throws ASIdiSPIMException, Error {
+      ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
+      double settingOrig = diSPIM.getVolumeDelayBeforeSide();
+      // throws exception if not between 0 and 10000
+      try {
+         diSPIM.setVolumeDelayBeforeSide(-0.1);
+         fail("didn't catch exception");
+      } catch (ASIdiSPIMException ex) {
+      }
+      try {
+         diSPIM.setVolumeDelayBeforeSide(10000.1);
+         fail("didn't catch exception");
+      } catch (ASIdiSPIMException ex) {
+      }
+      diSPIM.setVolumeDelayBeforeSide(10);
+      assertEquals(10, diSPIM.getVolumeDelayBeforeSide(), 1e-6);
+      diSPIM.setVolumeDelayBeforeSide(100);
+      assertEquals(100, diSPIM.getVolumeDelayBeforeSide(), 1e-6);
+      diSPIM.setVolumeDelayBeforeSide(settingOrig);
+   }
+   
+   private void testVolumeSlicesPerVolume() throws ASIdiSPIMException, Error {
+      ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
+      int settingOrig = diSPIM.getVolumeSlicesPerVolume();
+      // throws exception if not between 1 and 65000
+      try {
+         diSPIM.setVolumeSlicesPerVolume(0);
+         fail("didn't catch exception");
+      } catch (ASIdiSPIMException ex) {
+      }
+      try {
+         diSPIM.setVolumeSlicesPerVolume(65001);
+         fail("didn't catch exception");
+      } catch (ASIdiSPIMException ex) {
+      }
+      diSPIM.setVolumeSlicesPerVolume(10);
+      assertEquals(10, diSPIM.getVolumeSlicesPerVolume());
+      diSPIM.setVolumeSlicesPerVolume(100);
+      assertEquals(100, diSPIM.getVolumeSlicesPerVolume());
+      diSPIM.setVolumeSlicesPerVolume(settingOrig);
+   }
+   
+   private void testVolumeSliceStepSize() throws ASIdiSPIMException, Error {
+      ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
+      double settingOrig = diSPIM.getVolumeSliceStepSize();
+      // throws exception if not between 0 and 10000
+      try {
+         diSPIM.setVolumeSliceStepSize(-0.1);
+         fail("didn't catch exception");
+      } catch (ASIdiSPIMException ex) {
+      }
+      try {
+         diSPIM.setVolumeSliceStepSize(100.1);
+         fail("didn't catch exception");
+      } catch (ASIdiSPIMException ex) {
+      }
+      diSPIM.setVolumeSliceStepSize(10);
+      assertEquals(10, diSPIM.getVolumeSliceStepSize(), 1e-6);
+      diSPIM.setVolumeSliceStepSize(1);
+      assertEquals(1, diSPIM.getVolumeSliceStepSize(), 1e-6);
+      diSPIM.setVolumeSliceStepSize(settingOrig);
+   }
+   
+   private void testVolumeMinimizeSlicePeriod() throws ASIdiSPIMException, Error {
+      ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
+      boolean settingOrig = diSPIM.getVolumeMinimizeSlicePeriod();
+      diSPIM.setVolumeMinimizeSlicePeriod(true);
+      assertEquals(true, diSPIM.getVolumeMinimizeSlicePeriod());
+      diSPIM.setVolumeMinimizeSlicePeriod(false);
+      assertEquals(false, diSPIM.getVolumeMinimizeSlicePeriod());
+      diSPIM.setVolumeMinimizeSlicePeriod(true);
+      assertEquals(true, diSPIM.getVolumeMinimizeSlicePeriod());
+      diSPIM.setVolumeMinimizeSlicePeriod(settingOrig);
+   }
    
 }

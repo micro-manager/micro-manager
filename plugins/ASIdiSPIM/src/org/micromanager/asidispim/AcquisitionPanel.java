@@ -857,8 +857,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    
    /**
     * convenience method to avoid having to regenerate acquisition settings
+    * public for API use
     */
-   private int getNumSides() {
+   public int getNumSides() {
       if (numSides_.getSelectedIndex() == 1) {
          return 2;
       } else {
@@ -868,14 +869,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    
    /**
     * convenience method to avoid having to regenerate acquisition settings
+    * public for API use
     */
-   private boolean isFirstSideA() {
+   public boolean isFirstSideA() {
       return ((String) firstSide_.getSelectedItem()).equals("A");
    }
    
    /**
     * convenience method to avoid having to regenerate acquisition settings.
-    * public for external use
+    * public for API use
     */
    public double getTimepointInterval() {
       return PanelUtils.getSpinnerFloatValue(acquisitionInterval_);
@@ -2537,15 +2539,119 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
 
    public double getMultiplePositionsPostMoveDelay() {
-      return (Double) positionDelay_.getValue();
+      return PanelUtils.getSpinnerFloatValue(positionDelay_);
    }
 
-   public void setMultiplePositionsPostMoveDelay(double delayMs) throws ASIdiSPIMException {
+   public void setMultiplePositionsDelay(double delayMs) throws ASIdiSPIMException {
       if (delayMs < 0d || delayMs > 10000d) {
          throw new ASIdiSPIMException("illegal value for post move delay");
       }
       positionDelay_.setValue(delayMs);
    }
+
+   public boolean getChannelsEnabled() {
+      return multiChannelPanel_.isMultiChannel();
+   }
+
+   public void setChannelsEnabled(boolean enabled) {
+      multiChannelPanel_.setPanelEnabled(enabled);
+   }
+
+   public String[] getAvailableChannelGroups() {
+      return multiChannelPanel_.getAvailableGroups();
+   }
+   
+   public String getChannelGroup() {
+      return multiChannelPanel_.getChannelGroup();
+   }
+
+   public void setChannelGroup(String channelGroup) {
+      String[] availableGroups = getAvailableChannelGroups();
+      for (String group : availableGroups) {
+         if (group.equals(channelGroup)) {
+            multiChannelPanel_.setChannelGroup(channelGroup);
+         }
+      }
+   }
+
+   public String[] getAvailableChannels() {
+      return multiChannelPanel_.getAvailableChannels();
+   }
+
+   public boolean getChannelEnabled(String channel) {
+      ChannelSpec[] usedChannels = multiChannelPanel_.getUsedChannels();
+      for (ChannelSpec spec : usedChannels) {
+         if (spec.config_.equals(channel)) {
+            return true;
+         }
+      }
+      return false;
+   }
+
+   public void setChannelEnabled(String channel, boolean enabled) {
+     multiChannelPanel_.setChannelEnabled(channel, enabled);
+   }
+
+   // getNumSides() already existed
+   
+   public void setVolumeNumberOfSides(int numSides) {
+      if (numSides == 2) {
+         numSides_.setSelectedIndex(1);
+      } else {
+         numSides_.setSelectedIndex(0);
+      }
+   }
+
+   public void setFirstSideIsA(boolean firstSideIsA) {
+      if (firstSideIsA) {
+         firstSide_.setSelectedIndex(0);
+      } else {
+         firstSide_.setSelectedIndex(1);
+      }
+   }
+
+   public double getVolumeDelayBeforeSide() {
+      return PanelUtils.getSpinnerFloatValue(delaySide_);
+   }
+
+   public void setVolumeDelayBeforeSide(double delayMs) throws ASIdiSPIMException {
+      if (delayMs < 0d || delayMs > 10000d) {
+         throw new ASIdiSPIMException("illegal value for delay before side");
+      }
+      delaySide_.setValue(delayMs);
+   }
+
+   public int getVolumeSlicesPerVolume() {
+      return (Integer) numSlices_.getValue();
+   }
+
+   public void setVolumeSlicesPerVolume(int slices) throws ASIdiSPIMException {
+      if (slices < 1 || slices > 65000) {
+         throw new ASIdiSPIMException("illegal value for number of slices");
+      }
+      numSlices_.setValue(slices);
+   }
+
+   public double getVolumeSliceStepSize() {
+      return PanelUtils.getSpinnerFloatValue(stepSize_);
+   }
+
+   public void setVolumeSliceStepSize(double stepSizeUm) throws ASIdiSPIMException {
+      if (stepSizeUm < 0d || stepSizeUm > 100d) {
+         throw new ASIdiSPIMException("illegal value for slice step size");
+      }
+      stepSize_.setValue(stepSizeUm);
+   }
+
+   public boolean getVolumeMinimizeSlicePeriod() {
+      return minSlicePeriodCB_.isSelected();
+   }
+
+   public void setVolumeMinimizeSlicePeriod(boolean minimize) {
+      minSlicePeriodCB_.setSelected(minimize);
+   }
+
+   
 
    
 }

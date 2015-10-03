@@ -24,10 +24,8 @@ package org.micromanager.asidispim.api;
 import java.awt.geom.Point2D.Double;
 
 import mmcorej.CMMCore;
-import mmcorej.MMCoreJ;
 
 import org.micromanager.MMStudio;
-import org.micromanager.api.MultiStagePosition;
 import org.micromanager.api.PositionList;
 import org.micromanager.asidispim.ASIdiSPIM;
 import org.micromanager.asidispim.ASIdiSPIMFrame;
@@ -37,6 +35,8 @@ import org.micromanager.asidispim.AutofocusPanel.Modes;
 import org.micromanager.asidispim.NavigationPanel;
 import org.micromanager.asidispim.Data.AcquisitionModes.Keys;
 import org.micromanager.asidispim.Data.AcquisitionSettings;
+import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.asidispim.Data.Devices.Sides;
 import org.micromanager.utils.MMScriptException;
 
 /**
@@ -182,6 +182,7 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
 
    @Override
    public void setTimepointInterval(double intervalTimepoints) throws ASIdiSPIMException {
+      // range checking done later
       getAcquisitionPanel().setTimepointInterval(intervalTimepoints);
    }
    
@@ -196,13 +197,175 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    }
    
    @Override
-   public double getMultiplePositionsPostMoveDelay() throws ASIdiSPIMException {
+   public double getMultiplePositionsDelay() throws ASIdiSPIMException {
       return getAcquisitionPanel().getMultiplePositionsPostMoveDelay();
    }
 
    @Override
-   public void setMultiplePositionsPostMoveDelay(double delayMs) throws ASIdiSPIMException {
-      getAcquisitionPanel().setMultiplePositionsPostMoveDelay(delayMs);
+   public void setMultiplePositionsDelay(double delayMs) throws ASIdiSPIMException {
+      // range checking done later
+      getAcquisitionPanel().setMultiplePositionsDelay(delayMs);
+   }
+   
+   @Override
+   public PositionList getPositionList() throws ASIdiSPIMException {
+      try {
+         return getGui().getPositionList();
+      } catch (Exception ex) {
+         throw new ASIdiSPIMException(ex);
+      }
+   }
+   
+   @Override
+   public boolean getChannelsEnabled() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getChannelsEnabled();
+   }
+
+   @Override
+   public void setChannelsEnabled(boolean enabled) throws ASIdiSPIMException {
+      getAcquisitionPanel().setChannelsEnabled(enabled);
+      
+   }
+
+   @Override
+   public String[] getAvailableChannelGroups() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getAvailableChannelGroups();
+   }
+   
+   @Override
+   public String getChannelGroup() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getChannelGroup();
+   }
+
+   @Override
+   public void setChannelGroup(String channelGroup) throws ASIdiSPIMException {
+      String[] availableGroups = getAvailableChannelGroups();
+      for (String gr : availableGroups) {
+         if (gr.equals(channelGroup)) {
+            getAcquisitionPanel().setChannelGroup(channelGroup);
+            return;
+         }
+      }
+      throw new ASIdiSPIMException("specified channel group not available");
+   }
+
+   @Override
+   public String[] getAvailableChannels() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getAvailableChannels();
+   }
+   
+   @Override
+   public boolean getChannelEnabled(String channel) throws ASIdiSPIMException {
+      if (!getChannelsEnabled()) {
+         return false;
+      }
+      String[] availableChannels = getAvailableChannels();
+      for (String ch : availableChannels) {
+         if (ch.equals(channel)) {
+            return getAcquisitionPanel().getChannelEnabled(channel);
+         }
+      }
+      throw new ASIdiSPIMException("specified channel not available");
+   }
+
+   @Override
+   public void setChannelEnabled(String channel, boolean enabled) throws ASIdiSPIMException {
+      String[] availableChannels = getAvailableChannels();
+      for (String ch : availableChannels) {
+         if (ch.equals(channel)) {
+            getAcquisitionPanel().setChannelEnabled(channel, enabled);
+            return;
+         }
+      }
+      throw new ASIdiSPIMException("specified channel not available");
+   }
+   
+   @Override
+   public org.micromanager.asidispim.Data.MultichannelModes.Keys getChannelChangeMode() throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void setChannelChangeMode(org.micromanager.asidispim.Data.MultichannelModes.Keys mode) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public int getVolumeNumberOfSides() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getNumSides();
+   }
+
+   @Override
+   public void setVolumeNumberOfSides(int numSides) throws ASIdiSPIMException {
+      if (numSides < 1 || numSides > 2) {
+         throw new ASIdiSPIMException("number of sides can only be 1 or 2");
+      }
+      getAcquisitionPanel().setVolumeNumberOfSides(numSides);
+   }
+   
+   @Override
+   public Devices.Sides getVolumeFirstSide() throws ASIdiSPIMException {
+      if (getAcquisitionPanel().isFirstSideA()) {
+         return Devices.Sides.A;
+      } else {
+         return Devices.Sides.B;
+      }
+   }
+
+   @Override
+   public void setVolumeFirstSide(Devices.Sides firstSide) throws ASIdiSPIMException {
+      if (firstSide == Devices.Sides.A) {
+         getAcquisitionPanel().setFirstSideIsA(true);
+      } else if (firstSide == Devices.Sides.B) {
+         getAcquisitionPanel().setFirstSideIsA(false);
+      } else {
+         throw new ASIdiSPIMException("invalid value of firstSide");
+      }
+   }
+   
+   @Override
+   public double getVolumeDelayBeforeSide() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getVolumeDelayBeforeSide();
+   }
+
+   @Override
+   public void setVolumeDelayBeforeSide(double delayMs) throws ASIdiSPIMException {
+      // range checking done later
+      getAcquisitionPanel().setVolumeDelayBeforeSide(delayMs);
+   }
+   
+   @Override
+   public int getVolumeSlicesPerVolume() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getVolumeSlicesPerVolume();
+   }
+
+   @Override
+   public void setVolumeSlicesPerVolume(int slices) throws ASIdiSPIMException {
+      // range checking done later
+      getAcquisitionPanel().setVolumeSlicesPerVolume(slices);      
+   }
+   
+   @Override
+   public double getVolumeSliceStepSize() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getVolumeSliceStepSize();
+   }
+
+   @Override
+   public void setVolumeSliceStepSize(double stepSizeUm) throws ASIdiSPIMException {
+      // range checking done later
+      getAcquisitionPanel().setVolumeSliceStepSize(stepSizeUm);   
+   }
+   
+   @Override
+   public boolean getVolumeMinimizeSlicePeriod() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getVolumeMinimizeSlicePeriod();
+   }
+
+   @Override
+   public void setVolumeMinimizeSlicePeriod(boolean minimize) throws ASIdiSPIMException {
+      getAcquisitionPanel().setVolumeMinimizeSlicePeriod(minimize);
    }
    
    
@@ -263,162 +426,6 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
 
 
 
-
-
-
-   @Override
-   public PositionList getPositionList() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return null;
-   }
-
-   @Override
-   public int getNumberOfPositions() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return 0;
-   }
-
-   @Override
-   public MultiStagePosition getPositionFromIndex(int idx)
-         throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return null;
-   }
-
-   @Override
-   public void moveToPositionFromIndex(int idx) throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public boolean getChannelsEnabled() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return false;
-   }
-
-   @Override
-   public void setChannelsEnabled(boolean enabled) throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public String getChannelGroup() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return null;
-   }
-
-   @Override
-   public void setChannelGroup(String channelGroup) throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public boolean getChannelPresetEnabled(String channelPreset)
-         throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return false;
-   }
-
-   @Override
-   public void setChannelPresetEnabled(String channelPreset, boolean enabled)
-         throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public org.micromanager.asidispim.Data.MultichannelModes.Keys getChannelChangeMode()
-         throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return null;
-   }
-
-   @Override
-   public void setChannelChangeMode(
-         org.micromanager.asidispim.Data.MultichannelModes.Keys mode)
-         throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public int getVolumeNumberOfSides() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return 0;
-   }
-
-   @Override
-   public void setVolumeNumberOfSides(int numSides) throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public String getVolumeFirstSide() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return null;
-   }
-
-   @Override
-   public void setVolumeFirstSide(String firstSide) throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public double getVolumeDelayBeforeSide() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return 0;
-   }
-
-   @Override
-   public void setVolumeDelayBeforeSide(double delayMs)
-         throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public int getVolumeSlicesPerVolume() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return 0;
-   }
-
-   @Override
-   public void setVolumeSlicesPerVolume(int slices) throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public double getVolumeSliceStepSize() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return 0;
-   }
-
-   @Override
-   public void setVolumeSliceStepSize(double stepSizeUm)
-         throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public boolean getVolumeMinimizeSlicePeriod() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return false;
-   }
-
-   @Override
-   public void setVolumeMinimizeSlicePeriod(boolean minimize)
-         throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
-
    @Override
    public double getVolumeSlicePeriod() throws ASIdiSPIMException {
       // TODO Auto-generated method stub
@@ -443,6 +450,109 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       // TODO Auto-generated method stub
       
    }
+   
+   @Override
+   public double getSideImagingCenter(Sides side) throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+
+   @Override
+   public void setSideImagingCenter(Sides side, double center)
+         throws ASIdiSPIMException {
+      // TODO Auto-generated method stub
+      
+   }
+   
+   @Override
+   public double getSideSlicePosition(Sides side) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void setSideSlicePosition(Sides side, double position) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public double getSideImagingPiezoPosition(Sides side) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void setSideImagingPiezoPosition(Sides side, double position) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public double getSideIlluminationPiezoPosition(Sides side) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void setSideIlluminationPiezoPosition(Sides side, double position) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void setSideIlluminationPiezoHome(Sides side) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public double getSideSheetWidth(Sides side) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void setSideSheetWidth(Sides side, double width) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public double getSideSheetOffset(Sides side) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void setSideSheetOffset(Sides side, double offset) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+   
+   @Override
+   public double getSideSlope(Sides side) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void setSideSlope(Sides side, double slope) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();      
+   }
+
+   @Override
+   public void updateSideOffset(Sides side) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void runAutofocusSide(Sides side) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
 
    @Override
    public boolean getAutofocusDuringAcquisition() throws ASIdiSPIMException {
@@ -456,44 +566,43 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       // TODO Auto-generated method stub
       
    }
-
+   
    @Override
    public int getAutofocusNumImages() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return 0;
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
    }
 
    @Override
    public void setAutofocusNumImages(int numImages) throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();      
    }
 
    @Override
    public double getAutofocusStepSize() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return 0;
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
    }
 
    @Override
-   public void setAutofocusStepSize(double stepSizeUm)
-         throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
+   public void setAutofocusStepSize(double stepSizeUm) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
    }
 
    @Override
    public Modes getAutofocusMode() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return null;
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
    }
 
    @Override
    public void setAutofocusMode(Modes mode) throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
    }
-
+   
    @Override
    public boolean getAutofocusBeforeAcquisition() throws ASIdiSPIMException {
       // TODO Auto-generated method stub
@@ -612,5 +721,7 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       // TODO Auto-generated method stub
       return null;
    }
+
+
 
 }
