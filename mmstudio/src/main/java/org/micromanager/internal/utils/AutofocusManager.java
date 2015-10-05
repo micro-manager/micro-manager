@@ -109,10 +109,12 @@ public class AutofocusManager {
 
       // make sure the current autofocus is still in the list, otherwise set it to something...
       boolean found = false;
-      for (AutofocusPlugin af : afs_) {
-         if (af.getName().equals(currentAfDevice_.getName())) {
-            found = true;
-            currentAfDevice_ = af;
+      if (currentAfDevice_ != null) {
+         for (AutofocusPlugin af : afs_) {
+            if (af.getName().equals(currentAfDevice_.getName())) {
+               found = true;
+               currentAfDevice_ = af;
+            }
          }
       }
       if (!found && afs_.size() > 0)
