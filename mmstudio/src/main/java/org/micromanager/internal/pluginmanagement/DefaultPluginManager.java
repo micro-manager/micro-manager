@@ -35,6 +35,7 @@ import org.json.JSONObject;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.display.OverlayPlugin;
+import org.micromanager.IntroPlugin;
 import org.micromanager.MenuPlugin;
 import org.micromanager.MMPlugin;
 import org.micromanager.PluginManager;
@@ -94,6 +95,7 @@ public class DefaultPluginManager implements PluginManager {
             OverlayPlugin.class);
       PATH_TO_CLASS.put("org.micromanager.data.ProcessorPlugin",
             ProcessorPlugin.class);
+      PATH_TO_CLASS.put("org.micromanager.IntroPlugin", IntroPlugin.class);
       PATH_TO_CLASS.put("org.micromanager.MenuPlugin", MenuPlugin.class);
       PATH_TO_CLASS.put("org.micromanager.AutofocusPlugin",
             AutofocusPlugin.class);
@@ -296,6 +298,15 @@ public class DefaultPluginManager implements PluginManager {
    }
 
    @Override
+   public HashMap<String, IntroPlugin> getIntroPlugins() {
+      HashMap<String, IntroPlugin> result = new HashMap<String, IntroPlugin>();
+      for (MMPlugin plugin : pluginTypeToPlugins_.get(IntroPlugin.class)) {
+         result.put(plugin.getName(), (IntroPlugin) plugin);
+      }
+      return result;
+   }
+
+   @Override
    public HashMap<String, MenuPlugin> getMenuPlugins() {
       HashMap<String, MenuPlugin> result = new HashMap<String, MenuPlugin>();
       for (MMPlugin plugin : pluginTypeToPlugins_.get(MenuPlugin.class)) {
@@ -312,5 +323,4 @@ public class DefaultPluginManager implements PluginManager {
       }
       return result;
    }
-
 }

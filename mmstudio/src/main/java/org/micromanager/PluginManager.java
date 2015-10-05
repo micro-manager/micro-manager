@@ -59,4 +59,12 @@ public interface PluginManager {
     * AutofocusPlugins are used to perform autofocus operations.
     */
    public HashMap<String, AutofocusPlugin> getAutofocusPlugins();
+
+   /**
+    * Return a HashMap that maps plugin names to IntroPlugin instances.
+    * IntroPlugins are used to customize the intro dialog at the start of the
+    * program. Ordinarily there should only be at most one of this kind of
+    * plugin installed at a time.
+    */
+   public HashMap<String, IntroPlugin> getIntroPlugins();
 }

@@ -385,30 +385,12 @@ public class MMStudio implements Studio, CompatibilityInterface {
       hotKeys_ = new org.micromanager.internal.utils.HotKeys();
       hotKeys_.loadSettings();
 
-      if (IntroDlg.getShouldAskForConfigFile() ||
-            !DefaultUserProfile.getShouldAlwaysUseDefaultProfile()) {
-         // Ask the user for a configuration file and/or user profile.
-         IntroDlg introDlg = new IntroDlg(MMVersion.VERSION_STRING);
-         introDlg.setConfigFile(sysConfigFile_);
-         introDlg.setVisible(true);
-         introDlg.toFront();
-         if (!introDlg.okChosen()) {
-            // User aborted; close the program down.
-            closeSequence(false);
-            return;
-         }
-         sysConfigFile_ = introDlg.getConfigFile();
-      }
-
-      IJVersionCheckDlg.execute();
-
-      // before loading the system configuration, we need to wait 
-      // until the plugins are loaded
-      final WaitDialog waitDlg = new WaitDialog(
-              "Loading plugins, please wait...");
-
-      waitDlg.setAlwaysOnTop(true);
-      waitDlg.showDialog();
+      // We wait for plugin loading to finish now, since IntroPlugins may be
+      // needed to display the intro dialog. Fortunately, plugin loading is
+      // fast in 2.0 (it used to be very slow in 1.4, so we had a special
+      // dialog that popped up prompting the user to wait, and we had to do
+      // plugin loading in parallel with the intro dialog).
+      // TODO: show a splash image (like Fiji does) prior to the intro dialog.
       try {
          pluginManager_.waitForInitialization(15000);
       } catch (InterruptedException ex) {
@@ -421,8 +403,22 @@ public class MMStudio implements Studio, CompatibilityInterface {
       else {
          ReportingUtils.logMessage("Finished waiting for plugins to load");
       }
-      waitDlg.closeDialog();
-      
+
+      if (IntroDlg.getShouldAskForConfigFile() ||
+            !DefaultUserProfile.getShouldAlwaysUseDefaultProfile()) {
+         // Ask the user for a configuration file and/or user profile.
+         IntroDlg introDlg = new IntroDlg(this, sysConfigFile_,
+               MMVersion.VERSION_STRING);
+         if (!introDlg.okChosen()) {
+            // User aborted; close the program down.
+            closeSequence(false);
+            return;
+         }
+         sysConfigFile_ = introDlg.getConfigFile();
+      }
+
+      IJVersionCheckDlg.execute();
+
       // if an error occurred during config loading, do not display more 
       // errors than needed
       if (!loadSystemConfiguration()) {

@@ -36,6 +36,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.prefs.BackingStoreException;
@@ -53,6 +54,11 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.border.LineBorder;
+
+import net.miginfocom.swing.MigLayout;
+
+import org.micromanager.IntroPlugin;
+import org.micromanager.Studio;
 
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.DefaultUserProfile;
@@ -73,6 +79,9 @@ public class IntroDlg extends JDialog {
    private static final String DEMO_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
 
    private static final int MAX_RECENT_CONFIGS = 6;
+
+   private Studio studio_;
+   private IntroPlugin plugin_ = null;
 
    private final JTextArea welcomeTextArea_;
    private boolean okFlag_ = true;
@@ -97,78 +106,61 @@ public class IntroDlg extends JDialog {
    public static String CITATION_TEXT =
       "If you have found this software useful, please cite Micro-Manager in your publications.";
 
-   public IntroDlg(String ver) {
+   public IntroDlg(Studio studio, String sysConfigFile, String versionStr) {
       super();
-      setFont(new Font("Arial", Font.PLAIN, 10));
+      studio_ = studio;
+
+      // Select a plugin to use to customize the dialog.
+      HashMap<String, IntroPlugin> plugins = studio_.plugins().getIntroPlugins();
+      if (plugins.size() > 0) {
+         // Take the alphabetically first intro plugin we see.
+         ArrayList<String> names = new ArrayList<String>(plugins.keySet());
+         Collections.sort(names);
+         plugin_ = plugins.get(names.get(0));
+         if (plugins.size() > 1) {
+            ReportingUtils.logError("Multiple IntroPlugins found; using " + names.get(0));
+         }
+      }
+
+      Font textFont = new Font("Arial", Font.PLAIN, 10);
+      setFont(textFont);
       setTitle("Micro-Manager Startup");
-      getContentPane().setLayout(null);
       setName("Intro");
       setResizable(false);
       setModal(true);
       setUndecorated(true);
-      if (! IJ.isMacOSX())
+      if (!IJ.isMacOSX()) {
         ((JPanel) getContentPane()).setBorder(BorderFactory.createLineBorder(Color.GRAY));
-      setSize(new Dimension(392, 573));
-      Dimension winSize = getSize();
-      Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-      setLocation(screenSize.width/2 - (winSize.width/2), screenSize.height/2 - (winSize.height/2));
+      }
 
+      JPanel contentsPanel = new JPanel(new MigLayout("flowy, insets 0"));
       JLabel introImage = new JLabel();
-      introImage.setIcon(new ImageIcon(getClass().getResource(
-              "/org/micromanager/icons/splash.gif")));
-      introImage.setLayout(null);
-      introImage.setBounds(0, 0, 392, 197);
-      introImage.setFocusable(false);
+      if (plugin_ == null || plugin_.getSplashImage() == null) {
+         introImage.setIcon(new ImageIcon(getClass().getResource(
+                 "/org/micromanager/icons/splash.gif")));
+      }
+      else {
+         introImage.setIcon(plugin_.getSplashImage());
+      }
       introImage.setBorder(new LineBorder(Color.black, 1, false));
-      introImage.setText("New JLabel");
-      getContentPane().add(introImage);
-
-      final JButton okButton = new JButton();
-      okButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      okButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            okFlag_ = true;
-            setVisible(false);
-         }
-      });
-      okButton.setText("OK");
-      okButton.setBounds(JavaUtils.isMac() ? 200 : 100, 537, 81, 24);
-      getContentPane().add(okButton);
-      getRootPane().setDefaultButton(okButton);
-      okButton.requestFocusInWindow();
-      
-      final JButton cancelButton = new JButton();
-      cancelButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      cancelButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            okFlag_ = false;
-            setVisible(false);
-         }
-      });
-      cancelButton.setText("Cancel");
-      cancelButton.setBounds(JavaUtils.isMac() ? 100 : 200, 537, 81, 24);
-      getContentPane().add(cancelButton);     
+      contentsPanel.add(introImage, "align center");
 
       final JLabel microscopeManagerLabel = new JLabel();
       microscopeManagerLabel.setFont(new Font("", Font.BOLD, 12));
       microscopeManagerLabel.setText("Micro-Manager startup configuration");
-      microscopeManagerLabel.setBounds(5, 198, 259, 22);
-      getContentPane().add(microscopeManagerLabel);
+      contentsPanel.add(microscopeManagerLabel, "gapleft 5");
 
-      final JLabel version10betaLabel = new JLabel();
-      version10betaLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-      version10betaLabel.setText("MMStudio Version " + ver);
-      version10betaLabel.setBounds(5, 216, 193, 13);
-      getContentPane().add(version10betaLabel);
+      final JLabel versionLabel = new JLabel();
+      versionLabel.setFont(textFont);
+      versionLabel.setText("MMStudio Version " + versionStr);
+      contentsPanel.add(versionLabel, "gapleft 5");
 
       if (!DefaultUserProfile.getShouldAlwaysUseDefaultProfile()) {
-         addProfileDropdown();
+         addProfileDropdown(contentsPanel);
       }
 
       if (getShouldAskForConfigFile()) {
-         addConfigFileSelect();
+         addConfigFileSelect(contentsPanel);
       }
 
       welcomeTextArea_ = new JTextArea() {
@@ -179,23 +171,67 @@ public class IntroDlg extends JDialog {
       };
       welcomeTextArea_.setBorder(new EtchedBorder());
       welcomeTextArea_.setWrapStyleWord(true);
-      welcomeTextArea_.setText(DISCLAIMER_TEXT + "\n\n" + SUPPORT_TEXT + "\n\n" + CITATION_TEXT);
+      welcomeTextArea_.setText(DISCLAIMER_TEXT + "\n\n" +
+            SUPPORT_TEXT + "\n\n" + CITATION_TEXT);
 
       welcomeTextArea_.setLineWrap(true);
-      welcomeTextArea_.setFont(new Font("Arial", Font.PLAIN, 10));
+      welcomeTextArea_.setFont(textFont);
       welcomeTextArea_.setFocusable(false);
       welcomeTextArea_.setEditable(false);
-      welcomeTextArea_.setBounds(10, 324, 356, 205);
-      getContentPane().add(welcomeTextArea_);
+      contentsPanel.add(welcomeTextArea_, "growx, gapleft 5, gapright 5");
 
+      final JButton okButton = new JButton();
+      okButton.setFont(textFont);
+      okButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            okFlag_ = true;
+            setVisible(false);
+         }
+      });
+      okButton.setText("OK");
+      getRootPane().setDefaultButton(okButton);
+      okButton.requestFocusInWindow();
+
+      final JButton cancelButton = new JButton();
+      cancelButton.setFont(textFont);
+      cancelButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            okFlag_ = false;
+            setVisible(false);
+         }
+      });
+      cancelButton.setText("Cancel");
+      if (JavaUtils.isMac()) {
+         contentsPanel.add(cancelButton, "split 2, align right, flowx");
+         contentsPanel.add(okButton);
+      }
+      else {
+         contentsPanel.add(okButton, "split 2, align right, flowx");
+         contentsPanel.add(cancelButton);
+      }
+
+      getContentPane().add(contentsPanel);
+      pack();
+      Dimension winSize = contentsPanel.getPreferredSize();
+      Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+      // Center the dialog on the screen.
+      setLocation(screenSize.width/2 - (winSize.width/2), screenSize.height/2 - (winSize.height/2));
+      setConfigFile(sysConfigFile);
+      toFront();
+      setVisible(true);
    }
 
-   private void addConfigFileSelect() {
+   private void addConfigFileSelect(JPanel contentsPanel) {
       final JLabel loadConfigurationLabel = new JLabel();
       loadConfigurationLabel.setFont(new Font("Arial", Font.PLAIN, 10));
       loadConfigurationLabel.setText("Configuration file:");
-      loadConfigurationLabel.setBounds(5, 270, 319, 19);
-      getContentPane().add(loadConfigurationLabel);
+      contentsPanel.add(loadConfigurationLabel, "gapleft 5");
+
+      cfgFileDropperDown_ = new JComboBox();
+      cfgFileDropperDown_.setFont(new Font("Arial", Font.PLAIN, 10));
+      contentsPanel.add(cfgFileDropperDown_, "split 2, flowx, width 320!");
 
       final JButton browseButton = new JButton();
       browseButton.addActionListener(new ActionListener() {
@@ -205,21 +241,14 @@ public class IntroDlg extends JDialog {
          }
       });
       browseButton.setText("...");
-      browseButton.setBounds(350, 287, 36, 26);
-      getContentPane().add(browseButton);
-
-      cfgFileDropperDown_ = new JComboBox();
-      cfgFileDropperDown_.setFont(new Font("Arial", Font.PLAIN, 10));
-      cfgFileDropperDown_.setBounds(5, 287, 342, 26);
-      getContentPane().add(cfgFileDropperDown_);
+      contentsPanel.add(browseButton);
    }
 
-   private void addProfileDropdown() {
+   private void addProfileDropdown(JPanel contentsPanel) {
       JLabel userProfileLabel = new JLabel("User profile:");
       Font stdFont = new Font("Arial", Font.PLAIN, 10);
       userProfileLabel.setFont(stdFont);
-      userProfileLabel.setBounds(5, 228, 319, 19);
-      getContentPane().add(userProfileLabel);
+      contentsPanel.add(userProfileLabel, "gapleft 5");
 
       final DefaultUserProfile profile = DefaultUserProfile.getInstance();
       Set<String> profiles = profile.getProfileNames();
@@ -228,6 +257,7 @@ public class IntroDlg extends JDialog {
       profilesAsList.remove(DefaultUserProfile.DEFAULT_USER);
       profilesAsList.add(0, DefaultUserProfile.DEFAULT_USER);
       profilesAsList.add(0, USERNAME_NEW);
+
       profileSelect_ = new JComboBox();
       profileSelect_.setToolTipText("The profile contains saved settings like window positions and acquisition parameters.");
       profileSelect_.setFont(stdFont);
@@ -235,7 +265,7 @@ public class IntroDlg extends JDialog {
          profileSelect_.addItem(profileName);
       }
       profileSelect_.setSelectedItem(DefaultUserProfile.DEFAULT_USER);
-      profileSelect_.setBounds(5, 244, 342, 26);
+      contentsPanel.add(profileSelect_, "split 2, flowx, width 320!");
 
       final JButton deleteButton = new JButton("Delete");
       deleteButton.setFont(stdFont);
@@ -256,8 +286,7 @@ public class IntroDlg extends JDialog {
          }
       });
       deleteButton.setEnabled(false);
-      deleteButton.setBounds(350, 244, 36, 26);
-      getContentPane().add(deleteButton);
+      contentsPanel.add(deleteButton);
 
       profileSelect_.addActionListener(new ActionListener() {
          @Override
@@ -294,7 +323,6 @@ public class IntroDlg extends JDialog {
             setConfigFile(null);
          }
       });
-      getContentPane().add(profileSelect_);
    }
 
    public boolean okChosen() {
@@ -311,6 +339,11 @@ public class IntroDlg extends JDialog {
       DefaultUserProfile profile = DefaultUserProfile.getInstance();
       ArrayList<String> configs = new ArrayList<String>(
             Arrays.asList(getRecentlyUsedConfigs()));
+      if (plugin_ != null && plugin_.getConfigFilePaths() != null) {
+         for (String pluginPath : plugin_.getConfigFilePaths()) {
+            configs.add(pluginPath);
+         }
+      }
       Boolean doesExist = false;
       if (path != null) {
          doesExist = new File(path).exists();
