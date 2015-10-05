@@ -339,11 +339,6 @@ public class IntroDlg extends JDialog {
       DefaultUserProfile profile = DefaultUserProfile.getInstance();
       ArrayList<String> configs = new ArrayList<String>(
             Arrays.asList(getRecentlyUsedConfigs()));
-      if (plugin_ != null && plugin_.getConfigFilePaths() != null) {
-         for (String pluginPath : plugin_.getConfigFilePaths()) {
-            configs.add(pluginPath);
-         }
-      }
       Boolean doesExist = false;
       if (path != null) {
          doesExist = new File(path).exists();
@@ -352,6 +347,11 @@ public class IntroDlg extends JDialog {
          addRecentlyUsedConfig(path);
          configs = new ArrayList<String>(
                Arrays.asList(getRecentlyUsedConfigs()));
+      }
+
+      // Add on plugin-provided configs.
+      if (plugin_ != null && plugin_.getConfigFilePaths() != null) {
+         configs.addAll(plugin_.getConfigFilePaths());
       }
 
       // Add on global default configs.
