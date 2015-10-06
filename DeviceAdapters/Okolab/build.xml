@@ -1,0 +1,15 @@
+<project name="Okolab">
+	<import file="../../buildscripts/deviceadapter.xml"/>
+	
+	<copy todir="${mm.dll.installdir}" file="okolib/db/okolib.db"/>
+	
+	<target name="install-Win32">
+		<copy todir="${mm.dll.installdir}" file="okolib/x86/okolib.dll"/>
+		<copy todir="${mm.dll.installdir}" file="okolib/x86/libserialport.dll"/>		
+	</target>
+
+	<target name="install-x64">
+		<copy todir="${mm.dll.installdir}" file="okolib/x64/okolib.dll"/>
+		<copy todir="${mm.dll.installdir}" file="okolib/x64/libserialport.dll"/>	
+	</target>
+</project>

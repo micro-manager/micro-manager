@@ -11,71 +11,17 @@
     </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CO2BLControl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CO2O2BL13Control.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CO2O2BLControl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="H201BLControl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="H301BLControl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="O2BLControl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="OCSControl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Okolab.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TestControl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ActiveHmdControl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
+    <ClInclude Include="OkolabDevice.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CO2BLControl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CO2O2BL13Control.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CO2O2BLControl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="H201BLControl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="H301BLControl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="O2BLControl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="OCSControl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Okolab.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TestControl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ActiveHmdControl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <ClCompile Include="OkolabDevice.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
