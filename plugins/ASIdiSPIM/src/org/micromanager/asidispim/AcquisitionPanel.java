@@ -297,6 +297,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          public void actionPerformed(ActionEvent e) {
             boolean doMin = minSlicePeriodCB_.isSelected();
             desiredSlicePeriod_.setEnabled(!doMin);
+            desiredSlicePeriodLabel_.setEnabled(!doMin);
             recalculateSliceTiming(false);
          }
       });
@@ -458,6 +459,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // also control some components in main volume settings sub-panel
             componentsSetEnabled(simpleTimingComponents, !enabled);
             desiredSlicePeriod_.setEnabled(!enabled && !minSlicePeriodCB_.isSelected());
+            desiredSlicePeriodLabel_.setEnabled(!enabled && !minSlicePeriodCB_.isSelected());
             updateDurationLabels();
          } 
 
