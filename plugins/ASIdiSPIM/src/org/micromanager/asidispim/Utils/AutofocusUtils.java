@@ -124,7 +124,7 @@ public class AutofocusUtils {
     *                            around the imaging center set in the setup panel (false)
     * @param sliceTiming - Data structure with current device timing setting
     * @param restoreCameraMode - After autofocus, set camera trigger back to internal or not
-    * @param runAsynchronously - whether or not to run the function asynchronously,
+    * @param runAsynchronously - whether or not to run the function asynchronously (in own thread)
     *          (both these are true when run from Setup panel and false when run during acquisition)
     * @return R-square for Gaussian fit to the focus data
     *
@@ -463,37 +463,29 @@ public class AutofocusUtils {
                      positions_.setPosition(galvoDevice, Directions.Y, originalGalvoPosition);
                   }
                   
-                  // determine if we found a "maximal focus" position and move to it
+                  // determine if we found a "maximal focus" position
                   // cannot be outside the center 80% of the search range
                   // R^2 value of fit must be greater than the minimum specified
                   // if for some reason we were unsuccessful then restore to original position
                   // don't bother moving anything if we are doing this during acquisition
+                  focusSuccess = false;
                   if (isPiezoScan) {
                      final double end1 = piezoStart + 0.1*piezoRange;
                      final double end2 = piezoStart + 0.9*piezoRange;
                      if (r2 > minimumRSquare
                            && bestPiezoPosition > Math.min(end1, end2)
                            && bestPiezoPosition < Math.max(end1, end2)) {
-                        // if during acquisition then make sure we are within allowed delta
-                        if (!restoreCameraMode) {  // proxy for "running during acquisition"
-                           // if focus hasn't changed then the best position will be exactly
-                           //   centered in the sweep range; use this to compute delta easily
-                           if (Math.abs(piezoCenter-bestPiezoPosition)
-                                 > props_.getPropValueFloat(Devices.Keys.PLUGIN,
-                                       Properties.Keys.PLUGIN_AUTOFOCUS_MAXOFFSETCHANGE)) {
-                              focusSuccess = false;  // during acquisition, not successful
-                           } else {
-                              focusSuccess = true;  // during acquisition, successful
-                           }
-                        } else {  // in setup tab, successful
-                           positions_.setPosition(piezoDevice, bestPiezoPosition);
-                           focusSuccess = true;
+                        // passed initial tests, now make sure change is within allowed range
+                        double focusDelta = Math.abs(piezoCenter-bestPiezoPosition);
+                        final double maxDelta;
+                        if (restoreCameraMode) {  // proxy for "running from setup"
+                           maxDelta = props_.getPropValueFloat(Devices.Keys.PLUGIN,
+                                 Properties.Keys.PLUGIN_AUTOFOCUS_MAXOFFSETCHANGE_SETUP);
+                        } else {
+                           maxDelta = props_.getPropValueFloat(Devices.Keys.PLUGIN,
+                                 Properties.Keys.PLUGIN_AUTOFOCUS_MAXOFFSETCHANGE);
                         }
-                     } else {  // unsuccessful
-                        // move to original position if we are doing this from setup tab
-                        if (restoreCameraMode) {
-                           positions_.setPosition(piezoDevice, originalPiezoPosition);
-                        }
+                        focusSuccess = (focusDelta <= maxDelta);
                      }
                   } else { // slice scan
                      final double end1 = galvoStart + 0.1*galvoRange;
@@ -501,30 +493,40 @@ public class AutofocusUtils {
                      if (r2 > minimumRSquare
                            && bestGalvoPosition > Math.min(end1, end2)
                            && bestGalvoPosition < Math.max(end1, end2)) {
-                        // if during acquisition then make sure we are within allowed delta
-                        if (!restoreCameraMode) {  // proxy for "running during acquisition"
-                           // if focus hasn't changed then the best position will be exactly
-                           //   centered in the sweep range; use this to compute delta easily
-                           if (Math.abs(galvoCenter-bestGalvoPosition) * calibrationRate
-                                 > props_.getPropValueFloat(Devices.Keys.PLUGIN,
-                                       Properties.Keys.PLUGIN_AUTOFOCUS_MAXOFFSETCHANGE)) {
-                              focusSuccess = false;  // during acquisition, not successful
+                        double focusDelta = Math.abs(galvoCenter-bestGalvoPosition) * calibrationRate;
+                        final double maxDelta;
+                        if (restoreCameraMode) {  // proxy for "running from setup"
+                           if (prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(), 
+                                 Properties.Keys.PLUGIN_AUTOFOCUS_AUTOUPDATE_OFFSET, false)) {
+                              maxDelta = props_.getPropValueFloat(Devices.Keys.PLUGIN,
+                                    Properties.Keys.PLUGIN_AUTOFOCUS_MAXOFFSETCHANGE_SETUP);
                            } else {
-                              focusSuccess = true;  // during acquisition, successful
+                              // effectively have no maximum delta if we aren't automatically updating
+                              maxDelta = 100000;
                            }
-                        } else {  // in setup tab, successful
-                           positions_.setPosition(galvoDevice, Directions.Y, bestGalvoPosition);
-                           focusSuccess = true;
+                        } else {
+                           maxDelta = props_.getPropValueFloat(Devices.Keys.PLUGIN,
+                                 Properties.Keys.PLUGIN_AUTOFOCUS_MAXOFFSETCHANGE);
                         }
-                     } else {  // unsuccessful
-                        // move to original position if we are doing this from setup tab
-                        if (restoreCameraMode) {
-                           positions_.setPosition(galvoDevice, Directions.Y, originalGalvoPosition);
-                        }
+                        focusSuccess = (focusDelta <= maxDelta);
+                     }
+                  }
+                  
+                  // if we are in Setup panel, move to either the best-focus position (if found)
+                  //   or else back to the original position.  If we are doing autofocus during
+                  //   acquisition this is an unnecessary step.
+                  if (restoreCameraMode) {  // proxy for "running from setup"
+                     if (isPiezoScan) {
+                        positions_.setPosition(piezoDevice, 
+                              focusSuccess ? bestPiezoPosition : originalPiezoPosition);
+                     } else {
+                        positions_.setPosition(galvoDevice, Directions.Y,
+                              focusSuccess ? bestGalvoPosition : originalGalvoPosition);
                      }
                   }
                   
                   // let the calling panel restore appropriate settings
+                  // currently only used by setup panels
                   caller.refreshSelected();
                      
                   posUpdater_.pauseUpdates(false);

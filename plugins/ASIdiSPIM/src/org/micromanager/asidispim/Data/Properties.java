@@ -209,6 +209,8 @@ public class Properties {
       PLUGIN_AUTOFOCUS_ACQBEFORESTART("AutofocusDoBeforeACQStart"),
       PLUGIN_AUTOFOCUS_EACHNIMAGES("AutofocusEachNTimePoints"),
       PLUGIN_AUTOFOCUS_MAXOFFSETCHANGE("AutofocusMaxOffsetChange"),
+      PLUGIN_AUTOFOCUS_MAXOFFSETCHANGE_SETUP("AutofocusMaxOffsetChangeSetup"),
+      PLUGIN_AUTOFOCUS_AUTOUPDATE_OFFSET("AutofocusAutoUpdateOffset"),
       PLUGIN_AUTOFOCUS_CHANNEL("AutofocusChannel"),
       PLUGIN_AUTOFOCUS_MINIMUMR2("AutofocusMinimumR2"),
       PLUGIN_ADVANCED_CAMERA_EXPOSURE("AdvancedCameraExposure")
