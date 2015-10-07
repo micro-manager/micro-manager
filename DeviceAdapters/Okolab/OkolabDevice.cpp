@@ -10,7 +10,8 @@ const char* g_MyDeviceName = "OkoLab";
 const char* g_DevicePort = "Device Port";
 const char* g_AutoLabel = "Auto";
 const char* g_RefreshInterval = "Time between refresh [ms]";
-const char* DAL_VERSION = "2.0.0";
+const char* DB_PATH = "";
+const char* DAL_VERSION = "2.0.1";
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
@@ -175,7 +176,7 @@ int OkolabDevice::initializeVersionAndDetectPorts()
 {
 	LogMessage("int OkolabDevice::initializeOkolabLibrary()", true);
 	oko_res_type ret = OKO_OK;
-	ret = oko_LibInit("");
+	ret = oko_LibInit(DB_PATH);
 	LogMessage("int OkolabDevice:2:initializeOkolabLibrary()", true);
 
 	if (ret != OKO_OK)
@@ -223,7 +224,7 @@ int OkolabDevice::initializeOkolabLibrary()
 {
 	LogMessage("int OkolabDevice::initializeOkolabLibrary()", true);
 	oko_res_type ret = OKO_OK;
-	ret = oko_LibInit("./Okolab");
+	ret = oko_LibInit(DB_PATH);
 	if (ret != OKO_OK)
 	{
 		LogOkolabError(ret, "Library cannot be initialized. ");
