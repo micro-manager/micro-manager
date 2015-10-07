@@ -278,7 +278,8 @@ public class DefaultImage implements Image {
          return null;
       }
       for (int i = 0; i < length; ++i) {
-         int sourceIndex = i * bytesPerPixel_ + component;
+         // See above re: divisor for why we have to do fiddly stuff here.
+         int sourceIndex = i * (numComponents_ == 1 ? 1 : bytesPerPixel_) + component;
          if (rawPixels_ instanceof ByteBuffer) {
             ((byte[]) result)[i] = ((ByteBuffer) rawPixels_).get(sourceIndex);
          }
