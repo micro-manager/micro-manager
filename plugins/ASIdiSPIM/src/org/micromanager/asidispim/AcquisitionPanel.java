@@ -2296,6 +2296,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     */
    @Override
    public void gotDeSelected() {
+      // if we have been using navigation panel's joysticks need to unset them
+      if (navigationJoysticksCB_.isSelected()) {
+         if (ASIdiSPIM.getFrame() != null) {
+            ASIdiSPIM.getFrame().getNavigationPanel().doJoystickSettings(false);
+         }
+      }
       sliceFrameAdvanced_.setVisible(false);
       saveSettings();
    }
