@@ -368,6 +368,28 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       getAcquisitionPanel().setVolumeMinimizeSlicePeriod(minimize);
    }
    
+   @Override
+   public double getVolumeSlicePeriod() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getVolumeSlicePeriod();
+   }
+
+   @Override
+   public void setVolumeSlicePeriod(double periodMs) throws ASIdiSPIMException {
+      // range checking done later
+      getAcquisitionPanel().setVolumeSlicePeriod(periodMs);   
+   }
+
+   @Override
+   public double getVolumeSampleExposure() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getVolumeSampleExposure();
+   }
+
+   @Override
+   public void setVolumeSampleExposure(double exposureMs) throws ASIdiSPIMException {
+      // range checking done later
+      getAcquisitionPanel().setVolumeSampleExposure(exposureMs);        
+   }
+   
    
    
    //** Private methods.  Only for internal use **//
@@ -426,31 +448,6 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
 
 
 
-   @Override
-   public double getVolumeSlicePeriod() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return 0;
-   }
-
-   @Override
-   public void setVolumeSlicePeriod(double periodMs) throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public double getVolumeSampleExposure() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return 0;
-   }
-
-   @Override
-   public void setVolumeSampleExposure(double exposureMs)
-         throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
-   
    @Override
    public double getSideImagingCenter(Sides side) throws ASIdiSPIMException {
       // TODO Auto-generated method stub
@@ -720,6 +717,30 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
          throws ASIdiSPIMException {
       // TODO Auto-generated method stub
       return null;
+   }
+
+   @Override
+   public double getEstimatedSliceDuration() {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+
+   @Override
+   public double getEstimatedVolumeDuration() {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+
+   @Override
+   public double getEstimatedAcquisitionDuration() {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+
+   @Override
+   public void refreshEstimatedTiming() {
+      // TODO Auto-generated method stub
+      
    }
 
 

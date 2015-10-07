@@ -92,6 +92,8 @@ public class TestingPanel extends ListeningJPanel {
                      testVolumeSlicesPerVolume();
                      testVolumeSliceStepSize();
                      testVolumeMinimizeSlicePeriod();
+                     testVolumeSlicePeriod();
+                     testVolumeSampleExposure();
                      MyDialogUtils.showError("all tests passed successfully");
                   } catch (Exception ex) {
                      MyDialogUtils.showError(ex);
@@ -468,5 +470,48 @@ public class TestingPanel extends ListeningJPanel {
       assertEquals(true, diSPIM.getVolumeMinimizeSlicePeriod());
       diSPIM.setVolumeMinimizeSlicePeriod(settingOrig);
    }
+   
+   private void testVolumeSlicePeriod() throws ASIdiSPIMException, Error {
+      ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
+      double settingOrig = diSPIM.getVolumeSlicePeriod();
+      // throws exception if not between 1 and 1000
+      try {
+         diSPIM.setVolumeSlicePeriod(0.9);
+         fail("didn't catch exception");
+      } catch (ASIdiSPIMException ex) {
+      }
+      try {
+         diSPIM.setVolumeSlicePeriod(1000.1);
+         fail("didn't catch exception");
+      } catch (ASIdiSPIMException ex) {
+      }
+      diSPIM.setVolumeSlicePeriod(10);
+      assertEquals(10, diSPIM.getVolumeSlicePeriod(), 1e-6);
+      diSPIM.setVolumeSlicePeriod(100);
+      assertEquals(100, diSPIM.getVolumeSlicePeriod(), 1e-6);
+      diSPIM.setVolumeSlicePeriod(settingOrig);
+   }
+   
+   private void testVolumeSampleExposure() throws ASIdiSPIMException, Error {
+      ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
+      double settingOrig = diSPIM.getVolumeSampleExposure();
+      // throws exception if not between 2.5 and 1000.5
+      try {
+         diSPIM.setVolumeSampleExposure(2.4);
+         fail("didn't catch exception");
+      } catch (ASIdiSPIMException ex) {
+      }
+      try {
+         diSPIM.setVolumeSampleExposure(1000.6);
+         fail("didn't catch exception");
+      } catch (ASIdiSPIMException ex) {
+      }
+      diSPIM.setVolumeSampleExposure(10.4);
+      assertEquals(10.5, diSPIM.getVolumeSampleExposure(), 1e-6);
+      diSPIM.setVolumeSampleExposure(100.9);
+      assertEquals(100.5, diSPIM.getVolumeSampleExposure(), 1e-6);
+      diSPIM.setVolumeSampleExposure(settingOrig);
+   }
+   
    
 }

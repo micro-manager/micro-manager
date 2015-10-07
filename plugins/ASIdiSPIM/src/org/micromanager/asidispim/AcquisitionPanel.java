@@ -2659,6 +2659,30 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       minSlicePeriodCB_.setSelected(minimize);
    }
 
+   public double getVolumeSlicePeriod() {
+      return PanelUtils.getSpinnerFloatValue(desiredSlicePeriod_);
+   }
+
+   public void setVolumeSlicePeriod(double periodMs) throws ASIdiSPIMException {
+      if (periodMs < 1d || periodMs > 1000d) {
+         throw new ASIdiSPIMException("illegal value for slice period");
+      }
+      desiredSlicePeriod_.setValue(periodMs);      
+   }
+
+   public double getVolumeSampleExposure() {
+      return PanelUtils.getSpinnerFloatValue(desiredLightExposure_);
+   }
+
+   public void setVolumeSampleExposure(double exposureMs) throws ASIdiSPIMException {
+      if (exposureMs < 2.5 || exposureMs > 1000.5) {
+         throw new ASIdiSPIMException("illegal value for sample exposure");
+      }
+      desiredLightExposure_.setValue(exposureMs);        
+   }
+   
+   
+
    
 
    

@@ -391,7 +391,8 @@ public interface ASIdiSPIMInterface {
    
    /**
     * @param periodMs requested duration of each period, only used if the 
-    *   "Minimize slice period" is unchecked
+    *   "Minimize slice period" is unchecked.
+    * If periodMs is not between 1 and 1000 then ASIdiSPIMException is thrown.
     */
    public void setVolumeSlicePeriod(double periodMs) throws ASIdiSPIMException;
    
@@ -406,6 +407,7 @@ public interface ASIdiSPIMInterface {
     * @param exposureMs is the exposure time of the sample to the laser in
     *   milliseconds (related but not the same as the camera's exposure time).
     *   Currently will be rounded to the nearest half-integer (e.g. 3.5, 4.5, etc.)
+    * If exposureMs is not between 2.5 and 1000.5 then ASIdiSPIMException is thrown.
     */
    public void setVolumeSampleExposure(double exposureMs) throws ASIdiSPIMException;
    
@@ -691,4 +693,26 @@ public interface ASIdiSPIMInterface {
     */
    public org.micromanager.asidispim.Data.AcquisitionSettings getAcquisitionSettings() throws ASIdiSPIMException;
    
+   /**
+    * @return estimated duration of each slice in milliseconds according to current timing
+    * @see ASIdiSPIMInterface#refreshEstimatedTiming()
+    */
+   public double getEstimatedSliceDuration();
+   
+   /**
+    * @return estimated duration of each volume in milliseconds according to current timing
+    * @see ASIdiSPIMInterface#refreshEstimatedTiming()
+    */
+   public double getEstimatedVolumeDuration();
+   
+   /**
+    * @return estimated duration of entire acquisition in seconds according to current timing
+    * @see ASIdiSPIMInterface#refreshEstimatedTiming()
+    */
+   public double getEstimatedAcquisitionDuration();
+   
+   /**
+    * forces recalculation of estimated timings.
+    */
+   public void refreshEstimatedTiming();
 }
