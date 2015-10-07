@@ -260,14 +260,17 @@ public class DefaultImage implements Image {
    // but what else can we do?
    @Override
    public Object getRawPixelsForComponent(int component) {
+      // The divisor to use here is a little squicky; for multi-component
+      // images it should be the bytes per pixel (not the number of components)
+      // as ARGB images have 3 components but 4 bytes per pixel. But for
+      // single-component images of course we want a divisor of only 1.
+      int divisor = (numComponents_ == 1) ? 1 : bytesPerPixel_;
+      int length = rawPixels_.capacity() / divisor;
       Object result;
-      int length;
       if (rawPixels_ instanceof ByteBuffer) {
-         length = ((ByteBuffer) rawPixels_).capacity() / bytesPerPixel_;
          result = (Object) new byte[length];
       }
       else if (rawPixels_ instanceof ShortBuffer) {
-         length = ((ShortBuffer) rawPixels_).capacity() / bytesPerPixel_;
          result = (Object) new short[length];
       }
       else {
