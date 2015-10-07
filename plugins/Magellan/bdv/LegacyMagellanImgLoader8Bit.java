@@ -17,13 +17,25 @@
 package bdv;
 
 import acq.MultiResMultipageTiffStorage;
-import bdv.spimdata.legacy.LegacyViewerImgLoaderWrapper;
+import bdv.img.cache.CachedCellImg;
+import mpicbg.spim.data.generic.sequence.ImgLoaderIo;
+import net.imglib2.img.basictypeaccess.volatiles.array.VolatileByteArray;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.volatiles.VolatileUnsignedByteType;
 
-public class MagellanImgLoader8Bit extends LegacyViewerImgLoaderWrapper< UnsignedByteType, VolatileUnsignedByteType, LegacyMagellanImgLoader8Bit > {
+public class LegacyMagellanImgLoader8Bit extends LegacyMagellanImgLoader< UnsignedByteType, VolatileUnsignedByteType, VolatileByteArray> {
 
-   public MagellanImgLoader8Bit(MultiResMultipageTiffStorage storage) {
-      super(new LegacyMagellanImgLoader8Bit(storage, new MultiResMPTiffVolatileByteArrayLoader(storage), new UnsignedByteType(), new VolatileUnsignedByteType()));
+   public LegacyMagellanImgLoader8Bit(MultiResMultipageTiffStorage storage) {
+      super(storage, new MultiResMPTiffVolatileByteArrayLoader(storage), new UnsignedByteType(), new VolatileUnsignedByteType());
+   }
+
+   @Override
+   protected void linkType(final CachedCellImg< UnsignedByteType, VolatileByteArray> img) {
+      img.setLinkedType(new UnsignedByteType(img));
+   }
+
+   @Override
+   protected void linkVolatileType(final CachedCellImg< VolatileUnsignedByteType, VolatileByteArray> img) {
+      img.setLinkedType(new VolatileUnsignedByteType(img));
    }
 }
