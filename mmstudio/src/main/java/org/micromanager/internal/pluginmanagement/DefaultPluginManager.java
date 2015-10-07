@@ -98,6 +98,7 @@ public class DefaultPluginManager implements PluginManager {
       VALID_CLASSES.add(IntroPlugin.class);
       VALID_CLASSES.add(MenuPlugin.class);
       VALID_CLASSES.add(QuickAccessPlugin.class);
+      VALID_CLASSES.add(MMPlugin.class);
    }
 
    private static final String PROCESSOR_MENU = "On-The-Fly Image Processing";
