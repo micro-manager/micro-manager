@@ -1897,13 +1897,13 @@ int DAXYStage::SetPositionSteps(long stepsX, long stepsY)
 
    // Interpret steps to be mV
    double voltX = minStageVoltX_  + (stepsX / 1000.0);
-   if (voltX > minStageVoltX_&& voltX < maxStageVoltX_  )
+   if (voltX >= minStageVoltX_ && voltX <= maxStageVoltX_  )
       DADeviceX_->SetSignal(voltX);
    else
       return ERR_VOLT_OUT_OF_RANGE;
 
    double voltY = minStageVoltY_  + (stepsY / 1000.0);
-   if (voltY < maxStageVoltY_)
+   if (voltY <= maxStageVoltY_ && voltY >= minStageVoltY_)
       DADeviceY_->SetSignal(voltY);
    else
       return ERR_VOLT_OUT_OF_RANGE;
