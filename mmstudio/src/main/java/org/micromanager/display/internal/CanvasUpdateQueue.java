@@ -37,7 +37,6 @@ import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.NewImagePlusEvent;
 import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
-import org.micromanager.display.internal.events.FPSEvent;
 import org.micromanager.display.internal.events.DefaultPixelsSetEvent;
 
 import org.micromanager.internal.utils.ReportingUtils;

@@ -49,7 +49,6 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.data.internal.IncomingImageEvent;
 import org.micromanager.data.internal.NewImageEvent;
 import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
-import org.micromanager.display.internal.events.FPSEvent;
 import org.micromanager.display.internal.events.MouseMovedEvent;
 import org.micromanager.display.internal.events.StatusEvent;
 import org.micromanager.internal.utils.ReportingUtils;
