@@ -357,22 +357,7 @@ public class MagellanEngine {
             //move to new position
             loopHardwareCommandRetries(new HardwareCommand() {
                 @Override
-                public void run() throws Exception {
-                    if (GlobalSettings.getInstance().isBIDCTwoPhoton()) {
-                        //hysteresis correction: move to to the left (screen) when starting
-                        //column 0 or every time on explore
-                        //left on the screen is a higher y coordinate on the gen3 stage
-                        //up on the screen is lower x coordinate
-                        //always approach from the top left
-                        double hystersisDistance = 70;
-                        if (lastEvent_ == null || 
-                                event.xyPosition_.getCenter().x  - lastEvent_.xyPosition_.getCenter().x < -hystersisDistance || //move to the left
-                                event.xyPosition_.getCenter().y - lastEvent_.xyPosition_.getCenter().y > hystersisDistance ) { //move up
-                            //70 is half a hi res field
-                            core_.setXYPosition(xyStage, event.xyPosition_.getCenter().x - hystersisDistance, 
-                                    event.xyPosition_.getCenter().y + hystersisDistance);
-                        }
-                    }
+                public void run() throws Exception {                   
                     core_.setXYPosition(xyStage, event.xyPosition_.getCenter().x, event.xyPosition_.getCenter().y);
                 }
             }, "moving XY stage");
