@@ -107,4 +107,9 @@ public interface Pipeline {
     * image data to be incorrect.
     */
    public void clearExceptions();
+
+   /**
+    * Return the list of Processors used by this Pipeline.
+    */
+   public List<Processor> getProcessors();
 }

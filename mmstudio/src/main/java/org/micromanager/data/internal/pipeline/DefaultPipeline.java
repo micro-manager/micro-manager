@@ -136,6 +136,11 @@ public class DefaultPipeline implements Pipeline {
       exceptions_.clear();
    }
 
+   @Override
+   public List<Processor> getProcessors() {
+      return processors_;
+   }
+
    public void exceptionOccurred(Exception e) {
       exceptions_.add(e);
    }
