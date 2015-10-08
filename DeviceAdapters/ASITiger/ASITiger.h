@@ -77,6 +77,8 @@ const char* const g_Msg_ERR_UNRECOGNIZED_ANSWER = "Unrecognized serial answer fr
 const char* const g_Msg_ERR_NOT_ENOUGH_AXES = "Do not have any axes installed";
 #define ERR_TOO_LARGE_ADDRESSES      10022   // if we have addresses 0x81 and higher without new firmware
 const char* const g_Msg_ERR_TOO_LARGE_ADDRESSES = "Need new firmware for more than 10 cards";
+#define ERR_INFO_COMMAND_NOT_SUPPORTED   10023   // can't receive output from INFO command because >1023 characters
+const char* const g_Msg_ERR_INFO_COMMAND_NOT_SUPPORTED = "Cannot use the INFO command due to Micro-Manager limitations";
 #define ERR_FILTER_WHEEL_NOT_READY   10030   // if filter wheel responds with error, e.g. it is not plugged in
 const char* const g_Msg_ERR_FILTER_WHEEL_NOT_READY = "Filter wheel doesn't appear to be connected";
 #define ERR_FILTER_WHEEL_SPINNING    10031   // if filter wheel is spinning and try to do something with it
