@@ -33,6 +33,7 @@ import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayDestroyedEvent;
+import org.micromanager.display.PixelsSetEvent;
 import org.micromanager.display.RequestToCloseEvent;
 
 import org.micromanager.data.NewPipelineEvent;
@@ -62,6 +63,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * "snap image" display (which is the same display as that used for live mode).
  */
 public class SnapLiveManager implements org.micromanager.SnapLiveManager {
+   private static final int MAX_DISPLAY_HISTORY = 20;
    private final Studio studio_;
    private final CMMCore core_;
    private DisplayWindow display_;
@@ -77,6 +79,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    private boolean shouldStopGrabberThread_ = false;
    private boolean shouldForceReset_ = false;
    private Thread grabberThread_;
+   private ArrayList<Long> displayUpdateTimes_;
    // Maps channel to the last image we have received for that channel.
    private final HashMap<Integer, DefaultImage> channelToLastImage_;
 
@@ -85,6 +88,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       core_ = core;
       channelToLastImage_ = new HashMap<Integer, DefaultImage>();
       listeners_ = new ArrayList<LiveModeListener>();
+      displayUpdateTimes_ = new ArrayList<Long>();
       studio_.events().registerForEvents(this);
    }
 
@@ -188,65 +192,109 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
     * "get next image" calls, though, which it doesn't.
     */
    private void grabImages() {
-      // No point in grabbing things faster than we can display, which is
-      // currently around 30FPS.
-      int interval = 33;
+      // We try to grab images at 30 FPS or the rate at which images are
+      // actually displayed, whichever is slower.
+      long displayRate = 33;
       try {
-         interval = (int) Math.max(interval, core_.getExposure());
+         displayRate = (long) Math.max(displayRate, core_.getExposure());
       }
       catch (Exception e) {
          // Getting exposure time failed; go with the default.
          ReportingUtils.logError(e, "Couldn't get exposure time for live mode.");
       }
+      // Reset our list of when images have updated.
+      synchronized(displayUpdateTimes_) {
+         displayUpdateTimes_.clear();
+      }
+
       long numChannels = core_.getNumberOfCameraChannels();
       String camName = core_.getCameraDevice();
       while (!shouldStopGrabberThread_) {
-         try {
-            // We scan over 2*numChannels here because, in multi-camera
-            // setups, one camera could be generating images faster than the
-            // other(s). Of course, 2x isn't guaranteed to be enough here,
-            // either, but it's what we've historically used.
-            HashSet<Integer> channelsSet = new HashSet<Integer>();
-            for (int c = 0; c < 2 * numChannels; ++c) {
-               TaggedImage tagged;
-               try {
-                  tagged = core_.getNBeforeLastTaggedImage(c);
-               }
-               catch (Exception e) {
-                  // No image in the sequence buffer.
-                  continue;
-               }
-               JSONObject tags = tagged.tags;
-               int imageChannel = c;
-               if (tags.has(camName + "-CameraChannelIndex")) {
-                  imageChannel = tags.getInt(camName + "-CameraChannelIndex");
-               }
-               if (channelsSet.contains(imageChannel)) {
-                  // Already provided a more recent version of this channel.
-                  continue;
-               }
-               DefaultImage image = new DefaultImage(tagged);
-               Coords newCoords = image.getCoords().copy()
-                  .time(0)
-                  .channel(imageChannel).build();
-               displayImage(image.copyAtCoords(newCoords));
-               channelsSet.add(imageChannel);
-               if (channelsSet.size() == numChannels) {
-                  // Got every channel.
-                  break;
-               }
-            }
+         grabAndAddImages(numChannels, camName);
+         displayRate = waitForNextDisplay(displayRate);
+      }
+   }
+
+   /**
+    * This method takes images out of the Core and inserts them into our
+    * pipeline.
+    */
+   private void grabAndAddImages(long numChannels, String camName) {
+      try {
+         // We scan over 2*numChannels here because, in multi-camera
+         // setups, one camera could be generating images faster than the
+         // other(s). Of course, 2x isn't guaranteed to be enough here,
+         // either, but it's what we've historically used.
+         HashSet<Integer> channelsSet = new HashSet<Integer>();
+         for (int c = 0; c < 2 * numChannels; ++c) {
+            TaggedImage tagged;
             try {
-               Thread.sleep(interval);
+               tagged = core_.getNBeforeLastTaggedImage(c);
             }
-            catch (InterruptedException e) {}
-         }
-         catch (JSONException e) {
-            ReportingUtils.logError(e, "Exception in image grabber thread.");
-         } catch (MMScriptException e) {
-            ReportingUtils.logError(e, "Exception in image grabber thread.");
+            catch (Exception e) {
+               // No image in the sequence buffer.
+               continue;
+            }
+            JSONObject tags = tagged.tags;
+            int imageChannel = c;
+            if (tags.has(camName + "-CameraChannelIndex")) {
+               imageChannel = tags.getInt(camName + "-CameraChannelIndex");
+            }
+            if (channelsSet.contains(imageChannel)) {
+               // Already provided a more recent version of this channel.
+               continue;
+            }
+            DefaultImage image = new DefaultImage(tagged);
+            Coords newCoords = image.getCoords().copy()
+               .time(0)
+               .channel(imageChannel).build();
+            displayImage(image.copyAtCoords(newCoords));
+            channelsSet.add(imageChannel);
+            if (channelsSet.size() == numChannels) {
+               // Got every channel.
+               break;
+            }
          }
       }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Exception in image grabber thread.");
+      }
+      catch (MMScriptException e) {
+         ReportingUtils.logError(e, "Exception in image grabber thread.");
+      }
+   }
+
+   /**
+    * This method waits for the next time at which we should grab images.
+    */
+   private long waitForNextDisplay(long displayRate) {
+      // Update our sleep time based on image display times (a.k.a. the
+      // amount of time passed between PixelsSetEvents). Only if we
+      // aren't using a nontrivial pipeline.
+      if (pipeline_.getProcessors().size() == 0) {
+         synchronized(displayUpdateTimes_) {
+            long average = 0;
+            for (int i = 0; i < displayUpdateTimes_.size() - 1; ++i) {
+               average += displayUpdateTimes_.get(i + 1) - displayUpdateTimes_.get(i);
+            }
+            if (displayUpdateTimes_.size() > 1) {
+               average /= (displayUpdateTimes_.size() - 1);
+            }
+            if (average > 1) {
+               // Sample faster than the achieved rate because glitches
+               // should not cause the system to permanently bog down; this
+               // allows us to recover if we temporarily end up displaying
+               // images slowly than we normally can.
+               // Don't sample more slowly than 2x/second.
+               displayRate = (long) Math.min(500, Math.max(33, average * .75));
+            }
+         }
+      }
+      try {
+         Thread.sleep((int) displayRate);
+      }
+      catch (InterruptedException e) {}
+      return displayRate;
    }
 
    public void addLiveModeListener(LiveModeListener listener) {
@@ -518,6 +566,17 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          return display_;
       }
       return null;
+   }
+
+   @Subscribe
+   public void onDisplayUpdated(PixelsSetEvent event) {
+      synchronized(displayUpdateTimes_) {
+         displayUpdateTimes_.add(System.currentTimeMillis());
+         while (displayUpdateTimes_.size() > MAX_DISPLAY_HISTORY) {
+            // Limit the history we maintain.
+            displayUpdateTimes_.remove(displayUpdateTimes_.get(0));
+         }
+      }
    }
 
    @Subscribe
