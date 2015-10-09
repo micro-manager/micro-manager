@@ -41,15 +41,22 @@ public class DefaultImageJConverter implements ImageJConverter {
       staticInstance_ = new DefaultImageJConverter();
    }
 
+   // Our API does not expose the original pixels so the caller cannot modify
+   // the image buffer.
    @Override
    public ImageProcessor createProcessor(Image image) {
+      return createProcessor(image, true);
+   }
+
+   public ImageProcessor createProcessor(Image image, boolean shouldCopy) {
       int width = image.getWidth();
       int height = image.getHeight();
       int bytesPerPixel = image.getBytesPerPixel();
       int numComponents = image.getNumComponents();
-      // HACK: make a copy of the pixels, on the assumption that the processor
-      // is going to modify the image.
-      Object pixels = image.getRawPixelsCopy();
+      Object pixels = image.getRawPixels();
+      if (shouldCopy) {
+         pixels = image.getRawPixelsCopy();
+      }
       if (bytesPerPixel == 1 && numComponents == 1) {
          return new ByteProcessor(width, height, (byte[]) pixels, null);
       }
