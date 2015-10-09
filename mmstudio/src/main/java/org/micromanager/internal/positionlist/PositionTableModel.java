@@ -22,9 +22,11 @@ package org.micromanager.internal.positionlist;
 
 import javax.swing.table.AbstractTableModel;
 
+import org.micromanager.events.internal.DefaultNewPositionListEvent;
 import org.micromanager.MultiStagePosition;
-import org.micromanager.StagePosition;
 import org.micromanager.PositionList;
+import org.micromanager.StagePosition;
+import org.micromanager.Studio;
 
 class PositionTableModel extends AbstractTableModel {
    private static final long serialVersionUID = 1L;
@@ -32,8 +34,13 @@ class PositionTableModel extends AbstractTableModel {
          "Label",
          "Position [um]"
    };
+   private Studio studio_;
    private PositionList posList_;
    private MultiStagePosition curMsp_;
+
+   public PositionTableModel(Studio studio) {
+      studio_ = studio;
+   }
 
    public void setData(PositionList pl) {
       posList_ = pl;
@@ -102,5 +109,11 @@ class PositionTableModel extends AbstractTableModel {
 
    public void setCurrentMSP(MultiStagePosition msp) {
       curMsp_ = msp;
+   }
+
+   @Override
+   public void fireTableDataChanged() {
+      super.fireTableDataChanged();
+      studio_.events().post(new DefaultNewPositionListEvent(posList_));
    }
 }

@@ -182,7 +182,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
          }
       };
       posTable_.setFont(arialSmallFont_);
-      positionModel_ = new PositionTableModel();
+      positionModel_ = new PositionTableModel(studio_);
       positionModel_.setData(posList);
       posTable_.setModel(positionModel_);
       scrollPane.setViewportView(posTable_);
