@@ -59,7 +59,7 @@ public class DefaultImageJConverter implements ImageJConverter {
       else if (bytesPerPixel == 4 && numComponents == 1) {
          return new FloatProcessor(width,height, (float[]) pixels, null);
       }
-      else if (bytesPerPixel == 1 && numComponents == 3) {
+      else if (bytesPerPixel == 4 && numComponents == 3) {
          // Micro-Manager RGB32 images are generally composed of byte
          // arrays, but ImageJ only takes int arrays.
          if (pixels instanceof byte[]) {
