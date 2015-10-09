@@ -160,13 +160,13 @@ public final class DefaultDisplayManager implements DisplayManager {
 
    @Override
    public DisplayWindow createDisplay(Datastore store) {
-      return DefaultDisplayWindow.createDisplay(store, null);
+      return DefaultDisplayWindow.createDisplay(studio_, store, null);
    }
 
    @Override
    public DisplayWindow createDisplay(Datastore store,
          ControlsFactory factory) {
-      return DefaultDisplayWindow.createDisplay(store, factory);
+      return DefaultDisplayWindow.createDisplay(studio_, store, factory);
    }
 
    @Override

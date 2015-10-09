@@ -37,12 +37,14 @@ import org.micromanager.display.NewImagePlusEvent;
 
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultImage;
+import org.micromanager.data.internal.DefaultImageJConverter;
 import org.micromanager.data.internal.DefaultMetadata;
 
 import org.micromanager.display.internal.events.StackPositionChangedEvent;
 
 import org.micromanager.internal.utils.ImageUtils;
-import org.micromanager.internal.utils.ReportingUtils;
+
+import org.micromanager.Studio;
 
 /**
  * This stack class provides the ImagePlus with images from the Datastore.
@@ -58,9 +60,11 @@ public class MMVirtualStack extends ij.VirtualStack {
    private ImagePlus plus_;
    private Coords curCoords_;
    private final HashMap<Integer, Image> channelToLastValidImage_;
+   private Studio studio_;
 
-   public MMVirtualStack(Datastore store, EventBus displayBus,
+   public MMVirtualStack(Studio studio, Datastore store, EventBus displayBus,
          ImagePlus plus) {
+      studio_ = studio;
       store_ = store;
       displayBus_ = displayBus;
       plus_ = plus;
@@ -129,7 +133,7 @@ public class MMVirtualStack extends ij.VirtualStack {
    private Image getImage(int flatIndex) {
       // Note: index is 1-based.
       if (flatIndex > plus_.getStackSize()) {
-         ReportingUtils.logError("Stack asked for image at " + flatIndex +
+         studio_.logs().logError("Stack asked for image at " + flatIndex +
                " that exceeds total of " + plus_.getStackSize() + " images");
          return null;
       }
@@ -167,7 +171,7 @@ public class MMVirtualStack extends ij.VirtualStack {
    private Image generateFakeImage(Coords pos) {
       Image tmp = store_.getAnyImage();
       if (tmp == null) {
-         ReportingUtils.logError("Unable to find any image whatsoever to base a new fake image on.");
+         studio_.logs().logError("Unable to find any image whatsoever to base a new fake image on.");
          return null;
       }
       int width = tmp.getWidth();
@@ -191,7 +195,7 @@ public class MMVirtualStack extends ij.VirtualStack {
          }
       }
       else {
-         ReportingUtils.logError("Unrecognized datatype for image; can't generate new dummy image.");
+         studio_.logs().logError("Unrecognized datatype for image; can't generate new dummy image.");
       }
       return new DefaultImage(rawPixels, width, height, bytesPerPixel,
             numComponents, pos, new DefaultMetadata.Builder().build());
@@ -204,7 +208,7 @@ public class MMVirtualStack extends ij.VirtualStack {
    @Override
    public Object getPixels(int flatIndex) {
       if (plus_ == null) {
-         ReportingUtils.logError("Asked to get pixels when I don't have an ImagePlus");
+         studio_.logs().logError("Asked to get pixels when I don't have an ImagePlus");
          return null;
       }
       Image image = getImage(flatIndex);
@@ -215,60 +219,42 @@ public class MMVirtualStack extends ij.VirtualStack {
          }
          return image.getRawPixels();
       }
-      ReportingUtils.logError("Null image at " + curCoords_);
+      studio_.logs().logError("Null image at " + curCoords_);
       return null;
    }
 
    @Override
    public ImageProcessor getProcessor(int flatIndex) {
       if (plus_ == null) {
-         ReportingUtils.logError("Tried to get a processor when there's no ImagePlus");
+         studio_.logs().logError("Tried to get a processor when there's no ImagePlus");
          return null;
       }
       Image image = getImage(flatIndex);
       if (image == null) {
-         ReportingUtils.logError("Tried to get a processor for an invalid image index " + flatIndex + " which ImageJ treats as " + mapFlatIndexToCoords(flatIndex));
+         studio_.logs().logError("Tried to get a processor for an invalid image index " + flatIndex + " which ImageJ treats as " + mapFlatIndexToCoords(flatIndex));
          return null;
       }
-      int width = image.getWidth();
-      int height = image.getHeight();
-      Object pixels = image.getRawPixels();
-      int mode = -1;
-      switch(image.getBytesPerPixel()) {
-         case 1:
-            mode = ImagePlus.GRAY8;
-            break;
-         case 2:
-            mode = ImagePlus.GRAY16;
-            break;
-         case 4:
-            if (image.getNumComponents() == 3) {
-               // Rely on our getPixels() call to have split out the
-               // appropriate component already.
-               mode = ImagePlus.GRAY8;
-            }
-            else {
-               mode = ImagePlus.COLOR_RGB;
-            }
-            break;
-         default:
-            ReportingUtils.showError("Unrecognized image with " + image.getBytesPerPixel() + " bytes per pixel");
-      }
-      try {
-         ImageProcessor result = ImageUtils.makeProcessor(mode, width, height, pixels);
-         return result;
-      }
-      catch (IllegalArgumentException e) {
+      ImageProcessor result = ((DefaultImageJConverter) studio_.data().ij()).createProcessor(image, false);
+      if (result == null) {
          int numPixels = -1;
+         String type = "unknown";
+         Object pixels = image.getRawPixels();
          if (pixels instanceof byte[]) {
             numPixels = ((byte[]) pixels).length;
+            type = "byte[]";
          }
          else if (pixels instanceof short[]) {
             numPixels = ((short[]) pixels).length;
+            type = "short[]";
          }
-         ReportingUtils.logError(String.format("Inconsistent pixel data: dimensions (%dx%d) but pixel length is %d", width, height, numPixels));
+         else if (pixels instanceof int[]) {
+            numPixels = ((int[]) pixels).length;
+            type = "int[]";
+         }
+         studio_.logs().logError(String.format("Unable to create ImageProcessor from image of type %s: dimensions (%dx%d) and pixel length is %d", type,
+                  image.getWidth(), image.getHeight(), numPixels));
       }
-      return null;
+      return result;
    }
 
    @Override

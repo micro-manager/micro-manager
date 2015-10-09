@@ -96,11 +96,11 @@ import org.micromanager.display.internal.events.StatusEvent;
 import org.micromanager.display.internal.inspector.InspectorFrame;
 import org.micromanager.display.internal.link.DisplayGroupManager;
 
-
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MMFrame;
-import org.micromanager.internal.utils.ReportingUtils;
+
+import org.micromanager.Studio;
 
 
 /**
@@ -128,6 +128,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    private static final HashMap<Integer, String> displayHashToUniqueName_ =
       new HashMap<Integer, String>();
 
+   private Studio studio_;
    private final Datastore store_;
    private DisplaySettings displaySettings_;
    private MMVirtualStack stack_;
@@ -179,9 +180,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     * DisplaySettings and title. See the main createDisplay below for
     * more info on parameters.
     */
-   public static DefaultDisplayWindow createDisplay(Datastore store,
-         ControlsFactory factory) {
-      return createDisplay(store, factory, null, null);
+   public static DefaultDisplayWindow createDisplay(Studio studio,
+         Datastore store, ControlsFactory factory) {
+      return createDisplay(studio, store, factory, null, null);
    }
 
    /**
@@ -199,10 +200,11 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     *        be "MM image display".
     * @return The new DisplayWindow in a ready-to-use state.
     */
-   public static DefaultDisplayWindow createDisplay(Datastore store,
-         ControlsFactory factory, DisplaySettings settings, String title) {
-      DefaultDisplayWindow result = new DefaultDisplayWindow(store, factory,
-            settings, title);
+   public static DefaultDisplayWindow createDisplay(Studio studio,
+         Datastore store, ControlsFactory factory, DisplaySettings settings,
+         String title) {
+      DefaultDisplayWindow result = new DefaultDisplayWindow(studio, store,
+            factory, settings, title);
       // There's a race condition here: if the Datastore adds an image
       // between us registering and us manually checking for images, then
       // we risk creating GUI objects twice, so makeGUI() has to be coded
@@ -223,10 +225,11 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     * @param settings DisplaySettings to use as initial state for this display
     * @param customName Custom title to show in title bar, or null for none.
     */
-   private DefaultDisplayWindow(Datastore store,
+   private DefaultDisplayWindow(Studio studio, Datastore store,
          ControlsFactory controlsFactory, DisplaySettings settings,
          String customName) {
       super("image display window");
+      studio_ = studio;
       store_ = store;
       knownChannels_ = new HashSet<String>();
       channelToModel_ = new HashMap<Integer, ChannelHistogramModel>();
@@ -304,11 +307,11 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             }
             catch (InterruptedException e) {
                // This should never happen.
-               ReportingUtils.showError(e,
+               studio_.logs().showError(e,
                      "Interrupted while creating DisplayWindow");
             }
             catch (java.lang.reflect.InvocationTargetException e) {
-               ReportingUtils.showError(e,
+               studio_.logs().showError(e,
                      "Exception while creating DisplayWindow");
             }
          }
@@ -326,7 +329,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       loadAndRestorePosition(getLocation().x, getLocation().y);
       ijImage_ = new MMImagePlus();
       setImagePlusMetadata(ijImage_);
-      stack_ = new MMVirtualStack(store_, displayBus_, ijImage_);
+      stack_ = new MMVirtualStack(studio_, store_, displayBus_, ijImage_);
       ijImage_.setStack(getName(), stack_);
       ijImage_.setOpenAsHyperStack(true);
       displayBus_.post(new DefaultNewImagePlusEvent(this, ijImage_));
@@ -649,7 +652,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          // exactly perfect either.
          Image sample = store_.getAnyImage();
          if (sample == null) {
-            ReportingUtils.logError("Unable to get an image for setting ImageJ metadata properties");
+            studio_.logs().logError("Unable to get an image for setting ImageJ metadata properties");
             return;
          }
          Double pixelSize = sample.getMetadata().getPixelSizeUm();
@@ -674,7 +677,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          ijImage_.setFileInfo(info);
       }
       catch (Exception e) {
-         ReportingUtils.logError(e, "Error setting metadata");
+         studio_.logs().logError(e, "Error setting metadata");
       }
    }
 
@@ -696,7 +699,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          }
       }
       catch (Exception e) {
-         ReportingUtils.logError(e, "Error processing layout-changed event");
+         studio_.logs().logError(e, "Error processing layout-changed event");
       }
    }
 
@@ -715,7 +718,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          setDisplayedImageTo(drawCoords);
       }
       catch (Exception e) {
-         ReportingUtils.logError(e, "Couldn't process RequestToDrawEvent");
+         studio_.logs().logError(e, "Couldn't process RequestToDrawEvent");
       }
    }
 
@@ -1051,16 +1054,16 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
                });
             }
             catch (InterruptedException e) {
-               ReportingUtils.logError(e, "Couldn't make window controls");
+               studio_.logs().logError(e, "Couldn't make window controls");
             }
             catch (java.lang.reflect.InvocationTargetException e) {
-               ReportingUtils.logError(e, "Couldn't make window controls");
+               studio_.logs().logError(e, "Couldn't make window controls");
             }
          }
          receiveNewImage(event.getImage());
       }
       catch (Exception e) {
-         ReportingUtils.logError(e, "Error processing new image");
+         studio_.logs().logError(e, "Error processing new image");
       }
    }
 
@@ -1096,7 +1099,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          }
       }
       catch (Exception e) {
-         ReportingUtils.logError(e, "Couldn't display new image");
+         studio_.logs().logError(e, "Couldn't display new image");
       }
    }
 
@@ -1166,7 +1169,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          resetTitle();
       }
       catch (Exception e) {
-         ReportingUtils.logError(e, "Failed to respond to datastore saved event");
+         studio_.logs().logError(e, "Failed to respond to datastore saved event");
       }
    }
 
@@ -1258,7 +1261,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
 
    @Override
    public DisplayWindow duplicate() {
-      DisplayWindow result = createDisplay(store_, controlsFactory_);
+      DisplayWindow result = createDisplay(studio_, store_, controlsFactory_);
       result.setDisplaySettings(displaySettings_);
       result.setCustomTitle(customName_);
       // HACK: for some unknown reason, duplicating the display causes our own
