@@ -85,6 +85,8 @@ import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
 
+import org.micromanager.Studio;
+
 /**
  * This class is used to execute most of the acquisition and image display
  * functionality in the ScriptInterface
@@ -111,6 +113,7 @@ public class MMAcquisition {
    private long startTimeMs_;
    private final String comment_ = "";
    private String rootDirectory_;
+   private Studio studio_;
    private DefaultDatastore store_;
    private DisplayWindow display_;
    private final boolean existing_;
@@ -120,25 +123,9 @@ public class MMAcquisition {
    private JSONObject summary_ = new JSONObject();
    private final String NOTINITIALIZED = "Acquisition was not initialized";
 
-   public MMAcquisition(String name, String dir) throws MMScriptException {
-      this(name, dir, false, false, false);
-   }
-
-   public MMAcquisition(String name, String dir, boolean show) throws MMScriptException {
-      this(name, dir, show, false, false);
-   }
-
-   public MMAcquisition(String name, String dir, boolean show,
-           boolean diskCached, boolean existing) throws MMScriptException {
-      name_ = name;
-      rootDirectory_ = dir;
-      show_ = show;
-      existing_ = existing;
-      virtual_ = diskCached;
-   }
-
-   public MMAcquisition(String name, JSONObject summaryMetadata, boolean diskCached, 
+   public MMAcquisition(Studio studio, String name, JSONObject summaryMetadata, boolean diskCached, 
            AcquisitionEngine eng, boolean show) {
+      studio_ = studio;
       name_ = name;
       virtual_ = diskCached;
       existing_ = false;
@@ -172,8 +159,8 @@ public class MMAcquisition {
          ReportingUtils.logError(e, "Couldn't set summary metadata");
       }
       if (show_) {
-         display_ = MMStudio.getInstance().displays().createDisplay(store_,
-               makeControlsFactory());
+         display_ = studio_.displays().createDisplay(
+               store_, makeControlsFactory());
          display_.registerForEvents(this);
       }
       DefaultEventManager.getInstance().registerForEvents(this);
@@ -313,7 +300,7 @@ public class MMAcquisition {
          }
          // Now that the datastore is set up, create the display(s).
          if (show_) {
-            List<DisplayWindow> displays = MMStudio.getInstance().displays().loadDisplays(store_);
+            List<DisplayWindow> displays = studio_.displays().loadDisplays(store_);
          }
       }
 
@@ -381,7 +368,7 @@ public class MMAcquisition {
          duplicate.copyFrom(store_);
          store_ = duplicate;
          if (show_) {
-            List<DisplayWindow> displays = MMStudio.getInstance().displays().loadDisplays(store_);
+            List<DisplayWindow> displays = studio_.displays().loadDisplays(store_);
          }
          // TODO: re-implement the check below before loading images into RAM
 //         imageCache_ = new MMImageCache(tempImageFileManager);
@@ -392,7 +379,7 @@ public class MMAcquisition {
 //         imageCache_.saveAs(imageFileManager);
       }
 
-      CMMCore core = MMStudio.getInstance().getCore();
+      CMMCore core = studio_.core();
       if (!existing_) {
          createDefaultAcqSettings();
       }
@@ -400,8 +387,8 @@ public class MMAcquisition {
       if (store_.getSummaryMetadata() != null) {
          if (show_ && !existing_) {
             // NB pre-existing setups will have loaded saved display settings.
-            display_ = MMStudio.getInstance().displays().createDisplay(store_,
-                  makeControlsFactory());
+            display_ = studio_.displays().createDisplay(
+                  store_, makeControlsFactory());
             display_.registerForEvents(this);
          }
          initialized_ = true;
@@ -517,7 +504,7 @@ public class MMAcquisition {
 
       try {
          JSONObject summaryMetadata = new JSONObject(summary_, keys);
-         CMMCore core = MMStudio.getInstance().getCore();
+         CMMCore core = studio_.core();
 
          summaryMetadata.put("BitDepth", bitDepth_);
          summaryMetadata.put("Channels", numChannels_);
@@ -722,7 +709,7 @@ public class MMAcquisition {
          return;
       }
       if (store_.getSavePath() != null ||
-            MMStudio.getInstance().displays().promptToSave(store_, display_)) {
+            studio_.displays().promptToSave(store_, display_)) {
          // Datastore is saved, or user declined to save.
          display_.forceClosed();
       }

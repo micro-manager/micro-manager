@@ -143,7 +143,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
                  studio_.getAutofocusManager().getDevice());
          summaryMetadata_ = getAcquisitionEngine2010().getSummaryMetadata();
 
-         MMAcquisition acq = new MMAcquisition("Acq",
+         MMAcquisition acq = new MMAcquisition(studio_, "Acq",
                  summaryMetadata_, acquisitionSettings.save, this,
                  !AcqControlDlg.getShouldHideMDADisplay());
          curStore_ = acq.getDatastore();
