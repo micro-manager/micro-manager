@@ -480,16 +480,14 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          channelToLastImage_.put(newImage.getCoords().getChannel(),
                newImage);
          synchronized(pipelineLock_) {
-            for (Image subImage : newImage.splitMultiComponent()) {
-               try {
-                  pipeline_.insertImage(subImage);
-               }
-               catch (PipelineErrorException e) {
-                  // Notify the user, then continue on.
-                  studio_.logs().showError(e,
-                        "An error occurred while processing images.");
-                  pipeline_.clearExceptions();
-               }
+            try {
+               pipeline_.insertImage(newImage);
+            }
+            catch (PipelineErrorException e) {
+               // Notify the user, then continue on.
+               studio_.logs().showError(e,
+                     "An error occurred while processing images.");
+               pipeline_.clearExceptions();
             }
          }
       }

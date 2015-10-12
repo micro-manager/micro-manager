@@ -24,11 +24,13 @@ import com.bulenkov.iconloader.IconLoader;
 
 import ij.CompositeImage;
 import ij.ImagePlus;
+import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.awt.image.DirectColorModel;
 import java.util.ArrayList;
 
 import javax.swing.Icon;
@@ -296,6 +298,11 @@ public class LUTMaster {
          composite = (CompositeImage) plus;
       }
       ImageProcessor processor = plus.getProcessor();
+      if (processor instanceof ColorProcessor) {
+         // RGB images require special handling.
+         setRGBLUT(processor);
+         return;
+      }
       if (hasCustomLUT) {
          // Get the current LUT from ImageJ instead.
          // TODO: Ignore gamma settings for custom LUTs.
@@ -316,6 +323,10 @@ public class LUTMaster {
                return;
             }
          }
+      }
+      if (lut == null) {
+         ReportingUtils.logError("Null LUT");
+         return;
       }
       lut.min = settings.getSafeChannelContrastMin(channelIndex,
             (int) processor.getMin());
@@ -353,6 +364,13 @@ public class LUTMaster {
             composite.updateImage();
          }
       } // End multi-channel case.
+   }
+
+   /**
+    * Apply an RGB LUT to the provided processor.
+    */
+   private static void setRGBLUT(ImageProcessor processor) {
+      processor.setColorModel(new RGBColorModel());
    }
 
    /**

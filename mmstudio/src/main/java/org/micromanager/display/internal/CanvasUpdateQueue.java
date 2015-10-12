@@ -23,6 +23,7 @@ package org.micromanager.display.internal;
 import com.google.common.eventbus.Subscribe;
 
 import ij.ImagePlus;
+import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -39,6 +40,7 @@ import org.micromanager.display.NewImagePlusEvent;
 import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
 import org.micromanager.display.internal.events.DefaultPixelsSetEvent;
 
+import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -188,7 +190,15 @@ public class CanvasUpdateQueue {
             }
             amWaitingForDraw_ = true;
             stack_.setCoords(image.getCoords());
-            plus_.getProcessor().setPixels(image.getRawPixels());
+            Object pixels = image.getRawPixels();
+            // If we have an RGB byte array, we need to convert it to an
+            // int array for ImageJ's consumption.
+            if (plus_.getProcessor() instanceof ColorProcessor &&
+                  pixels instanceof byte[]) {
+               pixels = ImageUtils.convertRGB32BytesToInt(
+                     (byte[]) pixels);
+            }
+            plus_.getProcessor().setPixels(pixels);
             if (shouldReapplyLUTs_) {
                // Must apply LUTs to the display now that it has pixels.
                LUTMaster.initializeDisplay(display_);
