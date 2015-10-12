@@ -370,7 +370,8 @@ public class LUTMaster {
     * Apply an RGB LUT to the provided processor.
     */
    private static void setRGBLUT(ImageProcessor processor) {
-      processor.setColorModel(new RGBColorModel());
+      processor.setColorModel(
+            new DirectColorModel(32, 0xff0000, 0xff00, 0xff));
    }
 
    /**
