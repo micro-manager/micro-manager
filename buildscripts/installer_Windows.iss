@@ -167,6 +167,9 @@ Source: {#MMStageDir}\MMCoreJ_wrap.dll; DestDir: {app}; Flags: ignoreversion
 Source: {#MMStageDir}\mmgr_dal_*.dll; DestDir: {app}; Flags: ignoreversion
 Source: {#MMStageDir}\*.dll; DestDir: {app}; Flags: ignoreversion
 
+; Okolab library extra files
+Source: {#MMStageDir}\okolib\*; DestDir: {app}\okolib; Flags: ignoreversion recursesubdirs createallsubdirs
+
 ; Olympus IX*3 control module
 Source: {#MMStageDir}\OlympusIX3Control\*; DestDir: {app}\OlympusIX3Control; Flags: ignoreversion recursesubdirs createallsubdirs
 

@@ -10,7 +10,7 @@ const char* g_MyDeviceName = "OkoLab";
 const char* g_DevicePort = "Device Port";
 const char* g_AutoLabel = "Auto";
 const char* g_RefreshInterval = "Time between refresh [ms]";
-const char* DB_PATH = "";
+const char* DB_PATH = "okolib";
 const char* DAL_VERSION = "2.0.1";
 
 ///////////////////////////////////////////////////////////////////////////////

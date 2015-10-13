@@ -2,14 +2,18 @@
 	<import file="../../buildscripts/deviceadapter.xml"/>
 	
 	<target name="install-Win32">
-		<copy todir="${mm.dll.installdir}" file="okolib/db/okolib.db"/>		
+		<copy todir="${mm.dll.installdir}/okolib" file="okolib/db/okolib.db"/>
 		<copy todir="${mm.dll.installdir}" file="okolib/x86/okolib.dll"/>
-		<copy todir="${mm.dll.installdir}" file="okolib/x86/libserialport.dll"/>	
+		<copy todir="${mm.dll.installdir}" file="okolib/x86/libserialport.dll"/>
+		<copy todir="${mm.dll.installdir}/okolib" file="okolib/README.txt"/>
+		<copy todir="${mm.dll.installdir}/okolib" file="okolib/COPYING.libserialport.txt"/>
 	</target>
 
 	<target name="install-x64">
-		<copy todir="${mm.dll.installdir}" file="okolib/db/okolib.db"/>		
+		<copy todir="${mm.dll.installdir}/okolib" file="okolib/db/okolib.db"/>
 		<copy todir="${mm.dll.installdir}" file="okolib/x64/okolib.dll"/>
 		<copy todir="${mm.dll.installdir}" file="okolib/x64/libserialport.dll"/>
+		<copy todir="${mm.dll.installdir}/okolib" file="okolib/README.txt"/>
+		<copy todir="${mm.dll.installdir}/okolib" file="okolib/COPYING.libserialport.txt"/>
 	</target>
 </project>
