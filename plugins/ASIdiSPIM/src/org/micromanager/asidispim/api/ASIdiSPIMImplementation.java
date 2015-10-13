@@ -33,6 +33,7 @@ import org.micromanager.asidispim.AcquisitionPanel;
 import org.micromanager.asidispim.AutofocusPanel;
 import org.micromanager.asidispim.AutofocusPanel.Modes;
 import org.micromanager.asidispim.NavigationPanel;
+import org.micromanager.asidispim.SetupPanel;
 import org.micromanager.asidispim.Data.AcquisitionModes.Keys;
 import org.micromanager.asidispim.Data.AcquisitionSettings;
 import org.micromanager.asidispim.Data.Devices;
@@ -390,6 +391,16 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       getAcquisitionPanel().setVolumeSampleExposure(exposureMs);        
    }
    
+   @Override
+   public double getSideImagingCenter(Sides side) throws ASIdiSPIMException {
+      return getSetupPanel(side).getImagingCenter();
+   }
+
+   @Override
+   public void setSideImagingCenter(Sides side, double center) throws ASIdiSPIMException {
+      getSetupPanel(side).setImagingCenter(center);
+   }
+   
    
    
    //** Private methods.  Only for internal use **//
@@ -427,6 +438,14 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       return acquisitionPanel;
    }
    
+   private SetupPanel getSetupPanel(Devices.Sides side) throws ASIdiSPIMException {
+      SetupPanel setupPanel = getFrame().getSetupPanel(side);
+      if (setupPanel == null) {
+         throw new ASIdiSPIMException ("SetupPanel is not open");
+      }
+      return setupPanel;
+   }
+   
    private NavigationPanel getNavigationPanel() throws ASIdiSPIMException {
       NavigationPanel navigationPanel = getFrame().getNavigationPanel();
       if (navigationPanel == null) {
@@ -448,18 +467,6 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
 
 
 
-   @Override
-   public double getSideImagingCenter(Sides side) throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return 0;
-   }
-
-   @Override
-   public void setSideImagingCenter(Sides side, double center)
-         throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
    
    @Override
    public double getSideSlicePosition(Sides side) throws ASIdiSPIMException {

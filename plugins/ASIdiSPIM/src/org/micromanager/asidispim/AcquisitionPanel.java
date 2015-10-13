@@ -2523,7 +2523,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
 
    public void setNumberOfTimepoints(int numTimepoints) throws ASIdiSPIMException {
-      if (numTimepoints < 1 || numTimepoints > 32000) {
+      if (MyNumberUtils.outsideRange(numTimepoints, 1, 32000)) {
          throw new ASIdiSPIMException("illegal value for number of time points");
       }
       numTimepoints_.setValue(numTimepoints);
@@ -2532,7 +2532,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    // getTimepointInterval already existed
 
    public void setTimepointInterval(double intervalTimepoints) throws ASIdiSPIMException {
-      if (intervalTimepoints < 0.1 || intervalTimepoints > 32000) {
+      if (MyNumberUtils.outsideRange(intervalTimepoints,  0.1, 32000)) {
          throw new ASIdiSPIMException("illegal value for time point interval");
       }
       acquisitionInterval_.setValue(intervalTimepoints);
@@ -2551,7 +2551,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
 
    public void setMultiplePositionsDelay(double delayMs) throws ASIdiSPIMException {
-      if (delayMs < 0d || delayMs > 10000d) {
+      if (MyNumberUtils.outsideRange(delayMs, 0d, 10000d)) {
          throw new ASIdiSPIMException("illegal value for post move delay");
       }
       positionDelay_.setValue(delayMs);
@@ -2623,7 +2623,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
 
    public void setVolumeDelayBeforeSide(double delayMs) throws ASIdiSPIMException {
-      if (delayMs < 0d || delayMs > 10000d) {
+      if (MyNumberUtils.outsideRange(delayMs, 0d, 10000d)) {
          throw new ASIdiSPIMException("illegal value for delay before side");
       }
       delaySide_.setValue(delayMs);
@@ -2634,7 +2634,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
 
    public void setVolumeSlicesPerVolume(int slices) throws ASIdiSPIMException {
-      if (slices < 1 || slices > 65000) {
+      if (MyNumberUtils.outsideRange(slices, 1, 65000)) {
          throw new ASIdiSPIMException("illegal value for number of slices");
       }
       numSlices_.setValue(slices);
@@ -2645,7 +2645,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
 
    public void setVolumeSliceStepSize(double stepSizeUm) throws ASIdiSPIMException {
-      if (stepSizeUm < 0d || stepSizeUm > 100d) {
+      if (MyNumberUtils.outsideRange(stepSizeUm, 0d, 100d)) {
          throw new ASIdiSPIMException("illegal value for slice step size");
       }
       stepSize_.setValue(stepSizeUm);
@@ -2664,7 +2664,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
 
    public void setVolumeSlicePeriod(double periodMs) throws ASIdiSPIMException {
-      if (periodMs < 1d || periodMs > 1000d) {
+      if (MyNumberUtils.outsideRange(periodMs, 1d, 1000d)) {
          throw new ASIdiSPIMException("illegal value for slice period");
       }
       desiredSlicePeriod_.setValue(periodMs);      
@@ -2675,7 +2675,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
 
    public void setVolumeSampleExposure(double exposureMs) throws ASIdiSPIMException {
-      if (exposureMs < 2.5 || exposureMs > 1000.5) {
+      if (MyNumberUtils.outsideRange(exposureMs, 2.5, 1000.5)) {
          throw new ASIdiSPIMException("illegal value for sample exposure");
       }
       desiredLightExposure_.setValue(exposureMs);        

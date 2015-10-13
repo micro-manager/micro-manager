@@ -420,6 +420,7 @@ public interface ASIdiSPIMInterface {
    /**
     * @param side Devices.Sides.A or Devices.Sides.B
     * @param center the imaging piezo's center position on specified side
+    * If center position is outside the range of the piezo then ASIdiSPIMException is thrown.
     */
    public void setSideImagingCenter(Devices.Sides side, double center) throws ASIdiSPIMException;
 

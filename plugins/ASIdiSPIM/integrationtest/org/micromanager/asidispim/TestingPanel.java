@@ -94,6 +94,8 @@ public class TestingPanel extends ListeningJPanel {
                      testVolumeMinimizeSlicePeriod();
                      testVolumeSlicePeriod();
                      testVolumeSampleExposure();
+                     testSideImagingCenter(Devices.Sides.A);
+                     testSideImagingCenter(Devices.Sides.B);
                      MyDialogUtils.showError("all tests passed successfully");
                   } catch (Exception ex) {
                      MyDialogUtils.showError(ex);
@@ -511,6 +513,28 @@ public class TestingPanel extends ListeningJPanel {
       diSPIM.setVolumeSampleExposure(100.9);
       assertEquals(100.5, diSPIM.getVolumeSampleExposure(), 1e-6);
       diSPIM.setVolumeSampleExposure(settingOrig);
+   }
+   
+   private void testSideImagingCenter(Devices.Sides side) throws ASIdiSPIMException, Error {
+      ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
+      double settingOrig = diSPIM.getSideImagingCenter(side);
+      // throws exception if outside range of piezo, e.g. outside +/- 75 um for 150um piezo
+      // in case firmware has up to 300um piezo range test +/- 150
+      try {
+         diSPIM.setSideImagingCenter(side, 151d);
+         fail("didn't catch exception");
+      } catch (ASIdiSPIMException ex) {
+      }
+      try {
+         diSPIM.setSideImagingCenter(side, -151d);
+         fail("didn't catch exception");
+      } catch (ASIdiSPIMException ex) {
+      }
+      diSPIM.setSideImagingCenter(side, 10.4);
+      assertEquals(10.4, diSPIM.getSideImagingCenter(side), 1e-6);
+      diSPIM.setSideImagingCenter(side, 0.9);
+      assertEquals(0.9, diSPIM.getSideImagingCenter(side), 1e-6);
+      diSPIM.setSideImagingCenter(side, settingOrig);
    }
    
    
