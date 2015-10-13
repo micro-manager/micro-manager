@@ -36,8 +36,10 @@ import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
+import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
+import org.micromanager.asidispim.Utils.MyNumberUtils;
 import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.asidispim.Utils.StoredFloatLabel;
@@ -49,6 +51,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Utils.AutofocusUtils;
+import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.ReportingUtils;
@@ -59,7 +62,7 @@ import org.micromanager.utils.ReportingUtils;
  * @author Jon
  */
 @SuppressWarnings("serial")
-public final class SetupPanel extends ListeningJPanel implements LiveModeListener {
+public final class SetupPanel extends ListeningJPanel implements LiveModeListener, DevicesListenerInterface {
 
    private final Devices devices_;
    private final Properties props_;
@@ -130,9 +133,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       PanelUtils pu = new PanelUtils(prefs_, props_, devices);
       final SetupPanel setupPanel = this;
 
-      piezoImagingDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side_);
-      piezoIlluminationDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, Devices.getOppositeSide(side_));
-      micromirrorDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side_);
+      updateKeyAssignments();
 
       sheetStartPositionLabel_ = new StoredFloatLabel(panelName_, 
               Properties.Keys.PLUGIN_SHEET_START_POS.toString(), -0.5f,
@@ -439,8 +440,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          @Override
          public void actionPerformed(ActionEvent e) {
             try {
-               imagingCenterPos_ = positions_.getUpdatedPosition(piezoImagingDeviceKey_); 
-               imagingCenterPosLabel_.setFloat((float)imagingCenterPos_);
+               setImagingCenter(positions_.getUpdatedPosition(piezoImagingDeviceKey_));
             } catch (Exception ex) {
                MyDialogUtils.showError(ex);
             }
@@ -818,4 +818,31 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       slopeCalibrationFrame_.savePosition();
       slopeCalibrationFrame_.dispose();
    }
+   
+   private void updateKeyAssignments() {
+      piezoImagingDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side_);
+      piezoIlluminationDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, Devices.getOppositeSide(side_));
+      micromirrorDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side_);
+   }
+   
+   @Override
+   public void devicesChangedAlert() {
+      updateKeyAssignments();
+   }
+
+   public double getImagingCenter() {
+      return imagingCenterPos_;
+   }
+
+   public void setImagingCenter(double center) throws ASIdiSPIMException {
+      if (MyNumberUtils.outsideRange(center,
+            props_.getPropValueFloat(piezoImagingDeviceKey_, Properties.Keys.UPPER_LIMIT)*1000,
+            props_.getPropValueFloat(piezoImagingDeviceKey_, Properties.Keys.LOWER_LIMIT)*1000)) {
+         throw new ASIdiSPIMException("Cannot set imaging center outside the range of the imaging piezo");
+      }
+      imagingCenterPos_ = center;
+      imagingCenterPosLabel_.setFloat((float)imagingCenterPos_);
+   }
+
+   
 }

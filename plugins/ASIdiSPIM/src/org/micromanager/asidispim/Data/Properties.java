@@ -67,6 +67,8 @@ public class Properties {
     * the value used by the device adapter.
     */
    public static enum Keys {
+      UPPER_LIMIT("UpperLim(mm)"),
+      LOWER_LIMIT("LowerLim(mm)"),
       JOYSTICK_ENABLED("JoystickEnabled"),
       JOYSTICK_INPUT("JoystickInput"),
       JOYSTICK_INPUT_X("JoystickInputX"),

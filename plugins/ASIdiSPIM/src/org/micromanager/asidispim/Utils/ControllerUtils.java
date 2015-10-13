@@ -293,7 +293,7 @@ public class ControllerUtils {
             MyStrings.PanelNames.SETUP.toString() + side.toString(), 
             Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, 100);
       if (MyNumberUtils.floatsEqual(sliceRate, 0.0f)) {
-         MyDialogUtils.showError("Rate for slice " + side.toString() + 
+         MyDialogUtils.showError("Calibration slope for side " + side.toString() + 
                " cannot be zero. Re-do calibration on Setup tab.");
          return false;
       }
@@ -344,6 +344,17 @@ public class ControllerUtils {
             }
             piezoAmplitude = 0.0f;
          }
+         
+         float piezoMin = props_.getPropValueFloat(piezoDevice, Properties.Keys.LOWER_LIMIT)*1000;
+         float piezoMax = props_.getPropValueFloat(piezoDevice, Properties.Keys.UPPER_LIMIT)*1000;
+         
+         if (MyNumberUtils.outsideRange(piezoCenter - piezoAmplitude/2, piezoMin, piezoMax) ||
+               MyNumberUtils.outsideRange(piezoCenter + piezoAmplitude/2, piezoMin, piezoMax)) {
+            MyDialogUtils.showError("Imaging piezo for side " + side.toString() + 
+                  " would travel outside the piezo limits during acquisition.");
+            return false;
+         }
+         
          props_.setPropValue(piezoDevice,
                Properties.Keys.SA_AMPLITUDE, piezoAmplitude);
          props_.setPropValue(piezoDevice,

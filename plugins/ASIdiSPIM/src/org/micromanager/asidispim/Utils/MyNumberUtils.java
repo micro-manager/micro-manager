@@ -63,5 +63,41 @@ public class MyNumberUtils {
       return ((float) Math.round(f*4))/4;
    }
    
+   /**
+    * Tests whether a float is outside the range set by two others.  Don't need to know
+    *   which of the two range-specifying numbers is minimum and which is maximum.
+    * @param num
+    * @param end1
+    * @param end2
+    * @return
+    */
+   public static boolean outsideRange(float num, float end1, float end2) {
+      return (num > Math.max(end1, end2) || num < Math.min(end1, end2));
+   }
+   
+   /**
+    * Tests whether a float is outside the range set by two others.  Don't need to know
+    *   which of the two range-specifying numbers is minimum and which is maximum.
+    * @param num
+    * @param end1
+    * @param end2
+    * @return
+    */
+   public static boolean outsideRange(double num, double end1, double end2) {
+      return (num > Math.max(end1, end2) || num < Math.min(end1, end2));
+   }
+   
+   /**
+    * Tests whether a float is outside the range set by two others.  Don't need to know
+    *   which of the two range-specifying numbers is minimum and which is maximum.
+    * @param num
+    * @param end1
+    * @param end2
+    * @return
+    */
+   public static boolean outsideRange(int num, int end1, int end2) {
+      return (num > Math.max(end1, end2) || num < Math.min(end1, end2));
+   }
+   
    
 }
