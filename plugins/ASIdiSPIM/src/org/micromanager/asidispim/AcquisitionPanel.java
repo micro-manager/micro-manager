@@ -2680,9 +2680,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       desiredLightExposure_.setValue(exposureMs);        
    }
-   
-   
 
+   public boolean getAutofocusDuringAcquisition() {
+      return useAutofocusCB_.isSelected();
+   }
+
+   public void setAutofocusDuringAcquisition(boolean enable) {
+      useAutofocusCB_.setSelected(enable);
+   }
    
 
    

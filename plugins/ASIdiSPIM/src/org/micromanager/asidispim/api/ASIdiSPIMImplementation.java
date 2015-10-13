@@ -345,7 +345,7 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    @Override
    public void setVolumeSlicesPerVolume(int slices) throws ASIdiSPIMException {
       // range checking done later
-      getAcquisitionPanel().setVolumeSlicesPerVolume(slices);      
+      getAcquisitionPanel().setVolumeSlicesPerVolume(slices);
    }
    
    @Override
@@ -356,7 +356,7 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    @Override
    public void setVolumeSliceStepSize(double stepSizeUm) throws ASIdiSPIMException {
       // range checking done later
-      getAcquisitionPanel().setVolumeSliceStepSize(stepSizeUm);   
+      getAcquisitionPanel().setVolumeSliceStepSize(stepSizeUm);
    }
    
    @Override
@@ -377,7 +377,7 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    @Override
    public void setVolumeSlicePeriod(double periodMs) throws ASIdiSPIMException {
       // range checking done later
-      getAcquisitionPanel().setVolumeSlicePeriod(periodMs);   
+      getAcquisitionPanel().setVolumeSlicePeriod(periodMs);
    }
 
    @Override
@@ -388,7 +388,7 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    @Override
    public void setVolumeSampleExposure(double exposureMs) throws ASIdiSPIMException {
       // range checking done later
-      getAcquisitionPanel().setVolumeSampleExposure(exposureMs);        
+      getAcquisitionPanel().setVolumeSampleExposure(exposureMs);
    }
    
    @Override
@@ -399,6 +399,16 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    @Override
    public void setSideImagingCenter(Sides side, double center) throws ASIdiSPIMException {
       getSetupPanel(side).setImagingCenter(center);
+   }
+   
+   @Override
+   public boolean getAutofocusDuringAcquisition() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getAutofocusDuringAcquisition();
+   }
+
+   @Override
+   public void setAutofocusDuringAcquisition(boolean enable) throws ASIdiSPIMException {
+      getAcquisitionPanel().setAutofocusDuringAcquisition(enable);
    }
    
    
@@ -558,19 +568,6 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       throw new UnsupportedOperationException();
    }
 
-   @Override
-   public boolean getAutofocusDuringAcquisition() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return false;
-   }
-
-   @Override
-   public void setAutofocusDuringAcquisition(boolean enable)
-         throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
-   
    @Override
    public int getAutofocusNumImages() throws ASIdiSPIMException {
       // @deprecated out of laziness, can add if needed

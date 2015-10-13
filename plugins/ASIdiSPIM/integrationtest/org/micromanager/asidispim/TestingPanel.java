@@ -96,6 +96,7 @@ public class TestingPanel extends ListeningJPanel {
                      testVolumeSampleExposure();
                      testSideImagingCenter(Devices.Sides.A);
                      testSideImagingCenter(Devices.Sides.B);
+                     testAutofocusDuringAcquisition();
                      MyDialogUtils.showError("all tests passed successfully");
                   } catch (Exception ex) {
                      MyDialogUtils.showError(ex);
@@ -537,5 +538,16 @@ public class TestingPanel extends ListeningJPanel {
       diSPIM.setSideImagingCenter(side, settingOrig);
    }
    
+   private void testAutofocusDuringAcquisition() throws ASIdiSPIMException, Error {
+      ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
+      boolean settingOrig = diSPIM.getAutofocusDuringAcquisition();
+      diSPIM.setAutofocusDuringAcquisition(true);
+      assertEquals(true, diSPIM.getAutofocusDuringAcquisition());
+      diSPIM.setAutofocusDuringAcquisition(false);
+      assertEquals(false, diSPIM.getAutofocusDuringAcquisition());
+      diSPIM.setAutofocusDuringAcquisition(true);
+      assertEquals(true, diSPIM.getAutofocusDuringAcquisition());
+      diSPIM.setAutofocusDuringAcquisition(settingOrig);
+   }
    
 }
