@@ -44,7 +44,7 @@ import mmcorej.CMMCore;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.internal.DefaultDatastore;
-import org.micromanager.display.internal.ChannelSettings;
+import org.micromanager.display.internal.RememberedChannelSettings;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.AcqOrderMode;
@@ -2069,18 +2069,19 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
    public static Integer getChannelColor(String channelGroup,
          String channel, int defaultVal) {
-      return ChannelSettings.getColorForChannel(channel, channelGroup,
-            new Color(defaultVal)).getRGB();
+      return RememberedChannelSettings.getColorForChannel(channel,
+            channelGroup, new Color(defaultVal)).getRGB();
    }
 
    public static void setChannelColor(String channelGroup, String channel,
          int color) {
       // TODO: this is kind of an ugly way to do this.
-      ChannelSettings settings = ChannelSettings.loadSettings(channel,
-            channelGroup, Color.WHITE, 0, -1, true);
-      settings = new ChannelSettings(channel, channelGroup,
-            new Color(color), settings.getHistogramMin(),
-            settings.getHistogramMax(), settings.getShouldAutoscale());
+      RememberedChannelSettings settings = RememberedChannelSettings.loadSettings(
+            channel, channelGroup, Color.WHITE,
+            new Integer[] {0}, new Integer[] {-1}, true);
+      settings = new RememberedChannelSettings(channel, channelGroup,
+            new Color(color), settings.getHistogramMins(),
+            settings.getHistogramMaxes(), settings.getShouldAutoscale());
       settings.saveToProfile();
    }
 

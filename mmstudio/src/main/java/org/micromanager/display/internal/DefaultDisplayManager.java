@@ -154,6 +154,20 @@ public final class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
+   public DisplaySettings.ContrastSettings getContrastSettings(Integer contrastMin,
+         Integer contrastMax, Double gamma) {
+      return new DefaultDisplaySettings.DefaultContrastSettings(
+            contrastMin, contrastMax, gamma);
+   }
+
+   @Override
+   public DisplaySettings.ContrastSettings getContrastSettings(Integer[] contrastMins,
+         Integer[] contrastMaxes, Double[] gammas) {
+      return new DefaultDisplaySettings.DefaultContrastSettings(contrastMins, contrastMaxes,
+            gammas);
+   }
+
+   @Override
    public PropertyMap.PropertyMapBuilder getPropertyMapBuilder() {
       return new DefaultPropertyMap.Builder();
    }

@@ -1123,8 +1123,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          }
       }
       if (didChange) {
-         DisplaySettings newSettings = ChannelSettings.updateSettings(names,
-               store_.getSummaryMetadata().getChannelGroup(),
+         DisplaySettings newSettings = RememberedChannelSettings.updateSettings(
+               names, store_.getSummaryMetadata().getChannelGroup(),
                displaySettings_);
          if (newSettings != null) {
             // There were new settings to load, i.e. we actually do have new

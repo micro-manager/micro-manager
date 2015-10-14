@@ -57,6 +57,33 @@ public interface DisplayManager {
    public DisplaySettings.DisplaySettingsBuilder getDisplaySettingsBuilder();
 
    /**
+    * Generate a ContrastSettings object with the provided values. This version
+    * of the method is to be used for single-component images.
+    * @param contrastMin The highest pixel intensity corresponding to black.
+    * @param contrastMax The lowest pixel intensity corresponding to full
+    *        intensity.
+    * @param gamma The gamma curve parameter.
+    * @return a DisplaySettings.ContrastSettings object, whose properties are
+    *         all length-1 arrays with the provided values.
+    */
+   public DisplaySettings.ContrastSettings getContrastSettings(
+         Integer contrastMin, Integer contrastMax, Double gamma);
+
+   /**
+    * Generate a ContrastSettings object with the provided values. This version
+    * of the method is to be used for multi-component (e.g. RGB) images.
+    * @param contrastMin The highest pixel intensity corresponding to black,
+    *        for each component.
+    * @param contrastMax The lowest pixel intensity corresponding to full
+    *        intensity, for each component.
+    * @param gamma The gamma curve parameter. NOTE: for now this parameter is
+    *        not used to control display of multi-component images.
+    * @return a DisplaySettings.ContrastSettings object.
+    */
+   public DisplaySettings.ContrastSettings getContrastSettings(
+         Integer[] contrastMins, Integer[] contrastMaxes, Double[] gammas);
+
+   /**
     * Generate a "blank" PropertyMap.PropertyMapBuilder with empty mappings.
     * @return A PropertyMapBuilder with no pre-set values.
     */

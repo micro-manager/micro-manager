@@ -25,25 +25,24 @@ package org.micromanager.display.internal.events;
  * their LUTs to the image.
  */
 public class LUTUpdateEvent {
-   // These are Integers and Doubles instead of ints and doubles so they can
-   // be null, which is used to signify that the recipient of the event should
-   // use their own values instead.
-   private Integer min_;
-   private Integer max_;
+   // Each of these may be null, which signifies to the recipient that they
+   // should use their own values instead.
+   private Integer[] mins_;
+   private Integer[] maxes_;
    private Double gamma_;
 
-   public LUTUpdateEvent(Integer min, Integer max, Double gamma) {
-      min_ = min;
-      max_ = max;
+   public LUTUpdateEvent(Integer[] mins, Integer[] maxes, Double gamma) {
+      mins_ = mins;
+      maxes_ = maxes;
       gamma_ = gamma;
    }
 
-   public Integer getMin() {
-      return min_;
+   public Integer[] getMins() {
+      return mins_;
    }
 
-   public Integer getMax() {
-      return max_;
+   public Integer[] getMaxes() {
+      return maxes_;
    }
 
    public Double getGamma() {

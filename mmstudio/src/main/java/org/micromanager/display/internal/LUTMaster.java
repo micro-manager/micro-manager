@@ -290,19 +290,29 @@ public class LUTMaster {
       if (mode == DisplaySettings.ColorMode.GRAYSCALE) {
          color = Color.WHITE;
       }
-      LUT lut = ImageUtils.makeLUT(color,
-            settings.getSafeChannelGamma(channelIndex, 1.0));
+
+      // Get the ImageProcessor.
       ImagePlus plus = display.getImagePlus();
       CompositeImage composite = null;
       if (plus instanceof CompositeImage) {
          composite = (CompositeImage) plus;
       }
       ImageProcessor processor = plus.getProcessor();
+
+      // Get the parameters to use to adjust contrast for this channel.
+      DisplaySettings.ContrastSettings contrastSettings =
+         settings.getSafeContrastSettings(channelIndex,
+               new DefaultDisplaySettings.DefaultContrastSettings(
+                  (int) processor.getMin(), (int) processor.getMax(), 1.0));
+
       if (processor instanceof ColorProcessor) {
          // RGB images require special handling.
-         setRGBLUT(processor);
+         setRGBLUT((ColorProcessor) processor, contrastSettings);
          return;
       }
+
+      LUT lut = ImageUtils.makeLUT(color,
+            contrastSettings.getSafeContrastGamma(0, 1.0));
       if (hasCustomLUT) {
          // Get the current LUT from ImageJ instead.
          // TODO: Ignore gamma settings for custom LUTs.
@@ -328,10 +338,10 @@ public class LUTMaster {
          ReportingUtils.logError("Null LUT");
          return;
       }
-      lut.min = settings.getSafeChannelContrastMin(channelIndex,
-            (int) processor.getMin());
-      lut.max = settings.getSafeChannelContrastMax(channelIndex,
-            (int) processor.getMax());
+      // Note that we are guaranteed to have values for the first component
+      // here because of the call to getSafeContrastSettings() earlier.
+      lut.min = contrastSettings.getSafeContrastMin(0, 0);
+      lut.max = contrastSettings.getSafeContrastMax(0, 0);
       processor.setMinAndMax(lut.min, lut.max);
       if (composite == null) {
          // Single-channel.
@@ -369,9 +379,23 @@ public class LUTMaster {
    /**
     * Apply an RGB LUT to the provided processor.
     */
-   private static void setRGBLUT(ImageProcessor processor) {
+   private static void setRGBLUT(ColorProcessor processor,
+         DisplaySettings.ContrastSettings contrastSettings) {
+      ReportingUtils.logError("Applying RGB settings " + contrastSettings);
       processor.setColorModel(
             new DirectColorModel(32, 0xff0000, 0xff00, 0xff));
+      // ImageJ only does RGB, i.e. 3-component, images.
+      for (int i = 0; i < 3; ++i) {
+         // Unfathomably, ImageJ's "which component to adjust" parameter is
+         // actually a bitmask, so 1 = first component, 2 = second component,
+         // and 4 = third component.
+         processor.setMinAndMax(
+               contrastSettings.getSafeContrastMin(i,
+                  (int) processor.getMin()),
+               contrastSettings.getSafeContrastMax(i,
+                  (int) processor.getMax()),
+               1 << i);
+      }
    }
 
    /**

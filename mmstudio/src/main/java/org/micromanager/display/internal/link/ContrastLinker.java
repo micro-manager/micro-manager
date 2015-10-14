@@ -26,6 +26,7 @@ import java.util.List;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 
+import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 
 import org.micromanager.internal.utils.ReportingUtils;
@@ -114,25 +115,13 @@ public class ContrastLinker extends SettingsLinker {
       }
 
       int newIndex = getIndex(source, newSettings);
-      // Scan each of the arrays we care about and see if our value in those
-      // arrays has changed.
-      Object[] oldChannelSettings = DefaultDisplaySettings.getPerChannelArrays(oldSettings);
-      Object[] newChannelSettings = DefaultDisplaySettings.getPerChannelArrays(newSettings);
-      for (int i = 0; i < oldChannelSettings.length; ++i) {
-         if (newChannelSettings[i] == oldChannelSettings[i]) {
-            // These two arrays are the same reference, so they can't
-            // possibly be different.
-            continue;
-         }
-         Object[] oldVals = DefaultDisplaySettings.makePerChannelArray(i, (Object[]) oldChannelSettings[i], channelIndex_ + 1);
-         Object[] newVals = DefaultDisplaySettings.makePerChannelArray(i, (Object[]) newChannelSettings[i], newIndex + 1);
-         if (newVals[newIndex] != oldVals[channelIndex_]) {
-            // Found an array where, for the index we care about,
-            // we are different.
-            return true;
-         }
-      }
-      return false;
+      DisplaySettings.ContrastSettings oldContrast = oldSettings.getSafeContrastSettings(channelIndex_,
+            DefaultDisplayManager.getInstance().getContrastSettings(
+               0, 0, 1.0));
+      DisplaySettings.ContrastSettings newContrast = newSettings.getSafeContrastSettings(newIndex,
+            DefaultDisplayManager.getInstance().getContrastSettings(
+               0, 0, 1.0));
+      return (oldContrast != newContrast);
    }
 
    /**
@@ -153,33 +142,19 @@ public class ContrastLinker extends SettingsLinker {
    @Override
    public DisplaySettings copySettings(DisplayWindow sourceDisplay,
          DisplaySettings source, DisplaySettings dest) {
-      DisplaySettings.DisplaySettingsBuilder builder = dest.copy();
-
-      Object[] destSettings = DefaultDisplaySettings.getPerChannelArrays(dest);
-      Object[] sourceSettings = DefaultDisplaySettings.getPerChannelArrays(source);
-      boolean shouldChangeSettings = dest.getShouldAutostretch() != source.getShouldAutostretch();
       int sourceIndex = getIndex(sourceDisplay, source);
-
-      for (int i = 0; i < destSettings.length; ++i) {
-         Object[] destVals = DefaultDisplaySettings.makePerChannelArray(
-               i, (Object[]) (destSettings[i]), channelIndex_ + 1);
-         Object[] sourceVals = DefaultDisplaySettings.makePerChannelArray(
-               i, (Object[]) (sourceSettings[i]), sourceIndex + 1);
-         if (destVals[channelIndex_] != sourceVals[sourceIndex]) {
-            // Something changed for our channel, so apply the array.
-            shouldChangeSettings = true;
-            destVals[channelIndex_] = sourceVals[sourceIndex];
-            DefaultDisplaySettings.updateChannelArray(i, destVals, builder);
-         }
-      }
-      if (shouldChangeSettings) {
-         builder.shouldAutostretch(source.getShouldAutostretch());
-         return builder.build();
-      }
-      else {
-         // No change; don't generate a new DisplaySettings.
+      DisplaySettings.ContrastSettings oldSettings = source.getSafeContrastSettings(
+            channelIndex_, DefaultDisplayManager.getInstance().getContrastSettings(
+               0, 0, 1.0));
+      DisplaySettings.ContrastSettings newSettings = dest.getSafeContrastSettings(
+            sourceIndex, null);
+      if (oldSettings == newSettings) {
+         // Our channel settings have not changed.
          return dest;
       }
+      DisplaySettings.DisplaySettingsBuilder builder = dest.copy();
+      builder.safeUpdateContrastSettings(newSettings, channelIndex_);
+      return builder.build();
    }
 
    /**

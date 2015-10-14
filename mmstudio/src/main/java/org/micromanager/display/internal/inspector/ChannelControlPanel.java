@@ -79,6 +79,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
   
    private ChannelHistogramModel model_;
    private final int channelIndex_;
+   private int curComponent_;
    private HistogramPanel histogram_;
    private final HistogramsPanel parent_;
    private final Datastore store_;
@@ -101,6 +102,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          Datastore store, DefaultDisplayWindow display) {
       haveInitialized_ = new AtomicBoolean(false);
       channelIndex_ = channelIndex;
+      curComponent_ = 0;
       parent_ = parent;
       store_ = store;
       display_ = display;
@@ -360,10 +362,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          // multi-channel situations.
          return;
       }
-      histogram_.setCursorText(model_.getContrastMin() + "",
-            model_.getContrastMax() + "");
-      histogram_.setCursors(model_.getContrastMin() / model_.getBinSize(),
-            (model_.getContrastMax() + 1) / model_.getBinSize(),
+      histogram_.setCursorText(model_.getContrastMin(curComponent_) + "",
+            model_.getContrastMax(curComponent_) + "");
+      histogram_.setCursors(model_.getContrastMin(curComponent_) / model_.getBinSize(),
+            (model_.getContrastMax(curComponent_) + 1) / model_.getBinSize(),
             model_.getContrastGamma());
       histogram_.repaint();
    }
@@ -477,15 +479,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    /**
-    * Pull new color and contrast settings from our DisplayWindow's
-    * DisplaySettings, or from the ChannelSettings for our channel name if our
-    * DisplaySettings are deficient.
-    * The priorities for values here are:
-    * 1) If single-channel, then we use a white color
-    * 2) Use the values in the display settings
-    * 3) If those values aren't available, use the values in the
-    *    ChannelSettings for our channel name.
-    * 4) If *those* values aren't available, use hardcoded defaults.
+    * Update our GUI to reflect changes in the display settings.
     */
    public void reloadDisplaySettings() {
       model_.reloadDisplaySettings();
@@ -509,10 +503,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       calcAndDisplayHistAndStats(true);
    }
 
-   public void setContrast(int min, int max, double gamma) {
-      model_.setContrast(min, max, gamma);
-   }
-
    @Subscribe
    public void onLUTUpdate(LUTUpdateEvent event) {
       try {
@@ -525,22 +515,23 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    @Override
    public void contrastMaxInput(int max) {
-      model_.setContrastMax(max);
+      model_.setContrastMax(curComponent_, max);
    }
    
    @Override
    public void contrastMinInput(int min) {    
-      model_.setContrastMin(min);
+      model_.setContrastMin(curComponent_, min);
    }
 
    @Override
    public void onLeftCursor(double pos) {
-      model_.setContrastMin((int) (Math.max(0, pos) * model_.getBinSize()));
+      model_.setContrastMin(curComponent_,
+            (int) (Math.max(0, pos) * model_.getBinSize()));
    }
 
    @Override
    public void onRightCursor(double pos) {
-      model_.setContrastMax(
+      model_.setContrastMax(curComponent_,
             (int) (Math.min(ChannelHistogramModel.NUM_BINS - 1, pos) * model_.getBinSize()));
    }
 
@@ -610,16 +601,16 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    public void calcAndDisplayHistAndStats(boolean shouldDrawHistogram) {
-      int[] histogram = model_.calcHistogramStats();
-      if (histogram == null || !model_.getChannelEnabled() ||
-            !shouldDrawHistogram) {
+      int[][] histogram = model_.calcHistogramStats();
+      if (histogram == null || histogram[curComponent_] == null ||
+            !model_.getChannelEnabled() || !shouldDrawHistogram) {
          histogram_.setVisible(false);
          return;
       }
       histogram_.setVisible(true);
       //Draw histogram and stats
       GraphData histogramData = new GraphData();
-      histogramData.setData(histogram);
+      histogramData.setData(histogram[curComponent_]);
       histogram_.setData(histogramData);
       histogram_.setAutoScale();
       histogram_.repaint();

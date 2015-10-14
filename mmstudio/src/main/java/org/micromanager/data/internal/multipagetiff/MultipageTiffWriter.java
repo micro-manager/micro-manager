@@ -794,26 +794,28 @@ public class MultipageTiffWriter {
       }
 
       DisplaySettings settings = DefaultDisplaySettings.getStandardSettings();
-      Integer[] mins = settings.getChannelContrastMins();
-      Integer[] maxes = settings.getChannelContrastMaxes();
-      if (mins != null && mins.length > numChannels &&
-            maxes != null && maxes.length > numChannels) {
+      DisplaySettings.ContrastSettings[] contrastSettings = settings.getContrastSettings();
+      if (contrastSettings != null && contrastSettings.length > numChannels) {
          for (int i = 0; i < numChannels; i++) {
             //Display Ranges: For each channel, write min then max
-            mdBuffer.putDouble(bufferPosition, mins[i]);
+            // TODO: doesn't handle multi-component images.
+            mdBuffer.putDouble(bufferPosition,
+                  contrastSettings[i].getSafeContrastMin(0, 0));
             bufferPosition += 8;
-            mdBuffer.putDouble(bufferPosition, maxes[i]);
+            mdBuffer.putDouble(bufferPosition,
+                  contrastSettings[i].getSafeContrastMax(0, 0));
             bufferPosition += 8;
          }
       }
 
       Color[] colors = settings.getChannelColors();
-      Double[] gammas = settings.getChannelGammas();
       if (colors != null && colors.length > numChannels &&
-            gammas != null && gammas.length > numChannels) {
+            contrastSettings != null &&
+            contrastSettings.length > numChannels) {
          //LUTs
          for (int i = 0; i < numChannels; i++) {
-            LUT lut = ImageUtils.makeLUT(colors[i], gammas[i]);
+            LUT lut = ImageUtils.makeLUT(colors[i],
+                  settings.getSafeContrastGamma(i, 0, 1.0));
             for (byte b : lut.getBytes()) {
                mdBuffer.put(bufferPosition, b);
                bufferPosition++;
@@ -857,13 +859,8 @@ public class MultipageTiffWriter {
       //write single channel contrast settings or display mode if multi channel
       DisplaySettings settings = DefaultDisplaySettings.getStandardSettings();
       if (numChannels_ == 1) {
-         Integer[] mins = settings.getChannelContrastMins();
-         Integer[] maxes = settings.getChannelContrastMaxes();
-         if (mins != null && mins.length > 0 &&
-               maxes != null && maxes.length > 0) {
-            sb.append("min=").append(mins[0]).append("\n");
-            sb.append("max=").append(maxes[0]).append("\n");
-         }
+         sb.append("min=").append(settings.getSafeContrastMin(0, 0, 0)).append("\n");
+         sb.append("max=").append(settings.getSafeContrastMax(0, 0, 0)).append("\n");
       } else {
          DisplaySettings.ColorMode mode = settings.getChannelColorMode();
          if (mode == DisplaySettings.ColorMode.COMPOSITE) {

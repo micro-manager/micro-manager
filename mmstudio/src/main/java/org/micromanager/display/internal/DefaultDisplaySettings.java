@@ -29,6 +29,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.json.JSONArray;
@@ -145,11 +146,125 @@ public class DefaultDisplaySettings implements DisplaySettings {
       return result;
    }
 
+   public static class DefaultContrastSettings implements DisplaySettings.ContrastSettings {
+      Integer[] contrastMins_;
+      Integer[] contrastMaxes_;
+      Double[] gammas_;
+
+      /**
+       * Convenience method for single-component settings.
+       */
+      public DefaultContrastSettings(Integer contrastMin, Integer contrastMax,
+            Double gamma) {
+         contrastMins_ = new Integer[] {contrastMin};
+         contrastMaxes_ = new Integer[] {contrastMax};
+         gammas_ = new Double[] {gamma};
+      }
+
+      public DefaultContrastSettings(Integer[] contrastMins, Integer[] contrastMaxes,
+            Double[] gammas) {
+         contrastMins_ = contrastMins;
+         contrastMaxes_ = contrastMaxes;
+         gammas_ = gammas;
+      }
+
+      @Override
+      public Integer[] getContrastMins() {
+         return contrastMins_;
+      }
+
+      @Override
+      public Integer getSafeContrastMin(int component, Integer defaultVal) {
+         if (contrastMins_ == null || contrastMins_.length <= component) {
+            return defaultVal;
+         }
+         return contrastMins_[component];
+      }
+
+      @Override
+      public Integer[] getContrastMaxes() {
+         return contrastMaxes_;
+      }
+
+      @Override
+      public Integer getSafeContrastMax(int component, Integer defaultVal) {
+         if (contrastMaxes_ == null || contrastMaxes_.length <= component) {
+            return defaultVal;
+         }
+         return contrastMaxes_[component];
+      }
+
+      @Override
+      public Double[] getContrastGammas() {
+         return gammas_;
+      }
+
+      @Override
+      public Double getSafeContrastGamma(int component, Double defaultVal) {
+         if (gammas_ == null || gammas_.length <= component) {
+            return defaultVal;
+         }
+         return gammas_[component];
+      }
+
+      @Override
+      public int getNumComponents() {
+         int result = 0;
+         if (contrastMins_ != null) {
+            result = Math.max(result, contrastMins_.length);
+         }
+         if (contrastMaxes_ != null) {
+            result = Math.max(result, contrastMaxes_.length);
+         }
+         if (gammas_ != null) {
+            result = Math.max(result, gammas_.length);
+         }
+         return result;
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+         if (!(obj instanceof ContrastSettings)) {
+            return false;
+         }
+         ContrastSettings alt = (ContrastSettings) obj;
+         if (getNumComponents() != alt.getNumComponents()) {
+            return false;
+         }
+         Integer[] altMins = alt.getContrastMins();
+         Integer[] altMaxes = alt.getContrastMaxes();
+         Double[] altGammas = alt.getContrastGammas();
+         if (((contrastMins_ == null) != (altMins == null)) ||
+               ((contrastMaxes_ == null) != (altMaxes == null)) ||
+               ((gammas_ == null) != (altGammas == null))) {
+            // Someone's array is null where the other one isn't.
+            return false;
+         }
+         if ((contrastMins_ != null &&
+               !Arrays.deepEquals(contrastMins_, altMins)) ||
+               (contrastMaxes_ != null &&
+                !Arrays.deepEquals(contrastMaxes_, altMaxes)) ||
+               (gammas_ != null && !Arrays.deepEquals(gammas_, altGammas))) {
+            // Arrays contain unequal values.
+            return false;
+         }
+         // All arrays have same contents or are both null.
+         return true;
+      }
+
+      @Override
+      public String toString() {
+         String result = String.format("<ContrastSettings (%d components)", getNumComponents());
+         for (int i = 0; i < getNumComponents(); ++i) {
+            result += String.format("(%d, %d)", getSafeContrastMin(i, -1), getSafeContrastMax(i, -1));
+         }
+         return result + ">";
+      }
+   }
+
    public static class Builder implements DisplaySettings.DisplaySettingsBuilder {
       private Color[] channelColors_ = null;
-      private Integer[] channelContrastMins_ = null;
-      private Integer[] channelContrastMaxes_ = null;
-      private Double[] channelGammas_ = null;
+      private ContrastSettings[] contrastSettings_ = null;
       private Double magnification_ = null;
       private Integer animationFPS_ = null;
       private DisplaySettings.ColorMode channelColorMode_ = null;
@@ -194,64 +309,30 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
-      public DisplaySettingsBuilder channelContrastMins(Integer[] channelContrastMins) {
-         channelContrastMins_ = (channelContrastMins == null) ? null : channelContrastMins.clone();
+      public DisplaySettingsBuilder contrastSettings(ContrastSettings[] contrastSettings) {
+         contrastSettings_ = (contrastSettings == null) ? null : contrastSettings.clone();
          return this;
       }
 
       @Override
-      public DisplaySettingsBuilder safeUpdateChannelContrastMin(
-            Integer newMin, int channelIndex) {
-         if (channelContrastMins_ == null ||
-               channelContrastMins_.length <= channelIndex) {
-            Integer[] newArray = new Integer[channelIndex + 1];
+      public DisplaySettingsBuilder safeUpdateContrastSettings(
+            ContrastSettings newSettings, int channelIndex) {
+         if (contrastSettings_ == null ||
+               contrastSettings_.length <= channelIndex) {
+            ContrastSettings[] newArray = new ContrastSettings[channelIndex + 1];
             // Fill in nulls to start.
             for (int i = 0; i < newArray.length; ++i) {
                newArray[i] = null;
             }
-            if (channelContrastMins_ != null) {
+            if (contrastSettings_ != null) {
                // Copy old values across.
-               for (int i = 0; i < channelContrastMins_.length; ++i) {
-                  newArray[i] = channelContrastMins_[i];
+               for (int i = 0; i < contrastSettings_.length; ++i) {
+                  newArray[i] = contrastSettings_[i];
                }
             }
-            channelContrastMins_ = newArray;
+            contrastSettings_ = newArray;
          }
-         channelContrastMins_[channelIndex] = newMin;
-         return this;
-      }
-
-      @Override
-      public DisplaySettingsBuilder channelContrastMaxes(Integer[] channelContrastMaxes) {
-         channelContrastMaxes_ = (channelContrastMaxes == null) ? null : channelContrastMaxes.clone();
-         return this;
-      }
-
-      @Override
-      public DisplaySettingsBuilder safeUpdateChannelContrastMax(
-            Integer newMax, int channelIndex) {
-         if (channelContrastMaxes_ == null ||
-               channelContrastMaxes_.length <= channelIndex) {
-            Integer[] newArray = new Integer[channelIndex + 1];
-            // Fill in nulls to start.
-            for (int i = 0; i < newArray.length; ++i) {
-               newArray[i] = null;
-            }
-            if (channelContrastMaxes_ != null) {
-               // Copy old values across.
-               for (int i = 0; i < channelContrastMaxes_.length; ++i) {
-                  newArray[i] = channelContrastMaxes_[i];
-               }
-            }
-            channelContrastMaxes_ = newArray;
-         }
-         channelContrastMaxes_[channelIndex] = newMax;
-         return this;
-      }
-
-      @Override
-      public DisplaySettingsBuilder channelGammas(Double[] channelGammas) {
-         channelGammas_ = (channelGammas == null) ? null : channelGammas.clone();
+         contrastSettings_[channelIndex] = newSettings;
          return this;
       }
 
@@ -317,9 +398,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    }
 
    private Color[] channelColors_ = null;
-   private Integer[] channelContrastMins_ = null;
-   private Integer[] channelContrastMaxes_ = null;
-   private Double[] channelGammas_ = null;
+   private ContrastSettings[] contrastSettings_ = null;
    private Double magnification_ = null;
    private Integer animationFPS_ = null;
    private DisplaySettings.ColorMode channelColorMode_ = null;
@@ -333,9 +412,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
 
    public DefaultDisplaySettings(Builder builder) {
       channelColors_ = builder.channelColors_;
-      channelContrastMins_ = builder.channelContrastMins_;
-      channelContrastMaxes_ = builder.channelContrastMaxes_;
-      channelGammas_ = builder.channelGammas_;
+      contrastSettings_ = builder.contrastSettings_;
       magnification_ = builder.magnification_;
       animationFPS_ = builder.animationFPS_;
       channelColorMode_ = builder.channelColorMode_;
@@ -364,48 +441,52 @@ public class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
-   public Integer[] getChannelContrastMins() {
-      return channelContrastMins_;
+   public ContrastSettings[] getContrastSettings() {
+      return contrastSettings_;
    }
 
    @Override
-   public Integer getSafeChannelContrastMin(int index, Integer defaultVal) {
-      if (channelContrastMins_ == null ||
-            channelContrastMins_.length <= index ||
-            channelContrastMins_[index] == null) {
+   public ContrastSettings getSafeContrastSettings(int index,
+         ContrastSettings defaultVal) {
+      if (contrastSettings_ == null ||
+            contrastSettings_.length <= index ||
+            contrastSettings_[index] == null) {
          return defaultVal;
       }
-      return channelContrastMins_[index];
+      return contrastSettings_[index];
    }
 
    @Override
-   public Integer[] getChannelContrastMaxes() {
-      return channelContrastMaxes_;
-   }
-
-   @Override
-   public Integer getSafeChannelContrastMax(int index, Integer defaultVal) {
-      if (channelContrastMaxes_ == null ||
-            channelContrastMaxes_.length <= index ||
-            channelContrastMaxes_[index] == null) {
+   public Integer getSafeContrastMin(int index, int component,
+         Integer defaultVal) {
+      if (contrastSettings_ == null ||
+            contrastSettings_.length <= index ||
+            contrastSettings_[index] == null) {
          return defaultVal;
       }
-      return channelContrastMaxes_[index];
+      return contrastSettings_[index].getSafeContrastMin(component, defaultVal);
    }
 
    @Override
-   public Double[] getChannelGammas() {
-      return channelGammas_;
-   }
-
-   @Override
-   public Double getSafeChannelGamma(int index, Double defaultVal) {
-      if (channelGammas_ == null ||
-            channelGammas_.length <= index ||
-            channelGammas_[index] == null) {
+   public Integer getSafeContrastMax(int index, int component,
+         Integer defaultVal) {
+      if (contrastSettings_ == null ||
+            contrastSettings_.length <= index ||
+            contrastSettings_[index] == null) {
          return defaultVal;
       }
-      return channelGammas_[index];
+      return contrastSettings_[index].getSafeContrastMax(component, defaultVal);
+   }
+
+   @Override
+   public Double getSafeContrastGamma(int index, int component,
+         Double defaultVal) {
+      if (contrastSettings_ == null ||
+            contrastSettings_.length <= index ||
+            contrastSettings_[index] == null) {
+         return defaultVal;
+      }
+      return contrastSettings_[index].getSafeContrastGamma(component, defaultVal);
    }
 
    @Override
@@ -473,9 +554,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    public DisplaySettingsBuilder copy() {
       return new Builder()
             .channelColors(channelColors_)
-            .channelContrastMins(channelContrastMins_)
-            .channelContrastMaxes(channelContrastMaxes_)
-            .channelGammas(channelGammas_)
+            .contrastSettings(contrastSettings_)
             .magnification(magnification_)
             .animationFPS(animationFPS_)
             .channelColorMode(channelColorMode_)
@@ -511,22 +590,40 @@ public class DefaultDisplaySettings implements DisplaySettings {
             builder.channelColors(colors);
          }
 
+         // Reconstruct the channel contrast settings into ContrastSettings
+         // objects. Note that gamma is not preserved currently, let alone
+         // multi-component values.
+         Integer[] minsArr = null;
+         Integer[] maxesArr = null;
          if (tags.has("ChContrastMin")) {
             JSONArray mins = tags.getJSONArray("ChContrastMin");
-            Integer[] minsArr = new Integer[mins.length()];
+            minsArr = new Integer[mins.length()];
+            maxesArr = new Integer[mins.length()];
             for (int i = 0; i < minsArr.length; ++i) {
                minsArr[i] = mins.getInt(i);
             }
-            builder.channelContrastMins(minsArr);
          }
          if (tags.has("ChContrastMax")) {
             JSONArray maxes = tags.getJSONArray("ChContrastMax");
-            Integer[] maxesArr = new Integer[maxes.length()];
+            maxesArr = new Integer[maxes.length()];
+            if (minsArr == null) {
+               minsArr = new Integer[maxes.length()];
+            }
             for (int i = 0; i < maxesArr.length; ++i) {
                maxesArr[i] = maxes.getInt(i);
             }
-            builder.channelContrastMaxes(maxesArr);
          }
+         if (minsArr != null) {
+            ArrayList<ContrastSettings> contrastSettings = new ArrayList<ContrastSettings>();
+            for (int i = 0; i < minsArr.length; ++i) {
+               Integer min = minsArr[i];
+               Integer max = maxesArr[i];
+               contrastSettings.add(new DefaultContrastSettings(min, max, 1.0));
+            }
+            builder.contrastSettings(
+                  contrastSettings.toArray(new DefaultContrastSettings[] {}));
+         }
+
          if (tags.has("magnification")) {
             builder.magnification(tags.getDouble("magnification"));
          }
@@ -645,18 +742,15 @@ public class DefaultDisplaySettings implements DisplaySettings {
             }
             result.put("ChColors", colors);
          }
-         if (channelContrastMins_ != null && channelContrastMins_.length > 0) {
+         // TODO: doesn't handle multi-component images.
+         if (contrastSettings_ != null && contrastSettings_.length > 0) {
             JSONArray mins = new JSONArray();
-            for (int i = 0; i < channelContrastMins_.length; ++i) {
-               mins.put(channelContrastMins_[i]);
+            JSONArray maxes = new JSONArray();
+            for (int i = 0; i < contrastSettings_.length; ++i) {
+               mins.put(getSafeContrastMin(i, 0, -1));
+               maxes.put(getSafeContrastMax(i, 0, -1));
             }
             result.put("ChContrastMin", mins);
-         }
-         if (channelContrastMaxes_ != null && channelContrastMaxes_.length > 0) {
-            JSONArray maxes = new JSONArray();
-            for (int i = 0; i < channelContrastMaxes_.length; ++i) {
-               maxes.put(channelContrastMaxes_[i]);
-            }
             result.put("ChContrastMax", maxes);
          }
          result.put("magnification", magnification_);
@@ -706,96 +800,5 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
       result += ">";
       return result;
-   }
-
-   // There are a number of attributes in the DisplaySettings that apply on a
-   // per-channel basis (e.g. channelColors, channelContrastMins). Some code
-   // needs to work with these attributes in a generic fashion. The below
-   // functions handle abstracting out these arrays into a group and then
-   // de-abstracting them as appropriate.
-   //
-   // HACK: all of this is rather closely-tied to
-   // org.micromanager.imagedisplay.link.ContrastLinker.getID().
-   // But it's also needed by
-   // org.micromanager.imagedisplay.ChannelControlPanel, and could be useful
-   // elsewhere, which is why it's here.
-
-   /**
-    * Down-convert our per-channel properties into an array of Object[]s.
-    * If you update this method, also update makePerChannelArray() and
-    * updateChannelArray(), which make assumptions about the ordering of
-    * types and methods of the objects in this method's output. Also scan
-    * the code for anyone calling this method, since they may have similar
-    * assumptions!
-    */
-   public static Object[] getPerChannelArrays(DisplaySettings settings) {
-      return new Object[] {
-         settings.getChannelColors(), settings.getChannelContrastMins(),
-         settings.getChannelContrastMaxes(), settings.getChannelGammas()};
-   }
-
-   /**
-    * Generate a new array of the appropriate type, having a length that is
-    * the maximum of the length of the input array, or the provided minLength
-    * parameter (e.g. if the input array is null).
-    * If you change this method, also update updateChannelArray() and
-    * getPerChannelArrays().
-    */
-   public static Object[] makePerChannelArray(int attrIndex, Object[] oldVals,
-         int minLength) {
-      int oldLen = -1;
-      if (oldVals != null) {
-         oldLen = oldVals.length;
-      }
-      int len = Math.max(oldLen, minLength);
-      // Create the array of the appropriate type.
-      Object[] result;
-      switch(attrIndex) {
-         case 0: // channelColors;
-            result = new Color[len];
-            break;
-         case 1: // channelContrastMins
-         case 2: // channelContrastMaxes
-            result = new Integer[len];
-            break;
-         case 3: // channelGammas
-            result = new Double[len];
-            break;
-         default:
-            throw new IllegalArgumentException("Invalid attribute index value " + attrIndex);
-      }
-      // Copy values into the new array if possible.
-      if (oldVals != null) {
-         for (int i = 0; i < oldLen; ++i) {
-            result[i] = oldVals[i];
-         }
-      }
-      return result;
-   }
-
-   /**
-    * Insert the given array, whose identity is determined by attrIndex, into
-    * the provided builder.
-    * If you change this method, also update makePerChannelArray() and
-    * getPerChannelArrays.
-    */
-   public static void updateChannelArray(int attrIndex, Object[] newVals,
-         DisplaySettings.DisplaySettingsBuilder builder) {
-      switch (attrIndex) {
-         case 0: // channelColors
-            builder.channelColors((Color[]) newVals);
-            break;
-         case 1: // channelContrastMins
-            builder.channelContrastMins((Integer[]) newVals);
-            break;
-         case 2: // channelContrastMaxes
-            builder.channelContrastMaxes((Integer[]) newVals);
-            break;
-         case 3: // channelGammas
-            builder.channelGammas((Double[]) newVals);
-            break;
-         default:
-            throw new IllegalArgumentException("Invalid attribute index " + attrIndex);
-      }
    }
 }
