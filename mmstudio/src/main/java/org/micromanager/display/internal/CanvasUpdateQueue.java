@@ -199,8 +199,16 @@ public class CanvasUpdateQueue {
                      (byte[]) pixels);
             }
             plus_.getProcessor().setPixels(pixels);
+            // RGB images need to have their LUTs reapplied, because the
+            // image scaling is encoded into the pixel data. And in other
+            // situations we also need to just reapply LUTs now.
             if (shouldReapplyLUTs_ ||
                   plus_.getProcessor() instanceof ColorProcessor) {
+               if (plus_.getProcessor() instanceof ColorProcessor) {
+                  // Create a new snapshot which will be used as a basis for
+                  // calculating image stats.
+                  ((ColorProcessor) plus_.getProcessor()).snapshot();
+               }
                // Must apply LUTs to the display now that it has pixels.
                LUTMaster.initializeDisplay(display_);
                shouldReapplyLUTs_ = false;
