@@ -384,9 +384,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
       histogram_.setCursorText(model_.getContrastMin(curComponent_) + "",
             model_.getContrastMax(curComponent_) + "");
-      histogram_.setCursors(model_.getContrastMin(curComponent_) / model_.getBinSize(),
+      histogram_.setCursors(curComponent_,
+            model_.getContrastMin(curComponent_) / model_.getBinSize(),
             (model_.getContrastMax(curComponent_) + 1) / model_.getBinSize(),
             model_.getContrastGamma());
+      histogram_.setCurComponent(curComponent_);
       histogram_.repaint();
    }
 
