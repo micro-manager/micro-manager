@@ -240,6 +240,7 @@ public class ChannelHistogramModel {
          if (maxesAfterRejectingOutliers_[i] == -1) {
             // Haven't calculated stats yet; do that before autostretching,
             // so that pixelMins_, etc. are set.
+            didChange = true;
             calcHistogramStats();
             break;
          }
@@ -511,8 +512,27 @@ public class ChannelHistogramModel {
          // component because ColorProcessor.getHistogram operates on the
          // components together (using a weighting factor to combine them
          // together).
+         // Note: we calculate these processors manually from the "snapshot
+         // pixels" of the ColorProcessor, because prior adjustments of the
+         // ColorProcessor's contrast values directly adjust its backing data,
+         // creating potential feedback loops if we calculate stats based on
+         // the adjusted data.
+         // This is effectively an adjusted copy of
+         // ColorProcessor.getChannel().
+         ColorProcessor colorProc = (ColorProcessor) processor;
+         if (colorProc.getSnapshotPixels() == null) {
+            // Create the snapshot (a backup copy of the current pixels) now.
+            colorProc.snapshot();
+         }
+         int[] pixels = (int[]) colorProc.getSnapshotPixels();
          for (int i = 0; i < numComponents_; ++i) {
-            processors[i] = ((ColorProcessor) processor).getChannel(i + 1, null);
+            ByteProcessor byteProc = new ByteProcessor(processor.getWidth(),
+                  processor.getHeight());
+            byte[] bytes = (byte[]) byteProc.getPixels();
+            for (int j = 0; j < processor.getWidth() * processor.getHeight(); ++j) {
+               bytes[j] = (byte) (pixels[j] >> (i * 8));
+            }
+            processors[i] = byteProc;
          }
       }
       else if (composite_ == null) {
@@ -635,11 +655,6 @@ public class ChannelHistogramModel {
     * our new settings to the profile (via the RememberedChannelSettings).
     */
    private void postNewSettings() {
-      if (!haveInitialized_.get()) {
-         // Don't send out anything until after we're done initializing, since
-         // our settings are probably in an inconsistent state right now.
-         return;
-      }
       ReportingUtils.logError("Posting new contrast settings");
       DisplaySettings settings = display_.getDisplaySettings();
       DisplaySettings.DisplaySettingsBuilder builder = settings.copy();
