@@ -308,6 +308,7 @@ public class LUTMaster {
       if (processor instanceof ColorProcessor) {
          // RGB images require special handling.
          setRGBLUT((ColorProcessor) processor, contrastSettings);
+         plus.updateAndDraw();
          return;
       }
 
@@ -381,6 +382,14 @@ public class LUTMaster {
     */
    private static void setRGBLUT(ColorProcessor processor,
          DisplaySettings.ContrastSettings contrastSettings) {
+      // Unfathomably, ColorProcessor's setMinAndMax() method actually
+      // modifies the pixel data, so we need to "reset" it to its "snapshot"
+      // copy of the pixel data before applying our contrast factors. Of
+      // course we also need to ensure that the snapshot exists.
+      if (processor.getSnapshotPixels() == null) {
+         processor.snapshot();
+      }
+      processor.reset();
       ReportingUtils.logError("Applying RGB settings " + contrastSettings);
       processor.setColorModel(
             new DirectColorModel(32, 0xff0000, 0xff00, 0xff));

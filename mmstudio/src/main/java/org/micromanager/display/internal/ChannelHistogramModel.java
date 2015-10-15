@@ -236,7 +236,16 @@ public class ChannelHistogramModel {
       // Only send an event if we actually changed anything; otherwise we get
       // into an infinite loop.
       boolean didChange = false;
-      for (int i = 0; i < contrastMins_.length; ++i) {
+      for (int i = 0; i < numComponents_; ++i) {
+         if (maxesAfterRejectingOutliers_[i] == -1) {
+            // Haven't calculated stats yet; do that before autostretching,
+            // so that pixelMins_, etc. are set.
+            calcHistogramStats();
+            break;
+         }
+      }
+      ReportingUtils.logError("Autostretching; arrays are " + Arrays.toString(contrastMins_) + ", " + Arrays.toString(contrastMaxes_) + ", " + Arrays.toString(pixelMins_) + ", " + Arrays.toString(pixelMaxes_) + ", " + Arrays.toString(minsAfterRejectingOutliers_) + ", " + Arrays.toString(maxesAfterRejectingOutliers_));
+      for (int i = 0; i < numComponents_; ++i) {
          if (contrastMins_[i] != pixelMins_[i] ||
                contrastMaxes_[i] != pixelMaxes_[i]) {
             didChange = true;
@@ -247,6 +256,7 @@ public class ChannelHistogramModel {
                Math.max(contrastMins_[i], minsAfterRejectingOutliers_[i]));
          contrastMaxes_[i] = Math.min(contrastMaxes_[i],
                maxesAfterRejectingOutliers_[i]);
+         ReportingUtils.logError("For " + i + " new min/max are " + contrastMins_[i] + ", " + contrastMaxes_[i]);
          // Correct for a max that's less than the min.
          if (contrastMins_[i] >= contrastMaxes_[i]) {
             if (contrastMins_[i] == 0) {
@@ -497,25 +507,26 @@ public class ChannelHistogramModel {
       }
       ImageProcessor[] processors = new ImageProcessor[numComponents_];
       ImageProcessor processor = plus_.getProcessor();
-      if (composite_ == null) {
-         if (processor instanceof ColorProcessor) {
-            // Multi-component mode.
-            for (int i = 0; i < numComponents_; ++i) {
-               processors[i] = ((ColorProcessor) processor).getChannel(i + 1, null);
-            }
+      if (processor instanceof ColorProcessor) {
+         // Multi-component mode; extract separate processors for each
+         // component because ColorProcessor.getHistogram operates on the
+         // components together (using a weighting factor to combine them
+         // together).
+         for (int i = 0; i < numComponents_; ++i) {
+            processors[i] = ((ColorProcessor) processor).getChannel(i + 1, null);
          }
-         else {
-            // Single-component mode.
-            processors[0] = processor;
-         }
+      }
+      else if (composite_ == null) {
+         // Single-component mode.
+         processors[0] = processor;
       }
       else {
          // Composite mode; we have one (TODO assumed single-component)
          // processor from this batch.
          if (composite_.getMode() == CompositeImage.COMPOSITE) {
-            processor = composite_.getProcessor(channelIndex_ + 1);
-            if (processor != null) {
-               processor.setRoi(composite_.getRoi());
+            processors[0] = composite_.getProcessor(channelIndex_ + 1);
+            if (processors[0] != null) {
+               processors[0].setRoi(composite_.getRoi());
             }
          }
          else {
@@ -523,9 +534,8 @@ public class ChannelHistogramModel {
             int flatIndex = 1 + channelIndex_ + 
                   (composite_.getSlice() - 1) * ci.getNChannelsUnverified() +
                   (composite_.getFrame() - 1) * ci.getNSlicesUnverified() * ci.getNChannelsUnverified();
-            processor = composite_.getStack().getProcessor(flatIndex);
+            processors[0] = composite_.getStack().getProcessor(flatIndex);
          }
-         processors[0] = processor;
       }
       if (processors[0] == null ) {
          // Tried to get an image that doesn't exist.
@@ -534,6 +544,7 @@ public class ChannelHistogramModel {
 
       ArrayList<int[]> histograms = new ArrayList<int[]>();
       for (int i = 0; i < numComponents_; ++i) {
+         processors[i].setRoi(processor.getRoi());
          histograms.add(calcStats(i, processors[i]));
       }
       // Autostretch, if necessary.
@@ -553,8 +564,10 @@ public class ChannelHistogramModel {
       int imgWidth = plus_.getWidth();
       int imgHeight = plus_.getHeight();
 
+      ReportingUtils.logError("Calculating stats for " + component + " from histogram " + Arrays.toString(rawHistogram));
       if (rawHistogram[0] == imgWidth * imgHeight) {
          // Image data is invalid/blank.
+         ReportingUtils.logError("Invalid histogram");
          return null;
       }
 
@@ -570,6 +583,7 @@ public class ChannelHistogramModel {
             0.01 * extremaPercentage);
       minsAfterRejectingOutliers_[component] = hu.getMinAfterRejectingOutliers();
       maxesAfterRejectingOutliers_[component] = hu.getMaxAfterRejectingOutliers();
+      ReportingUtils.logError("Updated reject min/max to " + minsAfterRejectingOutliers_[component] + ", " + maxesAfterRejectingOutliers_[component]);
 
       pixelMins_[component] = -1;
       pixelMaxes_[component] = 0;
@@ -586,9 +600,6 @@ public class ChannelHistogramModel {
             histogram[i] += rawHistVal;
             if (rawHistVal > 0) {
                pixelMaxes_[component] = rawHistIndex;
-               if (pixelMins_[component] == -1) {
-                  pixelMins_[component] = rawHistIndex;
-               }
             }
          }
          total += histogram[i];
@@ -608,8 +619,10 @@ public class ChannelHistogramModel {
             pixelMins_[component] = i;
          }
       }
+      ReportingUtils.logError("Updated pixel min/max for " + component + " to " + pixelMins_[component] + ", " + pixelMaxes_[component]);
 
       // work around what is apparently a bug in ImageJ
+      // TODO: what is the bug in question?
       if (total == 0) {
          if (plus_.getProcessor().getMin() == 0) {
             histogram[0] = imgWidth * imgHeight;
