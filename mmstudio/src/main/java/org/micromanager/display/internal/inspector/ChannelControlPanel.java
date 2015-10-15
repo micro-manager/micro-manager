@@ -31,11 +31,13 @@ import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
@@ -79,7 +81,15 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    // Names of RGB components
    private static final String[] COMPONENT_NAMES = new String[] {
-      "Red", "Green", "Blue"};
+      "red", "green", "blue"};
+   // Icons to go with the components. These are based on the public-domain
+   // icon at http://publicdomainvectors.org/en/free-clipart/Pencil-vector-icon/9221.html
+   private static final Icon[] COMPONENT_ICONS = new Icon[] {
+      IconLoader.getIcon("/org/micromanager/icons/pencil_red.png"),
+      IconLoader.getIcon("/org/micromanager/icons/pencil_green.png"),
+      IconLoader.getIcon("/org/micromanager/icons/pencil_blue.png")
+   };
+
 
    private ChannelHistogramModel model_;
    private final int channelIndex_;
@@ -95,7 +105,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private JToggleButton isEnabledButton_;
    private JLabel nameLabel_;
    private JLabel colorPickerLabel_;
-   private JComboBox componentPicker_;
+   private JToggleButton[] componentPickerButtons_;
    private JButton fullButton_;
    private JLabel minMaxLabel_;
    private JComboBox histRangeComboBox_;
@@ -111,6 +121,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       parent_ = parent;
       store_ = store;
       display_ = display;
+      // TODO: hardcoded to 3 elements for now.
+      componentPickerButtons_ = new JToggleButton[3];
       model_ = display_.getHistogramModel(channelIndex_);
 
       // Must be registered for events before we start modifying images, since
@@ -139,7 +151,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       fullButton_ = new javax.swing.JButton();
       autoButton_ = new javax.swing.JButton();
       colorPickerLabel_ = new javax.swing.JLabel();
-      componentPicker_ = new javax.swing.JComboBox(COMPONENT_NAMES);
       // This icon is adapted from one of the many on this page:
       // http://thenounproject.com/term/eye/421/
       // (this particular one is public domain)
@@ -207,13 +218,18 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
 
-      componentPicker_.setToolTipText("Select the component to be controlled by the histogram");
-      componentPicker_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            updateCurComponent();
-         }
-      });
+      for (int i = 0; i < COMPONENT_ICONS.length; ++i) {
+         final JToggleButton button = new JToggleButton(COMPONENT_ICONS[i]);
+         button.setToolTipText("Switch to controlling the " +
+               COMPONENT_NAMES[i] + " component");
+         componentPickerButtons_[i] = button;
+         button.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               updateCurComponent(button);
+            }
+         });
+      }
 
       minMaxLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       minMaxLabel_.setText("<html>Min/Max/Mean:<br>00/00/00</html>");
@@ -269,11 +285,18 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       nameLabel_ = new JLabel(model_.getName());
       firstColumn.add(nameLabel_, "alignx center");
       firstColumn.add(isEnabledButton_, "split 3, flowx");
+      // Depending on the number of components, we show a color picker or a
+      // component control selector.
       if (model_.getNumComponents() == 1) {
          firstColumn.add(colorPickerLabel_, "aligny center");
       }
       else {
-         firstColumn.add(componentPicker_, "aligny center");
+         boolean isFirst = true;
+         JPanel subPanel = new JPanel(new MigLayout("flowx, insets 0"));
+         for (JToggleButton button : componentPickerButtons_) {
+            subPanel.add(button, "aligny center, w 16!, h 16!, gap 0! 0!");
+         }
+         firstColumn.add(subPanel);
       }
       linkButton_ = new LinkButton(
             DisplayGroupManager.getContrastLinker(channelIndex_, display_),
@@ -460,10 +483,21 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    /**
-    * Update our current component based on the componentPicker_ object.
+    * The specified button has been clicked; set the appropriate current
+    * component for control.
     */
-   private void updateCurComponent() {
-      curComponent_ = componentPicker_.getSelectedIndex();
+   private void updateCurComponent(JToggleButton button) {
+      for (int i = 0; i < componentPickerButtons_.length; ++i) {
+         JToggleButton altButton = componentPickerButtons_[i];
+         if (altButton == button) {
+            curComponent_ = i;
+            altButton.setSelected(true);
+         }
+         else {
+            altButton.setSelected(false);
+         }
+         button.repaint();
+      }
       updateHistogram();
    }
 
