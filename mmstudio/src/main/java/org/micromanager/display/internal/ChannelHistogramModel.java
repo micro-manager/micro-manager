@@ -592,7 +592,6 @@ public class ChannelHistogramModel {
 
       if (rawHistogram[0] == imgWidth * imgHeight) {
          // Image data is invalid/blank.
-         ReportingUtils.logError("Invalid histogram");
          return null;
       }
 
