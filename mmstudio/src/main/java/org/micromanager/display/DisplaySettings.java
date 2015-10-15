@@ -144,7 +144,7 @@ public interface DisplaySettings {
        */
       DisplaySettingsBuilder safeUpdateChannelColor(Color newColor,
             int channelIndex);
-      DisplaySettingsBuilder contrastSettings(ContrastSettings[] contrastSettings);
+      DisplaySettingsBuilder channelContrastSettings(ContrastSettings[] contrastSettings);
       /**
        * "Safely" update the contrastSettings property to have the provided
        * ContrastSettings object at the specified index. If the
@@ -201,7 +201,7 @@ public interface DisplaySettings {
     * @return An array of ContrastSettings objects, one per channel. May
     *         potentially be null or of inadequate length.
     */
-   public ContrastSettings[] getContrastSettings();
+   public ContrastSettings[] getChannelContrastSettings();
 
    /**
     * Safely retrieve the ContrastSettings object for the specified channel. If

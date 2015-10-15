@@ -203,7 +203,7 @@ public class RememberedChannelSettings {
 
       if (didChange) {
          settings = settings.copy().channelColors(newColors)
-            .contrastSettings(newSettings).build();
+            .channelContrastSettings(newSettings).build();
          return settings;
       }
       return null;

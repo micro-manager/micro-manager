@@ -794,7 +794,7 @@ public class MultipageTiffWriter {
       }
 
       DisplaySettings settings = DefaultDisplaySettings.getStandardSettings();
-      DisplaySettings.ContrastSettings[] contrastSettings = settings.getContrastSettings();
+      DisplaySettings.ContrastSettings[] contrastSettings = settings.getChannelContrastSettings();
       if (contrastSettings != null && contrastSettings.length > numChannels) {
          for (int i = 0; i < numChannels; i++) {
             //Display Ranges: For each channel, write min then max

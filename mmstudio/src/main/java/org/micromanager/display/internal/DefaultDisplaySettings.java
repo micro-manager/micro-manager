@@ -309,7 +309,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
-      public DisplaySettingsBuilder contrastSettings(ContrastSettings[] contrastSettings) {
+      public DisplaySettingsBuilder channelContrastSettings(ContrastSettings[] contrastSettings) {
          contrastSettings_ = (contrastSettings == null) ? null : contrastSettings.clone();
          return this;
       }
@@ -441,7 +441,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
-   public ContrastSettings[] getContrastSettings() {
+   public ContrastSettings[] getChannelContrastSettings() {
       return contrastSettings_;
    }
 
@@ -554,7 +554,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    public DisplaySettingsBuilder copy() {
       return new Builder()
             .channelColors(channelColors_)
-            .contrastSettings(contrastSettings_)
+            .channelContrastSettings(contrastSettings_)
             .magnification(magnification_)
             .animationFPS(animationFPS_)
             .channelColorMode(channelColorMode_)
@@ -620,7 +620,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
                Integer max = maxesArr[i];
                contrastSettings.add(new DefaultContrastSettings(min, max, 1.0));
             }
-            builder.contrastSettings(
+            builder.channelContrastSettings(
                   contrastSettings.toArray(new DefaultContrastSettings[] {}));
          }
 

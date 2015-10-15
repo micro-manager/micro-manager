@@ -244,7 +244,6 @@ public class ChannelHistogramModel {
             break;
          }
       }
-      ReportingUtils.logError("Autostretching; arrays are " + Arrays.toString(contrastMins_) + ", " + Arrays.toString(contrastMaxes_) + ", " + Arrays.toString(pixelMins_) + ", " + Arrays.toString(pixelMaxes_) + ", " + Arrays.toString(minsAfterRejectingOutliers_) + ", " + Arrays.toString(maxesAfterRejectingOutliers_));
       for (int i = 0; i < numComponents_; ++i) {
          if (contrastMins_[i] != pixelMins_[i] ||
                contrastMaxes_[i] != pixelMaxes_[i]) {
@@ -564,7 +563,6 @@ public class ChannelHistogramModel {
       int imgWidth = plus_.getWidth();
       int imgHeight = plus_.getHeight();
 
-      ReportingUtils.logError("Calculating stats for " + component + " from histogram " + Arrays.toString(rawHistogram));
       if (rawHistogram[0] == imgWidth * imgHeight) {
          // Image data is invalid/blank.
          ReportingUtils.logError("Invalid histogram");
@@ -583,7 +581,6 @@ public class ChannelHistogramModel {
             0.01 * extremaPercentage);
       minsAfterRejectingOutliers_[component] = hu.getMinAfterRejectingOutliers();
       maxesAfterRejectingOutliers_[component] = hu.getMaxAfterRejectingOutliers();
-      ReportingUtils.logError("Updated reject min/max to " + minsAfterRejectingOutliers_[component] + ", " + maxesAfterRejectingOutliers_[component]);
 
       pixelMins_[component] = -1;
       pixelMaxes_[component] = 0;
@@ -643,6 +640,7 @@ public class ChannelHistogramModel {
          // our settings are probably in an inconsistent state right now.
          return;
       }
+      ReportingUtils.logError("Posting new contrast settings");
       DisplaySettings settings = display_.getDisplaySettings();
       DisplaySettings.DisplaySettingsBuilder builder = settings.copy();
 
@@ -650,8 +648,9 @@ public class ChannelHistogramModel {
          DefaultDisplayManager.getInstance().getContrastSettings(
                contrastMins_, contrastMaxes_, new Double[] {gamma_});
       DisplaySettings.ContrastSettings[] contrasts =
-         settings.getContrastSettings();
+         settings.getChannelContrastSettings();
       if (contrasts == null || contrasts.length <= channelIndex_) {
+         ReportingUtils.logError("Expanding settings array");
          // Need to create a new ContrastSettings array.
          DisplaySettings.ContrastSettings[] newContrasts =
             new DisplaySettings.ContrastSettings[channelIndex_ + 1];
@@ -664,10 +663,11 @@ public class ChannelHistogramModel {
          contrasts = newContrasts;
       }
       contrasts[channelIndex_] = newContrast;
-      builder.contrastSettings(contrasts);
+      builder.channelContrastSettings(contrasts);
 
       Color[] colors = settings.getChannelColors();
       if (colors == null || colors.length <= channelIndex_) {
+         ReportingUtils.logError("Expanding colors array");
          // As above, we need to create a new array.
          Color[] newColors = new Color[channelIndex_ + 1];
          // Copy old values over.
@@ -682,6 +682,7 @@ public class ChannelHistogramModel {
       builder.channelColors(colors);
 
       settings = builder.build();
+      ReportingUtils.logError("Updated values are " + settings.getChannelContrastSettings() + ", " + settings.getChannelColors());
       display_.setDisplaySettings(settings);
       saveChannelSettings();
       postContrastEvent(settings);
