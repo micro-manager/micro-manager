@@ -665,7 +665,7 @@ public class MMAcquisition {
 
       try {
          DefaultImage image = new DefaultImage(taggedImg);
-         image.splitMultiComponentIntoStore(store_);
+         store_.putImage(image);
       }
       catch (JSONException e) {
          ReportingUtils.logError(e, "Couldn't generate DefaultImage from TaggedImage.");

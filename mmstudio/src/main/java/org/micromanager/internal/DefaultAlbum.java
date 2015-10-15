@@ -82,7 +82,7 @@ public class DefaultAlbum implements Album {
       Coords newCoords = image.getCoords().copy().time(curTime_).build();
       try {
          image = image.copyAtCoords(newCoords);
-         ((DefaultImage) image).splitMultiComponentIntoStore(store_);
+         store_.putImage(image);
       }
       catch (DatastoreFrozenException e) {
          ReportingUtils.showError(e, "Album datastore is locked.");

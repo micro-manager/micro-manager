@@ -66,18 +66,16 @@ public class DefaultTaggedImageSink  {
                      try {
                         ++imageCount;
                         DefaultImage image = new DefaultImage(tagged);
-                        for (Image subImage : image.splitMultiComponent()) {
-                           try {
-                              pipeline_.insertImage(subImage);
-                           }
-                           catch (PipelineErrorException e) {
-                              // TODO: make showing the dialog optional.
-                              // TODO: allow user to cancel acquisition from
-                              // here.
-                              ReportingUtils.showError(e,
-                                    "There was an error in processing images.");
-                              pipeline_.clearExceptions();
-                           }
+                        try {
+                           pipeline_.insertImage(image);
+                        }
+                        catch (PipelineErrorException e) {
+                           // TODO: make showing the dialog optional.
+                           // TODO: allow user to cancel acquisition from
+                           // here.
+                           ReportingUtils.showError(e,
+                                 "There was an error in processing images.");
+                           pipeline_.clearExceptions();
                         }
                      }
                      catch (OutOfMemoryError e) {
