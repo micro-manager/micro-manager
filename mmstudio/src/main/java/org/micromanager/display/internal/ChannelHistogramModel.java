@@ -229,7 +229,7 @@ public class ChannelHistogramModel {
       if (didChange) {
          postNewSettings();
       }
-      applyLUT(true);
+      applyLUT();
    }
 
    public void autostretch() {
@@ -272,7 +272,7 @@ public class ChannelHistogramModel {
       if (didChange) {
          postNewSettings();
       }
-      applyLUT(true);
+      applyLUT();
    }
 
    /**
@@ -330,7 +330,7 @@ public class ChannelHistogramModel {
       }
 
       saveChannelSettings();
-      applyLUT(true);
+      applyLUT();
    }
 
    /**
@@ -378,7 +378,7 @@ public class ChannelHistogramModel {
 
    public void setColor(Color color) {
       color_ = color;
-      applyLUT(true);
+      applyLUT();
       postNewSettings();
    }
 
@@ -394,7 +394,7 @@ public class ChannelHistogramModel {
       disableAutostretch();
       contrastMins_[component] = min;
       sanitizeRange();
-      applyLUT(true);
+      applyLUT();
       postNewSettings();
    }
 
@@ -406,7 +406,7 @@ public class ChannelHistogramModel {
       disableAutostretch();
       contrastMaxes_[component] = max;
       sanitizeRange();
-      applyLUT(true);
+      applyLUT();
       postNewSettings();
    }
 
@@ -423,7 +423,7 @@ public class ChannelHistogramModel {
          // Lock to 1.0.
          gamma_ = 1.0;
       }
-      applyLUT(true);
+      applyLUT();
       postNewSettings();
    }
 
@@ -432,7 +432,7 @@ public class ChannelHistogramModel {
       contrastMaxes_[component] = max;
       gamma_ = gamma;
       sanitizeRange();
-      applyLUT(true);
+      applyLUT();
       postNewSettings();
    }
 
@@ -488,7 +488,7 @@ public class ChannelHistogramModel {
             isFirstLUTUpdate_ = false;
          }
          if (didChange) {
-            applyLUT(true);
+            applyLUT();
          }
       }
       catch (Exception e) {
@@ -636,7 +636,6 @@ public class ChannelHistogramModel {
             pixelMins_[component] = i;
          }
       }
-      ReportingUtils.logError("Updated pixel min/max for " + component + " to " + pixelMins_[component] + ", " + pixelMaxes_[component]);
 
       // work around what is apparently a bug in ImageJ
       // TODO: what is the bug in question?
@@ -655,7 +654,6 @@ public class ChannelHistogramModel {
     * our new settings to the profile (via the RememberedChannelSettings).
     */
    private void postNewSettings() {
-      ReportingUtils.logError("Posting new contrast settings");
       DisplaySettings settings = display_.getDisplaySettings();
       DisplaySettings.DisplaySettingsBuilder builder = settings.copy();
 
@@ -697,17 +695,17 @@ public class ChannelHistogramModel {
       builder.channelColors(colors);
 
       settings = builder.build();
-      ReportingUtils.logError("Updated values are " + settings.getChannelContrastSettings() + ", " + settings.getChannelColors());
       display_.setDisplaySettings(settings);
       saveChannelSettings();
       postContrastEvent(settings);
    }
 
    /**
-    * We provide the boolean mostly so that we don't get into cyclic draw
-    * events when our drawing code calls this method.
+    * Post a LUTUpdateEvent, which will a) synchronize other histogram models
+    * if synchornization is on, and b) cause the display to apply our LUT
+    * to the onscreen image.
     */
-   public void applyLUT(boolean shouldRedisplay) {
+   public void applyLUT() {
       DisplaySettings settings = display_.getDisplaySettings();
       if (settings.getShouldSyncChannels() != null &&
             settings.getShouldSyncChannels()) {
@@ -716,9 +714,6 @@ public class ChannelHistogramModel {
       }
       else {
          display_.postEvent(new LUTUpdateEvent(null, null, null));
-      }
-      if (shouldRedisplay) {
-         LUTMaster.updateDisplayLUTs(display_);
       }
    }
 
@@ -774,7 +769,7 @@ public class ChannelHistogramModel {
          if (!color_.equals(targetColor)) {
             reloadDisplaySettings();
          }
-         applyLUT(true);
+         applyLUT();
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Error handling new image in histogram for channel " + channelIndex_);
