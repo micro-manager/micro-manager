@@ -39,7 +39,7 @@
     [org.micromanager.acquisition.internal AcquisitionSleepEvent]
     [org.micromanager.acquisition.internal TaggedImageQueue]
     [org.micromanager.data.internal DefaultSummaryMetadata]
-    [org.micromanager.display.internal ChannelSettings]
+    [org.micromanager.display.internal RememberedChannelSettings]
     [org.micromanager PositionList SequenceSettings]
     [org.micromanager.internal MMStudio]
     [org.micromanager.internal.utils MDUtils ReportingUtils])
@@ -884,8 +884,8 @@
       )
       channel-names
     )
-    ; else, ask ChannelSettings for color for this group/channel combination.
-    (map #(ChannelSettings/getColorForChannel % channel-group (. Color WHITE)) channel-names)))
+    ; else, ask RememberedChannelSettings for color for this group/channel combination.
+    (map #(RememberedChannelSettings/getColorForChannel % channel-group (. Color WHITE)) channel-names)))
 
 (defn summarize-position-list [position-list]
   (let [positions (seq (.getPositions position-list))]
