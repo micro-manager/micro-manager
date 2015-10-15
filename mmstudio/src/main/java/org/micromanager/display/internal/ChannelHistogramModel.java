@@ -300,11 +300,25 @@ public class ChannelHistogramModel {
                channelSettings.getHistogramMins(),
                channelSettings.getHistogramMaxes(),
                new Double[] {gamma_});
-      contrastMins_ = settings.getSafeContrastSettings(channelIndex_,
+      Integer[] newMins = settings.getSafeContrastSettings(channelIndex_,
             defaults).getContrastMins();
 
-      contrastMaxes_ = settings.getSafeContrastSettings(channelIndex_,
+      Integer[] newMaxes = settings.getSafeContrastSettings(channelIndex_,
             defaults).getContrastMaxes();
+      // Sanity check: stale channel settings could cause our arrays to now
+      // be too short. Hence the arraycopy.
+      if (newMins.length <= contrastMins_.length) {
+         System.arraycopy(newMins, 0, contrastMins_, 0, newMins.length);
+      }
+      else {
+         contrastMins_ = newMins;
+      }
+      if (newMaxes.length <= contrastMaxes_.length) {
+         System.arraycopy(newMaxes, 0, contrastMaxes_, 0, newMaxes.length);
+      }
+      else {
+         contrastMaxes_ = newMaxes;
+      }
 
       // TODO: gamma not stored in channel settings.
       gamma_ = settings.getSafeContrastSettings(channelIndex_,
