@@ -395,16 +395,31 @@ public class LUTMaster {
             new DirectColorModel(32, 0xff0000, 0xff00, 0xff));
       // ImageJ only does RGB, i.e. 3-component, images.
       for (int i = 0; i < 3; ++i) {
+         // Note that using ColorProcessor.setMinAndMax() doesn't work; only
+         // the component that we adjust last has the correct contrast
+         // settings, while the other two components have default contrast.
          // Unfathomably, ImageJ's "which component to adjust" parameter is
          // actually a bitmask, so 1 = first component, 2 = second component,
          // and 4 = third component.
-         processor.setMinAndMax(
-               contrastSettings.getSafeContrastMin(i,
+         int[] lut = calculateLinearLUT(contrastSettings.getSafeContrastMin(i,
                   (int) processor.getMin()),
                contrastSettings.getSafeContrastMax(i,
-                  (int) processor.getMax()),
-               1 << i);
+                  (int) processor.getMax()));
+         processor.applyTable(lut, 1 << i);
       }
+   }
+
+   /**
+    * Generate a linear ramp from the specified min to the specified max, with
+    * 256 entries.
+    */
+   private static int[] calculateLinearLUT(int min, int max) {
+      int[] result = new int[256];
+      for (int i = 0; i < result.length; ++i) {
+         result[i] = (int) Math.max(0, Math.min(255,
+                  256.0 * (i - min) / (max - min)));
+      }
+      return result;
    }
 
    /**
