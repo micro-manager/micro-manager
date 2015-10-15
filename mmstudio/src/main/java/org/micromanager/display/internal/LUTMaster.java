@@ -308,7 +308,6 @@ public class LUTMaster {
       if (processor instanceof ColorProcessor) {
          // RGB images require special handling.
          setRGBLUT((ColorProcessor) processor, contrastSettings);
-         plus.updateAndDraw();
          return;
       }
 
@@ -336,7 +335,6 @@ public class LUTMaster {
          }
       }
       if (lut == null) {
-         ReportingUtils.logError("Null LUT");
          return;
       }
       // Note that we are guaranteed to have values for the first component
@@ -390,7 +388,6 @@ public class LUTMaster {
          processor.snapshot();
       }
       processor.reset();
-      ReportingUtils.logError("Applying RGB settings " + contrastSettings);
       processor.setColorModel(
             new DirectColorModel(32, 0xff0000, 0xff00, 0xff));
       // ImageJ only does RGB, i.e. 3-component, images.

@@ -270,6 +270,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       JPanel secondColumn = new JPanel(new MigLayout("insets 0, flowy, fill"));
 
       histogram_ = makeHistogramPanel();
+      updateHistogramColor(model_.getColor());
       histogram_.setMinimumSize(new Dimension(100, 100));
       histogram_.setToolTipText("Adjust the brightness and contrast by dragging triangles at top and bottom. Change the gamma by dragging the curve. (These controls only change display, and do not edit the image data.)");
 
@@ -472,10 +473,25 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       };
 
       hp.setMargins(12, 12);
-      hp.setTraceStyle(true, model_.getColor());
       hp.setToolTipText("Click and drag curve to adjust gamma");
       hp.addCursorListener(this);
       return hp;
+   }
+
+   /**
+    * Update the histogram color -- only for single-component images, as
+    * multi-component images use hardcoded colors.
+    */
+   private void updateHistogramColor(Color color) {
+      if (model_.getNumComponents() == 1) {
+         histogram_.setTraceStyle(true, 0, color);
+      }
+      else {
+         // Multi-component images default to RGB.
+         histogram_.setTraceStyle(false, 0, Color.RED);
+         histogram_.setTraceStyle(false, 1, Color.GREEN);
+         histogram_.setTraceStyle(false, 2, Color.BLUE);
+      }
    }
 
    /**
@@ -490,7 +506,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
       Color color = model_.getColor();
       colorPickerLabel_.setBackground(color);
-      histogram_.setTraceStyle(true, color);
+      updateHistogramColor(color);
 
       DisplaySettings.ColorMode mode = display_.getDisplaySettings().getChannelColorMode();
       // Eye buttons are only enabled when in composite mode.
@@ -609,9 +625,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
       histogram_.setVisible(true);
       //Draw histogram and stats
-      GraphData histogramData = new GraphData();
-      histogramData.setData(histogram[curComponent_]);
-      histogram_.setData(histogramData);
+      for (int i = 0; i < histogram.length; ++i) {
+         GraphData histogramData = new GraphData();
+         histogramData.setData(histogram[i]);
+         histogram_.setData(i, histogramData);
+      }
       histogram_.setAutoScale();
       histogram_.repaint();
    }

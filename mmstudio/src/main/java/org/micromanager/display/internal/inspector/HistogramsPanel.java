@@ -285,7 +285,7 @@ public final class HistogramsPanel extends InspectorPanel {
       for (ChannelControlPanel panel : channelPanels_) {
          panel.getModel().setFullScale();
       }
-      display_.postEvent(new LUTUpdateEvent(null, null, null));
+      display_.postEvent(new LUTUpdateEvent(this, null, null, null));
       display_.postEvent(new DefaultRequestToDrawEvent());
    }
 

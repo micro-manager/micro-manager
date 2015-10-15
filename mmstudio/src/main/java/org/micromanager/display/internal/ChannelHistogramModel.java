@@ -229,7 +229,6 @@ public class ChannelHistogramModel {
       if (didChange) {
          postNewSettings();
       }
-      applyLUT();
    }
 
    public void autostretch() {
@@ -256,7 +255,6 @@ public class ChannelHistogramModel {
                Math.max(contrastMins_[i], minsAfterRejectingOutliers_[i]));
          contrastMaxes_[i] = Math.min(contrastMaxes_[i],
                maxesAfterRejectingOutliers_[i]);
-         ReportingUtils.logError("For " + i + " new min/max are " + contrastMins_[i] + ", " + contrastMaxes_[i]);
          // Correct for a max that's less than the min.
          if (contrastMins_[i] >= contrastMaxes_[i]) {
             if (contrastMins_[i] == 0) {
@@ -272,7 +270,6 @@ public class ChannelHistogramModel {
       if (didChange) {
          postNewSettings();
       }
-      applyLUT();
    }
 
    /**
@@ -377,9 +374,10 @@ public class ChannelHistogramModel {
    }
 
    public void setColor(Color color) {
-      color_ = color;
-      applyLUT();
-      postNewSettings();
+      if (color_ != color) {
+         color_ = color;
+         postNewSettings();
+      }
    }
 
    public int getNumComponents() {
@@ -392,10 +390,11 @@ public class ChannelHistogramModel {
 
    public void setContrastMin(int component, int min) {
       disableAutostretch();
-      contrastMins_[component] = min;
-      sanitizeRange();
-      applyLUT();
-      postNewSettings();
+      if (contrastMins_[component] != min) {
+         contrastMins_[component] = min;
+         sanitizeRange();
+         postNewSettings();
+      }
    }
 
    public int getContrastMax(int component) {
@@ -404,10 +403,11 @@ public class ChannelHistogramModel {
 
    public void setContrastMax(int component, int max) {
       disableAutostretch();
-      contrastMaxes_[component] = max;
-      sanitizeRange();
-      applyLUT();
-      postNewSettings();
+      if (contrastMaxes_[component] != max) {
+         contrastMaxes_[component] = max;
+         sanitizeRange();
+         postNewSettings();
+      }
    }
 
    public double getContrastGamma() {
@@ -418,22 +418,25 @@ public class ChannelHistogramModel {
       if (gamma <= 0) {
          return;
       }
-      gamma_ = gamma;
-      if (0.9 <= gamma_ && gamma_ <= 1.1) {
-         // Lock to 1.0.
-         gamma_ = 1.0;
+      if (gamma_ != gamma) {
+         gamma_ = gamma;
+         if (0.9 <= gamma_ && gamma_ <= 1.1) {
+            // Lock to 1.0.
+            gamma_ = 1.0;
+         }
+         postNewSettings();
       }
-      applyLUT();
-      postNewSettings();
    }
 
    public void setContrast(int component, int min, int max, double gamma) {
-      contrastMins_[component] = min;
-      contrastMaxes_[component] = max;
-      gamma_ = gamma;
-      sanitizeRange();
-      applyLUT();
-      postNewSettings();
+      if (contrastMins_[component] != min ||
+            contrastMaxes_[component] != max || gamma_ != gamma) {
+         contrastMins_[component] = min;
+         contrastMaxes_[component] = max;
+         gamma_ = gamma;
+         sanitizeRange();
+         postNewSettings();
+      }
    }
 
    public int getHistRangeIndex() {
@@ -461,6 +464,10 @@ public class ChannelHistogramModel {
 
    @Subscribe
    public void onLUTUpdate(LUTUpdateEvent event) {
+      if (event.getSource() == this) {
+         // We originated this event.
+         return;
+      }
       try {
          boolean didChange = false;
          Integer[] eventMins = event.getMins();
@@ -710,10 +717,11 @@ public class ChannelHistogramModel {
       if (settings.getShouldSyncChannels() != null &&
             settings.getShouldSyncChannels()) {
          display_.postEvent(
-               new LUTUpdateEvent(contrastMins_, contrastMaxes_, gamma_));
+               new LUTUpdateEvent(this, contrastMins_, contrastMaxes_,
+                  gamma_));
       }
       else {
-         display_.postEvent(new LUTUpdateEvent(null, null, null));
+         display_.postEvent(new LUTUpdateEvent(this, null, null, null));
       }
    }
 

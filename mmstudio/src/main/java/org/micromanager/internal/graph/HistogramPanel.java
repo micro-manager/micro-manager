@@ -36,16 +36,16 @@ import javax.swing.UIManager;
 import org.micromanager.internal.utils.JavaUtils;
 
 /**
- * Histogram view. 
+ * Histogram view.
  */
 public class HistogramPanel extends JPanel implements FocusListener, KeyListener {
-   
+
    private static final int LUT_HANDLE_SIZE = 10;
    private static final Color HIGHLIGHT_COLOR = Color.blue;
    private static final int TOP_HANDLE_OFFSET = JavaUtils.isMac() ? 7 : 3;
    private static final int BOTTOM_HANDLE_OFFSET = JavaUtils.isMac() ? 3 : 3;
    private static final int PIXELS_PER_HANDLE_DIGIT = 6;
-   
+
    private static final long serialVersionUID = -1789623844214721902L;
    // default histogram bins
    private int xMin_ = 0;
@@ -60,27 +60,26 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
    private boolean contrastMinEditable_ = false, contrastMaxEditable_ = false;
    private String newContrast_ = "";
    private String cursorTextLow_ = "",cursorTextHigh_ = "";   
-   
-   private GraphData data_;
+
+   private GraphData[] datas_;
    protected GraphData.Bounds bounds_;
-   
+
    private float xMargin_   = 50;
    private float yMargin_   = 50;
-   
+
    float cursorLoPos_;
    float cursorHiPos_;
    double gamma_;
-   
-   private boolean fillTrace_ = false;
-   private Color traceColor_ = Color.black;
-   
 
-   
+   private boolean fillTrace_ = false;
+   private Color[] traceColors_ = new Color[] {Color.black};
+
    public HistogramPanel() {
       super();
       addFocusListener(this);
       addKeyListener(this);
-      data_ = new GraphData();
+      datas_ = new GraphData[1];
+      datas_[0] = new GraphData();
       setAutoBounds();
       cursorLoPos_ = (float) bounds_.xMin;
       cursorHiPos_ = (float) bounds_.xMax;
@@ -108,18 +107,13 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       path.lineTo(ptDevTop.x, ptDevTop.y);
       return path;
    }
-      
+
    /**
     * Auto-scales Y axis.
     *
     */
    public void setAutoScale() {
       setAutoBounds();
-   }
-   
-   public void setDataSource(GraphData data){
-      setData(data);
-      refresh();
    }
 
    /*
@@ -193,7 +187,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       ptDevTop_ = getDevicePoint(ptPosTop, box, xUnit, yUnit);
       ptDevTopUnclippedX_ = getDevicePointUnclippedXMax(
             ptPosTop, box, xUnit, yUnit);
-      
+
       GeneralPath path = generateGammaCurvePath(
             ptDevTopUnclippedX_, ptDevBottom_, gamma);
 
@@ -226,7 +220,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       if (contrastMaxEditable_ && newContrast_.length() != 0) {
           text = newContrast_;
       }
-      
+
       int width = PIXELS_PER_HANDLE_DIGIT * text.length() + TOP_HANDLE_OFFSET;
       if (contrastMaxEditable_) {
          g.setColor(HIGHLIGHT_COLOR);
@@ -380,7 +374,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
          cursorListener.contrastMinInput(min);
       }
    }
-   
+
    private void applyContrastValues() {
       //apply the values
       if (!newContrast_.equals("")) {
@@ -393,7 +387,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       contrastMaxEditable_ = false;
       contrastMinEditable_ = false;
       newContrast_ = "";
-      
+
       repaint();
    }
 
@@ -425,7 +419,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
          public void mouseReleased(MouseEvent e) {
             currentHandle_ = 0;
          }
-         
+
          @Override
          public void mouseClicked(MouseEvent e) {
             if (e.getClickCount() >= 2 && clickLocation_ == 1) {
@@ -483,7 +477,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
    private float getHistogramTopNumbersWidth() {
       return (float) (PIXELS_PER_HANDLE_DIGIT * cursorTextHigh_.length() + TOP_HANDLE_OFFSET);
    }
-   
+
    private float getHistogramBottomNumbersWidth() {
       return (float) (PIXELS_PER_HANDLE_DIGIT * cursorTextLow_.length() + BOTTOM_HANDLE_OFFSET);
    }
@@ -525,44 +519,66 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       }
    }
 
-   public void setData(GraphData d) {
-      data_ = d;
+   public void setData(int component, GraphData d) {
+      if (datas_ == null || datas_.length <= component) {
+         // Extend the array.
+         GraphData[] newDatas = new GraphData[component + 1];
+         // Copy values over.
+         if (datas_ != null) {
+            for (int i = 0; i < datas_.length; ++i) {
+               newDatas[i] = datas_[i];
+            }
+         }
+         datas_ = newDatas;
+      }
+      datas_[component] = d;
    }
 
    public void setGamma(double gamma) {
       gamma_ = gamma;
    }
 
-   public void setTraceStyle(boolean fillTrace, Color color) {
+   public void setTraceStyle(boolean fillTrace, int component, Color color) {
       fillTrace_ = fillTrace;
-      traceColor_ = color;
+      if (traceColors_ == null || traceColors_.length <= component) {
+         // Extend the array.
+         Color[] newColors = new Color[component + 1];
+         // Copy values over.
+         if (traceColors_ != null) {
+            for (int i = 0; i < traceColors_.length; ++i) {
+               newColors[i] = traceColors_[i];
+            }
+         }
+         traceColors_ = newColors;
+      }
+      traceColors_[component] = color;
    }
- 
+
    public final void setAutoBounds(){
-      bounds_ = data_.getBounds();
+      bounds_ = datas_[0].getBounds();
       AdjustCursors();
    }
-   
+
    public void setMargins(float x, float y) {
       xMargin_ = x;
       yMargin_ = y;
    }
-   
+
    public void setCursorText(String low, String high) {
       cursorTextLow_ = low;
       cursorTextHigh_ = high;
    }
-   
+
    public void setCursors(double low, double high, double gamma) {
       cursorLoPos_ = (float)low;
       cursorHiPos_ = (float)high;
       gamma_ = gamma;
    }
-   
+
    public GraphData.Bounds getGraphBounds() {
       return bounds_;
    }
-   
+
    public void setBounds(double xMin, double xMax, double yMin, double yMax){
       bounds_.xMin = xMin;
       bounds_.xMax = xMax;
@@ -570,7 +586,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       bounds_.yMax = yMax;
       AdjustCursors();
    }
-   
+
    public void setBounds(GraphData.Bounds b){
       bounds_ = b;
       AdjustCursors();
@@ -581,25 +597,29 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
    private void AdjustCursors() {
       cursorLoPos_ = Math.max(cursorLoPos_, (float) bounds_.xMin);
    }
-   
+
    /**
     * Draw graph traces.
     * @param g
     * @param box
     */
-   protected void drawGraph(Graphics2D g, Rectangle box) {
-      if (data_.getSize() < 2)
+   protected void drawGraph(Graphics2D g, int component, Rectangle box) {
+      GraphData data = datas_[component];
+      if (data.getSize() < 2) {
          return;
+      }
 
-      //Make black background
-      Color oldC = g.getColor();
-      g.setColor(Color.black);
-      g.fillRect(box.x, box.y, box.width, box.height);
-      g.setColor(oldC);
+      // Make black background, only for the first component.
+      if (component == 0) {
+         Color oldC = g.getColor();
+         g.setColor(Color.black);
+         g.fillRect(box.x, box.y, box.width, box.height);
+         g.setColor(oldC);
+      }
 
       Color oldColor = g.getColor();
-      g.setColor(traceColor_);
-            
+      g.setColor(traceColors_[component]);
+
       // correct if Y range is zero
       if (bounds_.getRangeY() == 0.0) {
          if (bounds_.yMax > 0.0)
@@ -613,13 +633,13 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       if (bounds_.getRangeX() <= 0.0 || bounds_.getRangeY() <= 1.e-10) {
          return; // invalid range data
       }
-          
+
       // set scaling
       float xUnit = (float) (box.width / bounds_.getRangeX());
       float yUnit = (float) (box.height / bounds_.getRangeY());
-      
+
       GeneralPath trace = new GeneralPath(
-            GeneralPath.WIND_EVEN_ODD, data_.getSize() + 1);
+            GeneralPath.WIND_EVEN_ODD, data.getSize() + 1);
       // we need to start and end at y=0 to avoid strange display issues
       Point2D.Float pt0 = getDevicePoint(
             new Point2D.Float(0.0f, 0.0f), box, xUnit, yUnit);
@@ -627,15 +647,15 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       Point2D.Float pt1 = getDevicePoint(
             new Point2D.Float(1.0f, 0.0f), box, xUnit, yUnit);
       float halfWidth = (pt1.x - pt0.x) / 2;
-      for (int i = 0; i < data_.getSize(); i++) {
+      for (int i = 0; i < data.getSize(); i++) {
          Point2D.Float pt = getDevicePoint(
-               data_.getPoint(i), box, xUnit, yUnit);
+               data.getPoint(i), box, xUnit, yUnit);
          trace.lineTo(pt.x - halfWidth, pt.y);
          trace.lineTo(pt.x + halfWidth, pt.y);
       }
       pt0 = getDevicePoint(
-            new Point2D.Float((float) data_.getPoint(data_.getSize() - 1).getX(), 0.0f), 
-            box, xUnit, yUnit);
+            new Point2D.Float((float) data.getPoint(data.getSize() - 1).getX(),
+               0.0f), box, xUnit, yUnit);
       trace.lineTo(pt0.x, pt0.y);
 
       if (fillTrace_)
@@ -656,7 +676,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
             (float) box.y);
       return ptDev;
    }
-   
+
    public Point2D.Float getDevicePoint(Point2D.Float pt, Rectangle box, 
          float xUnit, float yUnit){
       Point2D.Float ptDev = new Point2D.Float(
@@ -677,7 +697,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
               (float) ((((box.y + box.height) - y) / (float) box.height) * (bounds_.yMax - bounds_.yMin)));
       return posPt;
    }
-   
+
    public Rectangle getBox() {
       Rectangle box = getBounds();
       box.x = (int) xMargin_;
@@ -691,23 +711,25 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
    public void paintComponent(Graphics g) {
       g.setColor(Color.red);
       super.paintComponent(g); // JPanel draws background
-      Graphics2D  g2d = (Graphics2D) g;
+      Graphics2D g2d = (Graphics2D) g;
 
-      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, 
+      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
             RenderingHints.VALUE_ANTIALIAS_ON);
 
       // get drawing rectangle
       Rectangle box = getBox();
-       
+
       // save current settings
-      Color oldColor = g2d.getColor();      
+      Color oldColor = g2d.getColor();
       Paint oldPaint = g2d.getPaint();
       Stroke oldStroke = g2d.getStroke();
 
       g2d.setPaint(Color.black);
       g2d.setStroke(new BasicStroke(2.0f));
 
-      drawGraph(g2d, box);
+      for (int i = 0; i < datas_.length; ++i) {
+         drawGraph(g2d, i, box);
+      }
       drawCursor(g2d, box, cursorLoPos_);
       drawCursor(g2d, box, cursorHiPos_);
       drawMapping(g2d, box, cursorLoPos_, cursorHiPos_, gamma_);

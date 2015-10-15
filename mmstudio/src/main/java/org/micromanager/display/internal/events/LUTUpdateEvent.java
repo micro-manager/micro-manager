@@ -30,11 +30,18 @@ public class LUTUpdateEvent {
    private Integer[] mins_;
    private Integer[] maxes_;
    private Double gamma_;
+   private Object source_;
 
-   public LUTUpdateEvent(Integer[] mins, Integer[] maxes, Double gamma) {
+   public LUTUpdateEvent(Object source, Integer[] mins, Integer[] maxes,
+         Double gamma) {
+      source_ = source;
       mins_ = mins;
       maxes_ = maxes;
       gamma_ = gamma;
+   }
+
+   public Object getSource() {
+      return source_;
    }
 
    public Integer[] getMins() {
