@@ -199,7 +199,8 @@ public class CanvasUpdateQueue {
                      (byte[]) pixels);
             }
             plus_.getProcessor().setPixels(pixels);
-            if (shouldReapplyLUTs_) {
+            if (shouldReapplyLUTs_ ||
+                  plus_.getProcessor() instanceof ColorProcessor) {
                // Must apply LUTs to the display now that it has pixels.
                LUTMaster.initializeDisplay(display_);
                shouldReapplyLUTs_ = false;
