@@ -259,7 +259,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       }
    }
 
-   static void drawTriangle(Graphics2D g, int x, int y, boolean top) {
+   void drawTriangle(Graphics2D g, int x, int y, boolean top) {
       int s = LUT_HANDLE_SIZE;
       if (top) {
          s = -s;
@@ -269,7 +269,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       Stroke oldStroke = g.getStroke();
       //draw outline
       g.setStroke(new BasicStroke(1));
-      g.setColor(top ? Color.white : Color.black);
+      g.setColor(traceColors_[curComponent_]);
       g.fillPolygon(xs, ys, 3);
       //fill center
       g.setColor(Color.black);
