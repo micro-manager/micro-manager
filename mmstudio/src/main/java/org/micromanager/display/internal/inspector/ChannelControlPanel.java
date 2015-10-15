@@ -84,10 +84,15 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       "red", "green", "blue"};
    // Icons to go with the components. These are based on the public-domain
    // icon at http://publicdomainvectors.org/en/free-clipart/Pencil-vector-icon/9221.html
-   private static final Icon[] COMPONENT_ICONS = new Icon[] {
+   private static final Icon[] COMPONENT_ICONS_ACTIVE = new Icon[] {
       IconLoader.getIcon("/org/micromanager/icons/pencil_red.png"),
       IconLoader.getIcon("/org/micromanager/icons/pencil_green.png"),
       IconLoader.getIcon("/org/micromanager/icons/pencil_blue.png")
+   };
+   private static final Icon[] COMPONENT_ICONS_INACTIVE = new Icon[] {
+      IconLoader.getIcon("/org/micromanager/icons/pencil_red_blank.png"),
+      IconLoader.getIcon("/org/micromanager/icons/pencil_green_blank.png"),
+      IconLoader.getIcon("/org/micromanager/icons/pencil_blue_blank.png")
    };
 
 
@@ -140,6 +145,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private void initialize() {
       initComponents();
       reloadDisplaySettings();
+      // Default to modifying the first component.
+      updateCurComponent(componentPickerButtons_[0]);
       // Default to "camera depth" mode.
       histRangeComboBox_.setSelectedIndex(0);
 
@@ -218,8 +225,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
 
-      for (int i = 0; i < COMPONENT_ICONS.length; ++i) {
-         final JToggleButton button = new JToggleButton(COMPONENT_ICONS[i]);
+      for (int i = 0; i < COMPONENT_ICONS_INACTIVE.length; ++i) {
+         final JToggleButton button = new JToggleButton(COMPONENT_ICONS_INACTIVE[i]);
          button.setToolTipText("Switch to controlling the " +
                COMPONENT_NAMES[i] + " component");
          componentPickerButtons_[i] = button;
@@ -492,9 +499,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          if (altButton == button) {
             curComponent_ = i;
             altButton.setSelected(true);
+            altButton.setIcon(COMPONENT_ICONS_ACTIVE[i]);
          }
          else {
             altButton.setSelected(false);
+            altButton.setIcon(COMPONENT_ICONS_INACTIVE[i]);
          }
          button.repaint();
       }
