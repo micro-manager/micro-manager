@@ -402,7 +402,8 @@ public class LUTMaster {
                   (int) processor.getMin()),
                contrastSettings.getSafeContrastMax(i,
                   (int) processor.getMax()));
-         processor.applyTable(lut, 1 << i);
+         // ImageJ's component numbers are BGR, so swap our index here.
+         processor.applyTable(lut, 1 << (2 - i));
       }
    }
 

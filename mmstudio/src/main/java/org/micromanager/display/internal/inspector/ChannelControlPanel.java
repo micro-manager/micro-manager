@@ -76,7 +76,11 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class ChannelControlPanel extends JPanel implements CursorListener {
 
    public static final Dimension CONTROLS_SIZE = new Dimension(80, 80);
-  
+
+   // Names of RGB components
+   private static final String[] COMPONENT_NAMES = new String[] {
+      "Red", "Green", "Blue"};
+
    private ChannelHistogramModel model_;
    private final int channelIndex_;
    private int curComponent_;
@@ -91,6 +95,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private JToggleButton isEnabledButton_;
    private JLabel nameLabel_;
    private JLabel colorPickerLabel_;
+   private JComboBox componentPicker_;
    private JButton fullButton_;
    private JLabel minMaxLabel_;
    private JComboBox histRangeComboBox_;
@@ -134,6 +139,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       fullButton_ = new javax.swing.JButton();
       autoButton_ = new javax.swing.JButton();
       colorPickerLabel_ = new javax.swing.JLabel();
+      componentPicker_ = new javax.swing.JComboBox(COMPONENT_NAMES);
       // This icon is adapted from one of the many on this page:
       // http://thenounproject.com/term/eye/421/
       // (this particular one is public domain)
@@ -201,6 +207,14 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
 
+      componentPicker_.setToolTipText("Select the component to be controlled by the histogram");
+      componentPicker_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            updateCurComponent();
+         }
+      });
+
       minMaxLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       minMaxLabel_.setText("<html>Min/Max/Mean:<br>00/00/00</html>");
 
@@ -255,7 +269,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       nameLabel_ = new JLabel(model_.getName());
       firstColumn.add(nameLabel_, "alignx center");
       firstColumn.add(isEnabledButton_, "split 3, flowx");
-      firstColumn.add(colorPickerLabel_, "aligny center");
+      if (model_.getNumComponents() == 1) {
+         firstColumn.add(colorPickerLabel_, "aligny center");
+      }
+      else {
+         firstColumn.add(componentPicker_, "aligny center");
+      }
       linkButton_ = new LinkButton(
             DisplayGroupManager.getContrastLinker(channelIndex_, display_),
             display_);
@@ -436,6 +455,14 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          display_.setDisplaySettings(newSettings);
       }
       reloadDisplaySettings();
+   }
+
+   /**
+    * Update our current component based on the componentPicker_ object.
+    */
+   private void updateCurComponent() {
+      curComponent_ = componentPicker_.getSelectedIndex();
+      updateHistogram();
    }
 
    private void postContrastEvent(DisplaySettings newSettings) {
