@@ -219,4 +219,28 @@ public class JavaUtils {
       }
       System.err.println("End all stack traces. =============");
    }
+
+   /**
+    * Return the path of the jar containing this class.
+    * Copied from the same-named method in MMCoreJ.i.
+    */
+   public static String getJarPath() {
+      String classPath = "/" + JavaUtils.class.getName();
+      classPath = classPath.replace(".", "/") + ".class";
+      try {
+         URL url = JavaUtils.class.getResource(classPath);
+         ReportingUtils.logError("Got URL " + url + " for path " + classPath);
+         String path = URLDecoder.decode(url.getPath(), "UTF-8");
+         path = URLDecoder.decode(new URL(path).getPath(), "UTF-8");
+         int bang = path.indexOf("!");
+         if (bang >= 0) {
+            path = path.substring(0, bang);
+         }
+         return path;
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Unable to get path of jar");
+         return "";
+      }
+   }
 }
