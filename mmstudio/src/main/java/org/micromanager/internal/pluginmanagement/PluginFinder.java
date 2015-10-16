@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -80,30 +81,52 @@ public class PluginFinder {
    public static HashMap<Class, JSONObject> findPlugins(String root) {
       HashMap<Class, JSONObject> result = new HashMap<Class, JSONObject>();
       for (String jarPath : findPaths(root, ".jar")) {
-         try {
-            JarFile jar = new JarFile(jarPath);
-            if (jar.getJarEntry(PLUGIN_ENTRY) == null) {
-               // Not a plugin jar.
-               continue;
-            }
-            // Read the plugin metadata and figure out which class is the
-            // plugin class.
-            InputStream stream = jar.getInputStream(jar.getJarEntry(PLUGIN_ENTRY));
-            String contents = CharStreams.toString(
-                  new InputStreamReader(stream, "UTF-8"));
-            stream.close();
+         for (JSONObject entry : getClassMetadata(jarPath)) {
             try {
-               JSONObject json = new JSONObject(contents);
-               String className = json.getString("class");
-               result.put(getClassFromJar(jarPath, className), json);
+               String className = entry.getString("class");
+               result.put(getClassFromJar(jarPath, className), entry);
             }
             catch (JSONException e) {
-               ReportingUtils.logError(e, "Error reading META-INF JSON");
+               ReportingUtils.logError(e, "Malformed JSON metadata found for jar at " + jarPath);
             }
          }
-         catch (IOException e) {
-            ReportingUtils.logError(e, "Unable to load jar file");
+      }
+      return result;
+   }
+
+   public static List<JSONObject> getClassMetadata(String jarPath) {
+      ArrayList<JSONObject> result = new ArrayList<JSONObject>();
+      try {
+         JarFile jar = new JarFile(jarPath);
+         if (jar.getJarEntry(PLUGIN_ENTRY) == null) {
+            // Not a plugin jar.
+            return result;
          }
+         // Read the plugin metadata and figure out which classes are plugin
+         // classes.
+         InputStream stream = jar.getInputStream(jar.getJarEntry(PLUGIN_ENTRY));
+         String contents = CharStreams.toString(
+               new InputStreamReader(stream, "UTF-8"));
+         stream.close();
+         // HACK: the contents of the plugin metadata file we just read are
+         // not necessarily valid JSON: if there are multiple classes in the
+         // jar with the @Plugin annotation, then we get multiple dictionaries
+         // in the file just kind of crammed together (i.e. not a JSON array,
+         // just two JSON dicts with no separation between them). So coerce
+         // the text to a JSON array and add the necessary separator(s).
+         contents = "[" + contents.replaceAll("\\}\\}\\{", "}},{") + "]";
+         try {
+            JSONArray json = new JSONArray(contents);
+            for (int i = 0; i < json.length(); ++i) {
+               result.add((JSONObject) json.get(i));
+            }
+         }
+         catch (JSONException e) {
+            ReportingUtils.logError(e, "Error reading META-INF JSON");
+         }
+      }
+      catch (IOException e) {
+         ReportingUtils.logError(e, "Unable to load jar file");
       }
       return result;
    }
