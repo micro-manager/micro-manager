@@ -24,6 +24,6 @@ import net.imglib2.type.volatiles.VolatileUnsignedShortType;
 public class MagellanImgLoader16Bit extends LegacyViewerImgLoaderWrapper< UnsignedShortType, VolatileUnsignedShortType, LegacyMagellanImgLoader16Bit > {
 
    public MagellanImgLoader16Bit(MultiResMultipageTiffStorage storage) {
-      super(new LegacyMagellanImgLoader16Bit(storage, new MultiResMPTiffVolatileShortArrayLoader(storage), new UnsignedShortType(), new VolatileUnsignedShortType()));
+      super(new LegacyMagellanImgLoader16Bit(storage));
    }
 }

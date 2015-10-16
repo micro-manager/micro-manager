@@ -24,6 +24,6 @@ import net.imglib2.type.volatiles.VolatileUnsignedByteType;
 public class MagellanImgLoader8Bit extends LegacyViewerImgLoaderWrapper< UnsignedByteType, VolatileUnsignedByteType, LegacyMagellanImgLoader8Bit > {
 
    public MagellanImgLoader8Bit(MultiResMultipageTiffStorage storage) {
-      super(new LegacyMagellanImgLoader8Bit(storage, new MultiResMPTiffVolatileByteArrayLoader(storage), new UnsignedByteType(), new VolatileUnsignedByteType()));
+      super(new LegacyMagellanImgLoader8Bit(storage ));
    }
 }
