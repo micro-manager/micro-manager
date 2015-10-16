@@ -82,17 +82,17 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    // Names of RGB components
    private static final String[] COMPONENT_NAMES = new String[] {
       "red", "green", "blue"};
-   // Icons to go with the components. These are based on the public-domain
-   // icon at http://publicdomainvectors.org/en/free-clipart/Pencil-vector-icon/9221.html
+   // Icons to go with the components. These are completely hand-done (not
+   // based on any external work).
    private static final Icon[] COMPONENT_ICONS_ACTIVE = new Icon[] {
-      IconLoader.getIcon("/org/micromanager/icons/pencil_red.png"),
-      IconLoader.getIcon("/org/micromanager/icons/pencil_green.png"),
-      IconLoader.getIcon("/org/micromanager/icons/pencil_blue.png")
+      IconLoader.getIcon("/org/micromanager/icons/rgb_red.png"),
+      IconLoader.getIcon("/org/micromanager/icons/rgb_green.png"),
+      IconLoader.getIcon("/org/micromanager/icons/rgb_blue.png")
    };
    private static final Icon[] COMPONENT_ICONS_INACTIVE = new Icon[] {
-      IconLoader.getIcon("/org/micromanager/icons/pencil_red_blank.png"),
-      IconLoader.getIcon("/org/micromanager/icons/pencil_green_blank.png"),
-      IconLoader.getIcon("/org/micromanager/icons/pencil_blue_blank.png")
+      IconLoader.getIcon("/org/micromanager/icons/rgb_red_blank.png"),
+      IconLoader.getIcon("/org/micromanager/icons/rgb_green_blank.png"),
+      IconLoader.getIcon("/org/micromanager/icons/rgb_blue_blank.png")
    };
 
 
