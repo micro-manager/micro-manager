@@ -11,7 +11,7 @@ const char* g_DevicePort = "Device Port";
 const char* g_AutoLabel = "Auto";
 const char* g_RefreshInterval = "Time between refresh [ms]";
 const char* DB_PATH = "okolib";
-const char* DAL_VERSION = "2.0.1";
+const char* DAL_VERSION = "2.1.0";
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
@@ -600,72 +600,8 @@ int OkolabDevice::OnOkolabPropertyChanged(MM::PropertyBase* pProp, MM::ActionTyp
 		LogOkolabError(ret, "On Okolab Property Changed");
 	}
 
-
-	if (eAct == MM::BeforeGet)
-	{
-		ret = oko_PropertyUpdate(_deviceHandle, name);
-		if (ret != OKO_OK)
-		{
-			LogOkolabError(ret, "Property Changed");
-		}
-		switch(pProp->GetType())
-		{
-		case MM::String:
-			{
-				char value[1024] = "";
-				ret = oko_PropertyReadString(_deviceHandle, name, value);
-				if (ret != OKO_OK)
-				{
-					LogOkolabError(ret, "Property Changed");
-					std::string errString = createPropertyError(ret);
-					pProp->Set(errString.c_str());
-				}
-				else
-				{
-					pProp->Set(value);
-				}
-				break;
-			}
-		case MM::Float:
-			{
-				double value = 0.;
-				ret = oko_PropertyReadDouble(_deviceHandle, name, &value);
-				if (ret != OKO_OK)
-				{
-					LogOkolabError(ret, "Property Changed");
-					std::string errString = createPropertyError(ret);
-					pProp->Set(errString.c_str());
-				}
-				else
-				{
-					pProp->Set(value);
-				}
-				break;
-			}
-		case MM::Integer:
-			{
-				int32_t value = 0;
-				ret = oko_PropertyReadInt(_deviceHandle, name, &value);
-				if (ret != OKO_OK)
-				{
-					LogOkolabError(ret, "Property Changed");
-					std::string errString = createPropertyError(ret);
-					pProp->Set(errString.c_str());
-				}
-				else
-				{
-					pProp->Set((long) value);
-				}
-				break;
-			}
-		case MM::Undef:
-		default:
-			return DEVICE_INVALID_PROPERTY;
-			break;
-		}
-	}
-	else if (eAct == MM::AfterSet)
-	{
+	if (eAct == MM::AfterSet)
+	{		
 		if (!propertyLocked(name))
 		{
 			propertyLock(name);
@@ -868,7 +804,6 @@ int OkolabDevice::updateOkolabProperties(MM::MMTime startTime)
 			default:
 				break;
 			}
-			SetProperty(name, value);
 			OnPropertyChanged(name, value);
 		}
 	}
