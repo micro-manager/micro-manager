@@ -327,12 +327,6 @@ public interface CompatibilityInterface {
    public void setAcquisitionSettings(SequenceSettings settings);
 
    /**
-    * Autostretch each histogram for the currently-active window, as if the
-    * "Auto" button had been clicked for each one.
-    */
-   public void autostretchCurrentWindow();
-
-   /**
     * Retrieve the affine transform describing how the camera image maps to
     * stage coordinates, for a given pixel size config. This method will pull
     * information from the profile if available, and failing that will look in

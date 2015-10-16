@@ -1676,21 +1676,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
    }
 
    @Override
-   public void autostretchCurrentWindow() {
-      DisplayWindow display = displays().getCurrentWindow();
-      DisplaySettings settings = display.getDisplaySettings();
-      if (settings.getShouldAutostretch() != true) {
-         // Autostretch is not currently enabled; toggle it to perform the
-         // autostretching.
-         // TODO: this seems like a rather hacky way to do things.
-         settings = settings.copy().shouldAutostretch(true).build();
-         display.setDisplaySettings(settings);
-         settings = settings.copy().shouldAutostretch(false).build();
-         display.setDisplaySettings(settings);
-      }
-   }
-   
-   @Override
    public DataManager data() {
       return dataManager_;
    }

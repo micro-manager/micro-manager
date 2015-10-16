@@ -56,7 +56,7 @@ public class HotKeyAction {
                   studio_.markCurrentPosition();
                   return true;
                case AUTOSTRETCH:
-                  studio_.autostretchCurrentWindow();
+                  studio_.displays().getCurrentWindow().autostretch();
             }
          } else {
             // Assume it's a script to run.
