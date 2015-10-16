@@ -18,6 +18,7 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,47 +26,6 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
 public class JavaUtils {
-   private static String stripFilenameExtension(String filename) {
-      int i = filename.lastIndexOf('.');
-      if (i > 0) {
-         return filename.substring(0, i);
-      } else {
-         return filename;
-      }
-   }
-
-   // Borrowed from http://forums.sun.com/thread.jspa?threadID=300557
-   private static final Class<?>[] parameters = new Class[]{URL.class};
-
-   public static void addURL(URL u) throws IOException {
-
-      URLClassLoader loader = (URLClassLoader) JavaUtils.class.getClassLoader();
-      Class<?> sysclass = URLClassLoader.class;
-
-      try {
-         Method method = sysclass.getDeclaredMethod("addURL", parameters);
-         method.setAccessible(true);
-         method.invoke(loader, new Object[]{u});
-         ReportingUtils.logMessage("Added URL to system class loader: " + u);
-      } catch (NoSuchMethodException t) {
-         ReportingUtils.logError(t, "Failed to add URL to system class loader: " + u);
-         throw new IOException("Failed to add URL to system class loader: " + u);
-      } catch (SecurityException t) {
-         ReportingUtils.logError(t, "Failed to add URL to system class loader: " + u);
-         throw new IOException("Failed to add URL to system class loader: " + u);
-      } //end try catch
-      catch (IllegalAccessException t) {
-         ReportingUtils.logError(t, "Failed to add URL to system class loader: " + u);
-         throw new IOException("Failed to add URL to system class loader: " + u);
-      } catch (IllegalArgumentException t) {
-         ReportingUtils.logError(t, "Failed to add URL to system class loader: " + u);
-         throw new IOException("Failed to add URL to system class loader: " + u);
-      } catch (InvocationTargetException t) {
-         ReportingUtils.logError(t, "Failed to add URL to system class loader: " + u);
-         throw new IOException("Failed to add URL to system class loader: " + u);
-      }//end try catch
-
-   }//end method
 
    /**
     * Call a private method without arguments.
