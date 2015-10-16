@@ -101,6 +101,12 @@ public interface DisplayWindow {
    public void setDisplaySettings(DisplaySettings settings);
 
    /**
+    * Cause the display to autostretch each of its displayed channels, as if
+    * the "auto once" button had been clicked in the Image Inspector Window.
+    */
+   public void autostretch();
+
+   /**
     * Retrieve the Images currently being displayed (all channels).
     * @return Every image at the currently-displayed image coordinates modulo
     *         the channel coordinate (as all channels are represented).

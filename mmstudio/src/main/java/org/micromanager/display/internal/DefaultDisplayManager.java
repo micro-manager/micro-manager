@@ -205,6 +205,14 @@ public final class DefaultDisplayManager implements DisplayManager {
          // new display.
          result.add(createDisplay(store));
       }
+      // HACK: our savefiles can't currently save contrast settings for
+      // multi-component images properly, so we must autostretch each display
+      // in those cases.
+      if (store.getAnyImage().getNumComponents() > 1) {
+         for (DisplayWindow display : result) {
+            display.autostretch();
+         }
+      }
       return result;
    }
 

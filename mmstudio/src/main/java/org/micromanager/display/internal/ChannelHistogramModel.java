@@ -227,7 +227,7 @@ public class ChannelHistogramModel {
          contrastMaxes_[i] = histMax_;
       }
       if (didChange) {
-         postNewSettings();
+         updateDisplaySettings();
       }
    }
 
@@ -268,7 +268,7 @@ public class ChannelHistogramModel {
       }
       // Only send an event if we actually changed anything.
       if (didChange) {
-         postNewSettings();
+         updateDisplaySettings();
       }
    }
 
@@ -390,7 +390,7 @@ public class ChannelHistogramModel {
    public void setColor(Color color) {
       if (color_ != color) {
          color_ = color;
-         postNewSettings();
+         updateDisplaySettings();
       }
    }
 
@@ -407,7 +407,7 @@ public class ChannelHistogramModel {
       if (contrastMins_[component] != min) {
          contrastMins_[component] = min;
          sanitizeRange();
-         postNewSettings();
+         updateDisplaySettings();
       }
    }
 
@@ -420,7 +420,7 @@ public class ChannelHistogramModel {
       if (contrastMaxes_[component] != max) {
          contrastMaxes_[component] = max;
          sanitizeRange();
-         postNewSettings();
+         updateDisplaySettings();
       }
    }
 
@@ -438,7 +438,7 @@ public class ChannelHistogramModel {
             // Lock to 1.0.
             gamma_ = 1.0;
          }
-         postNewSettings();
+         updateDisplaySettings();
       }
    }
 
@@ -449,7 +449,7 @@ public class ChannelHistogramModel {
          contrastMaxes_[component] = max;
          gamma_ = gamma;
          sanitizeRange();
-         postNewSettings();
+         updateDisplaySettings();
       }
    }
 
@@ -673,7 +673,7 @@ public class ChannelHistogramModel {
     * Update our parent's DisplaySettings, post a ContrastEvent, and save
     * our new settings to the profile (via the RememberedChannelSettings).
     */
-   private void postNewSettings() {
+   public void updateDisplaySettings() {
       DisplaySettings settings = display_.getDisplaySettings();
       DisplaySettings.DisplaySettingsBuilder builder = settings.copy();
 
@@ -683,7 +683,6 @@ public class ChannelHistogramModel {
       DisplaySettings.ContrastSettings[] contrasts =
          settings.getChannelContrastSettings();
       if (contrasts == null || contrasts.length <= channelIndex_) {
-         ReportingUtils.logError("Expanding settings array");
          // Need to create a new ContrastSettings array.
          DisplaySettings.ContrastSettings[] newContrasts =
             new DisplaySettings.ContrastSettings[channelIndex_ + 1];
@@ -700,7 +699,6 @@ public class ChannelHistogramModel {
 
       Color[] colors = settings.getChannelColors();
       if (colors == null || colors.length <= channelIndex_) {
-         ReportingUtils.logError("Expanding colors array");
          // As above, we need to create a new array.
          Color[] newColors = new Color[channelIndex_ + 1];
          // Copy old values over.

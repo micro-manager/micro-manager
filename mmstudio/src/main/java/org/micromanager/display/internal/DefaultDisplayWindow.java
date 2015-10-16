@@ -813,6 +813,14 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    }
 
    @Override
+   public void autostretch() {
+      for (ChannelHistogramModel model : channelToModel_.values()) {
+         model.autostretch();
+         model.updateDisplaySettings();
+      }
+   }
+
+   @Override
    public List<Image> getDisplayedImages() {
       ArrayList<Image> result = new ArrayList<Image>();
       Coords curCoords = stack_.getCurrentImageCoords();
