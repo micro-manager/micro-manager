@@ -80,12 +80,20 @@ public class MDUtils {
       map.put("BitDepth", depth);
    }
 
+   public static boolean hasWidth(JSONObject map) {
+      return map.has("Width");
+   }
+
    public static int getWidth(JSONObject map) throws JSONException {
       return map.getInt("Width");
    }
 
    public static void setWidth(JSONObject map, int width) throws JSONException {
       map.put("Width", width);
+   }
+
+   public static boolean hasHeight(JSONObject map) {
+      return map.has("Height");
    }
 
    public static int getHeight(JSONObject map) throws JSONException {
@@ -246,6 +254,10 @@ public class MDUtils {
             throw new MMScriptException("Can't figure out IJ type");
          }
       }
+   }
+
+   public static boolean hasPixelType(JSONObject map) {
+      return (map.has("PixelType") || map.has("IJType"));
    }
 
    public static String getPixelType(JSONObject map)  throws JSONException, MMScriptException {
