@@ -81,21 +81,17 @@ public class PluginFinder {
    public static HashMap<Class, JSONObject> findPlugins(String root) {
       HashMap<Class, JSONObject> result = new HashMap<Class, JSONObject>();
       for (String jarPath : findPaths(root, ".jar")) {
-         for (JSONObject entry : getClassMetadata(jarPath)) {
-            try {
-               String className = entry.getString("class");
-               result.put(getClassFromJar(jarPath, className), entry);
-            }
-            catch (JSONException e) {
-               ReportingUtils.logError(e, "Malformed JSON metadata found for jar at " + jarPath);
-            }
-         }
+         result.putAll(findPluginsInJar(jarPath));
       }
       return result;
    }
 
-   public static List<JSONObject> getClassMetadata(String jarPath) {
-      ArrayList<JSONObject> result = new ArrayList<JSONObject>();
+   /**
+    * Return a mapping of class objects to text from the corresponding META-INF
+    * JSON for the class, for a specific jar file.
+    */
+   public static HashMap<Class, JSONObject> findPluginsInJar(String jarPath) {
+      HashMap<Class, JSONObject> result = new HashMap<Class, JSONObject>();
       try {
          JarFile jar = new JarFile(jarPath);
          if (jar.getJarEntry(PLUGIN_ENTRY) == null) {
@@ -118,15 +114,22 @@ public class PluginFinder {
          try {
             JSONArray json = new JSONArray(contents);
             for (int i = 0; i < json.length(); ++i) {
-               result.add((JSONObject) json.get(i));
+               try {
+                  JSONObject entry = json.getJSONObject(i);
+                  String className = entry.getString("class");
+                  result.put(getClassFromJar(jarPath, className), entry);
+               }
+               catch (JSONException e) {
+                  ReportingUtils.logError(e, "Unable to get entry " + i + " from META-INF JSON for " + jarPath);
+               }
             }
          }
          catch (JSONException e) {
-            ReportingUtils.logError(e, "Error reading META-INF JSON");
+            ReportingUtils.logError(e, "Error reading META-INF JSON in " + jarPath);
          }
       }
       catch (IOException e) {
-         ReportingUtils.logError(e, "Unable to load jar file");
+         ReportingUtils.logError(e, "Unable to load jar file " + jarPath);
       }
       return result;
    }

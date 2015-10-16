@@ -44,6 +44,7 @@ import org.micromanager.Studio;
 
 import org.micromanager.events.internal.NewPluginEvent;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public class DefaultPluginManager implements PluginManager {
@@ -156,21 +157,26 @@ public class DefaultPluginManager implements PluginManager {
     * regular plugins.
     */
    private void loadPlugins() {
-      loadPluginsFromDir(
+      HashMap<Class, JSONObject> plugins = PluginFinder.findPlugins(
             System.getProperty("org.micromanager.plugin.path",
                System.getProperty("user.dir") + "/mmplugins"));
-      loadPluginsFromDir(
+      loadPlugins(plugins);
+
+      HashMap<Class, JSONObject> autofocusPlugins = PluginFinder.findPlugins(
             System.getProperty("org.micromanager.autofocus.path",
                System.getProperty("user.dir") + "/mmautofocus"));
+      loadPlugins(autofocusPlugins);
+
+      HashMap<Class, JSONObject> builtinPlugins = PluginFinder.findPluginsInJar(
+            JavaUtils.getJarPath());
+      loadPlugins(builtinPlugins);
    }
 
    /**
-    * Scan the specified directory for plugins and insert them into the
-    * pluginTypeToPlugins_ structure.
+    * Insert the provided plugins into the pluginTypeToPlugins_ structure,
+    * instantiate them, add them to menus, etc.
     */
-   private void loadPluginsFromDir(String dir) {
-      HashMap<Class, JSONObject> pluginToTypeInfo = PluginFinder.findPlugins(
-            dir);
+   private void loadPlugins(HashMap<Class, JSONObject> pluginToTypeInfo) {
       for (Class pluginClass : pluginToTypeInfo.keySet()) {
          try {
             MMPlugin plugin = (MMPlugin) pluginClass.newInstance();

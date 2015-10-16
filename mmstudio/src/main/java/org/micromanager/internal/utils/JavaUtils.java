@@ -229,7 +229,6 @@ public class JavaUtils {
       classPath = classPath.replace(".", "/") + ".class";
       try {
          URL url = JavaUtils.class.getResource(classPath);
-         ReportingUtils.logError("Got URL " + url + " for path " + classPath);
          String path = URLDecoder.decode(url.getPath(), "UTF-8");
          path = URLDecoder.decode(new URL(path).getPath(), "UTF-8");
          int bang = path.indexOf("!");
