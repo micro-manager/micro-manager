@@ -32,14 +32,12 @@ import java.net.URL;
 import java.net.URLClassLoader;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.scijava.InstantiableException;
+import org.scijava.plugin.DefaultPluginFinder;
+import org.scijava.plugin.PluginIndex;
+import org.scijava.plugin.PluginInfo;
 
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -55,6 +53,13 @@ public class PluginFinder {
     */
    private static ArrayList<String> findPaths(String root, String extension) {
       ArrayList<String> result = new ArrayList<String>();
+      // Short-circuit if we're called with a non-directory.
+      if (!(new File(root).isDirectory())) {
+         if (root.endsWith(extension)) {
+            result.add(root);
+         }
+         return result;
+      }
       recursiveFindPaths(new File(root), extension, result);
       return result;
    }
@@ -78,78 +83,29 @@ public class PluginFinder {
     * return a mapping of their class objects to the text from their META-INF
     * JSON files.
     */
-   public static HashMap<Class, JSONObject> findPlugins(String root) {
-      HashMap<Class, JSONObject> result = new HashMap<Class, JSONObject>();
+   public static List<Class> findPlugins(String root) {
+      ArrayList<Class> result = new ArrayList<Class>();
       for (String jarPath : findPaths(root, ".jar")) {
-         result.putAll(findPluginsInJar(jarPath));
-      }
-      return result;
-   }
-
-   /**
-    * Return a mapping of class objects to text from the corresponding META-INF
-    * JSON for the class, for a specific jar file.
-    */
-   public static HashMap<Class, JSONObject> findPluginsInJar(String jarPath) {
-      HashMap<Class, JSONObject> result = new HashMap<Class, JSONObject>();
-      try {
-         JarFile jar = new JarFile(jarPath);
-         if (jar.getJarEntry(PLUGIN_ENTRY) == null) {
-            // Not a plugin jar.
-            return result;
-         }
-         // Read the plugin metadata and figure out which classes are plugin
-         // classes.
-         InputStream stream = jar.getInputStream(jar.getJarEntry(PLUGIN_ENTRY));
-         String contents = CharStreams.toString(
-               new InputStreamReader(stream, "UTF-8"));
-         stream.close();
-         // HACK: the contents of the plugin metadata file we just read are
-         // not necessarily valid JSON: if there are multiple classes in the
-         // jar with the @Plugin annotation, then we get multiple dictionaries
-         // in the file just kind of crammed together (i.e. not a JSON array,
-         // just two JSON dicts with no separation between them). So coerce
-         // the text to a JSON array and add the necessary separator(s).
-         contents = "[" + contents.replaceAll("\\}\\}\\{", "}},{") + "]";
          try {
-            JSONArray json = new JSONArray(contents);
-            for (int i = 0; i < json.length(); ++i) {
+            PluginLoader loader = new PluginLoader(
+                  new File(jarPath).toURI().toURL());
+            DefaultPluginFinder finder = new DefaultPluginFinder(loader);
+            PluginIndex index = new PluginIndex(finder);
+            index.discover();
+            for (PluginInfo info : index.getAll()) {
                try {
-                  JSONObject entry = json.getJSONObject(i);
-                  String className = entry.getString("class");
-                  result.put(getClassFromJar(jarPath, className), entry);
+                  result.add(info.loadClass());
                }
-               catch (JSONException e) {
-                  ReportingUtils.logError(e, "Unable to get entry " + i + " from META-INF JSON for " + jarPath);
+               catch (InstantiableException e) {
+                  ReportingUtils.logError(e, "Unable to instantiate class for " + info);
                }
             }
          }
-         catch (JSONException e) {
-            ReportingUtils.logError(e, "Error reading META-INF JSON in " + jarPath);
+         catch (MalformedURLException e) {
+            ReportingUtils.logError("Unable to generate URL from path " + jarPath);
          }
       }
-      catch (IOException e) {
-         ReportingUtils.logError(e, "Unable to load jar file " + jarPath);
-      }
       return result;
-   }
-
-   /**
-    * Given a path to a jar and the name of a class within that jar, load the
-    * jar and return the Class object for the named class.
-    */
-   public static Class getClassFromJar(String jarPath, String className) {
-      try {
-         PluginLoader loader = new PluginLoader(new File(jarPath).toURI().toURL());
-         return loader.loadClass(className);
-      }
-      catch (ClassNotFoundException e) {
-         ReportingUtils.logError(e, "Couldn't find class " + className + " in " + jarPath);
-      }
-      catch (MalformedURLException e) {
-         ReportingUtils.logError(e, "Couldn't construct URL for jar " + jarPath);
-      }
-      return null;
    }
 
    /**

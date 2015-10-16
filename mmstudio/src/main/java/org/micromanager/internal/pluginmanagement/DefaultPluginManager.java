@@ -89,20 +89,15 @@ public class DefaultPluginManager implements PluginManager {
       }
    }
 
-   // Maps strings like "org.micromanager.data.ProcessorPlugin" to
-   // classes like ProcessorPlugin.class.
-   private static final HashMap<String, Class> PATH_TO_CLASS = new HashMap<String, Class>();
+   // List of the types of plugins we allow.
+   private static final ArrayList<Class> VALID_CLASSES = new ArrayList<Class>();
    static {
-      PATH_TO_CLASS.put("org.micromanager.AutofocusPlugin",
-            AutofocusPlugin.class);
-      PATH_TO_CLASS.put("org.micromanager.data.ProcessorPlugin",
-            ProcessorPlugin.class);
-      PATH_TO_CLASS.put("org.micromanager.display.OverlayPlugin",
-            OverlayPlugin.class);
-      PATH_TO_CLASS.put("org.micromanager.IntroPlugin", IntroPlugin.class);
-      PATH_TO_CLASS.put("org.micromanager.MenuPlugin", MenuPlugin.class);
-      PATH_TO_CLASS.put("org.micromanager.SimpleButtonPlugin",
-            SimpleButtonPlugin.class);
+      VALID_CLASSES.add(AutofocusPlugin.class);
+      VALID_CLASSES.add(ProcessorPlugin.class);
+      VALID_CLASSES.add(OverlayPlugin.class);
+      VALID_CLASSES.add(IntroPlugin.class);
+      VALID_CLASSES.add(MenuPlugin.class);
+      VALID_CLASSES.add(SimpleButtonPlugin.class);
    }
 
    private static final String PROCESSOR_MENU = "On-The-Fly Image Processing";
@@ -124,7 +119,7 @@ public class DefaultPluginManager implements PluginManager {
       subMenus_ = new HashMap<String, JMenu>();
 
       pluginTypeToPlugins_ = new HashMap<Class, ArrayList<MMPlugin>>();
-      for (Class classType : PATH_TO_CLASS.values()) {
+      for (Class classType : VALID_CLASSES) {
          pluginTypeToPlugins_.put(classType, new ArrayList<MMPlugin>());
       }
       loadingThread_ = new Thread(new Runnable() {
@@ -157,31 +152,27 @@ public class DefaultPluginManager implements PluginManager {
     * regular plugins.
     */
    private void loadPlugins() {
-      HashMap<Class, JSONObject> plugins = PluginFinder.findPlugins(
+      loadPlugins(PluginFinder.findPlugins(
             System.getProperty("org.micromanager.plugin.path",
-               System.getProperty("user.dir") + "/mmplugins"));
-      loadPlugins(plugins);
+               System.getProperty("user.dir") + "/mmplugins")));
 
-      HashMap<Class, JSONObject> autofocusPlugins = PluginFinder.findPlugins(
+      loadPlugins(PluginFinder.findPlugins(
             System.getProperty("org.micromanager.autofocus.path",
-               System.getProperty("user.dir") + "/mmautofocus"));
-      loadPlugins(autofocusPlugins);
+               System.getProperty("user.dir") + "/mmautofocus")));
 
-      HashMap<Class, JSONObject> builtinPlugins = PluginFinder.findPluginsInJar(
-            JavaUtils.getJarPath());
-      loadPlugins(builtinPlugins);
+      loadPlugins(PluginFinder.findPlugins(JavaUtils.getJarPath()));
    }
 
    /**
     * Insert the provided plugins into the pluginTypeToPlugins_ structure,
     * instantiate them, add them to menus, etc.
     */
-   private void loadPlugins(HashMap<Class, JSONObject> pluginToTypeInfo) {
-      for (Class pluginClass : pluginToTypeInfo.keySet()) {
+   private void loadPlugins(List<Class> pluginClasses) {
+      for (Class pluginClass : pluginClasses) {
          try {
             MMPlugin plugin = (MMPlugin) pluginClass.newInstance();
             ReportingUtils.logMessage("Found plugin " + plugin);
-            addPlugin(plugin, pluginToTypeInfo.get(pluginClass));
+            addPlugin(plugin);
          }
          catch (InstantiationException e) {
             ReportingUtils.logError(e, "Error instantiating plugin class " + pluginClass);
@@ -197,27 +188,19 @@ public class DefaultPluginManager implements PluginManager {
     * pluginTypeToPlugins_ map, insert it into a submenu if appropriate,
     * and post a NewPluginEvent.
     */
-   private void addPlugin(final MMPlugin plugin, JSONObject typeInfo) {
+   private void addPlugin(final MMPlugin plugin) {
       plugin.setContext(studio_);
-      String className = "";
-      try {
-         className = typeInfo.getJSONObject("values").getString("type");
+      String className = className = plugin.getClass().getName();
+      for (Class pluginClass : VALID_CLASSES) {
+         if (pluginClass.isInstance(plugin)) {
+            pluginTypeToPlugins_.get(pluginClass).add(plugin);
+         }
       }
-      catch (JSONException e) {
-         ReportingUtils.logError(e, "Error loading plugin class info for plugin " + plugin + " with info " + typeInfo);
-         return;
-      }
-      if (!PATH_TO_CLASS.containsKey(className)) {
-         ReportingUtils.logError("Unrecognized plugin type " + className + " for plugin " + plugin);
-         return;
-      }
-      Class pluginClass = PATH_TO_CLASS.get(className);
-      pluginTypeToPlugins_.get(pluginClass).add(plugin);
-      if (pluginClass == ProcessorPlugin.class) {
+      if (ProcessorPlugin.class.isInstance(plugin)) {
          // Add it to the "On-the-fly image processing" plugin menu.
          addProcessorPluginToMenu((ProcessorPlugin) plugin);
       }
-      if (pluginClass == MenuPlugin.class) {
+      if (MenuPlugin.class.isInstance(plugin)) {
          // Add it to the menu.
          addSubMenuItem(((MenuPlugin) plugin).getSubMenu(),
                plugin.getName(),
