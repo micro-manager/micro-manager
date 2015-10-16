@@ -109,7 +109,7 @@ public abstract class LegacyMagellanImgLoader< T extends NativeType< T >, V exte
 
       final int priority = tiffStorage_.getNumResLevels() - 1 - resLevelIndex;
       final CacheHints cacheHints = new CacheHints(loadingStrategy, priority, false);
-      final CellCache< A > c = bdvCache_.new VolatileCellCache< A >(view.getTimePointId(), view.getViewSetupId(), resLevelIndex, cacheHints, loader);
+      final CellCache< A > c = bdvCache_.new VolatileCellCache< A >(view.getTimePointId(), view.getViewSetupId(), resLevelIndex, cacheHints, loader_);
       final VolatileImgCells< A> cells = new VolatileImgCells< A>(c, new Fraction(), dimensions, cellDimensions);
       final CachedCellImg< T, A> img = new CachedCellImg< T, A>(cells);
       return img;
