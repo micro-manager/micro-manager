@@ -168,7 +168,7 @@ public class DefaultUserProfile implements UserProfile {
     * http://stackoverflow.com/questions/326390/how-to-create-a-java-string-from-the-contents-of-a-file
     * TODO: should probably be moved into utils somewhere.
     */
-   private String loadFileToString(String path) throws IOException {
+   private static String loadFileToString(String path) throws IOException {
       return Files.toString(new File(path), Charsets.UTF_8);
    }
 

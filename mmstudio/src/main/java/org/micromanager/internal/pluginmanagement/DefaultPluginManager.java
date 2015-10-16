@@ -39,6 +39,7 @@ import org.micromanager.IntroPlugin;
 import org.micromanager.MenuPlugin;
 import org.micromanager.MMPlugin;
 import org.micromanager.PluginManager;
+import org.micromanager.SimpleButtonPlugin;
 import org.micromanager.Studio;
 
 import org.micromanager.events.internal.NewPluginEvent;
@@ -91,14 +92,16 @@ public class DefaultPluginManager implements PluginManager {
    // classes like ProcessorPlugin.class.
    private static final HashMap<String, Class> PATH_TO_CLASS = new HashMap<String, Class>();
    static {
-      PATH_TO_CLASS.put("org.micromanager.display.OverlayPlugin",
-            OverlayPlugin.class);
-      PATH_TO_CLASS.put("org.micromanager.data.ProcessorPlugin",
-            ProcessorPlugin.class);
-      PATH_TO_CLASS.put("org.micromanager.IntroPlugin", IntroPlugin.class);
-      PATH_TO_CLASS.put("org.micromanager.MenuPlugin", MenuPlugin.class);
       PATH_TO_CLASS.put("org.micromanager.AutofocusPlugin",
             AutofocusPlugin.class);
+      PATH_TO_CLASS.put("org.micromanager.data.ProcessorPlugin",
+            ProcessorPlugin.class);
+      PATH_TO_CLASS.put("org.micromanager.display.OverlayPlugin",
+            OverlayPlugin.class);
+      PATH_TO_CLASS.put("org.micromanager.IntroPlugin", IntroPlugin.class);
+      PATH_TO_CLASS.put("org.micromanager.MenuPlugin", MenuPlugin.class);
+      PATH_TO_CLASS.put("org.micromanager.SimpleButtonPlugin",
+            SimpleButtonPlugin.class);
    }
 
    private static final String PROCESSOR_MENU = "On-The-Fly Image Processing";
@@ -171,7 +174,7 @@ public class DefaultPluginManager implements PluginManager {
       for (Class pluginClass : pluginToTypeInfo.keySet()) {
          try {
             MMPlugin plugin = (MMPlugin) pluginClass.newInstance();
-            ReportingUtils.logDebugMessage("Found plugin " + plugin);
+            ReportingUtils.logMessage("Found plugin " + plugin);
             addPlugin(plugin, pluginToTypeInfo.get(pluginClass));
          }
          catch (InstantiationException e) {
@@ -320,6 +323,15 @@ public class DefaultPluginManager implements PluginManager {
       HashMap<String, AutofocusPlugin> result = new HashMap<String, AutofocusPlugin>();
       for (MMPlugin plugin : pluginTypeToPlugins_.get(AutofocusPlugin.class)) {
          result.put(plugin.getName(), (AutofocusPlugin) plugin);
+      }
+      return result;
+   }
+
+   @Override
+   public HashMap<String, SimpleButtonPlugin> getSimpleButtonPlugins() {
+      HashMap<String, SimpleButtonPlugin> result = new HashMap<String, SimpleButtonPlugin>();
+      for (MMPlugin plugin : pluginTypeToPlugins_.get(SimpleButtonPlugin.class)) {
+         result.put(plugin.getName(), (SimpleButtonPlugin) plugin);
       }
       return result;
    }

@@ -67,4 +67,11 @@ public interface PluginManager {
     * plugin installed at a time.
     */
    public HashMap<String, IntroPlugin> getIntroPlugins();
+
+   /**
+    * Return a HashMap that maps plugin names to SimpleButtonPlugin instances.
+    * SimpleButtonPlugins are used for the Quick-Access Window and perform
+    * actions when their buttons are clicked.
+    */
+   public HashMap<String, SimpleButtonPlugin> getSimpleButtonPlugins();
 }
