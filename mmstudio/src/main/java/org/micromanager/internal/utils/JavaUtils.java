@@ -25,102 +25,6 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 
 public class JavaUtils {
- 
-   /**
-    * Add directories and JARs to the classpath, and return the classes found
-    * in the process.
-    *
-    * This method does two things that are really completely separate tasks.
-    *
-    * First, it adds the given directory and all JARs directly in directory to
-    * the search path of the system class loader. If recursionLevel is greater
-    * than 0, it does the same with subdirectories, up to that level of
-    * nesting.
-    *
-    * Second, it finds all classes in the directories and JARs that were added
-    * to the class path in the first step, and returns them. Classes are found
-    * anywhere within the JARs, or as .class files directly within directories.
-    *
-    * There is no support for .class files contained in a hierarchy of
-    * directories representing the package names (they will be loadable because
-    * the directory is in the search path, but they will not be included in the
-    * returned list unless they are within the recursionLevel).
-    *
-    * On most errors, an empty list is returned and the error is logged.
-    *
-    * @param directory The directory to search for classes
-    * @param recursionLevel Nesting level for searching subdirectories
-    * @return The discovered classes
-    */
-   public static List<Class<?>> findAndLoadClasses(File directory, int recursionLevel) {
-      List<Class<?>> classes = new ArrayList<Class<?>>();
-      if (!directory.exists()) {
-         return classes;
-      }
-
-      final URL directoryURL;
-      try {
-         directoryURL = directory.toURI().toURL();
-      }
-      catch (MalformedURLException e) {
-         ReportingUtils.logError(e, "Failed to search for classes");
-         return classes;
-      }
-
-      try {
-         addURL(directoryURL);
-      }
-      catch (IOException ignore) {
-         // Logged by addURL()
-      }
-
-      File[] files = directory.listFiles();
-      for (File file : files) {
-         final String fileName = file.getName();
-         if (file.isDirectory() && recursionLevel > 0) {
-            classes.addAll(findAndLoadClasses(file, recursionLevel - 1));
-         } else if (fileName.endsWith(".class")) {
-            final String className = stripFilenameExtension(fileName);
-            try {
-               classes.add(Class.forName(className));
-            }
-            catch (ClassNotFoundException e) {
-               ReportingUtils.logError(e, "Failed to load class: " +
-                     className + " (expected in " + fileName + ")");
-            }
-         } else if (file.getName().endsWith(".jar")) {
-            try {
-               addURL(new URL("jar:file:" + file.getAbsolutePath() + "!/"));
-               JarInputStream jarFile = new JarInputStream(new FileInputStream(file));
-               for (JarEntry jarEntry = jarFile.getNextJarEntry();
-                       jarEntry != null;
-                       jarEntry = jarFile.getNextJarEntry()) {
-                  final String classFileName = jarEntry.getName();
-                  if (classFileName.endsWith(".class")) {
-                     final String className = stripFilenameExtension(classFileName).replace("/", ".");
-                     try {
-                        classes.add(Class.forName(className));
-                     } catch (ClassNotFoundException e) {
-                        ReportingUtils.logError(e, "Failed to load class: " +
-                              className + " (expected in " +
-                              file.getAbsolutePath() + " based on JAR entry)");
-                     } catch (NoClassDefFoundError e) {
-                        ReportingUtils.logError(e, "Failed to load class: " +
-                              className + " (expected in " +
-                              file.getAbsolutePath() +
-                              " ) because no class definition was found");
-                     }
-                  }
-               }
-            } catch (Exception e) {
-               ReportingUtils.logError(e);
-            }
-         }
-      }
-
-      return classes;
-   }
-
    private static String stripFilenameExtension(String filename) {
       int i = filename.lastIndexOf('.');
       if (i > 0) {
@@ -129,7 +33,7 @@ public class JavaUtils {
          return filename;
       }
    }
-   
+
    // Borrowed from http://forums.sun.com/thread.jspa?threadID=300557
    private static final Class<?>[] parameters = new Class[]{URL.class};
 
