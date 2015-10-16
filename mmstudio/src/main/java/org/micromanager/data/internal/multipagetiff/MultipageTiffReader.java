@@ -235,64 +235,66 @@ public class MultipageTiffReader {
    }
 
    public DefaultImage readImage(Coords coords) {
-      if (coordsToOffset_.containsKey(coords)) {
-         if (fileChannel_ == null) {
-            ReportingUtils.logError("Attempted to read image on FileChannel that is null");
-            return null;
-         }
-         try {
-            long byteOffset = coordsToOffset_.get(coords);
-
-            IFDData data = readIFD(byteOffset);
-            TaggedImage tagged = readTaggedImage(data);
-            // The metadata in the TaggedImage needs to be augmented with
-            // fields from the summary JSON, or else we won't be able to
-            // construct a DefaultImage from it.
-            augmentWithSummaryMetadata(tagged.tags);
-            // Manually create new Metadata for the image we're about to
-            // create. Just passing the bare TaggedImage in would make
-            // Micro-Manager assume that the image was created by the scope
-            // this instance of the program is running, which has ramifications
-            // for the scope data properties.
-            Metadata metadata = DefaultMetadata.legacyFromJSON(tagged.tags);
-            // All keys that are part of the scope data cannot be part of
-            // the user data.
-            // TODO: assumes knowledge of how DefaultMetadata serializes
-            // scope data.
-            HashSet<String> blockedKeys = new HashSet<String>();
-            if (metadata.getScopeData() != null) {
-               blockedKeys.add("scopeDataKeys");
-               for (String key : ((DefaultPropertyMap) metadata.getScopeData()).getKeys()) {
-                  blockedKeys.add(key);
-               }
-            }
-            if (summaryMetadata_.getMetadataVersion() != null &&
-                  metadata.getUserData() == null &&
-                  VersionUtils.isOlderVersion(
-                     summaryMetadata_.getMetadataVersion(), "11")) {
-               // These older versions of the metadata don't have a separate
-               // location for scope data or user data, so we just stuff all
-               // unused tags into the userData section.
-               ReportingUtils.logDebugMessage("Importing \"flat\" miscellaneous metadata into the userData structure");
-               metadata = metadata.copy().userData(
-                     MDUtils.extractUserData(tagged.tags, blockedKeys)).build();
-            }
-            return new DefaultImage(tagged, null, metadata);
-         } catch (IOException ex) {
-            ReportingUtils.logError(ex);
-         }
-         catch (JSONException e) {
-            ReportingUtils.logError(e, "Couldn't convert TaggedImage to DefaultImage");
-         }
-         catch (MMScriptException e) {
-            ReportingUtils.logError(e, "Couldn't convert TaggedImage to DefaultImage");
-         }
-         return null;
-      } else {
+      if (!coordsToOffset_.containsKey(coords)) {
          // Coordinates not in our map; maybe the writer hasn't finished
          // writing it?
          return null;
       }
+      if (fileChannel_ == null) {
+         ReportingUtils.logError("Attempted to read image on FileChannel that is null");
+         return null;
+      }
+      try {
+         long byteOffset = coordsToOffset_.get(coords);
+
+         IFDData data = readIFD(byteOffset);
+         TaggedImage tagged = readTaggedImage(data);
+         // The metadata in the TaggedImage needs to be augmented with
+         // fields from the summary JSON, or else we won't be able to
+         // construct a DefaultImage from it.
+         augmentWithSummaryMetadata(tagged.tags);
+         // Manually create new Metadata for the image we're about to
+         // create. Just passing the bare TaggedImage in would make
+         // Micro-Manager assume that the image was created by the scope
+         // this instance of the program is running, which has ramifications
+         // for the scope data properties.
+         Metadata metadata = DefaultMetadata.legacyFromJSON(tagged.tags);
+         // All keys that are part of the scope data cannot be part of
+         // the user data.
+         // TODO: assumes knowledge of how DefaultMetadata serializes
+         // scope data.
+         HashSet<String> blockedKeys = new HashSet<String>();
+         if (metadata.getScopeData() != null) {
+            blockedKeys.add("scopeDataKeys");
+            for (String key : ((DefaultPropertyMap) metadata.getScopeData()).getKeys()) {
+               blockedKeys.add(key);
+            }
+         }
+         if (summaryMetadata_.getMetadataVersion() != null &&
+               metadata.getUserData() == null &&
+               VersionUtils.isOlderVersion(
+                  summaryMetadata_.getMetadataVersion(), "11")) {
+            // These older versions of the metadata don't have a separate
+            // location for scope data or user data, so we just stuff all
+            // unused tags into the userData section.
+            ReportingUtils.logDebugMessage("Importing \"flat\" miscellaneous metadata into the userData structure");
+            metadata = metadata.copy().userData(
+                  MDUtils.extractUserData(tagged.tags, blockedKeys)).build();
+         }
+         return new DefaultImage(tagged, null, metadata);
+      }
+      catch (IOException ex) {
+         ReportingUtils.logError(ex);
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e,
+               "Couldn't convert TaggedImage to DefaultImage");
+      }
+      catch (MMScriptException e) {
+         ReportingUtils.logError(e,
+               "Couldn't convert TaggedImage to DefaultImage");
+      }
+      return null;
    }
 
    /**
@@ -301,26 +303,32 @@ public class MultipageTiffReader {
     * metadata and image data properly.
     */
    private void augmentWithSummaryMetadata(JSONObject tags) {
-      try {
-         MDUtils.setWidth(tags, MDUtils.getWidth(summaryJSON_));
+      if (!MDUtils.hasWidth(tags)) {
+         try {
+            MDUtils.setWidth(tags, MDUtils.getWidth(summaryJSON_));
+         }
+         catch (JSONException e) {
+            ReportingUtils.logError(e, "Failed to get image width from summary JSON");
+         }
       }
-      catch (JSONException e) {
-         ReportingUtils.logError(e, "Failed to get image width from summary JSON");
+      if (!MDUtils.hasHeight(tags)) {
+         try {
+            MDUtils.setHeight(tags, MDUtils.getHeight(summaryJSON_));
+         }
+         catch (JSONException e) {
+            ReportingUtils.logError(e, "Failed to get image height from summary JSON");
+         }
       }
-      try {
-         MDUtils.setHeight(tags, MDUtils.getHeight(summaryJSON_));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logError(e, "Failed to get image height from summary JSON");
-      }
-      try {
-         MDUtils.setPixelType(tags, MDUtils.getSingleChannelType(summaryJSON_));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logError(e, "Failed to get image pixel type from summary JSON");
-      }
-      catch (MMScriptException e) {
-         ReportingUtils.logError(e, "Failed to get image pixel type from summary JSON");
+      if (!MDUtils.hasPixelType(tags)) {
+         try {
+            MDUtils.setPixelType(tags, MDUtils.getSingleChannelType(summaryJSON_));
+         }
+         catch (JSONException e) {
+            ReportingUtils.logError(e, "Failed to get image pixel type from summary JSON");
+         }
+         catch (MMScriptException e) {
+            ReportingUtils.logError(e, "Failed to get image pixel type from summary JSON");
+         }
       }
    }
 

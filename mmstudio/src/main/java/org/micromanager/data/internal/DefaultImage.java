@@ -459,6 +459,8 @@ public class DefaultImage implements Image {
    }
 
    public String toString() {
-      return String.format("<%dx%d image at %s>", getWidth(), getHeight(), coords_);
+      return String.format("<%dx%dx%d image (byte depth %d) at %s>",
+            getWidth(), getHeight(), getNumComponents(),
+            getBytesPerPixel(), coords_);
    }
 }

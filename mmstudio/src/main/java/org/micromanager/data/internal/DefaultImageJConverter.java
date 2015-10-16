@@ -57,7 +57,15 @@ public class DefaultImageJConverter implements ImageJConverter {
       if (shouldCopy) {
          pixels = image.getRawPixelsCopy();
       }
-      if (bytesPerPixel == 1 && numComponents == 1) {
+      if (bytesPerPixel == 4 && numComponents == 3) {
+         // Micro-Manager RGB32 images are generally composed of byte
+         // arrays, but ImageJ only takes int arrays.
+         if (pixels instanceof byte[]) {
+            pixels = ImageUtils.convertRGB32BytesToInt((byte[]) pixels);
+         }
+         return new ColorProcessor(width, height, (int[]) pixels);
+      }
+      else if (bytesPerPixel == 1 && numComponents == 1) {
          return new ByteProcessor(width, height, (byte[]) pixels, null);
       }
       else if (bytesPerPixel == 2 && numComponents == 1) {
@@ -65,14 +73,6 @@ public class DefaultImageJConverter implements ImageJConverter {
       }
       else if (bytesPerPixel == 4 && numComponents == 1) {
          return new FloatProcessor(width,height, (float[]) pixels, null);
-      }
-      else if (bytesPerPixel == 4 && numComponents == 3) {
-         // Micro-Manager RGB32 images are generally composed of byte
-         // arrays, but ImageJ only takes int arrays.
-         if (pixels instanceof byte[]) {
-            pixels = ImageUtils.convertRGB32BytesToInt((byte[]) pixels);
-         }
-         return new ColorProcessor(width, height, (int[]) pixels);
       }
       return null;
    }
