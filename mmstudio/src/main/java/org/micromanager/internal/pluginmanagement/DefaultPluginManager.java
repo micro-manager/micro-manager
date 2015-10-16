@@ -286,7 +286,7 @@ public class DefaultPluginManager implements PluginManager {
    public HashMap<String, ProcessorPlugin> getProcessorPlugins() {
       HashMap<String, ProcessorPlugin> result = new HashMap<String, ProcessorPlugin>();
       for (MMPlugin plugin : pluginTypeToPlugins_.get(ProcessorPlugin.class)) {
-         result.put(plugin.getName(), (ProcessorPlugin) plugin);
+         result.put(plugin.getClass().getName(), (ProcessorPlugin) plugin);
       }
       return result;
    }
@@ -295,7 +295,7 @@ public class DefaultPluginManager implements PluginManager {
    public HashMap<String, OverlayPlugin> getOverlayPlugins() {
       HashMap<String, OverlayPlugin> result = new HashMap<String, OverlayPlugin>();
       for (MMPlugin plugin : pluginTypeToPlugins_.get(OverlayPlugin.class)) {
-         result.put(plugin.getName(), (OverlayPlugin) plugin);
+         result.put(plugin.getClass().getName(), (OverlayPlugin) plugin);
       }
       return result;
    }
@@ -304,7 +304,7 @@ public class DefaultPluginManager implements PluginManager {
    public HashMap<String, IntroPlugin> getIntroPlugins() {
       HashMap<String, IntroPlugin> result = new HashMap<String, IntroPlugin>();
       for (MMPlugin plugin : pluginTypeToPlugins_.get(IntroPlugin.class)) {
-         result.put(plugin.getName(), (IntroPlugin) plugin);
+         result.put(plugin.getClass().getName(), (IntroPlugin) plugin);
       }
       return result;
    }
@@ -313,7 +313,7 @@ public class DefaultPluginManager implements PluginManager {
    public HashMap<String, MenuPlugin> getMenuPlugins() {
       HashMap<String, MenuPlugin> result = new HashMap<String, MenuPlugin>();
       for (MMPlugin plugin : pluginTypeToPlugins_.get(MenuPlugin.class)) {
-         result.put(plugin.getName(), (MenuPlugin) plugin);
+         result.put(plugin.getClass().getName(), (MenuPlugin) plugin);
       }
       return result;
    }
@@ -322,7 +322,7 @@ public class DefaultPluginManager implements PluginManager {
    public HashMap<String, AutofocusPlugin> getAutofocusPlugins() {
       HashMap<String, AutofocusPlugin> result = new HashMap<String, AutofocusPlugin>();
       for (MMPlugin plugin : pluginTypeToPlugins_.get(AutofocusPlugin.class)) {
-         result.put(plugin.getName(), (AutofocusPlugin) plugin);
+         result.put(plugin.getClass().getName(), (AutofocusPlugin) plugin);
       }
       return result;
    }
@@ -331,7 +331,7 @@ public class DefaultPluginManager implements PluginManager {
    public HashMap<String, SimpleButtonPlugin> getSimpleButtonPlugins() {
       HashMap<String, SimpleButtonPlugin> result = new HashMap<String, SimpleButtonPlugin>();
       for (MMPlugin plugin : pluginTypeToPlugins_.get(SimpleButtonPlugin.class)) {
-         result.put(plugin.getName(), (SimpleButtonPlugin) plugin);
+         result.put(plugin.getClass().getName(), (SimpleButtonPlugin) plugin);
       }
       return result;
    }

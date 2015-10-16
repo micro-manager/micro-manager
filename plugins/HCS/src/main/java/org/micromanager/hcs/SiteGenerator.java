@@ -128,7 +128,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
                  JOptionPane.YES_NO_OPTION);
          if (result == JOptionPane.YES_OPTION) {
             try {
-               MenuPlugin pc = app_.plugins().getMenuPlugins().get("Pixel Calibrator");
+               MenuPlugin pc = app_.plugins().getMenuPlugins().get("org.micromanager.pixelcalibrator.PixelCalibratorPlugin");
                pc.onPluginSelected();
             } catch (Exception ex) {
                app_.logs().showError(ex, "Unable to load Pixel Calibrator Plugin.");

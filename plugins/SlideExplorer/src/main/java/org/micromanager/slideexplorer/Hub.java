@@ -17,9 +17,9 @@ import mmcorej.CMMCore;
 
 import mmcorej.StrVector;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
-import org.micromanager.pixelcalibrator.PixelCalibratorPlugin;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MMScriptException;
@@ -117,9 +117,8 @@ public class Hub {
                  JOptionPane.YES_NO_OPTION);
          if (result == JOptionPane.YES_OPTION) {
             try {
-               PixelCalibratorPlugin pc = new PixelCalibratorPlugin();
-               pc.setContext(Hub.appRef_);
-               pc.onPluginSelected();
+               MenuPlugin pixelCal = appRef_.plugins().getMenuPlugins().get("org.micromanager.pixelcalibrator.PixelCalibratorPlugin");
+               pixelCal.onPluginSelected();
             } catch (Exception ex) {
                ReportingUtils.showError("Unable to load Pixel Calibrator Plugin.");
             }
