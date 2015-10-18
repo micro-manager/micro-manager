@@ -2303,7 +2303,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
       sliceFrameAdvanced_.setVisible(false);
-      saveSettings();
    }
 
    @Override
