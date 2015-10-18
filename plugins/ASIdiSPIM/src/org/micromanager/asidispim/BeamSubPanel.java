@@ -288,10 +288,26 @@ public final class BeamSubPanel extends ListeningJPanel {
    }
 
    /**
-    * @return true if sheet Bis on (navigation panel)
+    * @return true if sheet B is on (navigation panel)
     *  or if epi sheet is on (setup panel)
     */
    public boolean isSheetBOn() {
       return sheetBBox_.isSelected();
+   }
+
+   /**
+    * sets the imaging beam (or path A from navigation panel)
+    *   to the desired state
+    * @param enable true for on, false for off
+    */
+   public void setBeamA(boolean enable) {
+      sheetABox_.setSelected(enable);
+   }
+
+   /**
+    * @return true if "Change settings on tab activate" is enabled
+    */
+   public boolean isUpdateOnTab() {
+      return updateOnTab_.isSelected();
    }
 }

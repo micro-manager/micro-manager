@@ -806,14 +806,22 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    @Override
    // if this gets called other than after autofocus may need to change code
    public void refreshSelected() {
-      cameraPanel_.gotSelected();
-      beamPanel_.gotSelected();
       // currently only called after autofocus, so do an autofocus-specific task here
       // cannot put this where we call runFocus because it runs on a separate
       //   asynchronous thread
+      // be sure to update the calibration offset if needed before possibly
+      //   changing beam state using beamPanel_
       if (prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(), 
             Properties.Keys.PLUGIN_AUTOFOCUS_AUTOUPDATE_OFFSET, false)) {
          updateCalibrationOffset();
+      }
+      cameraPanel_.gotSelected();
+      if (beamPanel_.isUpdateOnTab()) {
+         beamPanel_.gotSelected();
+      } else {
+         // correctly handle case where beam was initially turned off, then turned
+         //   on by autofocus, but "Change settings on tab activate" is false
+         beamPanel_.setBeamA(false);
       }
    }
    
