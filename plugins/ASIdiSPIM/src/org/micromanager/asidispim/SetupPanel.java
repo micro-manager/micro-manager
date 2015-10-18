@@ -606,13 +606,17 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     */
    private void updateCalibrationOffset() {
       try {
-         double rate = (Double) rateField_.getValue();
-         // bypass cached positions in positions_ in case they aren't current
-         double currentScanner = positions_.getUpdatedPosition(micromirrorDeviceKey_,
-               Directions.Y);
-         double currentPiezo = positions_.getUpdatedPosition(piezoImagingDeviceKey_);
-         double newOffset = currentPiezo - rate * currentScanner;
-         offsetField_.setValue((Double) newOffset);
+         if (beamPanel_.isBeamAOn()) {
+            // only update offset if the beam is turned on
+            //  (if it's off then the current position is meaningless)
+            double rate = (Double) rateField_.getValue();
+            // bypass cached positions in positions_ in case they aren't current
+            double currentScanner = positions_.getUpdatedPosition(micromirrorDeviceKey_,
+                  Directions.Y);
+            double currentPiezo = positions_.getUpdatedPosition(piezoImagingDeviceKey_);
+            double newOffset = currentPiezo - rate * currentScanner;
+            offsetField_.setValue((Double) newOffset);
+         }
       } catch (Exception ex) {
          MyDialogUtils.showError(ex);
       }

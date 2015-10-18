@@ -263,5 +263,35 @@ public final class BeamSubPanel extends ListeningJPanel {
       // other 4 settings are updated on checkbox click instead of here
    }
    
-   
+   /**
+    * @return true if beam A is on (navigation panel)
+    *  or if imaging beam is on (setup panel)
+    */
+   public boolean isBeamAOn() {
+      return beamABox_.isSelected();
+   }
+
+   /**
+    * @return true if beam B is on (navigation panel)
+    *  or if epi beam is on (setup panel)
+    */
+   public boolean isBeamBOn() {
+      return beamBBox_.isSelected();
+   }
+
+   /**
+    * @return true if sheet A is on (navigation panel)
+    *  or if imaging sheet is on (setup panel)
+    */
+   public boolean isSheetAOn() {
+      return sheetABox_.isSelected();
+   }
+
+   /**
+    * @return true if sheet Bis on (navigation panel)
+    *  or if epi sheet is on (setup panel)
+    */
+   public boolean isSheetBOn() {
+      return sheetBBox_.isSelected();
+   }
 }
