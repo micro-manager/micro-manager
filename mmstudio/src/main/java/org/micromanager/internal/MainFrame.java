@@ -308,14 +308,14 @@ public class MainFrame extends MMFrame implements LiveModeListener {
     * buttons.
     */
    private void createCommonActionButtons(JPanel topPanel) {
-      snapButton_ = QuickAccessFactory.makeButton(
-            studio_.plugins().getSimpleButtonPlugins().get(
+      snapButton_ = (JButton) QuickAccessFactory.makeGUI(
+            studio_.plugins().getQuickAccessPlugins().get(
                "org.micromanager.quickaccess.internal.SnapButton"));
       snapButton_.setFont(defaultFont_);
       GUIUtils.addWithEdges(topPanel, snapButton_, 7, 4, 95, 25);
 
-      liveButton_ = QuickAccessFactory.makeToggleButton(
-            studio_.plugins().getToggleButtonPlugins().get(
+      liveButton_ = (JToggleButton) QuickAccessFactory.makeGUI(
+            studio_.plugins().getQuickAccessPlugins().get(
                "org.micromanager.quickaccess.internal.LiveButton"));
       liveButton_.setFont(defaultFont_);
       GUIUtils.addWithEdges(topPanel, liveButton_, 7, 26, 95, 47);

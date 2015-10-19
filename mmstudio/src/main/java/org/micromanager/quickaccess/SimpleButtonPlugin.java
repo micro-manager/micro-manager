@@ -21,14 +21,12 @@ package org.micromanager.quickaccess;
 
 import javax.swing.Icon;
 
-import org.micromanager.MMPlugin;
-
 /**
  * This plugin type is used for buttons that can be embedded in the
  * Quick-Access Window. It's for simple buttons that perform an action when
  * clicked.
  */
-public interface SimpleButtonPlugin extends MMPlugin {
+public interface SimpleButtonPlugin extends QuickAccessPlugin {
    /**
     * Returns the text to show in the button.
     */
@@ -37,7 +35,7 @@ public interface SimpleButtonPlugin extends MMPlugin {
    /**
     * Returns an icon to show in the button. May be null.
     */
-   public Icon getIcon();
+   public Icon getButtonIcon();
 
    /**
     * This method will be called when the button is clicked.

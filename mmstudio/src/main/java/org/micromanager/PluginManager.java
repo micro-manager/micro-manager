@@ -23,8 +23,7 @@ import java.util.HashMap;
 
 import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.display.OverlayPlugin;
-import org.micromanager.quickaccess.SimpleButtonPlugin;
-import org.micromanager.quickaccess.ToggleButtonPlugin;
+import org.micromanager.quickaccess.QuickAccessPlugin;
 
 /**
  * This class provides access to plugins that have been detected by
@@ -71,16 +70,9 @@ public interface PluginManager {
    public HashMap<String, IntroPlugin> getIntroPlugins();
 
    /**
-    * Return a HashMap that maps plugin names to SimpleButtonPlugin instances.
-    * SimpleButtonPlugins are used for the Quick-Access Window and perform
-    * actions when their buttons are clicked.
+    * Return a HashMap that maps plugin names to QuickAccessPlugin instances.
+    * QuickAccessPlugins are for controls that can be included in the Quick-
+    * Access Window.
     */
-   public HashMap<String, SimpleButtonPlugin> getSimpleButtonPlugins();
-
-   /**
-    * Return a HashMap that maps plugin names to ToggleButtonPlugin instances.
-    * ToggleButtonPlugins are used for the Quick-Access Window and can be
-    * toggled on and off.
-    */
-   public HashMap<String, ToggleButtonPlugin> getToggleButtonPlugins();
+   public HashMap<String, QuickAccessPlugin> getQuickAccessPlugins();
 }

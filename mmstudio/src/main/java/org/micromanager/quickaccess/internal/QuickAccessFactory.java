@@ -19,15 +19,20 @@
 
 package org.micromanager.quickaccess.internal;
 
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.Icon;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JToggleButton;
 
+import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.quickaccess.SimpleButtonPlugin;
 import org.micromanager.quickaccess.ToggleButtonPlugin;
+
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * This class creates UI widgets for the Quick-Access Window based on the
@@ -35,10 +40,25 @@ import org.micromanager.quickaccess.ToggleButtonPlugin;
  */
 public class QuickAccessFactory {
    /**
+    * Given a QuickAccessPlugin, make the appropriate GUI for it. This just
+    * farms out to the appropriate more specific method.
+    */
+   public static JComponent makeGUI(QuickAccessPlugin plugin) {
+      if (plugin instanceof SimpleButtonPlugin) {
+         return makeButton((SimpleButtonPlugin) plugin);
+      }
+      else if (plugin instanceof ToggleButtonPlugin) {
+         return makeToggleButton((ToggleButtonPlugin) plugin);
+      }
+      ReportingUtils.logError("Unrecognized plugin type " + plugin);
+      return null;
+   }
+
+   /**
     * Given a SimpleButtonPlugin, create a JButton from it.
     */
    public static JButton makeButton(final SimpleButtonPlugin plugin) {
-      JButton result = new JButton(plugin.getTitle(), plugin.getIcon());
+      JButton result = new JButton(plugin.getTitle(), plugin.getButtonIcon());
       result.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {

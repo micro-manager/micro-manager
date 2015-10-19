@@ -68,8 +68,13 @@ public class SnapButton implements SimpleButtonPlugin, SciJavaPlugin {
    }
 
    @Override
-   public Icon getIcon() {
+   public Icon getButtonIcon() {
       return IconLoader.getIcon("/org/micromanager/icons/camera.png");
+   }
+
+   @Override
+   public Icon getIcon() {
+      return null;
    }
 
    @Override

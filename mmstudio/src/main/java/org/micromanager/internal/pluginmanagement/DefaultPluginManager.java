@@ -39,8 +39,7 @@ import org.micromanager.IntroPlugin;
 import org.micromanager.MenuPlugin;
 import org.micromanager.MMPlugin;
 import org.micromanager.PluginManager;
-import org.micromanager.quickaccess.SimpleButtonPlugin;
-import org.micromanager.quickaccess.ToggleButtonPlugin;
+import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.Studio;
 
 import org.micromanager.events.internal.NewPluginEvent;
@@ -98,8 +97,7 @@ public class DefaultPluginManager implements PluginManager {
       VALID_CLASSES.add(OverlayPlugin.class);
       VALID_CLASSES.add(IntroPlugin.class);
       VALID_CLASSES.add(MenuPlugin.class);
-      VALID_CLASSES.add(SimpleButtonPlugin.class);
-      VALID_CLASSES.add(ToggleButtonPlugin.class);
+      VALID_CLASSES.add(QuickAccessPlugin.class);
    }
 
    private static final String PROCESSOR_MENU = "On-The-Fly Image Processing";
@@ -328,19 +326,10 @@ public class DefaultPluginManager implements PluginManager {
    }
 
    @Override
-   public HashMap<String, SimpleButtonPlugin> getSimpleButtonPlugins() {
-      HashMap<String, SimpleButtonPlugin> result = new HashMap<String, SimpleButtonPlugin>();
-      for (MMPlugin plugin : pluginTypeToPlugins_.get(SimpleButtonPlugin.class)) {
-         result.put(plugin.getClass().getName(), (SimpleButtonPlugin) plugin);
-      }
-      return result;
-   }
-
-   @Override
-   public HashMap<String, ToggleButtonPlugin> getToggleButtonPlugins() {
-      HashMap<String, ToggleButtonPlugin> result = new HashMap<String, ToggleButtonPlugin>();
-      for (MMPlugin plugin : pluginTypeToPlugins_.get(ToggleButtonPlugin.class)) {
-         result.put(plugin.getClass().getName(), (ToggleButtonPlugin) plugin);
+   public HashMap<String, QuickAccessPlugin> getQuickAccessPlugins() {
+      HashMap<String, QuickAccessPlugin> result = new HashMap<String, QuickAccessPlugin>();
+      for (MMPlugin plugin : pluginTypeToPlugins_.get(QuickAccessPlugin.class)) {
+         result.put(plugin.getClass().getName(), (QuickAccessPlugin) plugin);
       }
       return result;
    }

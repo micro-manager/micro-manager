@@ -26,6 +26,7 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.Icon;
 import javax.swing.JToggleButton;
 
 import org.micromanager.events.LiveModeEvent;
@@ -66,6 +67,11 @@ public class LiveButton implements ToggleButtonPlugin, SciJavaPlugin {
    @Override
    public String getCopyright() {
       return "Copyright (c) 2015 Open Imaging, Inc.";
+   }
+
+   @Override
+   public Icon getIcon() {
+      return null;
    }
 
    @Override

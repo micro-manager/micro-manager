@@ -19,16 +19,19 @@
 
 package org.micromanager.quickaccess;
 
-import javax.swing.JToggleButton;
+import javax.swing.Icon;
+
+import org.micromanager.MMPlugin;
 
 /**
- * This plugin type is used for buttons that can be embedded in the
- * Quick-Access Window. It is similar to the SimpleButtonPlugin, except that
- * its state may be toggled.
+ * QuickAccessPlugins are used for controls that can show up in the Quick-
+ * Access Window, which shows frequently-used controls.
  */
-public interface ToggleButtonPlugin extends QuickAccessPlugin {
+public interface QuickAccessPlugin extends MMPlugin {
    /**
-    * Provide a JToggleButton that will behave as desired by the plugin.
+    * Provide an icon to use to represent this plugin when customizing the
+    * Quick-Access Window. May be null, in which case a rendering of the
+    * plugin's controls will be used instead.
     */
-   public JToggleButton createButton();
+   public Icon getIcon();
 }
