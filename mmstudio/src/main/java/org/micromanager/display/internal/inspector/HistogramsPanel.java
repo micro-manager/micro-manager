@@ -389,15 +389,20 @@ public final class HistogramsPanel extends InspectorPanel {
 
    @Subscribe
    public void onPixelsSet(PixelsSetEvent event) {
-      if (event.getDisplay() == display_) {
-         calcAndDisplayHistAndStats();
-         // HACK: the inspector window can have the incorrect size (somewhat
-         // too small) if sized prior to histograms having been drawn. So we
-         // force a relayout the first time we receive this event.
-         if (isFirstDrawEvent_) {
-            inspector_.relayout();
-            isFirstDrawEvent_ = false;
+      try {
+         if (event.getDisplay() == display_) {
+            calcAndDisplayHistAndStats();
+            // HACK: the inspector window can have the incorrect size (somewhat
+            // too small) if sized prior to histograms having been drawn. So we
+            // force a relayout the first time we receive this event.
+            if (isFirstDrawEvent_) {
+               inspector_.relayout();
+               isFirstDrawEvent_ = false;
+            }
          }
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error updating histograms to match image");
       }
    }
 
