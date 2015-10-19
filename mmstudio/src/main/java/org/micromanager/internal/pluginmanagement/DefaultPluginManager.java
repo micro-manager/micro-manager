@@ -160,7 +160,8 @@ public class DefaultPluginManager implements PluginManager {
             System.getProperty("org.micromanager.autofocus.path",
                System.getProperty("user.dir") + "/mmautofocus")));
 
-      loadPlugins(PluginFinder.findPlugins(JavaUtils.getJarPath()));
+      loadPlugins(PluginFinder.findPlugins(JavaUtils.getJarPath(),
+            getClass().getClassLoader()));
    }
 
    /**
@@ -170,6 +171,12 @@ public class DefaultPluginManager implements PluginManager {
    private void loadPlugins(List<Class> pluginClasses) {
       for (Class pluginClass : pluginClasses) {
          try {
+            // HACK: We can load a bunch of scijava stuff from the MMJ_.jar
+            // file, which of course isn't really relevant to our interests, so
+            // skip things that aren't actually MMPlugins.
+            if (!MMPlugin.class.isAssignableFrom(pluginClass)) {
+               continue;
+            }
             MMPlugin plugin = (MMPlugin) pluginClass.newInstance();
             ReportingUtils.logMessage("Found plugin " + plugin);
             addPlugin(plugin);

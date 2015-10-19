@@ -79,16 +79,27 @@ public class PluginFinder {
 
    /**
     * Find all jars under the given root, check them for the META-INF file that
-    * indicates that they're annotated with the @Plugin annotation, and
-    * return a mapping of their class objects to the text from their META-INF
-    * JSON files.
+    * indicates that they're annotated with the @Plugin annotation, and return
+    * a list of the corresponding annotated classes.
     */
    public static List<Class> findPlugins(String root) {
+      return findPlugins(root, null);
+   }
+
+   /**
+    * Find all jars under the given root, check them for the META-INF file that
+    * indicates that they're annotated with the @Plugin annotation, and return
+    * a list of the corresponding annotated classes. This version allows you
+    * to specify the ClassLoader to use.
+    */
+   public static List<Class> findPlugins(String root, ClassLoader loader) {
       ArrayList<Class> result = new ArrayList<Class>();
+      boolean shouldUseOurLoader = (loader == null);
       for (String jarPath : findPaths(root, ".jar")) {
          try {
-            PluginLoader loader = new PluginLoader(
-                  new File(jarPath).toURI().toURL());
+            if (shouldUseOurLoader) {
+               loader = new PluginLoader(new File(jarPath).toURI().toURL());
+            }
             DefaultPluginFinder finder = new DefaultPluginFinder(loader);
             PluginIndex index = new PluginIndex(finder);
             index.discover();
