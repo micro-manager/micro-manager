@@ -190,7 +190,6 @@ public class DefaultPluginManager implements PluginManager {
     */
    private void addPlugin(final MMPlugin plugin) {
       plugin.setContext(studio_);
-      String className = className = plugin.getClass().getName();
       for (Class pluginClass : VALID_CLASSES) {
          if (pluginClass.isInstance(plugin)) {
             pluginTypeToPlugins_.get(pluginClass).add(plugin);
