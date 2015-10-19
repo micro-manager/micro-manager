@@ -160,6 +160,9 @@ public class DefaultPluginManager implements PluginManager {
             System.getProperty("org.micromanager.autofocus.path",
                System.getProperty("user.dir") + "/mmautofocus")));
 
+      // We need to use our normal class loader to load stuff from the MMJ_.jar
+      // file, since otherwise we won't be able to cast the new plugin to
+      // MMPlugin in loadPlugins(), below.
       loadPlugins(PluginFinder.findPlugins(JavaUtils.getJarPath(),
             getClass().getClassLoader()));
    }

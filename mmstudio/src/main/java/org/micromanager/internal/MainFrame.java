@@ -70,6 +70,7 @@ import org.micromanager.events.internal.MouseMovesStageEvent;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.StageControlFrame;
 import org.micromanager.internal.interfaces.LiveModeListener;
+import org.micromanager.internal.quickaccess.QuickAccessFactory;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.DragDropUtil;
 import org.micromanager.internal.utils.GUIUtils;
@@ -306,15 +307,10 @@ public class MainFrame extends MMFrame implements LiveModeListener {
     * buttons.
     */
    private void createCommonActionButtons(JPanel topPanel) {
-      snapButton_ = (JButton) GUIUtils.createButton(false, "Snap", "Snap",
-         "Snap single image",
-         new Runnable() {
-            @Override
-            public void run() {
-               studio_.live().snap(true);
-            }
-         }, 
-         "camera.png", topPanel, 7, 4, 95, 25);
+      snapButton_ = QuickAccessFactory.makeButton(
+            studio_.plugins().getSimpleButtonPlugins().get(
+               "org.micromanager.internal.quickaccess.SnapButton"));
+      GUIUtils.addWithEdges(topPanel, snapButton_, 7, 4, 95, 25);
 
       liveButton_ = (JToggleButton) GUIUtils.createButton(true,
          "Live", "Live", "Continuous live view",

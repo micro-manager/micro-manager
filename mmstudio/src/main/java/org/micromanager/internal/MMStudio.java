@@ -213,7 +213,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
    private Thread acquisitionEngine2010LoadingThread_ = null;
    private Class<?> acquisitionEngine2010Class_ = null;
    private IAcquisitionEngine2010 acquisitionEngine2010_ = null;
-   private final StaticInfo staticInfo_;
+   private StaticInfo staticInfo_;
    
    
    /**
@@ -285,7 +285,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       new ClickToMoveManager(this, core_);
       snapLiveManager_ = new SnapLiveManager(this, core_);
 
-      frame_ = new MainFrame(this, core_, snapLiveManager_);
       ReportingUtils.SetContainingFrame(frame_);
 
       // move ImageJ window to place where it last was if possible
@@ -298,8 +297,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
          }
       }
 
-      staticInfo_ = new StaticInfo(core_, frame_);
-
       openAcqDirectory_ = profile().getString(MMStudio.class,
             OPEN_ACQ_DIR, "");
 
@@ -309,8 +306,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       
       
       menuBar_ = new JMenuBar();
-
-      frame_.setJMenuBar(menuBar_);
 
       FileMenu fileMenu = new FileMenu(studio_);
       fileMenu.initializeFileMenu(menuBar_);
@@ -371,8 +366,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       afMgr_ = new AutofocusManager(studio_);
       pluginManager_ = new DefaultPluginManager(studio_, menuBar_);
 
-      frame_.paintToFront();
-      
       engine_.setCore(core_, afMgr_);
       posList_ = new PositionList();
       engine_.setPositionList(posList_);
@@ -403,6 +396,12 @@ public class MMStudio implements Studio, CompatibilityInterface {
       else {
          ReportingUtils.logMessage("Finished waiting for plugins to load");
       }
+
+      // The MainFrame relies on plugins.
+      frame_ = new MainFrame(this, core_, snapLiveManager_);
+      frame_.setJMenuBar(menuBar_);
+      frame_.paintToFront();
+      staticInfo_ = new StaticInfo(core_, frame_);
 
       if (IntroDlg.getShouldAskForConfigFile() ||
             !DefaultUserProfile.getShouldAlwaysUseDefaultProfile()) {
