@@ -17,9 +17,11 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager;
+package org.micromanager.quickaccess;
 
 import javax.swing.Icon;
+
+import org.micromanager.MMPlugin;
 
 /**
  * This plugin type is used for buttons that can be embedded in the

@@ -17,7 +17,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.internal.quickaccess;
+package org.micromanager.quickaccess.internal;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -26,8 +26,8 @@ import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JToggleButton;
 
-import org.micromanager.SimpleButtonPlugin;
-import org.micromanager.ToggleButtonPlugin;
+import org.micromanager.quickaccess.SimpleButtonPlugin;
+import org.micromanager.quickaccess.ToggleButtonPlugin;
 
 /**
  * This class creates UI widgets for the Quick-Access Window based on the

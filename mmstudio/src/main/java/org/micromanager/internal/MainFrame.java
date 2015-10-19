@@ -70,7 +70,6 @@ import org.micromanager.events.internal.MouseMovesStageEvent;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.StageControlFrame;
 import org.micromanager.internal.interfaces.LiveModeListener;
-import org.micromanager.internal.quickaccess.QuickAccessFactory;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.DragDropUtil;
 import org.micromanager.internal.utils.GUIUtils;
@@ -78,6 +77,8 @@ import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.MMKeyDispatcher;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
+
+import org.micromanager.quickaccess.internal.QuickAccessFactory;
 
 /**
  * GUI code for the primary window of the program. And nothing else.
@@ -309,12 +310,12 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    private void createCommonActionButtons(JPanel topPanel) {
       snapButton_ = QuickAccessFactory.makeButton(
             studio_.plugins().getSimpleButtonPlugins().get(
-               "org.micromanager.internal.quickaccess.SnapButton"));
+               "org.micromanager.quickaccess.internal.SnapButton"));
       GUIUtils.addWithEdges(topPanel, snapButton_, 7, 4, 95, 25);
 
       liveButton_ = QuickAccessFactory.makeToggleButton(
             studio_.plugins().getToggleButtonPlugins().get(
-               "org.micromanager.internal.quickaccess.LiveButton"));
+               "org.micromanager.quickaccess.internal.LiveButton"));
       GUIUtils.addWithEdges(topPanel, liveButton_, 7, 26, 95, 47);
 
       GUIUtils.createButton(false, "Album", "Album",

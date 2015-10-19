@@ -39,8 +39,8 @@ import org.micromanager.IntroPlugin;
 import org.micromanager.MenuPlugin;
 import org.micromanager.MMPlugin;
 import org.micromanager.PluginManager;
-import org.micromanager.SimpleButtonPlugin;
-import org.micromanager.ToggleButtonPlugin;
+import org.micromanager.quickaccess.SimpleButtonPlugin;
+import org.micromanager.quickaccess.ToggleButtonPlugin;
 import org.micromanager.Studio;
 
 import org.micromanager.events.internal.NewPluginEvent;

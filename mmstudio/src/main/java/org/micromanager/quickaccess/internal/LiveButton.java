@@ -17,7 +17,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.internal.quickaccess;
+package org.micromanager.quickaccess.internal;
 
 import com.bulenkov.iconloader.IconLoader;
 
@@ -30,7 +30,7 @@ import javax.swing.JToggleButton;
 
 import org.micromanager.events.LiveModeEvent;
 
-import org.micromanager.ToggleButtonPlugin;
+import org.micromanager.quickaccess.ToggleButtonPlugin;
 import org.micromanager.Studio;
 
 import org.scijava.plugin.Plugin;

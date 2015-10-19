@@ -23,6 +23,8 @@ import java.util.HashMap;
 
 import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.display.OverlayPlugin;
+import org.micromanager.quickaccess.SimpleButtonPlugin;
+import org.micromanager.quickaccess.ToggleButtonPlugin;
 
 /**
  * This class provides access to plugins that have been detected by
