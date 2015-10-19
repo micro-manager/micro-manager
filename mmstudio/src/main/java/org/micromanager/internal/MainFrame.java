@@ -312,15 +312,10 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                "org.micromanager.internal.quickaccess.SnapButton"));
       GUIUtils.addWithEdges(topPanel, snapButton_, 7, 4, 95, 25);
 
-      liveButton_ = (JToggleButton) GUIUtils.createButton(true,
-         "Live", "Live", "Continuous live view",
-         new Runnable() {
-            @Override
-            public void run() {
-               studio_.live().setLiveMode(!studio_.live().getIsLiveModeOn());
-            }
-         },
-         "camera_go.png", topPanel, 7, 26, 95, 47);
+      liveButton_ = QuickAccessFactory.makeToggleButton(
+            studio_.plugins().getToggleButtonPlugins().get(
+               "org.micromanager.internal.quickaccess.LiveButton"));
+      GUIUtils.addWithEdges(topPanel, liveButton_, 7, 26, 95, 47);
 
       GUIUtils.createButton(false, "Album", "Album",
          "Acquire single frame and add to an album",
@@ -561,11 +556,6 @@ public class MainFrame extends MMFrame implements LiveModeListener {
          toggleShutterButton_.setText(isEnabled ? "Close" : "Open" );
       }
       snapButton_.setEnabled(!isEnabled);
-      liveButton_.setIcon(IconLoader.getIcon(
-               isEnabled ? "/org/micromanager/icons/cancel.png" : 
-               "/org/micromanager/icons/camera_go.png"));
-      liveButton_.setSelected(false);
-      liveButton_.setText(isEnabled ? "Stop Live" : "Live");
    }
    
    public void initializeShutterGUI(String[] items) {

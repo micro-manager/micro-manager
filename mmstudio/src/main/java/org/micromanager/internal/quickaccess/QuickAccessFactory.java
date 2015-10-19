@@ -24,8 +24,10 @@ import java.awt.event.ActionListener;
 
 import javax.swing.Icon;
 import javax.swing.JButton;
+import javax.swing.JToggleButton;
 
 import org.micromanager.SimpleButtonPlugin;
+import org.micromanager.ToggleButtonPlugin;
 
 /**
  * This class creates UI widgets for the Quick-Access Window based on the
@@ -44,5 +46,12 @@ public class QuickAccessFactory {
          }
       });
       return result;
+   }
+
+   /**
+    * Given a ToggleButtonPlugin, create a JToggleButton from it.
+    */
+   public static JToggleButton makeToggleButton(ToggleButtonPlugin plugin) {
+      return plugin.createButton();
    }
 }

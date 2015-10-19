@@ -74,4 +74,11 @@ public interface PluginManager {
     * actions when their buttons are clicked.
     */
    public HashMap<String, SimpleButtonPlugin> getSimpleButtonPlugins();
+
+   /**
+    * Return a HashMap that maps plugin names to ToggleButtonPlugin instances.
+    * ToggleButtonPlugins are used for the Quick-Access Window and can be
+    * toggled on and off.
+    */
+   public HashMap<String, ToggleButtonPlugin> getToggleButtonPlugins();
 }

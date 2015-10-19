@@ -40,6 +40,7 @@ import org.micromanager.MenuPlugin;
 import org.micromanager.MMPlugin;
 import org.micromanager.PluginManager;
 import org.micromanager.SimpleButtonPlugin;
+import org.micromanager.ToggleButtonPlugin;
 import org.micromanager.Studio;
 
 import org.micromanager.events.internal.NewPluginEvent;
@@ -98,6 +99,7 @@ public class DefaultPluginManager implements PluginManager {
       VALID_CLASSES.add(IntroPlugin.class);
       VALID_CLASSES.add(MenuPlugin.class);
       VALID_CLASSES.add(SimpleButtonPlugin.class);
+      VALID_CLASSES.add(ToggleButtonPlugin.class);
    }
 
    private static final String PROCESSOR_MENU = "On-The-Fly Image Processing";
@@ -330,6 +332,15 @@ public class DefaultPluginManager implements PluginManager {
       HashMap<String, SimpleButtonPlugin> result = new HashMap<String, SimpleButtonPlugin>();
       for (MMPlugin plugin : pluginTypeToPlugins_.get(SimpleButtonPlugin.class)) {
          result.put(plugin.getClass().getName(), (SimpleButtonPlugin) plugin);
+      }
+      return result;
+   }
+
+   @Override
+   public HashMap<String, ToggleButtonPlugin> getToggleButtonPlugins() {
+      HashMap<String, ToggleButtonPlugin> result = new HashMap<String, ToggleButtonPlugin>();
+      for (MMPlugin plugin : pluginTypeToPlugins_.get(ToggleButtonPlugin.class)) {
+         result.put(plugin.getClass().getName(), (ToggleButtonPlugin) plugin);
       }
       return result;
    }
