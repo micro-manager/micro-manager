@@ -26,7 +26,7 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JToggleButton;
 
 import org.micromanager.events.LiveModeEvent;
@@ -51,7 +51,7 @@ public class LiveButton implements ToggleButtonPlugin, SciJavaPlugin {
 
    @Override
    public String getName() {
-      return "Snap/Live button";
+      return "Live button";
    }
 
    @Override
@@ -70,7 +70,7 @@ public class LiveButton implements ToggleButtonPlugin, SciJavaPlugin {
    }
 
    @Override
-   public Icon getIcon() {
+   public ImageIcon getIcon() {
       return null;
    }
 

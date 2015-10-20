@@ -22,6 +22,7 @@ package org.micromanager.quickaccess.internal;
 import com.bulenkov.iconloader.IconLoader;
 
 import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 
 import org.micromanager.quickaccess.SimpleButtonPlugin;
@@ -73,7 +74,7 @@ public class SnapButton implements SimpleButtonPlugin, SciJavaPlugin {
    }
 
    @Override
-   public Icon getIcon() {
+   public ImageIcon getIcon() {
       return null;
    }
 
