@@ -206,15 +206,17 @@ public class QuickAccessFrame extends MMFrame {
 
    /**
     * Add a control to the grid of controls at the specified location.
+    * This requires removing and then re-adding all components because the
+    * size of the MigLayout entity may have changed.
     */
    private void addControl(Point loc, Component control) {
-      if (gridToControl_.containsKey(loc)) {
-         Component oldControl = gridToControl_.get(loc);
-         controlsPanel_.remove(oldControl);
-      }
+      controlsPanel_.removeAll();
       gridToControl_.put(loc, control);
-      controlsPanel_.add(control, String.format("cell %d %d, w %d!, h %d!",
-               loc.x, loc.y, CELL_WIDTH, CELL_HEIGHT));
+      for (Point p : gridToControl_.keySet()) {
+         Component c = gridToControl_.get(p);
+         controlsPanel_.add(c, String.format("cell %d %d, w %d!, h %d!",
+                  p.x, p.y, CELL_WIDTH, CELL_HEIGHT));
+      }
       validate();
    }
 
@@ -296,7 +298,11 @@ public class QuickAccessFrame extends MMFrame {
                   draggedIcon_ = null;
                   Point p = getCell(mouseX_, mouseY_);
                   if (p != null) {
-                     addControl(p, QuickAccessFactory.makeGUI(plugin));
+                     // Embed the control in a panel for better sizing.
+                     JPanel panel = new JPanel(new MigLayout("fill"));
+                     panel.add(QuickAccessFactory.makeGUI(plugin),
+                           "align center");
+                     addControl(p, panel);
                   }
                   QuickAccessFrame.this.repaint();
                }
