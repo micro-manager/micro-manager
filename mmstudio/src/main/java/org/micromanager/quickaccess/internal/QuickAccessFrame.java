@@ -131,11 +131,12 @@ public class QuickAccessFrame extends MMFrame {
        * on when dragging components, and b) to ensure that its default size is
        * sane.
        */
-      controlsPanel_ = new JPanel(new MigLayout("flowy, wrap 3")) {
+      controlsPanel_ = new JPanel(
+            new MigLayout("flowy, insets 0, wrap " + numRows_)) {
          @Override
          public void paint(Graphics g) {
             super.paint(g);
-            if (!configureButton_.isSelected() && false) {
+            if (!configureButton_.isSelected()) {
                // We aren't in configure mode; just draw normally.
                return;
             }
@@ -149,10 +150,11 @@ public class QuickAccessFrame extends MMFrame {
                // mouse coordinates are with respect to the window, not this
                // panel.
                g.setColor(new Color(255, 200, 200, 128));
-               int cellX = (mouseX_ - getLocation().x) / CELL_WIDTH;
-               int cellY = (mouseY_ - getLocation().y) / CELL_HEIGHT;
-               g.fillRect(cellX * CELL_WIDTH, cellY * CELL_HEIGHT,
-                     CELL_WIDTH, CELL_HEIGHT);
+               Point p = getCell(mouseX_, mouseY_);
+               if (p != null) {
+                  g.fillRect(p.x * CELL_WIDTH, p.y * CELL_HEIGHT,
+                        CELL_WIDTH, CELL_HEIGHT);
+               }
             }
             // Draw the grid lines.
             g.setColor(Color.BLACK);
@@ -211,7 +213,8 @@ public class QuickAccessFrame extends MMFrame {
          controlsPanel_.remove(oldControl);
       }
       gridToControl_.put(loc, control);
-      controlsPanel_.add(control, "cell " + loc.x + " " + loc.y);
+      controlsPanel_.add(control, String.format("cell %d %d, w %d!, h %d!",
+               loc.x, loc.y, CELL_WIDTH, CELL_HEIGHT));
       validate();
    }
 
@@ -226,6 +229,20 @@ public class QuickAccessFrame extends MMFrame {
          contentsPanel_.remove(configurePanel_);
       }
       pack();
+   }
+
+   /**
+    * Map a provided location (relative to the window) into a cell location
+    * (in the controlsPanel_). Returns null if the location is not valid.
+    */
+   private Point getCell(int x, int y) {
+      int cellX = (mouseX_ - controlsPanel_.getLocation().x) / CELL_WIDTH;
+      int cellY = (mouseY_ - controlsPanel_.getLocation().y) / CELL_HEIGHT;
+      if (cellX >= numCols_ || cellY >= numRows_ || cellX < 0 || cellY < 0) {
+         // Out of bounds.
+         return null;
+      }
+      return new Point(cellX, cellY);
    }
 
    /**
@@ -277,6 +294,10 @@ public class QuickAccessFrame extends MMFrame {
                @Override
                public void mouseReleased(MouseEvent e) {
                   draggedIcon_ = null;
+                  Point p = getCell(mouseX_, mouseY_);
+                  if (p != null) {
+                     addControl(p, QuickAccessFactory.makeGUI(plugin));
+                  }
                   QuickAccessFrame.this.repaint();
                }
             };
