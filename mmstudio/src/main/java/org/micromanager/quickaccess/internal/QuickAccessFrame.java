@@ -19,6 +19,8 @@
 
 package org.micromanager.quickaccess.internal;
 
+import com.bulenkov.iconloader.IconLoader;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -29,6 +31,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.awt.Point;
 import java.awt.Window;
@@ -124,7 +127,7 @@ public class QuickAccessFrame extends MMFrame {
 
       // Layout overview: the active controls, then a configure button, then
       // the configuration panel (normally hidden).
-      contentsPanel_ = new JPanel(new MigLayout("flowy, fill, debug"));
+      contentsPanel_ = new JPanel(new MigLayout("flowy, fill"));
 
       /**
        * This panel needs special logic a) to highlight the cell the mouse is
@@ -132,7 +135,7 @@ public class QuickAccessFrame extends MMFrame {
        * sane.
        */
       controlsPanel_ = new JPanel(
-            new MigLayout("flowy, insets 0, wrap " + numRows_)) {
+            new MigLayout("flowy, insets 0, gap 0, debug, wrap " + numRows_)) {
          @Override
          public void paint(Graphics g) {
             super.paint(g);
@@ -194,10 +197,22 @@ public class QuickAccessFrame extends MMFrame {
 
    /**
     * We need to paint any dragged icon being moved from place to place.
+    * Also, if we're in configure mode, we need to draw the "remove" icons for
+    * each occupied cell.
     */
    @Override
    public void paint(Graphics g) {
       super.paint(g);
+      if (configureButton_.isSelected()) {
+         Image image = IconLoader.loadFromResource(
+               "/org/micromanager/icons/cancel.png");
+         int x = controlsPanel_.getLocation().x + controlsPanel_.getInsets().left;
+         int y = controlsPanel_.getLocation().y + controlsPanel_.getInsets().top;
+         for (Point p : gridToControl_.keySet()) {
+            g.drawImage(image, x + p.x * CELL_WIDTH, y + p.y * CELL_HEIGHT,
+                  null);
+         }
+      }
       if (draggedIcon_ != null) {
          g.drawImage(draggedIcon_.getImage(), mouseX_ - iconOffsetX_,
                mouseY_ - iconOffsetY_, null);
@@ -212,11 +227,31 @@ public class QuickAccessFrame extends MMFrame {
    private void addControl(Point loc, Component control) {
       controlsPanel_.removeAll();
       gridToControl_.put(loc, control);
-      for (Point p : gridToControl_.keySet()) {
-         Component c = gridToControl_.get(p);
-         controlsPanel_.add(c, String.format("cell %d %d, w %d!, h %d!",
-                  p.x, p.y, CELL_WIDTH, CELL_HEIGHT));
+      for (int i = 0; i < numCols_; ++i) {
+         for (int j = 0; j < numRows_; ++j) {
+            String format = String.format("cell %d %d, w %d!, h %d!",
+                  i, j, CELL_WIDTH, CELL_HEIGHT);
+            Point p = new Point(i, j);
+            if (gridToControl_.containsKey(p)) {
+               controlsPanel_.add(gridToControl_.get(p), format);
+            }
+            else {
+               // Insert a dummy element to take up space.
+               controlsPanel_.add(new JLabel(), format);
+            }
+         }
       }
+      for (Point p : gridToControl_.keySet()) {
+      }
+      validate();
+   }
+
+   /**
+    * Clear a control from the grid.
+    */
+   private void removeControl(Point loc) {
+      controlsPanel_.remove(gridToControl_.get(loc));
+      gridToControl_.remove(loc);
       validate();
    }
 
