@@ -18,6 +18,7 @@ import java.util.List;
 import javax.swing.ImageIcon;
 
 import javax.swing.JButton;
+import javax.swing.JComponent;
 
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
@@ -49,6 +50,8 @@ import org.micromanager.events.LiveModeEvent;
 import org.micromanager.events.internal.DefaultLiveModeEvent;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
+
+import org.micromanager.quickaccess.internal.QuickAccessFactory;
 
 import org.micromanager.Studio;
 
@@ -108,14 +111,6 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          listener.liveModeEnabled(isLiveOn_);
       }
       DefaultEventManager.getInstance().post(new DefaultLiveModeEvent(isLiveOn_));
-   }
-
-   private void setLiveButtonMode(JButton button, boolean isOn) {
-      String label = isOn ? "Stop Live" : "Live";
-      String iconPath = isOn ? "/org/micromanager/icons/cancel.png" : 
-              "/org/micromanager/icons/camera_go.png";
-      button.setIcon(IconLoader.getIcon(iconPath));
-      button.setText(label);
    }
 
    /**
@@ -363,59 +358,16 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       ClickToMoveManager.getInstance().activate((DefaultDisplayWindow) display);
       ArrayList<Component> controls = new ArrayList<Component>();
       Insets zeroInsets = new Insets(0, 0, 0, 0);
-      // This button needs to be enabled/disabled when live mode is turned
-      // off/on.
-      // The icon is based on the public-domain icon at
-      // https://openclipart.org/detail/34051/digicam
-      JButton snapButton = new JButton("Snap",
-            IconLoader.getIcon("/org/micromanager/icons/camera.png")) {
-         @Subscribe
-         public void onLiveMode(LiveModeEvent event) {
-            setEnabled(!event.getIsOn());
-         }
-         @Subscribe
-         public void onDisplayDestroyed(DisplayDestroyedEvent event) {
-            DefaultEventManager.getInstance().unregisterForEvents(this);
-         }
-      };
-      DefaultEventManager.getInstance().registerForEvents(snapButton);
-      snapButton.setToolTipText("Take a new image");
+      JComponent snapButton = QuickAccessFactory.makeGUI(
+            studio_.plugins().getQuickAccessPlugins().get(
+               "org.micromanager.quickaccess.internal.SnapButton"));
       snapButton.setPreferredSize(new Dimension(90, 28));
-      snapButton.setFont(GUIUtils.buttonFont);
-      snapButton.setMargin(zeroInsets);
-      snapButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent event) {
-            snap(true);
-         }
-      });
       controls.add(snapButton);
 
-      // This button needs to change when live mode is turned on/off.
-      JButton liveButton = new JButton() {
-         @Subscribe
-         public void onLiveMode(LiveModeEvent event) {
-            setLiveButtonMode(this, event.getIsOn());
-         }
-         @Subscribe
-         public void onDisplayDestroyed(DisplayDestroyedEvent event) {
-            display.unregisterForEvents(this);
-            DefaultEventManager.getInstance().unregisterForEvents(this);
-         }
-      };
-      DefaultEventManager.getInstance().registerForEvents(liveButton);
-      display.registerForEvents(liveButton);
-      liveButton.setToolTipText("Continuously acquire new images");
-      setLiveButtonMode(liveButton, isLiveOn_);
+      JComponent liveButton = QuickAccessFactory.makeGUI(
+            studio_.plugins().getQuickAccessPlugins().get(
+               "org.micromanager.quickaccess.internal.LiveButton"));
       liveButton.setPreferredSize(new Dimension(90, 28));
-      liveButton.setFont(GUIUtils.buttonFont);
-      liveButton.setMargin(zeroInsets);
-      liveButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent event) {
-            setLiveMode(!isLiveOn_);
-         }
-      });
       controls.add(liveButton);
 
       JButton toAlbumButton = new JButton("Album",
