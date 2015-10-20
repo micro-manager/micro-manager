@@ -587,12 +587,6 @@ public class ChannelHistogramModel {
          processors[i].setRoi(processor.getRoi());
          histograms.add(calcStats(i, processors[i]));
       }
-      // Autostretch, if necessary.
-      DisplaySettings settings = display_.getDisplaySettings();
-      if (settings.getShouldAutostretch() != null &&
-            settings.getShouldAutostretch()) {
-         autostretch();
-      }
       return histograms.toArray(new int[0][]);
    }
 
@@ -787,6 +781,12 @@ public class ChannelHistogramModel {
                channelIndex_, null);
          if (!color_.equals(targetColor)) {
             reloadDisplaySettings();
+         }
+         // Autostretch, if necessary.
+         DisplaySettings settings = display_.getDisplaySettings();
+         if (settings.getShouldAutostretch() != null &&
+               settings.getShouldAutostretch()) {
+            autostretch();
          }
          applyLUT();
       }
