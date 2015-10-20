@@ -19,7 +19,7 @@
 
 package org.micromanager.quickaccess;
 
-import javax.swing.Icon;
+import javax.swing.ImageIcon;
 
 import org.micromanager.MMPlugin;
 
@@ -29,9 +29,9 @@ import org.micromanager.MMPlugin;
  */
 public interface QuickAccessPlugin extends MMPlugin {
    /**
-    * Provide an icon to use to represent this plugin when customizing the
+    * Provide an icon to use to represent this plugin when configuring the
     * Quick-Access Window. May be null, in which case a rendering of the
     * plugin's controls will be used instead.
     */
-   public Icon getIcon();
+   public ImageIcon getIcon();
 }
