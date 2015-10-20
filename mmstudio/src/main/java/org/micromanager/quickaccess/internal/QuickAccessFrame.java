@@ -22,7 +22,6 @@ package org.micromanager.quickaccess.internal;
 import com.bulenkov.iconloader.IconLoader;
 
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -42,6 +41,7 @@ import java.util.HashMap;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
@@ -81,15 +81,21 @@ public class QuickAccessFrame extends MMFrame {
    }
 
    private Studio studio_;
+   // Holds everything.
    private JPanel contentsPanel_;
+   // Holds the active controls.
    private JPanel controlsPanel_;
+   // Holds icons representing the current active controls.
+   private JPanel configuringControlsPanel_;
+   // Holds the "source" icons that can be added to the active controls.
    private JPanel configurePanel_;
+   // Switches between normal and configure modes.
    private JToggleButton configureButton_;
 
    /**
     * Maps controls' locations on the grid to those controls.
     */
-   private HashMap<Point, Component> gridToControl_;
+   private HashMap<Point, JComponent> gridToControl_;
    private int numCols_;
    private int numRows_;
 
@@ -103,7 +109,7 @@ public class QuickAccessFrame extends MMFrame {
    public QuickAccessFrame(Studio studio) {
       super("Quick-Access Tools");
       studio_ = studio;
-      gridToControl_ = new HashMap<Point, Component>();
+      gridToControl_ = new HashMap<Point, JComponent>();
       numCols_ = studio_.profile().getInt(QuickAccessFrame.class,
             NUM_COLS, 3);
       numRows_ = studio_.profile().getInt(QuickAccessFrame.class,
@@ -117,66 +123,16 @@ public class QuickAccessFrame extends MMFrame {
          }
       });
 
-      // Stop dragging things when the mouse is released.
-      addMouseListener(new MouseAdapter() {
-         @Override
-         public void mouseReleased(MouseEvent e) {
-            draggedIcon_ = null;
-         }
-      });
-
       // Layout overview: the active controls, then a configure button, then
       // the configuration panel (normally hidden).
       contentsPanel_ = new JPanel(new MigLayout("flowy, fill"));
 
-      /**
-       * This panel needs special logic a) to highlight the cell the mouse is
-       * on when dragging components, and b) to ensure that its default size is
-       * sane.
-       */
-      controlsPanel_ = new JPanel(
-            new MigLayout("flowy, insets 0, gap 0, debug, wrap " + numRows_)) {
-         @Override
-         public void paint(Graphics g) {
-            super.paint(g);
-            if (!configureButton_.isSelected()) {
-               // We aren't in configure mode; just draw normally.
-               return;
-            }
-            // Draw a grid showing the cells.
-            int width = getSize().width;
-            int height = getSize().height;
-            g.setColor(new Color(200, 255, 200, 128));
-            g.fillRect(0, 0, width, height);
-            if (draggedIcon_ != null) {
-               // Draw the current cell in a highlighted color. Note that
-               // mouse coordinates are with respect to the window, not this
-               // panel.
-               g.setColor(new Color(255, 200, 200, 128));
-               Point p = getCell(mouseX_, mouseY_);
-               if (p != null) {
-                  g.fillRect(p.x * CELL_WIDTH, p.y * CELL_HEIGHT,
-                        CELL_WIDTH, CELL_HEIGHT);
-               }
-            }
-            // Draw the grid lines.
-            g.setColor(Color.BLACK);
-            for (int i = 0; i < numCols_ - 1; ++i) {
-               g.drawLine((i + 1) * CELL_WIDTH, 0, (i + 1) * CELL_WIDTH,
-                     CELL_HEIGHT * numRows_);
-            }
-            for (int i = 0; i < numRows_ - 1; ++i) {
-               g.drawLine(0, (i + 1) * CELL_HEIGHT, numCols_ * CELL_WIDTH,
-                     (i + 1) * CELL_HEIGHT);
-            }
-         }
+      // We have two panels that are mutually-exclusive: controlsPanel_ and
+      // configuringControlsPanel_. The latter is only visible in configuration
+      // mode, and has special painting logic.
+      controlsPanel_ = new GridPanel(false);
+      configuringControlsPanel_ = new GridPanel(true);
 
-         @Override
-         public Dimension getPreferredSize() {
-            return new Dimension(CELL_WIDTH * numCols_,
-                  CELL_HEIGHT * numRows_);
-         }
-      };
       contentsPanel_.add(controlsPanel_);
 
       configureButton_ = new JToggleButton("Configure");
@@ -197,22 +153,10 @@ public class QuickAccessFrame extends MMFrame {
 
    /**
     * We need to paint any dragged icon being moved from place to place.
-    * Also, if we're in configure mode, we need to draw the "remove" icons for
-    * each occupied cell.
     */
    @Override
    public void paint(Graphics g) {
       super.paint(g);
-      if (configureButton_.isSelected()) {
-         Image image = IconLoader.loadFromResource(
-               "/org/micromanager/icons/cancel.png");
-         int x = controlsPanel_.getLocation().x + controlsPanel_.getInsets().left;
-         int y = controlsPanel_.getLocation().y + controlsPanel_.getInsets().top;
-         for (Point p : gridToControl_.keySet()) {
-            g.drawImage(image, x + p.x * CELL_WIDTH, y + p.y * CELL_HEIGHT,
-                  null);
-         }
-      }
       if (draggedIcon_ != null) {
          g.drawImage(draggedIcon_.getImage(), mouseX_ - iconOffsetX_,
                mouseY_ - iconOffsetY_, null);
@@ -224,24 +168,29 @@ public class QuickAccessFrame extends MMFrame {
     * This requires removing and then re-adding all components because the
     * size of the MigLayout entity may have changed.
     */
-   private void addControl(Point loc, Component control) {
+   private void addControl(Point loc, JComponent control) {
       controlsPanel_.removeAll();
+      configuringControlsPanel_.removeAll();
       gridToControl_.put(loc, control);
       for (int i = 0; i < numCols_; ++i) {
          for (int j = 0; j < numRows_; ++j) {
-            String format = String.format("cell %d %d, w %d!, h %d!",
-                  i, j, CELL_WIDTH, CELL_HEIGHT);
             Point p = new Point(i, j);
+            JComponent component;
+            JComponent dragger;
             if (gridToControl_.containsKey(p)) {
-               controlsPanel_.add(gridToControl_.get(p), format);
+               component = gridToControl_.get(p);
+               dragger = new DraggableIcon(component, null, null);
             }
             else {
                // Insert a dummy element to take up space.
-               controlsPanel_.add(new JLabel(), format);
+               component = new JLabel(" ");
+               dragger = new JLabel(" ");
             }
+            String format = String.format("cell %d %d, w %d!, h %d!",
+                  i, j, CELL_WIDTH, CELL_HEIGHT);
+            controlsPanel_.add(component, format);
+            configuringControlsPanel_.add(dragger, format);
          }
-      }
-      for (Point p : gridToControl_.keySet()) {
       }
       validate();
    }
@@ -249,21 +198,27 @@ public class QuickAccessFrame extends MMFrame {
    /**
     * Clear a control from the grid.
     */
-   private void removeControl(Point loc) {
-      controlsPanel_.remove(gridToControl_.get(loc));
-      gridToControl_.remove(loc);
-      validate();
+   private void removeControl(JComponent control, DraggableIcon source) {
+      controlsPanel_.remove(control);
+      configuringControlsPanel_.remove(source);
+      for (Point p : gridToControl_.keySet()) {
+         if (gridToControl_.get(p) == control) {
+            gridToControl_.remove(p);
+            validate();
+            break;
+         }
+      }
    }
 
    /**
     * Toggle visibility of the customization panel.
     */
    private void toggleConfigurePanel(boolean isShown) {
+      contentsPanel_.removeAll();
+      contentsPanel_.add(isShown ? configuringControlsPanel_ : controlsPanel_);
+      contentsPanel_.add(configureButton_);
       if (isShown) {
          contentsPanel_.add(configurePanel_, "growx");
-      }
-      else {
-         contentsPanel_.remove(configurePanel_);
       }
       pack();
    }
@@ -280,6 +235,61 @@ public class QuickAccessFrame extends MMFrame {
          return null;
       }
       return new Point(cellX, cellY);
+   }
+
+   /**
+    * These panels have a fixed size based on the number of rows/columns.
+    * Depending on the boolean isConfigurePanel_, they may also draw a
+    * semitransparent grid over their contents (which in turn are expected to
+    * be DraggableIcons instead of normal controls).
+    */
+   private class GridPanel extends JPanel {
+      private boolean isConfigurePanel_;
+      public GridPanel(boolean isConfigurePanel) {
+         super(new MigLayout(
+                  "flowy, insets 0, gap 0, debug, wrap " + numRows_));
+         isConfigurePanel_ = isConfigurePanel;
+      }
+
+      @Override
+      public void paint(Graphics g) {
+         super.paint(g);
+         if (!isConfigurePanel_ || !configureButton_.isSelected()) {
+            // We aren't in configure mode; just draw normally.
+            return;
+         }
+         // Draw a grid showing the cells.
+         int width = getSize().width;
+         int height = getSize().height;
+         g.setColor(new Color(200, 255, 200, 128));
+         g.fillRect(0, 0, width, height);
+         if (draggedIcon_ != null) {
+            // Draw the current cell in a highlighted color. Note that
+            // mouse coordinates are with respect to the window, not this
+            // panel.
+            g.setColor(new Color(255, 200, 200, 128));
+            Point p = getCell(mouseX_, mouseY_);
+            if (p != null) {
+               g.fillRect(p.x * CELL_WIDTH, p.y * CELL_HEIGHT,
+                     CELL_WIDTH, CELL_HEIGHT);
+            }
+         }
+         // Draw the grid lines.
+         g.setColor(Color.BLACK);
+         for (int i = 0; i < numCols_ - 1; ++i) {
+            g.drawLine((i + 1) * CELL_WIDTH, 0, (i + 1) * CELL_WIDTH,
+                  CELL_HEIGHT * numRows_);
+         }
+         for (int i = 0; i < numRows_ - 1; ++i) {
+            g.drawLine(0, (i + 1) * CELL_HEIGHT, numCols_ * CELL_WIDTH,
+                  (i + 1) * CELL_HEIGHT);
+         }
+      }
+
+      public Dimension getPreferredSize() {
+         return new Dimension(numCols_ * CELL_WIDTH,
+               numRows_ * CELL_HEIGHT);
+      }
    }
 
    /**
@@ -302,51 +312,87 @@ public class QuickAccessFrame extends MMFrame {
          ArrayList<String> keys = new ArrayList<String>(plugins.keySet());
          Collections.sort(keys);
          for (String key : keys) {
-            final QuickAccessPlugin plugin = plugins.get(key);
-            final ImageIcon icon = new ImageIcon(
-                  ScreenImage.createImage(
-                     QuickAccessFactory.makeGUI(plugin)));
-            iconToPlugin_.put(icon, plugin);
-            JLabel label = new JLabel(icon);
-            // When the user clicks and drags the icon, we need to move it
-            // around.
-            MouseAdapter adapter = new MouseAdapter() {
-               @Override
-               public void mousePressed(MouseEvent e) {
-                  draggedIcon_ = icon;
-                  draggedPlugin_ = plugin;
-                  iconOffsetX_ = e.getX();
-                  iconOffsetY_ = e.getY();
-               }
-               @Override
-               public void mouseDragged(MouseEvent e) {
-                  // We need to get the mouse coordinates with respect to
-                  // contentsPanel_.
-                  Window parent = SwingUtilities.getWindowAncestor(
-                        ConfigurationPanel.this);
-                  mouseX_ = e.getXOnScreen() - parent.getLocation().x;
-                  mouseY_ = e.getYOnScreen() - parent.getLocation().y;
-                  QuickAccessFrame.this.repaint();
-               }
-               @Override
-               public void mouseReleased(MouseEvent e) {
-                  draggedIcon_ = null;
-                  Point p = getCell(mouseX_, mouseY_);
-                  if (p != null) {
-                     // Embed the control in a panel for better sizing.
-                     JPanel panel = new JPanel(new MigLayout("fill"));
-                     panel.add(QuickAccessFactory.makeGUI(plugin),
-                           "align center");
-                     addControl(p, panel);
-                  }
-                  QuickAccessFrame.this.repaint();
-               }
-            };
-            label.addMouseListener(adapter);
-            label.addMouseMotionListener(adapter);
-            add(label, "split 2, flowy");
+            QuickAccessPlugin plugin = plugins.get(key);
+            DraggableIcon dragger = new DraggableIcon(
+                  QuickAccessFactory.makeGUI(plugin), plugin.getIcon(), plugin);
+            iconToPlugin_.put(dragger.getIcon(), plugin);
+            add(dragger, "split 2, flowy");
             add(new JLabel(plugins.get(key).getName()), "alignx center");
          }
+      }
+   }
+
+   /**
+    * This class represents an icon that can be dragged around the window,
+    * for adding or removing controls.
+    */
+   private class DraggableIcon extends JLabel {
+      private JComponent component_;
+      private QuickAccessPlugin plugin_;
+      private ImageIcon icon_;
+
+      /**
+       * icon and plugin are both optional. If plugin is null, then we assume
+       * this references an instantiated control which can be removed from
+       * the controlsPanel_ when dragged out of the grid. Otherwise, we want to
+       * create a new control when the icon is dragged into the grid). If icon
+       * is null, then we generate an icon from the JComponent.
+       */
+      public DraggableIcon(final JComponent component, ImageIcon icon,
+            QuickAccessPlugin plugin) {
+         super();
+         component_ = component;
+         plugin_ = plugin;
+         icon_ = icon;
+         if (icon_ == null) {
+            icon_ = new ImageIcon(ScreenImage.createImage(component));
+         }
+         setIcon(icon_);
+         // When the user clicks and drags the icon, we need to move it
+         // around.
+         MouseAdapter adapter = new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+               draggedIcon_ = icon_;
+               draggedPlugin_ = plugin_;
+               iconOffsetX_ = e.getX();
+               iconOffsetY_ = e.getY();
+            }
+            @Override
+            public void mouseDragged(MouseEvent e) {
+               // We need to get the mouse coordinates with respect to
+               // contentsPanel_.
+               Window parent = SwingUtilities.getWindowAncestor(
+                     DraggableIcon.this);
+               mouseX_ = e.getXOnScreen() - parent.getLocation().x;
+               mouseY_ = e.getYOnScreen() - parent.getLocation().y;
+               QuickAccessFrame.this.repaint();
+            }
+            @Override
+            public void mouseReleased(MouseEvent e) {
+               // Stop dragging; create or destroy controls as appropriate.
+               draggedIcon_ = null;
+               Point p = getCell(mouseX_, mouseY_);
+               if (p != null && plugin_ != null) {
+                  // Embed the control in a panel for better sizing.
+                  JPanel panel = new JPanel(new MigLayout("fill"));
+                  panel.add(QuickAccessFactory.makeGUI(plugin_),
+                        "align center");
+                  addControl(p, panel);
+               }
+               else if (plugin_ == null) {
+                  // Remove the control.
+                  removeControl(component_, DraggableIcon.this);
+               }
+               QuickAccessFrame.this.repaint();
+            }
+         };
+         addMouseListener(adapter);
+         addMouseMotionListener(adapter);
+      }
+
+      public ImageIcon getIcon() {
+         return icon_;
       }
    }
 }
