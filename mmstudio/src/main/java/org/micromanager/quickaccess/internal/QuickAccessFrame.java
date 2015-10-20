@@ -158,8 +158,9 @@ public class QuickAccessFrame extends MMFrame {
    public void paint(Graphics g) {
       super.paint(g);
       if (draggedIcon_ != null) {
-         g.drawImage(draggedIcon_.getImage(), mouseX_ - iconOffsetX_,
-               mouseY_ - iconOffsetY_, null);
+         g.drawImage(draggedIcon_.getImage(),
+               mouseX_ - iconOffsetX_ + getInsets().left,
+               mouseY_ - iconOffsetY_ + getInsets().top, null);
       }
    }
 
@@ -228,8 +229,10 @@ public class QuickAccessFrame extends MMFrame {
     * (in the controlsPanel_). Returns null if the location is not valid.
     */
    private Point getCell(int x, int y) {
-      int cellX = (mouseX_ - controlsPanel_.getLocation().x) / CELL_WIDTH;
-      int cellY = (mouseY_ - controlsPanel_.getLocation().y) / CELL_HEIGHT;
+      Point p = new Point(x, y);
+      SwingUtilities.convertPointFromScreen(p, controlsPanel_);
+      int cellX = p.x / CELL_WIDTH;
+      int cellY = p.y / CELL_HEIGHT;
       if (cellX >= numCols_ || cellY >= numRows_ || cellX < 0 || cellY < 0) {
          // Out of bounds.
          return null;
@@ -247,7 +250,7 @@ public class QuickAccessFrame extends MMFrame {
       private boolean isConfigurePanel_;
       public GridPanel(boolean isConfigurePanel) {
          super(new MigLayout(
-                  "flowy, insets 0, gap 0, debug, wrap " + numRows_));
+                  "flowy, insets 0, gap 0, wrap " + numRows_));
          isConfigurePanel_ = isConfigurePanel;
       }
 
@@ -360,12 +363,14 @@ public class QuickAccessFrame extends MMFrame {
             }
             @Override
             public void mouseDragged(MouseEvent e) {
-               // We need to get the mouse coordinates with respect to
-               // contentsPanel_.
+               // We need to get the mouse coordinates with respect to the
+               // upper-left corner of the window's content pane.
                Window parent = SwingUtilities.getWindowAncestor(
                      DraggableIcon.this);
-               mouseX_ = e.getXOnScreen() - parent.getLocation().x;
-               mouseY_ = e.getYOnScreen() - parent.getLocation().y;
+               mouseX_ = e.getXOnScreen() - parent.getLocation().x -
+                  parent.getInsets().left;
+               mouseY_ = e.getYOnScreen() - parent.getLocation().y -
+                  parent.getInsets().top;
                QuickAccessFrame.this.repaint();
             }
             @Override
