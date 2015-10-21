@@ -44,6 +44,7 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 
@@ -80,6 +81,19 @@ public class QuickAccessFrame extends MMFrame {
       staticInstance_.setVisible(true);
    }
 
+   /**
+    * Dead-simple container class for a widget, and its icon when in configure
+    * mode.
+    */
+   private static class ControlCell {
+      public JComponent widget_;
+      public DraggableIcon icon_;
+      public ControlCell(JComponent control, DraggableIcon icon) {
+         widget_ = control;
+         icon_ = icon;
+      }
+   }
+
    private Studio studio_;
    // Holds everything.
    private JPanel contentsPanel_;
@@ -87,15 +101,15 @@ public class QuickAccessFrame extends MMFrame {
    private JPanel controlsPanel_;
    // Holds icons representing the current active controls.
    private JPanel configuringControlsPanel_;
-   // Holds the "source" icons that can be added to the active controls.
+   // Holds the "source" icons that can be added to the active controls, as
+   // well as the rows/columns configuration fields.
    private JPanel configurePanel_;
    // Switches between normal and configure modes.
    private JToggleButton configureButton_;
 
-   /**
-    * Maps controls' locations on the grid to those controls.
-    */
-   private HashMap<Point, JComponent> gridToControl_;
+   // Maps controls' locations on the grid to those controls, and their
+   // corresponding icons when in configure mode.
+   private HashMap<Point, ControlCell> gridToControl_;
    private int numCols_;
    private int numRows_;
 
@@ -109,7 +123,7 @@ public class QuickAccessFrame extends MMFrame {
    public QuickAccessFrame(Studio studio) {
       super("Quick-Access Tools");
       studio_ = studio;
-      gridToControl_ = new HashMap<Point, JComponent>();
+      gridToControl_ = new HashMap<Point, ControlCell>();
       numCols_ = studio_.profile().getInt(QuickAccessFrame.class,
             NUM_COLS, 3);
       numRows_ = studio_.profile().getInt(QuickAccessFrame.class,
@@ -198,15 +212,16 @@ public class QuickAccessFrame extends MMFrame {
    private void addControl(Point loc, JComponent control) {
       controlsPanel_.removeAll();
       configuringControlsPanel_.removeAll();
-      gridToControl_.put(loc, control);
+      gridToControl_.put(loc, new ControlCell(control,
+               new DraggableIcon(control, null, null)));;
       for (int i = 0; i < numCols_; ++i) {
          for (int j = 0; j < numRows_; ++j) {
             Point p = new Point(i, j);
             JComponent component;
             JComponent dragger;
             if (gridToControl_.containsKey(p)) {
-               component = gridToControl_.get(p);
-               dragger = new DraggableIcon(component, null, null);
+               component = gridToControl_.get(p).widget_;
+               dragger = gridToControl_.get(p).icon_;
             }
             else {
                // Insert a dummy element to take up space.
@@ -225,12 +240,13 @@ public class QuickAccessFrame extends MMFrame {
    /**
     * Clear a control from the grid.
     */
-   private void removeControl(JComponent control, DraggableIcon source) {
-      controlsPanel_.remove(control);
-      configuringControlsPanel_.remove(source);
+   private void removeControl(JComponent component) {
       for (Point p : gridToControl_.keySet()) {
-         if (gridToControl_.get(p) == control) {
+         ControlCell control = gridToControl_.get(p);
+         if (control.widget_ == component) {
             gridToControl_.remove(p);
+            controlsPanel_.remove(component);
+            configuringControlsPanel_.remove(control.icon_);
             validate();
             repaint();
             break;
@@ -247,6 +263,21 @@ public class QuickAccessFrame extends MMFrame {
       contentsPanel_.add(configureButton_);
       if (isShown) {
          contentsPanel_.add(configurePanel_, "growx");
+      }
+      pack();
+   }
+
+   /**
+    * Change the shape of the grid we use.
+    */
+   private void setGridSize(int cols, int rows) {
+      numCols_ = cols;
+      numRows_ = rows;
+      // Show/hide controls depending on if they're in-bounds.
+      for (Point p : gridToControl_.keySet()) {
+         ControlCell control = gridToControl_.get(p);
+         control.widget_.setVisible(p.x < numCols_ && p.y < numRows_);
+         control.icon_.setVisible(p.x < numCols_ && p.y < numRows_);
       }
       pack();
    }
@@ -306,13 +337,13 @@ public class QuickAccessFrame extends MMFrame {
          }
          // Draw the grid lines.
          g.setColor(Color.BLACK);
-         for (int i = 0; i < numCols_ - 1; ++i) {
-            g.drawLine((i + 1) * CELL_WIDTH, 0, (i + 1) * CELL_WIDTH,
+         for (int i = 0; i < numCols_ + 1; ++i) {
+            g.drawLine(i * CELL_WIDTH, 0, i * CELL_WIDTH,
                   CELL_HEIGHT * numRows_);
          }
-         for (int i = 0; i < numRows_ - 1; ++i) {
-            g.drawLine(0, (i + 1) * CELL_HEIGHT, numCols_ * CELL_WIDTH,
-                  (i + 1) * CELL_HEIGHT);
+         for (int i = 0; i < numRows_ + 1; ++i) {
+            g.drawLine(0, i * CELL_HEIGHT, numCols_ * CELL_WIDTH,
+                  i * CELL_HEIGHT);
          }
       }
 
@@ -332,9 +363,48 @@ public class QuickAccessFrame extends MMFrame {
       private HashMap<ImageIcon, MMPlugin> iconToPlugin_;
 
       public ConfigurationPanel() {
-         super(new MigLayout());
+         super(new MigLayout("flowx, wrap 8"));
          iconToPlugin_ = new HashMap<ImageIcon, MMPlugin>();
          setBorder(BorderFactory.createLoweredBevelBorder());
+
+         // Add controls for setting rows/columns.
+         // It really bugs me how redundant this code is. Java!
+         JPanel subPanel = new JPanel(new MigLayout("flowx"));
+         subPanel.add(new JLabel("Columns: "));
+         final JTextField colsControl = new JTextField(
+               Integer.toString(numCols_));
+         subPanel.add(colsControl);
+         colsControl.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+               try {
+                  setGridSize(Integer.parseInt(colsControl.getText()),
+                     numRows_);
+               }
+               catch (Exception e) {
+                  // Ignore it.
+               }
+            }
+         });
+
+         subPanel.add(new JLabel("Rows: "));
+         final JTextField rowsControl = new JTextField(
+               Integer.toString(numRows_));
+         subPanel.add(rowsControl);
+         rowsControl.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent event) {
+               try {
+                  setGridSize(numCols_,
+                     Integer.parseInt(rowsControl.getText()));
+               }
+               catch (Exception e) {
+                  // Ignore it.
+               }
+            }
+         });
+
+         add(subPanel, "span, wrap");
 
          // Populate the panel with icons corresponding to controls we can
          // provide. List them in alphabetical order.
@@ -411,7 +481,7 @@ public class QuickAccessFrame extends MMFrame {
                   // Remove the control, if it's been dragged out of the cell.
                   Point p = getCell(mouseX_, mouseY_);
                   if (p == null) {
-                     removeControl(component_, DraggableIcon.this);
+                     removeControl(component_);
                   }
                }
                else {
