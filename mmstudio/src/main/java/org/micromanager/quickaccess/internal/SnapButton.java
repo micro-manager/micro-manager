@@ -21,11 +21,20 @@ package org.micromanager.quickaccess.internal;
 
 import com.bulenkov.iconloader.IconLoader;
 
+import com.google.common.eventbus.Subscribe;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.Window;
+
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 
-import org.micromanager.quickaccess.SimpleButtonPlugin;
+import org.micromanager.events.LiveModeEvent;
+import org.micromanager.quickaccess.WidgetPlugin;
+import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 
 import org.scijava.plugin.Plugin;
@@ -34,8 +43,8 @@ import org.scijava.plugin.SciJavaPlugin;
 /**
  * Implements the "Snap" button logic.
  */
-@Plugin(type = SimpleButtonPlugin.class)
-public class SnapButton implements SimpleButtonPlugin, SciJavaPlugin {
+@Plugin(type = WidgetPlugin.class)
+public class SnapButton implements WidgetPlugin, SciJavaPlugin {
    private Studio studio_;
 
    @Override
@@ -45,7 +54,7 @@ public class SnapButton implements SimpleButtonPlugin, SciJavaPlugin {
 
    @Override
    public String getName() {
-      return getTitle();
+      return "Snap";
    }
 
    @Override
@@ -64,22 +73,33 @@ public class SnapButton implements SimpleButtonPlugin, SciJavaPlugin {
    }
 
    @Override
-   public String getTitle() {
-      return "Snap";
-   }
-
-   @Override
-   public Icon getButtonIcon() {
-      return IconLoader.getIcon("/org/micromanager/icons/camera.png");
-   }
-
-   @Override
    public ImageIcon getIcon() {
       return null;
    }
 
+   // We are not actually configurable.
    @Override
-   public void activate() {
-      studio_.live().snap(true);
+   public JComponent createControl(PropertyMap config) {
+      JButton result = new JButton("Snap",
+            IconLoader.getIcon("/org/micromanager/icons/camera.png")) {
+         @Subscribe
+         public void onLiveMode(LiveModeEvent event) {
+            setEnabled(!event.getIsOn());
+         }
+      };
+      result.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            studio_.live().snap(true);
+         }
+      });
+      result.setEnabled(!studio_.live().getIsLiveModeOn());
+      studio_.events().registerForEvents(result);
+      return result;
+   }
+
+   @Override
+   public PropertyMap configureControl(Window parent) {
+      return studio_.data().getPropertyMapBuilder().build();
    }
 }

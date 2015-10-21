@@ -52,9 +52,9 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.ScreenImage;
 import org.micromanager.quickaccess.QuickAccessPlugin;
-import org.micromanager.quickaccess.SimpleButtonPlugin;
-import org.micromanager.quickaccess.ToggleButtonPlugin;
+import org.micromanager.quickaccess.WidgetPlugin;
 import org.micromanager.MMPlugin;
+import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 
 /**
@@ -162,6 +162,33 @@ public class QuickAccessFrame extends MMFrame {
                mouseX_ - iconOffsetX_ + getInsets().left,
                mouseY_ - iconOffsetY_ + getInsets().top, null);
       }
+   }
+
+   /**
+    * Drop the specified plugin into the controlsPanel_ at the current mouse
+    * location, creating a new control (and configuring it if necessary).
+    * @param plugin The source plugin to create the new control.
+    */
+   private void dropPlugin(QuickAccessPlugin plugin) {
+      draggedIcon_ = null;
+      Point p = getCell(mouseX_, mouseY_);
+      if (p != null && plugin != null) {
+         // Embed the control in a panel for better sizing.
+         JPanel panel = new JPanel(new MigLayout("fill"));
+         JComponent control = null;
+         if (plugin instanceof WidgetPlugin) {
+            // Configure the plugin first.
+            // TODO this needs to be spun off to a new thread.
+            PropertyMap config = ((WidgetPlugin) plugin).configureControl(this);
+            control = ((WidgetPlugin) plugin).createControl(config);
+         }
+         else {
+            control = QuickAccessFactory.makeGUI(plugin);
+         }
+         panel.add(control, "align center");
+         addControl(p, panel);
+      }
+      QuickAccessFrame.this.repaint();
    }
 
    /**
@@ -342,7 +369,7 @@ public class QuickAccessFrame extends MMFrame {
        * is null, then we generate an icon from the JComponent.
        */
       public DraggableIcon(final JComponent component, ImageIcon icon,
-            QuickAccessPlugin plugin) {
+            final QuickAccessPlugin plugin) {
          super();
          component_ = component;
          plugin_ = plugin;
@@ -376,20 +403,13 @@ public class QuickAccessFrame extends MMFrame {
             @Override
             public void mouseReleased(MouseEvent e) {
                // Stop dragging; create or destroy controls as appropriate.
-               draggedIcon_ = null;
-               Point p = getCell(mouseX_, mouseY_);
-               if (p != null && plugin_ != null) {
-                  // Embed the control in a panel for better sizing.
-                  JPanel panel = new JPanel(new MigLayout("fill"));
-                  panel.add(QuickAccessFactory.makeGUI(plugin_),
-                        "align center");
-                  addControl(p, panel);
-               }
-               else if (plugin_ == null) {
+               if (plugin_ == null) {
                   // Remove the control.
                   removeControl(component_, DraggableIcon.this);
                }
-               QuickAccessFrame.this.repaint();
+               else {
+                  dropPlugin(plugin_);
+               }
             }
          };
          addMouseListener(adapter);

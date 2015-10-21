@@ -28,9 +28,12 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JToggleButton;
 
+import org.micromanager.data.internal.DefaultPropertyMap;
+
 import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.quickaccess.SimpleButtonPlugin;
 import org.micromanager.quickaccess.ToggleButtonPlugin;
+import org.micromanager.quickaccess.WidgetPlugin;
 
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -49,6 +52,9 @@ public class QuickAccessFactory {
       }
       else if (plugin instanceof ToggleButtonPlugin) {
          return makeToggleButton((ToggleButtonPlugin) plugin);
+      }
+      else if (plugin instanceof WidgetPlugin) {
+         return makeWidget((WidgetPlugin) plugin);
       }
       ReportingUtils.logError("Unrecognized plugin type " + plugin);
       return null;
@@ -73,5 +79,15 @@ public class QuickAccessFactory {
     */
    public static JToggleButton makeToggleButton(ToggleButtonPlugin plugin) {
       return plugin.createButton();
+   }
+
+   /**
+    * Given a WidgetPlugin, create its controls. This method doesn't allow for
+    * interactive configuration; we just provide a blank PropertyMap as the
+    * config.
+    */
+   public static JComponent makeWidget(WidgetPlugin plugin) {
+      return plugin.createControl(
+            new DefaultPropertyMap.Builder().build());
    }
 }
