@@ -39,6 +39,8 @@ import java.util.Collections;
 import java.util.HashMap;
 
 import javax.swing.BorderFactory;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -279,7 +281,9 @@ public class QuickAccessFrame extends MMFrame {
          control.widget_.setVisible(p.x < numCols_ && p.y < numRows_);
          control.icon_.setVisible(p.x < numCols_ && p.y < numRows_);
       }
+      contentsPanel_.invalidate();
       pack();
+      repaint();
    }
 
    /**
@@ -323,7 +327,7 @@ public class QuickAccessFrame extends MMFrame {
          int width = getSize().width;
          int height = getSize().height;
          g.setColor(new Color(200, 255, 200, 128));
-         g.fillRect(0, 0, width, height);
+         g.fillRect(0, 0, numCols_ * CELL_WIDTH, numRows_ * CELL_HEIGHT);
          if (draggedIcon_ != null) {
             // Draw the current cell in a highlighted color. Note that
             // mouse coordinates are with respect to the window, not this
@@ -361,6 +365,8 @@ public class QuickAccessFrame extends MMFrame {
       // Maps iconified versions of controls to the plugins that generated
       // them.
       private HashMap<ImageIcon, MMPlugin> iconToPlugin_;
+      private JTextField colsControl_;
+      private JTextField rowsControl_;
 
       public ConfigurationPanel() {
          super(new MigLayout("flowx, wrap 8"));
@@ -371,36 +377,36 @@ public class QuickAccessFrame extends MMFrame {
          // It really bugs me how redundant this code is. Java!
          JPanel subPanel = new JPanel(new MigLayout("flowx"));
          subPanel.add(new JLabel("Columns: "));
-         final JTextField colsControl = new JTextField(
+         colsControl_ = new JTextField(
                Integer.toString(numCols_));
-         subPanel.add(colsControl);
-         colsControl.addActionListener(new ActionListener() {
+         subPanel.add(colsControl_);
+         colsControl_.getDocument().addDocumentListener(new DocumentListener() {
             @Override
-            public void actionPerformed(ActionEvent event) {
-               try {
-                  setGridSize(Integer.parseInt(colsControl.getText()),
-                     numRows_);
-               }
-               catch (Exception e) {
-                  // Ignore it.
-               }
+            public void changedUpdate(DocumentEvent e) {}
+            @Override
+            public void insertUpdate(DocumentEvent event) {
+               updateSize();
+            }
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+               updateSize();
             }
          });
 
          subPanel.add(new JLabel("Rows: "));
-         final JTextField rowsControl = new JTextField(
+         rowsControl_ = new JTextField(
                Integer.toString(numRows_));
-         subPanel.add(rowsControl);
-         rowsControl.addActionListener(new ActionListener() {
+         subPanel.add(rowsControl_);
+         rowsControl_.getDocument().addDocumentListener(new DocumentListener() {
             @Override
-            public void actionPerformed(ActionEvent event) {
-               try {
-                  setGridSize(numCols_,
-                     Integer.parseInt(rowsControl.getText()));
-               }
-               catch (Exception e) {
-                  // Ignore it.
-               }
+            public void changedUpdate(DocumentEvent e) {}
+            @Override
+            public void insertUpdate(DocumentEvent event) {
+               updateSize();
+            }
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+               updateSize();
             }
          });
 
@@ -418,6 +424,19 @@ public class QuickAccessFrame extends MMFrame {
             iconToPlugin_.put(dragger.getIcon(), plugin);
             add(dragger, "split 2, flowy");
             add(new JLabel(plugins.get(key).getName()), "alignx center");
+         }
+      }
+
+      /**
+       * Change the grid size. Just a helper function to avoid duplication.
+       */
+      private void updateSize() {
+         try {
+            setGridSize(Integer.parseInt(colsControl_.getText()),
+                  Integer.parseInt(rowsControl_.getText()));
+         }
+         catch (Exception e) {
+            // Ignore it.
          }
       }
    }
