@@ -170,7 +170,6 @@ public class QuickAccessFrame extends MMFrame {
     * @param plugin The source plugin to create the new control.
     */
    private void dropPlugin(QuickAccessPlugin plugin) {
-      draggedIcon_ = null;
       Point p = getCell(mouseX_, mouseY_);
       if (p != null && plugin != null) {
          // Embed the control in a panel for better sizing.
@@ -233,6 +232,7 @@ public class QuickAccessFrame extends MMFrame {
          if (gridToControl_.get(p) == control) {
             gridToControl_.remove(p);
             validate();
+            repaint();
             break;
          }
       }
@@ -405,10 +405,14 @@ public class QuickAccessFrame extends MMFrame {
             }
             @Override
             public void mouseReleased(MouseEvent e) {
+               draggedIcon_ = null;
                // Stop dragging; create or destroy controls as appropriate.
                if (plugin_ == null) {
-                  // Remove the control.
-                  removeControl(component_, DraggableIcon.this);
+                  // Remove the control, if it's been dragged out of the cell.
+                  Point p = getCell(mouseX_, mouseY_);
+                  if (p == null) {
+                     removeControl(component_, DraggableIcon.this);
+                  }
                }
                else {
                   dropPlugin(plugin_);
