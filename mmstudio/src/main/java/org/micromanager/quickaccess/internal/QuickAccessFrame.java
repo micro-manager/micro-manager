@@ -378,6 +378,9 @@ public class QuickAccessFrame extends MMFrame {
             icon_ = new ImageIcon(ScreenImage.createImage(component));
          }
          setIcon(icon_);
+         if (plugin != null) {
+            setToolTipText(plugin.getHelpText());
+         }
          // When the user clicks and drags the icon, we need to move it
          // around.
          MouseAdapter adapter = new MouseAdapter() {
