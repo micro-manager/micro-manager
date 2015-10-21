@@ -25,6 +25,7 @@ import com.google.common.eventbus.Subscribe;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.Insets;
 import java.awt.Window;
 
 import javax.swing.Icon;
@@ -36,6 +37,8 @@ import org.micromanager.events.LiveModeEvent;
 import org.micromanager.quickaccess.WidgetPlugin;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
+
+import org.micromanager.internal.utils.GUIUtils;
 
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
@@ -87,6 +90,8 @@ public class SnapButton implements WidgetPlugin, SciJavaPlugin {
             setEnabled(!event.getIsOn());
          }
       };
+      result.setFont(GUIUtils.buttonFont);
+      result.setMargin(new Insets(0, 0, 0, 0));
       result.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {

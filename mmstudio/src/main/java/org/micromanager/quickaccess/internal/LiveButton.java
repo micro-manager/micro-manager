@@ -25,14 +25,16 @@ import com.google.common.eventbus.Subscribe;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.Insets;
 
 import javax.swing.ImageIcon;
 import javax.swing.JToggleButton;
 
 import org.micromanager.events.LiveModeEvent;
-
 import org.micromanager.quickaccess.ToggleButtonPlugin;
 import org.micromanager.Studio;
+
+import org.micromanager.internal.utils.GUIUtils;
 
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
@@ -84,6 +86,8 @@ public class LiveButton implements ToggleButtonPlugin, SciJavaPlugin {
             studio_.live().getIsLiveModeOn() ?
             IconLoader.getIcon("/org/micromanager/icons/cancel.png") :
             IconLoader.getIcon("/org/micromanager/icons/camera_go.png"));
+      result.setFont(GUIUtils.buttonFont);
+      result.setMargin(new Insets(0, 0, 0, 0));
       Object wrapper = new Object() {
          @Subscribe
          public void onLiveMode(LiveModeEvent event) {
