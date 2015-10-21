@@ -26,7 +26,7 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.Insets;
-import java.awt.Window;
+import java.awt.Frame;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -104,7 +104,7 @@ public class SnapButton implements WidgetPlugin, SciJavaPlugin {
    }
 
    @Override
-   public PropertyMap configureControl(Window parent) {
+   public PropertyMap configureControl(Frame parent) {
       return studio_.data().getPropertyMapBuilder().build();
    }
 }
