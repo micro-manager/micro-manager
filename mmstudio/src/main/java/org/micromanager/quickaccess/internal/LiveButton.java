@@ -81,6 +81,8 @@ public class LiveButton implements ToggleButtonPlugin, SciJavaPlugin {
       // Java will contain that the button might not have been initialized,
       // and thus we aren't allowed to try to modify it.
       final JToggleButton result = new JToggleButton("Live",
+            studio_.live().getIsLiveModeOn() ?
+            IconLoader.getIcon("/org/micromanager/icons/cancel.png") :
             IconLoader.getIcon("/org/micromanager/icons/camera_go.png"));
       Object wrapper = new Object() {
          @Subscribe
