@@ -39,15 +39,16 @@ import java.util.Collections;
 import java.util.HashMap;
 
 import javax.swing.BorderFactory;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
+import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 
 import net.miginfocom.swing.MigLayout;
@@ -365,8 +366,8 @@ public class QuickAccessFrame extends MMFrame {
       // Maps iconified versions of controls to the plugins that generated
       // them.
       private HashMap<ImageIcon, MMPlugin> iconToPlugin_;
-      private JTextField colsControl_;
-      private JTextField rowsControl_;
+      private JSpinner colsControl_;
+      private JSpinner rowsControl_;
 
       public ConfigurationPanel() {
          super(new MigLayout("flowx, wrap 8"));
@@ -377,35 +378,23 @@ public class QuickAccessFrame extends MMFrame {
          // It really bugs me how redundant this code is. Java!
          JPanel subPanel = new JPanel(new MigLayout("flowx"));
          subPanel.add(new JLabel("Columns: "));
-         colsControl_ = new JTextField(
-               Integer.toString(numCols_));
+         colsControl_ = new JSpinner(
+               new SpinnerNumberModel(numCols_, 1, 99, 1));
          subPanel.add(colsControl_);
-         colsControl_.getDocument().addDocumentListener(new DocumentListener() {
+         colsControl_.addChangeListener(new ChangeListener() {
             @Override
-            public void changedUpdate(DocumentEvent e) {}
-            @Override
-            public void insertUpdate(DocumentEvent event) {
-               updateSize();
-            }
-            @Override
-            public void removeUpdate(DocumentEvent e) {
+            public void stateChanged(ChangeEvent e) {
                updateSize();
             }
          });
 
          subPanel.add(new JLabel("Rows: "));
-         rowsControl_ = new JTextField(
-               Integer.toString(numRows_));
+         rowsControl_ = new JSpinner(
+               new SpinnerNumberModel(numCols_, 1, 99, 1));
          subPanel.add(rowsControl_);
-         rowsControl_.getDocument().addDocumentListener(new DocumentListener() {
+         rowsControl_.addChangeListener(new ChangeListener() {
             @Override
-            public void changedUpdate(DocumentEvent e) {}
-            @Override
-            public void insertUpdate(DocumentEvent event) {
-               updateSize();
-            }
-            @Override
-            public void removeUpdate(DocumentEvent e) {
+            public void stateChanged(ChangeEvent e) {
                updateSize();
             }
          });
@@ -432,8 +421,9 @@ public class QuickAccessFrame extends MMFrame {
        */
       private void updateSize() {
          try {
-            setGridSize(Integer.parseInt(colsControl_.getText()),
-                  Integer.parseInt(rowsControl_.getText()));
+            setGridSize(
+                  (Integer) ((SpinnerNumberModel) colsControl_.getModel()).getNumber(),
+                  (Integer) ((SpinnerNumberModel) rowsControl_.getModel()).getNumber());
          }
          catch (Exception e) {
             // Ignore it.
