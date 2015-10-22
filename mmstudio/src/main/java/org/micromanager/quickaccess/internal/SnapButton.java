@@ -23,6 +23,7 @@ import com.bulenkov.iconloader.IconLoader;
 
 import com.google.common.eventbus.Subscribe;
 
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.Insets;
@@ -106,5 +107,10 @@ public class SnapButton implements WidgetPlugin, SciJavaPlugin {
    @Override
    public PropertyMap configureControl(Frame parent) {
       return studio_.data().getPropertyMapBuilder().build();
+   }
+
+   @Override
+   public Dimension getSize() {
+      return new Dimension(1, 1);
    }
 }

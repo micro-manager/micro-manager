@@ -19,6 +19,7 @@
 
 package org.micromanager.quickaccess;
 
+import java.awt.Dimension;
 import java.awt.Frame;
 
 import javax.swing.JComponent;
@@ -48,4 +49,12 @@ public interface WidgetPlugin extends QuickAccessPlugin {
     * @param parent The Quick-Access Window
     */
    public PropertyMap configureControl(Frame parent);
+
+   /**
+    * Return the dimensionality of the widget, in cells. For example, a
+    * value of 2x1 here would indicate a widget that is 2 cells wide and 1
+    * tall. The size of a single cell is the CELL_WIDTH and CELL_HEIGHT
+    * values in QuickAccessPlugin.
+    */
+   public Dimension getSize();
 }

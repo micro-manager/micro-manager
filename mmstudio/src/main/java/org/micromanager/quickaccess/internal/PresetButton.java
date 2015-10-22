@@ -23,6 +23,7 @@ import com.bulenkov.iconloader.IconLoader;
 
 import com.google.common.eventbus.Subscribe;
 
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.Insets;
@@ -162,5 +163,10 @@ public class PresetButton implements WidgetPlugin, SciJavaPlugin {
          .putString("configGroup", (String) groupSelector.getSelectedItem())
          .putString("presetName", (String) presetSelector.getSelectedItem())
          .build();
+   }
+
+   @Override
+   public Dimension getSize() {
+      return new Dimension(1, 1);
    }
 }

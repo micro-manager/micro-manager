@@ -29,6 +29,15 @@ import org.micromanager.MMPlugin;
  */
 public interface QuickAccessPlugin extends MMPlugin {
    /**
+    * The width of a single cell in the Quick-Access Window.
+    */
+   public static final int CELL_WIDTH = 100;
+
+   /**
+    * The height of a single cell in the Quick-Access Window.
+    */
+   public static final int CELL_HEIGHT = 50;
+   /**
     * Provide an icon to use to represent this plugin when configuring the
     * Quick-Access Window. May be null, in which case a rendering of the
     * plugin's controls will be used instead.

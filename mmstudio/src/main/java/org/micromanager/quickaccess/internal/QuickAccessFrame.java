@@ -33,10 +33,12 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.Window;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import javax.swing.BorderFactory;
 import javax.swing.event.ChangeEvent;
@@ -66,9 +68,6 @@ import org.micromanager.Studio;
  * This class shows the Quick-Access Window for frequently-used controls.
  */
 public class QuickAccessFrame extends MMFrame {
-   // Default dimensions of a cell in the controls grid.
-   private static final int CELL_HEIGHT = 50;
-   private static final int CELL_WIDTH = 150;
    // Profile keys.
    private static final String NUM_COLS = "Number of columns in the Quick-Access Window";
    private static final String NUM_ROWS = "Number of rows in the Quick-Access Window";
@@ -113,7 +112,9 @@ public class QuickAccessFrame extends MMFrame {
 
    // Maps controls' locations on the grid to those controls, and their
    // corresponding icons when in configure mode.
-   private HashMap<Point, ControlCell> gridToControl_;
+   private HashMap<Rectangle, ControlCell> gridToControl_;
+   // Keeps track of which cells in the grid are occupied.
+   private HashSet<Point> occupiedCells_;
    private int numCols_;
    private int numRows_;
 
@@ -127,7 +128,8 @@ public class QuickAccessFrame extends MMFrame {
    public QuickAccessFrame(Studio studio) {
       super("Quick-Access Tools");
       studio_ = studio;
-      gridToControl_ = new HashMap<Point, ControlCell>();
+      gridToControl_ = new HashMap<Rectangle, ControlCell>();
+      occupiedCells_ = new HashSet<Point>();
       numCols_ = studio_.profile().getInt(QuickAccessFrame.class,
             NUM_COLS, 3);
       numRows_ = studio_.profile().getInt(QuickAccessFrame.class,
@@ -189,6 +191,8 @@ public class QuickAccessFrame extends MMFrame {
     */
    private void dropPlugin(QuickAccessPlugin plugin) {
       Point p = getCell(mouseX_, mouseY_);
+      // Default to 1x1 cell.
+      Rectangle rect = new Rectangle(p.x, p.y, 1, 1);
       if (p != null && plugin != null) {
          // Embed the control in a panel for better sizing.
          JPanel panel = new JPanel(new MigLayout("fill"));
@@ -196,47 +200,64 @@ public class QuickAccessFrame extends MMFrame {
          if (plugin instanceof WidgetPlugin) {
             // Configure the plugin first.
             // TODO this needs to be spun off to a new thread.
-            PropertyMap config = ((WidgetPlugin) plugin).configureControl(this);
-            control = ((WidgetPlugin) plugin).createControl(config);
+            WidgetPlugin widget = (WidgetPlugin) plugin;
+            PropertyMap config = widget.configureControl(this);
+            control = widget.createControl(config);
+            rect.width = widget.getSize().width;
+            rect.height = widget.getSize().height;
          }
          else {
             control = QuickAccessFactory.makeGUI(plugin);
          }
          panel.add(control, "align center");
-         addControl(p, panel);
+         addControl(rect, panel);
       }
       QuickAccessFrame.this.repaint();
    }
 
    /**
-    * Add a control to the grid of controls at the specified location.
+    * Add a control to the grid of controls at the specified location and
+    * dimensionality.
     * This requires removing and then re-adding all components because the
     * size of the MigLayout entity may have changed.
     */
-   private void addControl(Point loc, JComponent control) {
+   private void addControl(Rectangle rect, JComponent control) {
       controlsPanel_.removeAll();
       configuringControlsPanel_.removeAll();
-      gridToControl_.put(loc, new ControlCell(control,
-               new DraggableIcon(control, null, null)));;
+      gridToControl_.put(rect, new ControlCell(control,
+               new DraggableIcon(control, null, null)));
+      // Reset our indications of which cells are occupied.
+      occupiedCells_.clear();
+      for (int i = rect.x; i < rect.width; ++i) {
+         for (int j = rect.y; j < rect.height; ++j) {
+            occupiedCells_.add(new Point(i, j));
+         }
+      }
+      // Restore controls.
+      for (Rectangle r : gridToControl_.keySet()) {
+         ControlCell c = gridToControl_.get(r);
+         String format = String.format(
+               "cell %d %d %d %d, w %d!, h %d!, alignx center",
+               r.x, r.y, r.width, r.height,
+               r.width * QuickAccessPlugin.CELL_WIDTH,
+               r.height * QuickAccessPlugin.CELL_HEIGHT);
+         controlsPanel_.add(c.widget_, format);
+         configuringControlsPanel_.add(c.icon_, format);
+      }
+      // Add spacers for unoccupied cells.
       for (int i = 0; i < numCols_; ++i) {
          for (int j = 0; j < numRows_; ++j) {
             Point p = new Point(i, j);
-            JComponent component;
-            JComponent dragger;
-            if (gridToControl_.containsKey(p)) {
-               component = gridToControl_.get(p).widget_;
-               dragger = gridToControl_.get(p).icon_;
-            }
-            else {
-               // Insert a dummy element to take up space.
-               component = new JLabel(" ");
-               dragger = new JLabel(" ");
+            if (occupiedCells_.contains(p)) {
+               // This cell doesn't need a spacer.
+               continue;
             }
             String format = String.format(
                   "cell %d %d, w %d!, h %d!, alignx center",
-                  i, j, CELL_WIDTH, CELL_HEIGHT);
-            controlsPanel_.add(component, format);
-            configuringControlsPanel_.add(dragger, format);
+                  i, j,
+                  QuickAccessPlugin.CELL_WIDTH, QuickAccessPlugin.CELL_HEIGHT);
+            controlsPanel_.add(new JLabel(" "), format);
+            configuringControlsPanel_.add(new JLabel(" "), format);
          }
       }
       validate();
@@ -246,10 +267,10 @@ public class QuickAccessFrame extends MMFrame {
     * Clear a control from the grid.
     */
    private void removeControl(JComponent component) {
-      for (Point p : gridToControl_.keySet()) {
-         ControlCell control = gridToControl_.get(p);
+      for (Rectangle rect : gridToControl_.keySet()) {
+         ControlCell control = gridToControl_.get(rect);
          if (control.widget_ == component) {
-            gridToControl_.remove(p);
+            gridToControl_.remove(rect);
             controlsPanel_.remove(component);
             configuringControlsPanel_.remove(control.icon_);
             validate();
@@ -279,10 +300,12 @@ public class QuickAccessFrame extends MMFrame {
       numCols_ = cols;
       numRows_ = rows;
       // Show/hide controls depending on if they're in-bounds.
-      for (Point p : gridToControl_.keySet()) {
-         ControlCell control = gridToControl_.get(p);
-         control.widget_.setVisible(p.x < numCols_ && p.y < numRows_);
-         control.icon_.setVisible(p.x < numCols_ && p.y < numRows_);
+      for (Rectangle r : gridToControl_.keySet()) {
+         ControlCell control = gridToControl_.get(r);
+         boolean isVisible = (r.x + r.width < numCols_ &&
+               r.y + r.height < numRows_);
+         control.widget_.setVisible(isVisible);
+         control.icon_.setVisible(isVisible);
       }
       contentsPanel_.invalidate();
       pack();
@@ -296,8 +319,8 @@ public class QuickAccessFrame extends MMFrame {
    private Point getCell(int x, int y) {
       Point p = new Point(x, y);
       SwingUtilities.convertPointFromScreen(p, controlsPanel_);
-      int cellX = p.x / CELL_WIDTH;
-      int cellY = p.y / CELL_HEIGHT;
+      int cellX = p.x / QuickAccessPlugin.CELL_WIDTH;
+      int cellY = p.y / QuickAccessPlugin.CELL_HEIGHT;
       if (cellX >= numCols_ || cellY >= numRows_ || cellX < 0 || cellY < 0) {
          // Out of bounds.
          return null;
@@ -330,33 +353,45 @@ public class QuickAccessFrame extends MMFrame {
          int width = getSize().width;
          int height = getSize().height;
          g.setColor(new Color(200, 255, 200, 128));
-         g.fillRect(0, 0, numCols_ * CELL_WIDTH, numRows_ * CELL_HEIGHT);
+         g.fillRect(0, 0, numCols_ * QuickAccessPlugin.CELL_WIDTH,
+               numRows_ * QuickAccessPlugin.CELL_HEIGHT);
          if (draggedIcon_ != null) {
-            // Draw the current cell in a highlighted color. Note that
-            // mouse coordinates are with respect to the window, not this
-            // panel.
+            // Draw the cells the icon would go into in a highlighted color.
+            // Note that mouse coordinates are with respect to the window, not
+            // this panel.
             g.setColor(new Color(255, 200, 200, 128));
             Point p = getCell(mouseX_, mouseY_);
+            int cellWidth = 1;
+            int cellHeight = 1;
+            if (draggedPlugin_ != null &&
+                  draggedPlugin_ instanceof WidgetPlugin) {
+               cellWidth = ((WidgetPlugin) draggedPlugin_).getSize().width;
+               cellHeight = ((WidgetPlugin) draggedPlugin_).getSize().height;
+            }
             if (p != null) {
-               g.fillRect(p.x * CELL_WIDTH, p.y * CELL_HEIGHT,
-                     CELL_WIDTH, CELL_HEIGHT);
+               g.fillRect(p.x * QuickAccessPlugin.CELL_WIDTH,
+                     p.y * QuickAccessPlugin.CELL_HEIGHT,
+                     QuickAccessPlugin.CELL_WIDTH * cellWidth,
+                     QuickAccessPlugin.CELL_HEIGHT * cellHeight);
             }
          }
          // Draw the grid lines.
          g.setColor(Color.BLACK);
          for (int i = 0; i < numCols_ + 1; ++i) {
-            g.drawLine(i * CELL_WIDTH, 0, i * CELL_WIDTH,
-                  CELL_HEIGHT * numRows_);
+            g.drawLine(i * QuickAccessPlugin.CELL_WIDTH, 0,
+                  i * QuickAccessPlugin.CELL_WIDTH,
+                  QuickAccessPlugin.CELL_HEIGHT * numRows_);
          }
          for (int i = 0; i < numRows_ + 1; ++i) {
-            g.drawLine(0, i * CELL_HEIGHT, numCols_ * CELL_WIDTH,
-                  i * CELL_HEIGHT);
+            g.drawLine(0, i * QuickAccessPlugin.CELL_HEIGHT,
+                  numCols_ * QuickAccessPlugin.CELL_WIDTH,
+                  i * QuickAccessPlugin.CELL_HEIGHT);
          }
       }
 
       public Dimension getPreferredSize() {
-         return new Dimension(numCols_ * CELL_WIDTH,
-               numRows_ * CELL_HEIGHT);
+         return new Dimension(numCols_ * QuickAccessPlugin.CELL_WIDTH,
+               numRows_ * QuickAccessPlugin.CELL_HEIGHT);
       }
    }
 
@@ -416,7 +451,8 @@ public class QuickAccessFrame extends MMFrame {
             iconToPlugin_.put(dragger.getIcon(), plugin);
             add(dragger,
                   String.format("split 2, alignx center, flowy, w %d!, h %d!",
-                     CELL_WIDTH, CELL_HEIGHT));
+                     QuickAccessPlugin.CELL_WIDTH,
+                     QuickAccessPlugin.CELL_HEIGHT));
             JLabel name = new JLabel(plugins.get(key).getName());
             name.setFont(GUIUtils.buttonFont);
             add(name, "alignx center");
@@ -461,7 +497,27 @@ public class QuickAccessFrame extends MMFrame {
          plugin_ = plugin;
          icon_ = icon;
          if (icon_ == null) {
-            icon_ = new ImageIcon(ScreenImage.createImage(component));
+            // Render the image, then downscale to fit the available space.
+            Image render = ScreenImage.createImage(component);
+            int width = render.getWidth(null);
+            int height = render.getHeight(null);
+            int maxWidth = QuickAccessPlugin.CELL_WIDTH;
+            int maxHeight = QuickAccessPlugin.CELL_HEIGHT;
+            if (width > maxWidth || height > maxHeight) {
+               // Resize, constraining aspect ratios.
+               double ratio = ((double) width) / height;
+               if (ratio > 1.0) {
+                  // Wider than we are tall.
+                  render = render.getScaledInstance(maxWidth,
+                        (int) (height / ratio), Image.SCALE_DEFAULT);
+               }
+               else {
+                  // Taller than we are wide.
+                  render = render.getScaledInstance((int) (width * ratio),
+                        maxHeight, Image.SCALE_DEFAULT);
+               }
+            }
+            icon_ = new ImageIcon(render);
          }
          setIcon(icon_);
          if (plugin != null) {
