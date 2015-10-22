@@ -53,6 +53,7 @@ import javax.swing.SwingUtilities;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.ScreenImage;
 import org.micromanager.quickaccess.QuickAccessPlugin;
@@ -231,7 +232,8 @@ public class QuickAccessFrame extends MMFrame {
                component = new JLabel(" ");
                dragger = new JLabel(" ");
             }
-            String format = String.format("cell %d %d, w %d!, h %d!",
+            String format = String.format(
+                  "cell %d %d, w %d!, h %d!, alignx center",
                   i, j, CELL_WIDTH, CELL_HEIGHT);
             controlsPanel_.add(component, format);
             configuringControlsPanel_.add(dragger, format);
@@ -370,7 +372,8 @@ public class QuickAccessFrame extends MMFrame {
       private JSpinner rowsControl_;
 
       public ConfigurationPanel() {
-         super(new MigLayout("flowx, wrap 8"));
+         super(new MigLayout(
+                  String.format("flowx, wrap %d", numCols_)));
          iconToPlugin_ = new HashMap<ImageIcon, MMPlugin>();
          setBorder(BorderFactory.createLoweredBevelBorder());
 
@@ -411,8 +414,12 @@ public class QuickAccessFrame extends MMFrame {
             DraggableIcon dragger = new DraggableIcon(
                   QuickAccessFactory.makeGUI(plugin), plugin.getIcon(), plugin);
             iconToPlugin_.put(dragger.getIcon(), plugin);
-            add(dragger, "split 2, flowy");
-            add(new JLabel(plugins.get(key).getName()), "alignx center");
+            add(dragger,
+                  String.format("split 2, alignx center, flowy, w %d!, h %d!",
+                     CELL_WIDTH, CELL_HEIGHT));
+            JLabel name = new JLabel(plugins.get(key).getName());
+            name.setFont(GUIUtils.buttonFont);
+            add(name, "alignx center");
          }
       }
 
