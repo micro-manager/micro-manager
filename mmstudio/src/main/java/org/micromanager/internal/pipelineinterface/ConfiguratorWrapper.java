@@ -75,7 +75,7 @@ public class ConfiguratorWrapper {
          JSONObject json = new JSONObject();
          json.put("name", name_);
          json.put("isEnabled", isEnabled_);
-         json.put("pluginName", plugin_.getName());
+         json.put("pluginName", plugin_.getClass().getName());
          json.put("configSettings", configurator_.getSettings().toString());
          return json.toString();
       }
