@@ -65,6 +65,7 @@ import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 
 import org.micromanager.events.ConfigGroupChangedEvent;
+import org.micromanager.events.ChannelExposureEvent;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.MouseMovesStageEvent;
 import org.micromanager.internal.dialogs.OptionsDlg;
@@ -584,6 +585,13 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    @Subscribe
    public void onMouseMovesStage(MouseMovesStageEvent event) {
       handMovesButton_.setSelected(event.getIsEnabled());
+   }
+
+   @Subscribe
+   public void onChannelExposure(ChannelExposureEvent event) {
+      if (event.getIsMainExposureTime()) {
+         setDisplayedExposureTime(event.getNewExposureTime());
+      }
    }
 
    private List<String> sortBinningItems(final List<String> items) {

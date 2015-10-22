@@ -73,8 +73,10 @@ import org.micromanager.data.Image;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.events.ChannelExposureEvent;
 import org.micromanager.events.EventManager;
 import org.micromanager.events.ForcedShutdownEvent;
+import org.micromanager.events.GUIRefreshEvent;
 import org.micromanager.events.internal.MouseMovesStageEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.events.StartupCompleteEvent;
@@ -547,19 +549,10 @@ public class MMStudio implements Studio, CompatibilityInterface {
          double exposure;
          try {
             exposure = core_.getExposure();
-            frame_.setDisplayedExposureTime(exposure);
-            
-            // update current channel in MDA window with this exposure
             String channelGroup = core_.getChannelGroup();
             String channel = core_.getCurrentConfigFromCache(channelGroup);
-            if (!channel.equals("") ) {
-               AcqControlDlg.setChannelExposure(channelGroup, channel,
-                     exposure);
-               if (AcqControlDlg.getShouldSyncExposure()) {
-                  acqControlWin_.setChannelExposureTime(channelGroup,
-                        channel, exposure);
-               }
-            }
+            events().post(new ChannelExposureEvent(exposure,
+                     channelGroup, channel, true));
          }
          catch (Exception e) {
             ReportingUtils.logError(e, "Couldn't set exposure time.");
@@ -998,21 +991,19 @@ public class MMStudio implements Studio, CompatibilityInterface {
             frame_.setBinSize(binSize);
          }
 
-
-
          // active shutter combo
          if (shutters_ != null) {
             String activeShutter = core_.getShutterDevice();
             frame_.setShutterComboSelection(
                   activeShutter != null ? activeShutter : "");
          }
-         
+
          // Set AutoShutterCheckBox
          frame_.setAutoShutterSelected(core_.getAutoShutter());
-          
+
          // Set Shutter button
          frame_.setShutterButton(core_.getShutterOpen());
-            
+
          if (live().getIsLiveModeOn()) {
             frame_.setToggleShutterButtonEnabled(!core_.getAutoShutter());
          }
@@ -1043,6 +1034,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
          ReportingUtils.logError(e);
       }
       frame_.updateTitle(sysConfigFile_);
+      events().post(new GUIRefreshEvent());
    }
 
    /**

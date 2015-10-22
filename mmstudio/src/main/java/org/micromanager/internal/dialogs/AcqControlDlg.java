@@ -20,6 +20,7 @@
 
 package org.micromanager.internal.dialogs;
 
+import com.google.common.eventbus.Subscribe;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -45,6 +46,7 @@ import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.display.internal.RememberedChannelSettings;
+import org.micromanager.events.ChannelExposureEvent;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.AcqOrderMode;
@@ -1063,7 +1065,22 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
          }
       }
    }
-   
+
+   @Subscribe
+   public void onChannelExposure(ChannelExposureEvent event) {
+      String channel = event.getChannel();
+      if (!channel.equals("")) {
+         String channelGroup = event.getChannelGroup();
+         double exposure = event.getNewExposureTime();
+         // Man, who named these methods? :) Note difference between
+         // setChannelExposure and setChannelExposureTime.
+         setChannelExposure(channelGroup, channel, exposure);
+         if (getShouldSyncExposure()) {
+            setChannelExposureTime(channelGroup, channel, exposure);
+         }
+      }
+   }
+
    /**
     * Returns exposure time for the desired preset in the given channelgroup
     * Acquires its info from the preferences
