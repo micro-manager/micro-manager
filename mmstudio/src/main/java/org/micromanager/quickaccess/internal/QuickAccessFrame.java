@@ -113,8 +113,6 @@ public class QuickAccessFrame extends MMFrame {
    // Maps controls' locations on the grid to those controls, and their
    // corresponding icons when in configure mode.
    private HashMap<Rectangle, ControlCell> gridToControl_;
-   // Keeps track of which cells in the grid are occupied.
-   private HashSet<Point> occupiedCells_;
    private int numCols_;
    private int numRows_;
 
@@ -129,7 +127,6 @@ public class QuickAccessFrame extends MMFrame {
       super("Quick-Access Tools");
       studio_ = studio;
       gridToControl_ = new HashMap<Rectangle, ControlCell>();
-      occupiedCells_ = new HashSet<Point>();
       numCols_ = studio_.profile().getInt(QuickAccessFrame.class,
             NUM_COLS, 3);
       numRows_ = studio_.profile().getInt(QuickAccessFrame.class,
@@ -226,55 +223,46 @@ public class QuickAccessFrame extends MMFrame {
       configuringControlsPanel_.removeAll();
       gridToControl_.put(rect, new ControlCell(control,
                new DraggableIcon(control, null, null)));
-      // Reset our indications of which cells are occupied.
-      occupiedCells_.clear();
-      for (int i = rect.x; i < rect.width; ++i) {
-         for (int j = rect.y; j < rect.height; ++j) {
-            occupiedCells_.add(new Point(i, j));
-         }
-      }
       // Restore controls.
       for (Rectangle r : gridToControl_.keySet()) {
          ControlCell c = gridToControl_.get(r);
-         String format = String.format(
-               "cell %d %d %d %d, w %d!, h %d!, alignx center",
-               r.x, r.y, r.width, r.height,
-               r.width * QuickAccessPlugin.CELL_WIDTH,
-               r.height * QuickAccessPlugin.CELL_HEIGHT);
-         controlsPanel_.add(c.widget_, format);
-         configuringControlsPanel_.add(c.icon_, format);
-      }
-      // Add spacers for unoccupied cells.
-      for (int i = 0; i < numCols_; ++i) {
-         for (int j = 0; j < numRows_; ++j) {
-            Point p = new Point(i, j);
-            if (occupiedCells_.contains(p)) {
-               // This cell doesn't need a spacer.
-               continue;
-            }
-            String format = String.format(
-                  "cell %d %d, w %d!, h %d!, alignx center",
-                  i, j,
-                  QuickAccessPlugin.CELL_WIDTH, QuickAccessPlugin.CELL_HEIGHT);
-            controlsPanel_.add(new JLabel(" "), format);
-            configuringControlsPanel_.add(new JLabel(" "), format);
-         }
+         controlsPanel_.add(c.widget_, r);
+         configuringControlsPanel_.add(c.icon_, r);
       }
       validate();
    }
 
    /**
+    * Move a control to a new location in the grid.
+    */
+   private void moveControl(JComponent component, Point p) {
+      for (Rectangle rect : gridToControl_.keySet()) {
+         ControlCell control = gridToControl_.get(rect);
+         if (control.widget_ == component) {
+            removeControl(component, false);
+            addControl(new Rectangle(p.x, p.y, rect.width, rect.height),
+                  component);
+            validate();
+            repaint();
+            break;
+         }
+      }
+   }
+
+   /**
     * Clear a control from the grid.
     */
-   private void removeControl(JComponent component) {
+   private void removeControl(JComponent component, boolean shouldRedraw) {
       for (Rectangle rect : gridToControl_.keySet()) {
          ControlCell control = gridToControl_.get(rect);
          if (control.widget_ == component) {
             gridToControl_.remove(rect);
             controlsPanel_.remove(component);
             configuringControlsPanel_.remove(control.icon_);
-            validate();
-            repaint();
+            if (shouldRedraw) {
+               validate();
+               repaint();
+            }
             break;
          }
       }
@@ -337,8 +325,8 @@ public class QuickAccessFrame extends MMFrame {
    private class GridPanel extends JPanel {
       private boolean isConfigurePanel_;
       public GridPanel(boolean isConfigurePanel) {
-         super(new MigLayout(
-                  "flowy, insets 0, gap 0, wrap " + numRows_));
+         super(new SparseGridLayout(QuickAccessPlugin.CELL_WIDTH,
+                  QuickAccessPlugin.CELL_HEIGHT));
          isConfigurePanel_ = isConfigurePanel;
       }
 
@@ -550,10 +538,14 @@ public class QuickAccessFrame extends MMFrame {
                draggedIcon_ = null;
                // Stop dragging; create or destroy controls as appropriate.
                if (plugin_ == null) {
-                  // Remove the control, if it's been dragged out of the cell.
                   Point p = getCell(mouseX_, mouseY_);
                   if (p == null) {
-                     removeControl(component_);
+                     // Dragged out of the grid; remove it.
+                     removeControl(component_, true);
+                  }
+                  else {
+                     // Move it to a new location, if possible.
+                     moveControl(component_, p);
                   }
                }
                else {
