@@ -15,14 +15,14 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package coordinates;
+package org.micromanager.plugins.magellan.coordinates;
 
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
-import json.JSONArray;
-import json.JSONObject;
-import main.Magellan;
-import misc.Log;
+import org.micromanager.plugins.magellan.json.JSONArray;
+import org.micromanager.plugins.magellan.json.JSONObject;
+import org.micromanager.plugins.magellan.main.Magellan;
+import org.micromanager.plugins.magellan.misc.Log;
 import mmcorej.CMMCore;
 
 /**

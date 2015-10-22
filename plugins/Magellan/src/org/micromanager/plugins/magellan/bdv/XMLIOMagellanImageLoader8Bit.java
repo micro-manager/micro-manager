@@ -15,12 +15,12 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package bdv;
+package org.micromanager.plugins.magellan.bdv;
 
-import acq.MultiResMultipageTiffStorage;
+import org.micromanager.plugins.magellan.acq.MultiResMultipageTiffStorage;
 import java.io.File;
 import java.io.IOException;
-import misc.MD;
+import org.micromanager.plugins.magellan.misc.MD;
 import mpicbg.spim.data.generic.sequence.AbstractSequenceDescription;
 import mpicbg.spim.data.generic.sequence.ImgLoaderIo;
 import mpicbg.spim.data.generic.sequence.XmlIoBasicImgLoader;

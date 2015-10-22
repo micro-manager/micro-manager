@@ -14,18 +14,18 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package acq;
+package org.micromanager.plugins.magellan.acq;
 
-import channels.ChannelSetting;
-import channels.ChannelUtils;
-import propsandcovariants.CovariantPairing;
-import propsandcovariants.CovariantPairingsManager;
+import org.micromanager.plugins.magellan.channels.ChannelSetting;
+import org.micromanager.plugins.magellan.channels.ChannelUtils;
+import org.micromanager.plugins.magellan.propsandcovariants.CovariantPairing;
+import org.micromanager.plugins.magellan.propsandcovariants.CovariantPairingsManager;
 import java.util.ArrayList;
 import java.util.prefs.Preferences;
-import main.Magellan;
-import misc.Log;
-import surfacesandregions.SurfaceInterpolator;
-import surfacesandregions.XYFootprint;
+import org.micromanager.plugins.magellan.main.Magellan;
+import org.micromanager.plugins.magellan.misc.Log;
+import org.micromanager.plugins.magellan.surfacesandregions.SurfaceInterpolator;
+import org.micromanager.plugins.magellan.surfacesandregions.XYFootprint;
 
 /**
  *

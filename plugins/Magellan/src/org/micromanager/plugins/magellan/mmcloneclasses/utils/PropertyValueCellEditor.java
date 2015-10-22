@@ -1,4 +1,4 @@
-package mmcloneclasses.utils;
+package org.micromanager.plugins.magellan.mmcloneclasses.utils;
 
 import java.awt.Component;
 import java.awt.event.ActionEvent;
@@ -16,9 +16,9 @@ import javax.swing.JComboBox;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.TableCellEditor;
-import misc.Log;
-import propsandcovariants.DeviceControlTableModel;
-import propsandcovariants.SinglePropertyOrGroup;
+import org.micromanager.plugins.magellan.misc.Log;
+import org.micromanager.plugins.magellan.propsandcovariants.DeviceControlTableModel;
+import org.micromanager.plugins.magellan.propsandcovariants.SinglePropertyOrGroup;
 
 /**
  * Cell editing using either JTextField or JComboBox depending on whether the

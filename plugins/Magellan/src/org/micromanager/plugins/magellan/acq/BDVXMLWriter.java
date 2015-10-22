@@ -15,7 +15,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package acq;
+package org.micromanager.plugins.magellan.acq;
 
 //this class writes a simple xml file that accomponaies 
 

@@ -15,7 +15,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package acq;
+package org.micromanager.plugins.magellan.acq;
 
 /**
  * Name says it all

@@ -20,7 +20,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package misc;
+package org.micromanager.plugins.magellan.misc;
 
 import java.io.File;
 import java.io.FileNotFoundException;

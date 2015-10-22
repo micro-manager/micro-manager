@@ -15,10 +15,10 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package acq;
+package org.micromanager.plugins.magellan.acq;
 
-import acq.MultipleAcquisitionManager;
-import gui.GUI;
+import org.micromanager.plugins.magellan.acq.MultipleAcquisitionManager;
+import org.micromanager.plugins.magellan.gui.GUI;
 import javax.swing.table.AbstractTableModel;
 
 /**

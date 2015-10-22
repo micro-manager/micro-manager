@@ -14,7 +14,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package imagedisplay;
+package org.micromanager.plugins.magellan.imagedisplay;
 
 /**
  * This interface allows us to manipulate the dimensions

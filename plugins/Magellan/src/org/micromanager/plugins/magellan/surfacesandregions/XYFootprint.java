@@ -15,9 +15,9 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package surfacesandregions;
+package org.micromanager.plugins.magellan.surfacesandregions;
 
-import coordinates.XYStagePosition;
+import org.micromanager.plugins.magellan.coordinates.XYStagePosition;
 import java.util.ArrayList;
 import java.util.List;
 

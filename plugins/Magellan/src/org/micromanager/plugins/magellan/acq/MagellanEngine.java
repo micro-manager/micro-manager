@@ -14,7 +14,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package acq;
+package org.micromanager.plugins.magellan.acq;
 
 /*
  * To change this template, choose Tools | Templates and open the template in
@@ -30,19 +30,19 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import javax.swing.JOptionPane;
-import bidc.JavaLayerImageConstructor;
-import bidc.FrameIntegrationMethod;
-import channels.ChannelSetting;
-import coordinates.AffineUtils;
+import org.micromanager.plugins.magellan.bidc.JavaLayerImageConstructor;
+import org.micromanager.plugins.magellan.bidc.FrameIntegrationMethod;
+import org.micromanager.plugins.magellan.channels.ChannelSetting;
+import org.micromanager.plugins.magellan.coordinates.AffineUtils;
 import java.awt.geom.AffineTransform;
-import json.JSONArray;
-import json.JSONObject;
-import main.Magellan;
-import misc.GlobalSettings;
-import misc.Log;
-import misc.MD;
+import org.micromanager.plugins.magellan.json.JSONArray;
+import org.micromanager.plugins.magellan.json.JSONObject;
+import org.micromanager.plugins.magellan.main.Magellan;
+import org.micromanager.plugins.magellan.misc.GlobalSettings;
+import org.micromanager.plugins.magellan.misc.Log;
+import org.micromanager.plugins.magellan.misc.MD;
 import mmcorej.CMMCore;
-import propsandcovariants.CovariantPairing;
+import org.micromanager.plugins.magellan.propsandcovariants.CovariantPairing;
 
 /**
  * Engine has a single thread executor, which sits idly waiting for new

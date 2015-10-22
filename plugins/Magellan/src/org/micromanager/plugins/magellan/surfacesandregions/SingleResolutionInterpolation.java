@@ -15,13 +15,13 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package surfacesandregions;
+package org.micromanager.plugins.magellan.surfacesandregions;
 
 import ij.IJ;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.TreeSet;
-import misc.Log;
+import org.micromanager.plugins.magellan.misc.Log;
 import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.apache.commons.math3.geometry.partitioning.Region;

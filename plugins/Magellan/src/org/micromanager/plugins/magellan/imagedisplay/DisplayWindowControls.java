@@ -3,24 +3,18 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package imagedisplay;
+package org.micromanager.plugins.magellan.imagedisplay;
 
-import acq.Acquisition;
-import acq.ExploreAcquisition;
-import channels.SimpleChannelTableModel;
+import org.micromanager.plugins.magellan.acq.Acquisition;
+import org.micromanager.plugins.magellan.acq.ExploreAcquisition;
+import org.micromanager.plugins.magellan.channels.SimpleChannelTableModel;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import gui.GUI;
+import org.micromanager.plugins.magellan.gui.GUI;
 import java.awt.Color;
 import java.awt.Panel;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.util.concurrent.TimeUnit;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JLabel;
@@ -31,13 +25,13 @@ import javax.swing.PopupFactory;
 import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import json.JSONObject;
-import main.Magellan;
-import misc.MD;
-import surfacesandregions.MultiPosRegion;
-import surfacesandregions.RegionManager;
-import surfacesandregions.SurfaceManager;
-import surfacesandregions.SurfaceRegionComboBoxModel;
+import org.micromanager.plugins.magellan.json.JSONObject;
+import org.micromanager.plugins.magellan.main.Magellan;
+import org.micromanager.plugins.magellan.misc.MD;
+import org.micromanager.plugins.magellan.surfacesandregions.MultiPosRegion;
+import org.micromanager.plugins.magellan.surfacesandregions.RegionManager;
+import org.micromanager.plugins.magellan.surfacesandregions.SurfaceManager;
+import org.micromanager.plugins.magellan.surfacesandregions.SurfaceRegionComboBoxModel;
 
 /**
  *

@@ -1,4 +1,4 @@
-package json;
+package org.micromanager.plugins.magellan.json;
 
 /*
 Copyright (c) 2006 JSON.org

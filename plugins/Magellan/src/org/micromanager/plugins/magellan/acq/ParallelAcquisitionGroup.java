@@ -14,18 +14,15 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package acq;
+package org.micromanager.plugins.magellan.acq;
 
-import ij.IJ;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import misc.Log;
+import org.micromanager.plugins.magellan.misc.Log;
 
 /**
  * Class to encapsulate several FixedAreaAcquisitions that are run in parallel

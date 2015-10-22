@@ -15,13 +15,13 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package misc;
+package org.micromanager.plugins.magellan.misc;
 
 import ij.ImagePlus;
 import java.util.Iterator;
-import json.JSONArray;
-import json.JSONException;
-import json.JSONObject;
+import org.micromanager.plugins.magellan.json.JSONArray;
+import org.micromanager.plugins.magellan.json.JSONException;
+import org.micromanager.plugins.magellan.json.JSONObject;
 
 
 

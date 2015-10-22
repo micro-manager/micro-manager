@@ -14,7 +14,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package imagedisplay;
+package org.micromanager.plugins.magellan.imagedisplay;
 
 // This class signifies that the display window's title should be re-set.
 class UpdateTitleEvent {}

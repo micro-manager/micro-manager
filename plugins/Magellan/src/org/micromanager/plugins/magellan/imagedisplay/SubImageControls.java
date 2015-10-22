@@ -2,11 +2,11 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package imagedisplay;
+package org.micromanager.plugins.magellan.imagedisplay;
 
-import acq.Acquisition;
-import acq.ExploreAcquisition;
-import acq.FixedAreaAcquisition;
+import org.micromanager.plugins.magellan.acq.Acquisition;
+import org.micromanager.plugins.magellan.acq.ExploreAcquisition;
+import org.micromanager.plugins.magellan.acq.FixedAreaAcquisition;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import ij.gui.StackWindow;
@@ -28,9 +28,9 @@ import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import main.Magellan;
-import misc.JavaUtils;
-import misc.Log;
+import org.micromanager.plugins.magellan.main.Magellan;
+import org.micromanager.plugins.magellan.misc.JavaUtils;
+import org.micromanager.plugins.magellan.misc.Log;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 

@@ -21,7 +21,7 @@
 
 //CVS:          $Id: ConfigGroupPad.java 747 2008-01-04 01:08:50Z nenad $
 
-package mmcloneclasses.utils;
+package org.micromanager.plugins.magellan.mmcloneclasses.utils;
 
 
 import java.awt.Color;
@@ -40,9 +40,9 @@ import javax.swing.JTextField;
 import javax.swing.SpringLayout;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import misc.JavaUtils;
-import misc.Log;
-import misc.NumberUtils;
+import org.micromanager.plugins.magellan.misc.JavaUtils;
+import org.micromanager.plugins.magellan.misc.Log;
+import org.micromanager.plugins.magellan.misc.NumberUtils;
 
 
 public class SliderPanel extends JPanel {

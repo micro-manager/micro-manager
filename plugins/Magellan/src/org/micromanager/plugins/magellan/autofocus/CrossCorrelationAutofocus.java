@@ -15,10 +15,10 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package autofocus;
+package org.micromanager.plugins.magellan.autofocus;
 
-import acq.FixedAreaAcquisition;
-import acq.MultiResMultipageTiffStorage;
+import org.micromanager.plugins.magellan.acq.FixedAreaAcquisition;
+import org.micromanager.plugins.magellan.acq.MultiResMultipageTiffStorage;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij3d.image3d.FHTImage3D;
@@ -35,8 +35,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import main.Magellan;
-import misc.Log;
+import org.micromanager.plugins.magellan.main.Magellan;
+import org.micromanager.plugins.magellan.misc.Log;
 import org.apache.commons.math.ArgumentOutsideDomainException;
 import org.apache.commons.math.analysis.interpolation.SplineInterpolator;
 import org.apache.commons.math.analysis.polynomials.PolynomialSplineFunction;

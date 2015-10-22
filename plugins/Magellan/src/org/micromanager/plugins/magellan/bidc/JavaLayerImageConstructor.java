@@ -15,26 +15,26 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package bidc;
+package org.micromanager.plugins.magellan.bidc;
 
-import acq.AcquisitionEvent;
-import acq.FixedAreaAcquisition;
-import acq.MagellanEngine;
-import acq.MagellanTaggedImage;
-import acq.SignalTaggedImage;
-import demo.DemoModeImageData;
+import org.micromanager.plugins.magellan.acq.AcquisitionEvent;
+import org.micromanager.plugins.magellan.acq.FixedAreaAcquisition;
+import org.micromanager.plugins.magellan.acq.MagellanEngine;
+import org.micromanager.plugins.magellan.acq.MagellanTaggedImage;
+import org.micromanager.plugins.magellan.acq.SignalTaggedImage;
+import org.micromanager.plugins.magellan.demo.DemoModeImageData;
 import ij.IJ;
 import java.awt.geom.Point2D;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
-import json.JSONException;
-import json.JSONObject;
-import main.Magellan;
-import misc.GlobalSettings;
-import misc.Log;
-import misc.MD;
+import org.micromanager.plugins.magellan.json.JSONException;
+import org.micromanager.plugins.magellan.json.JSONObject;
+import org.micromanager.plugins.magellan.main.Magellan;
+import org.micromanager.plugins.magellan.misc.GlobalSettings;
+import org.micromanager.plugins.magellan.misc.Log;
+import org.micromanager.plugins.magellan.misc.MD;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 

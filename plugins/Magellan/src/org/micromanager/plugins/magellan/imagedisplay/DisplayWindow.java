@@ -14,11 +14,11 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package imagedisplay;
+package org.micromanager.plugins.magellan.imagedisplay;
 
-import acq.Acquisition;
-import acq.ExploreAcquisition;
-import acq.FixedAreaAcquisition;
+import org.micromanager.plugins.magellan.acq.Acquisition;
+import org.micromanager.plugins.magellan.acq.ExploreAcquisition;
+import org.micromanager.plugins.magellan.acq.FixedAreaAcquisition;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import ij.ImagePlus;
@@ -31,8 +31,8 @@ import java.text.DecimalFormat;
 import java.util.Comparator;
 import java.util.prefs.Preferences;
 import javax.swing.*;
-import misc.Log;
-import mmcloneclasses.graph.ContrastPanel;
+import org.micromanager.plugins.magellan.misc.Log;
+import org.micromanager.plugins.magellan.mmcloneclasses.graph.ContrastPanel;
 
 /**
  * This class is the Frame that handles image viewing: it contains the canvas

@@ -2,13 +2,13 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package gui;
+package org.micromanager.plugins.magellan.gui;
 
-import propsandcovariants.Covariant;
-import propsandcovariants.EligibleCovariantTableModel;
-import propsandcovariants.CovariantPairing;
-import propsandcovariants.CovariantPairingsManager;
-import misc.ExactlyOneRowSelectionModel;
+import org.micromanager.plugins.magellan.propsandcovariants.Covariant;
+import org.micromanager.plugins.magellan.propsandcovariants.EligibleCovariantTableModel;
+import org.micromanager.plugins.magellan.propsandcovariants.CovariantPairing;
+import org.micromanager.plugins.magellan.propsandcovariants.CovariantPairingsManager;
+import org.micromanager.plugins.magellan.misc.ExactlyOneRowSelectionModel;
 
 /**
  *

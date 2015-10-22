@@ -14,9 +14,9 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package bdv;
+package org.micromanager.plugins.magellan.bdv;
 
-import acq.MultiResMultipageTiffStorage;
+import org.micromanager.plugins.magellan.acq.MultiResMultipageTiffStorage;
 import bdv.spimdata.legacy.LegacyViewerImgLoaderWrapper;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.volatiles.VolatileUnsignedByteType;

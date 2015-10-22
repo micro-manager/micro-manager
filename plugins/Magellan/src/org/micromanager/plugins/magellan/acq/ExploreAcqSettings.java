@@ -14,14 +14,13 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package acq;
+package org.micromanager.plugins.magellan.acq;
 
-import channels.ChannelSetting;
-import channels.ChannelUtils;
+import org.micromanager.plugins.magellan.channels.ChannelSetting;
+import org.micromanager.plugins.magellan.channels.ChannelUtils;
 import java.util.ArrayList;
 import java.util.prefs.Preferences;
-import javax.swing.filechooser.FileSystemView;
-import main.Magellan;
+import org.micromanager.plugins.magellan.main.Magellan;
 
 /**
  * Container for settings specific to explore acquisition

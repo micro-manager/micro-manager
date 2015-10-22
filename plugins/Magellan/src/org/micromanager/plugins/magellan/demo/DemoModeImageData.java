@@ -15,14 +15,14 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package demo;
+package org.micromanager.plugins.magellan.demo;
 
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import java.awt.Frame;
-import main.Magellan;
-import misc.JavaUtils;
+import org.micromanager.plugins.magellan.main.Magellan;
+import org.micromanager.plugins.magellan.misc.JavaUtils;
 
 /**
  *

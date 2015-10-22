@@ -15,7 +15,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package propsandcovariants;
+package org.micromanager.plugins.magellan.propsandcovariants;
 
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumnModel;

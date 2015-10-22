@@ -19,9 +19,9 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package mmcloneclasses.graph;
+package org.micromanager.plugins.magellan.mmcloneclasses.graph;
 
-import acq.MMImageCache;
+import org.micromanager.plugins.magellan.acq.MMImageCache;
 
 
 /**

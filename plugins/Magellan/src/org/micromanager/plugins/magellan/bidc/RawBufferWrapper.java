@@ -3,9 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package bidc;
+package org.micromanager.plugins.magellan.bidc;
 
-import main.Magellan;
+import org.micromanager.plugins.magellan.main.Magellan;
 
 /**
  * Class that wraps raw, double wide, warped buffer to support fast access

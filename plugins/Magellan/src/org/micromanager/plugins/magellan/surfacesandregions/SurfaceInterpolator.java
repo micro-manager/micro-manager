@@ -15,12 +15,12 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package surfacesandregions;
+package org.micromanager.plugins.magellan.surfacesandregions;
 
-import acq.FixedAreaAcquisitionSettings;
-import bidc.JavaLayerImageConstructor;
-import coordinates.AffineUtils;
-import coordinates.XYStagePosition;
+import org.micromanager.plugins.magellan.acq.FixedAreaAcquisitionSettings;
+import org.micromanager.plugins.magellan.bidc.JavaLayerImageConstructor;
+import org.micromanager.plugins.magellan.coordinates.AffineUtils;
+import org.micromanager.plugins.magellan.coordinates.XYStagePosition;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
@@ -34,8 +34,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
-import main.Magellan;
-import misc.Log;
+import org.micromanager.plugins.magellan.main.Magellan;
+import org.micromanager.plugins.magellan.misc.Log;
 import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
 import org.apache.commons.math3.geometry.euclidean.twod.PolygonsSet;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
@@ -43,8 +43,8 @@ import org.apache.commons.math3.geometry.euclidean.twod.hull.ConvexHull2D;
 import org.apache.commons.math3.geometry.euclidean.twod.hull.MonotoneChain;
 import org.apache.commons.math3.geometry.partitioning.Region;
 import org.apache.commons.math3.geometry.partitioning.RegionFactory;
-import propsandcovariants.CovariantPairingsManager;
-import propsandcovariants.SurfaceData;
+import org.micromanager.plugins.magellan.propsandcovariants.CovariantPairingsManager;
+import org.micromanager.plugins.magellan.propsandcovariants.SurfaceData;
 
 /**
  *

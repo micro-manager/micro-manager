@@ -15,7 +15,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package misc;
+package org.micromanager.plugins.magellan.misc;
 
 import javax.swing.DefaultListSelectionModel;
 import javax.swing.ListSelectionModel;

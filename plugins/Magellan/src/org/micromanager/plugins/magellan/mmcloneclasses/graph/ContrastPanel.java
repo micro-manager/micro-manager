@@ -19,19 +19,19 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package mmcloneclasses.graph;
+package org.micromanager.plugins.magellan.mmcloneclasses.graph;
 
 import ij.CompositeImage;
-import imagedisplay.DisplayOverlayer;
-import imagedisplay.MMScaleBar;
-import imagedisplay.VirtualAcquisitionDisplay;
+import org.micromanager.plugins.magellan.imagedisplay.DisplayOverlayer;
+import org.micromanager.plugins.magellan.imagedisplay.MMScaleBar;
+import org.micromanager.plugins.magellan.imagedisplay.VirtualAcquisitionDisplay;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.util.prefs.Preferences;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import misc.Log;
+import org.micromanager.plugins.magellan.misc.Log;
 
 /**
  *

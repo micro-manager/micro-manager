@@ -15,23 +15,23 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package coordinates;
+package org.micromanager.plugins.magellan.coordinates;
 
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import bidc.JavaLayerImageConstructor;
+import org.micromanager.plugins.magellan.bidc.JavaLayerImageConstructor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import json.JSONArray;
-import json.JSONException;
-import json.JSONObject;
-import main.Magellan;
-import misc.Log;
-import misc.LongPoint;
-import misc.MD;
+import org.micromanager.plugins.magellan.json.JSONArray;
+import org.micromanager.plugins.magellan.json.JSONException;
+import org.micromanager.plugins.magellan.json.JSONObject;
+import org.micromanager.plugins.magellan.main.Magellan;
+import org.micromanager.plugins.magellan.misc.Log;
+import org.micromanager.plugins.magellan.misc.LongPoint;
+import org.micromanager.plugins.magellan.misc.MD;
 
 
 

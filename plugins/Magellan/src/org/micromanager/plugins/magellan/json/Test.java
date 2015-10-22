@@ -1,4 +1,4 @@
-package json;
+package org.micromanager.plugins.magellan.json;
 
 import java.io.StringWriter;
 import java.util.Iterator;

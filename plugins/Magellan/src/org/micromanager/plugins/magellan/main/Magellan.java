@@ -14,14 +14,14 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package main;
+package org.micromanager.plugins.magellan.main;
 
 /*
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-import autofocus.CrossCorrelationAutofocus;
-import gui.GUI;
+import org.micromanager.plugins.magellan.autofocus.CrossCorrelationAutofocus;
+import org.micromanager.plugins.magellan.gui.GUI;
 import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
 import org.micromanager.MMStudio;

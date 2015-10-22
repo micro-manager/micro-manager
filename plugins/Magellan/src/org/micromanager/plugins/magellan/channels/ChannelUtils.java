@@ -15,14 +15,14 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package channels;
+package org.micromanager.plugins.magellan.channels;
 
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
-import main.Magellan;
-import misc.GlobalSettings;
-import misc.Log;
+import org.micromanager.plugins.magellan.main.Magellan;
+import org.micromanager.plugins.magellan.misc.GlobalSettings;
+import org.micromanager.plugins.magellan.misc.Log;
 import mmcorej.StrVector;
 
 /**

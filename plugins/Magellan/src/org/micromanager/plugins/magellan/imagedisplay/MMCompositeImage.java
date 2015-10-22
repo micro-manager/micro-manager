@@ -14,7 +14,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package imagedisplay;
+package org.micromanager.plugins.magellan.imagedisplay;
 
 import com.google.common.eventbus.EventBus;
 import ij.CompositeImage;
@@ -23,8 +23,8 @@ import ij.plugin.frame.ContrastAdjuster;
 import ij.process.LUT;
 import java.lang.reflect.InvocationTargetException;
 import javax.swing.SwingUtilities;
-import misc.JavaUtils;
-import misc.Log;
+import org.micromanager.plugins.magellan.misc.JavaUtils;
+import org.micromanager.plugins.magellan.misc.Log;
 
 
 public class MMCompositeImage extends CompositeImage implements IMMImagePlus {

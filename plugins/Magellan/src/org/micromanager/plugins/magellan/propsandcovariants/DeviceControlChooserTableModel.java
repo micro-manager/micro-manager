@@ -15,15 +15,15 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package propsandcovariants;
+package org.micromanager.plugins.magellan.propsandcovariants;
 
-import propsandcovariants.PropertyAndGroupUtils;
+import org.micromanager.plugins.magellan.propsandcovariants.PropertyAndGroupUtils;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.TreeMap;
 import java.util.prefs.Preferences;
 import javax.swing.table.AbstractTableModel;
-import main.Magellan;
+import org.micromanager.plugins.magellan.main.Magellan;
 import mmcorej.CMMCore;
 
 /**

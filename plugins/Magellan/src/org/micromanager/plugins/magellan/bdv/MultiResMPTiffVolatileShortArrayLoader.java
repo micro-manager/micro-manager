@@ -15,10 +15,10 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package bdv;
+package org.micromanager.plugins.magellan.bdv;
 
-import acq.MagellanTaggedImage;
-import acq.MultiResMultipageTiffStorage;
+import org.micromanager.plugins.magellan.acq.MagellanTaggedImage;
+import org.micromanager.plugins.magellan.acq.MultiResMultipageTiffStorage;
 import bdv.img.cache.CacheArrayLoader;
 import net.imglib2.img.basictypeaccess.volatiles.array.VolatileByteArray;
 import net.imglib2.img.basictypeaccess.volatiles.array.VolatileShortArray;

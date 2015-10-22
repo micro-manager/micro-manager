@@ -1,15 +1,14 @@
-package mmcloneclasses.utils;
+package org.micromanager.plugins.magellan.mmcloneclasses.utils;
 
 import java.awt.Color;
 import java.awt.Component;
 import java.text.ParseException;
-
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
-import misc.Log;
-import propsandcovariants.DeviceControlTableModel;
-import propsandcovariants.SinglePropertyOrGroup;
+import org.micromanager.plugins.magellan.misc.Log;
+import org.micromanager.plugins.magellan.propsandcovariants.DeviceControlTableModel;
+import org.micromanager.plugins.magellan.propsandcovariants.SinglePropertyOrGroup;
 
 public class PropertyValueCellRenderer implements TableCellRenderer {
    // This method is called each time a cell in a column

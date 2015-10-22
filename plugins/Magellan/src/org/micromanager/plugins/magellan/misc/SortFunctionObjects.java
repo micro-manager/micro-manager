@@ -14,7 +14,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package misc;
+package org.micromanager.plugins.magellan.misc;
 
 import java.text.ParseException;
 import java.util.Comparator;

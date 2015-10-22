@@ -15,10 +15,10 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package misc;
+package org.micromanager.plugins.magellan.misc;
 
-import demo.DemoModeImageData;
-import gui.GUI;
+import org.micromanager.plugins.magellan.demo.DemoModeImageData;
+import org.micromanager.plugins.magellan.gui.GUI;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
@@ -28,8 +28,7 @@ import java.util.ArrayList;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import javax.swing.filechooser.FileSystemView;
-import main.Magellan;
-import mmcorej.CMMCore;
+import org.micromanager.plugins.magellan.main.Magellan;
 
 /**
  *

@@ -18,22 +18,20 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package acq;
+package org.micromanager.plugins.magellan.acq;
 
 import ij.CompositeImage;
-import imagedisplay.DisplayPlus;
+import org.micromanager.plugins.magellan.imagedisplay.DisplayPlus;
 import java.awt.Color;
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import javax.swing.SwingUtilities;
-import json.JSONArray;
-import json.JSONException;
-import json.JSONObject;
-import main.Magellan;
-import misc.Log;
-import misc.MD;
+import org.micromanager.plugins.magellan.json.JSONArray;
+import org.micromanager.plugins.magellan.json.JSONException;
+import org.micromanager.plugins.magellan.json.JSONObject;
+import org.micromanager.plugins.magellan.main.Magellan;
+import org.micromanager.plugins.magellan.misc.Log;
+import org.micromanager.plugins.magellan.misc.MD;
 
 /**
  * MMImageCache: central repository of Images

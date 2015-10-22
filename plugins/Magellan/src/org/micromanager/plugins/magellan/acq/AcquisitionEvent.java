@@ -15,12 +15,11 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package acq;
+package org.micromanager.plugins.magellan.acq;
 
-import coordinates.XYStagePosition;
+import org.micromanager.plugins.magellan.coordinates.XYStagePosition;
 import java.util.List;
-import propsandcovariants.CovariantPairing;
-import propsandcovariants.CovariantValue;
+import org.micromanager.plugins.magellan.propsandcovariants.CovariantPairing;
 
 /**
  * Information about the acquisition of a single image

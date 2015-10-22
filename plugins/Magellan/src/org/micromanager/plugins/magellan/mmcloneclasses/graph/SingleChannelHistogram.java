@@ -19,7 +19,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package mmcloneclasses.graph;
+package org.micromanager.plugins.magellan.mmcloneclasses.graph;
 
 import com.swtdesigner.SwingResourceManager;
 import ij.ImagePlus;
@@ -43,13 +43,13 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import acq.MMImageCache;
-import imagedisplay.DisplayPlus;
-import mmcloneclasses.graph.HistogramPanel.CursorListener;
-import imagedisplay.VirtualAcquisitionDisplay;
-import misc.HistogramUtils;
-import misc.Log;
-import misc.NumberUtils;
+import org.micromanager.plugins.magellan.acq.MMImageCache;
+import org.micromanager.plugins.magellan.imagedisplay.DisplayPlus;
+import org.micromanager.plugins.magellan.mmcloneclasses.graph.HistogramPanel.CursorListener;
+import org.micromanager.plugins.magellan.imagedisplay.VirtualAcquisitionDisplay;
+import org.micromanager.plugins.magellan.misc.HistogramUtils;
+import org.micromanager.plugins.magellan.misc.Log;
+import org.micromanager.plugins.magellan.misc.NumberUtils;
 
 
 /**

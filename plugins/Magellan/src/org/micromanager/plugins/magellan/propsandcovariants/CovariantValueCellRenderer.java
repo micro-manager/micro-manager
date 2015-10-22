@@ -14,7 +14,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package propsandcovariants;
+package org.micromanager.plugins.magellan.propsandcovariants;
 
 import java.awt.Color;
 import java.awt.Component;

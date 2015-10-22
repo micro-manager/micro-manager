@@ -14,10 +14,10 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package surfacesandregions;
+package org.micromanager.plugins.magellan.surfacesandregions;
 
-import gui.GUI;
-import imagedisplay.DisplayPlus;
+import org.micromanager.plugins.magellan.gui.GUI;
+import org.micromanager.plugins.magellan.imagedisplay.DisplayPlus;
 import java.awt.FileDialog;
 import java.io.BufferedReader;
 import java.io.File;
@@ -29,12 +29,11 @@ import java.util.ArrayList;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import main.Magellan;
-import misc.JavaUtils;
-import misc.Log;
-import propsandcovariants.CovariantPairing;
-import propsandcovariants.CovariantPairingsManager;
-import propsandcovariants.SurfaceData;
+import org.micromanager.plugins.magellan.main.Magellan;
+import org.micromanager.plugins.magellan.misc.JavaUtils;
+import org.micromanager.plugins.magellan.misc.Log;
+import org.micromanager.plugins.magellan.propsandcovariants.CovariantPairingsManager;
+import org.micromanager.plugins.magellan.propsandcovariants.SurfaceData;
 
 /**
  *

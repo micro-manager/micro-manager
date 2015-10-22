@@ -15,9 +15,9 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package acq;
+package org.micromanager.plugins.magellan.acq;
 
-import json.JSONObject;
+import org.micromanager.plugins.magellan.json.JSONObject;
 
 /**
  *

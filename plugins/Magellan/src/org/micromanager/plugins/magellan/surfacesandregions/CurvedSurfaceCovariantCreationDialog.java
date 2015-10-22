@@ -14,12 +14,10 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package surfacesandregions;
+package org.micromanager.plugins.magellan.surfacesandregions;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
-import propsandcovariants.CurvedSurfaceCalculations;
+import org.micromanager.plugins.magellan.propsandcovariants.CurvedSurfaceCalculations;
 
 /**
  *

@@ -15,10 +15,10 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package misc;
+package org.micromanager.plugins.magellan.misc;
 
 import ij.IJ;
-import main.Magellan;
+import org.micromanager.plugins.magellan.main.Magellan;
 
 /**
  *

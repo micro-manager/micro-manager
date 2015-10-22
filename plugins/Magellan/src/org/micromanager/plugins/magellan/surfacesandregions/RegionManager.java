@@ -14,11 +14,11 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package surfacesandregions;
+package org.micromanager.plugins.magellan.surfacesandregions;
 
-import imagedisplay.DisplayPlus;
+import org.micromanager.plugins.magellan.imagedisplay.DisplayPlus;
 import java.util.ArrayList;
-import propsandcovariants.CovariantPairingsManager;
+import org.micromanager.plugins.magellan.propsandcovariants.CovariantPairingsManager;
 
 /**
  *

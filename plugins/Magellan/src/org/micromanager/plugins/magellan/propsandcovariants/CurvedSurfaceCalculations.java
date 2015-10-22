@@ -14,11 +14,11 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package propsandcovariants;
+package org.micromanager.plugins.magellan.propsandcovariants;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import misc.Log;
+import org.micromanager.plugins.magellan.misc.Log;
 
 /**
  *

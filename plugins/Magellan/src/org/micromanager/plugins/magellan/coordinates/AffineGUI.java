@@ -2,14 +2,14 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package coordinates;
+package org.micromanager.plugins.magellan.coordinates;
 
 import ij.IJ;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.util.prefs.Preferences;
-import main.Magellan;
-import misc.JavaUtils;
+import org.micromanager.plugins.magellan.main.Magellan;
+import org.micromanager.plugins.magellan.misc.JavaUtils;
 import org.micromanager.MMStudio;
 
 /**

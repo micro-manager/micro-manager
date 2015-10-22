@@ -15,7 +15,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package imagedisplay;
+package org.micromanager.plugins.magellan.imagedisplay;
 
 import com.sun.java.swing.plaf.windows.WindowsScrollBarUI;
 import java.awt.Color;

@@ -15,11 +15,11 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package acq;
+package org.micromanager.plugins.magellan.acq;
 
-import autofocus.CrossCorrelationAutofocus;
-import bidc.FrameIntegrationMethod;
-import coordinates.XYStagePosition;
+import org.micromanager.plugins.magellan.autofocus.CrossCorrelationAutofocus;
+import org.micromanager.plugins.magellan.bidc.FrameIntegrationMethod;
+import org.micromanager.plugins.magellan.coordinates.XYStagePosition;
 import ij.IJ;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,15 +31,15 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import bidc.JavaLayerImageConstructor;
-import channels.ChannelSetting;
-import coordinates.AffineUtils;
+import org.micromanager.plugins.magellan.bidc.JavaLayerImageConstructor;
+import org.micromanager.plugins.magellan.channels.ChannelSetting;
+import org.micromanager.plugins.magellan.coordinates.AffineUtils;
 import java.awt.geom.Point2D;
-import json.JSONArray;
-import main.Magellan;
-import misc.GlobalSettings;
-import misc.Log;
-import surfacesandregions.Point3d;
+import org.micromanager.plugins.magellan.json.JSONArray;
+import org.micromanager.plugins.magellan.main.Magellan;
+import org.micromanager.plugins.magellan.misc.GlobalSettings;
+import org.micromanager.plugins.magellan.misc.Log;
+import org.micromanager.plugins.magellan.surfacesandregions.Point3d;
 
 /**
  *

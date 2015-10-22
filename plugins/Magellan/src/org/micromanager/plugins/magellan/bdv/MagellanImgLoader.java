@@ -15,7 +15,7 @@
 ////               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 ////
 //
-//package bdv;
+//package org.micromanager.plugins.magellan.bdv;
 //
 //import acq.MultiResMultipageTiffStorage;
 //import bdv.AbstractViewerImgLoader;

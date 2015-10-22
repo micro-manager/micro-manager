@@ -14,15 +14,15 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package imagedisplay;
+package org.micromanager.plugins.magellan.imagedisplay;
 
 /*
  * Master stitched window to display real time stitched images, allow navigating
  * of XY more easily
  */
-import acq.Acquisition;
-import acq.ExploreAcquisition;
-import acq.MultiResMultipageTiffStorage;
+import org.micromanager.plugins.magellan.acq.Acquisition;
+import org.micromanager.plugins.magellan.acq.ExploreAcquisition;
+import org.micromanager.plugins.magellan.acq.MultiResMultipageTiffStorage;
 import com.google.common.eventbus.Subscribe;
 import ij.CompositeImage;
 import ij.IJ;
@@ -38,7 +38,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
-import acq.MMImageCache;
+import org.micromanager.plugins.magellan.acq.MMImageCache;
 import ij.measure.Calibration;
 import java.io.File;
 import java.util.concurrent.ExecutionException;
@@ -48,14 +48,14 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import json.JSONObject;
-import misc.JavaUtils;
-import misc.Log;
-import misc.LongPoint;
-import misc.MD;
-import misc.ProgressBar;
-import surfacesandregions.MultiPosRegion;
-import surfacesandregions.SurfaceInterpolator;
+import org.micromanager.plugins.magellan.json.JSONObject;
+import org.micromanager.plugins.magellan.misc.JavaUtils;
+import org.micromanager.plugins.magellan.misc.Log;
+import org.micromanager.plugins.magellan.misc.LongPoint;
+import org.micromanager.plugins.magellan.misc.MD;
+import org.micromanager.plugins.magellan.misc.ProgressBar;
+import org.micromanager.plugins.magellan.surfacesandregions.MultiPosRegion;
+import org.micromanager.plugins.magellan.surfacesandregions.SurfaceInterpolator;
 
 public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataListener {
 

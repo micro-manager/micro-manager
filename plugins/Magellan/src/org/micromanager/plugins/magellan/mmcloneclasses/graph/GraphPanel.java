@@ -21,7 +21,7 @@
 //
 // CVS:          $Id$
 //
-package mmcloneclasses.graph;
+package org.micromanager.plugins.magellan.mmcloneclasses.graph;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;

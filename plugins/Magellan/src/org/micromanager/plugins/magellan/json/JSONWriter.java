@@ -1,4 +1,4 @@
-package json;
+package org.micromanager.plugins.magellan.json;
 
 import java.io.IOException;
 import java.io.Writer;

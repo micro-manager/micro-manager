@@ -1,5 +1,5 @@
 
-package mmcloneclasses.graph;
+package org.micromanager.plugins.magellan.mmcloneclasses.graph;
 
 /**
  *

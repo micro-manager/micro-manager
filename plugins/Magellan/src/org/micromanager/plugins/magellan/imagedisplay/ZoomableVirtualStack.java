@@ -14,22 +14,22 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package imagedisplay;
+package org.micromanager.plugins.magellan.imagedisplay;
 
 /*
  * To change this template, choose Tools | Templates and open the template in
  * the editor.
  */
-import acq.Acquisition;
-import acq.ExploreAcquisition;
-import acq.FixedAreaAcquisition;
-import acq.MMImageCache;
-import acq.MagellanTaggedImage;
-import acq.MultiResMultipageTiffStorage;
+import org.micromanager.plugins.magellan.acq.Acquisition;
+import org.micromanager.plugins.magellan.acq.ExploreAcquisition;
+import org.micromanager.plugins.magellan.acq.FixedAreaAcquisition;
+import org.micromanager.plugins.magellan.acq.MMImageCache;
+import org.micromanager.plugins.magellan.acq.MagellanTaggedImage;
+import org.micromanager.plugins.magellan.acq.MultiResMultipageTiffStorage;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.util.Set;
-import misc.LongPoint;
+import org.micromanager.plugins.magellan.misc.LongPoint;
 
 /**
  * This class acts as an intermediary between display and multiresolution

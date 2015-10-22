@@ -15,21 +15,20 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package propsandcovariants;
+package org.micromanager.plugins.magellan.propsandcovariants;
 
-import acq.AcquisitionEvent;
-import acq.FixedAreaAcquisition;
-import coordinates.AffineUtils;
-import coordinates.XYStagePosition;
+import org.micromanager.plugins.magellan.acq.AcquisitionEvent;
+import org.micromanager.plugins.magellan.coordinates.AffineUtils;
+import org.micromanager.plugins.magellan.coordinates.XYStagePosition;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.util.Arrays;
 import java.util.List;
-import misc.Log;
-import surfacesandregions.CurvedSurfaceCovariantCreationDialog;
-import surfacesandregions.SingleResolutionInterpolation;
-import surfacesandregions.SurfaceInterpolator;
+import org.micromanager.plugins.magellan.misc.Log;
+import org.micromanager.plugins.magellan.surfacesandregions.CurvedSurfaceCovariantCreationDialog;
+import org.micromanager.plugins.magellan.surfacesandregions.SingleResolutionInterpolation;
+import org.micromanager.plugins.magellan.surfacesandregions.SurfaceInterpolator;
 
 /**
  * Category about interpolated surface (e.g. distance below surface) to be used in

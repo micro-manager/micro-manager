@@ -15,17 +15,17 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package surfacesandregions;
+package org.micromanager.plugins.magellan.surfacesandregions;
 
-import acq.FixedAreaAcquisitionSettings;
-import bidc.JavaLayerImageConstructor;
-import coordinates.AffineUtils;
-import coordinates.XYStagePosition;
+import org.micromanager.plugins.magellan.acq.FixedAreaAcquisitionSettings;
+import org.micromanager.plugins.magellan.bidc.JavaLayerImageConstructor;
+import org.micromanager.plugins.magellan.coordinates.AffineUtils;
+import org.micromanager.plugins.magellan.coordinates.XYStagePosition;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
-import main.Magellan;
-import misc.Log;
+import org.micromanager.plugins.magellan.main.Magellan;
+import org.micromanager.plugins.magellan.misc.Log;
 
 /**
  *

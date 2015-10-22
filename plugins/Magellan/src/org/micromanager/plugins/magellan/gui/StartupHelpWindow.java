@@ -14,16 +14,16 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package gui;
+package org.micromanager.plugins.magellan.gui;
 
-import coordinates.AffineUtils;
+import org.micromanager.plugins.magellan.coordinates.AffineUtils;
 import java.awt.Color;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.util.prefs.Preferences;
-import main.Magellan;
-import misc.JavaUtils;
+import org.micromanager.plugins.magellan.main.Magellan;
+import org.micromanager.plugins.magellan.misc.JavaUtils;
 import org.micromanager.MMStudio;
 import org.micromanager.utils.GUIUtils;
 

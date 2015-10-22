@@ -14,12 +14,12 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package imagedisplay;
+package org.micromanager.plugins.magellan.imagedisplay;
 
-import acq.Acquisition;
-import acq.ExploreAcquisition;
-import acq.FixedAreaAcquisition;
-import coordinates.XYStagePosition;
+import org.micromanager.plugins.magellan.acq.Acquisition;
+import org.micromanager.plugins.magellan.acq.ExploreAcquisition;
+import org.micromanager.plugins.magellan.acq.FixedAreaAcquisition;
+import org.micromanager.plugins.magellan.coordinates.XYStagePosition;
 import ij.IJ;
 import ij.gui.ImageCanvas;
 import ij.gui.Line;
@@ -39,14 +39,14 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import javax.swing.SwingUtilities;
-import misc.Log;
-import misc.LongPoint;
-import mmcloneclasses.graph.ContrastPanel;
+import org.micromanager.plugins.magellan.misc.Log;
+import org.micromanager.plugins.magellan.misc.LongPoint;
+import org.micromanager.plugins.magellan.mmcloneclasses.graph.ContrastPanel;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
-import surfacesandregions.SingleResolutionInterpolation;
-import surfacesandregions.MultiPosRegion;
-import surfacesandregions.Point3d;
-import surfacesandregions.SurfaceInterpolator;
+import org.micromanager.plugins.magellan.surfacesandregions.SingleResolutionInterpolation;
+import org.micromanager.plugins.magellan.surfacesandregions.MultiPosRegion;
+import org.micromanager.plugins.magellan.surfacesandregions.Point3d;
+import org.micromanager.plugins.magellan.surfacesandregions.SurfaceInterpolator;
 
 /**
  * Class that encapsulates calculation of overlays for DisplayPlus

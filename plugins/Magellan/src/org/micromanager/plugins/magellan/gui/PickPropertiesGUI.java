@@ -2,13 +2,10 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package gui;
+package org.micromanager.plugins.magellan.gui;
 
-import java.awt.Dialog;
-import java.awt.Window;
-import propsandcovariants.DeviceControlChooserTableModel;
+import org.micromanager.plugins.magellan.propsandcovariants.DeviceControlChooserTableModel;
 import java.util.prefs.Preferences;
-import javax.swing.JDialog;
 
 /**
  *

@@ -15,7 +15,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package coordinates;
+package org.micromanager.plugins.magellan.coordinates;
 
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -28,10 +28,10 @@ import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
-import main.Magellan;
-import misc.GlobalSettings;
-import misc.Log;
-import misc.MD;
+import org.micromanager.plugins.magellan.main.Magellan;
+import org.micromanager.plugins.magellan.misc.GlobalSettings;
+import org.micromanager.plugins.magellan.misc.Log;
+import org.micromanager.plugins.magellan.misc.MD;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;

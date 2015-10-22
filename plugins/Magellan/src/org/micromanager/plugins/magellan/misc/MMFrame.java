@@ -21,7 +21,7 @@
 //
 // CVS:          $Id: MMFrame.java 14898 2015-01-08 18:52:48Z cweisiger $
 //
-package misc;
+package org.micromanager.plugins.magellan.misc;
 
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;

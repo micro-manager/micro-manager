@@ -15,14 +15,14 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package acq;
+package org.micromanager.plugins.magellan.acq;
 
-import gui.GUI;
+import org.micromanager.plugins.magellan.gui.GUI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.CyclicBarrier;
 import javax.swing.JOptionPane;
-import misc.Log;
+import org.micromanager.plugins.magellan.misc.Log;
 
 /**
  *

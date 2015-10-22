@@ -15,7 +15,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package bidc;
+package org.micromanager.plugins.magellan.bidc;
 
 /**
  * Alternative to rank filter wrapper that wraps frame averaging

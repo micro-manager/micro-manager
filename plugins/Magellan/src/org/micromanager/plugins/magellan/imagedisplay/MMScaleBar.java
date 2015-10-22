@@ -18,7 +18,7 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-package imagedisplay;
+package org.micromanager.plugins.magellan.imagedisplay;
 
 import ij.ImagePlus;
 import ij.gui.Overlay;

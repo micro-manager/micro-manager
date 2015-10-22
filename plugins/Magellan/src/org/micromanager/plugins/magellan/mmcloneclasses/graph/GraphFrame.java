@@ -22,7 +22,7 @@
 // CVS:          $Id$
 //
 
-package mmcloneclasses.graph;
+package org.micromanager.plugins.magellan.mmcloneclasses.graph;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
@@ -34,7 +34,7 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
 import javax.swing.border.LineBorder;
-import misc.MMFrame;
+import org.micromanager.plugins.magellan.misc.MMFrame;
 
 /**
  * XY Graph window.

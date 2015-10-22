@@ -3,12 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package channels;
+package org.micromanager.plugins.magellan.channels;
 
 import java.util.ArrayList;
 import javax.swing.DefaultComboBoxModel;
-import main.Magellan;
-import misc.Log;
+import org.micromanager.plugins.magellan.main.Magellan;
+import org.micromanager.plugins.magellan.misc.Log;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.StrVector;

@@ -19,7 +19,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package mmcloneclasses.graph;
+package org.micromanager.plugins.magellan.mmcloneclasses.graph;
 
 import com.swtdesigner.SwingResourceManager;
 import ij.CompositeImage;
@@ -30,19 +30,19 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.prefs.Preferences;
 import javax.swing.*;
-import acq.MMImageCache;
-import mmcloneclasses.graph.HistogramPanel.CursorListener;
-import imagedisplay.MMCompositeImage;
-import imagedisplay.DisplayPlus;
-import imagedisplay.VirtualAcquisitionDisplay;
-import json.JSONArray;
-import json.JSONObject;
-import main.Magellan;
-import misc.GlobalSettings;
-import misc.HistogramUtils;
-import misc.JavaUtils;
-import misc.Log;
-import misc.MD;
+import org.micromanager.plugins.magellan.acq.MMImageCache;
+import org.micromanager.plugins.magellan.mmcloneclasses.graph.HistogramPanel.CursorListener;
+import org.micromanager.plugins.magellan.imagedisplay.MMCompositeImage;
+import org.micromanager.plugins.magellan.imagedisplay.DisplayPlus;
+import org.micromanager.plugins.magellan.imagedisplay.VirtualAcquisitionDisplay;
+import org.micromanager.plugins.magellan.json.JSONArray;
+import org.micromanager.plugins.magellan.json.JSONObject;
+import org.micromanager.plugins.magellan.main.Magellan;
+import org.micromanager.plugins.magellan.misc.GlobalSettings;
+import org.micromanager.plugins.magellan.misc.HistogramUtils;
+import org.micromanager.plugins.magellan.misc.JavaUtils;
+import org.micromanager.plugins.magellan.misc.Log;
+import org.micromanager.plugins.magellan.misc.MD;
 import mmcorej.CMMCore;
 
 /**

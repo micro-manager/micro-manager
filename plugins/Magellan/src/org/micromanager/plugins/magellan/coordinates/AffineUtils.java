@@ -14,7 +14,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package coordinates;
+package org.micromanager.plugins.magellan.coordinates;
 
 /*
  * To change this template, choose Tools | Templates
@@ -23,8 +23,8 @@ package coordinates;
 import java.awt.geom.AffineTransform;
 import java.util.TreeMap;
 import java.util.prefs.Preferences;
-import misc.JavaUtils;
-import misc.Log;
+import org.micromanager.plugins.magellan.misc.JavaUtils;
+import org.micromanager.plugins.magellan.misc.Log;
 import org.micromanager.MMStudio;
 
 /**
