@@ -108,9 +108,8 @@ public class QuickAccessFrame extends MMFrame {
    // Switches between normal and configure modes.
    private JToggleButton configureButton_;
 
-   // Maps controls' locations on the grid to those controls, and their
-   // corresponding icons when in configure mode.
-   private HashMap<Rectangle, ControlCell> gridToControl_;
+   // All of the controls we have in the grid.
+   private HashSet<ControlCell> controls_;
    private int numCols_;
    private int numRows_;
 
@@ -124,7 +123,7 @@ public class QuickAccessFrame extends MMFrame {
    public QuickAccessFrame(Studio studio) {
       super("Quick-Access Tools");
       studio_ = studio;
-      gridToControl_ = new HashMap<Rectangle, ControlCell>();
+      controls_ = new HashSet<ControlCell>();
       numCols_ = studio_.profile().getInt(QuickAccessFrame.class,
             NUM_COLS, 3);
       numRows_ = studio_.profile().getInt(QuickAccessFrame.class,
@@ -200,7 +199,7 @@ public class QuickAccessFrame extends MMFrame {
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
       JSONArray settings = new JSONArray();
-      for (ControlCell cell : gridToControl_.values()) {
+      for (ControlCell cell : controls_) {
          settings.put(cell.toJSON());
       }
       studio_.profile().setString(QuickAccessFrame.class, SAVED_CONFIG,
@@ -249,12 +248,11 @@ public class QuickAccessFrame extends MMFrame {
    private void addControl(ControlCell cell) {
       controlsPanel_.removeAll();
       configuringControlsPanel_.removeAll();
-      gridToControl_.put(cell.rect_, cell);
+      controls_.add(cell);
       // Restore controls.
-      for (Rectangle r : gridToControl_.keySet()) {
-         ControlCell c = gridToControl_.get(r);
-         controlsPanel_.add(c.widget_, r);
-         configuringControlsPanel_.add(c.icon_, r);
+      for (ControlCell c : controls_) {
+         controlsPanel_.add(c.widget_, c.rect_);
+         configuringControlsPanel_.add(c.icon_, c.rect_);
       }
       validate();
    }
@@ -263,34 +261,24 @@ public class QuickAccessFrame extends MMFrame {
     * Move a control to a new location in the grid.
     */
    private void moveControl(ControlCell control, Point p) {
-      for (Rectangle rect : gridToControl_.keySet()) {
-         ControlCell altControl = gridToControl_.get(rect);
-         if (altControl == control) {
-            removeControl(control, false);
-            control.rect_ = new Rectangle(p.x, p.y, rect.width, rect.height);
-            addControl(control);
-            validate();
-            repaint();
-            break;
-         }
-      }
+      removeControl(control, false);
+      control.rect_.x = p.x;
+      control.rect_.y = p.y;
+      addControl(control);
+      validate();
+      repaint();
    }
 
    /**
     * Clear a control from the grid.
     */
    private void removeControl(ControlCell control, boolean shouldRedraw) {
-      for (Rectangle rect : gridToControl_.keySet()) {
-         if (gridToControl_.get(rect) == control) {
-            gridToControl_.remove(rect);
-            controlsPanel_.remove(control.widget_);
-            configuringControlsPanel_.remove(control.icon_);
-            if (shouldRedraw) {
-               validate();
-               repaint();
-            }
-            break;
-         }
+      controls_.remove(control);
+      controlsPanel_.remove(control.widget_);
+      configuringControlsPanel_.remove(control.icon_);
+      if (shouldRedraw) {
+         validate();
+         repaint();
       }
    }
 
@@ -314,8 +302,8 @@ public class QuickAccessFrame extends MMFrame {
       numCols_ = cols;
       numRows_ = rows;
       // Show/hide controls depending on if they're in-bounds.
-      for (Rectangle r : gridToControl_.keySet()) {
-         ControlCell control = gridToControl_.get(r);
+      for (ControlCell control : controls_) {
+         Rectangle r = control.rect_;
          boolean isVisible = (r.x + r.width < numCols_ &&
                r.y + r.height < numRows_);
          control.widget_.setVisible(isVisible);
