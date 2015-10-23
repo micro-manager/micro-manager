@@ -93,8 +93,15 @@ public class SparseGridLayout implements LayoutManager2 {
    public void layoutContainer(Container container) {
       for (Rectangle r : rectToComponent_.keySet()) {
          Component comp = rectToComponent_.get(r);
-         Rectangle bounds = new Rectangle(r.x * cellWidth_, r.y * cellHeight_,
-               r.width * cellWidth_, r.height * cellHeight_);
+         // Horizontally and vertically center the component.
+         Dimension size = comp.getPreferredSize();
+         int slopWidth = Math.max(0, (r.width * cellWidth_ - size.width) / 2);
+         int slopHeight = Math.max(0,
+               (r.height * cellHeight_ - size.height) / 2);
+         int targetWidth = Math.min(size.width, r.width * cellWidth_);
+         int targetHeight = Math.min(size.height, r.height * cellHeight_);
+         Rectangle bounds = new Rectangle(r.x * cellWidth_ + slopWidth,
+               r.y * cellHeight_ + slopHeight, targetWidth, targetHeight);
          comp.setBounds(bounds);
       }
    }
