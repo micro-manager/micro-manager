@@ -471,9 +471,13 @@ public class QuickAccessFrame extends MMFrame {
             JPanel iconPanel = new JPanel(new MigLayout("flowy, insets 0"));
             iconPanel.setBorder(BorderFactory.createLoweredBevelBorder());
             QuickAccessPlugin plugin = plugins.get(key);
+            Dimension size = new Dimension(1, 1);
+            if (plugin instanceof WidgetPlugin) {
+               size = ((WidgetPlugin) plugin).getSize();
+            }
             DraggableIcon dragger = new DraggableIcon(
                   QuickAccessFactory.makeGUI(plugin), plugin.getIcon(), plugin,
-                  null);
+                  null, size);
             iconPanel.add(dragger,
                   String.format("alignx center, w %d!, h %d!",
                      QuickAccessPlugin.CELL_WIDTH,
@@ -536,7 +540,7 @@ public class QuickAccessFrame extends MMFrame {
          }
          panel.add(control, "align center");
          widget_ = panel;
-         icon_ = new DraggableIcon(control, null, null, this);
+         icon_ = new DraggableIcon(control, null, null, this, rect_.getSize());
       }
 
       public JSONObject toJSON() {
@@ -605,9 +609,11 @@ public class QuickAccessFrame extends MMFrame {
        * the controlsPanel_ when dragged out of the grid. Otherwise, we want to
        * create a new control when the icon is dragged into the grid). If icon
        * is null, then we generate an icon from the JComponent.
+       * @param size Number of cells (width x height) taken up by the icon.
        */
       public DraggableIcon(final JComponent component, ImageIcon icon,
-            final QuickAccessPlugin plugin, final ControlCell parent) {
+            final QuickAccessPlugin plugin, final ControlCell parent,
+            Dimension size) {
          super();
          component_ = component;
          plugin_ = plugin;
@@ -618,21 +624,14 @@ public class QuickAccessFrame extends MMFrame {
             Image render = ScreenImage.createImage(component);
             int width = render.getWidth(null);
             int height = render.getHeight(null);
-            int maxWidth = QuickAccessPlugin.CELL_WIDTH;
-            int maxHeight = QuickAccessPlugin.CELL_HEIGHT;
+            int maxWidth = QuickAccessPlugin.CELL_WIDTH * size.width;
+            int maxHeight = QuickAccessPlugin.CELL_HEIGHT * size.height;
             if (width > maxWidth || height > maxHeight) {
-               // Resize, constraining aspect ratios.
-               double ratio = ((double) width) / height;
-               if (ratio > 1.0) {
-                  // Wider than we are tall.
-                  render = render.getScaledInstance(maxWidth,
-                        (int) (height / ratio), Image.SCALE_DEFAULT);
-               }
-               else {
-                  // Taller than we are wide.
-                  render = render.getScaledInstance((int) (width * ratio),
-                        maxHeight, Image.SCALE_DEFAULT);
-               }
+               // Too big; we must downscale.
+               double scale = Math.min((double) width / maxWidth,
+                     (double) height / maxHeight);
+               render = render.getScaledInstance((int) (width * scale),
+                     (int) (height * scale), Image.SCALE_DEFAULT);
             }
             icon_ = new ImageIcon(render);
          }
