@@ -31,7 +31,7 @@ public interface QuickAccessPlugin extends MMPlugin {
    /**
     * The width of a single cell in the Quick-Access Window.
     */
-   public static final int CELL_WIDTH = 100;
+   public static final int CELL_WIDTH = 120;
 
    /**
     * The height of a single cell in the Quick-Access Window.

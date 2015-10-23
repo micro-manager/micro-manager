@@ -98,7 +98,7 @@ public class PresetButton implements WidgetPlugin, SciJavaPlugin {
       // configure mode.
       final String preset = config.getString("presetName", "GFP");
       JButton result = new JButton(preset,
-            IconLoader.getIcon("/org/micromanager/icons/arrow_right.png"));
+            IconLoader.getIcon("/org/micromanager/icons/color_filter.png"));
       result.setFont(GUIUtils.buttonFont);
       result.setMargin(new Insets(0, 0, 0, 0));
       result.addActionListener(new ActionListener() {
