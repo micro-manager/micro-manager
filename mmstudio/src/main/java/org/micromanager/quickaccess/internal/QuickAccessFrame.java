@@ -115,8 +115,7 @@ public class QuickAccessFrame extends MMFrame {
 
    private int mouseX_ = -1;
    private int mouseY_ = -1;
-   private ImageIcon draggedIcon_ = null;
-   private QuickAccessPlugin draggedPlugin_ = null;
+   private DraggableIcon draggedIcon_ = null;
    private int iconOffsetX_ = -1;
    private int iconOffsetY_ = -1;
 
@@ -213,7 +212,7 @@ public class QuickAccessFrame extends MMFrame {
    public void paint(Graphics g) {
       super.paint(g);
       if (draggedIcon_ != null) {
-         g.drawImage(draggedIcon_.getImage(),
+         g.drawImage(draggedIcon_.icon_.getImage(),
                mouseX_ - iconOffsetX_ + getInsets().left,
                mouseY_ - iconOffsetY_ + getInsets().top, null);
       }
@@ -226,6 +225,10 @@ public class QuickAccessFrame extends MMFrame {
     */
    private void dropPlugin(QuickAccessPlugin plugin) {
       Point p = getCell(mouseX_, mouseY_);
+      if (p == null) {
+         // Can't drop anything here.
+         return;
+      }
       // Default to 1x1 cell.
       Rectangle rect = new Rectangle(p.x, p.y, 1, 1);
       if (p != null && plugin != null) {
@@ -255,6 +258,24 @@ public class QuickAccessFrame extends MMFrame {
          configuringControlsPanel_.add(c.icon_, c.rect_);
       }
       validate();
+   }
+
+   /**
+    * Return true if there is room for a control at the desired
+    * rect. Optionally include a control being moved, so we don't have to
+    * worry about self-intersections.
+    */
+   private boolean canFitRect(Rectangle rect, ControlCell source) {
+      for (ControlCell alt : controls_) {
+         if (alt == source) {
+            // Don't need to compare against yourself for hit detection.
+            continue;
+         }
+         if (alt.rect_.intersects(rect)) {
+            return false;
+         }
+      }
+      return true;
    }
 
    /**
@@ -358,23 +379,23 @@ public class QuickAccessFrame extends MMFrame {
          g.fillRect(0, 0, numCols_ * QuickAccessPlugin.CELL_WIDTH,
                numRows_ * QuickAccessPlugin.CELL_HEIGHT);
          if (draggedIcon_ != null) {
-            // Draw the cells the icon would go into in a highlighted color.
-            // Note that mouse coordinates are with respect to the window, not
-            // this panel.
-            g.setColor(new Color(255, 200, 200, 128));
+            // Draw the cells the icon would go into in a highlighted color,
+            // or in red if the icon's corresponding control would not fit.
             Point p = getCell(mouseX_, mouseY_);
-            int cellWidth = 1;
-            int cellHeight = 1;
-            if (draggedPlugin_ != null &&
-                  draggedPlugin_ instanceof WidgetPlugin) {
-               cellWidth = ((WidgetPlugin) draggedPlugin_).getSize().width;
-               cellHeight = ((WidgetPlugin) draggedPlugin_).getSize().height;
-            }
             if (p != null) {
+               Rectangle rect = new Rectangle(p.x, p.y,
+                     draggedIcon_.getSize().width,
+                     draggedIcon_.getSize().height);
+               if (canFitRect(rect, draggedIcon_.parent_)) {
+                  g.setColor(new Color(255, 200, 200, 128));
+               }
+               else {
+                  g.setColor(new Color(255, 50, 50, 192));
+               }
                g.fillRect(p.x * QuickAccessPlugin.CELL_WIDTH,
                      p.y * QuickAccessPlugin.CELL_HEIGHT,
-                     QuickAccessPlugin.CELL_WIDTH * cellWidth,
-                     QuickAccessPlugin.CELL_HEIGHT * cellHeight);
+                     QuickAccessPlugin.CELL_WIDTH * rect.width,
+                     QuickAccessPlugin.CELL_HEIGHT * rect.height);
             }
          }
          // Draw the grid lines.
@@ -404,14 +425,12 @@ public class QuickAccessFrame extends MMFrame {
    private class ConfigurationPanel extends JPanel {
       // Maps iconified versions of controls to the plugins that generated
       // them.
-      private HashMap<ImageIcon, MMPlugin> iconToPlugin_;
       private JSpinner colsControl_;
       private JSpinner rowsControl_;
 
       public ConfigurationPanel() {
          super(new MigLayout(
                   String.format("flowx, wrap %d", numCols_)));
-         iconToPlugin_ = new HashMap<ImageIcon, MMPlugin>();
          setBorder(BorderFactory.createLoweredBevelBorder());
 
          // Add controls for setting rows/columns.
@@ -454,7 +473,6 @@ public class QuickAccessFrame extends MMFrame {
             DraggableIcon dragger = new DraggableIcon(
                   QuickAccessFactory.makeGUI(plugin), plugin.getIcon(), plugin,
                   null);
-            iconToPlugin_.put(dragger.getIcon(), plugin);
             iconPanel.add(dragger,
                   String.format("alignx center, w %d!, h %d!",
                      QuickAccessPlugin.CELL_WIDTH,
@@ -538,6 +556,12 @@ public class QuickAccessFrame extends MMFrame {
             return null;
          }
       }
+
+      @Override
+      public String toString() {
+         return String.format("<ControlCell for %s at %s>",
+               plugin_.getName(), rect_);
+      }
    }
 
    private ControlCell controlCellFromJSON(JSONObject json) {
@@ -620,8 +644,7 @@ public class QuickAccessFrame extends MMFrame {
          MouseAdapter adapter = new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-               draggedIcon_ = icon_;
-               draggedPlugin_ = plugin_;
+               draggedIcon_ = DraggableIcon.this;
                iconOffsetX_ = e.getX();
                iconOffsetY_ = e.getY();
             }
@@ -648,8 +671,10 @@ public class QuickAccessFrame extends MMFrame {
                      // Dragged out of the grid; remove it.
                      removeControl(parent_, true);
                   }
-                  else {
-                     // Move it to a new location, if possible.
+                  else if (canFitRect(
+                           new Rectangle(p.x, p.y, getSize().width,
+                              getSize().height), parent_)) {
+                     // Move it to a new location.
                      moveControl(parent_, p);
                   }
                }
@@ -661,14 +686,21 @@ public class QuickAccessFrame extends MMFrame {
                   // This should be impossible.
                   studio_.logs().logError("DraggableIcon with both null plugin and null ControlCell");
                }
+               QuickAccessFrame.this.repaint();
             }
          };
          addMouseListener(adapter);
          addMouseMotionListener(adapter);
       }
 
-      public ImageIcon getIcon() {
-         return icon_;
+      public Dimension getSize() {
+         if (parent_ == null) {
+            if (plugin_ instanceof WidgetPlugin) {
+               return ((WidgetPlugin) plugin_).getSize();
+            }
+            return new Dimension(1, 1);
+         }
+         return new Dimension(parent_.rect_.width, parent_.rect_.height);
       }
    }
 }
