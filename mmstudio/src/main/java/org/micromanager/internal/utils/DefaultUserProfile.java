@@ -612,6 +612,20 @@ public class DefaultUserProfile implements UserProfile {
       userProfile_ = (DefaultPropertyMap) userProfile_.merge(properties);
    }
 
+   @Override
+   public void createUser(String username, String path) throws IllegalArgumentException, IOException {
+      if (nameToFile_.containsKey(username)) {
+         throw new IllegalArgumentException("Username " + username + " is already in use");
+      }
+      // This populates nameToFile_.
+      addProfile(username);
+      if (path != null) {
+         String profilePath = JavaUtils.getApplicationDataPath() + "/" +
+            nameToFile_.get(username);
+         Files.copy(new File(path), new File(profilePath));
+      }
+   }
+
    public Set<String> getProfileNames() {
       // HACK: don't reveal the global profile since it's not technically a
       // "user".
