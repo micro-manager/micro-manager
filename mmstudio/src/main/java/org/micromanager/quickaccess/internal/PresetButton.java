@@ -152,8 +152,11 @@ public class PresetButton implements WidgetPlugin, SciJavaPlugin {
          }
       });
       // Default to the Channel group, if available.
-      if (Arrays.asList(groups).contains("Channel")) {
-         groupSelector.setSelectedItem("Channel");
+      for (String group : groups) {
+         if (group.toLowerCase().contains("channel")) {
+            groupSelector.setSelectedItem(group);
+            break;
+         }
       }
 
       JOptionPane.showMessageDialog(parent, contents,
