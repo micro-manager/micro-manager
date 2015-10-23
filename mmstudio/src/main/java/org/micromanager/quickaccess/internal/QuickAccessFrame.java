@@ -21,6 +21,8 @@ package org.micromanager.quickaccess.internal;
 
 import com.bulenkov.iconloader.IconLoader;
 
+import com.google.common.eventbus.Subscribe;
+
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -55,6 +57,13 @@ import javax.swing.SwingUtilities;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import org.micromanager.data.internal.DefaultPropertyMap;
+import org.micromanager.events.internal.InternalShutdownCommencingEvent;
+import org.micromanager.events.StartupCompleteEvent;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.ScreenImage;
@@ -71,30 +80,19 @@ public class QuickAccessFrame extends MMFrame {
    // Profile keys.
    private static final String NUM_COLS = "Number of columns in the Quick-Access Window";
    private static final String NUM_ROWS = "Number of rows in the Quick-Access Window";
+   private static final String SAVED_CONFIG = "Saved configuration of the Quick-Access Window";
 
    private static QuickAccessFrame staticInstance_;
+   public static void makeFrame(Studio studio) {
+      staticInstance_ = new QuickAccessFrame(studio);
+      studio.events().registerForEvents(staticInstance_);
+   }
 
    /**
     * Show the Quick-Access Window, creating it if it does not already exist.
     */
    public static void showFrame(Studio studio) {
-      if (staticInstance_ == null) {
-         staticInstance_ = new QuickAccessFrame(studio);
-      }
       staticInstance_.setVisible(true);
-   }
-
-   /**
-    * Dead-simple container class for a widget, and its icon when in configure
-    * mode.
-    */
-   private static class ControlCell {
-      public JComponent widget_;
-      public DraggableIcon icon_;
-      public ControlCell(JComponent control, DraggableIcon icon) {
-         widget_ = control;
-         icon_ = icon;
-      }
    }
 
    private Studio studio_;
@@ -132,7 +130,8 @@ public class QuickAccessFrame extends MMFrame {
       numRows_ = studio_.profile().getInt(QuickAccessFrame.class,
             NUM_ROWS, 3);
 
-      // Hide ourselves when the close button is clicked.
+      // Hide ourselves when the close button is clicked, instead of letting
+      // us be destroyed.
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent e) {
@@ -169,6 +168,46 @@ public class QuickAccessFrame extends MMFrame {
    }
 
    /**
+    * Check the user's profile to see if we have any saved settings there.
+    */
+   @Subscribe
+   public void onStartupComplete(StartupCompleteEvent event) {
+      boolean shouldShow = false;
+      String configStr = studio_.profile().getString(
+            QuickAccessFrame.class, SAVED_CONFIG, null);
+      if (configStr == null) {
+         // Nothing saved.
+         return;
+      }
+      try {
+         JSONArray config = new JSONArray(configStr);
+         for (int i = 0; i < config.length(); ++i) {
+            addControl(controlCellFromJSON(config.getJSONObject(i)));
+            shouldShow = true;
+         }
+      }
+      catch (JSONException e) {
+         studio_.logs().logError(e, "Unable to reconstruct Quick-Access Window from config.");
+      }
+      if (shouldShow) {
+         setVisible(true);
+      }
+   }
+
+   /**
+    * Save our current state to the profile.
+    */
+   @Subscribe
+   public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
+      JSONArray settings = new JSONArray();
+      for (ControlCell cell : gridToControl_.values()) {
+         settings.put(cell.toJSON());
+      }
+      studio_.profile().setString(QuickAccessFrame.class, SAVED_CONFIG,
+            settings.toString());
+   }
+
+   /**
     * We need to paint any dragged icon being moved from place to place.
     */
    @Override
@@ -191,23 +230,12 @@ public class QuickAccessFrame extends MMFrame {
       // Default to 1x1 cell.
       Rectangle rect = new Rectangle(p.x, p.y, 1, 1);
       if (p != null && plugin != null) {
-         // Embed the control in a panel for better sizing.
-         JPanel panel = new JPanel(new MigLayout("fill"));
-         JComponent control = null;
+         PropertyMap config = null;
          if (plugin instanceof WidgetPlugin) {
-            // Configure the plugin first.
-            // TODO this needs to be spun off to a new thread.
-            WidgetPlugin widget = (WidgetPlugin) plugin;
-            PropertyMap config = widget.configureControl(this);
-            control = widget.createControl(config);
-            rect.width = widget.getSize().width;
-            rect.height = widget.getSize().height;
+            config = ((WidgetPlugin) plugin).configureControl(this);
          }
-         else {
-            control = QuickAccessFactory.makeGUI(plugin);
-         }
-         panel.add(control, "align center");
-         addControl(rect, panel);
+         ControlCell cell = new ControlCell(plugin, config, rect);
+         addControl(cell);
       }
       QuickAccessFrame.this.repaint();
    }
@@ -218,11 +246,10 @@ public class QuickAccessFrame extends MMFrame {
     * This requires removing and then re-adding all components because the
     * size of the MigLayout entity may have changed.
     */
-   private void addControl(Rectangle rect, JComponent control) {
+   private void addControl(ControlCell cell) {
       controlsPanel_.removeAll();
       configuringControlsPanel_.removeAll();
-      gridToControl_.put(rect, new ControlCell(control,
-               new DraggableIcon(control, null, null)));
+      gridToControl_.put(cell.rect_, cell);
       // Restore controls.
       for (Rectangle r : gridToControl_.keySet()) {
          ControlCell c = gridToControl_.get(r);
@@ -235,13 +262,13 @@ public class QuickAccessFrame extends MMFrame {
    /**
     * Move a control to a new location in the grid.
     */
-   private void moveControl(JComponent component, Point p) {
+   private void moveControl(ControlCell control, Point p) {
       for (Rectangle rect : gridToControl_.keySet()) {
-         ControlCell control = gridToControl_.get(rect);
-         if (control.widget_ == component) {
-            removeControl(component, false);
-            addControl(new Rectangle(p.x, p.y, rect.width, rect.height),
-                  component);
+         ControlCell altControl = gridToControl_.get(rect);
+         if (altControl == control) {
+            removeControl(control, false);
+            control.rect_ = new Rectangle(p.x, p.y, rect.width, rect.height);
+            addControl(control);
             validate();
             repaint();
             break;
@@ -252,12 +279,11 @@ public class QuickAccessFrame extends MMFrame {
    /**
     * Clear a control from the grid.
     */
-   private void removeControl(JComponent component, boolean shouldRedraw) {
+   private void removeControl(ControlCell control, boolean shouldRedraw) {
       for (Rectangle rect : gridToControl_.keySet()) {
-         ControlCell control = gridToControl_.get(rect);
-         if (control.widget_ == component) {
+         if (gridToControl_.get(rect) == control) {
             gridToControl_.remove(rect);
-            controlsPanel_.remove(component);
+            controlsPanel_.remove(control.widget_);
             configuringControlsPanel_.remove(control.icon_);
             if (shouldRedraw) {
                validate();
@@ -438,7 +464,8 @@ public class QuickAccessFrame extends MMFrame {
             iconPanel.setBorder(BorderFactory.createLoweredBevelBorder());
             QuickAccessPlugin plugin = plugins.get(key);
             DraggableIcon dragger = new DraggableIcon(
-                  QuickAccessFactory.makeGUI(plugin), plugin.getIcon(), plugin);
+                  QuickAccessFactory.makeGUI(plugin), plugin.getIcon(), plugin,
+                  null);
             iconToPlugin_.put(dragger.getIcon(), plugin);
             iconPanel.add(dragger,
                   String.format("alignx center, w %d!, h %d!",
@@ -467,12 +494,96 @@ public class QuickAccessFrame extends MMFrame {
    }
 
    /**
+    * This class represents a single control in the window.
+    */
+   private class ControlCell {
+      // Plugin that created the control.
+      public QuickAccessPlugin plugin_;
+      // Configuration if the plugin is a WidgetPlugin.
+      public PropertyMap config_;
+      // Rectangle in the grid that the control occupies.
+      public Rectangle rect_;
+      // The control itself (in a JPanel).
+      public JComponent widget_;
+      // An iconified version of the control.
+      public DraggableIcon icon_;
+
+      public ControlCell(QuickAccessPlugin plugin, PropertyMap config,
+            Rectangle rect) {
+         plugin_ = plugin;
+         config_ = config;
+         rect_ = rect;
+         JPanel panel = new JPanel(new MigLayout("fill"));
+         JComponent control = null;
+         if (plugin instanceof WidgetPlugin) {
+            WidgetPlugin widget = (WidgetPlugin) plugin;
+            if (config == null) {
+               config = widget.configureControl(QuickAccessFrame.this);
+            }
+            rect_.width = widget.getSize().width;
+            rect_.height = widget.getSize().height;
+            control = widget.createControl(config);
+         }
+         else {
+            control = QuickAccessFactory.makeGUI(plugin);
+         }
+         panel.add(control, "align center");
+         widget_ = panel;
+         icon_ = new DraggableIcon(widget_, null, null, this);
+      }
+
+      public JSONObject toJSON() {
+         try {
+            JSONObject result = new JSONObject();
+            result.put("pluginName", plugin_.getClass().getName());
+            if (config_ != null) {
+               result.put("config", ((DefaultPropertyMap) config_).toJSON());
+            }
+            result.put("rectX", rect_.x);
+            result.put("rectY", rect_.y);
+            result.put("rectWidth", rect_.width);
+            result.put("rectHeight", rect_.height);
+            return result;
+         }
+         catch (JSONException e) {
+            studio_.logs().logError(e, "Error serializing ControlCell");
+            return null;
+         }
+      }
+   }
+
+   private ControlCell controlCellFromJSON(JSONObject json) {
+      String pluginName = "";
+      try {
+         pluginName = json.getString("pluginName");
+         QuickAccessPlugin plugin = studio_.plugins().getQuickAccessPlugins().get(pluginName);
+         PropertyMap config = null;
+         if (json.has("config")) {
+            config = DefaultPropertyMap.fromJSON(json.getJSONObject("config"));
+         }
+         Rectangle rect = new Rectangle(
+               json.getInt("rectX"), json.getInt("rectY"),
+               json.getInt("rectWidth"), json.getInt("rectHeight"));
+         return new ControlCell(plugin, config, rect);
+      }
+      catch (JSONException e) {
+         studio_.logs().logError(e,
+               "Unable to deserialize ControlCell from " + json);
+      }
+      catch (NullPointerException e) {
+         studio_.logs().logError(e, "Unable to reload plugin " + pluginName);
+      }
+      return null;
+   }
+
+   /**
     * This class represents an icon that can be dragged around the window,
     * for adding or removing controls.
     */
    private class DraggableIcon extends JLabel {
       private JComponent component_;
       private QuickAccessPlugin plugin_;
+      private ControlCell parent_;
       private ImageIcon icon_;
 
       /**
@@ -483,10 +594,11 @@ public class QuickAccessFrame extends MMFrame {
        * is null, then we generate an icon from the JComponent.
        */
       public DraggableIcon(final JComponent component, ImageIcon icon,
-            final QuickAccessPlugin plugin) {
+            final QuickAccessPlugin plugin, final ControlCell parent) {
          super();
          component_ = component;
          plugin_ = plugin;
+         parent_ = parent;
          icon_ = icon;
          if (icon_ == null) {
             // Render the image, then downscale to fit the available space.
@@ -540,20 +652,26 @@ public class QuickAccessFrame extends MMFrame {
             @Override
             public void mouseReleased(MouseEvent e) {
                draggedIcon_ = null;
-               // Stop dragging; create or destroy controls as appropriate.
-               if (plugin_ == null) {
+               // Stop dragging; create/move/destroy controls as appropriate.
+               if (parent_ != null) {
+                  // Have an existing control; move or destroy it.
                   Point p = getCell(mouseX_, mouseY_);
                   if (p == null) {
                      // Dragged out of the grid; remove it.
-                     removeControl(component_, true);
+                     removeControl(parent_, true);
                   }
                   else {
                      // Move it to a new location, if possible.
-                     moveControl(component_, p);
+                     moveControl(parent_, p);
                   }
                }
-               else {
+               else if (plugin_ != null) {
+                  // Add a new control to the grid.
                   dropPlugin(plugin_);
+               }
+               else {
+                  // This should be impossible.
+                  studio_.logs().logError("DraggableIcon with both null plugin and null ControlCell");
                }
             }
          };
