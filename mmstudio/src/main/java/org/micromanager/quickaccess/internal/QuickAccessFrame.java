@@ -536,7 +536,7 @@ public class QuickAccessFrame extends MMFrame {
          }
          panel.add(control, "align center");
          widget_ = panel;
-         icon_ = new DraggableIcon(widget_, null, null, this);
+         icon_ = new DraggableIcon(control, null, null, this);
       }
 
       public JSONObject toJSON() {
