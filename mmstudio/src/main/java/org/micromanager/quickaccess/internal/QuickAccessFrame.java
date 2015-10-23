@@ -110,12 +110,16 @@ public class QuickAccessFrame extends MMFrame {
 
    // All of the controls we have in the grid.
    private HashSet<ControlCell> controls_;
+   // Dimensions of the grid.
    private int numCols_;
    private int numRows_;
 
+   // X/Y position of the mouse when dragging icons.
    private int mouseX_ = -1;
    private int mouseY_ = -1;
+   // The icon being dragged.
    private DraggableIcon draggedIcon_ = null;
+   // The X/Y offsets from the top-left corner at which the icon was "grabbed"
    private int iconOffsetX_ = -1;
    private int iconOffsetY_ = -1;
 
@@ -468,7 +472,7 @@ public class QuickAccessFrame extends MMFrame {
          ArrayList<String> keys = new ArrayList<String>(plugins.keySet());
          Collections.sort(keys);
          for (String key : keys) {
-            JPanel iconPanel = new JPanel(new MigLayout("flowy, insets 0"));
+            JPanel iconPanel = new JPanel(new MigLayout("flowy, insets 0, fill"));
             iconPanel.setBorder(BorderFactory.createLoweredBevelBorder());
             QuickAccessPlugin plugin = plugins.get(key);
             Dimension size = new Dimension(1, 1);
@@ -478,14 +482,13 @@ public class QuickAccessFrame extends MMFrame {
             DraggableIcon dragger = new DraggableIcon(
                   QuickAccessFactory.makeGUI(plugin), plugin.getIcon(), plugin,
                   null, size);
-            iconPanel.add(dragger,
-                  String.format("alignx center, w %d!, h %d!",
-                     QuickAccessPlugin.CELL_WIDTH,
-                     QuickAccessPlugin.CELL_HEIGHT));
+            iconPanel.add(dragger, "alignx center");
             JLabel name = new JLabel(plugins.get(key).getName());
             name.setFont(GUIUtils.buttonFont);
             iconPanel.add(name, "alignx center");
-            add(iconPanel, "alignx center");
+            add(iconPanel, String.format("alignx center, w %d!, h %d!",
+                     QuickAccessPlugin.CELL_WIDTH,
+                     QuickAccessPlugin.CELL_HEIGHT));
          }
       }
 
