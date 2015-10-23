@@ -61,7 +61,12 @@ public interface CompatibilityInterface {
     * @throws MMScriptException
     */
    public Datastore runAcquisition() throws MMScriptException;
-   
+
+   /**
+    * Halt any ongoing acquisition as soon as possible.
+    */
+   public void haltAcquisition();
+
    /**
     * Executes Acquisition with current settings but allows for changing the data path.
     * Will open the Acquisition Dialog when it is not open yet.

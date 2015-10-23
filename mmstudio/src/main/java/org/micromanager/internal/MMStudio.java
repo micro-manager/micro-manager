@@ -1464,6 +1464,11 @@ public class MMStudio implements Studio, CompatibilityInterface {
    }
 
    @Override
+   public void haltAcquisition() {
+      engine_.abortRequest();
+   }
+
+   @Override
    public Datastore runAcquisition(String name, String root)
          throws MMScriptException {
       testForAbortRequests();
