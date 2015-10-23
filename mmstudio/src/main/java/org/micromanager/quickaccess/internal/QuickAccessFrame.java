@@ -417,13 +417,14 @@ public class QuickAccessFrame extends MMFrame {
          subPanel.add(new JLabel("Rows: "));
          rowsControl_ = new JSpinner(
                new SpinnerNumberModel(numCols_, 1, 99, 1));
-         subPanel.add(rowsControl_);
+         subPanel.add(rowsControl_, "wrap");
          rowsControl_.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
                updateSize();
             }
          });
+         subPanel.add(new JLabel("Drag controls into the grid above to add them to the window."), "span, wrap");
 
          add(subPanel, "span, wrap");
 
@@ -433,17 +434,20 @@ public class QuickAccessFrame extends MMFrame {
          ArrayList<String> keys = new ArrayList<String>(plugins.keySet());
          Collections.sort(keys);
          for (String key : keys) {
+            JPanel iconPanel = new JPanel(new MigLayout("flowy, insets 0"));
+            iconPanel.setBorder(BorderFactory.createLoweredBevelBorder());
             QuickAccessPlugin plugin = plugins.get(key);
             DraggableIcon dragger = new DraggableIcon(
                   QuickAccessFactory.makeGUI(plugin), plugin.getIcon(), plugin);
             iconToPlugin_.put(dragger.getIcon(), plugin);
-            add(dragger,
-                  String.format("split 2, alignx center, flowy, w %d!, h %d!",
+            iconPanel.add(dragger,
+                  String.format("alignx center, w %d!, h %d!",
                      QuickAccessPlugin.CELL_WIDTH,
                      QuickAccessPlugin.CELL_HEIGHT));
             JLabel name = new JLabel(plugins.get(key).getName());
             name.setFont(GUIUtils.buttonFont);
-            add(name, "alignx center");
+            iconPanel.add(name, "alignx center");
+            add(iconPanel, "alignx center");
          }
       }
 
