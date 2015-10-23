@@ -224,7 +224,7 @@ public class QuickAccessFrame extends MMFrame {
     * @param plugin The source plugin to create the new control.
     */
    private void dropPlugin(QuickAccessPlugin plugin) {
-      Point p = getCell(mouseX_, mouseY_);
+      Point p = getCell();
       if (p == null) {
          // Can't drop anything here.
          return;
@@ -336,11 +336,12 @@ public class QuickAccessFrame extends MMFrame {
    }
 
    /**
-    * Map a provided location (relative to the window) into a cell location
-    * (in the controlsPanel_). Returns null if the location is not valid.
+    * Map the current mouse position (relative to the window) into a cell
+    * location (in the controlsPanel_). Returns null if the location is not
+    * valid.
     */
-   private Point getCell(int x, int y) {
-      Point p = new Point(x, y);
+   private Point getCell() {
+      Point p = new Point(mouseX_, mouseY_);
       SwingUtilities.convertPointFromScreen(p, controlsPanel_);
       int cellX = p.x / QuickAccessPlugin.CELL_WIDTH;
       int cellY = p.y / QuickAccessPlugin.CELL_HEIGHT;
@@ -381,7 +382,7 @@ public class QuickAccessFrame extends MMFrame {
          if (draggedIcon_ != null) {
             // Draw the cells the icon would go into in a highlighted color,
             // or in red if the icon's corresponding control would not fit.
-            Point p = getCell(mouseX_, mouseY_);
+            Point p = getCell();
             if (p != null) {
                Rectangle rect = new Rectangle(p.x, p.y,
                      draggedIcon_.getSize().width,
@@ -666,7 +667,7 @@ public class QuickAccessFrame extends MMFrame {
                // Stop dragging; create/move/destroy controls as appropriate.
                if (parent_ != null) {
                   // Have an existing control; move or destroy it.
-                  Point p = getCell(mouseX_, mouseY_);
+                  Point p = getCell();
                   if (p == null) {
                      // Dragged out of the grid; remove it.
                      removeControl(parent_, true);
