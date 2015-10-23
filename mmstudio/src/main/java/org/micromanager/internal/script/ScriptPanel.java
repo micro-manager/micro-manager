@@ -122,7 +122,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
    private Interpreter beanshellREPLint_;
    private JConsole cons_;
    
-   private static final FileType BSH_FILE
+   public static final FileType BSH_FILE
            = new FileType("BSH_FILE","Beanshell files",
                     System.getProperty("user.home") + "/MyScript.bsh",
                     true, "bsh");

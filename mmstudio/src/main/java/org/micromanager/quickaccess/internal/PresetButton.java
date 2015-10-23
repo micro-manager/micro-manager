@@ -90,7 +90,6 @@ public class PresetButton implements WidgetPlugin, SciJavaPlugin {
       return null;
    }
 
-   // We are not actually configurable.
    @Override
    public JComponent createControl(PropertyMap config) {
       final String group = config.getString("configGroup", null);
