@@ -83,7 +83,7 @@ public class MDAButton implements WidgetPlugin, SciJavaPlugin {
    @Override
    public ImageIcon getIcon() {
       return new ImageIcon(IconLoader.loadFromResource(
-               "/org/micromanager/icons/film.png"));
+               "/org/micromanager/icons/film@2x.png"));
    }
 
    // We are not actually configurable.
