@@ -108,10 +108,12 @@ public class MDAButton implements WidgetPlugin, SciJavaPlugin {
          public void onAcquisitionStart(AcquisitionStartedEvent event) {
             setIcon(IconLoader.getIcon(
                      "/org/micromanager/icons/cancel.png"));
+            setText("Stop!");
          }
          @Subscribe
          public void onAcquisitionEnded(AcquisitionEndedEvent event) {
             setIcon(null);
+            setText("Acquire!");
          }
       };
       studio_.events().registerForEvents(runButton);

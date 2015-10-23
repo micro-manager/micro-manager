@@ -270,6 +270,11 @@ public class QuickAccessFrame extends MMFrame {
     * worry about self-intersections.
     */
    private boolean canFitRect(Rectangle rect, ControlCell source) {
+      if (rect.x < 0 || rect.x + rect.width > numRows_ ||
+            rect.y < 0 || rect.y + rect.height > numCols_) {
+         // Rect is out of bounds.
+         return false;
+      }
       for (ControlCell alt : controls_) {
          if (alt == source) {
             // Don't need to compare against yourself for hit detection.
@@ -385,22 +390,19 @@ public class QuickAccessFrame extends MMFrame {
                numRows_ * QuickAccessPlugin.CELL_HEIGHT);
          if (draggedIcon_ != null) {
             // Draw the cells the icon would go into in a highlighted color,
-            // or in red if the icon's corresponding control would not fit.
+            // only if it would fit.
             Point p = getCell();
             if (p != null) {
                Rectangle rect = new Rectangle(p.x, p.y,
                      draggedIcon_.getSize().width,
                      draggedIcon_.getSize().height);
                if (canFitRect(rect, draggedIcon_.parent_)) {
-                  g.setColor(new Color(255, 200, 200, 128));
+                  g.setColor(new Color(255, 255, 150, 128));
+                  g.fillRect(p.x * QuickAccessPlugin.CELL_WIDTH,
+                        p.y * QuickAccessPlugin.CELL_HEIGHT,
+                        QuickAccessPlugin.CELL_WIDTH * rect.width,
+                        QuickAccessPlugin.CELL_HEIGHT * rect.height);
                }
-               else {
-                  g.setColor(new Color(255, 50, 50, 192));
-               }
-               g.fillRect(p.x * QuickAccessPlugin.CELL_WIDTH,
-                     p.y * QuickAccessPlugin.CELL_HEIGHT,
-                     QuickAccessPlugin.CELL_WIDTH * rect.width,
-                     QuickAccessPlugin.CELL_HEIGHT * rect.height);
             }
          }
          // Draw the grid lines.

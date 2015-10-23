@@ -78,7 +78,8 @@ public class SnapButton implements WidgetPlugin, SciJavaPlugin {
 
    @Override
    public ImageIcon getIcon() {
-      return null;
+      return new ImageIcon(IconLoader.loadFromResource(
+            "/org/micromanager/icons/camera@2x.png"));
    }
 
    // We are not actually configurable.

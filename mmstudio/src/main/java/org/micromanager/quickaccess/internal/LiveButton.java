@@ -73,7 +73,8 @@ public class LiveButton implements ToggleButtonPlugin, SciJavaPlugin {
 
    @Override
    public ImageIcon getIcon() {
-      return null;
+      return new ImageIcon(IconLoader.loadFromResource(
+            "/org/micromanager/icons/camera_go@2x.png"));
    }
 
    @Override
