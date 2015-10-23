@@ -105,7 +105,13 @@ public class ScriptButton implements WidgetPlugin, SciJavaPlugin {
       result.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent event) {
-            studio_.scripter().runFile(file);
+            if (!file.exists()) {
+               studio_.logs().showError("Unable to find script file at " +
+                  file.getAbsolutePath());
+            }
+            else {
+               studio_.scripter().runFile(file);
+            }
          }
       });
       return result;
