@@ -104,6 +104,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    private JLabel labelImageDimensions_;
    private JToggleButton liveButton_;
    private JToggleButton autoShutterToggle_;
+   private JLabel shutterIcon_;
    private JButton snapButton_;
    private JToggleButton handMovesButton_;
    private JButton autofocusNowButton_;
@@ -269,7 +270,6 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    }
 
    private void createShutterControls(JPanel subPanel) {
-      String buttonSize = "w 72!, h 22!";
       autoShutterToggle_ = new JToggleButton("Auto shutter");
       autoShutterToggle_.setFont(defaultFont_);
       autoShutterToggle_.addActionListener(new ActionListener() {
@@ -278,9 +278,13 @@ public class MainFrame extends MMFrame implements LiveModeListener {
             studio_.toggleAutoShutter();
          }
       });
-      subPanel.add(autoShutterToggle_, buttonSize + ", split 2");
+      subPanel.add(autoShutterToggle_, "w 72!, h 22!, split 3");
 
-      toggleShutterButton_ = new JToggleButton("Open shutter");
+      shutterIcon_ = new JLabel(
+            IconLoader.getIcon("/org/micromanager/icons/shutter_open.png"));
+      subPanel.add(shutterIcon_, "growx, alignx center");
+
+      toggleShutterButton_ = new JToggleButton("Open");
       toggleShutterButton_.setToolTipText("Open/close the shutter");
       toggleShutterButton_.setFont(defaultFont_);
       toggleShutterButton_.addActionListener(new ActionListener() {
@@ -289,7 +293,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                toggleShutter();
             }
       });
-      subPanel.add(toggleShutterButton_, buttonSize + ", gapleft push, wrap");
+      subPanel.add(toggleShutterButton_, "w 40!, h 22!, wrap");
    }
 
    private JPanel createCameraSettingsWidgets() {
@@ -552,9 +556,13 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    
    public void setShutterButton(boolean state) {
       if (state) {
-         toggleShutterButton_.setText("Close shutter");
+         toggleShutterButton_.setText("Close");
+         shutterIcon_.setIcon(IconLoader.getIcon(
+                  "/org/micromanager/icons/shutter_open.png"));
       } else {
-         toggleShutterButton_.setText("Open shutter");
+         toggleShutterButton_.setText("Open");
+         shutterIcon_.setIcon(IconLoader.getIcon(
+                  "/org/micromanager/icons/shutter_closed.png"));
       }
    }
 
@@ -563,7 +571,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
          if (!toggleShutterButton_.isEnabled())
             return;
          toggleShutterButton_.requestFocusInWindow();
-         if (toggleShutterButton_.getText().equals("Open shutter")) {
+         if (toggleShutterButton_.getText().equals("Open")) {
             setShutterButton(true);
             core_.setShutterOpen(true);
          } else {
