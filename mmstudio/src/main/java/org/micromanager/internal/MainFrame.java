@@ -110,7 +110,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    private JButton autofocusNowButton_;
    private JButton autofocusConfigureButton_;
    private JButton saveConfigButton_;
-   private JToggleButton toggleShutterButton_;
+   private JButton toggleShutterButton_;
    
    private ConfigGroupPad configPad_;
 
@@ -284,7 +284,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
             IconLoader.getIcon("/org/micromanager/icons/shutter_open.png"));
       subPanel.add(shutterIcon_, "growx, alignx center");
 
-      toggleShutterButton_ = new JToggleButton("Open");
+      toggleShutterButton_ = new JButton("Open");
       toggleShutterButton_.setToolTipText("Open/close the shutter");
       toggleShutterButton_.setFont(defaultFont_);
       toggleShutterButton_.addActionListener(new ActionListener() {
