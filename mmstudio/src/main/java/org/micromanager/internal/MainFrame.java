@@ -36,6 +36,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.Font;
+import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
 import java.awt.Toolkit;
 import java.text.ParseException;
@@ -53,7 +54,6 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SpringLayout;
@@ -63,6 +63,8 @@ import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
+
+import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.events.ConfigGroupChangedEvent;
 import org.micromanager.events.ChannelExposureEvent;
@@ -90,13 +92,18 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    private static final String MAIN_FRAME_DIVIDER_POS = "divider_pos";
    private static final String MAIN_EXPOSURE = "exposure";
 
+   // Size constraint for normal buttons.
+   private static final String BIGBUTTON_SIZE = "w 88!, h 22!";
+   // Size constraint for small buttons.
+   private static final String SMALLBUTTON_SIZE = "w 30!, h 20!";
+
    // GUI components
    private JComboBox comboBinning_;
    private JComboBox shutterComboBox_;
    private JTextField textFieldExp_;
    private JLabel labelImageDimensions_;
    private JToggleButton liveButton_;
-   private JCheckBox autoShutterCheckBox_;
+   private JToggleButton autoShutterToggle_;
    private JButton snapButton_;
    private JToggleButton handMovesButton_;
    private JButton autofocusNowButton_;
@@ -128,14 +135,15 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       snapLiveManager_.addLiveModeListener(this);
 
       setTitle(MICRO_MANAGER_TITLE + " " + MMVersion.VERSION_STRING);
-      setMinimumSize(new Dimension(605, 250));
+      setMinimumSize(new Dimension(575, 250));
 
       JPanel contents = new JPanel();
-      contents.setLayout(new SpringLayout());
-      getContentPane().add(contents);
+      // Minimize insets.
+      contents.setLayout(new MigLayout("insets 1, gap 0"));
+      setContentPane(contents);
 
-      createTopPanelWidgets(contents);
-      
+      contents.add(createComponents(), "grow");
+
       setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
       setupWindowHandlers();
 
@@ -179,19 +187,33 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       configPadButtonPanel_.setCore(core_);
    }
 
-   private static JLabel createLabel(String text, boolean big,
-           JPanel parentPanel, int west, int north, int east, int south) {
-            final JLabel label = new JLabel();
+   private JButton createButton(String text, String iconPath,
+         String help, final Runnable action) {
+      JButton button = new JButton(text,
+            IconLoader.getIcon("/org/micromanager/icons/" + iconPath));
+      button.setMargin(new Insets(0, 0, 0, 0));
+      button.setToolTipText(help);
+      button.setFont(defaultFont_);
+      button.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            action.run();
+         }
+      });
+      return button;
+   }
+
+   private static JLabel createLabel(String text, boolean big) {
+      final JLabel label = new JLabel();
       label.setFont(new Font("Arial",
               big ? Font.BOLD : Font.PLAIN,
               big ? 11 : 10));
       label.setText(text);
-      GUIUtils.addWithEdges(parentPanel, label, west, north, east, south);
       return label;
    }
 
-   private void createActiveShutterChooser(JPanel topPanel) {
-      createLabel("Shutter", false, topPanel, 111, 73, 158, 86); 
+   private void createActiveShutterChooser(JPanel subPanel) {
+      subPanel.add(createLabel("Shutter", false), "split 2");
 
       shutterComboBox_ = new JComboBox();
       shutterComboBox_.setName("Shutter");
@@ -207,11 +229,11 @@ public class MainFrame extends MMFrame implements LiveModeListener {
             }
          }
       });
-      GUIUtils.addWithEdges(topPanel, shutterComboBox_, 170, 70, 275, 92);
+      subPanel.add(shutterComboBox_, "gapleft push, wrap");
    }
 
-   private void createBinningChooser(JPanel topPanel) {
-      createLabel("Binning", false, topPanel, 111, 43, 199, 64);
+   private void createBinningChooser(JPanel subPanel) {
+      subPanel.add(createLabel("Binning", false), "split 2");
 
       comboBinning_ = new JComboBox();
       comboBinning_.setName("Binning");
@@ -223,13 +245,13 @@ public class MainFrame extends MMFrame implements LiveModeListener {
             studio_.changeBinning();
          }
       });
-      GUIUtils.addWithEdges(topPanel, comboBinning_, 200, 43, 275, 66);
+      subPanel.add(comboBinning_, "gapleft push, wrap");
    }
 
-   private void createExposureField(JPanel topPanel) {
-      createLabel("Exposure [ms]", false, topPanel, 111, 23, 198, 39);
+   private void createExposureField(JPanel subPanel) {
+      subPanel.add(createLabel("Exposure [ms]", false), "split 2");
 
-      textFieldExp_ = new JTextField();
+      textFieldExp_ = new JTextField(8);
       textFieldExp_.addFocusListener(new FocusAdapter() {
          @Override
          public void focusLost(FocusEvent fe) {
@@ -243,108 +265,121 @@ public class MainFrame extends MMFrame implements LiveModeListener {
             studio_.setExposure(getDisplayedExposureTime());
          }
       });
-      GUIUtils.addWithEdges(topPanel, textFieldExp_, 203, 21, 276, 40);
+      subPanel.add(textFieldExp_, "gapleft push, wrap");
    }
 
-   private void createShutterControls(JPanel topPanel) {
-      autoShutterCheckBox_ = new JCheckBox();
-      autoShutterCheckBox_.setFont(defaultFont_);
-      autoShutterCheckBox_.addActionListener(new ActionListener() {
+   private void createShutterControls(JPanel subPanel) {
+      String buttonSize = "w 72!, h 22!";
+      autoShutterToggle_ = new JToggleButton("Auto shutter");
+      autoShutterToggle_.setFont(defaultFont_);
+      autoShutterToggle_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             studio_.toggleAutoShutter();
          }
       });
-      autoShutterCheckBox_.setIconTextGap(6);
-      autoShutterCheckBox_.setHorizontalTextPosition(SwingConstants.LEADING);
-      autoShutterCheckBox_.setText("Auto shutter");
-      GUIUtils.addWithEdges(topPanel, autoShutterCheckBox_, 107, 96, 199, 119);
+      subPanel.add(autoShutterToggle_, buttonSize + ", split 2");
 
-      toggleShutterButton_ = (JToggleButton) GUIUtils.createButton(true,
-         "toggleShutterButton", "Open", "Open/close the shutter",
-         new Runnable() {
+      toggleShutterButton_ = new JToggleButton("Open shutter");
+      toggleShutterButton_.setToolTipText("Open/close the shutter");
+      toggleShutterButton_.setFont(defaultFont_);
+      toggleShutterButton_.addActionListener(new ActionListener() {
             @Override
-            public void run() {
+            public void actionPerformed(ActionEvent e) {
                toggleShutter();
             }
-         },
-         null, topPanel, 203, 96, 275, 117);
+      });
+      subPanel.add(toggleShutterButton_, buttonSize + ", gapleft push, wrap");
    }
 
-   private void createCameraSettingsWidgets(JPanel topPanel) {
-      createLabel("Camera settings", true, topPanel, 109, 2, 211, 22);
-      createExposureField(topPanel);
-      createBinningChooser(topPanel);
-      createActiveShutterChooser(topPanel);
-      createShutterControls(topPanel);
+   private JPanel createCameraSettingsWidgets() {
+      JPanel subPanel = new JPanel(
+            new MigLayout("flowx, fillx, insets 1, gap 0"));
+      // HACK: This minor extra vertical gap aligns this text with the
+      // Configuration Settings header over the config pad.
+      subPanel.add(createLabel("Camera settings", true), "gaptop 3, wrap");
+      createExposureField(subPanel);
+      createBinningChooser(subPanel);
+      createActiveShutterChooser(subPanel);
+      createShutterControls(subPanel);
+      return subPanel;
    }
 
-   private void createConfigurationControls(JPanel topPanel) {
-      createLabel("Configuration settings", true, topPanel, 280, 2, 430, 22);
+   private JPanel createConfigurationControls() {
+      JPanel subPanel = new JPanel(
+            new MigLayout("filly, flowy, insets 1, gap 0"));
+      subPanel.add(createLabel("Configuration settings", true),
+            "flowx, split 2");
 
-      saveConfigButton_ = (JButton) GUIUtils.createButton(false,
-         "saveConfigureButton", "Save",
+      saveConfigButton_ = createButton("Save", null,
          "Save current presets to the configuration file",
          new Runnable() {
             @Override
             public void run() {
                studio_.saveConfigPresets();
             }
-         }, 
-         null, topPanel, -80, 2, -5, 20);
-      
+         });
+      subPanel.add(saveConfigButton_,
+            "gapleft push, alignx right, w 88!, h 20!");
+
       configPad_ = new ConfigGroupPad();
       configPadButtonPanel_ = new ConfigPadButtonPanel();
       configPadButtonPanel_.setConfigPad(configPad_);
       configPadButtonPanel_.setGUI(studio_);
-      
+
       configPad_.setFont(defaultFont_);
-      
-      GUIUtils.addWithEdges(topPanel, configPad_, 280, 21, -4, -44);
-      GUIUtils.addWithEdges(topPanel, configPadButtonPanel_, 280, -40, -4, -20);
+
+      // Allow the config pad to grow horizontally. Its preferred height is
+      // only 420px, hence why we override it here.
+      subPanel.add(configPad_,
+            "growy, alignx center, w min:320:pref, h min:9999:9999, span");
+      subPanel.add(configPadButtonPanel_,
+            "growx, alignx center, w 320!, h 20!, span");
+      return subPanel;
    }
 
    /** 
     * Generate the "Snap", "Live", "Snap to album", "MDA", and "Refresh"
     * buttons.
     */
-   private void createCommonActionButtons(JPanel topPanel) {
+   private JPanel createCommonActionButtons() {
+      JPanel subPanel = new JPanel(
+            new MigLayout("flowy, insets 2 2 4 0, gap 1"));
       snapButton_ = (JButton) QuickAccessFactory.makeGUI(
             studio_.plugins().getQuickAccessPlugins().get(
                "org.micromanager.quickaccess.internal.SnapButton"));
       snapButton_.setFont(defaultFont_);
-      GUIUtils.addWithEdges(topPanel, snapButton_, 7, 4, 95, 25);
+      subPanel.add(snapButton_, BIGBUTTON_SIZE);
 
       liveButton_ = (JToggleButton) QuickAccessFactory.makeGUI(
             studio_.plugins().getQuickAccessPlugins().get(
                "org.micromanager.quickaccess.internal.LiveButton"));
       liveButton_.setFont(defaultFont_);
-      GUIUtils.addWithEdges(topPanel, liveButton_, 7, 26, 95, 47);
+      subPanel.add(liveButton_, BIGBUTTON_SIZE);
 
-      GUIUtils.createButton(false, "Album", "Album",
+      JButton albumButton = createButton("Album", "camera_plus_arrow.png",
          "Acquire single frame and add to an album",
          new Runnable() {
             @Override
             public void run() {
                studio_.album().addImages(studio_.live().snap(false));
             }
-         }, 
-         "camera_plus_arrow.png", topPanel, 7, 48, 95, 69);
+         });
+      subPanel.add(albumButton, BIGBUTTON_SIZE);
 
       // This icon based on the public-domain icon at
       // https://openclipart.org/detail/2757/movie-tape
-      GUIUtils.createButton(false,
-         "Multi-D Acq.", "Multi-D Acq.",
+      JButton mdaButton = createButton("Multi-D Acq.", "film.png",
          "Open multi-dimensional acquisition window",
          new Runnable() {
             @Override
             public void run() {
                studio_.openAcqControlDialog();
             }
-         }, 
-         "film.png", topPanel, 7, 70, 95, 91);
+         });
+      subPanel.add(mdaButton, BIGBUTTON_SIZE);
 
-      GUIUtils.createButton(false, "Refresh", "Refresh",
+      JButton refreshButton = createButton("Refresh", "arrow_refresh.png",
          "Refresh all GUI controls directly from the hardware",
          new Runnable() {
             @Override
@@ -352,14 +387,14 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                core_.updateSystemStateCache();
                studio_.updateGUI(true);
             }
-         },
-         "arrow_refresh.png", topPanel, 7, 92, 95, 113);
+         });
+      subPanel.add(refreshButton, BIGBUTTON_SIZE);
+      return subPanel;
    }
 
-   private void createPleaLabel(JPanel topPanel) {
+   private JLabel createPleaLabel() {
       JLabel citePleaLabel = new JLabel("<html>Please <a href=\"http://micro-manager.org\">cite Micro-Manager</a> so funding will continue!</html>");
       citePleaLabel.setFont(new Font("Arial", Font.PLAIN, 11));
-      GUIUtils.addWithEdges(topPanel, citePleaLabel, 7, 119, 270, 139);
 
       // When users click on the citation plea, we spawn a new thread to send
       // their browser to the MM wiki.
@@ -369,121 +404,125 @@ public class MainFrame extends MMFrame implements LiveModeListener {
             new Thread(GUIUtils.makeURLRunnable("https://micro-manager.org/wiki/Citing_Micro-Manager")).start();
          }
       });
+      return citePleaLabel;
    }
 
-   private JSplitPane createSplitPane(int dividerPos) {
-      JPanel topPanel = new JPanel();
-      JPanel bottomPanel = new JPanel();
-      topPanel.setLayout(new SpringLayout());
-      topPanel.setMinimumSize(new Dimension(580, 195));
-      bottomPanel.setLayout(new SpringLayout());
-      JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, true,
-              topPanel, bottomPanel);
-      splitPane.setBorder(BorderFactory.createEmptyBorder());
-      splitPane.setDividerLocation(dividerPos);
-      splitPane.setResizeWeight(0.0);
-      return splitPane;
+   private JPanel createComponents() {
+      JPanel overPanel = new JPanel(new MigLayout("flowx, insets 1, gap 0"));
+      JPanel subPanel = new JPanel(new MigLayout("flowx, insets 1, gap 0"));
+      subPanel.add(createCommonActionButtons());
+      subPanel.add(createCameraSettingsWidgets(), "gapleft 10, growx, wrap");
+      subPanel.add(createUtilityButtons(), "span, wrap");
+      subPanel.add(createPleaLabel(), "span, wrap");
+      overPanel.add(subPanel, "gapbottom push");
+      overPanel.add(createConfigurationControls(), "growy, wrap");
+      labelImageDimensions_ = createLabel("", false);
+      overPanel.add(labelImageDimensions_, "growx, span, gap 2 0 2 0");
+      return overPanel;
    }
 
-   private void createTopPanelWidgets(JPanel topPanel) {
-      createCommonActionButtons(topPanel);
-      createCameraSettingsWidgets(topPanel);
-      createPleaLabel(topPanel);
-      createUtilityButtons(topPanel);
-      createConfigurationControls(topPanel);
-      labelImageDimensions_ = createLabel("", false, topPanel, 5, -20, 0, 0);
-   }
-
-   private void createUtilityButtons(JPanel topPanel) {
+   private JPanel createUtilityButtons() {
+      JPanel subPanel = new JPanel(new MigLayout("flowx, insets 1, gap 0"));
       // ROI
-      createLabel("ROI", true, topPanel, 29, 140, 79, 154);
-      setRoiButton_ = GUIUtils.createButton(false, "setRoiButton", null,
+      JPanel roiPanel = new JPanel(new MigLayout("flowx, insets 1, gap 0"));
+      roiPanel.add(createLabel("ROI", true),
+            "span 2, alignx center, growx, wrap");
+      setRoiButton_ = createButton(null, "shape_handles.png",
          "Set Region Of Interest to selected rectangle",
          new Runnable() {
             @Override
             public void run() {
                studio_.setROI();
             }
-         }, 
-         "shape_handles.png", topPanel, 7, 154, 37, 174);
+         });
+      roiPanel.add(setRoiButton_, SMALLBUTTON_SIZE);
 
-      clearRoiButton_ = GUIUtils.createButton(false, "clearRoiButton", null,
+      clearRoiButton_ = createButton(null, "arrow_out.png",
          "Reset Region of Interest to full frame",
          new Runnable() {
             @Override
             public void run() {
                studio_.clearROI();
             }
-         },
-         "arrow_out.png", topPanel, 40, 154, 70, 174);
+         });
+      roiPanel.add(clearRoiButton_, SMALLBUTTON_SIZE);
+
+      subPanel.add(roiPanel);
 
       // Stage control
-      createLabel("Stage", true, topPanel, 113, 140, 163, 154);
-      AbstractButton moveButton = GUIUtils.createButton(false,
-            "stageControlButton", null,
+      JPanel stagePanel = new JPanel(new MigLayout("flowx, insets 1, gap 0"));
+      stagePanel.add(createLabel("Stage", true),
+            "span 3, alignx center, growx, wrap");
+      // This icon is the public-domain icon at
+      // https://openclipart.org/detail/198011/mono-move
+      AbstractButton moveButton = createButton(null, "move.png",
             "Control the current stage with a virtual joystick",
             new Runnable() {
                @Override
                public void run() {
                   StageControlFrame.showStageControl();
                }
-            },
-            // This icon is the public-domain icon at
-            // https://openclipart.org/detail/198011/mono-move
-            "move.png", topPanel, 89, 154, 119, 174);
+            });
+      stagePanel.add(moveButton, SMALLBUTTON_SIZE);
 
-      handMovesButton_ = (JToggleButton) GUIUtils.createButton(true,
-            "mouseMovesStageButton", null,
-            "When set, you can double-click on the Snap/Live view to move the stage. Requires pixel sizes to be set (see Pixel Calibration), and that you use the hand tool.",
-            new Runnable() {
-               @Override
-               public void run() {
-                  boolean isSelected = handMovesButton_.isSelected();
-                  studio_.updateCenterAndDragListener(isSelected);
-                  String path = isSelected ? "move_hand_on.png" : "move_hand.png";
-                  handMovesButton_.setIcon(IconLoader.getIcon(
-                        "/org/micromanager/icons/" + path));
-               }
-            },
-            // This icon is based on the public-domain icons at
-            // https://openclipart.org/detail/170328/eco-green-hand-icon
-            // and
-            // https://openclipart.org/detail/198011/mono-move
-            "move_hand.png", topPanel, 123, 154, 153, 174);
+      // This icon is based on the public-domain icons at
+      // https://openclipart.org/detail/170328/eco-green-hand-icon
+      // and
+      // https://openclipart.org/detail/198011/mono-move
+      handMovesButton_ = new JToggleButton(
+            IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
+      handMovesButton_.setToolTipText(
+            "When set, you can double-click on the Snap/Live view to move the stage. Requires pixel sizes to be set (see Pixel Calibration), and that you use the hand tool.");
+      handMovesButton_.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               boolean isSelected = handMovesButton_.isSelected();
+               studio_.updateCenterAndDragListener(isSelected);
+               String path = isSelected ? "move_hand_on.png" : "move_hand.png";
+               handMovesButton_.setIcon(IconLoader.getIcon(
+                     "/org/micromanager/icons/" + path));
+            }
+      });
+      stagePanel.add(handMovesButton_, SMALLBUTTON_SIZE);
 
-      AbstractButton listButton = GUIUtils.createButton(false,
-            "stagePositionListButton", null,
+      AbstractButton listButton = createButton(null, "application_view_list.png",
             "Show the Stage Position List dialog",
             new Runnable() {
                @Override
                public void run() {
                   studio_.showXYPositionList();
                }
-            },
-            "application_view_list.png", topPanel, 157, 154, 187, 174);
+            });
+      stagePanel.add(listButton, SMALLBUTTON_SIZE);
+
+      subPanel.add(stagePanel, "gapleft 16");
 
       // Autofocus
-      createLabel("Autofocus", true, topPanel, 209, 140, 291, 154);
-      autofocusNowButton_ = (JButton) GUIUtils.createButton(false,
-         "autofocusNowButton", null, "Autofocus now",
+      JPanel autoPanel = new JPanel(new MigLayout("flowx, insets 1, gap 0"));
+      autoPanel.add(createLabel("Autofocus", true),
+            "span 2, alignx center, growx, wrap");
+      autofocusNowButton_ = createButton(null, "find.png",
+         "Autofocus now",
          new Runnable() {
             @Override
             public void run() {
                studio_.autofocusNow();
             }
-         }, 
-         "find.png", topPanel, 207, 154, 236, 174);
+         });
+      autoPanel.add(autofocusNowButton_, SMALLBUTTON_SIZE);
 
-      autofocusConfigureButton_ = (JButton) GUIUtils.createButton(false,
-         "autofocusConfigureButton", null,
-         "Set autofocus options",
+      autofocusConfigureButton_ = createButton(null,
+            "wrench_orange.png", "Set autofocus options",
          new Runnable() {
             @Override
             public void run() {
                studio_.showAutofocusDialog();
             }
-         },
-         "wrench_orange.png", topPanel, 239, 154, 269, 174);
+         });
+      autoPanel.add(autofocusConfigureButton_, SMALLBUTTON_SIZE);
+
+      subPanel.add(autoPanel, "gapleft 16");
+      return subPanel;
    }
 
    public void updateTitle(String configFile) {
@@ -513,9 +552,9 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    
    public void setShutterButton(boolean state) {
       if (state) {
-         toggleShutterButton_.setText("Close");
+         toggleShutterButton_.setText("Close shutter");
       } else {
-         toggleShutterButton_.setText("Open");
+         toggleShutterButton_.setText("Open shutter");
       }
    }
 
@@ -524,7 +563,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
          if (!toggleShutterButton_.isEnabled())
             return;
          toggleShutterButton_.requestFocusInWindow();
-         if (toggleShutterButton_.getText().equals("Open")) {
+         if (toggleShutterButton_.getText().equals("Open shutter")) {
             setShutterButton(true);
             core_.setShutterOpen(true);
          } else {
@@ -555,7 +594,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
 
    @Override
    public void liveModeEnabled(boolean isEnabled) {
-      autoShutterCheckBox_.setEnabled(!isEnabled);
+      autoShutterToggle_.setEnabled(!isEnabled);
       if (core_.getAutoShutter()) {
          toggleShutterButton_.setText(isEnabled ? "Close" : "Open" );
       }
@@ -670,7 +709,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    }
 
    public void setAutoShutterSelected(boolean isSelected) {
-      autoShutterCheckBox_.setSelected(isSelected);
+      autoShutterToggle_.setSelected(isSelected);
    }
 
    public void setToggleShutterButtonEnabled(boolean isEnabled) {
@@ -687,7 +726,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    }
 
    public boolean getAutoShutterChecked() {
-      return autoShutterCheckBox_.isSelected();
+      return autoShutterToggle_.isSelected();
    }
 
    public ConfigGroupPad getConfigPad() {
