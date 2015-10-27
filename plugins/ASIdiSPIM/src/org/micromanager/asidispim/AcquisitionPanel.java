@@ -190,6 +190,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             Color.PINK, Color.CYAN, Color.YELLOW, Color.ORANGE};
    private String lastAcquisitionPath_;
    private String lastAcquisitionName_;
+   private String[] channelNames_;
    
    public AcquisitionPanel(ScriptInterface gui, 
            Devices devices, 
@@ -219,6 +220,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       sliceTiming_ = new SliceTiming();
       lastAcquisitionPath_ = "";
       lastAcquisitionName_ = "";
+      channelNames_ = null;
       
       PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
       
@@ -1823,7 +1825,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                core_.setExposure(secondCamera, exposureTime);
             }
             
-            // build metadata for MultiViewRegistration plugin
+            channelNames_ = new String[nrSides * nrChannels];
+            
+            // generate channel names and colors
+            // also builds viewString for MultiViewRegistration metadata
             String viewString = "";
             final String SEPARATOR = "_";
             // set up channels (side A/B is treated as channel too)
@@ -1836,27 +1841,30 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   if (twoSided) {
                      channelIndex *= 2;
                   }
-                  gui_.setChannelName(acqName, channelIndex, firstCamera + chName);
-                  gui_.setChannelColor(acqName, channelIndex, getChannelColor(channelIndex));
+                  channelNames_[channelIndex] = firstCamera + chName;
                   viewString += NumberUtils.intToDisplayString(0) + SEPARATOR;
                   if (twoSided) {
-                     gui_.setChannelName(acqName, channelIndex + 1, secondCamera + chName);
-                     gui_.setChannelColor(acqName, channelIndex + 1, getChannelColor(channelIndex + 1));
+                     channelNames_[channelIndex] = secondCamera + chName;
                      viewString += NumberUtils.intToDisplayString(90) + SEPARATOR;
                   }
                }
             } else {
-               gui_.setChannelName(acqName, 0, firstCamera);
-               gui_.setChannelColor(acqName, 0, getChannelColor(0));
+               channelNames_[0] = firstCamera;
                viewString += NumberUtils.intToDisplayString(0) + SEPARATOR;
                if (twoSided) {
-                  gui_.setChannelName(acqName, 1, secondCamera);
-                  gui_.setChannelColor(acqName, 1, getChannelColor(1));
+                  channelNames_[1] = secondCamera;
                   viewString += NumberUtils.intToDisplayString(90) + SEPARATOR;
                }
             }
-            // strip last separators:
+            // strip last separator of viewString (for Multiview Reconstruction)
             viewString = viewString.substring(0, viewString.length() - 1);
+            
+            // assign channel names and colors
+            for (int i = 0; i < nrSides * nrChannels; i++) {
+               gui_.setChannelName(acqName, i, channelNames_[i]);
+               gui_.setChannelColor(acqName, i, getChannelColor(i));
+            }
+            
             
             // initialize acquisition
             gui_.initializeAcquisition(acqName, (int) core_.getImageWidth(),
@@ -2386,6 +2394,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          MDUtils.setFrameIndex(tags, frame);
          tags.put(MMTags.Image.FRAME, frame);
          MDUtils.setChannelIndex(tags, channel);
+         MDUtils.setChannelName(tags, channelNames_[channel]);
          MDUtils.setSliceIndex(tags, slice);
          MDUtils.setPositionIndex(tags, position);
          MDUtils.setElapsedTimeMs(tags, ms);
