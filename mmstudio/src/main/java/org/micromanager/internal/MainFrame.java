@@ -249,6 +249,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       subPanel.add(createLabel("Changroup", false), "split 2");
 
       chanGroupSelect_ = new JComboBox();
+      chanGroupSelect_.setFont(defaultFont_);
       chanGroupSelect_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
