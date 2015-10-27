@@ -1926,6 +1926,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             vad.getImagePlus().getWindow().addWindowListener(new WindowAdapter() {
                @Override
                public void windowClosing(WindowEvent arg0) {
+                  // if running acquisition only close if user confirms
                   if (acquisitionRunning_.get() &&
                         MyDialogUtils.getConfirmDialogResult(
                               "Do you really want to abort the acquisition?",
@@ -1933,7 +1934,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      cancelAcquisition_.set(true);
                      vad.getImagePlus().getWindow().dispose();
                   }
-                  // else do nothing, ignoring the close event
+                  // if not running acquisition then close anyway
+                  if (!acquisitionRunning_.get()) {
+                     vad.getImagePlus().getWindow().dispose();
+                  }
                }
             });
             
