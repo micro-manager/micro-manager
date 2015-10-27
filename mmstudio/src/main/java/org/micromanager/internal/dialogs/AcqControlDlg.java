@@ -47,6 +47,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.display.internal.RememberedChannelSettings;
 import org.micromanager.events.ChannelExposureEvent;
+import org.micromanager.events.internal.ChannelGroupEvent;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.AcqOrderMode;
@@ -84,8 +85,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    private static final String SHOULD_HIDE_DISPLAY = "should hide image display windows for multi-dimensional acquisitions";
    private static final String SAVE_MODE = "default save mode";
    private static final String SHOULD_CHECK_EXPOSURE_SANITY = "whether to prompt the user if their exposure times seem excessively long";
-   // This array allows us to convert from SaveModes to integers. Of course it
-   // needs to be updated if any new save modes are added in the future.
    private JComboBox channelGroupCombo_;
    private final JTextArea commentTextArea_;
    private final JComboBox zValCombo_;
@@ -1026,6 +1025,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       this.loadAndRestorePosition(100, 100);
       this.setSize(521, 690);
 
+      studio_.events().registerForEvents(this);
    }
 
    /** 
@@ -1079,6 +1079,11 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
             setChannelExposureTime(channelGroup, channel, exposure);
          }
       }
+   }
+
+   @Subscribe
+   public void onChannelGroup(ChannelGroupEvent event) {
+      updateGroupsCombo();
    }
 
    /**

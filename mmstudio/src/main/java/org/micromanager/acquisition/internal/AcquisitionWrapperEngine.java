@@ -28,6 +28,7 @@ import org.micromanager.IAcquisitionEngine2010;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.SequenceSettings;
+import org.micromanager.events.internal.ChannelGroupEvent;
 import org.micromanager.events.internal.DefaultAcquisitionStartedEvent;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
@@ -589,6 +590,12 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    @Override
    public boolean setChannelGroup(String group) {
+      String curGroup = core_.getChannelGroup();
+      if (!(group != null &&
+            (curGroup == null || !curGroup.contentEquals(group)))) {
+         // Don't make redundant changes.
+         return false;
+      }
       if (groupIsEligibleChannel(group)) {
          try {
             core_.setChannelGroup(group);
@@ -600,6 +607,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
             }
             return false;
          }
+         studio_.events().post(new ChannelGroupEvent());
          return true;
       } else {
          return false;

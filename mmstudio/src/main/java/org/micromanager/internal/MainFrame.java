@@ -68,6 +68,9 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.events.ConfigGroupChangedEvent;
 import org.micromanager.events.ChannelExposureEvent;
+import org.micromanager.events.GUIRefreshEvent;
+import org.micromanager.events.StartupCompleteEvent;
+import org.micromanager.events.internal.ChannelGroupEvent;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.MouseMovesStageEvent;
 import org.micromanager.internal.dialogs.OptionsDlg;
@@ -101,6 +104,9 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    private JComboBox comboBinning_;
    private JComboBox shutterComboBox_;
    private JTextField textFieldExp_;
+   private JComboBox chanGroupSelect_;
+   // Toggles activity of chanGroupSelect_ on or off.
+   private boolean shouldChangeChannelGroup_;
    private JLabel labelImageDimensions_;
    private JToggleButton liveButton_;
    private JToggleButton autoShutterToggle_;
@@ -111,7 +117,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    private JButton autofocusConfigureButton_;
    private JButton saveConfigButton_;
    private JButton toggleShutterButton_;
-   
+
    private ConfigGroupPad configPad_;
 
    private final Font defaultFont_ = new Font("Arial", Font.PLAIN, 10);
@@ -136,7 +142,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       snapLiveManager_.addLiveModeListener(this);
 
       setTitle(MICRO_MANAGER_TITLE + " " + MMVersion.VERSION_STRING);
-      setMinimumSize(new Dimension(575, 250));
+      setMinimumSize(new Dimension(595, 250));
 
       JPanel contents = new JPanel();
       // Minimize insets.
@@ -213,7 +219,66 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       return label;
    }
 
-   private void createActiveShutterChooser(JPanel subPanel) {
+   private JPanel createImagingSettingsWidgets() {
+      JPanel subPanel = new JPanel(
+            new MigLayout("flowx, fillx, insets 1, gap 0"));
+      // HACK: This minor extra vertical gap aligns this text with the
+      // Configuration Settings header over the config pad.
+      subPanel.add(createLabel("Imaging settings", true), "gaptop 2, wrap");
+
+      // Exposure time.
+      subPanel.add(createLabel("Exposure [ms]", false), "split 2");
+
+      textFieldExp_ = new JTextField(8);
+      textFieldExp_.addFocusListener(new FocusAdapter() {
+         @Override
+         public void focusLost(FocusEvent fe) {
+            studio_.setExposure(getDisplayedExposureTime());
+         }
+      });
+      textFieldExp_.setFont(defaultFont_);
+      textFieldExp_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            studio_.setExposure(getDisplayedExposureTime());
+         }
+      });
+      subPanel.add(textFieldExp_, "gapleft push, wrap");
+
+      // Channel group.
+      subPanel.add(createLabel("Changroup", false), "split 2");
+
+      chanGroupSelect_ = new JComboBox();
+      chanGroupSelect_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            if (!shouldChangeChannelGroup_) {
+               // We're modifying this combobox, so we don't want it making
+               // changes.
+               return;
+            }
+            String newGroup = (String) chanGroupSelect_.getSelectedItem();
+            studio_.getAcquisitionEngine().setChannelGroup(newGroup);
+         }
+      });
+      subPanel.add(chanGroupSelect_, "gapleft push, wrap");
+
+      // Binning.
+      subPanel.add(createLabel("Binning", false), "split 2");
+
+      comboBinning_ = new JComboBox();
+      comboBinning_.setName("Binning");
+      comboBinning_.setFont(defaultFont_);
+      comboBinning_.setMaximumRowCount(4);
+      comboBinning_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            studio_.changeBinning();
+         }
+      });
+      subPanel.add(comboBinning_, "gapleft push, wrap");
+
+      // Shutter device.
       subPanel.add(createLabel("Shutter", false), "split 2");
 
       shutterComboBox_ = new JComboBox();
@@ -232,45 +297,8 @@ public class MainFrame extends MMFrame implements LiveModeListener {
          }
       });
       subPanel.add(shutterComboBox_, "gapleft push, wrap");
-   }
 
-   private void createBinningChooser(JPanel subPanel) {
-      subPanel.add(createLabel("Binning", false), "split 2");
-
-      comboBinning_ = new JComboBox();
-      comboBinning_.setName("Binning");
-      comboBinning_.setFont(defaultFont_);
-      comboBinning_.setMaximumRowCount(4);
-      comboBinning_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            studio_.changeBinning();
-         }
-      });
-      subPanel.add(comboBinning_, "gapleft push, wrap");
-   }
-
-   private void createExposureField(JPanel subPanel) {
-      subPanel.add(createLabel("Exposure [ms]", false), "split 2");
-
-      textFieldExp_ = new JTextField(8);
-      textFieldExp_.addFocusListener(new FocusAdapter() {
-         @Override
-         public void focusLost(FocusEvent fe) {
-            studio_.setExposure(getDisplayedExposureTime());
-         }
-      });
-      textFieldExp_.setFont(defaultFont_);
-      textFieldExp_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            studio_.setExposure(getDisplayedExposureTime());
-         }
-      });
-      subPanel.add(textFieldExp_, "gapleft push, wrap");
-   }
-
-   private void createShutterControls(JPanel subPanel) {
+      // Auto/manual shutter control.
       autoShutterToggle_ = new JToggleButton("Auto shutter");
       autoShutterToggle_.setFont(defaultFont_);
       autoShutterToggle_.addActionListener(new ActionListener() {
@@ -295,18 +323,6 @@ public class MainFrame extends MMFrame implements LiveModeListener {
             }
       });
       subPanel.add(toggleShutterButton_, "w 40!, h 20!, wrap");
-   }
-
-   private JPanel createCameraSettingsWidgets() {
-      JPanel subPanel = new JPanel(
-            new MigLayout("flowx, fillx, insets 1, gap 0"));
-      // HACK: This minor extra vertical gap aligns this text with the
-      // Configuration Settings header over the config pad.
-      subPanel.add(createLabel("Camera settings", true), "gaptop 3, wrap");
-      createExposureField(subPanel);
-      createBinningChooser(subPanel);
-      createActiveShutterChooser(subPanel);
-      createShutterControls(subPanel);
       return subPanel;
    }
 
@@ -416,7 +432,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       JPanel overPanel = new JPanel(new MigLayout("flowx, insets 1, gap 0"));
       JPanel subPanel = new JPanel(new MigLayout("flowx, insets 1, gap 0"));
       subPanel.add(createCommonActionButtons());
-      subPanel.add(createCameraSettingsWidgets(), "gapleft 10, growx, wrap");
+      subPanel.add(createImagingSettingsWidgets(), "gapleft 10, growx, wrap");
       subPanel.add(createUtilityButtons(), "span, wrap");
       subPanel.add(createPleaLabel(), "span, wrap");
       overPanel.add(subPanel, "gapbottom push");
@@ -641,10 +657,40 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       autofocusConfigureButton_.setEnabled(isEnabled);
       autofocusNowButton_.setEnabled(isEnabled);
    }
-   
+
    @Subscribe
    public void onConfigGroupChanged(ConfigGroupChangedEvent event) {
       configPad_.refreshGroup(event.getGroupName(), event.getNewConfig());
+   }
+
+   @Subscribe
+   public void onGUIRefresh(GUIRefreshEvent event) {
+      refreshChannelGroup();
+   }
+
+   @Subscribe
+   public void onStartupComplete(StartupCompleteEvent event) {
+      refreshChannelGroup();
+   }
+
+   @Subscribe
+   public void onChannelGroup(ChannelGroupEvent event) {
+      refreshChannelGroup();
+   }
+
+   /**
+    * Recreate the contents and current selection of the chanGroupSelect_
+    * combobox. We have to temporarily disable its action listener so it
+    * doesn't try to change the current channel group while we do this.
+    */
+   private void refreshChannelGroup() {
+      shouldChangeChannelGroup_ = false;
+      chanGroupSelect_.removeAllItems();
+      for (String group : core_.getAvailableConfigGroups().toArray()) {
+         chanGroupSelect_.addItem(group);
+      }
+      chanGroupSelect_.setSelectedItem(core_.getChannelGroup());
+      shouldChangeChannelGroup_ = true;
    }
 
    @Subscribe
