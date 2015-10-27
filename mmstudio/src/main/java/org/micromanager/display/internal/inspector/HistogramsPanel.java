@@ -267,7 +267,9 @@ public final class HistogramsPanel extends InspectorPanel {
 
    private void addPanel(DefaultDisplayWindow display, int channelIndex) {
       ChannelControlPanel panel = new ChannelControlPanel(channelIndex,
-            display.getDatastore(), display);
+            display.getDatastore(), display.getHistogramModel(channelIndex),
+            DisplayGroupManager.getContrastLinker(channelIndex, display),
+            display);
       displayToPanels_.get(display).add(panel);
       if (display == display_) {
          // Also add the panel to our contents, and tell our inspector frame

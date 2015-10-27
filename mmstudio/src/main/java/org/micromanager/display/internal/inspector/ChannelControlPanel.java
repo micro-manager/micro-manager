@@ -61,13 +61,14 @@ import org.micromanager.internal.graph.GraphData;
 import org.micromanager.internal.graph.HistogramPanel;
 import org.micromanager.internal.graph.HistogramPanel.CursorListener;
 
+import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.ChannelHistogramModel;
 import org.micromanager.display.internal.events.LUTUpdateEvent;
 import org.micromanager.display.internal.link.ContrastEvent;
+import org.micromanager.display.internal.link.ContrastLinker;
 import org.micromanager.display.internal.link.DisplayGroupManager;
 import org.micromanager.display.internal.link.LinkButton;
 import org.micromanager.display.internal.DefaultDisplaySettings;
-import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.display.internal.DisplayDestroyedEvent;
 
 import org.micromanager.internal.utils.ReportingUtils;
@@ -111,8 +112,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private final int channelIndex_;
    private int curComponent_;
    private HistogramPanel histogram_;
+   private ContrastLinker linker_;
    private final Datastore store_;
-   private DefaultDisplayWindow display_;
+   private DisplayWindow display_;
 
    private JButton autoButton_;
    private JButton zoomInButton_;
@@ -129,15 +131,17 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private final AtomicBoolean haveInitialized_;
 
    public ChannelControlPanel(int channelIndex, Datastore store,
-         DefaultDisplayWindow display) {
+         ChannelHistogramModel model, ContrastLinker linker,
+         DisplayWindow display) {
       haveInitialized_ = new AtomicBoolean(false);
       channelIndex_ = channelIndex;
       curComponent_ = 0;
       store_ = store;
+      model_ = model;
+      linker_ = linker;
       display_ = display;
       // TODO: hardcoded to 3 elements for now.
       componentPickerButtons_ = new JToggleButton[3];
-      model_ = display_.getHistogramModel(channelIndex_);
 
       // Must be registered for events before we start modifying images, since
       // that relies on LUTUpdateEvent.
@@ -315,12 +319,12 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
          firstColumn.add(subPanel);
       }
-      linkButton_ = new LinkButton(
-            DisplayGroupManager.getContrastLinker(channelIndex_, display_),
-            display_);
-      linkButton_.setMinimumSize(new Dimension(linkButton_.getWidth(),
-               smallButtonSize.height));
-      firstColumn.add(linkButton_, "aligny center");
+      if (linker_ != null) {
+         linkButton_ = new LinkButton(linker_, display_);
+         linkButton_.setMinimumSize(new Dimension(linkButton_.getWidth(),
+                  smallButtonSize.height));
+         firstColumn.add(linkButton_, "aligny center");
+      }
       firstColumn.add(fullButton_, "alignx center, width 70!");
       firstColumn.add(autoButton_, "alignx center, width 70!");
 
@@ -704,7 +708,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             // onDisplayDestroyed; ignore it.
          }
       }
-      linkButton_.cleanup();
+      if (linkButton_ != null) {
+         linkButton_.cleanup();
+      }
    }
 
    public void calcAndDisplayHistAndStats(boolean shouldDrawHistogram) {
