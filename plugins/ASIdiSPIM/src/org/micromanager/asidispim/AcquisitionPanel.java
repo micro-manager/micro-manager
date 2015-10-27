@@ -104,6 +104,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -1672,15 +1673,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
       
-      if (nrRepeats > 10 && separateTimePointsCB_.isSelected()) {
-         if (!MyDialogUtils.getConfirmDialogResult(
-               "This will generate " + nrRepeats + " separate windows. "
-               + "Do you really want to proceed?",
-               JOptionPane.OK_CANCEL_OPTION)) {
-            return false;
-         }
-      }
-      
       // Autofocus settings; only used if acqSettings.useAutofocus is true
       boolean autofocusAtT0 = false;
       int autofocusEachNFrames = 10;
@@ -1774,16 +1766,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       boolean nonfatalError = false;
       long acqButtonStart = System.currentTimeMillis();
+      String acqName = "";
 
       // do not want to return from within this loop => throw exception instead
       // loop is executed once per acquisition (i.e. once if separate viewers isn't selected)
       long repeatStart = System.currentTimeMillis();
-      for (int tp = 0; tp < nrRepeats; tp++) {
+      for (int timepoint = 0; timepoint < nrRepeats; timepoint++) {
          // handle intervals between (software-timed) repeats
          // only applies when doing separate viewers for each timepoint
          // and have multiple timepoints
          long repeatNow = System.currentTimeMillis();
-         long repeatdelay = repeatStart + tp * timepointIntervalMs - repeatNow;
+         long repeatdelay = repeatStart + timepoint * timepointIntervalMs - repeatNow;
          while (repeatdelay > 0 && !cancelAcquisition_.get()) {
             updateAcquisitionStatus(AcquisitionStatus.WAITING, (int) (repeatdelay / 1000));
             long sleepTime = Math.min(1000, repeatdelay);
@@ -1793,13 +1786,26 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                ReportingUtils.showError(e);
             }
             repeatNow = System.currentTimeMillis();
-            repeatdelay = repeatStart + tp * timepointIntervalMs - repeatNow;
+            repeatdelay = repeatStart + timepoint * timepointIntervalMs - repeatNow;
          }
          
          BlockingQueue<TaggedImage> bq = new LinkedBlockingQueue<TaggedImage>(10);
-         String acqName;
+         
+         // try to close last timepoint if there could be one open
+         if (singleTimePointViewers && gui_.acquisitionExists(acqName)) {
+            try {
+               // following line needed due to some arcane internal reason, otherwise
+               //   call to closeAcquisitionWindow() fails silently. 
+               //   See http://sourceforge.net/p/micro-manager/mailman/message/32999320/
+               gui_.getAcquisition(acqName).promptToSave(false);
+               gui_.closeAcquisitionWindow(acqName);
+            } catch (Exception ex) {
+               // do nothing if unsuccessful
+            }
+         }
+         
          if (singleTimePointViewers) {
-            acqName = gui_.getUniqueAcquisitionName(prefixField_.getText() + "_" + tp);
+            acqName = gui_.getUniqueAcquisitionName(prefixField_.getText() + "_" + timepoint);
          } else {
             acqName = gui_.getUniqueAcquisitionName(prefixField_.getText());
          }
@@ -1901,17 +1907,39 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             
             // Dive into MM internals since script interface does not support pipelines
             ImageCache imageCache = acq.getImageCache();
-            VirtualAcquisitionDisplay vad = acq.getAcquisitionWindow();
+            final VirtualAcquisitionDisplay vad = acq.getAcquisitionWindow();
             imageCache.addImageCacheListener(vad);
-
+            
             // Start pumping images into the ImageCache
             DefaultTaggedImageSink sink = new DefaultTaggedImageSink(bq, imageCache);
             sink.start();
             
+            // remove usual window listener and replace it with our own
+            //   that will prompt before closing and cancel acquisition if confirmed
+            // it's probably dangerous to do this and should be considered a hack
+            // I have confirmed that there is only one windowListener and it seems to 
+            //   also be related to window closing
+            WindowListener[] wls = vad.getImagePlus().getWindow().getWindowListeners();
+            for (WindowListener l : wls) {
+               vad.getImagePlus().getWindow().removeWindowListener(l);
+            }
+            vad.getImagePlus().getWindow().addWindowListener(new WindowAdapter() {
+               @Override
+               public void windowClosing(WindowEvent arg0) {
+                  if (acquisitionRunning_.get() &&
+                        MyDialogUtils.getConfirmDialogResult(
+                              "Do you really want to abort the acquisition?",
+                              JOptionPane.YES_NO_OPTION)) {
+                     cancelAcquisition_.set(true);
+                     vad.getImagePlus().getWindow().dispose();
+                  }
+                  // else do nothing, ignoring the close event
+               }
+            });
+            
             // patterned after implementation in MMStudio.java
             // will be null if not saving to disk
             lastAcquisitionPath_ = acq.getImageCache().getDiskLocation();
-            
             lastAcquisitionName_ = acqName;
             
             // flag that we are actually running acquisition now
