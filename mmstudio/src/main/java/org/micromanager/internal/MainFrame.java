@@ -365,7 +365,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
     */
    private JPanel createCommonActionButtons() {
       JPanel subPanel = new JPanel(
-            new MigLayout("flowy, insets 2 2 4 0, gap 1"));
+            new MigLayout("flowy, insets 1, gap 1"));
       snapButton_ = (JButton) QuickAccessFactory.makeGUI(
             studio_.plugins().getQuickAccessPlugins().get(
                "org.micromanager.quickaccess.internal.SnapButton"));
@@ -431,7 +431,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    private JPanel createComponents() {
       JPanel overPanel = new JPanel(new MigLayout("flowx, insets 1, gap 0"));
       JPanel subPanel = new JPanel(new MigLayout("flowx, insets 1, gap 0"));
-      subPanel.add(createCommonActionButtons());
+      subPanel.add(createCommonActionButtons(), "growy, aligny top");
       subPanel.add(createImagingSettingsWidgets(), "gapleft 10, growx, wrap");
       subPanel.add(createUtilityButtons(), "span, wrap");
       subPanel.add(createPleaLabel(), "span, wrap");
