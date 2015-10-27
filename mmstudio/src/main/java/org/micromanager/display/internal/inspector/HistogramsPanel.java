@@ -266,7 +266,7 @@ public final class HistogramsPanel extends InspectorPanel {
    }
 
    private void addPanel(DefaultDisplayWindow display, int channelIndex) {
-      ChannelControlPanel panel = new ChannelControlPanel(channelIndex, this,
+      ChannelControlPanel panel = new ChannelControlPanel(channelIndex,
             display.getDatastore(), display);
       displayToPanels_.get(display).add(panel);
       if (display == display_) {
@@ -287,17 +287,6 @@ public final class HistogramsPanel extends InspectorPanel {
       }
       display_.postEvent(new LUTUpdateEvent(this, null, null, null));
       display_.postEvent(new DefaultRequestToDrawEvent());
-   }
-
-   public synchronized void updateOtherDisplayCombos(int selectedIndex) {
-      if (updatingCombos_) {
-         return;
-      }
-      updatingCombos_ = true;
-      for (int i = 0; i < channelPanels_.size(); i++) {
-         channelPanels_.get(i).setDisplayComboIndex(selectedIndex);
-      }
-      updatingCombos_ = false;
    }
 
    public boolean amInCompositeMode() {

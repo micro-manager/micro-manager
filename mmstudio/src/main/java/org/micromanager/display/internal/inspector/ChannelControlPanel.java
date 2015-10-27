@@ -95,12 +95,22 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       IconLoader.getIcon("/org/micromanager/icons/rgb_blue_blank.png")
    };
 
+   // Event to tell other panels to go to "full" contrast.
+   private static class FullScaleEvent {}
+
+   // Event to tell other panels to set their histogram X scale to the given
+   // index.
+   private static class HistogramRangeEvent {
+      public int index_;
+      public HistogramRangeEvent(int index) {
+         index_ = index;
+      }
+   }
 
    private ChannelHistogramModel model_;
    private final int channelIndex_;
    private int curComponent_;
    private HistogramPanel histogram_;
-   private final HistogramsPanel parent_;
    private final Datastore store_;
    private DefaultDisplayWindow display_;
 
@@ -118,12 +128,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    private final AtomicBoolean haveInitialized_;
 
-   public ChannelControlPanel(int channelIndex, HistogramsPanel parent,
-         Datastore store, DefaultDisplayWindow display) {
+   public ChannelControlPanel(int channelIndex, Datastore store,
+         DefaultDisplayWindow display) {
       haveInitialized_ = new AtomicBoolean(false);
       channelIndex_ = channelIndex;
       curComponent_ = 0;
-      parent_ = parent;
       store_ = store;
       display_ = display;
       // TODO: hardcoded to 3 elements for now.
@@ -249,7 +258,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             DisplaySettings settings = display_.getDisplaySettings();
             if (settings.getShouldSyncChannels() != null &&
                   settings.getShouldSyncChannels()) {
-               parent_.updateOtherDisplayCombos(histRangeComboBox_.getSelectedIndex());
+               display_.postEvent(new HistogramRangeEvent(
+                     histRangeComboBox_.getSelectedIndex()));
             }
             displayComboAction();
          }
@@ -342,10 +352,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       validate();
    }
 
-   public void setDisplayComboIndex(int index) {
-      histRangeComboBox_.setSelectedIndex(index);
-   }
-   
    /**
     * Do a logarithmic (powers of 2) zoom, which in turn updates our displayed
     * bit depth.
@@ -427,9 +433,22 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       DisplaySettings settings = display_.getDisplaySettings();
       if (settings.getShouldSyncChannels() != null &&
             settings.getShouldSyncChannels()) {
-         parent_.fullScaleChannels();
-      } else {
+         display_.postEvent(new FullScaleEvent());
+      }
+      else {
          model_.setFullScale();
+      }
+   }
+
+   @Subscribe
+   public void onFullScale(FullScaleEvent event) {
+      model_.setFullScale();
+   }
+
+   @Subscribe
+   public void onHistogramRange(HistogramRangeEvent event) {
+      if (histRangeComboBox_.getSelectedIndex() != event.index_) {
+         histRangeComboBox_.setSelectedIndex(event.index_);
       }
    }
 
@@ -689,6 +708,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    public void calcAndDisplayHistAndStats(boolean shouldDrawHistogram) {
+      if (histogram_ == null) {
+         // Can't do anything yet.
+         return;
+      }
       int[][] histogram = model_.calcHistogramStats();
       if (histogram == null || histogram[curComponent_] == null ||
             !model_.getChannelEnabled() || !shouldDrawHistogram) {
