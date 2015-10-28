@@ -192,6 +192,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private String lastAcquisitionPath_;
    private String lastAcquisitionName_;
    private String[] channelNames_;
+   private int nrRepeats_;  // how many separate acquisitions to perform
    
    public AcquisitionPanel(ScriptInterface gui, 
            Devices devices, 
@@ -516,6 +517,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               Devices.Keys.PLUGIN,
               Properties.Keys.PLUGIN_NUM_ACQUISITIONS, 1);
       numTimepoints_.addChangeListener(recalculateTimeLapseDisplay);
+      numTimepoints_.addChangeListener(new ChangeListener() {
+         @Override
+         public void stateChanged(ChangeEvent arg0) {
+            // update nrRepeats_ variable so the acquisition can be extended or shortened
+            //   as long as we have separate timepoints
+            if (acquisitionRunning_.get() && separateTimePointsCB_.isSelected()) {
+               nrRepeats_ = getNumTimepoints();
+            }
+         }
+      });
       timepointPanel_.add(numTimepoints_, "wrap");
 
       timepointPanel_.add(new JLabel("Interval [s]:"));
@@ -1581,14 +1592,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       boolean singleTimePointViewers = separateTimePointsCB_.isSelected();
       String rootDir = rootField_.getText();
 
-      int nrRepeats;  // how many acquisition windows to open
       int nrFrames;   // how many Micro-manager "frames" = time points to take
       if (singleTimePointViewers) {
          nrFrames = 1;
-         nrRepeats = acqSettings.numTimepoints;
+         nrRepeats_ = acqSettings.numTimepoints;
       } else {
          nrFrames = acqSettings.numTimepoints;
-         nrRepeats = 1;
+         nrRepeats_ = 1;
       }
       
       AcquisitionModes.Keys spimMode = acqSettings.spimMode;
@@ -1771,7 +1781,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // do not want to return from within this loop => throw exception instead
       // loop is executed once per acquisition (i.e. once if separate viewers isn't selected)
       long repeatStart = System.currentTimeMillis();
-      for (int timepoint = 0; timepoint < nrRepeats; timepoint++) {
+      for (int timepoint = 0; timepoint < nrRepeats_; timepoint++) {
          // handle intervals between (software-timed) repeats
          // only applies when doing separate viewers for each timepoint
          // and have multiple timepoints
