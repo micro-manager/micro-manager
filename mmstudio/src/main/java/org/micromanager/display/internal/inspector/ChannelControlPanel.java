@@ -52,8 +52,8 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.NewSummaryMetadataEvent;
+import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.NewDisplaySettingsEvent;
 
 import org.micromanager.data.internal.DefaultCoords;
@@ -61,7 +61,6 @@ import org.micromanager.internal.graph.GraphData;
 import org.micromanager.internal.graph.HistogramPanel;
 import org.micromanager.internal.graph.HistogramPanel.CursorListener;
 
-import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.ChannelHistogramModel;
 import org.micromanager.display.internal.events.LUTUpdateEvent;
 import org.micromanager.display.internal.link.ContrastEvent;
@@ -114,7 +113,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private HistogramPanel histogram_;
    private ContrastLinker linker_;
    private final Datastore store_;
-   private DisplayWindow display_;
+   private DataViewer display_;
 
    private JButton autoButton_;
    private JButton zoomInButton_;
@@ -132,7 +131,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    public ChannelControlPanel(int channelIndex, Datastore store,
          ChannelHistogramModel model, ContrastLinker linker,
-         DisplayWindow display) {
+         DataViewer display) {
       haveInitialized_ = new AtomicBoolean(false);
       channelIndex_ = channelIndex;
       curComponent_ = 0;
@@ -643,7 +642,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    @Override
    public void onRightCursor(double pos) {
       model_.setContrastMax(curComponent_,
-            (int) (Math.min(ChannelHistogramModel.NUM_BINS - 1, pos) * model_.getBinSize()));
+            (int) (Math.min(model_.getNumBins() - 1, pos) * model_.getBinSize()));
    }
 
    @Override

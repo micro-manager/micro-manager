@@ -24,7 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.DataViewer;
 
 import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.display.internal.DefaultDisplaySettings;
@@ -47,7 +47,7 @@ public class ContrastLinker extends SettingsLinker {
    private static final List<Class<?>> RELEVANT_EVENTS = Arrays.asList(
          new Class<?>[] {ContrastEvent.class});
 
-   public ContrastLinker(int channelIndex, DisplayWindow parent) {
+   public ContrastLinker(int channelIndex, DataViewer parent) {
       super(parent, RELEVANT_EVENTS);
       channelIndex_ = channelIndex;
       addToSiblings();
@@ -69,7 +69,7 @@ public class ContrastLinker extends SettingsLinker {
 
    // Look up our channel name in the specified display's datastore and return
    // the corresponding index, or channelIndex_ if a match was not found.
-   private int getIndex(DisplayWindow display, DisplaySettings settings) {
+   private int getIndex(DataViewer display, DisplaySettings settings) {
       String[] names = display.getDatastore().getSummaryMetadata().getChannelNames();
       String ourName = getName();
       if (names != null) {
@@ -92,7 +92,7 @@ public class ContrastLinker extends SettingsLinker {
     * we are linked for has changed for one of the channel settings.
     */
    @Override
-   public boolean getShouldApplyChanges(DisplayWindow source,
+   public boolean getShouldApplyChanges(DataViewer source,
          DisplaySettingsEvent changeEvent) {
       ContrastEvent event = (ContrastEvent) changeEvent;
       String name = event.getChannelName();
@@ -128,7 +128,7 @@ public class ContrastLinker extends SettingsLinker {
     * Copy over just the channel we are linked for.
     */
    @Override
-   public void applyChange(DisplayWindow source,
+   public void applyChange(DataViewer source,
          DisplaySettingsEvent changeEvent) {
       ContrastEvent event = (ContrastEvent) changeEvent;
       DisplaySettings oldSettings = parent_.getDisplaySettings();
@@ -140,7 +140,7 @@ public class ContrastLinker extends SettingsLinker {
    }
 
    @Override
-   public DisplaySettings copySettings(DisplayWindow sourceDisplay,
+   public DisplaySettings copySettings(DataViewer sourceDisplay,
          DisplaySettings source, DisplaySettings dest) {
       int sourceIndex = getIndex(sourceDisplay, source);
       DisplaySettings.ContrastSettings oldSettings = source.getSafeContrastSettings(

@@ -29,12 +29,12 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.DataViewer;
 import org.micromanager.display.internal.DisplayDestroyedEvent;
 
 
 /**
- * This class is for setting up links across DisplayWindows for specific
+ * This class is for setting up links across DataViewers for specific
  * attributes of the DisplaySettings. Extensions of this class will be specific
  * to certain types of the DisplaySettings.
  */
@@ -57,12 +57,12 @@ public abstract class SettingsLinker {
             }
          };
 
-   protected DisplayWindow parent_;
+   protected DataViewer parent_;
    private List<Class<?>> relevantEvents_;
    private HashSet<LinkButton> buttons_;
    private boolean isActive_;
 
-   public SettingsLinker(DisplayWindow parent,
+   public SettingsLinker(DataViewer parent,
          List<Class<?>> relevantEventClasses) {
       parent_ = parent;
       parent_.registerForEvents(this);
@@ -285,7 +285,7 @@ public abstract class SettingsLinker {
     * Push the provided event to the linkers we are connected to -- only if
     * the event is one of the event classes we care about.
     */
-   public void pushEvent(DisplayWindow source, DisplaySettingsEvent event) {
+   public void pushEvent(DataViewer source, DisplaySettingsEvent event) {
       boolean isRelevant = false;
       for (Class<?> eventClass : relevantEvents_) {
          if (eventClass.isInstance(event)) {
@@ -316,7 +316,7 @@ public abstract class SettingsLinker {
    /**
     * Apply the relevant parts of our DisplaySettings to the provided display.
     */
-   public void pushState(DisplayWindow display) {
+   public void pushState(DataViewer display) {
       DisplaySettings newSettings = copySettings(parent_,
             parent_.getDisplaySettings(), display.getDisplaySettings());
       if (newSettings != display.getDisplaySettings()) {
@@ -332,10 +332,10 @@ public abstract class SettingsLinker {
    }
 
    /**
-    * Return our DisplayWindow, which may be needed e.g. to provide access to
+    * Return our DataViewer, which may be needed e.g. to provide access to
     * the Datastore for another SettingsLinker.
     */
-   public DisplayWindow getDisplay() {
+   public DataViewer getDisplay() {
       return parent_;
    }
 
@@ -355,21 +355,21 @@ public abstract class SettingsLinker {
     * about. Should return the dest parameter unmodified if no change needs
     * to occur.
     */
-   public abstract DisplaySettings copySettings(DisplayWindow sourceDisplay,
+   public abstract DisplaySettings copySettings(DataViewer sourceDisplay,
          DisplaySettings source, DisplaySettings dest);
 
    /**
     * Return true iff the given DisplaySettingsEvent represents a change that
-    * we need to apply to our own DisplayWindow.
+    * we need to apply to our own DataViewer.
     */
-   public abstract boolean getShouldApplyChanges(DisplayWindow source,
+   public abstract boolean getShouldApplyChanges(DataViewer source,
          DisplaySettingsEvent changeEvent);
 
    /**
     * Apply the change indicated by the provided DisplaySettingsEvent to
-    * our own DisplayWindow.
+    * our own DataViewer.
     */
-   public abstract void applyChange(DisplayWindow source,
+   public abstract void applyChange(DataViewer source,
          DisplaySettingsEvent changeEvent);
 
    /**

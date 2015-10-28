@@ -31,8 +31,8 @@ import javax.swing.JButton;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
+import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.LUTMaster;
 
 /**
@@ -44,9 +44,9 @@ import org.micromanager.display.internal.LUTMaster;
  * TODO: LUTs with color displays don't currently work.
  */
 public class ColorModeCombo extends JButton {
-   private DisplayWindow display_;
+   private DataViewer display_;
 
-   public ColorModeCombo(DisplayWindow display) {
+   public ColorModeCombo(DataViewer display) {
       super();
       display_ = display;
       int index = DisplaySettings.ColorMode.COLOR.getIndex();

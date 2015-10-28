@@ -261,8 +261,7 @@ public class ScrollerPanel extends JPanel {
       });
       add(scrollbar, "shrinkx, growx");
 
-      ScrollbarLockIcon lock = new ScrollbarLockIcon(axis,
-            display_.getDisplayBus());
+      ScrollbarLockIcon lock = new ScrollbarLockIcon(axis, display_);
       add(lock, "grow 0");
 
       LinkButton linker = new LinkButton(

@@ -61,6 +61,7 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.NewDisplaySettingsEvent;
 import org.micromanager.display.NewImagePlusEvent;
 
+import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.Inspector;
 import org.micromanager.display.InspectorPanel;
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
@@ -121,9 +122,7 @@ public final class HistogramsPanel extends InspectorPanel {
 
    private Object panelLock_ = new Object();
    private Datastore store_;
-   private DefaultDisplayWindow display_;
-   private MMVirtualStack stack_;
-   private ImagePlus ijImage_;
+   private DisplayWindow viewer_;
    private Timer histogramUpdateTimer_;
    private boolean isFirstDrawEvent_ = true;
    private long lastUpdateTime_ = 0;
@@ -148,7 +147,7 @@ public final class HistogramsPanel extends InspectorPanel {
       synchronized(panelLock_) {
          // Check the display to see how many histograms it needs at the start.
          for (int i = 0; i < display.getDatastore().getAxisLength(Coords.CHANNEL); ++i) {
-            addPanel((DefaultDisplayWindow) display, i);
+            addPanel(display, i);
          }
       }
       display.registerForEvents(this);
@@ -171,12 +170,12 @@ public final class HistogramsPanel extends InspectorPanel {
          return;
       }
 
-      channelPanels_ = displayToPanels_.get(display_);
+      channelPanels_ = displayToPanels_.get(viewer_);
       if (channelPanels_ == null) {
          // This should never happen (it means that this object didn't know
          // about the new display), but could potentially if there's a bug
          // in event unregistering.
-         ReportingUtils.logError("Somehow defunct HistogramsPanel got notified of existence of " + display_);
+         ReportingUtils.logError("Somehow defunct HistogramsPanel got notified of existence of " + viewer_);
          return;
       }
       for (ChannelControlPanel panel : channelPanels_) {
@@ -197,7 +196,7 @@ public final class HistogramsPanel extends InspectorPanel {
     * mode, autostretch, and extrema% controls.
     */
    private synchronized void addStandardControls() {
-      DisplaySettings settings = display_.getDisplaySettings();
+      DisplaySettings settings = viewer_.getDisplaySettings();
 
       // HACK: we set these labels manually to null now, so that if the
       // display settings change while making controls (e.g. because we need
@@ -209,12 +208,12 @@ public final class HistogramsPanel extends InspectorPanel {
       percentLabel_ = null;
 
       add(new JLabel("Color mode: "), "split 2, flowx, gapleft 15");
-      ColorModeCombo colorModeCombo = new ColorModeCombo(display_);
+      ColorModeCombo colorModeCombo = new ColorModeCombo(viewer_);
       add(colorModeCombo, "align right");
 
       boolean shouldAutostretchSetting = true;
-      if (display_.getDisplaySettings().getShouldAutostretch() != null) {
-         shouldAutostretchSetting = display_.getDisplaySettings().getShouldAutostretch();
+      if (viewer_.getDisplaySettings().getShouldAutostretch() != null) {
+         shouldAutostretchSetting = viewer_.getDisplaySettings().getShouldAutostretch();
       }
       shouldAutostretch_ = new JCheckBox("Autostretch");
       shouldAutostretch_.setSelected(shouldAutostretchSetting);
@@ -249,29 +248,30 @@ public final class HistogramsPanel extends InspectorPanel {
          @Override
          public void actionPerformed(ActionEvent e) {
             boolean newVal = shouldAutostretch_.isSelected();
-            DisplaySettings newSettings = display_.getDisplaySettings()
+            DisplaySettings newSettings = viewer_.getDisplaySettings()
                   .copy().shouldAutostretch(newVal).build();
             DefaultDisplaySettings.setStandardSettings(newSettings);
-            display_.setDisplaySettings(newSettings);
+            viewer_.setDisplaySettings(newSettings);
          }
       });
    }
 
    private void setExtremaPercentage(JSpinner extrema) {
-      DisplaySettings settings = display_.getDisplaySettings();
+      DisplaySettings settings = viewer_.getDisplaySettings();
       Double percentage = (Double) (extrema.getValue());
       settings = settings.copy().extremaPercentage(percentage).build();
       DefaultDisplaySettings.setStandardSettings(settings);
-      display_.setDisplaySettings(settings);
+      viewer_.setDisplaySettings(settings);
    }
 
-   private void addPanel(DefaultDisplayWindow display, int channelIndex) {
+   private void addPanel(DisplayWindow display, int channelIndex) {
       ChannelControlPanel panel = new ChannelControlPanel(channelIndex,
-            display.getDatastore(), display.getHistogramModel(channelIndex),
+            display.getDatastore(),
+            ((DefaultDisplayWindow) display).getHistogramModel(channelIndex),
             DisplayGroupManager.getContrastLinker(channelIndex, display),
             display);
       displayToPanels_.get(display).add(panel);
-      if (display == display_) {
+      if (display == viewer_) {
          // Also add the panel to our contents, and tell our inspector frame
          // to relayout.
          add(panel, "grow, gap 0");
@@ -287,21 +287,12 @@ public final class HistogramsPanel extends InspectorPanel {
       for (ChannelControlPanel panel : channelPanels_) {
          panel.getModel().setFullScale();
       }
-      display_.postEvent(new LUTUpdateEvent(this, null, null, null));
-      display_.postEvent(new DefaultRequestToDrawEvent());
-   }
-
-   public boolean amInCompositeMode() {
-      return ((ijImage_ instanceof CompositeImage) &&
-            ((CompositeImage) ijImage_).getMode() != CompositeImage.COMPOSITE);
-   }
-
-   public boolean amMultiChannel() {
-      return (ijImage_ instanceof CompositeImage);
+      viewer_.postEvent(new LUTUpdateEvent(this, null, null, null));
+      viewer_.postEvent(new DefaultRequestToDrawEvent());
    }
 
    private double getHistogramUpdateRate() {
-      DisplaySettings settings = display_.getDisplaySettings();
+      DisplaySettings settings = viewer_.getDisplaySettings();
       if (settings == null || settings.getHistogramUpdateRate() == null) {
          // Assume we update every time.
          return 0;
@@ -355,7 +346,7 @@ public final class HistogramsPanel extends InspectorPanel {
       try {
          // Make certain we have enough histograms for the relevant display(s).
          Datastore store = event.getDatastore();
-         List<DisplayWindow> displays = DisplayGroupManager.getDisplaysForDatastore(store);
+         List<DisplayWindow> displays = new ArrayList<DisplayWindow>(DisplayGroupManager.getDisplaysForDatastore(store));
          for (DisplayWindow display : displays) {
             if (display.getDatastore() != store) {
                continue;
@@ -368,7 +359,7 @@ public final class HistogramsPanel extends InspectorPanel {
                   // modify the "panels" object's length, incrementing the
                   // value returned by panels.size() here and ensuring the
                   // while loop continues.
-                  addPanel((DefaultDisplayWindow) display, panels.size());
+                  addPanel(display, panels.size());
                }
             }
          }
@@ -381,7 +372,7 @@ public final class HistogramsPanel extends InspectorPanel {
    @Subscribe
    public void onPixelsSet(PixelsSetEvent event) {
       try {
-         if (event.getDisplay() == display_) {
+         if (event.getDisplay() == viewer_) {
             calcAndDisplayHistAndStats();
             // HACK: the inspector window can have the incorrect size (somewhat
             // too small) if sized prior to histograms having been drawn. So we
@@ -400,7 +391,7 @@ public final class HistogramsPanel extends InspectorPanel {
    @Subscribe
    public synchronized void onNewDisplaySettings(NewDisplaySettingsEvent event) {
       try {
-         if (event.getDisplay() == display_) {
+         if (event.getDisplay() == viewer_) {
             // Check if autostretch is modified.
             DisplaySettings settings = event.getDisplaySettings();
             Boolean stretchSetting = settings.getShouldAutostretch();
@@ -469,11 +460,11 @@ public final class HistogramsPanel extends InspectorPanel {
    @Override
    public JPopupMenu getGearMenu() {
       JPopupMenu result = new JPopupMenu();
-      if (display_ == null) {
+      if (viewer_ == null) {
          // Nothing to be done yet.
          return result;
       }
-      final DisplaySettings settings = display_.getDisplaySettings();
+      final DisplaySettings settings = viewer_.getDisplaySettings();
 
       // Add option for turning log display on/off.
       JCheckBoxMenuItem logDisplay = new JCheckBoxMenuItem("Logarithmic Y axis");
@@ -487,7 +478,7 @@ public final class HistogramsPanel extends InspectorPanel {
             // Invert current setting; null counts as false here.
             Boolean newVal = !(shouldLog == null || shouldLog);
             DisplaySettings newSettings = settings.copy().shouldUseLogScale(newVal).build();
-            display_.setDisplaySettings(newSettings);
+            viewer_.setDisplaySettings(newSettings);
          }
       });
       result.add(logDisplay);
@@ -501,7 +492,7 @@ public final class HistogramsPanel extends InspectorPanel {
          @Override
          public void actionPerformed(ActionEvent e) {
             DisplaySettings newSettings = settings.copy().channelColors(RGB_COLORS).build();
-            display_.setDisplaySettings(newSettings);
+            viewer_.setDisplaySettings(newSettings);
          }
       });
       JCheckBoxMenuItem colorblind = new JCheckBoxMenuItem("Colorblind-friendly");
@@ -509,7 +500,7 @@ public final class HistogramsPanel extends InspectorPanel {
          @Override
          public void actionPerformed(ActionEvent e) {
             DisplaySettings newSettings = settings.copy().channelColors(COLORBLIND_COLORS).build();
-            display_.setDisplaySettings(newSettings);
+            viewer_.setDisplaySettings(newSettings);
          }
       });
       JCheckBoxMenuItem custom = new JCheckBoxMenuItem("Custom");
@@ -557,7 +548,7 @@ public final class HistogramsPanel extends InspectorPanel {
          @Override
          public void actionPerformed(ActionEvent e) {
             DisplaySettings newSettings = settings.copy().histogramUpdateRate(-1.0).build();
-            display_.setDisplaySettings(newSettings);
+            viewer_.setDisplaySettings(newSettings);
          }
       });
       JCheckBoxMenuItem always = new JCheckBoxMenuItem("Every Image");
@@ -565,7 +556,7 @@ public final class HistogramsPanel extends InspectorPanel {
          @Override
          public void actionPerformed(ActionEvent e) {
             DisplaySettings newSettings = settings.copy().histogramUpdateRate(0.0).build();
-            display_.setDisplaySettings(newSettings);
+            viewer_.setDisplaySettings(newSettings);
          }
       });
       JCheckBoxMenuItem oncePerSec = new JCheckBoxMenuItem("Once per Second");
@@ -573,7 +564,7 @@ public final class HistogramsPanel extends InspectorPanel {
          @Override
          public void actionPerformed(ActionEvent e) {
             DisplaySettings newSettings = settings.copy().histogramUpdateRate(1.0).build();
-            display_.setDisplaySettings(newSettings);
+            viewer_.setDisplaySettings(newSettings);
          }
       });
 
@@ -599,16 +590,19 @@ public final class HistogramsPanel extends InspectorPanel {
    }
 
    @Override
-   public synchronized void setDisplay(DisplayWindow display) {
-      display_ = (DefaultDisplayWindow) display;
-      if (display_ == null) {
+   public InspectorPanel.DisplayRequirement getDisplayRequirement() {
+      return InspectorPanel.DisplayRequirement.DISPLAY_WINDOW;
+   }
+
+   @Override
+   public synchronized void setDisplayWindow(DisplayWindow viewer) {
+      viewer_ = viewer;
+      if (viewer_ == null) {
          removeAll();
          invalidate();
          return;
       }
-      store_ = display_.getDatastore();
-      stack_ = display_.getStack();
-      ijImage_ = display_.getImagePlus();
+      store_ = viewer_.getDatastore();
       setupChannelControls();
       revalidate();
       inspector_.relayout();

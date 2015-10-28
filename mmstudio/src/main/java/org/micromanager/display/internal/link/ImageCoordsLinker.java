@@ -25,7 +25,7 @@ import java.util.List;
 
 import org.micromanager.data.Coords;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.DataViewer;
 import org.micromanager.display.internal.ScrollerPanel;
 
 import org.micromanager.data.internal.DefaultCoords;
@@ -43,7 +43,7 @@ public class ImageCoordsLinker extends SettingsLinker {
    private static final List<Class<?>> RELEVANT_EVENTS = Arrays.asList(
          new Class<?>[] {ImageCoordsEvent.class});
 
-   public ImageCoordsLinker(String axis, DisplayWindow parent,
+   public ImageCoordsLinker(String axis, DataViewer parent,
          ScrollerPanel scrollerPanel) {
       super(parent, RELEVANT_EVENTS);
       axis_ = axis;
@@ -61,7 +61,7 @@ public class ImageCoordsLinker extends SettingsLinker {
     * we are linked for is different.
     */
    @Override
-   public boolean getShouldApplyChanges(DisplayWindow source,
+   public boolean getShouldApplyChanges(DataViewer source,
          DisplaySettingsEvent changeEvent) {
       ImageCoordsEvent event = (ImageCoordsEvent) changeEvent;
       int newPos = event.getImageCoords().getIndex(axis_);
@@ -73,7 +73,7 @@ public class ImageCoordsLinker extends SettingsLinker {
     * Copy over just the index we are linked for.
     */
    @Override
-   public void applyChange(DisplayWindow source,
+   public void applyChange(DataViewer source,
          DisplaySettingsEvent changeEvent) {
       ImageCoordsEvent event = (ImageCoordsEvent) changeEvent;
       Coords curCoords = parent_.getDisplayedImages().get(0).getCoords();
@@ -88,7 +88,7 @@ public class ImageCoordsLinker extends SettingsLinker {
     * doesn't do anything meaningful for us.
     */
    @Override
-   public void pushState(DisplayWindow display) {
+   public void pushState(DataViewer display) {
       // Get the coordinates of the displayed image in the target display,
       // then tweak them along our axis.
       Coords coords = display.getDisplayedImages().get(0).getCoords();
@@ -99,7 +99,7 @@ public class ImageCoordsLinker extends SettingsLinker {
    }
 
    @Override
-   public DisplaySettings copySettings(DisplayWindow sourceDisplay,
+   public DisplaySettings copySettings(DataViewer sourceDisplay,
          DisplaySettings source, DisplaySettings dest) {
       ReportingUtils.logError("copySettings() of ImageCoordsLinker should never be called.");
       return null;

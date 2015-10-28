@@ -35,6 +35,8 @@ import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.SwingUtilities;
 
+import org.micromanager.display.DataViewer;
+
 import org.micromanager.internal.utils.TooltipTextMaker;
 
 public class ScrollbarLockIcon extends JButton {
@@ -98,14 +100,14 @@ public class ScrollbarLockIcon extends JButton {
 
    private LockedState lockedState_;
    private final String axis_;
-   private final EventBus bus_;
-   
-   public ScrollbarLockIcon(final String axis, final EventBus bus) {
+   private final DataViewer viewer_;
+
+   public ScrollbarLockIcon(final String axis, final DataViewer viewer) {
       // Start out unlocked.
       super(stateToIcon_.get(LockedState.UNLOCKED));
       lockedState_ = LockedState.UNLOCKED;
       axis_ = axis;
-      bus_ = bus;
+      viewer_ = viewer;
       this.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(
               "Lock the scrollbar to its current postion. Click twice to superlock; right-click to update all axes."));
       this.addMouseListener(new MouseInputAdapter() {
@@ -114,7 +116,7 @@ public class ScrollbarLockIcon extends JButton {
             advanceLockedState(SwingUtilities.isRightMouseButton(e));
          }
       });
-      bus_.register(this);
+      viewer_.registerForEvents(this);
    }
 
    private void advanceLockedState(boolean shouldBroadcast) {
@@ -130,14 +132,14 @@ public class ScrollbarLockIcon extends JButton {
             break;
       }
       if (shouldBroadcast) {
-         bus_.post(new ForceLockEvent(lockedState_));
+         viewer_.postEvent(new ForceLockEvent(lockedState_));
       }
    }
 
    public void setLockedState(LockedState state) {
       lockedState_ = state;
       setIcon(stateToIcon_.get(state));
-      bus_.post(new LockEvent(axis_, lockedState_));
+      viewer_.postEvent(new LockEvent(axis_, lockedState_));
       repaint();
    }
 

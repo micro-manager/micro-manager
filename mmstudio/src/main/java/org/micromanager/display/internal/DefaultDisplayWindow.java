@@ -1038,11 +1038,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       displayBus_.post(obj);
    }
 
-   @Override
-   public EventBus getDisplayBus() {
-      return displayBus_;
-   }
-
    /**
     * Datastore has received a new image; display it, and adjust our
     * ImageJ object if necessary.

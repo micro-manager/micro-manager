@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.micromanager.data.Datastore;
+import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
 
 import org.micromanager.display.internal.DefaultDisplayWindow;
@@ -134,14 +135,14 @@ public class DisplayGroupManager {
    // Keeps track of which displays have which SettingsLinkers, so we can
    // propagate changes to linkers, and clean up when displays go away. This
    // also serves as a convenient container of all displays.
-   private HashMap<DisplayWindow, LinkersGroup> displayToLinkers_;
+   private HashMap<DataViewer, LinkersGroup> viewerToLinkers_;
    // Tracks which screen (a.k.a. monitor) a given window is on.
    private HashMap<GraphicsConfiguration, DisplayWindow> screenToDisplay_;
    private HashMap<Datastore, ArrayList<DisplayWindow>> storeToDisplays_;
    private ArrayList<WindowListener> listeners_;
 
    public DisplayGroupManager() {
-      displayToLinkers_ = new HashMap<DisplayWindow, LinkersGroup>();
+      viewerToLinkers_ = new HashMap<DataViewer, LinkersGroup>();
       screenToDisplay_ = new HashMap<GraphicsConfiguration, DisplayWindow>();
       storeToDisplays_ = new HashMap<Datastore, ArrayList<DisplayWindow>>();
       listeners_ = new ArrayList<WindowListener>();
@@ -154,7 +155,7 @@ public class DisplayGroupManager {
     */
    public void addDisplay(DisplayWindow display) {
       listeners_.add(new WindowListener(display, this));
-      displayToLinkers_.put(display, new LinkersGroup(display));
+      viewerToLinkers_.put(display, new LinkersGroup(display));
       Datastore store = display.getDatastore();
       if (!storeToDisplays_.containsKey(store)) {
          storeToDisplays_.put(store, new ArrayList<DisplayWindow>());
@@ -173,13 +174,13 @@ public class DisplayGroupManager {
     * A display was destroyed; stop tracking it, and remove siblings from
     * linkers.
     */
-   public void onDisplayDestroyed(DisplayWindow source,
+   public void onDisplayDestroyed(DataViewer source,
          DisplayDestroyedEvent event) {
       try {
-         for (SettingsLinker linker : displayToLinkers_.get(source).getLinkers()) {
+         for (SettingsLinker linker : viewerToLinkers_.get(source).getLinkers()) {
             linker.destroy();
          }
-         displayToLinkers_.remove(source);
+         viewerToLinkers_.remove(source);
          for (WindowListener listener : listeners_) {
             if (listener.getDisplay() == source) {
                listeners_.remove(listener);
@@ -222,20 +223,20 @@ public class DisplayGroupManager {
    /**
     * A new LinkButton has been created; we need to start tracking its linker.
     */
-   public void addNewLinker(SettingsLinker newLinker, DisplayWindow source) {
-      displayToLinkers_.get(source).getLinkers().add(newLinker);
+   public void addNewLinker(SettingsLinker newLinker, DataViewer source) {
+      viewerToLinkers_.get(source).getLinkers().add(newLinker);
    }
 
    /**
     * A SettingsLinker is being removed.
     */
-   public void onLinkerRemoved(DisplayWindow source,
+   public void onLinkerRemoved(DataViewer source,
          LinkerRemovedEvent event) {
       SettingsLinker linker = event.getLinker();
       // We might not have the display around any more if this was called
       // as a side-effect of the display being removed.
-      if (displayToLinkers_.containsKey(source)) {
-         displayToLinkers_.get(source).getLinkers().remove(linker);
+      if (viewerToLinkers_.containsKey(source)) {
+         viewerToLinkers_.get(source).getLinkers().remove(linker);
       }
       linker.destroy();
    }
@@ -243,8 +244,8 @@ public class DisplayGroupManager {
    /**
     * Retrieve a ContrastLinker.
     */
-   public static ContrastLinker getContrastLinker(int channel, DisplayWindow display) {
-      return staticInstance_.displayToLinkers_.get(display).getContrastLinker(channel);
+   public static ContrastLinker getContrastLinker(int channel, DataViewer display) {
+      return staticInstance_.viewerToLinkers_.get(display).getContrastLinker(channel);
    }
 
    /**
@@ -277,7 +278,11 @@ public class DisplayGroupManager {
       // These displays are already fullscreened; thus we shouldn't change
       // their visibility.
       HashSet<DisplayWindow> displaysToSkip = new HashSet<DisplayWindow>(screenToDisplay_.values());
-      for (DisplayWindow display : displayToLinkers_.keySet()) {
+      for (DataViewer viewer : viewerToLinkers_.keySet()) {
+         if (!(viewer instanceof DisplayWindow)) {
+            continue;
+         }
+         DisplayWindow display = (DisplayWindow) viewer;
          if (!displaysToSkip.contains(display)) {
             display.getAsWindow().setVisible(
                   !bannedConfigs.contains(display.getScreenConfig()));
@@ -289,15 +294,15 @@ public class DisplayGroupManager {
     * A DisplayWindow's DisplaySettings have changed; push those changes out
     * to linked displays via the SettingsLinkers.
     */
-   public void onDisplaySettingsChanged(DisplayWindow source,
+   public void onDisplaySettingsChanged(DataViewer source,
          DisplaySettingsEvent event) {
-      if (!displayToLinkers_.containsKey(source)) {
+      if (!viewerToLinkers_.containsKey(source)) {
          // Unlikely, but could happen when a display is cleared during Live
          // mode.
          return;
       }
       try {
-         for (SettingsLinker linker : displayToLinkers_.get(source).getLinkers()) {
+         for (SettingsLinker linker : viewerToLinkers_.get(source).getLinkers()) {
             linker.pushEvent(source, event);
          }
       }

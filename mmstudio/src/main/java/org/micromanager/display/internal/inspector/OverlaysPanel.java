@@ -49,7 +49,6 @@ import org.micromanager.display.Inspector;
 import org.micromanager.display.InspectorPanel;
 import org.micromanager.display.OverlayPanel;
 import org.micromanager.display.internal.DefaultDisplayManager;
-import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.display.internal.events.CanvasDrawEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.display.internal.events.NewOverlayEvent;
@@ -65,8 +64,6 @@ class OverlaysPanel extends InspectorPanel {
    private static final String NO_OVERLAY = "   ";
    private ArrayList<OverlayPanel> overlays_;
    private DisplayWindow display_;
-   private MMVirtualStack stack_;
-   private ImagePlus plus_;
    private Inspector inspector_;
    
    public OverlaysPanel() {
@@ -101,6 +98,13 @@ class OverlaysPanel extends InspectorPanel {
          menu.add(item);
       }
       menu.show(event.getComponent(), 0, event.getComponent().getHeight());
+   }
+
+   /**
+    * We need specific access to the drawing API for the DisplayWindow.
+    */
+   public InspectorPanel.DisplayRequirement getDisplayRequirement() {
+      return InspectorPanel.DisplayRequirement.DISPLAY_WINDOW;
    }
 
    /**
@@ -153,7 +157,7 @@ class OverlaysPanel extends InspectorPanel {
    }
 
    @Override
-   public synchronized void setDisplay(DisplayWindow display) {
+   public synchronized void setDisplayWindow(DisplayWindow display) {
       if (display_ != null) {
          try {
             display_.unregisterForEvents(this);
@@ -167,8 +171,6 @@ class OverlaysPanel extends InspectorPanel {
          overlay.setDisplay(display);
       }
       if (display_ != null) {
-         stack_ = ((DefaultDisplayWindow) display).getStack();
-         plus_ = display.getImagePlus();
          display_.registerForEvents(this);
       }
    }

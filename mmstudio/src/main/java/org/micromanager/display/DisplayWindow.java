@@ -37,21 +37,7 @@ import org.micromanager.data.Image;
  * A DisplayWindow is the interface to Micro-Manager's custom image display
  * windows.
  */
-public interface DisplayWindow {
-   /**
-    * Display the image at the specified coordinates in the Datastore the
-    * display is showing.
-    * @param coords The coordinates of the image to be displayed.
-    */
-   public void setDisplayedImageTo(Coords coords);
-
-   /**
-    * Request that the display redraw its current image. You shouldn't need
-    * to call this often; most changes that affect the display (for example,
-    * changes to the display settings) automatically cause the image to be
-    * redrawn.
-    */
-   public void requestRedraw();
+public interface DisplayWindow extends DataViewer {
 
    /**
     * Display the specified status string.
@@ -82,36 +68,10 @@ public interface DisplayWindow {
    public double getMagnification();
 
    /**
-    * Retrieve the Datastore backing this display.
-    * @return The Datastore backing this display.
-    */
-   public Datastore getDatastore();
-
-   /**
-    * Retrieve the DisplaySettings for this display.
-    * @return The DisplaySettings for this display.
-    */
-   public DisplaySettings getDisplaySettings();
-
-   /**
-    * Set new DisplaySettings for this display. This will post a
-    * NewDisplaySettingsEvent to the display's EventBus.
-    * @param settings The new DisplaySettings to use.
-    */
-   public void setDisplaySettings(DisplaySettings settings);
-
-   /**
     * Cause the display to autostretch each of its displayed channels, as if
     * the "auto once" button had been clicked in the Image Inspector Window.
     */
    public void autostretch();
-
-   /**
-    * Retrieve the Images currently being displayed (all channels).
-    * @return Every image at the currently-displayed image coordinates modulo
-    *         the channel coordinate (as all channels are represented).
-    */
-   public List<Image> getDisplayedImages();
 
    /**
     * Return the ImagePlus used to handle image display logic in ImageJ. This
@@ -199,15 +159,6 @@ public interface DisplayWindow {
    public Window getAsWindow();
 
    /**
-    * Return the unique name of this display. Typically this will include the
-    * display number and the name of the dataset; if no name is available, then
-    * "MM image display" will be used instead. This string is displayed in
-    * the inspector window, ImageJ's "Windows" menu, and a few other places.
-    * @return a string labeling this window.
-    */
-   public String getName();
-
-   /**
     * Add a custom extra string to the title of this display. The usual format
     * for the window title is "#num: name (magnification) (saved status)".
     * If you call this method, then the name will be replaced by your custom
@@ -217,32 +168,4 @@ public interface DisplayWindow {
     * @param title Custom title component to insert into the window's title.
     */
    public void setCustomTitle(String title);
-
-   /**
-    * Register for access to the EventBus that the window uses for propagating
-    * events. Note that this is different from the EventBus that the Datastore
-    * uses; this EventBus is specifically for events related to the display.
-    * @param obj The object that wants to subscribe for events.
-    */
-   public void registerForEvents(Object obj);
-
-   /**
-    * Unregister for events for this display. See documentation for
-    * registerForEvents().
-    * @param obj The object that wants to no longer be subscribed for events.
-    */
-   public void unregisterForEvents(Object obj);
-
-   /**
-    * Post the provided event object on the display's EventBus, so that objects
-    * that have called registerForEvents(), above, can receive it.
-    * @param obj The event to post.
-    */
-   public void postEvent(Object obj);
-
-   /**
-    * Return a reference to the display's EventBus.
-    * @return The display's EventBus.
-    */
-   public EventBus getDisplayBus();
 }

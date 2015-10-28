@@ -458,6 +458,10 @@ public class ChannelHistogramModel {
             0);
    }
 
+   public int getNumBins() {
+      return NUM_BINS;
+   }
+
    public double getBinSize() {
       return binSize_;
    }

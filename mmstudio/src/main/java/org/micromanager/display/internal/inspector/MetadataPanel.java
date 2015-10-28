@@ -50,7 +50,7 @@ import org.micromanager.data.Metadata;
 import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
-import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.DataViewer;
 import org.micromanager.display.Inspector;
 import org.micromanager.display.InspectorPanel;
 import org.micromanager.display.PixelsSetEvent;
@@ -67,7 +67,7 @@ public class MetadataPanel extends InspectorPanel {
    private final MetadataTableModel summaryMetadataModel_;
    private ImageWindow currentWindow_;
    private Datastore store_;
-   private DisplayWindow display_;
+   private DataViewer display_;
    private Timer updateTimer_;
 
    /** This class makes smaller JTables, since the default size is absurd. */
@@ -261,7 +261,7 @@ public class MetadataPanel extends InspectorPanel {
    }
 
    @Override
-   public synchronized void setDisplay(DisplayWindow display) {
+   public synchronized void setDataViewer(DataViewer display) {
       if (display_ != null) {
          try {
             display_.unregisterForEvents(this);

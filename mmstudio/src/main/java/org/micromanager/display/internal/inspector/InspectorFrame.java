@@ -57,6 +57,7 @@ import javax.swing.UIManager;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.Inspector;
 import org.micromanager.display.InspectorPanel;
@@ -74,28 +75,28 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * This frame shows a set of controls that are related to the currently-on-top
- * DisplayWindow (or to a specific DisplayWindow as selected by the user). It
+ * DataViewer (or to a specific DataViewer as selected by the user). It
  * consists of a set of expandable panels in a vertical configuration.
  */
 public class InspectorFrame extends MMFrame implements Inspector {
 
    /**
     * This class is used to represent entries in the dropdown menu the user
-    * uses to select which DisplayWindow the InspectorFrame is controlling.
-    * Functionally it serves as a mapping of DisplayWindow names to those
-    * DisplayWindows, with the caveat that DisplayWindow names can change
+    * uses to select which DataViewer the InspectorFrame is controlling.
+    * Functionally it serves as a mapping of DataViewer names to those
+    * DataViewers, with the caveat that DataViewer names can change
     * any time a duplicate display is created or destroyed (see the note on
     * populateChooser(), below).
     * HACK: as a special case, if one of these is created with a null display,
     * then it pretends to be the TOPMOST_DISPLAY option instead.
     */
    private class DisplayMenuItem {
-      private DisplayWindow menuDisplay_;
-      public DisplayMenuItem(DisplayWindow display) {
+      private DataViewer menuDisplay_;
+      public DisplayMenuItem(DataViewer display) {
          menuDisplay_ = display;
       }
 
-      public DisplayWindow getDisplay() {
+      public DataViewer getDisplay() {
          return menuDisplay_;
       }
 
@@ -110,17 +111,17 @@ public class InspectorFrame extends MMFrame implements Inspector {
    private static final String TOPMOST_DISPLAY = "Topmost Window";
    private static final String CONTRAST_TITLE = "Histograms and Settings";
    private static final String WINDOW_WIDTH = "width of the inspector frame";
-   private DisplayWindow display_;
-   private Stack<DisplayWindow> displayHistory_;
+   private DataViewer display_;
+   private Stack<DataViewer> displayHistory_;
    private ArrayList<InspectorPanel> panels_;
    private JPanel contents_;
    private JComboBox displayChooser_;
    private JButton raiseButton_;
    private JLabel curDisplayTitle_;
 
-   public InspectorFrame(DisplayWindow display) {
+   public InspectorFrame(DataViewer display) {
       super();
-      displayHistory_ = new Stack<DisplayWindow>();
+      displayHistory_ = new Stack<DataViewer>();
       setTitle("Image Inspector");
       setAlwaysOnTop(true);
       // Use a small title bar.
@@ -159,7 +160,9 @@ public class InspectorFrame extends MMFrame implements Inspector {
       raiseButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            display_.toFront();
+            if (display_ instanceof DisplayWindow) {
+               ((DisplayWindow) display_).toFront();
+            }
          }
       });
       raiseButton_.setVisible(false);
@@ -241,8 +244,8 @@ public class InspectorFrame extends MMFrame implements Inspector {
       // See the HACK note on DisplayMenuItem.
       DisplayMenuItem nullItem = new DisplayMenuItem(null);
       displayChooser_.addItem(nullItem);
-      List<DisplayWindow> allDisplays = DefaultDisplayManager.getInstance().getAllImageWindows();
-      for (DisplayWindow display : allDisplays) {
+      List<DataViewer> allDisplays = new ArrayList<DataViewer>(DefaultDisplayManager.getInstance().getAllImageWindows());
+      for (DataViewer display : allDisplays) {
          if (!displayHistory_.contains(display)) {
             displayHistory_.push(display);
          }
@@ -392,7 +395,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
       }
    }
 
-   private void setDisplay(DisplayWindow display) {
+   private void setDisplay(DataViewer display) {
       if (display == null) {
          // Remove the top display from the history, and switch to the most
          // recent next one, if possible.
@@ -411,7 +414,18 @@ public class InspectorFrame extends MMFrame implements Inspector {
       display_ = display;
       for (InspectorPanel panel : panels_) {
          try {
-            panel.setDisplay(display_);
+            if (panel.getDisplayRequirement() == InspectorPanel.DisplayRequirement.DISPLAY_WINDOW) {
+               if (display_ instanceof DisplayWindow) {
+                  panel.setVisible(true);
+                  panel.setDisplayWindow((DisplayWindow) display_);
+               }
+               else {
+                  panel.setVisible(false);
+               }
+            }
+            else {
+               panel.setDataViewer(display_);
+            }
          }
          catch (Exception e) {
             ReportingUtils.logError(e, "Error dispatching new display to " + panel);

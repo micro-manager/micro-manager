@@ -47,10 +47,9 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
 
-import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.DataViewer;
 import org.micromanager.display.Inspector;
 import org.micromanager.display.InspectorPanel;
-import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.display.internal.MMVirtualStack;
 import org.micromanager.display.PixelsSetEvent;
 
@@ -61,7 +60,7 @@ public class CommentsPanel extends InspectorPanel {
    private JTextArea imageCommentsTextArea_;
    private JTextArea summaryCommentsTextArea_;
    private ImageWindow currentWindow_;
-   private DisplayWindow display_;
+   private DataViewer display_;
    private Datastore store_;
    private Timer updateTimer_;
    private HashMap<Image, Timer> imageToSaveTimer_;
@@ -280,7 +279,7 @@ public class CommentsPanel extends InspectorPanel {
    }
 
    @Override
-   public synchronized void setDisplay(DisplayWindow display) {
+   public synchronized void setDataViewer(DataViewer display) {
       if (display_ != null) {
          try {
             display_.unregisterForEvents(this);

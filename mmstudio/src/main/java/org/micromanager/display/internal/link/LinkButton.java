@@ -41,15 +41,15 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 
+import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayDestroyedEvent;
-import org.micromanager.display.DisplayWindow;
 
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * This class provides the GUI for a button that links DisplaySettings
- * attributes across multiple DisplayWindows.
+ * attributes across multiple DataViewers.
  */
 public class LinkButton extends JButton {
    // These icons are modified versions of the public domain icon at
@@ -60,10 +60,10 @@ public class LinkButton extends JButton {
                    "/org/micromanager/icons/linkflat.png");
 
    private SettingsLinker linker_;
-   private final DisplayWindow display_;
+   private final DataViewer display_;
 
    public LinkButton(final SettingsLinker linker,
-         final DisplayWindow display) {
+         final DataViewer display) {
       super(INACTIVE_ICON);
       setMinimumSize(new Dimension(1, 1));
       setMargin(new Insets(0, 0, 0, 0));
@@ -189,7 +189,7 @@ public class LinkButton extends JButton {
             ACTIVE_ICON.getIconHeight() + 2);
    }
 
-   public DisplayWindow getDisplay() {
+   public DataViewer getDisplay() {
       return display_;
    }
 

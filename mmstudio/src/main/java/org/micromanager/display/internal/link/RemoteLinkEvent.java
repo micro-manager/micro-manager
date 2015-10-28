@@ -21,8 +21,8 @@
 package org.micromanager.display.internal.link;
 
 /**
- * This class is used to inform one DisplayWindow that another, different
- * DisplayWindow has changed a LinkButton's state.
+ * This class is used to inform one DataViewer that another, different
+ * DataViewer has changed a LinkButton's state.
  */
 public class RemoteLinkEvent {
    private SettingsLinker linker_;
