@@ -1779,7 +1779,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       String acqName = "";
 
       // do not want to return from within this loop => throw exception instead
-      // loop is executed once per acquisition (i.e. once if separate viewers isn't selected)
+      // loop is executed once per acquisition (i.e. once if separate viewers isn't selected
+      //   or once per timepoint if separate viewers is selected)
       long repeatStart = System.currentTimeMillis();
       for (int timepoint = 0; timepoint < nrRepeats_; timepoint++) {
          // handle intervals between (software-timed) repeats
@@ -1860,7 +1861,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   channelNames_[channelIndex] = firstCamera + chName;
                   viewString += NumberUtils.intToDisplayString(0) + SEPARATOR;
                   if (twoSided) {
-                     channelNames_[channelIndex] = secondCamera + chName;
+                     channelNames_[channelIndex+1] = secondCamera + chName;
                      viewString += NumberUtils.intToDisplayString(90) + SEPARATOR;
                   }
                }
