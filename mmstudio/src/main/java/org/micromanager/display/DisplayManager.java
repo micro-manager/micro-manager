@@ -63,11 +63,14 @@ public interface DisplayManager {
     * @param contrastMax The lowest pixel intensity corresponding to full
     *        intensity.
     * @param gamma The gamma curve parameter.
+    * @param isVisible Whether or not this channel is visible in the display
+    *        when the display is showing multiple channels simultaneously.
     * @return a DisplaySettings.ContrastSettings object, whose properties are
     *         all length-1 arrays with the provided values.
     */
    public DisplaySettings.ContrastSettings getContrastSettings(
-         Integer contrastMin, Integer contrastMax, Double gamma);
+         Integer contrastMin, Integer contrastMax, Double gamma,
+         Boolean isVisible);
 
    /**
     * Generate a ContrastSettings object with the provided values. This version
@@ -78,10 +81,13 @@ public interface DisplayManager {
     *        intensity, for each component.
     * @param gamma The gamma curve parameter. NOTE: for now this parameter is
     *        not used to control display of multi-component images.
+    * @param isVisible Whether or not this channel is visible in the display
+    *        when the display is showing multiple channels simultaneously.
     * @return a DisplaySettings.ContrastSettings object.
     */
    public DisplaySettings.ContrastSettings getContrastSettings(
-         Integer[] contrastMins, Integer[] contrastMaxes, Double[] gammas);
+         Integer[] contrastMins, Integer[] contrastMaxes, Double[] gammas,
+         Boolean isVisible);
 
    /**
     * Generate a "blank" PropertyMap.PropertyMapBuilder with empty mappings.
