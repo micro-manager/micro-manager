@@ -494,13 +494,16 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          didChange = true;
       }
       int curMin = settings.getSafeContrastMin(channelIndex_,
-            curComponent_, -1);
+            curComponent_,
+            lastHistograms_[curComponent_].getMinIgnoringOutliers());
       int curMax = settings.getSafeContrastMax(channelIndex_,
-            curComponent_, -1);
+            curComponent_,
+            lastHistograms_[curComponent_].getMaxIgnoringOutliers());
       if (curMin != min || curMax != max) {
          // New values are different from old ones.
          builder = updateContrastSettings(builder,
                curComponent_, min, max, null, false);
+         didChange = true;
       }
       if (didChange) {
          display_.setDisplaySettings(builder.build());
