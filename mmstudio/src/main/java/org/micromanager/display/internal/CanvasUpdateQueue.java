@@ -321,6 +321,13 @@ public class CanvasUpdateQueue {
       if (percentage == null) {
          percentage = 0.0;
       }
+      // We may need to apply our newly-calculated values to the display
+      // contrast settings.
+      boolean shouldUpdate = (settings.getShouldAutostretch() != null &&
+            settings.getShouldAutostretch());
+      Integer[] mins = new Integer[image.getNumComponents()];
+      Integer[] maxes = new Integer[image.getNumComponents()];
+      Double[] gammas = new Double[image.getNumComponents()];
       synchronized(history) {
          history.datas_.clear();
          for (int i = 0; i < image.getNumComponents(); ++i) {
@@ -328,11 +335,24 @@ public class CanvasUpdateQueue {
             HistogramData data = ContrastCalculator.calculateHistogram(
                   image, i, 8, percentage);
             history.datas_.add(data);
+            if (shouldUpdate) {
+               mins[i] = data.getMinIgnoringOutliers();
+               maxes[i] = data.getMaxIgnoringOutliers();
+               gammas[i] = settings.getSafeContrastGamma(channel, i, 1.0);
+            }
          }
          history.imageHash_ = image.hashCode();
          history.needsUpdate_ = false;
          history.lastUpdateTime_ = System.currentTimeMillis();
          display_.postEvent(new NewHistogramsEvent(channel, history.datas_));
+         if (shouldUpdate) {
+            DisplaySettings.DisplaySettingsBuilder builder = settings.copy();
+            builder.safeUpdateContrastSettings(
+                  new DefaultDisplaySettings.DefaultContrastSettings(
+                     mins, maxes, gammas, true),
+                  channel);
+            display_.setDisplaySettings(builder.build());
+         }
          // Allow future jobs to be scheduled.
          history.timer_ = null;
       }

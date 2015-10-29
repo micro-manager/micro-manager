@@ -468,6 +468,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                mins, maxes, gammas, isEnabledButton_.isSelected());
       builder.safeUpdateContrastSettings(contrast, channelIndex_);
       if (shouldPost) {
+         builder.shouldAutostretch(false);
          display_.setDisplaySettings(builder.build());
          display_.postEvent(new HistogramRecalcEvent(channelIndex_));
       }

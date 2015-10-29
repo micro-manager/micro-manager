@@ -94,10 +94,11 @@ public class ContrastCalculator {
       HistogramUtils util = new HistogramUtils(histogram,
             width * height, .01 * extremaPercentage);
       int bitDepth = image.getMetadata().getBitDepth();
+      int binSize = (int) (Math.pow(2, bitDepth) / numBins);
       return new HistogramData(histogram, minVal, maxVal,
-            util.getMinAfterRejectingOutliers(),
-            util.getMaxAfterRejectingOutliers(),
+            util.getMinAfterRejectingOutliers() * binSize,
+            (util.getMaxAfterRejectingOutliers() + 1) * binSize,
             (int) (meanVal / (width * height)),
-            bitDepth, (int) (Math.pow(2, bitDepth) / numBins));
+            bitDepth, binSize);
    }
 }

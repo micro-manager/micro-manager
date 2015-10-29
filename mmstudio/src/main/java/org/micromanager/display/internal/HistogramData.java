@@ -20,8 +20,6 @@
 
 package org.micromanager.display.internal;
 
-import java.util.Arrays;
-
 /**
  * This is a simple container class containing a histogram for one component
  * of an image, and some related statistics.
@@ -83,9 +81,9 @@ public class HistogramData {
 
    @Override
    public String toString() {
-      String result = String.format("<HistogramData mins %d/%d maxes %d/%d mean %d bitdepth %d binsize %d, data %s>",
+      String result = String.format("<HistogramData mins %d/%d maxes %d/%d mean %d bitdepth %d binsize %d>",
             minVal_, minIgnoringOutliers_, maxVal_, maxIgnoringOutliers_,
-            mean_, bitDepth_, binSize_, Arrays.toString(histogram_));
+            mean_, bitDepth_, binSize_);
       return result;
    }
 }
