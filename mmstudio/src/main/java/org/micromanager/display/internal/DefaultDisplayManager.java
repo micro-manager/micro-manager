@@ -154,17 +154,19 @@ public final class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
-   public DisplaySettings.ContrastSettings getContrastSettings(Integer contrastMin,
-         Integer contrastMax, Double gamma) {
+   public DisplaySettings.ContrastSettings getContrastSettings(
+         Integer contrastMin, Integer contrastMax, Double gamma,
+         Boolean isVisible) {
       return new DefaultDisplaySettings.DefaultContrastSettings(
-            contrastMin, contrastMax, gamma);
+            contrastMin, contrastMax, gamma, isVisible);
    }
 
    @Override
-   public DisplaySettings.ContrastSettings getContrastSettings(Integer[] contrastMins,
-         Integer[] contrastMaxes, Double[] gammas) {
-      return new DefaultDisplaySettings.DefaultContrastSettings(contrastMins, contrastMaxes,
-            gammas);
+   public DisplaySettings.ContrastSettings getContrastSettings(
+         Integer[] contrastMins, Integer[] contrastMaxes, Double[] gammas,
+         Boolean isVisible) {
+      return new DefaultDisplaySettings.DefaultContrastSettings(
+            contrastMins, contrastMaxes, gammas, isVisible);
    }
 
    @Override
