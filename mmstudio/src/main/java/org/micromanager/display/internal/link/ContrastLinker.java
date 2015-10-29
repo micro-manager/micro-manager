@@ -117,10 +117,10 @@ public class ContrastLinker extends SettingsLinker {
       int newIndex = getIndex(source, newSettings);
       DisplaySettings.ContrastSettings oldContrast = oldSettings.getSafeContrastSettings(channelIndex_,
             DefaultDisplayManager.getInstance().getContrastSettings(
-               0, 0, 1.0));
+               0, 0, 1.0, null));
       DisplaySettings.ContrastSettings newContrast = newSettings.getSafeContrastSettings(newIndex,
             DefaultDisplayManager.getInstance().getContrastSettings(
-               0, 0, 1.0));
+               0, 0, 1.0, null));
       return (oldContrast != newContrast);
    }
 
@@ -145,7 +145,7 @@ public class ContrastLinker extends SettingsLinker {
       int sourceIndex = getIndex(sourceDisplay, source);
       DisplaySettings.ContrastSettings oldSettings = source.getSafeContrastSettings(
             channelIndex_, DefaultDisplayManager.getInstance().getContrastSettings(
-               0, 0, 1.0));
+               0, 0, 1.0, null));
       DisplaySettings.ContrastSettings newSettings = dest.getSafeContrastSettings(
             sourceIndex, null);
       if (oldSettings == newSettings) {

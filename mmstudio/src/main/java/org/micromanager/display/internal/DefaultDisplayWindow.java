@@ -91,6 +91,7 @@ import org.micromanager.display.internal.events.GlobalDisplayDestroyedEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.display.internal.events.LUTUpdateEvent;
 import org.micromanager.display.internal.events.NewDisplaySettingsEvent;
+import org.micromanager.display.internal.events.NewHistogramsEvent;
 import org.micromanager.display.internal.events.RequestToCloseEvent;
 import org.micromanager.display.internal.events.StatusEvent;
 import org.micromanager.display.internal.inspector.InspectorFrame;
@@ -137,8 +138,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    // List of channel names we have seen, for ensuring our contrast settings
    // are up-to-date.
    private HashSet<String> knownChannels_;
-   // Keeps track of ChannelHistogramModel objects for us.
-   private HashMap<Integer, ChannelHistogramModel> channelToModel_;
 
    // This will be our intermediary with ImageJ.
    private DummyImageWindow dummyWindow_;
@@ -232,7 +231,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       studio_ = studio;
       store_ = store;
       knownChannels_ = new HashSet<String>();
-      channelToModel_ = new HashMap<Integer, ChannelHistogramModel>();
       if (settings == null) {
          displaySettings_ = DefaultDisplaySettings.getStandardSettings();
       }
@@ -476,26 +474,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             .build();
          displayBus_.post(new NewDisplaySettingsEvent(displaySettings_, this));
       }
-   }
-
-   /**
-    * Retrieve the ChannelHistogramModel for the specified channel. Create it
-    * if it does not already exist.
-    */
-   public ChannelHistogramModel getHistogramModel(int index) {
-      if (!channelToModel_.containsKey(index)) {
-         createHistogramModel(index);
-      }
-      return channelToModel_.get(index);
-   }
-
-   /**
-    * Create a new ChannelHistogramModel for the specified channel index.
-    */
-   private void createHistogramModel(int index) {
-      channelToModel_.put(index,
-            new ChannelHistogramModel(index, store_, this, stack_,
-               ijImage_));
    }
 
    /**
@@ -812,11 +790,38 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       }
    }
 
+   /**
+    * Calculate new min and max values for each channel and update our
+    * DisplaySettings.
+    */
    @Override
    public void autostretch() {
-      for (ChannelHistogramModel model : channelToModel_.values()) {
-         model.autostretch();
-         model.updateDisplaySettings();
+      Coords baseCoords = getDisplayedImages().get(0).getCoords();
+      Double extremaPercentage = displaySettings_.getExtremaPercentage();
+      if (extremaPercentage == null) {
+         extremaPercentage = 0.0;
+      }
+      DisplaySettings.DisplaySettingsBuilder builder = displaySettings_.copy();
+      for (int i = 0; i < store_.getAxisLength(Coords.CHANNEL); ++i) {
+         Image image = store_.getImage(baseCoords.copy().channel(i).build());
+         if (image != null) {
+            int numComponents = image.getNumComponents();
+            Integer[] mins = new Integer[numComponents];
+            Integer[] maxes = new Integer[numComponents];
+            Double[] gammas = new Double[numComponents];
+            for (int j = 0; j < image.getNumComponents(); ++j) {
+               gammas[j] = displaySettings_.getSafeContrastGamma(i, j, 1.0);
+               // 8 means 256 bins.
+               HistogramData data = ContrastCalculator.calculateHistogram(
+                     image, j, 8, extremaPercentage);
+               mins[j] = data.getMinIgnoringOutliers();
+               maxes[j] = data.getMaxIgnoringOutliers();
+            }
+            builder.safeUpdateContrastSettings(
+                  new DefaultDisplaySettings.DefaultContrastSettings(
+                     mins, maxes, gammas, true), i);
+         }
+         postEvent(new NewDisplaySettingsEvent(builder.build(), this));
       }
    }
 
@@ -1091,10 +1096,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             composite.setNChannelsUnverified(numChannels);
             composite.reset();
          }
-         if (!channelToModel_.containsKey(imageChannel)) {
-            // Create the entity that will handle display of this channel.
-            createHistogramModel(imageChannel);
-         }
          String name = store_.getSummaryMetadata().getSafeChannelName(imageChannel);
          if (!knownChannels_.contains(name)) {
             // Update our display settings with the new channel.
@@ -1163,7 +1164,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     * title.
     */
    @Subscribe
-   public void onDatastoreFrozenPath(DatastoreFrozenEvent event) {
+   public void onDatastoreFrozen(DatastoreFrozenEvent event) {
       try {
          String path = store_.getSavePath();
          if (path != null) {

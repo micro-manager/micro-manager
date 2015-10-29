@@ -267,7 +267,6 @@ public final class HistogramsPanel extends InspectorPanel {
    private void addPanel(DisplayWindow display, int channelIndex) {
       ChannelControlPanel panel = new ChannelControlPanel(channelIndex,
             display.getDatastore(),
-            ((DefaultDisplayWindow) display).getHistogramModel(channelIndex),
             DisplayGroupManager.getContrastLinker(channelIndex, display),
             display);
       displayToPanels_.get(display).add(panel);
@@ -280,17 +279,6 @@ public final class HistogramsPanel extends InspectorPanel {
       }
    }
 
-   public synchronized void fullScaleChannels() {
-      if (channelPanels_ == null) {
-         return;
-      }
-      for (ChannelControlPanel panel : channelPanels_) {
-         panel.getModel().setFullScale();
-      }
-      viewer_.postEvent(new LUTUpdateEvent(this, null, null, null));
-      viewer_.postEvent(new DefaultRequestToDrawEvent());
-   }
-
    private double getHistogramUpdateRate() {
       DisplaySettings settings = viewer_.getDisplaySettings();
       if (settings == null || settings.getHistogramUpdateRate() == null) {
@@ -298,47 +286,6 @@ public final class HistogramsPanel extends InspectorPanel {
          return 0;
       }
       return settings.getHistogramUpdateRate();
-   }
-
-   public synchronized void calcAndDisplayHistAndStats() {
-      if (channelPanels_ == null) {
-         return;
-      }
-      double updateRate = getHistogramUpdateRate();
-      if (updateRate < 0) {
-         // Update rate is set to "never".
-         return;
-      }
-      else if (updateRate == 0) {
-         // Update every time an image comes through.
-         updateHistograms();
-      }
-      else {
-         // Set up a timer to update the histograms at the right time.
-         if (histogramUpdateTimer_ == null) {
-            histogramUpdateTimer_ = new Timer("Histogram update delay");
-         }
-         TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-               updateHistograms();
-            }
-         };
-         histogramUpdateTimer_.schedule(task, (long) (updateRate * 1000));
-      }
-   }
-
-   // Ensure it's been the right amount of time since the last update, then
-   // redraw histograms.
-   private synchronized void updateHistograms() {
-      long curTime = System.currentTimeMillis();
-      if (curTime - lastUpdateTime_ > getHistogramUpdateRate() * 1000) {
-         // It's time to do an update.
-         for (ChannelControlPanel panel : channelPanels_) {
-            panel.calcAndDisplayHistAndStats(true);
-         }
-         lastUpdateTime_ = curTime;
-      }
    }
 
    @Subscribe
@@ -373,7 +320,6 @@ public final class HistogramsPanel extends InspectorPanel {
    public void onPixelsSet(PixelsSetEvent event) {
       try {
          if (event.getDisplay() == viewer_) {
-            calcAndDisplayHistAndStats();
             // HACK: the inspector window can have the incorrect size (somewhat
             // too small) if sized prior to histograms having been drawn. So we
             // force a relayout the first time we receive this event.

@@ -61,7 +61,9 @@ import org.micromanager.internal.graph.GraphData;
 import org.micromanager.internal.graph.HistogramPanel;
 import org.micromanager.internal.graph.HistogramPanel.CursorListener;
 
-import org.micromanager.display.internal.ChannelHistogramModel;
+import org.micromanager.display.internal.events.HistogramRecalcEvent;
+import org.micromanager.display.internal.events.HistogramRequestEvent;
+import org.micromanager.display.internal.events.NewHistogramsEvent;
 import org.micromanager.display.internal.events.LUTUpdateEvent;
 import org.micromanager.display.internal.link.ContrastEvent;
 import org.micromanager.display.internal.link.ContrastLinker;
@@ -69,6 +71,7 @@ import org.micromanager.display.internal.link.DisplayGroupManager;
 import org.micromanager.display.internal.link.LinkButton;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.DisplayDestroyedEvent;
+import org.micromanager.display.internal.HistogramData;
 
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -107,7 +110,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
    }
 
-   private ChannelHistogramModel model_;
+   private HistogramData[] lastHistograms_;
    private final int channelIndex_;
    private int curComponent_;
    private HistogramPanel histogram_;
@@ -130,13 +133,14 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private final AtomicBoolean haveInitialized_;
 
    public ChannelControlPanel(int channelIndex, Datastore store,
-         ChannelHistogramModel model, ContrastLinker linker,
-         DataViewer display) {
+         ContrastLinker linker, DataViewer display) {
       haveInitialized_ = new AtomicBoolean(false);
       channelIndex_ = channelIndex;
       curComponent_ = 0;
+      // Start with 1 component; extend array as needed later.
+      lastHistograms_ = new HistogramData[1];
+      lastHistograms_[0] = null;
       store_ = store;
-      model_ = model;
       linker_ = linker;
       display_ = display;
       // TODO: hardcoded to 3 elements for now.
@@ -146,12 +150,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       // that relies on LUTUpdateEvent.
       store.registerForEvents(this);
       display.registerForEvents(this);
-      List<Image> images = store_.getImagesMatching(
-            (new DefaultCoords.Builder()).channel(channelIndex_).build());
-      if (images != null && images.size() > 0) {
-         // Found an image for our channel
-         initialize();
-      }
+      // We can't create our GUI until we have histogram data to use, so
+      // request it. If it's available it'll ping our NewHistogramsEvent
+      // handler.
+      display.postEvent(new HistogramRequestEvent(channelIndex_));
    }
 
    private void initialize() {
@@ -225,7 +227,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       isEnabledButton_.setSize(smallButtonSize);
       isEnabledButton_.setSelected(true);
 
-      colorPickerLabel_.setBackground(model_.getColor());
+      colorPickerLabel_.setBackground(
+            display_.getDisplaySettings().getSafeChannelColor(
+               channelIndex_, Color.WHITE));
       colorPickerLabel_.setMinimumSize(smallButtonSize);
       colorPickerLabel_.setToolTipText("Change the color for displaying this channel");
       colorPickerLabel_.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
@@ -302,12 +306,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       JPanel firstColumn = new JPanel(
             new MigLayout("novisualpadding, insets 0, flowy",
                "[]", "[][][]0[]"));
-      nameLabel_ = new JLabel(model_.getName());
+      nameLabel_ = new JLabel(
+            display_.getDatastore().getSummaryMetadata().getSafeChannelName(channelIndex_));
       firstColumn.add(nameLabel_, "alignx center");
       firstColumn.add(isEnabledButton_, "split 3, flowx");
       // Depending on the number of components, we show a color picker or a
       // component control selector.
-      if (model_.getNumComponents() == 1) {
+      if (lastHistograms_.length == 1) {
          firstColumn.add(colorPickerLabel_, "aligny center");
       }
       else {
@@ -332,7 +337,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       JPanel secondColumn = new JPanel(new MigLayout("insets 0, flowy, fill"));
 
       histogram_ = makeHistogramPanel();
-      updateHistogramColor(model_.getColor());
+      updateHistogramColor(display_.getDisplaySettings().getSafeChannelColor(
+               channelIndex_, Color.WHITE));
       histogram_.setMinimumSize(new Dimension(100, 100));
       histogram_.setToolTipText("Adjust the brightness and contrast by dragging triangles at top and bottom. Change the gamma by dragging the curve. (These controls only change display, and do not edit the image data.)");
 
@@ -372,7 +378,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       int power = 0;
       if (index == 0) {
          // Currently on "camera bit depth" mode; adjust from there.
-         power = Math.max(0, model_.getBitDepth() + modifier);
+         power = Math.max(0,
+               lastHistograms_[curComponent_].getBitDepth() + modifier);
       }
       else {
          // Indices correspond to powers + 3
@@ -380,7 +387,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
       // TODO: hardcoded minimum/maximum power here.
       power = Math.max(4, Math.min(16, power));
-      model_.updateHistMax(power);
       // Reflect the current power setting.
       histRangeComboBox_.setSelectedIndex(power - 3);
       updateHistogram();
@@ -411,41 +417,93 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          display_.setDisplaySettings(settings);
       }
 
-      updateHistogram();
-      calcAndDisplayHistAndStats(true);
-   }
-
-   private void updateHistogram() {
-      if (histogram_ == null) {
-         // Don't actually have a histogram yet. This can happen in weird
-         // multi-channel situations.
-         return;
-      }
-      histogram_.setCursorText(model_.getContrastMin(curComponent_) + "",
-            model_.getContrastMax(curComponent_) + "");
-      histogram_.setCursors(curComponent_,
-            model_.getContrastMin(curComponent_) / model_.getBinSize(),
-            (model_.getContrastMax(curComponent_) + 1) / model_.getBinSize(),
-            model_.getContrastGamma());
-      histogram_.setCurComponent(curComponent_);
-      histogram_.repaint();
+      redraw();
    }
 
    private void fullButtonAction() {
-      model_.disableAutostretch();
       DisplaySettings settings = display_.getDisplaySettings();
       if (settings.getShouldSyncChannels() != null &&
             settings.getShouldSyncChannels()) {
+         // This will make all histograms, including us, call the code in the
+         // else block here (see onFullScale()).
          display_.postEvent(new FullScaleEvent());
       }
       else {
-         model_.setFullScale();
+         setScale(0,
+               (int) Math.pow(2, lastHistograms_[curComponent_].getBitDepth()));
       }
+   }
+
+   /**
+    * Update contrast settings for the specified component into the provided
+    * builder. Ignore parameters that are null (retain the old value).
+    * Post the new settings to the display if the shouldPost boolean is set.
+    */
+   private DisplaySettings.DisplaySettingsBuilder updateContrastSettings(
+         DisplaySettings.DisplaySettingsBuilder builder, int component,
+         Integer minVal, Integer maxVal, Double gamma, boolean shouldPost) {
+      int numComponents = lastHistograms_.length;
+      DisplaySettings settings = display_.getDisplaySettings();
+      Integer[] mins = new Integer[numComponents];
+      Integer[] maxes = new Integer[numComponents];
+      Double[] gammas = new Double[numComponents];
+      for (int i = 0; i < numComponents; ++i) {
+         mins[i] = settings.getSafeContrastMin(channelIndex_, i,
+               lastHistograms_[i].getMinVal());
+         maxes[i] = settings.getSafeContrastMax(channelIndex_, i,
+               lastHistograms_[i].getMaxVal());
+         gammas[i] = settings.getSafeContrastGamma(channelIndex_, i, 1.0);
+      }
+      if (minVal != null) {
+         mins[component] = minVal;
+      }
+      if (maxVal != null) {
+         maxes[component] = maxVal;
+      }
+      if (gamma != null) {
+         gammas[component] = gamma;
+      }
+      DisplaySettings.ContrastSettings contrast =
+         new DefaultDisplaySettings.DefaultContrastSettings(
+               mins, maxes, gammas, isEnabledButton_.isSelected());
+      builder.safeUpdateContrastSettings(contrast, channelIndex_);
+      if (shouldPost) {
+         display_.setDisplaySettings(builder.build());
+         display_.postEvent(new HistogramRecalcEvent(channelIndex_));
+      }
+      return builder;
    }
 
    @Subscribe
    public void onFullScale(FullScaleEvent event) {
-      model_.setFullScale();
+      setScale(0,
+            (int) Math.pow(2, lastHistograms_[curComponent_].getBitDepth()));
+   }
+
+   /**
+    * Set the contrast settings for our channel to the given min/max.
+    */
+   private void setScale(int min, int max) {
+      DisplaySettings settings = display_.getDisplaySettings();
+      DisplaySettings.DisplaySettingsBuilder builder = settings.copy();
+      boolean didChange = false;
+      if (settings.getShouldAutostretch() != null &&
+            settings.getShouldAutostretch()) {
+         builder.shouldAutostretch(false);
+         didChange = true;
+      }
+      int curMin = settings.getSafeContrastMin(channelIndex_,
+            curComponent_, -1);
+      int curMax = settings.getSafeContrastMax(channelIndex_,
+            curComponent_, -1);
+      if (curMin != min || curMax != max) {
+         // New values are different from old ones.
+         builder = updateContrastSettings(builder,
+               curComponent_, min, max, null, false);
+      }
+      if (didChange) {
+         display_.setDisplaySettings(builder.build());
+      }
    }
 
    @Subscribe
@@ -455,12 +513,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
    }
 
-   public ChannelHistogramModel getModel() {
-      return model_;
-   }
-
    public void autoButtonAction() {
-      model_.autostretch();
+      ReportingUtils.logError("TODO: IMPLEMENT");
    }
 
    /**
@@ -476,37 +530,16 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
       // Pick the default color to start with.
       DisplaySettings settings = display_.getDisplaySettings();
-      Color defaultColor = model_.getColor();
-      Color[] channelColors = settings.getChannelColors();
-      if (channelColors != null && channelColors.length > channelIndex_) {
-         defaultColor = channelColors[channelIndex_];
-      }
+      Color defaultColor = settings.getSafeChannelColor(channelIndex_,
+            Color.WHITE);
 
       Color newColor = JColorChooser.showDialog(this, "Choose a color for the "
               + name + " channel", defaultColor);
       if (newColor != null) {
          // Update the display settings.
-         Color[] newColors = channelColors;
-         if (newColors == null) {
-            // Create a new empty array, which will be filled in below.
-            newColors = new Color[] {};
-         }
-         if (newColors.length <= channelIndex_) {
-            // Expand the array and fill the new entries with white.
-            // TODO: use differentiated colors instead of white everywhere.
-            newColors = new Color[channelIndex_ + 1];
-            for (int i = 0; i < newColors.length; ++i) {
-               if (channelColors == null || i >= channelColors.length) {
-                  newColors[i] = Color.WHITE;
-               }
-               else {
-                  newColors[i] = channelColors[i];
-               }
-            }
-         }
-         newColors[channelIndex_] = newColor;
-         DisplaySettings newSettings = settings.copy().channelColors(newColors).build();
-         display_.setDisplaySettings(newSettings);
+         settings = settings.copy().safeUpdateChannelColor(newColor,
+               channelIndex_).build();
+         display_.setDisplaySettings(settings);
       }
       reloadDisplaySettings();
    }
@@ -549,7 +582,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                   "/org/micromanager/icons/eye.png")) :
             new ImageIcon(getClass().getResource(
                   "/org/micromanager/icons/eye-out.png")));
-      model_.setChannelEnabled(isEnabledButton_.isSelected());
+      DisplaySettings.DisplaySettingsBuilder builder =
+         display_.getDisplaySettings().copy();
+      updateContrastSettings(display_.getDisplaySettings().copy(),
+            curComponent_, null, null, null, true);
    }
 
    private HistogramPanel makeHistogramPanel() {
@@ -560,9 +596,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             //For drawing max label
             g.setColor(Color.black);
             g.setFont(new Font("Lucida Grande", 0, 10));
-            g.drawString(model_.getHistMaxLabel(),
-                  this.getSize().width - 8 * model_.getHistMaxLabel().length(),
-                  this.getSize().height);
+            String maxLabel = "" + Math.pow(2,
+                  lastHistograms_[curComponent_].getBitDepth());
+            g.drawString(maxLabel, getSize().width - 8 * maxLabel.length(),
+                  getSize().height);
          }
       };
 
@@ -577,7 +614,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     * multi-component images use hardcoded colors.
     */
    private void updateHistogramColor(Color color) {
-      if (model_.getNumComponents() == 1) {
+      if (lastHistograms_.length == 1) {
+         // Just one component.
          histogram_.setTraceStyle(true, 0, color);
       }
       else {
@@ -592,25 +630,24 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     * Update our GUI to reflect changes in the display settings.
     */
    public void reloadDisplaySettings() {
-      model_.reloadDisplaySettings();
-
-      if (histRangeComboBox_.getSelectedIndex() != model_.getHistRangeIndex()) {
-         histRangeComboBox_.setSelectedIndex(model_.getHistRangeIndex());
+      DisplaySettings settings = display_.getDisplaySettings();
+      Integer bitDepthIndex = settings.getSafeBitDepthIndex(channelIndex_, 0);
+      if (histRangeComboBox_.getSelectedIndex() != bitDepthIndex) {
+         histRangeComboBox_.setSelectedIndex(bitDepthIndex);
       }
 
-      Color color = model_.getColor();
+      Color color = settings.getSafeChannelColor(channelIndex_, Color.WHITE);
       colorPickerLabel_.setBackground(color);
       updateHistogramColor(color);
 
-      DisplaySettings.ColorMode mode = display_.getDisplaySettings().getChannelColorMode();
+      DisplaySettings.ColorMode mode = settings.getChannelColorMode();
       // Eye buttons are only shown when in composite mode.
       if (mode != null) {
          isEnabledButton_.setVisible(
                mode == DisplaySettings.ColorMode.COMPOSITE);
       }
 
-      updateHistogram();
-      calcAndDisplayHistAndStats(true);
+      redraw();
    }
 
    @Subscribe
@@ -625,34 +662,42 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    @Override
    public void contrastMaxInput(int max) {
-      model_.setContrastMax(curComponent_, max);
+      updateContrastSettings(display_.getDisplaySettings().copy(),
+            curComponent_, null, max, null, true);
    }
-   
+
    @Override
-   public void contrastMinInput(int min) {    
-      model_.setContrastMin(curComponent_, min);
+   public void contrastMinInput(int min) {
+      updateContrastSettings(display_.getDisplaySettings().copy(),
+            curComponent_, min, null, null, true);
    }
 
    @Override
    public void onLeftCursor(double pos) {
-      model_.setContrastMin(curComponent_,
-            (int) (Math.max(0, pos) * model_.getBinSize()));
+      HistogramData hist = lastHistograms_[curComponent_];
+      updateContrastSettings(display_.getDisplaySettings().copy(),
+            curComponent_,
+            (int) (Math.max(0, pos) * hist.getBinSize()),
+            null, null, true);
    }
 
    @Override
    public void onRightCursor(double pos) {
-      model_.setContrastMax(curComponent_,
-            (int) (Math.min(model_.getNumBins() - 1, pos) * model_.getBinSize()));
+      HistogramData hist = lastHistograms_[curComponent_];
+      updateContrastSettings(display_.getDisplaySettings().copy(),
+            curComponent_, null,
+            (int) (Math.min(hist.getHistogram().length - 1, pos) * hist.getBinSize()),
+            null, true);
    }
 
    @Override
    public void onGammaCurve(double gamma) {
-      model_.setContrastGamma(gamma);
+      updateContrastSettings(display_.getDisplaySettings().copy(),
+            curComponent_, null, null, gamma, true);
    }
 
    /**
-    * Display settings have changed; update our color.
-    * @param event
+    * Display settings have changed; update our GUI to match.
     */
    @Subscribe
    public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
@@ -686,6 +731,30 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
    }
 
+   /**
+    * Receive new histogram data.
+    */
+   @Subscribe
+   public void onNewHistograms(NewHistogramsEvent event) {
+      if (event.getChannel() != channelIndex_) {
+         // Wrong channel.
+         return;
+      }
+      // Expand our number of components, if necessary.
+      if (lastHistograms_.length < event.getNumComponents()) {
+         lastHistograms_ = new HistogramData[event.getNumComponents()];
+      }
+      for (int i = 0; i < event.getNumComponents(); ++i) {
+         lastHistograms_[i] = event.getHistogram(i);
+      }
+
+      if (!haveInitialized_.get()) {
+         // Need to create our GUI now.
+         initialize();
+      }
+      redraw();
+   }
+
    @Subscribe
    public void onDisplayDestroyed(DisplayDestroyedEvent event) {
       try {
@@ -712,22 +781,42 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
    }
 
-   public void calcAndDisplayHistAndStats(boolean shouldDrawHistogram) {
+   private void updateHistogram() {
+      if (histogram_ == null) {
+         // Don't actually have a histogram yet. This can happen in weird
+         // multi-channel situations. TODO: is that in fact still true?
+         return;
+      }
+      DisplaySettings settings = display_.getDisplaySettings();
+      int minVal = settings.getSafeContrastMin(channelIndex_, curComponent_,
+            lastHistograms_[curComponent_].getMinVal());
+      int maxVal = settings.getSafeContrastMax(channelIndex_, curComponent_,
+            lastHistograms_[curComponent_].getMaxVal());
+      int binSize = lastHistograms_[curComponent_].getBinSize();
+      double gamma = settings.getSafeContrastGamma(
+            channelIndex_, curComponent_, 1.0);
+      histogram_.setCursorText(minVal + "", maxVal + "");
+      histogram_.setCursors(curComponent_,
+            minVal / binSize, (maxVal + 1) / binSize, gamma);
+      histogram_.setCurComponent(curComponent_);
+      histogram_.repaint();
+   }
+
+   public void redraw() {
       if (histogram_ == null) {
          // Can't do anything yet.
          return;
       }
-      int[][] histogram = model_.calcHistogramStats();
-      if (histogram == null || histogram[curComponent_] == null ||
-            !model_.getChannelEnabled() || !shouldDrawHistogram) {
+      if (!isEnabledButton_.isSelected()) {
          histogram_.setVisible(false);
          return;
       }
+      updateHistogram();
       histogram_.setVisible(true);
       //Draw histogram and stats
-      for (int i = 0; i < histogram.length; ++i) {
+      for (int i = 0; i < lastHistograms_.length; ++i) {
          GraphData histogramData = new GraphData();
-         histogramData.setData(histogram[i]);
+         histogramData.setData(lastHistograms_[i].getHistogram());
          histogram_.setData(i, histogramData);
       }
       histogram_.setAutoScale();

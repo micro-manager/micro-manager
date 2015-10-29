@@ -28,6 +28,11 @@ import ij.process.ImageProcessor;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.SwingUtilities;
 
@@ -35,10 +40,15 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 
+import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.NewDisplaySettingsEvent;
 import org.micromanager.display.NewImagePlusEvent;
 import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
 import org.micromanager.display.internal.events.DefaultPixelsSetEvent;
+import org.micromanager.display.internal.events.HistogramRecalcEvent;
+import org.micromanager.display.internal.events.HistogramRequestEvent;
+import org.micromanager.display.internal.events.NewHistogramsEvent;
 
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -64,6 +74,21 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 public class CanvasUpdateQueue {
 
+   /**
+    * Simple class for tracking our history with respect to calculating
+    * histograms for a single channel.
+    */
+   private static class HistogramHistory {
+      ArrayList<HistogramData> datas_ = null;
+      long lastUpdateTime_ = 0;
+      Timer timer_ = null;
+      boolean needsUpdate_ = true;
+      int imageHash_ = 0;
+      public HistogramHistory() {
+         datas_ = new ArrayList<HistogramData>();
+      }
+   }
+
    private final Datastore store_;
    private final MMVirtualStack stack_;
    private ImagePlus plus_;
@@ -73,13 +98,14 @@ public class CanvasUpdateQueue {
    private final Object drawLock_;
    private final LinkedBlockingQueue<Coords> coordsQueue_;
    private boolean shouldAcceptNewCoords_ = true;
+   private HashMap<Integer, HistogramHistory> channelToHistory_;
    // Unfortunately, even though we do all of our work in the EDT, there's
    // no way for us to tell Swing to paint *right now* -- we can only put a
    // draw command on the EDT to be processed later. This boolean allows us
    // to recognize when we're waiting for such a draw to process, so we don't
    // spam up the EDT with lots of excess draw requests.
    private boolean amWaitingForDraw_ = false;
-   private boolean shouldReapplyLUTs_ = true;
+   private boolean shouldReapplyLUTs_;
 
    public static CanvasUpdateQueue makeQueue(DisplayWindow display,
          MMVirtualStack stack, Object drawLock) {
@@ -103,6 +129,7 @@ public class CanvasUpdateQueue {
       store_ = display_.getDatastore();
       plus_ = display_.getImagePlus();
       coordsQueue_ = new LinkedBlockingQueue<Coords>();
+      channelToHistory_ = new HashMap<Integer, HistogramHistory>();
       consumer_ = new Runnable() {
          @Override
          public void run() {
@@ -199,6 +226,19 @@ public class CanvasUpdateQueue {
                      (byte[]) pixels);
             }
             plus_.getProcessor().setPixels(pixels);
+            // Recalculate histogram data, if necessary (because the image
+            // is different from the last one we've calculated or because we
+            // need to force an update).
+            int channel = image.getCoords().getChannel();
+            if (!channelToHistory_.containsKey(channel)) {
+               HistogramHistory history = new HistogramHistory();
+               channelToHistory_.put(channel, history);
+            }
+            HistogramHistory history = channelToHistory_.get(channel);
+            if (history.imageHash_ != image.hashCode() ||
+                  history.needsUpdate_) {
+               scheduleHistogramUpdate(image, history);
+            }
             // RGB images need to have their LUTs reapplied, because the
             // image scaling is encoded into the pixel data. And in other
             // situations we also need to just reapply LUTs now.
@@ -219,6 +259,82 @@ public class CanvasUpdateQueue {
          catch (Exception e) {
             ReportingUtils.logError(e, "Error drawing image at " + image.getCoords());
          }
+      }
+   }
+
+   /**
+    * Determine whether or not to recalculate histogram data for the provided
+    * image. If we do need to calculate the histogram, we may need to delay
+    * it until later.
+    */
+   private void scheduleHistogramUpdate(final Image image,
+         final HistogramHistory history) {
+      int channel = image.getCoords().getChannel();
+
+      DisplaySettings settings = display_.getDisplaySettings();
+      Double updateRate = settings.getHistogramUpdateRate();
+      if (updateRate == null) {
+         // Assume we always update.
+         updateRate = 0.0;
+      }
+      if (updateRate < 0) {
+         // Never update histograms.
+         return;
+      }
+      else if (updateRate > 0 &&
+            System.currentTimeMillis() - history.lastUpdateTime_ <= updateRate * 1000) {
+         // Calculate histogram sometime in the future. Only if a timer isn't
+         // already running for this channel.
+         synchronized(history) {
+            if (history.timer_ != null) {
+               // Already a timer, so don't do anything.
+               return;
+            }
+            history.timer_ = new Timer(
+                  "Histogram calculation delay for " + channel);
+            TimerTask task = new TimerTask() {
+               @Override
+               public void run() {
+                  updateHistogram(image, history);
+               }
+            };
+            long waitTime = (long) (System.currentTimeMillis() +
+               (updateRate * 1000) - history.lastUpdateTime_);
+            history.timer_.schedule(task, waitTime);
+         }
+      }
+      else {
+         // We either always update, or it's been too long since the last
+         // update, so do it now.
+         updateHistogram(image, history);
+      }
+   }
+
+   /**
+    * Generate new HistogramDatas for the provided image, and post a
+    * NewHistogramsEvent.
+    */
+   private void updateHistogram(Image image, HistogramHistory history) {
+      DisplaySettings settings = display_.getDisplaySettings();
+      int channel = image.getCoords().getChannel();
+      Double percentage = settings.getExtremaPercentage();
+      if (percentage == null) {
+         percentage = 0.0;
+      }
+      synchronized(history) {
+         history.datas_.clear();
+         for (int i = 0; i < image.getNumComponents(); ++i) {
+            // 8 means 256 bins.
+            HistogramData data = ContrastCalculator.calculateHistogram(
+                  image, i, 8, percentage);
+            history.datas_.add(data);
+         }
+         history.imageHash_ = image.hashCode();
+         history.needsUpdate_ = false;
+         history.lastUpdateTime_ = System.currentTimeMillis();
+         display_.postEvent(new NewHistogramsEvent(channel, history.datas_));
+         // Allow future jobs to be scheduled.
+         history.timer_ = null;
       }
    }
 
@@ -257,5 +373,32 @@ public class CanvasUpdateQueue {
    @Subscribe
    public void onNewImagePlus(NewImagePlusEvent event) {
       plus_ = event.getImagePlus();
+   }
+
+   @Subscribe
+   public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
+      // The new settings may have new contrast settings, so reapply contrast.
+      reapplyLUTs();
+   }
+
+   /**
+    * Someone wants us to recalculate histograms.
+    */
+   @Subscribe
+   public void onHistogramRecalc(HistogramRecalcEvent event) {
+      channelToHistory_.get(event.getChannel()).needsUpdate_ = true;
+   }
+
+   /**
+    * Someone is requesting that the current histograms be posted.
+    */
+   @Subscribe
+   public void onHistogramRequest(HistogramRequestEvent event) {
+      int channel = event.getChannel();
+      if (channelToHistory_.containsKey(channel)) {
+         HistogramHistory history = channelToHistory_.get(channel);
+         display_.postEvent(
+               new NewHistogramsEvent(channel, history.datas_));
+      }
    }
 }
