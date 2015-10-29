@@ -518,7 +518,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    public void autoButtonAction() {
-      ReportingUtils.logError("TODO: IMPLEMENT");
+      setScale(lastHistograms_[curComponent_].getMinIgnoringOutliers(),
+            lastHistograms_[curComponent_].getMaxIgnoringOutliers());
    }
 
    /**
