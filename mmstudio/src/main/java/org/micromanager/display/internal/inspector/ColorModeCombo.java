@@ -82,7 +82,6 @@ public class ColorModeCombo extends JButton {
             public void actionPerformed(ActionEvent e) {
                setText(LUTMaster.ICONS.get(index).text_);
                setIcon(LUTMaster.ICONS.get(index).icon_);
-               LUTMaster.setModeByIndex(display_, index);
                DisplaySettings settings = display_.getDisplaySettings();
                settings = settings.copy().channelColorMode(
                   DisplaySettings.ColorMode.fromInt(index)).build();
