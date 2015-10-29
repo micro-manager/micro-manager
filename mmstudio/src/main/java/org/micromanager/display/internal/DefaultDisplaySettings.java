@@ -150,22 +150,25 @@ public class DefaultDisplaySettings implements DisplaySettings {
       Integer[] contrastMins_;
       Integer[] contrastMaxes_;
       Double[] gammas_;
+      Boolean isVisible_;
 
       /**
        * Convenience method for single-component settings.
        */
       public DefaultContrastSettings(Integer contrastMin, Integer contrastMax,
-            Double gamma) {
+            Double gamma, Boolean isVisible) {
          contrastMins_ = new Integer[] {contrastMin};
          contrastMaxes_ = new Integer[] {contrastMax};
          gammas_ = new Double[] {gamma};
+         isVisible_ = isVisible;
       }
 
-      public DefaultContrastSettings(Integer[] contrastMins, Integer[] contrastMaxes,
-            Double[] gammas) {
+      public DefaultContrastSettings(Integer[] contrastMins,
+            Integer[] contrastMaxes, Double[] gammas, Boolean isVisible) {
          contrastMins_ = contrastMins;
          contrastMaxes_ = contrastMaxes;
          gammas_ = gammas;
+         isVisible_ = isVisible;
       }
 
       @Override
@@ -223,6 +226,11 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
+      public Boolean getIsVisible() {
+         return isVisible_;
+      }
+
+      @Override
       public boolean equals(Object obj) {
          if (!(obj instanceof ContrastSettings)) {
             return false;
@@ -249,7 +257,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
             return false;
          }
          // All arrays have same contents or are both null.
-         return true;
+         return (isVisible_ != alt.getIsVisible());
       }
 
       @Override
@@ -591,8 +599,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
          }
 
          // Reconstruct the channel contrast settings into ContrastSettings
-         // objects. Note that gamma is not preserved currently, let alone
-         // multi-component values.
+         // objects. Note that gamma and channel visibility are not preserved
+         // currently, let alone multi-component values.
          Integer[] minsArr = null;
          Integer[] maxesArr = null;
          if (tags.has("ChContrastMin")) {
@@ -618,7 +626,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
             for (int i = 0; i < minsArr.length; ++i) {
                Integer min = minsArr[i];
                Integer max = maxesArr[i];
-               contrastSettings.add(new DefaultContrastSettings(min, max, 1.0));
+               contrastSettings.add(
+                     new DefaultContrastSettings(min, max, 1.0, true));
             }
             builder.channelContrastSettings(
                   contrastSettings.toArray(new DefaultContrastSettings[] {}));

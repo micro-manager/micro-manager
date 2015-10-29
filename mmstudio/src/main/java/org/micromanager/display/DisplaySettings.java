@@ -111,6 +111,14 @@ public interface DisplaySettings {
       public Double getSafeContrastGamma(int component, Double defaultVal);
 
       /**
+       * Return true if the channel is currently displayed, and false
+       * otherwise. This is only relevant when the display is showing
+       * multiple channels at the same time (i.e. ColorMode is COMPOSITE); in
+       * all other modes this value is ignored.
+       */
+      public Boolean getIsVisible();
+
+      /**
        * Return the number of components this ContrastSettings object has
        * information for. This will be the length of the smallest array from
        * the contrastMins, contrastMaxes, and contrastGammas attributes. Note
