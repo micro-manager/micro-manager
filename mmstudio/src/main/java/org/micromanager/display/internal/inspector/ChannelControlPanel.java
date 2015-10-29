@@ -663,12 +663,30 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    @Override
    public void contrastMaxInput(int max) {
+      setMax(max);
+   }
+
+   private void setMax(int max) {
+      // Don't go below current min.
+      int limit = display_.getDisplaySettings().getSafeContrastMin(
+               channelIndex_, curComponent_,
+               lastHistograms_[curComponent_].getMinIgnoringOutliers());
+      max = Math.max(max, limit + 1);
       updateContrastSettings(display_.getDisplaySettings().copy(),
             curComponent_, null, max, null, true);
    }
 
    @Override
    public void contrastMinInput(int min) {
+      setMin(min);
+   }
+
+   private void setMin(int min) {
+      // Don't go above current max.
+      int limit = display_.getDisplaySettings().getSafeContrastMax(
+               channelIndex_, curComponent_,
+               lastHistograms_[curComponent_].getMinIgnoringOutliers());
+      min = Math.min(min, limit - 1);
       updateContrastSettings(display_.getDisplaySettings().copy(),
             curComponent_, min, null, null, true);
    }
@@ -676,19 +694,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    @Override
    public void onLeftCursor(double pos) {
       HistogramData hist = lastHistograms_[curComponent_];
-      updateContrastSettings(display_.getDisplaySettings().copy(),
-            curComponent_,
-            (int) (Math.max(0, pos) * hist.getBinSize()),
-            null, null, true);
+      setMin((int) (Math.max(0, pos) * hist.getBinSize()));
    }
 
    @Override
    public void onRightCursor(double pos) {
       HistogramData hist = lastHistograms_[curComponent_];
-      updateContrastSettings(display_.getDisplaySettings().copy(),
-            curComponent_, null,
-            (int) (Math.min(hist.getHistogram().length - 1, pos) * hist.getBinSize()),
-            null, true);
+      setMax((int) (Math.min(hist.getHistogram().length - 1, pos) * hist.getBinSize()));
    }
 
    @Override
