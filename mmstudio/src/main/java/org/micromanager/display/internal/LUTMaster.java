@@ -303,7 +303,8 @@ public class LUTMaster {
       DisplaySettings.ContrastSettings contrastSettings =
          settings.getSafeContrastSettings(channelIndex,
                new DefaultDisplaySettings.DefaultContrastSettings(
-                  (int) processor.getMin(), (int) processor.getMax(), 1.0));
+                  (int) processor.getMin(), (int) processor.getMax(), 1.0,
+                  true));
 
       if (processor instanceof ColorProcessor) {
          // RGB images require special handling.

@@ -175,7 +175,7 @@ public class RememberedChannelSettings {
          DisplaySettings.ContrastSettings oldSettings = settings.getSafeContrastSettings(i, null);
          newSettings[i] = DefaultDisplayManager.getInstance()
             .getContrastSettings(channel.getHistogramMins(),
-                  channel.getHistogramMaxes(), null);
+                  channel.getHistogramMaxes(), null, null);
          if (didChange) {
             // No need to scan the remaining channels.
             continue;
