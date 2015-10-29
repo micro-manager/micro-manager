@@ -70,6 +70,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
 
    float[] cursorLowPositions_;
    float[] cursorHighPositions_;
+   float highlightPosition_;
    double gamma_;
 
    private boolean fillTrace_ = false;
@@ -122,7 +123,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
     * position.
     */
    public void drawCursor(Graphics2D g, Rectangle box, float xPos,
-         int component) {
+         Color color, int offset) {
       // correct if Y range is zero
       if (bounds_.getRangeY() == 0.0) {
          if (bounds_.yMax > 0.0)
@@ -147,11 +148,11 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
 
       Color oldColor = g.getColor();
       Stroke oldStroke = g.getStroke();
-      g.setColor(traceColors_[component]);
+      g.setColor(color);
 
       float dash1[] = {3.0f};
       BasicStroke dashed = new BasicStroke(1.0f, BasicStroke.CAP_BUTT,
-            BasicStroke.JOIN_MITER, 3.0f, dash1, component);
+            BasicStroke.JOIN_MITER, 3.0f, dash1, offset);
       g.setStroke(dashed);
       g.draw(new Line2D.Float(ptDevBottom, ptDevTop));
       g.setColor(oldColor);
@@ -599,6 +600,11 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       gamma_ = gamma;
    }
 
+   public void setHighlight(double pos) {
+      highlightPosition_ = (float) pos;
+      repaint();
+   }
+
    public GraphData.Bounds getGraphBounds() {
       return bounds_;
    }
@@ -757,9 +763,12 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
 
       for (int i = 0; i < datas_.length; ++i) {
          drawGraph(g2d, i, box);
-         drawCursor(g2d, box, cursorLowPositions_[i], i);
-         drawCursor(g2d, box, cursorHighPositions_[i], i);
+         drawCursor(g2d, box, cursorLowPositions_[i],
+               traceColors_[i], i);
+         drawCursor(g2d, box, cursorHighPositions_[i],
+               traceColors_[i], i);
       }
+      drawCursor(g2d, box, highlightPosition_, Color.YELLOW, 0);
       drawMapping(g2d, box, cursorLowPositions_[curComponent_],
             cursorHighPositions_[curComponent_], gamma_);
 

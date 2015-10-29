@@ -61,6 +61,7 @@ import org.micromanager.internal.graph.GraphData;
 import org.micromanager.internal.graph.HistogramPanel;
 import org.micromanager.internal.graph.HistogramPanel.CursorListener;
 
+import org.micromanager.display.internal.events.MouseMovedEvent;
 import org.micromanager.display.internal.events.HistogramRecalcEvent;
 import org.micromanager.display.internal.events.HistogramRequestEvent;
 import org.micromanager.display.internal.events.NewHistogramsEvent;
@@ -771,6 +772,21 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
       redraw();
    }
+
+   @Subscribe
+   public void onMouseMoved(MouseMovedEvent event) {
+      if (histogram_ != null) {
+         // Highlight the intensity of the pixel the mouse is on in the image.
+         for (Image image : display_.getDisplayedImages()) {
+            if (image.getCoords().getChannel() == channelIndex_) {
+               long intensity = image.getComponentIntensityAt(
+                     event.getX(), event.getY(), curComponent_);
+               HistogramData data = lastHistograms_[curComponent_];
+               histogram_.setHighlight(intensity / data.getBinSize());
+            }
+         }
+      }
+   };
 
    @Subscribe
    public void onDisplayDestroyed(DisplayDestroyedEvent event) {
