@@ -43,6 +43,9 @@ public class ContrastCalculator {
       int maxVal = -1;
       long meanVal = 0;
       int numBins = (int) Math.pow(2, binPower);
+      int bitDepth = image.getMetadata().getBitDepth();
+      int binSize = (int) (Math.pow(2, bitDepth) / numBins);
+
       int[] histogram = new int[numBins];
 
       Object pixels = image.getRawPixels();
@@ -78,7 +81,7 @@ public class ContrastCalculator {
                }
                pixelVal += addend;
             }
-            histogram[pixelVal / numBins]++;
+            histogram[pixelVal / binSize]++;
             if (minVal == -1) {
                minVal = pixelVal;
                maxVal = pixelVal;
@@ -90,8 +93,6 @@ public class ContrastCalculator {
             meanVal += pixelVal;
          }
       }
-      int bitDepth = image.getMetadata().getBitDepth();
-      int binSize = (int) (Math.pow(2, bitDepth) / numBins);
       int contrastMin = -1;
       int contrastMax = -1;
       // Need to interpolate into the histogram to get the correct
