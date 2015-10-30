@@ -144,13 +144,39 @@ public class RememberedChannelSettings {
     */
    public static Color getColorForChannel(String channelName,
          String channelGroup, Color defaultColor) {
+      int defaultRGB = -1;
+      if (defaultColor != null) {
+         defaultRGB = defaultColor.getRGB();
+      }
       synchronized(profileLock_) {
          DefaultUserProfile profile = DefaultUserProfile.getInstance();
          String key = genKey(channelName, channelGroup);
-         return new Color(profile.getInt(
-                  RememberedChannelSettings.class, key + ":" + COLOR,
-                  defaultColor.getRGB()));
+         int rgb = profile.getInt(
+               RememberedChannelSettings.class, key + ":" + COLOR, defaultRGB);
+         if (defaultColor == null && defaultRGB == -1) {
+            // No known color here and user wants a null default.
+            return null;
+         }
+         else {
+            return new Color(rgb);
+         }
       }
+   }
+
+   /**
+    * As getColorForChannel, but we use the DisplaySettings as a fallback.
+    */
+   public static Color getColorWithSettings(String channelName,
+         String channelGroup, DisplaySettings settings, int channelIndex,
+         Color defaultColor) {
+      Color result = getColorForChannel(channelName, channelGroup, null);
+      if (result == null) {
+         result = settings.getSafeChannelColor(channelIndex, null);
+      }
+      if (result == null) {
+         result = defaultColor;
+      }
+      return result;
    }
 
    /**

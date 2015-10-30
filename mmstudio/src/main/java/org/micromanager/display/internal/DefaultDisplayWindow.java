@@ -784,9 +784,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       displaySettings_ = settings;
       boolean magChanged = (settings.getMagnification() != null &&
             settings.getMagnification() != canvas_.getMagnification());
+      DefaultDisplaySettings.setStandardSettings(settings);
       // This will cause the canvas to pick up magnification changes, note.
       displayBus_.post(new NewDisplaySettingsEvent(settings, this));
-      DefaultDisplaySettings.setStandardSettings(settings);
       if (haveCreatedGUI_) {
          if (magChanged) {
             // Ensure that any changes in the canvas size (and thus in our

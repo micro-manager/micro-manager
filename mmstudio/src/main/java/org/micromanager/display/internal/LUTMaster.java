@@ -39,6 +39,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import org.micromanager.data.Coords;
+import org.micromanager.data.SummaryMetadata;
 
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
@@ -286,7 +287,10 @@ public class LUTMaster {
       DisplaySettings.ColorMode mode = settings.getChannelColorMode();
       boolean hasCustomLUT = (mode != null &&
             mode.getIndex() > DisplaySettings.ColorMode.COMPOSITE.getIndex());
-      Color color = settings.getSafeChannelColor(channelIndex, Color.WHITE);
+      SummaryMetadata summary = display.getDatastore().getSummaryMetadata();
+      Color color = RememberedChannelSettings.getColorWithSettings(
+            summary.getSafeChannelName(channelIndex),
+            summary.getChannelGroup(), settings, channelIndex, Color.WHITE);
       if (mode == DisplaySettings.ColorMode.GRAYSCALE) {
          color = Color.WHITE;
       }
@@ -462,7 +466,6 @@ public class LUTMaster {
       builder.channelColorMode(DisplaySettings.ColorMode.fromInt(index));
       DisplaySettings settings = builder.build();
       if (settings.getChannelColorMode() != origSettings.getChannelColorMode()) {
-         DefaultDisplaySettings.setStandardSettings(settings);
          display.setDisplaySettings(settings);
       }
    }

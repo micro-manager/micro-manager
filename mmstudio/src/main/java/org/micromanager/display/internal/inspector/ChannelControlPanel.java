@@ -52,6 +52,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.NewSummaryMetadataEvent;
+import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.NewDisplaySettingsEvent;
@@ -74,6 +75,7 @@ import org.micromanager.display.internal.link.LinkButton;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.DisplayDestroyedEvent;
 import org.micromanager.display.internal.HistogramData;
+import org.micromanager.display.internal.RememberedChannelSettings;
 
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -312,7 +314,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             new MigLayout("novisualpadding, insets 0, flowy",
                "[]", "[][][]0[]"));
       nameLabel_ = new JLabel(
-            display_.getDatastore().getSummaryMetadata().getSafeChannelName(channelIndex_));
+            store_.getSummaryMetadata().getSafeChannelName(channelIndex_));
       firstColumn.add(nameLabel_, "alignx center");
       firstColumn.add(isEnabledButton_, "split 3, flowx");
       // Depending on the number of components, we show a color picker or a
@@ -531,17 +533,19 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     * Pop up a dialog to let the user set a new color for our channel.
     */
    private void colorPickerLabelMouseClicked() {
+      SummaryMetadata summary = store_.getSummaryMetadata();
       // Pick an appropriate string for the dialog prompt.
       String name = "selected";
-      String[] channelNames = store_.getSummaryMetadata().getChannelNames();
+      String[] channelNames = summary.getChannelNames();
       if (channelNames != null && channelNames.length > channelIndex_) {
          name = channelNames[channelIndex_];
       }
 
-      // Pick the default color to start with.
       DisplaySettings settings = display_.getDisplaySettings();
-      Color defaultColor = settings.getSafeChannelColor(channelIndex_,
-            Color.WHITE);
+      // Pick the default color to start with.
+      Color defaultColor = RememberedChannelSettings.getColorWithSettings(
+            summary.getSafeChannelName(channelIndex_),
+            summary.getChannelGroup(), settings, channelIndex_, Color.WHITE);
 
       Color newColor = JColorChooser.showDialog(this, "Choose a color for the "
               + name + " channel", defaultColor);
@@ -576,7 +580,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void postContrastEvent(DisplaySettings newSettings) {
-      String[] channelNames = display_.getDatastore().getSummaryMetadata().getChannelNames();
+      String[] channelNames = store_.getSummaryMetadata().getChannelNames();
       String name = null;
       if (channelNames != null && channelNames.length > channelIndex_) {
          name = channelNames[channelIndex_];
@@ -640,15 +644,26 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     * Update our GUI to reflect changes in the display settings.
     */
    public void reloadDisplaySettings() {
+      // Figure out which color to use.
+      // HACK: use a color based on the channel index: specifically, use the
+      // colorblind-friendly color set.
+      Color color = Color.WHITE;
+      if (channelIndex_ < HistogramsPanel.COLORBLIND_COLORS.length) {
+         color = HistogramsPanel.COLORBLIND_COLORS[channelIndex_];
+      }
+      SummaryMetadata summary = store_.getSummaryMetadata();
       DisplaySettings settings = display_.getDisplaySettings();
+      color = RememberedChannelSettings.getColorWithSettings(
+            summary.getSafeChannelName(channelIndex_),
+            summary.getChannelGroup(), settings, channelIndex_, color);
+
+      colorPickerLabel_.setBackground(color);
+      updateHistogramColor(color);
+
       Integer bitDepthIndex = settings.getSafeBitDepthIndex(channelIndex_, 0);
       if (histRangeComboBox_.getSelectedIndex() != bitDepthIndex) {
          histRangeComboBox_.setSelectedIndex(bitDepthIndex);
       }
-
-      Color color = settings.getSafeChannelColor(channelIndex_, Color.WHITE);
-      colorPickerLabel_.setBackground(color);
-      updateHistogramColor(color);
 
       DisplaySettings.ColorMode mode = settings.getChannelColorMode();
       // Eye buttons are only shown when in composite mode.
@@ -657,6 +672,14 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                mode == DisplaySettings.ColorMode.COMPOSITE);
       }
 
+      // If the display settings don't have color information, we should
+      // re-apply it now.
+      Color settingsColor = settings.getSafeChannelColor(channelIndex_, null);
+      if (settingsColor == null || !settingsColor.equals(color)) {
+         settings = settings.copy()
+            .safeUpdateChannelColor(color, channelIndex_).build();
+         display_.setDisplaySettings(settings);
+      }
       redraw();
    }
 
@@ -747,10 +770,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          // See TODO note in onNewDisplaySettings.
          return;
       }
-      String[] names = event.getSummaryMetadata().getChannelNames();
-      if (names != null && names.length > channelIndex_) {
-         nameLabel_.setText(names[channelIndex_]);
-      }
+      nameLabel_.setText(event.getSummaryMetadata().getSafeChannelName(
+               channelIndex_));
    }
 
    /**

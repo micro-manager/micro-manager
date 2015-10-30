@@ -253,7 +253,6 @@ public final class HistogramsPanel extends InspectorPanel {
             boolean newVal = shouldAutostretch_.isSelected();
             DisplaySettings newSettings = viewer_.getDisplaySettings()
                   .copy().shouldAutostretch(newVal).build();
-            DefaultDisplaySettings.setStandardSettings(newSettings);
             viewer_.setDisplaySettings(newSettings);
          }
       });
@@ -263,7 +262,6 @@ public final class HistogramsPanel extends InspectorPanel {
       DisplaySettings settings = viewer_.getDisplaySettings();
       Double percentage = (Double) (extrema.getValue());
       settings = settings.copy().extremaPercentage(percentage).build();
-      DefaultDisplaySettings.setStandardSettings(settings);
       viewer_.setDisplaySettings(settings);
    }
 
