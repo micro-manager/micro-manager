@@ -331,6 +331,7 @@ public:
 private:
    int GetFocusState(std::string& focusState);
    int SetFocusState(std::string focusState);
+   int ForceSetFocusState(std::string focusState);
    int GetValue(std::string cmd, float& val);
    int SetCommand(std::string cmd);
 

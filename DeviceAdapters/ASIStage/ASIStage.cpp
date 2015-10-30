@@ -3685,61 +3685,49 @@ int CRISP::GetFocusState(std::string& focusState)
    if (ret != DEVICE_OK)
       return ERR_UNRECOGNIZED_ANSWER;
 
-   // translate response to one of our globals (see page 6 of CRIF manual)
+   // translate response to one of our globals (see CRISP manual)
    char test = answer.c_str()[3];
    switch (test) {
-      case 'I': 
-         focusState = g_CRISP_I;
-         break;
-      case 'R': 
-         focusState = g_CRISP_R;
-         break;
+      case 'I': focusState = g_CRISP_I; break;
+      case 'R': focusState = g_CRISP_R; break;
       case '1': 
       case '2': 
       case '3': 
       case '4': 
       case '5': 
       case 'g':
-      case 'h' :
-      case 'i' :
-      case 'j' :
-         focusState = g_CRISP_Cal;
-         break;
-      case 'D': 
-         focusState = g_CRISP_D;
-         break;
-      case 'F': 
-         focusState = g_CRISP_F;
-         break;
-      case 'N': 
-         focusState = g_CRISP_N;
-         break;
-      case 'E': 
-         focusState = g_CRISP_E;
-         break;
-      case 'G': 
-         focusState = g_CRISP_G;
-         break;
-      case 'f': 
-         focusState = g_CRISP_f;
-         break;
-      case 'C': 
-         focusState = g_CRISP_C;
-         break;
-      case 'B': 
-         focusState = g_CRISP_B;
-         break;
-      case 'l':
-         focusState = g_CRISP_RFO;
-         break;
-      default:
-         return ERR_UNRECOGNIZED_ANSWER;
+      case 'h':
+      case 'i':
+      case 'j': focusState = g_CRISP_Cal; break;
+      case 'D': focusState = g_CRISP_D; break;
+      case 'K': focusState = g_CRISP_K; break;
+      case 'F': focusState = g_CRISP_F; break;
+      case 'N': focusState = g_CRISP_N; break;
+      case 'E': focusState = g_CRISP_E; break;
+      case 'G': focusState = g_CRISP_G; break;
+      case 'f': focusState = g_CRISP_f; break;
+      case 'C': focusState = g_CRISP_C; break;
+      case 'B': focusState = g_CRISP_B; break;
+      case 'l': focusState = g_CRISP_RFO; break;
+      default: return ERR_UNRECOGNIZED_ANSWER;
    }
-
    return DEVICE_OK;
 }
 
 int CRISP::SetFocusState(std::string focusState)
+{
+	std::string currentState;
+	int ret = GetFocusState(currentState);
+	if (ret != DEVICE_OK)
+		return ret;
+
+	if (focusState == currentState)
+		return DEVICE_OK;
+
+	return ForceSetFocusState(focusState);
+}
+
+int CRISP::ForceSetFocusState(std::string focusState)
 {
    std::string currentState;
    int ret = GetFocusState(currentState);
@@ -3758,18 +3746,16 @@ int CRISP::SetFocusState(std::string focusState)
 
    else if (focusState == g_CRISP_R )
    {
-      // Unlock 
-      ret = SetContinuousFocusing(false);
-      if (ret != DEVICE_OK)
-         return ret;
+      // Unlock
+   	const char* command = "LK F=85";
+      return SetCommand(command);
    }
 
-   else if (focusState == g_CRIF_K)
+   else if (focusState == g_CRISP_K)
    {
       // Lock
-      ret = SetContinuousFocusing(true);
-      if (ret != DEVICE_OK)
-         return ret;
+      const char* command = "LK F=83";
+      return SetCommand(command);
    }
 
    else if (focusState == g_CRISP_G) 
@@ -3816,30 +3802,32 @@ bool CRISP::IsContinuousFocusLocked()
    int ret = GetFocusState(focusState);
    if (ret != DEVICE_OK)
       return false;
-
-   if (focusState == g_CRISP_F)
-      return true;
-
-   return false;
+   return (focusState == g_CRISP_K);
 }
 
 
 int CRISP::SetContinuousFocusing(bool state)
 {
-   // empty the Rx serial buffer before sending command
-   ClearPort();
-
-   string command;
-   if (state)
-   {
-      command = "LK F=83";
+   bool focusingOn;
+   int ret = GetContinuousFocusing(focusingOn);
+   if (ret != DEVICE_OK)
+   	return ret;
+   if (focusingOn && !state) {
+   	// was on, turning off
+   	return ForceSetFocusState(g_CRISP_R);
+   } else if (!focusingOn && state) {
+   	// was off, turning on
+   	if (focusState_ == g_CRISP_R ) {
+   		return ForceSetFocusState(g_CRISP_K);
+   	} else {  // need to move to ready state, then turn on
+   		ret = ForceSetFocusState(g_CRISP_R);
+   		if (ret != DEVICE_OK)
+   			return ret;
+   		return ForceSetFocusState(g_CRISP_K);
+   	}
    }
-   else
-   {
-      command = "LK F=85"; // Turns off laser and unlocks
-   }
-
-   return SetCommand(command);
+   // if was already in state requested we don't need to do anything
+   return DEVICE_OK;
 }
 
 
@@ -3850,10 +3838,7 @@ int CRISP::GetContinuousFocusing(bool& state)
    if (ret != DEVICE_OK)
       return ret;
 
-   if (focusState == g_CRIF_K)
-      state = true;
-   else
-      state =false;
+   state = ((focusState == g_CRISP_K) || (focusState == g_CRISP_F));
    
    return DEVICE_OK;
 }
