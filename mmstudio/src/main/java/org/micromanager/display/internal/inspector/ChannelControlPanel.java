@@ -61,6 +61,7 @@ import org.micromanager.internal.graph.GraphData;
 import org.micromanager.internal.graph.HistogramPanel;
 import org.micromanager.internal.graph.HistogramPanel.CursorListener;
 
+import org.micromanager.display.internal.events.MouseExitedEvent;
 import org.micromanager.display.internal.events.MouseMovedEvent;
 import org.micromanager.display.internal.events.HistogramRecalcEvent;
 import org.micromanager.display.internal.events.HistogramRequestEvent;
@@ -777,6 +778,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       redraw();
    }
 
+   /**
+    * The mouse is moving over the canvas; highlight the bin in the histogram
+    * corresponding to the pixel under the mouse.
+    */
    @Subscribe
    public void onMouseMoved(MouseMovedEvent event) {
       lastX_ = event.getX();
@@ -784,16 +789,33 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       updateHighlight();
    }
 
+   /**
+    * The mouse has left the canvas; stop highlighting it.
+    */
+   @Subscribe
+   public void onMouseExited(MouseExitedEvent event) {
+      lastX_ = -1;
+      lastY_ = -1;
+      updateHighlight();
+   }
+
    private void updateHighlight() {
-      if (histogram_ != null && lastX_ >= 0 && lastY_ >= 0) {
-         // Highlight the intensity of the pixel the mouse is on in the image.
-         for (Image image : display_.getDisplayedImages()) {
-            if (image.getCoords().getChannel() == channelIndex_) {
-               long intensity = image.getComponentIntensityAt(
-                     lastX_, lastY_, curComponent_);
-               HistogramData data = lastHistograms_[curComponent_];
-               histogram_.setHighlight(intensity / data.getBinSize());
+      if (histogram_ != null) {
+         if (lastX_ >= 0 && lastY_ >= 0) {
+            // Highlight the intensity of the pixel the mouse is on in the
+            // image.
+            for (Image image : display_.getDisplayedImages()) {
+               if (image.getCoords().getChannel() == channelIndex_) {
+                  long intensity = image.getComponentIntensityAt(
+                        lastX_, lastY_, curComponent_);
+                  HistogramData data = lastHistograms_[curComponent_];
+                  histogram_.setHighlight(intensity / data.getBinSize());
+               }
             }
+         }
+         else {
+            // Disable highlights.
+            histogram_.setHighlight(-1);
          }
       }
    };

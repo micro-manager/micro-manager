@@ -70,7 +70,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
 
    float[] cursorLowPositions_;
    float[] cursorHighPositions_;
-   float highlightPosition_;
+   float highlightPosition_ = -1;
    double gamma_;
 
    private boolean fillTrace_ = false;
@@ -768,7 +768,9 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
          drawCursor(g2d, box, cursorHighPositions_[i],
                traceColors_[i], i);
       }
-      drawCursor(g2d, box, highlightPosition_, Color.YELLOW, 0);
+      if (highlightPosition_ > 0) {
+         drawCursor(g2d, box, highlightPosition_, Color.YELLOW, 0);
+      }
       drawMapping(g2d, box, cursorLowPositions_[curComponent_],
             cursorHighPositions_[curComponent_], gamma_);
 

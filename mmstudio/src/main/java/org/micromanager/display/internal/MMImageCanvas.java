@@ -42,6 +42,8 @@ import org.micromanager.display.internal.events.CanvasDrawEvent;
 import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
+import org.micromanager.display.internal.events.MouseExitedEvent;
+import org.micromanager.display.internal.events.MouseExitedEvent;
 import org.micromanager.display.internal.events.MouseMovedEvent;
 
 /**
@@ -62,7 +64,26 @@ class MMImageCanvas extends ImageCanvas {
       addMouseMotionListener(new MouseAdapter() {
          @Override
          public void mouseMoved(MouseEvent event) {
-            publishMouseInfo(event.getX(), event.getY());
+            // Post a MouseMovedEvent indicating the coordinates of the pixel
+            // underneath the mouse. This requires us to account for the zoom
+            // level and how much of the canvas is actually in-view (which may
+            // apply an offset into the image coordinates).
+            int x = event.getX();
+            int y = event.getY();
+            x /= magnification;
+            y /= magnification;
+            x += getSrcRect().x;
+            y += getSrcRect().y;
+            display_.postEvent(new MouseMovedEvent(x, y));
+         }
+      });
+      // Why doesn't addMouseMotionListener get mouse entrance/exit events?
+      // Java!
+      addMouseListener(new MouseAdapter() {
+         @Override
+         public void mouseExited(MouseEvent event) {
+            // Inform clients that the mouse has left the canvas.
+            display_.postEvent(new MouseExitedEvent());
          }
       });
    }
@@ -209,20 +230,6 @@ class MMImageCanvas extends ImageCanvas {
                (int) (bounds.height * magnification / mag));
       }
       display_.postEvent(new DefaultRequestToDrawEvent());
-   }
-
-   /**
-    * Post a MouseMovedEvent indicating the coordinates of the pixel underneath
-    * the mouse. This requires us to account for the zoom level and how much
-    * of the canvas is actually in-view (which may apply an offset into the
-    * image coordinates).
-    */
-   private void publishMouseInfo(int x, int y) {
-      x /= magnification;
-      y /= magnification;
-      x += getSrcRect().x;
-      y += getSrcRect().y;
-      display_.postEvent(new MouseMovedEvent(x, y));
    }
 
    /**
