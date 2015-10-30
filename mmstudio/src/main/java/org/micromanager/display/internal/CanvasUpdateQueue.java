@@ -398,6 +398,9 @@ public class CanvasUpdateQueue {
    @Subscribe
    public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
       // The new settings may have new contrast settings, so reapply contrast.
+      for (HistogramHistory history : channelToHistory_.values()) {
+         history.needsUpdate_ = true;
+      }
       reapplyLUTs();
    }
 
