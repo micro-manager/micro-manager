@@ -22,6 +22,7 @@ package org.micromanager.display.internal;
 
 import com.google.common.eventbus.Subscribe;
 
+import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
@@ -66,11 +67,12 @@ import org.micromanager.internal.utils.ReportingUtils;
  * 3) enqueue() adds the image to the queue, and then adds an event to the
  *    Event Dispatch Thread (EDT) to call consumeImages()
  * 4) consumeImages() pulls the most recent image off of the queue (throwing
- *    away all older images in the process), draws it, and posts a
+ *    away all older images in the process), recalculates histograms if
+ *    necessary (posting a NewHistogramsEvent), draws it, and posts a
  *    PixelsSetEvent (to allow other code to draw things) and a
  *    CanvasDoneDrawingEvent afterwards (to notify that drawing is complete).
  *    Then, if the queue is not empty, it adds an event to the EDT to draw
- *    itself.
+ *    itself, thus starting the process of drawing new images again.
  */
 public class CanvasUpdateQueue {
 
@@ -164,12 +166,17 @@ public class CanvasUpdateQueue {
    }
 
    /**
-    * Draw the most recent image on the queue, if any, and then re-call
-    * ourselves if there are still more images to draw once that finishes.
+    * Draw the most recent image on the queue (or images when in composite
+    * mode), if any.
     * Only called on the EDT.
     */
    private void consumeImages() {
-      Coords coords = null;
+      // Depending on if we're in composite view or not, we may need to draw
+      // multiple images or just the most recent image.
+      boolean isComposite = (plus_ instanceof CompositeImage &&
+            ((CompositeImage) plus_).getMode() == CompositeImage.COMPOSITE);
+      HashMap<Integer, Coords> channelToCoords = new HashMap<Integer, Coords>();
+      Coords lastCoords = null;
       if (amWaitingForDraw_) {
          // No point in running right now as we're waiting for a draw
          // request to make its way through the EDT.
@@ -178,9 +185,12 @@ public class CanvasUpdateQueue {
       // Grab images from the queue until we get the last one, so all
       // others get ignored (because we don't have time to display them).
       while (!coordsQueue_.isEmpty()) {
-         coords = coordsQueue_.poll();
+         lastCoords = coordsQueue_.poll();
+         if (isComposite) {
+            channelToCoords.put(lastCoords.getChannel(), lastCoords);
+         }
       }
-      if (coords == null) {
+      if (lastCoords == null) {
          // No images in the queue; nothing to do.
          return;
       }
@@ -188,12 +198,20 @@ public class CanvasUpdateQueue {
          // The display may have gone away while we were waiting.
          return;
       }
-      final Image image = store_.getImage(coords);
-      if (image == null) {
-         // Odd; is this an error situation?
-         return;
+      if (isComposite) {
+         for (Coords c : channelToCoords.values()) {
+            Image image = store_.getImage(c);
+            if (image != null) {
+               showImage(image);
+            }
+         }
       }
-      showImage(image);
+      else {
+         Image image = store_.getImage(lastCoords);
+         if (image != null) {
+            showImage(image);
+         }
+      }
    }
 
    @Subscribe
@@ -392,7 +410,9 @@ public class CanvasUpdateQueue {
       shouldReapplyLUTs_ = true;
       if (coordsQueue_.isEmpty() && shouldAcceptNewCoords_) {
          // Force refresh of the display.
-         enqueue(display_.getDisplayedImages().get(0).getCoords());
+         for (Image image : display_.getDisplayedImages()) {
+            enqueue(image.getCoords());
+         }
       }
    }
 
