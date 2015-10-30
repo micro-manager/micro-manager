@@ -269,7 +269,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       // Update our sleep time based on image display times (a.k.a. the
       // amount of time passed between PixelsSetEvents). Only if we
       // aren't using a nontrivial pipeline.
-      if (pipeline_.getProcessors().size() == 0) {
+      if (pipeline_ == null || pipeline_.getProcessors().size() == 0) {
          synchronized(displayUpdateTimes_) {
             long average = 0;
             for (int i = 0; i < displayUpdateTimes_.size() - 1; ++i) {
