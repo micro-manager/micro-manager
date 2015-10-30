@@ -573,7 +573,7 @@ const char* const g_AxisPolarityReversed = "Reversed";  // used for other stages
 // CRISP states
 const char* const g_CRISPState = "CRISP State";
 const char* const g_CRISP_I = "Idle";
-const char* const g_CRISP_R = "Ready";
+const char* const g_CRISP_R = "Ready";  // LED on and ready to move to K/lock state
 const char* const g_CRISP_D = "Dim";
 const char* const g_CRISP_K = "Lock";  // enter this state to try to lock, system will move to F when locked
 const char* const g_CRISP_F = "In Focus";  // a "read only" state, don't go to directly but via K state

@@ -74,6 +74,7 @@ private:
 
    int UpdateFocusState();
    int SetFocusState(string focusState);
+   int ForceSetFocusState(string focusState);
 };
 
 #endif //_ASICRISP_H_
