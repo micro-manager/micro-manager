@@ -226,6 +226,9 @@ public final class HistogramsPanel extends InspectorPanel {
       extrema_.setToolTipText("Ignore the top and bottom percentage of the image when autostretching.");
       // Going to 50% would mean the entire image is ignored.
       extrema_.setModel(new SpinnerNumberModel(0.0, 0.0, 49.999, 0.1));
+      if (settings.getExtremaPercentage() != null) {
+         extrema_.setValue(settings.getExtremaPercentage());
+      }
       extrema_.addChangeListener(new ChangeListener() {
          @Override
          public void stateChanged(ChangeEvent e) {
