@@ -208,8 +208,8 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       long numChannels = core_.getNumberOfCameraChannels();
       String camName = core_.getCameraDevice();
       while (!shouldStopGrabberThread_) {
-         grabAndAddImages(numChannels, camName);
          displayRate = waitForNextDisplay(displayRate);
+         grabAndAddImages(numChannels, camName);
       }
    }
 
