@@ -131,6 +131,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private JComboBox histRangeComboBox_;
    private LinkButton linkButton_;
 
+   private int lastX_ = -1;
+   private int lastY_ = -1;
+
    private final AtomicBoolean haveInitialized_;
 
    public ChannelControlPanel(int channelIndex, Datastore store,
@@ -770,17 +773,24 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          // Need to create our GUI now.
          initialize();
       }
+      updateHighlight();
       redraw();
    }
 
    @Subscribe
    public void onMouseMoved(MouseMovedEvent event) {
-      if (histogram_ != null) {
+      lastX_ = event.getX();
+      lastY_ = event.getY();
+      updateHighlight();
+   }
+
+   private void updateHighlight() {
+      if (histogram_ != null && lastX_ >= 0 && lastY_ >= 0) {
          // Highlight the intensity of the pixel the mouse is on in the image.
          for (Image image : display_.getDisplayedImages()) {
             if (image.getCoords().getChannel() == channelIndex_) {
                long intensity = image.getComponentIntensityAt(
-                     event.getX(), event.getY(), curComponent_);
+                     lastX_, lastY_, curComponent_);
                HistogramData data = lastHistograms_[curComponent_];
                histogram_.setHighlight(intensity / data.getBinSize());
             }
