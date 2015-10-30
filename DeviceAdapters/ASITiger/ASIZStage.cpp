@@ -318,6 +318,17 @@ int CZStage::Stop()
    return hub_->QueryCommand(command.str());
 }
 
+int CZStage::Home()
+{
+   // single-axis possible in recent firmware of motorized Z but rarely
+   // used so for now don't support in Micro-Manager; when added to the
+   // device adapter then stop move here like in ASIPiezo
+   ostringstream command; command.str("");
+   command << "! " << axisLetter_;
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   return DEVICE_OK;
+}
+
 bool CZStage::Busy()
 {
    ostringstream command; command.str("");

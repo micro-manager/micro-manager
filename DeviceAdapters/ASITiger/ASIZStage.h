@@ -43,6 +43,7 @@ public:
    // ZStage API
    // -----------
    int Stop();
+   int Home();
 
    // the step size is the programming unit for dimensions and is integer
    // see http://micro-manager.3463995.n2.nabble.com/what-are-quot-steps-quot-for-stages-td7580724.html
