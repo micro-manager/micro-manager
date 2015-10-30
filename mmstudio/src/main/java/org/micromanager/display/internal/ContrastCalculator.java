@@ -129,8 +129,9 @@ public class ContrastCalculator {
          contrastMax = (int) (frac * (interpMax - interpMin) + interpMin);
          break;
       }
-      return new HistogramData(histogram, minVal, maxVal,
+      HistogramData result = new HistogramData(histogram, minVal, maxVal,
             contrastMin, contrastMax,
             (int) (meanVal / (width * height)), bitDepth, binSize);
+      return result;
    }
 }

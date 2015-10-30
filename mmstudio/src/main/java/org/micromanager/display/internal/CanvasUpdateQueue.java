@@ -106,6 +106,10 @@ public class CanvasUpdateQueue {
    // spam up the EDT with lots of excess draw requests.
    private boolean amWaitingForDraw_ = false;
    private boolean shouldReapplyLUTs_;
+   // This boolean is set when we call setDisplaySettings(), so we don't
+   // erroneously respond to our own new display settings by redrawing
+   // everything.
+   private boolean amSettingDisplaySettings_;
 
    public static CanvasUpdateQueue makeQueue(DisplayWindow display,
          MMVirtualStack stack, Object drawLock) {
@@ -351,7 +355,9 @@ public class CanvasUpdateQueue {
                   new DefaultDisplaySettings.DefaultContrastSettings(
                      mins, maxes, gammas, true),
                   channel);
+            amSettingDisplaySettings_ = true;
             display_.setDisplaySettings(builder.build());
+            amSettingDisplaySettings_ = false;
          }
          // Allow future jobs to be scheduled.
          history.timer_ = null;
@@ -398,10 +404,13 @@ public class CanvasUpdateQueue {
    @Subscribe
    public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
       // The new settings may have new contrast settings, so reapply contrast.
-      for (HistogramHistory history : channelToHistory_.values()) {
-         history.needsUpdate_ = true;
+      // Only if the new settings didn't originate from us of course.
+      if (!amSettingDisplaySettings_) {
+         for (HistogramHistory history : channelToHistory_.values()) {
+            history.needsUpdate_ = true;
+         }
+         reapplyLUTs();
       }
-      reapplyLUTs();
    }
 
    /**
