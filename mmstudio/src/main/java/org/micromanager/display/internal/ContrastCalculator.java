@@ -25,7 +25,6 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.display.DisplaySettings;
 
-import org.micromanager.internal.utils.HistogramUtils;
 import org.micromanager.internal.utils.ImageUtils;
 
 /**
@@ -91,14 +90,47 @@ public class ContrastCalculator {
             meanVal += pixelVal;
          }
       }
-      HistogramUtils util = new HistogramUtils(histogram,
-            width * height, .01 * extremaPercentage);
       int bitDepth = image.getMetadata().getBitDepth();
       int binSize = (int) (Math.pow(2, bitDepth) / numBins);
+      int contrastMin = -1;
+      int contrastMax = -1;
+      // Need to interpolate into the histogram to get the correct
+      // contrast min/max values. This number is the number of the pixel
+      // whose intensity we want.
+      double pixelCount = width * height * .01 * extremaPercentage;
+      // Start with finding the min.
+      double curCount = pixelCount;
+      for (int i = 0; i < histogram.length; ++i) {
+         if (curCount >= histogram[i]) {
+            curCount -= histogram[i];
+            continue;
+         }
+         // The target min pixel intensity is somewhere in this bucket.
+         // Linearly interpolate between the min and max values of the
+         // bucket based on the current count. Note that at the ends of
+         // the histogram, the interpolation limits are minVal/maxVal.
+         int interpMin = Math.max(minVal, i * binSize);
+         int interpMax = Math.min((i + 1) * binSize, maxVal);
+         double frac = curCount / histogram[i];
+         contrastMin = (int) (frac * (interpMax - interpMin) + interpMin);
+         break;
+      }
+      // Now find the max. Same as above, except we start counting from the
+      // top of the histogram instead of the bottom.
+      curCount = pixelCount;
+      for (int i = histogram.length - 1; i >= 0; --i) {
+         if (curCount >= histogram[i]) {
+            curCount -= histogram[i];
+            continue;
+         }
+         int interpMin = Math.max(minVal, i * binSize);
+         int interpMax = Math.min((i + 1) * binSize, maxVal);
+         double frac = curCount / histogram[i];
+         contrastMax = (int) (frac * (interpMax - interpMin) + interpMin);
+         break;
+      }
       return new HistogramData(histogram, minVal, maxVal,
-            util.getMinAfterRejectingOutliers() * binSize,
-            (util.getMaxAfterRejectingOutliers() + 1) * binSize,
-            (int) (meanVal / (width * height)),
-            bitDepth, binSize);
+            contrastMin, contrastMax,
+            (int) (meanVal / (width * height)), bitDepth, binSize);
    }
 }
