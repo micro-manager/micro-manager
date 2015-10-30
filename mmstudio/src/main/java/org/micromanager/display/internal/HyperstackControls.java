@@ -49,6 +49,7 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.data.internal.IncomingImageEvent;
 import org.micromanager.data.internal.NewImageEvent;
 import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
+import org.micromanager.display.internal.events.MouseExitedEvent;
 import org.micromanager.display.internal.events.MouseMovedEvent;
 import org.micromanager.display.internal.events.StatusEvent;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -61,8 +62,8 @@ public class HyperstackControls extends JPanel {
    private final MMVirtualStack stack_;
 
    // Last known mouse positions.
-   private int mouseX_ = 0;
-   private int mouseY_ = 0;
+   private int mouseX_ = -1;
+   private int mouseY_ = -1;
 
    // Controls common to both control sets
    private ScrollerPanel scrollerPanel_;
@@ -134,9 +135,8 @@ public class HyperstackControls extends JPanel {
    }
 
    /**
-    * User moused over the display; update our indication of pixel intensities. 
-    * @param event
-    * */
+    * User moused over the display; update our indication of pixel intensities.
+    **/
    @Subscribe
    public void onMouseMoved(MouseMovedEvent event) {
       try {
@@ -147,6 +147,16 @@ public class HyperstackControls extends JPanel {
       catch (Exception e) {
          ReportingUtils.logError(e, "Failed to get image pixel info");
       }
+   }
+
+   /**
+    * User's mouse left the display; stop showing pixel intensities.
+    */
+   @Subscribe
+   public void onMouseExited(MouseExitedEvent event) {
+      mouseX_ = -1;
+      mouseY_ = -1;
+      pixelInfoLabel_.setVisible(false);
    }
 
    public String getIntensityString(int x, int y) {
@@ -193,6 +203,7 @@ public class HyperstackControls extends JPanel {
          String intensity = getIntensityString(x, y);
          pixelInfoLabel_.setText(String.format("x=%d, y=%d, value=%s",
                   x, y, intensity));
+         pixelInfoLabel_.setVisible(true);
       }
       // If the pixel info display grows (e.g. due to extra digits in the
       // intensity display) then we don't want to let it shrink again, or else
