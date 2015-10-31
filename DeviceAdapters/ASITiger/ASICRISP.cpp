@@ -138,6 +138,18 @@ int CCRISP::Initialize()
    CreateProperty(g_CRISPLogAmpAGCPropertyName, "", MM::Integer, true, pAct);
    UpdateProperty(g_CRISPLogAmpAGCPropertyName);
 
+   if (FirmwareVersionAtLeast(3.12))
+   {
+   	pAct = new CPropertyAction(this, &CCRISP::OnNumSkips);
+   	CreateProperty(g_CRISPNumberSkipsPropertyName, "0", MM::Integer, false, pAct);
+   	SetPropertyLimits(g_CRISPNumberSkipsPropertyName, 0, 100);
+   	UpdateProperty(g_CRISPNumberSkipsPropertyName);
+
+   	pAct = new CPropertyAction(this, &CCRISP::OnInFocusRange);
+   	CreateProperty(g_CRISPInFocusRangePropertyName, "0.0001", MM::Float, false, pAct);
+   	UpdateProperty(g_CRISPInFocusRangePropertyName);
+   }
+
    initialized_ = true;
    return DEVICE_OK;
 }
@@ -548,6 +560,52 @@ int CCRISP::OnLogAmpAGC(MM::PropertyBase* pProp, MM::ActionType eAct)
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   return DEVICE_OK;
+}
+
+int CCRISP::OnNumSkips(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "UL Y?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Y="));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(tmp);
+      command << addressChar_ << "UL Y=" << tmp;
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CCRISP::OnInFocusRange(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "AFLIM Z?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(tmp);
+      command << addressChar_ << "AFLIM Z=" << tmp;
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }
