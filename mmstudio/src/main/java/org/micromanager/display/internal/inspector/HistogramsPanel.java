@@ -128,7 +128,7 @@ public final class HistogramsPanel extends InspectorPanel {
       setMinimumSize(new java.awt.Dimension(280, 0));
       displayToPanels_ = new HashMap<DataViewer, ArrayList<ChannelControlPanel>>();
       // Populate displayToPanels now.
-      for (DataViewer display : DefaultDisplayManager.getInstance().getAllImageWindows()) {
+      for (DataViewer display : DefaultDisplayManager.getInstance().getAllDataViewers()) {
          setupDisplay(display);
       }
       DefaultEventManager.getInstance().registerForEvents(this);

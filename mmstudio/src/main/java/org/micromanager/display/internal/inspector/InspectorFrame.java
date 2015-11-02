@@ -247,7 +247,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
       // See the HACK note on DisplayMenuItem.
       DisplayMenuItem nullItem = new DisplayMenuItem(null);
       displayChooser_.addItem(nullItem);
-      List<DataViewer> allDisplays = new ArrayList<DataViewer>(DefaultDisplayManager.getInstance().getAllImageWindows());
+      List<DataViewer> allDisplays = new ArrayList<DataViewer>(DefaultDisplayManager.getInstance().getAllDataViewers());
       for (DataViewer display : allDisplays) {
          if (!displayHistory_.contains(display)) {
             displayHistory_.push(display);
