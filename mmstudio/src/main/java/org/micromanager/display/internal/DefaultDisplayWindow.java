@@ -823,7 +823,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
                gammas[j] = displaySettings_.getSafeContrastGamma(i, j, 1.0);
                // 8 means 256 bins.
                HistogramData data = ContrastCalculator.calculateHistogram(
-                     image, j, 8, extremaPercentage);
+                     image, ijImage_, j, 8, extremaPercentage);
                mins[j] = data.getMinIgnoringOutliers();
                maxes[j] = data.getMaxIgnoringOutliers();
             }

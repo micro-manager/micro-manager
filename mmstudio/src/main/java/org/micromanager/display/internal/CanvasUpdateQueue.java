@@ -355,7 +355,7 @@ public class CanvasUpdateQueue {
          for (int i = 0; i < image.getNumComponents(); ++i) {
             // 8 means 256 bins.
             HistogramData data = ContrastCalculator.calculateHistogram(
-                  image, i, 8, percentage);
+                  image, plus_, i, 8, percentage);
             history.datas_.add(data);
             if (shouldUpdate) {
                mins[i] = data.getMinIgnoringOutliers();

@@ -20,20 +20,40 @@
 
 package org.micromanager.display.internal;
 
+import ij.gui.Roi;
+import ij.ImagePlus;
+import ij.process.ImageProcessor;
+
+import java.awt.Rectangle;
+
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.display.DisplaySettings;
 
 import org.micromanager.internal.utils.ImageUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * This class calculates histograms and contrast settings for images.
  */
 public class ContrastCalculator {
 
+   /**
+    * @param image Image whose pixel data we will calculate the histogram for.
+    * @param plus ImageJ ImagePlus object, needed for constraining
+    *        the histogram area to the current ROI. May be null, in which case
+    *        we assume there is no ROI.
+    * @param component The component number of the image for RGB or other
+    *        multi-component images (use 0 for grayscale images).
+    * @param binPower The number of bins in the histogram, expressed as a power
+    *        of 2. E.g. 8 means to have 256 bins.
+    * @param extremaPercentage Percentage of pixels to ignore when calculating
+    *        the contrast min/max values.
+    */
    public static HistogramData calculateHistogram(Image image,
-         int component, int binPower, double extremaPercentage) {
+         ImagePlus plus, int component, int binPower,
+         double extremaPercentage) {
       int channel = image.getCoords().getChannel();
       int width = image.getWidth();
       int height = image.getHeight();
@@ -55,8 +75,42 @@ public class ContrastCalculator {
          divisor *= 2;
          exponent = 16;
       }
-      for (int x = 0; x < width; ++x) {
-         for (int y = 0; y < height; ++y) {
+
+      // Get ROI information. This consists of a rectangle containing the
+      // ROI, and then, for non-rectangular ROIs, a pixel mask (fortunately
+      // not a *bit* mask though; each byte is one pixel).
+      byte[] maskPixels = null;
+      Rectangle roiRect = null;
+      if (plus != null) {
+         if (plus.getMask() != null) {
+            maskPixels = (byte[]) (plus.getMask().getPixels());
+         }
+         Roi roi = plus.getRoi();
+         if (roi != null) {
+            roiRect = roi.getBounds();
+         }
+      }
+
+      int xMin = 0;
+      int xMax = width;
+      int yMin = 0;
+      int yMax = height;
+      if (roiRect != null) {
+         xMin = roiRect.x;
+         xMax = roiRect.x + roiRect.width;
+         yMin = roiRect.y;
+         yMax = roiRect.y + roiRect.height;
+      }
+
+      for (int x = xMin; x < xMax; ++x) {
+         for (int y = yMin; y < yMax; ++y) {
+            if (maskPixels != null) {
+               int index = (y - roiRect.y) * roiRect.width + (x - roiRect.x);
+               if (maskPixels[index] == 0) {
+                  // Outside of the mask.
+                  continue;
+               }
+            }
             // TODO this code is copied not-quite-verbatim from
             // Image.getComponentIntensityAt(). The chief difference being that
             // we operate on the Java pixels array instead of the Image's
