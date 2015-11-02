@@ -396,6 +396,10 @@ int CCRISP::OnNA(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmp);
       command << addressChar_ << "LR Y=" << tmp;
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A") );
+      // setting NA affects the in-focus range
+      if (FirmwareVersionAtLeast(3.12)) {
+      	RETURN_ON_MM_ERROR( UpdateProperty(g_CRISPInFocusRangePropertyName) );
+      }
    }
    return DEVICE_OK;
 }
