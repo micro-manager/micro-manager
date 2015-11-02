@@ -53,6 +53,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 import net.miginfocom.swing.MigLayout;
@@ -342,14 +343,27 @@ public class InspectorFrame extends MMFrame implements Inspector {
 
    @Override
    public synchronized void relayout() {
-      // HACK: coerce minimum size to our default size for the duration of this
-      // pack; otherwise our default size effectively gets ignored on a
-      // routine basis.
-      Dimension minSize = getMinimumSize();
-      int width = getDefaultWidth();
-      setMinimumSize(new Dimension(width, (int) minSize.getHeight()));
-      pack();
-      setMinimumSize(minSize);
+      /**
+       * HACK: we have to postpone our relayout logic until after all pending
+       * events have cleared from the EDT, because Swing's revalidate logic
+       * only kicks in once the EDT is clear, and we need to do our own
+       * layout after Swing is done. At least, I *think* that's what's going
+       * on. Bottom line is, if we do the below code immediately instead of
+       * in an invokeLater(), then the window size is wrong.
+       */
+      SwingUtilities.invokeLater(new Runnable() {
+         @Override
+         public void run() {
+            // HACK: coerce minimum size to our default size for the duration
+            // of this pack; otherwise our default size effectively gets
+            // ignored on a routine basis.
+            Dimension minSize = getMinimumSize();
+            int width = getDefaultWidth();
+            setMinimumSize(new Dimension(width, (int) minSize.getHeight()));
+            pack();
+            setMinimumSize(minSize);
+         }
+      });
    }
 
    @Subscribe
