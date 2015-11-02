@@ -288,9 +288,23 @@ public class LUTMaster {
       boolean hasCustomLUT = (mode != null &&
             mode.getIndex() > DisplaySettings.ColorMode.COMPOSITE.getIndex());
       SummaryMetadata summary = display.getDatastore().getSummaryMetadata();
-      Color color = RememberedChannelSettings.getColorWithSettings(
-            summary.getSafeChannelName(channelIndex),
-            summary.getChannelGroup(), settings, channelIndex, Color.WHITE);
+
+      // Determine the channel color to use. If the display settings don't
+      // have a channel color, then we should use either the remembered
+      // color for this channel name, or a colorblind-friendly color, and then
+      // save the new color to the display settings.
+      Color color = settings.getSafeChannelColor(channelIndex, null);
+      if (color == null) {
+         color = RememberedChannelSettings.getColorForChannel(
+               summary.getSafeChannelName(channelIndex),
+               summary.getChannelGroup(),
+               ColorSets.COLORBLIND_COLORS[channelIndex]);
+         settings = settings.copy().safeUpdateChannelColor(color,
+               channelIndex).build();
+         display.setDisplaySettings(settings);
+      }
+      // Coerce white for grayscale mode, but don't save it to the display
+      // settings so we don't forget the color when we switch to other modes.
       if (mode == DisplaySettings.ColorMode.GRAYSCALE) {
          color = Color.WHITE;
       }

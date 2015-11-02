@@ -543,9 +543,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
       DisplaySettings settings = display_.getDisplaySettings();
       // Pick the default color to start with.
-      Color defaultColor = RememberedChannelSettings.getColorWithSettings(
-            summary.getSafeChannelName(channelIndex_),
-            summary.getChannelGroup(), settings, channelIndex_, Color.WHITE);
+      Color defaultColor = settings.getSafeChannelColor(channelIndex_,
+            Color.WHITE);
 
       Color newColor = JColorChooser.showDialog(this, "Choose a color for the "
               + name + " channel", defaultColor);
@@ -554,6 +553,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          settings = settings.copy().safeUpdateChannelColor(newColor,
                channelIndex_).build();
          display_.setDisplaySettings(settings);
+         new RememberedChannelSettings(
+               summary.getSafeChannelName(channelIndex_),
+               summary.getChannelGroup(),
+               newColor, null, null, null).saveToProfile();
       }
       reloadDisplaySettings();
    }
@@ -645,17 +648,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     */
    public void reloadDisplaySettings() {
       // Figure out which color to use.
-      // HACK: use a color based on the channel index: specifically, use the
-      // colorblind-friendly color set.
-      Color color = Color.WHITE;
-      if (channelIndex_ < HistogramsPanel.COLORBLIND_COLORS.length) {
-         color = HistogramsPanel.COLORBLIND_COLORS[channelIndex_];
-      }
-      SummaryMetadata summary = store_.getSummaryMetadata();
       DisplaySettings settings = display_.getDisplaySettings();
-      color = RememberedChannelSettings.getColorWithSettings(
-            summary.getSafeChannelName(channelIndex_),
-            summary.getChannelGroup(), settings, channelIndex_, color);
+      Color color = settings.getSafeChannelColor(channelIndex_, Color.WHITE);
 
       colorPickerLabel_.setBackground(color);
       updateHistogramColor(color);
@@ -670,15 +664,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (mode != null) {
          isEnabledButton_.setVisible(
                mode == DisplaySettings.ColorMode.COMPOSITE);
-      }
-
-      // If the display settings don't have color information, we should
-      // re-apply it now.
-      Color settingsColor = settings.getSafeChannelColor(channelIndex_, null);
-      if (settingsColor == null || !settingsColor.equals(color)) {
-         settings = settings.copy()
-            .safeUpdateChannelColor(color, channelIndex_).build();
-         display_.setDisplaySettings(settings);
       }
       redraw();
    }

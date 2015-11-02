@@ -52,6 +52,11 @@ public class RememberedChannelSettings {
    private final Integer[] histogramMaxes_;
    private final Boolean shouldAutoscale_;
 
+   /**
+    * For purposes of saving to profile, any or all of the settings (i.e.
+    * everything except the channel name and channel group) may be null, in
+    * which case they will not be saved to the profile.
+    */
    public RememberedChannelSettings(String channelName, String channelGroup,
          Color color, Integer[] histogramMins, Integer[] histogramMaxes,
          Boolean shouldAutoscale) {
@@ -99,14 +104,22 @@ public class RememberedChannelSettings {
       synchronized(profileLock_) {
          DefaultUserProfile profile = DefaultUserProfile.getInstance();
          String ourKey = genKey(channelName_, channelGroup_);
-         profile.setInt(RememberedChannelSettings.class,
-               ourKey + ":" + COLOR, color_.getRGB());
-         profile.setIntArray(RememberedChannelSettings.class,
-               ourKey + ":" + MINS, histogramMins_);
-         profile.setIntArray(RememberedChannelSettings.class,
-               ourKey + ":" + MAXES, histogramMaxes_);
-         profile.setBoolean(RememberedChannelSettings.class,
-               ourKey + ":" + AUTOSCALE, shouldAutoscale_);
+         if (color_ != null) {
+            profile.setInt(RememberedChannelSettings.class,
+                  ourKey + ":" + COLOR, color_.getRGB());
+         }
+         if (histogramMins_ != null) {
+            profile.setIntArray(RememberedChannelSettings.class,
+                  ourKey + ":" + MINS, histogramMins_);
+         }
+         if (histogramMaxes_ != null) {
+            profile.setIntArray(RememberedChannelSettings.class,
+                  ourKey + ":" + MAXES, histogramMaxes_);
+         }
+         if (shouldAutoscale_ != null) {
+            profile.setBoolean(RememberedChannelSettings.class,
+                  ourKey + ":" + AUTOSCALE, shouldAutoscale_);
+         }
       }
    }
 
