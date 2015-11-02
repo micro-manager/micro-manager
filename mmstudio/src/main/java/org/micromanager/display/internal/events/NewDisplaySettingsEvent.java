@@ -20,17 +20,17 @@
 
 package org.micromanager.display.internal.events;
 
+import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.DisplayWindow;
 
 /**
- * This class signifies that new display settings have been set for a 
- * Datastore.
+ * This class signifies that new display settings have been set for a
+ * DataViewer.
  */
 public class NewDisplaySettingsEvent implements org.micromanager.display.NewDisplaySettingsEvent {
    private DisplaySettings settings_;
-   private DisplayWindow display_;
-   public NewDisplaySettingsEvent(DisplaySettings settings, DisplayWindow display) {
+   private DataViewer display_;
+   public NewDisplaySettingsEvent(DisplaySettings settings, DataViewer display) {
       settings_ = settings;
       display_ = display;
    }
@@ -41,7 +41,7 @@ public class NewDisplaySettingsEvent implements org.micromanager.display.NewDisp
    }
 
    @Override
-   public DisplayWindow getDisplay() {
+   public DataViewer getDisplay() {
       return display_;
    }
 }
