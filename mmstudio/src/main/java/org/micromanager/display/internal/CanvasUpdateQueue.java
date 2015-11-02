@@ -408,8 +408,14 @@ public class CanvasUpdateQueue {
     */
    public void reapplyLUTs() {
       shouldReapplyLUTs_ = true;
+      redraw();
+   }
+
+   /**
+    * Force refresh of the display.
+    */
+   public void redraw() {
       if (coordsQueue_.isEmpty() && shouldAcceptNewCoords_) {
-         // Force refresh of the display.
          for (Image image : display_.getDisplayedImages()) {
             enqueue(image.getCoords());
          }
@@ -438,7 +444,17 @@ public class CanvasUpdateQueue {
     */
    @Subscribe
    public void onHistogramRecalc(HistogramRecalcEvent event) {
-      channelToHistory_.get(event.getChannel()).needsUpdate_ = true;
+      Integer channel = event.getChannel();
+      if (channel != null) {
+         channelToHistory_.get(channel).needsUpdate_ = true;
+      }
+      else {
+         // Do it for all channels.
+         for (Integer i : channelToHistory_.keySet()) {
+            channelToHistory_.get(i).needsUpdate_ = true;
+         }
+      }
+      redraw();
    }
 
    /**

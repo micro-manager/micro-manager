@@ -29,12 +29,17 @@ import org.micromanager.display.internal.HistogramData;
  * recalculated for the display.
  */
 public class HistogramRecalcEvent {
-   private int channel_;
-   public HistogramRecalcEvent(int channel) {
+   private Integer channel_;
+
+   /**
+    * @param channel The channel that needs new histograms, or null for all
+    *        channels.
+    */
+   public HistogramRecalcEvent(Integer channel) {
       channel_ = channel;
    }
 
-   public int getChannel() {
+   public Integer getChannel() {
       return channel_;
    }
 }

@@ -41,6 +41,7 @@ import org.micromanager.display.NewDisplaySettingsEvent;
 import org.micromanager.display.internal.events.CanvasDrawEvent;
 import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
+import org.micromanager.display.internal.events.HistogramRecalcEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.display.internal.events.MouseExitedEvent;
 import org.micromanager.display.internal.events.MouseExitedEvent;
@@ -77,13 +78,19 @@ class MMImageCanvas extends ImageCanvas {
             display_.postEvent(new MouseMovedEvent(x, y));
          }
       });
-      // Why doesn't addMouseMotionListener get mouse entrance/exit events?
-      // Java!
+      // Listen for the mouse leaving the canvas (oddly, not covered under
+      // addMouseMotionListener) and for mouse click events that can signal
+      // changes in the ROI.
       addMouseListener(new MouseAdapter() {
          @Override
          public void mouseExited(MouseEvent event) {
             // Inform clients that the mouse has left the canvas.
             display_.postEvent(new MouseExitedEvent());
+         }
+
+         @Override
+         public void mouseReleased(MouseEvent event) {
+            display_.postEvent(new HistogramRecalcEvent(null));
          }
       });
    }
