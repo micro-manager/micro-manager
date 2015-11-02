@@ -31,7 +31,7 @@ public interface NewDisplaySettingsEvent {
    public DisplaySettings getDisplaySettings();
 
    /**
-    * @return the DisplayWindow that received the new DisplaySettings.
+    * @return the DataViewer that received the new DisplaySettings.
     */
-   public DisplayWindow getDisplay();
+   public DataViewer getDisplay();
 }

@@ -24,6 +24,7 @@ import com.google.common.eventbus.Subscribe;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 
+import org.micromanager.display.DataViewer;
 import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplayWindow;
@@ -67,11 +69,13 @@ public final class DefaultDisplayManager implements DisplayManager {
    private final HashMap<Datastore, ArrayList<DisplayWindow>> storeToDisplays_;
    private LinkedHashMap<String, OverlayPanelFactory> titleToOverlay_;
    private final ArrayList<DisplayWindow> allDisplays_;
+   private final HashSet<DataViewer> externalViewers_;
 
    public DefaultDisplayManager(MMStudio studio) {
       studio_ = studio;
       storeToDisplays_ = new HashMap<Datastore, ArrayList<DisplayWindow>>();
       allDisplays_ = new ArrayList<DisplayWindow>();
+      externalViewers_ = new HashSet<DataViewer>();
       studio_.events().registerForEvents(this);
       staticInstance_ = this;
    }
@@ -186,6 +190,19 @@ public final class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
+   public void addViewer(DataViewer viewer) {
+      externalViewers_.add(viewer);
+   }
+
+   @Override
+   public void removeViewer(DataViewer viewer) {
+      if (!externalViewers_.contains(viewer)) {
+         throw new IllegalArgumentException("Viewer " + viewer + " is not currently tracked.");
+      }
+      externalViewers_.remove(viewer);
+   }
+
+   @Override
    public RequestToDrawEvent createRequestToDrawEvent(Coords coords) {
       return new DefaultRequestToDrawEvent(coords);
    }
@@ -231,6 +248,14 @@ public final class DefaultDisplayManager implements DisplayManager {
    @Override
    public List<DisplayWindow> getAllImageWindows() {
       return new ArrayList<DisplayWindow>(allDisplays_);
+   }
+
+   @Override
+   public List<DataViewer> getAllDataViewers() {
+      ArrayList<DataViewer> result = new ArrayList<DataViewer>(
+            getAllImageWindows());
+      result.addAll(externalViewers_);
+      return result;
    }
 
    @Override

@@ -115,6 +115,23 @@ public interface DisplayManager {
          ControlsFactory factory);
 
    /**
+    * Register a DataViewer with Micro-Manager. This makes Micro-Manager
+    * aware of the viewer, so that it may be used by Micro-Manager's widgets
+    * (chiefly, the Inspector Window). Use removeViewer() to remove a viewer
+    * that has been added by this method.
+    * @param viewer The new DataViewer that should be tracked.
+    */
+   public void addViewer(DataViewer viewer);
+
+   /**
+    * Cause Micro-Manager to stop tracking a DataViewer that was previously
+    * added with addViewer().
+    * @param viewer The DataViewer that should no longer be tracked.
+    * @throws IllegalArgumentException if the viewer is not currently tracked.
+    */
+   public void removeViewer(DataViewer viewer);
+
+   /**
     * Create a RequestToDrawEvent and return it. This event can be posted to
     * a DisplayWindow's EventBus (using the DisplayWindow.postEvent() method)
     * to request that the DisplayWindow update its displayed image. This will
@@ -192,11 +209,19 @@ public interface DisplayManager {
    public DisplayWindow getCurrentWindow();
 
    /**
-    * Return all active DisplayWindows. Note this is limited to windows created
-    * by Micro-Manager (e.g. not windows created by ImageJ).
+    * Return all active DisplayWindows. Note this is specifically Micro-
+    * Manager DisplayWindows; it doesn't include ImageJ's ImageWindows or
+    * any other data-representation windows.
     * @return A list of all DisplayWindows that Micro-Manager knows about.
     */
    public List<DisplayWindow> getAllImageWindows();
+
+   /**
+    * Return all DataViewers that Micro-Manager knows about. This includes
+    * the results of getAllImageWindows, as well as any extant DataViewers
+    * that have been registered with Micro-Manager via the addViewer method.
+    */
+   public List<DataViewer> getAllDataViewers();
 
    /**
     * Display a prompt for the user to save their data. This is the same
