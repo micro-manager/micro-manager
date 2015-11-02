@@ -26,6 +26,7 @@ package org.micromanager.display.internal;
  */
 public class HistogramData {
    private int[] histogram_;
+   private int numPixels_;
    private int minVal_;
    private int maxVal_;
    private int minIgnoringOutliers_;
@@ -34,10 +35,11 @@ public class HistogramData {
    private int bitDepth_;
    private int binSize_;
 
-   public HistogramData(int[] histogram, int minVal, int maxVal,
+   public HistogramData(int[] histogram, int numPixels, int minVal, int maxVal,
          int minIgnoringOutliers, int maxIgnoringOutliers, int mean,
          int bitDepth, int binSize) {
       histogram_ = histogram;
+      numPixels_ = numPixels;
       minVal_ = minVal;
       maxVal_ = maxVal;
       minIgnoringOutliers_ = minIgnoringOutliers;
@@ -77,6 +79,10 @@ public class HistogramData {
 
    public int getBinSize() {
       return binSize_;
+   }
+
+   public int getNumPixels() {
+      return numPixels_;
    }
 
    @Override

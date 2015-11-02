@@ -62,6 +62,7 @@ public class ContrastCalculator {
       int minVal = -1;
       int maxVal = -1;
       long meanVal = 0;
+      int numPixels = 0;
       int numBins = (int) Math.pow(2, binPower);
       int bitDepth = image.getMetadata().getBitDepth();
       int binSize = (int) (Math.pow(2, bitDepth) / numBins);
@@ -111,6 +112,7 @@ public class ContrastCalculator {
                   continue;
                }
             }
+            numPixels++;
             // TODO this code is copied not-quite-verbatim from
             // Image.getComponentIntensityAt(). The chief difference being that
             // we operate on the Java pixels array instead of the Image's
@@ -184,9 +186,14 @@ public class ContrastCalculator {
          contrastMax = (int) (frac * (interpMax - interpMin) + interpMin);
          break;
       }
-      HistogramData result = new HistogramData(histogram, minVal, maxVal,
-            contrastMin, contrastMax,
-            (int) (meanVal / (width * height)), bitDepth, binSize);
+
+      if (numPixels > 0) {
+         meanVal = meanVal / numPixels;
+      }
+
+      HistogramData result = new HistogramData(histogram, numPixels,
+            minVal, maxVal, contrastMin, contrastMax,
+            (int) meanVal, bitDepth, binSize);
       return result;
    }
 }

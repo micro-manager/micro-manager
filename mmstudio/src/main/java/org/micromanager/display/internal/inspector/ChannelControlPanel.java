@@ -886,9 +886,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       histogram_.setVisible(true);
       //Draw histogram and stats
       for (int i = 0; i < lastHistograms_.length; ++i) {
-         GraphData histogramData = new GraphData();
-         histogramData.setData(lastHistograms_[i].getHistogram());
-         histogram_.setData(i, histogramData);
+         if (lastHistograms_[i].getNumPixels() > 0) {
+            GraphData histogramData = new GraphData();
+            histogramData.setData(lastHistograms_[i].getHistogram());
+            histogram_.setData(i, histogramData);
+         }
       }
       histogram_.setAutoScale();
       histogram_.repaint();
