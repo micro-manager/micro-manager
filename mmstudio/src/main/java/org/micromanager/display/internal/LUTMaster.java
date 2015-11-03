@@ -293,12 +293,11 @@ public class LUTMaster {
       // have a channel color, then we should use either the remembered
       // color for this channel name, or a colorblind-friendly color, and then
       // save the new color to the display settings.
-      Color color = settings.getSafeChannelColor(channelIndex, null);
-      if (color == null) {
-         color = RememberedChannelSettings.getColorForChannel(
-               summary.getSafeChannelName(channelIndex),
-               summary.getChannelGroup(),
-               ColorSets.COLORBLIND_COLORS[channelIndex]);
+      Color color = RememberedChannelSettings.getColorWithSettings(
+            summary.getSafeChannelName(channelIndex),
+            summary.getChannelGroup(), settings, channelIndex,
+            ColorSets.COLORBLIND_COLORS[channelIndex]);
+      if (color != settings.getSafeChannelColor(channelIndex, null)) {
          settings = settings.copy().safeUpdateChannelColor(color,
                channelIndex).build();
          display.setDisplaySettings(settings);
