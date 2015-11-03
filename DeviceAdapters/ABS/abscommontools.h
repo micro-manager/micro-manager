@@ -17,7 +17,7 @@
 #define _ABSCOMMONTOOLS_H_
 
 #ifndef _CRT_SECURE_NO_WARNINGS
-  #define _CRT_SECURE_NO_WARNINGS	// disbale warning C4996
+  #define _CRT_SECURE_NO_WARNINGS  // disable warning C4996
 #endif
 
 #if _MSC_VER < 1400
@@ -30,7 +30,9 @@
         SHGFP_TYPE_CURRENT  = 0,   // current value for user, verify it exists
         SHGFP_TYPE_DEFAULT  = 1,   // default value, may not exist
     } SHGFP_TYPE;
+  #ifndef CSIDL_COMMON_APPDATA
 	#define CSIDL_COMMON_APPDATA            0x0023        // All Users\Application Data	
+  #endif
 #else
 	#include "shlobj.h"
 #endif
@@ -48,6 +50,10 @@ namespace ABSTools
 		EOS_OrLess		// requested os or a older one		
 	};
 
+    // return true on Windows9x systems
+    bool IsWindows9x(EOSVersionFlags eFlag = EOS_None);
+    // return true on WindowsNT systems
+    bool IsWindowsNT(EOSVersionFlags eFlag = EOS_None);
 	// return true on WindowsXP systems
     bool IsWindowsXP(	EOSVersionFlags eFlag = EOS_None);
 	// return true on Windows2000 systems
@@ -99,9 +105,15 @@ namespace ABSTools
 	BYTE  round_f_range_b (float const fValue,  int const nMin, int const nMax);    
     WORD  round_d_range_w (double const dValue, int const nMin, int const nMax);
 
+    int   round( float const x );    // Round to nearest integer;
+    int   round( double const x );    // Round to nearest integer;
+
 
     void IdentityMatrix( float* pfMatrix, int nWidth, int nHeight );
     void MultiplyMatrix( float* pfSrc1, float* pfSrc2, float* pfDst, int nXYDim );
+
+    void IdentityMatrix( double* pfMatrix, int nWidth, int nHeight );
+    void MultiplyMatrix( double* pfSrc1, double* pfSrc2, double* pfDst, int nXYDim );
 
   unsigned int GetShell32DllVersion( void );
 
@@ -111,9 +123,14 @@ namespace ABSTools
   unsigned int  getBitCount( unsigned long long ulBitMask );
 
   std::string   getBaseFilename( const std::string &  strFilePath );
+  std::string   getFileExtension( const std::string & strFilePath );
   std::string   getFilename( const std::string &  strFilePath );
   std::string   getFileDir( const std::string & strFilePath );
   unsigned int  findFiles( const std::string & strFileMask, CStdStringLst & strFiles );
+
+  // return the current application path
+  std::string   getAppPath( );
+  std::string   getQualified( const std::string & strFilePath );
 
 }
 

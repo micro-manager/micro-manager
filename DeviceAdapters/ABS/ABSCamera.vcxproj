@@ -167,7 +167,6 @@
     <ClCompile Include="AutoTimeMeasure.cpp" />
     <ClCompile Include="CcmFileStd.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="include\stringtools.cpp" />
     <ClCompile Include="MemoryIniFile.cpp" />
     <ClCompile Include="TimeSpanPC.cpp" />
   </ItemGroup>

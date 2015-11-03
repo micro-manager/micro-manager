@@ -30,8 +30,8 @@
 	#define WINVER  0x0500
 #endif
 
-#include "./ABSCommonTools.h"
-#include "./SafeUtil.h"
+#include "ABSCommonTools.h"
+#include "SafeUtil.h"
 #include "shlobj.h"
 #include "shlwapi.h"
 #pragma comment(lib, "shlwapi.lib")
@@ -70,7 +70,7 @@ typedef int		(CALLBACK* LPSHCreateDirectoryExW)( HWND, LPCWSTR, LPSECURITY_ATTRI
 //
 bool ABSTools::IsWindows7(EOSVersionFlags eFlag)
 {
-	bool bRC = true;
+  bool bRC = false;
 	OSVERSIONINFOEX sOSVerEx;
 	if (ABSTools::GetOsVersion(sOSVerEx))
 	{
@@ -105,7 +105,7 @@ bool ABSTools::IsWindows7(EOSVersionFlags eFlag)
 
 bool ABSTools::IsWindowsVista(EOSVersionFlags eFlag)
 {
-	bool bRC = true;
+  bool bRC = false;
 	OSVERSIONINFOEX sOSVerEx;
 	if (ABSTools::GetOsVersion(sOSVerEx))
 	{
@@ -137,7 +137,7 @@ bool ABSTools::IsWindowsVista(EOSVersionFlags eFlag)
 
 bool ABSTools::IsWindowsXP(EOSVersionFlags eFlag)
 {
-    bool bRC = true;
+  bool bRC = false;
     OSVERSIONINFOEX sOSVerEx;
     if (ABSTools::GetOsVersion(sOSVerEx))
     {
@@ -170,7 +170,7 @@ bool ABSTools::IsWindowsXP(EOSVersionFlags eFlag)
 
 bool ABSTools::IsWindows2000(EOSVersionFlags eFlag)
 {
-	bool bRC = true;
+  bool bRC = false;
 	OSVERSIONINFOEX sOSVerEx;
 	if (ABSTools::GetOsVersion(sOSVerEx))
 	{
@@ -195,6 +195,56 @@ bool ABSTools::IsWindows2000(EOSVersionFlags eFlag)
 		}
 	}
 	return bRC;
+}
+
+bool ABSTools::IsWindowsNT(EOSVersionFlags eFlag)
+{
+  bool bRC = false;
+  OSVERSIONINFOEX sOSVerEx;
+  if (ABSTools::GetOsVersion(sOSVerEx))
+  {
+    if (sOSVerEx.dwPlatformId == VER_PLATFORM_WIN32_NT)
+    {
+      switch (eFlag)
+      {
+      case EOS_OrHigher:
+        bRC = (sOSVerEx.dwMajorVersion >=  4);
+        break;
+
+      case EOS_OrLess:
+        bRC = (sOSVerEx.dwMajorVersion <= 4);
+        break;
+      default:
+        bRC =(sOSVerEx.dwMajorVersion <= 4);
+        break;
+      }
+    }
+  }
+  return bRC;
+}
+
+bool ABSTools::IsWindows9x(EOSVersionFlags eFlag)
+{
+  bool bRC = false;
+  OSVERSIONINFOEX sOSVerEx;
+  if (ABSTools::GetOsVersion(sOSVerEx))
+  {
+    switch (eFlag)
+    {
+    case EOS_OrHigher:
+      bRC = (sOSVerEx.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS) ||
+            (sOSVerEx.dwPlatformId == VER_PLATFORM_WIN32_NT);
+      break;
+
+    case EOS_OrLess:
+      bRC = (sOSVerEx.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS);
+      break;
+    default:
+      bRC = (sOSVerEx.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS);
+      break;
+    }
+  }
+  return bRC;
 }
 
 bool ABSTools::GetOsVersion(OSVERSIONINFOEX &sOSVerEx)
@@ -242,14 +292,18 @@ bool ABSTools::CreateFolder( WCHAR* wzPath)
 			
 			if (NULL != SHCreateDirectoryExW) 
 			{
+				#ifndef __GNUWIN32__
 				__try
+				#endif
 				{
 					nRC = SHCreateDirectoryExW( NULL, wzPath, NULL );
 				}
+				#ifndef __GNUWIN32__
 				__except(GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
 				{
 					nRC = ERROR_CANCELLED;						
 				}
+				#endif
 			}
 		}
 			
@@ -445,14 +499,18 @@ bool ABSTools::IsWindowsThemeActive(void)
 
 				if (NULL != IsThemeActive) 
 				{
+					#ifndef __GNUWIN32__
 					__try
+					#endif
 					{
 						bThemeActive = (IsThemeActive() == TRUE);
 					}
+					#ifndef __GNUWIN32__
 					__except(GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
 					{
 						bThemeActive = false;						
 					}
+					#endif
 				}
 
 				FreeLibrary(hUxTheme);
@@ -476,7 +534,7 @@ bool ABSTools::GetLocalizedName( WCHAR* wzSrc,  WCHAR* wzDst, UINT nDstSize)
 
 	if (IsWindowsVista( ABSTools::EOS_OrHigher ))
 	{
-		#if WINVER < 0x0600
+    #if WINVER < 0x0601
 			HINSTANCE hShell32;			
 			LPSHGetLocalizedName SHGetLocalizedName = NULL;
 
@@ -487,14 +545,18 @@ bool ABSTools::GetLocalizedName( WCHAR* wzSrc,  WCHAR* wzDst, UINT nDstSize)
 
 				if (NULL != SHGetLocalizedName) 
 				{
+					#ifndef __GNUWIN32__
 					__try
+					#endif
 					{						
 						bLocalized = (SHGetLocalizedName( wzSrc,  wzTmp, nTmpSize, &nID) == S_OK);						
 					}
+					#ifndef __GNUWIN32__
 					__except(GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
 					{
 						bLocalized = false;						
 					}
+					#endif
 				}
 
 				FreeLibrary(hShell32);
@@ -730,14 +792,18 @@ bool ABSTools::GetFolderPath( int nFolder, WCHAR* wzPath, UINT nSize, DWORD dwFl
 
     if (NULL != SHGetFolderPathW) 
     {
+				#ifndef __GNUWIN32__
       __try
+				#endif
       {
         bRC = (S_OK == SHGetFolderPathW( NULL, nFolder, NULL, dwFlag, (WCHAR*) wzPath));
       }
+				#ifndef __GNUWIN32__
       __except(GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH)
       {
         bRC = false;
       }
+				#endif
     }
   }
   FreeLibrary(hShell32);
@@ -752,7 +818,7 @@ bool ABSTools::GetFolderPath( int nFolder, WCHAR* wzPath, UINT nSize, DWORD dwFl
 //! keep an integer value within the given WORD range
 BYTE ABSTools::range_b(int const nValue, int const nMin, int const nMax)
 {
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__GNUWIN32__)
 	return (BYTE) max(min(nValue, nMax), nMin);
 #else
 	__asm   mov     eax, nValue
@@ -766,7 +832,7 @@ BYTE ABSTools::range_b(int const nValue, int const nMin, int const nMax)
 //! keep an float value within the given BYTE range
 BYTE ABSTools::round_f_range_b (float const fValue, int const nMin, int const nMax)
 {
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__GNUWIN32__)
 	return (BYTE) max(min((int)fValue, nMax), nMin);
 #else
 	int nValue;
@@ -786,7 +852,7 @@ BYTE ABSTools::round_f_range_b (float const fValue, int const nMin, int const nM
 //! keep an integer value within the given WORD range
 WORD ABSTools::range_w(int const nValue, int const nMin, int const nMax)
 {
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__GNUWIN32__)
 	return (WORD) max(min(nValue, nMax), nMin);
 #else
 	__asm   mov     eax, nValue
@@ -801,7 +867,7 @@ WORD ABSTools::range_w(int const nValue, int const nMin, int const nMax)
 //! keep an integer value within the given WORD range
 WORD ABSTools::round_d_range_w (double const dValue, int const nMin, int const nMax)
 {
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__GNUWIN32__)
     return (WORD) max(min((int)dValue, nMax), nMin);
 #else
     int nValue;
@@ -822,7 +888,7 @@ WORD ABSTools::round_d_range_w (double const dValue, int const nMin, int const n
 //! keep an integer value within the given WORD range
 DWORD ABSTools::range_dw (int const nValue, int const nMin, int const nMax)
 {
-#ifdef _WIN64
+#if defined(_WIN64) || defined(__GNUWIN32__)
     return (DWORD) max(min(nValue, nMax), nMin);
 #else
     __asm   mov     eax, nValue
@@ -856,6 +922,25 @@ void ABSTools::IdentityMatrix( float* pfMatrix, int nWidth, int nHeight )
     }  
 }
 
+void ABSTools::IdentityMatrix( double* pfMatrix, int nWidth, int nHeight )
+{    
+  double fValue;
+  // 1 0 0 0
+  // 0 1 0 0
+  // 0 0 1 0
+
+  for (int y=0; y < nHeight; y++)
+  {
+    int nOffset = y*nWidth;
+    for (int x=0; x < nWidth; x++)
+    {
+      fValue = (y == x) ? 1.0 : 0;
+      *(pfMatrix+(nOffset+x)) = fValue;
+
+    }
+  }  
+}
+
 
 void ABSTools::MultiplyMatrix(float* pfSrc1, float* pfSrc2,  float* pfDst, int nXYDim )
 {    
@@ -882,6 +967,33 @@ void ABSTools::MultiplyMatrix(float* pfSrc1, float* pfSrc2,  float* pfDst, int n
     memcpy(pfDst, fTmp, sizeof(float) * (nXYDim*nXYDim));
 
     SAFE_DELETE_ARRAY(fTmp);
+}
+
+void ABSTools::MultiplyMatrix(double* pfSrc1, double* pfSrc2,  double* pfDst, int nXYDim )
+{    
+  double fValue;
+  double* fTmp = new double [nXYDim * nXYDim];
+  // 1 0 0 0
+  // 0 1 0 0
+  // 0 0 1 0
+
+  for (int y=0; y < nXYDim; y++)
+  {
+    int nOffset = y*nXYDim;
+    for (int x=0; x < nXYDim; x++)
+    {   
+      fValue = 0.0;
+      for (int n=0; n < nXYDim; n++)
+      {   
+        fValue += pfSrc2[ nOffset + n ] * pfSrc1[ n * nXYDim + x ];
+      }
+      fTmp[ nOffset + x ] = fValue;
+    }
+  }  
+
+  memcpy(pfDst, fTmp, sizeof(double) * (nXYDim*nXYDim));
+
+  SAFE_DELETE_ARRAY(fTmp);
 }
 
 
@@ -957,6 +1069,7 @@ unsigned int ABSTools::getBitCount(unsigned long long ulBitMask)
   ulBitMask *= 0x0101010101010101;
   return (unsigned int) (ulBitMask>>56);
 }
+
 // ---------------------------------------------------------------------------
 
 std::string ABSTools::getBaseFilename( const std::string &  strFilePath )
@@ -965,6 +1078,13 @@ std::string ABSTools::getBaseFilename( const std::string &  strFilePath )
   PathRemoveExtensionA( (char*) strBaseFileName.c_str() );
   str::ResizeByZeroTermination(strBaseFileName);
   return strBaseFileName;
+}
+
+// ---------------------------------------------------------------------------
+
+std::string ABSTools::getFileExtension( const std::string &  strFilePath )
+{
+  return std::string( PathFindExtensionA( strFilePath.c_str() ) );
 }
 
 // ---------------------------------------------------------------------------
@@ -1011,3 +1131,68 @@ unsigned int ABSTools::findFiles( const std::string & strFileMask, CStdStringLst
 
 // ---------------------------------------------------------------------------
 
+std::string ABSTools::getAppPath( )
+{
+  std::string strAppPath( MAX_PATH, '\0' );
+
+  ABSTools::GetAppPath( (char *)strAppPath.c_str(), (int)strAppPath.size() );
+
+  std::string::size_type iPos = strAppPath.find('\0');
+  if ( iPos != std::string::npos )
+    strAppPath.erase( iPos, std::string::npos );
+
+  return strAppPath;
+}
+
+// ---------------------------------------------------------------------------
+
+std::string ABSTools::getQualified( const std::string & strFilePath )
+{
+  std::string strQualified( MAX_PATH, '\0' );
+  if ( PathSearchAndQualifyA( strFilePath.c_str(), (char*) strQualified.c_str(), MAX_PATH) )
+    return strQualified;
+  else
+    return strFilePath;
+}
+
+// ---------------------------------------------------------------------------
+
+int ABSTools::round( float const x )    // Round to nearest integer
+{
+    int n;
+#if defined(__unix__) || defined(__GNUC__)
+    // 32-bit Linux, Gnu/AT&T syntax:
+    __asm ("fldl %1 \n fistpl %0 " : "=m"(n) : "m"(x) : "memory" );
+#else
+    #ifdef _M_X64 // For 64-bit apps 
+        n = (int) x;
+    #else
+    // 32-bit Windows, Intel/MASM syntax:
+    __asm fld qword ptr x;
+    __asm fistp dword ptr n;
+    #endif
+#endif
+    return n;
+}
+
+// ---------------------------------------------------------------------------
+
+int ABSTools::round( double const x )    // Round to nearest integer
+{
+  int n;
+#if defined(__unix__) || defined(__GNUC__)
+  // 32-bit Linux, Gnu/AT&T syntax:
+  __asm ("fldl %1 \n fistpl %0 " : "=m"(n) : "m"(x) : "memory" );
+#else
+  #ifdef _M_X64 // For 64-bit apps 
+    n = (int) x;
+  #else
+    // 32-bit Windows, Intel/MASM syntax:
+    __asm fld qword ptr x;
+    __asm fistp dword ptr n;
+  #endif
+#endif
+  return n;
+}
+
+// ---------------------------------------------------------------------------

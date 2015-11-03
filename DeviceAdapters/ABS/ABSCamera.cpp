@@ -164,7 +164,6 @@ const char* g_IOPort_None = " none";
 // CABSCamera implementation
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-volatile int CABSCamera::staticDeviceNo = NO_CAMERA_DEVICE;
 /**
 * CABSCamera constructor.
 * Setup default all variables and create device properties required to exist
@@ -322,22 +321,27 @@ int CABSCamera::Initialize()
   }
 
   // open camera device
-  u32 dwRC;
-  u08 deviceNumber = accquireDeviceNumber();
-  // open camera without reboot
-  dwRC = GET_RC( CamUSB_InitCameraEx( deviceNumber, serialNumber, 0, 0, platformID ), deviceNumber );
+  u32 dwRC = retOK;
 
-  if ( retNO_FW_RUNNING == dwRC ) // open camera with reboot
-    dwRC = GET_RC( CamUSB_InitCameraEx( deviceNumber, serialNumber, 1, 0, platformID ), deviceNumber );
+  // init camera and setup device number (sCamInit->nDevNr)
+  S_CAMERA_INIT sCamInit = {0};
+  sCamInit.dwSerialnumber     = serialNumber;
+  sCamInit.dwPlatformID       = platformID;
+  sCamInit.dwFirmwareOptions  = FWOPT_AUTOMATIC;
+  if ( FALSE == CamUSB_InitCameraExS( &sCamInit ) )
+  {
+    dwRC = CamUSB_GetLastError( GLOBAL_DEVNR );
+    if (retOK == dwRC )
+      dwRC = CamUSB_GetLastError( sCamInit.nDevNr );
+  }
 
   if ( FALSE == IsNoError( dwRC ) )
   {
-    releaseDeviceNumber( deviceNumber );
     return convertApiErrorCode( dwRC, __FUNCTION__ );
   }
   else // remember device number for later access
   {
-    setDeviceNo( deviceNumber );
+    setDeviceNo( sCamInit.nDevNr );
   }
 
   // camera device is now open do the right things
@@ -743,7 +747,6 @@ Initialize_Done:
     if ( static_cast<u08>(NO_CAMERA_DEVICE) != deviceNumber )
     {
       CamUSB_FreeCamera( deviceNumber );
-      releaseDeviceNumber( deviceNumber );
     }
   }
   else
@@ -773,7 +776,6 @@ int CABSCamera::Shutdown()
     rc = saveProfile( PROFILE_DEFAULTNAME, PROFILE_SETTINGSNAME );
     rc = GET_RC( CamUSB_FreeCamera( (u08) deviceNo() ), deviceNo() );
     setDeviceNo( NO_CAMERA_DEVICE );
-    releaseDeviceNumber( deviceNo() );
   }
 
   initTransposeFunctions( false );
@@ -3165,19 +3167,6 @@ u08 CABSCamera::deviceNo( void ) const
 {
   return (u08) deviceNo_;
 }
-
-u08 CABSCamera::accquireDeviceNumber( void )
-{
-  return static_cast<u08> (++staticDeviceNo);
-}
-
-void CABSCamera::releaseDeviceNumber( const u08 deviceNo )
-{
-  if (deviceNo != static_cast<u08> (NO_CAMERA_DEVICE) )
-    if (staticDeviceNo != NO_CAMERA_DEVICE)
-      --staticDeviceNo;
-}
-
 
 int CABSCamera::apiToMMErrorCode( unsigned long apiErrorNumber ) const
 {

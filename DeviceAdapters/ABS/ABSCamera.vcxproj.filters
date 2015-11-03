@@ -42,9 +42,6 @@
     <ClCompile Include="absdelayloaddll.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="include\stringtools.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ABSCamera.h">
