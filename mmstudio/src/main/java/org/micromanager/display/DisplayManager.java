@@ -90,6 +90,22 @@ public interface DisplayManager {
          Boolean isVisible);
 
    /**
+    * Generate a HistogramData object based on the pixels in the provided
+    * Image. HistogramData objects may be used for controlling the histogram(s)
+    * in the Inspector window by posting a NewHistogramsEvent to the display.
+    * @param image The image whose pixel intensities will be examined.
+    * @param component The component of the image (use 0 for grayscale images).
+    * @param binPower The number of bins in the resulting histogram, expressed
+    *        as an exponent for a power of 2. For example, using 8 here will
+    *        result in a histogram with 256 bins. Micro-Manager uses 256 bins
+    *        by default.
+    * @param extremaPercentage The percentage of pixels to ignore when
+    *        calculating the min/max intensities.
+    */
+   public HistogramData calculateHistogram(Image image, int component,
+         int binPower, double extremaPercentage);
+
+   /**
     * Generate a "blank" PropertyMap.PropertyMapBuilder with empty mappings.
     * @return A PropertyMapBuilder with no pre-set values.
     */

@@ -41,6 +41,7 @@ import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.HistogramData;
 import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.display.RequestToDrawEvent;
 import org.micromanager.display.OverlayPanel;
@@ -48,6 +49,7 @@ import org.micromanager.display.OverlayPanelFactory;
 import org.micromanager.display.OverlayPlugin;
 import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
 import org.micromanager.display.internal.events.NewOverlayEvent;
+import org.micromanager.display.internal.link.DisplayGroupManager;
 
 import org.micromanager.events.DatastoreClosingEvent;
 import org.micromanager.events.internal.DefaultEventManager;
@@ -174,6 +176,13 @@ public final class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
+   public HistogramData calculateHistogram(Image image, int component,
+         int binPower, double extremaPercentage) {
+      return ContrastCalculator.calculateHistogram(image, null, component,
+            binPower, extremaPercentage);
+   }
+
+   @Override
    public PropertyMap.PropertyMapBuilder getPropertyMapBuilder() {
       return new DefaultPropertyMap.Builder();
    }
@@ -192,6 +201,7 @@ public final class DefaultDisplayManager implements DisplayManager {
    @Override
    public void addViewer(DataViewer viewer) {
       externalViewers_.add(viewer);
+      DisplayGroupManager.getInstance().addDisplay(viewer);
    }
 
    @Override
@@ -200,6 +210,7 @@ public final class DefaultDisplayManager implements DisplayManager {
          throw new IllegalArgumentException("Viewer " + viewer + " is not currently tracked.");
       }
       externalViewers_.remove(viewer);
+      DisplayGroupManager.getInstance().removeDisplay(viewer);
    }
 
    @Override

@@ -43,13 +43,14 @@ import org.micromanager.data.Image;
 
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.HistogramData;
 import org.micromanager.display.NewDisplaySettingsEvent;
+import org.micromanager.display.NewHistogramsEvent;
 import org.micromanager.display.NewImagePlusEvent;
 import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
 import org.micromanager.display.internal.events.DefaultPixelsSetEvent;
 import org.micromanager.display.internal.events.HistogramRecalcEvent;
 import org.micromanager.display.internal.events.HistogramRequestEvent;
-import org.micromanager.display.internal.events.NewHistogramsEvent;
 
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.ReportingUtils;

@@ -55,7 +55,9 @@ import org.micromanager.data.NewSummaryMetadataEvent;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.HistogramData;
 import org.micromanager.display.NewDisplaySettingsEvent;
+import org.micromanager.display.NewHistogramsEvent;
 
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.internal.graph.GraphData;
@@ -66,7 +68,6 @@ import org.micromanager.display.internal.events.MouseExitedEvent;
 import org.micromanager.display.internal.events.MouseMovedEvent;
 import org.micromanager.display.internal.events.HistogramRecalcEvent;
 import org.micromanager.display.internal.events.HistogramRequestEvent;
-import org.micromanager.display.internal.events.NewHistogramsEvent;
 import org.micromanager.display.internal.events.LUTUpdateEvent;
 import org.micromanager.display.internal.link.ContrastEvent;
 import org.micromanager.display.internal.link.ContrastLinker;
@@ -74,7 +75,6 @@ import org.micromanager.display.internal.link.DisplayGroupManager;
 import org.micromanager.display.internal.link.LinkButton;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.DisplayDestroyedEvent;
-import org.micromanager.display.internal.HistogramData;
 import org.micromanager.display.internal.RememberedChannelSettings;
 
 import org.micromanager.internal.utils.ReportingUtils;
@@ -760,24 +760,29 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     */
    @Subscribe
    public void onNewHistograms(NewHistogramsEvent event) {
-      if (event.getChannel() != channelIndex_) {
-         // Wrong channel.
-         return;
-      }
-      // Expand our number of components, if necessary.
-      if (lastHistograms_.length < event.getNumComponents()) {
-         lastHistograms_ = new HistogramData[event.getNumComponents()];
-      }
-      for (int i = 0; i < event.getNumComponents(); ++i) {
-         lastHistograms_[i] = event.getHistogram(i);
-      }
+      try {
+         if (event.getChannel() != channelIndex_) {
+            // Wrong channel.
+            return;
+         }
+         // Expand our number of components, if necessary.
+         if (lastHistograms_.length < event.getNumComponents()) {
+            lastHistograms_ = new HistogramData[event.getNumComponents()];
+         }
+         for (int i = 0; i < event.getNumComponents(); ++i) {
+            lastHistograms_[i] = event.getHistogram(i);
+         }
 
-      if (!haveInitialized_.get()) {
-         // Need to create our GUI now.
-         initialize();
+         if (!haveInitialized_.get()) {
+            // Need to create our GUI now.
+            initialize();
+         }
+         updateHighlight();
+         redraw();
       }
-      updateHighlight();
-      redraw();
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error receiving new histograms");
+      }
    }
 
    /**
@@ -885,7 +890,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       histogram_.setVisible(true);
       //Draw histogram and stats
       for (int i = 0; i < lastHistograms_.length; ++i) {
-         if (lastHistograms_[i].getNumPixels() > 0) {
+         if (lastHistograms_[i].getNumSamples() > 0) {
             GraphData histogramData = new GraphData();
             histogramData.setData(lastHistograms_[i].getHistogram());
             histogram_.setData(i, histogramData);

@@ -52,9 +52,9 @@ public class DisplayGroupManager {
     * which event.
     */
    private class WindowListener {
-      private DisplayWindow display_;
+      private DataViewer display_;
       private DisplayGroupManager master_;
-      public WindowListener(DisplayWindow display, DisplayGroupManager master) {
+      public WindowListener(DataViewer display, DisplayGroupManager master) {
          display_ = display;
          master_ = master;
          display_.registerForEvents(this);
@@ -67,7 +67,12 @@ public class DisplayGroupManager {
 
       @Subscribe
       public void onFullScreen(FullScreenEvent event) {
-         master_.onFullScreen(display_, event);
+         // HACK: this one we only try to handle sensibly if the display is a
+         // DisplayWindow. DataViewer doesn't have the necessary API to figure
+         // out which physical display the window is in.
+         if (display_ instanceof DisplayWindow) {
+            master_.onFullScreen((DisplayWindow) display_, event);
+         }
       }
 
       @Subscribe
@@ -81,7 +86,7 @@ public class DisplayGroupManager {
          master_.onLinkerRemoved(display_, event);
       }
 
-      public DisplayWindow getDisplay() {
+      public DataViewer getDisplay() {
          return display_;
       }
    }
@@ -96,7 +101,7 @@ public class DisplayGroupManager {
    }
 
    /**
-    * This class tracks linkers for a single DisplayWindow.
+    * This class tracks linkers for a single DataViewer.
     */
    private class LinkersGroup {
       private HashSet<SettingsLinker> genericLinkers_;
@@ -107,9 +112,9 @@ public class DisplayGroupManager {
       // This means they need to be stored centrally somewhere, and that place
       // is here.
       private HashMap<Integer, ContrastLinker> channelToContrastLinker_;
-      private DisplayWindow display_;
+      private DataViewer display_;
 
-      public LinkersGroup(DisplayWindow display) {
+      public LinkersGroup(DataViewer display) {
          genericLinkers_ = new HashSet<SettingsLinker>();
          channelToContrastLinker_ = new HashMap<Integer, ContrastLinker>();
          display_ = display;
@@ -138,13 +143,13 @@ public class DisplayGroupManager {
    private HashMap<DataViewer, LinkersGroup> viewerToLinkers_;
    // Tracks which screen (a.k.a. monitor) a given window is on.
    private HashMap<GraphicsConfiguration, DisplayWindow> screenToDisplay_;
-   private HashMap<Datastore, ArrayList<DisplayWindow>> storeToDisplays_;
+   private HashMap<Datastore, ArrayList<DataViewer>> storeToDisplays_;
    private ArrayList<WindowListener> listeners_;
 
    public DisplayGroupManager() {
       viewerToLinkers_ = new HashMap<DataViewer, LinkersGroup>();
       screenToDisplay_ = new HashMap<GraphicsConfiguration, DisplayWindow>();
-      storeToDisplays_ = new HashMap<Datastore, ArrayList<DisplayWindow>>();
+      storeToDisplays_ = new HashMap<Datastore, ArrayList<DataViewer>>();
       listeners_ = new ArrayList<WindowListener>();
       DefaultEventManager.getInstance().registerForEvents(this);
    }
@@ -153,19 +158,21 @@ public class DisplayGroupManager {
     * A new display has arrived; register for its events, and add it to our
     * list of displays for its datastore.
     */
-   public void addDisplay(DisplayWindow display) {
+   public void addDisplay(DataViewer display) {
       listeners_.add(new WindowListener(display, this));
       viewerToLinkers_.put(display, new LinkersGroup(display));
       Datastore store = display.getDatastore();
       if (!storeToDisplays_.containsKey(store)) {
-         storeToDisplays_.put(store, new ArrayList<DisplayWindow>());
+         storeToDisplays_.put(store, new ArrayList<DataViewer>());
       }
-      ArrayList<DisplayWindow> displays = storeToDisplays_.get(store);
+      ArrayList<DataViewer> displays = storeToDisplays_.get(store);
       displays.add(display);
       if (displays.size() > 1) {
          // Multiple displays; numbers in titles need to be shown.
-         for (DisplayWindow alt : displays) {
-            ((DefaultDisplayWindow) alt).resetTitle();
+         for (DataViewer alt : displays) {
+            if (alt instanceof DefaultDisplayWindow) {
+               ((DefaultDisplayWindow) alt).resetTitle();
+            }
          }
       }
    }
@@ -176,13 +183,17 @@ public class DisplayGroupManager {
     */
    public void onDisplayDestroyed(DataViewer source,
          DisplayDestroyedEvent event) {
+      removeDisplay(source);
+   }
+
+   public void removeDisplay(DataViewer display) {
       try {
-         for (SettingsLinker linker : viewerToLinkers_.get(source).getLinkers()) {
+         for (SettingsLinker linker : viewerToLinkers_.get(display).getLinkers()) {
             linker.destroy();
          }
-         viewerToLinkers_.remove(source);
+         viewerToLinkers_.remove(display);
          for (WindowListener listener : listeners_) {
-            if (listener.getDisplay() == source) {
+            if (listener.getDisplay() == display) {
                listeners_.remove(listener);
                break;
             }
@@ -190,7 +201,7 @@ public class DisplayGroupManager {
 
          // Check if we were tracking this display in screenToDisplay_.
          for (GraphicsConfiguration config : screenToDisplay_.keySet()) {
-            if (screenToDisplay_.get(config) == source) {
+            if (screenToDisplay_.get(config) == display) {
                screenToDisplay_.remove(config);
                break;
             }
@@ -198,11 +209,12 @@ public class DisplayGroupManager {
 
          // Remove from our datastore-based tracking, and update other
          // displays' titles if necessary.
-         Datastore store = source.getDatastore();
+         Datastore store = display.getDatastore();
          if (storeToDisplays_.containsKey(store)) {
-            ArrayList<DisplayWindow> displays = storeToDisplays_.get(store);
-            displays.remove(source);
-            if (displays.size() == 1) {
+            ArrayList<DataViewer> displays = storeToDisplays_.get(store);
+            displays.remove(display);
+            if (displays.size() == 1 &&
+                  displays.get(0) instanceof DefaultDisplayWindow) {
                // Back down to one display; hide display numbers.
                ((DefaultDisplayWindow) displays.get(0)).resetTitle();
             }
@@ -315,10 +327,10 @@ public class DisplayGroupManager {
     * Return all displays that we know about for the specified Datastore, or
     * an empty list if we aren't tracking it.
     */
-   public static List<DisplayWindow> getDisplaysForDatastore(Datastore store) {
+   public static List<DataViewer> getDisplaysForDatastore(Datastore store) {
       if (staticInstance_.storeToDisplays_.containsKey(store)) {
          return staticInstance_.storeToDisplays_.get(store);
       }
-      return new ArrayList<DisplayWindow>();
+      return new ArrayList<DataViewer>();
    }
 }

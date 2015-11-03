@@ -21,17 +21,34 @@
 package org.micromanager.display;
 
 /**
- * This class signifies that new display settings have been set for a 
- * DisplayWindow.
+ * This class signifies that new display settings have been set for a
+ * DataViewer, and provides access to those DisplaySettings.
  */
-public interface NewDisplaySettingsEvent {
-   /**
-    * @return the newly-set DisplaySettings.
-    */
-   public DisplaySettings getDisplaySettings();
+public class NewDisplaySettingsEvent {
+   private DisplaySettings settings_;
+   private DataViewer display_;
 
    /**
-    * @return the DataViewer that received the new DisplaySettings.
+    * Create the event.
+    * @param settings The new DisplaySettings.
+    * @param display The DataViewer whose DisplaySettings have been updated.
     */
-   public DataViewer getDisplay();
+   public NewDisplaySettingsEvent(DisplaySettings settings, DataViewer display) {
+      settings_ = settings;
+      display_ = display;
+   }
+
+   /**
+    * Provide access to the new DisplaySettings.
+    */
+   public DisplaySettings getDisplaySettings() {
+      return settings_;
+   }
+
+   /**
+    * Provide the DataViewer that the new DisplaySettings are for.
+    */
+   public DataViewer getDisplay() {
+      return display_;
+   }
 }

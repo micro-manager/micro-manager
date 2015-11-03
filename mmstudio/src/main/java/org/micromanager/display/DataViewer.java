@@ -40,7 +40,8 @@ public interface DataViewer {
    /**
     * Update the DisplaySettings for the display. This will post a
     * NewDisplaySettingsEvent on the display's EventBus, and will also cause
-    * the display to redraw itself.
+    * the display to redraw itself. If you are implementing your own DataViewer
+    * then you should be certain to do those actions yourself.
     * @param settings The new display settings.
     */
    public void setDisplaySettings(DisplaySettings settings);
@@ -53,8 +54,9 @@ public interface DataViewer {
 
    /**
     * Register for access to the EventBus that the window uses for propagating
-    * events. Note that this is different from the EventBus that the Datastore
-    * uses; this EventBus is specifically for events related to the display.
+    * events. Note that this is different from the EventBus for the Datastore
+    * that this display uses; this EventBus is specifically for events related
+    * to the display.
     * @param obj The object that wants to subscribe for events.
     */
    public void registerForEvents(Object obj);

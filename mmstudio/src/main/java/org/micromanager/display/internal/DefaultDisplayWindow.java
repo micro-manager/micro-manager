@@ -72,8 +72,11 @@ import org.micromanager.data.NewImageEvent;
 import org.micromanager.data.NewSummaryMetadataEvent;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.ControlsFactory;
+import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.HistogramData;
+import org.micromanager.display.NewDisplaySettingsEvent;
 import org.micromanager.display.RequestToDrawEvent;
 import org.micromanager.events.DatastoreClosingEvent;
 
@@ -90,8 +93,6 @@ import org.micromanager.display.internal.events.FullScreenEvent;
 import org.micromanager.display.internal.events.GlobalDisplayDestroyedEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.display.internal.events.LUTUpdateEvent;
-import org.micromanager.display.internal.events.NewDisplaySettingsEvent;
-import org.micromanager.display.internal.events.NewHistogramsEvent;
 import org.micromanager.display.internal.events.RequestToCloseEvent;
 import org.micromanager.display.internal.events.StatusEvent;
 import org.micromanager.display.internal.inspector.InspectorFrame;
@@ -1184,7 +1185,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    @Override
    public String getName() {
       String name = getSpecifiedName();
-      List<DisplayWindow> displays = DisplayGroupManager.getDisplaysForDatastore(store_);
+      List<DataViewer> displays = DisplayGroupManager.getDisplaysForDatastore(store_);
       if (displays.size() > 1) {
          // Append a number so we can tell different displays for the
          // same datastore apart.
