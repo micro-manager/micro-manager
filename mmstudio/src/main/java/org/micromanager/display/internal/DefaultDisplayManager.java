@@ -204,6 +204,11 @@ public final class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
+   public void createFirstInspector() {
+      InspectorFrame.createFirstInspector();
+   }
+
+   @Override
    public void raisedToTop(DataViewer display) {
       DefaultEventManager.getInstance().post(
             new DisplayActivatedEvent(display));

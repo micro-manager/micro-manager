@@ -139,6 +139,15 @@ public interface DisplayManager {
    public void createInspector(DataViewer display);
 
    /**
+    * Ensure that the "default" Inspector window exists and is visible. This
+    * Inspector window is normally created when the first Micro-Manager
+    * DisplayWindow is created, but it can be created earlier by calling this
+    * method. Note that once the default Inspector has been created, this
+    * method will not do anything, even if that Inspector is later closed.
+    */
+   public void createFirstInspector();
+
+   /**
     * Signal that the specified DataViewer has been raised to the top, so that
     * any Inspector windows that show information on the topmost display can
     * change to show information for that viewer.
