@@ -168,7 +168,8 @@ int CCRISP::SetContinuousFocusing(bool state)
    RETURN_ON_MM_ERROR( GetContinuousFocusing(focusingOn) );  // will update focusState_
    if (focusingOn && !state) {
    	// was on, turning off
-   	return ForceSetFocusState(g_CRISP_R);
+   	command << addressChar_ << "UL";
+   	RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A") );
    } else if (!focusingOn && state) {
    	// was off, turning on
    	if (focusState_ == g_CRISP_R ) {
@@ -481,7 +482,7 @@ int CCRISP::OnLoopGainMultiplier(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << addressChar_ << "KA " << axisLetter_ << "?";
+      command << "KA " << axisLetter_ << "?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
@@ -490,7 +491,7 @@ int CCRISP::OnLoopGainMultiplier(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet)
    {
       pProp->Get(tmp);
-      command << addressChar_ << "KA " << axisLetter_ << "="<< tmp;
+      command << "KA " << axisLetter_ << "="<< tmp;
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
