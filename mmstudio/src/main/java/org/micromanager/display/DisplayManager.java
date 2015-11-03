@@ -99,11 +99,34 @@ public interface DisplayManager {
     *        as an exponent for a power of 2. For example, using 8 here will
     *        result in a histogram with 256 bins. Micro-Manager uses 256 bins
     *        by default.
+    * @param bitDepth The range of values accepted by the histogram, expressed
+    *        as a power of 2. For example, using 10 here would result in a
+    *        histogram whose bins accept values from 0 through 1023,
+    *        inclusive. The other statistics provided in the HistogramData are
+    *        not constrained by this value.
     * @param extremaPercentage The percentage of pixels to ignore when
     *        calculating the min/max intensities.
+    * @return a HistogramData derived from the pixels in the image.
     */
    public HistogramData calculateHistogram(Image image, int component,
-         int binPower, double extremaPercentage);
+         int binPower, int bitDepth, double extremaPercentage);
+
+   /**
+    * Generate a HistogramData object based on the pixels in the provided
+    * Image. HistogramData objects may be used for controlling the histogram(s)
+    * in the Inspector window by posting a NewHistogramsEvent to the display.
+    * Behaves as calculateHistogram, except that the binPower, bitDepth, and
+    * extremaPercentage parameters will be derived from the provided
+    * DisplaySettings (or the image's native bit depth, if the bitDepthIndex
+    * property of the DisplaySettings has a value of 0).
+    * @param image The image whose pixel intensities will be examined.
+    * @param component The component of the image (use 0 for grayscale images).
+    * @param settings The DisplaySettings to use for extracting other
+    *        histogram calculation values.
+    * @return a HistogramData derived from the pixels in the image.
+    */
+   public HistogramData calculateHistogramWithSettings(Image image,
+         int component, DisplaySettings settings);
 
    /**
     * Generate a "blank" PropertyMap.PropertyMapBuilder with empty mappings.
