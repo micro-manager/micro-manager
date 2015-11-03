@@ -553,10 +553,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          settings = settings.copy().safeUpdateChannelColor(newColor,
                channelIndex_).build();
          display_.setDisplaySettings(settings);
-         new RememberedChannelSettings(
-               summary.getSafeChannelName(channelIndex_),
-               summary.getChannelGroup(),
-               newColor, null, null, null).saveToProfile();
       }
       reloadDisplaySettings();
    }

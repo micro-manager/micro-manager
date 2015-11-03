@@ -25,7 +25,9 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.internal.DefaultDisplaySettings;
 
 import org.micromanager.internal.utils.DefaultUserProfile;
 
@@ -246,6 +248,27 @@ public class RememberedChannelSettings {
          return settings;
       }
       return null;
+   }
+
+   /**
+    * Given a DisplaySettings and a SummaryMetadata (for channel names/group),
+    * generate RememberedChannelSettings from its values and save them to the
+    * profile.
+    */
+   public static void saveSettingsToProfile(DisplaySettings settings,
+         SummaryMetadata summary, int numChannels) {
+      String group = summary.getChannelGroup();
+      for (int i = 0; i < numChannels; ++i) {
+         String channel = summary.getSafeChannelName(i);
+         DisplaySettings.ContrastSettings contrast = settings.getSafeContrastSettings(i,
+               new DefaultDisplaySettings.DefaultContrastSettings(0, 0, 1.0, true));
+         Color color = settings.getSafeChannelColor(i,
+               getColorForChannel(channel, group,
+                  ColorSets.COLORBLIND_COLORS[i]));
+         new RememberedChannelSettings(channel, group, color,
+               contrast.getContrastMins(), contrast.getContrastMaxes(),
+               settings.getShouldAutostretch()).saveToProfile();
+      }
    }
 
    @Override
