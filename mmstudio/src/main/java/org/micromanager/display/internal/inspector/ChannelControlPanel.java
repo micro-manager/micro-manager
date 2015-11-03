@@ -398,7 +398,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       histRangeComboBox_.setSelectedIndex(power - 3);
       updateHistogram();
    }
-   
+
    public void displayComboAction() {
       int index = histRangeComboBox_.getSelectedIndex();
       // Update the display settings.
@@ -867,6 +867,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             minVal / binSize, (maxVal + 1) / binSize, gamma);
       histogram_.setCurComponent(curComponent_);
       histogram_.repaint();
+      minMaxLabel_.setText(String.format(
+               "<html>Min/Max/Mean:<br>%d/%d/%d</html>",
+               minVal, maxVal, lastHistograms_[curComponent_].getMean()));
    }
 
    public void redraw() {
