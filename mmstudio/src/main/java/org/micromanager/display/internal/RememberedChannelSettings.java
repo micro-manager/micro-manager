@@ -159,22 +159,15 @@ public class RememberedChannelSettings {
     */
    public static Color getColorForChannel(String channelName,
          String channelGroup, Color defaultColor) {
-      int defaultRGB = -1;
-      if (defaultColor != null) {
-         defaultRGB = defaultColor.getRGB();
-      }
       synchronized(profileLock_) {
          DefaultUserProfile profile = DefaultUserProfile.getInstance();
          String key = genKey(channelName, channelGroup);
-         int rgb = profile.getInt(
-               RememberedChannelSettings.class, key + ":" + COLOR, defaultRGB);
-         if (defaultColor == null && defaultRGB == -1) {
-            // No known color here and user wants a null default.
-            return null;
+         Integer rgb = profile.getInt(
+               RememberedChannelSettings.class, key + ":" + COLOR, null);
+         if (rgb == null) {
+            return defaultColor;
          }
-         else {
-            return new Color(rgb);
-         }
+         return new Color(rgb);
       }
    }
 
@@ -195,59 +188,28 @@ public class RememberedChannelSettings {
    }
 
    /**
-    * Given a list of channel names, a channel group, and a DisplaySettings
-    * object, record the appropriate color/min/max values into the
-    * DisplaySettings and return it. Or return null if no changes need to be
-    * made. Note that the input channel names are assumed to be in the same
-    * order as the ContrastSettings array in the DisplaySettings.
+    * Given a SummaryMetadata object and a DisplaySettings object, record the
+    * appropriate color/min/max values into the DisplaySettings and return it.
+    * Note that the SummaryMetadata's channel names are assumed to be in the
+    * same order as the ContrastSettings array in the DisplaySettings.
     */
-   public static DisplaySettings updateSettings(String[] channelNames,
-         String channelGroup, DisplaySettings settings) {
-      Color[] origColors = settings.getChannelColors();
-      Color[] newColors = new Color[channelNames.length];
-      DisplaySettings.ContrastSettings[] newSettings = new DisplaySettings.ContrastSettings[channelNames.length];
-      boolean didChange = false;
-      for (int i = 0; i < channelNames.length; ++i) {
-         // Load this channel's settings, and compare it against the settings
-         // in the DisplaySettings for changes.
-         String name = channelNames[i];
-         RememberedChannelSettings channel = loadSettings(name, channelGroup,
+   public static DisplaySettings updateSettings(SummaryMetadata summary,
+         DisplaySettings settings, int numChannels) {
+      Color[] newColors = new Color[numChannels];
+      DisplaySettings.ContrastSettings[] newSettings = new DisplaySettings.ContrastSettings[numChannels];
+      String group = summary.getChannelGroup();
+      for (int i = 0; i < numChannels; ++i) {
+         // Load this channel's settings
+         String name = summary.getSafeChannelName(i);
+         RememberedChannelSettings channel = loadSettings(name, group,
                Color.WHITE, null, null, null);
-         DisplaySettings.ContrastSettings oldSettings = settings.getSafeContrastSettings(i, null);
          newSettings[i] = DefaultDisplayManager.getInstance()
             .getContrastSettings(channel.getHistogramMins(),
                   channel.getHistogramMaxes(), null, null);
-         if (didChange) {
-            // No need to scan the remaining channels.
-            continue;
-         }
-         if (oldSettings == null ||
-               oldSettings.getNumComponents() != newSettings[i].getNumComponents()) {
-            // Invalid old settings, or changed number of components.
-            didChange = true;
-            continue;
-         }
-         for (int j = 0; j < oldSettings.getNumComponents(); ++j) {
-            if (oldSettings.getSafeContrastMin(j, null) != newSettings[i].getSafeContrastMin(j, null) ||
-                  oldSettings.getSafeContrastMax(j, null) != newSettings[i].getSafeContrastMax(j, null)) {
-               // Contrast for this component changed.
-               didChange = true;
-               continue;
-            }
-         }
-         if (settings.getSafeChannelColor(i, null) != channel.getColor()) {
-            // Color changed.
-            didChange = true;
-            continue;
-         }
       }
 
-      if (didChange) {
-         settings = settings.copy().channelColors(newColors)
-            .channelContrastSettings(newSettings).build();
-         return settings;
-      }
-      return null;
+      return settings.copy().channelColors(newColors)
+         .channelContrastSettings(newSettings).build();
    }
 
    /**

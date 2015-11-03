@@ -232,7 +232,13 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       store_ = store;
       knownChannels_ = new HashSet<String>();
       if (settings == null) {
+         // Combine the default global display settings from
+         // getStandardSettings() with the channel-specific settings from
+         // RememberedChannelSettings.
          displaySettings_ = DefaultDisplaySettings.getStandardSettings();
+         displaySettings_ = RememberedChannelSettings.updateSettings(
+               store_.getSummaryMetadata(), displaySettings_,
+               store_.getAxisLength(Coords.CHANNEL));
       }
       else {
          displaySettings_ = settings;
@@ -1108,45 +1114,18 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             composite.setNChannelsUnverified(numChannels);
             composite.reset();
          }
-         String name = store_.getSummaryMetadata().getSafeChannelName(imageChannel);
+         String name = store_.getSummaryMetadata().getSafeChannelName(
+               imageChannel);
          if (!knownChannels_.contains(name)) {
-            // Update our display settings with the new channel.
-            updateChannelSettings();
+            // Grab new display information from the RememberedChannelSettings
+            setDisplaySettings(RememberedChannelSettings.updateSettings(
+                  store_.getSummaryMetadata(), displaySettings_,
+                  store_.getAxisLength(Coords.CHANNEL)));
+            knownChannels_.add(name);
          }
       }
       catch (Exception e) {
          studio_.logs().logError(e, "Couldn't display new image");
-      }
-   }
-
-   /**
-    * Update our channel display settings (color and contrast) to incorporate
-    * the new channel name.
-    */
-   private void updateChannelSettings() {
-      int numChannels = store_.getAxisLength(Coords.CHANNEL);
-      String[] names = new String[numChannels];
-      String[] officialNames = store_.getSummaryMetadata().getChannelNames();
-      boolean didChange = false;
-      // Construct a list of channel names.
-      for (int i = 0; i < store_.getAxisLength(Coords.CHANNEL); ++i) {
-         // HACK: this name must match the name derived in
-         // ChannelContrastPanel.java.
-         names[i] = store_.getSummaryMetadata().getSafeChannelName(i);
-         if (!knownChannels_.contains(names[i])) {
-            knownChannels_.add(names[i]);
-            didChange = true;
-         }
-      }
-      if (didChange) {
-         DisplaySettings newSettings = RememberedChannelSettings.updateSettings(
-               names, store_.getSummaryMetadata().getChannelGroup(),
-               displaySettings_);
-         if (newSettings != null) {
-            // There were new settings to load, i.e. we actually do have new
-            // names
-            setDisplaySettings(newSettings);
-         }
       }
    }
 
