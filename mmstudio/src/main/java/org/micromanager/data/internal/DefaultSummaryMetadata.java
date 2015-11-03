@@ -340,8 +340,8 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
 
    @Override
    public String getSafeChannelName(int index) {
-      if (channelNames_ == null || channelNames_.length <= index ||
-            channelNames_[index] == null) {
+      if (index < 0 || channelNames_ == null ||
+            channelNames_.length <= index || channelNames_[index] == null) {
          return "channel " + index;
       }
       return channelNames_[index];

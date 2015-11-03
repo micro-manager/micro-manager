@@ -178,7 +178,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
 
       @Override
       public Integer getSafeContrastMin(int component, Integer defaultVal) {
-         if (contrastMins_ == null || contrastMins_.length <= component) {
+         if (component < 0 || contrastMins_ == null ||
+               contrastMins_.length <= component) {
             return defaultVal;
          }
          return contrastMins_[component];
@@ -191,7 +192,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
 
       @Override
       public Integer getSafeContrastMax(int component, Integer defaultVal) {
-         if (contrastMaxes_ == null || contrastMaxes_.length <= component) {
+         if (component < 0 || contrastMaxes_ == null ||
+               contrastMaxes_.length <= component) {
             return defaultVal;
          }
          return contrastMaxes_[component];
@@ -204,7 +206,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
 
       @Override
       public Double getSafeContrastGamma(int component, Double defaultVal) {
-         if (gammas_ == null || gammas_.length <= component) {
+         if (component < 0 || gammas_ == null ||
+               gammas_.length <= component) {
             return defaultVal;
          }
          return gammas_[component];
@@ -440,7 +443,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
 
    @Override
    public Color getSafeChannelColor(int index, Color defaultVal) {
-      if (channelColors_ == null ||
+      if (index < 0 || channelColors_ == null ||
             channelColors_.length <= index ||
             channelColors_[index] == null) {
          return defaultVal;
@@ -456,7 +459,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    @Override
    public ContrastSettings getSafeContrastSettings(int index,
          ContrastSettings defaultVal) {
-      if (contrastSettings_ == null ||
+      if (index < 0 || contrastSettings_ == null ||
             contrastSettings_.length <= index ||
             contrastSettings_[index] == null) {
          return defaultVal;
@@ -467,7 +470,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    @Override
    public Integer getSafeContrastMin(int index, int component,
          Integer defaultVal) {
-      if (contrastSettings_ == null ||
+      if (index < 0 || contrastSettings_ == null ||
             contrastSettings_.length <= index ||
             contrastSettings_[index] == null) {
          return defaultVal;
@@ -478,7 +481,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    @Override
    public Integer getSafeContrastMax(int index, int component,
          Integer defaultVal) {
-      if (contrastSettings_ == null ||
+      if (index < 0 || contrastSettings_ == null ||
             contrastSettings_.length <= index ||
             contrastSettings_[index] == null) {
          return defaultVal;
@@ -489,7 +492,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    @Override
    public Double getSafeContrastGamma(int index, int component,
          Double defaultVal) {
-      if (contrastSettings_ == null ||
+      if (index < 0 || contrastSettings_ == null ||
             contrastSettings_.length <= index ||
             contrastSettings_[index] == null) {
          return defaultVal;
@@ -540,7 +543,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
 
    @Override
    public Integer getSafeBitDepthIndex(int index, Integer defaultVal) {
-      if (bitDepthIndices_ == null ||
+      if (index < 0 || bitDepthIndices_ == null ||
             bitDepthIndices_.length <= index ||
             bitDepthIndices_[index] == null) {
          return defaultVal;
