@@ -110,12 +110,6 @@ public interface DisplayWindow extends DataViewer {
    public void forceClosed();
 
    /**
-    * Return true iff the window has been closed.
-    * @return whether the display has been closed.
-    */
-   public boolean getIsClosed();
-
-   /**
     * Turn fullscreen mode on or off. Note that, because of how Java's GUI
     * systems work, turning on fullscreen mode actually creates a new
     * JFrame that takes over the monitor that this DisplayWindow is in,

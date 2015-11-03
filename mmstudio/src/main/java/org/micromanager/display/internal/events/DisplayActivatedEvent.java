@@ -20,19 +20,19 @@
 
 package org.micromanager.display.internal.events;
 
-import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.DataViewer;
 
 /**
  * This event signifies that a display has been made the current active window.
  */
 public class DisplayActivatedEvent {
-   private DisplayWindow display_;
+   private DataViewer display_;
 
-   public DisplayActivatedEvent(DisplayWindow display) {
+   public DisplayActivatedEvent(DataViewer display) {
       display_ = display;
    }
 
-   public DisplayWindow getDisplay() {
+   public DataViewer getDisplay() {
       return display_;
    }
 }

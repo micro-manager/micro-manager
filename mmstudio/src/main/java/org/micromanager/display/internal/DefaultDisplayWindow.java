@@ -116,12 +116,6 @@ import org.micromanager.Studio;
  */
 public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
 
-   // HACK: the first time a DisplayWindow is created, create an
-   // InspectorFrame to go with it.
-   static {
-      new InspectorFrame(null);
-   }
-
    // Keeps track of unique names that we are forced to invent for anonymous
    // datasets. Note we use hashCode here so we don't maintain a reference to
    // the display itself, which would prevent garbage collection of displays.
@@ -214,6 +208,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       DefaultEventManager.getInstance().post(
             new DefaultNewDisplayEvent(result));
       DefaultEventManager.getInstance().registerForEvents(result);
+      InspectorFrame.createFirstInspector();
       return result;
    }
 
@@ -249,14 +244,13 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
 
       DisplayGroupManager.getInstance().addDisplay(this);
 
-      final DefaultDisplayWindow thisWindow = this;
       // Post an event whenever we're made active, so that the InspectorFrame
       // can update its contents.
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowActivated(WindowEvent e) {
             DefaultEventManager.getInstance().post(
-               new DisplayActivatedEvent(thisWindow));
+               new DisplayActivatedEvent(DefaultDisplayWindow.this));
          }
       });
 

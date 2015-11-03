@@ -103,6 +103,12 @@ public interface DataViewer {
    public void requestRedraw();
 
    /**
+    * Return true if the DataViewer has been closed and should no longer be
+    * used.
+    */
+   public boolean getIsClosed();
+
+   /**
     * Return the unique name of this display. Typically this will include the
     * display number and the name of the dataset; if no name is available, then
     * "MM image display" will be used instead. For DisplayWindows, this string

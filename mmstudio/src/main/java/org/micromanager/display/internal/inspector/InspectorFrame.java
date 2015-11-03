@@ -114,6 +114,17 @@ public class InspectorFrame extends MMFrame implements Inspector {
    private static final String TOPMOST_DISPLAY = "Topmost Window";
    private static final String CONTRAST_TITLE = "Histograms and Settings";
    private static final String WINDOW_WIDTH = "width of the inspector frame";
+
+   // This boolean is used to create a new Inspector frame only on the first
+   // time that we create a new DisplayWindow in any given session of the
+   // program.
+   private static boolean haveCreatedInspector_ = false;
+   public static void createFirstInspector() {
+      if (!haveCreatedInspector_) {
+         new InspectorFrame(null);
+      }
+   }
+
    private DataViewer display_;
    private Stack<DataViewer> displayHistory_;
    private ArrayList<InspectorPanel> panels_;
@@ -124,6 +135,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
 
    public InspectorFrame(DataViewer display) {
       super();
+      haveCreatedInspector_ = true;
       displayHistory_ = new Stack<DataViewer>();
       setTitle("Image Inspector");
       setAlwaysOnTop(true);
@@ -388,7 +400,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
 
    @Subscribe
    public void onDisplayActivated(DisplayActivatedEvent event) {
-      DisplayWindow newDisplay = event.getDisplay();
+      DataViewer newDisplay = event.getDisplay();
       if (newDisplay.getIsClosed()) {
          // TODO: why do we get notified of this?
          return;

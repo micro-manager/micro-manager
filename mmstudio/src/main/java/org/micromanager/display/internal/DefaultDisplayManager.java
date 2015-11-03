@@ -46,7 +46,9 @@ import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.display.OverlayPanel;
 import org.micromanager.display.OverlayPanelFactory;
 import org.micromanager.display.OverlayPlugin;
+import org.micromanager.display.internal.events.DisplayActivatedEvent;
 import org.micromanager.display.internal.events.NewOverlayEvent;
+import org.micromanager.display.internal.inspector.InspectorFrame;
 import org.micromanager.display.internal.link.DisplayGroupManager;
 
 import org.micromanager.events.DatastoreClosingEvent;
@@ -194,6 +196,17 @@ public final class DefaultDisplayManager implements DisplayManager {
    public DisplayWindow createDisplay(Datastore store,
          ControlsFactory factory) {
       return DefaultDisplayWindow.createDisplay(studio_, store, factory);
+   }
+
+   @Override
+   public void createInspector(DataViewer display) {
+      new InspectorFrame(display);
+   }
+
+   @Override
+   public void raisedToTop(DataViewer display) {
+      DefaultEventManager.getInstance().post(
+            new DisplayActivatedEvent(display));
    }
 
    @Override

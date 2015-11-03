@@ -131,6 +131,22 @@ public interface DisplayManager {
          ControlsFactory factory);
 
    /**
+    * Create a new Inspector window that shows information for the specified
+    * DataViewer, or for the topmost window if the DataViewer is null.
+    * @param display The DataViewer the inspector should show information on,
+    *        or null to show information on the topmost window.
+    */
+   public void createInspector(DataViewer display);
+
+   /**
+    * Signal that the specified DataViewer has been raised to the top, so that
+    * any Inspector windows that show information on the topmost display can
+    * change to show information for that viewer.
+    * @param display The DataViewer that has been raised to top.
+    */
+   public void raisedToTop(DataViewer display);
+
+   /**
     * Register a DataViewer with Micro-Manager. This makes Micro-Manager
     * aware of the viewer, so that it may be used by Micro-Manager's widgets
     * (chiefly, the Inspector Window). Use removeViewer() to remove a viewer
