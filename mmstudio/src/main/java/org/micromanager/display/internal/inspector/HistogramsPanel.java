@@ -157,10 +157,9 @@ public final class HistogramsPanel extends InspectorPanel {
 
       addStandardControls();
 
-      // TODO: ignoring the possibility of RGB images for now.
       final int nChannels = store_.getAxisLength(Coords.CHANNEL);
       if (nChannels == 0) {
-         ReportingUtils.logError("Have zero channels to work with.");
+         // Just wait for some images to arrive.
          return;
       }
 
