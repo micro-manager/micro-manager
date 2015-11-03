@@ -339,10 +339,6 @@ public class CanvasUpdateQueue {
    private void updateHistogram(Image image, HistogramHistory history) {
       DisplaySettings settings = display_.getDisplaySettings();
       int channel = image.getCoords().getChannel();
-      Double percentage = settings.getExtremaPercentage();
-      if (percentage == null) {
-         percentage = 0.0;
-      }
       // We may need to apply our newly-calculated values to the display
       // contrast settings.
       boolean shouldUpdate = (settings.getShouldAutostretch() != null &&
@@ -364,8 +360,8 @@ public class CanvasUpdateQueue {
             }
             // 8 means 256 bins.
             int binPower = Math.min(8, bitDepth);
-            HistogramData data = ContrastCalculator.calculateHistogram(
-                  image, plus_, i, binPower, bitDepth, percentage);
+            HistogramData data = ContrastCalculator.calculateHistogramWithSettings(
+                  image, plus_, i, settings);
             history.datas_.add(data);
             if (shouldUpdate) {
                mins[i] = data.getMinIgnoringOutliers();

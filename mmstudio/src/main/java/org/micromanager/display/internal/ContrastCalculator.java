@@ -202,4 +202,30 @@ public class ContrastCalculator {
             (int) meanVal, depthPower, binSize);
       return result;
    }
+
+   /**
+    * Calls calculateHistogram with the appropriate bit depth per the provided
+    * DisplaySettings.
+    */
+   public static HistogramData calculateHistogramWithSettings(Image image,
+         ImagePlus plus, int component, DisplaySettings settings) {
+      int bitDepth = settings.getSafeBitDepthIndex(
+            image.getCoords().getChannel(), 0);
+      if (bitDepth == 0) {
+         // Use camera depth.
+         bitDepth = image.getMetadata().getBitDepth();
+      }
+      else {
+         // Add 3 to convert from index to power of 2.
+         bitDepth += 3;
+      }
+      // 8 means 256 bins.
+      int binPower = Math.min(8, bitDepth);
+      Double percentage = settings.getExtremaPercentage();
+      if (percentage == null) {
+         percentage = 0.0;
+      }
+      return calculateHistogram(image, plus, component, binPower, bitDepth,
+            percentage);
+   }
 }
