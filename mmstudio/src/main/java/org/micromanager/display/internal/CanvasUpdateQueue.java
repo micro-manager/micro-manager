@@ -353,9 +353,19 @@ public class CanvasUpdateQueue {
       synchronized(history) {
          history.datas_.clear();
          for (int i = 0; i < image.getNumComponents(); ++i) {
+            int bitDepth = settings.getSafeBitDepthIndex(channel, 0);
+            if (bitDepth == 0) {
+               // Use camera depth.
+               bitDepth = image.getMetadata().getBitDepth();
+            }
+            else {
+               // Add 3 to convert from index to power of 2.
+               bitDepth += 3;
+            }
             // 8 means 256 bins.
+            int binPower = Math.min(8, bitDepth);
             HistogramData data = ContrastCalculator.calculateHistogram(
-                  image, plus_, i, 8, percentage);
+                  image, plus_, i, binPower, bitDepth, percentage);
             history.datas_.add(data);
             if (shouldUpdate) {
                mins[i] = data.getMinIgnoringOutliers();

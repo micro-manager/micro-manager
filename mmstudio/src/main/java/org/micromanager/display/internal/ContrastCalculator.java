@@ -48,11 +48,15 @@ public class ContrastCalculator {
     *        multi-component images (use 0 for grayscale images).
     * @param binPower The number of bins in the histogram, expressed as a power
     *        of 2. E.g. 8 means to have 256 bins.
+    * @param depthPower The range of allowed values in the histogram, expressed
+    *        as a power of 2. E.g. 10 means that values from 0 to 1023 will be
+    *        allowed and anything outside that range is not included in the
+    *        histogram.
     * @param extremaPercentage Percentage of pixels to ignore when calculating
     *        the contrast min/max values.
     */
    public static HistogramData calculateHistogram(Image image,
-         ImagePlus plus, int component, int binPower,
+         ImagePlus plus, int component, int binPower, int depthPower,
          double extremaPercentage) {
       int channel = image.getCoords().getChannel();
       int width = image.getWidth();
@@ -64,8 +68,8 @@ public class ContrastCalculator {
       long meanVal = 0;
       int numPixels = 0;
       int numBins = (int) Math.pow(2, binPower);
-      int bitDepth = image.getMetadata().getBitDepth();
-      int binSize = (int) (Math.pow(2, bitDepth) / numBins);
+      int range = (int) Math.pow(2, depthPower);
+      int binSize = Math.max(1, range / numBins);
 
       int[] histogram = new int[numBins];
 
@@ -137,7 +141,9 @@ public class ContrastCalculator {
                }
                pixelVal += addend;
             }
-            histogram[pixelVal / binSize]++;
+            if (pixelVal >= 0 && pixelVal < range) {
+               histogram[pixelVal / binSize]++;
+            }
             if (minVal == -1) {
                minVal = pixelVal;
                maxVal = pixelVal;
@@ -193,7 +199,7 @@ public class ContrastCalculator {
 
       HistogramData result = new HistogramData(histogram, numPixels,
             minVal, maxVal, contrastMin, contrastMax,
-            (int) meanVal, bitDepth, binSize);
+            (int) meanVal, depthPower, binSize);
       return result;
    }
 }

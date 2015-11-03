@@ -681,21 +681,29 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       Point2D.Float pt1 = getDevicePoint(
             new Point2D.Float(1.0f, 0.0f), box, xUnit, yUnit);
       float halfWidth = (pt1.x - pt0.x) / 2;
+
       for (int i = 0; i < data.getSize(); i++) {
          Point2D.Float pt = getDevicePoint(
                data.getPoint(i), box, xUnit, yUnit);
+         if (pt.x + halfWidth > box.x + box.width) {
+            // Out of bounds.
+            break;
+         }
          trace.lineTo(pt.x - halfWidth, pt.y);
          trace.lineTo(pt.x + halfWidth, pt.y);
       }
-      pt0 = getDevicePoint(
-            new Point2D.Float((float) data.getPoint(data.getSize() - 1).getX(),
-               0.0f), box, xUnit, yUnit);
-      trace.lineTo(pt0.x, pt0.y);
 
-      if (fillTrace_)
+      if (fillTrace_) {
+         pt0 = getDevicePoint(
+               new Point2D.Float(
+                  (float) data.getPoint(data.getSize() - 1).getX(), 0.0f),
+               box, xUnit, yUnit);
+         trace.lineTo(pt0.x, pt0.y);
          g.fill(trace);
-      else
+      }
+      else {
          g.draw(trace);
+      }
 
       g.setColor(oldColor);
    }
