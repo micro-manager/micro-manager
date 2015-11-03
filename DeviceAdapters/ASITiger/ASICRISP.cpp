@@ -296,7 +296,7 @@ int CCRISP::UpdateFocusState()
 int CCRISP::ForceSetFocusState(string focusState)
 {
    ostringstream command; command.str("");
-   if (focusState_ == g_CRISP_R)
+   if (focusState == g_CRISP_R)
    	command << addressChar_ << "LK F=85";
    else if (focusState == g_CRISP_K)
    	command << addressChar_ << "LK F=83";
