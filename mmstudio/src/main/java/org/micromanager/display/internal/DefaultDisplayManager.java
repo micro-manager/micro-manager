@@ -43,11 +43,9 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.HistogramData;
 import org.micromanager.display.RequestToCloseEvent;
-import org.micromanager.display.RequestToDrawEvent;
 import org.micromanager.display.OverlayPanel;
 import org.micromanager.display.OverlayPanelFactory;
 import org.micromanager.display.OverlayPlugin;
-import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
 import org.micromanager.display.internal.events.NewOverlayEvent;
 import org.micromanager.display.internal.link.DisplayGroupManager;
 
@@ -211,11 +209,6 @@ public final class DefaultDisplayManager implements DisplayManager {
       }
       externalViewers_.remove(viewer);
       DisplayGroupManager.getInstance().removeDisplay(viewer);
-   }
-
-   @Override
-   public RequestToDrawEvent createRequestToDrawEvent(Coords coords) {
-      return new DefaultRequestToDrawEvent(coords);
    }
 
    @Override

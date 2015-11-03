@@ -148,17 +148,6 @@ public interface DisplayManager {
    public void removeViewer(DataViewer viewer);
 
    /**
-    * Create a RequestToDrawEvent and return it. This event can be posted to
-    * a DisplayWindow's EventBus (using the DisplayWindow.postEvent() method)
-    * to request that the DisplayWindow update its displayed image. This will
-    * also force a redraw of GUI controls, overlays, and metadata display.
-    * @param coords The Coords of the image to draw. May be null, in which
-    *        case the currently-display image(s) will be redrawn.
-    * @return An object that implements the RequestToDrawEvent interface.
-    */
-   public RequestToDrawEvent createRequestToDrawEvent(Coords coords);
-
-   /**
     * Load saved DisplayWindows for the given Datastore, which is assumed to
     * represent data that is saved on disk. DisplayWindow settings are saved
     * in a separate display settings file; one new DisplayWindow will be

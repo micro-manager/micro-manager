@@ -59,7 +59,6 @@ import org.micromanager.display.NewDisplaySettingsEvent;
 import org.micromanager.data.internal.DefaultCoords;
 
 import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
-import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.display.internal.link.ImageCoordsEvent;
 import org.micromanager.display.internal.link.ImageCoordsLinker;

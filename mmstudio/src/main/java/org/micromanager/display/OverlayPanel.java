@@ -52,7 +52,8 @@ public abstract class OverlayPanel extends JPanel {
     * drawing on.
     * Note that you can request a redraw of the DisplayWindow (for example,
     * after the parameters of your overlay have been changed by the user) by
-    * using DisplayWindow.postEvent(DisplayManager.createRequestToDrawEvent());
+    * using DisplayWindow.requestRedraw() (or by just calling
+    * OverlayPanel.redraw(), which does the same thing).
     * @param display The new DisplayWindow. Note that this may be null,
     *        indicating that no DisplayWindow is available.
     */
@@ -66,7 +67,7 @@ public abstract class OverlayPanel extends JPanel {
     */
    public void redraw() {
       if (display_ != null) {
-         display_.postEvent(manager_.createRequestToDrawEvent(null));
+         display_.requestRedraw();
       }
    }
 

@@ -77,7 +77,6 @@ import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.HistogramData;
 import org.micromanager.display.NewDisplaySettingsEvent;
-import org.micromanager.display.RequestToDrawEvent;
 import org.micromanager.events.DatastoreClosingEvent;
 
 import org.micromanager.data.internal.DefaultCoords;
@@ -87,7 +86,6 @@ import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.display.internal.events.DefaultDisplayAboutToShowEvent;
 import org.micromanager.display.internal.events.DefaultNewDisplayEvent;
 import org.micromanager.display.internal.events.DefaultNewImagePlusEvent;
-import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
 import org.micromanager.display.internal.events.DisplayActivatedEvent;
 import org.micromanager.display.internal.events.FullScreenEvent;
 import org.micromanager.display.internal.events.GlobalDisplayDestroyedEvent;
@@ -679,25 +677,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       }
       catch (Exception e) {
          studio_.logs().logError(e, "Error processing layout-changed event");
-      }
-   }
-
-   /**
-    * Something on our display bus (i.e. not the Datastore bus) wants us to
-    * redisplay.
-    */
-   @Subscribe
-   public void onDrawEvent(RequestToDrawEvent event) {
-      try {
-         Coords drawCoords = stack_.getCurrentImageCoords();
-         if (event.getCoords() != null) {
-            // In particular, they want to display this image.
-            drawCoords = event.getCoords();
-         }
-         setDisplayedImageTo(drawCoords);
-      }
-      catch (Exception e) {
-         studio_.logs().logError(e, "Couldn't process RequestToDrawEvent");
       }
    }
 

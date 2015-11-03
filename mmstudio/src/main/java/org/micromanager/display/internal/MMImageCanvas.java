@@ -40,7 +40,6 @@ import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.NewDisplaySettingsEvent;
 import org.micromanager.display.internal.events.CanvasDrawEvent;
 import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
-import org.micromanager.display.internal.events.DefaultRequestToDrawEvent;
 import org.micromanager.display.internal.events.HistogramRecalcEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.display.internal.events.MouseExitedEvent;
@@ -236,7 +235,7 @@ class MMImageCanvas extends ImageCanvas {
          zoomIn((int) (bounds.width * magnification / mag),
                (int) (bounds.height * magnification / mag));
       }
-      display_.postEvent(new DefaultRequestToDrawEvent());
+      display_.requestRedraw();
    }
 
    /**
