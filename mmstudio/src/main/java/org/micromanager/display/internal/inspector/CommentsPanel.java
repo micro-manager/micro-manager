@@ -59,6 +59,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class CommentsPanel extends InspectorPanel {
    private JTextArea imageCommentsTextArea_;
    private JTextArea summaryCommentsTextArea_;
+   private JLabel errorLabel_;
    private ImageWindow currentWindow_;
    private DataViewer display_;
    private Datastore store_;
@@ -77,6 +78,8 @@ public class CommentsPanel extends InspectorPanel {
       JPanel summaryPanel = new JPanel(
             new MigLayout("flowy, insets 0, fillx"));
 
+      errorLabel_ = new JLabel("                                          ");
+      summaryPanel.add(errorLabel_);
       summaryPanel.add(new JLabel("Acquisition comments:"));
 
       summaryCommentsTextArea_ = makeTextArea();
@@ -173,6 +176,7 @@ public class CommentsPanel extends InspectorPanel {
          @Override
          public void run() {
             synchronized(imageToSaveTimer_) {
+               errorLabel_.setText("");
                try {
                   if (imageText != null) {
                      // Comments have changed.
@@ -188,7 +192,7 @@ public class CommentsPanel extends InspectorPanel {
                   }
                }
                catch (DatastoreFrozenException e) {
-                  ReportingUtils.showError("Comments cannot be changed because the datastore has been locked.");
+                  errorLabel_.setText("Comments cannot be changed because the datastore has been locked.");
                   // Prevent redundant errors by forcing the text back to
                   // what it should be.
                   Image curImage = display_.getDisplayedImages().get(0);
