@@ -78,6 +78,30 @@ public class DefaultImageJConverter implements ImageJConverter {
    }
 
    @Override
+   public ImageProcessor createProcessorFromComponent(Image image,
+         int component) {
+      int numComponents = image.getNumComponents();
+      if (numComponents == 1) {
+         return createProcessor(image);
+      }
+      int bytesPerPixel = image.getBytesPerPixel();
+      Object pixels = image.getRawPixels();
+      // This is the only multi-component image type we know how to support
+      // currently.
+      if (bytesPerPixel == 4 && numComponents == 3 &&
+            pixels instanceof byte[]) {
+         byte[] subPixels = ImageUtils.singleChannelFromRGB32(
+               (byte[]) pixels, component);
+         return new ByteProcessor(image.getWidth(), image.getHeight(),
+               subPixels);
+      }
+      else {
+         ReportingUtils.logError(String.format("Unknown image format with %d bytes per pixel, %d components, and pixel type %s", bytesPerPixel, numComponents, pixels.getClass().getName()));
+         return null;
+      }
+   }
+
+   @Override
    public Image createImage(ImageProcessor processor, Coords coords,
          Metadata metadata) {
       int bytesPerPixel = -1;
