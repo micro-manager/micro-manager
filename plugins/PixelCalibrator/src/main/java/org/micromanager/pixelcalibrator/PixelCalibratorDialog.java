@@ -76,7 +76,7 @@ public class PixelCalibratorDialog extends MMFrame {
 
       jLabel1.setText("Safe travel radius, um:");
 
-      safeTravelRadiusComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1000", "10000" }));
+      safeTravelRadiusComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1000", "10000", "100000" }));
       safeTravelRadiusComboBox.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             safeTravelRadiusComboBoxActionPerformed(evt);
