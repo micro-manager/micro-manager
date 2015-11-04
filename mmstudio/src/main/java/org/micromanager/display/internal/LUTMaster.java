@@ -517,6 +517,10 @@ public class LUTMaster {
             else {
                composite.setMode(CompositeImage.COMPOSITE);
             }
+            // Ensure channels have appropriate visibility.
+            for (int i = 0; i < display.getDatastore().getAxisLength(Coords.CHANNEL); ++i) {
+               composite.getActiveChannels()[i] = origSettings.getSafeIsVisible(i, true);
+            }
          }
          else if (mode == DisplaySettings.ColorMode.COLOR) {
             composite.setMode(CompositeImage.COLOR);
