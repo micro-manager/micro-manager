@@ -129,9 +129,10 @@
     <Component class="javax.swing.JComboBox" name="safeTravelRadiusComboBox">
       <Properties>
         <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
-          <StringArray count="2">
+          <StringArray count="3">
             <StringItem index="0" value="1000"/>
             <StringItem index="1" value="10000"/>
+            <StringItem index="2" value="100000"/>
           </StringArray>
         </Property>
       </Properties>
@@ -141,3 +142,4 @@
     </Component>
   </SubComponents>
 </Form>
+
