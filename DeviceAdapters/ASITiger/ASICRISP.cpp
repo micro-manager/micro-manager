@@ -146,7 +146,7 @@ int CCRISP::Initialize()
    	UpdateProperty(g_CRISPNumberSkipsPropertyName);
 
    	pAct = new CPropertyAction(this, &CCRISP::OnInFocusRange);
-   	CreateProperty(g_CRISPInFocusRangePropertyName, "0.0001", MM::Float, false, pAct);
+   	CreateProperty(g_CRISPInFocusRangePropertyName, "0.1", MM::Float, false, pAct);
    	UpdateProperty(g_CRISPInFocusRangePropertyName);
    }
 
@@ -399,6 +399,7 @@ int CCRISP::OnNA(MM::PropertyBase* pProp, MM::ActionType eAct)
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A") );
       // setting NA affects the in-focus range
       if (FirmwareVersionAtLeast(3.12)) {
+      	// TODO need to set flag to get this to update
       	RETURN_ON_MM_ERROR( UpdateProperty(g_CRISPInFocusRangePropertyName) );
       }
    }
@@ -603,13 +604,13 @@ int CCRISP::OnInFocusRange(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << addressChar_ << "AFLIM Z?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
-      if (!pProp->Set(tmp))
+      if (!pProp->Set(tmp*1000))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
    else if (eAct == MM::AfterSet)
    {
       pProp->Get(tmp);
-      command << addressChar_ << "AFLIM Z=" << tmp;
+      command << addressChar_ << "AFLIM Z=" << tmp/1000;
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
