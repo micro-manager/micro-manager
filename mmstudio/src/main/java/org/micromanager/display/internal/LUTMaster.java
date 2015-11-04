@@ -286,7 +286,7 @@ public class LUTMaster {
       DisplaySettings settings = display.getDisplaySettings();
       DisplaySettings.ColorMode mode = settings.getChannelColorMode();
       boolean hasCustomLUT = (mode != null &&
-            mode.getIndex() > DisplaySettings.ColorMode.COMPOSITE.getIndex());
+            mode.getIndex() > DisplaySettings.ColorMode.GRAYSCALE.getIndex());
       SummaryMetadata summary = display.getDatastore().getSummaryMetadata();
 
       // Determine the channel color to use. If the display settings don't
