@@ -458,7 +458,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
 
       private double getGammaFromMousePosition(int x, int y) {
          if ((ptDevTopUnclippedX_ == null) || (ptDevBottom_ == null)) {
-            return 0;
+            return 1.0;
          }
          double width = ptDevTopUnclippedX_.x - ptDevBottom_.x;
          double height = ptDevBottom_.y - ptDevTopUnclippedX_.y;
@@ -468,7 +468,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
          if (xn > 0.05 && xn < 0.95 && yn > 0.05 && yn < 0.95) {
             gammaClick = Math.log(yn) / Math.log(xn);
          } else {
-            gammaClick = 0;
+            gammaClick = 1.0;
          }
          return gammaClick;
       }
