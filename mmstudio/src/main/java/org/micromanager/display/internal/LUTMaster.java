@@ -462,7 +462,8 @@ public class LUTMaster {
       }
       boolean isColored = (
             index == DisplaySettings.ColorMode.COLOR.getIndex() ||
-            index == DisplaySettings.ColorMode.COMPOSITE.getIndex());
+            index == DisplaySettings.ColorMode.COMPOSITE.getIndex() ||
+            display.getImagePlus().getProcessor() instanceof ColorProcessor);
       DisplaySettings.ColorMode mode = DisplaySettings.ColorMode.fromInt(index);
       if (isColored) {
          setColoredMode(display, mode);
