@@ -152,6 +152,7 @@ public class DefaultPluginManager implements PluginManager {
     * regular plugins.
     */
    private void loadPlugins() {
+      long startTime = System.currentTimeMillis();
       loadPlugins(PluginFinder.findPlugins(
             System.getProperty("org.micromanager.plugin.path",
                System.getProperty("user.dir") + "/mmplugins")));
@@ -163,8 +164,10 @@ public class DefaultPluginManager implements PluginManager {
       // We need to use our normal class loader to load stuff from the MMJ_.jar
       // file, since otherwise we won't be able to cast the new plugin to
       // MMPlugin in loadPlugins(), below.
-      loadPlugins(PluginFinder.findPlugins(JavaUtils.getJarPath(),
+      loadPlugins(PluginFinder.findPluginsWithLoader(
             getClass().getClassLoader()));
+      ReportingUtils.logMessage("Plugin loading took " +
+            (System.currentTimeMillis() - startTime) + "ms");
    }
 
    /**

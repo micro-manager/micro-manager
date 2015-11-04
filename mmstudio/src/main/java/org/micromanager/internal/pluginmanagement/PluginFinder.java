@@ -83,37 +83,30 @@ public class PluginFinder {
     * a list of the corresponding annotated classes.
     */
    public static List<Class> findPlugins(String root) {
-      return findPlugins(root, null);
-   }
-
-   /**
-    * Find all jars under the given root, check them for the META-INF file that
-    * indicates that they're annotated with the @Plugin annotation, and return
-    * a list of the corresponding annotated classes. This version allows you
-    * to specify the ClassLoader to use.
-    */
-   public static List<Class> findPlugins(String root, ClassLoader loader) {
       ArrayList<Class> result = new ArrayList<Class>();
-      boolean shouldUseOurLoader = (loader == null);
       for (String jarPath : findPaths(root, ".jar")) {
          try {
-            if (shouldUseOurLoader) {
-               loader = new PluginLoader(new File(jarPath).toURI().toURL());
-            }
-            DefaultPluginFinder finder = new DefaultPluginFinder(loader);
-            PluginIndex index = new PluginIndex(finder);
-            index.discover();
-            for (PluginInfo info : index.getAll()) {
-               try {
-                  result.add(info.loadClass());
-               }
-               catch (InstantiableException e) {
-                  ReportingUtils.logError(e, "Unable to instantiate class for " + info);
-               }
-            }
+            result.addAll(findPluginsWithLoader(
+                     new PluginLoader(new File(jarPath).toURI().toURL())));
          }
          catch (MalformedURLException e) {
             ReportingUtils.logError("Unable to generate URL from path " + jarPath);
+         }
+      }
+      return result;
+   }
+
+   public static List<Class> findPluginsWithLoader(ClassLoader loader) {
+      ArrayList<Class> result = new ArrayList<Class>();
+      DefaultPluginFinder finder = new DefaultPluginFinder(loader);
+      PluginIndex index = new PluginIndex(finder);
+      index.discover();
+      for (PluginInfo info : index.getAll()) {
+         try {
+            result.add(info.loadClass());
+         }
+         catch (InstantiableException e) {
+            ReportingUtils.logError(e, "Unable to instantiate class for " + info);
          }
       }
       return result;
