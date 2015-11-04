@@ -265,6 +265,17 @@ public interface DisplaySettings {
    public Double getSafeContrastGamma(int index, int component, Double defaultVal);
 
    /**
+    * Safely determine if the specified channel is visible when in composite
+    * view mode. If the contrastSettings property is null, is too small to
+    * have a value for the given index, has a value of null for the given
+    * index, or has a ContrastSettings object whose isVisible property is null,
+    * then the provided default value will be returned instead.
+    * @param index Channel index to get visibility for.
+    * @param defaultVal Default value to return if no visibility is available.
+    */
+   public Boolean getSafeIsVisible(int index, Boolean defaultVal);
+
+   /**
     * The magnification level of the canvas
     * @return magnification level of the canvas
     */

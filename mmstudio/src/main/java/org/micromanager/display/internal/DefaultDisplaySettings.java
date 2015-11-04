@@ -501,6 +501,17 @@ public class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
+   public Boolean getSafeIsVisible(int index, Boolean defaultVal) {
+      if (index < 0 || contrastSettings_ == null ||
+            contrastSettings_.length <= index ||
+            contrastSettings_[index] == null ||
+            contrastSettings_[index].getIsVisible() == null) {
+         return defaultVal;
+      }
+      return contrastSettings_[index].getIsVisible();
+   }
+
+   @Override
    public Double getMagnification() {
       return magnification_;
    }
