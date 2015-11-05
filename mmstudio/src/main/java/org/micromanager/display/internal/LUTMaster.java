@@ -311,10 +311,12 @@ public class LUTMaster {
       // Get the ImageProcessor.
       ImagePlus plus = display.getImagePlus();
       CompositeImage composite = null;
+      ImageProcessor processor = plus.getProcessor();
       if (plus instanceof CompositeImage) {
          composite = (CompositeImage) plus;
+         // Get the processor for the specific channel we want to modify.
+         processor = composite.getProcessor(channelIndex + 1);
       }
-      ImageProcessor processor = plus.getProcessor();
 
       // Get the parameters to use to adjust contrast for this channel.
       DisplaySettings.ContrastSettings contrastSettings =
@@ -388,8 +390,8 @@ public class LUTMaster {
             } catch (NoSuchFieldException ex) {
                ReportingUtils.logError(ex);
             }
-            composite.updateImage();
          }
+         composite.updateImage();
       } // End multi-channel case.
    }
 
@@ -476,10 +478,10 @@ public class LUTMaster {
 
       // Update the display settings, only if something changed.
       DisplaySettings origSettings = display.getDisplaySettings();
-      DisplaySettings.DisplaySettingsBuilder builder = origSettings.copy();
-      builder.channelColorMode(DisplaySettings.ColorMode.fromInt(index));
-      DisplaySettings settings = builder.build();
-      if (settings.getChannelColorMode() != origSettings.getChannelColorMode()) {
+      if (origSettings.getChannelColorMode() != DisplaySettings.ColorMode.fromInt(index)) {
+         DisplaySettings.DisplaySettingsBuilder builder = origSettings.copy();
+         builder.channelColorMode(DisplaySettings.ColorMode.fromInt(index));
+         DisplaySettings settings = builder.build();
          display.setDisplaySettings(settings);
       }
    }
@@ -502,7 +504,7 @@ public class LUTMaster {
          SwingUtilities.invokeLater(runnable);
          return;
       }
-      DisplaySettings origSettings = display.getDisplaySettings();
+      DisplaySettings settings = display.getDisplaySettings();
       ImagePlus plus = display.getImagePlus();
       if (plus instanceof CompositeImage) {
          CompositeImage composite = (CompositeImage) plus;
@@ -519,7 +521,7 @@ public class LUTMaster {
             }
             // Ensure channels have appropriate visibility.
             for (int i = 0; i < display.getDatastore().getAxisLength(Coords.CHANNEL); ++i) {
-               composite.getActiveChannels()[i] = origSettings.getSafeIsVisible(i, true);
+               composite.getActiveChannels()[i] = settings.getSafeIsVisible(i, true);
             }
          }
          else if (mode == DisplaySettings.ColorMode.COLOR) {
