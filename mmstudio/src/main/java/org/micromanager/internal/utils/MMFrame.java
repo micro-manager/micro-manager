@@ -22,6 +22,8 @@
 //
 package org.micromanager.internal.utils;
 
+import java.awt.Frame;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -78,6 +80,7 @@ public class MMFrame extends JFrame {
                 profile.getInt(this.getClass(), prefPrefix_ + WINDOW_Y, y),
                 profile.getInt(this.getClass(), prefPrefix_ + WINDOW_WIDTH, width),
                 profile.getInt(this.getClass(), prefPrefix_ + WINDOW_HEIGHT, height));
+      offsetIfNecessary();
    }
 
    public void loadPosition(int x, int y) {
@@ -87,9 +90,34 @@ public class MMFrame extends JFrame {
                 profile.getInt(this.getClass(), prefPrefix_ + WINDOW_Y, y),
                 getWidth(),
                 getHeight());
+      offsetIfNecessary();
    }
-   
-   
+
+   /**
+    * Scan the program for other MMFrames that have the same type as this
+    * MMFrame, and make certain we don't precisely overlap any of them.
+    */
+   private void offsetIfNecessary() {
+      Point newLoc = getLocation();
+      boolean foundOverlap = false;
+      do {
+         foundOverlap = false;
+         for (Frame frame : Frame.getFrames()) {
+            if (frame != this && frame.getClass() == getClass() &&
+                  frame.getLocation().equals(newLoc)) {
+               foundOverlap = true;
+               newLoc.x += 22;
+               newLoc.y += 22;
+            }
+         }
+         if (!foundOverlap) {
+            break;
+         }
+      } while (foundOverlap);
+
+      setLocation(newLoc);
+   }
+
     /**
     * Load window position and size from profile if possible.
     * If not possible then sets them from arguments
