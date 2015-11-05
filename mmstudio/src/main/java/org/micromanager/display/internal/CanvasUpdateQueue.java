@@ -107,7 +107,7 @@ public class CanvasUpdateQueue {
    // to recognize when we're waiting for such a draw to process, so we don't
    // spam up the EDT with lots of excess draw requests.
    private boolean amWaitingForDraw_ = false;
-   private boolean shouldReapplyLUTs_;
+   private boolean shouldReapplyLUTs_ = true;
    // This boolean is set when we call setDisplaySettings(), so we don't
    // erroneously respond to our own new display settings by redrawing
    // everything.
