@@ -399,8 +399,9 @@ int CCRISP::OnNA(MM::PropertyBase* pProp, MM::ActionType eAct)
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A") );
       // setting NA affects the in-focus range
       if (FirmwareVersionAtLeast(3.12)) {
-      	// TODO need to set flag to get this to update
-      	RETURN_ON_MM_ERROR( UpdateProperty(g_CRISPInFocusRangePropertyName) );
+         refreshOverride_ = true;
+         RETURN_ON_MM_ERROR( UpdateProperty(g_CRISPInFocusRangePropertyName) );
+         refreshOverride_ = false;
       }
    }
    return DEVICE_OK;
@@ -599,7 +600,7 @@ int CCRISP::OnInFocusRange(MM::PropertyBase* pProp, MM::ActionType eAct)
    double tmp = 0;
    if (eAct == MM::BeforeGet)
    {
-      if (!refreshProps_ && initialized_)
+      if (!refreshProps_ && initialized_ && !refreshOverride_)
          return DEVICE_OK;
       command << addressChar_ << "AFLIM Z?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));

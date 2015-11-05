@@ -41,7 +41,8 @@ public:
       ASIBase<TDeviceBase, UConcreteDevice>(name),
       hub_(NULL),
       addressString_(g_EmptyCardAddressStr),
-      refreshProps_(false)
+      refreshProps_(false),
+      refreshOverride_(false)
    {
       // sometimes constructor gets called without the full name like in the case of the hub
       //   so only set up these properties if we have the required information
@@ -121,6 +122,7 @@ protected:
    string addressChar_;    // address within hub, in single character (possibly extended ASCII)
                            // in case of XY device, the MM device is split across two HW cards so it will be two characters
    bool refreshProps_;     // true when property values should be read anew from controller each time
+   bool refreshOverride_;  // true when device wants to manually force refreshes temporarily
 
    // related to creating "extended" names containing address and axis letters
    static bool IsExtendedName(const char* name)

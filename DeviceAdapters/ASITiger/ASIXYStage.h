@@ -143,7 +143,6 @@ private:
    string axisLetterY_;
    bool advancedPropsEnabled_;
    bool speedTruth_;
-   bool refreshOverride_;  // true temporarily if refreshing property
 
    // private helper functions
    int OnSaveJoystickSettings();

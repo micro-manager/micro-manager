@@ -66,7 +66,6 @@ CScanner::CScanner(const char* name) :
    ring_buffer_supported_(false),
    laser_side_(0),   // will be set to 1 or 2 if used
    laserTTLenabled_(false),
-   refreshOverride_(false),
    mmTarget_(false),
    targetExposure_(0),
    targetSettling_(5),
