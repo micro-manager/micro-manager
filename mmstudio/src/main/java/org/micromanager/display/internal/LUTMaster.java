@@ -98,6 +98,11 @@ public class LUTMaster {
          }
       }
 
+      @Override
+      public String toString() {
+         return String.format("<IconWithStats %s>", text_);
+      }
+
       /**
        * Generate a gradient icon for one of the LUTs we support.
        */
@@ -476,8 +481,7 @@ public class LUTMaster {
       }
       else {
          IconWithStats icon = ICONS.get(index);
-         setLUTMode(display, new LUT(8, icon.red_.length, icon.red_,
-                  icon.green_, icon.blue_), index);
+         setLUTMode(display, icon, index);
       }
 
       // Update the display settings, only if something changed.
@@ -545,33 +549,32 @@ public class LUTMaster {
     * Set a LUT-based mode.
     */
    public static void setLUTMode(final DisplayWindow display,
-         final LUT lut, final int index) {
+         final IconWithStats icon, final int index) {
       if (!SwingUtilities.isEventDispatchThread()) {
          // Can't muck about with the display outside of the EDT. Re-call
          // in the EDT instead.
          Runnable runnable = new Runnable() {
             @Override
             public void run() {
-               setLUTMode(display, lut, index);
+               setLUTMode(display, icon, index);
             }
          };
          SwingUtilities.invokeLater(runnable);
          return;
       }
       ImagePlus plus = display.getImagePlus();
+      // Set channel 0 always; do other channels if we're composite.
+      LUT lut = createLUT(icon, display, 0);
       plus.getProcessor().setColorModel(lut);
       if (plus instanceof CompositeImage) {
          // Composite LUTs are done by shifting to grayscale and setting the
          // LUT for all channels to be the same; only one will be drawn at a
          // time.
-         // Though we can't actually use the *same* LUT instance because then
-         // the scaling is shared across channels.
          CompositeImage composite = (CompositeImage) plus;
          composite.setMode(CompositeImage.GRAYSCALE);
-         for (int i = 0; i < display.getDatastore().getAxisLength(
-                  Coords.CHANNEL); ++i) {
+         for (int i = 0; i < display.getDatastore().getAxisLength(Coords.CHANNEL); ++i) {
             // ImageJ is 1-indexed...
-            composite.setChannelLut((LUT) lut.clone(), i + 1);
+            composite.setChannelLut(lut, i + 1);
          }
       }
       plus.updateAndDraw();
@@ -579,5 +582,33 @@ public class LUTMaster {
       DisplaySettings settings = display.getDisplaySettings().copy()
          .channelColorMode(DisplaySettings.ColorMode.fromInt(index)).build();
       display.setDisplaySettings(settings);
+   }
+
+   /**
+    * Create a new LUT based on the colors of the given IconWithStats and the
+    * gamma of the specified channel of the display.
+    */
+   private static LUT createLUT(IconWithStats icon, DisplayWindow display,
+         int channelIndex) {
+      // For now, always use the gamma of component 0.
+      double gamma = display.getDisplaySettings().getSafeContrastGamma(
+            channelIndex, 0, 1.0);
+      if (Math.abs(gamma - 1.0) < .01) {
+         // No gamma correction.
+         return new LUT(8, icon.red_.length, icon.red_,
+                  icon.green_, icon.blue_);
+      }
+      int len = icon.red_.length;
+      byte[] red = new byte[len];
+      byte[] blue = new byte[len];
+      byte[] green = new byte[len];
+      for (int i = 0; i < len; ++i) {
+         int index = (int)
+            (Math.pow((double) i / (len - 1), gamma) * (len - 1));
+         red[i] = icon.red_[index];
+         blue[i] = icon.blue_[index];
+         green[i] = icon.green_[index];
+      }
+      return new LUT(8, len, red, green, blue);
    }
 }
