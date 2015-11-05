@@ -573,6 +573,7 @@ public class LUTMaster {
          CompositeImage composite = (CompositeImage) plus;
          composite.setMode(CompositeImage.GRAYSCALE);
          for (int i = 0; i < display.getDatastore().getAxisLength(Coords.CHANNEL); ++i) {
+            lut = createLUT(icon, display, i);
             // ImageJ is 1-indexed...
             composite.setChannelLut(lut, i + 1);
          }
