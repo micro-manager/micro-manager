@@ -314,16 +314,20 @@ public class LUTMaster {
       ImageProcessor processor = plus.getProcessor();
       if (plus instanceof CompositeImage) {
          composite = (CompositeImage) plus;
-         // Get the processor for the specific channel we want to modify.
-         processor = composite.getProcessor(channelIndex + 1);
+         if (composite.getMode() == CompositeImage.COMPOSITE) {
+            // Get the processor for the specific channel we want to modify.
+            // Don't ask me why we don't do this when in color/grayscale modes.
+            // Chalk it up to ImageJ weirdness.
+            processor = composite.getProcessor(channelIndex + 1);
+         }
       }
 
       // Get the parameters to use to adjust contrast for this channel.
+      DisplaySettings.ContrastSettings defaultSettings =
+         new DefaultDisplaySettings.DefaultContrastSettings(
+            (int) processor.getMin(), (int) processor.getMax(), 1.0, true);
       DisplaySettings.ContrastSettings contrastSettings =
-         settings.getSafeContrastSettings(channelIndex,
-               new DefaultDisplaySettings.DefaultContrastSettings(
-                  (int) processor.getMin(), (int) processor.getMax(), 1.0,
-                  true));
+         settings.getSafeContrastSettings(channelIndex, defaultSettings);
 
       if (processor instanceof ColorProcessor) {
          // RGB images require special handling.
