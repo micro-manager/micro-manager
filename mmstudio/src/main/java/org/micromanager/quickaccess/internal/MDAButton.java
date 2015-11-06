@@ -38,6 +38,7 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.events.AcquisitionEndedEvent;
 import org.micromanager.events.AcquisitionStartedEvent;
+import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.quickaccess.WidgetPlugin;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
@@ -91,7 +92,12 @@ public class MDAButton extends WidgetPlugin implements SciJavaPlugin {
    public JComponent createControl(PropertyMap config) {
       JPanel result = new JPanel(new MigLayout("flowy, insets 0, gap 0"));
       JButton dialogButton = new JButton("Multi-D Acq",
-            IconLoader.getIcon("/org/micromanager/icons/film.png"));
+            IconLoader.getIcon("/org/micromanager/icons/film.png")) {
+         @Override
+         public Dimension getPreferredSize() {
+            return QuickAccessPlugin.getPaddedCellSize();
+         }
+      };
       dialogButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -104,6 +110,10 @@ public class MDAButton extends WidgetPlugin implements SciJavaPlugin {
 
       // This runs or stops acquisitions.
       final JButton runButton = new JButton("Acquire!") {
+         @Override
+         public Dimension getPreferredSize() {
+            return QuickAccessPlugin.getPaddedCellSize();
+         }
          @Subscribe
          public void onAcquisitionStart(AcquisitionStartedEvent event) {
             setIcon(IconLoader.getIcon(
