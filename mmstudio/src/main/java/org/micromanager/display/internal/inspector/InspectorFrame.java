@@ -39,6 +39,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowAdapter;
 
+import java.io.File;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -103,7 +105,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
 
       public String toString() {
          if (menuDisplay_ != null) {
-            return menuDisplay_.getName();
+            return truncateName(menuDisplay_.getName(), 40);
          }
          return TOPMOST_DISPLAY;
       }
@@ -454,7 +456,8 @@ public class InspectorFrame extends MMFrame implements Inspector {
          if (item.getDisplay() == null) {
             // Show the title of the current display, to make it clear which one
             // we're controlling.
-            curDisplayTitle_.setText(display_.getName());
+            String name = truncateName(display_.getName(), 60);
+            curDisplayTitle_.setText(name);
             curDisplayTitle_.setVisible(true);
          }
          else {
@@ -463,6 +466,21 @@ public class InspectorFrame extends MMFrame implements Inspector {
       }
       // Redo the layout to account for curDisplayTitle_ being shown/hidden.
       validate();
+   }
+
+   /**
+    * Truncate the provided display name so that elements that display it in
+    * the frame don't cause the frame to get horribly stretched.
+    */
+   private String truncateName(String name, int maxLen) {
+      if (name.length() > maxLen) {
+         File file = new File(name);
+         String finalName = file.getName();
+         // Subtract 3 for the ellipses.
+         int remainingLength = maxLen - finalName.length() - 3;
+         name = name.substring(0, remainingLength) + "..." + finalName;
+      }
+      return name;
    }
 
    @Override
