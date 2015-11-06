@@ -23,6 +23,7 @@ import com.bulenkov.iconloader.IconLoader;
 
 import com.google.common.eventbus.Subscribe;
 
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.Insets;
@@ -31,6 +32,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JToggleButton;
 
 import org.micromanager.events.LiveModeEvent;
+import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.quickaccess.ToggleButtonPlugin;
 import org.micromanager.Studio;
 
@@ -81,12 +83,19 @@ public class LiveButton implements ToggleButtonPlugin, SciJavaPlugin {
    public JToggleButton createButton() {
       // HACK: we have to create a "container" for the button that handles
       // events. If we subscribe the button itself to the LiveModeEvent, then
-      // Java will contain that the button might not have been initialized,
+      // Java will complain that the button might not have been initialized,
       // and thus we aren't allowed to try to modify it.
+      // Make the button mostly fill its cell.
       final JToggleButton result = new JToggleButton("Live",
             studio_.live().getIsLiveModeOn() ?
             IconLoader.getIcon("/org/micromanager/icons/cancel.png") :
-            IconLoader.getIcon("/org/micromanager/icons/camera_go.png"));
+            IconLoader.getIcon("/org/micromanager/icons/camera_go.png")) {
+         @Override
+         public Dimension getPreferredSize() {
+            return new Dimension(QuickAccessPlugin.CELL_WIDTH - 10,
+                  QuickAccessPlugin.CELL_HEIGHT - 10);
+         }
+      };
       result.setFont(GUIUtils.buttonFont);
       result.setMargin(new Insets(0, 0, 0, 0));
       Object wrapper = new Object() {

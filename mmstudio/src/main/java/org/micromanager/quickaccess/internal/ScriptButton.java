@@ -31,20 +31,13 @@ import java.awt.Frame;
 
 import java.io.File;
 
-import java.util.Arrays;
-
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.events.LiveModeEvent;
+import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.quickaccess.WidgetPlugin;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
@@ -98,8 +91,15 @@ public class ScriptButton implements WidgetPlugin, SciJavaPlugin {
    @Override
    public JComponent createControl(PropertyMap config) {
       final File file = new File(config.getString("scriptPath", ""));
+      // Size it to mostly fill its frame.
       JButton result = new JButton(file.getName(),
-            IconLoader.getIcon("/org/micromanager/icons/file.png"));
+            IconLoader.getIcon("/org/micromanager/icons/file.png")) {
+         @Override
+         public Dimension getPreferredSize() {
+            return new Dimension(QuickAccessPlugin.CELL_WIDTH - 10,
+                  QuickAccessPlugin.CELL_HEIGHT - 10);
+         }
+      };
       result.setFont(GUIUtils.buttonFont);
       result.setMargin(new Insets(0, 0, 0, 0));
       result.addActionListener(new ActionListener() {

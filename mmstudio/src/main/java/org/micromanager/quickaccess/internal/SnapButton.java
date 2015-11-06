@@ -35,6 +35,7 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 
 import org.micromanager.events.LiveModeEvent;
+import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.quickaccess.WidgetPlugin;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
@@ -85,11 +86,18 @@ public class SnapButton implements WidgetPlugin, SciJavaPlugin {
    // We are not actually configurable.
    @Override
    public JComponent createControl(PropertyMap config) {
+      // Make button size mostly fill the cell.
       JButton result = new JButton("Snap",
             IconLoader.getIcon("/org/micromanager/icons/camera.png")) {
          @Subscribe
          public void onLiveMode(LiveModeEvent event) {
             setEnabled(!event.getIsOn());
+         }
+
+         @Override
+         public Dimension getPreferredSize() {
+            return new Dimension(QuickAccessPlugin.CELL_WIDTH - 10,
+                  QuickAccessPlugin.CELL_HEIGHT - 10);
          }
       };
       result.setFont(GUIUtils.buttonFont);
