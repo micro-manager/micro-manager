@@ -661,20 +661,25 @@ public class QuickAccessFrame extends MMFrame {
          parent_ = parent;
          icon_ = icon;
          if (icon_ == null) {
-            // Render the image, then downscale to fit the available space.
-            Image render = ScreenImage.createImage(component);
-            int width = render.getWidth(null);
-            int height = render.getHeight(null);
-            int maxWidth = QuickAccessPlugin.CELL_WIDTH * size.width;
-            int maxHeight = QuickAccessPlugin.CELL_HEIGHT * size.height;
-            if (width > maxWidth || height > maxHeight) {
-               // Too big; we must downscale.
-               double scale = Math.min((double) width / maxWidth,
-                     (double) height / maxHeight);
-               render = render.getScaledInstance((int) (width * scale),
-                     (int) (height * scale), Image.SCALE_DEFAULT);
+            try {
+               // Render the image, then downscale to fit the available space.
+               Image render = ScreenImage.createImage(component);
+               int width = render.getWidth(null);
+               int height = render.getHeight(null);
+               int maxWidth = QuickAccessPlugin.CELL_WIDTH * size.width;
+               int maxHeight = QuickAccessPlugin.CELL_HEIGHT * size.height;
+               if (width > maxWidth || height > maxHeight) {
+                  // Too big; we must downscale.
+                  double scale = Math.min((double) width / maxWidth,
+                        (double) height / maxHeight);
+                  render = render.getScaledInstance((int) (width * scale),
+                        (int) (height * scale), Image.SCALE_DEFAULT);
+               }
+               icon_ = new ImageIcon(render);
             }
-            icon_ = new ImageIcon(render);
+            catch (Exception e) {
+               studio_.logs().showError(e, "Unable to create icon for Quick-Access Plugin " + plugin.getName());
+            }
          }
          setIcon(icon_);
          if (plugin != null) {
