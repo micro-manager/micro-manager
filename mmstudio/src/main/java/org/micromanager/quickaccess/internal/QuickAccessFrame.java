@@ -131,9 +131,12 @@ public class QuickAccessFrame extends MMFrame {
    private int iconOffsetY_ = -1;
 
    public QuickAccessFrame(Studio studio) {
-      super("Quick-Access Tools");
+      setAlwaysOnTop(true);
+      setTitle("Quick-Access Tools");
+
       studio_ = studio;
       controls_ = new HashSet<ControlCell>();
+
       numCols_ = studio_.profile().getInt(QuickAccessFrame.class,
             NUM_COLS, 3);
       numRows_ = studio_.profile().getInt(QuickAccessFrame.class,
