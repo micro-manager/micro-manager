@@ -18,7 +18,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display.internal;
+package org.micromanager.display.internal.overlays;
 
 import ij.gui.ImageCanvas;
 
@@ -49,7 +49,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 /**
  * This class provides a GUI for drawing a scale bar.
  */
-public class ScaleBarOverlayPanel extends OverlayPanel {
+public class ScaleBarPanel extends OverlayPanel {
    private static final String DRAW_TEXT = "scaleBarOverlay: whether or not to draw text";
    private static final String IS_FILLED = "scaleBarOverlay: if the scale bar is drawn as solid";
    private static final String COLOR = "scaleBarOverlay: color to draw everything";
@@ -78,7 +78,7 @@ public class ScaleBarOverlayPanel extends OverlayPanel {
 
    private boolean haveLoggedError_ = false;
    
-   public ScaleBarOverlayPanel() {
+   public ScaleBarPanel() {
       ActionListener changeListener = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {

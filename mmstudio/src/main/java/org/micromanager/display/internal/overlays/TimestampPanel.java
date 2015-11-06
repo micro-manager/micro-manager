@@ -18,7 +18,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display.internal;
+package org.micromanager.display.internal.overlays;
 
 import ij.gui.ImageCanvas;
 
@@ -54,7 +54,7 @@ import org.micromanager.display.OverlayPanel;
 /**
  * This overlay draws the timestamps of the currently-displayed images.
  */
-public class TimestampOverlayPanel extends OverlayPanel {
+public class TimestampPanel extends OverlayPanel {
    private static final int LINE_HEIGHT = 13;
 
    private final JCheckBox amMultiChannel_;
@@ -64,7 +64,7 @@ public class TimestampOverlayPanel extends OverlayPanel {
    private final JComboBox position_;
    private final JComboBox color_;
 
-   public TimestampOverlayPanel() {
+   public TimestampPanel() {
       setLayout(new MigLayout("flowx"));
 
       ActionListener redrawListener = new ActionListener() {

@@ -18,14 +18,14 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display.internal;
+package org.micromanager.display.internal.overlays;
 
 import org.micromanager.display.OverlayPanel;
 import org.micromanager.display.OverlayPanelFactory;
 
-public class TimestampOverlayFactory implements OverlayPanelFactory {
+public class ScaleBarFactory implements OverlayPanelFactory {
    @Override
    public OverlayPanel createOverlayPanel() {
-      return new TimestampOverlayPanel();
+      return new ScaleBarPanel();
    }
 }

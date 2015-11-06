@@ -260,11 +260,8 @@ public final class DefaultDisplayManager implements DisplayManager {
       HashMap<String, OverlayPlugin> plugins = studio_.plugins().getOverlayPlugins();
       for (String key : plugins.keySet()) {
          OverlayPlugin plugin = plugins.get(key);
-         titleToOverlay_.put(key, plugin.createFactory());
+         titleToOverlay_.put(plugin.getName(), plugin.createFactory());
       }
-      // HACK: hardcode in the scalebar and timestamp overlays for now.
-      titleToOverlay_.put("Scale Bar", new ScaleBarOverlayFactory());
-      titleToOverlay_.put("Timestamp", new TimestampOverlayFactory());
    }
 
    public String[] getOverlayTitles() {

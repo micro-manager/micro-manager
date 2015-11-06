@@ -18,14 +18,42 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display.internal;
+package org.micromanager.display.internal.overlays;
 
-import org.micromanager.display.OverlayPanel;
 import org.micromanager.display.OverlayPanelFactory;
+import org.micromanager.display.OverlayPlugin;
+import org.micromanager.Studio;
 
-public class ScaleBarOverlayFactory implements OverlayPanelFactory {
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
+
+@Plugin(type = OverlayPlugin.class)
+public class TimestampPlugin implements OverlayPlugin, SciJavaPlugin {
    @Override
-   public OverlayPanel createOverlayPanel() {
-      return new ScaleBarOverlayPanel();
+   public void setContext(Studio studio) {}
+
+   @Override
+   public OverlayPanelFactory createFactory() {
+      return new TimestampFactory();
+   }
+
+   @Override
+   public String getName() {
+      return "Timestamp";
+   }
+
+   @Override
+   public String getHelpText() {
+      return "Display the time of acquisition of the image";
+   }
+
+   @Override
+   public String getVersion() {
+      return "Version 1.0";
+   }
+
+   @Override
+   public String getCopyright() {
+      return "Copyright 2015 Regents of the University of California; Open Imaging Inc.";
    }
 }
