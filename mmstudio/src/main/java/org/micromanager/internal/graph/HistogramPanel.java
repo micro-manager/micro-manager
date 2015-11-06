@@ -465,12 +465,20 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
          double xn = (x - ptDevBottom_.x) / width;
          double yn = (ptDevBottom_.y - y) / height;
          double gammaClick;
-         if (xn > 0.05 && xn < 0.95 && yn > 0.05 && yn < 0.95) {
+         if (xn > 0.01 && xn < 0.99 && yn > 0.01 && yn < 0.99) {
             gammaClick = Math.log(yn) / Math.log(xn);
-         } else {
-            gammaClick = 1.0;
          }
-         return gammaClick;
+         else if (xn >= .99 || yn <= .01) {
+            // Mouse off the right/bottom end of the histogram.
+            gammaClick = 100;
+         }
+         else {
+            // Mouse off the left/top end of the histogram.
+            gammaClick = 0.0;
+         }
+         // Clamp gamma to "sane" values so that the gamma curve doesn't become
+         // impossible to click on.
+         return Math.max(.05, Math.min(50, gammaClick));
       }
 
    static int clipVal(int v, int min, int max) {
