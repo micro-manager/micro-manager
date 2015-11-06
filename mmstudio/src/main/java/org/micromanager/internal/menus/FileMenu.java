@@ -144,7 +144,7 @@ public class FileMenu {
       // files are on top.
       Collections.reverse(files);
       for (final String path : files) {
-         JMenuItem item = new JMenuItem(new File(path).getName());
+         JMenuItem item = new JMenuItem(path);
          item.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
