@@ -26,9 +26,9 @@ import javax.swing.JToggleButton;
  * Quick-Access Window. It is similar to the SimpleButtonPlugin, except that
  * its state may be toggled.
  */
-public interface ToggleButtonPlugin extends QuickAccessPlugin {
+public abstract class ToggleButtonPlugin extends QuickAccessPlugin {
    /**
     * Provide a JToggleButton that will behave as desired by the plugin.
     */
-   public JToggleButton createButton();
+   public abstract JToggleButton createButton();
 }

@@ -52,7 +52,7 @@ import org.scijava.plugin.SciJavaPlugin;
  * Implements the "MDA" button logic.
  */
 @Plugin(type = WidgetPlugin.class)
-public class MDAButton implements WidgetPlugin, SciJavaPlugin {
+public class MDAButton extends WidgetPlugin implements SciJavaPlugin {
    private Studio studio_;
 
    @Override

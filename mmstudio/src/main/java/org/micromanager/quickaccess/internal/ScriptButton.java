@@ -54,7 +54,7 @@ import org.scijava.plugin.SciJavaPlugin;
  * a preselected script file.
  */
 @Plugin(type = WidgetPlugin.class)
-public class ScriptButton implements WidgetPlugin, SciJavaPlugin {
+public class ScriptButton extends WidgetPlugin implements SciJavaPlugin {
    private Studio studio_;
 
    @Override
@@ -96,8 +96,7 @@ public class ScriptButton implements WidgetPlugin, SciJavaPlugin {
             IconLoader.getIcon("/org/micromanager/icons/file.png")) {
          @Override
          public Dimension getPreferredSize() {
-            return new Dimension(QuickAccessPlugin.CELL_WIDTH - 10,
-                  QuickAccessPlugin.CELL_HEIGHT - 10);
+            return QuickAccessPlugin.getPaddedCellSize();
          }
       };
       result.setFont(GUIUtils.buttonFont);

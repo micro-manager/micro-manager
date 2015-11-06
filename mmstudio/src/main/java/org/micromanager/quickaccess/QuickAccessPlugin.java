@@ -19,6 +19,8 @@
 
 package org.micromanager.quickaccess;
 
+import java.awt.Dimension;
+
 import javax.swing.ImageIcon;
 
 import org.micromanager.MMPlugin;
@@ -27,7 +29,7 @@ import org.micromanager.MMPlugin;
  * QuickAccessPlugins are used for controls that can show up in the Quick-
  * Access Window, which shows frequently-used controls.
  */
-public interface QuickAccessPlugin extends MMPlugin {
+public abstract class QuickAccessPlugin implements MMPlugin {
    /**
     * The width of a single cell in the Quick-Access Window.
     */
@@ -37,10 +39,20 @@ public interface QuickAccessPlugin extends MMPlugin {
     * The height of a single cell in the Quick-Access Window.
     */
    public static final int CELL_HEIGHT = 50;
+
+   /**
+    * Provides a dimension that mostly fills 1 cell in the Quick-Access Window.
+    * This dimension should be used by any "simple" controls (like buttons)
+    * to preserve visual uniformity.
+    */
+   public static Dimension getPaddedCellSize() {
+      return new Dimension(CELL_WIDTH - 10, CELL_HEIGHT - 10);
+   }
+
    /**
     * Provide an icon to use to represent this plugin when configuring the
     * Quick-Access Window. May be null, in which case a rendering of the
     * plugin's controls will be used instead.
     */
-   public ImageIcon getIcon();
+   public abstract ImageIcon getIcon();
 }

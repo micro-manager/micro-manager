@@ -45,7 +45,7 @@ import org.scijava.plugin.SciJavaPlugin;
  * Implements the "Live" button logic.
  */
 @Plugin(type = ToggleButtonPlugin.class)
-public class LiveButton implements ToggleButtonPlugin, SciJavaPlugin {
+public class LiveButton extends ToggleButtonPlugin implements SciJavaPlugin {
    private Studio studio_;
 
    @Override
@@ -92,8 +92,7 @@ public class LiveButton implements ToggleButtonPlugin, SciJavaPlugin {
             IconLoader.getIcon("/org/micromanager/icons/camera_go.png")) {
          @Override
          public Dimension getPreferredSize() {
-            return new Dimension(QuickAccessPlugin.CELL_WIDTH - 10,
-                  QuickAccessPlugin.CELL_HEIGHT - 10);
+            return QuickAccessPlugin.getPaddedCellSize();
          }
       };
       result.setFont(GUIUtils.buttonFont);

@@ -49,7 +49,7 @@ import org.scijava.plugin.SciJavaPlugin;
  * Implements the "Snap" button logic.
  */
 @Plugin(type = WidgetPlugin.class)
-public class SnapButton implements WidgetPlugin, SciJavaPlugin {
+public class SnapButton extends WidgetPlugin implements SciJavaPlugin {
    private Studio studio_;
 
    @Override
@@ -96,8 +96,7 @@ public class SnapButton implements WidgetPlugin, SciJavaPlugin {
 
          @Override
          public Dimension getPreferredSize() {
-            return new Dimension(QuickAccessPlugin.CELL_WIDTH - 10,
-                  QuickAccessPlugin.CELL_HEIGHT - 10);
+            return QuickAccessPlugin.getPaddedCellSize();
          }
       };
       result.setFont(GUIUtils.buttonFont);

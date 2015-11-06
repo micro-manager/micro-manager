@@ -69,8 +69,7 @@ public class QuickAccessFactory {
       JButton result = new JButton(plugin.getTitle(), plugin.getButtonIcon()) {
          @Override
          public Dimension getPreferredSize() {
-            return new Dimension(QuickAccessPlugin.CELL_WIDTH - 10,
-                  QuickAccessPlugin.CELL_HEIGHT - 10);
+            return QuickAccessPlugin.getPaddedCellSize();
          }
       };
       result.addActionListener(new ActionListener() {

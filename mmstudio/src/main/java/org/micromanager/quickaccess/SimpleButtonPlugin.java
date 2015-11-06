@@ -26,19 +26,19 @@ import javax.swing.Icon;
  * Quick-Access Window. It's for simple buttons that perform an action when
  * clicked.
  */
-public interface SimpleButtonPlugin extends QuickAccessPlugin {
+public abstract class SimpleButtonPlugin extends QuickAccessPlugin {
    /**
     * Returns the text to show in the button.
     */
-   public String getTitle();
+   public abstract String getTitle();
 
    /**
     * Returns an icon to show in the button. May be null.
     */
-   public Icon getButtonIcon();
+   public abstract Icon getButtonIcon();
 
    /**
     * This method will be called when the button is clicked.
     */
-   public void activate();
+   public abstract void activate();
 }

@@ -32,14 +32,14 @@ import org.micromanager.PropertyMap;
  * will appear and behave. However, it also requires you to implement the most
  * logic.
  */
-public interface WidgetPlugin extends QuickAccessPlugin {
+public abstract class WidgetPlugin extends QuickAccessPlugin {
    /**
     * Create the GUI components for this control.
     * @param config A PropertyMap as output by configureControl used to
     *        configure this control. The PropertyMap may be empty or may be
     *        preserved from a previous session.
     */
-   public JComponent createControl(PropertyMap config);
+   public abstract JComponent createControl(PropertyMap config);
 
    /**
     * Generate configuration information that can be used to configure a
@@ -48,7 +48,7 @@ public interface WidgetPlugin extends QuickAccessPlugin {
     * modal. It is also only ever called from the EDT.
     * @param parent The Quick-Access Window
     */
-   public PropertyMap configureControl(Frame parent);
+   public abstract PropertyMap configureControl(Frame parent);
 
    /**
     * Return the dimensionality of the widget, in cells. For example, a
@@ -56,5 +56,5 @@ public interface WidgetPlugin extends QuickAccessPlugin {
     * tall. The size of a single cell is the CELL_WIDTH and CELL_HEIGHT
     * values in QuickAccessPlugin.
     */
-   public Dimension getSize();
+   public abstract Dimension getSize();
 }

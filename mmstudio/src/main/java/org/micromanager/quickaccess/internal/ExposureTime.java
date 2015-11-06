@@ -58,7 +58,7 @@ import org.scijava.plugin.SciJavaPlugin;
  * Allows you to set the exposure time for the currently-selected channel.
  */
 @Plugin(type = WidgetPlugin.class)
-public class ExposureTime implements WidgetPlugin, SciJavaPlugin {
+public class ExposureTime extends WidgetPlugin implements SciJavaPlugin {
    private Studio studio_;
 
    @Override
