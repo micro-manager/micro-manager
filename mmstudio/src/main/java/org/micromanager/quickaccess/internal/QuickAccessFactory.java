@@ -20,6 +20,7 @@
 package org.micromanager.quickaccess.internal;
 
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -64,7 +65,14 @@ public class QuickAccessFactory {
     * Given a SimpleButtonPlugin, create a JButton from it.
     */
    public static JButton makeButton(final SimpleButtonPlugin plugin) {
-      JButton result = new JButton(plugin.getTitle(), plugin.getButtonIcon());
+      // Size the button to mostly fill its cell.
+      JButton result = new JButton(plugin.getTitle(), plugin.getButtonIcon()) {
+         @Override
+         public Dimension getPreferredSize() {
+            return new Dimension(QuickAccessPlugin.CELL_WIDTH - 10,
+                  QuickAccessPlugin.CELL_HEIGHT - 10);
+         }
+      };
       result.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {

@@ -529,7 +529,7 @@ public class QuickAccessFrame extends MMFrame {
          plugin_ = plugin;
          config_ = config;
          rect_ = rect;
-         JPanel panel = new JPanel(new MigLayout("fill"));
+         JPanel panel = new JPanel(new MigLayout("fill, insets 0, gap 0"));
          JComponent control = null;
          if (plugin instanceof WidgetPlugin) {
             WidgetPlugin widget = (WidgetPlugin) plugin;
@@ -543,7 +543,7 @@ public class QuickAccessFrame extends MMFrame {
          else {
             control = QuickAccessFactory.makeGUI(plugin);
          }
-         panel.add(control, "align center");
+         panel.add(control, "align center, grow");
          widget_ = panel;
          icon_ = new DraggableIcon(control, null, null, this, rect_.getSize());
       }
