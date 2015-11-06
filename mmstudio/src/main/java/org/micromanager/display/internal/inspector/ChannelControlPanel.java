@@ -874,7 +874,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       histogram_.repaint();
       minMaxLabel_.setText(String.format(
                "<html>Min/Max/Mean:<br>%d/%d/%d</html>",
-               minVal, maxVal, lastHistograms_[curComponent_].getMean()));
+               lastHistograms_[curComponent_].getMinVal(),
+               lastHistograms_[curComponent_].getMaxVal(),
+               lastHistograms_[curComponent_].getMean()));
    }
 
    public void redraw() {
