@@ -116,9 +116,4 @@ public class SnapButton extends WidgetPlugin implements SciJavaPlugin {
    public PropertyMap configureControl(Frame parent) {
       return studio_.data().getPropertyMapBuilder().build();
    }
-
-   @Override
-   public Dimension getSize() {
-      return new Dimension(1, 1);
-   }
 }

@@ -56,5 +56,7 @@ public abstract class WidgetPlugin extends QuickAccessPlugin {
     * tall. The size of a single cell is the CELL_WIDTH and CELL_HEIGHT
     * values in QuickAccessPlugin.
     */
-   public abstract Dimension getSize();
+   public Dimension getSize() {
+      return new Dimension(1, 1);
+   }
 }

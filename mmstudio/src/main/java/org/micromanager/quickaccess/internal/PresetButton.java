@@ -166,9 +166,4 @@ public class PresetButton extends WidgetPlugin implements SciJavaPlugin {
          .putString("presetName", (String) presetSelector.getSelectedItem())
          .build();
    }
-
-   @Override
-   public Dimension getSize() {
-      return new Dimension(1, 1);
-   }
 }

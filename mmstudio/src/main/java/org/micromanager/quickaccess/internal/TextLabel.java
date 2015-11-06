@@ -24,37 +24,28 @@ import com.bulenkov.iconloader.IconLoader;
 import com.google.common.eventbus.Subscribe;
 
 import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.Insets;
 import java.awt.Frame;
 
-import java.io.File;
-
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 
-import net.miginfocom.swing.MigLayout;
-
-import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.quickaccess.WidgetPlugin;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
-
-import org.micromanager.internal.script.ScriptPanel;
-import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.utils.GUIUtils;
 
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
 /**
- * Implements the "Run script" button logic, which allows the user to run
- * a preselected script file.
+ * Allows you to put a simple text label into the window.
  */
 @Plugin(type = WidgetPlugin.class)
-public class ScriptButton extends WidgetPlugin implements SciJavaPlugin {
+public class TextLabel extends WidgetPlugin implements SciJavaPlugin {
    private Studio studio_;
 
    @Override
@@ -64,12 +55,12 @@ public class ScriptButton extends WidgetPlugin implements SciJavaPlugin {
 
    @Override
    public String getName() {
-      return "Run Script";
+      return "Text Label";
    }
 
    @Override
    public String getHelpText() {
-      return "Run a Beanshell script file.";
+      return "Provides a text label; does nothing else.";
    }
 
    @Override
@@ -84,43 +75,19 @@ public class ScriptButton extends WidgetPlugin implements SciJavaPlugin {
 
    @Override
    public ImageIcon getIcon() {
-      return new ImageIcon(IconLoader.loadFromResource(
-            "/org/micromanager/icons/file@2x.png"));
+      return null;
    }
 
    @Override
    public JComponent createControl(PropertyMap config) {
-      final File file = new File(config.getString("scriptPath", ""));
-      // Size it to mostly fill its frame.
-      JButton result = new JButton(file.getName(),
-            IconLoader.getIcon("/org/micromanager/icons/file.png")) {
-         @Override
-         public Dimension getPreferredSize() {
-            return QuickAccessPlugin.getPaddedCellSize();
-         }
-      };
-      result.setFont(GUIUtils.buttonFont);
-      result.setMargin(new Insets(0, 0, 0, 0));
-      result.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent event) {
-            if (!file.exists()) {
-               studio_.logs().showError("Unable to find script file at " +
-                  file.getAbsolutePath());
-            }
-            else {
-               studio_.scripter().runFile(file);
-            }
-         }
-      });
-      return result;
+      return new JLabel(config.getString("labelText", "Your Label Here"));
    }
 
    @Override
    public PropertyMap configureControl(Frame parent) {
-      File file = FileDialogs.openFile(parent, "Choose Beanshell script",
-            ScriptPanel.BSH_FILE);
+      String text = JOptionPane.showInputDialog(
+            "Please input the label contents:");
       return studio_.data().getPropertyMapBuilder()
-         .putString("scriptPath", file.getAbsolutePath()).build();
+         .putString("labelText", text).build();
    }
 }

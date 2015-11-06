@@ -52,7 +52,11 @@ public abstract class QuickAccessPlugin implements MMPlugin {
    /**
     * Provide an icon to use to represent this plugin when configuring the
     * Quick-Access Window. May be null, in which case a rendering of the
-    * plugin's controls will be used instead.
+    * plugin's controls will be used instead. Note that if you want to use a
+    * null icon here, then your plugin *must* create some kind of sensible
+    * control even when there is no configuration (for WidgetPlugins), as
+    * the icon of the control in the configuration mode is derived from a
+    * non-configured control.
     */
    public abstract ImageIcon getIcon();
 }
