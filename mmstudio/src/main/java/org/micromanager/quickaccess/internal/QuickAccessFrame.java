@@ -47,6 +47,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -81,6 +82,12 @@ public class QuickAccessFrame extends MMFrame {
    private static final String NUM_COLS = "Number of columns in the Quick-Access Window";
    private static final String NUM_ROWS = "Number of rows in the Quick-Access Window";
    private static final String SAVED_CONFIG = "Saved configuration of the Quick-Access Window";
+   private static final String OPEN_MODE = "Mode for deciding whether or not to open on launch.";
+   private static final String WAS_OPEN = "Whether Quick-Access Window was open at end of last session.";
+
+   private static final String OPEN_NEVER = "Never";
+   private static final String OPEN_IF_USED = "If window is not empty";
+   private static final String OPEN_REMEMBER = "If window was open at end of last session";
 
    private static QuickAccessFrame staticInstance_;
    public static void makeFrame(Studio studio) {
@@ -174,7 +181,7 @@ public class QuickAccessFrame extends MMFrame {
     */
    @Subscribe
    public void onStartupComplete(StartupCompleteEvent event) {
-      boolean shouldShow = false;
+      boolean hasContents = false;
       String configStr = studio_.profile().getString(
             QuickAccessFrame.class, SAVED_CONFIG, null);
       if (configStr == null) {
@@ -185,13 +192,19 @@ public class QuickAccessFrame extends MMFrame {
          JSONArray config = new JSONArray(configStr);
          for (int i = 0; i < config.length(); ++i) {
             addControl(controlCellFromJSON(config.getJSONObject(i)));
-            shouldShow = true;
+            hasContents = true;
          }
       }
       catch (JSONException e) {
          studio_.logs().logError(e, "Unable to reconstruct Quick-Access Window from config.");
       }
-      if (shouldShow) {
+
+      boolean wasOpen = studio_.profile().getBoolean(QuickAccessFrame.class,
+            WAS_OPEN, false);
+      String openMode = studio_.profile().getString(QuickAccessFrame.class,
+            OPEN_MODE, OPEN_NEVER);
+      if ((hasContents && openMode.equals(OPEN_IF_USED)) ||
+            (wasOpen && openMode.equals(OPEN_REMEMBER))) {
          setVisible(true);
       }
    }
@@ -207,6 +220,8 @@ public class QuickAccessFrame extends MMFrame {
       }
       studio_.profile().setString(QuickAccessFrame.class, SAVED_CONFIG,
             settings.toString());
+      studio_.profile().setBoolean(QuickAccessFrame.class, WAS_OPEN,
+            isVisible());
    }
 
    /**
@@ -434,6 +449,8 @@ public class QuickAccessFrame extends MMFrame {
       // them.
       private JSpinner colsControl_;
       private JSpinner rowsControl_;
+      // Dropdown menu for selecting the open mode.
+      private JComboBox openSelect_;
 
       public ConfigurationPanel() {
          super(new MigLayout(
@@ -464,7 +481,23 @@ public class QuickAccessFrame extends MMFrame {
                updateSize();
             }
          });
-         subPanel.add(new JLabel("Drag controls into the grid above to add them to the window."), "span, wrap");
+
+         subPanel.add(new JLabel("Open on launch: "));
+         openSelect_ = new JComboBox(new String[] {OPEN_NEVER,
+            OPEN_IF_USED, OPEN_REMEMBER});
+         openSelect_.setSelectedItem(studio_.profile().getString(
+                  QuickAccessFrame.class, OPEN_MODE, OPEN_NEVER));
+         openSelect_.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               String mode = (String) openSelect_.getSelectedItem();
+               studio_.profile().setString(QuickAccessFrame.class, OPEN_MODE,
+                  mode);
+            }
+         });
+         subPanel.add(openSelect_, "span, wrap");
+
+         subPanel.add(new JLabel("Drag controls into the grid above to add them to the window."), "span, wrap, gaptop 10");
 
          add(subPanel, "span, wrap");
 
