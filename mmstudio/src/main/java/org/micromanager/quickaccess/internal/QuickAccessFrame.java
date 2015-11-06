@@ -255,11 +255,17 @@ public class QuickAccessFrame extends MMFrame {
       Rectangle rect = new Rectangle(p.x, p.y, 1, 1);
       if (p != null && plugin != null) {
          PropertyMap config = null;
-         if (plugin instanceof WidgetPlugin) {
-            config = ((WidgetPlugin) plugin).configureControl(this);
+         try {
+            if (plugin instanceof WidgetPlugin) {
+               config = ((WidgetPlugin) plugin).configureControl(this);
+            }
+            ControlCell cell = new ControlCell(plugin, config, rect);
+            addControl(cell);
          }
-         ControlCell cell = new ControlCell(plugin, config, rect);
-         addControl(cell);
+         catch (Exception e) {
+            // Probably because configuration failed.
+            studio_.logs().showError(e, "Unable to add control");
+         }
       }
       QuickAccessFrame.this.repaint();
    }
