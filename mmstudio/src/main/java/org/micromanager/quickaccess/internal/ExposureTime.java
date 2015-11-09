@@ -97,7 +97,7 @@ public class ExposureTime extends WidgetPlugin implements SciJavaPlugin {
       JPanel panel = new JPanel(new MigLayout("flowy, gap 0, insets 0"));
       JLabel label = new JLabel("Exposure (ms):");
       label.setFont(GUIUtils.buttonFont);
-      panel.add(new JLabel("Exposure (ms): "));
+      panel.add(label);
       final JTextField text = new ExposureField(5);
       // Initialize display with current exposure time.
       reloadExposureTime(text);
@@ -178,9 +178,4 @@ public class ExposureTime extends WidgetPlugin implements SciJavaPlugin {
          }
       }
    };
-
-   @Override
-   public Dimension getSize() {
-      return new Dimension(1, 2);
-   }
 }
