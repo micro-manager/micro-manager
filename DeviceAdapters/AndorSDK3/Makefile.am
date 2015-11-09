@@ -20,6 +20,8 @@ libmmgr_dal_AndorSDK3_la_SOURCES = \
 	EventsManager.cpp \
 	EventsManager.h \
 	EventsManagerHelper.h \
+	ExposureProperty.cpp \
+	ExposureProperty.h \
 	FloatProperty.cpp \
 	FloatProperty.h \
 	IntegerProperty.cpp \
