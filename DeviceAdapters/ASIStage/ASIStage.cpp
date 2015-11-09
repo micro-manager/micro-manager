@@ -348,7 +348,7 @@ XYStage::XYStage() :
    answerTimeoutMs_(1000),
    serialOnlySendChanged_(true),
    manualSerialAnswer_(""),
-   post2010firmware_(false)
+   compileYear_(0)
 {
    InitializeDefaultErrorMessages();
 
@@ -404,16 +404,23 @@ int XYStage::Initialize()
    CreateProperty("CompileDate", "", MM::String, true, pAct);
    UpdateProperty("CompileDate");
 
-   // see if firmware date is 201x;
-   // this snippet will need to be updated in 2020 ;-)
+   // get the year of the firmware
    char compile_date[MM::MaxStrLength];
-   post2010firmware_ =  (GetProperty("CompileDate", compile_date) == DEVICE_OK
-               && compile_date[9]=='1');  // i.e. between 2010 and 2019
+   if (GetProperty("CompileDate", compile_date) == DEVICE_OK
+         && strlen(compile_date) >= 11
+         && compile_date[7] == '2'  // must be 20xx
+         && compile_date[8] == '0'
+         && compile_date[9] <= '9'
+         && compile_date[9] >= '0'
+         && compile_date[10] <= '9'
+         && compile_date[10] >= '0') {
+      compileYear_ = 2000 + 10*(compile_date[9]-'0') + (compile_date[10]-'0');
+   }
 
    // if really old firmware then don't get build name
    // build name is really just for diagnostic purposes anyway
    // I think it was present before 2010 but this is easy way
-   if (post2010firmware_)
+   if (compileYear_ >= 2010)
    {
       pAct = new CPropertyAction (this, &XYStage::OnBuildName);
       CreateProperty("BuildName", "", MM::String, true, pAct);
@@ -1097,15 +1104,14 @@ int XYStage::OnWait(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (waitCycles < 0)
          waitCycles = 0;
 
-      // if firmware date is 201x  then use msec/int definition of WaitCycles
+      // if firmware date is 2009+  then use msec/int definition of WaitCycles
       // would be better to parse firmware (8.4 and earlier used unsigned char)
-      // and that transition occurred ~2008 but this is easier than trying to
-      // parse version strings
-      if (post2010firmware_)
+      // and that transition occurred ~2008 but this is easier
+      if (compileYear_ >= 2009)
       {
          // don't enforce upper limit
       }
-      else  // enforce limit for 2009 and earlier firmware or
+      else  // enforce limit for 2008 and earlier firmware or
       {     // if getting compile date wasn't successful
          if (waitCycles > 255)
             waitCycles = 255;
@@ -1846,7 +1852,8 @@ ZStage::ZStage() :
    hasRingBuffer_(false),
    nrEvents_(50),
    maxSpeed_(7.5),
-   motorOn_(true)
+   motorOn_(true),
+   compileYear_(0)
 {
    InitializeDefaultErrorMessages();
 
@@ -1911,12 +1918,29 @@ int ZStage::Initialize()
    stepSizeUm_ = 0.1; //res;
 
    ret = GetPositionSteps(curSteps_);
-   // if command fails, try one more time, 
+   // if command fails, try one more time,
    // other devices may have send crud to this serial port during device detection
-   if (ret != DEVICE_OK) 
+   if (ret != DEVICE_OK)
       ret = GetPositionSteps(curSteps_);
 
    CPropertyAction* pAct;
+
+   pAct = new CPropertyAction (this, &ZStage::OnCompileDate);
+   CreateProperty("CompileDate", "", MM::String, true, pAct);
+   UpdateProperty("CompileDate");
+
+   // get the year of the firmware
+   char compile_date[MM::MaxStrLength];
+   if (GetProperty("CompileDate", compile_date) == DEVICE_OK
+         && strlen(compile_date) >= 11
+         && compile_date[7] == '2'  // must be 20xx
+         && compile_date[8] == '0'
+         && compile_date[9] <= '9'
+         && compile_date[9] >= '0'
+         && compile_date[10] <= '9'
+         && compile_date[10] >= '0') {
+      compileYear_ = 2000 + 10*(compile_date[9]-'0') + (compile_date[10]-'0');
+   }
 
    if (HasRingBuffer())
    {
@@ -2518,6 +2542,28 @@ int ZStage::OnRingBufferSize(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+// Get the compile date of this controller
+int ZStage::OnCompileDate(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      if (initialized_)
+         return DEVICE_OK;
+
+      ostringstream command;
+      command << "CD";
+      string answer;
+      // query the device
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      pProp->Set(answer.c_str());
+
+   }
+   return DEVICE_OK;
+}
+
 // This sets the number of waitcycles
 int ZStage::OnWait(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -2554,17 +2600,15 @@ int ZStage::OnWait(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (waitCycles < 0)
          waitCycles = 0;
 
-      // if firmware date is 201x  then use msec/int definition of WaitCycles
+      // if firmware date is 2009+  then use msec/int definition of WaitCycles
       // would be better to parse firmware (8.4 and earlier used unsigned char)
       // and that transition occurred ~2008 but this is easier than trying to
       // parse version strings
-      char compile_date[MM::MaxStrLength];
-      if (GetProperty("CompileDate", compile_date) == DEVICE_OK
-            && compile_date[9]=='1')  // i.e. between 2010 and 2019
+      if (compileYear_ >= 2009)
       {
          // don't enforce upper limit
       }
-      else  // enforce limit for 2009 and earlier firmware or
+      else  // enforce limit for 2008 and earlier firmware or
       {     // if getting compile date wasn't successful
          if (waitCycles > 255)
             waitCycles = 255;
@@ -3499,7 +3543,8 @@ CRISP::CRISP() :
    ledIntensity_(50),
    na_(0.65),
    waitAfterLock_(1000),
-   answerTimeoutMs_(1000)
+   answerTimeoutMs_(1000),
+   compileYear_(0)
 {
    InitializeDefaultErrorMessages();
 
@@ -3526,6 +3571,7 @@ CRISP::CRISP() :
    AddAllowedValue("Axis", "Z");
    AddAllowedValue("Axis", "P");
    AddAllowedValue("Axis", "F");
+
 }
 
 CRISP::~CRISP()
@@ -3569,6 +3615,23 @@ int CRISP::Initialize()
    AddAllowedValue(g_CRISPState, g_CRISP_RFO);
    AddAllowedValue(g_CRISPState, g_CRISP_S);
 
+   pAct = new CPropertyAction (this, &CRISP::OnCompileDate);
+   CreateProperty("CompileDate", "", MM::String, true, pAct);
+   UpdateProperty("CompileDate");
+
+   // get the year of the firmware
+   char compile_date[MM::MaxStrLength];
+   if (GetProperty("CompileDate", compile_date) == DEVICE_OK
+         && strlen(compile_date) >= 11
+         && compile_date[7] == '2'  // must be 20xx
+         && compile_date[8] == '0'
+         && compile_date[9] <= '9'
+         && compile_date[9] >= '0'
+         && compile_date[10] <= '9'
+         && compile_date[10] >= '0') {
+      compileYear_ = 2000 + 10*(compile_date[9]-'0') + (compile_date[10]-'0');
+   }
+
    pAct = new CPropertyAction(this, &CRISP::OnWaitAfterLock);
    CreateProperty("Wait ms after Lock", "3000", MM::Integer, false, pAct);
 
@@ -3593,6 +3656,17 @@ int CRISP::Initialize()
    pAct = new CPropertyAction(this, &CRISP::OnNumAvg);
    CreateProperty("Number of Averages", "1", MM::Integer, false, pAct);
    SetPropertyLimits("Number of Averages", 0, 10);
+
+   if (compileYear_ >= 2015) {
+      pAct = new CPropertyAction(this, &CRISP::OnNumSkips);
+      CreateProperty("Number of Skips", "0", MM::Integer, false, pAct);
+      SetPropertyLimits("Number of Skips", 0, 100);
+      UpdateProperty("Number of Skips");
+
+      pAct = new CPropertyAction(this, &CRISP::OnInFocusRange);
+      CreateProperty("In Focus Range(um)", "0.1", MM::Float, false, pAct);
+      UpdateProperty("In Focus Range(um)");
+   }
 
    const char* fc = "Obtain Focus Curve";
    pAct = new CPropertyAction(this, &CRISP::OnFocusCurve);
@@ -3973,6 +4047,27 @@ int CRISP::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+// Get the compile date of this controller
+int CRISP::OnCompileDate(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      if (initialized_)
+         return DEVICE_OK;
+
+      ostringstream command;
+      command << "CD";
+      string answer;
+      // query the device
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      pProp->Set(answer.c_str());
+
+   }
+   return DEVICE_OK;
+}
 
 int CRISP::OnFocus(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -4254,6 +4349,54 @@ int CRISP::OnLogAmpAGC(MM::PropertyBase* pProp, MM::ActionType eAct)
          return ret;
       pProp->Set(val);
    }
+   return DEVICE_OK;
+}
+
+int CRISP::OnNumSkips(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      float numSkips;
+      int ret = GetValue("UL Y?", numSkips);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      pProp->Set(numSkips);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long nr;
+      pProp->Get(nr);
+      ostringstream command;
+      command << fixed << "UL Y=" << nr;
+
+      return SetCommand(command.str());
+   }
+
+   return DEVICE_OK;
+}
+
+int CRISP::OnInFocusRange(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      float focusRange;
+      int ret = GetValue("AFLIM Z?", focusRange);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      pProp->Set(focusRange*1000);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double lr;
+      pProp->Get(lr);
+      ostringstream command;
+      command << fixed << "AFLIM Z=" << lr/1000;
+
+      return SetCommand(command.str());
+   }
+
    return DEVICE_OK;
 }
 

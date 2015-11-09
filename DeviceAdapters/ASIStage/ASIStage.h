@@ -161,7 +161,7 @@ private:
    bool stopSignal_;
    bool serialOnlySendChanged_;        // if true the serial command is only sent when it has changed
    std::string manualSerialAnswer_; // last answer received when the SerialCommand property was used
-   bool post2010firmware_;      // true if compile date is 2010 or later
+   unsigned int compileYear_;    // four digit compile year if firmware is year 2000 or newer. 0 for 1999 and older firmware.
 };
 
 class ZStage : public CStageBase<ZStage>, public ASIBase
@@ -209,6 +209,7 @@ public:
    int SendStageSequence();
 
 private:
+   int OnCompileDate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBacklash(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFinishError(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -237,6 +238,7 @@ private:
    long curSteps_;
    double maxSpeed_;
    bool motorOn_;
+   unsigned int compileYear_;    // four digit compile year if firmware is year 2000 or newer. 0 for 1999 and older firmware.
 };
 
 
@@ -313,6 +315,7 @@ public:
    // action interface
    // ----------------
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnCompileDate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAxis(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFocus(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnNA(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -327,6 +330,8 @@ public:
    int OnSNR(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDitherError(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnLogAmpAGC(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnNumSkips(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnInFocusRange(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int GetFocusState(std::string& focusState);
@@ -343,6 +348,7 @@ private:
    std::string focusState_;
    long waitAfterLock_;
    int answerTimeoutMs_;
+   unsigned int compileYear_;    // four digit compile year if firmware is year 2000 or newer. 0 for 1999 and older firmware.
 };
 
 class AZ100Turret : public CStateDeviceBase<AZ100Turret>, public ASIBase
