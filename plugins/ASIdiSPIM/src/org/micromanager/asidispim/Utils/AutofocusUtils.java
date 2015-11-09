@@ -63,6 +63,7 @@ import org.micromanager.utils.ReportingUtils;
 
 /**
  * @author nico
+ * @author Jon
  */
 public class AutofocusUtils {
 
@@ -99,9 +100,9 @@ public class AutofocusUtils {
          piezoPosition_ = piezoPosition;
       }
       
-      public boolean getFocusSuccess() { return focusSuccess_; } 
-      public double getGalvoPosition() { return galvoPosition_; }
-      public double getPiezoPosition() { return piezoPosition_; }
+      public boolean getFocusSuccess()      { return focusSuccess_; } 
+      public double getGalvoFocusPosition() { return galvoPosition_; }
+      public double getPiezoFocusPosition() { return piezoPosition_; }
    }
    
    /**
@@ -141,6 +142,11 @@ public class AutofocusUtils {
 
          @Override
          protected FocusResult doInBackground() throws Exception {
+            
+            if (ASIdiSPIM.getFrame().getAcquisitionPanel().isAcquisitionRequested()) {
+               throw new ASIdiSPIMException("Cannot run autofocus while another"
+                     + " autofocus or acquisition is ongoing.");
+            }
 
             // Score indicating goodness of the fit
             double r2 = 0;

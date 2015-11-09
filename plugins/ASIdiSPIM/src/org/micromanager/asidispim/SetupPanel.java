@@ -101,7 +101,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private final JLabel imagingPiezoPositionLabel_;
    private final JLabel illuminationPiezoPositionLabel_;
    private final JLabel sheetPositionLabel_;
-
+   private AutofocusUtils.FocusResult lastFocusResult_;
 
 
    public SetupPanel(ScriptInterface gui, 
@@ -241,9 +241,10 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       tmp_but.setToolTipText("Autofocus at current piezo position");
       tmp_but.setBackground(Color.green);
       tmp_but.addActionListener(new ActionListener() {
+
          @Override
          public void actionPerformed(ActionEvent e) {
-            autofocus_.runFocus(setupPanel, side_, true,
+            lastFocusResult_ = autofocus_.runFocus(setupPanel, side_, true,
                     ASIdiSPIM.getFrame().getAcquisitionPanel().getSliceTiming(),
                     true, true);
          }
@@ -635,7 +636,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          return;
       }
       double rate = (Double) rateField_.getValue();
-      double newOffset = score.getPiezoPosition() - rate * score.getGalvoPosition();         
+      double newOffset = score.getPiezoFocusPosition() - rate * score.getGalvoFocusPosition();         
       offsetField_.setValue((Double) newOffset);
       ReportingUtils.logMessage("autofocus updated offset for side " + side_ + "; new value is " + newOffset);
    }
@@ -804,16 +805,14 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    }
    
    @Override
-   // if this gets called other than after autofocus may need to change code
+   // currently only called after autofocus, so do autofocus-specific tasks here
+   // if this gets called otherwise in future then will need to change code
    public void refreshSelected() {
-      // currently only called after autofocus, so do an autofocus-specific task here
-      // cannot put this where we call runFocus because it runs on a separate
-      //   asynchronous thread
-      // be sure to update the calibration offset if needed before possibly
-      //   changing beam state using beamPanel_
       if (prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(), 
             Properties.Keys.PLUGIN_AUTOFOCUS_AUTOUPDATE_OFFSET, false)) {
-         updateCalibrationOffset();
+         // cannot put this where we call runFocus because it runs on a separate
+         //   asynchronous thread
+         updateCalibrationOffset(lastFocusResult_);
       }
       cameraPanel_.gotSelected();
       if (beamPanel_.isUpdateOnTab()) {
@@ -856,5 +855,4 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       imagingCenterPosLabel_.setFloat((float)imagingCenterPos_);
    }
 
-   
 }
