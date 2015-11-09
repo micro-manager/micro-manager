@@ -90,12 +90,15 @@ public class MDAButton extends WidgetPlugin implements SciJavaPlugin {
    // We are not actually configurable.
    @Override
    public JComponent createControl(PropertyMap config) {
-      JPanel result = new JPanel(new MigLayout("flowy, insets 0, gap 0"));
-      JButton dialogButton = new JButton("Multi-D Acq",
+      JPanel result = new JPanel(new MigLayout("flowx, insets 0, gap 0"));
+      JButton dialogButton = new JButton("<html>Multi-D<br>Dialog</html>",
             IconLoader.getIcon("/org/micromanager/icons/film.png")) {
          @Override
          public Dimension getPreferredSize() {
-            return QuickAccessPlugin.getPaddedCellSize();
+            // Take up half a cell.
+            Dimension result = QuickAccessPlugin.getPaddedCellSize();
+            result.width = (int) (result.width * .4);
+            return result;
          }
       };
       dialogButton.addActionListener(new ActionListener() {
@@ -109,10 +112,20 @@ public class MDAButton extends WidgetPlugin implements SciJavaPlugin {
       result.add(dialogButton);
 
       // This runs or stops acquisitions.
-      final JButton runButton = new JButton("Acquire!") {
+      // HACK: the empty icon is a requirement for the button to be small
+      // enough to fit into our layout; with no icon, the button is too wide.
+      final JButton runButton = new JButton("Acquire!",
+            IconLoader.getIcon("/org/micromanager/icons/empty.png")) {
          @Override
          public Dimension getPreferredSize() {
-            return QuickAccessPlugin.getPaddedCellSize();
+            // Take up under half a cell.
+            Dimension result = QuickAccessPlugin.getPaddedCellSize();
+            result.width = (int) (result.width * .4);
+            return result;
+         }
+         @Override
+         public Dimension getMaximumSize() {
+            return getPreferredSize();
          }
          @Subscribe
          public void onAcquisitionStart(AcquisitionStartedEvent event) {
@@ -160,10 +173,5 @@ public class MDAButton extends WidgetPlugin implements SciJavaPlugin {
    @Override
    public PropertyMap configureControl(Frame parent) {
       return studio_.data().getPropertyMapBuilder().build();
-   }
-
-   @Override
-   public Dimension getSize() {
-      return new Dimension(1, 2);
    }
 }
