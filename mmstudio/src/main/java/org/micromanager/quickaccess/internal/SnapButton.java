@@ -83,9 +83,11 @@ public class SnapButton extends WidgetPlugin implements SciJavaPlugin {
             "/org/micromanager/icons/camera@2x.png"));
    }
 
-   // We are not actually configurable.
+   // Configuration is just used to determine if we use the "big" button size,
+   // as the hardcoded snap buttons in e.g. the main window and Snap/Live
+   // window don't use that size.
    @Override
-   public JComponent createControl(PropertyMap config) {
+   public JComponent createControl(final PropertyMap config) {
       // Make button size mostly fill the cell.
       JButton result = new JButton("Snap",
             IconLoader.getIcon("/org/micromanager/icons/camera.png")) {
@@ -96,7 +98,10 @@ public class SnapButton extends WidgetPlugin implements SciJavaPlugin {
 
          @Override
          public Dimension getPreferredSize() {
-            return QuickAccessPlugin.getPaddedCellSize();
+            if (config.getBoolean("isBig", false)) {
+               return QuickAccessPlugin.getPaddedCellSize();
+            }
+            return super.getPreferredSize();
          }
       };
       result.setFont(GUIUtils.buttonFont);
@@ -114,6 +119,9 @@ public class SnapButton extends WidgetPlugin implements SciJavaPlugin {
 
    @Override
    public PropertyMap configureControl(Frame parent) {
-      return studio_.data().getPropertyMapBuilder().build();
+      // When used in the Quick-Access window, we use a bigger size than when
+      // used in other contexts.
+      return studio_.data().getPropertyMapBuilder()
+         .putBoolean("isBig", true).build();
    }
 }

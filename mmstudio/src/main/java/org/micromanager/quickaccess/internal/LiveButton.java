@@ -26,14 +26,17 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.Frame;
 import java.awt.Insets;
 
 import javax.swing.ImageIcon;
+import javax.swing.JComponent;
 import javax.swing.JToggleButton;
 
 import org.micromanager.events.LiveModeEvent;
+import org.micromanager.PropertyMap;
 import org.micromanager.quickaccess.QuickAccessPlugin;
-import org.micromanager.quickaccess.ToggleButtonPlugin;
+import org.micromanager.quickaccess.WidgetPlugin;
 import org.micromanager.Studio;
 
 import org.micromanager.internal.utils.GUIUtils;
@@ -44,8 +47,8 @@ import org.scijava.plugin.SciJavaPlugin;
 /**
  * Implements the "Live" button logic.
  */
-@Plugin(type = ToggleButtonPlugin.class)
-public class LiveButton extends ToggleButtonPlugin implements SciJavaPlugin {
+@Plugin(type = WidgetPlugin.class)
+public class LiveButton extends WidgetPlugin implements SciJavaPlugin {
    private Studio studio_;
 
    @Override
@@ -79,8 +82,11 @@ public class LiveButton extends ToggleButtonPlugin implements SciJavaPlugin {
             "/org/micromanager/icons/camera_go@2x.png"));
    }
 
+   // Configuration is just used to determine if we use the "big" button size,
+   // as the hardcoded snap buttons in e.g. the main window and Snap/Live
+   // window don't use that size.
    @Override
-   public JToggleButton createButton() {
+   public JComponent createControl(final PropertyMap config) {
       // HACK: we have to create a "container" for the button that handles
       // events. If we subscribe the button itself to the LiveModeEvent, then
       // Java will complain that the button might not have been initialized,
@@ -92,7 +98,10 @@ public class LiveButton extends ToggleButtonPlugin implements SciJavaPlugin {
             IconLoader.getIcon("/org/micromanager/icons/camera_go.png")) {
          @Override
          public Dimension getPreferredSize() {
-            return QuickAccessPlugin.getPaddedCellSize();
+            if (config.getBoolean("isBig", false)) {
+               return QuickAccessPlugin.getPaddedCellSize();
+            }
+            return super.getPreferredSize();
          }
       };
       result.setFont(GUIUtils.buttonFont);
@@ -116,5 +125,13 @@ public class LiveButton extends ToggleButtonPlugin implements SciJavaPlugin {
          }
       });
       return result;
+   }
+
+   @Override
+   public PropertyMap configureControl(Frame parent) {
+      // When used in the Quick-Access window, we use a bigger size than when
+      // used in other contexts.
+      return studio_.data().getPropertyMapBuilder()
+         .putBoolean("isBig", true).build();
    }
 }
