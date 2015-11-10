@@ -98,7 +98,7 @@ public class PresetButton extends WidgetPlugin implements SciJavaPlugin {
    }
 
    @Override
-   public JComponent createControl(PropertyMap config) {
+   public JComponent createControl(final PropertyMap config) {
       final String group = config.getString("configGroup", null);
       // This preset name is solely for purposes of setting up the icon in
       // configure mode.
@@ -107,11 +107,16 @@ public class PresetButton extends WidgetPlugin implements SciJavaPlugin {
             IconLoader.getIcon("/org/micromanager/icons/color_filter.png")) {
          @Override
          public Dimension getPreferredSize() {
+            // For iconized mode, we want a smaller button.
+            if (config.getString("configGroup") == null) {
+               return super.getPreferredSize();
+            }
             return QuickAccessPlugin.getPaddedCellSize();
          }
       };
       result.setOpaque(true);
-      result.setBackground(new Color(config.getInt("backgroundColor", -1)));
+      result.setBackground(new Color(config.getInt("backgroundColor",
+                  Color.GREEN.getRGB())));
       result.setFont(GUIUtils.buttonFont);
       result.setMargin(new Insets(0, 0, 0, 0));
       result.addActionListener(new ActionListener() {
