@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.swing.JOptionPane;
+
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
@@ -36,6 +38,7 @@ import mmcorej.StrVector;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
+import org.micromanager.asidispim.api.ASIdiSPIMException;
 
 
 /**
@@ -622,16 +625,28 @@ public class Devices {
    /**
     * Reads mapping between Device keys and Micro-manager device names from
     * preferences. Assumes loadedDevices_ contains all available devices, and
-    * sets any no-longer-existing device to null. Changes deviceInfo_.
+    * sets any no-longer-existing device to empty string. Changes deviceInfo_.
+    * @return true if successful, false if problem (cancelled by user)
+    * @throws ASIdiSPIMException 
     */
-   public final void restoreSettings() {
+   public final void restoreSettings() throws ASIdiSPIMException {
       for (Devices.Keys key : Devices.Keys.values()) {
          if (deviceInfo_.get(key).saveInPref) {
             String mmDevice = prefs_.getString(DEVICES_PREF_NODE, key.toString(), "");
+            DeviceData d = deviceInfo_.get(key);
             if (!loadedDevices_.contains(mmDevice)) {
+               if (!mmDevice.equals("")) {
+                  // if the device isn't present now but was last time
+                  if (!MyDialogUtils.getConfirmDialogResult(
+                     "Device " + mmDevice + " which was previously as " + d.displayName
+                     + " is no longer present and will be cleared.  OK to "
+                     + "proceed with plugin launch or cancel?",
+                     JOptionPane.OK_CANCEL_OPTION)) {
+                     throw new ASIdiSPIMException("Missing device, user cancelled");
+                  }
+               }
                mmDevice = "";
             }
-            DeviceData d = deviceInfo_.get(key);
             d.mmDevice = mmDevice;
             deviceInfo_.put(key, d);
          }
@@ -722,8 +737,9 @@ public class Devices {
     * constructor
     * @param gui
     * @param prefs
+    * @throws ASIdiSPIMException 
     */
-   public Devices(ScriptInterface gui, Prefs prefs) {
+   public Devices(ScriptInterface gui, Prefs prefs) throws ASIdiSPIMException {
       prefs_ = prefs;
       core_ = gui.getMMCore();
 

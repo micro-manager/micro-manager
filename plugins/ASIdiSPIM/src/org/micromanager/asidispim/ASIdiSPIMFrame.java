@@ -50,6 +50,7 @@ import org.micromanager.asidispim.Utils.ControllerUtils;
 import static org.micromanager.asidispim.Utils.MyJavaUtils.isMac;
 
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
+import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.internalinterfaces.LiveModeListener; 
 import org.micromanager.utils.MMFrame;
 
@@ -117,8 +118,9 @@ public class ASIdiSPIMFrame extends MMFrame
    /**
     * Creates the ASIdiSPIM plugin frame
     * @param gui - Micro-Manager script interface
+    * @throws ASIdiSPIMException
     */
-   public ASIdiSPIMFrame(ScriptInterface gui)  {
+   public ASIdiSPIMFrame(ScriptInterface gui) throws ASIdiSPIMException {
 
       // create interface objects used by panels
       gui_ = gui;
