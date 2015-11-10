@@ -189,6 +189,21 @@ public class ControllerUtils {
       return true;
    }
    
+   private boolean getSkipScannerWarnings(Devices.Keys galvoDevice) {
+      boolean ignoreMissingScanner = prefs_.getBoolean(
+            MyStrings.PanelNames.SETTINGS.toString(),  
+            Properties.Keys.PREFS_IGNORE_MISSING_SCANNER, false);
+      boolean haveMissingScanner = !devices_.isValidMMDevice(galvoDevice);
+      
+      // checks to prevent hard-to-diagnose other errors
+      if (!ignoreMissingScanner && haveMissingScanner) {
+         MyDialogUtils.showError("Scanner device required; please check Devices tab.");
+            return false;
+      }
+      
+      return ignoreMissingScanner && haveMissingScanner;
+   }
+   
     /**
     * Sets all the controller's properties according to volume settings
     * and otherwise gets controller all ready for acquisition
@@ -207,17 +222,7 @@ public class ControllerUtils {
       Devices.Keys galvoDevice = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side);
       Devices.Keys piezoDevice = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side);
       
-      boolean ignoreMissingScanner = prefs_.getBoolean(
-              MyStrings.PanelNames.SETTINGS.toString(),  
-            Properties.Keys.PREFS_IGNORE_MISSING_SCANNER, false);
-      boolean haveMissingScanner = !devices_.isValidMMDevice(galvoDevice);
-      boolean skipScannerWarnings = ignoreMissingScanner && haveMissingScanner;
-      
-      // checks to prevent hard-to-diagnose other errors
-      if (!ignoreMissingScanner && haveMissingScanner) {
-         MyDialogUtils.showError("Scanner device required; please check Devices tab.");
-            return false;
-      }
+      boolean skipScannerWarnings = getSkipScannerWarnings(galvoDevice);
       
       // if we are changing color slice by slice then set controller to do multiple slices per piezo move
       // otherwise just set to 1 slice per piezo move
@@ -375,15 +380,17 @@ public class ControllerUtils {
          }
       }
       if (settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED) {
-         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_PIEZO_HOME_ENABLE, Properties.Values.NO);
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_PIEZO_HOME_ENABLE,
+               Properties.Values.NO, skipScannerWarnings);
       } else {
-         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_PIEZO_HOME_ENABLE, Properties.Values.YES);
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_PIEZO_HOME_ENABLE,
+               Properties.Values.YES, skipScannerWarnings);
       }
       
       // set interleaved sides flag low unless we are doing interleaved stage scan
       if (settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED) {
          props_.setPropValue(galvoDevice, Properties.Keys.SPIM_INTERLEAVE_SIDES,
-               Properties.Values.YES, false); // make sure to check for errors
+               Properties.Values.YES, skipScannerWarnings); // make sure to check for errors
       } else {
          props_.setPropValue(galvoDevice, Properties.Keys.SPIM_INTERLEAVE_SIDES,
                Properties.Values.NO, true);  // ignore errors b/c older firmware won't have it
@@ -615,15 +622,11 @@ public class ControllerUtils {
       case PIEZO_SLICE_SCAN:
       case SLICE_SCAN_ONLY:
       case NO_SCAN:
-         // only matters which device we trigger if there are two micro-mirror cards
-         //   which hasn't ever been done in practice yet
-         if (isFirstSideA) {
-            props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
-                  Properties.Values.SPIM_RUNNING);
-         } else {
-            props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SPIM_STATE,
-                  Properties.Values.SPIM_RUNNING);
-         }
+         // in actuality only matters which device we trigger if there are
+         //   two micro-mirror cards, which hasn't ever been done in practice yet
+         Devices.Keys galvoDevice = isFirstSideA ? Devices.Keys.GALVOA : Devices.Keys.GALVOB;
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_STATE,
+               Properties.Values.SPIM_RUNNING, getSkipScannerWarnings(galvoDevice));
          break;
       default:
          MyDialogUtils.showError("Unknown acquisition mode");
