@@ -102,6 +102,7 @@ public class SavedMDAButton extends WidgetPlugin implements SciJavaPlugin {
       };
       result.setFont(GUIUtils.buttonFont);
       result.setMargin(new Insets(0, 0, 0, 0));
+      result.setOpaque(false);
       result.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent event) {
