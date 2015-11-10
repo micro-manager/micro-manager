@@ -86,7 +86,7 @@ public class SavedMDAButton extends WidgetPlugin implements SciJavaPlugin {
    @Override
    public ImageIcon getIcon() {
       return new ImageIcon(IconLoader.loadFromResource(
-            "/org/micromanager/icons/file@2x.png"));
+            "/org/micromanager/icons/film_file@2x.png"));
    }
 
    @Override
@@ -94,7 +94,7 @@ public class SavedMDAButton extends WidgetPlugin implements SciJavaPlugin {
       final File file = new File(config.getString("settingsPath", ""));
       // Size it to mostly fill its frame.
       JButton result = new JButton(file.getName(),
-            IconLoader.getIcon("/org/micromanager/icons/file.png")) {
+            IconLoader.getIcon("/org/micromanager/icons/film_file.png")) {
          @Override
          public Dimension getPreferredSize() {
             return QuickAccessPlugin.getPaddedCellSize();
