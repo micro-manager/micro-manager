@@ -75,6 +75,7 @@ public class AutofocusUtils {
    private final StagePositionUpdater posUpdater_;
    private final Positions positions_;
    private final ControllerUtils controller_;
+   private FocusResult lastFocusResult_;
 
    public AutofocusUtils(ScriptInterface gui, Devices devices, Properties props,
            Prefs prefs, Cameras cameras, StagePositionUpdater stagePosUpdater,
@@ -87,6 +88,8 @@ public class AutofocusUtils {
       posUpdater_ = stagePosUpdater;
       positions_ = positions;
       controller_ = controller;
+      lastFocusResult_ = new FocusResult(false, 0.0, 0.0);
+      
    }
 
    public class FocusResult {
@@ -103,6 +106,10 @@ public class AutofocusUtils {
       public boolean getFocusSuccess()      { return focusSuccess_; } 
       public double getGalvoFocusPosition() { return galvoPosition_; }
       public double getPiezoFocusPosition() { return piezoPosition_; }
+   }
+   
+   public FocusResult getLastFocusResult() {
+      return lastFocusResult_;
    }
    
    /**
@@ -499,7 +506,7 @@ public class AutofocusUtils {
                      if (r2 > minimumRSquare
                            && bestGalvoPosition > Math.min(end1, end2)
                            && bestGalvoPosition < Math.max(end1, end2)) {
-                        double focusDelta = Math.abs(galvoCenter-bestGalvoPosition) * calibrationRate;
+                        double focusDelta = Math.abs((galvoCenter-bestGalvoPosition) * calibrationRate);
                         final double maxDelta;
                         if (restoreCameraMode) {  // proxy for "running from setup"
                            if (prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(), 
@@ -548,10 +555,11 @@ public class AutofocusUtils {
                }
             }
             if (isPiezoScan) {
-                return new FocusResult(focusSuccess, galvoPosition, bestPiezoPosition);
+               lastFocusResult_ = new FocusResult(focusSuccess, galvoPosition, bestPiezoPosition); 
             } else {
-               return new FocusResult(focusSuccess, bestGalvoPosition, piezoPosition);               
+               lastFocusResult_ = new FocusResult(focusSuccess, bestGalvoPosition, piezoPosition);
             }
+            return lastFocusResult_;
          }
 
          @Override

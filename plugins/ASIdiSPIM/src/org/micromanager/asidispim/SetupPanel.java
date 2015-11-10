@@ -101,7 +101,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private final JLabel imagingPiezoPositionLabel_;
    private final JLabel illuminationPiezoPositionLabel_;
    private final JLabel sheetPositionLabel_;
-   private AutofocusUtils.FocusResult lastFocusResult_;
 
 
    public SetupPanel(ScriptInterface gui, 
@@ -244,7 +243,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
 
          @Override
          public void actionPerformed(ActionEvent e) {
-            lastFocusResult_ = autofocus_.runFocus(setupPanel, side_, true,
+            autofocus_.runFocus(setupPanel, side_, true,
                     ASIdiSPIM.getFrame().getAcquisitionPanel().getSliceTiming(),
                     true, true);
          }
@@ -806,13 +805,13 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    
    @Override
    // currently only called after autofocus, so do autofocus-specific tasks here
-   // if this gets called otherwise in future then will need to change code
+   // if this gets called otherwise in future then will need to modify flow/code
    public void refreshSelected() {
       if (prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(), 
             Properties.Keys.PLUGIN_AUTOFOCUS_AUTOUPDATE_OFFSET, false)) {
-         // cannot put this where we call runFocus because it runs on a separate
-         //   asynchronous thread
-         updateCalibrationOffset(lastFocusResult_);
+         // cannot put this where we call runFocus because it runs on a
+         //   separate asynchronous thread
+         updateCalibrationOffset(autofocus_.getLastFocusResult());
       }
       cameraPanel_.gotSelected();
       if (beamPanel_.isUpdateOnTab()) {
