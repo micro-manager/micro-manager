@@ -462,14 +462,13 @@ public class QuickAccessFrame extends MMFrame {
       private JComboBox openSelect_;
 
       public ConfigurationPanel() {
-         super(new MigLayout(
-                  String.format("flowx, wrap %d", numCols_)));
+         super(new MigLayout("flowy, insets 0, gap 0"));
          setBorder(BorderFactory.createLoweredBevelBorder());
 
          // Add controls for setting rows/columns.
          // It really bugs me how redundant this code is. Java!
          JPanel subPanel = new JPanel(new MigLayout("flowx"));
-         subPanel.add(new JLabel("Columns: "));
+         subPanel.add(new JLabel("Columns: "), "split 4, span");
          colsControl_ = new JSpinner(
                new SpinnerNumberModel(numCols_, 1, 99, 1));
          subPanel.add(colsControl_);
@@ -510,6 +509,9 @@ public class QuickAccessFrame extends MMFrame {
 
          add(subPanel, "span, wrap");
 
+         JPanel buttonsPanel = new JPanel(
+               new MigLayout("flowx, wrap " + numCols_));
+
          // Populate the panel with icons corresponding to controls we can
          // provide. List them in alphabetical order.
          HashMap<String, QuickAccessPlugin> plugins = studio_.plugins().getQuickAccessPlugins();
@@ -530,10 +532,12 @@ public class QuickAccessFrame extends MMFrame {
             JLabel name = new JLabel(plugins.get(key).getName());
             name.setFont(GUIUtils.buttonFont);
             iconPanel.add(name, "alignx center");
-            add(iconPanel, String.format("alignx center, w %d!, h %d!",
-                     QuickAccessPlugin.CELL_WIDTH,
-                     QuickAccessPlugin.CELL_HEIGHT));
+            buttonsPanel.add(iconPanel,
+                  String.format("alignx center, w %d!, h %d!",
+                  QuickAccessPlugin.CELL_WIDTH,
+                  QuickAccessPlugin.CELL_HEIGHT));
          }
+         add(buttonsPanel, "span, wrap");
       }
 
       /**
