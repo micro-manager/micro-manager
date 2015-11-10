@@ -23,17 +23,22 @@ import com.bulenkov.iconloader.IconLoader;
 
 import com.google.common.eventbus.Subscribe;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.Insets;
 import java.awt.Frame;
 
 import java.util.Arrays;
 
+import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -42,7 +47,9 @@ import javax.swing.JPanel;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.micromanager.display.internal.RememberedChannelSettings;
 import org.micromanager.events.LiveModeEvent;
+import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.quickaccess.WidgetPlugin;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
@@ -97,7 +104,14 @@ public class PresetButton extends WidgetPlugin implements SciJavaPlugin {
       // configure mode.
       final String preset = config.getString("presetName", "GFP");
       JButton result = new JButton(preset,
-            IconLoader.getIcon("/org/micromanager/icons/color_filter.png"));
+            IconLoader.getIcon("/org/micromanager/icons/color_filter.png")) {
+         @Override
+         public Dimension getPreferredSize() {
+            return QuickAccessPlugin.getPaddedCellSize();
+         }
+      };
+      result.setOpaque(true);
+      result.setBackground(new Color(config.getInt("backgroundColor", -1)));
       result.setFont(GUIUtils.buttonFont);
       result.setMargin(new Insets(0, 0, 0, 0));
       result.addActionListener(new ActionListener() {
@@ -117,18 +131,22 @@ public class PresetButton extends WidgetPlugin implements SciJavaPlugin {
    }
 
    @Override
-   public PropertyMap configureControl(Frame parent) {
-      JPanel contents = new JPanel(new MigLayout("flowy"));
-      contents.add(new JLabel("Select which configuration group and preset to set when the button is clicked."));
+   public PropertyMap configureControl(final Frame parent) {
+      JPanel contents = new JPanel(new MigLayout("flowx"));
+      contents.add(new JLabel("Select which configuration group and preset to set when the button is clicked."), "span, wrap");
 
-      contents.add(new JLabel("Config group: "), "split 2, flowx");
+      // Changing the dropdowns may change the color of this label, so we need
+      // to create it now before we specify dropdown behavior.
+      final JLabel pickerLabel = new JLabel();
+
+      contents.add(new JLabel("Config group: "));
       final String[] groups = studio_.core().getAvailableConfigGroups().toArray();
       final JComboBox groupSelector = new JComboBox(groups);
-      contents.add(groupSelector);
+      contents.add(groupSelector, "wrap");
 
-      contents.add(new JLabel("Config preset: "), "split 2, flowx");
+      contents.add(new JLabel("Config preset: "));
       final JComboBox presetSelector = new JComboBox();
-      contents.add(presetSelector);
+      contents.add(presetSelector, "wrap");
 
       groupSelector.addActionListener(new ActionListener() {
          @Override
@@ -148,15 +166,58 @@ public class PresetButton extends WidgetPlugin implements SciJavaPlugin {
             catch (Exception e) {
                studio_.logs().logError(e, "Invalid configuration group name " + group);
             }
+            // Try to get a new color for the color picker. This won't do
+            // anything useful when not dealing with channel groups, in which
+            // case the color will remain the same.
+            pickerLabel.setBackground(
+               RememberedChannelSettings.getColorForChannel(
+                  (String) groupSelector.getSelectedItem(),
+                  (String) presetSelector.getSelectedItem(),
+                  pickerLabel.getBackground()));
+         }
+      });
+
+      presetSelector.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent event) {
+            // Try to get a new color for the color picker. This won't do
+            // anything useful when not dealing with channel groups, in which
+            // case the color will remain the same.
+            pickerLabel.setBackground(
+               RememberedChannelSettings.getColorForChannel(
+                  (String) presetSelector.getSelectedItem(),
+                  (String) groupSelector.getSelectedItem(),
+                  pickerLabel.getBackground()));
          }
       });
       // Default to the Channel group, if available.
       for (String group : groups) {
          if (group.toLowerCase().contains("channel")) {
             groupSelector.setSelectedItem(group);
+            try {
+               presetSelector.setSelectedItem(studio_.core().getCurrentConfig(group));
+            }
+            catch (Exception e) {
+               studio_.logs().logError(e, "Unable to get config for group " + group);
+            }
             break;
          }
       }
+
+      contents.add(new JLabel("Background color: "));
+      pickerLabel.setOpaque(true);
+      pickerLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
+      pickerLabel.setMinimumSize(new Dimension(20, 20));
+      pickerLabel.addMouseListener(new MouseAdapter() {
+         @Override
+         public void mouseClicked(MouseEvent e) {
+            Color newColor = JColorChooser.showDialog(parent,
+               "Choose a background color for this preset.",
+               pickerLabel.getBackground());
+            pickerLabel.setBackground(newColor);
+         }
+      });
+      contents.add(pickerLabel, "wrap");
 
       JOptionPane.showMessageDialog(parent, contents,
             "Configure presets button", JOptionPane.PLAIN_MESSAGE);
@@ -164,6 +225,7 @@ public class PresetButton extends WidgetPlugin implements SciJavaPlugin {
       return studio_.data().getPropertyMapBuilder()
          .putString("configGroup", (String) groupSelector.getSelectedItem())
          .putString("presetName", (String) presetSelector.getSelectedItem())
+         .putInt("backgroundColor", pickerLabel.getBackground().getRGB())
          .build();
    }
 }
