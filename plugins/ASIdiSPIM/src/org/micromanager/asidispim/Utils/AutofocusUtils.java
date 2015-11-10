@@ -134,7 +134,8 @@ public class AutofocusUtils {
     * @param restoreCameraMode - After autofocus, set camera trigger back to internal or not
     * @param runAsynchronously - whether or not to run the function asynchronously (in own thread)
     *          (both these are true when run from Setup panel and false when run during acquisition)
-    * @return R-square for Gaussian fit to the focus data
+    * @return FocusResult object.  Will be bogus  if runAsynchronously is true, but in that case the
+    *          actual result can be accessed via getLastFocusResult() in the caller's refreshSelected() method
     *
     */
    public FocusResult runFocus(
@@ -226,7 +227,6 @@ public class AutofocusUtils {
             
             String acqModeString = props_.getPropValueString(Devices.Keys.PLUGIN, Properties.Keys.AUTOFOCUS_ACQUSITION_MODE);
             final boolean isPiezoScan = acqModeString.equals("Fix slice, sweep piezo");
-            boolean focusSuccess = false;
             
             posUpdater_.pauseUpdates(true);
             
@@ -456,6 +456,11 @@ public class AutofocusUtils {
             } catch (Exception ex) {
                throw new ASIdiSPIMException(ex);
             } finally {
+               
+               // set result to be a dummy value for now; we will overwrite it later
+               //  unless we encounter an exception in the meantime
+               lastFocusResult_ = new FocusResult(false, galvoPosition, piezoPosition);
+               
                try {
                   caller.setCursor(Cursor.getDefaultCursor());
 
@@ -481,7 +486,7 @@ public class AutofocusUtils {
                   // R^2 value of fit must be greater than the minimum specified
                   // if for some reason we were unsuccessful then restore to original position
                   // don't bother moving anything if we are doing this during acquisition
-                  focusSuccess = false;
+                  boolean focusSuccess = false;
                   if (isPiezoScan) {
                      final double end1 = piezoStart + 0.1*piezoRange;
                      final double end2 = piezoStart + 0.9*piezoRange;
@@ -500,6 +505,7 @@ public class AutofocusUtils {
                         }
                         focusSuccess = (focusDelta <= maxDelta);
                      }
+                     lastFocusResult_ = new FocusResult(focusSuccess, galvoPosition, bestPiezoPosition);
                   } else { // slice scan
                      final double end1 = galvoStart + 0.1*galvoRange;
                      final double end2 = galvoStart + 0.9*galvoRange;
@@ -523,6 +529,7 @@ public class AutofocusUtils {
                         }
                         focusSuccess = (focusDelta <= maxDelta);
                      }
+                     lastFocusResult_ = new FocusResult(focusSuccess, bestGalvoPosition, piezoPosition);
                   }
                   
                   // if we are in Setup panel, move to either the best-focus position (if found)
@@ -553,11 +560,6 @@ public class AutofocusUtils {
                } catch (Exception ex) {
                   throw new ASIdiSPIMException(ex, "Error while restoring hardware state after autofocus.");
                }
-            }
-            if (isPiezoScan) {
-               lastFocusResult_ = new FocusResult(focusSuccess, galvoPosition, bestPiezoPosition); 
-            } else {
-               lastFocusResult_ = new FocusResult(focusSuccess, bestGalvoPosition, piezoPosition);
             }
             return lastFocusResult_;
          }
