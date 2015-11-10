@@ -81,8 +81,8 @@ public class ToolsMenu {
                  }
               });
 
-      GUIUtils.addMenuItem(toolsMenu_, "Quick Access (Beta)...",
-              "Show the Quick-Access Window, for easy access to commonly-used controls.",
+      GUIUtils.addMenuItem(toolsMenu_, "Quick Access Panel (Beta)...",
+              "Show the Quick Access Panel, for easy access to commonly-used controls.",
               new Runnable() {
                  @Override
                  public void run() {
