@@ -23,6 +23,7 @@ import com.bulenkov.iconloader.IconLoader;
 
 import com.google.common.eventbus.Subscribe;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -32,6 +33,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.awt.Point;
@@ -75,15 +77,15 @@ import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 
 /**
- * This class shows the Quick-Access Window for frequently-used controls.
+ * This class shows the Quick Access Window for frequently-used controls.
  */
 public class QuickAccessFrame extends MMFrame {
    // Profile keys.
-   private static final String NUM_COLS = "Number of columns in the Quick-Access Window";
-   private static final String NUM_ROWS = "Number of rows in the Quick-Access Window";
-   private static final String SAVED_CONFIG = "Saved configuration of the Quick-Access Window";
+   private static final String NUM_COLS = "Number of columns in the Quick Access Window";
+   private static final String NUM_ROWS = "Number of rows in the Quick Access Window";
+   private static final String SAVED_CONFIG = "Saved configuration of the Quick Access Window";
    private static final String OPEN_MODE = "Mode for deciding whether or not to open on launch.";
-   private static final String WAS_OPEN = "Whether Quick-Access Window was open at end of last session.";
+   private static final String WAS_OPEN = "Whether Quick Access Window was open at end of last session.";
 
    private static final String OPEN_NEVER = "Never";
    private static final String OPEN_IF_USED = "If window is not empty";
@@ -96,7 +98,7 @@ public class QuickAccessFrame extends MMFrame {
    }
 
    /**
-    * Show the Quick-Access Window, creating it if it does not already exist.
+    * Show the Quick Access Window, creating it if it does not already exist.
     */
    public static void showFrame(Studio studio) {
       staticInstance_.setVisible(true);
@@ -106,14 +108,16 @@ public class QuickAccessFrame extends MMFrame {
    // Holds everything.
    private JPanel contentsPanel_;
    // Holds the active controls.
-   private JPanel controlsPanel_;
+   private GridPanel controlsPanel_;
    // Holds icons representing the current active controls.
-   private JPanel configuringControlsPanel_;
+   private GridPanel configuringControlsPanel_;
    // Holds the "source" icons that can be added to the active controls, as
    // well as the rows/columns configuration fields.
    private JPanel configurePanel_;
    // Switches between normal and configure modes.
    private JToggleButton configureButton_;
+   // List of visual dividers in the grid.
+   private HashSet<Divider> dividers_;
 
    // All of the controls we have in the grid.
    private HashSet<ControlCell> controls_;
@@ -132,10 +136,11 @@ public class QuickAccessFrame extends MMFrame {
 
    public QuickAccessFrame(Studio studio) {
       setAlwaysOnTop(true);
-      setTitle("Quick-Access Tools");
+      setTitle("Quick Access Tools");
 
       studio_ = studio;
       controls_ = new HashSet<ControlCell>();
+      dividers_ = new HashSet<Divider>();
 
       numCols_ = studio_.profile().getInt(QuickAccessFrame.class,
             NUM_COLS, 3);
@@ -192,14 +197,19 @@ public class QuickAccessFrame extends MMFrame {
          return;
       }
       try {
-         JSONArray config = new JSONArray(configStr);
-         for (int i = 0; i < config.length(); ++i) {
-            addControl(controlCellFromJSON(config.getJSONObject(i)));
+         JSONObject config = new JSONObject(configStr);
+         JSONArray cells = config.getJSONArray("cells");
+         for (int i = 0; i < cells.length(); ++i) {
+            addControl(controlCellFromJSON(cells.getJSONObject(i)));
             hasContents = true;
+         }
+         JSONArray dividers = config.getJSONArray("dividers");
+         for (int i = 0; i < dividers.length(); ++i) {
+            dividers_.add(dividerFromJSON(dividers.getJSONObject(i)));
          }
       }
       catch (JSONException e) {
-         studio_.logs().logError(e, "Unable to reconstruct Quick-Access Window from config.");
+         studio_.logs().logError(e, "Unable to reconstruct Quick Access Window from config.");
       }
 
       boolean wasOpen = studio_.profile().getBoolean(QuickAccessFrame.class,
@@ -217,14 +227,26 @@ public class QuickAccessFrame extends MMFrame {
     */
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
-      JSONArray settings = new JSONArray();
-      for (ControlCell cell : controls_) {
-         settings.put(cell.toJSON());
+      try {
+         JSONObject settings = new JSONObject();
+         JSONArray cells = new JSONArray();
+         for (ControlCell cell : controls_) {
+            cells.put(cell.toJSON());
+         }
+         settings.put("cells", cells);
+         JSONArray dividers = new JSONArray();
+         for (Divider divider : dividers_) {
+            dividers.put(divider.toJSON());
+         }
+         settings.put("dividers", dividers);
+         studio_.profile().setString(QuickAccessFrame.class, SAVED_CONFIG,
+               settings.toString());
+         studio_.profile().setBoolean(QuickAccessFrame.class, WAS_OPEN,
+               isVisible());
       }
-      studio_.profile().setString(QuickAccessFrame.class, SAVED_CONFIG,
-            settings.toString());
-      studio_.profile().setBoolean(QuickAccessFrame.class, WAS_OPEN,
-            isVisible());
+      catch (JSONException e) {
+         studio_.logs().logError(e, "Error saving Quick Access Window's settings");
+      }
    }
 
    /**
@@ -386,6 +408,14 @@ public class QuickAccessFrame extends MMFrame {
    }
 
    /**
+    * Update the current mouse coordinates based on the provided MouseEvent.
+    */
+   private void updateMouse(MouseEvent event) {
+      mouseX_ = event.getXOnScreen() - getLocation().x - getInsets().left;
+      mouseY_ = event.getYOnScreen() - getLocation().y - getInsets().top;
+   }
+
+   /**
     * These panels have a fixed size based on the number of rows/columns.
     * Depending on the boolean isConfigurePanel_, they may also draw a
     * semitransparent grid over their contents (which in turn are expected to
@@ -393,15 +423,86 @@ public class QuickAccessFrame extends MMFrame {
     */
    private class GridPanel extends JPanel {
       private boolean isConfigurePanel_;
+      // Current divider under the mouse, for drawing.
+      private Divider curDivider_;
       public GridPanel(boolean isConfigurePanel) {
          super(new SparseGridLayout(QuickAccessPlugin.CELL_WIDTH,
                   QuickAccessPlugin.CELL_HEIGHT));
          isConfigurePanel_ = isConfigurePanel;
+         if (isConfigurePanel_) {
+            // We need to listen for mouse events that aren't claimed by our
+            // icons, so that the user can toggle dividers on and off.
+            addMouseListener(new MouseAdapter() {
+               @Override
+               public void mousePressed(MouseEvent e) {
+                  // Did the user click on a divider? If so, toggle it on/off.
+                  Divider divider = getDivider(e);
+                  if (divider != null) {
+                     if (dividers_.contains(divider)) {
+                        dividers_.remove(divider);
+                     }
+                     else {
+                        dividers_.add(divider);
+                     }
+                     GridPanel.this.repaint();
+                  }
+               }
+            });
+            addMouseMotionListener(new MouseAdapter() {
+               @Override
+               public void mouseMoved(MouseEvent e) {
+                  curDivider_ = getDivider(e);
+                  GridPanel.this.repaint();
+               }
+               @Override
+               public void mouseExited(MouseEvent e) {
+                  curDivider_ = null;
+                  GridPanel.this.repaint();
+               }
+            });
+         }
+      }
+
+      /**
+       * Return the Divider that is closest to the mouse event, or null if
+       * no divider is close enough.
+       */
+      private Divider getDivider(MouseEvent e) {
+         // Find distance to closest column/row, within 10px.
+         int columnDist = (e.getX() + 10) % QuickAccessPlugin.CELL_WIDTH;
+         int rowDist = (e.getY() + 10) % QuickAccessPlugin.CELL_HEIGHT;
+         if (columnDist > 20 && rowDist > 20) {
+            // Too far from any grid line.
+            return null;
+         }
+         int column = (e.getX() + 10) / QuickAccessPlugin.CELL_WIDTH;
+         int row = (e.getY() + 10) / QuickAccessPlugin.CELL_HEIGHT;
+         if (columnDist < rowDist) {
+            // Horizontal divider.
+            return new Divider(new Point(column, row),
+                  new Point(column, row + 1));
+         }
+         else {
+            // Vertical divider.
+            return new Divider(new Point(column, row),
+                  new Point(column + 1, row));
+         }
       }
 
       @Override
       public void paint(Graphics g) {
          super.paint(g);
+         int cellWidth = QuickAccessPlugin.CELL_WIDTH;
+         int cellHeight = QuickAccessPlugin.CELL_HEIGHT;
+
+         // Draw any dividers.
+         ((Graphics2D) g).setStroke(new BasicStroke(4));
+         g.setColor(Color.BLACK);
+         for (Divider divider : dividers_) {
+            divider.paint(g);
+         }
+         ((Graphics2D) g).setStroke(new BasicStroke(1));
+
          if (!isConfigurePanel_ || !configureButton_.isSelected()) {
             // We aren't in configure mode; just draw normally.
             return;
@@ -410,8 +511,8 @@ public class QuickAccessFrame extends MMFrame {
          int width = getSize().width;
          int height = getSize().height;
          g.setColor(new Color(200, 255, 200, 128));
-         g.fillRect(0, 0, numCols_ * QuickAccessPlugin.CELL_WIDTH,
-               numRows_ * QuickAccessPlugin.CELL_HEIGHT);
+         g.fillRect(0, 0, numCols_ * cellWidth,
+               numRows_ * cellHeight);
          if (draggedIcon_ != null) {
             // Draw the cells the icon would go into in a highlighted color,
             // only if it would fit.
@@ -422,24 +523,29 @@ public class QuickAccessFrame extends MMFrame {
                      draggedIcon_.getSize().height);
                if (canFitRect(rect, draggedIcon_.parent_)) {
                   g.setColor(new Color(255, 255, 150, 128));
-                  g.fillRect(p.x * QuickAccessPlugin.CELL_WIDTH,
-                        p.y * QuickAccessPlugin.CELL_HEIGHT,
-                        QuickAccessPlugin.CELL_WIDTH * rect.width,
-                        QuickAccessPlugin.CELL_HEIGHT * rect.height);
+                  g.fillRect(p.x * cellWidth, p.y * cellHeight,
+                        cellWidth * rect.width, cellHeight * rect.height);
                }
             }
          }
          // Draw the grid lines.
          g.setColor(Color.BLACK);
          for (int i = 0; i < numCols_ + 1; ++i) {
-            g.drawLine(i * QuickAccessPlugin.CELL_WIDTH, 0,
-                  i * QuickAccessPlugin.CELL_WIDTH,
-                  QuickAccessPlugin.CELL_HEIGHT * numRows_);
+            g.drawLine(i * cellWidth, 0,
+                  i * cellWidth,
+                  cellHeight * numRows_);
          }
          for (int i = 0; i < numRows_ + 1; ++i) {
-            g.drawLine(0, i * QuickAccessPlugin.CELL_HEIGHT,
-                  numCols_ * QuickAccessPlugin.CELL_WIDTH,
-                  i * QuickAccessPlugin.CELL_HEIGHT);
+            g.drawLine(0, i * cellHeight, numCols_ * cellWidth, i * cellHeight);
+         }
+         // Draw the current divider under the mouse, if any. Red if we'd
+         // remove it, blue if we'd add it.
+         if (curDivider_ != null) {
+            g.setColor(
+                  dividers_.contains(curDivider_) ? Color.RED : Color.BLUE);
+            ((Graphics2D) g).setStroke(new BasicStroke(4));
+            curDivider_.paint(g);
+            ((Graphics2D) g).setStroke(new BasicStroke(1));
          }
       }
 
@@ -505,7 +611,8 @@ public class QuickAccessFrame extends MMFrame {
          });
          subPanel.add(openSelect_, "span, wrap");
 
-         subPanel.add(new JLabel("Drag controls into the grid above to add them to the window."), "span, wrap, gaptop 10");
+         subPanel.add(new JLabel("Drag controls into the grid above to add them to the panel."), "span, wrap, gaptop 10");
+         subPanel.add(new JLabel("Click on grid lines to add or remove dividers."), "span, wrap");
 
          add(subPanel, "span, wrap");
 
@@ -594,23 +701,17 @@ public class QuickAccessFrame extends MMFrame {
          icon_ = new DraggableIcon(control, null, null, this, rect_.getSize());
       }
 
-      public JSONObject toJSON() {
-         try {
-            JSONObject result = new JSONObject();
-            result.put("pluginName", plugin_.getClass().getName());
-            if (config_ != null) {
-               result.put("config", ((DefaultPropertyMap) config_).toJSON());
-            }
-            result.put("rectX", rect_.x);
-            result.put("rectY", rect_.y);
-            result.put("rectWidth", rect_.width);
-            result.put("rectHeight", rect_.height);
-            return result;
+      public JSONObject toJSON() throws JSONException {
+         JSONObject result = new JSONObject();
+         result.put("pluginName", plugin_.getClass().getName());
+         if (config_ != null) {
+            result.put("config", ((DefaultPropertyMap) config_).toJSON());
          }
-         catch (JSONException e) {
-            studio_.logs().logError(e, "Error serializing ControlCell");
-            return null;
-         }
+         result.put("rectX", rect_.x);
+         result.put("rectY", rect_.y);
+         result.put("rectWidth", rect_.width);
+         result.put("rectHeight", rect_.height);
+         return result;
       }
 
       @Override
@@ -688,7 +789,7 @@ public class QuickAccessFrame extends MMFrame {
                icon_ = new ImageIcon(render);
             }
             catch (Exception e) {
-               studio_.logs().showError(e, "Unable to create icon for Quick-Access Plugin " + plugin.getName());
+               studio_.logs().showError(e, "Unable to create icon for Quick Access Plugin " + plugin.getName());
             }
          }
          setIcon(icon_);
@@ -706,14 +807,7 @@ public class QuickAccessFrame extends MMFrame {
             }
             @Override
             public void mouseDragged(MouseEvent e) {
-               // We need to get the mouse coordinates with respect to the
-               // upper-left corner of the window's content pane.
-               Window parent = SwingUtilities.getWindowAncestor(
-                     DraggableIcon.this);
-               mouseX_ = e.getXOnScreen() - parent.getLocation().x -
-                  parent.getInsets().left;
-               mouseY_ = e.getYOnScreen() - parent.getLocation().y -
-                  parent.getInsets().top;
+               updateMouse(e);
                QuickAccessFrame.this.repaint();
             }
             @Override
@@ -758,5 +852,90 @@ public class QuickAccessFrame extends MMFrame {
          }
          return new Dimension(parent_.rect_.width, parent_.rect_.height);
       }
+   }
+
+   /**
+    * Simple class representing a pair of Points in the grid that have been
+    * highlighted to create a visual divider.
+    */
+   private class Divider {
+      public Point p1_;
+      public Point p2_;
+
+      public Divider(Point p1, Point p2) {
+         p1_ = p1;
+         p2_ = p2;
+      }
+
+      public void paint(Graphics g) {
+         // HACK: back off from the edges slightly, so the line doesn't
+         // get clipped to thinner than it should be.
+         int cellWidth = QuickAccessPlugin.CELL_WIDTH;
+         int cellHeight = QuickAccessPlugin.CELL_HEIGHT;
+         int x1 = clampX(p1_.x * cellWidth);
+         int x2 = clampX(p2_.x * cellWidth);
+         int y1 = clampY(p1_.y * cellHeight);
+         int y2 = clampY(p2_.y * cellHeight);
+         g.drawLine(x1, y1, x2, y2);
+      }
+
+      /**
+       * Ensure the given X value is in-bounds for drawing.
+       */
+      private int clampX(int x) {
+         return Math.max(2,
+               Math.min(numCols_ * QuickAccessPlugin.CELL_WIDTH - 2, x));
+      }
+
+      /**
+       * As above, but for Y.
+       */
+      private int clampY(int y) {
+         return Math.max(2,
+               Math.min(numRows_ * QuickAccessPlugin.CELL_HEIGHT - 2, y));
+      }
+
+      public JSONObject toJSON() throws JSONException {
+         JSONObject result = new JSONObject();
+         result.put("x1", p1_.x);
+         result.put("y1", p1_.y);
+         result.put("x2", p2_.x);
+         result.put("y2", p2_.y);
+         return result;
+      }
+
+      /**
+       * We want any two identical Dividers to hash the same in the dividers_
+       * structure, hence we override hashCode and equals.
+       */
+      @Override
+      public int hashCode() {
+         // Allows for 100x100 grids without any hash collisions.
+         return p1_.x + p2_.x * 100 + p1_.y * 10000 + p2_.y * 1000000;
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+         if (!(obj instanceof Divider)) {
+            return false;
+         }
+         Divider alt = (Divider) obj;
+         return (p1_.x == alt.p1_.x && p1_.y == alt.p1_.y &&
+               p2_.x == alt.p2_.x && p2_.y == alt.p2_.y);
+      }
+
+      @Override
+      public String toString() {
+         return String.format("<Divider from (%d, %d) to (%d, %d)>",
+               p1_.x, p1_.y, p2_.x, p2_.y);
+      }
+   }
+
+   private Divider dividerFromJSON(JSONObject json) throws JSONException {
+      int x1 = json.getInt("x1");
+      int y1 = json.getInt("y1");
+      int x2 = json.getInt("x2");
+      int y2 = json.getInt("y2");
+      return new Divider(new Point(x1, y1), new Point(x2, y2));
    }
 }
