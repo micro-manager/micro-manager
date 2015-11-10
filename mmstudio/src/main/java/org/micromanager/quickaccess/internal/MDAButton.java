@@ -91,7 +91,7 @@ public class MDAButton extends WidgetPlugin implements SciJavaPlugin {
    @Override
    public JComponent createControl(PropertyMap config) {
       JPanel result = new JPanel(new MigLayout("flowx, insets 0, gap 0"));
-      JButton dialogButton = new JButton("<html>Multi-D<br>Dialog</html>",
+      JButton dialogButton = new JButton("<html>Multi-D<br>Acq.</html>",
             IconLoader.getIcon("/org/micromanager/icons/film.png")) {
          @Override
          public Dimension getPreferredSize() {
