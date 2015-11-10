@@ -380,8 +380,8 @@ public class QuickAccessFrame extends MMFrame {
       // Show/hide controls depending on if they're in-bounds.
       for (ControlCell control : controls_) {
          Rectangle r = control.rect_;
-         boolean isVisible = (r.x + r.width < numCols_ &&
-               r.y + r.height < numRows_);
+         boolean isVisible = (r.x + r.width <= numCols_ &&
+               r.y + r.height <= numRows_);
          control.widget_.setVisible(isVisible);
          control.icon_.setVisible(isVisible);
       }
