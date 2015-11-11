@@ -84,6 +84,7 @@ private:
    int GetError(bool& error, std::string& errorCode);
    int WaitForBusy();
    int GetValue(const char* cmd, double& val);
+   int GetControllerInfo();
    std::string MakeCommand(const char* cmd);
 
    std::string port_;

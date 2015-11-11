@@ -70,8 +70,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // NewportZStage
 
 NewportZStage::NewportZStage() :
-   //port_("Undefined"),   ;HCA 2013-02-15
-   port_("COM5"),         //need to recompile with COM5 listed.
+   port_("Undefined"),
    stepSizeUm_(1),
    conversionFactor_(1000.0),    // divide request by this number
                  // to accomodate for units in mm rather than microns
@@ -137,6 +136,11 @@ int NewportZStage::Initialize()
    if (ret != DEVICE_OK)
       return ret;
    LogMessage(answer.c_str(), true);
+
+   // Controller info only reads maximum velocity
+   ret = GetControllerInfo();
+   if (ret != DEVICE_OK)
+      return ret;
 
    // Send the "homing" command to init stage
    ret = SetOrigin();
@@ -462,6 +466,38 @@ int NewportZStage::GetVelocity(double& velocity)
    LogMessage(os.str().c_str());
 
    return DEVICE_OK;
+}
+
+
+/**
+ * Asks the controller for all its axis information
+ * Now only used to read the maximum velocity
+ * Can be extended in the future to store more information about the controller
+ * and drive
+ */
+int NewportZStage::GetControllerInfo()
+{
+   // length of controller address as returned by controller in chars
+   int offset = 1;
+   if (cAddress_ > 9)
+      offset = 2;
+   const char* command = MakeCommand("ZT").c_str();
+   int ret = SendSerialCommand(port_.c_str(), command, "\r\n");
+   if (ret != DEVICE_OK)
+      return ret;
+   std::string answer;
+   bool done = false;
+   while (ret == DEVICE_OK && !done) { // keep on reading until we time out
+      ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+      LogMessage(answer.c_str(), true);
+      if (answer.substr(offset,2) == "VA") {
+         velocityUpperLimit_ = atof(answer.substr(offset + 2).c_str());
+      }
+      if (answer.substr(offset,3) == "PW0") {
+         done = true;
+      }
+   }
+   return ret;
 }
 
 
