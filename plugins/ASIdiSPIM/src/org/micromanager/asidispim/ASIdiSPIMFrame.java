@@ -367,6 +367,7 @@ public class ASIdiSPIMFrame extends MMFrame
    
 // TODO make this automatically call all panels' method
    private void windowClosing() {
+      // TODO force user to cancel any ongoing acquisition before closing
       acquisitionPanel_.windowClosing();
       setupPanelA_.windowClosing();
       setupPanelB_.windowClosing();

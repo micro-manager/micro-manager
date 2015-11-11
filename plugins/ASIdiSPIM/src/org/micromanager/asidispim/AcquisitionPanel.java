@@ -2385,6 +2385,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     */
    @Override
    public void windowClosing() {
+      if (acquisitionRequested_.get()) {
+         cancelAcquisition_.set(true);
+         while (acquisitionRunning_.get()) {
+            // spin wheels until we are done
+         }
+      }
       sliceFrameAdvanced_.savePosition();
       sliceFrameAdvanced_.dispose();
    }
