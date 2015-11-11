@@ -42,7 +42,6 @@ public class SaveButton extends JButton {
    public SaveButton(final Datastore store, final DisplayWindow display) {
       setToolTipText("Save data as a Micro-Manager dataset.");
 
-      final JButton staticThis = this;
       addMouseListener(new MouseInputAdapter() {
          @Override
          public void mousePressed(MouseEvent e) {

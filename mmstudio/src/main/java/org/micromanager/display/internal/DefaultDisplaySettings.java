@@ -693,8 +693,9 @@ public class DefaultDisplaySettings implements DisplaySettings {
    @Override
    public void save(String path) {
       File file = new File(path, DisplaySettings.FILENAME);
+      FileWriter writer = null;
       try {
-         FileWriter writer = new FileWriter(file, true);
+         writer = new FileWriter(file, true);
          writer.write(toJSON().toString(1));
          writer.write("\n" + RECORD_DELIMETER + "\n");
          writer.close();
@@ -704,6 +705,16 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
       catch (IOException e) {
          ReportingUtils.logError(e, "Error while saving DisplaySettings");
+      }
+      finally {
+         if (writer != null) {
+            try {
+               writer.close();
+            }
+            catch (IOException e) {
+               ReportingUtils.logError(e, "Error while closing writer");
+            }
+         }
       }
    }
 
@@ -715,8 +726,9 @@ public class DefaultDisplaySettings implements DisplaySettings {
    public static List<DisplaySettings> load(String path) {
       ArrayList<DisplaySettings> result = new ArrayList<DisplaySettings>();
       File file = new File(path, DisplaySettings.FILENAME);
+      BufferedReader reader = null;
       try {
-         BufferedReader reader = new BufferedReader(new FileReader(file));
+         reader = new BufferedReader(new FileReader(file));
          String curSettings = "";
          String curLine = reader.readLine();
          while (curLine != null) {
@@ -739,6 +751,16 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
       catch (JSONException e) {
          ReportingUtils.logError(e, "Error while converting saved settings into JSON");
+      }
+      finally {
+         if (reader != null) {
+            try {
+               reader.close();
+            }
+            catch (IOException e) {
+               ReportingUtils.logError(e, "Error while closing reader");
+            }
+         }
       }
       return result;
    }

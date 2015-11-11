@@ -144,8 +144,6 @@ public class ExportMovieDlg extends JDialog {
             public void stateChanged(ChangeEvent e) {
                // Ensure that the end point can't go below the start point.
                int newMin = (Integer) minSpinner_.getValue();
-               int curMax = (Integer) maxSpinner_.getValue();
-               int axisLen = store_.getAxisLength(getAxis());
                maxModel_.setMinimum(newMin + 1);
             }
          });
@@ -155,8 +153,6 @@ public class ExportMovieDlg extends JDialog {
             public void stateChanged(ChangeEvent e) {
                // Ensure that the start point can't come after the end point.
                int newMax = (Integer) maxSpinner_.getValue();
-               int curMin = (Integer) minSpinner_.getValue();
-               int axisLen = store_.getAxisLength(getAxis());
                minModel_.setMaximum(newMax - 1);
             }
          });
