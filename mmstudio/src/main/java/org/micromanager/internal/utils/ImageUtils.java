@@ -528,11 +528,6 @@ public class ImageUtils {
       return new LUT(8,size,rs,gs,bs);
    }
 
-   public class MinAndMax {
-      int min;
-      int max;
-   }
-
    public static int unsignedValue(byte b) {
       // Sign-extend, then mask
       return ((int) b) & 0x000000ff;
