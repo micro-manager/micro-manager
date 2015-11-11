@@ -196,18 +196,6 @@ public class MMAcquisition {
       return maxNumber;
    }
 
-   public void setImagePhysicalDimensions(int width, int height,
-           int byteDepth, int bitDepth, int multiCamNumCh) throws MMScriptException {
-      if (initialized_) {
-         throw new MMScriptException("Can't change image dimensions - the acquisition is already initialized");
-      }
-      width_ = width;
-      height_ = height;
-      byteDepth_ = byteDepth;
-      bitDepth_ = bitDepth;
-      multiCamNumCh_ = multiCamNumCh;
-   }
-
    public void initialize() throws MMScriptException {
       if (initialized_) {
          throw new MMScriptException("Acquisition is already initialized");
