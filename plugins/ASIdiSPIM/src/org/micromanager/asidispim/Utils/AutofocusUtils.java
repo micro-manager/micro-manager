@@ -88,7 +88,7 @@ public class AutofocusUtils {
       posUpdater_ = stagePosUpdater;
       positions_ = positions;
       controller_ = controller;
-      lastFocusResult_ = new FocusResult(false, 0.0, 0.0);
+      lastFocusResult_ = new FocusResult(false, 0.0, 0.0, 0.0);
       
    }
 
@@ -96,16 +96,19 @@ public class AutofocusUtils {
       private final boolean focusSuccess_;
       private final double galvoPosition_;
       private final double piezoPosition_;
+      private final double offsetDelta_;
       
-      public FocusResult(boolean focusSuccess, double galvoPosition, double piezoPosition) {
+      public FocusResult(boolean focusSuccess, double galvoPosition, double piezoPosition, double offsetDelta) {
          focusSuccess_ = focusSuccess;
          galvoPosition_ = galvoPosition;
          piezoPosition_ = piezoPosition;
+         offsetDelta_ = offsetDelta;  // amount in um that the offset will shift, could be positive or negative
       }
       
-      public boolean getFocusSuccess()      { return focusSuccess_; } 
+      public boolean getFocusSuccess()      { return focusSuccess_; }
       public double getGalvoFocusPosition() { return galvoPosition_; }
       public double getPiezoFocusPosition() { return piezoPosition_; }
+      public double getOffsetDelta()        { return offsetDelta_; }
    }
    
    public FocusResult getLastFocusResult() {
@@ -151,7 +154,7 @@ public class AutofocusUtils {
          @Override
          protected FocusResult doInBackground() throws Exception {
             
-            if (ASIdiSPIM.getFrame().getAcquisitionPanel().isAcquisitionRequested()) {
+            if (ASIdiSPIM.getFrame().getHardwareInUse()) {
                throw new ASIdiSPIMException("Cannot run autofocus while another"
                      + " autofocus or acquisition is ongoing.");
             }
@@ -294,6 +297,8 @@ public class AutofocusUtils {
                   gui_.enableLiveMode(false);
                   gui_.getMMCore().waitForDevice(originalCamera);
                }
+               
+               ASIdiSPIM.getFrame().setHardwareInUse(true);
                
                // deal with shutter before starting acquisition
                // needed despite core's handling because of DemoCamera
@@ -457,9 +462,11 @@ public class AutofocusUtils {
                throw new ASIdiSPIMException(ex);
             } finally {
                
+               ASIdiSPIM.getFrame().setHardwareInUse(false);
+               
                // set result to be a dummy value for now; we will overwrite it later
                //  unless we encounter an exception in the meantime
-               lastFocusResult_ = new FocusResult(false, galvoPosition, piezoPosition);
+               lastFocusResult_ = new FocusResult(false, galvoPosition, piezoPosition, 0.0);
                
                try {
                   caller.setCursor(Cursor.getDefaultCursor());
@@ -481,55 +488,30 @@ public class AutofocusUtils {
                      positions_.setPosition(galvoDevice, Directions.Y, originalGalvoPosition);
                   }
                   
-                  // determine if we found a "maximal focus" position
-                  // cannot be outside the center 80% of the search range
-                  // R^2 value of fit must be greater than the minimum specified
-                  // if for some reason we were unsuccessful then restore to original position
-                  // don't bother moving anything if we are doing this during acquisition
-                  boolean focusSuccess = false;
+                  // determine if it was "successful" which for now we define as
+                  //   - "maximal focus" position is inside the center 80% of the search range
+                  //   - curve fit has sufficient R^2 value
+                  // if we are successful then stay at that position, otherwise restore the original position
+                  //   (don't bother moving anything if we are doing this during acquisition)
+                  // the caller may (and usually will) apply further logic to decide whether or not this was a
+                  //   successful autofocus, e.g. before automatically updating the offset
+                  boolean focusSuccess = false; 
                   if (isPiezoScan) {
                      final double end1 = piezoStart + 0.1*piezoRange;
                      final double end2 = piezoStart + 0.9*piezoRange;
-                     if (r2 > minimumRSquare
+                     focusSuccess = (r2 > minimumRSquare
                            && bestPiezoPosition > Math.min(end1, end2)
-                           && bestPiezoPosition < Math.max(end1, end2)) {
-                        // passed initial tests, now make sure change is within allowed range
-                        double focusDelta = Math.abs(piezoCenter-bestPiezoPosition);
-                        final double maxDelta;
-                        if (restoreCameraMode) {  // proxy for "running from setup"
-                           maxDelta = props_.getPropValueFloat(Devices.Keys.PLUGIN,
-                                 Properties.Keys.PLUGIN_AUTOFOCUS_MAXOFFSETCHANGE_SETUP);
-                        } else {
-                           maxDelta = props_.getPropValueFloat(Devices.Keys.PLUGIN,
-                                 Properties.Keys.PLUGIN_AUTOFOCUS_MAXOFFSETCHANGE);
-                        }
-                        focusSuccess = (focusDelta <= maxDelta);
-                     }
-                     lastFocusResult_ = new FocusResult(focusSuccess, galvoPosition, bestPiezoPosition);
+                           && bestPiezoPosition < Math.max(end1, end2));
+                     double focusDelta = piezoCenter-bestPiezoPosition;
+                     lastFocusResult_ = new FocusResult(focusSuccess, galvoPosition, bestPiezoPosition, focusDelta);
                   } else { // slice scan
                      final double end1 = galvoStart + 0.1*galvoRange;
                      final double end2 = galvoStart + 0.9*galvoRange;
-                     if (r2 > minimumRSquare
+                     focusSuccess = (r2 > minimumRSquare
                            && bestGalvoPosition > Math.min(end1, end2)
-                           && bestGalvoPosition < Math.max(end1, end2)) {
-                        double focusDelta = Math.abs((galvoCenter-bestGalvoPosition) * calibrationRate);
-                        final double maxDelta;
-                        if (restoreCameraMode) {  // proxy for "running from setup"
-                           if (prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(), 
-                                 Properties.Keys.PLUGIN_AUTOFOCUS_AUTOUPDATE_OFFSET, false)) {
-                              maxDelta = props_.getPropValueFloat(Devices.Keys.PLUGIN,
-                                    Properties.Keys.PLUGIN_AUTOFOCUS_MAXOFFSETCHANGE_SETUP);
-                           } else {
-                              // effectively have no maximum delta if we aren't automatically updating
-                              maxDelta = 100000;
-                           }
-                        } else {
-                           maxDelta = props_.getPropValueFloat(Devices.Keys.PLUGIN,
-                                 Properties.Keys.PLUGIN_AUTOFOCUS_MAXOFFSETCHANGE);
-                        }
-                        focusSuccess = (focusDelta <= maxDelta);
-                     }
-                     lastFocusResult_ = new FocusResult(focusSuccess, bestGalvoPosition, piezoPosition);
+                           && bestGalvoPosition < Math.max(end1, end2));
+                     double focusDelta = (galvoCenter-bestGalvoPosition) * calibrationRate;
+                     lastFocusResult_ = new FocusResult(focusSuccess, bestGalvoPosition, piezoPosition, focusDelta);
                   }
                   
                   // if we are in Setup panel, move to either the best-focus position (if found)
@@ -561,6 +543,8 @@ public class AutofocusUtils {
                   throw new ASIdiSPIMException(ex, "Error while restoring hardware state after autofocus.");
                }
             }
+            ReportingUtils.logMessage("finished autofocus: " + (lastFocusResult_.getFocusSuccess() ? "successful" : "not successful")
+               + " with galvo position " + lastFocusResult_.getGalvoFocusPosition() + " and piezo position " + lastFocusResult_.getPiezoFocusPosition());
             return lastFocusResult_;
          }
 
@@ -593,7 +577,7 @@ public class AutofocusUtils {
       }
       
       // we can only return a bogus score 
-      return new FocusResult(false, 0.0, 0.0);
+      return new FocusResult(false, 0.0, 0.0, 0.0);
    }
 
    public static ImageProcessor makeProcessor(TaggedImage taggedImage)

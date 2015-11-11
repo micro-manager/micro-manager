@@ -820,7 +820,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    
    private void updateCalibrationOffset(final Sides side, 
            final AutofocusUtils.FocusResult score) {
-         ASIdiSPIM.getFrame().getSetupPanel(side).updateCalibrationOffset(score);
+      if (score.getFocusSuccess()) {
+         double offsetDelta = score.getOffsetDelta();
+         double maxDelta = props_.getPropValueFloat(Devices.Keys.PLUGIN,
+               Properties.Keys.PLUGIN_AUTOFOCUS_MAXOFFSETCHANGE);
+         if (Math.abs(offsetDelta) <= maxDelta) {
+            ASIdiSPIM.getFrame().getSetupPanel(side).updateCalibrationOffset(score);
+         } else {
+            ReportingUtils.logMessage("autofocus successful for side " + side + " but offset change too much to automatically update");
+         }
+      }
    }
    
    public SliceTiming getSliceTiming() {
@@ -1454,6 +1463,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return false;
       }
       
+      if (ASIdiSPIM.getFrame().getHardwareInUse()) {
+         MyDialogUtils.showError("Hardware is being used by something else (maybe autofocus?)");
+         return false;
+      }
+      
       boolean liveModeOriginally = gui_.isLiveModeOn();
       if (liveModeOriginally) {
          gui_.enableLiveMode(false);
@@ -2055,6 +2069,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   // loop over all the times we trigger the controller
                   for (int channelNum = 0; channelNum < nrChannelsSoftware; channelNum++) {
                      try {
+                        // flag that we are using the cameras/controller
+                        ASIdiSPIM.getFrame().setHardwareInUse(true);
+                        
                         // deal with shutter before starting acquisition
                         shutterOpen = core_.getShutterOpen();
                         if (autoShutter) {
@@ -2211,6 +2228,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         MyDialogUtils.showError(ex);
                      } finally {
                         // cleanup at the end of each time we trigger the controller
+                        
+                        ASIdiSPIM.getFrame().setHardwareInUse(false);
 
                         // put shutter back to original state
                         core_.setShutterOpen(shutterOpen);

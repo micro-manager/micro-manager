@@ -34,6 +34,7 @@ import org.micromanager.asidispim.Utils.ListeningJTabbedPane;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 
 import java.awt.Container;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.prefs.Preferences;
 
 import javax.swing.JFrame;
@@ -112,6 +113,8 @@ public class ASIdiSPIMFrame extends MMFrame
    private final StatusSubPanel statusSubPanel_;
    private final StagePositionUpdater stagePosUpdater_;
    private final ListeningJTabbedPane tabbedPane_;
+   
+   private final AtomicBoolean hardwareInUse_ = new AtomicBoolean(false);   // true if acquisition or autofocus running
    
    private static final String MAIN_PREF_NODE = "Main"; 
    
@@ -253,6 +256,14 @@ public class ASIdiSPIMFrame extends MMFrame
             "[" + this.getHeight() + "]"));
       glassPane.add(statusSubPanel_, "dock south");
       
+   }
+   
+   public void setHardwareInUse(boolean inuse) {
+      hardwareInUse_.set(inuse);
+   }
+   
+   public boolean getHardwareInUse() {
+      return hardwareInUse_.get();
    }
    
    /**

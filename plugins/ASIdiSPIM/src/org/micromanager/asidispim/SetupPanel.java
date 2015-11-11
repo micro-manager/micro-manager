@@ -603,6 +603,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    /**
     * Performs "1-point" calibration updating the offset
     * (but not the slope) based on current piezo/galvo positions.
+    * Does not perform any error/range checking except to ensure beam is on.
     */
    private void updateCalibrationOffset() {
       try {
@@ -616,6 +617,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             double currentPiezo = positions_.getUpdatedPosition(piezoImagingDeviceKey_);
             double newOffset = currentPiezo - rate * currentScanner;
             offsetField_.setValue((Double) newOffset);
+            ReportingUtils.logMessage("updated offset for side " + side_ + "; new value is " + newOffset);
          }
       } catch (Exception ex) {
          MyDialogUtils.showError(ex);
@@ -623,17 +625,12 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    }
    
    /**
-    * Give autofocus and acquisition the opportunity to update the offset.
-    * Only happens if the focus is deemed a "success" by autofocus
-    * (currently means R^2 value is sufficiently high and best focus
-    * position is in the middle 80% of the range sampled)
+    * Update the calibration offset according to the autofocus score.
+    * Caller should make sure to apply any required criteria before calling this.
+    * method because no error/range checking is done here.
     * @param newValue - new value for the piezo/slice calibration offset
     */
    public void updateCalibrationOffset(AutofocusUtils.FocusResult score) {
-      if (!score.getFocusSuccess()) {
-         ReportingUtils.logMessage("autofocus offset for side " + side_ + " not updated because focus not successful");
-         return;
-      }
       double rate = (Double) rateField_.getValue();
       double newOffset = score.getPiezoFocusPosition() - rate * score.getGalvoFocusPosition();         
       offsetField_.setValue((Double) newOffset);
@@ -809,9 +806,19 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    public void refreshSelected() {
       if (prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(), 
             Properties.Keys.PLUGIN_AUTOFOCUS_AUTOUPDATE_OFFSET, false)) {
-         // cannot put this where we call runFocus because it runs on a
+         // cannot put this where we call runFocus because autofocus runs on a
          //   separate asynchronous thread
-         updateCalibrationOffset(autofocus_.getLastFocusResult());
+         AutofocusUtils.FocusResult score = autofocus_.getLastFocusResult();
+         if (score.getFocusSuccess()) {
+            double offsetDelta = score.getOffsetDelta();
+            double maxDelta = props_.getPropValueFloat(Devices.Keys.PLUGIN,
+                  Properties.Keys.PLUGIN_AUTOFOCUS_MAXOFFSETCHANGE_SETUP);
+            if (Math.abs(offsetDelta) <= maxDelta) {
+               updateCalibrationOffset(score);
+            } else {
+               ReportingUtils.logMessage("autofocus successful for side " + side_ + " but offset change too much to automatically update");
+            }
+         }
       }
       cameraPanel_.gotSelected();
       if (beamPanel_.isUpdateOnTab()) {
