@@ -70,11 +70,13 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    private final Studio studio_;
    private final CMMCore core_;
    private DisplayWindow display_;
+   private Object displayLock_ = new Object();
    private DefaultDatastore store_;
    private Pipeline pipeline_;
    private Object pipelineLock_ = new Object();
    private final ArrayList<LiveModeListener> listeners_;
    private boolean isLiveOn_ = false;
+   private Object liveModeLock_ = new Object();
    // Suspended means that we *would* be running except we temporarily need
    // to halt for the duration of some action (e.g. changing the exposure
    // time). See setSuspended().
@@ -97,20 +99,22 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
 
    @Override
    public void setLiveMode(boolean isOn) {
-      if (isLiveOn_ == isOn) {
-         return;
+      synchronized(liveModeLock_) {
+         if (isLiveOn_ == isOn) {
+            return;
+         }
+         isLiveOn_ = isOn;
+         if (isLiveOn_) {
+            startLiveMode();
+         }
+         else {
+            stopLiveMode();
+         }
+         for (LiveModeListener listener : listeners_) {
+            listener.liveModeEnabled(isLiveOn_);
+         }
+         DefaultEventManager.getInstance().post(new DefaultLiveModeEvent(isLiveOn_));
       }
-      isLiveOn_ = isOn;
-      if (isLiveOn_) {
-         startLiveMode();
-      }
-      else {
-         stopLiveMode();
-      }
-      for (LiveModeListener listener : listeners_) {
-         listener.liveModeEnabled(isLiveOn_);
-      }
-      DefaultEventManager.getInstance().post(new DefaultLiveModeEvent(isLiveOn_));
    }
 
    /**
@@ -121,15 +125,17 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
     */
    @Override
    public void setSuspended(boolean shouldSuspend) {
-      if (shouldSuspend && isLiveOn_) {
-         // Need to stop now.`
-         stopLiveMode();
-         isSuspended_ = true;
-      }
-      else if (!shouldSuspend && isSuspended_) {
-         // Need to resume now.
-         startLiveMode();
-         isSuspended_ = false;
+      synchronized(liveModeLock_) {
+         if (shouldSuspend && isLiveOn_) {
+            // Need to stop now.
+            stopLiveMode();
+            isSuspended_ = true;
+         }
+         else if (!shouldSuspend && isSuspended_) {
+            // Need to resume now.
+            startLiveMode();
+            isSuspended_ = false;
+         }
       }
    }
 
@@ -336,16 +342,18 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    /**
     * We need to [re]create the display and its associated custom controls.
     */
-   private synchronized void createDisplay() {
-      display_ = studio_.displays().createDisplay(store_,
-         new ControlsFactory() {
-            @Override
-            public List<Component> makeControls(DisplayWindow display) {
-               return createControls(display);
-            }
-      });
-      display_.registerForEvents(this);
-      display_.setCustomTitle("Snap/Live View");
+   private void createDisplay() {
+      synchronized(displayLock_) {
+         display_ = studio_.displays().createDisplay(store_,
+            new ControlsFactory() {
+               @Override
+               public List<Component> makeControls(DisplayWindow display) {
+                  return createControls(display);
+               }
+         });
+         display_.registerForEvents(this);
+         display_.setCustomTitle("Snap/Live View");
+      }
    }
 
    /**
@@ -400,54 +408,56 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
     * @param image Image to be displayed
     */
    @Override
-   public synchronized void displayImage(Image image) {
-      // Check for changes in the number of channels, indicating e.g. changing
-      // multicamera.
-      boolean shouldReset = shouldForceReset_;
-      long numChannels = core_.getNumberOfCameraChannels();
-      try {
-         DefaultImage newImage = new DefaultImage(image, image.getCoords(), image.getMetadata());
-         // Find any image to compare against, at all.
-         DefaultImage lastImage = null;
-         if (channelToLastImage_.keySet().size() > 0) {
-            int channel = new ArrayList<Integer>(channelToLastImage_.keySet()).get(0);
-            lastImage = channelToLastImage_.get(channel);
+   public void displayImage(Image image) {
+      synchronized(displayLock_) {
+         // Check for changes in the number of channels, indicating e.g.
+         // changing multicamera.
+         boolean shouldReset = shouldForceReset_;
+         long numChannels = core_.getNumberOfCameraChannels();
+         try {
+            DefaultImage newImage = new DefaultImage(image, image.getCoords(), image.getMetadata());
+            // Find any image to compare against, at all.
+            DefaultImage lastImage = null;
+            if (channelToLastImage_.keySet().size() > 0) {
+               int channel = new ArrayList<Integer>(channelToLastImage_.keySet()).get(0);
+               lastImage = channelToLastImage_.get(channel);
+            }
+            if (lastImage == null ||
+                  newImage.getWidth() != lastImage.getWidth() ||
+                  newImage.getHeight() != lastImage.getHeight() ||
+                  newImage.getNumComponents() != lastImage.getNumComponents() ||
+                  newImage.getBytesPerPixel() != lastImage.getBytesPerPixel()) {
+               // Format changing, channel changing, and/or we have no display;
+               // we need to recreate everything.
+               shouldReset = true;
+            }
+            if (shouldReset) {
+               reset();
+            }
+            // Check for display having been closed on us by the user.
+            else if (display_ == null || display_.getIsClosed()) {
+               createDisplay();
+            }
+            channelToLastImage_.put(newImage.getCoords().getChannel(),
+                  newImage);
+            synchronized(pipelineLock_) {
+               try {
+                  pipeline_.insertImage(newImage);
+               }
+               catch (PipelineErrorException e) {
+                  // Notify the user, then continue on.
+                  studio_.logs().showError(e,
+                        "An error occurred while processing images.");
+                  pipeline_.clearExceptions();
+               }
+            }
          }
-         if (lastImage == null ||
-               newImage.getWidth() != lastImage.getWidth() ||
-               newImage.getHeight() != lastImage.getHeight() ||
-               newImage.getNumComponents() != lastImage.getNumComponents() ||
-               newImage.getBytesPerPixel() != lastImage.getBytesPerPixel()) {
-            // Format changing, channel changing, and/or we have no display; we
-            // need to recreate everything.
-            shouldReset = true;
-         }
-         if (shouldReset) {
+         catch (DatastoreFrozenException e) {
+            // Datastore has been frozen (presumably the user saved a snapped
+            // image); replace it.
             reset();
+            displayImage(image);
          }
-         // Check for display having been closed on us by the user.
-         else if (display_ == null || display_.getIsClosed()) {
-            createDisplay();
-         }
-         channelToLastImage_.put(newImage.getCoords().getChannel(),
-               newImage);
-         synchronized(pipelineLock_) {
-            try {
-               pipeline_.insertImage(newImage);
-            }
-            catch (PipelineErrorException e) {
-               // Notify the user, then continue on.
-               studio_.logs().showError(e,
-                     "An error occurred while processing images.");
-               pipeline_.clearExceptions();
-            }
-         }
-      }
-      catch (DatastoreFrozenException e) {
-         // Datastore has been frozen (presumably the user saved a snapped
-         // image); replace it.
-         reset();
-         displayImage(image);
       }
    }
 

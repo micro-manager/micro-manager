@@ -529,7 +529,16 @@ public class MMStudio implements Studio, CompatibilityInterface {
 
    }
 
-   public void setExposure(double exposureTime) {
+   public void setExposure(final double exposureTime) {
+      // Avoid redundantly setting the exposure time.
+      try {
+         if (core_ != null && core_.getExposure() == exposureTime) {
+            return;
+         }
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error getting core exposure time");
+      }
       // This is synchronized with the shutdown lock primarily so that
       // the exposure-time field in MainFrame won't cause issues when it loses
       // focus during shutdown.
