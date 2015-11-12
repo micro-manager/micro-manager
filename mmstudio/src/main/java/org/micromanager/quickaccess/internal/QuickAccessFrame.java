@@ -51,8 +51,12 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
 import javax.swing.SpinnerNumberModel;
@@ -65,10 +69,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.micromanager.data.internal.DefaultPropertyMap;
-import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.events.StartupCompleteEvent;
 import org.micromanager.internal.utils.GUIUtils;
-import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.ScreenImage;
 import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.quickaccess.WidgetPlugin;
@@ -79,30 +81,10 @@ import org.micromanager.Studio;
 /**
  * This class shows the Quick Access Window for frequently-used controls.
  */
-public class QuickAccessFrame extends MMFrame {
-   // Profile keys.
-   private static final String NUM_COLS = "Number of columns in the Quick Access Window";
-   private static final String NUM_ROWS = "Number of rows in the Quick Access Window";
-   private static final String SAVED_CONFIG = "Saved configuration of the Quick Access Window";
-   private static final String OPEN_MODE = "Mode for deciding whether or not to open on launch.";
-   private static final String WAS_OPEN = "Whether Quick Access Window was open at end of last session.";
-
+public class QuickAccessFrame extends JFrame {
    private static final String OPEN_NEVER = "Never";
    private static final String OPEN_IF_USED = "If window is not empty";
    private static final String OPEN_REMEMBER = "If window was open at end of last session";
-
-   private static QuickAccessFrame staticInstance_;
-   public static void makeFrame(Studio studio) {
-      staticInstance_ = new QuickAccessFrame(studio);
-      studio.events().registerForEvents(staticInstance_);
-   }
-
-   /**
-    * Show the Quick Access Window, creating it if it does not already exist.
-    */
-   public static void showFrame(Studio studio) {
-      staticInstance_.setVisible(true);
-   }
 
    private Studio studio_;
    // Holds everything.
@@ -113,17 +95,19 @@ public class QuickAccessFrame extends MMFrame {
    private GridPanel configuringControlsPanel_;
    // Holds the "source" icons that can be added to the active controls, as
    // well as the rows/columns configuration fields.
-   private JPanel configurePanel_;
+   private ConfigurationPanel configurePanel_;
    // Switches between normal and configure modes.
    private JToggleButton configureButton_;
+   // Access create-new and delete actions.
+   private JButton gearButton_;
    // List of visual dividers in the grid.
    private HashSet<Divider> dividers_;
 
    // All of the controls we have in the grid.
    private HashSet<ControlCell> controls_;
    // Dimensions of the grid.
-   private int numCols_;
-   private int numRows_;
+   private int numCols_ = 3;
+   private int numRows_ = 3;
 
    // X/Y position of the mouse when dragging icons.
    private int mouseX_ = -1;
@@ -134,18 +118,13 @@ public class QuickAccessFrame extends MMFrame {
    private int iconOffsetX_ = -1;
    private int iconOffsetY_ = -1;
 
-   public QuickAccessFrame(Studio studio) {
+   public QuickAccessFrame(Studio studio, JSONObject config) {
       setAlwaysOnTop(true);
       setTitle("Quick Access Tools");
 
       studio_ = studio;
       controls_ = new HashSet<ControlCell>();
       dividers_ = new HashSet<Divider>();
-
-      numCols_ = studio_.profile().getInt(QuickAccessFrame.class,
-            NUM_COLS, 3);
-      numRows_ = studio_.profile().getInt(QuickAccessFrame.class,
-            NUM_ROWS, 3);
 
       // Hide ourselves when the close button is clicked, instead of letting
       // us be destroyed.
@@ -158,7 +137,7 @@ public class QuickAccessFrame extends MMFrame {
 
       // Layout overview: the active controls, then a configure button, then
       // the configuration panel (normally hidden).
-      contentsPanel_ = new JPanel(new MigLayout("flowy, fill"));
+      contentsPanel_ = new JPanel(new MigLayout("flowy, fill, insets 0, gap 2"));
 
       // We have two panels that are mutually-exclusive: controlsPanel_ and
       // configuringControlsPanel_. The latter is only visible in configuration
@@ -175,29 +154,42 @@ public class QuickAccessFrame extends MMFrame {
             toggleConfigurePanel(configureButton_.isSelected());
          }
       });
-      contentsPanel_.add(configureButton_);
+      contentsPanel_.add(configureButton_, "split 2, flowx");
 
+      gearButton_ = new JButton(IconLoader.getIcon(
+               "/org/micromanager/icons/gear.png"));
+      gearButton_.addMouseListener(new MouseAdapter() {
+         @Override
+         public void mousePressed(MouseEvent e) {
+            showGearMenu(e);
+         }
+      });
+      contentsPanel_.add(gearButton_, "gapleft push");
+
+      // We'll add this later, when the configure button is toggled.
       configurePanel_ = new ConfigurationPanel();
 
       add(contentsPanel_);
+
+      loadConfig(config);
+
       pack();
-      // Note that showFrame() will call setVisible() for us.
    }
 
    /**
-    * Check the user's profile to see if we have any saved settings there.
+    * Reload our configuration from the provided config data.
     */
-   @Subscribe
-   public void onStartupComplete(StartupCompleteEvent event) {
+   private void loadConfig(JSONObject config) {
       boolean hasContents = false;
-      String configStr = studio_.profile().getString(
-            QuickAccessFrame.class, SAVED_CONFIG, null);
-      if (configStr == null) {
-         // Nothing saved.
+      if (config.length() == 0) {
+         // Empty config; create a default (i.e. empty) window.
+         setVisible(true);
          return;
       }
       try {
-         JSONObject config = new JSONObject(configStr);
+         numCols_ = config.getInt("numCols");
+         numRows_ = config.getInt("numRows");
+         configurePanel_.updateSpinners(numCols_, numRows_);
          JSONArray cells = config.getJSONArray("cells");
          for (int i = 0; i < cells.length(); ++i) {
             addControl(controlCellFromJSON(cells.getJSONObject(i)));
@@ -207,46 +199,90 @@ public class QuickAccessFrame extends MMFrame {
          for (int i = 0; i < dividers.length(); ++i) {
             dividers_.add(dividerFromJSON(dividers.getJSONObject(i)));
          }
+         int xPos = config.getInt("xPos");
+         int yPos = config.getInt("yPos");
+         int width = config.getInt("windowWidth");
+         int height = config.getInt("windowHeight");
+         setBounds(xPos, yPos, width, height);
+
+         boolean wasOpen = config.getBoolean("wasOpen");
+         String openMode = config.getString("openMode");
+         configurePanel_.setOpenMode(openMode);
+         if ((hasContents && openMode.equals(OPEN_IF_USED)) ||
+               (wasOpen && openMode.equals(OPEN_REMEMBER))) {
+            setVisible(true);
+         }
       }
       catch (JSONException e) {
          studio_.logs().logError(e, "Unable to reconstruct Quick Access Window from config.");
       }
-
-      boolean wasOpen = studio_.profile().getBoolean(QuickAccessFrame.class,
-            WAS_OPEN, false);
-      String openMode = studio_.profile().getString(QuickAccessFrame.class,
-            OPEN_MODE, OPEN_NEVER);
-      if ((hasContents && openMode.equals(OPEN_IF_USED)) ||
-            (wasOpen && openMode.equals(OPEN_REMEMBER))) {
-         setVisible(true);
-      }
    }
 
    /**
-    * Save our current state to the profile.
+    * Create a JSONObject for storing our settings to the profile.
     */
-   @Subscribe
-   public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
+   public JSONObject getConfig() {
       try {
          JSONObject settings = new JSONObject();
+         settings.put("numCols", numCols_);
+         settings.put("numRows", numRows_);
+
          JSONArray cells = new JSONArray();
          for (ControlCell cell : controls_) {
             cells.put(cell.toJSON());
          }
          settings.put("cells", cells);
+
          JSONArray dividers = new JSONArray();
          for (Divider divider : dividers_) {
             dividers.put(divider.toJSON());
          }
          settings.put("dividers", dividers);
-         studio_.profile().setString(QuickAccessFrame.class, SAVED_CONFIG,
-               settings.toString());
-         studio_.profile().setBoolean(QuickAccessFrame.class, WAS_OPEN,
-               isVisible());
+
+         settings.put("wasOpen", isVisible());
+         settings.put("openMode", configurePanel_.getOpenMode());
+         settings.put("xPos", getLocation().x);
+         settings.put("yPos", getLocation().y);
+         settings.put("windowWidth", getSize().width);
+         settings.put("windowHeight", getSize().height);
+         return settings;
       }
       catch (JSONException e) {
          studio_.logs().logError(e, "Error saving Quick Access Window's settings");
+         return null;
       }
+   }
+
+   /**
+    * Show a popup menu under the mouse, allowing the user to create or
+    * delete Quick Access Windows.
+    */
+   private void showGearMenu(MouseEvent event) {
+      JPopupMenu menu = new JPopupMenu();
+      JMenuItem dupeItem = new JMenuItem("Create New Window");
+      dupeItem.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            QuickAccessManager.createNewFrame();
+         }
+      });
+      menu.add(dupeItem);
+
+      JMenuItem deleteItem = new JMenuItem("Delete This Window");
+      deleteItem.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            if (JOptionPane.showConfirmDialog(QuickAccessFrame.this,
+               "Really delete this window and lose its configuration?",
+               "Confirm Window Deletion", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+               QuickAccessManager.deleteFrame(QuickAccessFrame.this);
+               dispose();
+            }
+         }
+      });
+      menu.add(deleteItem);
+
+      menu.show(gearButton_, event.getX(), event.getY());
    }
 
    /**
@@ -316,8 +352,8 @@ public class QuickAccessFrame extends MMFrame {
     * worry about self-intersections.
     */
    private boolean canFitRect(Rectangle rect, ControlCell source) {
-      if (rect.x < 0 || rect.x + rect.width > numRows_ ||
-            rect.y < 0 || rect.y + rect.height > numCols_) {
+      if (rect.x < 0 || rect.x + rect.width > numCols_ ||
+            rect.y < 0 || rect.y + rect.height > numRows_) {
          // Rect is out of bounds.
          return false;
       }
@@ -364,7 +400,8 @@ public class QuickAccessFrame extends MMFrame {
    private void toggleConfigurePanel(boolean isShown) {
       contentsPanel_.removeAll();
       contentsPanel_.add(isShown ? configuringControlsPanel_ : controlsPanel_);
-      contentsPanel_.add(configureButton_);
+      contentsPanel_.add(configureButton_, "split 2, flowx");
+      contentsPanel_.add(gearButton_, "gapleft push");
       if (isShown) {
          contentsPanel_.add(configurePanel_, "growx");
       }
@@ -599,16 +636,7 @@ public class QuickAccessFrame extends MMFrame {
          subPanel.add(new JLabel("Open on launch: "));
          openSelect_ = new JComboBox(new String[] {OPEN_NEVER,
             OPEN_IF_USED, OPEN_REMEMBER});
-         openSelect_.setSelectedItem(studio_.profile().getString(
-                  QuickAccessFrame.class, OPEN_MODE, OPEN_NEVER));
-         openSelect_.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               String mode = (String) openSelect_.getSelectedItem();
-               studio_.profile().setString(QuickAccessFrame.class, OPEN_MODE,
-                  mode);
-            }
-         });
+         openSelect_.setSelectedItem(OPEN_NEVER);
          subPanel.add(openSelect_, "span, wrap");
 
          subPanel.add(new JLabel("Drag controls into the grid above to add them to the panel."), "span, wrap, gaptop 10");
@@ -659,6 +687,23 @@ public class QuickAccessFrame extends MMFrame {
          catch (Exception e) {
             // Ignore it.
          }
+      }
+
+      /**
+       * Receive a new grid size. Used to initialize the GUI when the frame
+       * is created.
+       */
+      public void updateSpinners(int numCols, int numRows) {
+         colsControl_.setValue(numCols);
+         rowsControl_.setValue(numRows);
+      }
+
+      public void setOpenMode(String mode) {
+         openSelect_.setSelectedItem(mode);
+      }
+
+      public String getOpenMode() {
+         return (String) openSelect_.getSelectedItem();
       }
    }
 
