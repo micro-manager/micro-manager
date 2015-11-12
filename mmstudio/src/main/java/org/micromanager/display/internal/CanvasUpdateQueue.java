@@ -261,6 +261,13 @@ public class CanvasUpdateQueue {
             if (history.imageHash_ != image.hashCode() ||
                   history.needsUpdate_) {
                scheduleHistogramUpdate(image, history);
+               DisplaySettings settings = display_.getDisplaySettings();
+               // After a histogram update, we may need to reapply LUTs.
+               // TODO: This is pointless in situations where the histogram
+               // update rate isn't "every image".
+               shouldReapplyLUTs_ = (shouldReapplyLUTs_ ||
+                     (settings.getShouldAutostretch() != null &&
+                      settings.getShouldAutostretch()));
             }
             // RGB images need to have their LUTs reapplied, because the
             // image scaling is encoded into the pixel data. And in other
@@ -340,8 +347,8 @@ public class CanvasUpdateQueue {
    private void updateHistogram(Image image, HistogramHistory history) {
       DisplaySettings settings = display_.getDisplaySettings();
       int channel = image.getCoords().getChannel();
-      // We may need to apply our newly-calculated values to the display
-      // contrast settings.
+      // If autostretch is on, then we need to apply our newly-calculated
+      // values to the display contrast settings.
       boolean shouldUpdate = (settings.getShouldAutostretch() != null &&
             settings.getShouldAutostretch());
       Integer[] mins = new Integer[image.getNumComponents()];

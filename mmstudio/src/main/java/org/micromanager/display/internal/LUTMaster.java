@@ -302,7 +302,7 @@ public class LUTMaster {
             summary.getSafeChannelName(channelIndex),
             summary.getChannelGroup(), settings, channelIndex,
             ColorSets.COLORBLIND_COLORS[channelIndex]);
-      if (color != settings.getSafeChannelColor(channelIndex, null)) {
+      if (!color.equals(settings.getSafeChannelColor(channelIndex, null))) {
          settings = settings.copy().safeUpdateChannelColor(color,
                channelIndex).build();
          display.setDisplaySettings(settings);
