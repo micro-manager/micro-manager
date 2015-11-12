@@ -509,6 +509,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             // Ensure that ImageJ's opinion of our name reflects our own; this
             // is important for ImageJ's "Windows" menu.
             ijImage_.setStack(getName(), stack_);
+            // And then re-apply LUTs as calling setStack will make ImageJ
+            // revert us to grayscale...
+            canvasQueue_.reapplyLUTs();
          }
       }
    }
