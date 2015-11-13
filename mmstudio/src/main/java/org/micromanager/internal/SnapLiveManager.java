@@ -368,13 +368,13 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       Insets zeroInsets = new Insets(0, 0, 0, 0);
       JComponent snapButton = QuickAccessFactory.makeGUI(
             studio_.plugins().getQuickAccessPlugins().get(
-               "org.micromanager.quickaccess.internal.SnapButton"));
+               "org.micromanager.quickaccess.internal.controls.SnapButton"));
       snapButton.setPreferredSize(new Dimension(90, 28));
       controls.add(snapButton);
 
       JComponent liveButton = QuickAccessFactory.makeGUI(
             studio_.plugins().getQuickAccessPlugins().get(
-               "org.micromanager.quickaccess.internal.LiveButton"));
+               "org.micromanager.quickaccess.internal.controls.LiveButton"));
       liveButton.setPreferredSize(new Dimension(90, 28));
       controls.add(liveButton);
 

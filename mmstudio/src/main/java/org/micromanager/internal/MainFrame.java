@@ -369,13 +369,13 @@ public class MainFrame extends MMFrame implements LiveModeListener {
             new MigLayout("flowy, insets 1, gap 1"));
       snapButton_ = (JButton) QuickAccessFactory.makeGUI(
             studio_.plugins().getQuickAccessPlugins().get(
-               "org.micromanager.quickaccess.internal.SnapButton"));
+               "org.micromanager.quickaccess.internal.controls.SnapButton"));
       snapButton_.setFont(defaultFont_);
       subPanel.add(snapButton_, BIGBUTTON_SIZE);
 
       liveButton_ = (JToggleButton) QuickAccessFactory.makeGUI(
             studio_.plugins().getQuickAccessPlugins().get(
-               "org.micromanager.quickaccess.internal.LiveButton"));
+               "org.micromanager.quickaccess.internal.controls.LiveButton"));
       liveButton_.setFont(defaultFont_);
       subPanel.add(liveButton_, BIGBUTTON_SIZE);
 

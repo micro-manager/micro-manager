@@ -17,38 +17,35 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.quickaccess.internal;
+package org.micromanager.quickaccess.internal.controls;
 
 import com.bulenkov.iconloader.IconLoader;
 
 import com.google.common.eventbus.Subscribe;
 
 import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.Insets;
 import java.awt.Frame;
 
-import javax.swing.Icon;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.ImageIcon;
-import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 
-import org.micromanager.events.LiveModeEvent;
-import org.micromanager.quickaccess.SimpleButtonPlugin;
+import org.micromanager.quickaccess.WidgetPlugin;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
-
-import org.micromanager.internal.utils.GUIUtils;
 
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
 /**
- * Implements the "Refresh" button logic.
+ * Allows you to put a simple text label into the window.
  */
-@Plugin(type = SimpleButtonPlugin.class)
-public class RefreshButton extends SimpleButtonPlugin implements SciJavaPlugin {
+@Plugin(type = WidgetPlugin.class)
+public class TextLabel extends WidgetPlugin implements SciJavaPlugin {
    private Studio studio_;
 
    @Override
@@ -58,12 +55,12 @@ public class RefreshButton extends SimpleButtonPlugin implements SciJavaPlugin {
 
    @Override
    public String getName() {
-      return "Refresh GUI";
+      return "Text Label";
    }
 
    @Override
    public String getHelpText() {
-      return "Refresh the GUI so it reflects the current state of the system.";
+      return "Provides a text label; does nothing else.";
    }
 
    @Override
@@ -78,22 +75,19 @@ public class RefreshButton extends SimpleButtonPlugin implements SciJavaPlugin {
 
    @Override
    public ImageIcon getIcon() {
-      return new ImageIcon(IconLoader.loadFromResource(
-               "/org/micromanager/icons/arrow_refresh.png"));
+      return null;
    }
 
    @Override
-   public String getTitle() {
-      return "Refresh";
+   public JComponent createControl(PropertyMap config) {
+      return new JLabel(config.getString("labelText", "Your Label Here"));
    }
 
    @Override
-   public Icon getButtonIcon() {
-      return IconLoader.getIcon("/org/micromanager/icons/arrow_refresh.png");
-   }
-
-   @Override
-   public void activate() {
-      studio_.compat().refreshGUI();
+   public PropertyMap configureControl(Frame parent) {
+      String text = JOptionPane.showInputDialog(
+            "Please input the label contents:");
+      return studio_.data().getPropertyMapBuilder()
+         .putString("labelText", text).build();
    }
 }

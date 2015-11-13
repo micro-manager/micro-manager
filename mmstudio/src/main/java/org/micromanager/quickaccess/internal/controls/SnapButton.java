@@ -17,7 +17,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.quickaccess.internal;
+package org.micromanager.quickaccess.internal.controls;
 
 import com.bulenkov.iconloader.IconLoader;
 
@@ -29,32 +29,27 @@ import java.awt.event.ActionListener;
 import java.awt.Insets;
 import java.awt.Frame;
 
-import java.io.File;
-
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 
-import net.miginfocom.swing.MigLayout;
-
+import org.micromanager.events.LiveModeEvent;
 import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.quickaccess.WidgetPlugin;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 
-import org.micromanager.internal.script.ScriptPanel;
-import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
 /**
- * Implements the "Run script" button logic, which allows the user to run
- * a preselected script file.
+ * Implements the "Snap" button logic.
  */
 @Plugin(type = WidgetPlugin.class)
-public class ScriptButton extends WidgetPlugin implements SciJavaPlugin {
+public class SnapButton extends WidgetPlugin implements SciJavaPlugin {
    private Studio studio_;
 
    @Override
@@ -64,12 +59,12 @@ public class ScriptButton extends WidgetPlugin implements SciJavaPlugin {
 
    @Override
    public String getName() {
-      return "Run Script";
+      return "Snap";
    }
 
    @Override
    public String getHelpText() {
-      return "Run a Beanshell script file.";
+      return "Snap an image and display it in the Snap/Live Window";
    }
 
    @Override
@@ -85,42 +80,48 @@ public class ScriptButton extends WidgetPlugin implements SciJavaPlugin {
    @Override
    public ImageIcon getIcon() {
       return new ImageIcon(IconLoader.loadFromResource(
-            "/org/micromanager/icons/file@2x.png"));
+            "/org/micromanager/icons/camera@2x.png"));
    }
 
+   // Configuration is just used to determine if we use the "big" button size,
+   // as the hardcoded snap buttons in e.g. the main window and Snap/Live
+   // window don't use that size.
    @Override
-   public JComponent createControl(PropertyMap config) {
-      final File file = new File(config.getString("scriptPath", ""));
-      // Size it to mostly fill its frame.
-      JButton result = new JButton(file.getName(),
-            IconLoader.getIcon("/org/micromanager/icons/file.png")) {
+   public JComponent createControl(final PropertyMap config) {
+      // Make button size mostly fill the cell.
+      JButton result = new JButton("Snap",
+            IconLoader.getIcon("/org/micromanager/icons/camera.png")) {
+         @Subscribe
+         public void onLiveMode(LiveModeEvent event) {
+            setEnabled(!event.getIsOn());
+         }
+
          @Override
          public Dimension getPreferredSize() {
-            return QuickAccessPlugin.getPaddedCellSize();
+            if (config.getBoolean("isBig", false)) {
+               return QuickAccessPlugin.getPaddedCellSize();
+            }
+            return super.getPreferredSize();
          }
       };
       result.setFont(GUIUtils.buttonFont);
       result.setMargin(new Insets(0, 0, 0, 0));
       result.addActionListener(new ActionListener() {
          @Override
-         public void actionPerformed(ActionEvent event) {
-            if (!file.exists()) {
-               studio_.logs().showError("Unable to find script file at " +
-                  file.getAbsolutePath());
-            }
-            else {
-               studio_.scripter().runFile(file);
-            }
+         public void actionPerformed(ActionEvent e) {
+            studio_.live().snap(true);
          }
       });
+      result.setEnabled(!studio_.live().getIsLiveModeOn());
+      studio_.events().registerForEvents(result);
       return result;
    }
 
    @Override
    public PropertyMap configureControl(Frame parent) {
-      File file = FileDialogs.openFile(parent, "Choose Beanshell script",
-            ScriptPanel.BSH_FILE);
+      // When used in the Quick-Access window, we use a bigger size than when
+      // used in other contexts.
       return studio_.data().getPropertyMapBuilder()
-         .putString("scriptPath", file.getAbsolutePath()).build();
+         .putBoolean("isBig", true).build();
    }
 }

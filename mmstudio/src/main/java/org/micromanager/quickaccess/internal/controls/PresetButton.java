@@ -17,7 +17,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.quickaccess.internal;
+package org.micromanager.quickaccess.internal.controls;
 
 import com.bulenkov.iconloader.IconLoader;
 
@@ -103,8 +103,9 @@ public class PresetButton extends WidgetPlugin implements SciJavaPlugin {
       // This preset name is solely for purposes of setting up the icon in
       // configure mode.
       final String preset = config.getString("presetName", "GFP");
-      JButton result = new JButton(preset,
-            IconLoader.getIcon("/org/micromanager/icons/color_filter.png")) {
+      Icon icon = IconLoader.getIcon(
+            config.getString("customIcon", "/org/micromanager/icons/color_filter.png"));
+      JButton result = new JButton(preset, icon) {
          @Override
          public Dimension getPreferredSize() {
             // For iconized mode, we want a smaller button.
@@ -232,5 +233,10 @@ public class PresetButton extends WidgetPlugin implements SciJavaPlugin {
          .putString("presetName", (String) presetSelector.getSelectedItem())
          .putInt("backgroundColor", pickerLabel.getBackground().getRGB())
          .build();
+   }
+
+   @Override
+   public boolean getCanCustomizeIcon() {
+      return true;
    }
 }
