@@ -103,6 +103,10 @@ NewportZStage::NewportZStage() :
    pAct = new CPropertyAction (this, &NewportZStage::OnConversionFactor);
    CreateFloatProperty("Conversion Factor", conversionFactor_, false, pAct, true);
 
+   // Maximum allowed position (will only be used if smaller than the hardware limit
+   pAct = new CPropertyAction (this, &NewportZStage::OnMaxPosition);
+   CreateFloatProperty("Max Position (mm)", 100.0, false, pAct, true);
+
    // Controller address
    pAct = new CPropertyAction (this, &NewportZStage::OnControllerAddress);
    CreateIntegerProperty("Controller Address", cAddress_, false, pAct, true);
@@ -488,7 +492,9 @@ int NewportZStage::GetControllerInfo()
 		  lowerLimit_ = atof(answer.substr(offset + 2).c_str());
 	  }
 	  if (answer.substr(offset, 2) == "SR") {
-		  upperLimit_ = atof(answer.substr(offset + 2).c_str());
+		  double tmp = atof(answer.substr(offset + 2).c_str());
+		  if (tmp < upperLimit_)
+			  upperLimit_ = tmp;
 	  }
       if (answer.substr(offset,2) == "VA") {
          velocityUpperLimit_ = atof(answer.substr(offset + 2).c_str());
@@ -572,6 +578,22 @@ int NewportZStage::OnConversionFactor(MM::PropertyBase* pProp, MM::ActionType eA
       double pos;
       pProp->Get(pos);
       conversionFactor_ = pos;
+   }
+
+   return DEVICE_OK;
+}
+
+int NewportZStage::OnMaxPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(upperLimit_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double pos;
+      pProp->Get(pos);
+      upperLimit_ = pos;
    }
 
    return DEVICE_OK;

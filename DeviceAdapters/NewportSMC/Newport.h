@@ -70,6 +70,7 @@ public:
    int OnControllerAddress(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnMaxPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    int IsStageSequenceable(bool& isSequenceable) const {
