@@ -636,6 +636,9 @@ public class QuickAccessFrame extends JFrame {
          subPanel.add(new JLabel("Open on launch: "));
          openSelect_ = new JComboBox(new String[] {OPEN_NEVER,
             OPEN_IF_USED, OPEN_REMEMBER});
+         // The OPEN_REMEMBER string is kinda large and blows out the size
+         // of the combobox, so use the OPEN_IF_USED string to set size.
+         openSelect_.setPrototypeDisplayValue(OPEN_IF_USED);
          openSelect_.setSelectedItem(OPEN_NEVER);
          subPanel.add(openSelect_, "span, wrap");
 
