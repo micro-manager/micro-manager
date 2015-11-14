@@ -41,7 +41,6 @@ import org.micromanager.asidispim.Utils.StagePositionUpdater;
 
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.Rectangle;
@@ -448,8 +447,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             delayScan_, numScansPerSlice_, lineScanPeriod_, 
             delayLaser_, durationLaser_, delayCamera_,
             durationCamera_, exposureCamera_};
-      componentsSetEnabled(advancedTimingComponents, advancedSliceTimingCB_.isSelected());
-      componentsSetEnabled(simpleTimingComponents, !advancedSliceTimingCB_.isSelected());
+      PanelUtils.componentsSetEnabled(advancedTimingComponents, advancedSliceTimingCB_.isSelected());
+      PanelUtils.componentsSetEnabled(simpleTimingComponents, !advancedSliceTimingCB_.isSelected());
       
       // this action listener takes care of enabling/disabling inputs
       // of the advanced slice timing window
@@ -459,9 +458,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          public void itemStateChanged(ItemEvent e) {
             boolean enabled = advancedSliceTimingCB_.isSelected();
             // set other components in this advanced timing frame
-            componentsSetEnabled(advancedTimingComponents, enabled);
+            PanelUtils.componentsSetEnabled(advancedTimingComponents, enabled);
             // also control some components in main volume settings sub-panel
-            componentsSetEnabled(simpleTimingComponents, !enabled);
+            PanelUtils.componentsSetEnabled(simpleTimingComponents, !enabled);
             desiredSlicePeriod_.setEnabled(!enabled && !minSlicePeriodCB_.isSelected());
             desiredSlicePeriodLabel_.setEnabled(!enabled && !minSlicePeriodCB_.isSelected());
             updateDurationLabels();
@@ -540,10 +539,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       useTimepointsCB_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) { 
-            componentsSetEnabled(timepointPanel_, useTimepointsCB_.isSelected());
+            PanelUtils.componentsSetEnabled(timepointPanel_, useTimepointsCB_.isSelected());
          }
       });
-      componentsSetEnabled(timepointPanel_, useTimepointsCB_.isSelected());  // initialize
+      PanelUtils.componentsSetEnabled(timepointPanel_, useTimepointsCB_.isSelected());  // initialize
       
       // end repeat sub-panel
       
@@ -622,12 +621,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // we only need to gray out the directory-related components
       final JComponent[] saveComponents = { browseRootButton, rootField_, 
                                             dirRootLabel };
-      componentsSetEnabled(saveComponents, saveCB_.isSelected());
+      PanelUtils.componentsSetEnabled(saveComponents, saveCB_.isSelected());
       
       saveCB_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            componentsSetEnabled(saveComponents, saveCB_.isSelected());
+            PanelUtils.componentsSetEnabled(saveComponents, saveCB_.isSelected());
          }
       });
       
@@ -716,10 +715,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       usePositionsCB_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) { 
-            componentsSetEnabled(positionPanel, usePositionsCB_.isSelected());
+            PanelUtils.componentsSetEnabled(positionPanel, usePositionsCB_.isSelected());
          }
       });
-      componentsSetEnabled(positionPanel, usePositionsCB_.isSelected());  // initialize
+      PanelUtils.componentsSetEnabled(positionPanel, usePositionsCB_.isSelected());  // initialize
       
       // end of Position panel
       
@@ -1389,28 +1388,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
 
    /**
-    * call setEnabled(boolean) on all components in list
-    * @param components
-    * @param enabled
-    */
-   private static void componentsSetEnabled(JComponent[] components, boolean enabled) {
-      for (JComponent c : components) {
-         c.setEnabled(enabled);
-      }
-   }
-   
-   /**
-   * call setEnabled(boolean) on all components in frame/panel
-    * @param panel
-    * @param enabled
-    */
-   private static void componentsSetEnabled(Container container, boolean enabled) {
-      for (Component comp : container.getComponents()) {
-         comp.setEnabled(enabled);
-      }
-   }
-   
-   /**
     * Implementation of acquisition that orchestrates image
     * acquisition itself rather than using the acquisition engine.
     * 
@@ -1431,14 +1408,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             ReportingUtils.logDebugMessage("User requested start of diSPIM acquisition.");
             cancelAcquisition_.set(false);
             acquisitionRequested_.set(true);
+            ASIdiSPIM.getFrame().tabsSetEnabled(false);
             updateStartButton();
             boolean success = runAcquisitionPrivate();
             if (!success) {
                ReportingUtils.logError("Fatal error running diSPIM acquisition.");
             }
             acquisitionRequested_.set(false);
-            acquisitionRunning_.set(false);
             updateStartButton();
+            ASIdiSPIM.getFrame().tabsSetEnabled(true);
          }
       }            
       acqThread acqt = new acqThread("diSPIM Acquisition");
@@ -1834,11 +1812,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          } else {
             acqName = gui_.getUniqueAcquisitionName(prefixField_.getText());
          }
+         
+         VirtualAcquisitionDisplay vad = null;
+         WindowListener wl_acq = null;
+         WindowListener[] wls_orig = null;
          try {
             // check for stop button before each acquisition
             if (cancelAcquisition_.get()) {
                throw new IllegalMonitorStateException("User stopped the acquisition");
             }
+            
+            // flag that we are actually running acquisition now
+            acquisitionRunning_.set(true);
             
             ReportingUtils.logMessage("diSPIM plugin starting acquisition " + acqName);
             
@@ -1932,23 +1917,23 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             
             // Dive into MM internals since script interface does not support pipelines
             ImageCache imageCache = acq.getImageCache();
-            final VirtualAcquisitionDisplay vad = acq.getAcquisitionWindow();
+            vad = acq.getAcquisitionWindow();
             imageCache.addImageCacheListener(vad);
             
             // Start pumping images into the ImageCache
             DefaultTaggedImageSink sink = new DefaultTaggedImageSink(bq, imageCache);
             sink.start();
             
-            // remove usual window listener and replace it with our own
+            // remove usual window listener(s) and replace it with our own
             //   that will prompt before closing and cancel acquisition if confirmed
             // it's probably dangerous to do this and should be considered a hack
             // I have confirmed that there is only one windowListener and it seems to 
             //   also be related to window closing
-            WindowListener[] wls = vad.getImagePlus().getWindow().getWindowListeners();
-            for (WindowListener l : wls) {
+            wls_orig = vad.getImagePlus().getWindow().getWindowListeners();
+            for (WindowListener l : wls_orig) {
                vad.getImagePlus().getWindow().removeWindowListener(l);
             }
-            vad.getImagePlus().getWindow().addWindowListener(new WindowAdapter() {
+            wl_acq = new WindowAdapter() {
                @Override
                public void windowClosing(WindowEvent arg0) {
                   // if running acquisition only close if user confirms
@@ -1957,23 +1942,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               "Do you really want to abort the acquisition?",
                               JOptionPane.YES_NO_OPTION)) {
                      cancelAcquisition_.set(true);
-                     vad.getImagePlus().getWindow().dispose();
-                  }
-                  // if not running acquisition then close anyway
-                  if (!acquisitionRunning_.get()) {
-                     vad.getImagePlus().getWindow().dispose();
                   }
                }
-            });
+            };
+            vad.getImagePlus().getWindow().addWindowListener(wl_acq);
             
             // patterned after implementation in MMStudio.java
             // will be null if not saving to disk
             lastAcquisitionPath_ = acq.getImageCache().getDiskLocation();
             lastAcquisitionName_ = acqName;
             
-            // flag that we are actually running acquisition now
-            acquisitionRunning_.set(true);
-
             // Loop over all the times we trigger the controller's acquisition
             // remember acquisition start time for software-timed timepoints
             // For hardware-timed timepoints we only trigger the controller once
@@ -2257,6 +2235,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             MyDialogUtils.showError(ex);
          } finally {  // end of this acquisition (could be about to restart if separate viewers)
             try {
+               // restore original window listeners
+               try {
+                  vad.getImagePlus().getWindow().removeWindowListener(wl_acq);
+                  for (WindowListener l : wls_orig) {
+                     vad.getImagePlus().getWindow().addWindowListener(l);
+                  }
+               } catch (Exception ex) {
+                  // do nothing, window is probably gone
+               }
+               
                bq.put(TaggedImageQueue.POISON);
                // TODO: evaluate closeAcquisition call
                // at the moment, the Micro-Manager api has a bug that causes 
@@ -2267,9 +2255,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                ReportingUtils.logMessage("diSPIM plugin acquisition " + acqName + 
                      " took: " + (System.currentTimeMillis() - acqButtonStart) + "ms");
                
+               // flag that we are done with acquisition
+               acquisitionRunning_.set(false);
+               
             } catch (Exception ex) {
                // exception while stopping sequence acquisition, not sure what to do...
-               MyDialogUtils.showError(ex, "Problem while finsihing acquisition");
+               MyDialogUtils.showError(ex, "Problem while finishing acquisition");
             }
          }
 
@@ -2349,7 +2340,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     */
    @Override
    public void gotSelected() {
-      // TODO figure out why posUpdater_ is paused and then unpaused here
       posUpdater_.pauseUpdates(true);
       props_.callListeners();
       // old joystick associations were cleared when leaving

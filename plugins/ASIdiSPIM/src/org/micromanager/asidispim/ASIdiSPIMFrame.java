@@ -80,6 +80,7 @@ import org.micromanager.utils.MMFrame;
 //TODO smart default joystick settings (e.g. different defaults different panels/wheels)
 //TODO easily take "test acquisition" that wouldn't need to be saved, only do 1 timepoint, etc. From both acquisition and setup tabs (setup tab would only do that side)
 //TODO calculate and show estimated disk space as part of "durations"
+//TODO prevent user from closing plugin window during acquisition
 
 
 /**
@@ -264,6 +265,10 @@ public class ASIdiSPIMFrame extends MMFrame
    
    public boolean getHardwareInUse() {
       return hardwareInUse_.get();
+   }
+   
+   public void tabsSetEnabled(boolean enabled) {
+      tabbedPane_.setEnabled(enabled);
    }
    
    /**
