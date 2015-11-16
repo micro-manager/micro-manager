@@ -90,11 +90,17 @@ public class SavedMDAButton extends WidgetPlugin implements SciJavaPlugin {
    }
 
    @Override
+   public boolean getCanCustomizeIcon() {
+      return true;
+   }
+
+   @Override
    public JComponent createControl(PropertyMap config) {
       final File file = new File(config.getString("settingsPath", ""));
       // Size it to mostly fill its frame.
       JButton result = new JButton(file.getName(),
-            IconLoader.getIcon("/org/micromanager/icons/film_file.png")) {
+            studio_.quickAccess().getCustomIcon(config,
+               IconLoader.getIcon("/org/micromanager/icons/film_file.png"))) {
          @Override
          public Dimension getPreferredSize() {
             return QuickAccessPlugin.getPaddedCellSize();

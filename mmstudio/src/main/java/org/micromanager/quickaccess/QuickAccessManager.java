@@ -42,10 +42,13 @@ public interface QuickAccessManager {
     * customizable icons (i.e. their getCanCustomizeIcon() method returns true)
     * to insert the custom icon into their UI. Note that just because the UI
     * *can* have a custom icon does not necessarily mean that it *will* have
-    * a custom icon; in such situations this method will return null.
+    * a custom icon; in such situations this method will return the
+    * defaultIcon value instead.
     * @param config A PropertyMap potentially containing information about
     *        user-customized icons.
-    * @return A custom Icon derived from the PropertyMap, or null.
+    * @param defaultIcon Icon to use if no custom icon information is set.
+    * @return A custom Icon derived from the PropertyMap, or the defaultIcon
+    *         if no icon information is available.
     */
-   public Icon getCustomIcon(PropertyMap config);
+   public Icon getCustomIcon(PropertyMap config, Icon defaultIcon);
 }

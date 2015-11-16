@@ -151,12 +151,12 @@ public class DefaultQuickAccessManager implements QuickAccessManager {
    }
 
    @Override
-   public Icon getCustomIcon(PropertyMap config) {
+   public Icon getCustomIcon(PropertyMap config, Icon defaultIcon) {
       String configString = config.getString(WidgetPlugin.CUSTOM_ICON_STRING,
             null);
       if (configString == null) {
          // No custom icon info.
-         return null;
+         return defaultIcon;
       }
       try {
          JSONObject json = new JSONObject(configString);
@@ -184,13 +184,12 @@ public class DefaultQuickAccessManager implements QuickAccessManager {
          }
          else {
             studio_.logs().logError("Unsupported icon type " + iconType);
-            return null;
          }
       }
       catch (JSONException e) {
          studio_.logs().logError(e, "Unable to create custom icon");
       }
-      return null;
+      return defaultIcon;
    }
 
    /**

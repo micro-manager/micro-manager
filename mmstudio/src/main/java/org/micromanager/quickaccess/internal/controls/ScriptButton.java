@@ -31,6 +31,7 @@ import java.awt.Frame;
 
 import java.io.File;
 
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -89,11 +90,17 @@ public class ScriptButton extends WidgetPlugin implements SciJavaPlugin {
    }
 
    @Override
+   public boolean getCanCustomizeIcon() {
+      return true;
+   }
+
+   @Override
    public JComponent createControl(PropertyMap config) {
       final File file = new File(config.getString("scriptPath", ""));
+      Icon icon = studio_.quickAccess().getCustomIcon(config,
+            IconLoader.getIcon("/org/micromanager/icons/file.png"));
       // Size it to mostly fill its frame.
-      JButton result = new JButton(file.getName(),
-            IconLoader.getIcon("/org/micromanager/icons/file.png")) {
+      JButton result = new JButton(file.getName(), icon) {
          @Override
          public Dimension getPreferredSize() {
             return QuickAccessPlugin.getPaddedCellSize();

@@ -103,11 +103,8 @@ public class PresetButton extends WidgetPlugin implements SciJavaPlugin {
       // This preset name is solely for purposes of setting up the icon in
       // configure mode.
       final String preset = config.getString("presetName", "GFP");
-      Icon icon = studio_.quickAccess().getCustomIcon(config);
-      if (icon == null) {
-         // No custom icon available.
-         icon = IconLoader.getIcon("/org/micromanager/icons/color_filter.png");
-      }
+      Icon icon = studio_.quickAccess().getCustomIcon(config,
+            IconLoader.getIcon("/org/micromanager/icons/color_filter.png"));
       JButton result = new JButton(preset, icon) {
          @Override
          public Dimension getPreferredSize() {
