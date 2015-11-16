@@ -31,13 +31,17 @@ import java.io.File;
 import java.io.IOException;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -104,7 +108,7 @@ public class DefaultQuickAccessManager implements QuickAccessManager {
             JSONArray panels = config.getJSONArray("panels");
             for (int i = 0; i < panels.length(); ++i) {
                JSONObject panelConfig = panels.getJSONObject(i);
-               knownPanels_.add(new QuickAccessFrame(studio_, panelConfig));
+               addPanel(panelConfig);
             }
          }
          catch (JSONException e) {
@@ -140,14 +144,21 @@ public class DefaultQuickAccessManager implements QuickAccessManager {
 
    @Override
    public void showPanels() {
-      if (staticInstance_.knownPanels_.size() == 0) {
-         staticInstance_.knownPanels_.add(
-               new QuickAccessFrame(staticInstance_.studio_,
-                  new JSONObject()));
+      if (knownPanels_.size() == 0) {
+         addPanel(new JSONObject());
       }
-      for (QuickAccessFrame panel : staticInstance_.knownPanels_) {
+      for (QuickAccessFrame panel : knownPanels_) {
          panel.setVisible(true);
       }
+   }
+
+   @Override
+   public Map<String, JFrame> getPanels() {
+      HashMap<String, JFrame> result = new HashMap<String, JFrame>();
+      for (QuickAccessFrame panel : knownPanels_) {
+         result.put(panel.getTitle(), panel);
+      }
+      return result;
    }
 
    @Override
@@ -206,11 +217,53 @@ public class DefaultQuickAccessManager implements QuickAccessManager {
    }
 
    /**
+    * Create a new panel with the provided configuration information.
+    */
+   private void addPanel(JSONObject config) {
+      knownPanels_.add(new QuickAccessFrame(studio_, config));
+      studio_.events().post(new QuickAccessPanelEvent());
+   }
+
+   /**
+    * Prompt the user to delete the specified panel.
+    */
+   public static void promptToDelete(JFrame panel) {
+      if (!(panel instanceof QuickAccessFrame)) {
+         // This should never happen.
+         staticInstance_.studio_.logs().logError(
+               "Asked to delete JFrame that isn't a QuickAccessFrame.");
+      }
+      if (JOptionPane.showConfirmDialog(panel,
+         "Really delete this panel and lose its configuration?",
+         "Confirm Panel Deletion", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+         deletePanel((QuickAccessFrame) panel);
+         panel.dispose();
+      }
+   }
+
+   /**
+    * Provide a unique string for the provided panel, based on the provided
+    * base title and the titles of the other extant panels.
+    */
+   public static String getUniqueTitle(QuickAccessFrame panel, String base) {
+      int offset = 0;
+      for (QuickAccessFrame alt : staticInstance_.knownPanels_) {
+         if (alt != panel && alt.getTitle().startsWith(base)) {
+            offset++;
+         }
+      }
+      if (offset == 0) {
+         // Title is already unique.
+         return base;
+      }
+      return base + " " + (offset + 1);
+   }
+
+   /**
     * Create a new, empty panel.
     */
    public static void createNewPanel() {
-      staticInstance_.knownPanels_.add(
-            new QuickAccessFrame(staticInstance_.studio_, new JSONObject()));
+      staticInstance_.addPanel(new JSONObject());
    }
 
    /**
@@ -218,6 +271,7 @@ public class DefaultQuickAccessManager implements QuickAccessManager {
     */
    public static void deletePanel(QuickAccessFrame panel) {
       staticInstance_.knownPanels_.remove(panel);
+      staticInstance_.studio_.events().post(new QuickAccessPanelEvent());
    }
 
    public static QuickAccessManager getInstance() {

@@ -307,8 +307,10 @@ public class MMStudio implements Studio, CompatibilityInterface {
       ToolTipManager ttManager = ToolTipManager.sharedInstance();
       ttManager.setDismissDelay(TOOLTIP_DISPLAY_DURATION_MILLISECONDS);
       ttManager.setInitialDelay(TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS);
-      
-      
+
+      // The tools menu depends on the Quick-Access Manager.
+      DefaultQuickAccessManager.createManager(studio_);
+
       menuBar_ = new JMenuBar();
 
       FileMenu fileMenu = new FileMenu(studio_);
@@ -452,7 +454,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
          }
       }
 
-      DefaultQuickAccessManager.createManager(studio_);
       zWheelListener_ = new ZWheelListener(core_, studio_);
       snapLiveManager_.addLiveModeListener(zWheelListener_);
       xyzKeyListener_ = new XYZKeyListener(core_, studio_);

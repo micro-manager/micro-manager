@@ -4,9 +4,13 @@ import com.google.common.eventbus.Subscribe;
 
 import java.awt.Cursor;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -26,12 +30,15 @@ import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.HotKeysDialog;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
+import org.micromanager.quickaccess.internal.QuickAccessPanelEvent;
 
 public class ToolsMenu {
    private static final String MOUSE_MOVES_STAGE = "whether or not the hand tool can be used to move the stage";
 
    private JMenu toolsMenu_;
    private final JMenu switchConfigurationMenu_;
+   private final JMenu quickAccessMenu_;
    private JCheckBoxMenuItem centerAndDragMenuItem_;
 
    private final MMStudio studio_;
@@ -41,6 +48,7 @@ public class ToolsMenu {
    public ToolsMenu(MMStudio studio, CMMCore core) {
       studio_ = studio;
       core_ = core;
+      quickAccessMenu_ = new JMenu("Quick Access Panels (Beta)");
       switchConfigurationMenu_ = new JMenu();
       studio_.events().registerForEvents(this);
    }
@@ -80,14 +88,8 @@ public class ToolsMenu {
                  }
               });
 
-      GUIUtils.addMenuItem(toolsMenu_, "Quick Access Panel (Beta)...",
-              "Show the Quick Access Panel, for easy access to commonly-used controls.",
-              new Runnable() {
-                 @Override
-                 public void run() {
-                     studio_.quickAccess().showPanels();
-                 }
-              });
+      populateQuickAccessMenu();
+      toolsMenu_.add(quickAccessMenu_);
 
       GUIUtils.addMenuItem(toolsMenu_, "Shortcuts...",
               "Create keyboard shortcuts to activate image acquisition, mark positions, or run custom scripts",
@@ -300,6 +302,54 @@ public class ToolsMenu {
       }
    }
 
+   private void populateQuickAccessMenu() {
+      quickAccessMenu_.removeAll();
+      GUIUtils.addMenuItem(quickAccessMenu_, "Create New Panel",
+            "Create a new Quick Access Panel, for easy access to commonly-used controls.",
+            new Runnable() {
+               @Override
+               public void run() {
+                  DefaultQuickAccessManager.createNewPanel();
+               }
+            });
+
+      final Map<String, JFrame> titleToFrame = studio_.quickAccess().getPanels();
+      ArrayList<String> titles = new ArrayList<String>(titleToFrame.keySet());
+      Collections.sort(titles);
+
+      JMenu deleteMenu = new JMenu("Delete...");
+      for (final String title : titles) {
+         GUIUtils.addMenuItem(deleteMenu, title, "Delete this panel",
+               new Runnable() {
+                  @Override
+                  public void run() {
+                     DefaultQuickAccessManager.promptToDelete(
+                        titleToFrame.get(title));
+                  }
+               });
+      }
+      quickAccessMenu_.add(deleteMenu);
+      quickAccessMenu_.addSeparator();
+      GUIUtils.addMenuItem(quickAccessMenu_, "Show all",
+            "Show all Quick Access Panels; create a new one if necessary",
+            new Runnable() {
+               @Override
+               public void run() {
+                  studio_.quickAccess().showPanels();
+               }
+            });
+
+      for (final String title : titles) {
+         GUIUtils.addMenuItem(quickAccessMenu_, title, "",
+               new Runnable() {
+               @Override
+               public void run() {
+                  titleToFrame.get(title).setVisible(true);
+               }
+         });
+      }
+   }
+
    public void updateSwitchConfigurationMenu() {
       switchConfigurationMenu_.removeAll();
       HashSet<String> seenConfigs = new HashSet<String>();
@@ -318,6 +368,11 @@ public class ToolsMenu {
          });
          seenConfigs.add(configFile);
       }
+   }
+
+   @Subscribe
+   public void onQuickAccessPanel(QuickAccessPanelEvent event) {
+      populateQuickAccessMenu();
    }
 
    @Subscribe

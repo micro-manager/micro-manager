@@ -47,6 +47,8 @@ import java.util.HashSet;
 import javax.swing.BorderFactory;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -58,6 +60,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSpinner;
+import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
@@ -85,6 +88,7 @@ public class QuickAccessFrame extends JFrame {
    private static final String OPEN_NEVER = "Never";
    private static final String OPEN_IF_USED = "If window is not empty";
    private static final String OPEN_REMEMBER = "If window was open at end of last session";
+   private static final String DEFAULT_TITLE = "Quick Access Tools";
 
    private Studio studio_;
    // Holds everything.
@@ -98,8 +102,6 @@ public class QuickAccessFrame extends JFrame {
    private ConfigurationPanel configurePanel_;
    // Switches between normal and configure modes.
    private JToggleButton configureButton_;
-   // Access create-new and delete actions.
-   private JButton gearButton_;
    // List of visual dividers in the grid.
    private HashSet<Divider> dividers_;
 
@@ -120,7 +122,6 @@ public class QuickAccessFrame extends JFrame {
 
    public QuickAccessFrame(Studio studio, JSONObject config) {
       setAlwaysOnTop(true);
-      setTitle("Quick Access Tools");
 
       studio_ = studio;
       controls_ = new HashSet<ControlCell>();
@@ -147,27 +148,20 @@ public class QuickAccessFrame extends JFrame {
 
       contentsPanel_.add(controlsPanel_);
 
-      configureButton_ = new JToggleButton("Configure");
+      configureButton_ = new JToggleButton(
+            IconLoader.getIcon("/org/micromanager/icons/gear.png"));
+      configureButton_.setToolTipText("Open the configuration UI for this panel");
       configureButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             toggleConfigurePanel(configureButton_.isSelected());
          }
       });
-      contentsPanel_.add(configureButton_, "split 2, flowx");
-
-      gearButton_ = new JButton(IconLoader.getIcon(
-               "/org/micromanager/icons/gear.png"));
-      gearButton_.addMouseListener(new MouseAdapter() {
-         @Override
-         public void mousePressed(MouseEvent e) {
-            showGearMenu(e);
-         }
-      });
-      contentsPanel_.add(gearButton_, "gapleft push");
+      contentsPanel_.add(configureButton_);
 
       // We'll add this later, when the configure button is toggled.
-      configurePanel_ = new ConfigurationPanel();
+      configurePanel_ = new ConfigurationPanel(
+            config.optString("title", DEFAULT_TITLE));
 
       add(contentsPanel_);
 
@@ -183,12 +177,15 @@ public class QuickAccessFrame extends JFrame {
       boolean hasContents = false;
       if (config.length() == 0) {
          // Empty config; create a default (i.e. empty) window.
+         setTitle(DEFAULT_TITLE);
          setVisible(true);
          return;
       }
       try {
          numCols_ = config.getInt("numCols");
          numRows_ = config.getInt("numRows");
+         setTitle(DefaultQuickAccessManager.getUniqueTitle(this, 
+                  config.optString("title", DEFAULT_TITLE)));
          configurePanel_.updateSpinners(numCols_, numRows_);
          JSONArray cells = config.getJSONArray("cells");
          for (int i = 0; i < cells.length(); ++i) {
@@ -227,6 +224,7 @@ public class QuickAccessFrame extends JFrame {
          JSONObject settings = new JSONObject();
          settings.put("numCols", numCols_);
          settings.put("numRows", numRows_);
+         settings.put("title", configurePanel_.getUserTitle());
 
          JSONArray cells = new JSONArray();
          for (ControlCell cell : controls_) {
@@ -252,38 +250,6 @@ public class QuickAccessFrame extends JFrame {
          studio_.logs().logError(e, "Error saving Quick Access Window's settings");
          return null;
       }
-   }
-
-   /**
-    * Show a popup menu under the mouse, allowing the user to create or
-    * delete Quick Access Windows.
-    */
-   private void showGearMenu(MouseEvent event) {
-      JPopupMenu menu = new JPopupMenu();
-      JMenuItem dupeItem = new JMenuItem("Create New Window");
-      dupeItem.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            DefaultQuickAccessManager.createNewPanel();
-         }
-      });
-      menu.add(dupeItem);
-
-      JMenuItem deleteItem = new JMenuItem("Delete This Window");
-      deleteItem.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            if (JOptionPane.showConfirmDialog(QuickAccessFrame.this,
-               "Really delete this window and lose its configuration?",
-               "Confirm Window Deletion", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
-               DefaultQuickAccessManager.deletePanel(QuickAccessFrame.this);
-               dispose();
-            }
-         }
-      });
-      menu.add(deleteItem);
-
-      menu.show(gearButton_, event.getX(), event.getY());
    }
 
    /**
@@ -418,8 +384,7 @@ public class QuickAccessFrame extends JFrame {
    private void toggleConfigurePanel(boolean isShown) {
       contentsPanel_.removeAll();
       contentsPanel_.add(isShown ? configuringControlsPanel_ : controlsPanel_);
-      contentsPanel_.add(configureButton_, "split 2, flowx");
-      contentsPanel_.add(gearButton_, "gapleft push");
+      contentsPanel_.add(configureButton_);
       if (isShown) {
          contentsPanel_.add(configurePanel_, "growx");
       }
@@ -468,6 +433,16 @@ public class QuickAccessFrame extends JFrame {
    public void updateMouse(MouseEvent event) {
       mouseX_ = event.getXOnScreen() - getLocation().x - getInsets().left;
       mouseY_ = event.getYOnScreen() - getLocation().y - getInsets().top;
+   }
+
+   /**
+    * Update the title of this window according to the provided string.
+    */
+   private void updateTitle(String title) {
+      setTitle(DefaultQuickAccessManager.getUniqueTitle(this, title));
+      // This is mostly to let the Tools menu know it needs to regenerate its
+      // submenu for the quick access panels.
+      studio_.events().post(new QuickAccessPanelEvent());
    }
 
    /**
@@ -615,21 +590,28 @@ public class QuickAccessFrame extends JFrame {
     * main window.
     */
    private class ConfigurationPanel extends JPanel {
-      // Maps iconified versions of controls to the plugins that generated
-      // them.
+      // Dimensionality controls.
       private JSpinner colsControl_;
       private JSpinner rowsControl_;
+      // Title input text field
+      private JTextField titleField_;
       // Dropdown menu for selecting the open mode.
       private JComboBox openSelect_;
 
-      public ConfigurationPanel() {
+      /**
+       * We take the title as a parameter because, at the time that this
+       * constructor is invoked, we haven't loaded the correct title for the
+       * window yet, so getTitle() returns the wrong value. And anyway,
+       * getTitle() includes any modifications from the getUniqueTitle call.
+       */
+      public ConfigurationPanel(String title) {
          super(new MigLayout("flowy, insets 0, gap 0"));
          setBorder(BorderFactory.createLoweredBevelBorder());
 
          // Add controls for setting rows/columns.
          // It really bugs me how redundant this code is. Java!
          JPanel subPanel = new JPanel(new MigLayout("flowx"));
-         subPanel.add(new JLabel("Columns: "), "split 4, span");
+         subPanel.add(new JLabel("Columns: "));
          colsControl_ = new JSpinner(
                new SpinnerNumberModel(numCols_, 1, 99, 1));
          subPanel.add(colsControl_);
@@ -651,14 +633,32 @@ public class QuickAccessFrame extends JFrame {
             }
          });
 
-         subPanel.add(new JLabel("Open on launch: "));
+         subPanel.add(new JLabel("Panel title:"), "split 2, span");
+         titleField_ = new JTextField(title, 20);
+         titleField_.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+               updateTitle(titleField_.getText());
+            }
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+               updateTitle(titleField_.getText());
+            }
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+               updateTitle(titleField_.getText());
+            }
+         });
+         subPanel.add(titleField_, "wrap");
+
+         subPanel.add(new JLabel("Open on launch: "), "split 2, span");
          openSelect_ = new JComboBox(new String[] {OPEN_NEVER,
             OPEN_IF_USED, OPEN_REMEMBER});
          // The OPEN_REMEMBER string is kinda large and blows out the size
          // of the combobox, so use the OPEN_IF_USED string to set size.
          openSelect_.setPrototypeDisplayValue(OPEN_IF_USED);
          openSelect_.setSelectedItem(OPEN_NEVER);
-         subPanel.add(openSelect_, "span, wrap");
+         subPanel.add(openSelect_, "wrap");
 
          subPanel.add(new JLabel("<html>Drag controls into the grid above to add them to the panel.<br>Click on grid lines to add or remove dividers. Right-click<br>on a control in the grid to customize its icon (when possible).</html>"),
                "span, wrap, gaptop 10");
@@ -709,6 +709,13 @@ public class QuickAccessFrame extends JFrame {
          catch (Exception e) {
             // Ignore it.
          }
+      }
+
+      /**
+       * Return the title field's text.
+       */
+      public String getUserTitle() {
+         return titleField_.getText();
       }
 
       /**

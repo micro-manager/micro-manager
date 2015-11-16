@@ -19,7 +19,10 @@
 
 package org.micromanager.quickaccess;
 
+import java.util.Map;
+
 import javax.swing.Icon;
+import javax.swing.JFrame;
 
 import org.micromanager.PropertyMap;
 
@@ -35,6 +38,11 @@ public interface QuickAccessManager {
     * a new, blank panel will be created.
     */
    public void showPanels();
+
+   /**
+    * Retrieve a mapping of Quick Access Panel titles to the panels themselves.
+    */
+   public Map<String, JFrame> getPanels();
 
    /**
     * Generate an Icon based on information contained in the provided
