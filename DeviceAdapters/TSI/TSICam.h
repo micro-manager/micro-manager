@@ -27,6 +27,8 @@
 #include <TsiSDK.h>
 #include <TsiCamera.h>
 #include <TsiImage.h>
+#include <TsiColorCamera.h>
+#include <TsiColorImage.h>
 
 #ifdef WIN32
 //...
@@ -43,6 +45,17 @@
 #include <string>
 #include <map>
 
+static const char* g_DeviceTsiCam = "TSICam";
+static const char* g_ReadoutRate = "ReadoutRate";
+static const char* g_Gain = "Gain";
+static const char* g_NumberOfTaps = "Taps";
+static const char* g_ColorFilterArray = "ColorArray";
+static const char* g_WhiteBalance = "WhiteBalance";
+static const char* g_Set = "SetNow";
+static const char* g_Off = "Off";
+static const char* g_On = "On";
+
+
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
 //
@@ -52,6 +65,7 @@
 #define ERR_TSI_OPEN_FAILED               10013
 #define ERR_CAMERA_OPEN_FAILED            10014
 #define ERR_IMAGE_TIMED_OUT               10015
+#define ERR_INVALID_CHANNEL_INDEX         16016
 
 //////////////////////////////////////////////////////////////////////////////
 // Region of Interest
@@ -71,6 +85,7 @@ struct ROI {
 };
 
 class AcqSequenceThread;
+class TsiColorCamera;
 
 //////////////////////////////////////////////////////////////////////////////
 // Implementation of the MMDevice and MMCamera interfaces
@@ -94,11 +109,18 @@ public:
    
    // MMCamera API
    int SnapImage();
+   const unsigned char* GetImageBuffer(unsigned chNum);
+   const unsigned int* GetImageBufferAsRGB32();
    const unsigned char* GetImageBuffer();
+
+   unsigned GetNumberOfComponents() const;
+   unsigned GetNumberOfChannels() const;
+   int GetChannelName(unsigned channel, char* name);
+
    unsigned GetImageWidth() const {return img.Width();}
    unsigned GetImageHeight() const {return img.Height();}
-   unsigned GetImageBytesPerPixel() const {return img.Depth();} 
-   long GetImageBufferSize() const {return img.Width() * img.Height() * GetImageBytesPerPixel();}
+   unsigned GetImageBytesPerPixel() const {return color ? colorImg.Depth() : img.Depth();} 
+   long GetImageBufferSize() const;
    unsigned GetBitDepth() const;
    int GetBinning() const;
    int SetBinning(int binSize);
@@ -124,6 +146,7 @@ public:
    int OnReadoutRate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTaps(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    // stubs
    int OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -148,14 +171,24 @@ private:
    int GetImageParameters();
    int PushImage(unsigned char* imgBuf);
    static void ReadoutComplete(int callback_type_id, TsiImage *tsi_image, void *context);
+   TsiColorCamera* getColorCamera();
+   static void convertToRGBA32(TsiColorImage& tsiImg, ImgBuffer& img, int bitDepth);
+   int SetWhiteBalance();
+   void ClearWhiteBalance();
 
    ImgBuffer img;
+   ImgBuffer colorImg;
    bool initialized;
    bool stopOnOverflow;
    long acquiring;
    TsiCamera* camHandle_;
+   int bitDepth;
    TSI_ROI_BIN roiBinData;
    TSI_ROI_BIN fullFrame;
+
+   // color camera support
+   bool color;
+   bool wb;
 
    friend class AcqSequenceThread;
    AcqSequenceThread*   liveAcqThd_;

@@ -20,9 +20,6 @@
 
 #include "TsiCam.h"
 
-extern const char* g_ReadoutRate;
-extern const char* g_NumberOfTaps;
-
 using namespace std;
 
 int TsiCam::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -153,6 +150,35 @@ int TsiCam::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int TsiCam::OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      string val;
+      pProp->Get(val);
+      if (val.compare(g_Off) == 0)
+      {
+         ClearWhiteBalance();
+      }
+      else if (val.compare(g_On) == 0)
+      {
+         if (!wb)
+            return SetWhiteBalance();
+      }
+      else if (val.compare(g_Set) == 0)
+      {
+         return SetWhiteBalance();
+      }
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      if (wb)
+         pProp->Set(g_On);
+      else
+         pProp->Set(g_Off);
+   }
+   return DEVICE_OK;
+}
 
 int TsiCam::OnTemperature(MM::PropertyBase* /*pProp*/, MM::ActionType eAct)
 {

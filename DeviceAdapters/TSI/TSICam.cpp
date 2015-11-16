@@ -45,18 +45,9 @@
 
 using namespace std;
 
-
-// global constants
-const char* g_DeviceTsiCam = "TSICam";
-const char* g_ReadoutRate = "ReadoutRate";
-const char* g_Gain = "Gain";
-const char* g_NumberOfTaps = "Taps";
-
 TsiSDK* TsiCam::tsiSdk = 0;
 
-
 static const WORD MAX_CONSOLE_LINES = 500;
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
@@ -84,7 +75,10 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 
 TsiCam::TsiCam() :
    initialized(0), stopOnOverflow(false),
-   acquiring(0)
+   acquiring(0),
+   color(false),
+   bitDepth(14),
+   wb(false)
 {
    // set default error messages
    InitializeDefaultErrorMessages();
@@ -97,6 +91,7 @@ TsiCam::TsiCam() :
    SetErrorText(ERR_TSI_CAMERA_NOT_FOUND, "Couldn't detect any TSI cameras.\n"
       "  Make sure cameras are attached and the power is ON.");
    SetErrorText(ERR_IMAGE_TIMED_OUT, "Timed out waiting for the image from the camera.");
+   SetErrorText(ERR_INVALID_CHANNEL_INDEX, "Invalid channel index");
 
    // initialize roi-bin structure
    roiBinData.XBin = 1;
@@ -341,6 +336,31 @@ int TsiCam::Initialize()
 		  bRet = camHandle_->SetParameter(TSI_PARAM_TAPS_INDEX, tapIdxOrg);
 		  assert(bRet);
 	   }
+   }
+
+   // check color capabilities
+   color = false;
+   TSI_COLOR_ATTRIBUTES c;
+   bRet = camHandle_->GetParameter (TSI_PARAM_COLOR_ATTRIBUTES, sizeof (TSI_COLOR_ATTRIBUTES), &c);
+   if (bRet && (strlen (c.ColorFilterArrayType) != 0) && (strcmp (c.ColorFilterArrayType, "mono") != 0))
+   {
+      color = true;
+      ret = CreateProperty(g_ColorFilterArray, c.ColorFilterArrayType, MM::String, true);
+
+      //configure color processing
+      getColorCamera()->ClearColorPipeline();
+      getColorCamera()->ConcatenateColorTransform (TSI_Camera_Color_Correction, 0);
+      getColorCamera()->ConcatenateColorTransform (TSI_sRGB, 14);
+      getColorCamera()->FinalizeColorPipeline();
+
+      // create white balance property
+      pAct = new CPropertyAction(this, &TsiCam::OnWhiteBalance);
+      ret = CreateProperty(g_WhiteBalance, g_Off, MM::String, false, pAct);
+      AddAllowedValue(g_WhiteBalance, g_Off);
+      AddAllowedValue(g_WhiteBalance, g_Set);
+      AddAllowedValue(g_WhiteBalance, g_On);
+
+      assert(ret == DEVICE_OK);
 
    }
 
@@ -395,13 +415,64 @@ bool TsiCam::Busy()
    return false;
 }
 
+long TsiCam::GetImageBufferSize() const
+{
+   if (color)
+      return colorImg.Height() * colorImg.Width() * GetImageBytesPerPixel();
+   else
+      return img.Width() * img.Height() * GetImageBytesPerPixel();
+}
+
+
 /**
  * Access single image buffer 
  */
 const unsigned char* TsiCam::GetImageBuffer()
 {
-   void* pixBuffer = const_cast<unsigned char*> (img.GetPixels());
-   return (unsigned char*) pixBuffer;
+   void* pixBuf(0);
+   if (color)
+      pixBuf = const_cast<unsigned char*> (colorImg.GetPixels());
+   else
+      pixBuf = const_cast<unsigned char*> (img.GetPixels());
+   
+   return (unsigned char*) pixBuf;
+}
+
+const unsigned char* TsiCam::GetImageBuffer(unsigned /* chNum */)
+{
+   // TODO: multichannel
+   return GetImageBuffer();
+}
+
+const unsigned int* TsiCam::GetImageBufferAsRGB32()
+{
+   void* pixBuffer = const_cast<unsigned char*> (colorImg.GetPixels());
+   return (unsigned int*) pixBuffer;
+}
+unsigned TsiCam::GetNumberOfComponents() const
+{
+   // TODO: multichannel
+   if (color)
+      return 4;
+   else
+      return 1;
+}
+
+unsigned TsiCam::GetNumberOfChannels() const
+{
+   // TODO: multichannel
+   return 1;
+}
+
+int TsiCam::GetChannelName(unsigned channel, char* name)
+{
+   // TODO: multichannel
+
+   if (channel != 0)
+      return ERR_INVALID_CHANNEL_INDEX;
+   
+   strncpy(name, "Channel-0", MM::MaxStrLength);
+   return DEVICE_OK;
 }
 
 /**
@@ -409,45 +480,65 @@ const unsigned char* TsiCam::GetImageBuffer()
  */
 int TsiCam::SnapImage()
 {
-   camHandle_->SetParameter(TSI_PARAM_FRAME_COUNT, 1);
+   camHandle_->SetParameter(TSI_PARAM_FRAME_COUNT, 0);
    camHandle_->Start();
 
-   MM::MMTime start = GetCurrentMMTime();
-   MM::MMTime timeout(4, 0); // 4 sec timeout
-   TsiImage* tsiImg = 0;
-   do
+   if (color)
    {
-      tsiImg = camHandle_->GetPendingImage();
-   } while (tsiImg == 0 && GetCurrentMMTime() - start < timeout);
+      MM::MMTime start = GetCurrentMMTime();
+      MM::MMTime timeout(4000000); // 4 sec timeout
+      TsiColorImage* tsiColorImg = 0;
+      do
+      {
+         tsiColorImg = getColorCamera()->GetPendingColorImage(TSI_COLOR_POST_PROCESS);
+      } while (tsiColorImg == 0 && GetCurrentMMTime() - start < timeout);
 
-   if (tsiImg == 0)
-      return ERR_IMAGE_TIMED_OUT;
+      if (tsiColorImg == 0)
+         return ERR_IMAGE_TIMED_OUT;
 
-   // adjust image size
-   if (img.Width() != tsiImg->m_Width || img.Height() != tsiImg->m_Height || img.Depth() != tsiImg->m_BytesPerPixel)
-      img.Resize(tsiImg->m_Width, tsiImg->m_Height, tsiImg->m_BytesPerPixel);
+      // adjust image size
+      if (colorImg.Width() != tsiColorImg->m_Width || colorImg.Height() != tsiColorImg->m_Height || colorImg.Depth() != 4)
+         colorImg.Resize(tsiColorImg->m_Width, tsiColorImg->m_Height, 4);
 
-   img.SetPixels(tsiImg->m_PixelData.vptr);
-   camHandle_->FreeImage(tsiImg);
-   camHandle_->Stop();
+      // convert from 16 to 8 bit
+      convertToRGBA32(*tsiColorImg, colorImg, 14);
+
+      getColorCamera()->FreeColorImage(tsiColorImg);
+   }
+   else
+   {
+      // grayscale image snap
+      MM::MMTime start = GetCurrentMMTime();
+      MM::MMTime timeout(4, 0); // 4 sec timeout
+      TsiImage* tsiImg = 0;
+      do
+      {
+         tsiImg = camHandle_->GetPendingImage();
+      } while (tsiImg == 0 && GetCurrentMMTime() - start < timeout);
+
+      if (tsiImg == 0)
+         return ERR_IMAGE_TIMED_OUT;
+
+      // adjust image size
+      if (img.Width() != tsiImg->m_Width || img.Height() != tsiImg->m_Height || img.Depth() != tsiImg->m_BytesPerPixel)
+         img.Resize(tsiImg->m_Width, tsiImg->m_Height, tsiImg->m_BytesPerPixel);
+
+      img.SetPixels(tsiImg->m_PixelData.vptr);
+      camHandle_->FreeImage(tsiImg);
+    }
+
+    camHandle_->Stop();
 
    return DEVICE_OK;
 }
 
 unsigned TsiCam::GetBitDepth() const
 {
-bool         success;
-unsigned int bitpix   = 0;
-unsigned     bitDepth = 12;
-
-   success = camHandle_->GetParameter(TSI_PARAM_BITS_PER_PIXEL, sizeof(uint32_t), (void*)&bitpix);
-   if(success == true)
-   {
-      bitDepth     = bitpix;
-   }
-
-   return bitDepth;
-}
+   if (color)
+      return 8; // 8-bit rgb
+   else
+      return bitDepth;
+ }
 
 int TsiCam::GetBinning() const
 {
@@ -592,8 +683,9 @@ int TsiCam::ResizeImageBuffer()
    if (!camHandle_->GetParameter(TSI_PARAM_VSIZE, sizeof(uint32_t), (void*)&height))
       return camHandle_->GetErrorCode();
 
-   // TODO: bits per pixel
-   // TODO: bytes per pixel
+   unsigned int bitpix   = 0;
+   if (camHandle_->GetParameter(TSI_PARAM_BITS_PER_PIXEL, sizeof(uint32_t), (void*)&bitpix))
+   bitDepth = bitpix;
 
    // set full frame
    roiBinData.XBin    = 1;
@@ -611,6 +703,7 @@ int TsiCam::ResizeImageBuffer()
    }
 
    img.Resize(width, height, 2);
+   colorImg.Resize(width, height, 4);
 
    fullFrame = roiBinData; // save full frame info
 
@@ -619,7 +712,7 @@ int TsiCam::ResizeImageBuffer()
 
 int TsiCam::ResizeImageBuffer(TSI_ROI_BIN& roiBin)
 {
-   const int byteDepth = 2; // TODO
+   const int byteDepth = color ? 4 : 2;
 
    printf("[MicroManager] TsiCam::ResizeImageBuffer(TSI_ROI_BIN& roiBin) w:%d h:%d xbin:%d ybin:%d\n", roiBinData.XPixels, roiBinData.YPixels, roiBinData.XBin, roiBinData.YBin);
 
@@ -637,6 +730,7 @@ int TsiCam::ResizeImageBuffer(TSI_ROI_BIN& roiBin)
       return camHandle_->GetErrorCode();
 
    img.Resize(roiBinData.XPixels / roiBinData.XBin, roiBinData.YPixels / roiBinData.YBin, byteDepth);
+   colorImg.Resize(roiBinData.XPixels / roiBinData.XBin, roiBinData.YPixels / roiBinData.YBin, byteDepth);
    ostringstream os;
    os << "TSI resized to: " << img.Width() << " X " << img.Height() << ", bin factor: "
       << roiBinData.XBin;
@@ -651,30 +745,63 @@ void TsiCam::ReadoutComplete(int /*callback_type_id*/, TsiImage *tsiImg, void *c
 {
    //assert(callback_type_id == TSI_CALLBACK_CAMERA_FRAME_READOUT_COMPLETE);
    TsiCam* cam = static_cast<TsiCam*>(context);
-   //TsiImage* tsiImg = cam->camera_->GetPendingImage();
-   if (cam->img.Width() == tsiImg->m_Width || cam->img.Height() == tsiImg->m_Height || cam->img.Depth() == tsiImg->m_BytesPerPixel)
-      cam->PushImage(reinterpret_cast<unsigned char*>(tsiImg->m_PixelData.vptr));
+   if (cam->color)
+   {
+      TsiColorImage* tsiCImg = dynamic_cast<TsiColorImage*>(tsiImg);
+      assert(tsiCImg);
+      if (cam->colorImg.Width() == tsiCImg->m_Width || cam->colorImg.Height() == tsiCImg->m_Height || cam->colorImg.Depth() == tsiCImg->m_BytesPerPixel)
+         cam->PushImage(reinterpret_cast<unsigned char*>(tsiCImg->m_PixelData.vptr));
+      else
+         assert(!"color image dimensions do not match");
+   }
    else
-      assert(!"live image dimensions do not match");
+   {
+      if (cam->img.Width() == tsiImg->m_Width || cam->img.Height() == tsiImg->m_Height || cam->img.Depth() == tsiImg->m_BytesPerPixel)
+         cam->PushImage(reinterpret_cast<unsigned char*>(tsiImg->m_PixelData.vptr));
+      else
+         assert(!"live image dimensions do not match");
+   }
 }
 
 int TsiCam::PushImage(unsigned char* imgBuf)
 {
-   int retCode = GetCoreCallback()->InsertImage(this,
+   if (color)
+   {
+      int retCode = GetCoreCallback()->InsertImage(this,
+         imgBuf,
+         colorImg.Width(),
+         colorImg.Height(),
+         colorImg.Depth());
+
+      if (!stopOnOverflow && retCode == DEVICE_BUFFER_OVERFLOW)
+      {
+         // do not stop on overflow - just reset the buffer
+         GetCoreCallback()->ClearImageBuffer(this);
+         retCode = GetCoreCallback()->InsertImage(this,
+            imgBuf,
+            colorImg.Width(),
+            colorImg.Height(),
+            colorImg.Depth());
+      }
+   }
+   else
+   {
+      int retCode = GetCoreCallback()->InsertImage(this,
          imgBuf,
          img.Width(),
          img.Height(),
          img.Depth());
 
-   if (!stopOnOverflow && retCode == DEVICE_BUFFER_OVERFLOW)
-   {
-      // do not stop on overflow - just reset the buffer
-      GetCoreCallback()->ClearImageBuffer(this);
-      retCode = GetCoreCallback()->InsertImage(this,
-         imgBuf,
-         img.Width(),
-         img.Height(),
-         img.Depth());
+      if (!stopOnOverflow && retCode == DEVICE_BUFFER_OVERFLOW)
+      {
+         // do not stop on overflow - just reset the buffer
+         GetCoreCallback()->ClearImageBuffer(this);
+         retCode = GetCoreCallback()->InsertImage(this,
+            imgBuf,
+            img.Width(),
+            img.Height(),
+            img.Depth());
+      }
    }
 
    return DEVICE_OK;
@@ -768,24 +895,85 @@ bool TsiCam::ParamSupported (TSI_PARAM_ID ParamID)
 
 int AcqSequenceThread::svc (void)
 {
-   unsigned count(0);
-   camInstance->camHandle_->SetParameter(TSI_PARAM_FRAME_COUNT, numFrames <= 0 ? 0 : numFrames);
-
+   bool rb = camInstance->camHandle_->SetParameter(TSI_PARAM_FRAME_COUNT, numFrames <= 0 ? 0 : numFrames);
    InterlockedExchange(&camInstance->acquiring, 1);
-   camInstance->camHandle_->Start();
-   MM::MMTime start = camInstance->GetCurrentMMTime();
-   MM::MMTime timeout(4, 0); // 2 seconds, 0 micro seconds
-   while (!stop && (camInstance->GetCurrentMMTime() - start) < timeout)
-   {
-      TsiImage* tsiImg = camInstance->camHandle_->GetPendingImage();
-      if (tsiImg)
+   rb = camInstance->camHandle_->Start();
+   assert(rb);
+
+   unsigned count = 0;
+   while(!stop)
+   {   
+      MM::MMTime start = camInstance->GetCurrentMMTime();
+      MM::MMTime timeout(4, 0); // 2 seconds, 0 micro seconds
+      
+      if (camInstance->color)
       {
+         TsiColorImage* tsiCImg(0);
+         while (!stop && (camInstance->GetCurrentMMTime() - start) < timeout && !tsiCImg)
+         {
+            tsiCImg = camInstance->getColorCamera()->GetPendingColorImage(TSI_COLOR_POST_PROCESS);
+            Sleep(1);
+         }
+         if (!tsiCImg)
+         {
+            camInstance->LogMessage("Camera timed out on GetPendingColorImage().");
+            camInstance->camHandle_->Stop();
+            InterlockedExchange(&camInstance->acquiring, 0);
+            return 1;
+         }
+      
+         // convert from 16 to 8 bit
+         TsiCam::convertToRGBA32(*tsiCImg, camInstance->colorImg, 14);
+   
+         if (camInstance->colorImg.Width() == tsiCImg->m_Width || camInstance->colorImg.Height() == tsiCImg->m_Height || camInstance->colorImg.Depth() == 4)
+         {
+            camInstance->PushImage(reinterpret_cast<unsigned char*>(camInstance->colorImg.GetPixelsRW()));
+            camInstance->getColorCamera()->FreeColorImage(tsiCImg);
+            camInstance->LogMessage("Acquired image.");
+            count++;
+            if (numFrames > 0 && count == numFrames)
+            {
+               printf("[MicroManager] - AcqSequenceThread::svc() - numFrames:%d count:%d - calling Stop()\n", numFrames, count);
+               camInstance->LogMessage("Number of frames reached: exiting.");
+               camInstance->getColorCamera()->Stop();
+               InterlockedExchange(&camInstance->acquiring, 0);
+               return 0;
+            }
+         }
+         else
+         {
+            camInstance->LogMessage("Error: image dimensions do not match.");
+            camInstance->getColorCamera()->FreeColorImage(tsiCImg);
+            printf("[MicroManager] - AcqSequenceThread::svc() - image dimensions don't match calling stop\n");
+            printf("[MicroManager] - Expected image size w:%5d h:%5d bytes_per_pixel:%5d\n", camInstance->img.Width(), camInstance->img.Height(), camInstance->img.Depth());
+            printf("[MicroManager] - Actual   image size w:%5d h:%5d bytes_per_pixel:%5d\n", tsiCImg->m_Width, tsiCImg->m_Height, tsiCImg->m_BytesPerPixel);
+   
+            camInstance->getColorCamera()->Stop();
+            InterlockedExchange(&camInstance->acquiring, 0);
+            return 1;
+         }
+      }
+      else
+      {
+         TsiImage* tsiImg(0);
+         while (!stop && (camInstance->GetCurrentMMTime() - start) < timeout && !tsiImg)
+         {
+            tsiImg = camInstance->getColorCamera()->GetPendingImage();
+            Sleep(1);
+         }
+         if (!tsiImg)
+         {
+            camInstance->LogMessage("Camera timed out on GetPendingImage().");
+            camInstance->camHandle_->Stop();
+            InterlockedExchange(&camInstance->acquiring, 0);
+            return 1;
+         }
+
          if (camInstance->img.Width() == tsiImg->m_Width || camInstance->img.Height() == tsiImg->m_Height || camInstance->img.Depth() == tsiImg->m_BytesPerPixel)           
          {
             camInstance->PushImage(reinterpret_cast<unsigned char*>(tsiImg->m_PixelData.vptr));
             camInstance->camHandle_->FreeImage(tsiImg);
             camInstance->LogMessage("Acquired image.");
-            start = camInstance->GetCurrentMMTime();
             count++;
             if (numFrames > 0 && count == numFrames)
             {
@@ -803,15 +991,137 @@ int AcqSequenceThread::svc (void)
             printf("[MicroManager] - AcqSequenceThread::svc() - image dimensions don't match calling stop\n");
             printf("[MicroManager] - Expected image size w:%5d h:%5d bytes_per_pixel:%5d\n", camInstance->img.Width(), camInstance->img.Height(), camInstance->img.Depth());
             printf("[MicroManager] - Actual   image size w:%5d h:%5d bytes_per_pixel:%5d\n", tsiImg->m_Width, tsiImg->m_Height, tsiImg->m_BytesPerPixel);
-
+  
             camInstance->camHandle_->Stop();
             InterlockedExchange(&camInstance->acquiring, 0);
             return 1;
          }
       }
+      
+      if (numFrames > 0 && count >= numFrames)
+      {
+         camInstance->LogMessage("Number of frames reached.");
+         camInstance->camHandle_->Stop();
+         InterlockedExchange(&camInstance->acquiring, 0);
+      }
    }
+
    camInstance->LogMessage("User pressed stop.");
    camInstance->camHandle_->Stop();
    InterlockedExchange(&camInstance->acquiring, 0);
    return 0;
 }
+
+TsiColorCamera* TsiCam::getColorCamera()
+{
+    return dynamic_cast<TsiColorCamera*> (camHandle_);
+}
+
+void TsiCam::convertToRGBA32(TsiColorImage& tsiImg, ImgBuffer& img, int colorBitDepth)
+{
+   // adjust image size
+   if (img.Width() != tsiImg.m_Width || img.Height() != tsiImg.m_Height || img.Depth() != 4)
+         img.Resize(tsiImg.m_Width, tsiImg.m_Height, 4);
+
+   int shift = max(0, colorBitDepth - 8);
+
+   // convert from 16 to 8 bit
+   for (unsigned i=0; i<img.Height(); i++)
+      for (unsigned j=0; j<img.Width(); j++)
+      {
+         int offset = img.Width()*i*4 + j*4;
+         int tsiIdx = i*tsiImg.m_Width + j;
+         *(img.GetPixelsRW() + offset ) = (unsigned char)(tsiImg.m_ColorPixelDataBGR.BGR_16[tsiIdx].b >> shift);
+         *(img.GetPixelsRW() + offset + 1) = (unsigned char)(tsiImg.m_ColorPixelDataBGR.BGR_16[tsiIdx].g >> shift);
+         *(img.GetPixelsRW() + offset + 2) = (unsigned char)(tsiImg.m_ColorPixelDataBGR.BGR_16[tsiIdx].r >> shift);
+         *(img.GetPixelsRW() + offset + 3) = 0;
+      }
+}
+
+int TsiCam::SetWhiteBalance()
+{
+   if (!color)
+      return DEVICE_OK;
+
+   // rebuild pipeline for linear transform
+   getColorCamera()->ClearColorPipeline();
+   getColorCamera()->ConcatenateColorTransform(TSI_Camera_Color_Correction, 0);
+   getColorCamera()->ConcatenateColorTransform(TSI_RGB_Linear, 14);
+   getColorCamera()->FinalizeColorPipeline();
+
+   // acquire image
+   camHandle_->SetParameter(TSI_PARAM_FRAME_COUNT, 0);
+   camHandle_->Start();
+   MM::MMTime start = GetCurrentMMTime();
+   MM::MMTime timeout(4, 0); // 4 sec timeout
+   TsiColorImage* tsiColorImg = 0;
+   do
+   {
+      tsiColorImg = getColorCamera()->GetPendingColorImage(TSI_COLOR_POST_PROCESS);
+      ::Sleep(3);
+   } while (tsiColorImg == 0 && GetCurrentMMTime() - start < timeout);
+
+   if (tsiColorImg == 0)
+      return ERR_IMAGE_TIMED_OUT;
+
+   int rows = tsiColorImg->m_Height;
+   int columns = tsiColorImg->m_Width;
+   double rSum = 0.0, gSum = 0.0, bSum = 0.0;
+
+   // Compute the sum of the pixel intensity values
+   // separately for all 3 color channels.
+   for (int i = 0; i < rows; ++i)
+   {
+      for (int j = 0; j < columns; ++j)
+      {
+         int tsiIdx = i*tsiColorImg->m_Width + j;
+
+         rSum += tsiColorImg->m_ColorPixelDataBGR.BGR_16[tsiIdx].r;
+         gSum += tsiColorImg->m_ColorPixelDataBGR.BGR_16[tsiIdx].g;
+         bSum += tsiColorImg->m_ColorPixelDataBGR.BGR_16[tsiIdx].b;
+      }
+   }
+
+   // Calculate the luminance coefficient
+   double lumin = 0.2126 * rSum + 0.7152 * gSum + 0.0722 * bSum;
+
+   // Determine the color balance coefficients.
+   double rScaler = (rSum != 0) ? lumin / rSum : 1.0;
+   double bScaler = (bSum != 0) ? lumin / bSum : 1.0;
+   double gScaler = (gSum != 0) ? lumin / gSum : 1.0;
+
+   // Send the coefficients to the SDK color pipeline
+   // on the diagonal of a 3x3 matrix.
+   //configure color processing
+   double matrix[9] = { 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
+   matrix[0] = rScaler;
+   matrix[4] = gScaler;
+   matrix[8] = bScaler;
+
+   // restore regular pipeline and apply matrix
+   getColorCamera()->ClearColorPipeline();
+   getColorCamera()->ConcatenateColorTransform(matrix);
+   getColorCamera()->ConcatenateColorTransform(TSI_Camera_Color_Correction, 0);
+   getColorCamera()->ConcatenateColorTransform(TSI_sRGB, 14);
+   getColorCamera()->FinalizeColorPipeline();
+   wb = true;
+
+   // release tsi image
+   getColorCamera()->FreeColorImage(tsiColorImg);
+   camHandle_->Stop();
+
+   return DEVICE_OK;
+}
+
+void TsiCam::ClearWhiteBalance()
+{
+   // restore default pipeline
+   getColorCamera()->ClearColorPipeline();
+   getColorCamera()->ConcatenateColorTransform(TSI_Camera_Color_Correction, 0);
+   getColorCamera()->ConcatenateColorTransform(TSI_sRGB, 14);
+   getColorCamera()->FinalizeColorPipeline();
+   wb = false;
+}
+
+
+
