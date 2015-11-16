@@ -29,6 +29,7 @@ import org.micromanager.data.DataManager;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.events.EventManager;
 import org.micromanager.internal.utils.AutofocusManager;
+import org.micromanager.quickaccess.QuickAccessManager;
 
 
 /**
@@ -194,4 +195,18 @@ public interface Studio {
     * @return PluginManager instance.
     */
    public PluginManager getPluginManager();
+
+   /**
+    * Provides access to the QuickAccessManager for accessing the Quick-Access
+    * Panel system.
+    * @return QuickAccessManager instance.
+    */
+   public QuickAccessManager quickAccess();
+
+   /**
+    * Provides access to the QuickAccessManager for accessing the Quick-Access
+    * Panel system. Identical to quickAccess() except in name.
+    * @return QuickAccessManager instance.
+    */
+   public QuickAccessManager getQuickAccessManager();
 }

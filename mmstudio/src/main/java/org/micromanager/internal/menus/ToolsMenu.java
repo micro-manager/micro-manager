@@ -26,7 +26,6 @@ import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.HotKeysDialog;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.quickaccess.internal.QuickAccessManager;
 
 public class ToolsMenu {
    private static final String MOUSE_MOVES_STAGE = "whether or not the hand tool can be used to move the stage";
@@ -86,7 +85,7 @@ public class ToolsMenu {
               new Runnable() {
                  @Override
                  public void run() {
-                     QuickAccessManager.showFrames();
+                     studio_.quickAccess().showPanels();
                  }
               });
 

@@ -192,7 +192,8 @@ public class QuickAccessFrame extends JFrame {
          configurePanel_.updateSpinners(numCols_, numRows_);
          JSONArray cells = config.getJSONArray("cells");
          for (int i = 0; i < cells.length(); ++i) {
-            addControl(controlCellFromJSON(cells.getJSONObject(i)));
+            addControl(ControlCell.fromJSON(cells.getJSONObject(i),
+                     studio_, this));
             hasContents = true;
          }
          JSONArray dividers = config.getJSONArray("dividers");
@@ -263,7 +264,7 @@ public class QuickAccessFrame extends JFrame {
       dupeItem.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            QuickAccessManager.createNewFrame();
+            DefaultQuickAccessManager.createNewPanel();
          }
       });
       menu.add(dupeItem);
@@ -275,7 +276,7 @@ public class QuickAccessFrame extends JFrame {
             if (JOptionPane.showConfirmDialog(QuickAccessFrame.this,
                "Really delete this window and lose its configuration?",
                "Confirm Window Deletion", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
-               QuickAccessManager.deleteFrame(QuickAccessFrame.this);
+               DefaultQuickAccessManager.deletePanel(QuickAccessFrame.this);
                dispose();
             }
          }
@@ -292,10 +293,27 @@ public class QuickAccessFrame extends JFrame {
    public void paint(Graphics g) {
       super.paint(g);
       if (draggedIcon_ != null) {
-         g.drawImage(draggedIcon_.icon_.getImage(),
+         g.drawImage(draggedIcon_.getIcon().getImage(),
                mouseX_ - iconOffsetX_ + getInsets().left,
                mouseY_ - iconOffsetY_ + getInsets().top, null);
       }
+   }
+
+   /**
+    * Start dragging the specified DraggableIcon, which was clicked on
+    * according to the provided MouseEvent.
+    */
+   public void startDragging(DraggableIcon icon, MouseEvent e) {
+      draggedIcon_ = icon;
+      iconOffsetX_ = e.getX();
+      iconOffsetY_ = e.getY();
+   }
+
+   /**
+    * Stop dragging something.
+    */
+   public void stopDragging() {
+      draggedIcon_ = null;
    }
 
    /**
@@ -303,7 +321,7 @@ public class QuickAccessFrame extends JFrame {
     * location, creating a new control (and configuring it if necessary).
     * @param plugin The source plugin to create the new control.
     */
-   private void dropPlugin(QuickAccessPlugin plugin) {
+   public void dropPlugin(QuickAccessPlugin plugin) {
       Point p = getCell();
       if (p == null) {
          // Can't drop anything here.
@@ -317,7 +335,8 @@ public class QuickAccessFrame extends JFrame {
             if (plugin instanceof WidgetPlugin) {
                config = ((WidgetPlugin) plugin).configureControl(this);
             }
-            ControlCell cell = new ControlCell(plugin, config, rect);
+            ControlCell cell = new ControlCell(studio_, this, plugin,
+                  config, rect);
             addControl(cell);
          }
          catch (Exception e) {
@@ -334,14 +353,14 @@ public class QuickAccessFrame extends JFrame {
     * This requires removing and then re-adding all components because the
     * size of the MigLayout entity may have changed.
     */
-   private void addControl(ControlCell cell) {
+   public void addControl(ControlCell cell) {
       controlsPanel_.removeAll();
       configuringControlsPanel_.removeAll();
       controls_.add(cell);
       // Restore controls.
       for (ControlCell c : controls_) {
-         controlsPanel_.add(c.widget_, c.rect_);
-         configuringControlsPanel_.add(c.icon_, c.rect_);
+         controlsPanel_.add(c.getWidget(), c.getRect());
+         configuringControlsPanel_.add(c.getIcon(), c.getRect());
       }
       validate();
    }
@@ -351,7 +370,7 @@ public class QuickAccessFrame extends JFrame {
     * rect. Optionally include a control being moved, so we don't have to
     * worry about self-intersections.
     */
-   private boolean canFitRect(Rectangle rect, ControlCell source) {
+   public boolean canFitRect(Rectangle rect, ControlCell source) {
       if (rect.x < 0 || rect.x + rect.width > numCols_ ||
             rect.y < 0 || rect.y + rect.height > numRows_) {
          // Rect is out of bounds.
@@ -362,7 +381,7 @@ public class QuickAccessFrame extends JFrame {
             // Don't need to compare against yourself for hit detection.
             continue;
          }
-         if (alt.rect_.intersects(rect)) {
+         if (alt.getRect().intersects(rect)) {
             return false;
          }
       }
@@ -372,10 +391,9 @@ public class QuickAccessFrame extends JFrame {
    /**
     * Move a control to a new location in the grid.
     */
-   private void moveControl(ControlCell control, Point p) {
+   public void moveControl(ControlCell control, Point p) {
       removeControl(control, false);
-      control.rect_.x = p.x;
-      control.rect_.y = p.y;
+      control.moveTo(p);
       addControl(control);
       validate();
       repaint();
@@ -384,10 +402,10 @@ public class QuickAccessFrame extends JFrame {
    /**
     * Clear a control from the grid.
     */
-   private void removeControl(ControlCell control, boolean shouldRedraw) {
+   public void removeControl(ControlCell control, boolean shouldRedraw) {
       controls_.remove(control);
-      controlsPanel_.remove(control.widget_);
-      configuringControlsPanel_.remove(control.icon_);
+      controlsPanel_.remove(control.getWidget());
+      configuringControlsPanel_.remove(control.getIcon());
       if (shouldRedraw) {
          validate();
          repaint();
@@ -416,11 +434,11 @@ public class QuickAccessFrame extends JFrame {
       numRows_ = rows;
       // Show/hide controls depending on if they're in-bounds.
       for (ControlCell control : controls_) {
-         Rectangle r = control.rect_;
+         Rectangle r = control.getRect();
          boolean isVisible = (r.x + r.width <= numCols_ &&
                r.y + r.height <= numRows_);
-         control.widget_.setVisible(isVisible);
-         control.icon_.setVisible(isVisible);
+         control.getWidget().setVisible(isVisible);
+         control.getIcon().setVisible(isVisible);
       }
       contentsPanel_.invalidate();
       pack();
@@ -432,7 +450,7 @@ public class QuickAccessFrame extends JFrame {
     * location (in the controlsPanel_). Returns null if the location is not
     * valid.
     */
-   private Point getCell() {
+   public Point getCell() {
       Point p = new Point(mouseX_, mouseY_);
       SwingUtilities.convertPointFromScreen(p, controlsPanel_);
       int cellX = p.x / QuickAccessPlugin.CELL_WIDTH;
@@ -447,7 +465,7 @@ public class QuickAccessFrame extends JFrame {
    /**
     * Update the current mouse coordinates based on the provided MouseEvent.
     */
-   private void updateMouse(MouseEvent event) {
+   public void updateMouse(MouseEvent event) {
       mouseX_ = event.getXOnScreen() - getLocation().x - getInsets().left;
       mouseY_ = event.getYOnScreen() - getLocation().y - getInsets().top;
    }
@@ -558,7 +576,7 @@ public class QuickAccessFrame extends JFrame {
                Rectangle rect = new Rectangle(p.x, p.y,
                      draggedIcon_.getSize().width,
                      draggedIcon_.getSize().height);
-               if (canFitRect(rect, draggedIcon_.parent_)) {
+               if (canFitRect(rect, draggedIcon_.getControlCell())) {
                   g.setColor(new Color(255, 255, 150, 128));
                   g.fillRect(p.x * cellWidth, p.y * cellHeight,
                         cellWidth * rect.width, cellHeight * rect.height);
@@ -642,8 +660,8 @@ public class QuickAccessFrame extends JFrame {
          openSelect_.setSelectedItem(OPEN_NEVER);
          subPanel.add(openSelect_, "span, wrap");
 
-         subPanel.add(new JLabel("Drag controls into the grid above to add them to the panel."), "span, wrap, gaptop 10");
-         subPanel.add(new JLabel("Click on grid lines to add or remove dividers."), "span, wrap");
+         subPanel.add(new JLabel("<html>Drag controls into the grid above to add them to the panel.<br>Click on grid lines to add or remove dividers. Right-click<br>on a control in the grid to customize its icon (when possible).</html>"),
+               "span, wrap, gaptop 10");
 
          add(subPanel, "span, wrap");
 
@@ -663,9 +681,10 @@ public class QuickAccessFrame extends JFrame {
             if (plugin instanceof WidgetPlugin) {
                size = ((WidgetPlugin) plugin).getSize();
             }
-            DraggableIcon dragger = new DraggableIcon(
+            DraggableIcon dragger = new DraggableIcon(studio_,
+                  QuickAccessFrame.this,
                   QuickAccessFactory.makeGUI(plugin), plugin.getIcon(), plugin,
-                  null, size);
+                  true, null, size);
             iconPanel.add(dragger, "alignx center");
             JLabel name = new JLabel(plugins.get(key).getName());
             name.setFont(GUIUtils.buttonFont);
@@ -707,198 +726,6 @@ public class QuickAccessFrame extends JFrame {
 
       public String getOpenMode() {
          return (String) openSelect_.getSelectedItem();
-      }
-   }
-
-   /**
-    * This class represents a single control in the window.
-    */
-   private class ControlCell {
-      // Plugin that created the control.
-      public QuickAccessPlugin plugin_;
-      // Configuration if the plugin is a WidgetPlugin.
-      public PropertyMap config_;
-      // Rectangle in the grid that the control occupies.
-      public Rectangle rect_;
-      // The control itself (in a JPanel).
-      public JComponent widget_;
-      // An iconified version of the control.
-      public DraggableIcon icon_;
-
-      public ControlCell(QuickAccessPlugin plugin, PropertyMap config,
-            Rectangle rect) {
-         plugin_ = plugin;
-         config_ = config;
-         rect_ = rect;
-         JPanel panel = new JPanel(new MigLayout("fill, insets 0, gap 0"));
-         JComponent control = null;
-         if (plugin instanceof WidgetPlugin) {
-            WidgetPlugin widget = (WidgetPlugin) plugin;
-            if (config == null) {
-               config = widget.configureControl(QuickAccessFrame.this);
-            }
-            rect_.width = widget.getSize().width;
-            rect_.height = widget.getSize().height;
-            control = widget.createControl(config);
-         }
-         else {
-            control = QuickAccessFactory.makeGUI(plugin);
-         }
-         panel.add(control, "align center, grow");
-         widget_ = panel;
-         icon_ = new DraggableIcon(control, null, null, this, rect_.getSize());
-      }
-
-      public JSONObject toJSON() throws JSONException {
-         JSONObject result = new JSONObject();
-         result.put("pluginName", plugin_.getClass().getName());
-         if (config_ != null) {
-            result.put("config", ((DefaultPropertyMap) config_).toJSON());
-         }
-         result.put("rectX", rect_.x);
-         result.put("rectY", rect_.y);
-         result.put("rectWidth", rect_.width);
-         result.put("rectHeight", rect_.height);
-         return result;
-      }
-
-      @Override
-      public String toString() {
-         return String.format("<ControlCell for %s at %s>",
-               plugin_.getName(), rect_);
-      }
-   }
-
-   private ControlCell controlCellFromJSON(JSONObject json) {
-      String pluginName = "";
-      try {
-         pluginName = json.getString("pluginName");
-         QuickAccessPlugin plugin = studio_.plugins().getQuickAccessPlugins().get(pluginName);
-         PropertyMap config = null;
-         if (json.has("config")) {
-            config = DefaultPropertyMap.fromJSON(json.getJSONObject("config"));
-         }
-         Rectangle rect = new Rectangle(
-               json.getInt("rectX"), json.getInt("rectY"),
-               json.getInt("rectWidth"), json.getInt("rectHeight"));
-         return new ControlCell(plugin, config, rect);
-      }
-      catch (JSONException e) {
-         studio_.logs().logError(e,
-               "Unable to deserialize ControlCell from " + json);
-      }
-      catch (NullPointerException e) {
-         studio_.logs().logError(e, "Unable to reload plugin " + pluginName);
-      }
-      return null;
-   }
-
-   /**
-    * This class represents an icon that can be dragged around the window,
-    * for adding or removing controls.
-    */
-   private class DraggableIcon extends JLabel {
-      private JComponent component_;
-      private QuickAccessPlugin plugin_;
-      private ControlCell parent_;
-      private ImageIcon icon_;
-
-      /**
-       * icon and plugin are both optional. If plugin is null, then we assume
-       * this references an instantiated control which can be removed from
-       * the controlsPanel_ when dragged out of the grid. Otherwise, we want to
-       * create a new control when the icon is dragged into the grid). If icon
-       * is null, then we generate an icon from the JComponent.
-       * @param size Number of cells (width x height) taken up by the icon.
-       */
-      public DraggableIcon(final JComponent component, ImageIcon icon,
-            final QuickAccessPlugin plugin, final ControlCell parent,
-            Dimension size) {
-         super();
-         component_ = component;
-         plugin_ = plugin;
-         parent_ = parent;
-         icon_ = icon;
-         if (icon_ == null) {
-            try {
-               // Render the image, then downscale to fit the available space.
-               Image render = ScreenImage.createImage(component);
-               int width = render.getWidth(null);
-               int height = render.getHeight(null);
-               int maxWidth = QuickAccessPlugin.CELL_WIDTH * size.width;
-               int maxHeight = QuickAccessPlugin.CELL_HEIGHT * size.height;
-               if (width > maxWidth || height > maxHeight) {
-                  // Too big; we must downscale.
-                  double scale = Math.min((double) width / maxWidth,
-                        (double) height / maxHeight);
-                  render = render.getScaledInstance((int) (width * scale),
-                        (int) (height * scale), Image.SCALE_DEFAULT);
-               }
-               icon_ = new ImageIcon(render);
-            }
-            catch (Exception e) {
-               studio_.logs().showError(e, "Unable to create icon for Quick Access Plugin " + plugin.getName());
-            }
-         }
-         setIcon(icon_);
-         if (plugin != null) {
-            setToolTipText(plugin.getHelpText());
-         }
-         // When the user clicks and drags the icon, we need to move it
-         // around.
-         MouseAdapter adapter = new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-               draggedIcon_ = DraggableIcon.this;
-               iconOffsetX_ = e.getX();
-               iconOffsetY_ = e.getY();
-            }
-            @Override
-            public void mouseDragged(MouseEvent e) {
-               updateMouse(e);
-               QuickAccessFrame.this.repaint();
-            }
-            @Override
-            public void mouseReleased(MouseEvent e) {
-               draggedIcon_ = null;
-               // Stop dragging; create/move/destroy controls as appropriate.
-               if (parent_ != null) {
-                  // Have an existing control; move or destroy it.
-                  Point p = getCell();
-                  if (p == null) {
-                     // Dragged out of the grid; remove it.
-                     removeControl(parent_, true);
-                  }
-                  else if (canFitRect(
-                           new Rectangle(p.x, p.y, getSize().width,
-                              getSize().height), parent_)) {
-                     // Move it to a new location.
-                     moveControl(parent_, p);
-                  }
-               }
-               else if (plugin_ != null) {
-                  // Add a new control to the grid.
-                  dropPlugin(plugin_);
-               }
-               else {
-                  // This should be impossible.
-                  studio_.logs().logError("DraggableIcon with both null plugin and null ControlCell");
-               }
-               QuickAccessFrame.this.repaint();
-            }
-         };
-         addMouseListener(adapter);
-         addMouseMotionListener(adapter);
-      }
-
-      public Dimension getSize() {
-         if (parent_ == null) {
-            if (plugin_ instanceof WidgetPlugin) {
-               return ((WidgetPlugin) plugin_).getSize();
-            }
-            return new Dimension(1, 1);
-         }
-         return new Dimension(parent_.rect_.width, parent_.rect_.height);
       }
    }
 

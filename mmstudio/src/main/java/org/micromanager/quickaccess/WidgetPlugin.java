@@ -59,4 +59,23 @@ public abstract class WidgetPlugin extends QuickAccessPlugin {
    public Dimension getSize() {
       return new Dimension(1, 1);
    }
+
+   /**
+    * Returns true if the widget can accept custom icons (i.e. the setIcon()
+    * method actually does something). This will allow users to provide their
+    * own icons for individual instances of the widget.
+    */
+   public boolean getCanCustomizeIcon() {
+      return false;
+   }
+
+   /**
+    * Key used for custom icon information. If your plugin returns true in
+    * getCanCustomizeIcon(), then there may be a property, in the PropertyMap
+    * passed to createControl(), under this key. You should not need to read or
+    * modify this property; just pass your config to
+    * QuickAccessManager.getCustomIcon() to get the customized icon the user
+    * has requested.
+    */
+   public static final String CUSTOM_ICON_STRING = "__MM_CustomIcon";
 }

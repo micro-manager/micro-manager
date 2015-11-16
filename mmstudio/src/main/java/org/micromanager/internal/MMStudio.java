@@ -87,7 +87,8 @@ import org.micromanager.MMListenerInterface;
 import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
 import org.micromanager.PluginManager;
 import org.micromanager.PositionList;
-import org.micromanager.quickaccess.internal.QuickAccessManager;
+import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
+import org.micromanager.quickaccess.QuickAccessManager;
 import org.micromanager.ScriptController;
 import org.micromanager.Studio;
 import org.micromanager.SequenceSettings;
@@ -451,7 +452,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
          }
       }
 
-      QuickAccessManager.createManager(studio_);
+      DefaultQuickAccessManager.createManager(studio_);
       zWheelListener_ = new ZWheelListener(core_, studio_);
       snapLiveManager_.addLiveModeListener(zWheelListener_);
       xyzKeyListener_ = new XYZKeyListener(core_, studio_);
@@ -1779,6 +1780,16 @@ public class MMStudio implements Studio, CompatibilityInterface {
    @Override
    public PluginManager getPluginManager() {
       return plugins();
+   }
+
+   @Override
+   public QuickAccessManager quickAccess() {
+      return DefaultQuickAccessManager.getInstance();
+   }
+
+   @Override
+   public QuickAccessManager getQuickAccessManager() {
+      return quickAccess();
    }
 
    @Override
