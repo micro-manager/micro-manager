@@ -241,13 +241,14 @@ public class DraggableIcon extends JLabel {
       public IconGrid(JPopupMenu menu) {
          super(new MigLayout("flowx, insets 0, gap 0"));
 
-         addItem(menu, "Custom...", null, 0, new Runnable() {
+         addItem(menu, "Custom File...", "span, split 2", null, 0,
+               new Runnable() {
             @Override
             public void run() {
                loadIconFromFile();
             }
          });
-         addItem(menu, "Color swatch...",
+         addItem(menu, "Color Swatch...", "wrap",
                DefaultQuickAccessManager.createSwatch(Color.RED, 16), 1,
                new Runnable() {
                   @Override
@@ -260,8 +261,7 @@ public class DraggableIcon extends JLabel {
             final String iconName = JAR_ICONS[i];
             String iconPath =
                   "/org/micromanager/icons/" + iconName + ".png";
-            // Add 2 to account for the custom and swatch options.
-            addItem(menu, iconName, IconLoader.getIcon(iconPath), i + 2,
+            addItem(menu, null, "", IconLoader.getIcon(iconPath), i,
                   new Runnable() {
                      @Override
                      public void run() {
@@ -275,8 +275,17 @@ public class DraggableIcon extends JLabel {
        * Add an entry to our grid of options.
        */
       private void addItem(final JPopupMenu menu, final String name,
-            Icon icon, int index, final Runnable action) {
-         final JLabel label = new JLabel(name, icon, SwingConstants.LEADING);
+            String params, Icon icon, int index, final Runnable action) {
+         final JLabel label;
+         if (name != null) {
+            label = new JLabel(name, icon, SwingConstants.LEADING);
+            label.setFont(GUIUtils.buttonFont);
+         }
+         else {
+            label = new JLabel(icon);
+         }
+         // Mostly for the benefit of the "empty" icon.
+         label.setMinimumSize(new Dimension(20, 20));
          label.setBorder(BorderFactory.createLoweredBevelBorder());
          // Respond to being clicked on.
          label.addMouseListener(new MouseAdapter() {
@@ -286,7 +295,7 @@ public class DraggableIcon extends JLabel {
                action.run();
             }
          });
-         String params = (index % 8 == 7) ? "wrap" : "";
+         params += (index % 8 == 7) ? "wrap" : "";
          add(label, params + ", growx");
       }
 
