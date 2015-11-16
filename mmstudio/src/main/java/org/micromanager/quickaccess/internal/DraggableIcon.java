@@ -144,11 +144,15 @@ public class DraggableIcon extends JLabel {
          @Override
          public void mousePressed(MouseEvent e) {
             frame_.updateMouse(e);
-            if (SwingUtilities.isLeftMouseButton(e)) {
+            if (SwingUtilities.isLeftMouseButton(e) &&
+                  !e.isControlDown()) {
                // Start dragging.
                frame_.startDragging(DraggableIcon.this, e);
             }
-            else if (SwingUtilities.isRightMouseButton(e) &&
+            // Right-click, or control click (for OSX support), for a
+            // customizable-icon plugin.
+            else if ((SwingUtilities.isRightMouseButton(e) ||
+                     e.isControlDown()) &&
                   isReified_ && parentCell_ != null &&
                   plugin_ instanceof WidgetPlugin &&
                   ((WidgetPlugin) plugin_).getCanCustomizeIcon()) {
