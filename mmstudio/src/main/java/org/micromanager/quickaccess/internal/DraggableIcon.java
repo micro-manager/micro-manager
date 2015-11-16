@@ -143,6 +143,7 @@ public class DraggableIcon extends JLabel {
       MouseAdapter adapter = new MouseAdapter() {
          @Override
          public void mousePressed(MouseEvent e) {
+            frame_.updateMouse(e);
             if (SwingUtilities.isLeftMouseButton(e)) {
                // Start dragging.
                frame_.startDragging(DraggableIcon.this, e);
