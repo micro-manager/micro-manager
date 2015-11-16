@@ -5,9 +5,10 @@ import java.util.Set;
 /**
  * This interface is used for storing custom information in the Metadata,
  * SummaryMetadata, and DisplaySettings classes (in org.micromanager.data and
- * org.micromanager.display). It presents a simple key/value mapping that can
- * store strings, integers, and doubles. New versions can be instantiated via
- * org.micromanager.data.DataManager or
+ * org.micromanager.display), and for passing information between plugins and
+ * in similar situations. It presents a simple key/value mapping that can store
+ * basic types, arrays of basic types, and generic objects.
+ * New versions can be instantiated via org.micromanager.data.DataManager or
  * org.micromanager.display.DisplayManager.
  *
  * This class uses a Builder pattern. Please see
