@@ -1774,7 +1774,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // loop is executed once per acquisition (i.e. once if separate viewers isn't selected
       //   or once per timepoint if separate viewers is selected)
       long repeatStart = System.currentTimeMillis();
-      for (int timepoint = 0; timepoint < nrRepeats_; timepoint++) {
+      for (int timepoint = 0; !cancelAcquisition_.get() && timepoint < nrRepeats_; timepoint++) {
          // handle intervals between (software-timed) repeats
          // only applies when doing separate viewers for each timepoint
          // and have multiple timepoints
@@ -1926,9 +1926,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             
             // remove usual window listener(s) and replace it with our own
             //   that will prompt before closing and cancel acquisition if confirmed
-            // it's probably dangerous to do this and should be considered a hack
+            // this should be considered a hack, it may not work perfectly
             // I have confirmed that there is only one windowListener and it seems to 
             //   also be related to window closing
+            // Note that ImageJ's acquisition window is AWT instead of Swing
             wls_orig = vad.getImagePlus().getWindow().getWindowListeners();
             for (WindowListener l : wls_orig) {
                vad.getImagePlus().getWindow().removeWindowListener(l);
@@ -1937,11 +1938,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                @Override
                public void windowClosing(WindowEvent arg0) {
                   // if running acquisition only close if user confirms
-                  if (acquisitionRunning_.get() &&
-                        MyDialogUtils.getConfirmDialogResult(
-                              "Do you really want to abort the acquisition?",
-                              JOptionPane.YES_NO_OPTION)) {
-                     cancelAcquisition_.set(true);
+                  if (acquisitionRunning_.get()) {
+                     boolean stop = MyDialogUtils.getConfirmDialogResult(
+                           "Do you really want to abort the acquisition?",
+                           JOptionPane.YES_NO_OPTION);
+                     if (stop) {
+                        cancelAcquisition_.set(true);                        
+                     }
                   }
                }
             };
@@ -2229,6 +2232,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             }
          } catch (IllegalMonitorStateException ex) {
             // do nothing, the acquisition was simply halted during its operation
+            // will log error message during finally clause
          } catch (MMScriptException mex) {
             MyDialogUtils.showError(mex);
          } catch (Exception ex) {
@@ -2243,6 +2247,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   }
                } catch (Exception ex) {
                   // do nothing, window is probably gone
+               }
+               
+               if (cancelAcquisition_.get()) {
+                  ReportingUtils.logMessage("User stopped the acquisition");
                }
                
                bq.put(TaggedImageQueue.POISON);
@@ -2264,7 +2272,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             }
          }
 
-      }
+      }// for loop over acquisitions
       
       // cleanup after end of all acquisitions
       
