@@ -168,21 +168,8 @@ int TsiCam::Initialize()
    ret = CreateProperty(MM::g_Keyword_CameraName, camName, MM::String, true);
    assert(ret == DEVICE_OK);
 
-   // binning
-   CPropertyAction *pAct = new CPropertyAction (this, &TsiCam::OnBinning);
-   ret = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
-   assert(ret == DEVICE_OK);
-
-   vector<string> binValues;
-   binValues.push_back("1");
-   binValues.push_back("2");
-   binValues.push_back("4");
-   binValues.push_back("8");
-   ret = SetAllowedValues(MM::g_Keyword_Binning, binValues);
-   assert(ret == DEVICE_OK);
-
    // exposure
-   pAct = new CPropertyAction (this, &TsiCam::OnExposure);
+   CPropertyAction *pAct = new CPropertyAction (this, &TsiCam::OnExposure);
    ret = CreateProperty(MM::g_Keyword_Exposure, "2.0", MM::Float, false, pAct);
    assert(ret == DEVICE_OK);
 
@@ -364,6 +351,24 @@ int TsiCam::Initialize()
 
    }
 
+      // binning
+   pAct = new CPropertyAction (this, &TsiCam::OnBinning);
+   ret = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
+   assert(ret == DEVICE_OK);
+
+   vector<string> binValues;
+   binValues.push_back("1");
+   if (!color)
+   {
+      // binning is not supported for color cameras
+      binValues.push_back("2");
+      binValues.push_back("4");
+      binValues.push_back("8");
+   }
+   ret = SetAllowedValues(MM::g_Keyword_Binning, binValues);
+   assert(ret == DEVICE_OK);
+
+
    ret = ResizeImageBuffer();
    if (ret != DEVICE_OK)
       return ret;
@@ -487,11 +492,16 @@ int TsiCam::SnapImage()
    {
       MM::MMTime start = GetCurrentMMTime();
       MM::MMTime timeout(4000000); // 4 sec timeout
+      int err(TSI_NO_ERROR);
       TsiColorImage* tsiColorImg = 0;
       do
       {
          tsiColorImg = getColorCamera()->GetPendingColorImage(TSI_COLOR_POST_PROCESS);
-      } while (tsiColorImg == 0 && GetCurrentMMTime() - start < timeout);
+         err = camHandle_->GetErrorCode();
+      } while (tsiColorImg == 0 && GetCurrentMMTime() - start < timeout && err == TSI_NO_ERROR);
+
+      if (err != TSI_NO_ERROR)
+         return err;
 
       if (tsiColorImg == 0)
          return ERR_IMAGE_TIMED_OUT;
@@ -909,14 +919,21 @@ int AcqSequenceThread::svc (void)
       if (camInstance->color)
       {
          TsiColorImage* tsiCImg(0);
-         while (!stop && (camInstance->GetCurrentMMTime() - start) < timeout && !tsiCImg)
+         int err = TSI_NO_ERROR;
+         while (!stop && (camInstance->GetCurrentMMTime() - start) < timeout && !tsiCImg && err == TSI_NO_ERROR)
          {
             tsiCImg = camInstance->getColorCamera()->GetPendingColorImage(TSI_COLOR_POST_PROCESS);
+            err = camInstance->getColorCamera()->GetErrorCode();
             Sleep(1);
          }
-         if (!tsiCImg)
+
+         if (!tsiCImg || err != TSI_NO_ERROR)
          {
-            camInstance->LogMessage("Camera timed out on GetPendingColorImage().");
+            if (err != TSI_NO_ERROR)
+               camInstance->LogMessage("Error acquiring image.");
+            else
+               camInstance->LogMessage("Camera timed out on GetPendingColorImage().");
+
             camInstance->camHandle_->Stop();
             InterlockedExchange(&camInstance->acquiring, 0);
             return 1;
@@ -956,11 +973,13 @@ int AcqSequenceThread::svc (void)
       else
       {
          TsiImage* tsiImg(0);
+         
          while (!stop && (camInstance->GetCurrentMMTime() - start) < timeout && !tsiImg)
          {
             tsiImg = camInstance->getColorCamera()->GetPendingImage();
             Sleep(1);
          }
+
          if (!tsiImg)
          {
             camInstance->LogMessage("Camera timed out on GetPendingImage().");
