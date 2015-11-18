@@ -242,7 +242,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
       zProjection.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            IJCommandThread t = new IJCommandThread("Z Project...", "projection=[Max Intensity]");
+            IJCommandThread t = new IJCommandThread("Z Project...", "projection=[Max Intensity] all");
             t.start();
          }
       });
