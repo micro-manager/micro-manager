@@ -86,8 +86,8 @@ import org.micromanager.Studio;
  */
 public class QuickAccessFrame extends JFrame {
    private static final String OPEN_NEVER = "Never";
-   private static final String OPEN_IF_USED = "If window is not empty";
-   private static final String OPEN_REMEMBER = "If window was open at end of last session";
+   private static final String OPEN_ALWAYS = "Always";
+   private static final String OPEN_REMEMBER = "Remember";
    private static final String DEFAULT_TITLE = "Quick Access Tools";
 
    private Studio studio_;
@@ -174,7 +174,6 @@ public class QuickAccessFrame extends JFrame {
     * Reload our configuration from the provided config data.
     */
    private void loadConfig(JSONObject config) {
-      boolean hasContents = false;
       if (config.length() == 0) {
          // Empty config; create a default (i.e. empty) window.
          setTitle(DEFAULT_TITLE);
@@ -191,7 +190,6 @@ public class QuickAccessFrame extends JFrame {
          for (int i = 0; i < cells.length(); ++i) {
             addControl(ControlCell.fromJSON(cells.getJSONObject(i),
                      studio_, this));
-            hasContents = true;
          }
          JSONArray dividers = config.getJSONArray("dividers");
          for (int i = 0; i < dividers.length(); ++i) {
@@ -206,7 +204,7 @@ public class QuickAccessFrame extends JFrame {
          boolean wasOpen = config.getBoolean("wasOpen");
          String openMode = config.getString("openMode");
          configurePanel_.setOpenMode(openMode);
-         if ((hasContents && openMode.equals(OPEN_IF_USED)) ||
+         if (openMode.equals(OPEN_ALWAYS) ||
                (wasOpen && openMode.equals(OPEN_REMEMBER))) {
             setVisible(true);
          }
@@ -653,10 +651,10 @@ public class QuickAccessFrame extends JFrame {
 
          subPanel.add(new JLabel("Open on launch: "), "split 2, span");
          openSelect_ = new JComboBox(new String[] {OPEN_NEVER,
-            OPEN_IF_USED, OPEN_REMEMBER});
+            OPEN_ALWAYS, OPEN_REMEMBER});
          // The OPEN_REMEMBER string is kinda large and blows out the size
-         // of the combobox, so use the OPEN_IF_USED string to set size.
-         openSelect_.setPrototypeDisplayValue(OPEN_IF_USED);
+         // of the combobox, so use the OPEN_ALWAYS string to set size.
+         openSelect_.setPrototypeDisplayValue(OPEN_ALWAYS);
          openSelect_.setSelectedItem(OPEN_NEVER);
          subPanel.add(openSelect_, "wrap");
 
