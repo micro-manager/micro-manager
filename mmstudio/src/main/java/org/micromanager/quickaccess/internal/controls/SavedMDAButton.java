@@ -147,6 +147,9 @@ public class SavedMDAButton extends WidgetPlugin implements SciJavaPlugin {
       File file = FileDialogs.openFile(parent,
             "Choose acquisition settings file",
             AcqControlDlg.ACQ_SETTINGS_FILE);
+      if (file == null) {
+         return null;
+      }
       return studio_.data().getPropertyMapBuilder()
          .putString("settingsPath", file.getAbsolutePath()).build();
    }

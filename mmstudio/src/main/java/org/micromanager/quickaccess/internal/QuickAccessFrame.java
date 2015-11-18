@@ -298,6 +298,10 @@ public class QuickAccessFrame extends JFrame {
          try {
             if (plugin instanceof WidgetPlugin) {
                config = ((WidgetPlugin) plugin).configureControl(this);
+               if (config == null) {
+                  // Plugin cancelled configuration.
+                  return;
+               }
             }
             ControlCell cell = new ControlCell(studio_, this, plugin,
                   config, rect);

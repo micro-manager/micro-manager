@@ -127,6 +127,9 @@ public class ScriptButton extends WidgetPlugin implements SciJavaPlugin {
    public PropertyMap configureControl(Frame parent) {
       File file = FileDialogs.openFile(parent, "Choose Beanshell script",
             ScriptPanel.BSH_FILE);
+      if (file == null) {
+         return null;
+      }
       return studio_.data().getPropertyMapBuilder()
          .putString("scriptPath", file.getAbsolutePath()).build();
    }

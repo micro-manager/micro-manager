@@ -87,6 +87,10 @@ public class TextLabel extends WidgetPlugin implements SciJavaPlugin {
    public PropertyMap configureControl(Frame parent) {
       String text = JOptionPane.showInputDialog(
             "Please input the label contents:");
+      if (text == null || text.equals("")) {
+         // Not a valid text label.
+         return null;
+      }
       return studio_.data().getPropertyMapBuilder()
          .putString("labelText", text).build();
    }
