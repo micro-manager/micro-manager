@@ -246,7 +246,7 @@ public class DraggableIcon extends JLabel {
       public IconGrid(JPopupMenu menu) {
          super(new MigLayout("flowx, insets 0, gap 0"));
 
-         addItem(menu, "Custom File...", "span, split 2", null, 0,
+         addItem(menu, "Image File...", "span, split 2", null, 0,
                new Runnable() {
             @Override
             public void run() {
