@@ -21,13 +21,16 @@ package org.micromanager.quickaccess.internal;
 
 import com.bulenkov.iconloader.IconLoader;
 
+import com.google.common.base.Charsets;
 import com.google.common.eventbus.Subscribe;
+import com.google.common.io.Files;
 
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Image;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 
 import java.util.ArrayList;
@@ -103,20 +106,27 @@ public class DefaultQuickAccessManager implements QuickAccessManager {
             // Nothing saved.
             return;
          }
-         try {
-            JSONObject config = new JSONObject(configStr);
-            JSONArray panels = config.getJSONArray("panels");
-            for (int i = 0; i < panels.length(); ++i) {
-               JSONObject panelConfig = panels.getJSONObject(i);
-               addPanel(panelConfig);
-            }
-         }
-         catch (JSONException e) {
-            studio_.logs().logError(e, "Unable to reconstruct Quick Access Window from config.");
-         }
+         loadConfig(configStr);
       }
       catch (Exception e) {
          studio_.logs().logError(e, "Unable to reload Quick Access config");
+      }
+   }
+
+   /**
+    * Load settings from the provided config string.
+    */
+   private void loadConfig(String configStr) {
+      try {
+         JSONObject config = new JSONObject(configStr);
+         JSONArray panels = config.getJSONArray("panels");
+         for (int i = 0; i < panels.length(); ++i) {
+            JSONObject panelConfig = panels.getJSONObject(i);
+            addPanel(panelConfig);
+         }
+      }
+      catch (JSONException e) {
+         studio_.logs().logError(e, "Unable to reconstruct Quick Access Window from config.");
       }
    }
 
@@ -125,6 +135,15 @@ public class DefaultQuickAccessManager implements QuickAccessManager {
     */
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
+      String config = getConfig(false);
+      studio_.profile().setString(QuickAccessManager.class, SAVED_CONFIG,
+            config);
+   }
+
+   /**
+    * Create a string version of our config.
+    */
+   private String getConfig(boolean isPretty) {
       try {
          // We store the array in a JSONObject, instead of storing the array
          // directly, to give us room to expand in future.
@@ -134,11 +153,11 @@ public class DefaultQuickAccessManager implements QuickAccessManager {
             panelConfigs.put(panel.getConfig());
          }
          config.put("panels", panelConfigs);
-         studio_.profile().setString(QuickAccessManager.class, SAVED_CONFIG,
-               config.toString());
+         return config.toString(isPretty ? 2 : 0);
       }
       catch (JSONException e) {
          studio_.logs().logError(e, "Error saving Quick Access Window config");
+         return "";
       }
    }
 
@@ -201,6 +220,29 @@ public class DefaultQuickAccessManager implements QuickAccessManager {
          studio_.logs().logError(e, "Unable to create custom icon");
       }
       return defaultIcon;
+   }
+
+   @Override
+   public void saveSettingsToFile(File file) {
+      try {
+         String settings = getConfig(true);
+         FileWriter writer = new FileWriter(file);
+         writer.write(settings + "\n");
+         writer.close();
+      }
+      catch (IOException e) {
+         studio_.logs().logError(e, "Error saving settings to " + file);
+      }
+   }
+
+   @Override
+   public void loadSettingsFromFile(File file) {
+      try {
+         loadConfig(Files.toString(file, Charsets.UTF_8));
+      }
+      catch (IOException e) {
+         studio_.logs().logError(e, "Error loading settings from " + file);
+      }
    }
 
    /**

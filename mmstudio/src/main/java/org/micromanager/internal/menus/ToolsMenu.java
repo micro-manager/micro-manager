@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Map;
 
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -348,6 +349,35 @@ public class ToolsMenu {
                }
          });
       }
+
+      quickAccessMenu_.addSeparator();
+
+      GUIUtils.addMenuItem(quickAccessMenu_, "Save Settings...",
+            "Save the Quick Access Panel settings to a file for use elsewhere",
+            new Runnable() {
+               @Override
+               public void run() {
+                  JFileChooser chooser = new JFileChooser();
+                  chooser.showSaveDialog(null);
+                  File file = chooser.getSelectedFile();
+                  if (file != null) {
+                     studio_.quickAccess().saveSettingsToFile(file);
+                  }
+               }
+            });
+      GUIUtils.addMenuItem(quickAccessMenu_, "Load Settings...",
+            "Load saved settings from a file",
+            new Runnable() {
+               @Override
+               public void run() {
+                  JFileChooser chooser = new JFileChooser();
+                  chooser.showOpenDialog(null);
+                  File file = chooser.getSelectedFile();
+                  if (file != null) {
+                     studio_.quickAccess().loadSettingsFromFile(file);
+                  }
+               }
+            });
    }
 
    public void updateSwitchConfigurationMenu() {
