@@ -319,6 +319,7 @@ public class ToolsMenu {
       Collections.sort(titles);
 
       JMenu deleteMenu = new JMenu("Delete...");
+      deleteMenu.setEnabled(titles.size() > 0);
       for (final String title : titles) {
          GUIUtils.addMenuItem(deleteMenu, title, "Delete this panel",
                new Runnable() {
@@ -331,7 +332,7 @@ public class ToolsMenu {
       }
       quickAccessMenu_.add(deleteMenu);
       quickAccessMenu_.addSeparator();
-      GUIUtils.addMenuItem(quickAccessMenu_, "Show all",
+      JMenuItem show = GUIUtils.addMenuItem(quickAccessMenu_, "Show all",
             "Show all Quick Access Panels; create a new one if necessary",
             new Runnable() {
                @Override
@@ -339,6 +340,7 @@ public class ToolsMenu {
                   studio_.quickAccess().showPanels();
                }
             });
+      show.setEnabled(titles.size() > 0);
 
       for (final String title : titles) {
          GUIUtils.addMenuItem(quickAccessMenu_, title, "",
