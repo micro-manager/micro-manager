@@ -169,8 +169,22 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    }
 
    private void setupWindowHandlers() {
-      // add window listeners
       addWindowListener(new WindowAdapter() {
+         // HACK: on OSX, some kind of system bug can disable the entire
+         // menu bar at times (it has something to do with modal dialogs and
+         // possibly with errors resulting from the code that handles their
+         // output). Calling setEnabled() on the MenuBar does *not* fix the
+         // enabled-ness of the menus. However, through experimentation, I've
+         // figured out that setting the menubar to null and then back again
+         // does fix the issue for all JMenus. This doesn't include the Help
+         // menu though, probably because it's an OSX-provided menu and thus
+         // behaves differently.
+         @Override
+         public void windowActivated(WindowEvent event) {
+            setMenuBar(null);
+            setJMenuBar(getJMenuBar());
+         }
+         // Shut down when this window is closed.
          @Override
          public void windowClosing(WindowEvent event) {
             studio_.closeSequence(false);

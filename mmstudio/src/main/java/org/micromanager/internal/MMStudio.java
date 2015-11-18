@@ -49,7 +49,9 @@ import java.util.List;
 
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
@@ -322,7 +324,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
       HelpMenu helpMenu = new HelpMenu(studio_, core_);
 
       initializationSequence();
-           
+
       helpMenu.initializeHelpMenu(menuBar_);
    }
 
@@ -1331,8 +1333,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       }
    }
 
-      
-   
    // //////////////////////////////////////////////////////////////////////////
    // Script interface
    // //////////////////////////////////////////////////////////////////////////
