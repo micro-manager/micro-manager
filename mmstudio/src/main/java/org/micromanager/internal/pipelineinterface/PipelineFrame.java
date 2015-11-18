@@ -243,7 +243,13 @@ final public class PipelineFrame extends MMFrame
     */
    private void reloadProcessors() {
       final HashMap<String, ProcessorPlugin> plugins = studio_.plugins().getProcessorPlugins();
-      ArrayList<String> names = new ArrayList<String>(plugins.keySet());
+      // Maps the plugin's declared name to the key in the above plugins
+      // object.
+      final HashMap<String, String> nameToPath = new HashMap<String, String>();
+      for (String pluginPath : plugins.keySet()) {
+         nameToPath.put(plugins.get(pluginPath).getName(), pluginPath);
+      }
+      ArrayList<String> names = new ArrayList<String>(nameToPath.keySet());
       Collections.sort(names);
       addProcessorPopup_.removeAll();
       final PropertyMap blankSettings = studio_.data().getPropertyMapBuilder().build();
@@ -251,9 +257,10 @@ final public class PipelineFrame extends MMFrame
          Action addAction = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
+               String path = nameToPath.get(name);
                getTableModel().addConfigurator(
-                     new ConfiguratorWrapper(plugins.get(name),
-                        plugins.get(name).createConfigurator(blankSettings),
+                     new ConfiguratorWrapper(plugins.get(path),
+                        plugins.get(path).createConfigurator(blankSettings),
                         name));
             }
          };
