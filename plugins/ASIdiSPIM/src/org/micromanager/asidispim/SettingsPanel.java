@@ -21,25 +21,37 @@
 
 package org.micromanager.asidispim;
 
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.text.ParseException;
 
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.text.DefaultFormatter;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+
+import org.micromanager.MMStudio;
 import org.micromanager.asidispim.Data.CameraModes;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
+import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
+import org.micromanager.utils.FileDialogs;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -54,6 +66,8 @@ public class SettingsPanel extends ListeningJPanel {
    private final Properties props_;
    private final Prefs prefs_;
    private final StagePositionUpdater stagePosUpdater_;
+   
+   private final JFormattedTextField rawPath_;
    
    /**
     * 
@@ -167,11 +181,65 @@ public class SettingsPanel extends ListeningJPanel {
       // end camera panel
       
       
+      // start test acquisition panel
+      
+      final JPanel testAcqPanel = new JPanel(new MigLayout(
+            "",
+            "[right]16[center]",
+            "[]8[]"));
+      testAcqPanel.setBorder(PanelUtils.makeTitledBorder("Test Acquisition"));
+      
+      final JCheckBox testAcqSave = pu.makeCheckBox("Save test acquisition as raw data",
+            Properties.Keys.PLUGIN_TESTACQ_SAVE, panelName_, false);
+      testAcqPanel.add(testAcqSave, "span 2, wrap");
+      
+      DefaultFormatter formatter = new DefaultFormatter();
+      rawPath_ = new JFormattedTextField(formatter);
+      rawPath_.setText( prefs_.getString(panelName_, 
+              Properties.Keys.PLUGIN_TESTACQ_PATH, "") );
+      rawPath_.addPropertyChangeListener(new PropertyChangeListener() {
+         // will respond to commitEdit() as well as GUI edit on commit
+         @Override
+         public void propertyChange(PropertyChangeEvent evt) {
+            prefs_.putString(panelName_, Properties.Keys.PLUGIN_TESTACQ_PATH,
+                  rawPath_.getText());
+         }
+      });
+      rawPath_.setColumns(20);
+      testAcqPanel.add(rawPath_);
+
+      JButton browseFileButton = new JButton();
+      browseFileButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+            File result = FileDialogs.openFile(null,
+                  "Please choose a file for raw image data",
+                  MMStudio.MM_DATA_SET);
+            if (result != null) {
+               rawPath_.setText(result.getAbsolutePath());
+               try {
+                  rawPath_.commitEdit();
+               } catch (ParseException ex) {
+                  MyDialogUtils.showError("Invalid file selected for test acquisition raw data");
+               }
+            }
+         }
+      });
+      browseFileButton.setMargin(new Insets(2, 5, 2, 5));
+      browseFileButton.setText("...");
+      testAcqPanel.add(browseFileButton, "wrap");
+
+      
+      // end test acquisition panel
+      
+      
       // construct main panel
       add(guiPanel);
       add(scannerPanel);
       add(cameraPanel, "wrap");
+      add(testAcqPanel);
       
+
       // start stage scan panel
       // only add this panel if stage scanning is supported
       // TODO create method to determine this instead of separate code here and in AcquisitionPanel
@@ -190,7 +258,6 @@ public class SettingsPanel extends ListeningJPanel {
          add(stageScanPanel, "growx");
        }
       // end stage scan panel
-      
       
       
    }

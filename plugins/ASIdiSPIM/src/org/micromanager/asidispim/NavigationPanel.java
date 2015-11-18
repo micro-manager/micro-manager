@@ -111,7 +111,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
             new MigLayout(
               "", 
               "[center]8[center]",
-              "[]16[]16[]"));
+              "[]8[]8[]"));
       devices_ = devices;
       props_ = props;
       joystick_ = joystick;

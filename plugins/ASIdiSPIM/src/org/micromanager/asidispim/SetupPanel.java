@@ -104,20 +104,20 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
 
 
    public SetupPanel(ScriptInterface gui, 
-           Devices devices, 
-           Properties props, 
-           Joystick joystick, 
-           Devices.Sides side, 
-           Positions positions, 
-           Cameras cameras, 
-           Prefs prefs, 
+           Devices devices,
+           Properties props,
+           Joystick joystick,
+           Devices.Sides side,
+           Positions positions,
+           Cameras cameras,
+           Prefs prefs,
            StagePositionUpdater posUpdater,
            AutofocusUtils autofocus) {
       super(MyStrings.PanelNames.SETUP.toString() + side.toString(),
               new MigLayout(
               "",
               "8[center]8[center]0",
-              "[]16[]16[]"));
+              "[]8[]8[]"));
       
       devices_ = devices;
       props_ = props;
@@ -163,7 +163,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       rateField_ = pu.makeFloatEntryField(panelName_, 
             Properties.Keys.PLUGIN_RATE_PIEZO_SHEET.toString(), 100, 5);
       piezoDeltaField_ = pu.makeFloatEntryField(panelName_, 
-            Properties.Keys.PLUGIN_PIEZO_SHEET_INCREMENT.toString(), 5, 3);
+            Properties.Keys.PLUGIN_PIEZO_SHEET_INCREMENT.toString(), 5, 2);
       piezoDeltaField_.setToolTipText("Piezo increment used by up/down arrow buttons");
       
       JButton upButton = new JButton();
@@ -211,7 +211,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       tmp_but.setBackground(Color.green);
       calibrationPanel.add(tmp_but);
 
-      calibrationPanel.add(upButton, "wrap");
+      calibrationPanel.add(upButton, "growy, wrap");
       
       calibrationPanel.add(new JLabel("Offset: "));
       calibrationPanel.add(offsetField_, "span 2, right");
@@ -229,11 +229,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       tmp_but.setBackground(Color.green);
       calibrationPanel.add(tmp_but);
       
-      calibrationPanel.add(downButton, "wrap");
-      
-      calibrationPanel.add(new JLabel("Step size: "), "span 2, left");
-      calibrationPanel.add(piezoDeltaField_);
-      calibrationPanel.add(new JLabel("\u00B5m"));
+      calibrationPanel.add(downButton, "growy, wrap");
       
       tmp_but = new JButton("Run Autofocus");
       tmp_but.setMargin(new Insets(4,8,4,8));
@@ -248,7 +244,11 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
                     true, true);
          }
       });
-      calibrationPanel.add(tmp_but, "center, span 3");
+      calibrationPanel.add(tmp_but, "center, span 4");
+      
+      calibrationPanel.add(new JLabel("Step size: "), "right, span 2");
+      calibrationPanel.add(piezoDeltaField_, "split 2");
+      calibrationPanel.add(new JLabel("\u00B5m"));
       
       // start 2-point calibration frame
       // this frame is separate from main plugin window
@@ -448,7 +448,16 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       });
       slicePanel.add(tmp_but, "wrap");
       
-      slicePanel.add(new JSeparator(SwingConstants.HORIZONTAL), "span 5, growx, shrinky, wrap");
+      JButton testAcqButton = new JButton("Test Acquisition");
+      testAcqButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            ASIdiSPIM.getFrame().getAcquisitionPanel().runTestAcquisition(side_);
+         }
+      });
+      slicePanel.add(testAcqButton, "center, span 2, wrap");
+      
+      slicePanel.add(new JSeparator(SwingConstants.HORIZONTAL), "span 4, growx, shrinky, wrap");
       
       slicePanel.add(new JLabel("Slice position:"));
       sheetPositionLabel_ = new JLabel("");
@@ -479,7 +488,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          }
       } );
       slicePanel.add(tmp_but);
-
       
       // Create sheet controls
       JPanel sheetPanel = new JPanel(new MigLayout(
@@ -570,7 +578,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
               props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MAX_DEFLECTION_X)/4, // max value
               1000, // the scale factor between internal integer representation and float representation
               micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG);
-      sheetPanel.add(tmp_sl, "span 4, growx, center, wrap");
+      sheetPanel.add(tmp_sl, "span 4, growx, center");
 
       
       // Create larger panel with slice, sheet, and calibration panels

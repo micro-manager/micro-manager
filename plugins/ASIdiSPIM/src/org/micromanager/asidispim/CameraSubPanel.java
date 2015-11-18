@@ -71,7 +71,6 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
    private final JToggleButton camBButton_;
    private final JToggleButton camMultiButton_;
    private final JToggleButton camBotButton_;
-//   private final JToggleButton testAcqButton_;
    private final JToggleButton toggleButtonLive_;
    private List<UpdateFromPropertyListenerInterface> privateListeners_;
    
@@ -151,13 +150,6 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
       cameraBox_ = makeCameraSelectionBox(columnWidth);
       add(cameraBox_, "wrap");
       
-      JPanel liveButtonPanel = new JPanel(new MigLayout(
-            "",
-            "0[left]8[right]0",
-            "0[]0"));
-      
-//      testAcqButton_ = new JToggleButton("Test Acq.");
-            
       toggleButtonLive_ = new JToggleButton();
       toggleButtonLive_.setMargin(new Insets(2, 15, 2, 15));
       toggleButtonLive_.setIconTextGap(6);
@@ -170,11 +162,7 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
             cameras_.enableLiveMode(!gui_.isLiveModeOn());
          }
       });
-      
-//      liveButtonPanel.add(testAcqButton_, "growy, shrinky");
-      liveButtonPanel.add(toggleButtonLive_, "width " + columnWidth + "px");
-      
-      add(liveButtonPanel, "skip 1");
+      add(toggleButtonLive_, "center, width " + columnWidth + "px, span 2");
    }
    
    /**

@@ -165,6 +165,8 @@ public class Properties {
       PLUGIN_ACQUISITION_INTERVAL("AcquisitionPeriod"),
       PLUGIN_DIRECTORY_ROOT("DirectoryRoot"),
       PLUGIN_NAME_PREFIX("NamePrefix"),
+      PLUGIN_TESTACQ_PATH("TestAcquisitionPath"),
+      PLUGIN_TESTACQ_SAVE("TestAcquisitionSave"),
       PREFS_SAVE_WHILE_ACQUIRING("SaveWhileAcquiring"),
       PREFS_HIDE_WHILE_ACQUIRING("HideWhileAcquiring"),
       PREFS_SEPARATE_VIEWERS_FOR_TIMEPOINTS("SeparateViewersForTimePoints"),

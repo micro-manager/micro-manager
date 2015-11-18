@@ -153,6 +153,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JSpinner numTimepoints_;
    private final JSpinner acquisitionInterval_;
    private final JToggleButton buttonStart_;
+   private final JButton buttonTestAcq_;
    private final JPanel volPanel_;
    private final JPanel slicePanel_;
    private final JPanel timepointPanel_;
@@ -655,6 +656,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // end duration report panel
       
+      buttonTestAcq_ = new JButton("Test Acquisition");
+      buttonTestAcq_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            runTestAcquisition(Devices.Sides.NONE);
+         }
+      });
+      
       buttonStart_ = new JToggleButton();
       buttonStart_.setIconTextGap(6);
       buttonStart_.addActionListener(new ActionListener() {
@@ -668,6 +677,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       });
       updateStartButton();  // call once to initialize, isSelected() will be false
+      
+      // make the size of the test button match the start button (easier on the eye)
+      Dimension sizeStart = buttonStart_.getPreferredSize();
+      Dimension sizeTest = buttonTestAcq_.getPreferredSize();
+      sizeTest.height = sizeStart.height;
+      buttonTestAcq_.setPreferredSize(sizeTest);
 
       acquisitionStatusLabel_ = new JLabel("");
       acquisitionStatusLabel_.setBackground(prefixField_.getBackground());
@@ -768,7 +783,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       spimMode_ = acqModes.getComboBox();
       spimMode_.addActionListener(recalculateTimingDisplayAL);
       leftColumnPanel_.add(spimMode_, "left, wrap");
-      leftColumnPanel_.add(buttonStart_, "split 2, left, wrap");
+      leftColumnPanel_.add(buttonStart_, "split 3, left");
+      leftColumnPanel_.add(new JLabel("    "));
+      leftColumnPanel_.add(buttonTestAcq_, "wrap");
       leftColumnPanel_.add(new JLabel("Status:"), "split 2, left");
       leftColumnPanel_.add(acquisitionStatusLabel_);
       
@@ -841,8 +858,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @param acqName
     */
    public void setAcquisitionNamePrefix(String acqName) {
-      prefixField_.setText((acqName + "_hello"));
-//      prefixField_.setText(acqName);
+      prefixField_.setText(acqName);
    }
    
    private void updateStartButton() {
@@ -856,6 +872,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             "/org/micromanager/icons/cancel.png")
             : SwingResourceManager.getIcon(MMStudio.class,
                   "/org/micromanager/icons/arrow_right.png"));
+      buttonTestAcq_.setEnabled(!started);
    }
    
    /**
@@ -1386,6 +1403,27 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       acquisitionStatusLabel_.setText(text);
    }
+   
+   /**
+    * runs a test acquisition with the following features:
+    *   - not saved to disk
+    *   - window can be closed without prompting to save
+    *   - timepoints disabled
+    *   - autofocus disabled
+    * @param side Devices.Sides.NONE to run as specified in acquisition tab,
+    *   Devices.Side.A or B to run only that side
+    */
+   public void runTestAcquisition(Devices.Sides side) {
+      acquisitionRequested_.set(true);
+      updateStartButton();
+      boolean success = runAcquisitionPrivate(true, side);
+      if (!success) {
+         ReportingUtils.logError("Fatal error running test diSPIM acquisition.");
+      }
+      acquisitionRequested_.set(false);
+      acquisitionRunning_.set(false);
+      updateStartButton();
+   }
 
    /**
     * Implementation of acquisition that orchestrates image
@@ -1410,7 +1448,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             acquisitionRequested_.set(true);
             ASIdiSPIM.getFrame().tabsSetEnabled(false);
             updateStartButton();
-            boolean success = runAcquisitionPrivate();
+            boolean success = runAcquisitionPrivate(false, Devices.Sides.NONE);
             if (!success) {
                ReportingUtils.logError("Fatal error running diSPIM acquisition.");
             }
@@ -1431,9 +1469,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * Actually runs the acquisition; does the dirty work of setting
     * up the controller, the circular buffer, starting the cameras,
     * grabbing the images and putting them into the acquisition, etc.
+    * @param testAcq true if running test acquisition only (see runTestAcquisition() javadoc)
+    * @param testAcqSide only applies to test acquisition, passthrough from runTestAcquisition() 
     * @return true if ran without any fatal errors.
     */
-   private boolean runAcquisitionPrivate() {
+   private boolean runAcquisitionPrivate(boolean testAcq, Devices.Sides testAcqSide) {
       
       // sanity check, shouldn't call this unless we aren't running an acquisition
       if (gui_.isAcquisitionRunning()) {
@@ -1460,6 +1500,25 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       recalculateSliceTiming(!minSlicePeriodCB_.isSelected());
       
       AcquisitionSettings acqSettings = getCurrentAcquisitionSettings();
+      
+      // if a test acquisition then only run single timpoint, no autofocus
+      if (testAcq) {
+         acqSettings.useTimepoints = false;
+         acqSettings.numTimepoints = 1;
+         acqSettings.useAutofocus = false;
+         if (testAcqSide != Devices.Sides.NONE) {
+            acqSettings.numSides = 1;
+            acqSettings.firstSideIsA = (testAcqSide == Devices.Sides.A);
+         }
+         
+         // work-around limitation of not being able to use PLogic per-volume switching with single side
+         // do per-volume switching instead (only difference should be extra time to switch)
+         if (acqSettings.useChannels && acqSettings.channelMode == MultichannelModes.Keys.VOLUME_HW
+               && acqSettings.numSides < 2) {
+            acqSettings.channelMode = MultichannelModes.Keys.VOLUME;
+         }
+         
+      }
       
       double volumeDuration = computeActualVolumeDuration(acqSettings);
       double timepointDuration = computeTimepointDuration();
@@ -1580,7 +1639,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       float cameraReadoutTime = computeCameraReadoutTime();
       double exposureTime = acqSettings.sliceTiming.cameraExposure;
       
-      boolean save = saveCB_.isSelected();
+      boolean save = saveCB_.isSelected() && !testAcq;
       boolean singleTimePointViewers = separateTimePointsCB_.isSelected();
       String rootDir = rootField_.getText();
 
@@ -1886,6 +1945,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.initializeAcquisition(acqName, (int) core_.getImageWidth(),
                     (int) core_.getImageHeight(), (int) core_.getBytesPerPixel(),
                     (int) core_.getImageBitDepth());
+            gui_.promptToSaveAcquisition(acqName, !testAcq);
             
             // These metadata have to added after initialization, otherwise they will not be shown?!
             gui_.setAcquisitionProperty(acqName, "NumberOfSides", 
@@ -2311,6 +2371,19 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       updateAcquisitionStatus(AcquisitionStatus.DONE);
       posUpdater_.pauseUpdates(false);
+      
+      if (testAcq && prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+            Properties.Keys.PLUGIN_TESTACQ_SAVE, false)) {
+         String path = "";
+         try {
+            path = prefs_.getString(MyStrings.PanelNames.SETTINGS.toString(),
+                  Properties.Keys.PLUGIN_TESTACQ_PATH, "");
+            ij.IJ.saveAs("raw", path);
+         // TODO consider generating a short metadata file to assist in interpretation
+         } catch (Exception ex) {
+            MyDialogUtils.showError("Could not save raw data from test acquisition to path " + path);
+         }
+      }
       
       if (separateImageFilesOriginally) {
          ImageUtils.setImageStorageClass(TaggedImageStorageDiskDefault.class);
