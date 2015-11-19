@@ -65,6 +65,8 @@ import org.micromanager.PropertyMap;
 
 
 public final class DefaultDisplayManager implements DisplayManager {
+   private static final String[] CLOSE_OPTIONS = new String[] {
+         "Cancel", "Prompt for each", "Close without save prompt"};
    private static DefaultDisplayManager staticInstance_;
 
    private final MMStudio studio_;
@@ -388,6 +390,28 @@ public final class DefaultDisplayManager implements DisplayManager {
          }
       }
       return true;
+   }
+
+   @Override
+   public void promptToCloseWindows() {
+      if (getAllImageWindows().size() == 0) {
+         // No open image windows.
+         return;
+      }
+      int result = JOptionPane.showOptionDialog(null,
+            "Close all open image windows?", "Micro-Manager",
+            JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+            CLOSE_OPTIONS, CLOSE_OPTIONS[0]);
+      if (result == 0) { // cancel
+         return;
+      }
+      if (result == 2 && JOptionPane.showConfirmDialog(null,
+               "Are you sure you want to close all image windows without prompting to save?",
+               "Micro-Manager", JOptionPane.YES_NO_OPTION) == 1) {
+         // Close without prompting, but user backed out.
+         return;
+      }
+      studio_.displays().closeAllDisplayWindows(result == 1);
    }
 
    @Override

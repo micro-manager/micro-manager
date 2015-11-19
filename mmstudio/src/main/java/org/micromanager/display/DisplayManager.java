@@ -298,6 +298,14 @@ public interface DisplayManager {
    public boolean closeDisplaysFor(Datastore store);
 
    /**
+    * Show a dialog to the user giving them a prompt to close all open windows,
+    * and allowing them to decide whether or not to be prompted to save each
+    * unsaved open window (or simply cancel the entire action). Assuming the
+    * user does not cancel, this method will then call closeAllDisplayWindows.
+    */
+   public void promptToCloseWindows();
+
+   /**
     * Close all open image windows.
     * @param shouldPromptToSave If true, then any open windows for Datastores
     *        that have not been saved will show a prompt to save, and if the

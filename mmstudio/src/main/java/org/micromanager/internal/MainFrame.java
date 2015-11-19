@@ -440,6 +440,16 @@ public class MainFrame extends MMFrame implements LiveModeListener {
             }
          });
       subPanel.add(refreshButton, BIGBUTTON_SIZE);
+
+      JButton closeAllButton = createButton("Close All",
+            "close_windows.png", "Close all open image windows, optionally prompting to save unsaved data.",
+            new Runnable() {
+               @Override
+               public void run() {
+                  studio_.displays().promptToCloseWindows();
+               }
+            });
+      subPanel.add(closeAllButton, BIGBUTTON_SIZE);
       return subPanel;
    }
 

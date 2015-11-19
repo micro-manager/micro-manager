@@ -27,8 +27,6 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Handles setting up the File menu and its actions.
  */
 public class FileMenu {
-   private static final String[] CLOSE_OPTIONS = new String[] {
-      "Cancel", "Close all", "Close without save prompt"};
    private static final String FILE_HISTORY = "list of recently-viewed files";
    private static final int MAX_HISTORY_SIZE = 15;
    private MMStudio studio_;
@@ -88,7 +86,7 @@ public class FileMenu {
          new Runnable() {
             @Override
             public void run() {
-               promptToCloseWindows();
+               studio_.displays().promptToCloseWindows();
             }
       });
 
@@ -115,23 +113,6 @@ public class FileMenu {
       catch (IOException e) {
          ReportingUtils.showError(e, "There was an error when opening data");
       }
-   }
-
-   private void promptToCloseWindows() {
-      int result = JOptionPane.showOptionDialog(null,
-            "Close all open image windows?", "Micro-Manager",
-            JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
-            CLOSE_OPTIONS, CLOSE_OPTIONS[0]);
-      if (result == 0) { // cancel
-         return;
-      }
-      if (result == 2 && JOptionPane.showConfirmDialog(null,
-               "Are you sure you want to close all image windows without prompting to save?",
-               "Micro-Manager", JOptionPane.YES_NO_OPTION) == 1) {
-         // Close without prompting, but user backed out.
-         return;
-      }
-      studio_.displays().closeAllDisplayWindows(result == 1);
    }
 
    private JMenu makeOpenRecentMenu(final boolean isVirtual) {
