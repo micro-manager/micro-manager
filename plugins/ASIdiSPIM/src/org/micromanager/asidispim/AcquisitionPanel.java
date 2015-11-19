@@ -1854,7 +1854,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          BlockingQueue<TaggedImage> bq = new LinkedBlockingQueue<TaggedImage>(10);
          
          // try to close last timepoint if there could be one open
-         if (singleTimePointViewers && gui_.acquisitionExists(acqName)) {
+         if (singleTimePointViewers && gui_.acquisitionExists(acqName) && !cancelAcquisition_.get()) {
             try {
                // following line needed due to some arcane internal reason, otherwise
                //   call to closeAcquisitionWindow() fails silently. 
