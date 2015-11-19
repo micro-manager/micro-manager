@@ -128,11 +128,13 @@ public class QuickAccessFrame extends JFrame {
       dividers_ = new HashSet<Divider>();
 
       // Hide ourselves when the close button is clicked, instead of letting
-      // us be destroyed.
+      // us be destroyed. Also leave configuration mode.
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent e) {
             setVisible(false);
+            configureButton_.setSelected(false);
+            toggleConfigurePanel(false);
          }
       });
 
