@@ -521,11 +521,11 @@ public class MMStudio implements Studio, CompatibilityInterface {
          if (frame_.getAutoShutterChecked()) {
             core_.setAutoShutter(true);
             core_.setShutterOpen(false);
-            frame_.toggleAutoShutter(false);
+            frame_.updateAutoShutterUI(true);
          } else {
             core_.setAutoShutter(false);
             core_.setShutterOpen(false);
-            frame_.toggleAutoShutter(true);
+            frame_.updateAutoShutterUI(false);
          }
       } catch (Exception exc) {
          ReportingUtils.logError(exc);

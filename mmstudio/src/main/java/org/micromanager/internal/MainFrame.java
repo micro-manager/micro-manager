@@ -109,7 +109,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    private boolean shouldChangeChannelGroup_;
    private JLabel labelImageDimensions_;
    private JToggleButton liveButton_;
-   private JToggleButton autoShutterToggle_;
+   private JCheckBox autoShutterCheckBox_;
    private JLabel shutterIcon_;
    private JButton snapButton_;
    private JToggleButton handMovesButton_;
@@ -294,7 +294,10 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       subPanel.add(comboBinning_, "gapleft push, wrap");
 
       // Shutter device.
-      subPanel.add(createLabel("Shutter", false), "split 2");
+      JPanel shutterPanel = new JPanel(
+            new MigLayout("fillx, flowx, insets 0, gap 0"));
+      shutterPanel.setBorder(BorderFactory.createLoweredBevelBorder());
+      shutterPanel.add(createLabel("Shutter", false), "split 2");
 
       shutterComboBox_ = new JComboBox();
       shutterComboBox_.setName("Shutter");
@@ -311,25 +314,36 @@ public class MainFrame extends MMFrame implements LiveModeListener {
             }
          }
       });
-      subPanel.add(shutterComboBox_, "gapleft push, wrap");
+      shutterPanel.add(shutterComboBox_, "gapleft push, wrap");
 
       // Auto/manual shutter control.
-      autoShutterToggle_ = new JToggleButton("Auto shutter");
-      autoShutterToggle_.setFont(defaultFont_);
-      autoShutterToggle_.addActionListener(new ActionListener() {
+      autoShutterCheckBox_ = new JCheckBox("Auto");
+      autoShutterCheckBox_.setToolTipText("Toggle auto shutter, in which the shutter opens automatically when an image is taken, and closes when imaging finishes.");
+      autoShutterCheckBox_.setFont(defaultFont_);
+      autoShutterCheckBox_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             studio_.toggleAutoShutter();
          }
       });
-      subPanel.add(autoShutterToggle_, "w 72!, h 20!, split 3");
+      shutterPanel.add(autoShutterCheckBox_, "w 72!, h 20!, split 3");
 
       shutterIcon_ = new JLabel(
             IconLoader.getIcon("/org/micromanager/icons/shutter_open.png"));
-      subPanel.add(shutterIcon_, "growx, alignx center");
+      shutterIcon_.addMouseListener(new MouseAdapter() {
+         @Override
+         public void mouseReleased(MouseEvent e) {
+            if (autoShutterCheckBox_.isSelected()) {
+               autoShutterCheckBox_.setSelected(false);
+               studio_.toggleAutoShutter();
+            }
+            toggleShutter();
+         }
+      });
+      shutterPanel.add(shutterIcon_, "growx, alignx center");
 
       toggleShutterButton_ = new JButton("Open");
-      toggleShutterButton_.setToolTipText("Open/close the shutter");
+      toggleShutterButton_.setToolTipText("Open/close the shutter, when autoshutter is not enabled.");
       toggleShutterButton_.setFont(defaultFont_);
       toggleShutterButton_.addActionListener(new ActionListener() {
             @Override
@@ -337,7 +351,8 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                toggleShutter();
             }
       });
-      subPanel.add(toggleShutterButton_, "w 40!, h 20!, wrap");
+      shutterPanel.add(toggleShutterButton_, "growx, h 20!, wrap");
+      subPanel.add(shutterPanel);
       return subPanel;
    }
 
@@ -597,8 +612,9 @@ public class MainFrame extends MMFrame implements LiveModeListener {
 
    public void toggleShutter() {
       try {
-         if (!toggleShutterButton_.isEnabled())
+         if (!toggleShutterButton_.isEnabled()) {
             return;
+         }
          toggleShutterButton_.requestFocusInWindow();
          if (toggleShutterButton_.getText().equals("Open")) {
             core_.setShutterOpen(true);
@@ -612,26 +628,27 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       }
    }
 
-   public void toggleAutoShutter(boolean enabled) {
+   public void updateAutoShutterUI(boolean isAuto) {
       StaticInfo.shutterLabel_ = core_.getShutterDevice();
       if (StaticInfo.shutterLabel_.length() == 0) {
+         // No shutter device.
          setToggleShutterButtonEnabled(false);
       } else {
-         setToggleShutterButtonEnabled(enabled);
+         setToggleShutterButtonEnabled(!isAuto);
          try {
             setShutterButton(core_.getShutterOpen());
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }
-         if (!enabled) {
-            toggleShutterButton_.setSelected(false);
+         if (!isAuto) {
+            toggleShutterButton_.setSelected(true);
          }
       }
    }
 
    @Override
    public void liveModeEnabled(boolean isEnabled) {
-      autoShutterToggle_.setEnabled(!isEnabled);
+      autoShutterCheckBox_.setEnabled(!isEnabled);
       if (core_.getAutoShutter()) {
          toggleShutterButton_.setText(isEnabled ? "Close" : "Open" );
          updateShutterIcon();
@@ -646,12 +663,20 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    private void updateShutterIcon() {
       try {
          String path = "/org/micromanager/icons/shutter_";
-         path += core_.getShutterOpen() ? "open" : "closed";
+         String tooltip = "The shutter is ";
+         // Note that we use the mode both for the tooltip and for
+         // constructing the image file path, since it happens to work out.
+         String mode = core_.getShutterOpen() ? "open" : "closed";
+         path += mode;
+         tooltip += mode;
          if (core_.getAutoShutter()) {
             path += "_auto";
+            tooltip += ". Autoshutter is enabled";
          }
          path += ".png";
+         tooltip += ". Click to open or close the shutter.";
          shutterIcon_.setIcon(IconLoader.getIcon(path));
+         shutterIcon_.setToolTipText(tooltip);
       }
       catch (Exception e) {
          studio_.logs().logError(e, "Unable to get shutter state");
@@ -796,7 +821,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    }
 
    public void setAutoShutterSelected(boolean isSelected) {
-      autoShutterToggle_.setSelected(isSelected);
+      autoShutterCheckBox_.setSelected(isSelected);
    }
 
    public void setToggleShutterButtonEnabled(boolean isEnabled) {
@@ -813,7 +838,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    }
 
    public boolean getAutoShutterChecked() {
-      return autoShutterToggle_.isSelected();
+      return autoShutterCheckBox_.isSelected();
    }
 
    public ConfigGroupPad getConfigPad() {
