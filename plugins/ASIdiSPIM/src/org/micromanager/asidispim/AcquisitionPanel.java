@@ -2221,15 +2221,22 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                           now - acqStart, timg, bq);
                                  }
 
-                                 // update our counters
+                                 // update our counters to be ready for next image
                                  frNumber[channelIndex]++;
                                  cameraFrNumber[cameraIndex]++;
                                  // if hardware timepoints then we only send one trigger
-                                 // and we have to manually keep track of which timepoint we are on
+                                 //   so we have to manually keep track of which timepoint we are on
                                  if (acqSettings.hardwareTimepoints
                                        && frNumber[channelIndex] >= nrSlices) {
                                     frNumber[channelIndex] = 0;
                                     tpNumber[channelIndex]++;
+                                    // update acquisition status message if needed
+                                    //   (don't otherwise reach code that does this)
+                                    //   Arbitrarily choose one possible channel to do this on 
+                                    if (channelIndex == 0 && (numTimePointsDone_ < acqSettings.numTimepoints)) {
+                                       numTimePointsDone_++;
+                                       updateAcquisitionStatus(AcquisitionStatus.ACQUIRING);
+                                    }
                                  }
                                  last = now;  // keep track of last image timestamp
 
