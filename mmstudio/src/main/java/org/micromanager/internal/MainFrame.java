@@ -558,7 +558,9 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       JPanel autoPanel = new JPanel(new MigLayout("flowx, insets 1, gap 0"));
       autoPanel.add(createLabel("Autofocus", true),
             "span 2, alignx center, growx, wrap");
-      autofocusNowButton_ = createButton(null, "find.png",
+      // Icon based on the public-domain icon at
+      // http://www.clker.com/clipart-267005.html
+      autofocusNowButton_ = createButton(null, "binoculars.png",
          "Autofocus now",
          new Runnable() {
             @Override
@@ -568,8 +570,10 @@ public class MainFrame extends MMFrame implements LiveModeListener {
          });
       autoPanel.add(autofocusNowButton_, SMALLBUTTON_SIZE);
 
+      // Icon based on the public-domain icon at
+      // http://publicdomainvectors.org/en/free-clipart/Adjustable-wrench-icon-vector-image/23097.html
       autofocusConfigureButton_ = createButton(null,
-            "wrench_orange.png", "Set autofocus options",
+            "wrench.png", "Set autofocus options",
          new Runnable() {
             @Override
             public void run() {

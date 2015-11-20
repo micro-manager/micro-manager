@@ -50,10 +50,11 @@ import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
 /**
- * Implements the "MDA" button logic.
+ * Implements the "Autofocus" buttons (one to run autofocus, one to adjust
+ * the autofocus options).
  */
 @Plugin(type = WidgetPlugin.class)
-public class MDAButton extends WidgetPlugin implements SciJavaPlugin {
+public class AutofocusButtons extends WidgetPlugin implements SciJavaPlugin {
    private Studio studio_;
 
    @Override
@@ -63,12 +64,12 @@ public class MDAButton extends WidgetPlugin implements SciJavaPlugin {
 
    @Override
    public String getName() {
-      return "MDA";
+      return "Autofocus";
    }
 
    @Override
    public String getHelpText() {
-      return "Access the MDA dialog and run acquisitions.";
+      return "Access the Autofocus configuration and run autofocus.";
    }
 
    @Override
@@ -84,15 +85,36 @@ public class MDAButton extends WidgetPlugin implements SciJavaPlugin {
    @Override
    public ImageIcon getIcon() {
       return new ImageIcon(IconLoader.loadFromResource(
-               "/org/micromanager/icons/film@2x.png"));
+               "/org/micromanager/icons/binoculars@2x.png"));
    }
 
    // We are not actually configurable.
    @Override
    public JComponent createControl(PropertyMap config) {
       JPanel result = new JPanel(new MigLayout("flowx, insets 0, gap 0"));
-      JButton dialogButton = new JButton("<html>Multi-D<br>Acq.</html>",
-            IconLoader.getIcon("/org/micromanager/icons/film.png")) {
+
+      JButton runButton = new JButton("Run",
+            IconLoader.getIcon("/org/micromanager/icons/binoculars.png")) {
+         @Override
+         public Dimension getPreferredSize() {
+            // Take up under half a cell.
+            Dimension result = QuickAccessPlugin.getPaddedCellSize();
+            result.width = (int) (result.width * .4);
+            return result;
+         }
+      };
+      runButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent event) {
+            ((MMStudio) studio_).autofocusNow();
+         }
+      });
+      runButton.setFont(GUIUtils.buttonFont);
+      runButton.setMargin(new Insets(0, 0, 0, 0));
+      result.add(runButton);
+
+      JButton dialogButton = new JButton("Config",
+            IconLoader.getIcon("/org/micromanager/icons/wrench.png")) {
          @Override
          public Dimension getPreferredSize() {
             // Take up half a cell.
@@ -104,68 +126,12 @@ public class MDAButton extends WidgetPlugin implements SciJavaPlugin {
       dialogButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            ((MMStudio) studio_).openAcqControlDialog();
+            ((MMStudio) studio_).showAutofocusDialog();
          }
       });
       dialogButton.setFont(GUIUtils.buttonFont);
       dialogButton.setMargin(new Insets(0, 0, 0, 0));
       result.add(dialogButton);
-
-      // This runs or stops acquisitions.
-      // HACK: the empty icon is a requirement for the button to be small
-      // enough to fit into our layout; with no icon, the button is too wide.
-      final JButton runButton = new JButton("Acquire!",
-            IconLoader.getIcon("/org/micromanager/icons/empty.png")) {
-         @Override
-         public Dimension getPreferredSize() {
-            // Take up under half a cell.
-            Dimension result = QuickAccessPlugin.getPaddedCellSize();
-            result.width = (int) (result.width * .4);
-            return result;
-         }
-         @Override
-         public Dimension getMaximumSize() {
-            return getPreferredSize();
-         }
-         @Subscribe
-         public void onAcquisitionStart(AcquisitionStartedEvent event) {
-            setIcon(IconLoader.getIcon(
-                     "/org/micromanager/icons/cancel.png"));
-            setText("Stop!");
-         }
-         @Subscribe
-         public void onAcquisitionEnded(AcquisitionEndedEvent event) {
-            setIcon(null);
-            setText("Acquire!");
-         }
-      };
-      studio_.events().registerForEvents(runButton);
-      runButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent event) {
-            if (runButton.getIcon() == null) {
-               // Move this off the EDT.
-               new Thread(new Runnable() {
-                  @Override
-                  public void run() {
-                     try {
-                        studio_.compat().runAcquisition();
-                     }
-                     catch (Exception e) {
-                        studio_.logs().showError(e,
-                           "Error running acquisition.");
-                     }
-                  }
-               }).start();
-            }
-            else {
-               studio_.compat().haltAcquisition();
-            }
-         }
-      });
-      runButton.setFont(GUIUtils.buttonFont);
-      runButton.setMargin(new Insets(0, 0, 0, 0));
-      result.add(runButton);
 
       return result;
    }
