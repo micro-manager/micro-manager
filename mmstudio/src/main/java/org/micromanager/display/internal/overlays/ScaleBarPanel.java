@@ -28,6 +28,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyAdapter;
+import java.awt.Font;
 import java.awt.Graphics;
 
 import javax.swing.JCheckBox;
@@ -51,11 +52,13 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 public class ScaleBarPanel extends OverlayPanel {
    private static final String DRAW_TEXT = "scaleBarOverlay: whether or not to draw text";
+   private static final String FONT_SIZE = "scaleBarOverlay: font size";
    private static final String IS_FILLED = "scaleBarOverlay: if the scale bar is drawn as solid";
    private static final String COLOR = "scaleBarOverlay: color to draw everything";
    private static final String X_OFFSET = "scaleBarOverlay: X offset at which to draw";
    private static final String Y_OFFSET = "scaleBarOverlay: Y offset at which to draw";
    private static final String SIZE = "scaleBarOverlay: size of scalebar in microns";
+   private static final String BAR_WIDTH = "scaleBarOverlay: width of scalebar";
    private static final String POSITION = "scaleBarOverlay: corner to draw in";
 
    private static final Color[] COLORS = new Color[] {
@@ -71,13 +74,15 @@ public class ScaleBarPanel extends OverlayPanel {
    private final JCheckBox shouldDrawText_;
    private final JCheckBox isBarFilled_;
    private final JComboBox color_;
+   private JTextField fontSize_;
    private final JTextField xOffset_;
    private final JTextField yOffset_;
    private final JTextField scaleSize_;
+   private JTextField barWidth_;
    private final JComboBox position_;
 
    private boolean haveLoggedError_ = false;
-   
+
    public ScaleBarPanel() {
       ActionListener changeListener = new ActionListener() {
             @Override
@@ -85,6 +90,13 @@ public class ScaleBarPanel extends OverlayPanel {
                saveSettings();
                redraw();
             }
+      };
+      KeyAdapter keyAdapter = new KeyAdapter() {
+         @Override
+         public void keyPressed(KeyEvent event) {
+            saveSettings();
+            redraw();
+         }
       };
       setLayout(new MigLayout("flowy"));
 
@@ -97,20 +109,24 @@ public class ScaleBarPanel extends OverlayPanel {
       shouldDrawText_.addActionListener(changeListener);
       add(shouldDrawText_);
 
+      add(new JLabel("Font size: "), "split 2, flowx");
+      fontSize_ = new JTextField("14", 3);
+      fontSize_.addKeyListener(keyAdapter);
+      add(fontSize_);
+
       add(new JLabel("X offset: "), "split 2, flowx");
       xOffset_ = new JTextField("0", 3);
-      xOffset_.addKeyListener(new KeyAdapter() {
-         @Override
-         public void keyPressed(KeyEvent event) {
-            saveSettings();
-            redraw();
-         }
-      });
+      xOffset_.addKeyListener(keyAdapter);
       add(xOffset_, "wrap");
 
       isBarFilled_ = new JCheckBox("Solid scale bar");
       isBarFilled_.addActionListener(changeListener);
       add(isBarFilled_);
+
+      add(new JLabel("Bar thickness: "), "split 2, flowx");
+      barWidth_ = new JTextField("5", 3);
+      barWidth_.addKeyListener(keyAdapter);
+      add(barWidth_);
 
       add(new JLabel("Position: "));
       position_ = new JComboBox(new String[] {
@@ -125,13 +141,7 @@ public class ScaleBarPanel extends OverlayPanel {
 
       add(new JLabel("Y offset: "), "split 2, flowx");
       yOffset_ = new JTextField("0", 3);
-      yOffset_.addKeyListener(new KeyAdapter() {
-         @Override
-         public void keyPressed(KeyEvent event) {
-            saveSettings();
-            redraw();
-         }
-      });
+      yOffset_.addKeyListener(keyAdapter);
       add(yOffset_);
    }
 
@@ -149,9 +159,11 @@ public class ScaleBarPanel extends OverlayPanel {
       }
       builder.putInt(COLOR, color_.getSelectedIndex());
       builder.putBoolean(DRAW_TEXT, shouldDrawText_.isSelected());
+      builder.putString(FONT_SIZE, fontSize_.getText());
       builder.putString(X_OFFSET, xOffset_.getText());
       builder.putString(Y_OFFSET, yOffset_.getText());
       builder.putBoolean(IS_FILLED, isBarFilled_.isSelected());
+      builder.putString(BAR_WIDTH, barWidth_.getText());
       builder.putInt(POSITION, position_.getSelectedIndex());
       builder.putString(SIZE, scaleSize_.getText());
       DisplaySettings newSettings = display_.getDisplaySettings().copy().userData(builder.build()).build();
@@ -176,9 +188,11 @@ public class ScaleBarPanel extends OverlayPanel {
 
       color_.setSelectedIndex(userData.getInt(COLOR, 0));
       shouldDrawText_.setSelected(userData.getBoolean(DRAW_TEXT, true));
+      fontSize_.setText(userData.getString(FONT_SIZE, "14"));
       xOffset_.setText(userData.getString(X_OFFSET, "15"));
       yOffset_.setText(userData.getString(Y_OFFSET, "15"));
       isBarFilled_.setSelected(userData.getBoolean(IS_FILLED, true));
+      barWidth_.setText(userData.getString(BAR_WIDTH, "5"));
       position_.setSelectedIndex(userData.getInt(POSITION, 0));
       scaleSize_.setText(userData.getString(SIZE, "100"));
    }
@@ -205,16 +219,10 @@ public class ScaleBarPanel extends OverlayPanel {
 
       int width = (int) (scaleSize / pixelSize * canvas.getMagnification());
       g.setColor(COLORS[color_.getSelectedIndex()]);
-      int xOffset = 0;
-      try {
-         xOffset = Integer.parseInt(xOffset_.getText());
-      }
-      catch (NumberFormatException e) {} // Ignore it.
-      int yOffset = 0;
-      try {
-         yOffset = Integer.parseInt(yOffset_.getText());
-      }
-      catch (NumberFormatException e) {} // Ignore it.
+      int fontSize = getText(fontSize_, 14);
+      int xOffset = getText(xOffset_, 0);
+      int yOffset = getText(yOffset_, 0);
+      int barWidth = getText(barWidth_, 5);
 
       String position = (String) position_.getSelectedItem();
       Dimension canvasSize = canvas.getPreferredSize();
@@ -226,13 +234,27 @@ public class ScaleBarPanel extends OverlayPanel {
       }
 
       if (shouldDrawText_.isSelected()) {
+         g.setFont(new Font("Arial", Font.PLAIN, fontSize));
          g.drawString(String.format("%dum", scaleSize), xOffset, yOffset);
       }
       if (isBarFilled_.isSelected()) {
-         g.fillRect(xOffset, yOffset + 6, width, 5);
+         g.fillRect(xOffset, yOffset + 6, width, barWidth);
       }
       else {
-         g.drawRect(xOffset, yOffset + 6, width, 5);
+         g.drawRect(xOffset, yOffset + 6, width, barWidth);
       }
+   }
+
+   /**
+    * Try to parse out the value from the provided text field, returning the
+    * given default on failure.
+    */
+   private static int getText(JTextField field, int defaultVal) {
+      int result = defaultVal;
+      try {
+         result = Integer.parseInt(field.getText());
+      }
+      catch (NumberFormatException e) {}
+      return result;
    }
 }
