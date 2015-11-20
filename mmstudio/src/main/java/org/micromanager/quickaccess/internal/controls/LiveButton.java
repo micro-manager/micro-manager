@@ -58,7 +58,7 @@ public class LiveButton extends WidgetPlugin implements SciJavaPlugin {
 
    @Override
    public String getName() {
-      return "Live button";
+      return "Start/Stop Live";
    }
 
    @Override
