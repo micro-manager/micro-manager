@@ -1021,6 +1021,8 @@ public class MMStudio implements Studio, CompatibilityInterface {
          // Set Shutter button
          frame_.setShutterButton(core_.getShutterOpen());
 
+         frame_.updateAutofocusButtons(afMgr_.getDevice() != null);
+
          if (live().getIsLiveModeOn()) {
             frame_.setToggleShutterButtonEnabled(!core_.getAutoShutter());
          }
