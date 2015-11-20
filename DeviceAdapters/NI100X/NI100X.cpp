@@ -511,6 +511,32 @@ int DigitalIO::Initialize()
       }
    } while (index != std::string::npos);
 
+   SetupTask();
+
+   // Determine the number of "positions".
+   // Create a temporary DO channel just to determine the number of lines.
+   int32 niRet = DAQmxCreateDOChan(task_, channel_.c_str(), "tempchan", DAQmx_Val_ChanForAllLines);
+   if (niRet != DAQmxSuccess)
+   {
+      return LogError(niRet, "CreateDOChan");
+   }
+   uInt32 numLines = 0;
+   error = DAQmxGetDONumLines(task_, "tempchan", &numLines);
+   if (error)
+   {
+	  return LogError(error, "GetDONumLines");
+   }
+   if (numLines > 0)
+   {
+	  numPos_ = 1 << numLines;
+   }
+   else
+   {
+	  numPos_ = 0; // Shouldn't happen
+   }
+   // Reset the task to remove the temporary channel
+   SetupTask();
+
    // create positions and labels
    const int bufSize = 1024;
    char buf[bufSize];
@@ -521,12 +547,19 @@ int DigitalIO::Initialize()
    }
 
    // State
-   // -----
    pAct = new CPropertyAction (this, &DigitalIO::OnState);
    nRet = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
    if (nRet != DEVICE_OK)
    {
       return nRet;
+   }
+
+   // Label
+   pAct = new CPropertyAction(this, &DigitalIO::OnLabel);
+   nRet = CreateProperty(MM::g_Keyword_Label, "0", MM::String, false, pAct);
+   if (nRet != DEVICE_OK)
+   {
+	   return nRet;
    }
 
    // Gate Closed Position
@@ -536,8 +569,6 @@ int DigitalIO::Initialize()
       return nRet;
    }
 
-   SetupTask();
-   
    GetGateOpen(open_);
 
    // Whether or not hardware triggering is available. Determined by
