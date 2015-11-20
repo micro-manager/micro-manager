@@ -555,6 +555,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
             live().setSuspended(true);
             try {
                core_.setExposure(exposureTime);
+               core_.waitForDevice(core_.getCameraDevice());
             }
             catch (Exception e) {
                ReportingUtils.logError(e, "Failed to set core exposure time.");
