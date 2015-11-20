@@ -136,6 +136,14 @@ public class ASIdiSPIMFrame extends MMFrame
       cameras_ = new Cameras(gui_, devices_, props_, prefs_);
       controller_ = new ControllerUtils(gui_, props_, prefs_, devices_, positions_);
       
+      // make sure Live mode is turned off (panels assume it can manipulate
+      //   cameras which requires live mode to be turned off)
+      boolean liveModeOriginally = gui_.isLiveModeOn();
+      String cameraOriginal = gui_.getMMCore().getCameraDevice();
+      if (liveModeOriginally) {
+         gui_.enableLiveMode(false);
+      }
+      
       // create the panels themselves
       // in some cases dependencies create required ordering
       devicesPanel_ = new DevicesPanel(gui_, devices_, props_);
@@ -257,6 +265,15 @@ public class ASIdiSPIMFrame extends MMFrame
             "[" + this.getHeight() + "]"));
       glassPane.add(statusSubPanel_, "dock south");
       
+      // restore live mode and camera
+      if (liveModeOriginally) {
+         gui_.enableLiveMode(true);
+      }
+      try {
+         gui_.getMMCore().setCameraDevice(cameraOriginal);
+      } catch (Exception ex) {
+         // do nothing
+      }
    }
    
    public void setHardwareInUse(boolean inuse) {
