@@ -94,7 +94,8 @@ public class PresetButton extends WidgetPlugin implements SciJavaPlugin {
 
    @Override
    public ImageIcon getIcon() {
-      return null;
+      return new ImageIcon(IconLoader.loadFromResource(
+               "/org/micromanager/icons/color_filter@2x.png"));
    }
 
    @Override
