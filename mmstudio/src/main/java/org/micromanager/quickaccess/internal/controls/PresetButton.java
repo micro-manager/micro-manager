@@ -126,6 +126,7 @@ public class PresetButton extends WidgetPlugin implements SciJavaPlugin {
          public void actionPerformed(ActionEvent event) {
             try {
                studio_.core().setConfig(group, preset);
+               studio_.core().waitForConfig(group, preset);
                studio_.compat().refreshGUI();
             }
             catch (Exception e) {
