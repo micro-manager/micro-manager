@@ -149,12 +149,16 @@ public class ExposureTime extends WidgetPlugin implements SciJavaPlugin {
                amMutating_ = true;
                updateExposureTime(getText());
                amMutating_ = false;
+               // Changing the exposure time loses focus, so request it back.
+               requestFocus();
             }
             @Override
             public void removeUpdate(DocumentEvent e) {
                amMutating_ = true;
                updateExposureTime(getText());
                amMutating_ = false;
+               // Changing the exposure time loses focus, so request it back.
+               requestFocus();
             }
          });
       }
