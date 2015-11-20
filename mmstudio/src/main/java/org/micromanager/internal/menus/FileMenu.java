@@ -105,10 +105,12 @@ public class FileMenu {
       try {
          Datastore store = studio_.data().promptForDataToLoad(
                MMStudio.getInstance().getFrame(), isVirtual);
-         if (store != null) {
-            studio_.displays().loadDisplays(store);
-            updateFileHistory(store.getSavePath());
+         if (store == null || store.getAnyImage() == null) {
+            studio_.logs().showError("Unable to load any images; file may be invalid.");
+            return;
          }
+         studio_.displays().loadDisplays(store);
+         updateFileHistory(store.getSavePath());
       }
       catch (IOException e) {
          ReportingUtils.showError(e, "There was an error when opening data");
