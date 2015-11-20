@@ -469,7 +469,7 @@ int DigitalIO::Initialize()
    // DigitalIO and AnalogIO classes.
    // Manual triggering override.
    CPropertyAction* pAct = new CPropertyAction(this, &DAQDevice::OnTriggeringEnabled);
-   nRet = CreateIntegerProperty(g_PropertyTriggeringEnabled, 1, false, pAct, false);
+   nRet = CreateIntegerProperty(g_PropertyTriggeringEnabled, 0, false, pAct, false);
    if (DEVICE_OK != nRet)
    {
       return nRet;
@@ -887,7 +887,7 @@ int AnalogIO::Initialize()
    // and AnalogIO classes.
    // Manual triggering override.
    CPropertyAction* pAct = new CPropertyAction(this, &DAQDevice::OnTriggeringEnabled);
-   nRet = CreateIntegerProperty(g_PropertyTriggeringEnabled, 1, false, pAct, false);
+   nRet = CreateIntegerProperty(g_PropertyTriggeringEnabled, 0, false, pAct, false);
    if (DEVICE_OK != nRet)
    {
       return nRet;
