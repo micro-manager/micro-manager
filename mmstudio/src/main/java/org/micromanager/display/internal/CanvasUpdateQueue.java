@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
 
 import javax.swing.SwingUtilities;
 
@@ -86,7 +87,8 @@ public class CanvasUpdateQueue {
       long lastUpdateTime_ = 0;
       Timer timer_ = null;
       boolean needsUpdate_ = true;
-      int imageHash_ = 0;
+      UUID imageUUID_ = null;
+      int coordsHash_ = 0;
       public HistogramHistory() {
          datas_ = new ArrayList<HistogramData>();
       }
@@ -258,8 +260,24 @@ public class CanvasUpdateQueue {
                channelToHistory_.put(channel, history);
             }
             HistogramHistory history = channelToHistory_.get(channel);
-            if (history.imageHash_ != image.hashCode() ||
-                  history.needsUpdate_) {
+            // We check two things to determine if this is the last image
+            // we drew:
+            // - UUID: should be unique per-image but can be duplicated if
+            //   Metadata objects are copied.
+            // - Coords hash: uniquely identifies a coordinate location, but
+            //   it is allowed to replace images in Datastores so this does not
+            //   mean that the image itself is the same.
+            // Note that we do NOT check the image's hash, as disk-based
+            // storage systems may create a new Image object every time
+            // Datastore.getImage() is called, which would have a different
+            // hash code.
+            boolean uuidMatch = false;
+            UUID oldUUID = history.imageUUID_;
+            UUID newUUID = image.getMetadata().getUUID();
+            uuidMatch = (oldUUID == null && newUUID == null) ||
+               (oldUUID != null && newUUID != null && oldUUID.equals(newUUID));
+            if (history.needsUpdate_ || !uuidMatch ||
+                  history.coordsHash_ != image.getCoords().hashCode()) {
                scheduleHistogramUpdate(image, history);
                DisplaySettings settings = display_.getDisplaySettings();
                // After a histogram update, we may need to reapply LUTs.
@@ -377,7 +395,8 @@ public class CanvasUpdateQueue {
                gammas[i] = settings.getSafeContrastGamma(channel, i, 1.0);
             }
          }
-         history.imageHash_ = image.hashCode();
+         history.imageUUID_ = image.getMetadata().getUUID();
+         history.coordsHash_ = image.getCoords().hashCode();
          history.needsUpdate_ = false;
          history.lastUpdateTime_ = System.currentTimeMillis();
          display_.postEvent(new NewHistogramsEvent(channel, history.datas_));
