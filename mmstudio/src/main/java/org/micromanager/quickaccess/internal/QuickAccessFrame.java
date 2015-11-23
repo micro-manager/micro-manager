@@ -88,7 +88,7 @@ public class QuickAccessFrame extends JFrame {
    private static final String OPEN_NEVER = "Never";
    private static final String OPEN_ALWAYS = "Always";
    private static final String OPEN_REMEMBER = "Remember";
-   private static final String DEFAULT_TITLE = "Quick Access Tools";
+   private static final String DEFAULT_TITLE = "Quick Access Panel";
 
    private Studio studio_;
    // Holds everything.
