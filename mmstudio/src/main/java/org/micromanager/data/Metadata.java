@@ -80,6 +80,10 @@ public interface Metadata {
       MetadataBuilder startTimeMs(Double startTimeMs);
       MetadataBuilder scopeData(PropertyMap scopeData);
       MetadataBuilder userData(PropertyMap userData);
+      /**
+       * Generate a new UUID for this Metadata instance.
+       */
+      MetadataBuilder uuid();
       MetadataBuilder uuid(UUID uuid);
       MetadataBuilder xPositionUm(Double xPositionUm);
       MetadataBuilder yPositionUm(Double yPositionUm);
@@ -272,9 +276,13 @@ public interface Metadata {
     */
    String getSource();
    
-   /** 
-    * A unique identifier for this specific image
-    * @return Unique identifier 
+   /**
+    * A unique identifier for this specific image. Micro-Manager uses this
+    * field to determine if two images are truly different, so if you copy this
+    * Metadata instance to apply to a new image, you should make certain to
+    * set a new UUID for it (which you can conveniently do using
+    * MetadataBuilder.uuid() with no parameter).
+    * @return Unique identifier
     */
    UUID getUUID();
 }

@@ -91,6 +91,12 @@ public class DefaultMetadata implements Metadata {
       }
 
       @Override
+      public MetadataBuilder uuid() {
+         uuid_ = UUID.randomUUID();
+         return this;
+      }
+
+      @Override
       public MetadataBuilder uuid(UUID uuid) {
          uuid_ = uuid;
          return this;
