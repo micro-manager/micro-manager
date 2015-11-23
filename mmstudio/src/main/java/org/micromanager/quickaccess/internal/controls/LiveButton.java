@@ -104,6 +104,7 @@ public class LiveButton extends WidgetPlugin implements SciJavaPlugin {
             return super.getPreferredSize();
          }
       };
+      result.setSelected(studio_.live().getIsLiveModeOn());
       result.setFont(GUIUtils.buttonFont);
       result.setMargin(new Insets(0, 0, 0, 0));
       Object wrapper = new Object() {
