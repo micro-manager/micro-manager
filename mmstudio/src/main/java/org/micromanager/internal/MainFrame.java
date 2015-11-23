@@ -650,9 +650,6 @@ public class MainFrame extends MMFrame implements LiveModeListener {
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }
-         if (!isAuto) {
-            toggleShutterButton_.setSelected(true);
-         }
       }
    }
 
