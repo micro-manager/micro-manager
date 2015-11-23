@@ -259,9 +259,10 @@ public class QuickAccessFrame extends JFrame {
    public void paint(Graphics g) {
       super.paint(g);
       if (draggedIcon_ != null) {
+         Point p = new Point(mouseX_, mouseY_);
+         SwingUtilities.convertPointFromScreen(p, this);
          g.drawImage(draggedIcon_.getIcon().getImage(),
-               mouseX_ - iconOffsetX_ + getInsets().left,
-               mouseY_ - iconOffsetY_ + getInsets().top, null);
+               p.x - iconOffsetX_, p.y - iconOffsetY_, null);
       }
    }
 
@@ -387,10 +388,19 @@ public class QuickAccessFrame extends JFrame {
     */
    private void toggleConfigurePanel(boolean isShown) {
       contentsPanel_.removeAll();
-      contentsPanel_.add(isShown ? configuringControlsPanel_ : controlsPanel_);
+      GridPanel panel = isShown ? configuringControlsPanel_ : controlsPanel_;
+      contentsPanel_.add(panel);
       contentsPanel_.add(configureButton_);
       if (isShown) {
-         contentsPanel_.add(configurePanel_, "growx");
+         String paramString = "growx";
+         // Depending on the grid shape, we either put the configure panel
+         // below or to the right of the grid. We prefer having the panel
+         // below the window.
+         if (configurePanel_.getNumRows() / 1.5 > configurePanel_.getNumCols()) {
+            // Tall grid instead of wide grid.
+            paramString += ", newline";
+         }
+         contentsPanel_.add(configurePanel_, paramString);
       }
       pack();
    }
@@ -409,6 +419,9 @@ public class QuickAccessFrame extends JFrame {
          control.getWidget().setVisible(isVisible);
          control.getIcon().setVisible(isVisible);
       }
+      // HACK: Retoggle controls so we can put the configure panel at the
+      // correct orientation when the window gets too tall.
+      toggleConfigurePanel(configureButton_.isSelected());
       contentsPanel_.invalidate();
       pack();
       repaint();
@@ -421,7 +434,12 @@ public class QuickAccessFrame extends JFrame {
     */
    public Point getCell() {
       Point p = new Point(mouseX_, mouseY_);
-      SwingUtilities.convertPointFromScreen(p, controlsPanel_);
+      GridPanel panel = configuringControlsPanel_;
+      if (controlsPanel_.getParent() != null) {
+         // Controls panel is active, not configuring panel.
+         panel = controlsPanel_;
+      }
+      SwingUtilities.convertPointFromScreen(p, panel);
       int cellX = p.x / QuickAccessPlugin.CELL_WIDTH;
       int cellY = p.y / QuickAccessPlugin.CELL_HEIGHT;
       if (cellX >= numCols_ || cellY >= numRows_ || cellX < 0 || cellY < 0) {
@@ -435,8 +453,8 @@ public class QuickAccessFrame extends JFrame {
     * Update the current mouse coordinates based on the provided MouseEvent.
     */
    public void updateMouse(MouseEvent event) {
-      mouseX_ = event.getXOnScreen() - getLocation().x - getInsets().left;
-      mouseY_ = event.getYOnScreen() - getLocation().y - getInsets().top;
+      mouseX_ = event.getXOnScreen();
+      mouseY_ = event.getYOnScreen();
    }
 
    /**
@@ -729,6 +747,14 @@ public class QuickAccessFrame extends JFrame {
       public void updateSpinners(int numCols, int numRows) {
          colsControl_.setValue(numCols);
          rowsControl_.setValue(numRows);
+      }
+
+      public int getNumCols() {
+         return (Integer) ((SpinnerNumberModel) colsControl_.getModel()).getNumber();
+      }
+
+      public int getNumRows() {
+         return (Integer) ((SpinnerNumberModel) rowsControl_.getModel()).getNumber();
       }
 
       public void setOpenMode(String mode) {
