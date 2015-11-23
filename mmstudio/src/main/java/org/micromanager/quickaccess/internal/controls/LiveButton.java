@@ -30,8 +30,8 @@ import java.awt.Frame;
 import java.awt.Insets;
 
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JToggleButton;
 
 import org.micromanager.events.LiveModeEvent;
 import org.micromanager.PropertyMap;
@@ -92,7 +92,7 @@ public class LiveButton extends WidgetPlugin implements SciJavaPlugin {
       // Java will complain that the button might not have been initialized,
       // and thus we aren't allowed to try to modify it.
       // Make the button mostly fill its cell.
-      final JToggleButton result = new JToggleButton("Live",
+      final JButton result = new JButton("Live",
             studio_.live().getIsLiveModeOn() ?
             IconLoader.getIcon("/org/micromanager/icons/cancel.png") :
             IconLoader.getIcon("/org/micromanager/icons/camera_go.png")) {
@@ -104,7 +104,6 @@ public class LiveButton extends WidgetPlugin implements SciJavaPlugin {
             return super.getPreferredSize();
          }
       };
-      result.setSelected(studio_.live().getIsLiveModeOn());
       result.setFont(GUIUtils.buttonFont);
       result.setMargin(new Insets(0, 0, 0, 0));
       Object wrapper = new Object() {
@@ -115,14 +114,13 @@ public class LiveButton extends WidgetPlugin implements SciJavaPlugin {
                   isOn ? "/org/micromanager/icons/cancel.png" :
                   "/org/micromanager/icons/camera_go.png"));
             result.setText(isOn ? "Stop Live" : "Live");
-            result.setSelected(isOn);
          }
       };
       studio_.events().registerForEvents(wrapper);
       result.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            studio_.live().setLiveMode(result.isSelected());
+            studio_.live().setLiveMode(!studio_.live().getIsLiveModeOn());
          }
       });
       return result;

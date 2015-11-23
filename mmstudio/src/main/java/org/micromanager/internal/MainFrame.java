@@ -108,7 +108,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    // Toggles activity of chanGroupSelect_ on or off.
    private boolean shouldChangeChannelGroup_;
    private JLabel labelImageDimensions_;
-   private JToggleButton liveButton_;
+   private JButton liveButton_;
    private JCheckBox autoShutterCheckBox_;
    private JLabel shutterIcon_;
    private JButton snapButton_;
@@ -402,7 +402,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       snapButton_.setFont(defaultFont_);
       subPanel.add(snapButton_, BIGBUTTON_SIZE);
 
-      liveButton_ = (JToggleButton) QuickAccessFactory.makeGUI(
+      liveButton_ = (JButton) QuickAccessFactory.makeGUI(
             studio_.plugins().getQuickAccessPlugins().get(
                "org.micromanager.quickaccess.internal.controls.LiveButton"));
       liveButton_.setFont(defaultFont_);
