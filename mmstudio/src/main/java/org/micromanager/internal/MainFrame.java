@@ -146,7 +146,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
 
       JPanel contents = new JPanel();
       // Minimize insets.
-      contents.setLayout(new MigLayout("insets 1, gap 0"));
+      contents.setLayout(new MigLayout("insets 1, gap 0, fill"));
       setContentPane(contents);
 
       contents.add(createComponents(), "grow");
@@ -358,9 +358,9 @@ public class MainFrame extends MMFrame implements LiveModeListener {
 
    private JPanel createConfigurationControls() {
       JPanel subPanel = new JPanel(
-            new MigLayout("filly, flowy, insets 1, gap 0"));
+            new MigLayout("fill, flowy, insets 1, gap 0"));
       subPanel.add(createLabel("Configuration settings", true),
-            "flowx, split 2");
+            "flowx, growx, split 2");
 
       saveConfigButton_ = createButton("Save", null,
          "Save current presets to the configuration file",
@@ -380,12 +380,12 @@ public class MainFrame extends MMFrame implements LiveModeListener {
 
       configPad_.setFont(defaultFont_);
 
-      // Allow the config pad to grow horizontally. Its preferred height is
-      // only 420px, hence why we override it here.
+      // Allowing the config pad to grow horizontally and vertically requires
+      // us to override its preferred size.
       subPanel.add(configPad_,
-            "growy, alignx center, w min:320:pref, h min:9999:9999, span");
+            "grow, alignx center, w min:9999:9999, h min:9999:9999, span");
       subPanel.add(configPadButtonPanel_,
-            "growx, alignx center, w 320!, h 20!, span");
+            "growx, alignx left, w 320!, h 20!, span");
       return subPanel;
    }
 
@@ -465,14 +465,14 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    }
 
    private JPanel createComponents() {
-      JPanel overPanel = new JPanel(new MigLayout("flowx, insets 1, gap 0"));
+      JPanel overPanel = new JPanel(new MigLayout("fill, flowx, insets 1, gap 0"));
       JPanel subPanel = new JPanel(new MigLayout("flowx, insets 1, gap 0"));
       subPanel.add(createCommonActionButtons(), "growy, aligny top");
       subPanel.add(createImagingSettingsWidgets(), "gapleft 10, growx, wrap");
       subPanel.add(createUtilityButtons(), "span, wrap");
       subPanel.add(createPleaLabel(), "span, wrap");
-      overPanel.add(subPanel, "gapbottom push");
-      overPanel.add(createConfigurationControls(), "growy, wrap");
+      overPanel.add(subPanel, "gapbottom push, grow 0");
+      overPanel.add(createConfigurationControls(), "grow, wrap");
       labelImageDimensions_ = createLabel("", false);
       overPanel.add(labelImageDimensions_, "growx, span, gap 2 0 2 0");
       return overPanel;
