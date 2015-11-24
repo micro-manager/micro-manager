@@ -518,28 +518,6 @@ public class GUIUtils {
       field.setInputVerifier(textFieldInputVerifier(field, validator));
    }
 
-   public static DefaultCellEditor validatingDefaultCellEditor(final StringValidator validator) {
-      final String lastValue[] = {""};
-      final JTextField field = new JTextField();
-      field.getDocument().addDocumentListener(new DocumentListener() {
-         @Override
-         public void insertUpdate(DocumentEvent e) {}
-         @Override
-         public void removeUpdate(DocumentEvent e) {}
-         @Override
-         public void changedUpdate(DocumentEvent e) {
-            lastValue[0] = field.getText();         }
-      });
-      final InputVerifier verifier = textFieldInputVerifier(field, validator);
-      DefaultCellEditor editor = new DefaultCellEditor(field) {
-         @Override
-         public boolean stopCellEditing() {
-            return verifier.shouldYieldFocus(field) && super.stopCellEditing();
-         }
-      };
-      return editor;
-   }
-
    public static StringValidator integerStringValidator(final int minValue, final int maxValue) {
       return new StringValidator() {
          @Override
@@ -556,74 +534,14 @@ public class GUIUtils {
       };
    }
    
-   public static StringValidator floatStringValidator(final double minValue, final double maxValue) {
-       return new StringValidator() {
-         @Override
-         public void validate(String string) {
-            try {
-               double value = Double.parseDouble(string);
-               if ((value < minValue) || (value > maxValue)) {
-                  throw new RuntimeException("Value should be between " + minValue + " and " + maxValue);
-               }
-            } catch (NumberFormatException e) {
-               throw new RuntimeException("Please enter a number.");
-            }
-         }
-       };
-   }
-   
+   // TODO: this is only used by the Projector plugin and should probably
+   // be moved into it.
    public static void enforceIntegerTextField(final JTextField field, final int minValue, final int maxValue) {
       enforceValidTextField(field, integerStringValidator(minValue, maxValue));
    }
-   
-   public static void enforceFloatFieldText(final JTextField field, final double minValue, final double maxValue) {
-      enforceValidTextField(field, floatStringValidator(minValue, maxValue));
-   }
-   
-   public static void enforceIntegerTextColumn(final JTable table, int columnInt, int minValue, int maxValue) {
-      table.getColumnModel().getColumn(columnInt)
-           .setCellEditor(validatingDefaultCellEditor(integerStringValidator(minValue, maxValue)));
-   }
-   
-   
-   public static String getStringValue(JComponent component) {
-      if (component instanceof JTextComponent) {
-         return ((JTextComponent) component).getText();
-      }
-      if (component instanceof JComboBox) {
-         return ((JComboBox) component).getSelectedItem().toString();
-      }
-      if (component instanceof JList) {
-         return ((JList) component).getSelectedValue().toString();
-      }
-      return null;
-   }
-   
-   public static void setValue(JComponent component, String value) {
-      if (component instanceof JTextComponent) {
-         ((JTextComponent) component).setText(value);
-      }
-      if (component instanceof JComboBox) {
-         ((JComboBox) component).setSelectedItem(value);
-      }
-      if (component instanceof JList) {
-         ((JList) component).setSelectedValue(value, true);
-      }
-   }
-   
-   public static void setValue(JComponent component, Object value) {
-      String valueText = value.toString();
-      if (component instanceof JTextComponent) {
-         ((JTextComponent) component).setText(valueText);
-      }
-      if (component instanceof JComboBox) {
-         ((JComboBox) component).setSelectedItem(valueText);
-      }
-      if (component instanceof JList) {
-         ((JList) component).setSelectedValue(valueText, true);
-      }
-   }
-   
+
+   // TODO: this is only used by the Projector plugin and should probably
+   // be moved into it.
    public static int getIntValue(JTextField component) {
      return Integer.parseInt(component.getText());
    }
