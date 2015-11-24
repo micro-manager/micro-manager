@@ -38,7 +38,7 @@ public class ChannelUtils {
 
    private static String[] getChannelConfigs(String channelGroup) {
       if (channelGroup == null || channelGroup.equals("")) {
-         return new String[0];
+         return new String[]{"Default"};
       }
       StrVector configs = Magellan.getCore().getAvailableConfigs(channelGroup);
       String[] names = new String[(int) configs.size()];
@@ -70,7 +70,8 @@ public class ChannelUtils {
             Color color = new Color(GlobalSettings.getInstance().getIntInPrefs(PREF_COLOR + config,
                     DEFAULT_COLORS[Arrays.asList(getChannelConfigs(channelGroup)).indexOf(config)].getRGB()));
             boolean use = GlobalSettings.getInstance().getBooleanInPrefs(PREF_USE + config, true);
-            channels.add(new ChannelSetting(channelGroup, config, config, exposure, color, use, true));
+            channels.add(new ChannelSetting(channelGroup, 
+                    channelGroup == null || channelGroup.equals("") ? null : config, config, exposure, color, use, true));
          }
       } else { //multichannel camera
          for (int i = 0; i < numCamChannels; i++) {

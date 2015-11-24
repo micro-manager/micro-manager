@@ -226,9 +226,9 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
 
 
       JButton zoomInButton = new JButton();
-      zoomInButton.setIcon(SwingResourceManager.getIcon("/icons/zoom_in.png"));
+      zoomInButton.setIcon(SwingResourceManager.getIcon("/org/micromanager/plugins/magellan/icons/zoom_in.png"));
       JButton zoomOutButton = new JButton();
-      zoomOutButton.setIcon(SwingResourceManager.getIcon( "/icons/zoom_out.png"));
+      zoomOutButton.setIcon(SwingResourceManager.getIcon( "/org/micromanager/plugins/magellan/icons/zoom_out.png"));
       zoomInButton.addActionListener(new ActionListener() {
 
          @Override

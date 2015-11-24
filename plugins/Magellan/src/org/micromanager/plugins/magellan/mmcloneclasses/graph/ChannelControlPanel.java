@@ -209,9 +209,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                  "12bit (0-4095)", "13bit (0-8191)", "14bit (0-16383)", "15bit (0-32767)", "16bit (0-65535)"}));
 
       zoomInButton_ = new JButton();
-      zoomInButton_.setIcon(SwingResourceManager.getIcon( "/icons/zoom_in.png"));
+      zoomInButton_.setIcon(SwingResourceManager.getIcon( "/org/micromanager/plugins/magellan/icons/zoom_in.png"));
       zoomOutButton_ = new JButton();
-      zoomOutButton_.setIcon(SwingResourceManager.getIcon("/icons/zoom_out.png"));   
+      zoomOutButton_.setIcon(SwingResourceManager.getIcon("/org/micromanager/plugins/magellan/icons/zoom_out.png"));   
       zoomInButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {

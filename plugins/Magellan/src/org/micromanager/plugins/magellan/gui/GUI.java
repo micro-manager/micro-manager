@@ -74,10 +74,15 @@ import org.micromanager.plugins.magellan.channels.ColorRenderer;
 import java.awt.FileDialog;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JSplitPane;
 import javax.swing.JTextField;
@@ -85,6 +90,7 @@ import javax.swing.SwingConstants;
 import org.micromanager.plugins.magellan.main.Magellan;
 import org.micromanager.plugins.magellan.misc.GlobalSettings;
 import org.micromanager.plugins.magellan.misc.JavaUtils;
+import org.micromanager.plugins.magellan.misc.Log;
 import org.micromanager.plugins.magellan.propsandcovariants.CurvedSurfaceCalculations;
 
 
@@ -190,7 +196,24 @@ public class GUI extends javax.swing.JFrame {
     }
 
     private void moreInitialization() {
-        covariantPairingsTable_.setSelectionModel(new ExactlyOneRowSelectionModel());
+       //add link to user guide label
+       userGuideLink_.addMouseListener(new MouseAdapter() {
+         @Override
+         public void mousePressed(MouseEvent e) {
+            new Thread(new Runnable() {
+               @Override
+               public void run() {
+                  try {            
+                     ij.plugin.BrowserLauncher.openURL("https://micro-manager.org/wiki/MicroMagellan");
+                  } catch (IOException ex) {
+                     Log.log("couldn't open User guide link");
+                  }
+               }
+            }).start();
+         }
+      });
+       
+       covariantPairingsTable_.setSelectionModel(new ExactlyOneRowSelectionModel());
         covariantPairingsTable_.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
@@ -340,12 +363,12 @@ public class GUI extends javax.swing.JFrame {
         //set bottom row selected because it was just added
         covariantPairingsTable_.setRowSelectionInterval(covariantPairingsTable_.getRowCount() - 1, covariantPairingsTable_.getRowCount() - 1);
     }
-
+    
     public void refreshAcquisitionSettings() {
         //so that acquisition names can be changed form multi acquisitiion table
         populateAcqControls(multiAcqManager_.getAcquisitionSettings(multiAcqSelectedIndex_));
     }
-
+    
     private void refreshAcqTabTitleText() {
         JLabel l1 = new JLabel("Saving");
         l1.setForeground(DARK_GREEN);
@@ -823,6 +846,7 @@ public class GUI extends javax.swing.JFrame {
       createdByHenryLabel_ = new javax.swing.JLabel();
       openDatasetButton_ = new javax.swing.JButton();
       helpButton_ = new javax.swing.JButton();
+      userGuideLink_ = new javax.swing.JLabel();
 
       jLabel11.setText("jLabel11");
 
@@ -850,7 +874,7 @@ public class GUI extends javax.swing.JFrame {
       );
       controlPanelName_Layout.setVerticalGroup(
          controlPanelName_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addComponent(deviceControlScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 172, Short.MAX_VALUE)
+         .addComponent(deviceControlScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 75, Short.MAX_VALUE)
       );
 
       splitPaneTopPanel_.addTab("Device status/control", controlPanelName_);
@@ -958,7 +982,7 @@ public class GUI extends javax.swing.JFrame {
          multipleAcquisitionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, multipleAcquisitionsPanelLayout.createSequentialGroup()
             .addContainerGap()
-            .addComponent(multipleAcqScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 121, Short.MAX_VALUE)
+            .addComponent(multipleAcqScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 27, Short.MAX_VALUE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
       );
@@ -999,7 +1023,7 @@ public class GUI extends javax.swing.JFrame {
       gridsPanel_Layout.setVerticalGroup(
          gridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(gridsPanel_Layout.createSequentialGroup()
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 143, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 39, Short.MAX_VALUE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(gridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(deleteSelectedRegionButton_)
@@ -1060,7 +1084,7 @@ public class GUI extends javax.swing.JFrame {
       surfacesPanel_Layout.setVerticalGroup(
          surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(surfacesPanel_Layout.createSequentialGroup()
-            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 143, Short.MAX_VALUE)
+            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 39, Short.MAX_VALUE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(deleteAllSurfacesButton_)
@@ -1163,7 +1187,7 @@ public class GUI extends javax.swing.JFrame {
             .addComponent(savingNameLabel_)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(savingNameTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addContainerGap(204, Short.MAX_VALUE))
+            .addContainerGap(205, Short.MAX_VALUE))
       );
 
       acqTabbedPane_.addTab("Saving", savingTab_);
@@ -1256,7 +1280,7 @@ public class GUI extends javax.swing.JFrame {
             .addComponent(timePointsCheckBox_)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(timePointsPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addContainerGap(137, Short.MAX_VALUE))
+            .addContainerGap(135, Short.MAX_VALUE))
       );
 
       for (Component c : timePointsPanel_.getComponents()) {
@@ -1726,7 +1750,7 @@ public class GUI extends javax.swing.JFrame {
                .addComponent(jLabel3)
                .addComponent(ChannelGroupCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 229, Short.MAX_VALUE))
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 228, Short.MAX_VALUE))
       );
 
       acqTabbedPane_.addTab("Channels", ChannelsTab_);
@@ -1848,7 +1872,7 @@ public class GUI extends javax.swing.JFrame {
                .addComponent(loadPairingsButton_)
                .addComponent(addCovariedPairingValueButton_)
                .addComponent(deleteCovariedPairingValueButton_))
-            .addContainerGap(47, Short.MAX_VALUE))
+            .addContainerGap(44, Short.MAX_VALUE))
       );
 
       acqTabbedPane_.addTab("Covaried settings", covariedSettingsTab_);
@@ -1973,7 +1997,7 @@ public class GUI extends javax.swing.JFrame {
             .addComponent(useAutofocusCheckBox_)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(autofocusComponentsPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addContainerGap(55, Short.MAX_VALUE))
+            .addContainerGap(32, Short.MAX_VALUE))
       );
 
       acqTabbedPane_.addTab("Drift Compensation", autofocusTab_l);
@@ -2171,7 +2195,7 @@ public class GUI extends javax.swing.JFrame {
             .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(ch5OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                .addComponent(ch5OffsetLabel_))
-            .addContainerGap(69, Short.MAX_VALUE))
+            .addContainerGap(31, Short.MAX_VALUE))
       );
 
       acqTabbedPane_.addTab("2Photon settings", imageFilteringTab_);
@@ -2208,27 +2232,19 @@ public class GUI extends javax.swing.JFrame {
       });
 
       helpButton_.setBackground(new java.awt.Color(200, 255, 200));
-      helpButton_.setText("Help");
+      helpButton_.setText("Setup");
       helpButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             helpButton_ActionPerformed(evt);
          }
       });
 
+      userGuideLink_.setText("<html><a href=\\\"https://micro-manager.org/wiki/MicroMagellan\\\">Micro-Magellan User Guide</a></html>");
+
       javax.swing.GroupLayout splitPaneBottomPanel_Layout = new javax.swing.GroupLayout(splitPaneBottomPanel_);
       splitPaneBottomPanel_.setLayout(splitPaneBottomPanel_Layout);
       splitPaneBottomPanel_Layout.setHorizontalGroup(
          splitPaneBottomPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, splitPaneBottomPanel_Layout.createSequentialGroup()
-            .addContainerGap()
-            .addComponent(createdByHenryLabel_)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(configPropsButton_)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(jButton1)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(helpButton_)
-            .addGap(298, 298, 298))
          .addGroup(splitPaneBottomPanel_Layout.createSequentialGroup()
             .addGroup(splitPaneBottomPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                .addGroup(splitPaneBottomPanel_Layout.createSequentialGroup()
@@ -2276,7 +2292,19 @@ public class GUI extends javax.swing.JFrame {
                      .addComponent(acqTabbedPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 843, javax.swing.GroupLayout.PREFERRED_SIZE)))
                .addGroup(splitPaneBottomPanel_Layout.createSequentialGroup()
                   .addGap(345, 345, 345)
-                  .addComponent(runAcqButton_)))
+                  .addComponent(runAcqButton_))
+               .addGroup(splitPaneBottomPanel_Layout.createSequentialGroup()
+                  .addGap(121, 121, 121)
+                  .addComponent(configPropsButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 182, javax.swing.GroupLayout.PREFERRED_SIZE)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(jButton1)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(helpButton_)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(userGuideLink_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+               .addGroup(splitPaneBottomPanel_Layout.createSequentialGroup()
+                  .addGap(193, 193, 193)
+                  .addComponent(createdByHenryLabel_)))
             .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
       splitPaneBottomPanel_Layout.setVerticalGroup(
@@ -2311,16 +2339,17 @@ public class GUI extends javax.swing.JFrame {
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(jLabel1)
             .addGap(18, 18, 18)
-            .addComponent(acqTabbedPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 283, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(acqTabbedPane_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addComponent(runAcqButton_)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(splitPaneBottomPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(configPropsButton_)
                .addComponent(jButton1)
-               .addComponent(createdByHenryLabel_)
-               .addComponent(helpButton_))
-            .addContainerGap())
+               .addComponent(helpButton_)
+               .addComponent(userGuideLink_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(createdByHenryLabel_))
       );
 
       addTextEditListener(zStepSpinner_);
@@ -2335,7 +2364,7 @@ public class GUI extends javax.swing.JFrame {
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addComponent(splitPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 651, Short.MAX_VALUE)
+         .addComponent(splitPane_)
       );
 
       pack();
@@ -2907,6 +2936,7 @@ public class GUI extends javax.swing.JFrame {
    private javax.swing.JLabel umBelowLabel_;
    private javax.swing.JLabel umBelowVolBetweenLabel_;
    private javax.swing.JCheckBox useAutofocusCheckBox_;
+   private javax.swing.JLabel userGuideLink_;
    private javax.swing.JComboBox volumeBetweenFootprintCombo_;
    private javax.swing.JRadioButton volumeBetweenSurfacesRadioButton_;
    private javax.swing.JPanel volumeBetweenZPanel_;

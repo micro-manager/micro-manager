@@ -20,7 +20,6 @@ package org.micromanager.plugins.magellan.main;
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-import org.micromanager.plugins.magellan.autofocus.CrossCorrelationAutofocus;
 import org.micromanager.plugins.magellan.gui.GUI;
 import java.util.prefs.Preferences;
 import mmcorej.CMMCore;

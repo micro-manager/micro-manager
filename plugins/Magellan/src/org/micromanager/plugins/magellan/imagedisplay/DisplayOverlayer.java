@@ -272,7 +272,7 @@ public class DisplayOverlayer {
                   throw new RuntimeException();
                }
             } catch (NullPointerException npe) {
-               Log.log("Null pointer exception while creating overlay. written to stack ", true);
+               Log.log("Null pointer exception while creating overlay. written to stack ", false);
                npe.printStackTrace();
                return null;
             }
