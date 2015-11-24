@@ -1127,11 +1127,11 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
                "Micro-Manager", JOptionPane.YES_NO_OPTION,
                JOptionPane.INFORMATION_MESSAGE);
 
-         if (result == JOptionPane.NO_OPTION) {
-            event.cancelShutdown();
+         if (result == JOptionPane.YES_OPTION) {
+            getAcquisitionEngine2010().stop();
          }
          else {
-            getAcquisitionEngine2010().stop();
+            event.cancelShutdown();
          }
       }
    }
