@@ -1,0 +1,59 @@
+// diSPIM Tools
+// Author: Jon Daniels, Applied Scientific Instrumentation, November 2015
+// released into the public domain
+// basic documentation at http://rsb.info.nih.gov/ij/developer/macro/macros.html#toolsets
+//
+// credits:
+//   - MBF toolset for of ImageJ (http://rsb.info.nih.gov/ij/macros/toolsets/MBF%20Tools.txt)
+//   - Fiji's StartupMacros.fiji.ijm (https://github.com/fiji/fiji/blob/master/macros/StartupMacros.fiji.ijm)
+
+
+// icon and macro from MBF tools
+macro "Brightness and Contrast Dialog Action Tool - C000D0dD0eD13D14D15D16D17D18D19D1aD1bD1cD1dD20D21D22D23D24D25D26D27D28D29D2aD2bD2cD2fD33D34D35D36D37D38D39D3aD3bD3eD3fD47D48D49D4aD4dD4eD4fD5cD5dD5eD5fD6bD6cD6dD6eD6fD7dD7eD7fD8dD8eD8fD9dD9eD9fDaeDafDbeDbfDcfDdfDefDffC000C111C222C333C444D1fD2eD3dD4cD5bD6aD79D87D88D96Da5Db4Dc3Dd2De1Df0C444C555C666C777C888C999CaaaCbbbCcccD0fD1eD2dD3cD4bD5aD69D78D86D95Da4Db3Dc2Dd1De0CcccCdddCeeeCfff" {
+   run("Brightness/Contrast...");
+}
+
+// icon from MBF tools
+// macro modified from MBF tools with "all" option by Jon Daniels
+macro "Maximum Intensity Projection Action Tool - C902T3f18Z" {
+   run("Z Project...", "projection=[Max Intensity] all");
+}
+
+// icon from Fiji StartupMacros
+// macro modified from Fiji StartupMacros by Jon Daniels
+var sCmds = newMenu("Stacks Menu Tool",
+   newArray("Add Slice", "Delete Slice", "Next Slice [>]", "Previous Slice [<]", "Set Slice...", "-",
+   "Images to Stack", "Stack to Images", "Make Montage...", "Reslice [/]...", "Z Project...",
+   "3D Project...", "Plot Z-axis Profile"));
+macro "Stacks Menu Tool - C037T0b11ST8b09tTcb09k" {
+   cmd = getArgument();
+   if (cmd!="-") run(cmd);
+}
+
+// icon from MBF tools
+// macro modified from MBF tools by Jon Daniels
+macro "Channel Split (+shift=Merge; +alt=Channels Tool) Action Tool - Cff0D63D64D65D71D72D73D74D75D81D82D83D84D85D93D94D95C0f0D90D91D92Da0Da1Da2Da3Da4Da5Da6Db0Db1Db2Db3Db4Db5Db6Dc0Dc1Dc2Dc3Dc4Dc5Dc6Dc7Dc8Dd1Dd2Dd3Dd4Dd5Dd6Dd7Dd8De1De2De3De4De5De6De7De8Df3Df4Df5Df6Cf0fD39D47D48D49D57D58D59D67D68D69Cf00D03D04D05D06D11D12D13D14D15D16D17D18D21D22D23D24D25D26D27D28D30D31D32D33D34D35D36D37D38D40D41D42D43D44D45D46D50D51D52D53D54D55D56D60D61D62C00fD3aD3bD3cD4aD4bD4cD4dD4eD5aD5bD5cD5dD5eD6aD6bD6cD6dD6eD6fD79D7aD7bD7cD7dD7eD7fD89D8aD8bD8cD8dD8eD8fD9aD9bD9cD9dD9eD9fDaaDabDacDadDaeDbaDbbDbcDbdDbeDcaDcbDccCfffD66D76D77D78D86D87D88D96C0ffD97D98D99Da7Da8Da9Db7Db8Db9Dc9" {
+   if(isKeyDown("shift")) {
+      run("Merge Channels...");
+   }
+   else if (isKeyDown("alt")) {
+      run("Channels Tool...");
+   }
+   else {
+      run("Split Channels");
+   }
+}
+
+// icon by Jon Daniels, then using macro at http://rsb.info.nih.gov/ij/macros/toolsets/Example%20Icons.txt
+macro "Duplicate Action Tool -  C000D3cD43D44D45D46D47D48D49D4aD4bD4cD4dD4eD4fD53D5fD63D6fD73D7fD83D8fD93D9fDa3DafDb0Db1Db2Db3DbbDbcDbdDbeDbfDc3DcbDcfDd3DdbDdeDe3DebDedDf3Df4Df5Df6Df7Df8Df9DfaDfbDfcC000D00D01D02D03D04D05D06D07D08D09D0aD0bD0cD10D1cD20D2cD30D40D50D60D70D80D90Da0C000C111C222C333C444C555C666C777D33D36D39D76D79D7cD86D89D8cD96D99D9cDa6Da9DacDb6Db9Dc6Dc9C888C999CaaaCbbbCcccCdddCeeeCfff" {
+   run("Duplicate...");
+}
+
+// trying to leave one empty slot, for some reason two lines seem to be needed
+macro "Unused Tool-1 - " {}
+macro "Unused Tool-2 - " {}
+
+// icon by Jon Daniels, then using macro at http://rsb.info.nih.gov/ij/macros/toolsets/Example%20Icons.txt
+macro "Close All Windows Action Tool - C000D0fD1aD1dD1fD2aD2bD2dD3dD3fD4fD6aD6fD7aD7fD8fDbaDbfDcaDcfDdfC999D0aD1bD2cD2fCf00D26D80Cf00D33D34D35D36D37D38D39D42D43D45D46D47D49D4aD51D52D56D5aD5bD61D6bD71D72D81D82D83D89D8aD8bD8cD91D92D9aD9bDa1DabDb1Db2Db6DbbDc2Dc3Dc5Dc6Dc7Dc9Dd3Dd4Dd5Dd6Dd7Dd8Dd9De6CfddD23D50Cf66D3aD4bC000D7bD7cDcbCfccD29D5cD66D84D88Da6Db0De3Cf55D48DaaDc8Cf88D55D57D59D73D79D93D99Db5Db7Db9CfbbDbcDe9Cf44D44D62Da2Dc4Cf77D32D41Dc1Dd2C333D1cD3cCf66D24D28D60Da0DdaCf22De5Cf77D53Db3C111D1eD9fDefCf55D6cDacDe4De8C666D3bD3eD4eD5fDafCf11D9cDe7C000D7dD7eDccDcdDceCf22D25D27D70D90" {
+   run("Close All");
+}
