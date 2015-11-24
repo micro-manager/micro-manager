@@ -402,7 +402,7 @@ public final class DefaultDisplayManager implements DisplayManager {
             "Close all open image windows?", "Micro-Manager",
             JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
             CLOSE_OPTIONS, CLOSE_OPTIONS[0]);
-      if (result == 0) { // cancel
+      if (result <= 0) { // cancel
          return;
       }
       if (result == 2 && JOptionPane.showConfirmDialog(null,
