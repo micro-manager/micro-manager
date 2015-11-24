@@ -276,7 +276,7 @@ public class IntroDlg extends JDialog {
             if (JOptionPane.showConfirmDialog(null,
                   "Are you sure you want to delete the \"" + curName +
                   "\" profile?", "Confirm Profile Deletion",
-                  JOptionPane.YES_NO_OPTION) == 1) {
+                  JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) {
                // User backed out.
                return;
             }

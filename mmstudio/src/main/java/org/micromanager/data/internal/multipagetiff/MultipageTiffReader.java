@@ -615,7 +615,7 @@ public class MultipageTiffReader {
          ReportingUtils.showError("Can't read index map in file: " + file_.getName());
          int choice = JOptionPane.showConfirmDialog(null, "This file cannot be opened bcause it appears to have \n"
                  + "been improperly saved.  Would you like Micro-Manger to attempt to fix it?", "Micro-Manager", JOptionPane.YES_NO_OPTION);
-         if (choice == JOptionPane.NO_OPTION) {
+         if (choice != JOptionPane.YES_OPTION) {
             return;
          }
       }

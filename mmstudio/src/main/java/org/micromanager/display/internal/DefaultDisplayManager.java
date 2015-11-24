@@ -379,7 +379,7 @@ public final class DefaultDisplayManager implements DisplayManager {
             "Do you want to save this data set before closing?",
             "MicroManager", JOptionPane.DEFAULT_OPTION,
             JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
-      if (result == 2) {
+      if (result == 2 || result < 0) {
          // User cancelled.
          return false;
       }

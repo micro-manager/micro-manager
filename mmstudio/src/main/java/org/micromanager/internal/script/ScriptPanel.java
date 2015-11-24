@@ -840,12 +840,12 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
             APP_NAME, JOptionPane.YES_NO_OPTION,
             JOptionPane.INFORMATION_MESSAGE);
       switch (result) {
-         case JOptionPane.YES_OPTION:
-            saveScript(row);
-            break;
          case JOptionPane.NO_OPTION:
             // avoid prompting again:
             scriptPaneSaved_ = true;
+            break;
+         default:
+            saveScript(row);
             break;
       }                                                                      
 
@@ -927,7 +927,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
             switch (result) {
                case JOptionPane.YES_OPTION:
                   break;
-               case JOptionPane.NO_OPTION:
+               default:
                   return;
             }
          }
@@ -1013,7 +1013,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
                   break;
                case JOptionPane.NO_OPTION:
                   break;
-               case JOptionPane.CANCEL_OPTION:                                        
+               default:
                   return;
             }
          }

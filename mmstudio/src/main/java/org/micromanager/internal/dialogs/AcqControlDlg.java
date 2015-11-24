@@ -1596,7 +1596,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
                "</body></html>",
                "Insufficient memory warning",
                JOptionPane.YES_NO_OPTION);
-         return answer == 0;
+         return answer == JOptionPane.YES_OPTION;
       }
       return true;
    }
@@ -1637,7 +1637,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
                   new Object[] {message, neverAgain},
                   "Confirm exposure times", JOptionPane.YES_NO_OPTION);
             setShouldCheckExposureSanity(!neverAgain.isSelected());
-            if (response == JOptionPane.NO_OPTION) {
+            if (response != JOptionPane.YES_OPTION) {
                return null;
             }
          }
