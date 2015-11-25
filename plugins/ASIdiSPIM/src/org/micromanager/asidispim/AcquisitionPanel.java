@@ -99,6 +99,8 @@ import org.micromanager.utils.ReportingUtils;
 
 import com.swtdesigner.SwingResourceManager;
 
+import ij.IJ;
+
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
@@ -2378,15 +2380,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       updateAcquisitionStatus(AcquisitionStatus.DONE);
       posUpdater_.pauseUpdates(false);
-      
       if (testAcq && prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
             Properties.Keys.PLUGIN_TESTACQ_SAVE, false)) {
          String path = "";
          try {
             path = prefs_.getString(MyStrings.PanelNames.SETTINGS.toString(),
                   Properties.Keys.PLUGIN_TESTACQ_PATH, "");
-            ij.IJ.saveAs("raw", path);
-         // TODO consider generating a short metadata file to assist in interpretation
+            IJ.saveAs(gui_.getAcquisition(acqName).getAcquisitionWindow().getImagePlus(), "raw", path);
+            // TODO consider generating a short metadata file to assist in interpretation
          } catch (Exception ex) {
             MyDialogUtils.showError("Could not save raw data from test acquisition to path " + path);
          }
