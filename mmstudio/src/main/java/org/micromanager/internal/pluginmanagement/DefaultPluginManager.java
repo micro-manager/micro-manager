@@ -167,6 +167,7 @@ public class DefaultPluginManager implements PluginManager {
       // MMPlugin in loadPlugins(), below.
       loadPlugins(PluginFinder.findPluginsWithLoader(
             getClass().getClassLoader()));
+
       ReportingUtils.logMessage("Plugin loading took " +
             (System.currentTimeMillis() - startTime) + "ms");
    }

@@ -18,20 +18,16 @@
 //
 package org.micromanager.internal.pluginmanagement;
 
-import com.google.common.io.CharStreams;
 
 import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.IOException;
-
-import java.lang.ClassLoader;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 
 import org.scijava.InstantiableException;
@@ -43,9 +39,6 @@ import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public class PluginFinder {
-   // This entry is present only if the jar contains a plugin.
-   private static final String PLUGIN_ENTRY = "META-INF/json/org.scijava.plugin.Plugin";
-
    /**
     * Recursively seek through the directory structure under the specified
     * root and generate a list of files that match the given extension.
@@ -85,13 +78,27 @@ public class PluginFinder {
    public static List<Class> findPlugins(String root) {
       ArrayList<Class> result = new ArrayList<Class>();
       for (String jarPath : findPaths(root, ".jar")) {
+         URL jarURL;
          try {
-            result.addAll(findPluginsWithLoader(
-                     new PluginLoader(new File(jarPath).toURI().toURL())));
+            jarURL = new File(jarPath).toURI().toURL();
          }
          catch (MalformedURLException e) {
-            ReportingUtils.logError("Unable to generate URL from path " + jarPath);
+            ReportingUtils.logError("Unable to generate URL from path " + jarPath + "; skipping");
+            continue;
          }
+
+         // The class loader used by the plugin should find classes and
+         // resources within the plugin JAR first, then fall back to the
+         // default class loader.
+         // However, when SciJava is discovering plugin classes, we do NOT
+         // want to search all JARs on the class path.
+         // So we temporarily set the class loader to look only at the given
+         // URL for resources.
+         PluginClassLoader loader = new PluginClassLoader(jarURL,
+                 MMStudio.getInstance().getClass().getClassLoader());
+         loader.setBlockInheritedResources(true);
+         result.addAll(findPluginsWithLoader(loader));
+         loader.setBlockInheritedResources(false);
       }
       return result;
    }
@@ -113,42 +120,40 @@ public class PluginFinder {
    }
 
    /**
-    * Custom class loader for loading plugin classes and resources. It loads
-    * from the specified jar file, and if that fails then it falls back to
-    * Micro-Manager's own ClassLoader, so that plugins can depend on the same
-    * jars that Micro-Manager does.
+    * Custom class loader for loading plugin classes and resources.
+    * 
+    * The only difference from URLClassLoader is that it allows temporary
+    * blockage of resource enumeration and loading from the parent loader.
     */
-   public static class PluginLoader extends URLClassLoader {
-      public PluginLoader(URL jarURL) {
-         super(new URL[] {jarURL});
+   private static class PluginClassLoader extends URLClassLoader {
+      private boolean blockInheritedResources_ = false;
+
+      public PluginClassLoader(URL jarURL, ClassLoader parent) {
+         super(new URL[] {jarURL}, parent);
       }
 
-      public Class loadClass(String className) throws ClassNotFoundException {
-         Class result;
-         try {
-            result = super.loadClass(className);
-         }
-         catch (ClassNotFoundException e) {
-            // Fall back to Micro-Manager's classloader.
-            result = MMStudio.getInstance().getClass().getClassLoader().loadClass(className);
-         }
-         if (result == null) {
-            ReportingUtils.logError("Couldn't load class " + className);
-         }
-         return result;
+      public void setBlockInheritedResources(boolean flag) {
+         blockInheritedResources_ = flag;
       }
 
       @Override
       public URL getResource(String name) {
-         URL result = super.getResource(name);
-         if (result == null) {
-            // Fall back to our own jar.
-            result = MMStudio.getInstance().getClass().getClassLoader().getResource(name);
+         if (blockInheritedResources_) {
+            return findResource(name);
          }
-         if (result == null) {
-            ReportingUtils.logError("Couldn't find resource " + name);
+         else {
+            return super.getResource(name);
          }
-         return result;
+      }
+
+      @Override
+      public Enumeration<URL> getResources(String name) throws IOException {
+         if (blockInheritedResources_) {
+            return findResources(name);
+         }
+         else {
+            return super.getResources(name);
+         }
       }
    }
 }
