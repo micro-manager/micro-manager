@@ -56,5 +56,10 @@ public class ImageJUtils {
          IJ.run(command_, args_);
       }
    }
+   
+   public static void loadToolset() {
+      IJCommandThread t = new IJCommandThread("Install...", "install=[macros\\toolsets\\diSPIM_Tools.txt]");
+      t.start();
+   }
 
 }

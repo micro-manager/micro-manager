@@ -168,6 +168,7 @@ public class Properties {
       PLUGIN_NAME_PREFIX("NamePrefix"),
       PLUGIN_TESTACQ_PATH("TestAcquisitionPath"),
       PLUGIN_TESTACQ_SAVE("TestAcquisitionSave"),
+      PLUGIN_USE_TOOLSET("UseImageJToolset"),
       PREFS_SAVE_WHILE_ACQUIRING("SaveWhileAcquiring"),
       PREFS_HIDE_WHILE_ACQUIRING("HideWhileAcquiring"),
       PREFS_SEPARATE_VIEWERS_FOR_TIMEPOINTS("SeparateViewersForTimePoints"),

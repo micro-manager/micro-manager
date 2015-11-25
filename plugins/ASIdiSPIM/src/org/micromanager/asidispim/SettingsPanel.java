@@ -47,6 +47,7 @@ import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
+import org.micromanager.asidispim.Utils.ImageJUtils;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.asidispim.Utils.PanelUtils;
@@ -228,9 +229,52 @@ public class SettingsPanel extends ListeningJPanel {
       browseFileButton.setMargin(new Insets(2, 5, 2, 5));
       browseFileButton.setText("...");
       testAcqPanel.add(browseFileButton, "wrap");
-
       
       // end test acquisition panel
+
+      
+      // start stage scan panel
+      
+      final JPanel stageScanPanel = new JPanel(new MigLayout(
+            "",
+            "[right]16[center]",
+            "[]8[]"));
+      stageScanPanel.setBorder(PanelUtils.makeTitledBorder("Stage scanning"));
+      
+      // TODO create method to determine this instead of separate code here and in AcquisitionPanel
+      if (devices_.isTigerDevice(Devices.Keys.XYSTAGE)
+            && props_.hasProperty(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_NUMLINES)) {
+         stageScanPanel.add(new JLabel("Motor acceleration time [ms]:"));
+         final JSpinner stageAccelTime = pu.makeSpinnerFloat(10, 1000, 10,
+               Devices.Keys.XYSTAGE,
+               Properties.Keys.STAGESCAN_MOTOR_ACCEL, 50);
+         stageScanPanel.add(stageAccelTime, "wrap");
+      } else {
+         stageScanPanel.add(new JLabel("Stage scanning not supported by your firmware."), "left, wrap");
+         stageScanPanel.add(new JLabel("See http://dispim.org for further information."), "left, wrap");
+      }
+      
+      // end stage scan panel
+      
+      
+      // start ImageJ settings panel
+      
+      final JPanel imageJPanel = new JPanel(new MigLayout(
+            "",
+            "[right]16[center]",
+            "[]8[]"));
+      imageJPanel.setBorder(PanelUtils.makeTitledBorder("ImageJ"));
+      
+      final JCheckBox useToolset = pu.makeCheckBox("Load diSPIM toolset on launch",
+            Properties.Keys.PLUGIN_USE_TOOLSET, panelName_, true);
+      useToolset.setToolTipText("places icons in ImageJ toolbar for quick access of commonly-used image manipulation tasks");
+      if (useToolset.isSelected()) {
+         ImageJUtils.loadToolset();
+      }
+      imageJPanel.add(useToolset, "span 2, wrap");
+      
+      // end ImageJ settings panel
+      
       
       
       // construct main panel
@@ -238,27 +282,10 @@ public class SettingsPanel extends ListeningJPanel {
       add(scannerPanel);
       add(cameraPanel, "wrap");
       add(testAcqPanel);
+      add(stageScanPanel, "growx");
+      add(imageJPanel, "growx");
       
 
-      // start stage scan panel
-      // only add this panel if stage scanning is supported
-      // TODO create method to determine this instead of separate code here and in AcquisitionPanel
-      if (devices_.isTigerDevice(Devices.Keys.XYSTAGE)
-            && props_.hasProperty(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_NUMLINES)) {
-         final JPanel stageScanPanel = new JPanel(new MigLayout(
-               "",
-               "[right]16[center]",
-               "[]8[]"));
-         stageScanPanel.setBorder(PanelUtils.makeTitledBorder("Stage scanning"));
-         stageScanPanel.add(new JLabel("Motor acceleration time [ms]:"));
-         final JSpinner stageAccelTime = pu.makeSpinnerFloat(10, 1000, 10,
-               Devices.Keys.XYSTAGE,
-               Properties.Keys.STAGESCAN_MOTOR_ACCEL, 50);
-         stageScanPanel.add(stageAccelTime, "wrap");
-         add(stageScanPanel, "growx");
-       }
-      // end stage scan panel
-      
       
    }
    

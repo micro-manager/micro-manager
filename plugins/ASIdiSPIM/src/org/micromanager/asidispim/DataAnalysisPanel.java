@@ -5,7 +5,6 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
-import ij.macro.MacroRunner;
 import ij.process.ImageProcessor;
 
 import java.awt.Cursor;
@@ -35,7 +34,6 @@ import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.asidispim.Utils.PanelUtils;
-import org.micromanager.asidispim.Utils.ImageJUtils.IJCommandThread;
 import org.micromanager.utils.FileDialogs;
 
 
@@ -52,7 +50,6 @@ import org.micromanager.utils.FileDialogs;
 public class DataAnalysisPanel extends ListeningJPanel {
    private final Prefs prefs_;
    private final JPanel exportPanel_;
-   private final JPanel imageJPanel_;
    private final JTextField saveDestinationField_;
    private final JTextField baseNameField_;
    
@@ -211,64 +208,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
       
       // end export sub-panel
       
-      // start ImageJ sub-panel
-      imageJPanel_ = new JPanel(new MigLayout(
-              "",
-              "[center]",
-              "[]8[]"));
-      
-      imageJPanel_.setBorder(PanelUtils.makeTitledBorder("ImageJ"));
-      
-      JButton adjustBC = new JButton("Brightness/Contrast");
-      adjustBC.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            IJCommandThread t = new IJCommandThread("Brightness/Contrast...");
-            t.start();
-         }
-      });
-      imageJPanel_.add(adjustBC, "wrap");
-      
-      JButton splitChannels = new JButton("Split Channels");
-      splitChannels.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            IJCommandThread t = new IJCommandThread("Split Channels");
-            t.start();
-         }
-      });
-      imageJPanel_.add(splitChannels, "wrap");
-      
-      JButton zProjection = new JButton("Z Projection");
-      zProjection.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            IJCommandThread t = new IJCommandThread("Z Project...", "projection=[Max Intensity] all");
-            t.start();
-         }
-      });
-      imageJPanel_.add(zProjection, "wrap");
-      
-      JButton closeImages = new JButton("Close All Images");
-      closeImages.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            final String macro = 
-                  "while (nImages>0) { " +
-                  "selectImage(nImages); " +
-                  " close(); " + 
-                  "}";
-            ij.macro.MacroRunner m = new MacroRunner(macro);
-            m.run();
-         }
-      });
-      imageJPanel_.add(closeImages, "wrap");
-      
-      // end ImageJ sub-panel
-            
-       
       this.add(exportPanel_);
-      this.add(imageJPanel_);
    }
    
    @Override

@@ -786,7 +786,7 @@ public class PanelUtils {
     */
    public static TitledBorder makeTitledBorder(String title) {
       TitledBorder myBorder = BorderFactory.createTitledBorder(
-              BorderFactory.createLineBorder(ASIdiSPIM.borderColor), title);
+              BorderFactory.createLineBorder(ASIdiSPIM.borderColor), " " + title + " ");
       myBorder.setTitleJustification(TitledBorder.CENTER);
       return myBorder;
    }
