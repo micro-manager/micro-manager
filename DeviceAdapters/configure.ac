@@ -179,6 +179,9 @@ else
    AC_MSG_RESULT([not found])
 fi
 
+AC_SUBST(LIBATCORE)
+AC_SUBST(LIBATUTILITY)
+
 # Andor laser combiner on linux 
 AC_MSG_CHECKING(for Andor laser combiner)
 AM_CONDITIONAL([BUILD_ANDORLASERCOMBINER],[test -f "/usr/local/include/ALC_REV.h"])
