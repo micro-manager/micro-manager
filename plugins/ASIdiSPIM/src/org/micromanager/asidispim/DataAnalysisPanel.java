@@ -35,6 +35,7 @@ import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.asidispim.Utils.PanelUtils;
+import org.micromanager.asidispim.Utils.ImageJUtils.IJCommandThread;
 import org.micromanager.utils.FileDialogs;
 
 
@@ -58,7 +59,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
    public static final String[] TRANSFORMOPTIONS = 
       {"None", "Rotate Right 90\u00B0", "Rotate Left 90\u00B0", "Rotate outward"};
    public static final String[] EXPORTFORMATS = 
-      {"mipav GenerateFusion", "Multiview Reconstruction"};
+      {"mipav GenerateFusion", "Multiview Reconstruction (deprecated)"};
    public static FileDialogs.FileType EXPORT_DATA_SET 
            = new FileDialogs.FileType("EXPORT_DATA_SET",
                  "Export to Location",
@@ -480,29 +481,4 @@ public class DataAnalysisPanel extends ListeningJPanel {
       }
    }
    
-   /**
-    * Make it easy to execute an ImageJ command in its own thread (for speed).
-    * After creating this object with the command (menu item) then call its start() method.
-    * TODO: see if this would be faster using ImageJ's Executer class (http://rsb.info.nih.gov/ij/developer/api/ij/Executer.html)
-    * @author Jon
-    */
-   class IJCommandThread extends Thread {
-      private final String command_;
-      private final String args_;
-      IJCommandThread(String command) {
-         super(command);
-         command_ = command;
-         args_ = "";
-      }
-      IJCommandThread(String command, String args) {
-         super(command);
-         command_ = command;
-         args_ = args;
-      }
-      @Override
-      public void run() {
-         IJ.run(command_, args_);
-      }
-   }
-  
 }
