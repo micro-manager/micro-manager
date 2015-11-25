@@ -319,6 +319,9 @@ public class ControllerUtils {
          }
          sliceAmplitude = 0.0f;
       }
+      // round to nearest 0.0001 degrees, which is approximately the DAC resolution
+      sliceAmplitude = MyNumberUtils.roundFloatToPlace(sliceAmplitude, 4);
+      sliceCenter = MyNumberUtils.roundFloatToPlace(sliceCenter, 4);
       boolean triangleWave = prefs_.getBoolean(
             MyStrings.PanelNames.SETTINGS.toString(),  
             Properties.Keys.PREFS_SCAN_OPPOSITE_DIRECTIONS, false);
@@ -360,6 +363,9 @@ public class ControllerUtils {
             return false;
          }
          
+         // round to nearest 0.001 micron, which is approximately the DAC resolution
+         piezoAmplitude = MyNumberUtils.roundFloatToPlace(piezoAmplitude, 3);
+         piezoCenter = MyNumberUtils.roundFloatToPlace(piezoCenter, 3);
          props_.setPropValue(piezoDevice,
                Properties.Keys.SA_AMPLITUDE, piezoAmplitude);
          props_.setPropValue(piezoDevice,

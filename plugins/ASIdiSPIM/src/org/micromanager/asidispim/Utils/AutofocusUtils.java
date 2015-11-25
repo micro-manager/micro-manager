@@ -223,7 +223,7 @@ public class AutofocusUtils {
                     MyStrings.PanelNames.SETUP.toString() + side.toString(),
                     Properties.Keys.PLUGIN_PIEZO_CENTER_POS, 0);
             final float minimumRSquare =  props_.getPropValueFloat(Devices.Keys.PLUGIN,
-                     Properties.Keys.PLUGIN_AUTOFOCUS_MINIMUMR2, null);
+                     Properties.Keys.PLUGIN_AUTOFOCUS_MINIMUMR2);
             final double originalPiezoPosition = positions_.getUpdatedPosition(piezoDevice);
             final double originalGalvoPosition = positions_.getUpdatedPosition(galvoDevice, Directions.Y);
             final double piezoCenter = centerAtCurrentZ ? originalPiezoPosition : imagingCenter;
