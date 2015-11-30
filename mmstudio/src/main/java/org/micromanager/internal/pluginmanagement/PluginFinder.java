@@ -139,6 +139,9 @@ public class PluginFinder {
       @Override
       public URL getResource(String name) {
          if (blockInheritedResources_) {
+            // findResource does not defer to the parent ClassLoader, and thus
+            // will return null if the resource is not found in our specific
+            // jar.
             return findResource(name);
          }
          else {
