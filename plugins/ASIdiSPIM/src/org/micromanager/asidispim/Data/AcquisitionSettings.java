@@ -24,7 +24,7 @@ package org.micromanager.asidispim.Data;
 import org.micromanager.asidispim.Utils.SliceTiming;
 
 /**
- * Associative container or "plain old data structure" for slice timing information.
+ * Associative container or "plain old data structure" for acquisition settings.
  * Public elements so they can be get/set directly, like C/C++ struct
  * Note that this container doesn't work with collections (https://www.artima.com/lejava/articles/equality.html)
  * @author Nico & Jon
@@ -110,5 +110,8 @@ public class AcquisitionSettings {
    // true/false determined by the interval between timpoints vs. overhead
    // to trigger each one separately
    public boolean hardwareTimepoints;
+   
+   // true if we are doing separate acquisition (viewer and file) for every timepoint
+   public boolean separateTimepoints;
    
 }
