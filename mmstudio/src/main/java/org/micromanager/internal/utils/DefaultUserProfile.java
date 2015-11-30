@@ -589,9 +589,18 @@ public class DefaultUserProfile implements UserProfile {
          serialization = properties.toJSON();
       }
       try {
-         FileWriter writer = new FileWriter(path);
+         // Write to a temporary file, then move the temporary file to the
+         // final destination, to avoid partial writes. This is not strictly
+         // speaking guaranteed to be atomic (it's OS-dependent), but it's
+         // better than being potentially interrupted mid-write with a
+         // resulting corrupt file.
+         File tempFile = File.createTempFile("MicroManagerProfile", "prf");
+         FileWriter writer = new FileWriter(tempFile);
          writer.write(serialization.toString(2) + "\n");
          writer.close();
+         if (!tempFile.renameTo(new File(path))) {
+            ReportingUtils.logError("Unable to move exported property map to " + path);
+         }
       }
       catch (FileNotFoundException e) {
          ReportingUtils.logError(e, "Unable to open writer to save user profile mapping file");
