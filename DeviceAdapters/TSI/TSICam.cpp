@@ -49,6 +49,54 @@ TsiSDK* TsiCam::tsiSdk = 0;
 
 static const WORD MAX_CONSOLE_LINES = 500;
 
+namespace
+{
+
+void BuildWhiteBalancedPipeline (TsiColorImage& tsiColorImg, TsiColorCamera* tsiColorCamera)
+{
+   int rows = tsiColorImg.m_Height;
+   int columns = tsiColorImg.m_Width;
+   double rSum = 0.0, gSum = 0.0, bSum = 0.0;
+
+   // Compute the sum of the pixel intensity values
+   // separately for all 3 color channels.
+   for (int i = 0; i < rows; ++i)
+   {
+      for (int j = 0; j < columns; ++j)
+      {
+         int tsiIdx = i*tsiColorImg.m_Width + j;
+
+         rSum += tsiColorImg.m_ColorPixelDataBGR.BGR_16[tsiIdx].r;
+         gSum += tsiColorImg.m_ColorPixelDataBGR.BGR_16[tsiIdx].g;
+         bSum += tsiColorImg.m_ColorPixelDataBGR.BGR_16[tsiIdx].b;
+      }
+   }
+
+   // Calculate the luminance coefficient
+   double lumin = 0.2126 * rSum + 0.7152 * gSum + 0.0722 * bSum;
+
+   // Determine the color balance coefficients.
+   double rScaler = (rSum != 0) ? lumin / rSum : 1.0;
+   double bScaler = (bSum != 0) ? lumin / bSum : 1.0;
+   double gScaler = (gSum != 0) ? lumin / gSum : 1.0;
+
+   // Send the coefficients to the SDK color pipeline
+   // on the diagonal of a 3x3 matrix.
+   //configure color processing
+   double matrix[9] = { 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
+   matrix[0] = rScaler;
+   matrix[4] = gScaler;
+   matrix[8] = bScaler;
+
+   tsiColorCamera->ClearColorPipeline();
+   tsiColorCamera->ConcatenateColorTransform(matrix);
+   tsiColorCamera->ConcatenateColorTransform(TSI_Camera_Color_Correction, 0);
+   tsiColorCamera->ConcatenateColorTransform(TSI_sRGB8_32, 0);
+   tsiColorCamera->FinalizeColorPipeline();
+}
+
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
 ///////////////////////////////////////////////////////////////////////////////
@@ -78,7 +126,8 @@ TsiCam::TsiCam() :
    acquiring(0),
    color(false),
    bitDepth(14),
-   wb(false)
+   wb(false),
+   whiteBalanceSelected(0)
 {
    // set default error messages
    InitializeDefaultErrorMessages();
@@ -327,18 +376,15 @@ int TsiCam::Initialize()
 
    // check color capabilities
    color = false;
-   TSI_COLOR_ATTRIBUTES c;
-   bRet = camHandle_->GetParameter (TSI_PARAM_COLOR_ATTRIBUTES, sizeof (TSI_COLOR_ATTRIBUTES), &c);
-   if (bRet && (strlen (c.ColorFilterArrayType) != 0) && (strcmp (c.ColorFilterArrayType, "mono") != 0))
+   char colorFiltertype[32] = {0};
+   bRet = camHandle_->GetParameter (TSI_PARAM_COLOR_FILTER_TYPE, 32, &colorFiltertype);
+   if (bRet && (strlen (colorFiltertype) != 0) && (strcmp (colorFiltertype, "mono") != 0))
    {
       color = true;
-      ret = CreateProperty(g_ColorFilterArray, c.ColorFilterArrayType, MM::String, true);
+      ret = CreateProperty(g_ColorFilterArray, colorFiltertype, MM::String, true);
 
       //configure color processing
-      getColorCamera()->ClearColorPipeline();
-      getColorCamera()->ConcatenateColorTransform (TSI_Camera_Color_Correction, 0);
-      getColorCamera()->ConcatenateColorTransform (TSI_sRGB, 14);
-      getColorCamera()->FinalizeColorPipeline();
+      ConfigureDefaultColorPipeline();
 
       // create white balance property
       pAct = new CPropertyAction(this, &TsiCam::OnWhiteBalance);
@@ -493,6 +539,15 @@ int TsiCam::SnapImage()
       MM::MMTime start = GetCurrentMMTime();
       MM::MMTime timeout(4000000); // 4 sec timeout
       int err(TSI_NO_ERROR);
+
+      bool computeWhiteBalanceCoefficients = false;
+
+      if (InterlockedCompareExchange(&whiteBalanceSelected, 0, 1))
+      {     
+         ConfigureWhiteBalanceColorPipeline();
+         computeWhiteBalanceCoefficients = true;
+      }
+
       TsiColorImage* tsiColorImg = 0;
       do
       {
@@ -506,12 +561,25 @@ int TsiCam::SnapImage()
       if (tsiColorImg == 0)
          return ERR_IMAGE_TIMED_OUT;
 
+      if (computeWhiteBalanceCoefficients)
+      {
+         BuildWhiteBalancedPipeline(*tsiColorImg, getColorCamera());
+         getColorCamera()->FreeColorImage(tsiColorImg);
+         tsiColorImg = 0;
+         MM::MMTime start = GetCurrentMMTime();
+         MM::MMTime timeout(4000000); // 4 sec timeout
+         do
+         {
+            tsiColorImg = getColorCamera()->GetPendingColorImage(TSI_COLOR_POST_PROCESS);
+            err = camHandle_->GetErrorCode();
+         } while (tsiColorImg == 0 && GetCurrentMMTime() - start < timeout && err == TSI_NO_ERROR);
+      }
+
       // adjust image size
       if (colorImg.Width() != tsiColorImg->m_Width || colorImg.Height() != tsiColorImg->m_Height || colorImg.Depth() != 4)
          colorImg.Resize(tsiColorImg->m_Width, tsiColorImg->m_Height, 4);
 
-      // convert from 16 to 8 bit
-      convertToRGBA32(*tsiColorImg, colorImg, 14);
+      colorImg.SetPixels(tsiColorImg->m_ColorPixelDataBGR.ui8);
 
       getColorCamera()->FreeColorImage(tsiColorImg);
    }
@@ -920,10 +988,18 @@ int AcqSequenceThread::svc (void)
       {
          TsiColorImage* tsiCImg(0);
          int err = TSI_NO_ERROR;
+
+         bool determineWhiteBalanceCoefficients = false;
+
+         if (InterlockedCompareExchange(&camInstance->whiteBalanceSelected, 0, 1))
+         {
+            camInstance->ConfigureWhiteBalanceColorPipeline();
+            determineWhiteBalanceCoefficients = true;
+         }
+
          while (!stop && (camInstance->GetCurrentMMTime() - start) < timeout && !tsiCImg && err == TSI_NO_ERROR)
          {
             tsiCImg = camInstance->getColorCamera()->GetPendingColorImage(TSI_COLOR_POST_PROCESS);
-            err = camInstance->getColorCamera()->GetErrorCode();
             Sleep(1);
          }
 
@@ -934,13 +1010,24 @@ int AcqSequenceThread::svc (void)
             else
                camInstance->LogMessage("Camera timed out on GetPendingColorImage().");
 
+            if (determineWhiteBalanceCoefficients)
+            {
+               camInstance->ConfigureDefaultColorPipeline();
+            }
+
             camInstance->camHandle_->Stop();
             InterlockedExchange(&camInstance->acquiring, 0);
             return 1;
          }
       
-         // convert from 16 to 8 bit
-         TsiCam::convertToRGBA32(*tsiCImg, camInstance->colorImg, 14);
+         if (determineWhiteBalanceCoefficients)
+         {
+            BuildWhiteBalancedPipeline(*tsiCImg, camInstance->getColorCamera());
+            camInstance->getColorCamera()->FreeColorImage(tsiCImg);
+            continue;
+         }
+
+         camInstance->colorImg.SetPixels(tsiCImg->m_ColorPixelDataBGR.ui8);
    
          if (camInstance->colorImg.Width() == tsiCImg->m_Width || camInstance->colorImg.Height() == tsiCImg->m_Height || camInstance->colorImg.Depth() == 4)
          {
@@ -1033,7 +1120,7 @@ int AcqSequenceThread::svc (void)
 
 TsiColorCamera* TsiCam::getColorCamera()
 {
-    return dynamic_cast<TsiColorCamera*> (camHandle_);
+    return static_cast<TsiColorCamera*> (camHandle_);
 }
 
 void TsiCam::convertToRGBA32(TsiColorImage& tsiImg, ImgBuffer& img, int colorBitDepth)
@@ -1062,85 +1149,36 @@ int TsiCam::SetWhiteBalance()
    if (!color)
       return DEVICE_OK;
 
-   // rebuild pipeline for linear transform
-   getColorCamera()->ClearColorPipeline();
-   getColorCamera()->ConcatenateColorTransform(TSI_Camera_Color_Correction, 0);
-   getColorCamera()->ConcatenateColorTransform(TSI_RGB_Linear, 14);
-   getColorCamera()->FinalizeColorPipeline();
-
-   // acquire image
-   camHandle_->SetParameter(TSI_PARAM_FRAME_COUNT, 0);
-   camHandle_->Start();
-   MM::MMTime start = GetCurrentMMTime();
-   MM::MMTime timeout(4, 0); // 4 sec timeout
-   TsiColorImage* tsiColorImg = 0;
-   do
-   {
-      tsiColorImg = getColorCamera()->GetPendingColorImage(TSI_COLOR_POST_PROCESS);
-      ::Sleep(3);
-   } while (tsiColorImg == 0 && GetCurrentMMTime() - start < timeout);
-
-   if (tsiColorImg == 0)
-      return ERR_IMAGE_TIMED_OUT;
-
-   int rows = tsiColorImg->m_Height;
-   int columns = tsiColorImg->m_Width;
-   double rSum = 0.0, gSum = 0.0, bSum = 0.0;
-
-   // Compute the sum of the pixel intensity values
-   // separately for all 3 color channels.
-   for (int i = 0; i < rows; ++i)
-   {
-      for (int j = 0; j < columns; ++j)
-      {
-         int tsiIdx = i*tsiColorImg->m_Width + j;
-
-         rSum += tsiColorImg->m_ColorPixelDataBGR.BGR_16[tsiIdx].r;
-         gSum += tsiColorImg->m_ColorPixelDataBGR.BGR_16[tsiIdx].g;
-         bSum += tsiColorImg->m_ColorPixelDataBGR.BGR_16[tsiIdx].b;
-      }
-   }
-
-   // Calculate the luminance coefficient
-   double lumin = 0.2126 * rSum + 0.7152 * gSum + 0.0722 * bSum;
-
-   // Determine the color balance coefficients.
-   double rScaler = (rSum != 0) ? lumin / rSum : 1.0;
-   double bScaler = (bSum != 0) ? lumin / bSum : 1.0;
-   double gScaler = (gSum != 0) ? lumin / gSum : 1.0;
-
-   // Send the coefficients to the SDK color pipeline
-   // on the diagonal of a 3x3 matrix.
-   //configure color processing
-   double matrix[9] = { 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
-   matrix[0] = rScaler;
-   matrix[4] = gScaler;
-   matrix[8] = bScaler;
-
-   // restore regular pipeline and apply matrix
-   getColorCamera()->ClearColorPipeline();
-   getColorCamera()->ConcatenateColorTransform(matrix);
-   getColorCamera()->ConcatenateColorTransform(TSI_Camera_Color_Correction, 0);
-   getColorCamera()->ConcatenateColorTransform(TSI_sRGB, 14);
-   getColorCamera()->FinalizeColorPipeline();
+   InterlockedExchange(&whiteBalanceSelected, 1);
    wb = true;
-
-   // release tsi image
-   getColorCamera()->FreeColorImage(tsiColorImg);
-   camHandle_->Stop();
 
    return DEVICE_OK;
 }
 
 void TsiCam::ClearWhiteBalance()
 {
-   // restore default pipeline
-   getColorCamera()->ClearColorPipeline();
-   getColorCamera()->ConcatenateColorTransform(TSI_Camera_Color_Correction, 0);
-   getColorCamera()->ConcatenateColorTransform(TSI_sRGB, 14);
-   getColorCamera()->FinalizeColorPipeline();
+   ConfigureDefaultColorPipeline();
    wb = false;
 }
 
+void TsiCam::ConfigureDefaultColorPipeline()
+{
+   getColorCamera()->ClearColorPipeline();
+   getColorCamera()->ConcatenateColorTransform(TSI_Default_White_Balance, 0);
+   getColorCamera()->ConcatenateColorTransform(TSI_Camera_Color_Correction, 0);
+   getColorCamera()->ConcatenateColorTransform(TSI_sRGB8_32, 0);
+   getColorCamera()->FinalizeColorPipeline();
+}
+
+void TsiCam::ConfigureWhiteBalanceColorPipeline()
+{
+   // rebuild pipeline for linear transform
+   getColorCamera()->ClearColorPipeline();
+   // Don't concatenate the default white balance matrix here since we want straight linear RGB
+   // for the purpose of image analysis.
+   getColorCamera()->ConcatenateColorTransform(TSI_Camera_Color_Correction, 0);
+   getColorCamera()->ConcatenateColorTransform(TSI_RGB_Linear, 0);
+   getColorCamera()->FinalizeColorPipeline();
+}
 
 

@@ -175,6 +175,8 @@ private:
    static void convertToRGBA32(TsiColorImage& tsiImg, ImgBuffer& img, int bitDepth);
    int SetWhiteBalance();
    void ClearWhiteBalance();
+   void ConfigureDefaultColorPipeline();
+   void ConfigureWhiteBalanceColorPipeline();
 
    ImgBuffer img;
    ImgBuffer colorImg;
@@ -189,6 +191,7 @@ private:
    // color camera support
    bool color;
    bool wb;
+   LONG whiteBalanceSelected;
 
    friend class AcqSequenceThread;
    AcqSequenceThread*   liveAcqThd_;
