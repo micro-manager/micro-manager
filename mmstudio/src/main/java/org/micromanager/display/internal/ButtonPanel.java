@@ -40,6 +40,7 @@ import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.events.FullScreenEvent;
 import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 
 /**
@@ -48,6 +49,13 @@ import org.micromanager.internal.utils.GUIUtils;
  * to include.
  */
 public class ButtonPanel extends JPanel {
+
+   // Zoom levels copied from ij.gui.ImageCanvas.
+   private static final Double[] ALLOWED_ZOOMS = new Double[] {
+      1 / 72.0, 1 / 48.0, 1 / 32.0, 1 / 24.0, 1 / 16.0, 1 / 12.0,
+      1 / 8.0, 1 / 6.0, 1 / 4.0, 1 / 3.0, 1 / 2.0, 0.75, 1.0, 1.5,
+      2.0, 3.0, 4.0, 6.0, 8.0, 12.0, 16.0, 24.0, 32.0
+         };
 
    private final JButton fullButton_;
 
@@ -85,7 +93,7 @@ public class ButtonPanel extends JPanel {
       zoomInButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            display.adjustZoom(2.0);
+            adjustZoom(display, 1);
          }
       });
       add(zoomInButton);
@@ -96,7 +104,7 @@ public class ButtonPanel extends JPanel {
       zoomOutButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            display.adjustZoom(0.5);
+            adjustZoom(display, -1);
          }
       });
       add(zoomOutButton);
@@ -105,6 +113,40 @@ public class ButtonPanel extends JPanel {
 
       add(new GearButton(display));
       display.registerForEvents(this);
+   }
+
+   /**
+    * Move the provided display's magnification to the next allowed zoom
+    * level based on its current zoom level. We can't just double or halve the
+    * zoom level because ImageJ's own magnifying glass tool uses "unusual" zoom
+    * levels like 75%; once we switch to a zoom like that, doubling or halving
+    * can no longer return you to 100% zoom.
+    */
+   private static void adjustZoom(DisplayWindow display, int indexOffset) {
+      Double curMag = display.getDisplaySettings().getMagnification();
+      if (curMag == null) {
+         curMag = 1.0;
+      }
+      // Find the closest match.
+      Double best = -1.0;
+      int bestIndex = -1;
+      for (int i = 0; i < ALLOWED_ZOOMS.length; ++i) {
+         Double zoom = ALLOWED_ZOOMS[i];
+         if (Math.abs(zoom - curMag) < Math.abs(best - curMag)) {
+            best = zoom;
+            bestIndex = i;
+         }
+      }
+      if (bestIndex == -1) {
+         // This should never happen!
+         ReportingUtils.logError("Failed to find a match for zoom " + curMag);
+         return;
+      }
+      // Update the display with the new zoom.
+      int nextIndex = Math.max(0, Math.min(bestIndex + indexOffset,
+               ALLOWED_ZOOMS.length - 1));
+      display.setDisplaySettings(display.getDisplaySettings().copy()
+            .magnification(ALLOWED_ZOOMS[nextIndex]).build());
    }
 
    /**
