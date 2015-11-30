@@ -194,7 +194,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
 
    public void resetPosition() {
       // put frame back where it was last time if possible
-      this.loadAndRestorePosition(100, 100, 644, 220);
+      loadAndRestorePosition(100, 100, 644, 220);
    }
 
    public void paintToFront() {
@@ -383,7 +383,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       // Allowing the config pad to grow horizontally and vertically requires
       // us to override its preferred size.
       subPanel.add(configPad_,
-            "grow, alignx center, w min:9999:9999, h min:9999:9999, span");
+            "grow, alignx center, w min::9999, h min::9999, span");
       subPanel.add(configPadButtonPanel_,
             "growx, alignx left, w 320!, h 20!, span");
       return subPanel;
