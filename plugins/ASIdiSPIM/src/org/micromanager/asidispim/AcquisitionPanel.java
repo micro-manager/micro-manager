@@ -524,7 +524,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          public void stateChanged(ChangeEvent arg0) {
             // update nrRepeats_ variable so the acquisition can be extended or shortened
             //   as long as we have separate timepoints
-            if (acquisitionRunning_.get() && separateTimePointsCB_.isSelected()) {
+            if (acquisitionRunning_.get() && getSavingSeparateFile()) {
                nrRepeats_ = getNumTimepoints();
             }
          }
@@ -959,6 +959,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acqSettings.accelerationX = props_.getPropValueFloat(Devices.Keys.XYSTAGE,
             Properties.Keys.STAGESCAN_MOTOR_ACCEL);
       acqSettings.hardwareTimepoints = false; //  when running acquisition we check this and set to true if needed
+      acqSettings.separateTimepoints = getSavingSeparateFile();
       return acqSettings;
    }
    
@@ -1416,6 +1417,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     *   Devices.Side.A or B to run only that side
     */
    public void runTestAcquisition(Devices.Sides side) {
+      cancelAcquisition_.set(false);
       acquisitionRequested_.set(true);
       updateStartButton();
       boolean success = runAcquisitionPrivate(true, side);
@@ -1642,11 +1644,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       double exposureTime = acqSettings.sliceTiming.cameraExposure;
       
       boolean save = saveCB_.isSelected() && !testAcq;
-      boolean singleTimePointViewers = separateTimePointsCB_.isSelected();
       String rootDir = rootField_.getText();
 
       int nrFrames;   // how many Micro-manager "frames" = time points to take
-      if (singleTimePointViewers) {
+      if (acqSettings.separateTimepoints) {
          nrFrames = 1;
          nrRepeats_ = acqSettings.numTimepoints;
       } else {
@@ -1698,7 +1699,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   + " with stage scanning.");
             return false;
          }
-         if (singleTimePointViewers) {
+         if (acqSettings.separateTimepoints) {
             MyDialogUtils.showError("Cannot use hardware time points (small time point interval)"
                   + " with separate viewers/file for each time point.");
             return false;
@@ -1747,20 +1748,22 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                Properties.Keys.PLUGIN_AUTOFOCUS_EACHNIMAGES);
          autofocusChannel = props_.getPropValueString(Devices.Keys.PLUGIN,
                Properties.Keys.PLUGIN_AUTOFOCUS_CHANNEL);
-         // double-check that selected channel is valid
-         String channelGroup  = props_.getPropValueString(Devices.Keys.PLUGIN,
-               Properties.Keys.PLUGIN_MULTICHANNEL_GROUP);
-         StrVector channels = gui_.getMMCore().getAvailableConfigs(channelGroup);
-         boolean found = false;
-         for (String channel : channels) {
-            if (channel.equals(autofocusChannel)) {
-               found = true;
-               break;
+         // double-check that selected channel is valid if we are doing multi-channel
+         if (acqSettings.useChannels) {
+            String channelGroup  = props_.getPropValueString(Devices.Keys.PLUGIN,
+                  Properties.Keys.PLUGIN_MULTICHANNEL_GROUP);
+            StrVector channels = gui_.getMMCore().getAvailableConfigs(channelGroup);
+            boolean found = false;
+            for (String channel : channels) {
+               if (channel.equals(autofocusChannel)) {
+                  found = true;
+                  break;
+               }
             }
-         }
-         if (!found) {
-            MyDialogUtils.showError("Invalid autofocus channel selected on autofocus tab.");
-            return false;
+            if (!found) {
+               MyDialogUtils.showError("Invalid autofocus channel selected on autofocus tab.");
+               return false;
+            }
          }
       }
       
@@ -1835,12 +1838,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // loop is executed once per acquisition (i.e. once if separate viewers isn't selected
       //   or once per timepoint if separate viewers is selected)
       long repeatStart = System.currentTimeMillis();
-      for (int timepoint = 0; !cancelAcquisition_.get() && timepoint < nrRepeats_; timepoint++) {
+      for (int acqNum = 0; !cancelAcquisition_.get() && acqNum < nrRepeats_; acqNum++) {
          // handle intervals between (software-timed) repeats
          // only applies when doing separate viewers for each timepoint
          // and have multiple timepoints
          long repeatNow = System.currentTimeMillis();
-         long repeatdelay = repeatStart + timepoint * timepointIntervalMs - repeatNow;
+         long repeatdelay = repeatStart + acqNum * timepointIntervalMs - repeatNow;
          while (repeatdelay > 0 && !cancelAcquisition_.get()) {
             updateAcquisitionStatus(AcquisitionStatus.WAITING, (int) (repeatdelay / 1000));
             long sleepTime = Math.min(1000, repeatdelay);
@@ -1850,13 +1853,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                ReportingUtils.showError(e);
             }
             repeatNow = System.currentTimeMillis();
-            repeatdelay = repeatStart + timepoint * timepointIntervalMs - repeatNow;
+            repeatdelay = repeatStart + acqNum * timepointIntervalMs - repeatNow;
          }
          
          BlockingQueue<TaggedImage> bq = new LinkedBlockingQueue<TaggedImage>(10);
          
-         // try to close last timepoint if there could be one open
-         if (singleTimePointViewers && gui_.acquisitionExists(acqName) && !cancelAcquisition_.get()) {
+         // try to close last acquisition viewer if there could be one open (only in single acquisition per timepoint mode)
+         if (acqSettings.separateTimepoints && gui_.acquisitionExists(acqName) && !cancelAcquisition_.get()) {
             try {
                // following line needed due to some arcane internal reason, otherwise
                //   call to closeAcquisitionWindow() fails silently. 
@@ -1868,8 +1871,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             }
          }
          
-         if (singleTimePointViewers) {
-            acqName = gui_.getUniqueAcquisitionName(prefixField_.getText() + "_" + timepoint);
+         if (acqSettings.separateTimepoints) {
+            acqName = gui_.getUniqueAcquisitionName(prefixField_.getText() + "_" + acqNum);
          } else {
             acqName = gui_.getUniqueAcquisitionName(prefixField_.getText());
          }
@@ -1888,7 +1891,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             
             ReportingUtils.logMessage("diSPIM plugin starting acquisition " + acqName);
             
-            if (spimMode == AcquisitionModes.Keys.NO_SCAN && ! singleTimePointViewers) {
+            if (spimMode == AcquisitionModes.Keys.NO_SCAN && !acqSettings.separateTimepoints) {
                // swap nrFrames and nrSlices
                gui_.openAcquisition(acqName, rootDir, nrSlices, nrSides * nrChannels,
                   nrFrames, nrPositions, true, save);
@@ -2021,25 +2024,27 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // remember acquisition start time for software-timed timepoints
             // For hardware-timed timepoints we only trigger the controller once
             long acqStart = System.currentTimeMillis();
-            for (int timePoint = 0; timePoint < nrFrames; timePoint++) {
+            for (int trigNum = 0; trigNum < nrFrames; trigNum++) {
                // handle intervals between (software-timed) time points
                // when we are within the same acquisition
                // (if separate viewer is selected then nothing bad happens here
                // but waiting during interval handled elsewhere)
                long acqNow = System.currentTimeMillis();
-               long delay = acqStart + timePoint * timepointIntervalMs - acqNow;
+               long delay = acqStart + trigNum * timepointIntervalMs - acqNow;
                while (delay > 0 && !cancelAcquisition_.get()) {
                   updateAcquisitionStatus(AcquisitionStatus.WAITING, (int) (delay / 1000));
                   long sleepTime = Math.min(1000, delay);
                   Thread.sleep(sleepTime);
                   acqNow = System.currentTimeMillis();
-                  delay = acqStart + timePoint * timepointIntervalMs - acqNow;
+                  delay = acqStart + trigNum * timepointIntervalMs - acqNow;
                }
 
                // check for stop button before each time point
                if (cancelAcquisition_.get()) {
                   throw new IllegalMonitorStateException("User stopped the acquisition");
                }
+               
+               int timePoint = acqSettings.separateTimepoints ? acqNum : trigNum ;
                
                // this is where we autofocus if requested
                if (acqSettings.useAutofocus) {
@@ -2049,7 +2054,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   // ensured that we aren't doing both
                   if ( (autofocusAtT0 && timePoint == 0) || ( (timePoint > 0) && 
                           (timePoint % autofocusEachNFrames == 0 ) ) ) {
-                     multiChannelPanel_.selectChannel(autofocusChannel);
+                     if (acqSettings.useChannels) {
+                        multiChannelPanel_.selectChannel(autofocusChannel);
+                     }
                      if (sideActiveA) {
                         AutofocusUtils.FocusResult score = autofocus_.runFocus(
                                 this, Devices.Sides.A, false,
@@ -2164,7 +2171,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         // grab all the images from the cameras, put them into the acquisition
                         int[] frNumber = new int[nrChannels*2];  // keep track of how many frames we have received for each "channel" (MM channel is our channel * 2 for the 2 cameras)
                         int[] cameraFrNumber = new int[2];       // keep track of how many frames we have received from the camera
-                        int[] tpNumber = new int[nrChannels*2];    // keep track of which timepoint we are on
+                        int[] tpNumber = new int[nrChannels*2];  // keep track of which timepoint we are on for hardware timepoints
                         boolean done = false;
                         long timeout2;  // how long to wait between images before timing out
                         timeout2 = Math.max(2000, Math.round(5*sliceDuration));
@@ -2212,7 +2219,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                  }
 
                                  // add image to acquisition
-                                 if (spimMode == AcquisitionModes.Keys.NO_SCAN && ! singleTimePointViewers) {
+                                 if (spimMode == AcquisitionModes.Keys.NO_SCAN && !acqSettings.separateTimepoints) {
                                     // create time series for no scan
                                     addImageToAcquisition(acqName,
                                           frNumber[channelIndex], channelIndex, actualTimePoint, 
