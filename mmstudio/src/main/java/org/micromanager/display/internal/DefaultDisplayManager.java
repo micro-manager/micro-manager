@@ -213,8 +213,8 @@ public final class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
-   public void createFirstInspector() {
-      InspectorFrame.createFirstInspector();
+   public boolean createFirstInspector() {
+      return InspectorFrame.createFirstInspector();
    }
 
    @Override

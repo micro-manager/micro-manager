@@ -119,10 +119,12 @@ public class InspectorFrame extends MMFrame implements Inspector {
    // time that we create a new DisplayWindow in any given session of the
    // program.
    private static boolean haveCreatedInspector_ = false;
-   public static void createFirstInspector() {
+   public static boolean createFirstInspector() {
       if (!haveCreatedInspector_) {
          new InspectorFrame(null);
+         return true;
       }
+      return false;
    }
 
    private DataViewer display_;

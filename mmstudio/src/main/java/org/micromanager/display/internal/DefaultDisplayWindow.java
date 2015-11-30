@@ -208,7 +208,10 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       DefaultEventManager.getInstance().post(
             new DefaultNewDisplayEvent(result));
       DefaultEventManager.getInstance().registerForEvents(result);
-      InspectorFrame.createFirstInspector();
+      if (InspectorFrame.createFirstInspector()) {
+         // The new inspector stole focus; retrieve it.
+         result.toFront();
+      }
       return result;
    }
 

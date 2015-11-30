@@ -167,8 +167,9 @@ public interface DisplayManager {
     * DisplayWindow is created, but it can be created earlier by calling this
     * method. Note that once the default Inspector has been created, this
     * method will not do anything, even if that Inspector is later closed.
+    * @return true if an inspector window is created, false otherwise.
     */
-   public void createFirstInspector();
+   public boolean createFirstInspector();
 
    /**
     * Signal that the specified DataViewer has been raised to the top, so that
