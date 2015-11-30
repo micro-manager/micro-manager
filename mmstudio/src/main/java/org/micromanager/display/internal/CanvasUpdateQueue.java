@@ -498,8 +498,11 @@ public class CanvasUpdateQueue {
       int channel = event.getChannel();
       if (channelToHistory_.containsKey(channel)) {
          HistogramHistory history = channelToHistory_.get(channel);
-         display_.postEvent(
-               new NewHistogramsEvent(channel, history.datas_));
+         if (history.datas_.size() > 0) {
+            // Can't post new histograms if we don't have any.
+            display_.postEvent(
+                  new NewHistogramsEvent(channel, history.datas_));
+         }
       }
    }
 }
