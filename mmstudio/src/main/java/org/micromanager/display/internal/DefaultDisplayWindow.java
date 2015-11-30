@@ -252,8 +252,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowActivated(WindowEvent e) {
-            DefaultEventManager.getInstance().post(
-               new DisplayActivatedEvent(DefaultDisplayWindow.this));
+            DefaultDisplayManager.getInstance().raisedToTop(
+               DefaultDisplayWindow.this);
          }
       });
 
