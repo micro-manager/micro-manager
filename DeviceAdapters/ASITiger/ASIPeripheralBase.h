@@ -153,6 +153,17 @@ protected:
          return g_EmptyCardAddressStr;
    }
 
+   static int GetChannelFromExtName(const char* name)
+   {
+         vector<string> vName;
+      CDeviceUtils::Tokenize(name, vName, ":");
+      if (vName.size() > 3)
+         return (stoi(vName[3],nullptr,10));
+      else
+         return 1; //default is 1
+   
+   }
+
    static int double_cmp(const double d1, const double d2)
    {
       return double_cmp(d1, d2, 1e-6);

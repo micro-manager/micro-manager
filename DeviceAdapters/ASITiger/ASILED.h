@@ -56,7 +56,8 @@ public:
 private:
    bool open_;       // true when LED turned on
    int intensity_;   // intensity from 1 to 100 (controller reports 0 intensity if off, we use that to set open_)
-
+   int channel_; 
+   char channelAxisChar_;
    int UpdateOpenIntensity();
 };
 
