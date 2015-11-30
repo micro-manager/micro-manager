@@ -441,6 +441,8 @@ public class InspectorFrame extends MMFrame implements Inspector {
          }
          displayHistory_.push(display_);
       }
+      // Update our listing of displays.
+      populateChooser();
       display_ = display;
       for (InspectorPanel panel : panels_) {
          try {
