@@ -158,8 +158,10 @@ protected:
          vector<string> vName;
       CDeviceUtils::Tokenize(name, vName, ":");
       if (vName.size() > 3)
-         return (stoi(vName[3],nullptr,10));
-      else
+	  {
+		  return atoi(vName[3].c_str());
+ 	  }
+	  else
          return 1; //default is 1
    
    }
