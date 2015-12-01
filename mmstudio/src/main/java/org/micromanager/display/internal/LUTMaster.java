@@ -51,14 +51,14 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * This module handles setting the display mode (color/grayscale/composite) and
- * LUTs for displays. It basically acts as a backing for a) initializing
- * display LUTs, and b) implementing the logic behind the ColorModeControl
- * in the inspector.
+ * LUTs for displays. It is responsible for ensuring that image pixel
+ * intensities map to the correct color/brightness in the display.
  */
 public class LUTMaster {
 
    /**
-    * Provides an ImageIcon and the byte data used to generate that icon.
+    * Provides an ImageIcon and the byte data used to generate that icon. These
+    * represent the various false-color LUTs that we allow.
     */
    public static class IconWithStats {
       private static final int ICON_WIDTH = 64;
@@ -231,7 +231,7 @@ public class LUTMaster {
 
    // List of available color modes we allow.
    // NOTE: the order of items in this list must match the order of ColorMode
-   // enums!
+   // enums in the DisplaySettings!
    public static final ArrayList<IconWithStats> ICONS = new ArrayList<IconWithStats>();
    static {
       ICONS.add(new IconWithStats("Color", EMPTY, null, null, null));
