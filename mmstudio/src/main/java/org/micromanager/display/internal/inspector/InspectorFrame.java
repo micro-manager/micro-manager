@@ -42,6 +42,7 @@ import java.awt.event.WindowAdapter;
 import java.io.File;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
@@ -72,6 +73,7 @@ import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.events.DisplayAboutToShowEvent;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.pluginmanagement.PluginSorter;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;
@@ -203,8 +205,12 @@ public class InspectorFrame extends MMFrame implements Inspector {
       addPanel(CONTRAST_TITLE, new HistogramsPanel());
       addPanel("Metadata", new MetadataPanel());
       addPanel("Comments", new CommentsPanel());
-      // Pluggable panels.
-      for (InspectorPlugin plugin : MMStudio.getInstance().plugins().getInspectorPlugins().values()) {
+      // Pluggable panels. Sort by name -- not the classpath name in the
+      // given HashMap, but the name returned by getName();
+      ArrayList<InspectorPlugin> plugins = new ArrayList<InspectorPlugin>(
+            MMStudio.getInstance().plugins().getInspectorPlugins().values());
+      Collections.sort(plugins, new PluginSorter());
+      for (InspectorPlugin plugin : plugins) {
          addPanel(plugin.getName(), plugin.createPanel());
       }
 
