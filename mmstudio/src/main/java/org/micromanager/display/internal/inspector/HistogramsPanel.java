@@ -61,7 +61,6 @@ import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.Inspector;
 import org.micromanager.display.InspectorPanel;
 import org.micromanager.display.NewDisplaySettingsEvent;
-import org.micromanager.display.NewImagePlusEvent;
 
 import org.micromanager.display.internal.events.LUTUpdateEvent;
 import org.micromanager.display.internal.DefaultDisplayManager;

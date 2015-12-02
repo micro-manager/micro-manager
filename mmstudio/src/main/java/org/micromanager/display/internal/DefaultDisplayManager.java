@@ -227,6 +227,7 @@ public final class DefaultDisplayManager implements DisplayManager {
    public void addViewer(DataViewer viewer) {
       externalViewers_.add(viewer);
       DisplayGroupManager.getInstance().addDisplay(viewer);
+      createFirstInspector();
    }
 
    @Override
