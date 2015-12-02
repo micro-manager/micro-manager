@@ -104,6 +104,7 @@ class OverlaysPanel extends InspectorPanel {
    /**
     * We need specific access to the drawing API for the DisplayWindow.
     */
+   @Override
    public boolean getIsValid(DataViewer viewer) {
       return viewer instanceof DisplayWindow;
    }
