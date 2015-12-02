@@ -35,7 +35,9 @@ import org.micromanager.data.Image;
 
 /**
  * A DisplayWindow is the interface to Micro-Manager's custom image display
- * windows.
+ * windows. It is not expected that third-party code implement this interface.
+ * If you want to provide your own custom display then you should implement
+ * the org.micromanager.display.DataViewer interface instead.
  */
 public interface DisplayWindow extends DataViewer {
 
