@@ -53,6 +53,8 @@ public interface DisplaySettings {
    interface ContrastSettings {
       /**
        * Return the array of minimum contrast settings for all components.
+       * @return array of minimum contrast settings (i.e. the intensity value 
+       * in the image that results in black display) for all components
        */
       public Integer[] getContrastMins();
 
@@ -72,6 +74,8 @@ public interface DisplaySettings {
 
       /**
        * Return the array of maximum contrast settings for all components.
+       * @return array of maximum contrast settings (i.e. the intensity value 
+       * in the image that results in the brightest display value) for all components
        */
       public Integer[] getContrastMaxes();
 
@@ -92,6 +96,8 @@ public interface DisplaySettings {
       /**
        * Return the array of gamma settings for all components. Note that
        * multi-component images do not currently make use of the gamma setting.
+       * This function will often return a null pointer!!!
+       * @return Array of gamma settings for all components
        */
       public Double[] getContrastGammas();
 
@@ -115,6 +121,7 @@ public interface DisplaySettings {
        * otherwise. This is only relevant when the display is showing
        * multiple channels at the same time (i.e. ColorMode is COMPOSITE); in
        * all other modes this value is ignored.
+       * @return Flag indicating whether the channel is currently displayed
        */
       public Boolean getIsVisible();
 
@@ -149,6 +156,7 @@ public interface DisplaySettings {
        * will be copied across, and any missing values will be null.
        * @param newColor New color for the specified channel.
        * @param channelIndex Index into the channelColors array.
+       * @return builder to be used to build the new DisplaySettings
        */
       DisplaySettingsBuilder safeUpdateChannelColor(Color newColor,
             int channelIndex);
@@ -162,6 +170,7 @@ public interface DisplaySettings {
        * null.
        * @param newSettings New ContrastSettings for the channel.
        * @param channelIndex Index into the contrastSettings array.
+       * @return builder to be used to build the new DisplaySettings
        */
       DisplaySettingsBuilder safeUpdateContrastSettings(
             ContrastSettings newSettings, int channelIndex);
@@ -201,6 +210,7 @@ public interface DisplaySettings {
     * default value will be returned instead.
     * @param index Channel index to get the color for
     * @param defaultVal Default value to return if no color is available.
+    * @return Channel color
     */
    public Color getSafeChannelColor(int index, Color defaultVal);
 
@@ -219,6 +229,7 @@ public interface DisplaySettings {
     * @param index Channel index to get the ContrastSettings for
     * @param defaultVal Default value to return if no contrast setting is
     *        available.
+    * @return Contrast settings for the specified channel
     */
    public ContrastSettings getSafeContrastSettings(int index, ContrastSettings defaultVal);
 
@@ -233,6 +244,7 @@ public interface DisplaySettings {
     * @param component Component index to get the contrast min for.
     * @param defaultVal Default value to return if no contrast min is
     *        available.
+    * @return Black point for the specified channel/component
     */
    public Integer getSafeContrastMin(int index, int component, Integer defaultVal);
 
@@ -247,6 +259,7 @@ public interface DisplaySettings {
     * @param component Component index to get the contrast max for.
     * @param defaultVal Default value to return if no contrast max is
     *        available.
+    * @return White point for the specified channel/component
     */
    public Integer getSafeContrastMax(int index, int component, Integer defaultVal);
 
@@ -261,6 +274,7 @@ public interface DisplaySettings {
     * @param component Component index to get the contrast gamma for.
     * @param defaultVal Default value to return if no contrast gamma is
     *        available.
+    * @return Gamma for the specified channel/component
     */
    public Double getSafeContrastGamma(int index, int component, Double defaultVal);
 
@@ -272,6 +286,7 @@ public interface DisplaySettings {
     * then the provided default value will be returned instead.
     * @param index Channel index to get visibility for.
     * @param defaultVal Default value to return if no visibility is available.
+    * @return Flag indicating visibility of the specified channel
     */
    public Boolean getSafeIsVisible(int index, Boolean defaultVal);
 
@@ -297,7 +312,7 @@ public interface DisplaySettings {
       // TODO: replace numbers with strings.
       COLOR(0), COMPOSITE(1), GRAYSCALE(2), HIGHLIGHT_LIMITS(3), FIRE(4),
          RED_HOT(5), SPECTRUM(6);
-      private int index_;
+      private final int index_;
 
       ColorMode(int index) {
          index_ = index;
@@ -366,6 +381,7 @@ public interface DisplaySettings {
     * @param index Channel index to get the bit depth index for
     * @param defaultVal Default value to return if no bit depth index is
     *        available.
+    * @return Bit depth for the specified channel (what does "bit depth index" mean???)
     */
    public Integer getSafeBitDepthIndex(int index, Integer defaultVal);
 
