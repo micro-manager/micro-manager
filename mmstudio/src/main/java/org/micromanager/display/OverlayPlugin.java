@@ -31,6 +31,7 @@ import org.micromanager.MMPlugin;
 public interface OverlayPlugin extends MMPlugin {
    /**
     * Create a new OverlayPanelFactory object for creating OverlayPanels.
+    * @return new OverlayPanelFactory object for creating OverlayPanels.
     */
    public OverlayPanelFactory createFactory();
 }

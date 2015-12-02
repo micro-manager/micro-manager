@@ -25,8 +25,8 @@ package org.micromanager.display;
  * DataViewer, and provides access to those DisplaySettings.
  */
 public class NewDisplaySettingsEvent {
-   private DisplaySettings settings_;
-   private DataViewer display_;
+   private final DisplaySettings settings_;
+   private final DataViewer display_;
 
    /**
     * Create the event.
@@ -40,6 +40,7 @@ public class NewDisplaySettingsEvent {
 
    /**
     * Provide access to the new DisplaySettings.
+    * @return the new DisplaySettings
     */
    public DisplaySettings getDisplaySettings() {
       return settings_;
@@ -47,6 +48,7 @@ public class NewDisplaySettingsEvent {
 
    /**
     * Provide the DataViewer that the new DisplaySettings are for.
+    * @return The DataViewer whose display settings were updated
     */
    public DataViewer getDisplay() {
       return display_;

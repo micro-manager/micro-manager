@@ -22,7 +22,6 @@ package org.micromanager.display;
 
 import java.util.List;
 
-import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.PropertyMap;
@@ -75,11 +74,11 @@ public interface DisplayManager {
    /**
     * Generate a ContrastSettings object with the provided values. This version
     * of the method is to be used for multi-component (e.g. RGB) images.
-    * @param contrastMin The highest pixel intensity corresponding to black,
-    *        for each component.
-    * @param contrastMax The lowest pixel intensity corresponding to full
+    * @param contrastMins Array with the highest pixel intensity corresponding 
+    *        to black, for each component.
+    * @param contrastMaxes Array with the lowest pixel intensity corresponding to full
     *        intensity, for each component.
-    * @param gamma The gamma curve parameter. NOTE: for now this parameter is
+    * @param gammas Array with the gamma curve parameters. NOTE: for now this parameter is
     *        not used to control display of multi-component images.
     * @param isVisible Whether or not this channel is visible in the display
     *        when the display is showing multiple channels simultaneously.
@@ -285,6 +284,7 @@ public interface DisplayManager {
     * Return all DataViewers that Micro-Manager knows about. This includes
     * the results of getAllImageWindows, as well as any extant DataViewers
     * that have been registered with Micro-Manager via the addViewer method.
+    * @return List with all DataViewers that Micro-Manager knows about
     */
    public List<DataViewer> getAllDataViewers();
 
