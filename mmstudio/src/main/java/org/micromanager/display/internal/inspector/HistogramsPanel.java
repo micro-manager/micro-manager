@@ -63,6 +63,7 @@ import org.micromanager.display.InspectorPanel;
 import org.micromanager.display.NewDisplaySettingsEvent;
 
 import org.micromanager.display.internal.events.LUTUpdateEvent;
+import org.micromanager.display.internal.events.ViewerAddedEvent;
 import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.DisplayDestroyedEvent;
@@ -355,6 +356,18 @@ public final class HistogramsPanel extends InspectorPanel {
    public synchronized void onNewDisplay(DisplayAboutToShowEvent event) {
       try {
          setupDisplay(event.getDisplay());
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Unable to set up new display's histograms");
+      }
+   }
+
+   // An external display has been added, so we need to start tracking its
+   // histograms.
+   @Subscribe
+   public synchronized void onViewerAdded(ViewerAddedEvent event) {
+      try {
+         setupDisplay(event.getViewer());
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Unable to set up new display's histograms");
