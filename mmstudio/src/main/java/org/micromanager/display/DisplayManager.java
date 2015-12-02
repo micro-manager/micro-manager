@@ -129,6 +129,17 @@ public interface DisplayManager {
          int component, DisplaySettings settings);
 
    /**
+    * Send updated histogram information to anyone who is listening for it for
+    * the specified display. This is equivalent to calling
+    * calculateHistogramWithSettings for every component in every image in the
+    * provided list and then posting a NewHistogramsEvent with the resulting
+    * HistogramDatas.
+    * @param images List of images to calculate histograms for.
+    * @param viewer DataViewer that histogram information should be updated for
+    */
+   public void updateHistogramDisplays(List<Image> images, DataViewer viewer);
+
+   /**
     * Generate a "blank" PropertyMap.PropertyMapBuilder with empty mappings.
     * @return A PropertyMapBuilder with no pre-set values.
     */

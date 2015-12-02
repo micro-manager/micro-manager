@@ -42,10 +42,11 @@ import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.HistogramData;
-import org.micromanager.display.RequestToCloseEvent;
+import org.micromanager.display.NewHistogramsEvent;
 import org.micromanager.display.OverlayPanel;
 import org.micromanager.display.OverlayPanelFactory;
 import org.micromanager.display.OverlayPlugin;
+import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.display.internal.events.DisplayActivatedEvent;
 import org.micromanager.display.internal.events.NewOverlayEvent;
 import org.micromanager.display.internal.inspector.InspectorFrame;
@@ -189,6 +190,20 @@ public final class DefaultDisplayManager implements DisplayManager {
          int component, DisplaySettings settings) {
       return ContrastCalculator.calculateHistogramWithSettings(image, null,
             component, settings);
+   }
+
+   @Override
+   public void updateHistogramDisplays(List<Image> images, DataViewer viewer) {
+      for (Image image : images) {
+         ArrayList<HistogramData> datas = new ArrayList<HistogramData>();
+         for (int i = 0; i < image.getNumComponents(); ++i) {
+            HistogramData data = calculateHistogramWithSettings(image, i,
+                  viewer.getDisplaySettings());
+            datas.add(data);
+         }
+         viewer.postEvent(
+               new NewHistogramsEvent(image.getCoords().getChannel(), datas));
+      }
    }
 
    @Override
