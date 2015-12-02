@@ -22,6 +22,7 @@ package org.micromanager;
 import java.util.HashMap;
 
 import org.micromanager.data.ProcessorPlugin;
+import org.micromanager.display.InspectorPlugin;
 import org.micromanager.display.OverlayPlugin;
 import org.micromanager.quickaccess.QuickAccessPlugin;
 
@@ -72,7 +73,13 @@ public interface PluginManager {
    /**
     * Return a HashMap that maps plugin class names to QuickAccessPlugin
     * instances. QuickAccessPlugins are for controls that can be included in
-    * the Quick- Access Window.
+    * the Quick-Access Window.
     */
    public HashMap<String, QuickAccessPlugin> getQuickAccessPlugins();
+
+   /**
+    * Return a HashMap that maps plugin class names to InspectorPlugin
+    * instances. InspectorPlugins create the panels in the Inspector windows.
+    */
+   public HashMap<String, InspectorPlugin> getInspectorPlugins();
 }

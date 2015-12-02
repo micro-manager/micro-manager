@@ -64,12 +64,14 @@ import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.Inspector;
 import org.micromanager.display.InspectorPanel;
+import org.micromanager.display.InspectorPlugin;
 import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.internal.events.DisplayActivatedEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.events.DisplayAboutToShowEvent;
 import org.micromanager.events.internal.DefaultEventManager;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;
@@ -201,7 +203,10 @@ public class InspectorFrame extends MMFrame implements Inspector {
       addPanel(CONTRAST_TITLE, new HistogramsPanel());
       addPanel("Metadata", new MetadataPanel());
       addPanel("Comments", new CommentsPanel());
-      addPanel("Overlays", new OverlaysPanel());
+      // Pluggable panels.
+      for (InspectorPlugin plugin : MMStudio.getInstance().plugins().getInspectorPlugins().values()) {
+         addPanel(plugin.getName(), plugin.createPanel());
+      }
 
       if (display != null) {
          displayChooser_.setSelectedItem(display.getName());

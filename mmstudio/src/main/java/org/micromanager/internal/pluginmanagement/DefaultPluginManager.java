@@ -34,6 +34,7 @@ import org.json.JSONObject;
 
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.data.ProcessorPlugin;
+import org.micromanager.display.InspectorPlugin;
 import org.micromanager.display.OverlayPlugin;
 import org.micromanager.IntroPlugin;
 import org.micromanager.MenuPlugin;
@@ -94,6 +95,7 @@ public class DefaultPluginManager implements PluginManager {
    static {
       VALID_CLASSES.add(AutofocusPlugin.class);
       VALID_CLASSES.add(ProcessorPlugin.class);
+      VALID_CLASSES.add(InspectorPlugin.class);
       VALID_CLASSES.add(OverlayPlugin.class);
       VALID_CLASSES.add(IntroPlugin.class);
       VALID_CLASSES.add(MenuPlugin.class);
@@ -335,6 +337,15 @@ public class DefaultPluginManager implements PluginManager {
       HashMap<String, QuickAccessPlugin> result = new HashMap<String, QuickAccessPlugin>();
       for (MMPlugin plugin : pluginTypeToPlugins_.get(QuickAccessPlugin.class)) {
          result.put(plugin.getClass().getName(), (QuickAccessPlugin) plugin);
+      }
+      return result;
+   }
+
+   @Override
+   public HashMap<String, InspectorPlugin> getInspectorPlugins() {
+      HashMap<String, InspectorPlugin> result = new HashMap<String, InspectorPlugin>();
+      for (MMPlugin plugin : pluginTypeToPlugins_.get(InspectorPlugin.class)) {
+         result.put(plugin.getClass().getName(), (InspectorPlugin) plugin);
       }
       return result;
    }
