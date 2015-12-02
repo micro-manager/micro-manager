@@ -31,9 +31,7 @@ import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
@@ -45,7 +43,6 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
-import javax.swing.SwingUtilities;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -59,7 +56,6 @@ import org.micromanager.display.HistogramData;
 import org.micromanager.display.NewDisplaySettingsEvent;
 import org.micromanager.display.NewHistogramsEvent;
 
-import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.internal.graph.GraphData;
 import org.micromanager.internal.graph.HistogramPanel;
 import org.micromanager.internal.graph.HistogramPanel.CursorListener;
@@ -71,11 +67,9 @@ import org.micromanager.display.internal.events.HistogramRequestEvent;
 import org.micromanager.display.internal.events.LUTUpdateEvent;
 import org.micromanager.display.internal.link.ContrastEvent;
 import org.micromanager.display.internal.link.ContrastLinker;
-import org.micromanager.display.internal.link.DisplayGroupManager;
 import org.micromanager.display.internal.link.LinkButton;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.DisplayDestroyedEvent;
-import org.micromanager.display.internal.RememberedChannelSettings;
 
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -118,9 +112,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private final int channelIndex_;
    private int curComponent_;
    private HistogramPanel histogram_;
-   private ContrastLinker linker_;
+   private final ContrastLinker linker_;
    private final Datastore store_;
-   private DataViewer display_;
+   private final DataViewer display_;
 
    private JButton autoButton_;
    private JButton zoomInButton_;
@@ -128,7 +122,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private JToggleButton isEnabledButton_;
    private JLabel nameLabel_;
    private JLabel colorPickerLabel_;
-   private JToggleButton[] componentPickerButtons_;
+   private final JToggleButton[] componentPickerButtons_;
    private JButton fullButton_;
    private JLabel minMaxLabel_;
    private JComboBox histRangeComboBox_;
@@ -382,7 +376,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    private void updateZoom(int modifier) {
       int index = histRangeComboBox_.getSelectedIndex();
-      int power = 0;
+      int power;
       if (index == 0) {
          // Currently on "camera bit depth" mode; adjust from there.
          power = Math.max(0,
@@ -482,6 +476,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       return builder;
    }
 
+   /**
+    *
+    * @param event
+    */
    @Subscribe
    public void onFullScale(FullScaleEvent event) {
       setScale(0,
@@ -517,6 +515,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
    }
 
+   /**
+    *
+    * @param event
+    */
    @Subscribe
    public void onHistogramRange(HistogramRangeEvent event) {
       if (histRangeComboBox_.getSelectedIndex() != event.index_) {
@@ -724,6 +726,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    /**
     * Display settings have changed; update our GUI to match.
+    * @param event
     */
    @Subscribe
    public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
@@ -757,6 +760,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    /**
     * Receive new histogram data.
+    * @param event
     */
    @Subscribe
    public void onNewHistograms(NewHistogramsEvent event) {
@@ -788,6 +792,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    /**
     * The mouse is moving over the canvas; highlight the bin in the histogram
     * corresponding to the pixel under the mouse.
+    * @param event
     */
    @Subscribe
    public void onMouseMoved(MouseMovedEvent event) {
@@ -798,6 +803,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    /**
     * The mouse has left the canvas; stop highlighting it.
+    * @param event
     */
    @Subscribe
    public void onMouseExited(MouseExitedEvent event) {

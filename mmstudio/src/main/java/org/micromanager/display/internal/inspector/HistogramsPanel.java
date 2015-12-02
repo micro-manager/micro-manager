@@ -22,8 +22,6 @@ package org.micromanager.display.internal.inspector;
 
 import com.google.common.eventbus.Subscribe;
 
-import ij.CompositeImage;
-import ij.ImagePlus;
 
 import java.awt.Color;
 import java.awt.event.ActionEvent;
@@ -35,18 +33,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Timer;
-import java.util.TimerTask;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
@@ -62,19 +55,15 @@ import org.micromanager.display.Inspector;
 import org.micromanager.display.InspectorPanel;
 import org.micromanager.display.NewDisplaySettingsEvent;
 
-import org.micromanager.display.internal.events.LUTUpdateEvent;
 import org.micromanager.display.internal.events.ViewerAddedEvent;
 import org.micromanager.display.internal.DefaultDisplayManager;
-import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.DisplayDestroyedEvent;
 import org.micromanager.display.internal.link.DisplayGroupManager;
-import org.micromanager.display.internal.MMVirtualStack;
 import org.micromanager.display.PixelsSetEvent;
 
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.DisplayAboutToShowEvent;
 
-import org.micromanager.internal.utils.ContrastSettings;
 import org.micromanager.internal.utils.ReportingUtils;
 
 // This class tracks all histograms for all displays in a given inspector
@@ -105,7 +94,7 @@ public final class HistogramsPanel extends InspectorPanel {
    // TODO: this is potentially inefficient in the use case where there are
    // multiple Inspector windows open, as each will have a complete set of
    // histograms. Make this a static singleton, maybe?
-   private HashMap<DataViewer, ArrayList<ChannelControlPanel>> displayToPanels_;
+   private final HashMap<DataViewer, ArrayList<ChannelControlPanel>> displayToPanels_;
    // The current active (displayed) set of histograms.
    private ArrayList<ChannelControlPanel> channelPanels_;
    private JCheckBox shouldAutostretch_;
@@ -113,13 +102,10 @@ public final class HistogramsPanel extends InspectorPanel {
    private JSpinner extrema_;
    private JLabel percentLabel_;
 
-   private Object panelLock_ = new Object();
+   private final Object panelLock_ = new Object();
    private Datastore store_;
    private DataViewer viewer_;
-   private Timer histogramUpdateTimer_;
    private boolean isFirstDrawEvent_ = true;
-   private long lastUpdateTime_ = 0;
-   private boolean updatingCombos_ = false;
 
    public HistogramsPanel() {
       super();
