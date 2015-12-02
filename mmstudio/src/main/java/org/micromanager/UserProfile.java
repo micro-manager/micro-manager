@@ -23,7 +23,6 @@
 package org.micromanager;
 
 import java.io.IOException;
-import java.io.Serializable;
 
 /**
  * This interface provides a way to save and recall parameters across multiple

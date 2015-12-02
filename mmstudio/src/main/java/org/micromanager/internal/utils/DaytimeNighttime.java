@@ -27,8 +27,6 @@ import java.awt.Graphics;
 import java.awt.Window;
 import java.util.HashMap;
 
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JTable;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.SwingUtilities;
@@ -92,17 +90,17 @@ public class DaytimeNighttime {
    };
 
    // background color of the UI
-   private static HashMap<String, ColorUIResource> background_;
+   private static final HashMap<String, ColorUIResource> background_;
    // background color of disabled UI elements.
-   private static HashMap<String, ColorUIResource> disabledBackground_;
+   private static final HashMap<String, ColorUIResource> disabledBackground_;
    // Lighter background colors, for certain elements.
-   private static HashMap<String, ColorUIResource> lightBackground_;
+   private static final HashMap<String, ColorUIResource> lightBackground_;
    // background color of pads in the UI
-   private static HashMap<String, ColorUIResource> padBackground_;
+   private static final HashMap<String, ColorUIResource> padBackground_;
    // Color of enabled text.
-   private static HashMap<String, ColorUIResource> enabledTextColor_;
+   private static final HashMap<String, ColorUIResource> enabledTextColor_;
    // Color of disabled text.
-   private static HashMap<String, ColorUIResource> disabledTextColor_;
+   private static final HashMap<String, ColorUIResource> disabledTextColor_;
 
    // Mode we were in before suspendToMode() was called.
    private static String suspendedMode_ = null;
@@ -200,6 +198,7 @@ public class DaytimeNighttime {
     * If the specified mode is not currently active, then we switch to that
     * mode without updating the UI. Useful if a component must be generated
     * with a nonstandard look-and-feel.
+    * @param mode ???
     */
    public static void suspendToMode(String mode) {
       suspendedMode_ = getBackgroundMode();
@@ -223,6 +222,7 @@ public class DaytimeNighttime {
 
    /**
     * Set a new default background mode in the user's profile.
+    * @param mode new default background mode
     */
    public static void storeBackgroundMode(String mode) {
       DefaultUserProfile.getInstance().setString(DaytimeNighttime.class,
@@ -231,6 +231,7 @@ public class DaytimeNighttime {
 
    /**
     * Return the current stored background mode from the profile.
+    * @return current stored background mode from the profile
     */
    public static String getBackgroundMode() {
       return DefaultUserProfile.getInstance().getString(DaytimeNighttime.class,
@@ -239,6 +240,7 @@ public class DaytimeNighttime {
 
    /**
     * Return the current background color.
+    * @return current background color
     */
    public static Color getBackgroundColor() {
       return background_.get(getBackgroundMode());
@@ -246,6 +248,7 @@ public class DaytimeNighttime {
 
    /**
     * Return a proper "disabled" background color based on the current mode.
+    * @return "disabled" background color based on the current mode
     */
    public static Color getDisabledBackgroundColor() {
       return disabledBackground_.get(getBackgroundMode());
@@ -253,6 +256,7 @@ public class DaytimeNighttime {
 
    /**
     * Return the current color for enabled text.
+    * @return current color for enabled text
     */
    public static Color getEnabledTextColor() {
       return enabledTextColor_.get(getBackgroundMode());
@@ -260,6 +264,7 @@ public class DaytimeNighttime {
 
    /**
     * Return the current color for disabled text.
+    * @return current color for disabled text.
     */
    public static Color getDisabledTextColor() {
       return disabledTextColor_.get(getBackgroundMode());
@@ -295,6 +300,7 @@ public class DaytimeNighttime {
 
       /**
        * Before painting, ensure our color is correct.
+       * @param g Graphics to be painted
        */
       @Override
       public void paint(Graphics g) {
