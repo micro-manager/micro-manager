@@ -151,9 +151,6 @@ public class InspectorFrame extends MMFrame implements Inspector {
       // that display changes).
       displayChooser_ = new JComboBox();
       populateChooser();
-      if (display == null) {
-         displayChooser_.setSelectedItem(TOPMOST_DISPLAY);
-      }
       displayChooser_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -404,6 +401,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
    public void onDisplayActivated(DisplayActivatedEvent event) {
       DataViewer newDisplay = event.getDisplay();
       if (newDisplay.getIsClosed()) {
+
          // TODO: why do we get notified of this?
          return;
       }
@@ -446,17 +444,12 @@ public class InspectorFrame extends MMFrame implements Inspector {
       populateChooser();
       for (InspectorPanel panel : panels_) {
          try {
-            if (panel.getDisplayRequirement() == InspectorPanel.DisplayRequirement.DISPLAY_WINDOW) {
-               if (display_ instanceof DisplayWindow) {
-                  panel.setVisible(true);
-                  panel.setDisplayWindow((DisplayWindow) display_);
-               }
-               else {
-                  panel.setVisible(false);
-               }
+            if (panel.getIsValid(display_)) {
+               panel.setVisible(true);
+               panel.setDataViewer(display_);
             }
             else {
-               panel.setDataViewer(display_);
+               panel.setVisible(false);
             }
          }
          catch (Exception e) {

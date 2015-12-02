@@ -527,11 +527,6 @@ public final class HistogramsPanel extends InspectorPanel {
    }
 
    @Override
-   public InspectorPanel.DisplayRequirement getDisplayRequirement() {
-      return InspectorPanel.DisplayRequirement.DATA_VIEWER;
-   }
-
-   @Override
    public synchronized void setDataViewer(DataViewer viewer) {
       viewer_ = viewer;
       if (viewer_ == null) {

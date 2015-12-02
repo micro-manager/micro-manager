@@ -50,49 +50,26 @@ public abstract class InspectorPanel extends JPanel {
    public void setInspector(Inspector inspector) {}
 
    /**
-    * This enum defines what level of detail this InspectorPanel needs about
-    * the display in order to operate successfully.
+    * Return whether or not this InspectorPanel can meaningfully interact with
+    * the provided DataViewer. If this method returns false, then this
+    * InspectorPanel will be hidden until a different DataViewer is activated
+    * in the Inspector window.
+    * @param viewer DataViewer that the Inspector window is tracking.
+    * @return true if this InspectorPanel can work with the DataViewer.
     */
-   public enum DisplayRequirement {
-      DATA_VIEWER, DISPLAY_WINDOW
-   }
-
-   /**
-    * Return the level of detail this InspectorPanel needs of its current
-    * display in order to be able to perform its tasks.
-    * If a panel with a DISPLAY_WINDOW level of DisplayRequirement is added to
-    * the inspector window, and the inspector only has a DataViewer, then the
-    * panel will be hidden. Thus, depending on whether you only require the
-    * methods exposed in DataViewer or you need the "complete" API in
-    * DisplayWindow, and depending on the context in which the inspector
-    * window is operating, your panel may not always appear.
-    * @return DISPLAY_WINDOW for panels that need access to the DisplayWindow
-    *         API, DATA_VIEWER for panels that don't.
-    */
-   public DisplayRequirement getDisplayRequirement() {
-      return DisplayRequirement.DATA_VIEWER;
+   public boolean getIsValid(DataViewer viewer) {
+      return true;
    }
 
    /**
     * Receive a new DataViewer. For panels whose contents change in response
     * to the DataViewer that is currently "active", this method must be
     * overridden to update those contents. This method will only ever be
-    * called if getDisplayRequirement() returns DisplayRequirement.DATA_VIEWER.
+    * called if getIsValid() returns true for the provided viewer.
     * @param viewer The newly-active DataViewer. This may be null, in which
     *        case no DataViewer is available.
     */
    public void setDataViewer(DataViewer viewer) {}
-
-   /**
-    * Receive a new DisplayWindow. For panels whose contents change in response
-    * to the DisplayWindow that is currently "active", this method must be
-    * overridden to update those contents. This method will only ever be
-    * called if getDisplayRequirement() returns
-    * DisplayRequirement.DISPLAY_WINDOW.
-    * @param display The newly-active DisplayWindow. This may be null, in which
-    *        case no DisplayWindow is available.
-    */
-   public void setDisplayWindow(DisplayWindow display) {}
 
    /**
     * Release resources and unregister for events, because the Inspector that

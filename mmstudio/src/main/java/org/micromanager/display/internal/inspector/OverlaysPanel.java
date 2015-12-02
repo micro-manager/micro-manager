@@ -44,6 +44,7 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.data.Image;
 
+import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.Inspector;
 import org.micromanager.display.InspectorPanel;
@@ -103,8 +104,8 @@ class OverlaysPanel extends InspectorPanel {
    /**
     * We need specific access to the drawing API for the DisplayWindow.
     */
-   public InspectorPanel.DisplayRequirement getDisplayRequirement() {
-      return InspectorPanel.DisplayRequirement.DISPLAY_WINDOW;
+   public boolean getIsValid(DataViewer viewer) {
+      return viewer instanceof DisplayWindow;
    }
 
    /**
@@ -157,7 +158,10 @@ class OverlaysPanel extends InspectorPanel {
    }
 
    @Override
-   public synchronized void setDisplayWindow(DisplayWindow display) {
+   public synchronized void setDataViewer(DataViewer viewer) {
+      // This cast should always succeed because getIsValid() requires viewer
+      // to be a DisplayWindow.
+      DisplayWindow display = (DisplayWindow) viewer;
       if (display_ != null) {
          try {
             display_.unregisterForEvents(this);
