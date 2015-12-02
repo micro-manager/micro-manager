@@ -1510,13 +1510,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          acqSettings.useTimepoints = false;
          acqSettings.numTimepoints = 1;
          acqSettings.useAutofocus = false;
+         // if called from the setup panels then the side will be specified
+         //   so we can do an appropriate single-sided acquisition
+         // if called from the acquisition panel then NONE will be specified
+         //   and run according to existing settings
          if (testAcqSide != Devices.Sides.NONE) {
             acqSettings.numSides = 1;
             acqSettings.firstSideIsA = (testAcqSide == Devices.Sides.A);
          }
          
-         // work-around limitation of not being able to use PLogic per-volume switching with single side
-         // do per-volume switching instead (only difference should be extra time to switch)
+         // work around limitation of not being able to use PLogic per-volume switching with single side
+         // => do per-volume switching instead (only difference should be extra time to switch)
          if (acqSettings.useChannels && acqSettings.channelMode == MultichannelModes.Keys.VOLUME_HW
                && acqSettings.numSides < 2) {
             acqSettings.channelMode = MultichannelModes.Keys.VOLUME;
@@ -1605,13 +1609,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             break;
          case VOLUME_HW:
          case SLICE_HW:
-            boolean success = controller_.setupHardwareChannelSwitching(acqSettings);
-            if (!success) {
-               MyDialogUtils.showError("Couldn't set up slice hardware channel switching.");
-               return false;
+            if (nrChannels == 1) {  // only 1 channel selected so don't have to really use hardware switching
+               multiChannelPanel_.initializeChannelCycle();
+               multiChannelPanel_.selectNextChannel();
+            } else {  // we have at least 2 channels
+               boolean success = controller_.setupHardwareChannelSwitching(acqSettings);
+               if (!success) {
+                  MyDialogUtils.showError("Couldn't set up slice hardware channel switching.");
+                  return false;
+               }
+               nrChannelsSoftware = 1;
+               nrSlicesSoftware = nrSlices * nrChannels;
             }
-            nrChannelsSoftware = 1;
-            nrSlicesSoftware = nrSlices * nrChannels; 
             break;
          default:
             MyDialogUtils.showError("Unsupported multichannel mode \"" + channelMode.toString() + "\"");
@@ -1662,6 +1671,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       String originalCamera = core_.getCameraDevice();
 
       // more sanity checks
+      // TODO move these checks earlier, before we set up channels and XY positions
       
       // make sure stage scan is supported if selected
       if (acqSettings.isStageScanning) {
@@ -1960,12 +1970,19 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   actualSlicePeriodLabel_.getText());
             gui_.setAcquisitionProperty(acqName, "LaserExposure_ms",
                   NumberUtils.doubleToDisplayString(acqSettings.desiredLightExposure));
-            gui_.setAcquisitionProperty(acqName, "VolumeDuration", 
+            gui_.setAcquisitionProperty(acqName, "VolumeDuration",
                     actualVolumeDurationLabel_.getText());
             gui_.setAcquisitionProperty(acqName, "SPIMmode", spimMode.toString()); 
             // Multi-page TIFF saving code wants this one (cameras are all 16-bits, so not much reason for anything else)
             gui_.setAcquisitionProperty(acqName, "PixelType", "GRAY16");
-            gui_.setAcquisitionProperty(acqName, "z-step_um",  
+            gui_.setAcquisitionProperty(acqName, "UseAutofocus", 
+                  acqSettings.useAutofocus ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
+            gui_.setAcquisitionProperty(acqName, "HardwareTimepoints", 
+                  acqSettings.hardwareTimepoints ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
+            gui_.setAcquisitionProperty(acqName, "SeparateTimepoints", 
+                  acqSettings.separateTimepoints ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
+            gui_.setAcquisitionProperty(acqName, "CameraMode", acqSettings.cameraMode.toString()); 
+            gui_.setAcquisitionProperty(acqName, "z-step_um",
                   NumberUtils.doubleToDisplayString(acqSettings.stepSizeUm));
             // Properties for use by MultiViewRegistration plugin
             // Format is: x_y_z, set to 1 if we should rotate around this axis.
@@ -2021,6 +2038,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             lastAcquisitionName_ = acqName;
             
             // Loop over all the times we trigger the controller's acquisition
+            //  (although if multi-channel with volume switching is selected there
+            //   is inner loop to trigger once per channel)
             // remember acquisition start time for software-timed timepoints
             // For hardware-timed timepoints we only trigger the controller once
             long acqStart = System.currentTimeMillis();
@@ -2117,6 +2136,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   }
 
                   // loop over all the times we trigger the controller
+                  // usually just once, but will be the number of channels if we have
+                  //  multiple channels and aren't using PLogic to change between them
                   for (int channelNum = 0; channelNum < nrChannelsSoftware; channelNum++) {
                      try {
                         // flag that we are using the cameras/controller
