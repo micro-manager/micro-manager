@@ -20,10 +20,7 @@
 
 package org.micromanager.display.internal.inspector;
 
-import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-
-import ij.ImagePlus;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -35,7 +32,6 @@ import java.util.List;
 import javax.swing.border.TitledBorder;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
@@ -51,19 +47,13 @@ import org.micromanager.display.InspectorPanel;
 import org.micromanager.display.OverlayPanel;
 import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.display.internal.events.CanvasDrawEvent;
-import org.micromanager.display.internal.events.LayoutChangedEvent;
-import org.micromanager.display.internal.events.NewOverlayEvent;
-import org.micromanager.display.internal.MMVirtualStack;
-
-import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * This class contains panels used to draw overlays on the image canvas.
  */
 class OverlaysPanel extends InspectorPanel {
    private static final String NO_OVERLAY = "   ";
-   private ArrayList<OverlayPanel> overlays_;
+   private final ArrayList<OverlayPanel> overlays_;
    private DisplayWindow display_;
    private Inspector inspector_;
    
@@ -147,7 +137,7 @@ class OverlaysPanel extends InspectorPanel {
    @Subscribe
    public void onCanvasDraw(CanvasDrawEvent event) {
       List<Image> images = display_.getDisplayedImages();
-      if (images.size() == 0) {
+      if (images.isEmpty()) {
          // Nothing to draw on yet.
          return;
       }

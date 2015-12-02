@@ -22,8 +22,6 @@ package org.micromanager.display.internal.inspector;
 
 import com.google.common.eventbus.Subscribe;
 
-import ij.gui.ImageWindow;
-
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.HashMap;
@@ -50,7 +48,6 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.Inspector;
 import org.micromanager.display.InspectorPanel;
-import org.micromanager.display.internal.MMVirtualStack;
 import org.micromanager.display.PixelsSetEvent;
 
 import org.micromanager.internal.utils.ReportingUtils;
@@ -60,11 +57,10 @@ public class CommentsPanel extends InspectorPanel {
    private JTextArea imageCommentsTextArea_;
    private JTextArea summaryCommentsTextArea_;
    private JLabel errorLabel_;
-   private ImageWindow currentWindow_;
    private DataViewer display_;
    private Datastore store_;
    private Timer updateTimer_;
-   private HashMap<Image, Timer> imageToSaveTimer_;
+   private final HashMap<Image, Timer> imageToSaveTimer_;
 
    /** Creates new form CommentsPanel */
    public CommentsPanel() {
@@ -125,7 +121,7 @@ public class CommentsPanel extends InspectorPanel {
     * after the user is done typing (5s).
     */
    private void recordCommentsChanges() {
-      if (display_.getDisplayedImages().size() == 0) {
+      if (display_.getDisplayedImages().isEmpty()) {
          // No images to record for.
          return;
       }
@@ -246,6 +242,7 @@ public class CommentsPanel extends InspectorPanel {
     * We postpone comments display updates slightly in case the image display
     * is changing rapidly, to ensure that we don't end up with a race condition
     * that causes us to display the wrong metadata.
+    * @param image 
     */
    public synchronized void imageChangedUpdate(final Image image) {
       // Do nothing if the new image's comments match our current contents,

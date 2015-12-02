@@ -25,8 +25,6 @@ import com.bulenkov.iconloader.IconLoader;
 import com.google.common.eventbus.Subscribe;
 
 import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.GraphicsConfiguration;
@@ -42,7 +40,6 @@ import java.awt.event.WindowAdapter;
 import java.io.File;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
 
@@ -68,7 +65,6 @@ import org.micromanager.display.InspectorPlugin;
 import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.internal.events.DisplayActivatedEvent;
-import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.events.DisplayAboutToShowEvent;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.MMStudio;
@@ -96,7 +92,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
     * then it pretends to be the TOPMOST_DISPLAY option instead.
     */
    private class DisplayMenuItem {
-      private DataViewer menuDisplay_;
+      private final DataViewer menuDisplay_;
       public DisplayMenuItem(DataViewer display) {
          menuDisplay_ = display;
       }
@@ -105,6 +101,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
          return menuDisplay_;
       }
 
+      @Override
       public String toString() {
          if (menuDisplay_ != null) {
             return truncateName(menuDisplay_.getName(), 40);
@@ -130,12 +127,12 @@ public class InspectorFrame extends MMFrame implements Inspector {
    }
 
    private DataViewer display_;
-   private Stack<DataViewer> displayHistory_;
-   private ArrayList<InspectorPanel> panels_;
-   private JPanel contents_;
+   private final Stack<DataViewer> displayHistory_;
+   private final ArrayList<InspectorPanel> panels_;
+   private final JPanel contents_;
    private JComboBox displayChooser_;
    private JButton raiseButton_;
-   private JLabel curDisplayTitle_;
+   private final JLabel curDisplayTitle_;
 
    public InspectorFrame(DataViewer display) {
       super();
@@ -283,8 +280,10 @@ public class InspectorFrame extends MMFrame implements Inspector {
 
    /**
     * Add a new InspectorPanel to the window.
+    * @param title Title of the panel
+    * @param panel Inspector Panel to be added
     */
-   public void addPanel(String title, final InspectorPanel panel) {
+   public final void addPanel(String title, final InspectorPanel panel) {
       panels_.add(panel);
       panel.setInspector(this);
       // Wrap the panel in our own panel which includes the header.
