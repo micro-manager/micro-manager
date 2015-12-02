@@ -19,7 +19,6 @@
 package org.micromanager.internal;
 
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
-import org.micromanager.acquisition.internal.TaggedImageQueue;
 import bsh.EvalError;
 import bsh.Interpreter;
 
@@ -32,13 +31,10 @@ import ij.WindowManager;
 import ij.gui.Roi;
 import ij.gui.Toolbar;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.geom.AffineTransform;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.Toolkit;
-import java.awt.Window;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
@@ -49,9 +45,7 @@ import java.util.List;
 
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
-import javax.swing.JMenu;
 import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
@@ -62,9 +56,6 @@ import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
-import mmcorej.TaggedImage;
-
-import org.json.JSONException;
 
 import org.micromanager.Album;
 import org.micromanager.AutofocusPlugin;
@@ -73,7 +64,6 @@ import org.micromanager.data.DataManager;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.display.DisplayManager;
-import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.ChannelExposureEvent;
 import org.micromanager.events.EventManager;
@@ -129,7 +119,6 @@ import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.internal.utils.GUIUtils;
-import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -837,7 +826,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
       isClickToMoveEnabled_ = isEnabled;
       if (isEnabled) {
          IJ.setTool(Toolbar.HAND);
-         toolsMenu_.setMouseMovesStage(isEnabled);
+         ToolsMenu.setMouseMovesStage(isEnabled);
       }
       events().post(new MouseMovesStageEvent(isEnabled));
    }
