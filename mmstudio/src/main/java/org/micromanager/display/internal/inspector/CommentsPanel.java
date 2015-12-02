@@ -242,6 +242,7 @@ public class CommentsPanel extends InspectorPanel {
     * We postpone comments display updates slightly in case the image display
     * is changing rapidly, to ensure that we don't end up with a race condition
     * that causes us to display the wrong metadata.
+    * @param image 
     */
    public synchronized void imageChangedUpdate(final Image image) {
       // Do nothing if the new image's comments match our current contents,
