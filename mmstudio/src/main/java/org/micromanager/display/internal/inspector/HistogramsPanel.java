@@ -58,12 +58,10 @@ import org.micromanager.display.NewDisplaySettingsEvent;
 import org.micromanager.display.internal.events.ViewerAddedEvent;
 import org.micromanager.display.internal.events.ViewerRemovedEvent;
 import org.micromanager.display.internal.DefaultDisplayManager;
-import org.micromanager.display.internal.DisplayDestroyedEvent;
 import org.micromanager.display.internal.link.DisplayGroupManager;
 import org.micromanager.display.PixelsSetEvent;
 
 import org.micromanager.events.internal.DefaultEventManager;
-import org.micromanager.events.DisplayAboutToShowEvent;
 
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -338,17 +336,6 @@ public final class HistogramsPanel extends InspectorPanel {
       }
    }
 
-   // A new display has arrived, so we need to start tracking its histograms.
-   @Subscribe
-   public synchronized void onNewDisplay(DisplayAboutToShowEvent event) {
-      try {
-         setupDisplay(event.getDisplay());
-      }
-      catch (Exception e) {
-         ReportingUtils.logError(e, "Unable to set up new display's histograms");
-      }
-   }
-
    // An external display has been added, so we need to start tracking its
    // histograms.
    @Subscribe
@@ -359,11 +346,6 @@ public final class HistogramsPanel extends InspectorPanel {
       catch (Exception e) {
          ReportingUtils.logError(e, "Unable to set up new display's histograms");
       }
-   }
-
-   @Subscribe
-   public synchronized void onDisplayDestroyed(DisplayDestroyedEvent event) {
-      removeDisplay(event.getDisplay());
    }
 
    @Subscribe

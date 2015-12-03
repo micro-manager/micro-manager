@@ -48,6 +48,7 @@ import org.micromanager.display.OverlayPanelFactory;
 import org.micromanager.display.OverlayPlugin;
 import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.display.internal.events.DisplayActivatedEvent;
+import org.micromanager.display.internal.events.GlobalDisplayDestroyedEvent;
 import org.micromanager.display.internal.events.NewOverlayEvent;
 import org.micromanager.display.internal.events.ViewerAddedEvent;
 import org.micromanager.display.internal.events.ViewerRemovedEvent;
@@ -469,6 +470,7 @@ public final class DefaultDisplayManager implements DisplayManager {
          display.registerForEvents(this);
       }
       allDisplays_.add(display);
+      DefaultEventManager.getInstance().post(new ViewerAddedEvent(display));
    }
 
    /**
@@ -481,13 +483,6 @@ public final class DefaultDisplayManager implements DisplayManager {
       if (getIsManaged(store)) {
          storeToDisplays_.get(store).remove(display);
       }
-      stopTrackingDisplay(display);
-   }
-
-   /**
-    * A display is going away, so we should stop listing it in allDisplays.
-    */
-   public static void stopTrackingDisplay(DisplayWindow display) {
       if (staticInstance_.allDisplays_.contains(display)) {
          staticInstance_.allDisplays_.remove(display);
       }
@@ -495,6 +490,15 @@ public final class DefaultDisplayManager implements DisplayManager {
          // This should never happen.
          ReportingUtils.logError("DisplayManager informed of destruction of display it didn't know existed.");
       }
+   }
+
+   /**
+    * Translate the display-destroyed event into a viewer-removed event.
+    */
+   @Subscribe
+   public void onGlobalDisplayDestroyed(GlobalDisplayDestroyedEvent event) {
+      DefaultEventManager.getInstance().post(
+            new ViewerRemovedEvent(event.getDisplay()));
    }
 
    public static DefaultDisplayManager getInstance() {

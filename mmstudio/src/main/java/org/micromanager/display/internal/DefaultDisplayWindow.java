@@ -874,10 +874,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       DefaultEventManager.getInstance().post(
             new GlobalDisplayDestroyedEvent(this));
       DefaultEventManager.getInstance().unregisterForEvents(this);
-      // HACK: notify the DisplayManager that we're going away.
-      // TODO: is this necessary? DisplayManager already listens for display
-      // events.
-      DefaultDisplayManager.stopTrackingDisplay(this);
       store_.unregisterForEvents(this);
       // Closing the window immediately invalidates the ImagePlus
       // ImageProcessor that we use for drawing, even if our CanvasUpdateQueue

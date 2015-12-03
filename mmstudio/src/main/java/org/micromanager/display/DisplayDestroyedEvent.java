@@ -21,8 +21,8 @@
 package org.micromanager.display;
 
 /**
- * This event signifies that a display has been closed (that its
- * forceClosed() method was called).
+ * This event signifies that a DisplayWindow has been closed (that its
+ * forceClosed() method was called). It is not called for DataViewers.
  */
 public interface DisplayDestroyedEvent {
    /**
