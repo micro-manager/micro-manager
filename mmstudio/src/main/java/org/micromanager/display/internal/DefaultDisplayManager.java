@@ -49,6 +49,7 @@ import org.micromanager.display.OverlayPlugin;
 import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.display.internal.events.DisplayActivatedEvent;
 import org.micromanager.display.internal.events.NewOverlayEvent;
+import org.micromanager.display.internal.events.ViewerAddedEvent;
 import org.micromanager.display.internal.inspector.InspectorFrame;
 import org.micromanager.display.internal.link.DisplayGroupManager;
 
@@ -242,6 +243,8 @@ public final class DefaultDisplayManager implements DisplayManager {
    public void addViewer(DataViewer viewer) {
       externalViewers_.add(viewer);
       DisplayGroupManager.getInstance().addDisplay(viewer);
+      DefaultEventManager.getInstance().post(
+            new ViewerAddedEvent(viewer));
       createFirstInspector();
    }
 

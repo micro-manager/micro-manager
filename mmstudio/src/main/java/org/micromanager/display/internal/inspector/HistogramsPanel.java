@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Timer;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -54,7 +53,7 @@ import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.Inspector;
 import org.micromanager.display.InspectorPanel;
 import org.micromanager.display.NewDisplaySettingsEvent;
-
+import org.micromanager.display.internal.events.ViewerAddedEvent;
 import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.display.internal.DisplayDestroyedEvent;
 import org.micromanager.display.internal.link.DisplayGroupManager;
@@ -341,6 +340,18 @@ public final class HistogramsPanel extends InspectorPanel {
    public synchronized void onNewDisplay(DisplayAboutToShowEvent event) {
       try {
          setupDisplay(event.getDisplay());
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Unable to set up new display's histograms");
+      }
+   }
+
+   // An external display has been added, so we need to start tracking its
+   // histograms.
+   @Subscribe
+   public synchronized void onViewerAdded(ViewerAddedEvent event) {
+      try {
+         setupDisplay(event.getViewer());
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Unable to set up new display's histograms");
