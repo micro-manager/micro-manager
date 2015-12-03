@@ -20,8 +20,6 @@
 
 package org.micromanager.display.internal.inspector;
 
-import net.miginfocom.swing.MigLayout;
-
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -44,7 +42,7 @@ import org.micromanager.display.internal.LUTMaster;
  * TODO: LUTs with color displays don't currently work.
  */
 public class ColorModeCombo extends JButton {
-   private DataViewer display_;
+   private final DataViewer display_;
 
    public ColorModeCombo(DataViewer display) {
       super();

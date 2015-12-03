@@ -31,8 +31,8 @@ import java.util.ArrayList;
  * one of these events on your EventBus.
  */
 public class NewHistogramsEvent {
-   private int channel_;
-   private ArrayList<HistogramData> datas_;
+   private final int channel_;
+   private final ArrayList<HistogramData> datas_;
 
    /**
     * @param channel The channel index for which these new histograms are
@@ -47,6 +47,7 @@ public class NewHistogramsEvent {
 
    /**
     * Return the channel for which new histograms have been calculated.
+    * @return Channel for which new histograms were calculated
     */
    public int getChannel() {
       return channel_;
@@ -55,6 +56,8 @@ public class NewHistogramsEvent {
    /**
     * Return the number of components in the image(s) used to generate the
     * histograms.
+    * @return Number of Components (i.e. 1 for grey scale, 3 for RGB) in the image 
+    * used to generate the histogram
     */
    public int getNumComponents() {
       return datas_.size();
@@ -62,6 +65,8 @@ public class NewHistogramsEvent {
 
    /**
     * Retrieve the HistogramData corresponding to one component.
+    * @param component Desired component index
+    * @return Histogram for the requested component
     */
    public HistogramData getHistogram(int component) {
       return datas_.get(component);
