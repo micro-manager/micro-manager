@@ -106,7 +106,8 @@ public class HistogramData {
     * Retrieve the intensity of the dimmest sample in the dataset once a
     * fraction of all pixels have been discarded. See the extremaPercentage
     * parameter to DisplayManager.calculateHistogram() for more information.
-    * @return lowest intensity value in the dataset ignoring given fraction of outliers
+    * @return lowest intensity value in the dataset ignoring given fraction of
+    * outliers
     */
    public int getMinIgnoringOutliers() {
       return minIgnoringOutliers_;
@@ -116,7 +117,8 @@ public class HistogramData {
     * Retrieve the intensity of the brightest sample in the dataset once a
     * fraction of all pixels have been discarded. See the extremaPercentage
     * parameter to DisplayManager.calculateHistogram() for more information.
-    * @return highest intensity value in the dataset ignoring given fraction of outliers
+    * @return highest intensity value in the dataset ignoring given fraction of
+    * outliers
     */
    public int getMaxIgnoringOutliers() {
       return maxIgnoringOutliers_;
@@ -143,7 +145,8 @@ public class HistogramData {
     * Retrieve the number of distinct intensities that fit within each bin
     * of the histogram. For example, if this is 4, then the first bin will
     * hold the number of samples whose intensities were 0, 1, 2, or 3.
-    * @return Number of divers intensity values that can be represented in a histogram bin
+    * @return Range of pixel intensities that fit into a single bin in the
+    *         histogram.
     */
    public int getBinSize() {
       return binSize_;

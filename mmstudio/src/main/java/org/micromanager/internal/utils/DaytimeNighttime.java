@@ -198,7 +198,8 @@ public class DaytimeNighttime {
     * If the specified mode is not currently active, then we switch to that
     * mode without updating the UI. Useful if a component must be generated
     * with a nonstandard look-and-feel.
-    * @param mode ???
+    * @param mode String indicating the mode, e.g. CompatibilityInterface.DAY
+    *        or CompatibilityInterface.NIGHT.
     */
    public static void suspendToMode(String mode) {
       suspendedMode_ = getBackgroundMode();

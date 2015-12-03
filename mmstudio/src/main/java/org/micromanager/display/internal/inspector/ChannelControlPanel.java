@@ -476,10 +476,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       return builder;
    }
 
-   /**
-    *
-    * @param event
-    */
    @Subscribe
    public void onFullScale(FullScaleEvent event) {
       setScale(0,
@@ -726,7 +722,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    /**
     * Display settings have changed; update our GUI to match.
-    * @param event
     */
    @Subscribe
    public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
@@ -746,7 +741,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    /**
     * Summary metadata has changed; check for change in channel name.
-    * @param event
     */
    @Subscribe
    public void onNewSummaryMetadata(NewSummaryMetadataEvent event) {
@@ -760,7 +754,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    /**
     * Receive new histogram data.
-    * @param event
     */
    @Subscribe
    public void onNewHistograms(NewHistogramsEvent event) {
@@ -803,7 +796,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    /**
     * The mouse has left the canvas; stop highlighting it.
-    * @param event
     */
    @Subscribe
    public void onMouseExited(MouseExitedEvent event) {

@@ -53,8 +53,9 @@ public interface DisplaySettings {
    interface ContrastSettings {
       /**
        * Return the array of minimum contrast settings for all components.
-       * @return array of minimum contrast settings (i.e. the intensity value 
-       * in the image that results in black display) for all components
+       * @return array of minimum contrast settings (i.e. the intensity value
+       * in the image that results in black display) for all components. May
+       * be null.
        */
       public Integer[] getContrastMins();
 
@@ -74,8 +75,9 @@ public interface DisplaySettings {
 
       /**
        * Return the array of maximum contrast settings for all components.
-       * @return array of maximum contrast settings (i.e. the intensity value 
-       * in the image that results in the brightest display value) for all components
+       * @return array of maximum contrast settings (i.e. the intensity value
+       * in the image that results in the brightest display value) for all
+       * components. May be null.
        */
       public Integer[] getContrastMaxes();
 
@@ -96,8 +98,7 @@ public interface DisplaySettings {
       /**
        * Return the array of gamma settings for all components. Note that
        * multi-component images do not currently make use of the gamma setting.
-       * This function will often return a null pointer!!!
-       * @return Array of gamma settings for all components
+       * @return Array of gamma settings for all components. May be null.
        */
       public Double[] getContrastGammas();
 
@@ -381,7 +382,10 @@ public interface DisplaySettings {
     * @param index Channel index to get the bit depth index for
     * @param defaultVal Default value to return if no bit depth index is
     *        available.
-    * @return Bit depth for the specified channel (what does "bit depth index" mean???)
+    * @return Index into the "bit depth" dropdown menu for the specified
+    *         channel. 0 means that the camera's bit depth is used; otherwise,
+    *         the bit depth is equal to the the index + 3 (so e.g. 1 means a
+    *         bit depth of 4).
     */
    public Integer getSafeBitDepthIndex(int index, Integer defaultVal);
 
