@@ -56,6 +56,7 @@ import org.micromanager.display.InspectorPanel;
 import org.micromanager.display.NewDisplaySettingsEvent;
 
 import org.micromanager.display.internal.events.ViewerAddedEvent;
+import org.micromanager.display.internal.events.ViewerRemovedEvent;
 import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.display.internal.DisplayDestroyedEvent;
 import org.micromanager.display.internal.link.DisplayGroupManager;
@@ -362,7 +363,15 @@ public final class HistogramsPanel extends InspectorPanel {
 
    @Subscribe
    public synchronized void onDisplayDestroyed(DisplayDestroyedEvent event) {
-      DataViewer display = event.getDisplay();
+      removeDisplay(event.getDisplay());
+   }
+
+   @Subscribe
+   public synchronized void onViewerRemoved(ViewerRemovedEvent event) {
+      removeDisplay(event.getViewer());
+   }
+
+   private void removeDisplay(DataViewer display) {
       if (!displayToPanels_.containsKey(display)) {
          // This should never happen.
          ReportingUtils.logError("Got notified of a display being destroyed when we don't know about that display");
