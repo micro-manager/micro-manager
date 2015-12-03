@@ -1299,7 +1299,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
 
       } catch (Exception exc) {
          ReportingUtils.showError(exc,
-               "\nAcquistion window failed to open due to invalid or corrupted settings.\n"
+               "\nAcquisition window failed to open due to invalid or corrupted settings.\n"
                + "Try resetting registry settings to factory defaults (Menu Tools|Options).");
       }
    }

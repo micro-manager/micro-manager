@@ -883,7 +883,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       commentTextArea_ = new JTextArea();
       commentScrollPane.setViewportView(commentTextArea_);
       commentTextArea_.setFont(new Font("", Font.PLAIN, 10));
-      commentTextArea_.setToolTipText("Comment for the current acquistion");
+      commentTextArea_.setToolTipText("Comment for the current acquisition");
       commentTextArea_.setWrapStyleWord(true);
       commentTextArea_.setLineWrap(true);
       commentTextArea_.setBorder(new EtchedBorder(EtchedBorder.LOWERED));
@@ -1007,7 +1007,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       });
 
 
-      // load acquistion settings
+      // load acquisition settings
       loadAcqSettings();
 
       // create the table of channels

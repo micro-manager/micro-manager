@@ -73,14 +73,14 @@ public interface AcquisitionEngine {
    public void setZStageDevice(String stageLabel_);
 
    /**
-    * Sets whether the Live window will be updated during acquistion
+    * Sets whether the Live window will be updated during acquisition
     */
    public void setUpdateLiveWindow(boolean b);
    
    // run-time control
 
    /**
-    * Starts acquisition as defined in the Multi-Dimensional Acquistion Window.
+    * Starts acquisition as defined in the Multi-Dimensional Acquisition Window.
     * Returns the Datastore for the acquisition.
     * @throws MMException
     */
@@ -109,7 +109,7 @@ public interface AcquisitionEngine {
    public boolean isAcquisitionRunning();
 
    /**
-    * Determines if a multi-field acquistion is running
+    * Determines if a multi-field acquisition is running
     */
    public boolean isMultiFieldRunning();
 
@@ -146,23 +146,23 @@ public interface AcquisitionEngine {
    public void shutdown();
 
    /**
-    * Pause/Unpause a running acquistion
+    * Pause/Unpause a running acquisition
     */
    public void setPause(boolean state);
    
    // settings
    /**
-    * Returns Frame Interval set by user in Multi-Dimensional Acquistion Windows
+    * Returns Frame Interval set by user in Multi-Dimensional Acquisition Window
     */
    public double getFrameIntervalMs();
 
    /**
-    * Returns Z slice Step Size set by user in Multi-Dimensional Acquistion Windows
+    * Returns Z slice Step Size set by user in Multi-Dimensional Acquisition Window
     */
    public double getSliceZStepUm();
 
    /**
-    * Returns Z slice bottom position set by user in Multi-Dimensional Acquistion Windows
+    * Returns Z slice bottom position set by user in Multi-Dimensional Acquisition Window
     */
    public double getSliceZBottomUm();
 
@@ -183,12 +183,12 @@ public interface AcquisitionEngine {
    public String[] getChannelConfigs();
 
    /**
-    * Returns number of frames set by user in Multi-Dimensional Acquistion Window
+    * Returns number of frames set by user in Multi-Dimensional Acquisition Window
     */
    public int getNumFrames();
 
    /**
-    * Returns the configuration preset group currently selected in the Multi-Dimensional Acquistion Window
+    * Returns the configuration preset group currently selected in the Multi-Dimensional Acquisition Window
     */
    public String getChannelGroup();
 
