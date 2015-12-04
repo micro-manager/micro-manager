@@ -41,6 +41,7 @@ import java.io.File;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Stack;
 
@@ -130,7 +131,8 @@ public class InspectorFrame extends MMFrame implements Inspector {
 
    private DataViewer display_;
    private final Stack<DataViewer> displayHistory_;
-   private final ArrayList<InspectorPanel> panels_;
+   // Maps InspectorPanels to the JPanels that contain them in our UI.
+   private HashMap<InspectorPanel, JPanel> panelToWrapper_;
    private final JPanel contents_;
    private JComboBox displayChooser_;
    private JButton raiseButton_;
@@ -197,7 +199,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
       add(scroller);
       setVisible(true);
 
-      panels_ = new ArrayList<InspectorPanel>();
+      panelToWrapper_ = new HashMap<InspectorPanel, JPanel>();
       // Hard-coded initial panels.
       addPanel(CONTRAST_TITLE, new HistogramsPanel());
       addPanel("Metadata", new MetadataPanel());
@@ -290,11 +292,11 @@ public class InspectorFrame extends MMFrame implements Inspector {
     * @param panel Inspector Panel to be added
     */
    public final void addPanel(String title, final InspectorPanel panel) {
-      panels_.add(panel);
       panel.setInspector(this);
       // Wrap the panel in our own panel which includes the header.
       final JPanel wrapper = new JPanel(
             new MigLayout("flowy, insets 0, fillx"));
+      panelToWrapper_.put(panel, wrapper);
       wrapper.setBorder(BorderFactory.createRaisedBevelBorder());
 
       // Create a clickable header to show/hide contents, and hold a gear
@@ -337,11 +339,11 @@ public class InspectorFrame extends MMFrame implements Inspector {
             if (panel.isVisible()) {
                wrapper.add(panel, "growx, gap 0");
                label.setIcon(UIManager.getIcon("Tree.expandedIcon"));
-            }  
+            }
             else {
                wrapper.remove(panel);
                label.setIcon(UIManager.getIcon("Tree.collapsedIcon"));
-            }  
+            }
             if (gearButton != null) {
                gearButton.setVisible(panel.isVisible());
             }
@@ -360,7 +362,8 @@ public class InspectorFrame extends MMFrame implements Inspector {
          panel.setVisible(false); // So the first click will show it.
       }
 
-      contents_.add(wrapper, "growx");
+      // Make wrappers take no space when hidden.
+      contents_.add(wrapper, "growx, hidemode 2");
       validate();
    }
 
@@ -377,6 +380,12 @@ public class InspectorFrame extends MMFrame implements Inspector {
       SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
+            for (InspectorPanel panel : panelToWrapper_.keySet()) {
+               if (display_ != null) {
+                  panelToWrapper_.get(panel).setVisible(
+                     panel.getIsValid(display_));
+               }
+            }
             // HACK: coerce minimum size to our default size for the duration
             // of this pack; otherwise our default size effectively gets
             // ignored on a routine basis.
@@ -452,14 +461,10 @@ public class InspectorFrame extends MMFrame implements Inspector {
       // Update our listing of displays.
       display_ = display;
       populateChooser();
-      for (InspectorPanel panel : panels_) {
+      for (InspectorPanel panel : panelToWrapper_.keySet()) {
          try {
             if (panel.getIsValid(display_)) {
-               panel.setVisible(true);
                panel.setDataViewer(display_);
-            }
-            else {
-               panel.setVisible(false);
             }
          }
          catch (Exception e) {
@@ -483,8 +488,9 @@ public class InspectorFrame extends MMFrame implements Inspector {
             curDisplayTitle_.setVisible(false);
          }
       }
-      // Redo the layout to account for curDisplayTitle_ being shown/hidden.
-      validate();
+      // Redo the layout to account for curDisplayTitle_ being shown/hidden
+      // and for InspectorPanels that need to be shown/hidden.
+      relayout();
    }
 
    /**
@@ -513,7 +519,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
     * references lying around.
     */
    private void cleanup() {
-      for (InspectorPanel panel : panels_) {
+      for (InspectorPanel panel : panelToWrapper_.keySet()) {
          panel.cleanup();
       }
       savePosition();
