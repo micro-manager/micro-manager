@@ -24,7 +24,7 @@ package org.micromanager.display;
  * This is a simple container class containing a histogram for one component
  * of an int-based image, and some related statistics. You can generate new
  * HistogramData objects yourself, or use DisplayManager.calculateHistogram()
- * to generate a HistogramData based off of an Image.
+ * and related methods to generate a HistogramData based off of an Image.
  */
 public class HistogramData {
    private final int[] histogram_;
