@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 import javax.swing.ImageIcon;
 
 import javax.swing.JButton;
@@ -32,6 +33,7 @@ import org.micromanager.data.internal.StorageRAM;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
+import org.micromanager.data.Metadata;
 import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.PixelsSetEvent;
@@ -252,7 +254,11 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
             Coords newCoords = image.getCoords().copy()
                .time(0)
                .channel(imageChannel).build();
-            displayImage(image.copyAtCoords(newCoords));
+            // Generate a new UUID for the image, so that our histogram
+            // update code realizes this is a new image.
+            Metadata newMetadata = image.getMetadata().copy()
+               .uuid(UUID.randomUUID()).build();
+            displayImage(image.copyWith(newCoords, newMetadata));
             channelsSet.add(imageChannel);
             if (channelsSet.size() == numChannels) {
                // Got every channel.
@@ -506,7 +512,9 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
             TaggedImage tagged = core_.getTaggedImage(c);
             Image temp = new DefaultImage(tagged);
             Coords newCoords = temp.getCoords().copy().channel(c).build();
-            temp = temp.copyAtCoords(newCoords);
+            Metadata newMetadata = temp.getMetadata().copy()
+               .uuid(UUID.randomUUID()).build();
+            temp = temp.copyWith(newCoords, newMetadata);
             result.add(temp);
          }
          if (shouldDisplay) {
