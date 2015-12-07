@@ -34,6 +34,7 @@ import javax.swing.JPanel;
 import javax.swing.UIManager;
 
 import org.micromanager.internal.utils.JavaUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Histogram view.
@@ -112,10 +113,10 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
 
    /**
     * Auto-scales Y axis.
-    *
     */
    public void setAutoScale() {
-      setAutoBounds();
+      bounds_.yMin = datas_[0].getBounds().yMin;
+      bounds_.yMax = datas_[0].getBounds().yMax;
    }
 
    /*
@@ -617,6 +618,11 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       return bounds_;
    }
 
+   public void setXBounds(double xMin, double xMax) {
+      bounds_.xMin = xMin;
+      bounds_.xMax = xMax;
+   }
+
    public void setBounds(double xMin, double xMax, double yMin, double yMax){
       bounds_.xMin = xMin;
       bounds_.xMax = xMax;
@@ -672,13 +678,19 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       }
 
       // bounds can have strange values (i.e. 1e-42).  Avoid artefacts:
+      // TODO: does this ever happen now? If so, why?
       if (bounds_.getRangeX() <= 0.0 || bounds_.getRangeY() <= 1.e-10) {
+         ReportingUtils.logError("Invalid histogram bounds when drawing");
          return; // invalid range data
       }
 
-      // set scaling
-      float xUnit = (float) (box.width / bounds_.getRangeX());
-      float yUnit = (float) (box.height / bounds_.getRangeY());
+      // Determine scaling. Multiple bins in our source data may be applied
+      // to a single pixel in the output; compress the data as needed by
+      // summing bins together.
+      data = data.compress(Math.min(data.getSize(), box.width), 0,
+            (int) bounds_.xMax);
+      float xUnit = 1.0f;
+      float yUnit = (float) (box.height / data.getBounds().getRangeY());
 
       GeneralPath trace = new GeneralPath(
             GeneralPath.WIND_EVEN_ODD, data.getSize() + 1);

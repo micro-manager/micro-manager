@@ -888,12 +888,20 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
       updateHistogram();
       histogram_.setVisible(true);
-      //Draw histogram and stats
+      // Draw histogram and stats. This includes respecifying the histogram's
+      // visible data and X scale as those may have changed.
       for (int i = 0; i < lastHistograms_.length; ++i) {
          if (lastHistograms_[i].getNumSamples() > 0) {
-            GraphData histogramData = new GraphData();
-            histogramData.setData(lastHistograms_[i].getHistogram());
-            histogram_.setData(i, histogramData);
+            GraphData graphData = new GraphData();
+            graphData.setData(lastHistograms_[i].getHistogram());
+            histogram_.setData(i, graphData);
+            // Set X scale of histogram. Default to camera depth.
+            int scalePow = lastHistograms_[i].getBitDepth();
+            if (histRangeComboBox_.getSelectedIndex() != 0) {
+               // Add 3 to get from index to power-of-2.
+               scalePow = histRangeComboBox_.getSelectedIndex() + 3;
+            }
+            histogram_.setXBounds(0, Math.pow(2, scalePow));
          }
       }
       histogram_.setAutoScale();
