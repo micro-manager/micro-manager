@@ -104,14 +104,14 @@ public class GraphData {
    }
 
    
-   public Point2D.Float getPoint(int index){
+   public Point2D.Double getPoint(int index){
       double x = xVals_[index];
       double y;
       if (index < yVals_.length)
          y = yVals_[index];
       else
          y = 0.0;
-      return new Point2D.Float((float)x, (float)y);
+      return new Point2D.Double(x, y);
    }
 
    public void setData(double xVals[], double yVals[]) {

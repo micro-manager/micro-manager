@@ -166,7 +166,11 @@ public class GraphPanel extends JPanel {
       Point2D.Float pt1 = getDevicePoint(new Point2D.Float(1.0f, 0.0f), box, xUnit, yUnit);
       float halfWidth = (pt1.x - pt0.x)/2;
       for (int i=0; i<data_.getSize(); i++){
-         Point2D.Float pt = getDevicePoint(data_.getPoint(i), box, xUnit, yUnit);
+         // Convert from double to float.
+         Point2D.Double tmp = data_.getPoint(i);
+         Point2D.Float pt = getDevicePoint(
+               new Point2D.Float((float) tmp.x, (float) tmp.y),
+               box, xUnit, yUnit);
          trace.lineTo(pt.x - halfWidth, pt.y);
          trace.lineTo(pt.x + halfWidth, pt.y);
       }
