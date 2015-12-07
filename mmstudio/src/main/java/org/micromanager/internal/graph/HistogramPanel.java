@@ -142,9 +142,9 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       double xUnit = (box.width / bounds_.getRangeX());
       double yUnit = (box.height / bounds_.getRangeY());
 
-      Point2D.Double ptPosBottom = new Point2D.Double(xPos, (double)bounds_.yMax);
+      Point2D.Double ptPosBottom = new Point2D.Double(xPos, bounds_.yMax);
       Point2D.Double ptDevBottom = getDevicePoint(ptPosBottom, box, xUnit, yUnit);
-      Point2D.Double ptPosTop = new Point2D.Double(xPos, (double)bounds_.yMin);
+      Point2D.Double ptPosTop = new Point2D.Double(xPos, bounds_.yMin);
       Point2D.Double ptDevTop = getDevicePoint(ptPosTop, box, xUnit, yUnit);
 
       Color oldColor = g.getColor();
@@ -689,6 +689,10 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       data = data.compress(Math.min(data.getSize(), box.width), 0,
             (int) bounds_.xMax);
       double xUnit = 1.0;
+      if (data.getBounds().getRangeY() < 1) {
+         // We have an array of all zeros, i.e. nothing to draw, so don't try.
+         return;
+      }
       double yUnit = (box.height / data.getBounds().getRangeY());
 
       GeneralPath trace = new GeneralPath(
