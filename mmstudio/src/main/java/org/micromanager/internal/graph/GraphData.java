@@ -29,7 +29,6 @@ import java.awt.geom.Point2D;
 public class GraphData {
    private double xVals_[];
    private double yVals_[];
-   private double xBinSize_;
    
    public class Bounds {
       public double xMin;
@@ -42,7 +41,6 @@ public class GraphData {
          xMax = 0.0;
          yMin = 0.0;
          yMax = 0.0;
-         xBinSize_ = 1.0;
       }
       
       double getRangeX(){
@@ -95,15 +93,7 @@ public class GraphData {
       return xVals_.length;
    }
    
-   public double getXBinSize() {
-      return xBinSize_;
-   }
 
-   public void setXBinSize(double binSize) {
-      xBinSize_ = binSize;
-   }
-
-   
    public Point2D.Double getPoint(int index){
       double x = xVals_[index];
       double y;
