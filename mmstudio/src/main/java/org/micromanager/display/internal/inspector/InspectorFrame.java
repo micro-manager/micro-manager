@@ -335,8 +335,9 @@ public class InspectorFrame extends MMFrame implements Inspector {
       header.addMouseListener(new MouseAdapter() {
          @Override
          public void mouseClicked(MouseEvent e) {
-            panel.setVisible(!panel.isVisible());
-            if (panel.isVisible()) {
+            boolean shouldShow = !panel.isVisible();
+            panel.setVisible(shouldShow);
+            if (shouldShow) {
                wrapper.add(panel, "growx, gap 0");
                label.setIcon(UIManager.getIcon("Tree.expandedIcon"));
             }
