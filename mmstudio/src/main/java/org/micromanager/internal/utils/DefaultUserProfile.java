@@ -598,8 +598,20 @@ public class DefaultUserProfile implements UserProfile {
          FileWriter writer = new FileWriter(tempFile);
          writer.write(serialization.toString(2) + "\n");
          writer.close();
-         if (!tempFile.renameTo(new File(path))) {
-            ReportingUtils.logError("Unable to move exported property map to " + path);
+         File destination = new File(path);
+         // Some operating systems (specifically, Windows) don't allow you to
+         // overwrite files with a move operation, so move the destination file
+         // first.
+         if (JavaUtils.isWindows() && destination.exists()) {
+            File backup = new File(destination.getAbsolutePath() + "-autobak");
+            if (backup.exists() && !backup.delete()) {
+               ReportingUtils.logError("Unable to delete existing backup property map file at " + backup.getAbsolutePath() + " to make room for new backup; giving up.");
+               return;
+            }
+            destination.renameTo(backup);
+         }
+         if (!tempFile.renameTo(destination)) {
+            ReportingUtils.logError("Unable to move exported property map to " + path + "; temporary backup file is available at " + tempFile.getAbsolutePath());
          }
       }
       catch (FileNotFoundException e) {
