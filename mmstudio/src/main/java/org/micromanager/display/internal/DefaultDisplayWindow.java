@@ -1137,21 +1137,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       }
    }
 
-   /**
-    * If a DisplayWindow is topmost, return that DisplayWindow; otherwise
-    * return null. This relies on ImageJ's tracking of what the topmost window
-    * is (NB Java does not have any method for determining the Z order of
-    * a window, so any implementation of this method would require manual
-    * tracking by *someone*).
-    */
-   public static DisplayWindow getCurrentWindow() {
-      ImageWindow current = WindowManager.getCurrentWindow();
-      if (current instanceof DummyImageWindow) {
-         return ((DummyImageWindow) current).getMaster();
-      }
-      return null;
-   }
-
    // Letters for differentiating displays for the same dataset.
    private static final String LETTERS = "abcdefghijklmnopqrstuvwxyz";
    /**

@@ -265,9 +265,9 @@ public interface DisplayManager {
    public List<DisplayWindow> getDisplays(Datastore store);
 
    /**
-    * Return the DisplayWindow for the top-level window. Will be null if there
-    * is no such window or that window is not a DisplayWindow (e.g. it is an
-    * ImageJ window instead).
+    * Return the DisplayWindow for the topmost window. This window is not
+    * guaranteed to have focus as there may be other non-DisplayWindow windows
+    * on top of it. Will be null if there is no open DisplayWindow.
     * @return The top-level DisplayWindow, or null.
     */
    public DisplayWindow getCurrentWindow();

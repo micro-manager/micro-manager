@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 
 import javax.swing.JOptionPane;
 
@@ -76,13 +77,13 @@ public final class DefaultDisplayManager implements DisplayManager {
    private final MMStudio studio_;
    private final HashMap<Datastore, ArrayList<DisplayWindow>> storeToDisplays_;
    private LinkedHashMap<String, OverlayPanelFactory> titleToOverlay_;
-   private final ArrayList<DisplayWindow> allDisplays_;
+   private final Stack<DisplayWindow> displayFocusHistory_;
    private final HashSet<DataViewer> externalViewers_;
 
    public DefaultDisplayManager(MMStudio studio) {
       studio_ = studio;
       storeToDisplays_ = new HashMap<Datastore, ArrayList<DisplayWindow>>();
-      allDisplays_ = new ArrayList<DisplayWindow>();
+      displayFocusHistory_ = new Stack<DisplayWindow>();
       externalViewers_ = new HashSet<DataViewer>();
       studio_.events().registerForEvents(this);
       staticInstance_ = this;
@@ -236,9 +237,17 @@ public final class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
-   public void raisedToTop(DataViewer display) {
+   public void raisedToTop(DataViewer viewer) {
+      if (viewer instanceof DisplayWindow) {
+         // Update our knowledge of the Z-ordering of the DisplayWindows.
+         DisplayWindow display = (DisplayWindow) viewer;
+         if (displayFocusHistory_.contains(display)) {
+            displayFocusHistory_.remove(display);
+            displayFocusHistory_.push(display);
+         }
+      }
       DefaultEventManager.getInstance().post(
-            new DisplayActivatedEvent(display));
+            new DisplayActivatedEvent(viewer));
    }
 
    @Override
@@ -294,12 +303,15 @@ public final class DefaultDisplayManager implements DisplayManager {
 
    @Override
    public DisplayWindow getCurrentWindow() {
-      return DefaultDisplayWindow.getCurrentWindow();
+      if (displayFocusHistory_.isEmpty()) {
+         return null;
+      }
+      return displayFocusHistory_.peek();
    }
 
    @Override
    public List<DisplayWindow> getAllImageWindows() {
-      return new ArrayList<DisplayWindow>(allDisplays_);
+      return new ArrayList<DisplayWindow>(displayFocusHistory_);
    }
 
    @Override
@@ -469,7 +481,7 @@ public final class DefaultDisplayManager implements DisplayManager {
          storeToDisplays_.get(store).add(display);
          display.registerForEvents(this);
       }
-      allDisplays_.add(display);
+      displayFocusHistory_.push(display);
       DefaultEventManager.getInstance().post(new ViewerAddedEvent(display));
    }
 
@@ -483,8 +495,8 @@ public final class DefaultDisplayManager implements DisplayManager {
       if (getIsManaged(store)) {
          storeToDisplays_.get(store).remove(display);
       }
-      if (staticInstance_.allDisplays_.contains(display)) {
-         staticInstance_.allDisplays_.remove(display);
+      if (staticInstance_.displayFocusHistory_.contains(display)) {
+         staticInstance_.displayFocusHistory_.remove(display);
       }
       else {
          // This should never happen.
