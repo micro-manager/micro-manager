@@ -407,11 +407,13 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
             getClickBand(x, y);
             if (currentHandle_ != 0) {
                Point2D.Double pt = getPositionPoint(x,y);
-               if (currentHandle_ == 1)
+               if (currentHandle_ == 1) {
                   notifyCursorLeft(pt.x);
-               if (currentHandle_ == 2)
+               }
+               else if (currentHandle_ == 2) {
                   notifyCursorRight(pt.x);
-               if (currentHandle_ == 3) {
+               }
+               else if (currentHandle_ == 3) {
                   double gamma = getGammaFromMousePosition(x,y);
                   if (Math.abs((gamma_ - gamma)/gamma_) < 0.2) {
                      notifyGammaMouse(getGammaFromMousePosition(x, y));
@@ -767,8 +769,8 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
    public Point2D.Double getPositionPoint(int x, int y) {
       Rectangle box = getBox();
       Point2D.Double posPt = new Point2D.Double(
-              (((x - box.x) / box.width) * (bounds_.xMax - bounds_.xMin)),
-              ((((box.y + box.height) - y) / box.height) * (bounds_.yMax - bounds_.yMin)));
+              ((((double) x - box.x) / box.width) * (bounds_.xMax - bounds_.xMin)),
+              (((((double) box.y + box.height) - y) / box.height) * (bounds_.yMax - bounds_.yMin)));
       return posPt;
    }
 
