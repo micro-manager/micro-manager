@@ -77,6 +77,8 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
    private boolean fillTrace_ = false;
    private Color[] traceColors_ = new Color[] {Color.black};
 
+   private boolean isLogScale_ = false;
+
    public HistogramPanel() {
       super();
       addFocusListener(this);
@@ -635,6 +637,10 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       AdjustCursors();
    }
 
+   public void setLogScale(boolean isLogScale) {
+      isLogScale_ = isLogScale;
+   }
+
    // Note: doesn't adjust cursorHighPositions_, so that the contrast line can have an
    // endpoint past the end of the histogram.
    private void AdjustCursors() {
@@ -688,6 +694,9 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       // summing bins together.
       data = data.compress(Math.min(data.getSize(), box.width), 0,
             (int) bounds_.xMax);
+      if (isLogScale_) {
+         data = data.logScale();
+      }
       double xUnit = 1.0;
       if (data.getBounds().getRangeY() < 1) {
          // We have an array of all zeros, i.e. nothing to draw, so don't try.

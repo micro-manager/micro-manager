@@ -156,4 +156,17 @@ public class GraphData {
       result.setData(newYs);
       return result;
    }
+
+   /**
+    * Rescale the Y axis to a logarithmic scale.
+    */
+   public GraphData logScale() {
+      double[] newYs = new double[yVals_.length];
+      for (int i = 0; i < newYs.length; ++i) {
+         newYs[i] = yVals_[i] > 0 ? 1000 * Math.log(yVals_[i]) : 0;
+      }
+      GraphData result = new GraphData();
+      result.setData(newYs);
+      return result;
+   }
 }

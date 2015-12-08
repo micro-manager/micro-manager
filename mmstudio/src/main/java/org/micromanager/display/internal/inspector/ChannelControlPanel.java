@@ -895,6 +895,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             GraphData graphData = new GraphData();
             graphData.setData(lastHistograms_[i].getHistogram());
             histogram_.setData(i, graphData);
+            Boolean isLog = display_.getDisplaySettings().getShouldUseLogScale();
+            if (isLog != null) {
+               histogram_.setLogScale(isLog);
+            }
             // Set X scale of histogram. Default to camera depth.
             int scalePow = lastHistograms_[i].getBitDepth();
             if (histRangeComboBox_.getSelectedIndex() != 0) {
