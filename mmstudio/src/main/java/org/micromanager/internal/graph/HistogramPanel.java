@@ -103,7 +103,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       GeneralPath path = new GeneralPath();
       path.moveTo(ptDevBottom.x, ptDevBottom.y);
       for (int x = 0; x < w; x += 3) {
-         xn = x / w;
+         xn = x / (double) w;
          yn = Math.pow(xn, gamma);
          X = x + (int) ptDevBottom.x;
          Y = (int) ((1 - yn) * h + ptDevTop.y);
@@ -164,9 +164,9 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
 
    /*
     * Draws a line showing the mapping between pixel values and display
-    * intensity on the screen. 
+    * intensity on the screen.
     */
-   public void drawMapping(Graphics2D g, Rectangle box, 
+   public void drawMapping(Graphics2D g, Rectangle box,
          double xStart, double xEnd, double gamma) {
       // correct if Y range is zero
       if (bounds_.getRangeY() == 0.0) {
