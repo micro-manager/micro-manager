@@ -267,7 +267,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       public String toString() {
          String result = String.format("<ContrastSettings (%d components)", getNumComponents());
          for (int i = 0; i < getNumComponents(); ++i) {
-            result += String.format("(%d, %d)", getSafeContrastMin(i, -1), getSafeContrastMax(i, -1));
+            result += String.format("(%d, %d @ %.2f)", getSafeContrastMin(i, -1), getSafeContrastMax(i, -1), getSafeContrastGamma(i, -1.0));
          }
          return result + ">";
       }
