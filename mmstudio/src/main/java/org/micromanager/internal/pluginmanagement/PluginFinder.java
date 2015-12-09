@@ -94,11 +94,18 @@ public class PluginFinder {
          // want to search all JARs on the class path.
          // So we temporarily set the class loader to look only at the given
          // URL for resources.
-         PluginClassLoader loader = new PluginClassLoader(jarURL,
-                 MMStudio.getInstance().getClass().getClassLoader());
-         loader.setBlockInheritedResources(true);
-         result.addAll(findPluginsWithLoader(loader));
-         loader.setBlockInheritedResources(false);
+         // try/catch ensures that any failure to load a single jar won't
+         // cause the entire process of loading plugins to fail.
+         try {
+            PluginClassLoader loader = new PluginClassLoader(jarURL,
+                    MMStudio.getInstance().getClass().getClassLoader());
+            loader.setBlockInheritedResources(true);
+            result.addAll(findPluginsWithLoader(loader));
+            loader.setBlockInheritedResources(false);
+         }
+         catch (Throwable e) {
+            ReportingUtils.logError(e, "Unable to load JAR at " + jarURL);
+         }
       }
       return result;
    }
