@@ -78,7 +78,7 @@ public class ChannelUtils {
             String cameraChannelName = GlobalSettings.getInstance().getDemoMode() ?
                     new String[]{"Violet","Blue","Green","Yellow","Red","FarRed"}[i]
                     : Magellan.getCore().getCameraChannelName(i);
-            if (getChannelConfigs(channelGroup).length == 0) {
+            if (getChannelConfigs(channelGroup).length == 0 || channelGroup.isEmpty() ) {
                Color color = new Color(GlobalSettings.getInstance().getIntInPrefs(PREF_COLOR + cameraChannelName,
                        DEFAULT_COLORS[i].getRGB()));
                boolean use = GlobalSettings.getInstance().getBooleanInPrefs(PREF_USE + cameraChannelName, true);
