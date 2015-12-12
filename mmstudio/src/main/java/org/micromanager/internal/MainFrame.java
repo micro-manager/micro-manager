@@ -291,7 +291,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
             studio_.changeBinning();
          }
       });
-      subPanel.add(comboBinning_, "gapleft push, wrap");
+      subPanel.add(comboBinning_, "gapleft push, width 60::, wrap");
 
       // Shutter device.
       JPanel shutterPanel = new JPanel(
@@ -314,7 +314,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
             }
          }
       });
-      shutterPanel.add(shutterComboBox_, "gapleft push, wrap");
+      shutterPanel.add(shutterComboBox_, "gapleft push, width 60::, wrap");
 
       // Auto/manual shutter control.
       autoShutterCheckBox_ = new JCheckBox("Auto");
