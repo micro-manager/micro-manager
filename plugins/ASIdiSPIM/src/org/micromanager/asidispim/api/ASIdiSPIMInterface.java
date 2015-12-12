@@ -412,6 +412,17 @@ public interface ASIdiSPIMInterface {
    public void setVolumeSampleExposure(double exposureMs) throws ASIdiSPIMException;
    
    /**
+    * @return true if autofocus will be performed during acquisition.
+    */
+   public boolean getAutofocusDuringAcquisition() throws ASIdiSPIMException;
+   
+   /**
+    * @param enable true to enable autofocus during acquisition.  Parameters for that
+    *   are set on the autofocus tab or using this API.
+    */
+   public void setAutofocusDuringAcquisition(boolean enable) throws ASIdiSPIMException;
+   
+   /**
     * @param side Devices.Sides.A or Devices.Sides.B
     * @return the imaging piezo's center position for acquisitions in specified side
     */
@@ -489,14 +500,14 @@ public interface ASIdiSPIMInterface {
 
    /**
     * @param side Devices.Sides.A or Devices.Sides.B
-    * @return sheet offset from center in units of degrees
+    * @return sheet offset from center in units of degrees (not calibration offset)
     * @deprecated out of laziness, can add if needed
     */
    public double getSideSheetOffset(Devices.Sides side) throws ASIdiSPIMException;
    
    /**
     * @param side Devices.Sides.A or Devices.Sides.B
-    * @param the sheet offset from center in units of degrees
+    * @param the sheet offset from center in units of degrees (not calibration offset)
     * @deprecated out of laziness, can add if needed
     */
    public void setSideSheetOffset(Devices.Sides side, double offset) throws ASIdiSPIMException;
@@ -507,22 +518,33 @@ public interface ASIdiSPIMInterface {
     * @throws ASIdiSPIMException
     * @deprecated out of laziness, can add if needed
     */
-   public double getSideSlope(Devices.Sides side) throws ASIdiSPIMException;
+   public double getSideCalibrationSlope(Devices.Sides side) throws ASIdiSPIMException;
    
    /**
     * @param side Devices.Sides.A or Devices.Sides.B
     * @param slope slope of calibration in um/degree
     * @deprecated out of laziness, can add if needed
     */
-   public void setSideSlope(Devices.Sides side, double slope) throws ASIdiSPIMException;
+   public void setSideCalibrationSlope(Devices.Sides side, double slope) throws ASIdiSPIMException;
+   
+   /**
+    * @param side Devices.Sides.A or Devices.Sides.B
+    * @return calibration offset in units of um
+    */
+   public double getSideCalibrationOffset(Devices.Sides side) throws ASIdiSPIMException;
+   
+   /**
+    * @param side Devices.Sides.A or Devices.Sides.B
+    * @param calibration offset in units of um
+    */
+   public void setSideCalibrationOffset(Devices.Sides side, double offset) throws ASIdiSPIMException;
    
    /**
     * Updates the offset with the current positions of the slice and imaging piezo,
     *   just like clicking the GUI button does
     * @param side Devices.Sides.A or Devices.Sides.B
-    * @deprecated out of laziness, can add if needed
     */
-   public void updateSideOffset(Devices.Sides side) throws ASIdiSPIMException;
+   public void updateSideCalibrationOffset(Devices.Sides side) throws ASIdiSPIMException;
    
    /**
     * Runs the autofocus just like a GUI button press.  If the autofocus
@@ -530,20 +552,8 @@ public interface ASIdiSPIMInterface {
     *   position but the offset isn't updated automatically.
     * @see ASIdiSPIMInterface#updateSideOffset()
     * @param side Devices.Sides.A or Devices.Sides.B
-    * @deprecated out of laziness, can add if needed
     */
    public void runAutofocusSide(Devices.Sides side) throws ASIdiSPIMException;
-   
-   /**
-    * @return true if autofocus will be performed during acquisition.
-    */
-   public boolean getAutofocusDuringAcquisition() throws ASIdiSPIMException;
-   
-   /**
-    * @param enable true to enable autofocus during acquisition.  Parameters for that
-    *   are set on the autofocus tab or using this API.
-    */
-   public void setAutofocusDuringAcquisition(boolean enable) throws ASIdiSPIMException;
    
    // following are not included out of laziness for now, if they are needed they can be added
    /**
@@ -587,24 +597,26 @@ public interface ASIdiSPIMInterface {
    /**
     * @return true if autofocus will be performed before starting the acquisition.
     *   Only applies if "autofocus during acquisition" has been enabled
+    * @deprecated out of laziness, can add if needed
     */
    public boolean getAutofocusBeforeAcquisition() throws ASIdiSPIMException;
    
    /**
     * @param enable true will run autofocus before the acquisition begins.
     *   Only applies if "autofocus during acquisition" has been enabled
+    * @deprecated out of laziness, can add if needed
     */
    public void setAutofocusBeforeAcquisition(boolean enable) throws ASIdiSPIMException;
    
    /**
     * @return how often (in time points) that the autofocus runs during acquisition.
     */
-   public int getAutofocusInterval() throws ASIdiSPIMException;
+   public int getAutofocusTimepointInterval() throws ASIdiSPIMException;
    
    /**
     * @param numTimepoints will run autofocus after this many time points
     */
-   public void setAutofocusInterval(int numTimepoints) throws ASIdiSPIMException;
+   public void setAutofocusTimepointInterval(int numTimepoints) throws ASIdiSPIMException;
    
    /**
     * @return which channel will be used for autofocus during acquisition

@@ -40,7 +40,9 @@ import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.AutofocusUtils;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
+import org.micromanager.asidispim.Utils.MyNumberUtils;
 import org.micromanager.asidispim.Utils.PanelUtils;
+import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.asidispim.fit.Fitter;
 
 /**
@@ -60,6 +62,7 @@ public class AutofocusPanel extends ListeningJPanel{
    private final JLabel maxOffsetChangeSetupLabel1_;
    private final JSpinner maxOffsetChangeSetupSpinner_;
    private final JLabel maxOffsetChangeSetupLabel2_;
+   private final JSpinner eachNTimePointsSpinner_;
    
    public AutofocusPanel(final ScriptInterface gui, final Devices devices, 
            final Properties props, final Prefs prefs, 
@@ -172,10 +175,10 @@ public class AutofocusPanel extends ListeningJPanel{
       
       // autofocus every nth image
       acqOptionsPanel_.add(new JLabel("Autofocus every "));
-      final JSpinner eachNTimePointsSpinner = pu.makeSpinnerInteger(1, 1000,
+      eachNTimePointsSpinner_ = pu.makeSpinnerInteger(1, 1000,
             Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_AUTOFOCUS_EACHNIMAGES, 10);
-      acqOptionsPanel_.add(eachNTimePointsSpinner);
+      acqOptionsPanel_.add(eachNTimePointsSpinner_);
       acqOptionsPanel_.add(new JLabel( "time points"), "wrap");
       
       // autofocus using this channel
@@ -281,6 +284,17 @@ public class AutofocusPanel extends ListeningJPanel{
       } else {
          return Modes.NONE;
       }
+   }
+   
+   public int getAutofocusTimepointInterval() {
+      return (Integer)eachNTimePointsSpinner_.getValue();
+   }
+
+   public void setAutofocusTimepointInterval(int numTimepoints) throws ASIdiSPIMException {
+      if (MyNumberUtils.outsideRange(numTimepoints, 1, 1000)) {
+         throw new ASIdiSPIMException("illegal value for number of slices");
+      }
+      eachNTimePointsSpinner_.setValue(numTimepoints);
    }
    
    

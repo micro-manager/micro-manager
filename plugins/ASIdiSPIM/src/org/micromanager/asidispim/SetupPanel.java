@@ -236,12 +236,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       tmp_but.setToolTipText("Autofocus at current piezo position");
       tmp_but.setBackground(Color.green);
       tmp_but.addActionListener(new ActionListener() {
-
          @Override
          public void actionPerformed(ActionEvent e) {
-            autofocus_.runFocus(setupPanel, side_, true,
-                    ASIdiSPIM.getFrame().getAcquisitionPanel().getSliceTiming(),
-                    true, true);
+            runAutofocus();
          }
       });
       calibrationPanel.add(tmp_but, "center, span 4");
@@ -613,7 +610,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     * (but not the slope) based on current piezo/galvo positions.
     * Does not perform any error/range checking except to ensure beam is on.
     */
-   private void updateCalibrationOffset() {
+   public void updateCalibrationOffset() {
       try {
          if (beamPanel_.isBeamAOn()) {
             // only update offset if the beam is turned on
@@ -867,6 +864,20 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       }
       imagingCenterPos_ = center;
       imagingCenterPosLabel_.setFloat((float)imagingCenterPos_);
+   }
+   
+   public void runAutofocus() {
+      autofocus_.runFocus(this, side_, true,
+            ASIdiSPIM.getFrame().getAcquisitionPanel().getSliceTiming(),
+            true, true);
+   }
+
+   public double getSideCalibrationOffset() {
+      return (Double) offsetField_.getValue();
+   }
+
+   public void setSideCalibrationOffset(double offset) {
+      offsetField_.setValue((Double) offset);
    }
 
 }

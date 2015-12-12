@@ -392,6 +392,16 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    }
    
    @Override
+   public boolean getAutofocusDuringAcquisition() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getAutofocusDuringAcquisition();
+   }
+
+   @Override
+   public void setAutofocusDuringAcquisition(boolean enable) throws ASIdiSPIMException {
+      getAcquisitionPanel().setAutofocusDuringAcquisition(enable);
+   }
+   
+   @Override
    public double getSideImagingCenter(Sides side) throws ASIdiSPIMException {
       return getSetupPanel(side).getImagingCenter();
    }
@@ -402,14 +412,161 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    }
    
    @Override
-   public boolean getAutofocusDuringAcquisition() throws ASIdiSPIMException {
-      return getAcquisitionPanel().getAutofocusDuringAcquisition();
+   public double getSideSlicePosition(Sides side) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
    }
 
    @Override
-   public void setAutofocusDuringAcquisition(boolean enable) throws ASIdiSPIMException {
-      getAcquisitionPanel().setAutofocusDuringAcquisition(enable);
+   public void setSideSlicePosition(Sides side, double position) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
    }
+
+   @Override
+   public double getSideImagingPiezoPosition(Sides side) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void setSideImagingPiezoPosition(Sides side, double position) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public double getSideIlluminationPiezoPosition(Sides side) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void setSideIlluminationPiezoPosition(Sides side, double position) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void setSideIlluminationPiezoHome(Sides side) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public double getSideSheetWidth(Sides side) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void setSideSheetWidth(Sides side, double width) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+   
+   @Override
+   public double getSideSheetOffset(Sides side) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void setSideSheetOffset(Sides side, double width) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public double getSideCalibrationSlope(Sides side) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void setSideCalibrationSlope(Sides side, double slope) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();      
+   }
+   
+   @Override
+   public double getSideCalibrationOffset(Sides side) throws ASIdiSPIMException {
+      return getSetupPanel(side).getSideCalibrationOffset();
+   }
+
+   @Override
+   public void setSideCalibrationOffset(Sides side, double offset) throws ASIdiSPIMException {
+      getSetupPanel(side).setSideCalibrationOffset(offset);
+   }
+   
+   @Override
+   public void updateSideCalibrationOffset(Sides side) throws ASIdiSPIMException {
+      getSetupPanel(side).updateCalibrationOffset();
+   }
+   
+   @Override
+   public void runAutofocusSide(Sides side) throws ASIdiSPIMException {
+      getSetupPanel(side).runAutofocus();
+   }
+   
+   @Override
+   public int getAutofocusNumImages() throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void setAutofocusNumImages(int numImages) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();      
+   }
+
+   @Override
+   public double getAutofocusStepSize() throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void setAutofocusStepSize(double stepSizeUm) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public Modes getAutofocusMode() throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void setAutofocusMode(Modes mode) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+   
+   @Override
+   public boolean getAutofocusBeforeAcquisition() throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      return false;
+   }
+
+   @Override
+   public void setAutofocusBeforeAcquisition(boolean enable) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+   
+   @Override
+   public int getAutofocusTimepointInterval() throws ASIdiSPIMException {
+      return getAutofocusPanel().getAutofocusTimepointInterval();
+   }
+
+   @Override
+   public void setAutofocusTimepointInterval(int numTimepoints) throws ASIdiSPIMException {
+      getAutofocusPanel().setAutofocusTimepointInterval(numTimepoints);      
+   }
+   
    
    
    
@@ -475,160 +632,12 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
 
 
 
-
-
    
-   @Override
-   public double getSideSlicePosition(Sides side) throws ASIdiSPIMException {
-      // @deprecated out of laziness, can add if needed
-      throw new UnsupportedOperationException();
-   }
 
-   @Override
-   public void setSideSlicePosition(Sides side, double position) throws ASIdiSPIMException {
-      // @deprecated out of laziness, can add if needed
-      throw new UnsupportedOperationException();
-   }
 
-   @Override
-   public double getSideImagingPiezoPosition(Sides side) throws ASIdiSPIMException {
-      // @deprecated out of laziness, can add if needed
-      throw new UnsupportedOperationException();
-   }
 
-   @Override
-   public void setSideImagingPiezoPosition(Sides side, double position) throws ASIdiSPIMException {
-      // @deprecated out of laziness, can add if needed
-      throw new UnsupportedOperationException();
-   }
 
-   @Override
-   public double getSideIlluminationPiezoPosition(Sides side) throws ASIdiSPIMException {
-      // @deprecated out of laziness, can add if needed
-      throw new UnsupportedOperationException();
-   }
 
-   @Override
-   public void setSideIlluminationPiezoPosition(Sides side, double position) throws ASIdiSPIMException {
-      // @deprecated out of laziness, can add if needed
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public void setSideIlluminationPiezoHome(Sides side) throws ASIdiSPIMException {
-      // @deprecated out of laziness, can add if needed
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public double getSideSheetWidth(Sides side) throws ASIdiSPIMException {
-      // @deprecated out of laziness, can add if needed
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public void setSideSheetWidth(Sides side, double width) throws ASIdiSPIMException {
-      // @deprecated out of laziness, can add if needed
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public double getSideSheetOffset(Sides side) throws ASIdiSPIMException {
-      // @deprecated out of laziness, can add if needed
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public void setSideSheetOffset(Sides side, double offset) throws ASIdiSPIMException {
-      // @deprecated out of laziness, can add if needed
-      throw new UnsupportedOperationException();
-   }
-   
-   @Override
-   public double getSideSlope(Sides side) throws ASIdiSPIMException {
-      // @deprecated out of laziness, can add if needed
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public void setSideSlope(Sides side, double slope) throws ASIdiSPIMException {
-      // @deprecated out of laziness, can add if needed
-      throw new UnsupportedOperationException();      
-   }
-
-   @Override
-   public void updateSideOffset(Sides side) throws ASIdiSPIMException {
-      // @deprecated out of laziness, can add if needed
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public void runAutofocusSide(Sides side) throws ASIdiSPIMException {
-      // @deprecated out of laziness, can add if needed
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public int getAutofocusNumImages() throws ASIdiSPIMException {
-      // @deprecated out of laziness, can add if needed
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public void setAutofocusNumImages(int numImages) throws ASIdiSPIMException {
-      // @deprecated out of laziness, can add if needed
-      throw new UnsupportedOperationException();      
-   }
-
-   @Override
-   public double getAutofocusStepSize() throws ASIdiSPIMException {
-      // @deprecated out of laziness, can add if needed
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public void setAutofocusStepSize(double stepSizeUm) throws ASIdiSPIMException {
-      // @deprecated out of laziness, can add if needed
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public Modes getAutofocusMode() throws ASIdiSPIMException {
-      // @deprecated out of laziness, can add if needed
-      throw new UnsupportedOperationException();
-   }
-
-   @Override
-   public void setAutofocusMode(Modes mode) throws ASIdiSPIMException {
-      // @deprecated out of laziness, can add if needed
-      throw new UnsupportedOperationException();
-   }
-   
-   @Override
-   public boolean getAutofocusBeforeAcquisition() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return false;
-   }
-
-   @Override
-   public void setAutofocusBeforeAcquisition(boolean enable)
-         throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public int getAutofocusInterval() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return 0;
-   }
-
-   @Override
-   public void setAutofocusInterval(int numTimepoints)
-         throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
 
    @Override
    public String getAutofocusChannel() throws ASIdiSPIMException {
