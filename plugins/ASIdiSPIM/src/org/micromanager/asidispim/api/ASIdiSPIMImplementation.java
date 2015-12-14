@@ -548,7 +548,7 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    @Override
    public boolean getAutofocusBeforeAcquisition() throws ASIdiSPIMException {
       // @deprecated out of laziness, can add if needed
-      return false;
+      throw new UnsupportedOperationException();
    }
 
    @Override
@@ -564,7 +564,19 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
 
    @Override
    public void setAutofocusTimepointInterval(int numTimepoints) throws ASIdiSPIMException {
-      getAutofocusPanel().setAutofocusTimepointInterval(numTimepoints);      
+      getAutofocusPanel().setAutofocusTimepointInterval(numTimepoints);
+   }
+   
+   @Override
+   public String getAutofocusChannel() throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void setAutofocusChannel(String channel) throws ASIdiSPIMException {
+      // @deprecated out of laziness, can add if needed
+      throw new UnsupportedOperationException();
    }
    
    
@@ -637,19 +649,6 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
 
 
 
-
-
-   @Override
-   public String getAutofocusChannel() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return null;
-   }
-
-   @Override
-   public void setAutofocusChannel(String channel) throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
 
    @Override
    public void setXYPosition(double x, double y) throws ASIdiSPIMException {

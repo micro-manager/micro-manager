@@ -620,11 +620,13 @@ public interface ASIdiSPIMInterface {
    
    /**
     * @return which channel will be used for autofocus during acquisition
+    * @deprecated out of laziness, can add if needed
     */
    public String getAutofocusChannel() throws ASIdiSPIMException;
    
    /**
     * @param channel set the channel to be used for autofocus during acquisition
+    * @deprecated out of laziness, can add if needed
     */
    public void setAutofocusChannel(String channel) throws ASIdiSPIMException;
    
