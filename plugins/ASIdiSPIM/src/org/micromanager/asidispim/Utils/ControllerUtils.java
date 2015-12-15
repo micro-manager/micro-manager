@@ -322,8 +322,13 @@ public class ControllerUtils {
       // round to nearest 0.0001 degrees, which is approximately the DAC resolution
       sliceAmplitude = MyNumberUtils.roundFloatToPlace(sliceAmplitude, 4);
       sliceCenter = MyNumberUtils.roundFloatToPlace(sliceCenter, 4);
-      boolean triangleWave = prefs_.getBoolean(
-            MyStrings.PanelNames.SETTINGS.toString(),  
+      // only do triangle wave if user has it enabled on the advanced timing panel
+      //    and the user is using advanced timing
+      final boolean triangleWave = prefs_.getBoolean(
+            MyStrings.PanelNames.ACQUSITION.toString(),
+            Properties.Keys.PREFS_ADVANCED_SLICE_TIMING, false)
+            && prefs_.getBoolean(
+            MyStrings.PanelNames.ACQUSITION.toString(),  
             Properties.Keys.PREFS_SCAN_OPPOSITE_DIRECTIONS, false);
       Properties.Values scanPattern = triangleWave ?
             Properties.Values.SAM_TRIANGLE : Properties.Values.SAM_RAMP;

@@ -161,10 +161,6 @@ public class SettingsPanel extends ListeningJPanel {
             Properties.Keys.SCANNER_FILTER_Y, 0.4);
       scannerPanel.add(scannerFilterY, "wrap");
       
-      final JCheckBox scanOppositeDirectionsCB = pu.makeCheckBox("Scan beam opposite directions each slice",
-            Properties.Keys.PREFS_SCAN_OPPOSITE_DIRECTIONS, panelName_, false);
-      scannerPanel.add(scanOppositeDirectionsCB, "center, span 2, wrap");
-      
       // end scanner panel
       
       

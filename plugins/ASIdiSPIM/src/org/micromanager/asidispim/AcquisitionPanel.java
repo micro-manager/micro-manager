@@ -147,6 +147,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JSpinner delayCamera_;
    private final JSpinner durationCamera_;  // NB: not the same as camera exposure
    private final JSpinner exposureCamera_;  // NB: only used in advanced timing mode
+   private JCheckBox alternateBeamScanCB_;
    private final JSpinner durationLaser_;
    private final JSpinner delaySide_;
    private final JLabel actualSlicePeriodLabel_;
@@ -443,13 +444,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       exposureCamera_.addChangeListener(recalculateTimingDisplayCL);
       slicePanel_.add(exposureCamera_, "wrap");
       
+      alternateBeamScanCB_ = pu.makeCheckBox("Alternate scan direction",
+            Properties.Keys.PREFS_SCAN_OPPOSITE_DIRECTIONS, panelName_, false);
+      slicePanel_.add(alternateBeamScanCB_, "center, span 2, wrap");
+      
       final JComponent[] simpleTimingComponents = { desiredLightExposure_,
             minSlicePeriodCB_, desiredSlicePeriodLabel_,
             desiredLightExposureLabel_};
       final JComponent[] advancedTimingComponents = {
             delayScan_, numScansPerSlice_, lineScanPeriod_, 
             delayLaser_, durationLaser_, delayCamera_,
-            durationCamera_, exposureCamera_};
+            durationCamera_, exposureCamera_, alternateBeamScanCB_};
       PanelUtils.componentsSetEnabled(advancedTimingComponents, advancedSliceTimingCB_.isSelected());
       PanelUtils.componentsSetEnabled(simpleTimingComponents, !advancedSliceTimingCB_.isSelected());
       
