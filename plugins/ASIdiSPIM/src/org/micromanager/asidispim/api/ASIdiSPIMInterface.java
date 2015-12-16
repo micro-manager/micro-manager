@@ -691,14 +691,20 @@ public interface ASIdiSPIMInterface {
    public void lowerSPIMHead() throws ASIdiSPIMException;
    
    /**
-    * @param raised SPIM head position in microns when in lowered state ("start hunting")
+    * @param lowered SPIM head position in microns when in lowered state ("start hunting")
     */
-   public void setSPIMHeadLoweredPosition(double raised) throws ASIdiSPIMException; 
+   public void setSPIMHeadLoweredPosition(double lowered) throws ASIdiSPIMException; 
    
    /**
     * @return SPIM head position in microns when in lowered state ("start hunting")
     */
    public double getSPIMHeadLoweredPosition() throws ASIdiSPIMException;
+   
+   /**
+    * Stops all motion by sending a halt signal to the Tiger controller,
+    *   like the button on the navigation panel
+    */
+   public void haltAllMotion() throws ASIdiSPIMException;
    
    /**
     * @return object with all acquisition settings.  Intended for informational purposes

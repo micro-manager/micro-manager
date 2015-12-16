@@ -332,6 +332,15 @@ public class ASIdiSPIMFrame extends MMFrame
    public AutofocusPanel getAutofocusPanel() {
       return autofocusPanel_;
    }
+
+   /**
+    * Do not get into the internals of this plugin without relying on
+    * ASIdiSPIM.api
+    * @return the currently used instance of the AutofocusPanel;
+    */
+   public Devices getDevices() {
+      return devices_;
+   }
    
    // MMListener mandated member functions
    @Override

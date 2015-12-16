@@ -21,8 +21,6 @@
 
 package org.micromanager.asidispim.api;
 
-import java.awt.geom.Point2D.Double;
-
 import mmcorej.CMMCore;
 
 import org.micromanager.MMStudio;
@@ -579,7 +577,94 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       throw new UnsupportedOperationException();
    }
    
+   @Override
+   public void setXYPosition(double x, double y) throws ASIdiSPIMException {
+      try {
+         getCore().setXYPosition(getDevices().getMMDevice(Devices.Keys.XYSTAGE), x, y);
+      } catch (Exception e) {
+         throw new ASIdiSPIMException(e);
+      }
+   }
+
+   @Override
+   public java.awt.geom.Point2D.Double getXYPosition() throws ASIdiSPIMException {
+      try {
+         return getCore().getXYStagePosition(getDevices().getMMDevice(Devices.Keys.XYSTAGE));
+      } catch (Exception e) {
+         throw new ASIdiSPIMException(e);
+      }
+   }
+
+   @Override
+   public void setLowerZPosition(double z) throws ASIdiSPIMException {
+      try {
+         getCore().setPosition(getDevices().getMMDevice(Devices.Keys.LOWERZDRIVE), z);
+      } catch (Exception e) {
+         throw new ASIdiSPIMException(e);
+      }
+   }
+
+   @Override
+   public double getLowerZPosition() throws ASIdiSPIMException {
+      try {
+         return getCore().getPosition(getDevices().getMMDevice(Devices.Keys.LOWERZDRIVE));
+      } catch (Exception e) {
+         throw new ASIdiSPIMException(e);
+      }
+   }
+
+   @Override
+   public void setSPIMHeadPosition(double z) throws ASIdiSPIMException {
+      try {
+         getCore().setPosition(getDevices().getMMDevice(Devices.Keys.UPPERZDRIVE), z);
+      } catch (Exception e) {
+         throw new ASIdiSPIMException(e);
+      }
+   }
+
+   @Override
+   public double getSPIMHeadPosition() throws ASIdiSPIMException {
+      try {
+         return getCore().getPosition(getDevices().getMMDevice(Devices.Keys.UPPERZDRIVE));
+      } catch (Exception e) {
+         throw new ASIdiSPIMException(e);
+      }
+   }
+
+   @Override
+   public void raiseSPIMHead() throws ASIdiSPIMException {
+      getNavigationPanel().raiseSPIMHead();
+   }
+
+   @Override
+   public void setSPIMHeadRaisedPosition(double raised) throws ASIdiSPIMException {
+      getNavigationPanel().setSPIMHeadRaisedPosition(raised);
+   }
+
+   @Override
+   public double getSPIMHeadRaisedPosition() throws ASIdiSPIMException {
+      return getNavigationPanel().getSPIMHeadRaisedPosition();
+   }
+
+   @Override
+   public void lowerSPIMHead() throws ASIdiSPIMException {
+      getNavigationPanel().lowerSPIMHead();
+   }
+
+   @Override
+   public void setSPIMHeadLoweredPosition(double lowered) throws ASIdiSPIMException {
+      getNavigationPanel().setSPIMHeadLoweredPosition(lowered);
+   }
+
+   @Override
+   public double getSPIMHeadLoweredPosition() throws ASIdiSPIMException {
+      return getNavigationPanel().getSPIMHeadLoweredPosition();
+   }
    
+   @Override
+   public void haltAllMotion() throws ASIdiSPIMException {
+      getNavigationPanel().haltAllMotion();
+   }
    
    
    //** Private methods.  Only for internal use **//
@@ -640,89 +725,19 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       }
       return autofocusPanel;
    }
-
-
-
-
    
-
-
-
-
-
-   @Override
-   public void setXYPosition(double x, double y) throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
+   private Devices getDevices() throws ASIdiSPIMException {
+      Devices devices = getFrame().getDevices();
+      if (devices == null) {
+         throw new ASIdiSPIMException ("Devices object does not exist");
+      }
+      return devices;
    }
 
-   @Override
-   public Double getXYPosition() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return null;
-   }
 
-   @Override
-   public void setLowerZPosition(double z) throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
 
-   @Override
-   public double getLowerZPosition() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return 0;
-   }
 
-   @Override
-   public void setSPIMHeadPosition(double z) throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
 
-   @Override
-   public double getSPIMHeadPosition() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return 0;
-   }
-
-   @Override
-   public void raiseSPIMHead() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public void setSPIMHeadRaisedPosition(double raised)
-         throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public double getSPIMHeadRaisedPosition() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return 0;
-   }
-
-   @Override
-   public void lowerSPIMHead() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public void setSPIMHeadLoweredPosition(double raised)
-         throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      
-   }
-
-   @Override
-   public double getSPIMHeadLoweredPosition() throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return 0;
-   }
 
    @Override
    public AcquisitionSettings getAcquisitionSettings()
@@ -754,7 +769,6 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       // TODO Auto-generated method stub
       
    }
-
 
 
 }

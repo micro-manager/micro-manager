@@ -26,6 +26,8 @@ import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.EnumSet;
+import java.util.Set;
 
 import javax.swing.BorderFactory;
 
@@ -138,7 +140,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       headUpGo.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            positions_.setPosition(Devices.Keys.UPPERZDRIVE, ((Number)headUpPosition_.getValue()).doubleValue());
+            raiseSPIMHead();
          }
       });
       JButton headDownGo = new JButton();
@@ -148,7 +150,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       headDownGo.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            positions_.setPosition(Devices.Keys.UPPERZDRIVE, ((Number)headDownPosition_.getValue()).doubleValue());
+            lowerSPIMHead();
          }
       });
 
@@ -303,22 +305,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       buttonHalt.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            try {
-               String mmDevice = devices_.getMMDevice(Devices.Keys.UPPERZDRIVE);
-               if (mmDevice == null) {
-                  mmDevice = devices_.getMMDevice(Devices.Keys.XYSTAGE);
-               }
-               if (mmDevice == null) {
-                  mmDevice = devices_.getMMDevice(Devices.Keys.LOWERZDRIVE);
-               }
-               if (mmDevice != null) {
-                  String hubname = core_.getParentLabel(mmDevice);
-                  String port = core_.getProperty(hubname, Properties.Keys.SERIAL_COM_PORT.toString());
-                  core_.setSerialPortCommand(port, "\\",  "\r");
-               }
-            } catch (Exception ex) {
-               MyDialogUtils.showError("could not halt motion");
-            }
+            haltAllMotion();
          }
       });
       navPanel.add(buttonHalt, "cell 12 0, span 1 10, growy, wrap");
@@ -532,6 +519,56 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
          joystickPanel_.gotSelected();
       } else {
          joystickPanel_.gotDeSelected();
+      }
+   }
+
+   public void raiseSPIMHead() {
+      positions_.setPosition(Devices.Keys.UPPERZDRIVE, ((Number)headUpPosition_.getValue()).doubleValue());
+   }
+   
+   public void lowerSPIMHead() {
+      positions_.setPosition(Devices.Keys.UPPERZDRIVE, ((Number)headDownPosition_.getValue()).doubleValue());
+   }
+
+
+   public void setSPIMHeadRaisedPosition(double raised) {
+      headUpPosition_.setValue(raised);
+   }
+   
+   public double getSPIMHeadRaisedPosition() {
+      return ((Number)headUpPosition_.getValue()).doubleValue();
+   }
+   
+   public void setSPIMHeadLoweredPosition(double lowered) {
+      headDownPosition_.setValue(lowered);
+   }
+   
+   public double getSPIMHeadLoweredPosition() {
+      return ((Number)headDownPosition_.getValue()).doubleValue();
+   }
+
+
+   public void haltAllMotion() {
+      try {
+         final Set<Devices.Keys> TigerDevices = EnumSet.of(
+               Devices.Keys.UPPERZDRIVE, Devices.Keys.LOWERZDRIVE, Devices.Keys.XYSTAGE);
+         String mmDevice = null;
+         for (Devices.Keys dev : TigerDevices) {
+            if (devices_.isValidMMDevice(dev)
+                  && devices_.getMMDeviceLibrary(dev) == Devices.Libraries.ASITIGER) {
+               mmDevice = devices_.getMMDevice(dev);
+               break;
+            }
+         }
+         if (mmDevice != null) {
+            String hubname = core_.getParentLabel(mmDevice);
+            String port = core_.getProperty(hubname, Properties.Keys.SERIAL_COM_PORT.toString());
+            core_.setSerialPortCommand(port, "\\",  "\r");
+         } else {
+            throw new Exception("could not find a valid Tiger device");
+         }
+      } catch (Exception ex) {
+         MyDialogUtils.showError(ex, "could not halt motion");
       }
    }
 }
