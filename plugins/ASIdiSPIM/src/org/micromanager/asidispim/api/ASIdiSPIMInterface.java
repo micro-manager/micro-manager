@@ -718,22 +718,22 @@ public interface ASIdiSPIMInterface {
     * @return estimated duration of each slice in milliseconds according to current timing
     * @see ASIdiSPIMInterface#refreshEstimatedTiming()
     */
-   public double getEstimatedSliceDuration();
+   public double getEstimatedSliceDuration() throws ASIdiSPIMException;
    
    /**
     * @return estimated duration of each volume in milliseconds according to current timing
     * @see ASIdiSPIMInterface#refreshEstimatedTiming()
     */
-   public double getEstimatedVolumeDuration();
+   public double getEstimatedVolumeDuration() throws ASIdiSPIMException;
    
    /**
     * @return estimated duration of entire acquisition in seconds according to current timing
     * @see ASIdiSPIMInterface#refreshEstimatedTiming()
     */
-   public double getEstimatedAcquisitionDuration();
+   public double getEstimatedAcquisitionDuration() throws ASIdiSPIMException;
    
    /**
     * forces recalculation of estimated timings.
     */
-   public void refreshEstimatedTiming();
+   public void refreshEstimatedTiming() throws ASIdiSPIMException;
 }

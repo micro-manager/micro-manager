@@ -666,6 +666,32 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       getNavigationPanel().haltAllMotion();
    }
    
+   @Override
+   public AcquisitionSettings getAcquisitionSettings() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getCurrentAcquisitionSettings();
+   }
+
+   @Override
+   public double getEstimatedSliceDuration() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getEstimatedSliceDuration();
+   }
+
+   @Override
+   public double getEstimatedVolumeDuration() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getEstimatedVolumeDuration();
+   }
+
+   @Override
+   public double getEstimatedAcquisitionDuration() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getEstimatedAcquisitionDuration();
+   }
+
+   @Override
+   public void refreshEstimatedTiming() throws ASIdiSPIMException {
+      getAcquisitionPanel().updateDurationLabels();
+   }
+   
+   
    
    //** Private methods.  Only for internal use **//
 
@@ -733,42 +759,5 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       }
       return devices;
    }
-
-
-
-
-
-
-   @Override
-   public AcquisitionSettings getAcquisitionSettings()
-         throws ASIdiSPIMException {
-      // TODO Auto-generated method stub
-      return null;
-   }
-
-   @Override
-   public double getEstimatedSliceDuration() {
-      // TODO Auto-generated method stub
-      return 0;
-   }
-
-   @Override
-   public double getEstimatedVolumeDuration() {
-      // TODO Auto-generated method stub
-      return 0;
-   }
-
-   @Override
-   public double getEstimatedAcquisitionDuration() {
-      // TODO Auto-generated method stub
-      return 0;
-   }
-
-   @Override
-   public void refreshEstimatedTiming() {
-      // TODO Auto-generated method stub
-      
-   }
-
 
 }

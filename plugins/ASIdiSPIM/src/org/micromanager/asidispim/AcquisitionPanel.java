@@ -2876,6 +2876,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    public void setAutofocusDuringAcquisition(boolean enable) {
       useAutofocusCB_.setSelected(enable);
    }
+
+   public double getEstimatedSliceDuration() {
+      return sliceTiming_.sliceDuration;
+   }
+
+   public double getEstimatedVolumeDuration() {
+      return computeActualVolumeDuration();
+   }
+
+   public double getEstimatedAcquisitionDuration() {
+      return computeActualTimeLapseDuration();
+   }
    
 
    
