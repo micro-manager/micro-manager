@@ -6,7 +6,7 @@
 //
 // AUTHOR:       Nico Stuurman, Jon Daniels
 //
-// COPYRIGHT:    University of California, San Francisco, & ASI, 2013
+// COPYRIGHT:    University of California, San Francisco, & ASI, 2013-2015
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -91,6 +91,6 @@ public class ASIdiSPIM implements MMPlugin {
 
    @Override
    public String getCopyright() {
-      return "University of California and ASI, 2013";
+      return "University of California and ASI, 2013-2015";
    }
 }
