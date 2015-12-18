@@ -19,7 +19,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.asidispim.Data;
+package org.micromanager.asidispim.data;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,8 +34,8 @@ import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
 import org.micromanager.Studio;
-import org.micromanager.asidispim.Utils.DevicesListenerInterface;
-import org.micromanager.asidispim.Utils.MyDialogUtils;
+import org.micromanager.asidispim.util.DevicesListenerInterface;
+import org.micromanager.asidispim.utils.MyDialogUtils;
 
 
 /**

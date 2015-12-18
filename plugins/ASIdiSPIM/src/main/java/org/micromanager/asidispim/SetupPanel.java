@@ -37,11 +37,11 @@ import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
-import org.micromanager.asidispim.Utils.ListeningJPanel;
-import org.micromanager.asidispim.Utils.MyDialogUtils;
-import org.micromanager.asidispim.Utils.PanelUtils;
-import org.micromanager.asidispim.Utils.StagePositionUpdater;
-import org.micromanager.asidispim.Utils.StoredFloatLabel;
+import org.micromanager.asidispim.utils.ListeningJPanel;
+import org.micromanager.asidispim.utils.MyDialogUtils;
+import org.micromanager.asidispim.utils.PanelUtils;
+import org.micromanager.asidispim.utils.StagePositionUpdater;
+import org.micromanager.asidispim.utils.StoredFloatLabel;
 
 import mmcorej.CMMCore;
 
@@ -51,7 +51,7 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.asidispim.Utils.AutofocusUtils;
+import org.micromanager.asidispim.utils.AutofocusUtils;
 import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.ReportingUtils;

@@ -21,12 +21,12 @@
 
 package org.micromanager.asidispim;
 
-import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.MyStrings;
-import org.micromanager.asidispim.Data.Properties;
-import org.micromanager.asidispim.Utils.DeviceUtils;
-import org.micromanager.asidispim.Utils.ListeningJPanel;
-import org.micromanager.asidispim.Utils.MyDialogUtils;
+import org.micromanager.asidispim.data.Devices;
+import org.micromanager.asidispim.data.MyStrings;
+import org.micromanager.asidispim.data.Properties;
+import org.micromanager.asidispim.utils.DeviceUtils;
+import org.micromanager.asidispim.utils.ListeningJPanel;
+import org.micromanager.asidispim.utils.MyDialogUtils;
 
 import javax.swing.ImageIcon;
 import javax.swing.JComboBox;

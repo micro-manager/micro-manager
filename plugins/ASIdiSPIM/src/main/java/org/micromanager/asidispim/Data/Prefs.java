@@ -19,12 +19,12 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.asidispim.Data;
+package org.micromanager.asidispim.data;
 
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
-import org.micromanager.asidispim.Utils.MyDialogUtils;
+import org.micromanager.asidispim.utils.MyDialogUtils;
 
 
 /**

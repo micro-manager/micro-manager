@@ -29,8 +29,8 @@ import org.micromanager.asidispim.Data.Joystick;
 import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
-import org.micromanager.asidispim.Utils.ListeningJPanel;
-import org.micromanager.asidispim.Utils.ListeningJTabbedPane;
+import org.micromanager.asidispim.utils.ListeningJPanel;
+import org.micromanager.asidispim.utils.ListeningJTabbedPane;
 
 import java.awt.Container;
 import java.util.prefs.Preferences;
@@ -42,11 +42,11 @@ import javax.swing.event.ChangeListener;
 
 import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.MMStudio;
-import org.micromanager.asidispim.Utils.AutofocusUtils;
-import org.micromanager.asidispim.Utils.ControllerUtils;
-import static org.micromanager.asidispim.Utils.MyJavaUtils.isMac;
-import org.micromanager.asidispim.Utils.StagePositionUpdater;
+import org.micromanager.Studio;
+import org.micromanager.asidispim.utils.AutofocusUtils;
+import org.micromanager.asidispim.utils.ControllerUtils;
+import static org.micromanager.asidispim.utils.MyJavaUtils.isMac;
+import org.micromanager.asidispim.utils.StagePositionUpdater;
 import org.micromanager.internal.interfaces.LiveModeListener; 
 import org.micromanager.internal.utils.MMFrame;
 

@@ -20,7 +20,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 
-package org.micromanager.asidispim.Utils;
+package org.micromanager.asidispim.utils;
 
 import java.awt.Color;
 import java.awt.Dimension;

@@ -19,7 +19,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.asidispim.Utils;
+package org.micromanager.asidispim.utils;
 
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -35,8 +35,8 @@ import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
 import org.micromanager.Studio;
-import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.Properties;
+import org.micromanager.asidispim.data.Devices;
+import org.micromanager.asidispim.data.Properties;
 
 /**
  * @author Jon

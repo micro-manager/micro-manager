@@ -19,43 +19,43 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.asidispim.Utils;
+package org.micromanager.asidispim.utils;
 
 import java.awt.geom.Point2D;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.asidispim.Data.AcquisitionModes;
-import org.micromanager.asidispim.Data.CameraModes;
-import org.micromanager.asidispim.Data.ChannelSpec;
-import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.Joystick;
+import org.micromanager.Studio;
+import org.micromanager.asidispim.data.AcquisitionModes;
+import org.micromanager.asidispim.data.CameraModes;
+import org.micromanager.asidispim.data.ChannelSpec;
+import org.micromanager.asidispim.data.Devices;
+import org.micromanager.asidispim.data.Joystick;
 import org.micromanager.asidispim.Data.MultichannelModes;
-import org.micromanager.asidispim.Data.MyStrings;
-import org.micromanager.asidispim.Data.Positions;
-import org.micromanager.asidispim.Data.Prefs;
-import org.micromanager.asidispim.Data.Properties;
+import org.micromanager.asidispim.data.MyStrings;
+import org.micromanager.asidispim.data.Positions;
+import org.micromanager.asidispim.data.Prefs;
+import org.micromanager.asidispim.data.Properties;
 
 /**
  *
  * @author Nico & Jon
  */
 public class ControllerUtils {  
-   final ScriptInterface gui_;
+   final Studio gui_;
    final Properties props_;
    final Prefs prefs_;
    final Devices devices_;
    final Positions positions_;
    final CMMCore core_;
    
-   public ControllerUtils(ScriptInterface gui, final Properties props, 
+   public ControllerUtils(Studio gui, final Properties props, 
            final Prefs prefs, final Devices devices, final Positions positions) {
       gui_ = gui;
       props_ = props;
       prefs_ = prefs;
       devices_ = devices;
       positions_ = positions;
-      core_ = gui_.getMMCore();
+      core_ = gui_.core();
    }
    
    /**
@@ -530,6 +530,7 @@ public class ControllerUtils {
     * @param numChannels
     * @param channels
     * @param channelGroup
+    * @param firstSideA
     * @return false if there is a fatal error, true if successful
     */
    public boolean setupHardwareChannelSwitching(
