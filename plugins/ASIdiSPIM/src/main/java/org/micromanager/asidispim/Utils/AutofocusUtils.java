@@ -45,16 +45,17 @@ import org.micromanager.asidispim.data.AcquisitionModes;
 import org.micromanager.asidispim.data.Cameras;
 import org.micromanager.asidispim.data.Devices;
 import org.micromanager.asidispim.data.Joystick.Directions;
-import org.micromanager.asidispim.Data.MultichannelModes;
+import org.micromanager.asidispim.data.MultichannelModes;
 import org.micromanager.asidispim.data.MyStrings;
 import org.micromanager.asidispim.data.Positions;
 import org.micromanager.asidispim.data.Prefs;
 import org.micromanager.asidispim.data.Properties;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.asidispim.fit.Fitter;
-import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
-import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.data.Datastore;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * @author nico
@@ -69,6 +70,7 @@ public class AutofocusUtils {
    private final StagePositionUpdater posUpdater_;
    private final Positions positions_;
    private final ControllerUtils controller_;
+   private DisplayWindow ourWindow_;
 
    public AutofocusUtils(Studio gui, Devices devices, Properties props,
            Prefs prefs, Cameras cameras, StagePositionUpdater stagePosUpdater,
@@ -234,10 +236,16 @@ public class AutofocusUtils {
                }
                
                gui_.core().setCameraDevice(camera);
+               Datastore store = null;
                if (debug) {
-                  if (gui_.displays().acquisitionExists(acqName)) {
-                     gui_.closeAcquisitionWindow(acqName);
+                  if (gui_.displays().getAllImageWindows().contains(ourWindow_)) {
+                      ourWindow_.getDatastore().close();
+                      ourWindow_.requestToClose();
+                      ourWindow_.forceClosed();
                   }
+                  store = gui_.data().createRAMDatastore();
+                  ourWindow_ = gui_.displays().createDisplay(store);
+                  /*
                   acqName = gui_.getUniqueAcquisitionName(acqName);
                   gui_.openAcquisition(acqName, "", 1, 1, nrImages, 1, true, false);
                   gui_.initializeAcquisition(acqName,
@@ -245,13 +253,14 @@ public class AutofocusUtils {
                           (int) gui_.core().getImageHeight(),
                           (int) gui_.core().getBytesPerPixel(),
                           (int) gui_.core().getImageBitDepth());
+*/
                }
                gui_.core().clearCircularBuffer();
                gui_.core().initializeCircularBuffer();
                cameras_.setSPIMCamerasForAcquisition(true);
-               gui_.getMMCore().setExposure((double) sliceTiming.cameraExposure);
+               gui_.core().setExposure((double) sliceTiming.cameraExposure);
 
-               gui_.getMMCore().startSequenceAcquisition(camera, nrImages, 0, true);
+               gui_.core().startSequenceAcquisition(camera, nrImages, 0, true);
 
                boolean success = controller_.triggerControllerStartAcquisition(
                        AcquisitionModes.Keys.SLICE_SCAN_ONLY,
@@ -308,6 +317,7 @@ public class AutofocusUtils {
                         double galvoPos = galvoStart + counter * galvoStepSize;
                         timg.tags.put("SlicePosition", galvoPos);
                         timg.tags.put("ZPositionUm", piezoCenter);
+                        store.putImage(timg);
                         gui_.addImageToAcquisition(acqName, 0, 0, counter, 0, timg);
                         scoresToPlot[0].add(galvoPos, focusScores[counter]);
                      }
@@ -483,17 +493,18 @@ public class AutofocusUtils {
    }
 
    public static ImageProcessor makeProcessor(int type, int w, int h) {
-      if (type == ImagePlus.GRAY8) {
-         return new ByteProcessor(w, h);
-      } else if (type == ImagePlus.GRAY16) {
-         return new ShortProcessor(w, h);
-      } else if (type == ImagePlus.GRAY32) {
-         return new FloatProcessor(w, h);
-      } else if (type == ImagePlus.COLOR_RGB) {
-         return new ColorProcessor(w, h);
-      } else {
-         return null;
-      }
+       switch (type) {
+           case ImagePlus.GRAY8:
+               return new ByteProcessor(w, h);
+           case ImagePlus.GRAY16:
+               return new ShortProcessor(w, h);
+           case ImagePlus.GRAY32:
+               return new FloatProcessor(w, h);
+           case ImagePlus.COLOR_RGB:
+               return new ColorProcessor(w, h);
+           default:
+               return null;
+       }
    }
 
    public static int getIJType(JSONObject map) throws ASIdiSPIMException {

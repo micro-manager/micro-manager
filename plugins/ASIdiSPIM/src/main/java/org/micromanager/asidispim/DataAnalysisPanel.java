@@ -25,15 +25,14 @@ import javax.swing.SwingWorker;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.api.MMWindow;
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.asidispim.data.MyStrings;
 import org.micromanager.asidispim.data.Prefs;
 import org.micromanager.asidispim.data.Properties;
 import org.micromanager.asidispim.utils.ListeningJPanel;
 import org.micromanager.asidispim.utils.MyDialogUtils;
 import org.micromanager.asidispim.utils.PanelUtils;
-import org.micromanager.utils.FileDialogs;
+import org.micromanager.internal.utils.FileDialogs;
 
 
 /**

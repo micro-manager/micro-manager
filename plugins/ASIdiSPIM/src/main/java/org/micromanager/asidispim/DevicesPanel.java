@@ -66,7 +66,7 @@ public class DevicesPanel extends ListeningJPanel {
               + maxSelectorWidth + "!]8[]8[]",
               "[]12[]"));
       devices_ = devices;
-      core_ = gui.getMMCore();
+      core_ = gui.core();
       
       DeviceUtils du = new DeviceUtils(gui, devices, props);
       

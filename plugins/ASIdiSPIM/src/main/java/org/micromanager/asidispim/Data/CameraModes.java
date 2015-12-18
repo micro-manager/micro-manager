@@ -29,7 +29,7 @@ import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 
-import org.micromanager.asidispim.util.DevicesListenerInterface;
+import org.micromanager.asidispim.utils.DevicesListenerInterface;
 import org.micromanager.asidispim.utils.MyDialogUtils;
 
 
@@ -40,9 +40,9 @@ import org.micromanager.asidispim.utils.MyDialogUtils;
  */
 public class CameraModes {
    
-   private Devices devices_;   // object holding information about selected/available devices
-   private Properties props_;  // object handling all property read/writes
-   private Prefs prefs_;
+   private final Devices devices_;   // object holding information about selected/available devices
+   private final Properties props_;  // object handling all property read/writes
+   private final Prefs prefs_;
    
    /**
     * Enum to store the acquisition mode along with associated preference code.
@@ -77,9 +77,10 @@ public class CameraModes {
    }
    
    /**
+    * @param prefCode
     * @return null if prefCode not found, or the Key if it is
     */
-   public static Keys getKeyFromPrefCode(int prefCode) {
+   public static Keys getKeyFromPrefCode(final int prefCode) {
       for (Keys k : Keys.values()) {
          if (k.getPrefCode() == prefCode) {
             return k;

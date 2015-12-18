@@ -142,13 +142,13 @@ public class Cameras {
       String mmDevice = devices_.getMMDevice(key);
       if (mmDevice != null) {
          try {
-            boolean liveEnabled = gui_.isLiveModeOn();
+            boolean liveEnabled = gui_.live().getIsLiveModeOn();
             if (liveEnabled) {
                enableLiveMode(false);
             }
             currentCameraKey_ = key;
             core_.setCameraDevice(mmDevice);
-            gui_.refreshGUIFromCache();
+            gui_.compat().refreshGUIFromCache();
             if (liveEnabled) {
                enableLiveMode(true);
             }
@@ -181,7 +181,7 @@ public class Cameras {
       if (enable) {
          setSPIMCamerasForAcquisition(false);
       }
-      gui_.enableLiveMode(enable);
+      gui_.live().setLiveMode(enable);
    }
 
    /**

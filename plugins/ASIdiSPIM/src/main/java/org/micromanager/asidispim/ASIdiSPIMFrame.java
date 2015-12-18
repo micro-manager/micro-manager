@@ -23,12 +23,12 @@ package org.micromanager.asidispim;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.asidispim.Data.Cameras;
-import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.Joystick;
-import org.micromanager.asidispim.Data.Positions;
-import org.micromanager.asidispim.Data.Prefs;
-import org.micromanager.asidispim.Data.Properties;
+import org.micromanager.asidispim.data.Cameras;
+import org.micromanager.asidispim.data.Devices;
+import org.micromanager.asidispim.data.Joystick;
+import org.micromanager.asidispim.data.Positions;
+import org.micromanager.asidispim.data.Prefs;
+import org.micromanager.asidispim.data.Properties;
 import org.micromanager.asidispim.utils.ListeningJPanel;
 import org.micromanager.asidispim.utils.ListeningJTabbedPane;
 
@@ -40,14 +40,11 @@ import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.micromanager.api.MMListenerInterface;
-import org.micromanager.api.ScriptInterface;
 import org.micromanager.Studio;
 import org.micromanager.asidispim.utils.AutofocusUtils;
 import org.micromanager.asidispim.utils.ControllerUtils;
 import static org.micromanager.asidispim.utils.MyJavaUtils.isMac;
 import org.micromanager.asidispim.utils.StagePositionUpdater;
-import org.micromanager.internal.interfaces.LiveModeListener; 
 import org.micromanager.internal.utils.MMFrame;
 
 //TODO devices tab automatically recognize default device names
@@ -80,7 +77,7 @@ import org.micromanager.internal.utils.MMFrame;
  */
 @SuppressWarnings("serial")
 public class ASIdiSPIMFrame extends MMFrame  
-      implements MMListenerInterface {
+       {
    
    private final Properties props_; 
    private final Prefs prefs_;
@@ -176,9 +173,9 @@ public class ASIdiSPIMFrame extends MMFrame
       stagePosUpdater_.addPanel(statusSubPanel_);
 
       // attach live mode listeners
-      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelB_);
-      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelA_);
-      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) navigationPanel_);
+      //MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelB_);
+      //MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelA_);
+      //MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) navigationPanel_);
       
       // make sure gotDeSelected() and gotSelected() get called whenever we switch tabs
       tabbedPane_.addChangeListener(new ChangeListener() {
@@ -240,45 +237,7 @@ public class ASIdiSPIMFrame extends MMFrame
       return navigationPanel_;
    }
    
-   // MMListener mandated member functions
-   @Override
-   public void propertiesChangedAlert() {
-      // doesn't seem to actually be called by core when property changes
-     // props_.callListeners();
-   }
-
-   @Override
-   public void propertyChangedAlert(String device, String property, String value) {
-     // props_.callListeners();
-   }
-
-   @Override
-   public void configGroupChangedAlert(String groupName, String newConfig) {
-   }
-
-   @Override
-   public void systemConfigurationLoaded() {
-   }
-
-   @Override
-   public void pixelSizeChangedAlert(double newPixelSizeUm) {
-   }
-
-   @Override
-   public void stagePositionChangedAlert(String deviceName, double pos) {
-   }
-
-   @Override
-   public void xyStagePositionChanged(String deviceName, double xPos, double yPos) {
-   }
-
-   @Override
-   public void exposureChanged(String cameraName, double newExposureTime) {
-   }
-   
-   @Override
-   public void slmExposureChanged(String cameraName, double newExposureTime) {
-   }
+  
    
    // TODO make this automatically call all panels' method
    private void saveSettings() {

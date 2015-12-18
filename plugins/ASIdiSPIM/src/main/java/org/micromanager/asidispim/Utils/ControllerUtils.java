@@ -30,7 +30,7 @@ import org.micromanager.asidispim.data.CameraModes;
 import org.micromanager.asidispim.data.ChannelSpec;
 import org.micromanager.asidispim.data.Devices;
 import org.micromanager.asidispim.data.Joystick;
-import org.micromanager.asidispim.Data.MultichannelModes;
+import org.micromanager.asidispim.data.MultichannelModes;
 import org.micromanager.asidispim.data.MyStrings;
 import org.micromanager.asidispim.data.Positions;
 import org.micromanager.asidispim.data.Prefs;
