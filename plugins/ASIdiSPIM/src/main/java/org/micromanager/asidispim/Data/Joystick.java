@@ -19,7 +19,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.asidispim.Data;
+package org.micromanager.asidispim.data;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -27,7 +27,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.micromanager.asidispim.Utils.MyDialogUtils;
+import org.micromanager.asidispim.utils.MyDialogUtils;
 
 // TODO implement fast axis reverse checkbox (may need device adapter change and possibly even firmware-level change)
 

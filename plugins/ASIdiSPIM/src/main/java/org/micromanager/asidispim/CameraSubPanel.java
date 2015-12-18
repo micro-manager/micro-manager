@@ -25,8 +25,8 @@ import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
-import org.micromanager.asidispim.Utils.DevicesListenerInterface;
-import org.micromanager.asidispim.Utils.ListeningJPanel;
+import org.micromanager.asidispim.utils.DevicesListenerInterface;
+import org.micromanager.asidispim.utils.ListeningJPanel;
 
 import java.awt.Insets;
 import java.awt.event.ActionEvent;

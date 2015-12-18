@@ -18,7 +18,7 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-package org.micromanager.asidispim.Utils;
+package org.micromanager.asidispim.utils;
 
 /**
  * Collection of utility classes for general use

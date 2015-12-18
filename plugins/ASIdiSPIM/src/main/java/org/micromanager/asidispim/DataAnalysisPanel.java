@@ -27,12 +27,12 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.api.MMWindow;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.asidispim.Data.MyStrings;
-import org.micromanager.asidispim.Data.Prefs;
-import org.micromanager.asidispim.Data.Properties;
-import org.micromanager.asidispim.Utils.ListeningJPanel;
-import org.micromanager.asidispim.Utils.MyDialogUtils;
-import org.micromanager.asidispim.Utils.PanelUtils;
+import org.micromanager.asidispim.data.MyStrings;
+import org.micromanager.asidispim.data.Prefs;
+import org.micromanager.asidispim.data.Properties;
+import org.micromanager.asidispim.utils.ListeningJPanel;
+import org.micromanager.asidispim.utils.MyDialogUtils;
+import org.micromanager.asidispim.utils.PanelUtils;
 import org.micromanager.utils.FileDialogs;
 
 

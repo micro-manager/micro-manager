@@ -37,9 +37,9 @@ import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
-import org.micromanager.asidispim.Utils.ListeningJPanel;
-import org.micromanager.asidispim.Utils.PanelUtils;
-import org.micromanager.asidispim.Utils.StagePositionUpdater;
+import org.micromanager.asidispim.utils.ListeningJPanel;
+import org.micromanager.asidispim.utils.PanelUtils;
+import org.micromanager.asidispim.utils.StagePositionUpdater;
 
 import net.miginfocom.swing.MigLayout;
 

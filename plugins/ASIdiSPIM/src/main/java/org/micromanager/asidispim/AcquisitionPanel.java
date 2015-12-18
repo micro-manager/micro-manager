@@ -31,13 +31,13 @@ import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
-import org.micromanager.asidispim.Utils.DevicesListenerInterface;
-import org.micromanager.asidispim.Utils.ListeningJPanel;
-import org.micromanager.asidispim.Utils.MyDialogUtils;
-import org.micromanager.asidispim.Utils.MyNumberUtils;
-import org.micromanager.asidispim.Utils.PanelUtils;
-import org.micromanager.asidispim.Utils.SliceTiming;
-import org.micromanager.asidispim.Utils.StagePositionUpdater;
+import org.micromanager.asidispim.utils.DevicesListenerInterface;
+import org.micromanager.asidispim.utils.ListeningJPanel;
+import org.micromanager.asidispim.utils.MyDialogUtils;
+import org.micromanager.asidispim.utils.MyNumberUtils;
+import org.micromanager.asidispim.utils.PanelUtils;
+import org.micromanager.asidispim.utils.SliceTiming;
+import org.micromanager.asidispim.utils.StagePositionUpdater;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -106,8 +106,8 @@ import javax.swing.BorderFactory;
 
 import org.micromanager.asidispim.Data.ChannelSpec;
 import org.micromanager.asidispim.Data.Devices.Sides;
-import org.micromanager.asidispim.Utils.ControllerUtils;
-import org.micromanager.asidispim.Utils.AutofocusUtils;
+import org.micromanager.asidispim.utils.ControllerUtils;
+import org.micromanager.asidispim.utils.AutofocusUtils;
 
 /**
  *

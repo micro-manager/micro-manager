@@ -19,7 +19,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.asidispim.Data;
+package org.micromanager.asidispim.data;
 
 import java.awt.Rectangle;
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ import java.util.List;
 import mmcorej.CMMCore;
 
 import org.micromanager.Studio;
-import org.micromanager.asidispim.Utils.MyDialogUtils;
+import org.micromanager.asidispim.utils.MyDialogUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**

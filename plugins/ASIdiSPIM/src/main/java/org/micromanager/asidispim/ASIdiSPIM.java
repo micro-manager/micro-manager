@@ -24,11 +24,12 @@ package org.micromanager.asidispim;
 import java.awt.Color;
 import java.awt.event.WindowEvent;
 
-import org.micromanager.MMPlugin;
+import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
+import org.scijava.plugin.SciJavaPlugin;
 
 
-public class ASIdiSPIM implements MMPlugin {
+public class ASIdiSPIM implements MenuPlugin, SciJavaPlugin {
    public final static String menuName = "ASI diSPIM";
    public final static String tooltipDescription = "Control the ASI diSPIM";
    public final static Color borderColor = Color.gray;
@@ -36,53 +37,11 @@ public class ASIdiSPIM implements MMPlugin {
    private Studio gui_;
    private static ASIdiSPIMFrame myFrame_ = null;
 
-   @Override
-   public void setApp(Studio app) {
-      gui_ = app;
-      // close frame before re-load if already open
-      // if frame has been opened and then closed (myFrame != null) but it won't be displayable 
-      if (myFrame_ != null && myFrame_.isDisplayable()) {
-         WindowEvent wev = new WindowEvent(myFrame_, WindowEvent.WINDOW_CLOSING);
-         myFrame_.dispatchEvent(wev);
-      }
-      // create brand new instance of plugin frame every time
-      try {
-         myFrame_ = new ASIdiSPIMFrame(gui_);
-         gui_.addMMListener(myFrame_);
-      } catch (Exception e) {
-         gui_.showError(e);
-      }
-      myFrame_.setVisible(true);
-   }
-   
+  
    public static ASIdiSPIMFrame getFrame() {
       return myFrame_;
    }
-   
-   /**
-    * The main app calls this method to remove the module window
-    */
-   @Override
-   public void dispose() {
-      if (myFrame_ != null)
-         myFrame_.dispose();
-   }
-
-   @Override
-   public void show() {
-      @SuppressWarnings("unused")
-      String ig = "ASI diSPIM";
-   }
-
-   @Override
-   public String getInfo () {
-      return "ASI diSPIM";
-   }
-
-   @Override
-   public String getDescription() {
-      return tooltipDescription;
-   }
+ 
 
    @Override
    public String getVersion() {
@@ -92,5 +51,43 @@ public class ASIdiSPIM implements MMPlugin {
    @Override
    public String getCopyright() {
       return "University of California and ASI, 2013-2015";
+   }
+
+   @Override
+   public String getSubMenu() {
+      return "Acquisition";
+   }
+
+   @Override
+   public void onPluginSelected() {
+      // close frame before re-load if already open
+      // if frame has been opened and then closed (myFrame != null) but it won't be displayable 
+      if (myFrame_ != null && myFrame_.isDisplayable()) {
+         WindowEvent wev = new WindowEvent(myFrame_, WindowEvent.WINDOW_CLOSING);
+         myFrame_.dispatchEvent(wev);
+      }
+      // create brand new instance of plugin frame every time
+      try {
+         myFrame_ = new ASIdiSPIMFrame(gui_);
+         //gui_.addMMListener(myFrame_);
+      } catch (Exception e) {
+         gui_.logs().showError(e);
+      }
+      myFrame_.setVisible(true);
+   }
+
+   @Override
+   public void setContext(Studio studio) {
+      gui_ = studio;
+   }
+
+   @Override
+   public String getName() {
+      return "ASI diSPIM";
+   }
+
+   @Override
+   public String getHelpText() {
+      return tooltipDescription;
    }
 }

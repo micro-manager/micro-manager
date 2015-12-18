@@ -19,7 +19,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.asidispim.Utils;
+package org.micromanager.asidispim.utils;
 
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
@@ -40,16 +40,16 @@ import mmcorej.TaggedImage;
 import org.jfree.data.xy.XYSeries;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.asidispim.Data.AcquisitionModes;
-import org.micromanager.asidispim.Data.Cameras;
-import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.Joystick.Directions;
+import org.micromanager.Studio;
+import org.micromanager.asidispim.data.AcquisitionModes;
+import org.micromanager.asidispim.data.Cameras;
+import org.micromanager.asidispim.data.Devices;
+import org.micromanager.asidispim.data.Joystick.Directions;
 import org.micromanager.asidispim.Data.MultichannelModes;
-import org.micromanager.asidispim.Data.MyStrings;
-import org.micromanager.asidispim.Data.Positions;
-import org.micromanager.asidispim.Data.Prefs;
-import org.micromanager.asidispim.Data.Properties;
+import org.micromanager.asidispim.data.MyStrings;
+import org.micromanager.asidispim.data.Positions;
+import org.micromanager.asidispim.data.Prefs;
+import org.micromanager.asidispim.data.Properties;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.asidispim.fit.Fitter;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
@@ -61,7 +61,7 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class AutofocusUtils {
 
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    private final Devices devices_;
    private final Properties props_;
    private final Prefs prefs_;
@@ -70,7 +70,7 @@ public class AutofocusUtils {
    private final Positions positions_;
    private final ControllerUtils controller_;
 
-   public AutofocusUtils(ScriptInterface gui, Devices devices, Properties props,
+   public AutofocusUtils(Studio gui, Devices devices, Properties props,
            Prefs prefs, Cameras cameras, StagePositionUpdater stagePosUpdater,
            Positions positions, ControllerUtils controller) {
       gui_ = gui;
@@ -116,15 +116,15 @@ public class AutofocusUtils {
             
             double r2 = 0;
 
-            if (gui_.getAutofocus() == null) {
+            if (gui_.getAutofocusManager().getDevice() == null) {
                throw new ASIdiSPIMException("Please define an autofocus methods first");
             }
-            gui_.getAutofocus().applySettings();
+            gui_.getAutofocusManager().getDevice().applySettings();
             
             // if the Snap/Live window has an ROI set, we will use the same 
             // ROI for our focus calculations
             // TODO: should this be an option?
-            ImageWindow iw = gui_.getSnapLiveWin();
+            ImageWindow iw = gui_.getSnapLiveManager().getDisplay().getImageWindow();
             Roi roi = null;
             if (iw != null)
                roi = iw.getImagePlus().getRoi();
@@ -210,44 +210,44 @@ public class AutofocusUtils {
             scoresToPlot[0] = new XYSeries(nrImages);
 
             boolean liveModeOriginally = false;
-            String originalCamera = gui_.getMMCore().getCameraDevice();
+            String originalCamera = gui_.core().getCameraDevice();
             String acqName = "diSPIM Autofocus";
             
             int highestIndex = -1;
 
             try {
-               liveModeOriginally = gui_.isLiveModeOn();
+               liveModeOriginally = gui_.live().getIsLiveModeOn();
                if (liveModeOriginally) {
-                  gui_.enableLiveMode(false);
-                  gui_.getMMCore().waitForDevice(originalCamera);
+                  gui_.live().setLiveMode(false);
+                  gui_.core().waitForDevice(originalCamera);
                }
                
                // deal with shutter before starting acquisition
                // needed despite core's handling because of DemoCamera
-               boolean autoShutter = gui_.getMMCore().getAutoShutter();
-               boolean shutterOpen = gui_.getMMCore().getShutterOpen();
+               boolean autoShutter = gui_.core().getAutoShutter();
+               boolean shutterOpen = gui_.core().getShutterOpen();
                if (autoShutter) {
-                  gui_.getMMCore().setAutoShutter(false);
+                  gui_.core().setAutoShutter(false);
                   if (!shutterOpen) {
-                     gui_.getMMCore().setShutterOpen(true);
+                     gui_.core().setShutterOpen(true);
                   }
                }
                
-               gui_.getMMCore().setCameraDevice(camera);
+               gui_.core().setCameraDevice(camera);
                if (debug) {
-                  if (gui_.acquisitionExists(acqName)) {
+                  if (gui_.displays().acquisitionExists(acqName)) {
                      gui_.closeAcquisitionWindow(acqName);
                   }
                   acqName = gui_.getUniqueAcquisitionName(acqName);
                   gui_.openAcquisition(acqName, "", 1, 1, nrImages, 1, true, false);
                   gui_.initializeAcquisition(acqName,
-                          (int) gui_.getMMCore().getImageWidth(),
-                          (int) gui_.getMMCore().getImageHeight(),
-                          (int) gui_.getMMCore().getBytesPerPixel(),
-                          (int) gui_.getMMCore().getImageBitDepth());
+                          (int) gui_.core().getImageWidth(),
+                          (int) gui_.core().getImageHeight(),
+                          (int) gui_.core().getBytesPerPixel(),
+                          (int) gui_.core().getImageBitDepth());
                }
-               gui_.getMMCore().clearCircularBuffer();
-               gui_.getMMCore().initializeCircularBuffer();
+               gui_.core().clearCircularBuffer();
+               gui_.core().initializeCircularBuffer();
                cameras_.setSPIMCamerasForAcquisition(true);
                gui_.getMMCore().setExposure((double) sliceTiming.cameraExposure);
 
@@ -264,7 +264,7 @@ public class AutofocusUtils {
                long now = startTime;
                long timeout = 5000;  // wait 5 seconds for first image to come
                //timeout = Math.max(5000, Math.round(1.2*controller_.computeActualVolumeDuration(sliceTiming)));
-               while (gui_.getMMCore().getRemainingImageCount() == 0
+               while (gui_.core().getRemainingImageCount() == 0
                        && (now - startTime < timeout)) {
                   now = System.currentTimeMillis();
                   Thread.sleep(5);
@@ -280,12 +280,12 @@ public class AutofocusUtils {
                boolean done = false;
                int counter = 0;
                startTime = System.currentTimeMillis();
-               while ((gui_.getMMCore().getRemainingImageCount() > 0
-                       || gui_.getMMCore().isSequenceRunning(camera))
+               while ((gui_.core().getRemainingImageCount() > 0
+                       || gui_.core().isSequenceRunning(camera))
                        && !done) {
                   now = System.currentTimeMillis();
-                  if (gui_.getMMCore().getRemainingImageCount() > 0) {  // we have an image to grab
-                     TaggedImage timg = gui_.getMMCore().popNextTaggedImage();
+                  if (gui_.core().getRemainingImageCount() > 0) {  // we have an image to grab
+                     TaggedImage timg = gui_.core().popNextTaggedImage();
                      // reset our wait timer since we got an image
                      startTime = System.currentTimeMillis();
                      ImageProcessor ip = makeProcessor(timg);
@@ -294,7 +294,7 @@ public class AutofocusUtils {
                         ip = ip.crop();
                      }
                      try {
-                        focusScores[counter] = gui_.getAutofocus().computeScore(ip);
+                        focusScores[counter] = gui_.getAutofocusManager().getDevice().computeScore(ip);
                      } catch (Exception ex) {
                         done = true;
                         throw new ASIdiSPIMException("Selected autofocus device didn't return a focus score.");
@@ -329,8 +329,8 @@ public class AutofocusUtils {
                }
                
                // clean up shutter
-               gui_.getMMCore().setShutterOpen(shutterOpen);
-               gui_.getMMCore().setAutoShutter(autoShutter);
+               gui_.core().setShutterOpen(shutterOpen);
+               gui_.core().setAutoShutter(autoShutter);
                
                // fit the focus scores
                // limit the best position to the range of galvo range we used
@@ -349,10 +349,10 @@ public class AutofocusUtils {
                   vad.setSliceIndex(highestIndex);
                   vad.updateDisplay(null);
                   // TODO figure out why slice slider isn't updated, probably a bug in the core
-               } else if (gui_.getSnapLiveWin() != null) {
+               } else if (gui_.live().getDisplay() != null) {
                   // gui_.addImageToAcquisition("Snap/Live Window", 0, 0, 0, 0,
                   //         imageStore[highestIndex]);
-                  gui_.displayImage(imageStore[highestIndex]);
+                  gui_.live().displayImage(imageStore[highestIndex]);
                }
                
                if (debug) {
@@ -375,8 +375,8 @@ public class AutofocusUtils {
                try {
                   caller.setCursor(Cursor.getDefaultCursor());
 
-                  gui_.getMMCore().stopSequenceAcquisition(camera);
-                  gui_.getMMCore().setCameraDevice(originalCamera);
+                  gui_.core().stopSequenceAcquisition(camera);
+                  gui_.core().setCameraDevice(originalCamera);
                   if (debug) {
                      gui_.promptToSaveAcquisition(acqName, false);
                   }
@@ -405,9 +405,9 @@ public class AutofocusUtils {
                   posUpdater_.pauseUpdates(false);
 
                   if (liveModeOriginally) {
-                     gui_.getMMCore().waitForDevice(camera);
-                     gui_.getMMCore().waitForDevice(originalCamera);
-                     gui_.enableLiveMode(true);
+                     gui_.core().waitForDevice(camera);
+                     gui_.core().waitForDevice(originalCamera);
+                     gui_.live().setLiveMode(true);
                   }
 
                } catch (Exception ex) {

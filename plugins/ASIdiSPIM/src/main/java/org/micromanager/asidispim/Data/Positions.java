@@ -19,16 +19,16 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.asidispim.Data;
+package org.micromanager.asidispim.data;
 
 import java.awt.geom.Point2D;
 import java.util.HashMap;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.asidispim.Data.Joystick.Directions;
-import org.micromanager.asidispim.Utils.MyDialogUtils;
+import org.micromanager.asidispim.utils.MyDialogUtils;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -257,24 +257,32 @@ public class Positions {
          if (devices_.is1DStage(devKey)) {
             core_.setPosition(mmDevice, pos);
          } else  if (devices_.isXYStage(devKey)) {
-            if (dir == Directions.X) {
-               // would prefer setXPosition but it doesn't exist so we stop any Y motion
-               double ypos = core_.getYPosition(mmDevice);
-               core_.setXYPosition(mmDevice, pos, ypos);
-            } else if (dir == Directions.Y) {
-               double xpos = core_.getXPosition(mmDevice);
-               // would prefer setYPosition but it doesn't exist so we stop any X motion
-               core_.setXYPosition(mmDevice, xpos, pos);
-            } else {
-               throw new ASIdiSPIMException("Tried to set XYStage position without direction.");
+            if (null != dir) 
+               switch (dir) {
+               case X:
+                  // would prefer setXPosition but it doesn't exist so we stop any Y motion
+                  double ypos = core_.getYPosition(mmDevice);
+                  core_.setXYPosition(mmDevice, pos, ypos);
+                  break;
+               case Y:
+                  double xpos = core_.getXPosition(mmDevice);
+                  // would prefer setYPosition but it doesn't exist so we stop any X motion
+                  core_.setXYPosition(mmDevice, xpos, pos);
+                  break;
+               default:
+                  throw new ASIdiSPIMException("Tried to set XYStage position without direction.");
             }
          } else if (devices_.isGalvo(devKey)) {
-            if (dir == Directions.X) {
-               core_.setGalvoPosition(mmDevice, pos, getUpdatedPosition(devKey, Directions.Y));
-            } else if (dir == Directions.Y) {
-               core_.setGalvoPosition(mmDevice, getUpdatedPosition(devKey, Directions.X), pos);
-            } else {
-               throw new ASIdiSPIMException("Tried to set galvo position without direction.");
+            if (null != dir) 
+               switch (dir) {
+               case X:
+                  core_.setGalvoPosition(mmDevice, pos, getUpdatedPosition(devKey, Directions.Y));
+                  break;
+               case Y:
+                  core_.setGalvoPosition(mmDevice, getUpdatedPosition(devKey, Directions.X), pos);
+                  break;
+               default:
+                  throw new ASIdiSPIMException("Tried to set galvo position without direction.");
             }
          }
          return true;
@@ -296,23 +304,31 @@ public class Positions {
          if (devices_.is1DStage(devKey)) {
             core_.setRelativePosition(mmDevice, delta);
          } else if (devices_.isXYStage(devKey)) {
-            if (dir == Directions.X) {
-               core_.setRelativeXYPosition(mmDevice, delta, 0);
-            } else if (dir == Directions.Y) {
-               core_.setRelativeXYPosition(mmDevice, 0, delta);
-            } else {
-               throw new ASIdiSPIMException("Tried to set XYStage position without direction.");
+            if (null != dir) 
+               switch (dir) {
+               case X:
+                  core_.setRelativeXYPosition(mmDevice, delta, 0);
+                  break;
+               case Y:
+                  core_.setRelativeXYPosition(mmDevice, 0, delta);
+                  break;
+               default:
+                  throw new ASIdiSPIMException("Tried to set XYStage position without direction.");
             }
          } else if (devices_.isGalvo(devKey)) {
             Point2D.Double pos2D = new Point2D.Double();
             pos2D.x = getUpdatedPosition(devKey, Directions.X);  // will update cache for Y too
             pos2D.y = getCachedPosition(devKey, Directions.Y);
-            if (dir == Directions.X) {
-               core_.setGalvoPosition(mmDevice, pos2D.x + delta, pos2D.y);
-            } else if (dir == Directions.Y) {
-               core_.setGalvoPosition(mmDevice, pos2D.x, pos2D.y + delta);
-            } else {
-               throw new ASIdiSPIMException("Tried to set galvo position without direction.");
+            if (null != dir) 
+               switch (dir) {
+               case X:
+                  core_.setGalvoPosition(mmDevice, pos2D.x + delta, pos2D.y);
+                  break;
+               case Y:
+                  core_.setGalvoPosition(mmDevice, pos2D.x, pos2D.y + delta);
+                  break;
+               default:
+                  throw new ASIdiSPIMException("Tried to set galvo position without direction.");
             }
          }
       } catch (Exception ex) {
