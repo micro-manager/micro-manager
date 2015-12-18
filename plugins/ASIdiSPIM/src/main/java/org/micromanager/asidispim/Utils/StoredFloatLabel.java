@@ -24,7 +24,7 @@ import java.text.ParseException;
 
 import javax.swing.JLabel;
 
-import org.micromanager.asidispim.Data.Prefs;
+import org.micromanager.asidispim.data.Prefs;
 import org.micromanager.internal.utils.NumberUtils;
 
 

@@ -33,14 +33,14 @@ import java.util.List;
 
 import org.micromanager.internal.dialogs.ComponentTitledBorder;
 import org.micromanager.Studio;
-import org.micromanager.asidispim.Data.ChannelConfigEditor;
-import org.micromanager.asidispim.Data.ChannelSpec;
-import org.micromanager.asidispim.Data.ChannelTableModel;
-import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.MultichannelModes;
-import org.micromanager.asidispim.Data.MyStrings;
-import org.micromanager.asidispim.Data.Prefs;
-import org.micromanager.asidispim.Data.Properties;
+import org.micromanager.asidispim.data.ChannelConfigEditor;
+import org.micromanager.asidispim.data.ChannelSpec;
+import org.micromanager.asidispim.data.ChannelTableModel;
+import org.micromanager.asidispim.data.Devices;
+import org.micromanager.asidispim.data.MultichannelModes;
+import org.micromanager.asidispim.data.MyStrings;
+import org.micromanager.asidispim.data.Prefs;
+import org.micromanager.asidispim.data.Properties;
 import org.micromanager.asidispim.utils.ListeningJPanel;
 import org.micromanager.asidispim.utils.MyDialogUtils;
 import org.micromanager.asidispim.utils.PanelUtils;
@@ -321,7 +321,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       try {
          groups = core_.getAllowedPropertyValues("Core", "ChannelGroup");
       } catch (Exception ex) {
-         gui_.logError(ex);
+         gui_.logs().logError(ex);
          return new String[0];
       }
       ArrayList<String> strGroups = new ArrayList<String>();
@@ -391,7 +391,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       try {
          return core_.getCurrentConfigFromCache(channelGroup_.getSelectedItem().toString());
       } catch (Exception e) {
-         gui_.logError("Failed to get current configuration");
+         gui_.logs().logError("Failed to get current configuration");
       }
       return null;
    }
@@ -400,7 +400,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       try {
          core_.setConfig(channelGroup_.getSelectedItem().toString(), config);
       } catch (Exception e) {
-         gui_.logError(e, "Failed to set config.");
+         gui_.logs().logError(e, "Failed to set config.");
       }
    }
 

@@ -31,11 +31,11 @@ import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 
-import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.Joystick;
-import org.micromanager.asidispim.Data.MyStrings;
-import org.micromanager.asidispim.Data.Prefs;
-import org.micromanager.asidispim.util.DevicesListenerInterface;
+import org.micromanager.asidispim.data.Devices;
+import org.micromanager.asidispim.data.Joystick;
+import org.micromanager.asidispim.data.MyStrings;
+import org.micromanager.asidispim.data.Prefs;
+import org.micromanager.asidispim.utils.DevicesListenerInterface;
 import org.micromanager.asidispim.utils.ListeningJPanel;
 
 import net.miginfocom.swing.MigLayout;

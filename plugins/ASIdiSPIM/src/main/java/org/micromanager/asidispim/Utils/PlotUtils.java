@@ -31,8 +31,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
@@ -44,10 +42,8 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-import org.micromanager.MMStudio;
-import org.micromanager.asidispim.Data.Prefs;
-import org.micromanager.asidispim.Data.Properties;
-import org.micromanager.utils.MMScriptException;
+import org.micromanager.asidispim.data.Prefs;
+import org.micromanager.asidispim.data.Properties;
 
 /**
  * Utility class to make it simple to show a plot of XY data
@@ -228,12 +224,5 @@ public class PlotUtils {
       return graphFrame;
    }
    
-   public  void message(String msg) {
-      try {
-         MMStudio.getInstance().message(msg);
-      } catch (MMScriptException ex) {
-         Logger.getLogger(PlotUtils.class.getName()).log(Level.SEVERE, null, ex);
-      }
-   }
 
 }

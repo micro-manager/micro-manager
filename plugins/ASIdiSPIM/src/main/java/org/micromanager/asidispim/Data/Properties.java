@@ -29,7 +29,7 @@ import mmcorej.CMMCore;
 
 import org.micromanager.Studio;
 import org.micromanager.asidispim.utils.MyDialogUtils;
-import org.micromanager.asidispim.util.UpdateFromPropertyListenerInterface;
+import org.micromanager.asidispim.utils.UpdateFromPropertyListenerInterface;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 

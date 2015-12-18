@@ -29,7 +29,7 @@ import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 
-import org.micromanager.asidispim.util.DevicesListenerInterface;
+import org.micromanager.asidispim.utils.DevicesListenerInterface;
 import org.micromanager.asidispim.utils.MyDialogUtils;
 
 

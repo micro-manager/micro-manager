@@ -27,11 +27,11 @@ import java.util.HashMap;
 import mmcorej.CMMCore;
 
 import org.micromanager.Studio;
-import org.micromanager.asidispim.Data.Joystick.Directions;
+import org.micromanager.asidispim.data.Joystick.Directions;
 import org.micromanager.asidispim.utils.MyDialogUtils;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
-import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Holds information about device positions
@@ -140,9 +140,10 @@ public class Positions {
             oneAxisDrivePositions_.put(devKey, pt);
             return pt;
          }
-         Point2D.Double pt;
+         Point2D.Double pt = new Point2D.Double();
          if (devices_.isXYStage(devKey)) {
-            pt = core_.getXYPosition(mmDevice);
+             pt.x = core_.getXPosition(mmDevice);
+             pt.y = core_.getYPosition(mmDevice);
          } else if (devices_.isGalvo(devKey)) {
             pt = core_.getGalvoPosition(mmDevice);
          } else {
@@ -384,10 +385,11 @@ public class Positions {
             twoAxisDrivePositions_.put(devKey, null);
             continue;
          }
-         Point2D.Double pt;
+         Point2D.Double pt = new Point2D.Double();
          try {
             if (devices_.isXYStage(devKey)) {
-               pt = core_.getXYPosition(mmDevice);
+               pt.x = core_.getXPosition(mmDevice);
+               pt.y = core_.getYPosition(mmDevice);
             } else if (devices_.isGalvo(devKey)) {
                pt = core_.getGalvoPosition(mmDevice);
             } else {

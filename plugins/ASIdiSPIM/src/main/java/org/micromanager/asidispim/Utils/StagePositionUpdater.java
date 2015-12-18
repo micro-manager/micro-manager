@@ -27,9 +27,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.Positions;
-import org.micromanager.asidispim.Data.Properties;
+import org.micromanager.asidispim.data.Devices;
+import org.micromanager.asidispim.data.Positions;
+import org.micromanager.asidispim.data.Properties;
 
 /**
  *

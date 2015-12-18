@@ -29,14 +29,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Point2D;
 
-import org.micromanager.asidispim.Data.Cameras;
-import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.Joystick;
-import org.micromanager.asidispim.Data.Joystick.Directions;
-import org.micromanager.asidispim.Data.MyStrings;
-import org.micromanager.asidispim.Data.Positions;
-import org.micromanager.asidispim.Data.Prefs;
-import org.micromanager.asidispim.Data.Properties;
+import org.micromanager.asidispim.data.Cameras;
+import org.micromanager.asidispim.data.Devices;
+import org.micromanager.asidispim.data.Joystick;
+import org.micromanager.asidispim.data.Joystick.Directions;
+import org.micromanager.asidispim.data.MyStrings;
+import org.micromanager.asidispim.data.Positions;
+import org.micromanager.asidispim.data.Prefs;
+import org.micromanager.asidispim.data.Properties;
 import org.micromanager.asidispim.utils.ListeningJPanel;
 import org.micromanager.asidispim.utils.MyDialogUtils;
 import org.micromanager.asidispim.utils.PanelUtils;
@@ -49,12 +49,10 @@ import javax.swing.*;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.MMStudio;
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.Studio;
 import org.micromanager.asidispim.utils.AutofocusUtils;
-import org.micromanager.internalinterfaces.LiveModeListener;
-import org.micromanager.utils.MMFrame;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.internal.utils.MMFrame;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *
@@ -62,7 +60,7 @@ import org.micromanager.utils.ReportingUtils;
  * @author Jon
  */
 @SuppressWarnings("serial")
-public final class SetupPanel extends ListeningJPanel implements LiveModeListener {
+public final class SetupPanel extends ListeningJPanel {
 
    private final Devices devices_;
    private final Properties props_;
@@ -105,7 +103,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
 
 
 
-   public SetupPanel(ScriptInterface gui, 
+   public SetupPanel(Studio gui, 
            Devices devices, 
            Properties props, 
            Joystick joystick, 
@@ -171,7 +169,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       piezoDeltaField_.setToolTipText("Piezo increment used by up/down arrow buttons");
       
       JButton upButton = new JButton();
-      upButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "icons/arrow_up.png"));
+      upButton.setIcon(SwingResourceManager.getIcon(Studio.class, "icons/arrow_up.png"));
       upButton.setText("");
       upButton.setToolTipText("Move slice and piezo up together");
       upButton.addActionListener(new ActionListener() {
@@ -182,7 +180,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       });
       
       JButton downButton = new JButton();
-      downButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "icons/arrow_down.png"));
+      downButton.setIcon(SwingResourceManager.getIcon(Studio.class, "icons/arrow_down.png"));
       downButton.setText("");
       downButton.setToolTipText("Move slice and piezo down together");
       downButton.addActionListener(new ActionListener() {
@@ -767,16 +765,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       imagingPiezoPositionLabel_.setText("");
       illuminationPiezoPositionLabel_.setText("");
       sheetPositionLabel_.setText("");
-   }
-
-   /**
-    * required by LiveModeListener interface; just pass call along to camera
-    * panel
-    * @param enable - signals whether or not live mode is enabled
-    */
-   @Override
-   public void liveModeEnabled(boolean enable) {
-      cameraPanel_.liveModeEnabled(enable);
    }
 
    /**

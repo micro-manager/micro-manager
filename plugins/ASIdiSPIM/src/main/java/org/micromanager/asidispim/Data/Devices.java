@@ -34,7 +34,7 @@ import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
 import org.micromanager.Studio;
-import org.micromanager.asidispim.util.DevicesListenerInterface;
+import org.micromanager.asidispim.utils.DevicesListenerInterface;
 import org.micromanager.asidispim.utils.MyDialogUtils;
 
 
