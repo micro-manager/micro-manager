@@ -38,11 +38,35 @@ public interface ASIdiSPIMInterface {
    /**
     * Requests an acquisition using the current settings, i.e., the settings
     * as visible in the acquisition panel.  The definition of current
-    * settings may change in the future.  Does nothing if an acquisition
-    * is currently running or has been requested.
+    * settings may change in the future.  Throws exception if an acquisition
+    * is currently running or has been requested.  Does not block.
     * @see ASIdiSPIMInterface#stopAcquisition()
     */
    public void runAcquisition() throws ASIdiSPIMException;
+   
+   /**
+    * Requests an acquisition using the current settings, i.e., the settings
+    * as visible in the acquisition panel.  The definition of current
+    * settings may change in the future.  Throws exception if an acquisition
+    * is currently running or has been requested.  Blocks until complete.
+    * @return ImagePlus object with acquisition data
+    * @throws ASIdiSPIMException
+    */
+   public ij.ImagePlus runAcquisitionBlocking() throws ASIdiSPIMException;
+   
+   /**
+    * Moves the stages to the requested position, then requests
+    * an acquisition using the current settings, i.e., the settings
+    * as visible in the acquisition panel.  The definition of current
+    * settings may change in the future.  Throws exception if an acquisition
+    * is currently running or has been requested.  Blocks until complete.
+    * @param x requested position of X axis
+    * @param y requested position of Y axis
+    * @param f requested position of SPIM head, usually the F axis
+    * @return ImagePlus object with acquisition data
+    * @throws ASIdiSPIMException
+    */
+   public ij.ImagePlus runAcquisitionBlocking(double x, double y, double f) throws ASIdiSPIMException; 
    
    /**
     * Stops an acquisition, if one is currently running.  Also cancels a 
@@ -75,6 +99,12 @@ public interface ASIdiSPIMInterface {
     * @see ASIdiSPIMInterface#stopAcquisition()
     */
    public boolean isAcquisitionRequested() throws ASIdiSPIMException;
+   
+   /**
+    * @return ImagePlus object of last acquisition.
+    * @throws ASIdiSPIMException
+    */
+   public ij.ImagePlus getLastAcquisitionImagePlus() throws ASIdiSPIMException;
 
    /**
     * @return pathname on filesystem to last completed acquisition

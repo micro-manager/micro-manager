@@ -57,7 +57,34 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
 
    @Override
    public void runAcquisition() throws ASIdiSPIMException {
+      if (isAcquisitionRequested()) {
+         throw new ASIdiSPIMException("another acquisition ongoing");
+      }
       getAcquisitionPanel().runAcquisition();
+   }
+
+   @Override
+   public ij.ImagePlus runAcquisitionBlocking() throws ASIdiSPIMException {
+      if (isAcquisitionRequested()) {
+         throw new ASIdiSPIMException("another acquisition ongoing");
+      }
+      getAcquisitionPanel().runAcquisition();
+      try {
+         Thread.sleep(100);
+         while (isAcquisitionRequested()) {
+            Thread.sleep(10);
+         }
+         return getAcquisitionPanel().getLastAcquisitionImagePlus();
+      } catch (InterruptedException e) {
+         throw new ASIdiSPIMException(e);
+      }
+   }
+   
+   @Override
+   public ij.ImagePlus runAcquisitionBlocking(double x, double y, double f) throws ASIdiSPIMException {
+      setXYPosition(x, y);
+      setSPIMHeadPosition(f);
+      return runAcquisitionBlocking();
    }
    
    @Override
@@ -66,14 +93,20 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    }
    
    @Override
+   public boolean isAcquisitionRunning() throws ASIdiSPIMException {
+      return getAcquisitionPanel().isAcquisitionRunning();
+   }
+   
+   @Override
    public boolean isAcquisitionRequested() throws ASIdiSPIMException {
       return getAcquisitionPanel().isAcquisitionRequested();
    }
    
    @Override
-   public boolean isAcquisitionRunning() throws ASIdiSPIMException {
-      return getAcquisitionPanel().isAcquisitionRunning();
+   public ij.ImagePlus getLastAcquisitionImagePlus() throws ASIdiSPIMException {
+      return getAcquisitionPanel().getLastAcquisitionImagePlus();
    }
+
    
    @Override
    public String getLastAcquisitionPath() throws ASIdiSPIMException {

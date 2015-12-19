@@ -1453,6 +1453,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          @Override
          public void run() {
             ReportingUtils.logDebugMessage("User requested start of diSPIM acquisition.");
+            if (isAcquisitionRequested()) { // don't allow acquisition to be requested again, just return
+               ReportingUtils.logError("another acquisition already running");
+               return;
+            }
             cancelAcquisition_.set(false);
             acquisitionRequested_.set(true);
             ASIdiSPIM.getFrame().tabsSetEnabled(false);
@@ -2041,6 +2045,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // will be null if not saving to disk
             lastAcquisitionPath_ = acq.getImageCache().getDiskLocation();
             lastAcquisitionName_ = acqName;
+            
+            // make sure all devices have arrived, e.g. a stage isn't still moving
+            try {
+               core_.waitForSystem();
+            } catch (Exception e) {
+               ReportingUtils.logError("error waiting for system");
+            }
             
             // Loop over all the times we trigger the controller's acquisition
             //  (although if multi-channel with volume switching is selected there
@@ -2646,6 +2657,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
    public String getLastAcquisitionName() {
       return lastAcquisitionName_;
+   }
+   
+   public ij.ImagePlus getLastAcquisitionImagePlus() throws ASIdiSPIMException {
+      try {
+         return gui_.getAcquisition(lastAcquisitionName_).getAcquisitionWindow().getImagePlus();
+      } catch (MMScriptException e) {
+         throw new ASIdiSPIMException(e);
+      }
    }
    
    public String getSavingDirectoryRoot() {
