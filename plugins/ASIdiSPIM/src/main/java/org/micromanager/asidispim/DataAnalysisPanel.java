@@ -32,6 +32,9 @@ import org.micromanager.asidispim.data.Properties;
 import org.micromanager.asidispim.utils.ListeningJPanel;
 import org.micromanager.asidispim.utils.MyDialogUtils;
 import org.micromanager.asidispim.utils.PanelUtils;
+import org.micromanager.data.Coords;
+import org.micromanager.data.Datastore;
+import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.FileDialogs;
 
 
@@ -287,40 +290,43 @@ public class DataAnalysisPanel extends ListeningJPanel {
       protected Void doInBackground() throws Exception {
          setProgress(0);
          DisplayWindow dw = gui_.displays().getCurrentWindow();
-
+         
          if (null == dw) {
             throw new SaveTaskException("Can only convert Micro-Manager data set ");
          }
+         ImagePlus ip = dw.getImagePlus();
+         Datastore store = dw.getDatastore();
 
          if (exportFormat_ == 0) { // mipav
-            
+
             ImageProcessor iProc = ip.getProcessor();
-            if (!mmW.getSummaryMetaData().getString("NumberOfSides").equals("2")) {
-               throw new SaveTaskException("mipav export only works with two-sided data for now.");  
+            if (!store.getSummaryMetadata().getUserData().getString("NumberOfSides").equals("2")) {
+               throw new SaveTaskException("mipav export only works with two-sided data for now.");
             }
-            if (mmW.getNumberOfPositions() > 1) {
-               throw new SaveTaskException("mipav export does not yet work with multiple positions");  
+            if (store.getAxisLength(Coords.STAGE_POSITION) > 1) {
+               throw new SaveTaskException("mipav export does not yet work with multiple positions");
             }
-            
-            boolean usesChannels = mmW.getNumberOfChannels() > 2;  // if have channels besides two cameras
-            String [] channelDirArray = new String[mmW.getNumberOfChannels()];
+
+            boolean usesChannels = store.getAxisLength(Coords.CHANNEL) > 2;  // if have channels besides two cameras
+            String[] channelDirArray = new String[store.getAxisLength(Coords.CHANNEL)];
             if (usesChannels) {
-               for (int c = 0; c < mmW.getNumberOfChannels(); c++) {
-                  String chName = (String)mmW.getSummaryMetaData().getJSONArray("ChNames").get(c);
-                  String colorName = chName.substring(chName.indexOf("-")+1);  // matches with AcquisitionPanel naming convention
+               for (int c = 0; c < store.getAxisLength(Coords.CHANNEL); c++) {
+                  String chName = store.getSummaryMetadata().getUserData().
+                          getStringArray("ChNames")[c];
+                  String colorName = chName.substring(chName.indexOf("-") + 1);  // matches with AcquisitionPanel naming convention
                   channelDirArray[c] = targetDirectory_ + File.separator + baseName_ + File.separator
-                        + (((c % 2) == 0) ? "SPIMA" : "SPIMB") + File.separator + colorName;
+                          + (((c % 2) == 0) ? "SPIMA" : "SPIMB") + File.separator + colorName;
                }
             } else {
-               channelDirArray[0] = targetDirectory_ + File.separator + baseName_ + 
-                     File.separator + "SPIMA";
-               channelDirArray[1] = targetDirectory_ + File.separator + baseName_ + 
-                     File.separator + "SPIMB";
+               channelDirArray[0] = targetDirectory_ + File.separator + baseName_
+                       + File.separator + "SPIMA";
+               channelDirArray[1] = targetDirectory_ + File.separator + baseName_
+                       + File.separator + "SPIMB";
             }
 
             for (String dir : channelDirArray) {
                if (new File(dir).exists()) {
-                     throw new SaveTaskException("Output directory already exists");
+                  throw new SaveTaskException("Output directory already exists");
                }
             }
 
@@ -328,15 +334,19 @@ public class DataAnalysisPanel extends ListeningJPanel {
                new File(dir).mkdirs();
             }
 
-            int totalNr = mmW.getNumberOfChannels() * mmW.getNumberOfFrames() * mmW.getNumberOfSlices();
+            final int nrCh = store.getAxisLength(Coords.CHANNEL);
+            final int nrFr = store.getAxisLength(Coords.TIME);
+            final int nrZ = store.getAxisLength(Coords.Z);
+            final int totalNr = nrCh * nrFr * nrZ;
             int counter = 0;
-            
-            for (int c = 0; c < mmW.getNumberOfChannels(); c++) {  // for each channel
-               for (int t = 0; t < mmW.getNumberOfFrames(); t++) {  // for each timepoint
+
+            for (int c = 0; c < nrCh; c++) {  // for each channel
+               for (int t = 0; t < nrFr; t++) {  // for each timepoint
                   ImageStack stack = new ImageStack(iProc.getWidth(), iProc.getHeight());
-                  for (int i = 0; i < ds.getAxisLength(Coords.Z); i++) {
-                     ImageProcessor iProc2;
-                     iProc2 = mmW.getImageProcessor(c, i, t, 1);
+                  for (int i = 0; i < store.getAxisLength(Coords.Z); i++) {
+                     Coords coords = gui_.data().getCoordsBuilder().channel(c).time(t).z(i).build();
+                     // TODOL make utility that converts Image into ImageProcessor
+                     ImageProcessor iProc2 = store.getImage(coords);  
 
                      // optional transformation
                      switch (transformIndex_) {
@@ -361,20 +371,19 @@ public class DataAnalysisPanel extends ListeningJPanel {
                   }
                   ImagePlus ipN = new ImagePlus("tmp", stack);
                   ipN.setCalibration(ip.getCalibration());
-                  ij.IJ.save(ipN, channelDirArray[c] + File.separator 
-                        + (((c % 2) == 0) ? "SPIMA" : "SPIMB")
-                        + "-" + t + ".tif");
+                  ij.IJ.save(ipN, channelDirArray[c] + File.separator
+                          + (((c % 2) == 0) ? "SPIMA" : "SPIMB")
+                          + "-" + t + ".tif");
                }
             }
-            
-         } else 
-         if (exportFormat_ == 1) {  // Multiview reconstruction
+
+         } else if (exportFormat_ == 1) {  // Multiview reconstruction
             throw new SaveTaskException("Should import Micro-Manager datasets "
-                  + "directly into Fiji Multiview reconstruction as of April 2015.");
+                    + "directly into Fiji Multiview reconstruction as of April 2015.");
          }
          return null;
       }
-      
+
       
       @Override
       public void done() {

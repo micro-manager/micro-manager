@@ -21,16 +21,16 @@
 package org.micromanager.asidispim;
 
 
-import org.micromanager.asidispim.Data.AcquisitionModes;
-import org.micromanager.asidispim.Data.CameraModes;
-import org.micromanager.asidispim.Data.Cameras;
-import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.Joystick;
-import org.micromanager.asidispim.Data.MultichannelModes;
-import org.micromanager.asidispim.Data.MyStrings;
-import org.micromanager.asidispim.Data.Positions;
-import org.micromanager.asidispim.Data.Prefs;
-import org.micromanager.asidispim.Data.Properties;
+import org.micromanager.asidispim.data.AcquisitionModes;
+import org.micromanager.asidispim.data.CameraModes;
+import org.micromanager.asidispim.data.Cameras;
+import org.micromanager.asidispim.data.Devices;
+import org.micromanager.asidispim.data.Joystick;
+import org.micromanager.asidispim.data.MultichannelModes;
+import org.micromanager.asidispim.data.MyStrings;
+import org.micromanager.asidispim.data.Positions;
+import org.micromanager.asidispim.data.Prefs;
+import org.micromanager.asidispim.data.Properties;
 import org.micromanager.asidispim.utils.DevicesListenerInterface;
 import org.micromanager.asidispim.utils.ListeningJPanel;
 import org.micromanager.asidispim.utils.MyDialogUtils;
@@ -73,26 +73,8 @@ import org.json.JSONObject;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 
-import org.micromanager.api.MultiStagePosition;
-import org.micromanager.api.PositionList;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.api.ImageCache;
-import org.micromanager.api.MMTags;
-import org.micromanager.MMStudio;
-import org.micromanager.acquisition.ComponentTitledBorder;
-import org.micromanager.acquisition.DefaultTaggedImageSink;
-import org.micromanager.acquisition.MMAcquisition;
-import org.micromanager.acquisition.TaggedImageQueue;
-import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
-import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
-import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
-import org.micromanager.utils.ImageUtils;
-import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.FileDialogs;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.MMFrame;
-import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.ReportingUtils;
+
+import org.micromanager.Studio;
 
 import com.swtdesigner.SwingResourceManager;
 
@@ -103,11 +85,18 @@ import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
 
 import javax.swing.BorderFactory;
+import org.micromanager.PositionList;
 
-import org.micromanager.asidispim.Data.ChannelSpec;
-import org.micromanager.asidispim.Data.Devices.Sides;
+import org.micromanager.asidispim.data.ChannelSpec;
+import org.micromanager.asidispim.data.Devices.Sides;
 import org.micromanager.asidispim.utils.ControllerUtils;
 import org.micromanager.asidispim.utils.AutofocusUtils;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.dialogs.ComponentTitledBorder;
+import org.micromanager.internal.utils.MMFrame;
+import org.micromanager.internal.utils.MMScriptException;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *
@@ -206,7 +195,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       positions_ = positions;
       controller_ = controller;
       autofocus_ = autofocus;
-      core_ = gui_.getMMCore();
+      core_ = gui_.core();
       numTimePointsDone_ = 0;
       sliceTiming_ = new SliceTiming();
       
@@ -661,7 +650,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       editPositionListButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            gui_.showXYPositionList();
+            gui_.compat().showXYPositionList();
          }
       });
       positionPanel.add(editPositionListButton, "span 2, center");
@@ -1393,14 +1382,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     */
    private boolean runAcquisitionPrivate() {
       
-      if (gui_.isAcquisitionRunning()) {
+      if (gui_.compat().isAcquisitionRunning()) {
          MyDialogUtils.showError("An acquisition is already running");
          return false;
       }
       
-      boolean liveModeOriginally = gui_.isLiveModeOn();
+      boolean liveModeOriginally = gui_.live().getIsLiveModeOn();
       if (liveModeOriginally) {
-         gui_.enableLiveMode(false);
+         gui_.live().setLiveMode(false);
       }
       
       // stop the serial traffic for position updates during acquisition
@@ -1484,7 +1473,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       PositionList positionList = new PositionList();
       if (usePositions) {
          try {
-            positionList = gui_.getPositionList();
+            positionList = gui_.compat().getPositionList();
             nrPositions = positionList.getNumberOfPositions();
          } catch (MMScriptException ex) {
             MyDialogUtils.showError(ex, "Error getting position list for multiple XY positions");

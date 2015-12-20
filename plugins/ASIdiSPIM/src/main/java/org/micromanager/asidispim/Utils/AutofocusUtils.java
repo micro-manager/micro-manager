@@ -52,7 +52,9 @@ import org.micromanager.asidispim.data.Prefs;
 import org.micromanager.asidispim.data.Properties;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.asidispim.fit.Fitter;
+import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
+import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -245,15 +247,7 @@ public class AutofocusUtils {
                   }
                   store = gui_.data().createRAMDatastore();
                   ourWindow_ = gui_.displays().createDisplay(store);
-                  /*
-                  acqName = gui_.getUniqueAcquisitionName(acqName);
-                  gui_.openAcquisition(acqName, "", 1, 1, nrImages, 1, true, false);
-                  gui_.initializeAcquisition(acqName,
-                          (int) gui_.core().getImageWidth(),
-                          (int) gui_.core().getImageHeight(),
-                          (int) gui_.core().getBytesPerPixel(),
-                          (int) gui_.core().getImageBitDepth());
-*/
+                  ourWindow_.toFront();
                }
                gui_.core().clearCircularBuffer();
                gui_.core().initializeCircularBuffer();
@@ -317,8 +311,11 @@ public class AutofocusUtils {
                         double galvoPos = galvoStart + counter * galvoStepSize;
                         timg.tags.put("SlicePosition", galvoPos);
                         timg.tags.put("ZPositionUm", piezoCenter);
-                        store.putImage(timg);
-                        gui_.addImageToAcquisition(acqName, 0, 0, counter, 0, timg);
+                        Image img = gui_.data().convertTaggedImage(timg);
+                        Coords coords = gui_.data().getCoordsBuilder().z(counter).build();
+                        img = img.copyAtCoords(coords);
+                        if (store != null)
+                           store.putImage(img);
                         scoresToPlot[0].add(galvoPos, focusScores[counter]);
                      }
                      counter++;
@@ -354,15 +351,11 @@ public class AutofocusUtils {
                // display the best scoring image in the debug stack if it exists
                // or if not then in the snap/live window if it exists
                if (debug) {
-                  // the following does not work.  Delete?
-                  VirtualAcquisitionDisplay vad = gui_.getAcquisition(acqName).getAcquisitionWindow();
-                  vad.setSliceIndex(highestIndex);
-                  vad.updateDisplay(null);
-                  // TODO figure out why slice slider isn't updated, probably a bug in the core
+                  Coords coords = gui_.data().getCoordsBuilder().z(highestIndex).build();
+                  ourWindow_.setDisplayedImageTo(coords);
                } else if (gui_.live().getDisplay() != null) {
-                  // gui_.addImageToAcquisition("Snap/Live Window", 0, 0, 0, 0,
-                  //         imageStore[highestIndex]);
-                  gui_.live().displayImage(imageStore[highestIndex]);
+                  gui_.live().displayImage(gui_.data().convertTaggedImage(
+                          imageStore[highestIndex]));
                }
                
                if (debug) {
@@ -388,7 +381,7 @@ public class AutofocusUtils {
                   gui_.core().stopSequenceAcquisition(camera);
                   gui_.core().setCameraDevice(originalCamera);
                   if (debug) {
-                     gui_.promptToSaveAcquisition(acqName, false);
+                     // gui_.promptToSaveAcquisition(acqName, false);
                   }
 
                   controller_.cleanUpControllerAfterAcquisition(1, side.toString(), false);
