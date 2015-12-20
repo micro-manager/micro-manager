@@ -36,12 +36,12 @@ import javax.swing.JSpinner;
 import mmcorej.StrVector;
 
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.Studio;
 
-import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.MyStrings;
-import org.micromanager.asidispim.Data.Prefs;
-import org.micromanager.asidispim.Data.Properties;
+import org.micromanager.asidispim.data.Devices;
+import org.micromanager.asidispim.data.MyStrings;
+import org.micromanager.asidispim.data.Prefs;
+import org.micromanager.asidispim.data.Properties;
 import org.micromanager.asidispim.utils.AutofocusUtils;
 import org.micromanager.asidispim.utils.ListeningJPanel;
 import org.micromanager.asidispim.utils.PanelUtils;
@@ -53,7 +53,7 @@ import org.micromanager.asidispim.fit.Fitter;
  */
 @SuppressWarnings("serial")
 public class AutofocusPanel extends ListeningJPanel{
-   final private ScriptInterface gui_;
+   final private Studio gui_;
    final private Properties props_;
    final private Prefs prefs_;
    final private Devices devices_;
@@ -61,7 +61,7 @@ public class AutofocusPanel extends ListeningJPanel{
    private final JPanel optionsPanel_;
    private final JPanel acqOptionsPanel_;
    
-   public AutofocusPanel(final ScriptInterface gui, final Devices devices, 
+   public AutofocusPanel(final Studio gui, final Devices devices, 
            final Properties props, final Prefs prefs, 
            final AutofocusUtils autofocus) {
       
@@ -115,7 +115,7 @@ public class AutofocusPanel extends ListeningJPanel{
       afcButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            gui_.showAutofocusDialog();
+            gui_.getAutofocusManager().showOptionsDialog();
          }
       });
       optionsPanel_.add(afcButton, "wrap");
@@ -169,7 +169,7 @@ public class AutofocusPanel extends ListeningJPanel{
       // TODO: need to update when the channel group changes
       String channelGroup_  = props_.getPropValueString(Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_MULTICHANNEL_GROUP);
-      StrVector channels = gui.getMMCore().getAvailableConfigs(channelGroup_);
+      StrVector channels = gui.core().getAvailableConfigs(channelGroup_);
       final JComboBox channelSelect = pu.makeDropDownBox(channels.toArray(), 
               Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_AUTOFOCUS_CHANNEL, "");
       acqOptionsPanel_.add(new JLabel("Autofocus Channel: "));
