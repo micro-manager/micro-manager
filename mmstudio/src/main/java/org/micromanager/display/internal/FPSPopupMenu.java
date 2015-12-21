@@ -46,12 +46,19 @@ import org.micromanager.display.DisplayWindow;
  */
 public class FPSPopupMenu extends JPopupMenu {
    /**
+    * Maps integer values from the slider to float values for the actual FPS.
+    */
+   private static final double FPS_RATIO = 2.0;
+   /**
     * Implementation adapted from
     * http://www.onjava.com/pub/a/onjava/excerpt/swing_14/index6.html?page=2
+    * Note that we have a 2:1 scaling factor applied to the values this slider
+    * outputs (e.g. when the slider is at the "20" indicator, calling
+    * getValue() will return 40 instead).
     */
    private class FPSSlider extends JSlider implements MenuElement {
       public FPSSlider() {
-         super(1, 100);
+         super(1, (int) (100 * FPS_RATIO));
          setBorder(new TitledBorder("Animation FPS"));
          setMajorTickSpacing(20);
          // Set up custom labels, because otherwise we end up with ticks at
@@ -59,7 +66,7 @@ public class FPSPopupMenu extends JPopupMenu {
          Hashtable<Integer, JLabel> labels = new Hashtable<Integer, JLabel>();
          labels.put(1, new JLabel("1"));
          for (int i = 20; i < 101; i += 20) {
-            labels.put(i, new JLabel(String.valueOf(i)));
+            labels.put((int) (i * FPS_RATIO), new JLabel(String.valueOf(i)));
          }
          setLabelTable(labels);
          setPaintLabels(true);
@@ -91,16 +98,17 @@ public class FPSPopupMenu extends JPopupMenu {
       public void menuSelectionChanged(boolean isIncluded) {}
    }
 
-   public FPSPopupMenu(final DisplayWindow display, int initialVal) {
+   public FPSPopupMenu(final DisplayWindow display, double initialVal) {
       final FPSSlider slider = new FPSSlider();
       final JTextField field = new JTextField(3);
-      slider.setValue(initialVal);
+      slider.setValue((int) (initialVal * FPS_RATIO));
       slider.addChangeListener(new ChangeListener() {
          @Override
          public void stateChanged(ChangeEvent event) {
-            field.setText(Integer.toString(slider.getValue()));
+            double newRate = slider.getValue() / FPS_RATIO;
+            field.setText(String.format("%.2f", newRate));
             DisplaySettings settings = display.getDisplaySettings();
-            settings = settings.copy().animationFPS(slider.getValue()).build();
+            settings = settings.copy().animationFPS(newRate).build();
             display.setDisplaySettings(settings);
          }
       });
@@ -110,11 +118,11 @@ public class FPSPopupMenu extends JPopupMenu {
          @Override
          public void keyReleased(KeyEvent event) {
             try {
-               int newVal = Integer.parseInt(field.getText());
-               slider.setValue(newVal);
+               double newRate = Double.parseDouble(field.getText());
+               slider.setValue((int) (newRate * FPS_RATIO));
                slider.repaint();
                DisplaySettings settings = display.getDisplaySettings();
-               settings = settings.copy().animationFPS(newVal).build();
+               settings = settings.copy().animationFPS(newRate).build();
                display.setDisplaySettings(settings);
             }
             catch (NumberFormatException e) {
