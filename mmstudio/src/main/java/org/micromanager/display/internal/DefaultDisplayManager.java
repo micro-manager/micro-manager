@@ -491,21 +491,30 @@ public final class DefaultDisplayManager implements DisplayManager {
     */
    @Subscribe
    public void onGlobalDisplayDestroyed(GlobalDisplayDestroyedEvent event) {
-      DisplayWindow display = event.getDisplay();
-      Datastore store = display.getDatastore();
-      if (getIsManaged(store)) {
-         storeToDisplays_.get(store).remove(display);
+      try {
+         DisplayWindow display = event.getDisplay();
+         Datastore store = display.getDatastore();
+         if (getIsManaged(store) &&
+               storeToDisplays_.get(store).contains(display)) {
+            storeToDisplays_.get(store).remove(display);
+         }
+         if (displayFocusHistory_.contains(display)) {
+            displayFocusHistory_.remove(display);
+            if (displayFocusHistory_.size() > 0) {
+               // The next display in the stack must be on top now.
+               raisedToTop(displayFocusHistory_.peek());
+            }
+         }
+         else {
+            // This should never happen.
+            ReportingUtils.logError("DisplayManager informed of destruction of display it didn't know existed.");
+         }
+         DefaultEventManager.getInstance().post(
+               new ViewerRemovedEvent(event.getDisplay()));
       }
-      if (displayFocusHistory_.contains(display)) {
-         displayFocusHistory_.remove(display);
-         raisedToTop(displayFocusHistory_.peek());
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error handling destroyed display");
       }
-      else {
-         // This should never happen.
-         ReportingUtils.logError("DisplayManager informed of destruction of display it didn't know existed.");
-      }
-      DefaultEventManager.getInstance().post(
-            new ViewerRemovedEvent(event.getDisplay()));
    }
 
    public static DefaultDisplayManager getInstance() {
