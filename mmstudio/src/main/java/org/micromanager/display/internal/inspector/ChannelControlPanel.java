@@ -470,7 +470,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       builder.safeUpdateContrastSettings(contrast, channelIndex_);
       if (shouldPost) {
          builder.shouldAutostretch(false);
-         display_.setDisplaySettings(builder.build());
+         DisplaySettings newSettings = builder.build();
+         postContrastEvent(newSettings);
+         display_.setDisplaySettings(newSettings);
          display_.postEvent(new HistogramRecalcEvent(channelIndex_));
       }
       return builder;
@@ -507,7 +509,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          didChange = true;
       }
       if (didChange) {
-         display_.setDisplaySettings(builder.build());
+         DisplaySettings newSettings = builder.build();
+         postContrastEvent(newSettings);
+         display_.setDisplaySettings(newSettings);
       }
    }
 
