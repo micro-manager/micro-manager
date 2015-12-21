@@ -165,9 +165,16 @@ public class DefaultDataManager implements DataManager {
       }
       if (!isVirtual) {
          // Copy into a StorageRAM.
-         DefaultDatastore tmp = (DefaultDatastore) createRAMDatastore();
-         tmp.copyFrom(result);
-         result = tmp;
+         try {
+            DefaultDatastore tmp = (DefaultDatastore) createRAMDatastore();
+            tmp.copyFrom(result);
+            result = tmp;
+         }
+         catch (OutOfMemoryError e) {
+            // Unable to allocate enough direct memory for our images.
+            ReportingUtils.showError("Insufficient memory to open dataset. Try opening in virtual mode instead.");
+            return null;
+         }
       }
       result.setSavePath(directory);
       result.freeze();
