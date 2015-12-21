@@ -38,10 +38,20 @@ import org.micromanager.display.DisplayWindow;
  */
 public interface DataViewer {
    /**
-    * Update the DisplaySettings for the display. This will post a
-    * NewDisplaySettingsEvent on the display's EventBus, and will also cause
+    * Update the DisplaySettings for the display. This must post a
+    * NewDisplaySettingsEvent on the display's EventBus, and should also cause
     * the display to redraw itself. If you are implementing your own DataViewer
-    * then you should be certain to do those actions yourself.
+    * then you should be certain to do those actions yourself. For example,
+    * if your implementation stores the DisplaySettings under the "settings_"
+    * field and has an EventBus under the "bus_" field:
+    *
+    * @Override
+    * public void setDisplaySettings(DisplaySettings settings) {
+    *    settings_ = settings;
+    *    bus_.post(new NewDisplaySettingsEvent(settings_, this));
+    *    repaint();
+    * }
+    *
     * @param settings The new display settings.
     */
    public void setDisplaySettings(DisplaySettings settings);
