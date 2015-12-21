@@ -116,19 +116,17 @@ public class MMAcquisition {
    private Studio studio_;
    private DefaultDatastore store_;
    private DisplayWindow display_;
-   private final boolean existing_;
    private final boolean virtual_;
    private AcquisitionEngine eng_;
    private final boolean show_;
    private JSONObject summary_ = new JSONObject();
    private final String NOTINITIALIZED = "Acquisition was not initialized";
 
-   public MMAcquisition(Studio studio, String name, JSONObject summaryMetadata, boolean diskCached, 
-           AcquisitionEngine eng, boolean show) {
+   public MMAcquisition(Studio studio, String name, JSONObject summaryMetadata,
+         boolean diskCached, AcquisitionEngine eng, boolean show) {
       studio_ = studio;
       name_ = name;
       virtual_ = diskCached;
-      existing_ = false;
       eng_ = eng;
       show_ = show;
       store_ = new DefaultDatastore();
@@ -206,38 +204,7 @@ public class MMAcquisition {
       
       store_ = new DefaultDatastore();
 
-      // TODO is this code ever actually called? We should be using
-      // DataManager for all pre-existing datasets.
-      if (virtual_ && existing_) {
-         String dirName = rootDirectory_ + File.separator + name;
-         try {
-            boolean multipageTiff = MultipageTiffReader.isMMMultipageTiff(dirName);
-            if (multipageTiff) {
-               imageFileManager = new StorageMultipageTiff(store_, dirName,
-                     false);
-            } else {
-               imageFileManager = new StorageSinglePlaneTiffSeries(
-                     store_, dirName, false);
-            }
-         } catch (Exception ex) {
-            ReportingUtils.showError(ex, "Failed to open file");
-         }
-
-         store_.setStorage(imageFileManager);
-         store_.setSavePath(dirName);
-         try {
-            store_.setSummaryMetadata((new DefaultSummaryMetadata.Builder().build()));
-         }
-         catch (DatastoreFrozenException e) {
-            ReportingUtils.logError(e, "Couldn't set summary metadata");
-         }
-         // Now that the datastore is set up, create the display(s).
-         if (show_) {
-            List<DisplayWindow> displays = studio_.displays().loadDisplays(store_);
-         }
-      }
-
-      if (virtual_ && !existing_) {
+      if (virtual_) {
          String dirName = rootDirectory_ + File.separator + name;
          if ((new File(dirName)).exists()) {
             try {
@@ -265,8 +232,7 @@ public class MMAcquisition {
             ReportingUtils.logError("Unable to set summary metadata; datastore pre-emptively locked. This should never happen!");
          }
       }
-
-      if (!virtual_ && !existing_) {
+      else { // Not a disk-based data store.
          store_.setStorage(new StorageRAM(store_));
          try {
             store_.setSummaryMetadata((new DefaultSummaryMetadata.Builder().build()));
@@ -276,51 +242,11 @@ public class MMAcquisition {
          }
       }
 
-      // TODO is this code ever actually called? We should be using
-      // DataManager for all pre-existing datasets.
-      if (!virtual_ && existing_) {
-         String dirName = rootDirectory_ + File.separator + name;
-         Storage tempImageFileManager = null;
-         boolean multipageTiff;
-         try {
-            multipageTiff = MultipageTiffReader.isMMMultipageTiff(dirName);
-            if (multipageTiff) {
-               tempImageFileManager = new StorageMultipageTiff(store_, dirName, false);
-            } else {
-               tempImageFileManager = new StorageSinglePlaneTiffSeries(
-                     store_, dirName, false);
-            }
-         } catch (Exception ex) {
-            ReportingUtils.showError(ex, "Failed to open file");
-            return;
-         }
-
-         // Copy from the TIFF storage to a RAM-backed storage.
-         store_.setStorage(tempImageFileManager);
-         DefaultDatastore duplicate = new DefaultDatastore();
-         duplicate.setStorage(new StorageRAM(duplicate));
-         duplicate.setSavePath(dirName);
-         duplicate.copyFrom(store_, null);
-         store_ = duplicate;
-         if (show_) {
-            List<DisplayWindow> displays = studio_.displays().loadDisplays(store_);
-         }
-         // TODO: re-implement the check below before loading images into RAM
-//         imageCache_ = new MMImageCache(tempImageFileManager);
-//         if (tempImageFileManager.getDataSetSize() > 0.9 * JavaUtils.getAvailableUnusedMemory()) {
-//            throw new MMScriptException("Not enough room in memory for this data set.\nTry opening as a virtual data set instead.");
-//         }
-//         imageFileManager = new TaggedImageStorageRamFast(null);
-//         imageCache_.saveAs(imageFileManager);
-      }
-
       CMMCore core = studio_.core();
-      if (!existing_) {
-         createDefaultAcqSettings();
-      }
+      createDefaultAcqSettings();
 
       if (store_.getSummaryMetadata() != null) {
-         if (show_ && !existing_) {
+         if (show_) {
             // NB pre-existing setups will have loaded saved display settings.
             display_ = studio_.displays().createDisplay(
                   store_, makeControlsFactory());
