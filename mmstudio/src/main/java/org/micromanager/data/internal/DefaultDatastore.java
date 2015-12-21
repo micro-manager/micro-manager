@@ -28,6 +28,7 @@ import java.util.List;
 
 import javax.swing.filechooser.FileFilter;
 import javax.swing.JFileChooser;
+import javax.swing.ProgressMonitor;
 
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
@@ -81,13 +82,20 @@ public class DefaultDatastore implements Datastore {
    }
 
    /**
-    * Copy all data from the provided other Datastore into ourselves.
+    * Copy all data from the provided other Datastore into ourselves. The
+    * optional ProgressMonitor can be used to keep callers appraised of our
+    * progress.
     */
-   public void copyFrom(Datastore alt) {
+   public void copyFrom(Datastore alt, ProgressMonitor monitor) {
+      int imageCount = 0;
       try {
          setSummaryMetadata(alt.getSummaryMetadata());
          for (Coords coords : alt.getUnorderedImageCoords()) {
             putImage(alt.getImage(coords));
+            imageCount++;
+            if (monitor != null) {
+               monitor.setProgress(imageCount);
+            }
          }
       }
       catch (DatastoreFrozenException e) {
