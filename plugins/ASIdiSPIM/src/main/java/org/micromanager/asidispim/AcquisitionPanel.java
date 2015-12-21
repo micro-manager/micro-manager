@@ -1653,10 +1653,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // force saving as image stacks, not individual files
       // implementation assumes just two options, either 
       //  TaggedImageStorageDiskDefault.class or TaggedImageStorageMultipageTiff.class
+   /* TODO: check if this is OK
       boolean separateImageFilesOriginally =
             ImageUtils.getImageStorageClass().equals(TaggedImageStorageDiskDefault.class);
       ImageUtils.setImageStorageClass(TaggedImageStorageMultipageTiff.class);
-      
+    */  
       // Set up controller SPIM parameters (including from Setup panel settings)
       // want to do this, even with demo cameras, so we can test everything else
       if (! prepareControllerForAquisition(hardwareTimepoints)) {
