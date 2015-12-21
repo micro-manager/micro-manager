@@ -264,7 +264,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
 
       setBackgroundStyle(DaytimeNighttime.getBackgroundMode());
 
-      showRegistrationDialogMaybe();
+      RegistrationDlg.showIfNecessary();
 
       try {
          core_ = new CMMCore();
@@ -470,19 +470,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       live().setLiveMode(false);
       JOptionPane.showMessageDialog(frame_, message);
       core_.logMessage(message);
-   }
-
-   private void showRegistrationDialogMaybe() {
-      // show registration dialog if not already registered
-      // first check user preferences (for legacy compatibility reasons)
-      boolean shouldShow = !(RegistrationDlg.getHaveRegistered() ||
-            RegistrationDlg.getShouldNeverRegister());
-
-      if (shouldShow) {
-         // prompt for registration info
-         RegistrationDlg dlg = new RegistrationDlg();
-         dlg.setVisible(true);
-      }
    }
 
    /**
