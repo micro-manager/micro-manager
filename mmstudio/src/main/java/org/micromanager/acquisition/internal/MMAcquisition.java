@@ -206,6 +206,8 @@ public class MMAcquisition {
       
       store_ = new DefaultDatastore();
 
+      // TODO is this code ever actually called? We should be using
+      // DataManager for all pre-existing datasets.
       if (virtual_ && existing_) {
          String dirName = rootDirectory_ + File.separator + name;
          try {
@@ -274,6 +276,8 @@ public class MMAcquisition {
          }
       }
 
+      // TODO is this code ever actually called? We should be using
+      // DataManager for all pre-existing datasets.
       if (!virtual_ && existing_) {
          String dirName = rootDirectory_ + File.separator + name;
          Storage tempImageFileManager = null;
@@ -296,7 +300,7 @@ public class MMAcquisition {
          DefaultDatastore duplicate = new DefaultDatastore();
          duplicate.setStorage(new StorageRAM(duplicate));
          duplicate.setSavePath(dirName);
-         duplicate.copyFrom(store_);
+         duplicate.copyFrom(store_, null);
          store_ = duplicate;
          if (show_) {
             List<DisplayWindow> displays = studio_.displays().loadDisplays(store_);

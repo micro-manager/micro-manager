@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JFileChooser;
+import javax.swing.ProgressMonitor;
 
 import mmcorej.TaggedImage;
 
@@ -165,9 +166,11 @@ public class DefaultDataManager implements DataManager {
       }
       if (!isVirtual) {
          // Copy into a StorageRAM.
+         ProgressMonitor monitor = new ProgressMonitor(null,
+               "Loading images into RAM...", null, 0, result.getNumImages());
          try {
             DefaultDatastore tmp = (DefaultDatastore) createRAMDatastore();
-            tmp.copyFrom(result);
+            tmp.copyFrom(result, monitor);
             result = tmp;
          }
          catch (OutOfMemoryError e) {
