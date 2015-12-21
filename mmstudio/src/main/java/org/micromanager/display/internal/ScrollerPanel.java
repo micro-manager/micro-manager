@@ -362,16 +362,27 @@ public class ScrollerPanel extends JPanel {
    }
 
    /**
-    * Display settings have changed; check for new FPS.
+    * Display settings have changed; update FPS and activity of the channel
+    * scrollbar.
     */
    @Subscribe
    public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
       DisplaySettings settings = event.getDisplaySettings();
+      // Check for change in FPS.
       if (settings.getAnimationFPS() != null &&
             settings.getAnimationFPS() != animationFPS_) {
          animationFPS_ = settings.getAnimationFPS();
          fpsButton_.setText("FPS: " + animationFPS_);
          updateAnimation();
+      }
+      // Check if the channel scrollbar should be enabled/disabled.
+      if (settings.getChannelColorMode() != null &&
+            axisToState_.containsKey(Coords.CHANNEL)) {
+         boolean isEnabled = settings.getChannelColorMode() != DisplaySettings.ColorMode.COMPOSITE;
+         AxisState state = axisToState_.get(Coords.CHANNEL);
+         state.posButton_.setEnabled(isEnabled);
+         state.scrollbar_.setEnabled(isEnabled);
+         state.maxLabel_.setEnabled(isEnabled);
       }
    }
 
@@ -416,6 +427,11 @@ public class ScrollerPanel extends JPanel {
             shouldPostEvents_ = false;
             for (String axis : axisToState_.keySet()) {
                JScrollBar scroller = axisToState_.get(axis).scrollbar_;
+               if (!scroller.isEnabled()) {
+                  // The channel scrollbar can be disabled when in composite
+                  // view mode; don't change it if so.
+                  continue;
+               }
                if (scroller.getValue() != coords.getIndex(axis)) {
                   scroller.setValue(coords.getIndex(axis));
                }
