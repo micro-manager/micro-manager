@@ -63,8 +63,15 @@ public class DefaultDisplaySettings implements DisplaySettings {
          Color.MAGENTA, Color.RED, Color.GREEN, Color.BLUE, Color.ORANGE};
       Integer[] defaultIntColors = colorsToInts(defaultColors);
 
-      builder.animationFPS(profile.getInt(
-               DefaultDisplaySettings.class, "animationFPS", 10));
+      // This value used to be an int, then got changed to a double.
+      try {
+         builder.animationFPS(profile.getDouble(
+                  DefaultDisplaySettings.class, "animationFPS", 10.0));
+      }
+      catch (PropertyMap.TypeMismatchException e) {
+         builder.animationFPS(new Double(profile.getInt(
+                  DefaultDisplaySettings.class, "animationFPS", 10)));
+      }
       builder.channelColorMode(
             DisplaySettings.ColorMode.fromInt(profile.getInt(
             DefaultDisplaySettings.class, "channelColorMode", 0)));
@@ -92,7 +99,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
     */
    public static void setStandardSettings(DisplaySettings settings) {
       DefaultUserProfile profile = DefaultUserProfile.getInstance();
-      profile.setInt(DefaultDisplaySettings.class, "animationFPS",
+      profile.setDouble(DefaultDisplaySettings.class, "animationFPS",
             settings.getAnimationFPS());
       if (settings.getChannelColorMode() != null) {
          profile.setInt(DefaultDisplaySettings.class,
@@ -277,7 +284,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       private Color[] channelColors_ = null;
       private ContrastSettings[] contrastSettings_ = null;
       private Double magnification_ = null;
-      private Integer animationFPS_ = null;
+      private Double animationFPS_ = null;
       private DisplaySettings.ColorMode channelColorMode_ = null;
       private Double histogramUpdateRate_ = null;
       private Boolean shouldSyncChannels_ = null;
@@ -354,7 +361,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
-      public DisplaySettingsBuilder animationFPS(Integer animationFPS) {
+      public DisplaySettingsBuilder animationFPS(Double animationFPS) {
          animationFPS_ = animationFPS;
          return this;
       }
@@ -411,7 +418,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    private Color[] channelColors_ = null;
    private ContrastSettings[] contrastSettings_ = null;
    private Double magnification_ = null;
-   private Integer animationFPS_ = null;
+   private Double animationFPS_ = null;
    private DisplaySettings.ColorMode channelColorMode_ = null;
    private Double histogramUpdateRate_ = null;
    private Boolean shouldSyncChannels_ = null;
@@ -517,7 +524,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
-   public Integer getAnimationFPS() {
+   public Double getAnimationFPS() {
       return animationFPS_;
    }
 
@@ -651,7 +658,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
             builder.magnification(tags.getDouble("magnification"));
          }
          if (tags.has("animationFPS")) {
-            builder.animationFPS(tags.getInt("animationFPS"));
+            builder.animationFPS(tags.getDouble("animationFPS"));
          }
          if (tags.has("histogramUpdateRate")) {
             builder.histogramUpdateRate(tags.getDouble("histogramUpdateRate"));
