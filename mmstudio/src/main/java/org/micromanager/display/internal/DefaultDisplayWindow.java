@@ -909,6 +909,10 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    /**
     * Turn fullscreen mode on or off. Fullscreen is actually a separate
     * frame due to how Java handles the GUI.
+    * Note that the order of operations regarding when fullScreenFrame_ is
+    * set/unset and when our normal window is shown/hidden is important, to
+    * make certain that getIsClosed() doesn't briefly return false while we're
+    * transitioning to/from fullscreen mode.
     * TODO: should this really be exposed in the API?
     */
    @Override
@@ -924,15 +928,13 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             // away now. Retrieve our contents from it first, of course.
             add(contentsPanel_);
             fullScreenFrame_.dispose();
+            setVisible(true);
             fullScreenFrame_ = null;
             constrainWindowShape();
-            setVisible(true);
          }
          else {
             // Transfer our contents to a new JFrame for the fullscreen mode.
             fullScreenFrame_ = new JFrame();
-            // Set visibility to false after creating fullScreenFrame_, so that
-            // getIsClosed() doesn't return the wrong value.
             setVisible(false);
             fullScreenFrame_.setUndecorated(true);
             fullScreenFrame_.setBounds(
