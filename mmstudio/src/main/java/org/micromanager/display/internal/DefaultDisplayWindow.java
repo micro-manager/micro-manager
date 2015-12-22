@@ -884,6 +884,10 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       synchronized(drawLock_) {
          canvasQueue_.halt();
          dispose();
+         if (fullScreenFrame_ != null) {
+            fullScreenFrame_.dispose();
+            fullScreenFrame_ = null;
+         }
          haveClosed_ = true;
       }
    }
