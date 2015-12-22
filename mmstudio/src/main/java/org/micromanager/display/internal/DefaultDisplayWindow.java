@@ -930,8 +930,10 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          }
          else {
             // Transfer our contents to a new JFrame for the fullscreen mode.
-            setVisible(false);
             fullScreenFrame_ = new JFrame();
+            // Set visibility to false after creating fullScreenFrame_, so that
+            // getIsClosed() doesn't return the wrong value.
+            setVisible(false);
             fullScreenFrame_.setUndecorated(true);
             fullScreenFrame_.setBounds(
                   GUIUtils.getFullScreenBounds(getScreenConfig()));
