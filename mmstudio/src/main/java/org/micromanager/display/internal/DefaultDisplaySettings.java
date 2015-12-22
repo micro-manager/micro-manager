@@ -63,15 +63,10 @@ public class DefaultDisplaySettings implements DisplaySettings {
          Color.MAGENTA, Color.RED, Color.GREEN, Color.BLUE, Color.ORANGE};
       Integer[] defaultIntColors = colorsToInts(defaultColors);
 
-      // This value used to be an int, then got changed to a double.
-      try {
-         builder.animationFPS(profile.getDouble(
-                  DefaultDisplaySettings.class, "animationFPS", 10.0));
-      }
-      catch (PropertyMap.TypeMismatchException e) {
-         builder.animationFPS(new Double(profile.getInt(
-                  DefaultDisplaySettings.class, "animationFPS", 10)));
-      }
+      // This value used to be an int, then got changed to a double, hence the
+      // name change.
+      builder.animationFPS(profile.getDouble(
+               DefaultDisplaySettings.class, "animationFPS_Double", 10.0));
       builder.channelColorMode(
             DisplaySettings.ColorMode.fromInt(profile.getInt(
             DefaultDisplaySettings.class, "channelColorMode", 0)));
@@ -99,7 +94,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
     */
    public static void setStandardSettings(DisplaySettings settings) {
       DefaultUserProfile profile = DefaultUserProfile.getInstance();
-      profile.setDouble(DefaultDisplaySettings.class, "animationFPS",
+      profile.setDouble(DefaultDisplaySettings.class, "animationFPS_Double",
             settings.getAnimationFPS());
       if (settings.getChannelColorMode() != null) {
          profile.setInt(DefaultDisplaySettings.class,
