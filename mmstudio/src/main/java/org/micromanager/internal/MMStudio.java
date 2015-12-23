@@ -82,6 +82,7 @@ import org.micromanager.PositionList;
 import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
 import org.micromanager.quickaccess.QuickAccessManager;
 import org.micromanager.ScriptController;
+import org.micromanager.ShutterManager;
 import org.micromanager.Studio;
 import org.micromanager.SequenceSettings;
 import org.micromanager.UserProfile;
@@ -176,7 +177,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
    private boolean isProgramRunning_;
    private boolean configChanged_ = false;
    private boolean isClickToMoveEnabled_ = false;
-   private StrVector shutters_ = null;
 
    private ScriptPanel scriptPanel_;
    private PipelineFrame pipelineFrame_;
@@ -298,6 +298,8 @@ public class MMStudio implements Studio, CompatibilityInterface {
       ToolTipManager ttManager = ToolTipManager.sharedInstance();
       ttManager.setDismissDelay(TOOLTIP_DISPLAY_DURATION_MILLISECONDS);
       ttManager.setInitialDelay(TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS);
+
+      DefaultShutterManager.instantiate(studio_);
 
       // The tools menu depends on the Quick-Access Manager.
       DefaultQuickAccessManager.createManager(studio_);
@@ -490,23 +492,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       };
       acquisitionEngine2010LoadingThread_.setContextClassLoader(getClass().getClassLoader());
       acquisitionEngine2010LoadingThread_.start();
-   }
-
-   public void toggleAutoShutter() {
-      try {
-         if (frame_.getAutoShutterChecked()) {
-            core_.setAutoShutter(true);
-            core_.setShutterOpen(false);
-            frame_.updateAutoShutterUI(true);
-         } else {
-            core_.setAutoShutter(false);
-            core_.setShutterOpen(false);
-            frame_.updateAutoShutterUI(false);
-         }
-      } catch (Exception exc) {
-         ReportingUtils.logError(exc);
-      }
-
    }
 
    public void setExposure(final double exposureTime) {
@@ -805,10 +790,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       staticInfo_.getNewXYStagePosition();
    }
 
-   public void toggleShutter() {
-      frame_.toggleShutter();
-   }
-
    public void updateCenterAndDragListener(boolean isEnabled) {
       isClickToMoveEnabled_ = isEnabled;
       if (isEnabled) {
@@ -921,21 +902,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
   
          configureBinningCombo();
 
-         // active shutter combo
-         try {
-            shutters_ = core_.getLoadedDevicesOfType(DeviceType.ShutterDevice);
-         } catch (Exception e) {
-            ReportingUtils.logError(e);
-         }
-
-         if (shutters_ != null) {
-            String items[] = new String[(int) shutters_.size()];
-            for (int i = 0; i < shutters_.size(); i++) {
-               items[i] = shutters_.get(i);
-            }
-            frame_.initializeShutterGUI(items);
-         }
-
          // Rebuild stage list in XY PositinList
          if (posListDlg_ != null) {
             posListDlg_.rebuildAxisList();
@@ -985,24 +951,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
             frame_.setBinSize(binSize);
          }
 
-         // active shutter combo
-         if (shutters_ != null) {
-            String activeShutter = core_.getShutterDevice();
-            frame_.setShutterComboSelection(
-                  activeShutter != null ? activeShutter : "");
-         }
-
-         // Set AutoShutterCheckBox
-         frame_.setAutoShutterSelected(core_.getAutoShutter());
-
-         // Set Shutter button
-         frame_.setShutterButton(core_.getShutterOpen());
-
          frame_.updateAutofocusButtons(afMgr_.getDevice() != null);
-
-         if (live().getIsLiveModeOn()) {
-            frame_.setToggleShutterButtonEnabled(!core_.getAutoShutter());
-         }
 
          ConfigGroupPad pad = frame_.getConfigPad();
          // state devices
@@ -1770,6 +1719,16 @@ public class MMStudio implements Studio, CompatibilityInterface {
    @Override
    public QuickAccessManager getQuickAccessManager() {
       return quickAccess();
+   }
+
+   @Override
+   public ShutterManager shutter() {
+      return DefaultShutterManager.getInstance();
+   }
+
+   @Override
+   public ShutterManager getShutterManager() {
+      return shutter();
    }
 
    @Override

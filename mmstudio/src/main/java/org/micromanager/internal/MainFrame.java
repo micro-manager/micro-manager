@@ -66,13 +66,16 @@ import mmcorej.StrVector;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.micromanager.events.AutoShutterEvent;
 import org.micromanager.events.ConfigGroupChangedEvent;
 import org.micromanager.events.ChannelExposureEvent;
 import org.micromanager.events.GUIRefreshEvent;
 import org.micromanager.events.StartupCompleteEvent;
+import org.micromanager.events.ShutterEvent;
 import org.micromanager.events.internal.ChannelGroupEvent;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.MouseMovesStageEvent;
+import org.micromanager.events.internal.ShutterDevicesEvent;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.StageControlFrame;
 import org.micromanager.internal.interfaces.LiveModeListener;
@@ -318,12 +321,19 @@ public class MainFrame extends MMFrame implements LiveModeListener {
 
       // Auto/manual shutter control.
       autoShutterCheckBox_ = new JCheckBox("Auto");
+      autoShutterCheckBox_.setSelected(studio_.shutter().getAutoShutter());
       autoShutterCheckBox_.setToolTipText("Toggle auto shutter, in which the shutter opens automatically when an image is taken, and closes when imaging finishes.");
       autoShutterCheckBox_.setFont(defaultFont_);
       autoShutterCheckBox_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            studio_.toggleAutoShutter();
+            try {
+               studio_.shutter().setAutoShutter(
+                  autoShutterCheckBox_.isSelected());
+            }
+            catch (Exception ex) {
+               ReportingUtils.logError(ex, "Error setting auto shutter");
+            }
          }
       });
       shutterPanel.add(autoShutterCheckBox_, "w 72!, h 20!, split 3");
@@ -334,8 +344,12 @@ public class MainFrame extends MMFrame implements LiveModeListener {
          @Override
          public void mouseReleased(MouseEvent e) {
             if (autoShutterCheckBox_.isSelected()) {
-               autoShutterCheckBox_.setSelected(false);
-               studio_.toggleAutoShutter();
+               try {
+                  studio_.shutter().setAutoShutter(false);
+               }
+               catch (Exception ex) {
+                  ReportingUtils.logError(ex, "Error toggling auto shutter");
+               }
             }
             toggleShutter();
          }
@@ -610,7 +624,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    public void updateInfoDisplay(String text) {
       labelImageDimensions_.setText(text);
    }
-   
+
    public void setShutterButton(boolean state) {
       if (state) {
          toggleShutterButton_.setText("Close");
@@ -626,30 +640,9 @@ public class MainFrame extends MMFrame implements LiveModeListener {
             return;
          }
          toggleShutterButton_.requestFocusInWindow();
-         if (toggleShutterButton_.getText().equals("Open")) {
-            core_.setShutterOpen(true);
-            setShutterButton(true);
-         } else {
-            core_.setShutterOpen(false);
-            setShutterButton(false);
-         }
+         studio_.shutter().setShutter(!studio_.shutter().getShutter());
       } catch (Exception e1) {
          ReportingUtils.showError(e1);
-      }
-   }
-
-   public void updateAutoShutterUI(boolean isAuto) {
-      StaticInfo.shutterLabel_ = core_.getShutterDevice();
-      if (StaticInfo.shutterLabel_.length() == 0) {
-         // No shutter device.
-         setToggleShutterButtonEnabled(false);
-      } else {
-         setToggleShutterButtonEnabled(!isAuto);
-         try {
-            setShutterButton(core_.getShutterOpen());
-         } catch (Exception ex) {
-            ReportingUtils.logError(ex);
-         }
       }
    }
 
@@ -690,14 +683,46 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       }
    }
 
-   public void initializeShutterGUI(String[] items) {
+   @Subscribe
+   public void onShutterDevices(ShutterDevicesEvent event) {
+      refreshShutterGUI();
+   }
+
+   private void refreshShutterGUI() {
+      List<String> devices = studio_.shutter().getShutterDevices();
+      if (devices == null) {
+         // No shutter devices available yet.
+         return;
+      }
+      String[] items = new ArrayList<String>(devices).toArray(new String[] {});
       GUIUtils.replaceComboContents(shutterComboBox_, items);
-      String activeShutter = core_.getShutterDevice();
+      String activeShutter = null;
+      try {
+         activeShutter = studio_.shutter().getCurrentShutter();
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error getting shutter device");
+      }
       if (activeShutter != null) {
          shutterComboBox_.setSelectedItem(activeShutter);
-      } else {
+      }
+      else {
          shutterComboBox_.setSelectedItem("");
       }
+      if (activeShutter.equals("") || core_.getAutoShutter()) {
+         toggleShutterButton_.setEnabled(false);
+      }
+      else {
+         toggleShutterButton_.setEnabled(true);
+      }
+      autoShutterCheckBox_.setSelected(studio_.shutter().getAutoShutter());
+      try {
+         setShutterButton(studio_.shutter().getShutter());
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error getting shutter state");
+      }
+      updateShutterIcon();
    }
 
    public void updateAutofocusButtons(boolean isEnabled) {
@@ -713,6 +738,17 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    @Subscribe
    public void onGUIRefresh(GUIRefreshEvent event) {
       refreshChannelGroup();
+      refreshShutterGUI();
+   }
+
+   @Subscribe
+   public void onAutoShutter(AutoShutterEvent event) {
+      refreshShutterGUI();
+   }
+
+   @Subscribe
+   public void onShutter(ShutterEvent event) {
+      refreshShutterGUI();
    }
 
    @Subscribe
@@ -825,27 +861,6 @@ public class MainFrame extends MMFrame implements LiveModeListener {
          return item.toString();
       }
       return (String) null;
-   }
-
-   public void setAutoShutterSelected(boolean isSelected) {
-      autoShutterCheckBox_.setSelected(isSelected);
-   }
-
-   public void setToggleShutterButtonEnabled(boolean isEnabled) {
-      toggleShutterButton_.setEnabled(isEnabled);
-   }
-
-   public void setShutterComboSelection(String activeShutter) {
-      shutterComboBox_.setSelectedItem(activeShutter);
-      if (activeShutter.equals("") || core_.getAutoShutter()) {
-         setToggleShutterButtonEnabled(false);
-      } else {
-         setToggleShutterButtonEnabled(true);
-      }
-   }
-
-   public boolean getAutoShutterChecked() {
-      return autoShutterCheckBox_.isSelected();
    }
 
    public ConfigGroupPad getConfigPad() {
