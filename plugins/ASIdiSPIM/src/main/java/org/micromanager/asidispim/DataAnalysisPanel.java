@@ -29,6 +29,7 @@ import org.micromanager.Studio;
 import org.micromanager.asidispim.data.MyStrings;
 import org.micromanager.asidispim.data.Prefs;
 import org.micromanager.asidispim.data.Properties;
+import org.micromanager.asidispim.utils.ImageUtils;
 import org.micromanager.asidispim.utils.ListeningJPanel;
 import org.micromanager.asidispim.utils.MyDialogUtils;
 import org.micromanager.asidispim.utils.PanelUtils;
@@ -345,8 +346,8 @@ public class DataAnalysisPanel extends ListeningJPanel {
                   ImageStack stack = new ImageStack(iProc.getWidth(), iProc.getHeight());
                   for (int i = 0; i < store.getAxisLength(Coords.Z); i++) {
                      Coords coords = gui_.data().getCoordsBuilder().channel(c).time(t).z(i).build();
-                     // TODOL make utility that converts Image into ImageProcessor
-                     ImageProcessor iProc2 = store.getImage(coords);  
+                     // TODO make utility that converts Image into ImageProcessor
+                     ImageProcessor iProc2 = ImageUtils.getImageProcessor(store.getImage(coords));  
 
                      // optional transformation
                      switch (transformIndex_) {
