@@ -26,9 +26,10 @@ import java.awt.event.WindowEvent;
 
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
+import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
-
+@Plugin(type = MenuPlugin.class)
 public class ASIdiSPIM implements MenuPlugin, SciJavaPlugin {
    public final static String menuName = "ASI diSPIM";
    public final static String tooltipDescription = "Control the ASI diSPIM";
@@ -45,7 +46,7 @@ public class ASIdiSPIM implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public String getVersion() {
-      return "0.2";
+      return "0.3";
    }
 
    @Override
@@ -55,7 +56,7 @@ public class ASIdiSPIM implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public String getSubMenu() {
-      return "Acquisition";
+      return "Device Control";
    }
 
    @Override
