@@ -84,7 +84,7 @@ public class SettingsPanel extends ListeningJPanel {
             "",
             "[right]16[center]",
             "[]8[]"));
-      guiPanel.setBorder(PanelUtils.makeTitledBorder("GUI"));
+      guiPanel.setBorder(PanelUtils.makeTitledBorder("GUI", guiPanel));
       
       final JCheckBox activeTimerCheckBox = pu.makeCheckBox("Update axis positions continually",
             Properties.Keys.PREFS_ENABLE_POSITION_UPDATES, panelName_, true); 
@@ -132,7 +132,7 @@ public class SettingsPanel extends ListeningJPanel {
             "",
             "[right]16[center]",
             "[]8[]"));
-      scannerPanel.setBorder(PanelUtils.makeTitledBorder("Scanner"));
+      scannerPanel.setBorder(PanelUtils.makeTitledBorder("Scanner", scannerPanel));
 
       scannerPanel.add(new JLabel("Filter freq, sheet axis [kHz]:"));
       final JSpinner scannerFilterX = pu.makeSpinnerFloat(0.1, 5, 0.1,
@@ -159,7 +159,7 @@ public class SettingsPanel extends ListeningJPanel {
             "",
             "[right]16[center]",
             "[]8[]"));
-      cameraPanel.setBorder(PanelUtils.makeTitledBorder("Camera"));
+      cameraPanel.setBorder(PanelUtils.makeTitledBorder("Camera", cameraPanel));
       CameraModes camModeObject = new CameraModes(devices_, props_, prefs_);
       JComboBox camModeCB = camModeObject.getComboBox();
       cameraPanel.add(camModeCB);
@@ -173,7 +173,8 @@ public class SettingsPanel extends ListeningJPanel {
             "",
             "[right]16[center]",
             "[]8[]"));
-      stageScanPanel.setBorder(PanelUtils.makeTitledBorder("Stage scanning"));
+      stageScanPanel.setBorder(PanelUtils.makeTitledBorder("Stage scanning", 
+              stageScanPanel));
 
       stageScanPanel.add(new JLabel("Motor acceleration time [ms]:"));
       final JSpinner stageAccelTime = pu.makeSpinnerFloat(10, 1000, 10,

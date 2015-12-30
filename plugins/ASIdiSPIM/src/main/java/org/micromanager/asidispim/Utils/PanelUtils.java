@@ -40,6 +40,7 @@ import javax.swing.JSlider;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -50,6 +51,7 @@ import org.micromanager.asidispim.data.Joystick;
 import org.micromanager.asidispim.data.Positions;
 import org.micromanager.asidispim.data.Prefs;
 import org.micromanager.asidispim.data.Properties;
+import org.micromanager.internal.dialogs.ComponentTitledBorder;
 
 /**
  *
@@ -778,12 +780,28 @@ public class PanelUtils {
     * makes border with centered title text
     * @param title
     * @return
-    */
+    *
    public static TitledBorder makeTitledBorder(String title) {
       TitledBorder myBorder = BorderFactory.createTitledBorder(
               BorderFactory.createLineBorder(ASIdiSPIM.borderColor), title);
       myBorder.setTitleJustification(TitledBorder.CENTER);
       return myBorder;
    }
+   * */
+
+    /**
+    * Makes border with title text
+    * @param title title for panel
+    * @param comp parent panel
+    * @return
+    */
+   public static Border makeTitledBorder(String title, JComponent comp) {
+      JLabel label = new JLabel(title);
+      label.setOpaque(true);
+      label.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+      return new ComponentTitledBorder(label, comp,
+              BorderFactory.createEtchedBorder());
+   }
+
    
 }

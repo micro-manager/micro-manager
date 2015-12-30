@@ -90,7 +90,8 @@ public class DataAnalysisPanel extends ListeningJPanel {
               "[right]4[center]4[left]",
               "[]8[]"));
 
-      exportPanel_.setBorder(PanelUtils.makeTitledBorder("Export diSPIM data"));
+      exportPanel_.setBorder(PanelUtils.makeTitledBorder("Export diSPIM data", 
+              exportPanel_));
 
       exportPanel_.add(new JLabel("Export directory:"), "");
 
@@ -216,7 +217,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
               "[center]",
               "[]8[]"));
 
-      imageJPanel_.setBorder(PanelUtils.makeTitledBorder("ImageJ"));
+      imageJPanel_.setBorder(PanelUtils.makeTitledBorder("ImageJ", imageJPanel_));
 
       JButton adjustBC = new JButton("Brightness/Contrast");
       adjustBC.addActionListener(new ActionListener() {

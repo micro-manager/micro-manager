@@ -82,7 +82,8 @@ public class AutofocusPanel extends ListeningJPanel{
             "",
             "[right]16[center]",
             "[]8[]"));
-      optionsPanel_.setBorder(PanelUtils.makeTitledBorder("Autofocus Options"));
+      optionsPanel_.setBorder(PanelUtils.makeTitledBorder("Autofocus Options", 
+              optionsPanel_));
       
       // debug checkbox
       final JCheckBox debugCheckBox = pu.makeCheckBox("Show images",
@@ -150,7 +151,7 @@ public class AutofocusPanel extends ListeningJPanel{
             "[right]16[center]",
             "[]8[]"));
       acqOptionsPanel_.setBorder(PanelUtils.makeTitledBorder(
-              "Autofocus Options during Acquisition"));
+              "Autofocus Options during Acquisition", acqOptionsPanel_));
       
       // whether or not to run autofocus at the start of the acquisition
       final JCheckBox beforeStartCheckBox = pu.makeCheckBox("Autofocus before starting acquisition",
