@@ -68,7 +68,6 @@ import javax.swing.event.ChangeListener;
 import net.miginfocom.swing.MigLayout;
 
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
@@ -1766,9 +1765,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                int channelNr = 1;
                if (twoSided)
                   channelNr *= 2;
-               if (acqColors.length != channelNr)
+               if (acqColors == null || acqColors.length != channelNr)
                   acqColors = new Color[channelNr];
-               if (chNames.length != channelNr)
+               if (chNames == null || chNames.length != channelNr)
                   chNames = new String[channelNr];
                chNames[0] = firstCamera;
                acqColors[0] = getChannelColor(0);
@@ -1780,7 +1779,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                }
             }
             store.setSummaryMetadata(smb.build());
-            display.setDisplaySettings(dsb.build());
+            //display.setDisplaySettings(dsb.build());
             
             // strip last separators:
             viewString = viewString.substring(0, viewString.length() - 1);
@@ -1795,7 +1794,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             
             sm = store.getSummaryMetadata();
             PropertyMap pm = sm.getUserData();
-            PropertyMapBuilder pmb = pm.copy();
+            PropertyMapBuilder pmb = gui_.data().getPropertyMapBuilder();
+            if (pm != null)
+               pmb = pm.copy();
             pmb.putInt("NumberOfSides", getNumSides());
             //gui_.setAcquisitionProperty(acqName, "NumberOfSides", 
             //        NumberUtils.doubleToDisplayString(getNumSides()) );
