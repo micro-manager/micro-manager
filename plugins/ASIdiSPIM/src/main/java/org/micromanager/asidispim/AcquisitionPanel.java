@@ -239,7 +239,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               "[right]10[center]",
               "[]8[]"));
 
-      volPanel_.setBorder(PanelUtils.makeTitledBorder("Volume Settings"));
+      volPanel_.setBorder(PanelUtils.makeTitledBorder("Volume Settings", volPanel_));
 
       volPanel_.add(new JLabel("Number of sides:"));
       String [] str12 = {"1", "2"};
@@ -524,7 +524,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               "",
               "[right]10[center]8[left]",
               "[]4[]"));
-      savePanel_.setBorder(PanelUtils.makeTitledBorder("Data Saving Settings"));
+      savePanel_.setBorder(PanelUtils.makeTitledBorder("Data Saving Settings", savePanel_));
       
       separateTimePointsCB_ = pu.makeCheckBox("Separate viewer / file for each time point",
             Properties.Keys.PREFS_SEPARATE_VIEWERS_FOR_TIMEPOINTS, panelName_, false); 
@@ -609,7 +609,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             "",
             "[right]6[left, 40%!]",
             "[]5[]"));
-      durationPanel_.setBorder(PanelUtils.makeTitledBorder("Durations"));
+      durationPanel_.setBorder(PanelUtils.makeTitledBorder("Durations", durationPanel_));
       durationPanel_.setPreferredSize(new Dimension(125, 0));  // fix width so it doesn't constantly change depending on text
       
       durationPanel_.add(new JLabel("Slice:"));
