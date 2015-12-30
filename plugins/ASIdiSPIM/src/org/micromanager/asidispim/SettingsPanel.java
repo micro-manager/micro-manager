@@ -42,6 +42,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 import org.micromanager.MMStudio;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.CameraModes;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MyStrings;
@@ -54,6 +55,7 @@ import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.utils.FileDialogs;
 
+import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 
 /**
@@ -63,12 +65,15 @@ import net.miginfocom.swing.MigLayout;
 @SuppressWarnings("serial")
 public class SettingsPanel extends ListeningJPanel {
    
+   private final CMMCore core_;
    private final Devices devices_;
    private final Properties props_;
    private final Prefs prefs_;
    private final StagePositionUpdater stagePosUpdater_;
    
    private final JFormattedTextField rawPath_;
+   private final JSpinner liveScanMs_;
+
    
    /**
     * 
@@ -77,7 +82,7 @@ public class SettingsPanel extends ListeningJPanel {
     * @param prefs
     * @param stagePosUpdater
     */
-   public SettingsPanel(Devices devices, Properties props, 
+   public SettingsPanel(final ScriptInterface gui, Devices devices, Properties props, 
          Prefs prefs, StagePositionUpdater stagePosUpdater) {    
       super (MyStrings.PanelNames.SETTINGS.toString(), 
             new MigLayout(
@@ -85,6 +90,7 @@ public class SettingsPanel extends ListeningJPanel {
               "[right]16[center]16[center]",
               "[]16[]"));
      
+      core_ = gui.getMMCore();
       devices_ = devices;
       props_ = props;
       prefs_ = prefs;
@@ -168,12 +174,42 @@ public class SettingsPanel extends ListeningJPanel {
       
       final JPanel cameraPanel = new JPanel(new MigLayout(
             "",
-            "[right]16[center]",
+            "[right]16[left]",
             "[]8[]"));
       cameraPanel.setBorder(PanelUtils.makeTitledBorder("Camera"));
+      cameraPanel.add(new JLabel("Acq. Trigger Mode:"));
       CameraModes camModeObject = new CameraModes(devices_, props_, prefs_);
       JComboBox camModeCB = camModeObject.getComboBox();
-      cameraPanel.add(camModeCB);
+      cameraPanel.add(camModeCB, "wrap");
+      
+      cameraPanel.add(new JLabel("Live exposure [ms]:"));
+      JFormattedTextField liveExposureMs = pu.makeFloatEntryField(panelName_, 
+            Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE.toString(), 100, 6);
+      liveExposureMs.addPropertyChangeListener("value", new PropertyChangeListener() {
+         @Override
+         public void propertyChange(PropertyChangeEvent evt) {
+            try {
+               core_.setExposure((Double)evt.getNewValue());
+            } catch (Exception e) {
+               MyDialogUtils.showError("Could not change exposure setting for live mode");
+            }
+         }
+      });
+      cameraPanel.add(liveExposureMs, "wrap");
+      
+      
+      cameraPanel.add(new JLabel("Live scan time [ms]:"));
+      liveScanMs_ = pu.makeSpinnerInteger(1, 10000,
+            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_CAMERA_LIVE_SCAN, 10);
+      liveScanMs_.addChangeListener(new ChangeListener() {
+         @Override
+         public void stateChanged(ChangeEvent arg0) {
+            int scan = (Integer) liveScanMs_.getValue(); 
+            props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+                  Properties.Keys.SPIM_LINESCAN_PERIOD, scan, true);
+         }
+      });
+      cameraPanel.add(liveScanMs_, "wrap");
       
       // end camera panel
       

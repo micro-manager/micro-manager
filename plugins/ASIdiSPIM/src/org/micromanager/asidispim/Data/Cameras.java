@@ -551,13 +551,7 @@ public class Cameras {
       double rowReadoutTime = getRowReadoutTime(camKey);
       int numReadoutRows;
 
-      Rectangle roi = new Rectangle();
-      try {
-         roi = core_.getROI(devices_.getMMDevice(camKey));
-      } catch (Exception e) {
-         MyDialogUtils.showError(e);
-      }
-      
+      Rectangle roi = getCameraROI(camKey);
       Rectangle sensorSize = getSensorSize(camKey);
 
       switch (devices_.getMMDeviceLibrary(camKey)) {
@@ -637,9 +631,33 @@ public class Cameras {
                prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
                      Properties.Keys.PLUGIN_CAMERA_MODE, 0));
          setSPIMTriggerMode(cameraMode);
+         // exposure time set by acquisition setup code
       } else { // for Live mode
          setSPIMTriggerMode(CameraModes.Keys.INTERNAL);
+         // also set exposure time to the live mode value
+         float exposure = prefs_.getFloat(MyStrings.PanelNames.SETTINGS.toString(),
+               Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE.toString(), 100f);
+         try {
+            core_.setExposure(exposure);
+         } catch (Exception e) {
+            MyDialogUtils.showError("Could not change exposure setting for live mode");
+         }
       }
+   }
+   
+   /**
+    * Gets the camera ROI
+    * @param camKey
+    * @return
+    */
+   public Rectangle getCameraROI(Devices.Keys camKey) {
+      Rectangle roi = new Rectangle();
+      try {
+         roi = core_.getROI(devices_.getMMDevice(camKey));
+      } catch (Exception e) {
+         MyDialogUtils.showError(e);
+      }
+      return roi;
    }
    
 

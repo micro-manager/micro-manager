@@ -120,7 +120,6 @@ public class ControllerUtils {
             }
       }
       
-      
       // set up stage scan parameters if necessary
       if (settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN ||
             settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED) {
@@ -221,6 +220,7 @@ public class ControllerUtils {
 
       Devices.Keys galvoDevice = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side);
       Devices.Keys piezoDevice = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side);
+      Devices.Keys cameraDevice = Devices.getSideSpecificKey(Devices.Keys.CAMERAA, side);
       
       boolean skipScannerWarnings = getSkipScannerWarnings(galvoDevice);
       
@@ -257,9 +257,7 @@ public class ControllerUtils {
       // figure out the piezo parameters
       float piezoCenter;
       if (settings.centerAtCurrentZ) {
-         piezoCenter = (float) positions_.getUpdatedPosition(
-              Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side), 
-              Joystick.Directions.NONE);
+         piezoCenter = (float) positions_.getUpdatedPosition(piezoDevice, Joystick.Directions.NONE);
       } else {
          piezoCenter = prefs_.getFloat(
             MyStrings.PanelNames.SETUP.toString() + side.toString(), 
@@ -334,6 +332,8 @@ public class ControllerUtils {
             Properties.Values.SAM_TRIANGLE : Properties.Values.SAM_RAMP;
       props_.setPropValue(galvoDevice, Properties.Keys.SA_PATTERN_X, 
               scanPattern, skipScannerWarnings);
+      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_LINESCAN_PERIOD,
+            settings.sliceTiming.scanPeriod, skipScannerWarnings);
       props_.setPropValue(galvoDevice, Properties.Keys.SA_AMPLITUDE_Y_DEG,
             sliceAmplitude, skipScannerWarnings);
       props_.setPropValue(galvoDevice, Properties.Keys.SA_OFFSET_Y_DEG,
@@ -344,6 +344,14 @@ public class ControllerUtils {
             settings.numSides, skipScannerWarnings);
       props_.setPropValue(galvoDevice, Properties.Keys.SPIM_FIRSTSIDE,
             settings.firstSideIsA ? "A" : "B", skipScannerWarnings);
+      
+      final boolean autoSheet = prefs_.getBoolean(
+            MyStrings.PanelNames.SETUP.toString() + side.toString(), 
+            Properties.Keys.PREFS_AUTO_SHEET_WIDTH, false);
+      if (autoSheet) {
+         ASIdiSPIM.getFrame().getSetupPanel(side).updateSheetWidthROI(cameraDevice);
+      }
+      // if not autoSheet, then we just use the existing SAA settings
       
       // get the piezo card ready; skip if no piezo specified
       if (devices_.isValidMMDevice(piezoDevice)) {

@@ -2095,13 +2095,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      if (sideActiveA) {
                         AutofocusUtils.FocusResult score = autofocus_.runFocus(
                                 this, Devices.Sides.A, false,
-                                sliceTiming_, false, false);
+                                sliceTiming_, false);
                         updateCalibrationOffset(Devices.Sides.A, score);
                      }
                      if (sideActiveB) {
                         AutofocusUtils.FocusResult score = autofocus_.runFocus(
                               this, Devices.Sides.B, false,
-                              sliceTiming_, false, false);
+                              sliceTiming_, false);
                         updateCalibrationOffset(Devices.Sides.B, score);
                      }
                      // Restore settings of the controller

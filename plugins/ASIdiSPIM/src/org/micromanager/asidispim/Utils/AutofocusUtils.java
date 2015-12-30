@@ -134,9 +134,8 @@ public class AutofocusUtils {
     * @param centerAtCurrentZ - whether to focus around the current position (true), or
     *                            around the imaging center set in the setup panel (false)
     * @param sliceTiming - Data structure with current device timing setting
-    * @param restoreCameraMode - After autofocus, set camera trigger back to internal or not
     * @param runAsynchronously - whether or not to run the function asynchronously (in own thread)
-    *          (both these are true when run from Setup panel and false when run during acquisition)
+    *          (true when run from Setup panel and false when run during acquisition)
     * @return FocusResult object.  Will be bogus  if runAsynchronously is true, but in that case the
     *          actual result can be accessed via getLastFocusResult() in the caller's refreshSelected() method
     *
@@ -146,7 +145,6 @@ public class AutofocusUtils {
            final Devices.Sides side,
            final boolean centerAtCurrentZ,
            final SliceTiming sliceTiming,
-           final boolean restoreCameraMode,
            final boolean runAsynchronously) {
 
       class FocusWorker extends SwingWorker<FocusResult, Object> {
@@ -478,8 +476,8 @@ public class AutofocusUtils {
                   }
 
                   controller_.cleanUpControllerAfterAcquisition(1, acqSettings.firstSideIsA, false);
-
-                  if (restoreCameraMode)
+                  
+                  if (runAsynchronously)
                      cameras_.setSPIMCamerasForAcquisition(false);
 
                   // move back to original position if needed
@@ -517,7 +515,7 @@ public class AutofocusUtils {
                   // if we are in Setup panel, move to either the best-focus position (if found)
                   //   or else back to the original position.  If we are doing autofocus during
                   //   acquisition this is an unnecessary step.
-                  if (restoreCameraMode) {  // proxy for "running from setup"
+                  if (runAsynchronously) {  // proxy for "running from setup"
                      if (isPiezoScan) {
                         positions_.setPosition(piezoDevice, 
                               focusSuccess ? bestPiezoPosition : originalPiezoPosition);

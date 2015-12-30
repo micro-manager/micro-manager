@@ -55,6 +55,8 @@ import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.internalinterfaces.LiveModeListener; 
 import org.micromanager.utils.MMFrame;
 
+import mmcorej.CMMCore;
+
 //TODO devices tab automatically recognize default device names
 //TODO "swap sides" button (during alignment)
 //TODO alignment wizard that would guide through alignment steps
@@ -93,6 +95,7 @@ public class ASIdiSPIMFrame extends MMFrame
       implements MMListenerInterface {
    
    private final ScriptInterface gui_;
+   private final CMMCore core_;
    private final Properties props_; 
    private final Prefs prefs_;
    private final Devices devices_;
@@ -128,6 +131,7 @@ public class ASIdiSPIMFrame extends MMFrame
 
       // create interface objects used by panels
       gui_ = gui;
+      core_ = gui.getMMCore();
       prefs_ = new Prefs(Preferences.userNodeForPackage(this.getClass()));
       devices_ = new Devices(gui_, prefs_);
       props_ = new Properties(gui_, devices_, prefs_);
@@ -165,7 +169,7 @@ public class ASIdiSPIMFrame extends MMFrame
 
       dataAnalysisPanel_ = new DataAnalysisPanel(gui_, prefs_);
       autofocusPanel_ = new AutofocusPanel(gui_, devices_, props_, prefs_, autofocus_);
-      settingsPanel_ = new SettingsPanel(devices_, props_, prefs_, stagePosUpdater_);
+      settingsPanel_ = new SettingsPanel(gui_, devices_, props_, prefs_, stagePosUpdater_);
       stagePosUpdater_.oneTimeUpdate();  // needed for NavigationPanel
       helpPanel_ = new HelpPanel();
       statusSubPanel_ = new StatusSubPanel(devices_, props_, positions_, stagePosUpdater_);
@@ -215,13 +219,26 @@ public class ASIdiSPIMFrame extends MMFrame
                   for (Devices.Keys piezoKey : Devices.PIEZOS) {
                      if (devices_.isValidMMDevice(piezoKey)) {
                         if (props_.getPropValueInteger(piezoKey, Properties.Keys.AUTO_SLEEP_DELAY) > 0) {
-                           gui_.getMMCore().setRelativePosition(devices_.getMMDevice(piezoKey), 0);
+                           core_.setRelativePosition(devices_.getMMDevice(piezoKey), 0);
                         }
                      }
                   }
                } catch (Exception e) {
                   MyDialogUtils.showError("Could not reset piezo's positions");
                }
+            }
+         }
+      });
+      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener(new LiveModeListener() {
+         // update camera/scanner settings
+         @Override
+         public void liveModeEnabled(boolean enabled) {
+            if (enabled) {
+               int scan = props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_CAMERA_LIVE_SCAN);
+               props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+                     Properties.Keys.SPIM_LINESCAN_PERIOD, scan, true);
+               props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+                     Properties.Keys.SA_PATTERN_X, Properties.Values.SAM_TRIANGLE, true);
             }
          }
       });

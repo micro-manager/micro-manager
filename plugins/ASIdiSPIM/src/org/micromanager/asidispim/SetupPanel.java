@@ -25,8 +25,11 @@ import com.swtdesigner.SwingResourceManager;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
@@ -90,18 +93,23 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private double sliceStartPos_;
    private double sliceStopPos_;
    private final JCheckBox illumPiezoHomeEnable_;
+   private final JCheckBox autoSheetWidth_; 
    private final JFormattedTextField piezoDeltaField_;
    private final JFormattedTextField offsetField_;
    private final JFormattedTextField rateField_;
-   // device keys, get assigned in constructor based on side
-   private Devices.Keys piezoImagingDeviceKey_;
-   private Devices.Keys piezoIlluminationDeviceKey_;
-   private Devices.Keys micromirrorDeviceKey_;
+   private Devices.Keys piezoImagingDeviceKey_;       // assigned in constructor based on side, can be updated by deviceChange event
+   private Devices.Keys piezoIlluminationDeviceKey_;  // assigned in constructor based on side, can be updated by deviceChange event
+   private Devices.Keys micromirrorDeviceKey_;        // assigned in constructor based on side, can be updated by deviceChange event
+   private Devices.Keys cameraDeviceKey_;             // assigned in constructor based on side, can be updated by deviceChange event
    private final StoredFloatLabel imagingCenterPosLabel_;
+   private final JLabel slicePositionLabel_;
    private final JLabel imagingPiezoPositionLabel_;
    private final JLabel illuminationPiezoPositionLabel_;
-   private final JLabel sheetPositionLabel_;
-
+   private final JFormattedTextField sheetWidthSlope_;
+   private final JLabel sheetWidthSlopeUnits_;
+   private final JButton sheetIncButton_;
+   private final JButton sheetDecButton_;
+   private final JSlider sheetWidthSlider_;
 
    public SetupPanel(ScriptInterface gui, 
            Devices devices,
@@ -376,8 +384,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          @Override
          public void actionPerformed(ActionEvent e) {
             autofocus_.runFocus(setupPanel, side_, true,
-                    ASIdiSPIM.getFrame().getAcquisitionPanel().getSliceTiming(),
-                    true, true);
+                    ASIdiSPIM.getFrame().getAcquisitionPanel().getSliceTiming(), true);
          }
       });
       slopeCalibrationPanel.add(tmp_but);
@@ -450,6 +457,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          @Override
          public void actionPerformed(ActionEvent e) {
             ASIdiSPIM.getFrame().getAcquisitionPanel().runTestAcquisition(side_);
+            refreshCameraBeamSettings();
          }
       });
       slicePanel.add(testAcqButton, "center, span 2, wrap");
@@ -457,8 +465,8 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       slicePanel.add(new JSeparator(SwingConstants.HORIZONTAL), "span 4, growx, shrinky, wrap");
       
       slicePanel.add(new JLabel("Slice position:"));
-      sheetPositionLabel_ = new JLabel("");
-      slicePanel.add(sheetPositionLabel_);
+      slicePositionLabel_ = new JLabel("");
+      slicePanel.add(slicePositionLabel_);
       slicePanel.add(pu.makeSetPositionField(micromirrorDeviceKey_, Directions.Y, positions_));
       
       tmp_but = new JButton("Go to 0");
@@ -535,31 +543,65 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       sheetPanel.add(tmp_but);
 
       illumPiezoHomeEnable_ = pu.makeCheckBox("Go home on tab activate",
-            Properties.Keys.PREFS_ENABLE_ILLUM_PIEZO_HOME, panelName_, false); 
+            Properties.Keys.PREFS_ENABLE_ILLUM_PIEZO_HOME, panelName_, true); 
       sheetPanel.add(illumPiezoHomeEnable_, "span 3, wrap");
 
       // TODO calibrate the sheet axis and then set according to ROI and Bessel filter
       sheetPanel.add(new JLabel("Sheet width:"));
-      sheetPanel.add(new JLabel(""), "span 2");
-      sheetPanel.add(makeIncrementButton(micromirrorDeviceKey_,
-            Properties.Keys.SA_AMPLITUDE_X_DEG, "-", (float)-0.01),
-            "split 2");
-      sheetPanel.add(makeIncrementButton(micromirrorDeviceKey_,
-            Properties.Keys.SA_AMPLITUDE_X_DEG, "+", (float)0.01));
-      JSlider tmp_sl = pu.makeSlider(0, // 0 is min amplitude
+      autoSheetWidth_ = pu.makeCheckBox("Automatic",
+            Properties.Keys.PREFS_AUTO_SHEET_WIDTH, panelName_, false);
+      autoSheetWidth_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent arg0) {
+            if (autoSheetWidth_.isSelected()) {
+               updateSheetWidthROI();
+            } else {
+               props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_X_DEG, sheetWidthSlider_.getValue()/1000f);
+            }
+         }
+      });
+      sheetPanel.add(autoSheetWidth_, "span 2, right");
+      sheetWidthSlope_ = pu.makeFloatEntryField(panelName_, 
+            Properties.Keys.PLUGIN_SLOPE_SHEET_WIDTH.toString(), 2, 5);
+      sheetWidthSlope_.addPropertyChangeListener("value", new PropertyChangeListener() {
+         @Override
+         public void propertyChange(PropertyChangeEvent evt) {
+            updateSheetWidthROI();
+         }
+      });
+      // initialize sheet width if needed
+      if (autoSheetWidth_.isSelected()) {
+         updateSheetWidthROI();
+      }
+      sheetPanel.add(sheetWidthSlope_, "right");
+      sheetWidthSlopeUnits_ = new JLabel("\u00B0/1000px"); 
+      sheetPanel.add(sheetWidthSlopeUnits_, "left");
+      sheetIncButton_ = makeIncrementButton(micromirrorDeviceKey_,
+            Properties.Keys.SA_AMPLITUDE_X_DEG, "-", (float)-0.01);
+      sheetPanel.add(sheetIncButton_, "split 2");
+      sheetDecButton_ = makeIncrementButton(micromirrorDeviceKey_,
+            Properties.Keys.SA_AMPLITUDE_X_DEG, "+", (float)0.01);
+      sheetPanel.add(sheetDecButton_);
+      sheetWidthSlider_ = pu.makeSlider(0, // 0 is min amplitude
               props_.getPropValueFloat(micromirrorDeviceKey_,Properties.Keys.MAX_DEFLECTION_X) - 
               props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MIN_DEFLECTION_X), // compute max amplitude
               1000, // the scale factor between internal integer representation and float representation
               micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_X_DEG);
-      sheetPanel.add(tmp_sl, "span 5, growx, center, wrap");
+      sheetPanel.add(sheetWidthSlider_, "span 3, growx, center, wrap");
+      final JComponent[] autoSheetWidthComponents = { sheetWidthSlope_, sheetWidthSlopeUnits_ };
+      final JComponent[] manualSheetWidthComponents = { sheetIncButton_, sheetDecButton_, sheetWidthSlider_ };
+      PanelUtils.componentsSetEnabled(autoSheetWidthComponents, autoSheetWidth_.isSelected());
+      PanelUtils.componentsSetEnabled(manualSheetWidthComponents, !autoSheetWidth_.isSelected());
+      autoSheetWidth_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            PanelUtils.componentsSetEnabled(autoSheetWidthComponents, autoSheetWidth_.isSelected());
+            PanelUtils.componentsSetEnabled(manualSheetWidthComponents, !autoSheetWidth_.isSelected());
+         }
+      });
 
       sheetPanel.add(new JLabel("Sheet offset:"));
-      sheetPanel.add(new JLabel(""), "span 2");   // TODO update this label with current value and/or allow user to directly enter value
-      sheetPanel.add(makeIncrementButton(micromirrorDeviceKey_,
-            Properties.Keys.SA_OFFSET_X_DEG, "-", (float)-0.01),
-            "split 2");
-      sheetPanel.add(makeIncrementButton(micromirrorDeviceKey_,
-            Properties.Keys.SA_OFFSET_X_DEG, "+", (float)0.01));
+      sheetPanel.add(new JLabel(""), "span 3");   // TODO update this label with current value and/or allow user to directly enter value
       tmp_but = new JButton("Center");
       tmp_but.setMargin(new Insets(4,8,4,8));
       tmp_but.addActionListener(new ActionListener() {
@@ -570,7 +612,12 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          }
       });
       sheetPanel.add(tmp_but);
-      tmp_sl = pu.makeSlider(
+      sheetPanel.add(makeIncrementButton(micromirrorDeviceKey_,
+            Properties.Keys.SA_OFFSET_X_DEG, "-", (float)-0.01),
+            "split 2");
+      sheetPanel.add(makeIncrementButton(micromirrorDeviceKey_,
+            Properties.Keys.SA_OFFSET_X_DEG, "+", (float)0.01));
+      JSlider tmp_sl = pu.makeSlider(
               props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MIN_DEFLECTION_X)/4, // min value
               props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MAX_DEFLECTION_X)/4, // max value
               1000, // the scale factor between internal integer representation and float representation
@@ -725,6 +772,32 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       jb.addActionListener(l);
       return jb;
    }
+   
+   /**
+    * Restore camera and beam settings after an acquisition has been run (either autofocus or test acquisition)
+    */
+   private void refreshCameraBeamSettings() {
+      cameraPanel_.gotSelected();
+      if (beamPanel_.isUpdateOnTab()) {
+         beamPanel_.gotSelected();
+      } else {
+         // correctly handle case where beam was initially turned off, turned on and then off
+         //   again by autofocus/test acquisition, but "Change settings on tab activate" is false
+         beamPanel_.setBeamA(false);
+      }
+   }
+   
+   private void updateSheetWidthROI() {
+      updateSheetWidthROI(cameraDeviceKey_);
+   }
+   
+   public void updateSheetWidthROI(Devices.Keys cameraKey) {
+      Rectangle roi = cameras_.getCameraROI(cameraKey);
+      float width = (float) (roi.height * (Double) sheetWidthSlope_.getValue() / 1000f);
+      // TODO add extra width to compensate for filter depending on sweep rate and filter freq
+      width *= 1.1f;  // 10% extra width just to be sure
+      props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_X_DEG, width);
+   }
 
    @Override
    public void saveSettings() {
@@ -741,7 +814,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             positions_.getPositionString(piezoImagingDeviceKey_));
       illuminationPiezoPositionLabel_.setText(
             positions_.getPositionString(piezoIlluminationDeviceKey_));
-      sheetPositionLabel_.setText(
+      slicePositionLabel_.setText(
             positions_.getPositionString(micromirrorDeviceKey_, Directions.Y));
    }
    
@@ -752,7 +825,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    public final void stoppedStagePositions() {
       imagingPiezoPositionLabel_.setText("");
       illuminationPiezoPositionLabel_.setText("");
-      sheetPositionLabel_.setText("");
+      slicePositionLabel_.setText("");
    }
 
    /**
@@ -825,14 +898,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             }
          }
       }
-      cameraPanel_.gotSelected();
-      if (beamPanel_.isUpdateOnTab()) {
-         beamPanel_.gotSelected();
-      } else {
-         // correctly handle case where beam was initially turned off, then turned
-         //   on by autofocus, but "Change settings on tab activate" is false
-         beamPanel_.setBeamA(false);
-      }
+      refreshCameraBeamSettings();
    }
    
    @Override
@@ -845,6 +911,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       piezoImagingDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side_);
       piezoIlluminationDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, Devices.getOppositeSide(side_));
       micromirrorDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side_);
+      cameraDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.CAMERAA, side_);
    }
    
    @Override
@@ -868,8 +935,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    
    public void runAutofocus() {
       autofocus_.runFocus(this, side_, true,
-            ASIdiSPIM.getFrame().getAcquisitionPanel().getSliceTiming(),
-            true, true);
+            ASIdiSPIM.getFrame().getAcquisitionPanel().getSliceTiming(), true);
    }
 
    public double getSideCalibrationOffset() {

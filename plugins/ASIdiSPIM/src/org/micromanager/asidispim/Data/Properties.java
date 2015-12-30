@@ -174,13 +174,14 @@ public class Properties {
       PREFS_SEPARATE_VIEWERS_FOR_TIMEPOINTS("SeparateViewersForTimePoints"),
       PLUGIN_USE_NAVIGATION_JOYSTICKS("UseNavigationJoysticks"),
       PLUGIN_PIEZO_SHEET_INCREMENT("PiezoSheetIncrement"),  // piezo increment for moving piezo and galvo together
-      PLUGIN_OFFSET_PIEZO_SHEET("OffsetPiezoSheet"),  // Offset in piezo/sheet relation
-      PLUGIN_RATE_PIEZO_SHEET ("RatePiezoSheet"),     // Rate in piezo/sheet 
+      PLUGIN_OFFSET_PIEZO_SHEET("OffsetPiezoSheet"),  // Offset in piezo/sheet calibration
+      PLUGIN_RATE_PIEZO_SHEET ("RatePiezoSheet"),     // Rate in piezo/sheet calibration, really should be named "slice"
       PLUGIN_SHEET_START_POS ("SheetStartPosition"),  // Sheet start position for internal use
       PLUGIN_SHEET_END_POS ("SheetEndPosition"),      // Sheet end position for internal use
       PLUGIN_PIEZO_START_POS ("PiezoStartPosition"),  // Piezo start position for internal use
       PLUGIN_PIEZO_END_POS ("PiezoEndPosition"),      // Piezo end position for internal use
-      PLUGIN_PIEZO_CENTER_POS ("PiezoCenterPosition"),  // Piezo center position for acquisition
+      PLUGIN_PIEZO_CENTER_POS ("PiezoCenterPosition"), // Piezo center position for acquisition
+      PLUGIN_SLOPE_SHEET_WIDTH ("SlopeSheetWidth"),    // Rate in sheet generating axis in degrees/1000px 
       PLUGIN_EXPORT_DATA_DIR ("ExportDataDirectory"),  // Place data are saved in mipav/multiview format 
       PLUGIN_EXPORT_TRANSFORM_OPTION("ExportTransformOption"), // Transform to be applied when exporting data
       PLUGIN_EXPORT_FORMAT("ExportFormatOption"), // Output format of export pane
@@ -195,7 +196,10 @@ public class Properties {
       AUTOFOCUS_SCORING_ALGORITHM("AutofocusScoringAlgorithm"),
       PLUGIN_ACQUSITION_USE_AUTOFOCUS("UseAutofocusInAcquisition"),
       PLUGIN_CAMERA_MODE("CameraMode"),
+      PLUGIN_CAMERA_LIVE_EXPOSURE("CameraLiveExposureMs"),
+      PLUGIN_CAMERA_LIVE_SCAN("CameraLiveScanMs"),
       PREFS_ENABLE_POSITION_UPDATES("EnablePositionUpdates"),
+      PREFS_AUTO_SHEET_WIDTH("AutomaticSheetWidth"),
       PREFS_ENABLE_ILLUM_PIEZO_HOME("EnableIllumPiezoHome"),
       PREFS_SCAN_OPPOSITE_DIRECTIONS("ScanOppositeDirections"),
       PREFS_IGNORE_MISSING_SCANNER("IgnoreMissingScanner"),
@@ -409,6 +413,19 @@ public class Properties {
    }
    
    /**
+    * writes string property value to multiple device adapters using a core call, with error checking
+    * @param devices array of enum keys for device 
+    * @param name enum key for property 
+    * @param strVal value in string form, sent to core using setProperty()
+    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    */
+   public void setPropValue(Devices.Keys [] devices, Properties.Keys name, String strVal, boolean ignoreError) {
+      for (Devices.Keys device : devices) {
+         setPropValue(device, name, strVal, ignoreError);
+      }
+   }
+   
+   /**
     * writes string property value to the device adapter using a core call
     * @param device enum key for device 
     * @param name enum key for property 
@@ -439,6 +456,19 @@ public class Properties {
    public void setPropValue(Devices.Keys [] devices, Properties.Keys name, Properties.Values val) {
       for (Devices.Keys device : devices) {
          setPropValue(device, name, val.toString(), false);
+      }
+   }
+   
+   /**
+    * writes string property value to multiple device adapters using a core call, with error checking
+    * @param devices array of enum key for device 
+    * @param name enum key for property 
+    * @param val value in Properties.Values enum form, sent to core using setProperty() after toString() call
+    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    */
+   public void setPropValue(Devices.Keys [] devices, Properties.Keys name, Properties.Values val, boolean ignoreError) {
+      for (Devices.Keys device : devices) {
+         setPropValue(device, name, val.toString(), ignoreError);
       }
    }
  
@@ -500,6 +530,19 @@ public class Properties {
          setPropValue(device, name, intVal, false);
       }
    }
+   
+   /**
+    * writes integer property value to several device adapters using a core call, with error checking
+    * @param devices array of enum key for device 
+    * @param name enum key for property 
+    * @param intVal value in integer form, sent to core using setProperty()
+    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    */
+   public void setPropValue(Devices.Keys [] devices, Properties.Keys name, int intVal, boolean ignoreError) {
+      for (Devices.Keys device : devices) {
+         setPropValue(device, name, intVal, ignoreError);
+      }
+   }
 
    /**
     * writes float property value to the device adapter using a core call
@@ -557,6 +600,19 @@ public class Properties {
    public void setPropValue(Devices.Keys [] devices, Properties.Keys name, float floatVal) {
       for (Devices.Keys device : devices) {
          setPropValue(device, name, floatVal, false);
+      }
+   }
+   
+   /**
+    * writes float property value to several device adapters using a core call, with error checking
+    * @param devices array of enum key for device 
+    * @param name enum key for property 
+    * @param floatVal value in float form, sent to core using setProperty()
+    * @param ignoreError false (default) will do error checking, true means ignores non-existing property
+    */
+   public void setPropValue(Devices.Keys [] devices, Properties.Keys name, float floatVal, boolean ignoreError) {
+      for (Devices.Keys device : devices) {
+         setPropValue(device, name, floatVal, ignoreError);
       }
    }
 
