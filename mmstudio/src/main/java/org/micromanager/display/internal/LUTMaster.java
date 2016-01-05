@@ -317,6 +317,7 @@ public class LUTMaster {
       ImagePlus plus = display.getImagePlus();
       CompositeImage composite = null;
       ImageProcessor processor = plus.getProcessor();
+
       if (plus instanceof CompositeImage) {
          composite = (CompositeImage) plus;
          if (composite.getMode() == CompositeImage.COMPOSITE) {
@@ -325,6 +326,11 @@ public class LUTMaster {
             // Chalk it up to ImageJ weirdness.
             processor = composite.getProcessor(channelIndex + 1);
          }
+      }
+
+      if (processor == null) {
+         // Not ready to apply LUTs yet.
+         return;
       }
 
       // Get the parameters to use to adjust contrast for this channel.
