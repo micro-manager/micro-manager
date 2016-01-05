@@ -769,7 +769,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    private void refreshChannelGroup() {
       shouldChangeChannelGroup_ = false;
       chanGroupSelect_.removeAllItems();
-      for (String group : core_.getAvailableConfigGroups().toArray()) {
+      for (String group : studio_.getAcquisitionEngine().getAvailableGroups()) {
          chanGroupSelect_.addItem(group);
       }
       chanGroupSelect_.setSelectedItem(core_.getChannelGroup());
