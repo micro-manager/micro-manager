@@ -100,7 +100,7 @@ public class ShutterControl extends WidgetPlugin implements SciJavaPlugin {
    public JComponent createControl(PropertyMap config) {
       JPanel panel = new JPanel(new MigLayout("flowy, gap 0, insets 0"));
       panel.add(makeShutterIcon(studio_), "aligny center, wrap");
-      panel.add(makeAutoShutterCheckBox(studio_), "split 2");
+      panel.add(makeAutoShutterCheckBox(studio_), "alignx center, split 2");
       panel.add(makeShutterButton(studio_));
       return panel;
    }
