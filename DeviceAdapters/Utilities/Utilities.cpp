@@ -276,6 +276,7 @@ MultiCamera::MultiCamera() :
 
    SetErrorText(ERR_INVALID_DEVICE_NAME, "Please select a valid camera");
    SetErrorText(ERR_NO_PHYSICAL_CAMERA, "No physical camera assigned");
+   SetErrorText(ERR_NO_EQUAL_SIZE, "Cameras differ in image size");
 
    // Name                                                                   
    CreateProperty(MM::g_Keyword_Name, g_DeviceNameMultiCamera, MM::String, true); 
@@ -482,6 +483,22 @@ unsigned MultiCamera::GetImageHeight() const
    }
   
    return height;
+}
+
+
+bool MultiCamera::ImageSizesAreEqual() {
+   // edge case: if we have no or one camera, their sizes are equal
+   if (physicalCameras_.size() < 2)
+      return true;
+  unsigned height = physicalCameras_[0]->GetImageHeight();
+  unsigned width = physicalCameras_[0]->GetImageWidth();
+  for (int i = 1; i < physicalCameras_.size(); i++) {
+     if (height != physicalCameras_[i]->GetImageHeight())
+        return false;
+     if (width != physicalCameras_[i]->GetImageWidth())
+        return false;
+  }
+  return true;
 }
 
 unsigned MultiCamera::GetImageBytesPerPixel() const

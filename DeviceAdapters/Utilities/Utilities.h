@@ -43,6 +43,7 @@
 #define ERR_NO_AUTOFOCUS_DEVICE_FOUND      10009
 #define ERR_NO_AUTOFOCUS_DEVICE_FOUND      10009
 #define ERR_NO_PHYSICAL_CAMERA             10010
+#define ERR_NO_EQUAL_SIZE                  10011
 #define ERR_TIMEOUT                        10021
 
 
@@ -152,6 +153,7 @@ public:
 
 private:
    int Logical2Physical(int logical);
+   bool ImageSizesAreEqual();
    unsigned char* imageBuffer_;
 
    std::vector<std::string> availableCameras_;
