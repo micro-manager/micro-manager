@@ -380,8 +380,6 @@ public class ScrollerPanel extends JPanel {
             axisToState_.containsKey(Coords.CHANNEL)) {
          boolean isEnabled = settings.getChannelColorMode() != DisplaySettings.ColorMode.COMPOSITE;
          AxisState state = axisToState_.get(Coords.CHANNEL);
-         state.posButton_.setEnabled(isEnabled);
-         state.scrollbar_.setEnabled(isEnabled);
          state.maxLabel_.setEnabled(isEnabled);
       }
    }
