@@ -762,14 +762,14 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    @Override
    public void setDisplaySettings(DisplaySettings settings) {
       displaySettings_ = settings;
-      boolean magChanged = (settings.getMagnification() != null &&
-            settings.getMagnification() != canvas_.getMagnification());
-      DefaultDisplaySettings.setStandardSettings(settings);
-      RememberedChannelSettings.saveSettingsToProfile(settings,
-            store_.getSummaryMetadata(), store_.getAxisLength(Coords.CHANNEL));
-      // This will cause the canvas to pick up magnification changes, note.
-      displayBus_.post(new NewDisplaySettingsEvent(settings, this));
       if (haveCreatedGUI_) {
+         boolean magChanged = (settings.getMagnification() != null &&
+               settings.getMagnification() != canvas_.getMagnification());
+         DefaultDisplaySettings.setStandardSettings(settings);
+         RememberedChannelSettings.saveSettingsToProfile(settings,
+               store_.getSummaryMetadata(), store_.getAxisLength(Coords.CHANNEL));
+         // This will cause the canvas to pick up magnification changes, note.
+         displayBus_.post(new NewDisplaySettingsEvent(settings, this));
          if (magChanged) {
             // Ensure that any changes in the canvas size (and thus in our
             // window size) properly adjust other elements.
