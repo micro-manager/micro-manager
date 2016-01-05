@@ -39,11 +39,12 @@ import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JToggleButton;
+import javax.swing.JButton;
 
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.events.AutoShutterEvent;
+import org.micromanager.events.GUIRefreshEvent;
 import org.micromanager.events.ShutterEvent;
 import org.micromanager.quickaccess.WidgetPlugin;
 import org.micromanager.PropertyMap;
@@ -98,92 +99,68 @@ public class ShutterControl extends WidgetPlugin implements SciJavaPlugin {
    @Override
    public JComponent createControl(PropertyMap config) {
       JPanel panel = new JPanel(new MigLayout("flowy, gap 0, insets 0"));
+      panel.add(makeShutterIcon(studio_), "aligny center, wrap");
+      panel.add(makeAutoShutterCheckBox(studio_), "split 2");
+      panel.add(makeShutterButton(studio_));
+      return panel;
+   }
+
+   /**
+    * Create an icon that indicates the current shutter state.
+    */
+   public static JLabel makeShutterIcon(final Studio studio) {
       final JLabel icon = new JLabel();
+      // Must create a separate object to register for events, because
+      // otherwise the Java compiler complains when we modify "icon" that
+      // it might not have been initialized.
+      Object registrant = new Object() {
+         @Subscribe
+         public void onShutter(ShutterEvent event) {
+            updateIcon(icon, studio);
+         }
+         @Subscribe
+         public void onAutoShutter(AutoShutterEvent event) {
+            updateIcon(icon, studio);
+         }
+         @Subscribe
+         public void onGUIRefresh(GUIRefreshEvent event) {
+            updateIcon(icon, studio);
+         }
+      };
       // Toggle icon state when mouse is pressed.
       icon.addMouseListener(new MouseAdapter() {
          @Override
          public void mouseReleased(MouseEvent e) {
             try {
-               if (studio_.shutter().getAutoShutter()) {
-                  studio_.shutter().setAutoShutter(false);
+               if (studio.shutter().getAutoShutter()) {
+                  studio.shutter().setAutoShutter(false);
                }
-               studio_.shutter().setShutter(!studio_.shutter().getShutter());
+               studio.shutter().setShutter(!studio.shutter().getShutter());
             }
             catch (Exception ex) {
-               studio_.logs().logError(ex, "Error toggling shutter icon");
+               studio.logs().logError(ex, "Error toggling shutter icon");
             }
          }
       });
-      updateIcon(icon);
-      panel.add(icon, "aligny center, wrap");
-      final JCheckBox toggle = new JCheckBox("Auto");
-      toggle.setFont(GUIUtils.buttonFont);
-      toggle.setSelected(studio_.shutter().getAutoShutter());
-      toggle.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            try {
-               studio_.shutter().setAutoShutter(toggle.isSelected());
-            }
-            catch (Exception ex) {
-               studio_.logs().showError(ex, "Error setting auto shutter");
-            }
-         }
-      });
-      panel.add(toggle, "split 2");
-      final JToggleButton button = new JToggleButton();
-      button.setEnabled(!studio_.shutter().getAutoShutter());
-      try {
-         button.setText(studio_.shutter().getShutter() ? "Close" : "Open");
-      }
-      catch (Exception e) {
-         studio_.logs().logError(e, "Unable to get shutter state");
-      }
-      button.setFont(GUIUtils.buttonFont);
-      button.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            try {
-               studio_.shutter().setShutter(!studio_.shutter().getShutter());
-            }
-            catch (Exception ex) {
-               studio_.logs().logError(ex, "Unable to toggle shutter");
-            }
-         }
-      });
-      panel.add(button);
-      // Create an object to subscribe for events and keep the GUI updated.
-      Object registrant = new Object() {
-         @Subscribe
-         public void onShutter(ShutterEvent event) {
-            button.setText(event.getShutter() ? "Close" : "Open");
-            updateIcon(icon);
-         }
-         @Subscribe
-         public void onAutoShutter(AutoShutterEvent event) {
-            toggle.setSelected(event.getAutoShutter());
-            button.setEnabled(!event.getAutoShutter());
-            updateIcon(icon);
-         }
-      };
-      studio_.events().registerForEvents(registrant);
-      return panel;
+      updateIcon(icon, studio);
+      studio.events().registerForEvents(registrant);
+      return icon;
    }
 
    /**
-    * Set the icon for the shutter state display.
-    * TODO: this code is all a duplicate of what's in MainFrame for their icon.
+    * Update the JLabel's icon based on the current state of the shutter and
+    * autoshutter.
     */
-   private void updateIcon(JLabel icon) {
+   private static void updateIcon(JLabel icon, Studio studio) {
       String path = "/org/micromanager/icons/shutter_";
       String tooltip = "The shutter is ";
       // Note that we use the mode both for the tooltip and for
       // constructing the image file path, since it happens to work out.
       try {
-         String mode = studio_.shutter().getShutter() ? "open" : "closed";
+         String mode = studio.shutter().getShutter() ? "open" : "closed";
          path += mode;
          tooltip += mode;
-         if (studio_.shutter().getAutoShutter()) {
+         if (studio.shutter().getAutoShutter()) {
             path += "_auto";
             tooltip += ". Autoshutter is enabled";
          }
@@ -193,8 +170,43 @@ public class ShutterControl extends WidgetPlugin implements SciJavaPlugin {
          icon.setToolTipText(tooltip);
       }
       catch (Exception e) {
-         studio_.logs().logError(e, "Unable to update shutter state display");
+         studio.logs().logError(e, "Unable to update shutter state display");
       }
+   }
+
+   /**
+    * Create a checkbox for turning autoshutter on/off.
+    */
+   public static JCheckBox makeAutoShutterCheckBox(final Studio studio) {
+      final JCheckBox toggle = new JCheckBox("Auto");
+      // Must create a separate object to register for events, because
+      // otherwise the Java compiler complains when we modify "toggle" that
+      // it might not have been initialized.
+      Object registrant = new Object() {
+         @Subscribe
+         public void onAutoShutter(AutoShutterEvent event) {
+            toggle.setSelected(event.getAutoShutter());
+         }
+         @Subscribe
+         public void onGUIRefresh(GUIRefreshEvent event) {
+            toggle.setSelected(studio.shutter().getAutoShutter());
+         }
+      };
+      toggle.setFont(GUIUtils.buttonFont);
+      toggle.setSelected(studio.shutter().getAutoShutter());
+      toggle.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            try {
+               studio.shutter().setAutoShutter(toggle.isSelected());
+            }
+            catch (Exception ex) {
+               studio.logs().showError(ex, "Error setting auto shutter");
+            }
+         }
+      });
+      studio.events().registerForEvents(registrant);
+      return toggle;
    }
 
    @Override
@@ -202,4 +214,56 @@ public class ShutterControl extends WidgetPlugin implements SciJavaPlugin {
       return studio_.data().getPropertyMapBuilder().build();
    }
 
+   /**
+    * Create a button for opening/closing the shutter.
+    */
+   public static JButton makeShutterButton(final Studio studio) {
+      final JButton button = new JButton();
+      // Must create a separate object to register for events, because
+      // otherwise the Java compiler complains when we modify "button" that
+      // it might not have been initialized.
+      Object registrant = new Object() {
+         @Subscribe
+         public void onShutter(ShutterEvent event) {
+            button.setText(event.getShutter() ? "Close" : "Open");
+         }
+
+         @Subscribe
+         public void onAutoShutter(AutoShutterEvent event) {
+            button.setEnabled(!event.getAutoShutter());
+         }
+
+         @Subscribe
+         public void onGUIRefresh(GUIRefreshEvent event) {
+            try {
+               button.setText(studio.shutter().getShutter() ? "Close" : "Open");
+            }
+            catch (Exception e) {
+               studio.logs().logError(e, "Error getting shutter state");
+            }
+            button.setEnabled(!studio.shutter().getAutoShutter());
+         }
+      };
+      button.setEnabled(!studio.shutter().getAutoShutter());
+      try {
+         button.setText(studio.shutter().getShutter() ? "Close" : "Open");
+      }
+      catch (Exception e) {
+         studio.logs().logError(e, "Unable to get shutter state");
+      }
+      button.setFont(GUIUtils.buttonFont);
+      button.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            try {
+               studio.shutter().setShutter(!studio.shutter().getShutter());
+            }
+            catch (Exception ex) {
+               studio.logs().logError(ex, "Unable to toggle shutter");
+            }
+         }
+      });
+      studio.events().registerForEvents(registrant);
+      return button;
+   }
 }
