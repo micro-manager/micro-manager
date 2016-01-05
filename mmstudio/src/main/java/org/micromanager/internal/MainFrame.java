@@ -648,11 +648,6 @@ public class MainFrame extends MMFrame implements LiveModeListener {
 
    @Override
    public void liveModeEnabled(boolean isEnabled) {
-      autoShutterCheckBox_.setEnabled(!isEnabled);
-      if (core_.getAutoShutter()) {
-         toggleShutterButton_.setText(isEnabled ? "Close" : "Open" );
-         updateShutterIcon();
-      }
       snapButton_.setEnabled(!isEnabled);
    }
 
