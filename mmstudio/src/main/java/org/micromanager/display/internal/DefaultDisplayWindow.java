@@ -696,17 +696,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       // Synchronized so we don't try to change the display while we also
       // change our UI (e.g. in shiftToCompositeImage).
       synchronized(guiLock_) {
-         if (ijImage_ instanceof CompositeImage &&
-               ((CompositeImage) ijImage_).getMode() == CompositeImage.COMPOSITE) {
-            // Must enqueue all channels at these coords.
-            for (int i = 0; i < store_.getAxisLength(Coords.CHANNEL); ++i) {
-               canvasQueue_.enqueue(
-                        coords.copy().channel(i).build());
-            }
-         }
-         else {
-            canvasQueue_.enqueue(coords);
-         }
+         canvasQueue_.enqueue(coords);
       }
    }
 
