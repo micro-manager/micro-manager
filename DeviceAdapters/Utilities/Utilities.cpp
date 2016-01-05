@@ -362,6 +362,9 @@ int MultiCamera::SnapImage()
    if (nrCamerasInUse_ < 1)
       return ERR_NO_PHYSICAL_CAMERA;
 
+   if (!ImageSizesAreEqual())
+      return ERR_NO_EQUAL_SIZE;
+
    CameraSnapThread t[MAX_NUMBER_PHYSICAL_CAMERAS];
    for (unsigned int i = 0; i < physicalCameras_.size(); i++)
    {
@@ -486,17 +489,30 @@ unsigned MultiCamera::GetImageHeight() const
 }
 
 
+/**
+ * Returns true if image sizes of all available cameras are identical
+ * false otherwise
+ * edge case: if we have no or one camera, their sizes are equal
+ */
 bool MultiCamera::ImageSizesAreEqual() {
-   // edge case: if we have no or one camera, their sizes are equal
-   if (physicalCameras_.size() < 2)
-      return true;
-  unsigned height = physicalCameras_[0]->GetImageHeight();
-  unsigned width = physicalCameras_[0]->GetImageWidth();
-  for (int i = 1; i < physicalCameras_.size(); i++) {
-     if (height != physicalCameras_[i]->GetImageHeight())
-        return false;
-     if (width != physicalCameras_[i]->GetImageWidth())
-        return false;
+   unsigned height = 0;
+   unsigned width = 0;
+   for (int i = 0; i < physicalCameras_.size(); i++) {
+      if (physicalCameras_[i] != 0) 
+      {
+         height = physicalCameras_[0]->GetImageHeight();
+         width = physicalCameras_[0]->GetImageWidth();
+      }
+   }
+
+   for (int i = 0; i < physicalCameras_.size(); i++) {
+      if (physicalCameras_[i] != 0) 
+      {
+         if (height != physicalCameras_[i]->GetImageHeight())
+            return false;
+         if (width != physicalCameras_[i]->GetImageWidth())
+            return false;
+      }
   }
   return true;
 }
@@ -650,6 +666,9 @@ int MultiCamera::StartSequenceAcquisition(double interval)
 {
    if (nrCamerasInUse_ < 1)
       return ERR_NO_PHYSICAL_CAMERA;
+
+   if (!ImageSizesAreEqual())
+      return ERR_NO_EQUAL_SIZE;
 
    for (unsigned int i = 0; i < physicalCameras_.size(); i++)
    {
