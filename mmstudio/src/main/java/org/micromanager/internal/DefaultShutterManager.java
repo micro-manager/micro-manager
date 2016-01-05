@@ -27,6 +27,7 @@ import java.util.List;
 import mmcorej.DeviceType;
 
 import org.micromanager.events.GUIRefreshEvent;
+import org.micromanager.events.LiveModeEvent;
 import org.micromanager.events.SystemConfigurationLoadedEvent;
 import org.micromanager.events.internal.DefaultAutoShutterEvent;
 import org.micromanager.events.internal.DefaultShutterEvent;
@@ -77,6 +78,19 @@ public class DefaultShutterManager implements ShutterManager {
 
    @Subscribe
    public void onGUIRefresh(GUIRefreshEvent event) {
+      repostShutterState();
+   }
+
+   @Subscribe
+   public void onLiveMode(LiveModeEvent event) {
+      repostShutterState();
+   }
+
+   /**
+    * Check the current shutter state, and post events if it has changed
+    * compared to our cached values.
+    */
+   private void repostShutterState() {
       try {
          boolean isOpen = getShutter();
          if (isOpen != isOpen_) {
