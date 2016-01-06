@@ -1177,9 +1177,17 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          name = store_.getSummaryMetadata().getName();
       }
       if (name == null) {
-         // Must be an anonymous RAM datastore. Invent a new name and store it
+         // Must be an anonymous RAM datastore. First, scan for other displays
+         // for this datastore that may already have had a name invented for
+         // them; if that fails, then invent a new name and store it
          // in our static hashmap (because we can't count on storing it in
          // the datastore, which may be frozen).
+         for (DisplayWindow display : studio_.displays().getAllImageWindows()) {
+            if (display.getDatastore() == store_ &&
+                  displayHashToUniqueName_.containsKey(display.hashCode())) {
+               return displayHashToUniqueName_.get(display.hashCode());
+            }
+         }
          if (!displayHashToUniqueName_.containsKey(this.hashCode())) {
             displayHashToUniqueName_.put(this.hashCode(),
                   getUniqueDisplayName(this));
