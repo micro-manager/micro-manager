@@ -73,7 +73,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
       builder.channelColorMode(
             DisplaySettings.ColorMode.fromInt(profile.getInt(
             DefaultDisplaySettings.class,
-               key + "channelColorMode", 0)));
+               key + "channelColorMode",
+               DisplaySettings.ColorMode.COMPOSITE.getIndex())));
       builder.histogramUpdateRate(profile.getDouble(
             DefaultDisplaySettings.class,
                key + "histogramUpdateRate", 0.0));
