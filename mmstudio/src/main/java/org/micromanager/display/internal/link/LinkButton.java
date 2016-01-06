@@ -64,7 +64,7 @@ public class LinkButton extends JButton {
 
    public LinkButton(final SettingsLinker linker,
          final DataViewer display) {
-      super(INACTIVE_ICON);
+      super(linker.getIsActive() ? ACTIVE_ICON : INACTIVE_ICON);
       setMinimumSize(new Dimension(1, 1));
       setMargin(new Insets(0, 0, 0, 0));
 
