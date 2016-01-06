@@ -67,6 +67,7 @@ public:
    virtual int AddToSequence(const char* value) = 0;
    virtual int SendSequence() = 0;
 
+   virtual std::string GetName() const = 0;
 };
 
 /**
@@ -125,7 +126,7 @@ public:
 class Property : public PropertyBase
 {
 public:
-   Property() :
+   Property(const char* name) :
       readOnly_(false),
       fpAction_(0),
       cached_(false),
@@ -136,13 +137,15 @@ public:
       sequenceMaxSize_(0),
       sequenceEvents_(),
       lowerLimit_(0.0),
-      upperLimit_(0.0)
-      {}      
+      upperLimit_(0.0),
+      name_(name)
+   {}
+
    virtual ~Property()
    {
       delete fpAction_;
    }
-            
+
    bool GetCached()const {return cached_;}
    void SetCached(bool bState=true) {cached_ = bState;}
 
@@ -264,6 +267,11 @@ public:
       return DEVICE_OK; // Return an error instead???
    }
 
+   std::string GetName() const
+   {
+      return name_;
+   }
+
    std::vector<std::string> GetSequence() const
    {
       return sequenceEvents_;
@@ -296,6 +304,7 @@ protected:
    double lowerLimit_;
    double upperLimit_;
    std::map<std::string, long> values_; // allowed values
+   const std::string name_;
 
 private:
    Property& operator=(const Property&);
@@ -307,7 +316,9 @@ private:
 class StringProperty : public Property
 {
 public:
-   StringProperty() : Property() {}      
+   StringProperty(const char* name) :
+      Property(name)
+   {}
    virtual ~StringProperty(){};
             
    PropertyType GetType() {return String;}
@@ -335,7 +346,10 @@ private:
 class FloatProperty : public Property
 {
 public:
-   FloatProperty(): Property(), value_(0.0), decimalPlaces_(4)
+   FloatProperty(const char* name) :
+      Property(name),
+      value_(0.0),
+      decimalPlaces_(4)
    {
       int rms = 1;
       for (int i = 0; i < decimalPlaces_; ++i)
@@ -375,7 +389,10 @@ private:
 class IntegerProperty : public Property
 {
 public:
-   IntegerProperty(): Property(), value_(0) {}      
+   IntegerProperty(const char* name) :
+      Property(name),
+      value_(0)
+   {}
    ~IntegerProperty() {};
             
    PropertyType GetType() {return Integer;}
