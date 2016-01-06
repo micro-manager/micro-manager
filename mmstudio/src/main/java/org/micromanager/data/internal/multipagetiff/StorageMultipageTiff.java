@@ -58,6 +58,7 @@ import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.display.internal.DefaultDisplaySettings;
+import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MDUtils;
@@ -550,7 +551,8 @@ public final class StorageMultipageTiff implements Storage {
    public void writeDisplaySettings() {
       for (MultipageTiffReader r : new HashSet<MultipageTiffReader>(coordsToReader_.values())) {
          try {
-            r.rewriteDisplaySettings(DefaultDisplaySettings.getStandardSettings());
+            r.rewriteDisplaySettings(DefaultDisplaySettings.getStandardSettings(
+                     DefaultDisplayWindow.DEFAULT_SETTINGS_KEY));
             r.rewriteComments(summaryMetadata_.getComments());
          } catch (JSONException ex) {
             ReportingUtils.logError("Error writing display settings");

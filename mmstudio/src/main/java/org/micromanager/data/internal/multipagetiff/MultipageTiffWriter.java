@@ -56,6 +56,7 @@ import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.display.internal.DefaultDisplaySettings;
+import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMScriptException;
@@ -152,7 +153,7 @@ public class MultipageTiffWriter {
       augmentWithImageMetadata(summaryJSON,
             (DefaultImage) masterStorage_.getAnyImage());
       augmentWithDisplaySettings(summaryJSON,
-            DefaultDisplaySettings.getStandardSettings());
+            DefaultDisplaySettings.getStandardSettings(DefaultDisplayWindow.DEFAULT_SETTINGS_KEY));
       reader_ = new MultipageTiffReader(summary, summaryJSON, firstImageTags);
 
       //This is an overestimate of file size because file gets truncated at end
@@ -793,7 +794,8 @@ public class MultipageTiffWriter {
          bufferPosition += 2;
       }
 
-      DisplaySettings settings = DefaultDisplaySettings.getStandardSettings();
+      DisplaySettings settings = DefaultDisplaySettings.getStandardSettings(
+            DefaultDisplayWindow.DEFAULT_SETTINGS_KEY);
       DisplaySettings.ContrastSettings[] contrastSettings = settings.getChannelContrastSettings();
       if (contrastSettings != null && contrastSettings.length > numChannels) {
          for (int i = 0; i < numChannels; i++) {
@@ -857,7 +859,8 @@ public class MultipageTiffWriter {
          sb.append("spacing=").append(zStepUm_).append("\n");
       }
       //write single channel contrast settings or display mode if multi channel
-      DisplaySettings settings = DefaultDisplaySettings.getStandardSettings();
+      DisplaySettings settings = DefaultDisplaySettings.getStandardSettings(
+            DefaultDisplayWindow.DEFAULT_SETTINGS_KEY);
       if (numChannels_ == 1) {
          sb.append("min=").append(settings.getSafeContrastMin(0, 0, 0)).append("\n");
          sb.append("max=").append(settings.getSafeContrastMax(0, 0, 0)).append("\n");
@@ -930,7 +933,8 @@ public class MultipageTiffWriter {
 
    // TODO: is this identical to a similar function in the Reader?
    private void writeDisplaySettings() throws IOException {
-      DefaultDisplaySettings settings = DefaultDisplaySettings.getStandardSettings();
+      DefaultDisplaySettings settings = DefaultDisplaySettings.getStandardSettings(
+            DefaultDisplayWindow.DEFAULT_SETTINGS_KEY);
       int numReservedBytes = numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL;
       ByteBuffer header = allocateByteBuffer(8);
       ByteBuffer buffer = ByteBuffer.wrap(

@@ -50,9 +50,10 @@ public class DefaultDisplaySettings implements DisplaySettings {
     * Retrieve the display settings that have been saved in the preferences.
     * Note: we explicitly don't cache these settings, to ensure that
     * displays don't end up with copies of the same settings.
-    * @return 
+    * @param key String for storing settings under different locations, so
+    *        different "types" of displays can have different default settings.
     */
-   public static DefaultDisplaySettings getStandardSettings() {
+   public static DefaultDisplaySettings getStandardSettings(String key) {
       DefaultUserProfile profile = DefaultUserProfile.getInstance();
       Builder builder = new Builder();
       // We have to convert colors to/from int arrays.
@@ -63,27 +64,37 @@ public class DefaultDisplaySettings implements DisplaySettings {
          Color.MAGENTA, Color.RED, Color.GREEN, Color.BLUE, Color.ORANGE};
       Integer[] defaultIntColors = colorsToInts(defaultColors);
 
+      key = key + "_";
       // This value used to be an int, then got changed to a double, hence the
       // name change.
       builder.animationFPS(profile.getDouble(
-               DefaultDisplaySettings.class, "animationFPS_Double", 10.0));
+               DefaultDisplaySettings.class,
+               key + "animationFPS_Double", 10.0));
       builder.channelColorMode(
             DisplaySettings.ColorMode.fromInt(profile.getInt(
-            DefaultDisplaySettings.class, "channelColorMode", 0)));
+            DefaultDisplaySettings.class,
+               key + "channelColorMode", 0)));
       builder.histogramUpdateRate(profile.getDouble(
-            DefaultDisplaySettings.class, "histogramUpdateRate", 0.0));
+            DefaultDisplaySettings.class,
+               key + "histogramUpdateRate", 0.0));
       builder.magnification(profile.getDouble(
-            DefaultDisplaySettings.class, "magnification", 1.0));
+            DefaultDisplaySettings.class,
+               key + "magnification", 1.0));
       builder.shouldSyncChannels(profile.getBoolean(
-            DefaultDisplaySettings.class, "shouldSyncChannels", false));
+            DefaultDisplaySettings.class,
+               key + "shouldSyncChannels", false));
       builder.shouldAutostretch(profile.getBoolean(
-            DefaultDisplaySettings.class, "shouldAutostretch", true));
+            DefaultDisplaySettings.class,
+               key + "shouldAutostretch", true));
       builder.extremaPercentage(profile.getDouble(
-            DefaultDisplaySettings.class, "extremaPercentage", 0.0));
+            DefaultDisplaySettings.class,
+               key + "extremaPercentage", 0.0));
       builder.bitDepthIndices(profile.getIntArray(
-            DefaultDisplaySettings.class, "bitDepthIndices", null));
+            DefaultDisplaySettings.class,
+               key + "bitDepthIndices", null));
       builder.shouldUseLogScale(profile.getBoolean(
-            DefaultDisplaySettings.class, "shouldUseLogScale", false));
+            DefaultDisplaySettings.class,
+               key + "shouldUseLogScale", false));
       // Note we don't store user data in the prefs explicitly; let third-party
       // code manually access the prefs if they want.
       return builder.build();
@@ -91,30 +102,35 @@ public class DefaultDisplaySettings implements DisplaySettings {
 
    /**
     * Set new settings in the user's profile.
+    * @param key As with getStandardSettings, a specific key to use for
+    *        this type of display.
     */
-   public static void setStandardSettings(DisplaySettings settings) {
+   public static void setStandardSettings(DisplaySettings settings,
+         String key) {
       DefaultUserProfile profile = DefaultUserProfile.getInstance();
-      profile.setDouble(DefaultDisplaySettings.class, "animationFPS_Double",
+      key = key + "_";
+      profile.setDouble(DefaultDisplaySettings.class,
+            key + "animationFPS_Double",
             settings.getAnimationFPS());
       if (settings.getChannelColorMode() != null) {
          profile.setInt(DefaultDisplaySettings.class,
-               "channelColorMode",
+               key + "channelColorMode",
                settings.getChannelColorMode().getIndex());
       }
       profile.setDouble(DefaultDisplaySettings.class,
-            "histogramUpdateRate", settings.getHistogramUpdateRate());
+            key + "histogramUpdateRate", settings.getHistogramUpdateRate());
       profile.setDouble(DefaultDisplaySettings.class,
-            "magnification", settings.getMagnification());
+            key + "magnification", settings.getMagnification());
       profile.setBoolean(DefaultDisplaySettings.class,
-            "shouldSyncChannels", settings.getShouldSyncChannels());
+            key + "shouldSyncChannels", settings.getShouldSyncChannels());
       profile.setBoolean(DefaultDisplaySettings.class,
-            "shouldAutostretch", settings.getShouldAutostretch());
+            key + "shouldAutostretch", settings.getShouldAutostretch());
       profile.setDouble(DefaultDisplaySettings.class,
-            "extremaPercentage", settings.getExtremaPercentage());
+            key + "extremaPercentage", settings.getExtremaPercentage());
       profile.setIntArray(DefaultDisplaySettings.class,
-            "bitDepthIndices", settings.getBitDepthIndices());
+            key + "bitDepthIndices", settings.getBitDepthIndices());
       profile.setBoolean(DefaultDisplaySettings.class,
-            "shouldUseLogScale", settings.getShouldUseLogScale());
+            key + "shouldUseLogScale", settings.getShouldUseLogScale());
    }
 
    /**

@@ -115,6 +115,11 @@ import org.micromanager.Studio;
  * refactored.
  */
 public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
+   /**
+    * Default key to use when reading or writing DisplaySettings from/to the
+    * user's profile. See setDisplaySettingsKey() for more information.
+    */
+   public static final String DEFAULT_SETTINGS_KEY = "Default";
 
    // Keeps track of unique names that we are forced to invent for anonymous
    // datasets. Note we use hashCode here so we don't maintain a reference to
@@ -125,6 +130,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    private Studio studio_;
    private final Datastore store_;
    private DisplaySettings displaySettings_;
+   // Used for storing DisplaySettings under different locations in the profile
+   // than the default (e.g. for snap/live).
+   private String settingsProfileKey_ = DEFAULT_SETTINGS_KEY;
    private MMVirtualStack stack_;
    private ImagePlus ijImage_;
    private final EventBus displayBus_;
@@ -232,7 +240,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          // Combine the default global display settings from
          // getStandardSettings() with the channel-specific settings from
          // RememberedChannelSettings.
-         displaySettings_ = DefaultDisplaySettings.getStandardSettings();
+         displaySettings_ = DefaultDisplaySettings.getStandardSettings(
+               settingsProfileKey_);
          displaySettings_ = RememberedChannelSettings.updateSettings(
                store_.getSummaryMetadata(), displaySettings_,
                store_.getAxisLength(Coords.CHANNEL));
@@ -755,7 +764,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       if (haveCreatedGUI_) {
          boolean magChanged = (settings.getMagnification() != null &&
                settings.getMagnification() != canvas_.getMagnification());
-         DefaultDisplaySettings.setStandardSettings(settings);
+         DefaultDisplaySettings.setStandardSettings(settings,
+               settingsProfileKey_);
          RememberedChannelSettings.saveSettingsToProfile(settings,
                store_.getSummaryMetadata(), store_.getAxisLength(Coords.CHANNEL));
          // This will cause the canvas to pick up magnification changes, note.
@@ -1216,13 +1226,35 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
 
    @Override
    public DisplayWindow duplicate() {
-      DisplayWindow result = createDisplay(studio_, store_, controlsFactory_);
+      DefaultDisplayWindow result = createDisplay(studio_, store_, controlsFactory_);
+      result.setDisplaySettingsKey(settingsProfileKey_);
       result.setDisplaySettings(displaySettings_);
       result.setCustomTitle(customName_);
       // HACK: for some unknown reason, duplicating the display causes our own
       // LUTs to get "reset", so we have to re-apply them after duplicating.
       canvasQueue_.reapplyLUTs();
       return result;
+   }
+
+   /**
+    * Choose a custom string to use when saving this display's DisplaySettings
+    * to the user's profile (which happens automatically whenever the user
+    * makes a change to those settings). Any future changes to this display's
+    * DisplaySettings will be saved under this key, and when this method is
+    * called, the display will load any saved settings under this key and use
+    * them as the new DisplaySettings.
+    * @param key New key to use when reading from/writing to the profile to
+    *        store DisplaySettings. If null, then revert to
+    *        DEFAULT_SETTINGS_KEY.
+    */
+   public void setDisplaySettingsKey(String newKey) {
+      settingsProfileKey_ = newKey;
+      if (newKey == null) {
+         settingsProfileKey_ = DEFAULT_SETTINGS_KEY;
+      }
+      // Load the new display settings now.
+      setDisplaySettings(
+            DefaultDisplaySettings.getStandardSettings(settingsProfileKey_));
    }
 
    // Implemented to help out DummyImageWindow.

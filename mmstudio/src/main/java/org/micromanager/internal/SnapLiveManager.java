@@ -68,7 +68,9 @@ import org.micromanager.internal.utils.ReportingUtils;
  * "snap image" display (which is the same display as that used for live mode).
  */
 public class SnapLiveManager implements org.micromanager.SnapLiveManager {
+   private static final String TITLE = "Snap/Live View";
    private static final int MAX_DISPLAY_HISTORY = 20;
+
    private final Studio studio_;
    private final CMMCore core_;
    private DisplayWindow display_;
@@ -357,8 +359,9 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
                   return createControls(display);
                }
          });
+         ((DefaultDisplayWindow) display_).setDisplaySettingsKey(TITLE);
          display_.registerForEvents(this);
-         display_.setCustomTitle("Snap/Live View");
+         display_.setCustomTitle(TITLE);
       }
    }
 

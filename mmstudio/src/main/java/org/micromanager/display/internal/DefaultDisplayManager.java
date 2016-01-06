@@ -158,7 +158,8 @@ public final class DefaultDisplayManager implements DisplayManager {
 
    @Override
    public DisplaySettings getStandardDisplaySettings() {
-      return DefaultDisplaySettings.getStandardSettings();
+      return DefaultDisplaySettings.getStandardSettings(
+            DefaultDisplayWindow.DEFAULT_SETTINGS_KEY);
    }
 
    @Override
