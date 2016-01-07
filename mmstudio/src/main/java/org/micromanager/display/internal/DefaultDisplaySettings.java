@@ -47,6 +47,22 @@ import org.micromanager.PropertyMap;
 public class DefaultDisplaySettings implements DisplaySettings {
 
    /**
+    * This string is deprecated; it was used in prior versions of MM2.0 before
+    * we converted the value from int to double.
+    */
+   private static final String ANIMATION_FPS_INT = "animationFPS";
+   private static final String ANIMATION_FPS_DOUBLE = "animationFPS_Double";
+   private static final String CHANNEL_COLOR_MODE = "channelColorMode";
+   private static final String HISTOGRAM_UPDATE_RATE = "histogramUpdateRate";
+   private static final String MAGNIFICATION = "magnification";
+   private static final String SHOULD_SYNC_CHANNELS = "shouldSyncChannels";
+   private static final String SHOULD_AUTOSTRETCH = "shouldAutostretch";
+   private static final String EXTREMA_PERCENTAGE = "extremaPercentage";
+   private static final String BIT_DEPTH_INDICES = "bitDepthIndices";
+   private static final String SHOULD_USE_LOG_SCALE = "shouldUseLogScale";
+   private static final String USER_DATA = "userData";
+
+   /**
     * Retrieve the display settings that have been saved in the preferences.
     * Note: we explicitly don't cache these settings, to ensure that
     * displays don't end up with copies of the same settings.
@@ -69,33 +85,33 @@ public class DefaultDisplaySettings implements DisplaySettings {
       // name change.
       builder.animationFPS(profile.getDouble(
                DefaultDisplaySettings.class,
-               key + "animationFPS_Double", 10.0));
+               key + ANIMATION_FPS_DOUBLE, 10.0));
       builder.channelColorMode(
             DisplaySettings.ColorMode.fromInt(profile.getInt(
             DefaultDisplaySettings.class,
-               key + "channelColorMode",
+               key + CHANNEL_COLOR_MODE,
                DisplaySettings.ColorMode.COMPOSITE.getIndex())));
       builder.histogramUpdateRate(profile.getDouble(
             DefaultDisplaySettings.class,
-               key + "histogramUpdateRate", 0.0));
+               key + HISTOGRAM_UPDATE_RATE, 0.0));
       builder.magnification(profile.getDouble(
             DefaultDisplaySettings.class,
-               key + "magnification", 1.0));
+               key + MAGNIFICATION, 1.0));
       builder.shouldSyncChannels(profile.getBoolean(
             DefaultDisplaySettings.class,
-               key + "shouldSyncChannels", false));
+               key + SHOULD_SYNC_CHANNELS, false));
       builder.shouldAutostretch(profile.getBoolean(
             DefaultDisplaySettings.class,
-               key + "shouldAutostretch", true));
+               key + SHOULD_AUTOSTRETCH, true));
       builder.extremaPercentage(profile.getDouble(
             DefaultDisplaySettings.class,
-               key + "extremaPercentage", 0.0));
+               key + EXTREMA_PERCENTAGE, 0.0));
       builder.bitDepthIndices(profile.getIntArray(
             DefaultDisplaySettings.class,
-               key + "bitDepthIndices", null));
+               key + BIT_DEPTH_INDICES, null));
       builder.shouldUseLogScale(profile.getBoolean(
             DefaultDisplaySettings.class,
-               key + "shouldUseLogScale", false));
+               key + SHOULD_USE_LOG_SCALE, false));
       // Note we don't store user data in the prefs explicitly; let third-party
       // code manually access the prefs if they want.
       return builder.build();
@@ -111,27 +127,27 @@ public class DefaultDisplaySettings implements DisplaySettings {
       DefaultUserProfile profile = DefaultUserProfile.getInstance();
       key = key + "_";
       profile.setDouble(DefaultDisplaySettings.class,
-            key + "animationFPS_Double",
+            key + ANIMATION_FPS_DOUBLE,
             settings.getAnimationFPS());
       if (settings.getChannelColorMode() != null) {
          profile.setInt(DefaultDisplaySettings.class,
-               key + "channelColorMode",
+               key + CHANNEL_COLOR_MODE,
                settings.getChannelColorMode().getIndex());
       }
       profile.setDouble(DefaultDisplaySettings.class,
-            key + "histogramUpdateRate", settings.getHistogramUpdateRate());
+            key + HISTOGRAM_UPDATE_RATE, settings.getHistogramUpdateRate());
       profile.setDouble(DefaultDisplaySettings.class,
-            key + "magnification", settings.getMagnification());
+            key + MAGNIFICATION, settings.getMagnification());
       profile.setBoolean(DefaultDisplaySettings.class,
-            key + "shouldSyncChannels", settings.getShouldSyncChannels());
+            key + SHOULD_SYNC_CHANNELS, settings.getShouldSyncChannels());
       profile.setBoolean(DefaultDisplaySettings.class,
-            key + "shouldAutostretch", settings.getShouldAutostretch());
+            key + SHOULD_AUTOSTRETCH, settings.getShouldAutostretch());
       profile.setDouble(DefaultDisplaySettings.class,
-            key + "extremaPercentage", settings.getExtremaPercentage());
+            key + EXTREMA_PERCENTAGE, settings.getExtremaPercentage());
       profile.setIntArray(DefaultDisplaySettings.class,
-            key + "bitDepthIndices", settings.getBitDepthIndices());
+            key + BIT_DEPTH_INDICES, settings.getBitDepthIndices());
       profile.setBoolean(DefaultDisplaySettings.class,
-            key + "shouldUseLogScale", settings.getShouldUseLogScale());
+            key + SHOULD_USE_LOG_SCALE, settings.getShouldUseLogScale());
    }
 
    /**
@@ -666,37 +682,37 @@ public class DefaultDisplaySettings implements DisplaySettings {
                   contrastSettings.toArray(new DefaultContrastSettings[] {}));
          }
 
-         if (tags.has("magnification")) {
-            builder.magnification(tags.getDouble("magnification"));
+         if (tags.has(MAGNIFICATION)) {
+            builder.magnification(tags.getDouble(MAGNIFICATION));
          }
-         if (tags.has("animationFPS")) {
-            builder.animationFPS(tags.getDouble("animationFPS"));
+         if (tags.has(ANIMATION_FPS_DOUBLE)) {
+            builder.animationFPS(tags.getDouble(ANIMATION_FPS_DOUBLE));
          }
-         if (tags.has("histogramUpdateRate")) {
-            builder.histogramUpdateRate(tags.getDouble("histogramUpdateRate"));
+         if (tags.has(HISTOGRAM_UPDATE_RATE)) {
+            builder.histogramUpdateRate(tags.getDouble(HISTOGRAM_UPDATE_RATE));
          }
-         if (tags.has("shouldSyncChannels")) {
-            builder.shouldSyncChannels(tags.getBoolean("shouldSyncChannels"));
+         if (tags.has(SHOULD_SYNC_CHANNELS)) {
+            builder.shouldSyncChannels(tags.getBoolean(SHOULD_SYNC_CHANNELS));
          }
-         if (tags.has("shouldAutostretch")) {
-            builder.shouldAutostretch(tags.getBoolean("shouldAutostretch"));
+         if (tags.has(SHOULD_AUTOSTRETCH)) {
+            builder.shouldAutostretch(tags.getBoolean(SHOULD_AUTOSTRETCH));
          }
-         if (tags.has("extremaPercentage")) {
-            builder.extremaPercentage(tags.getDouble("extremaPercentage"));
+         if (tags.has(EXTREMA_PERCENTAGE)) {
+            builder.extremaPercentage(tags.getDouble(EXTREMA_PERCENTAGE));
          }
-         if (tags.has("bitDepthIndices")) {
-            JSONArray indices = tags.getJSONArray("bitDepthIndices");
+         if (tags.has(BIT_DEPTH_INDICES)) {
+            JSONArray indices = tags.getJSONArray(BIT_DEPTH_INDICES);
             Integer[] indicesArr = new Integer[indices.length()];
             for (int i = 0; i < indicesArr.length; ++i) {
                indicesArr[i] = indices.getInt(i);
             }
             builder.bitDepthIndices(indicesArr);
          }
-         if (tags.has("shouldUseLogScale")) {
-            builder.shouldUseLogScale(tags.getBoolean("shouldUseLogScale"));
+         if (tags.has(SHOULD_USE_LOG_SCALE)) {
+            builder.shouldUseLogScale(tags.getBoolean(SHOULD_USE_LOG_SCALE));
          }
-         if (tags.has("userData")) {
-            builder.userData(DefaultPropertyMap.fromJSON(tags.getJSONObject("userData")));
+         if (tags.has(USER_DATA)) {
+            builder.userData(DefaultPropertyMap.fromJSON(tags.getJSONObject(USER_DATA)));
          }
 
          return builder.build();
@@ -817,22 +833,22 @@ public class DefaultDisplaySettings implements DisplaySettings {
             result.put("ChContrastMin", mins);
             result.put("ChContrastMax", maxes);
          }
-         result.put("magnification", magnification_);
-         result.put("animationFPS", animationFPS_);
-         result.put("histogramUpdateRate", histogramUpdateRate_);
-         result.put("shouldSyncChannels", shouldSyncChannels_);
-         result.put("shouldAutostretch", shouldAutostretch_);
-         result.put("extremaPercentage", extremaPercentage_);
+         result.put(MAGNIFICATION, magnification_);
+         result.put(ANIMATION_FPS_DOUBLE, animationFPS_);
+         result.put(HISTOGRAM_UPDATE_RATE, histogramUpdateRate_);
+         result.put(SHOULD_SYNC_CHANNELS, shouldSyncChannels_);
+         result.put(SHOULD_AUTOSTRETCH, shouldAutostretch_);
+         result.put(EXTREMA_PERCENTAGE, extremaPercentage_);
          if (bitDepthIndices_ != null && bitDepthIndices_.length > 0) {
             JSONArray indices = new JSONArray();
             for (int i = 0; i < bitDepthIndices_.length; ++i) {
                indices.put(bitDepthIndices_[i]);
             }
-            result.put("bitDepthIndices", indices);
+            result.put(BIT_DEPTH_INDICES, indices);
          }
-         result.put("shouldUseLogScale", shouldUseLogScale_);
+         result.put(SHOULD_USE_LOG_SCALE, shouldUseLogScale_);
          if (userData_ != null) {
-            result.put("userData", ((DefaultPropertyMap) userData_).toJSON());
+            result.put(USER_DATA, ((DefaultPropertyMap) userData_).toJSON());
          }
          return result;
       }
