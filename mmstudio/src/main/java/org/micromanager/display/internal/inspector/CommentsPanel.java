@@ -264,7 +264,7 @@ public class CommentsPanel extends InspectorPanel {
       if (updateTimer_ != null) {
          updateTimer_.cancel();
       }
-      updateTimer_ = new Timer("Metadata update");
+      updateTimer_ = new Timer("Comments update");
       updateTimer_.schedule(task, 125);
    }
 
