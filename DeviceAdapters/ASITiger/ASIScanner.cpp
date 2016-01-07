@@ -803,7 +803,7 @@ int CScanner::SetIlluminationState(bool on)
       else if (!on && illuminationState_) // was on, turning off
       {
          illuminationState_ = false;
-         command << addressChar_ << "TTL Y=" << FirmwareVersionAtLeast(3.12) ? 21 : 11;
+         command << addressChar_ << "TTL Y=" << (FirmwareVersionAtLeast(3.12) ? 21 : 11);
          RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
       }
       // if was off, turning off do nothing
