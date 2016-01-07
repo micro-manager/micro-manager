@@ -407,5 +407,6 @@ public class HyperstackControls extends JPanel {
    public void onDisplayDestroyed(DisplayDestroyedEvent event) {
       display_.unregisterForEvents(this);
       store_.unregisterForEvents(this);
+      blankingTimer_.cancel();
    }
 }
