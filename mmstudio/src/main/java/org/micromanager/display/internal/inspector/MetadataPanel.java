@@ -29,8 +29,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.UUID;
 
 import javax.swing.JCheckBox;
@@ -80,6 +78,7 @@ public class MetadataPanel extends InspectorPanel {
    private DataViewer display_;
    private Thread updateThread_;
    private LinkedBlockingQueue<Image> updateQueue_;
+   private boolean shouldShowUpdates_ = true;
    private UUID lastImageUUID_ = null;
 
    /** This class makes smaller JTables, since the default size is absurd. */
@@ -220,7 +219,7 @@ public class MetadataPanel extends InspectorPanel {
     * rapid changes.
     */
    private void updateMetadata() {
-      while (!Thread.interrupted()) {
+      while (shouldShowUpdates_) {
          Image image = null;
          while (!updateQueue_.isEmpty()) {
             image = updateQueue_.poll();
@@ -231,7 +230,9 @@ public class MetadataPanel extends InspectorPanel {
                Thread.sleep(100);
             }
             catch (InterruptedException e) {
-               return;
+               if (!shouldShowUpdates_) {
+                  return;
+               }
             }
             continue;
          }
@@ -354,6 +355,7 @@ public class MetadataPanel extends InspectorPanel {
       if (display_ != null) {
          display_.unregisterForEvents(this);
       }
+      shouldShowUpdates_ = false;
       updateThread_.interrupt(); // It will then close.
    }
 }
