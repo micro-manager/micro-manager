@@ -875,6 +875,14 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             new GlobalDisplayDestroyedEvent(this));
       DefaultEventManager.getInstance().unregisterForEvents(this);
       store_.unregisterForEvents(this);
+      synchronized(guiLock_) {
+         if (!haveCreatedGUI_) {
+            // This window is closed before it is even created.
+            dispose();
+            haveClosed_ = true;
+            return;
+         }
+      }
       // Closing the window immediately invalidates the ImagePlus
       // ImageProcessor that we use for drawing, even if our CanvasUpdateQueue
       // is in the middle of performing a drawing operation. This synchronized
