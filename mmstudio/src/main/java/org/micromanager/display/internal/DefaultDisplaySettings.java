@@ -151,6 +151,25 @@ public class DefaultDisplaySettings implements DisplaySettings {
    }
 
    /**
+    * Return the current color mode setting in the profile, or the provided
+    * default value. This is specifically available to allow the Snap/Live
+    * Manager to default to grayscale instead of the normal default (returned
+    * from getStandardSettings) of composite mode.
+    * @param key Profile key to use, as per [get|set]StandardSettings.
+    */
+   public static ColorMode getStandardColorMode(String key,
+         DisplaySettings.ColorMode defaultVal) {
+      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      key = key + "_";
+      Integer mode = profile.getInt(DefaultDisplaySettings.class,
+            CHANNEL_COLOR_MODE, null);
+      if (mode == null) {
+         return defaultVal;
+      }
+      return DisplaySettings.ColorMode.fromInt(mode);
+   }
+
+   /**
     * Convert the provided array of Colors to an array of Integers, in RGB
     * order.
     */

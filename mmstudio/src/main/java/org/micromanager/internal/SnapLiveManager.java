@@ -36,6 +36,8 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayDestroyedEvent;
+import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.PixelsSetEvent;
 import org.micromanager.display.RequestToCloseEvent;
 
@@ -359,7 +361,20 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
                   return createControls(display);
                }
          });
+         // Store our display settings separately in the profile from other
+         // displays.
          ((DefaultDisplayWindow) display_).setDisplaySettingsKey(TITLE);
+         // HACK: coerce single-camera setups to grayscale (instead of the
+         // default of composite mode) if there is no existing profile settings
+         // for the user and we do not have a multicamera setup.
+         DisplaySettings.ColorMode mode = DefaultDisplaySettings.getStandardColorMode(TITLE, null);
+         if (mode == null && core_.getNumberOfCameraChannels() == 1) {
+            DisplaySettings settings = display_.getDisplaySettings();
+            settings = settings.copy()
+               .channelColorMode(DisplaySettings.ColorMode.GRAYSCALE)
+               .build();
+            display_.setDisplaySettings(settings);
+         }
          display_.registerForEvents(this);
          display_.setCustomTitle(TITLE);
       }
