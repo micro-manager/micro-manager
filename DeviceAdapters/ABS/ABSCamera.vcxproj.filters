@@ -42,6 +42,9 @@
     <ClCompile Include="absdelayloaddll.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="ImageHeader.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ABSCamera.h">
@@ -69,6 +72,9 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="ABSDelayLoadDll.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="ImageHeader.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>

@@ -167,6 +167,7 @@
     <ClCompile Include="AutoTimeMeasure.cpp" />
     <ClCompile Include="CcmFileStd.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="ImageHeader.cpp" />
     <ClCompile Include="MemoryIniFile.cpp" />
     <ClCompile Include="TimeSpanPC.cpp" />
   </ItemGroup>
@@ -177,6 +178,7 @@
     <ClInclude Include="AbsImgBuffer.h" />
     <ClInclude Include="AutoTimeMeasure.h" />
     <ClInclude Include="CcmFileStd.h" />
+    <ClInclude Include="ImageHeader.h" />
     <ClInclude Include="MemoryIniFile.h" />
     <ClInclude Include="include\stringtools.h" />
     <ClInclude Include="TimeSpanPC.h" />
