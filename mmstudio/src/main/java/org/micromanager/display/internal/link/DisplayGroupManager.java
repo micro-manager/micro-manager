@@ -140,7 +140,7 @@ public class DisplayGroupManager {
    // Keeps track of which displays have which SettingsLinkers, so we can
    // propagate changes to linkers, and clean up when displays go away. This
    // also serves as a convenient container of all displays.
-   private HashMap<DataViewer, LinkersGroup> viewerToLinkers_;
+   private final HashMap<DataViewer, LinkersGroup> viewerToLinkers_;
    // Tracks which screen (a.k.a. monitor) a given window is on.
    private HashMap<GraphicsConfiguration, DisplayWindow> screenToDisplay_;
    private HashMap<Datastore, ArrayList<DataViewer>> storeToDisplays_;
@@ -181,17 +181,15 @@ public class DisplayGroupManager {
     * A display was destroyed; stop tracking it, and remove siblings from
     * linkers.
     */
-   public void onDisplayDestroyed(DataViewer source,
+   public void onDisplayDestroyed(DataViewer display,
          DisplayDestroyedEvent event) {
-      removeDisplay(source);
-   }
-
-   public void removeDisplay(DataViewer display) {
       try {
-         for (SettingsLinker linker : viewerToLinkers_.get(display).getLinkers()) {
-            linker.destroy();
+         synchronized(viewerToLinkers_) {
+            for (SettingsLinker linker : viewerToLinkers_.get(display).getLinkers()) {
+               linker.destroy();
+            }
+            viewerToLinkers_.remove(display);
          }
-         viewerToLinkers_.remove(display);
          for (WindowListener listener : listeners_) {
             if (listener.getDisplay() == display) {
                listeners_.remove(listener);
@@ -240,8 +238,10 @@ public class DisplayGroupManager {
       // have already destroyed, if displays are being rapidly created and
       // destroyed. So we should check to make certain that the display is
       // still available.
-      if (viewerToLinkers_.containsKey(source)) {
-         viewerToLinkers_.get(source).getLinkers().add(newLinker);
+      synchronized(viewerToLinkers_) {
+         if (viewerToLinkers_.containsKey(source)) {
+            viewerToLinkers_.get(source).getLinkers().add(newLinker);
+         }
       }
    }
 
@@ -253,8 +253,10 @@ public class DisplayGroupManager {
       SettingsLinker linker = event.getLinker();
       // We might not have the display around any more if this was called
       // as a side-effect of the display being removed.
-      if (viewerToLinkers_.containsKey(source)) {
-         viewerToLinkers_.get(source).getLinkers().remove(linker);
+      synchronized(viewerToLinkers_) {
+         if (viewerToLinkers_.containsKey(source)) {
+            viewerToLinkers_.get(source).getLinkers().remove(linker);
+         }
       }
       linker.destroy();
    }
