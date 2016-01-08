@@ -121,7 +121,28 @@ public class DisplayGroupManager {
       }
 
       public HashSet<SettingsLinker> getLinkers() {
-         return genericLinkers_;
+         HashSet<SettingsLinker> result = new HashSet<SettingsLinker>();
+         result.addAll(genericLinkers_);
+         result.addAll(channelToContrastLinker_.values());
+         return result;
+      }
+
+      public void addLinker(SettingsLinker linker) {
+         genericLinkers_.add(linker);
+      }
+
+      public void removeLinker(SettingsLinker linker) {
+         if (genericLinkers_.contains(linker)) {
+            genericLinkers_.remove(linker);
+         }
+         if (linker instanceof ContrastLinker) {
+            for (Integer channel : channelToContrastLinker_.keySet()) {
+               if (channelToContrastLinker_.get(channel) == linker) {
+                  channelToContrastLinker_.remove(channel);
+                  break;
+               }
+            }
+         }
       }
 
       /**
@@ -240,7 +261,7 @@ public class DisplayGroupManager {
       // still available.
       synchronized(viewerToLinkers_) {
          if (viewerToLinkers_.containsKey(source)) {
-            viewerToLinkers_.get(source).getLinkers().add(newLinker);
+            viewerToLinkers_.get(source).addLinker(newLinker);
          }
       }
    }
@@ -255,7 +276,7 @@ public class DisplayGroupManager {
       // as a side-effect of the display being removed.
       synchronized(viewerToLinkers_) {
          if (viewerToLinkers_.containsKey(source)) {
-            viewerToLinkers_.get(source).getLinkers().remove(linker);
+            viewerToLinkers_.get(source).removeLinker(linker);
          }
       }
       linker.destroy();
