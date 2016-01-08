@@ -236,7 +236,13 @@ public class DisplayGroupManager {
     * A new LinkButton has been created; we need to start tracking its linker.
     */
    public void addNewLinker(SettingsLinker newLinker, DataViewer source) {
-      viewerToLinkers_.get(source).getLinkers().add(newLinker);
+      // We can potentially have this method be called for a display that we
+      // have already destroyed, if displays are being rapidly created and
+      // destroyed. So we should check to make certain that the display is
+      // still available.
+      if (viewerToLinkers_.containsKey(source)) {
+         viewerToLinkers_.get(source).getLinkers().add(newLinker);
+      }
    }
 
    /**
