@@ -204,6 +204,10 @@ public class DisplayGroupManager {
     */
    public void onDisplayDestroyed(DataViewer display,
          DisplayDestroyedEvent event) {
+      removeDisplay(display);
+   }
+
+   public void removeDisplay(DataViewer display) {
       try {
          synchronized(viewerToLinkers_) {
             for (SettingsLinker linker : viewerToLinkers_.get(display).getLinkers()) {
