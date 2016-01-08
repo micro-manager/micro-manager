@@ -115,6 +115,7 @@ import javax.swing.BorderFactory;
 import org.micromanager.asidispim.Data.AcquisitionSettings;
 import org.micromanager.asidispim.Data.ChannelSpec;
 import org.micromanager.asidispim.Data.Devices.Sides;
+import org.micromanager.asidispim.Data.Joystick.Directions;
 import org.micromanager.asidispim.Utils.ControllerUtils;
 import org.micromanager.asidispim.Utils.AutofocusUtils;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
@@ -1997,6 +1998,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // Format is: x_y_z, set to 1 if we should rotate around this axis.
             gui_.setAcquisitionProperty(acqName, "MVRotationAxis", "0_1_0");
             gui_.setAcquisitionProperty(acqName, "MVRotations", viewString);
+            // save XY and SPIM head position in metadata
+            // update positions first at expense of two extra serial transactions
+            positions_.getUpdatedPosition(Devices.Keys.XYSTAGE, Directions.X);  // / will update cache for Y too
+            gui_.setAcquisitionProperty(acqName, "Position_X",
+                  positions_.getPositionString(Devices.Keys.XYSTAGE, Directions.X));
+            gui_.setAcquisitionProperty(acqName, "Position_Y",
+                  positions_.getPositionString(Devices.Keys.XYSTAGE, Directions.Y));
+            positions_.getUpdatedPosition(Devices.Keys.UPPERZDRIVE);
+            gui_.setAcquisitionProperty(acqName, "Position_SPIM_Head",
+                  positions_.getPositionString(Devices.Keys.UPPERZDRIVE));
                       
             // get circular buffer ready
             // do once here but not per-trigger; need to ensure ROI changes registered
