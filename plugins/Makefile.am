@@ -1,5 +1,5 @@
 if BUILD_MAGELLAN
-   MAGELLAN_JAR = Beta/Magellan.jar
+   MAGELLAN_JAR = Acquisition_Tools/Magellan.jar
 endif
 
 # Note: 'nobase_' preserves the directory hierarchy upon installation. See

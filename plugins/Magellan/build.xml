@@ -1,5 +1,5 @@
 <project name="Magellan" default="jar">
-	<property name="plugin.path" value="Beta"/>
+	<property name="plugin.path" value="Acquisition_Tools"/>
 
 	<!-- A bit of a hack to skip building Magellan when non-free
 	     dependencies are not available -->
