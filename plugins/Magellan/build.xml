@@ -1,0 +1,5 @@
+<project name="Magellan" default="jar">
+	<property name="plugin.path" value="Beta"/>
+
+	<import file="../javapluginbuild.xml"/>
+</project>
