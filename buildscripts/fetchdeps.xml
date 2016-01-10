@@ -41,8 +41,14 @@
 		<property name="ivy.lib.dir" location="${mm.ivy.lib.dir}"/>
 
 		<ivy:configure file="${mm.basedir}/buildscripts/ivysettings.xml"/>
+		<!-- Don't halt on failure, since we have a few optional dependencies. -->
+		<ivy:resolve haltonfailure="false"/>
 		<ivy:retrieve
 			pattern="${ivy.lib.dir}/[conf]/[artifact]-[revision].[ext]"
 			sync="true"/>
+
+		<!-- Ensure directory exists even if no optional JARs are retrieved.
+			 Needed to prevent downstream errors. -->
+		<mkdir dir="${mm.ivy.lib.dir}/optional"/>
 	</target>
 </project>

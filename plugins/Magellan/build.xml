@@ -1,5 +1,18 @@
 <project name="Magellan" default="jar">
 	<property name="plugin.path" value="Beta"/>
 
+	<!-- A bit of a hack to skip building Magellan when non-free
+	     dependencies are not available -->
+	<include file="../../buildscripts/buildprops.xml"/>
+	<condition property="mm.java.disable.build">
+		<not>
+			<and>
+				<available file="${mm.ivy.lib.dir}/optional/DT1.2-.jar"/>
+				<available file="${mm.ivy.lib.dir}/optional/ij3d-bin-.jar"/>
+				<available file="${mm.ivy.lib.dir}/optional/ima3d_-.jar"/>
+			</and>
+		</not>
+	</condition>
+
 	<import file="../javapluginbuild.xml"/>
 </project>

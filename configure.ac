@@ -303,6 +303,22 @@ fi
 AC_SUBST([imagejjar])
 
 
+# Make the building of Magellan conditional on availability of non-free JARs.
+# (This is a bit of a hack, in part since it needs to run before fetchdeps, but
+# it will have to suffice for now.)
+build_magellan=yes
+AC_CHECK_FILE([$srcdir/../3rdparty/classext/DT1.2.jar],
+              [],
+              [build_magellan=no])
+AC_CHECK_FILE([$srcdir/../3rdparty/classext/ij3d-bin.jar],
+              [],
+              [build_magellan=no])
+AC_CHECK_FILE([$srcdir/../3rdparty/classext/ima3d_.jar],
+              [],
+              [build_magellan=no])
+AM_CONDITIONAL([BUILD_MAGELLAN],
+               [test "x$build_magellan" = xyes])
+
 # Java dependencies.
 AC_ARG_ENABLE([install-dependency-jars],
    [AS_HELP_STRING([--disable-install-dependency-jars],

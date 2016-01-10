@@ -4,10 +4,11 @@
 	<info organisation="org.micromanager" module="micromanager"/>
 
 	<configurations
-		defaultconfmapping="build->default;test->default;compile->default;imagej->default;runtime->default">
+		defaultconfmapping="build->default;test->default;compile->default;optional->default;imagej->default;runtime->default">
 		<conf name="build" visibility="private" description="needed for building only"/>
 		<conf name="test" visibility="private" description="needed for testing only"/>
 		<conf name="compile" description="compile-time dependencies, except for ij.jar"/>
+		<conf name="optional" description="optional compile-time dependencies"/>
 		<conf name="imagej" description="ij.jar only"/>
 		<conf name="runtime" description="runtime-only dependencies"/>
 	</configurations>
@@ -53,9 +54,9 @@
 		<dependency org="org.scijava" name="scijava-common" rev="2.46.0"/>
 
 		<!-- Magellan dependencies; not open source; not in Maven -->
-		<dependency org="" name="ij3d-bin" rev=""/>
-		<dependency org="" name="ima3d_" rev=""/>
-		<dependency org="" name="DT1.2" rev=""/>
+		<dependency conf="optional" org="" name="ij3d-bin" rev=""/>
+		<dependency conf="optional" org="" name="ima3d_" rev=""/>
+		<dependency conf="optional" org="" name="DT1.2" rev=""/>
 
 		<!-- Run-time-only dependencies -->
 		<dependency conf="runtime" org="org.swinglabs" name="swingx" rev="0.9.5"/>

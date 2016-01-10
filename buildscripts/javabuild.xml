@@ -1,4 +1,5 @@
 <project name="mm.javabuild">
+
 	<!-- This file is intended to be used via 'import' in each Java
 	     project's buildfile -->
 
@@ -41,6 +42,7 @@
 	<!-- Global default classpath -->
 	<path id="mm.compile.classpath">
 		<fileset dir="${mm.ivy.lib.dir}/compile" includes="*.jar"/>
+		<fileset dir="${mm.ivy.lib.dir}/optional" includes="*.jar"/>
 		<fileset dir="${mm.ivy.lib.dir}/imagej" includes="*.jar"/>
 	</path>
 
@@ -80,10 +82,12 @@
 
 	<!-- Targets -->
 
-	<target name="prerequisites" description="Build Jars for prerequisites"/>
+	<target name="prerequisites" description="Build Jars for prerequisites"
+		unless="mm.java.disable.build"/>
 
 	<target name="check-deps" depends="prerequisites"
-		description="Clean if dependencies have changed">
+		description="Clean if dependencies have changed"
+		unless="mm.java.disable.build">
 		<taskdef name="classesUpToDate" classname="org.micromanager.build.ClassesUpToDate"
 			classpath="${mm.java.lib.AntExtensions}"/>
 		<classesUpToDate dir="${intdir}" property="linked.jars.changed">
@@ -96,28 +100,32 @@
 		<antcall target="clean"/>
 	</target>
 
-	<target name="prepare" depends="prerequisites,check-deps"/>
+	<target name="prepare" depends="prerequisites,check-deps"
+		unless="mm.java.disable.build"/>
 
 	<!-- When overriding, the 'compile' target should always depend on 'prepare' -->
-	<target name="compile" depends="prepare" description="Compile Java sources">
+	<target name="compile" depends="prepare" description="Compile Java sources"
+		unless="mm.java.disable.build">
 		<mkdir dir="${intdir}"/>
 		<mm-javac srcdir="${srcdir}" destdir="${intdir}">
 			<classpath refid="project.classpath"/>
 		</mm-javac>
 	</target>
 
-	<target name="copy-files" description="Copy resource files">
+	<target name="copy-files" description="Copy resource files"
+		unless="mm.java.disable.build">
 		<copy todir="${intdir}">
 			<fileset dir="${srcdir}" includes="**/*.form"/>
 		</copy>
 	</target>
 
-	<target name="jar" depends="compile,copy-files" description="Build Jar file">
+	<target name="jar" depends="compile,copy-files" description="Build Jar file"
+		unless="mm.java.disable.build">
 		<mkdir dir="${outdir}"/>
 		<mm-jar basedir="${intdir}" destfile="${jarfile}"/>
 	</target>
 
-	<target name="test-only" if="has.tests">
+	<target name="test-only" if="has.tests" unless="mm.java.disable.build">
 		<mkdir dir="${test.intdir}"/>
 		<mm-javac srcdir="${testdir}" destdir="${test.intdir}">
 			<classpath refid="project.test.classpath"/>
@@ -138,17 +146,21 @@
 		</junit>
 	</target>
 
-	<target name="test" depends="jar,test-only" description="Run unit tests"/>
+	<target name="test" depends="jar,test-only" description="Run unit tests"
+		unless="mm.java.disable.build"/>
 
-	<target name="install-only" description="Like 'install', but skip the build">
+	<target name="install-only" description="Like 'install', but skip the build"
+		unless="mm.java.disable.build">
 		<fail unless="installdir"/>
 		<mkdir dir="${installdir}"/>
 		<copy todir="${installdir}" file="${jarfile}"/>
 	</target>
 
-	<target name="install" depends="jar,install-only" description="Install Jar file"/>
+	<target name="install" depends="jar,install-only" description="Install Jar file"
+		unless="mm.java.disable.build"/>
 
-	<target name="clean" description="Delete build product and intermediates">
+	<target name="clean" description="Delete build product and intermediates"
+		unless="mm.java.disable.build">
 		<delete file="${jarfile}"/>
 		<delete dir="${intdir}"/>
 		<delete dir="${scratchdir}"/>
