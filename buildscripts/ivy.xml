@@ -13,9 +13,12 @@
 	</configurations>
 
 	<dependencies defaultconf="compile">
-        <dependency conf="build->master" org="ant-contrib" name="ant-contrib" rev="1.0b3"/>
+		<!-- Build/test dependencies -->
+		<dependency conf="build->master" org="ant-contrib" name="ant-contrib" rev="1.0b3"/>
 		<dependency conf="test" org="junit" name="junit" rev="4.11"/>
-        <dependency conf="test" org="org.msgpack" name="msgpack" rev="0.6.12"/>
+		<dependency conf="test" org="org.msgpack" name="msgpack" rev="0.6.12"/>
+
+		<!-- Ordinary (compile-time) dependencies -->
 
 		<dependency org="com.fifesoft" name="rsyntaxtextarea" rev="2.5.2"/>
 		<dependency org="com.google.code.gson" name="gson" rev="2.2.4"/>
@@ -39,8 +42,22 @@
 
 		<!-- Not in Maven yet (resolved in 3rdpartypublic/classext) -->
 		<dependency org="" name="clooj" rev="0.2.7"/>
-		<dependency org="" name="TSFProto" rev="SVN"/><!-- dependency on protobuf-java will not be resolved -->
+		<dependency org="" name="TSFProto" rev="SVN"/><!-- dependency on protobuf-java will not be resolved automatically -->
 
+		<!-- Magellan dependencies -->
+		<dependency org="sc.fiji" name="spim_data" rev="2.0.1"/>
+		<dependency org="net.imglib2" name="imglib2" rev="2.4.0"/>
+		<dependency org="net.imglib2" name="imglib2-realtransform" rev="2.0.0-beta-29"/>
+		<dependency org="org.jdom" name="jdom" rev="2.0.2"/>
+		<dependency org="sc.fiji" name="bigdataviewer-core" rev="2.1.0"/>
+		<dependency org="org.scijava" name="scijava-common" rev="2.46.0"/>
+
+		<!-- Magellan dependencies; not open source; not in Maven -->
+		<dependency org="" name="ij3d-bin" rev=""/>
+		<dependency org="" name="ima3d_" rev=""/>
+		<dependency org="" name="DT1.2" rev=""/>
+
+		<!-- Run-time-only dependencies -->
 		<dependency conf="runtime" org="org.swinglabs" name="swingx" rev="0.9.5"/>
 	</dependencies>
 </ivy-module>
