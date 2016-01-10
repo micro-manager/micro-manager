@@ -97,7 +97,7 @@ public abstract class LegacyMagellanImgLoader< T extends NativeType< T >, V exte
 
    private < T extends NativeType<T>> CachedCellImg< T, A> prepareCachedImage(final ViewId view, final int resLevelIndex, final LoadingStrategy loadingStrategy) {
       final long[] dimensions = imageDimensions_[resLevelIndex];
-      //the only “shape” of block that your CacheArrayLoader needs to be able to load (plus they will be aligned at multiples of tileWidth, tileHeight, 
+      //the only "shape" of block that your CacheArrayLoader needs to be able to load (plus they will be aligned at multiples of tileWidth, tileHeight,
       final int[] cellDimensions = new int[]{tiffStorage_.getTileWidth(), tiffStorage_.getTileHeight(), 1}; 
 
       final int priority = tiffStorage_.getNumResLevels() - 1 - resLevelIndex;

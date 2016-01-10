@@ -58,7 +58,7 @@ public class MultiResMPTiffVolatileShortArrayLoader implements CacheArrayLoader<
    public VolatileShortArray loadArray(final int timepoint, final int setup, final int level, int[] dimensions, long[] min) throws InterruptedException {
       //From Tobias: To clarify that a bit better: 
       //You do not need to be able to load arbitrary blocks here. Just the ones that you will use from the images returned by your ImgLoader.
-      //So this is the only “shape” of block that your CacheArrayLoader needs to be able to load (plus they will be aligned at multiples of tileWidth, tileHeight, 1).
+      //So this is the only "shape" of block that your CacheArrayLoader needs to be able to load (plus they will be aligned at multiples of tileWidth, tileHeight, 1).
       //c, z, f, ds, x, y, w, h
       MagellanTaggedImage img = tiffStorage_.getImageForDisplay(setup, (int)min[2], timepoint, level, min[0], min[1], dimensions[0], dimensions[1]);
       return new VolatileShortArray((short[])img.pix, true);
