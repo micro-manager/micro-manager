@@ -63,6 +63,8 @@ import org.micromanager.internal.utils.ReportingUtils;
  * TODO: add method to generate an ImagePlus from the image.
  */
 public class DefaultImage implements Image {
+   private static final String COORDS_TAG = "completeCoords";
+
    private DefaultMetadata metadata_;
    private Coords coords_;
    private Buffer rawPixels_;
@@ -409,12 +411,36 @@ public class DefaultImage implements Image {
             fullCoords.put(axis, coords_.getIndex(axis));
          }
          // TODO: currently nothing actually consumes this information.
-         tags.put("completeCoords", fullCoords);
+         tags.put(COORDS_TAG, fullCoords);
       }
       catch (JSONException e) {
          ReportingUtils.logError("Unable to set image indices: " + e);
       }
       return new TaggedImage(getRawPixels(), tags);
+   }
+
+   /**
+    * Given some tags as produced by legacyToTaggedImage(), return the
+    * Coords of the corresponding image (by parsing the COORDS_TAG
+    * structure).
+    */
+   public static Coords getCoordsFromTags(JSONObject tags) {
+      if (!tags.has(COORDS_TAG)) {
+         // No coordinates available.
+         return null;
+      }
+      try {
+         Coords.CoordsBuilder builder = new DefaultCoords.Builder();
+         JSONObject coords = tags.getJSONObject(COORDS_TAG);
+         for (String key : MDUtils.getKeys(coords)) {
+            builder.index(key, coords.getInt(key));
+         }
+         return builder.build();
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Unable to retrieve coordinates from tags");
+         return null;
+      }
    }
 
    public int getImageJPixelType() {
