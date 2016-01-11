@@ -24,18 +24,20 @@ import com.google.common.eventbus.Subscribe;
 
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
+import javax.swing.SwingUtilities;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -56,18 +58,30 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class CommentsPanel extends InspectorPanel {
    private JTextArea imageCommentsTextArea_;
    private JTextArea summaryCommentsTextArea_;
+   private boolean shouldIgnoreUpdates_ = false;
    private JLabel errorLabel_;
    private DataViewer display_;
    private Datastore store_;
-   private Timer updateTimer_;
+   private Thread updateThread_;
+   private boolean shouldShowUpdates_ = true;
+   private Image curImage_ = null;
+   private LinkedBlockingQueue<Image> updateQueue_;
    private final HashMap<Image, Timer> imageToSaveTimer_;
 
-   /** Creates new form CommentsPanel */
    public CommentsPanel() {
+      updateQueue_ = new LinkedBlockingQueue<Image>();
       imageToSaveTimer_ = new HashMap<Image, Timer>();
       initialize();
       addTextChangeListeners();
-      addFocusListeners();
+
+      // Start a new thread to handle display updates.
+      updateThread_ = new Thread(new Runnable() {
+         @Override
+         public void run() {
+            updateComments();
+         }
+      });
+      updateThread_.start();
    }
 
    private void initialize() {
@@ -125,6 +139,10 @@ public class CommentsPanel extends InspectorPanel {
          // No images to record for.
          return;
       }
+      if (shouldIgnoreUpdates_) {
+         // We're in the middle of manually updating the text fields.
+         return;
+      }
       Image curImage = display_.getDisplayedImages().get(0);
       // Determine if anything has actually changed.
       String imageText = imageCommentsTextArea_.getText();
@@ -146,6 +164,11 @@ public class CommentsPanel extends InspectorPanel {
          summaryText = null;
       }
 
+      if (imageText == null && summaryText == null) {
+         // Nothing has changed.
+         return;
+      }
+
       synchronized(imageToSaveTimer_) {
          if (imageToSaveTimer_.containsKey(curImage)) {
             // Cancel the current timer. Since the task is synchronized around
@@ -156,6 +179,7 @@ public class CommentsPanel extends InspectorPanel {
          timer.schedule(makeSaveTask(curImage, imageText, summaryText, store_),
                5000);
          imageToSaveTimer_.put(curImage, timer);
+         errorLabel_.setText("Saving...");
       }
    }
 
@@ -192,8 +216,10 @@ public class CommentsPanel extends InspectorPanel {
                   // Prevent redundant errors by forcing the text back to
                   // what it should be.
                   Image curImage = display_.getDisplayedImages().get(0);
+                  shouldIgnoreUpdates_ = true;
                   imageCommentsTextArea_.setText(curImage.getMetadata().getComments());
                   summaryCommentsTextArea_.setText(store.getSummaryMetadata().getComments());
+                  shouldIgnoreUpdates_ = false;
                }
                imageToSaveTimer_.remove(image);
             }
@@ -201,22 +227,6 @@ public class CommentsPanel extends InspectorPanel {
       };
    }
 
-   /**
-    * TODO: why do we care about losing focus?
-    */
-   private void addFocusListeners() {
-      FocusListener listener = new FocusListener() {
-         @Override
-         public void focusGained(FocusEvent event) { }
-         @Override
-         public void focusLost(FocusEvent event) {
-            recordCommentsChanges();
-         }
-      };
-      summaryCommentsTextArea_.addFocusListener(listener);
-      imageCommentsTextArea_.addFocusListener(listener);
-   }
-   
    private void addTextChangeListeners() {
       DocumentListener listener = new DocumentListener() {
          @Override
@@ -239,42 +249,62 @@ public class CommentsPanel extends InspectorPanel {
    }
 
    /**
-    * We postpone comments display updates slightly in case the image display
-    * is changing rapidly, to ensure that we don't end up with a race condition
-    * that causes us to display the wrong metadata.
+    * This method runs in a new thread and continually polls updateQueue_ for
+    * images whose comments need to be updated. We use this method to ensure
+    * that, if the image display is changing rapidly, we don't overload the
+    * GUI.
+    */
+   private void updateComments() {
+      while (shouldShowUpdates_) {
+         Image image = null;
+         while (!updateQueue_.isEmpty()) {
+            image = updateQueue_.poll();
+         }
+         if (image == null) {
+            // No updates available; just wait for a bit.
+            try {
+               Thread.sleep(100);
+            }
+            catch (InterruptedException e) {
+               if (!shouldShowUpdates_) {
+                  return;
+               }
+            }
+            continue;
+         }
+         imageChangedUpdate(image);
+      }
+   }
+
+   /**
+    * Get the comments from the image and update our text fields.
     */
    public synchronized void imageChangedUpdate(final Image image) {
       // Do nothing if the new image's comments match our current contents,
       // to avoid reseting the cursor position.
-      String newComments = image.getMetadata().getComments();
-      if (newComments != null &&
-            newComments.contentEquals(imageCommentsTextArea_.getText())) {
+      if (image == curImage_) {
          return;
       }
-      TimerTask task = new TimerTask() {
+      curImage_ = image;
+      final String newComments = image.getMetadata().getComments();
+      // Run this in the EDT.
+      SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
-            Metadata data = image.getMetadata();
-            // Update image comment
-            imageCommentsTextArea_.setText(data.getComments());
+            shouldIgnoreUpdates_ = true;
+            imageCommentsTextArea_.setText(newComments);
+            shouldIgnoreUpdates_ = false;
          }
-      };
-      // Cancel all pending tasks and then schedule our task for execution
-      // 125ms in the future.
-      if (updateTimer_ != null) {
-         updateTimer_.cancel();
-      }
-      updateTimer_ = new Timer("Comments update");
-      updateTimer_.schedule(task, 125);
+      });
    }
 
    @Subscribe
    public void onPixelsSet(PixelsSetEvent event) {
       try {
-         imageChangedUpdate(event.getImage());
+         updateQueue_.put(event.getImage());
       }
-      catch (Exception e) {
-         ReportingUtils.logError(e, "Error on pixels set");
+      catch (InterruptedException e) {
+         ReportingUtils.logError(e, "Interrupted when enqueueing image for comments update");
       }
    }
 
@@ -295,10 +325,16 @@ public class CommentsPanel extends InspectorPanel {
          return;
       }
       store_ = display_.getDatastore();
-      imageCommentsTextArea_.setEditable(!store_.getIsFrozen());
-      summaryCommentsTextArea_.setEditable(!store_.getIsFrozen());
+      boolean isEditable = !store_.getIsFrozen();
+      imageCommentsTextArea_.setEditable(isEditable);
+      imageCommentsTextArea_.setEnabled(isEditable);
+      summaryCommentsTextArea_.setEditable(isEditable);
+      summaryCommentsTextArea_.setEnabled(isEditable);
+
+      shouldIgnoreUpdates_ = true;
       summaryCommentsTextArea_.setText(
             store_.getSummaryMetadata().getComments());
+      shouldIgnoreUpdates_ = false;
       display_.registerForEvents(this);
       List<Image> images = display_.getDisplayedImages();
       if (images.size() > 0) {
@@ -321,5 +357,7 @@ public class CommentsPanel extends InspectorPanel {
             // Must've already unregistered; ignore it.
          }
       }
+      shouldShowUpdates_ = false;
+      updateThread_.interrupt(); // It will then close.
    }
 }
