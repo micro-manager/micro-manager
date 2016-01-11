@@ -1486,7 +1486,7 @@ public class GUI extends javax.swing.JFrame {
         fixedDistanceZPanel_.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
 
         zStackModeButtonGroup_.add(fixedDistanceFromSurfaceRadioButton_);
-        fixedDistanceFromSurfaceRadioButton_.setLabel("Within distance from surface");
+        fixedDistanceFromSurfaceRadioButton_.setText("Within distance from surface");
         fixedDistanceFromSurfaceRadioButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 fixedDistanceFromSurfaceRadioButton_ActionPerformed(evt);
