@@ -396,6 +396,11 @@ public class DefaultDatastore implements Datastore {
          for (Coords coords : tmp) {
             duplicate.putImage(getImage(coords));
          }
+         // We set the save path and freeze *both* datastores; our own because
+         // we should not be modified post-saving, and the other because it
+         // may trigger side-effects that "finish" the process of saving.
+         setSavePath(path);
+         freeze();
          duplicate.setSavePath(path);
          duplicate.freeze();
          return true;
