@@ -91,6 +91,8 @@ public class MultipageTiffReader {
    public static boolean fixIndexMapWithoutPrompt_ = false;
 
    private HashMap<Coords, Long> coordsToOffset_;
+   private HashMap<Coords, String> coordsToComment_;
+   private String summaryComment_;
 
    /**
     * This constructor is used for a file that is currently being written.
@@ -140,18 +142,17 @@ public class MultipageTiffReader {
             ReportingUtils.showError("Fixing of dataset unsuccessful for file: " + file_.getName());
          }
       }
-      try {
-         if (summaryMetadata_ != null) {
-            if (summaryMetadata_.getComments() == null) {
-               // Copy out the primary comment into the summary metadata.
-               summaryMetadata_ = summaryMetadata_.copy().comments(readComments()).build();
-            }
+
+      readComments();
+      if (summaryMetadata_ != null) {
+         if (summaryMetadata_.getComments() == null) {
+            // Copy out the primary comment into the summary metadata.
+            summaryMetadata_ = summaryMetadata_.copy()
+               .comments(summaryComment_).build();
          }
-         else {
-            ReportingUtils.logError("No SummaryMetadata available to copy comments into.");
-         }
-      } catch (Exception ex) {
-         ReportingUtils.logError("Problem with JSON Representation of DisplayAndComments");
+      }
+      else {
+         ReportingUtils.logError("No SummaryMetadata available to copy comments into.");
       }
 
       if (summaryMetadata_ != null) {
@@ -254,6 +255,8 @@ public class MultipageTiffReader {
          // fields from the summary JSON, or else we won't be able to
          // construct a DefaultImage from it.
          augmentWithSummaryMetadata(tagged.tags);
+         // Load any comment that might be stored in the comment block.
+         augmentWithComment(tagged.tags);
          // Manually create new Metadata for the image we're about to
          // create. Just passing the bare TaggedImage in would make
          // Micro-Manager assume that the image was created by the scope
@@ -362,19 +365,83 @@ public class MultipageTiffReader {
       }
    }
 
-   private String readComments()  {
+   /**
+    * Read the comments block from the end of the file. This should be a
+    * JSONObject containing two potential types of comment: a summary comment
+    * and per-image comments. They're stored under the "Summary" key for the
+    * summary comment, and under coordinate strings for the per-image comments.
+    */
+   private void readComments()  {
+      ByteBuffer buffer = null;
       try {
          long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.COMMENTS_OFFSET_HEADER, 24);
          ByteBuffer header = readIntoBuffer(offset, 8);
          if (header.getInt(0) != MultipageTiffWriter.COMMENTS_HEADER) {
             ReportingUtils.logError("Can't find image comments in file: " + file_.getName());
-            return null;
+            return;
          }
-         ByteBuffer buffer = readIntoBuffer(offset + 8, header.getInt(4));
-         return getString(buffer);
-      } catch (Exception ex) {
-         ReportingUtils.logError("Can't find image comments in file: " + file_.getName());
-            return null;
+         buffer = readIntoBuffer(offset + 8, header.getInt(4));
+         JSONObject comments = new JSONObject(getString(buffer));
+         coordsToComment_ = new HashMap<Coords, String>();
+         Coords.CoordsBuilder builder = new DefaultCoords.Builder();
+         for (String key : MDUtils.getKeys(comments)) {
+            if (key.equals("Summary")) {
+               summaryComment_ = comments.getString(key);
+               continue;
+            }
+            // Generate a Coords object from the key string. The string is
+            // formatted as channel_z_time_position.
+            int[] indices = MDUtils.getIndices(key);
+            builder.channel(indices[0]).z(indices[1]).time(indices[2])
+               .stagePosition(indices[3]);
+            coordsToComment_.put(builder.build(), comments.getString(key));
+         }
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Unable to generate JSON from buffer " + getString(buffer));
+      }
+      catch (IOException e) {
+         ReportingUtils.logError(e, "Error reading comments block");
+      }
+   }
+
+   private void augmentWithComment(JSONObject tags) {
+      // Figure out where the image is. Two possible mechanisms: the 1.4-style
+      // system where four specific coordinates are stored flat in the tags,
+      // and the 2.0+-style where they're stored in a dedicated structure.
+      // TODO: centralize this logic (maybe in DefaultCoords?).
+      Coords.CoordsBuilder builder = new DefaultCoords.Builder();
+      try {
+         if (MDUtils.hasFrameIndex(tags)) {
+            builder.time(MDUtils.getFrameIndex(tags));
+         }
+         if (MDUtils.hasSliceIndex(tags)) {
+            builder.z(MDUtils.getSliceIndex(tags));
+         }
+         if (MDUtils.hasChannelIndex(tags)) {
+            builder.channel(MDUtils.getChannelIndex(tags));
+         }
+         if (MDUtils.hasPositionIndex(tags)) {
+            builder.stagePosition(MDUtils.getPositionIndex(tags));
+         }
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Error getting image coordinates from tags");
+      }
+      Coords imageCoords = builder.build();
+      Coords properCoords = DefaultImage.getCoordsFromTags(tags);
+      if (properCoords != null) {
+         imageCoords = properCoords;
+      }
+      // Now that we have the image coords, get the comment (if any) for those
+      // coords.
+      if (coordsToComment_.containsKey(imageCoords)) {
+         try {
+            MDUtils.setComments(tags, coordsToComment_.get(imageCoords));
+         }
+         catch (JSONException e) {
+            ReportingUtils.logError(e, "Error inserting comment into tags for image at " + imageCoords);
+         }
       }
    }
 
