@@ -886,6 +886,9 @@ public class DefaultDisplaySettings implements DisplaySettings {
       Field[] fields = getClass().getDeclaredFields();
       String result = "<DisplaySettings " + hashCode() + ": ";
       for (Field field : fields) {
+         if (java.lang.reflect.Modifier.isStatic(field.getModifiers())) {
+            continue;
+         }
          try {
             Object val = field.get(this);
             if (val == null) {
