@@ -51,7 +51,7 @@ def java_build_report(section_sink, stage_target, architecture):
     for task in mm_javac_tasks:
         java_warn_messages = task.findall("./message[@priority='warn']")
         java_warn_lines = (e.findtext(".") for e in java_warn_messages)
-        n_errors, n_warnings, has_note = 0, 0, False
+        n_errors, n_warnings = 0, 0
         filtered_lines = list()
         for line in java_warn_lines:
             m = re.match(r"(\d+) errors", line)
@@ -72,11 +72,6 @@ def java_build_report(section_sink, stage_target, architecture):
                 n_warnings = 1
                 filtered_lines.append(line)
                 continue
-            m = re.match(r"Note: ", line)
-            if m:
-                has_note = True
-                filtered_lines.append(line)
-                continue
             filtered_lines.append(line)
 
         text = "\n".join(filtered_lines).strip()
@@ -87,11 +82,9 @@ def java_build_report(section_sink, stage_target, architecture):
             elif n_warnings:
                 is_error = False
                 title = "Java warnings (during {} build)".format(architecture)
-            elif has_note:
-                is_error = False
-                title = "Java notes (during {} build)".format(architecture)
             else:
-                assert False, "Unexpected javac message format"
+                is_error = False
+                title = "Java messages (during {} build)".format(architecture)
             section_sink.send((is_error, title, False, text))
 
 
