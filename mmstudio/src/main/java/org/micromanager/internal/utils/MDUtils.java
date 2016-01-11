@@ -742,10 +742,10 @@ public class MDUtils {
    }
 
    public static String getComments(JSONObject map) throws JSONException {
-      return map.getString("Comments");
+      return map.getString("Comment");
    }
    public static void setComments(JSONObject map, String comments) throws JSONException {
-      map.put("Comments", comments);
+      map.put("Comment", comments);
    }
 
    /**
@@ -794,7 +794,7 @@ public class MDUtils {
       IGNORED_KEYS.add("Channel");
       IGNORED_KEYS.add("channelName");
       IGNORED_KEYS.add("ChannelIndex");
-      IGNORED_KEYS.add("Comments");
+      IGNORED_KEYS.add("Comment");
       IGNORED_KEYS.add("ElapsedTime-ms");
       IGNORED_KEYS.add("emissionLabel");
       IGNORED_KEYS.add("excitationLabel");
