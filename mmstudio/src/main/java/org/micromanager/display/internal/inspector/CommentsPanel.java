@@ -42,6 +42,7 @@ import javax.swing.SwingUtilities;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.data.Datastore;
+import org.micromanager.data.DatastoreFrozenEvent;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
@@ -308,11 +309,22 @@ public class CommentsPanel extends InspectorPanel {
       }
    }
 
+   /**
+    * Disable our text fields when the datastore becomes frozen.
+    */
+   @Subscribe
+   public void onDatastoreFrozen(DatastoreFrozenEvent event) {
+      imageCommentsTextArea_.setEnabled(false);
+      summaryCommentsTextArea_.setEnabled(false);
+      errorLabel_.setText("This dataset is frozen; comments cannot be edited.");
+   }
+
    @Override
    public synchronized void setDataViewer(DataViewer display) {
       if (display_ != null) {
          try {
             display_.unregisterForEvents(this);
+            store_.unregisterForEvents(this);
          }
          catch (IllegalArgumentException e) {
             // Must've already unregistered; ignore it.
@@ -330,12 +342,14 @@ public class CommentsPanel extends InspectorPanel {
       imageCommentsTextArea_.setEnabled(isEditable);
       summaryCommentsTextArea_.setEditable(isEditable);
       summaryCommentsTextArea_.setEnabled(isEditable);
+      errorLabel_.setText(isEditable? "" : "This dataset is frozen; comments cannot be edited.");
 
       shouldIgnoreUpdates_ = true;
       summaryCommentsTextArea_.setText(
             store_.getSummaryMetadata().getComments());
       shouldIgnoreUpdates_ = false;
       display_.registerForEvents(this);
+      store_.registerForEvents(this);
       List<Image> images = display_.getDisplayedImages();
       if (images.size() > 0) {
          imageChangedUpdate(images.get(0));
