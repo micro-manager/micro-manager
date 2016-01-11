@@ -335,8 +335,8 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       double overlapPercent = FixedAreaAcquisitionSettings.getStoredTileOverlapPercentage() / 100;
       int overlapX = (int) (JavaLayerImageConstructor.getInstance().getImageWidth() * overlapPercent);
       int overlapY = (int) (JavaLayerImageConstructor.getInstance().getImageHeight() * overlapPercent);
-      int tileWidth = (int) JavaLayerImageConstructor.getInstance().getImageWidth() - overlapX;
-      int tileHeight = (int) JavaLayerImageConstructor.getInstance().getImageHeight() - overlapY;
+      int tileWidth = JavaLayerImageConstructor.getInstance().getImageWidth() - overlapX;
+      int tileHeight = JavaLayerImageConstructor.getInstance().getImageHeight() - overlapY;
       while (interp.getPixelsPerInterpPoint() >= Math.max(tileWidth,tileHeight) / NUM_XY_TEST_POINTS ) {
          synchronized (interpolationLock_) {
             interpolationLock_.wait();
@@ -445,8 +445,8 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    protected abstract void interpolateSurface(LinkedList<Point3d> points) throws InterruptedException;
 
    private void fitXYPositionsToConvexHull(double overlap) throws InterruptedException {
-      int fullTileWidth = (int) JavaLayerImageConstructor.getInstance().getImageWidth();
-      int fullTileHeight = (int) JavaLayerImageConstructor.getInstance().getImageHeight();
+      int fullTileWidth = JavaLayerImageConstructor.getInstance().getImageWidth();
+      int fullTileHeight = JavaLayerImageConstructor.getInstance().getImageHeight();
       int overlapX = (int) (JavaLayerImageConstructor.getInstance().getImageWidth() * overlap / 100);
       int overlapY = (int) (JavaLayerImageConstructor.getInstance().getImageHeight() * overlap / 100);
       int tileWidthMinusOverlap = fullTileWidth - overlapX;

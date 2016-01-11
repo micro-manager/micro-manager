@@ -140,8 +140,8 @@ public class FixedAreaAcquisition extends Acquisition {
          } else {
             //no space mode, use current stage positon
             positions_ = new ArrayList<XYStagePosition>();
-            int fullTileWidth = (int) JavaLayerImageConstructor.getInstance().getImageWidth();
-            int fullTileHeight = (int) JavaLayerImageConstructor.getInstance().getImageHeight();
+            int fullTileWidth = JavaLayerImageConstructor.getInstance().getImageWidth();
+            int fullTileHeight = JavaLayerImageConstructor.getInstance().getImageHeight();
             int tileWidthMinusOverlap = fullTileWidth - this.getOverlapX();
             int tileHeightMinusOverlap = fullTileHeight - this.getOverlapY();
             Point2D.Double currentStagePos = Magellan.getCore().getXYStagePosition(xyStage_);  

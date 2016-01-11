@@ -158,7 +158,7 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
          channels_.get(row).use_ = (Boolean) value;
          //same for all other channels of the same camera_
          if (numCamChannels > 1) {
-            for (int i = (int) (row - row % numCamChannels); i < (row /numCamChannels + 1) * numCamChannels;i++ ) {
+            for (int i = (row - row % numCamChannels); i < (row /numCamChannels + 1) * numCamChannels;i++ ) {
                channels_.get(i).use_ = (Boolean) value;
             }
             fireTableDataChanged();
@@ -169,7 +169,7 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
          channels_.get(row).exposure_ = Double.parseDouble((String) value);
          //same for all other channels of the same camera_
          if (numCamChannels > 1) {
-            for (int i = (int) (row - row % numCamChannels); i < (row / numCamChannels + 1) * numCamChannels; i++) {
+            for (int i = (row - row % numCamChannels); i < (row / numCamChannels + 1) * numCamChannels; i++) {
                channels_.get(i).exposure_ = Double.parseDouble((String) value);
             }
             fireTableDataChanged();

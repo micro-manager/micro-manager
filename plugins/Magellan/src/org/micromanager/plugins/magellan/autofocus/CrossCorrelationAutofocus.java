@@ -140,8 +140,8 @@ public class CrossCorrelationAutofocus {
             //do these calulations with BigIntegers to prevent overflow and Nan values
             BigInteger tileWidth = new BigInteger(storage.getTileWidth() + "");
             BigInteger tileHeight = new BigInteger(storage.getTileHeight() + "");
-            BigInteger numCols = new BigInteger(((FixedAreaAcquisition) acq_).getNumColumns() + "");
-            BigInteger numRows = new BigInteger(((FixedAreaAcquisition) acq_).getNumRows() + "");
+            BigInteger numCols = new BigInteger(acq_.getNumColumns() + "");
+            BigInteger numRows = new BigInteger(acq_.getNumRows() + "");
             //figure out how much downsampling needed to run autofocus in a reasonable amount of time
             //factor of two is for z padding
             BigDecimal numPix2D = new BigDecimal(tileWidth.multiply(numCols).multiply(tileHeight).multiply(numRows));

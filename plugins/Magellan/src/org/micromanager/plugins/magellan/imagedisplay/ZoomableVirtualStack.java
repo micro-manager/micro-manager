@@ -207,8 +207,8 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
          //do actual zooming
          resolutionIndex_ += numLevels;
          dsFactor = (int) Math.pow(2, resolutionIndex_);
-         xView_ = (int) (fullResX / dsFactor - mouseLocation.x);
-         yView_ = (int) (fullResY / dsFactor - mouseLocation.y);
+         xView_ = (fullResX / dsFactor - mouseLocation.x);
+         yView_ = (fullResY / dsFactor - mouseLocation.y);
          //make sure view doesn't go outside image bounds
          if (boundedImage_) {
             xView_ = (int) Math.max(xMin_ / Math.pow(2, resolutionIndex_), Math.min(xView_, xMax_ / Math.pow(2, resolutionIndex_) - displayImageWidth_));

@@ -286,7 +286,7 @@ public class CovariantPairing {
     */
    CovariantValue getValue(int covIndex, int valueIndex) {
       CovariantValue indValue = independentValues_.get(valueIndex);
-      return (CovariantValue) (covIndex == 0 ? indValue : valueMap_.get(indValue));
+      return covIndex == 0 ? indValue : valueMap_.get(indValue);
    }
   
    @Override

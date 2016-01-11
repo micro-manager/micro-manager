@@ -488,8 +488,8 @@ public class GUI extends javax.swing.JFrame {
                 settings.zEnd_ = (Double) zEndSpinner_.getValue();
             } else if (volumeBetweenSurfacesRadioButton_.isSelected()) {
                 settings.spaceMode_ = FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK;
-                settings.topSurface_ = (SurfaceInterpolator) surfaceManager_.getSurface(topSurfaceCombo_.getSelectedIndex());
-                settings.bottomSurface_ = (SurfaceInterpolator) surfaceManager_.getSurface(bottomSurfaceCombo_.getSelectedIndex());
+                settings.topSurface_ = surfaceManager_.getSurface(topSurfaceCombo_.getSelectedIndex());
+                settings.bottomSurface_ = surfaceManager_.getSurface(bottomSurfaceCombo_.getSelectedIndex());
                 settings.distanceAboveTopSurface_ = (Double) umAboveTopSurfaceSpinner_.getValue();
                 settings.distanceBelowBottomSurface_ = (Double) umBelowBottomSurfaceSpinner_.getValue();
                 settings.useTopOrBottomFootprint_ = volumeBetweenFootprintCombo_.getSelectedItem().equals("Top surface")
@@ -498,7 +498,7 @@ public class GUI extends javax.swing.JFrame {
                 settings.spaceMode_ = FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK;
                 settings.distanceBelowFixedSurface_ = ((Number) distanceBelowFixedSurfaceSpinner_.getValue()).doubleValue();
                 settings.distanceAboveFixedSurface_ = ((Number) distanceAboveFixedSurfaceSpinner_.getValue()).doubleValue();
-                settings.fixedSurface_ = (SurfaceInterpolator) surfaceManager_.getSurface(fixedDistanceSurfaceComboBox_.getSelectedIndex());
+                settings.fixedSurface_ = surfaceManager_.getSurface(fixedDistanceSurfaceComboBox_.getSelectedIndex());
             }
         } else {
             settings.spaceMode_ = FixedAreaAcquisitionSettings.NO_SPACE;

@@ -294,7 +294,7 @@ public class MultiResMultipageTiffStorage {
          }
       }
       Arrays.sort(pixVals);
-      backgroundPix_.put(channel, (int) pixVals[(int) (pixVals.length * BACKGROUND_PIXEL_PERCENTILE)]);
+      backgroundPix_.put(channel, pixVals[(int) (pixVals.length * BACKGROUND_PIXEL_PERCENTILE)]);
    }
 
    /**
