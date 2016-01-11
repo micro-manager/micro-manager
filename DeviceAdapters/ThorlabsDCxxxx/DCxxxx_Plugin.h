@@ -31,7 +31,6 @@
 #include <map>
 
 #include "DC2xxx.h"
-#include "DC2200.h"
 #include "DC3100.h"
 #include "DC4100.h"
 

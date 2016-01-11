@@ -42,7 +42,7 @@
 ---------------------------------------------------------------------------*/
 MODULE_API void InitializeModuleData()
 {
-	RegisterDevice(DC2200::DeviceName(), MM::ShutterDevice, "DC2200 High Power LED Driver");
+	//RegisterDevice(DC2200::DeviceName(), MM::ShutterDevice, "DC2200 High Power LED Driver");
 	RegisterDevice(DC2xxx::DeviceName(), MM::ShutterDevice, "DC2010/DC2100 High Power LED Driver");
 	RegisterDevice(DC3100::DeviceName(), MM::ShutterDevice, "DC3100 FLIM LED Driver");
 	RegisterDevice(DC4100::DeviceName(), MM::ShutterDevice, "DC4100 Four channel LED Driver");
@@ -60,10 +60,10 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 	{
 		return new DC2xxx;
 	}
-	else if(strcmp(deviceName, DC2200::DeviceName()) == 0)
-	{
-		return new DC2200;
-	}
+	//else if(strcmp(deviceName, DC2200::DeviceName()) == 0)
+	//{
+	//	return new DC2200;
+	//}
 	else if(strcmp(deviceName, DC3100::DeviceName()) == 0)
 	{
 		return new DC3100;
