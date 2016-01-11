@@ -396,8 +396,8 @@ public class DefaultDatastore implements Datastore {
          for (Coords coords : tmp) {
             duplicate.putImage(getImage(coords));
          }
-         setSavePath(path);
-         freeze();
+         duplicate.setSavePath(path);
+         duplicate.freeze();
          return true;
       }
       catch (java.io.IOException e) {
