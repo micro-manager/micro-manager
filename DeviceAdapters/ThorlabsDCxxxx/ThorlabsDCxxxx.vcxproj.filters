@@ -18,12 +18,42 @@
     <ClCompile Include="DCxxxx_Plugin.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DC3100.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DynError.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DC4100.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DC2XXX.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DC2200.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DCxxxx_Plugin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DC3100.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DynError.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DC4100.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DC2XXX.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DC2200.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
