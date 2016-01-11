@@ -877,20 +877,6 @@ int MultiCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
-CameraSnapThread::~CameraSnapThread()
-{
-   wait();
-}
-
-int CameraSnapThread::svc()
-{
-   return camera_->SnapImage();
-}
-
-void CameraSnapThread::Start()
-{
-   activate();
-}
 /**********************************************************************
  * DAShutter implementation
  */

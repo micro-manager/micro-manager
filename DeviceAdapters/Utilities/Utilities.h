@@ -95,16 +95,22 @@ private:
 class CameraSnapThread : public MMDeviceThreadBase
 {
    public:
-      CameraSnapThread(){};
-      ~CameraSnapThread();
+      CameraSnapThread() :
+         camera_(0),
+         started_(false)
+      {}
 
-      void SetCamera(MM::Camera* camera) {camera_ = camera;};
-      int svc();
-      void Start();
-      CameraSnapThread & operator = (const CameraSnapThread & ) {return *this;};
+      ~CameraSnapThread() { if (started_) wait(); }
+
+      void SetCamera(MM::Camera* camera) { camera_ = camera; }
+
+      int svc() { camera_->SnapImage(); return 0; }
+
+      void Start() { activate(); started_ = true; }
 
    private:
       MM::Camera* camera_;
+      bool started_;
 };
 
 /*
