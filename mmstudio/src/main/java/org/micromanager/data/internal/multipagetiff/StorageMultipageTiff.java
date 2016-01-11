@@ -394,13 +394,14 @@ public final class StorageMultipageTiff implements Storage {
          for (FileSet p : positionToFileSet_.values()) {
             p.finishAbortedAcqIfNeeded();
          }
-     
+
          try {
-            //fill in missing tiffdata tags for OME meteadata--needed for acquisitions in which 
-            //z and t arent the same for every channel
+            //fill in missing tiffdata tags for OME meteadata--needed for
+            //acquisitions in which z and t arent the same for every channel
             for (int p = 0; p <= lastAcquiredPosition_; p++) {
                //set sizeT in case of aborted acq
-               int currentFrame =  positionToFileSet_.get(splitByXYPosition_ ? p : 0).getCurrentFrame();
+               int currentFrame = positionToFileSet_.get(
+                     splitByXYPosition_ ? p : 0).getCurrentFrame();
                omeMetadata_.setNumFrames(p, currentFrame + 1);
                omeMetadata_.fillInMissingTiffDatas(lastAcquiredFrame(), p);
             }
@@ -425,19 +426,19 @@ public final class StorageMultipageTiff implements Storage {
                break;
             }
          }
-         
+
          if (uuid == null) {
-            //in the rare case that no files have extra space to fit the full
-            //block of OME XML, generate a file specifically for holding it
-            //that all other files can point to simplest way to do this is to
-            //make a .ome text file 
+             //in the rare case that no files have extra space to fit the full
+             //block of OME XML, generate a file specifically for holding it
+             //that all other files can point to simplest way to do this is to
+             //make a .ome text file
              filename = "OMEXMLMetadata.ome";
              uuid = "urn:uuid:" + UUID.randomUUID().toString();
              PrintWriter pw = new PrintWriter(directory_ + File.separator + filename);
              pw.print(fullOMEXMLMetadata);
              pw.close();
          }
-         
+
          String partialOME = OMEMetadata.getOMEStringPointerToMasterFile(filename, uuid);
 
          for (FileSet p : positionToFileSet_.values()) {
@@ -447,11 +448,11 @@ public final class StorageMultipageTiff implements Storage {
             p.finished(partialOME);
             count++;
             progressBar.setProgress(count);
-         }            
+         }
          //shut down writing executor--pause here until all tasks have finished
          //writing so that no attempt is made to close the dataset (and thus
          //the FileChannel) before everything has finished writing mkae sure
-         //all images have finished writing if they are on seperate thread 
+         //all images have finished writing if they are on seperate thread
          if (writingExecutor_ != null && !writingExecutor_.isShutdown()) {
             writingExecutor_.shutdown();
             try {
@@ -474,19 +475,6 @@ public final class StorageMultipageTiff implements Storage {
          progressBar.setVisible(false);
       }
       finished_ = true;
-   }
-
-   /**
-    * Disposes of the tagged images in the imagestorage
-    */
-   public void close() {
-      for (MultipageTiffReader r : new HashSet<MultipageTiffReader>(coordsToReader_.values())) {
-         try {
-            r.close();
-         } catch (IOException ex) {
-            ReportingUtils.logError(ex);
-         }
-      }
    }
 
    public boolean isFinished() {

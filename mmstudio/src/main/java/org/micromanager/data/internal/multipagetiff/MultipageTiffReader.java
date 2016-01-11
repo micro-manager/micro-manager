@@ -105,6 +105,7 @@ public class MultipageTiffReader {
          JSONObject summaryJSON, JSONObject firstImageTags) {
       summaryMetadata_ = summaryMD;
       summaryJSON_ = summaryJSON;
+      coordsToComment_ = new HashMap<Coords, String>();
       byteOrder_ = MultipageTiffWriter.BYTE_ORDER;
       getRGBAndByteDepth(firstImageTags);
       writingFinished_ = false;
@@ -123,6 +124,7 @@ public class MultipageTiffReader {
     */
    public MultipageTiffReader(File file) throws IOException {
       file_ = file;
+      coordsToComment_ = new HashMap<Coords, String>();
       try {
          createFileChannel();
       } catch (Exception ex) {
@@ -382,7 +384,6 @@ public class MultipageTiffReader {
          }
          buffer = readIntoBuffer(offset + 8, header.getInt(4));
          JSONObject comments = new JSONObject(getString(buffer));
-         coordsToComment_ = new HashMap<Coords, String>();
          Coords.CoordsBuilder builder = new DefaultCoords.Builder();
          for (String key : MDUtils.getKeys(comments)) {
             if (key.equals("Summary")) {

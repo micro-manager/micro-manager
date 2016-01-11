@@ -911,24 +911,50 @@ public class MultipageTiffWriter {
    }
 
    private void writeComments() throws IOException {
-      //Write 4 byte header, 4 byte number of bytes
-      String comments = masterStorage_.getSummaryMetadata().getComments();
-      if (comments == null) {
-         comments = "";
-      }
-      byte[] commentsBytes = getBytesFromString(comments);
-      ByteBuffer header = allocateByteBuffer(8);
-      header.putInt(0, COMMENTS_HEADER);
-      header.putInt(4, commentsBytes.length);
-      ByteBuffer buffer = ByteBuffer.wrap(commentsBytes);
-      fileChannelWrite(header, filePosition_);
-      fileChannelWrite(buffer, filePosition_ + 8);
+      try {
+         // Get the summary comments, then comments for each image.
+         JSONObject comments = new JSONObject();
+         String summaryComments = masterStorage_.getSummaryMetadata().getComments();
+         if (summaryComments == null) {
+            summaryComments = "";
+         }
+         comments.put("Summary", summaryComments);
+         for (Coords coords : masterStorage_.getUnorderedImageCoords()) {
+            Image image = masterStorage_.getImage(coords);
+            String imageComments = image.getMetadata().getComments();
+            if (imageComments == null) {
+               // No comment for this image.
+               continue;
+            }
+            // HACK: produce a 1.4-style "coordinate string" to use as a key.
+            // See also MDUtils.getLabel(), though we can't use it directly.
+            int channel = coords.getChannel() < 0 ? 0 : coords.getChannel();
+            int z = coords.getZ() < 0 ? 0 : coords.getZ();
+            int time = coords.getTime() < 0 ? 0 : coords.getTime();
+            int stagePos = coords.getStagePosition() < 0 ? 0 : coords.getStagePosition();
+            String key = String.format("%d_%d_%d_%d", channel, z, time, stagePos);
+            comments.put(key, imageComments);
+         }
 
-      ByteBuffer offsetHeader = allocateByteBuffer(8);
-      offsetHeader.putInt(0, COMMENTS_OFFSET_HEADER);
-      offsetHeader.putInt(4, (int) filePosition_);
-      fileChannelWrite(offsetHeader, 24);
-      filePosition_ += 8 + commentsBytes.length;
+         String commentStr = comments.toString();
+         //Write 4 byte header, 4 byte number of bytes
+         byte[] commentsBytes = getBytesFromString(commentStr);
+         ByteBuffer header = allocateByteBuffer(8);
+         header.putInt(0, COMMENTS_HEADER);
+         header.putInt(4, commentsBytes.length);
+         ByteBuffer buffer = ByteBuffer.wrap(commentsBytes);
+         fileChannelWrite(header, filePosition_);
+         fileChannelWrite(buffer, filePosition_ + 8);
+
+         ByteBuffer offsetHeader = allocateByteBuffer(8);
+         offsetHeader.putInt(0, COMMENTS_OFFSET_HEADER);
+         offsetHeader.putInt(4, (int) filePosition_);
+         fileChannelWrite(offsetHeader, 24);
+         filePosition_ += 8 + commentsBytes.length;
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Unable to convert comments to JSON");
+      }
    }
 
    // TODO: is this identical to a similar function in the Reader?
