@@ -32,6 +32,7 @@ import javax.swing.JMenuItem;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import org.micromanager.acquisition.AcquisitionDialogPlugin;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.display.InspectorPlugin;
@@ -93,6 +94,7 @@ public class DefaultPluginManager implements PluginManager {
    // List of the types of plugins we allow.
    private static final ArrayList<Class> VALID_CLASSES = new ArrayList<Class>();
    static {
+      VALID_CLASSES.add(AcquisitionDialogPlugin.class);
       VALID_CLASSES.add(AutofocusPlugin.class);
       VALID_CLASSES.add(ProcessorPlugin.class);
       VALID_CLASSES.add(InspectorPlugin.class);
@@ -346,6 +348,15 @@ public class DefaultPluginManager implements PluginManager {
       HashMap<String, InspectorPlugin> result = new HashMap<String, InspectorPlugin>();
       for (MMPlugin plugin : pluginTypeToPlugins_.get(InspectorPlugin.class)) {
          result.put(plugin.getClass().getName(), (InspectorPlugin) plugin);
+      }
+      return result;
+   }
+
+   @Override
+   public HashMap<String, AcquisitionDialogPlugin> getAcquisitionDialogPlugins() {
+      HashMap<String, AcquisitionDialogPlugin> result = new HashMap<String, AcquisitionDialogPlugin>();
+      for (MMPlugin plugin : pluginTypeToPlugins_.get(AcquisitionDialogPlugin.class)) {
+         result.put(plugin.getClass().getName(), (AcquisitionDialogPlugin) plugin);
       }
       return result;
    }

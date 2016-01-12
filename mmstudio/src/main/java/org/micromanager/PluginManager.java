@@ -21,6 +21,7 @@ package org.micromanager;
 
 import java.util.HashMap;
 
+import org.micromanager.acquisition.AcquisitionDialogPlugin;
 import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.display.InspectorPlugin;
 import org.micromanager.display.OverlayPlugin;
@@ -82,4 +83,11 @@ public interface PluginManager {
     * instances. InspectorPlugins create the panels in the Inspector windows.
     */
    public HashMap<String, InspectorPlugin> getInspectorPlugins();
+
+   /**
+    * Return a HashMap that maps plugin class names to AcquisitionDialogPlugin
+    * instances. AcquisitionDialogPlugins provide user interfaces for running
+    * data acquisitions.
+    */
+   public HashMap<String, AcquisitionDialogPlugin> getAcquisitionDialogPlugins();
 }

@@ -43,7 +43,9 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Vector;
 
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
@@ -67,6 +69,7 @@ import mmcorej.StrVector;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.micromanager.acquisition.internal.AcquisitionSelector;
 import org.micromanager.events.ConfigGroupChangedEvent;
 import org.micromanager.events.ChannelExposureEvent;
 import org.micromanager.events.GUIRefreshEvent;
@@ -407,17 +410,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
          });
       subPanel.add(albumButton, BIGBUTTON_SIZE);
 
-      // This icon based on the public-domain icon at
-      // https://openclipart.org/detail/2757/movie-tape
-      JButton mdaButton = createButton("Multi-D Acq.", "film.png",
-         "Open multi-dimensional acquisition window",
-         new Runnable() {
-            @Override
-            public void run() {
-               studio_.openAcqControlDialog();
-            }
-         });
-      subPanel.add(mdaButton, BIGBUTTON_SIZE);
+      subPanel.add(AcquisitionSelector.makeSelector(studio_), BIGBUTTON_SIZE);
 
       JButton refreshButton = createButton("Refresh", "arrow_refresh.png",
          "Refresh all GUI controls directly from the hardware",

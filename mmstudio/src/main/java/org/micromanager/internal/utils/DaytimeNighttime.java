@@ -248,6 +248,14 @@ public class DaytimeNighttime {
    }
 
    /**
+    * Return the current "lighter" background color.
+    * @return light background color
+    */
+   public static Color getLightBackgroundColor() {
+      return lightBackground_.get(getBackgroundMode());
+   }
+
+   /**
     * Return a proper "disabled" background color based on the current mode.
     * @return "disabled" background color based on the current mode
     */
