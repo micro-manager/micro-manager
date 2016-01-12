@@ -199,6 +199,7 @@ public class MagellanEngine {
         } catch (Exception ex) {
            ex.printStackTrace();
            Log.log("Couldn't initialize explore acquisiton", true);
+           Log.log(ex);
             return;
         }
         runAcq(currentExploreAcq_);
