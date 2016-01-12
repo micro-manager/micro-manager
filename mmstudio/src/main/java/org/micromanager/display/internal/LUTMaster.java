@@ -586,9 +586,13 @@ public class LUTMaster {
       }
       plus.updateAndDraw();
 
-      DisplaySettings settings = display.getDisplaySettings().copy()
-         .channelColorMode(DisplaySettings.ColorMode.fromInt(index)).build();
-      display.setDisplaySettings(settings);
+      DisplaySettings settings = display.getDisplaySettings();
+      DisplaySettings.ColorMode curMode = DisplaySettings.ColorMode.fromInt(index);
+      if (settings.getChannelColorMode() != curMode) {
+         // Changed display settings; update them.
+         settings = settings.copy().channelColorMode(curMode).build();
+         display.setDisplaySettings(settings);
+      }
    }
 
    /**
