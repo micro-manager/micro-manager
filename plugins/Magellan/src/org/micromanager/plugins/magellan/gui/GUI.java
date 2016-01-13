@@ -74,6 +74,7 @@ import org.micromanager.plugins.magellan.channels.ColorRenderer;
 import java.awt.FileDialog;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
@@ -134,6 +135,10 @@ public class GUI extends javax.swing.JFrame {
         storeCurrentAcqSettings(); 
         if (GlobalSettings.getInstance().firstMagellanOpening()) {
            new StartupHelpWindow();
+        }
+        //make sure bottom controls get shown initially by simualting a resize
+        for (ComponentListener cl : this.getComponentListeners()) {
+           cl.componentResized(null);
         }
     }
 

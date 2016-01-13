@@ -48,6 +48,7 @@ public class StartupHelpWindow extends javax.swing.JFrame {
       this.setLocationRelativeTo(null);
       this.setVisible(true);
       this.requestFocus();
+      this.toFront();
       updateText();
       linkLabel_.addMouseListener(new MouseAdapter() {
          @Override
