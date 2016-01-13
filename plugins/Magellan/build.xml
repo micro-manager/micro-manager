@@ -15,4 +15,11 @@
 	</condition>
 
 	<import file="../javapluginbuild.xml"/>
+
+	<target name="copy-files" depends="mm.javabuild.copy-files"
+		unless="mm.java.disable.build">
+		<copy todir="${intdir}">
+			<fileset dir="${srcdir}" includes="**/*.png"/>
+		</copy>
+	</target>
 </project>
