@@ -25,6 +25,7 @@ import org.micromanager.plugins.magellan.acq.MultipleAcquisitionTableModel;
 import org.micromanager.plugins.magellan.autofocus.AutofocusChannelComboModel;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -58,7 +59,6 @@ import org.micromanager.plugins.magellan.propsandcovariants.CovariantPairingsTab
 import org.micromanager.plugins.magellan.propsandcovariants.CovariantValueCellEditor;
 import org.micromanager.plugins.magellan.propsandcovariants.CovariantValueCellRenderer;
 import org.micromanager.plugins.magellan.surfacesandregions.RegionManager;
-import org.micromanager.plugins.magellan.surfacesandregions.SurfaceInterpolator;
 import org.micromanager.plugins.magellan.surfacesandregions.SurfaceManager;
 import org.micromanager.plugins.magellan.surfacesandregions.SurfaceRegionComboBoxModel;
 import org.micromanager.plugins.magellan.surfacesandregions.XYFootprint;
@@ -84,15 +84,16 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.prefs.BackingStoreException;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import org.micromanager.plugins.magellan.main.Magellan;
 import org.micromanager.plugins.magellan.misc.GlobalSettings;
 import org.micromanager.plugins.magellan.misc.JavaUtils;
 import org.micromanager.plugins.magellan.misc.Log;
-import org.micromanager.plugins.magellan.propsandcovariants.CurvedSurfaceCalculations;
 
 
 /**
@@ -117,61 +118,61 @@ public class GUI extends javax.swing.JFrame {
     private LinkedList<JSpinner> offsetSpinners_ = new LinkedList<JSpinner>();
     private static GUI singleton_;
 
-    public GUI(Preferences prefs, String version) {
-        singleton_ = this;
-        prefs_ = prefs;
-        settings_ = new GlobalSettings(prefs_, this);
-        new JavaLayerImageConstructor();
-        this.setTitle("Micro-Magellan " + version);
-        eng_ = new MagellanEngine(Magellan.getCore());
-        multiAcqManager_ = new MultipleAcquisitionManager(this, eng_);
-        covariantPairManager_ = new CovariantPairingsManager(this, multiAcqManager_);
-        initComponents();
-        moreInitialization();
-        this.setVisible(true);
-        updatePropertiesTable();
-        addTextFieldListeners();
-        addGlobalSettingsListeners();
-        storeCurrentAcqSettings(); 
-        if (GlobalSettings.getInstance().firstMagellanOpening()) {
-           new StartupHelpWindow();
-        }
-        //make sure bottom controls get shown initially by simualting a resize
-        for (ComponentListener cl : this.getComponentListeners()) {
-           cl.componentResized(null);
-        }
-    }
+   public GUI(Preferences prefs, String version) {
+      singleton_ = this;
+      prefs_ = prefs;
+      settings_ = new GlobalSettings(prefs_, this);
+      new JavaLayerImageConstructor();
+      this.setTitle("Micro-Magellan " + version);
+      eng_ = new MagellanEngine(Magellan.getCore());
+      multiAcqManager_ = new MultipleAcquisitionManager(this, eng_);
+      covariantPairManager_ = new CovariantPairingsManager(this, multiAcqManager_);
+      initComponents();
+      moreInitialization();
+      this.setVisible(true);
+      updatePropertiesTable();
+      addTextFieldListeners();
+      addGlobalSettingsListeners();
+      storeCurrentAcqSettings();
+      if (GlobalSettings.getInstance().firstMagellanOpening()) {
+         new StartupHelpWindow();
+      }
+   }
+   
+   private void fitSplitPaneToWindowSize() {
+      splitPane_.setDividerLocation(splitPane_.getMaximumDividerLocation());
+   }
 
-    public void acquisitionSettingsChanged() {
-        //refresh GUI and store its state in current acq settings
-        refreshAcqTabTitleText();
-        storeCurrentAcqSettings();
-    }
+   public void acquisitionSettingsChanged() {
+      //refresh GUI and store its state in current acq settings
+      refreshAcqTabTitleText();
+      storeCurrentAcqSettings();
+   }
 
-    public FixedAreaAcquisitionSettings getActiveAcquisitionSettings() {
-        return multiAcqManager_.getAcquisitionSettings(multiAcqSelectedIndex_);
-    }
+   public FixedAreaAcquisitionSettings getActiveAcquisitionSettings() {
+      return multiAcqManager_.getAcquisitionSettings(multiAcqSelectedIndex_);
+   }
 
-    public XYFootprint getFootprintObject(int index) {
-        //regions first then surfaces
-        if (index < regionManager_.getNumberOfRegions()) {
-            return regionManager_.getRegion(index);
-        } else {
-            return surfaceManager_.getSurface(index - regionManager_.getNumberOfRegions());
-        }
-    }
+   public XYFootprint getFootprintObject(int index) {
+      //regions first then surfaces
+      if (index < regionManager_.getNumberOfRegions()) {
+         return regionManager_.getRegion(index);
+      } else {
+         return surfaceManager_.getSurface(index - regionManager_.getNumberOfRegions());
+      }
+   }
 
-    public static SurfaceRegionComboBoxModel createSurfaceAndRegionComboBoxModel(boolean surfaces, boolean regions) {
-        SurfaceRegionComboBoxModel model = new SurfaceRegionComboBoxModel(surfaces ? SurfaceManager.getInstance() : null,
-                regions ? RegionManager.getInstance() : null);
-        if (surfaces) {
-            SurfaceManager.getInstance().addToModelList(model);
-        }
-        if (regions) {
-            RegionManager.getInstance().addToModelList(model);
-        }
-        return model;
-    }
+   public static SurfaceRegionComboBoxModel createSurfaceAndRegionComboBoxModel(boolean surfaces, boolean regions) {
+      SurfaceRegionComboBoxModel model = new SurfaceRegionComboBoxModel(surfaces ? SurfaceManager.getInstance() : null,
+              regions ? RegionManager.getInstance() : null);
+      if (surfaces) {
+         SurfaceManager.getInstance().addToModelList(model);
+      }
+      if (regions) {
+         RegionManager.getInstance().addToModelList(model);
+      }
+      return model;
+   }
 
     public void updatePropertiesTable() {
         //needs to be off EDT to update width properly
@@ -299,9 +300,9 @@ public class GUI extends javax.swing.JFrame {
 
         int width = settings_.getIntInPrefs(PREF_SIZE_WIDTH, Integer.MIN_VALUE);
         int height = settings_.getIntInPrefs(PREF_SIZE_HEIGHT, Integer.MIN_VALUE);
-        if (height != Integer.MIN_VALUE && width != Integer.MIN_VALUE) {
+        if (height != Integer.MIN_VALUE && width != Integer.MIN_VALUE ) {
            this.setSize(width, height);
-        }
+        } 
         
         int splitPane = settings_.getIntInPrefs(PREF_SPLIT_PANE,Integer.MIN_VALUE);
         if (splitPane != Integer.MIN_VALUE) {
@@ -314,6 +315,7 @@ public class GUI extends javax.swing.JFrame {
            public void componentResized(ComponentEvent e) {
               settings_.storeIntInPrefs(PREF_SIZE_WIDTH, GUI.this.getWidth());
               settings_.storeIntInPrefs(PREF_SIZE_HEIGHT, GUI.this.getHeight());
+              fitSplitPaneToWindowSize();
           }
        });
        //save splitpane position
@@ -324,6 +326,7 @@ public class GUI extends javax.swing.JFrame {
               settings_.storeIntInPrefs(PREF_SPLIT_PANE, splitPane_.getDividerLocation());
            }
        });
+       fitSplitPaneToWindowSize();
         
         
        if (GlobalSettings.getInstance().isBIDCTwoPhoton()) {
@@ -684,7 +687,15 @@ public class GUI extends javax.swing.JFrame {
       exploreFilterMethodButtonGroup_ = new javax.swing.ButtonGroup();
       jLabel11 = new javax.swing.JLabel();
       splitPane_ = new javax.swing.JSplitPane();
-      splitPaneTopPanel_ = new javax.swing.JTabbedPane();
+      splitPaneTopPanel_ = splitPaneTopPanel_ = new javax.swing.JTabbedPane() {
+
+         @Override
+         public void setSize(Dimension size) {
+            super.setSize(size);
+            System.out.println();
+         }
+
+      };
       controlPanelName_ = new javax.swing.JPanel();
       deviceControlScrollPane_ = new javax.swing.JScrollPane();
       deviceControlTable_ = new javax.swing.JTable();

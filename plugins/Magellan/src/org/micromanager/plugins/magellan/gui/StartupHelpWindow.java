@@ -22,6 +22,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.util.prefs.Preferences;
+import javax.swing.SwingUtilities;
 import org.micromanager.plugins.magellan.main.Magellan;
 import org.micromanager.plugins.magellan.misc.JavaUtils;
 import org.micromanager.MMStudio;
@@ -48,7 +49,6 @@ public class StartupHelpWindow extends javax.swing.JFrame {
       this.setLocationRelativeTo(null);
       this.setVisible(true);
       this.requestFocus();
-      this.toFront();
       updateText();
       linkLabel_.addMouseListener(new MouseAdapter() {
          @Override
@@ -56,6 +56,13 @@ public class StartupHelpWindow extends javax.swing.JFrame {
             if (stepIndex_ == 2) {
                new Thread(GUIUtils.makeURLRunnable("https://micro-manager.org/wiki/Micro-Manager_Configuration_Guide#Pixel_Size_Calibration")).start();
             }
+         }
+      });
+      //Make sure it gets shown in front
+      SwingUtilities.invokeLater(new Runnable() {
+         @Override
+         public void run() {
+            StartupHelpWindow.this.toFront();
          }
       });
    }
