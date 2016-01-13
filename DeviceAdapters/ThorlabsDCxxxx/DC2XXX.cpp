@@ -1,4 +1,4 @@
-#include "DC2xxx.h"
+#include "DC2XXX.h"
 
 const char* g_DeviceDC2xxxName = "Thorlabs DC2010/DC2100";
 
