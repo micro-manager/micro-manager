@@ -17,7 +17,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.acquisition;
+package org.micromanager.acquisition.internal;
 
 import javax.swing.ImageIcon;
 
@@ -43,5 +43,5 @@ public interface AcquisitionDialogPlugin extends MMPlugin {
     * This method will be invoked when the user selects this plugin from the
     * dropdown menu of available AcquisitionDialogPlugins.
     */
-   public void onPluginSelected();
+   public void showAcquisitionDialog();
 }
