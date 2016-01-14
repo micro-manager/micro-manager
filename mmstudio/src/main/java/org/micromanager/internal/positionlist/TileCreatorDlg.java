@@ -867,6 +867,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
 
                // Add 'metadata'
                msp.setGridCoordinates(y, tmpX);
+               msp.setProperty("Source", "TileCreator");
 
                if (overlapUnit_ == OverlapUnitEnum.UM || overlapUnit_ == OverlapUnitEnum.PX) {
                   msp.setProperty("OverlapUm", NumberUtils.doubleToCoreString(overlapXUm));
