@@ -26,13 +26,6 @@ import java.util.prefs.Preferences;
 import org.micromanager.plugins.magellan.misc.JavaUtils;
 import org.micromanager.MMStudio;
 
-class AffineTransformUndefinedException extends Exception {
-
-   public AffineTransformUndefinedException(String message) {
-      super(message);
-   }
-}
-
 public class AffineUtils {
 
    private static TreeMap<String, AffineTransform> affineTransforms_ = new TreeMap<String, AffineTransform>();
@@ -60,7 +53,7 @@ public class AffineUtils {
    }
 
    //Only read from preferences one time, so that an inordinate amount of time isn't spent in native system calls
-   public static AffineTransform getAffineTransform(String pixelSizeConfig, double xCenter, double yCenter) throws AffineTransformUndefinedException {
+   public static AffineTransform getAffineTransform(String pixelSizeConfig, double xCenter, double yCenter) {
       AffineTransform transform = null;
       if (affineTransforms_.containsKey(pixelSizeConfig)) {
          transform = affineTransforms_.get(pixelSizeConfig);
@@ -74,7 +67,7 @@ public class AffineUtils {
          transform = JavaUtils.getObjectFromPrefs(prefs, "affine_transform_" + pixelSizeConfig, (AffineTransform) null);
          //create transform
          if (transform == null) {
-            throw new AffineTransformUndefinedException("No affine transform defined for " + pixelSizeConfig + ".  Use CALIBRATE Button to configure\n\n");
+            return null;
          }
          affineTransforms_.put(pixelSizeConfig, transform);
       }

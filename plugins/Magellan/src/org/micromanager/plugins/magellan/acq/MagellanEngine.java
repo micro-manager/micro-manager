@@ -35,6 +35,8 @@ import org.micromanager.plugins.magellan.bidc.FrameIntegrationMethod;
 import org.micromanager.plugins.magellan.channels.ChannelSetting;
 import org.micromanager.plugins.magellan.coordinates.AffineUtils;
 import java.awt.geom.AffineTransform;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.micromanager.plugins.magellan.json.JSONArray;
 import org.micromanager.plugins.magellan.json.JSONObject;
 import org.micromanager.plugins.magellan.main.Magellan;
@@ -483,13 +485,20 @@ public class MagellanEngine {
       MD.setPixelOverlapY(summary, acq.getOverlapY());
       MD.setExploreAcq(summary, acq instanceof ExploreAcquisition);
       //affine transform
+      String pixelSizeConfig;
       try {
-         AffineTransform at = AffineUtils.getAffineTransform(core.getCurrentPixelSizeConfig(), 0, 0);
-         MD.setAffineTransformString(summary, AffineUtils.transformToString(at));
-      } catch (Exception e) {
-         Log.log("couldn't get pixel size config");
+         pixelSizeConfig = core.getCurrentPixelSizeConfig();
+      } catch (Exception ex) {
+         Log.log("couldn't get affine transform");
          throw new RuntimeException();
       }
+      AffineTransform at = AffineUtils.getAffineTransform(pixelSizeConfig, 0, 0);
+      if (at == null) {
+         Log.log("No affine transform found for pixel size config: "  + pixelSizeConfig +
+                 "\nUse \"Calibrate\" button on main Magellan window to configure\n\n");
+         throw new RuntimeException();
+      }
+      MD.setAffineTransformString(summary, AffineUtils.transformToString(at));      
       JSONArray chNames = new JSONArray();
       JSONArray chColors = new JSONArray();
       String[] names = acq.getChannelNames();

@@ -41,11 +41,12 @@ public class AffineGUI extends javax.swing.JFrame {
       pixelCalLabel_.setText("Pixel size Calibration: " + pixelSizeConfig_);
       pixelSize_ = Magellan.getCore().getPixelSizeUm();
       setVisible(true);
-         AffineTransform transform = new AffineTransform(new double[]{1, 0, 0, 1});
-      try {
-         transform = AffineUtils.getAffineTransform(pixelSizeConfig_, 0, 0);
-      } catch (AffineTransformUndefinedException e) {
+      AffineTransform transform = AffineUtils.getAffineTransform(pixelSizeConfig_, 0, 0);
+      if (transform == null) {
+         //revert to identity matrix         
+         new AffineTransform(new double[]{1, 0, 0, 1});
       }
+         
       try {
          populateValues(transform);
       } catch (NoninvertibleTransformException ex) {
