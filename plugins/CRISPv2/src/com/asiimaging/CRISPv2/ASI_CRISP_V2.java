@@ -3,10 +3,15 @@
 * Micro Manager Plugin for ASIs CRISP Autofocus
 * Based on Nico Stuurman's original ASI CRISP Control plugin.
 * Modified by Vikram Kopuri, ASI
-* Last Updated 9/10/2014
+* Last Updated 1/14/2015
+* Changelog
+* 2.0
+* First Draft
+* 2.01
+* Bugfix , Pause refresh during Log Cal to avoid getting error
 
  */
-package com.asiimaging.CRISPv2;
+package com.asiimaging.CRISPv2;//ASI_CRISP_V2;
 
 import mmcorej.CMMCore;
 import org.micromanager.api.MMPlugin;

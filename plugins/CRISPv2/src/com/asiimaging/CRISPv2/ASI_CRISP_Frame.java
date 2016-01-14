@@ -3,13 +3,15 @@
 * Micro Manager Plugin for ASIs CRISP Autofocus
 * Based on Nico Stuurman's original ASI CRISP Control plugin.
 * Modified by Vikram Kopuri, ASI
-* Last Updated 9/12/2014
+* Last Updated 1/14/2015
 * Changelog
 * 2.0
 * First Draft
+* 2.01
+* Bugfix , Pause refresh during Log Cal to avoid getting error
 
  */
-package com.asiimaging.CRISPv2;
+package com.asiimaging.CRISPv2;//ASI_CRISP_V2;
 
 
 import java.awt.event.ActionEvent;
@@ -36,7 +38,9 @@ public class ASI_CRISP_Frame extends javax.swing.JFrame {
     private final CMMCore core_;
     private Preferences prefs_;
     private String CRISP_;
-    private int timer_poll=200;//200 millisec
+    private int timer_poll=250;//250 millisec
+    private int skip_refresh=20; // # of times to skip Polling
+    private int skip_counter=0;
     private int frameXPos_ = 100;
     private int frameYPos_ = 100;
     javax.swing.Timer myTimer ;//= new javax.swing.Timer(timer_poll, taskPerformer);
@@ -53,7 +57,7 @@ public class ASI_CRISP_Frame extends javax.swing.JFrame {
        prefs_ = Preferences.userNodeForPackage(this.getClass());
        CRISP_ = "";
             
-       jLabel1.setText("ASI CRISP Control v2.0");
+       jLabel1.setText("ASI CRISP Control v2.01");
        mmcorej.StrVector afs =
                core_.getLoadedDevicesOfType(DeviceType.AutoFocusDevice);
        boolean found = false;
@@ -66,6 +70,7 @@ public class ASI_CRISP_Frame extends javax.swing.JFrame {
                   CRISP_ = af;
                   jLabel6.setText(af);
                   myTimer = new javax.swing.Timer(timer_poll, taskPerformer);
+                  
                   //starting timers and such
                   myTimer.start();
                   core_.setProperty(CRISP_, "RefreshPropertyValues", "Yes");
@@ -208,7 +213,15 @@ update_status();
     }
     ActionListener taskPerformer = new ActionListener() {
       public void actionPerformed(ActionEvent evt) {
+          if(skip_counter>0)
+          {
+          skip_counter--;
+          label_crisp_state.setText("Calibrating..."+ Float.toString((timer_poll*skip_counter)/1000) +"s");
+          }
+          else
+          {
           update_status();
+          }
       }
             };
     
@@ -247,6 +260,7 @@ update_status();
         cb_polling = new javax.swing.JCheckBox();
         btn_offset = new javax.swing.JButton();
         btn_save = new javax.swing.JButton();
+        jPanel1 = new javax.swing.JPanel();
         panel_poll_data = new javax.swing.JPanel();
         jLabel8 = new javax.swing.JLabel();
         label_crisp_state = new javax.swing.JLabel();
@@ -380,6 +394,9 @@ update_status();
             }
         });
 
+        panel_poll_data.setMaximumSize(new java.awt.Dimension(148, 96));
+        panel_poll_data.setMinimumSize(new java.awt.Dimension(148, 96));
+
         jLabel8.setText("CRISP State:");
 
         label_crisp_state.setText("State");
@@ -413,7 +430,7 @@ update_status();
                     .addComponent(label_crisp_error)
                     .addComponent(label_snr)
                     .addComponent(label_agc))
-                .addGap(43, 43, 43))
+                .addContainerGap(43, Short.MAX_VALUE))
         );
         panel_poll_dataLayout.setVerticalGroup(
             panel_poll_dataLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -439,16 +456,32 @@ update_status();
 
         jLabel9.getAccessibleContext().setAccessibleName("AGC");
 
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(panel_poll_data, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(panel_poll_data, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap(40, Short.MAX_VALUE)
+                .addContainerGap(64, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(panel_poll_data, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(cb_polling)
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                                 .addComponent(jLabel6)
@@ -461,8 +494,9 @@ update_status();
                                         .addComponent(GainSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addComponent(LEDSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addComponent(NrAvgsSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(NASpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)))))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 26, Short.MAX_VALUE)
+                                        .addComponent(NASpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 52, Short.MAX_VALUE)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -479,7 +513,7 @@ update_status();
                             .addComponent(jLabel5))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(btn_setgain, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(37, Short.MAX_VALUE))
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jLabel1)
@@ -522,14 +556,14 @@ update_status();
                     .addComponent(cb_polling))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(panel_poll_data, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(btn_lock)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btn_unlock)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btn_save)
-                        .addGap(0, 0, Short.MAX_VALUE))))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
 
         pack();
@@ -603,7 +637,16 @@ update_status();
     }//GEN-LAST:event_btn_idleMouseClicked
 
     private void btn_logcalMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_btn_logcalMouseClicked
-       try{
+ 
+        try{
+         //Controller becomes unresponsive during Log_cal , skip polling a few times
+            if(myTimer.isRunning())
+         {
+         
+            skip_counter=skip_refresh;
+            myTimer.restart();
+            label_crisp_state.setText("Calibrating..."+ Float.toString((timer_poll*skip_counter)/1000) +"s");
+         }
         core_.setProperty(CRISP_, "CRISP State", "loG_cal");
        }
        catch (Exception ex) {
@@ -771,6 +814,7 @@ update_status();
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JLabel label_agc;
     private javax.swing.JLabel label_crisp_error;
     private javax.swing.JLabel label_crisp_state;
