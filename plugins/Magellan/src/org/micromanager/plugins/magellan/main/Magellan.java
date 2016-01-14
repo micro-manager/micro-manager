@@ -46,16 +46,6 @@ public class Magellan implements MMPlugin{
    private static GUI gui_;
    
    public Magellan() {
-      //TODO: Remove, for affine debugging
-       Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
-      try { 
-         prefs.clear();
-      } catch (BackingStoreException ex) {
-         Logger.getLogger(Magellan.class.getName()).log(Level.SEVERE, null, ex);
-      }
-      
-      
-      
       if (gui_ == null) {
          prefs_ = Preferences.userNodeForPackage(Magellan.class);
          gui_ = new GUI(prefs_, VERSION);

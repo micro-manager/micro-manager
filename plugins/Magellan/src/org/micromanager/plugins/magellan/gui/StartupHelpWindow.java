@@ -70,7 +70,7 @@ public class StartupHelpWindow extends javax.swing.JFrame {
    private void updateText() {
       if (stepIndex_ == 0 ) {
          textArea_.setText("<html>Welcome to Micro-Magellan!<br><br> This help dialog will help check that your microscope is "
-                 + "configured properly to use Micro-Magellan. Access this dialog at any time by pressing the <b>Help</b> "
+                 + "configured properly to use Micro-Magellan. Access this dialog at any time by pressing the <b>Setup</b> "
                  + "button at the bottm of the Magellan GUI</html>" );         
          statusLabel_.setText("");
          
