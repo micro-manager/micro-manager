@@ -17,10 +17,14 @@
 
 package org.micromanager.acquisition.internal;
 
+import com.bulenkov.iconloader.IconLoader;
+
 import java.awt.Component;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseAdapter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,7 +36,9 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
 
@@ -44,21 +50,23 @@ import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.Studio;
 
 /**
- * This class provides a JComboBox for selecting from the various available
- * AcquisitionDialogPlugins, and a button for displaying the selected plugin.
- * Or, if there is only one AcquisitionDialogPlugin, it provides a button for
- * activating just that one plugin.
+ * This class provides a JButton that accesses the acquisition dialog -- or,
+ * if there is more than one such dialog available, provides a popup menu
+ * of dialogs to choose from.
  */
 public class AcquisitionSelector {
 
    public static JComponent makeSelector(Studio studio) {
       final HashMap<String, AcquisitionDialogPlugin> plugins = studio.plugins().getAcquisitionDialogPlugins();
+      final JButton button = new JButton();
+      button.setMargin(new Insets(0, 0, 0, 0));
+      button.setFont(GUIUtils.buttonFont);
       if (plugins.size() == 1) {
          // Button to activate the single plugin.
          final AcquisitionDialogPlugin plugin = plugins.values().iterator().next();
-         JButton button = new JButton(plugin.getName(), plugin.getIcon());
-         button.setMargin(new Insets(0, 0, 0, 0));
-         button.setFont(GUIUtils.buttonFont);
+         button.setText(plugin.getName());
+         button.setToolTipText(plugin.getHelpText());
+         button.setIcon(plugin.getIcon());
          button.setToolTipText(plugin.getHelpText());
          button.addActionListener(new ActionListener() {
             @Override
@@ -69,33 +77,41 @@ public class AcquisitionSelector {
          return button;
       }
       else {
-         // Combobox to select from the available plugins.
-         final HashMap<JLabel, String> itemToName = new HashMap<JLabel, String>();
-         ArrayList<String> names = new ArrayList<String>(plugins.keySet());
-         Collections.sort(names);
-         Vector<JLabel> labels = new Vector<JLabel>();
-         for (String name : names) {
-            studio.logs().logError("Adding acq dialog " + name);
-            ImageIcon icon = plugins.get(name).getIcon();
-            JLabel label = new JLabel(plugins.get(name).getName(),
-                  plugins.get(name).getIcon(), SwingConstants.LEFT);
-            label.setFont(GUIUtils.buttonFont);
-            labels.add(label);
-            itemToName.put(label, name);
-         }
-         final JComboBox selector = new JComboBox(labels);
-         selector.setRenderer(new PluginRenderer());
-         selector.setFont(GUIUtils.buttonFont);
-         // TODO selector should remember user's preference.
-         selector.addActionListener(new ActionListener() {
+         // Button to show a popup menu selecting from the available plugins
+         button.setText("Acquire data");
+         button.setToolTipText("Show various data acquisition dialogs");
+         button.setIcon(IconLoader.getIcon("/org/micromanager/icons/film.png"));
+         button.addMouseListener(new MouseAdapter() {
             @Override
-            public void actionPerformed(ActionEvent e) {
-               JLabel item = (JLabel) selector.getSelectedItem();
-               plugins.get(itemToName.get(item)).onPluginSelected();
+            public void mouseReleased(MouseEvent e) {
+               showPopupMenu(button, plugins, e);
             }
          });
-         return selector;
+         return button;
       }
+   }
+
+   /**
+    * Show a popup menu allowing the user to select which plugin to run.
+    */
+   private static void showPopupMenu(JComponent parent,
+         final HashMap<String, AcquisitionDialogPlugin> plugins,
+         MouseEvent event) {
+      JPopupMenu menu = new JPopupMenu();
+      ArrayList<String> names = new ArrayList<String>(plugins.keySet());
+      Collections.sort(names);
+      for (final String name : names) {
+         JMenuItem item = new JMenuItem(plugins.get(name).getName(),
+               plugins.get(name).getIcon());
+         item.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               plugins.get(name).onPluginSelected();
+            }
+         });
+         menu.add(item);
+      }
+      menu.show(parent, event.getX(), event.getY());
    }
 
    /**
