@@ -23,7 +23,7 @@ import com.bulenkov.iconloader.IconLoader;
 
 import javax.swing.ImageIcon;
 
-import org.micromanager.acquisition.AcquisitionDialogPlugin;
+import org.micromanager.acquisition.internal.AcquisitionDialogPlugin;
 import org.micromanager.Studio;
 
 import org.micromanager.internal.MMStudio;
@@ -47,7 +47,7 @@ public class DefaultMDAPlugin implements AcquisitionDialogPlugin, SciJavaPlugin 
    }
 
    @Override
-   public void onPluginSelected() {
+   public void showAcquisitionDialog() {
       ((MMStudio) studio_).openAcqControlDialog();
    }
 

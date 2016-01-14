@@ -44,7 +44,8 @@ import javax.swing.SwingConstants;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.acquisition.AcquisitionDialogPlugin;
+import org.micromanager.acquisition.internal.AcquisitionDialogPlugin;
+import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.Studio;
@@ -57,7 +58,9 @@ import org.micromanager.Studio;
 public class AcquisitionSelector {
 
    public static JComponent makeSelector(Studio studio) {
-      final HashMap<String, AcquisitionDialogPlugin> plugins = studio.plugins().getAcquisitionDialogPlugins();
+      // This requires access to non-API methods.
+      DefaultPluginManager pluginMan = (DefaultPluginManager) studio.plugins();
+      final HashMap<String, AcquisitionDialogPlugin> plugins = pluginMan.getAcquisitionDialogPlugins();
       final JButton button = new JButton();
       button.setMargin(new Insets(0, 0, 0, 0));
       button.setFont(GUIUtils.buttonFont);
@@ -71,7 +74,7 @@ public class AcquisitionSelector {
          button.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-               plugin.onPluginSelected();
+               plugin.showAcquisitionDialog();
             }
          });
          return button;
@@ -106,7 +109,7 @@ public class AcquisitionSelector {
          item.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-               plugins.get(name).onPluginSelected();
+               plugins.get(name).showAcquisitionDialog();
             }
          });
          menu.add(item);

@@ -32,7 +32,7 @@ import javax.swing.JMenuItem;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import org.micromanager.acquisition.AcquisitionDialogPlugin;
+import org.micromanager.acquisition.internal.AcquisitionDialogPlugin;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.display.InspectorPlugin;
@@ -352,7 +352,6 @@ public class DefaultPluginManager implements PluginManager {
       return result;
    }
 
-   @Override
    public HashMap<String, AcquisitionDialogPlugin> getAcquisitionDialogPlugins() {
       HashMap<String, AcquisitionDialogPlugin> result = new HashMap<String, AcquisitionDialogPlugin>();
       for (MMPlugin plugin : pluginTypeToPlugins_.get(AcquisitionDialogPlugin.class)) {
