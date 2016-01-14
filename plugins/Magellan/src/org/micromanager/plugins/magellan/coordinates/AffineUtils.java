@@ -26,6 +26,7 @@ import java.util.prefs.Preferences;
 import org.micromanager.plugins.magellan.misc.JavaUtils;
 import org.micromanager.plugins.magellan.misc.Log;
 import org.micromanager.MMStudio;
+import org.micromanager.plugins.magellan.misc.GlobalSettings;
 
 /**
  *
@@ -72,8 +73,14 @@ public class AffineUtils {
             //Get affine transform from prefs
             Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
             transform = JavaUtils.getObjectFromPrefs(prefs, "affine_transform_" + pixelSizeConfig, (AffineTransform) null);
+            //create transform
+            if (transform == null) {
+               transform = new AffineTransform(new double[]{1, 0, 0, 1});
+               //store the default affine transform
+               GlobalSettings.putObjectInPrefs(prefs, "affine_transform_" + pixelSizeConfig, transform);
+            }
             affineTransforms_.put(pixelSizeConfig, transform);
-         }
+         }        
          //set map origin to current stage position
          double[] matrix = new double[6];
          transform.getMatrix(matrix);

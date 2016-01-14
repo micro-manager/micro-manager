@@ -20,6 +20,9 @@ package org.micromanager.plugins.magellan.main;
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.prefs.BackingStoreException;
 import org.micromanager.plugins.magellan.gui.GUI;
 import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
@@ -36,13 +39,23 @@ public class Magellan implements MMPlugin{
    private static final String VERSION = "1.0";
            
    public static final String menuName = "Micro-Magellan";
-   public static final String tooltipDescription = "Micro-Magellan: A plugin for exploring samples in space and time";
+   public static final String tooltipDescription = "High throughout, automated micrscopy for spatiotemporal exploration";
 
    private static Preferences prefs_;
    private static ScriptInterface mmAPI_;
    private static GUI gui_;
    
    public Magellan() {
+      //TODO: Remove, for affine debugging
+       Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
+      try { 
+         prefs.clear();
+      } catch (BackingStoreException ex) {
+         Logger.getLogger(Magellan.class.getName()).log(Level.SEVERE, null, ex);
+      }
+      
+      
+      
       if (gui_ == null) {
          prefs_ = Preferences.userNodeForPackage(Magellan.class);
          gui_ = new GUI(prefs_, VERSION);
