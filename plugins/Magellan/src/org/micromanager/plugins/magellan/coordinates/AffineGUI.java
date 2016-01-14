@@ -7,10 +7,14 @@ package org.micromanager.plugins.magellan.coordinates;
 import ij.IJ;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import org.micromanager.plugins.magellan.main.Magellan;
 import org.micromanager.plugins.magellan.misc.JavaUtils;
 import org.micromanager.MMStudio;
+import org.micromanager.plugins.magellan.misc.GlobalSettings;
+import org.micromanager.plugins.magellan.misc.Log;
 
 /**
  * 
@@ -37,17 +41,23 @@ public class AffineGUI extends javax.swing.JFrame {
       pixelCalLabel_.setText("Pixel size Calibration: " + pixelSizeConfig_);
       pixelSize_ = Magellan.getCore().getPixelSizeUm();
       setVisible(true);
-       try {
-           populateValues(AffineUtils.getAffineTransform(pixelSizeConfig_, 0, 0));
-       } catch (NoninvertibleTransformException ex) {
-           IJ.log("Couldn't populate current values due to invalid transform");
-       }
+         AffineTransform transform = new AffineTransform(new double[]{1, 0, 0, 1});
+      try {
+         transform = AffineUtils.getAffineTransform(pixelSizeConfig_, 0, 0);
+      } catch (AffineTransformUndefinedException e) {
+      }
+      try {
+         populateValues(transform);
+      } catch (NoninvertibleTransformException ex) {
+         Log.log("Problem decomposing affine transform values");
+      }
    }
-   
+
    //decompose affine, see http://math.stackexchange.com/questions/612006/decomposing-an-affine-transformation
+
    private void populateValues(AffineTransform transform) throws NoninvertibleTransformException {
-       //[T] = [R][Sc][Sh]
-       pixSizeLabel_.setText( pixelSize_ + " um");
+      //[T] = [R][Sc][Sh]
+      pixSizeLabel_.setText( pixelSize_ + " um");
        //{ m00 m10 m01 m11 m02 m12 }
        double[] matrix = new double[6];
        transform.getMatrix(matrix);

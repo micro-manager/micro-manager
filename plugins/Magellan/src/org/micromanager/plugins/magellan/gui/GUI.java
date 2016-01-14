@@ -137,6 +137,13 @@ public class GUI extends javax.swing.JFrame {
       if (GlobalSettings.getInstance().firstMagellanOpening()) {
          new StartupHelpWindow();
       }
+      //make sure nothing cut off at bottom
+      SwingUtilities.invokeLater(new Runnable() {
+         @Override
+         public void run() {
+            fitSplitPaneToWindowSize();
+         }
+      });      
    }
    
    private void fitSplitPaneToWindowSize() {
