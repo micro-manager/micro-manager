@@ -103,7 +103,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    private static final String MAIN_EXPOSURE = "exposure";
 
    // Size constraint for normal buttons.
-   private static final String BIGBUTTON_SIZE = "w 88!, h 22!";
+   private static final String BIGBUTTON_SIZE = "w 110!, h 22!";
    // Size constraint for small buttons.
    private static final String SMALLBUTTON_SIZE = "w 30!, h 20!";
 
