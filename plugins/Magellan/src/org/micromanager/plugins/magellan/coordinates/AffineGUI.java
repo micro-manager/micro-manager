@@ -44,7 +44,7 @@ public class AffineGUI extends javax.swing.JFrame {
       AffineTransform transform = AffineUtils.getAffineTransform(pixelSizeConfig_, 0, 0);
       if (transform == null) {
          //revert to identity matrix         
-         new AffineTransform(new double[]{1, 0, 0, 1});
+         transform = new AffineTransform(new double[]{1, 0, 0, 1});
       }
          
       try {
