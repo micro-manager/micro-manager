@@ -37,7 +37,7 @@ import mmcorej.CMMCore;
  */
 public class ExploreAcquisition extends Acquisition {
 
-    private static final int EXPLORE_EVENT_QUEUE_CAP = 250; //big so you can see a lot of tiles waiting to be acquired
+    private static final int EXPLORE_EVENT_QUEUE_CAP = 2000; //big so you can see a lot of tiles waiting to be acquired
     
     
    private volatile double zTop_, zBottom_;
