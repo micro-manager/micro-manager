@@ -223,7 +223,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       markButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            markPosition();
+            markPosition(true);
             posTable_.clearSelection();
             updateMarkButtonText();
          }
@@ -643,14 +643,17 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    /**
     * Store current xyPosition.
     * Use data collected in refreshCurrentPosition()
+    * @param shouldOverwrite if true, overwrite the selected marked position.
     */
-   public void markPosition() {
+   public void markPosition(boolean shouldOverwrite) {
       refreshCurrentPosition();
       MultiStagePosition msp = curMsp_;
 
       PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
-      MultiStagePosition selMsp = 
-              ptm.getPositionList().getPosition(posTable_.getSelectedRow() -1);
+      MultiStagePosition selMsp = null;
+      if (shouldOverwrite) {
+         selMsp = ptm.getPositionList().getPosition(posTable_.getSelectedRow() -1);
+      };
 
       if (selMsp == null) {
          msp.setLabel(ptm.getPositionList().generateLabel());

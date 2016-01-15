@@ -833,7 +833,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
          showXYPositionList();
       }
       if (posListDlg_ != null) {
-         posListDlg_.markPosition();
+         posListDlg_.markPosition(false);
       }
    }
 
