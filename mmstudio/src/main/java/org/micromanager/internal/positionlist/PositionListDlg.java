@@ -660,14 +660,15 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
          ptm.getPositionList().addPosition(msp);
          ptm.fireTableDataChanged();
          acqControlDlg_.updateGUIContents();
-      } else { // replace instead of add 
+      }
+      else { // replace instead of add
          msp.setLabel(ptm.getPositionList().getPosition(
                  posTable_.getSelectedRow() - 1).getLabel() );
          int selectedRow = posTable_.getSelectedRow();
          ptm.getPositionList().replacePosition(
                  posTable_.getSelectedRow() -1, msp);
-         ptm.fireTableCellUpdated(selectedRow, 1);
-         // Not sure why this is here as we undo the selecion after 
+         ptm.fireTableDataChanged();
+         // Not sure why this is here as we undo the selection after
          // this functions exits...
          posTable_.setRowSelectionInterval(selectedRow, selectedRow);
       }
