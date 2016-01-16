@@ -46,12 +46,15 @@ public class PropertyPairCreationDialog extends javax.swing.JDialog {
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("Select one from each list to create pairing");
 
+        independentVarTable_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         independentVarTable_.setModel(new EligibleCovariantTableModel(true));
         jScrollPane1.setViewportView(independentVarTable_);
 
+        dependentVarTable_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         dependentVarTable_.setModel(new EligibleCovariantTableModel(false));
         jScrollPane2.setViewportView(dependentVarTable_);
 
+        cancelButton_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         cancelButton_.setText("Cancel");
         cancelButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -59,6 +62,7 @@ public class PropertyPairCreationDialog extends javax.swing.JDialog {
             }
         });
 
+        okButton_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         okButton_.setText("OK");
         okButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -78,7 +82,7 @@ public class PropertyPairCreationDialog extends javax.swing.JDialog {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(cancelButton_)
-                        .addContainerGap(361, Short.MAX_VALUE))
+                        .addContainerGap(367, Short.MAX_VALUE))
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)))
         );
         layout.setVerticalGroup(

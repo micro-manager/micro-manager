@@ -261,9 +261,9 @@ public class GUI extends javax.swing.JFrame {
             }
         });
         //Table column widths
-        multipleAcqTable_.getColumnModel().getColumn(0).setMaxWidth(40); //order column
-        covariantPairingsTable_.getColumnModel().getColumn(0).setMaxWidth(40); //Acitve checkbox column
-       channelsTable_.getColumnModel().getColumn(0).setMaxWidth(40); //Acitve checkbox column
+        multipleAcqTable_.getColumnModel().getColumn(0).setMaxWidth(60); //order column
+        covariantPairingsTable_.getColumnModel().getColumn(0).setMaxWidth(60); //Acitve checkbox column
+       channelsTable_.getColumnModel().getColumn(0).setMaxWidth(60); //Acitve checkbox column
 
        //set color renderer for channel table
        for (int col = 1; col < channelsTable_.getColumnModel().getColumnCount(); col++) {
@@ -870,7 +870,10 @@ public class GUI extends javax.swing.JFrame {
         splitPane_.setDividerLocation(200);
         splitPane_.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
 
+        splitPaneTopPanel_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+
         deviceControlScrollPane_.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        deviceControlScrollPane_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
 
         DeviceControlTableModel model = new DeviceControlTableModel(prefs_);
         deviceControlTable_.setAutoCreateColumnsFromModel(false);
@@ -890,10 +893,12 @@ public class GUI extends javax.swing.JFrame {
         );
         controlPanelName_Layout.setVerticalGroup(
             controlPanelName_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(deviceControlScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 159, Short.MAX_VALUE)
+            .addComponent(deviceControlScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 162, Short.MAX_VALUE)
         );
 
         splitPaneTopPanel_.addTab("Device status/control", controlPanelName_);
+
+        multipleAcqScrollPane_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
 
         multipleAcqTable_.setModel(new MultipleAcquisitionTableModel(multiAcqManager_,this));
         multipleAcqTable_.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
@@ -1003,7 +1008,7 @@ public class GUI extends javax.swing.JFrame {
             multipleAcquisitionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, multipleAcquisitionsPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(multipleAcqScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 93, Short.MAX_VALUE)
+                .addComponent(multipleAcqScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 96, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
@@ -1045,7 +1050,7 @@ public class GUI extends javax.swing.JFrame {
         gridsPanel_Layout.setVerticalGroup(
             gridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(gridsPanel_Layout.createSequentialGroup()
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 125, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 128, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(gridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(deleteSelectedRegionButton_)
@@ -1069,6 +1074,9 @@ public class GUI extends javax.swing.JFrame {
                 deleteAllSurfacesButton_ActionPerformed(evt);
             }
         });
+
+        jScrollPane3.setFocusable(false);
+        jScrollPane3.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
 
         surfacesTable_.setModel(surfaceManager_.createSurfaceTableModel());
         surfacesTable_.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
@@ -1109,7 +1117,7 @@ public class GUI extends javax.swing.JFrame {
         surfacesPanel_Layout.setVerticalGroup(
             surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(surfacesPanel_Layout.createSequentialGroup()
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 125, Short.MAX_VALUE)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 128, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(deleteAllSurfacesButton_)
@@ -1791,12 +1799,11 @@ public class GUI extends javax.swing.JFrame {
                             .addComponent(fixedDistanceZPanel_, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addGroup(spaceTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(spaceTab_Layout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(panel2D_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(spaceTab_Layout.createSequentialGroup()
                                 .addGap(26, 26, 26)
-                                .addComponent(checkBox2D_)))))
-                .addGap(0, 2, Short.MAX_VALUE))
+                                .addComponent(checkBox2D_))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, spaceTab_Layout.createSequentialGroup()
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(panel2D_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))))
         );
 
         for (Component c : simpleZPanel_.getComponents()) {
@@ -1808,6 +1815,8 @@ public class GUI extends javax.swing.JFrame {
         addTextEditListener(zStepSpinner_);
 
         acqTabbedPane_.addTab("Space", spaceTab_);
+
+        jScrollPane1.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
 
         channelsTable_.setModel(new SimpleChannelTableModel());
         jScrollPane1.setViewportView(channelsTable_);
@@ -1850,6 +1859,7 @@ public class GUI extends javax.swing.JFrame {
         covariantPairValuesTable_.setAutoCreateColumnsFromModel(false);
         covariantPairValuesTable_.addColumn(new TableColumn(0, 100, new CovariantValueCellRenderer(), new CovariantValueCellEditor()));
         covariantPairValuesTable_.addColumn(new TableColumn(1, 100, new CovariantValueCellRenderer(), new CovariantValueCellEditor()));
+        covariantPairValuesTable_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         covariantPairValuesTable_.setModel(cpvtModel);
         covariantPairValuesTable_.setCellSelectionEnabled(true);
         covariantPairValuesTable_.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
@@ -1877,6 +1887,7 @@ public class GUI extends javax.swing.JFrame {
             }
         });
 
+        covariantPairingsTable_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         covariantPairingsTable_.setModel(new org.micromanager.plugins.magellan.propsandcovariants.CovariantPairingsTableModel());
         propertyPairingsScrollpane_.setViewportView(covariantPairingsTable_);
 
@@ -1935,11 +1946,11 @@ public class GUI extends javax.swing.JFrame {
                     .addComponent(jLabel8))
                 .addGap(16, 16, 16))
             .addGroup(covariedSettingsTab_Layout.createSequentialGroup()
-                .addGap(33, 33, 33)
+                .addGap(38, 38, 38)
                 .addComponent(newParingButton_)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(removePairingButton)
-                .addGap(121, 121, 121)
+                .addGap(245, 245, 245)
                 .addComponent(savePairingsButton_)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(loadPairingsButton_)
@@ -1947,7 +1958,7 @@ public class GUI extends javax.swing.JFrame {
                 .addComponent(addCovariedPairingValueButton_)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(deleteCovariedPairingValueButton_)
-                .addGap(116, 116, 116))
+                .addContainerGap())
         );
         covariedSettingsTab_Layout.setVerticalGroup(
             covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1956,8 +1967,8 @@ public class GUI extends javax.swing.JFrame {
                     .addComponent(jLabel6)
                     .addComponent(jLabel8))
                 .addGap(8, 8, 8)
-                .addGroup(covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(propertyPairValuesScrollpane_, javax.swing.GroupLayout.DEFAULT_SIZE, 157, Short.MAX_VALUE)
+                .addGroup(covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(propertyPairValuesScrollpane_, javax.swing.GroupLayout.DEFAULT_SIZE, 218, Short.MAX_VALUE)
                     .addComponent(propertyPairingsScrollpane_, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -1967,7 +1978,7 @@ public class GUI extends javax.swing.JFrame {
                     .addComponent(loadPairingsButton_)
                     .addComponent(addCovariedPairingValueButton_)
                     .addComponent(deleteCovariedPairingValueButton_))
-                .addContainerGap(77, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         acqTabbedPane_.addTab("Covaried settings", covariedSettingsTab_);
@@ -2432,7 +2443,7 @@ public class GUI extends javax.swing.JFrame {
                     .addGroup(splitPaneBottomPanel_Layout.createSequentialGroup()
                         .addGap(153, 153, 153)
                         .addComponent(createdByHenryLabel_)))
-                .addContainerGap(26, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addComponent(acqTabbedPane_)
         );
         splitPaneBottomPanel_Layout.setVerticalGroup(

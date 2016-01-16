@@ -36,7 +36,7 @@ public class CovariantPairingsTableModel extends AbstractTableModel {
    
     @Override
    public String getColumnName(int index) {
-      return index == 0 ? "Active" : "Pairing (Independent Variable : Dependent Variable)";
+      return index == 0 ? "Active" : "Independent Variable : Dependent Variable";
    }
 
    @Override

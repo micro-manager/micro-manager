@@ -33,7 +33,7 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
                       <Component id="cancelButton_" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="361" max="32767" attributes="0"/>
+                      <EmptySpace pref="367" max="32767" attributes="0"/>
                   </Group>
                   <Component id="jScrollPane2" pref="0" max="32767" attributes="0"/>
               </Group>
@@ -67,6 +67,9 @@
       <SubComponents>
         <Component class="javax.swing.JTable" name="independentVarTable_">
           <Properties>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+              <Font name="Tahoma" size="14" style="0"/>
+            </Property>
             <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
               <Connection code="new EligibleCovariantTableModel(true)" type="code"/>
             </Property>
@@ -83,6 +86,9 @@
       <SubComponents>
         <Component class="javax.swing.JTable" name="dependentVarTable_">
           <Properties>
+            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+              <Font name="Tahoma" size="14" style="0"/>
+            </Property>
             <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
               <Connection code="new EligibleCovariantTableModel(false)" type="code"/>
             </Property>
@@ -92,6 +98,9 @@
     </Container>
     <Component class="javax.swing.JButton" name="cancelButton_">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+          <Font name="Tahoma" size="14" style="0"/>
+        </Property>
         <Property name="text" type="java.lang.String" value="Cancel"/>
       </Properties>
       <Events>
@@ -100,6 +109,9 @@
     </Component>
     <Component class="javax.swing.JButton" name="okButton_">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+          <Font name="Tahoma" size="14" style="0"/>
+        </Property>
         <Property name="text" type="java.lang.String" value="OK"/>
       </Properties>
       <Events>
