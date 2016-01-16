@@ -17,18 +17,19 @@
 
 package org.micromanager.plugins.magellan.imagedisplay;
 
-import com.sun.java.swing.plaf.windows.WindowsScrollBarUI;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 import javax.swing.JComponent;
 import javax.swing.JScrollBar;
+import javax.swing.plaf.basic.BasicScrollBarUI;
+import javax.swing.plaf.synth.SynthScrollBarUI;
 
 /**
  *
  * @author Henry
  */
-public class ColorableScrollbarUI extends WindowsScrollBarUI {
+public class ColorableScrollbarUI extends BasicScrollBarUI {
 
    private static final Color DARK_GREEN = new Color(0,70,0);
    

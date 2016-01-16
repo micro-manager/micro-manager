@@ -124,9 +124,6 @@
               </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="elapsedTimeLabel_">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="jLabel3"/>
-              </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel3">
               <Properties>
@@ -134,9 +131,6 @@
               </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="zPosLabel_">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="jLabel4"/>
-              </Properties>
             </Component>
           </SubComponents>
         </Container>

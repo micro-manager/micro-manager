@@ -232,11 +232,7 @@ public class DisplayWindowControls extends Panel {
 
       jLabel2.setText("Elapsed time: ");
 
-      elapsedTimeLabel_.setText("jLabel3");
-
       jLabel3.setText("Z position: ");
-
-      zPosLabel_.setText("jLabel4");
 
       javax.swing.GroupLayout statusPanel_Layout = new javax.swing.GroupLayout(statusPanel_);
       statusPanel_.setLayout(statusPanel_Layout);

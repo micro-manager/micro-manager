@@ -53,17 +53,6 @@ public class GraphFrame extends MMFrame {
    private SpringLayout springLayout;
    private GraphPanel panel_;
    
-   /*
-   public static void main(String args[]) {
-      try {
-         UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
-         GraphFrame frame = new GraphFrame();
-         frame.setVisible(true);
-      } catch (Exception e) {
-         Log.log(e);
-      }
-   }
-   */
    
    private void updateBounds(){
       GraphData.Bounds bounds = panel_.getGraphBounds();

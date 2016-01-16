@@ -74,7 +74,6 @@ import org.micromanager.plugins.magellan.channels.ColorRenderer;
 import java.awt.FileDialog;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
@@ -82,17 +81,13 @@ import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.prefs.BackingStoreException;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JSplitPane;
 import javax.swing.JTextField;
+import javax.swing.LookAndFeel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-import javax.swing.UIManager.LookAndFeelInfo;
-import javax.swing.UnsupportedLookAndFeelException;
 import org.micromanager.plugins.magellan.main.Magellan;
 import org.micromanager.plugins.magellan.misc.GlobalSettings;
 import org.micromanager.plugins.magellan.misc.JavaUtils;
@@ -124,14 +119,6 @@ public class GUI extends javax.swing.JFrame {
    public GUI(Preferences prefs, String version) {
       singleton_ = this;
       prefs_ = prefs;
-      
-      LookAndFeelInfo[] lfi = UIManager.getInstalledLookAndFeels(); 
-//      UIManager.getLookAndFeel()
-//      try {
-//         UIManager.setLookAndFeel( "com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel" );
-//      } catch (Exception ex) {
-//         Log.log("Couldn't set look and feel correctly");
-//      }
       settings_ = new GlobalSettings(prefs_, this);
       new JavaLayerImageConstructor();
       this.setTitle("Micro-Magellan " + version);
@@ -148,13 +135,6 @@ public class GUI extends javax.swing.JFrame {
       if (GlobalSettings.getInstance().firstMagellanOpening()) {
          new StartupHelpWindow();
       }
-      //make sure nothing cut off at bottom
-      SwingUtilities.invokeLater(new Runnable() {
-         @Override
-         public void run() {
-            fitSplitPaneToWindowSize();
-         }
-      });      
    }
    
    private void fitSplitPaneToWindowSize() {
@@ -884,6 +864,8 @@ public class GUI extends javax.swing.JFrame {
 
       jLabel11.setText("jLabel11");
 
+      getContentPane().setLayout(new java.awt.FlowLayout());
+
       splitPane_.setBorder(null);
       splitPane_.setDividerLocation(200);
       splitPane_.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
@@ -904,11 +886,11 @@ public class GUI extends javax.swing.JFrame {
       controlPanelName_.setLayout(controlPanelName_Layout);
       controlPanelName_Layout.setHorizontalGroup(
          controlPanelName_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addComponent(deviceControlScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 852, Short.MAX_VALUE)
+         .addComponent(deviceControlScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 840, Short.MAX_VALUE)
       );
       controlPanelName_Layout.setVerticalGroup(
          controlPanelName_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addComponent(deviceControlScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 76, Short.MAX_VALUE)
+         .addComponent(deviceControlScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 75, Short.MAX_VALUE)
       );
 
       splitPaneTopPanel_.addTab("Device status/control", controlPanelName_);
@@ -1016,7 +998,7 @@ public class GUI extends javax.swing.JFrame {
          multipleAcquisitionsPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, multipleAcquisitionsPanelLayout.createSequentialGroup()
             .addContainerGap()
-            .addComponent(multipleAcqScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 28, Short.MAX_VALUE)
+            .addComponent(multipleAcqScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 27, Short.MAX_VALUE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
       );
@@ -1046,9 +1028,9 @@ public class GUI extends javax.swing.JFrame {
       gridsPanel_.setLayout(gridsPanel_Layout);
       gridsPanel_Layout.setHorizontalGroup(
          gridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 836, Short.MAX_VALUE)
+         .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 840, Short.MAX_VALUE)
          .addGroup(gridsPanel_Layout.createSequentialGroup()
-            .addContainerGap(350, Short.MAX_VALUE)
+            .addContainerGap(274, Short.MAX_VALUE)
             .addComponent(deleteSelectedRegionButton_)
             .addGap(41, 41, 41)
             .addComponent(deleteAllRegionsButton_)
@@ -1057,7 +1039,7 @@ public class GUI extends javax.swing.JFrame {
       gridsPanel_Layout.setVerticalGroup(
          gridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(gridsPanel_Layout.createSequentialGroup()
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 40, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 39, Short.MAX_VALUE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(gridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(deleteSelectedRegionButton_)
@@ -1104,7 +1086,7 @@ public class GUI extends javax.swing.JFrame {
       surfacesPanel_Layout.setHorizontalGroup(
          surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(surfacesPanel_Layout.createSequentialGroup()
-            .addContainerGap(383, Short.MAX_VALUE)
+            .addContainerGap(267, Short.MAX_VALUE)
             .addComponent(deleteSelectedSurfaceButton_)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
             .addComponent(deleteAllSurfacesButton_)
@@ -1113,12 +1095,12 @@ public class GUI extends javax.swing.JFrame {
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addComponent(loadSurfacesButton_)
             .addGap(131, 131, 131))
-         .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 836, Short.MAX_VALUE)
+         .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 840, Short.MAX_VALUE)
       );
       surfacesPanel_Layout.setVerticalGroup(
          surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(surfacesPanel_Layout.createSequentialGroup()
-            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 40, Short.MAX_VALUE)
+            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 39, Short.MAX_VALUE)
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(deleteAllSurfacesButton_)
@@ -2390,16 +2372,7 @@ public class GUI extends javax.swing.JFrame {
 
       splitPane_.setRightComponent(splitPaneBottomPanel_);
 
-      javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-      getContentPane().setLayout(layout);
-      layout.setHorizontalGroup(
-         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addComponent(splitPane_, javax.swing.GroupLayout.PREFERRED_SIZE, 857, javax.swing.GroupLayout.PREFERRED_SIZE)
-      );
-      layout.setVerticalGroup(
-         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addComponent(splitPane_)
-      );
+      getContentPane().add(splitPane_);
 
       pack();
    }// </editor-fold>//GEN-END:initComponents

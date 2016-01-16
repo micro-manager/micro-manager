@@ -28,6 +28,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import org.micromanager.plugins.magellan.main.Magellan;
 import org.micromanager.plugins.magellan.misc.JavaUtils;
 import org.micromanager.plugins.magellan.misc.Log;
@@ -228,6 +229,7 @@ public class SubImageControls extends Panel {
             }
             controlsPanel.add(sliderPanel_, "span, growx, align center, wrap");
          } catch (Exception e) {
+            e.printStackTrace();
             Log.log("Couldn't create z sliders");
          }
       }
