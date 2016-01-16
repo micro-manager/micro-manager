@@ -90,6 +90,9 @@ import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.UIManager.LookAndFeelInfo;
+import javax.swing.UnsupportedLookAndFeelException;
 import org.micromanager.plugins.magellan.main.Magellan;
 import org.micromanager.plugins.magellan.misc.GlobalSettings;
 import org.micromanager.plugins.magellan.misc.JavaUtils;
@@ -121,6 +124,14 @@ public class GUI extends javax.swing.JFrame {
    public GUI(Preferences prefs, String version) {
       singleton_ = this;
       prefs_ = prefs;
+      
+      LookAndFeelInfo[] lfi = UIManager.getInstalledLookAndFeels(); 
+//      UIManager.getLookAndFeel()
+//      try {
+//         UIManager.setLookAndFeel( "com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel" );
+//      } catch (Exception ex) {
+//         Log.log("Couldn't set look and feel correctly");
+//      }
       settings_ = new GlobalSettings(prefs_, this);
       new JavaLayerImageConstructor();
       this.setTitle("Micro-Magellan " + version);
