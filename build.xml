@@ -109,6 +109,7 @@
 		<copy todir="${mm.java.installdir}">
 			<!-- Copy all JARs except for ij.jar -->
 			<fileset dir="${mm.ivy.lib.dir}/compile" includes="*.jar"/>
+			<fileset dir="${mm.ivy.lib.dir}/optional" includes="*.jar"/>
 			<fileset dir="${mm.ivy.lib.dir}/runtime" includes="*.jar"/>
 		</copy>
 
