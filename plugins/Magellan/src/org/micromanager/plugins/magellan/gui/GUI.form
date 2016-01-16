@@ -28,10 +28,10 @@
     <AuxValue name="FormSettings_listenerGenerationStyle" type="java.lang.Integer" value="0"/>
     <AuxValue name="FormSettings_variablesLocal" type="java.lang.Boolean" value="false"/>
     <AuxValue name="FormSettings_variablesModifier" type="java.lang.Integer" value="2"/>
-    <AuxValue name="designerSize" type="java.awt.Dimension" value="-84,-19,0,5,115,114,0,18,106,97,118,97,46,97,119,116,46,68,105,109,101,110,115,105,111,110,65,-114,-39,-41,-84,95,68,20,2,0,2,73,0,6,104,101,105,103,104,116,73,0,5,119,105,100,116,104,120,112,0,0,3,23,0,0,3,103"/>
+    <AuxValue name="designerSize" type="java.awt.Dimension" value="-84,-19,0,5,115,114,0,18,106,97,118,97,46,97,119,116,46,68,105,109,101,110,115,105,111,110,65,-114,-39,-41,-84,95,68,20,2,0,2,73,0,6,104,101,105,103,104,116,73,0,5,119,105,100,116,104,120,112,0,0,3,83,0,0,3,106"/>
   </AuxValues>
 
-  <Layout class="org.netbeans.modules.form.compat2.layouts.DesignFlowLayout"/>
+  <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBoxLayout"/>
   <SubComponents>
     <Container class="javax.swing.JSplitPane" name="splitPane_">
       <Properties>
@@ -68,12 +68,12 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="deviceControlScrollPane_" alignment="0" pref="840" max="32767" attributes="0"/>
+                      <Component id="deviceControlScrollPane_" alignment="0" pref="869" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="deviceControlScrollPane_" alignment="0" pref="75" max="32767" attributes="0"/>
+                      <Component id="deviceControlScrollPane_" alignment="0" pref="159" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
               </Layout>
@@ -123,7 +123,7 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="1" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="multipleAcqScrollPane_" pref="27" max="32767" attributes="0"/>
+                          <Component id="multipleAcqScrollPane_" pref="93" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
                       </Group>
@@ -158,8 +158,8 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="removeAcqButton_" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="moveAcqUpButton_" min="-2" pref="67" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="moveAcqUpButton_" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
                               <Component id="moveAcqDownButton_" min="-2" pref="75" max="-2" attributes="0"/>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
                               <Component id="intereaveButton_" min="-2" max="-2" attributes="0"/>
@@ -192,7 +192,7 @@
                     <Component class="javax.swing.JButton" name="addAcqButton_">
                       <Properties>
                         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                          <Font name="Tahoma" size="11" style="1"/>
+                          <Font name="Tahoma" size="14" style="1"/>
                         </Property>
                         <Property name="text" type="java.lang.String" value="+"/>
                       </Properties>
@@ -203,7 +203,7 @@
                     <Component class="javax.swing.JButton" name="removeAcqButton_">
                       <Properties>
                         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                          <Font name="Tahoma" size="11" style="1"/>
+                          <Font name="Tahoma" size="14" style="1"/>
                         </Property>
                         <Property name="text" type="java.lang.String" value="-"/>
                       </Properties>
@@ -213,6 +213,9 @@
                     </Component>
                     <Component class="javax.swing.JButton" name="moveAcqUpButton_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Move&#x2191;"/>
                       </Properties>
                       <Events>
@@ -221,6 +224,9 @@
                     </Component>
                     <Component class="javax.swing.JButton" name="moveAcqDownButton_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Move&#x2193;"/>
                       </Properties>
                       <Events>
@@ -229,6 +235,9 @@
                     </Component>
                     <Component class="javax.swing.JButton" name="runMultipleAcquisitionsButton_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Run all"/>
                       </Properties>
                       <Events>
@@ -237,6 +246,9 @@
                     </Component>
                     <Component class="javax.swing.JButton" name="intereaveButton_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Interleave"/>
                       </Properties>
                       <Events>
@@ -245,6 +257,9 @@
                     </Component>
                     <Component class="javax.swing.JButton" name="deinterleaveButton_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Deinterleave"/>
                       </Properties>
                       <Events>
@@ -267,9 +282,9 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="jScrollPane2" pref="840" max="32767" attributes="0"/>
+                      <Component id="jScrollPane2" pref="869" max="32767" attributes="0"/>
                       <Group type="102" alignment="0" attributes="0">
-                          <EmptySpace pref="274" max="32767" attributes="0"/>
+                          <EmptySpace pref="357" max="32767" attributes="0"/>
                           <Component id="deleteSelectedRegionButton_" min="-2" max="-2" attributes="0"/>
                           <EmptySpace min="-2" pref="41" max="-2" attributes="0"/>
                           <Component id="deleteAllRegionsButton_" min="-2" max="-2" attributes="0"/>
@@ -280,7 +295,7 @@
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
-                          <Component id="jScrollPane2" pref="39" max="32767" attributes="0"/>
+                          <Component id="jScrollPane2" pref="125" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="deleteSelectedRegionButton_" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -310,7 +325,7 @@
                 <Component class="javax.swing.JButton" name="deleteSelectedRegionButton_">
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                      <Font name="Tahoma" size="11" style="1"/>
+                      <Font name="Tahoma" size="14" style="1"/>
                     </Property>
                     <Property name="text" type="java.lang.String" value="-"/>
                   </Properties>
@@ -320,6 +335,9 @@
                 </Component>
                 <Component class="javax.swing.JButton" name="deleteAllRegionsButton_">
                   <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                      <Font name="Tahoma" size="14" style="0"/>
+                    </Property>
                     <Property name="text" type="java.lang.String" value="Delete all"/>
                   </Properties>
                   <Events>
@@ -341,23 +359,23 @@
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
-                          <EmptySpace pref="267" max="32767" attributes="0"/>
-                          <Component id="deleteSelectedSurfaceButton_" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                          <Component id="deleteAllSurfacesButton_" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace min="-2" pref="96" max="-2" attributes="0"/>
+                          <EmptySpace min="-2" pref="88" max="-2" attributes="0"/>
                           <Component id="saveSurfacesButton_" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="loadSurfacesButton_" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace min="-2" pref="131" max="-2" attributes="0"/>
+                          <EmptySpace max="32767" attributes="0"/>
+                          <Component id="deleteSelectedSurfaceButton_" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                          <Component id="deleteAllSurfacesButton_" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace min="-2" pref="362" max="-2" attributes="0"/>
                       </Group>
-                      <Component id="jScrollPane3" alignment="0" pref="840" max="32767" attributes="0"/>
+                      <Component id="jScrollPane3" alignment="0" pref="869" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
                 <DimensionLayout dim="1">
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
-                          <Component id="jScrollPane3" pref="39" max="32767" attributes="0"/>
+                          <Component id="jScrollPane3" pref="125" max="32767" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
                               <Component id="deleteAllSurfacesButton_" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -373,7 +391,7 @@
                 <Component class="javax.swing.JButton" name="deleteSelectedSurfaceButton_">
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                      <Font name="Tahoma" size="11" style="1"/>
+                      <Font name="Tahoma" size="14" style="1"/>
                     </Property>
                     <Property name="text" type="java.lang.String" value="-"/>
                   </Properties>
@@ -383,6 +401,9 @@
                 </Component>
                 <Component class="javax.swing.JButton" name="deleteAllSurfacesButton_">
                   <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                      <Font name="Tahoma" size="14" style="0"/>
+                    </Property>
                     <Property name="text" type="java.lang.String" value="Delete all"/>
                   </Properties>
                   <Events>
@@ -407,6 +428,9 @@
                 </Container>
                 <Component class="javax.swing.JButton" name="saveSurfacesButton_">
                   <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                      <Font name="Tahoma" size="14" style="0"/>
+                    </Property>
                     <Property name="text" type="java.lang.String" value="Save"/>
                   </Properties>
                   <Events>
@@ -415,6 +439,9 @@
                 </Component>
                 <Component class="javax.swing.JButton" name="loadSurfacesButton_">
                   <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                      <Font name="Tahoma" size="14" style="0"/>
+                    </Property>
                     <Property name="text" type="java.lang.String" value="Load"/>
                   </Properties>
                   <Events>
@@ -480,11 +507,6 @@
                                       <Component id="openDatasetButton_" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <Component id="newExploreWindowButton_" alignment="0" min="-2" max="-2" attributes="0"/>
-                                  <Group type="102" alignment="0" attributes="0">
-                                      <EmptySpace min="-2" pref="313" max="-2" attributes="0"/>
-                                      <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
-                                  </Group>
-                                  <Component id="acqTabbedPane_" alignment="0" min="-2" pref="843" max="-2" attributes="0"/>
                               </Group>
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
@@ -502,12 +524,17 @@
                               <Component id="userGuideLink_" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
-                              <EmptySpace min="-2" pref="193" max="-2" attributes="0"/>
+                              <EmptySpace min="-2" pref="337" max="-2" attributes="0"/>
+                              <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="102" alignment="0" attributes="0">
+                              <EmptySpace min="-2" pref="153" max="-2" attributes="0"/>
                               <Component id="createdByHenryLabel_" min="-2" max="-2" attributes="0"/>
                           </Group>
                       </Group>
-                      <EmptySpace max="32767" attributes="0"/>
+                      <EmptySpace pref="26" max="32767" attributes="0"/>
                   </Group>
+                  <Component id="acqTabbedPane_" max="32767" attributes="0"/>
               </Group>
             </DimensionLayout>
             <DimensionLayout dim="1">
@@ -542,11 +569,11 @@
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="newExploreWindowButton_" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="1" max="-2" attributes="0"/>
                       <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace type="separate" max="-2" attributes="0"/>
-                      <Component id="acqTabbedPane_" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace max="32767" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="acqTabbedPane_" min="-2" pref="324" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
                       <Component id="runAcqButton_" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
@@ -557,6 +584,7 @@
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="createdByHenryLabel_" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -564,24 +592,33 @@
           <SubComponents>
             <Component class="javax.swing.JLabel" name="exploreSavingDirLabel_">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
                 <Property name="text" type="java.lang.String" value="Saving directory: "/>
               </Properties>
             </Component>
             <Component class="javax.swing.JTextField" name="globalSavingDirTextField_">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
                 <Property name="text" type="java.lang.String" value="jTextField1"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="exploreSampleLabel_">
               <Properties>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                  <Font name="Tahoma" size="11" style="1"/>
+                  <Font name="Tahoma" size="16" style="1"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Explore sample"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JSpinner" name="exploreRankSpinner_">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
                 <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                   <SpinnerModel initial="0.95" maximum="1.0" minimum="0.0" numberType="java.lang.Double" stepSize="0.01" type="number"/>
                 </Property>
@@ -591,6 +628,9 @@
               <Properties>
                 <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
                   <ComponentRef name="exploreFilterMethodButtonGroup_"/>
+                </Property>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Rank filter"/>
               </Properties>
@@ -603,17 +643,26 @@
                 <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
                   <ComponentRef name="exploreFilterMethodButtonGroup_"/>
                 </Property>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
                 <Property name="selected" type="boolean" value="true"/>
                 <Property name="text" type="java.lang.String" value="Frame average"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="explorePercentLabel_">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
                 <Property name="text" type="java.lang.String" value="%"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JSpinner" name="exploreTileOverlapSpinner_">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
                 <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                   <SpinnerModel initial="0.0" maximum="99.0" minimum="0.0" numberType="java.lang.Double" stepSize="1.0" type="number"/>
                 </Property>
@@ -621,11 +670,17 @@
             </Component>
             <Component class="javax.swing.JLabel" name="exploreOverlapLabel_">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
                 <Property name="text" type="java.lang.String" value="Tile overlap:"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JComboBox" name="exploreChannelGroupCombo_">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
                 <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
                   <Connection code="new ChannelComboBoxModel()" type="code"/>
                 </Property>
@@ -633,11 +688,17 @@
             </Component>
             <Component class="javax.swing.JLabel" name="channelGroupLabel_">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
                 <Property name="text" type="java.lang.String" value="Channel Group: "/>
               </Properties>
             </Component>
             <Component class="javax.swing.JSpinner" name="exploreZStepSpinner_">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
                 <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                   <SpinnerModel initial="1.0" numberType="java.lang.Double" stepSize="1.0" type="number"/>
                 </Property>
@@ -651,11 +712,17 @@
             </Component>
             <Component class="javax.swing.JLabel" name="exploreZStepLabel_">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
                 <Property name="text" type="java.lang.String" value="Z-step (&#xb5;m):"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JButton" name="exploreBrowseButton_">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
                 <Property name="text" type="java.lang.String" value="Browse"/>
               </Properties>
               <Events>
@@ -664,11 +731,17 @@
             </Component>
             <Component class="javax.swing.JLabel" name="exploreSavingNameLabel_">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
                 <Property name="text" type="java.lang.String" value="Saving name: "/>
               </Properties>
             </Component>
             <Component class="javax.swing.JTextField" name="exploreSavingNameTextField_">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
                 <Property name="text" type="java.lang.String" value="jTextField2"/>
               </Properties>
               <Events>
@@ -677,6 +750,9 @@
             </Component>
             <Component class="javax.swing.JButton" name="newExploreWindowButton_">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
                 <Property name="text" type="java.lang.String" value="Explore!"/>
               </Properties>
               <Events>
@@ -686,12 +762,17 @@
             <Component class="javax.swing.JLabel" name="jLabel1">
               <Properties>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                  <Font name="Tahoma" size="11" style="1"/>
+                  <Font name="Tahoma" size="16" style="1"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Acquisition Settings"/>
               </Properties>
             </Component>
             <Container class="javax.swing.JTabbedPane" name="acqTabbedPane_">
+              <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
+              </Properties>
               <AuxValues>
                 <AuxValue name="JavaCodeGenerator_SerializeTo" type="java.lang.String" value="GUI_jTabbedPane1"/>
               </AuxValues>
@@ -719,7 +800,7 @@
                                   </Group>
                                   <Component id="savingNameLabel_" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace pref="136" max="32767" attributes="0"/>
+                              <EmptySpace pref="162" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -730,7 +811,7 @@
                               <Component id="savingNameLabel_" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="savingNameTextField_" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace pref="205" max="32767" attributes="0"/>
+                              <EmptySpace pref="228" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -738,11 +819,17 @@
                   <SubComponents>
                     <Component class="javax.swing.JLabel" name="savingNameLabel_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Saving name: "/>
                       </Properties>
                     </Component>
                     <Component class="javax.swing.JTextField" name="savingNameTextField_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="jTextField2"/>
                       </Properties>
                     </Component>
@@ -766,7 +853,7 @@
                                   <Component id="timePointsCheckBox_" min="-2" max="-2" attributes="0"/>
                                   <Component id="timePointsPanel_" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace pref="610" max="32767" attributes="0"/>
+                              <EmptySpace pref="612" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -777,7 +864,7 @@
                               <Component id="timePointsCheckBox_" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="timePointsPanel_" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace pref="138" max="32767" attributes="0"/>
+                              <EmptySpace pref="152" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -839,6 +926,9 @@
                       <SubComponents>
                         <Component class="javax.swing.JComboBox" name="timeIntevalUnitCombo_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
                               <Connection code="new DefaultComboBoxModel(new String[]{&quot;ms&quot;, &quot;s&quot;, &quot;min&quot;})" type="code"/>
                             </Property>
@@ -849,16 +939,25 @@
                         </Component>
                         <Component class="javax.swing.JLabel" name="timeIntervalLabel_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="text" type="java.lang.String" value="Interval"/>
                           </Properties>
                         </Component>
                         <Component class="javax.swing.JLabel" name="numTimePointsLabel_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="text" type="java.lang.String" value="Number"/>
                           </Properties>
                         </Component>
                         <Component class="javax.swing.JSpinner" name="numTimePointsSpinner_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                               <SpinnerModel initial="1" minimum="1" numberType="java.lang.Integer" stepSize="1" type="number"/>
                             </Property>
@@ -872,6 +971,9 @@
                         </Component>
                         <Component class="javax.swing.JSpinner" name="timeIntervalSpinner_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                               <SpinnerModel initial="0.0" minimum="0.0" numberType="java.lang.Double" stepSize="1.0" type="number"/>
                             </Property>
@@ -887,6 +989,9 @@
                     </Container>
                     <Component class="javax.swing.JCheckBox" name="timePointsCheckBox_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Time points"/>
                       </Properties>
                       <Events>
@@ -909,13 +1014,8 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
-                              <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                                  <Group type="102" attributes="0">
-                                      <Component id="simpleZPanel_" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                      <Component id="volumeBetweenZPanel_" max="32767" attributes="0"/>
-                                  </Group>
-                                  <Group type="102" attributes="0">
+                              <Group type="103" groupAlignment="0" attributes="0">
+                                  <Group type="102" alignment="0" attributes="0">
                                       <Component id="checkBox3D_" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace min="-2" pref="40" max="-2" attributes="0"/>
                                       <Component id="zStepLabel" min="-2" max="-2" attributes="0"/>
@@ -929,15 +1029,23 @@
                                       <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <Group type="102" alignment="0" attributes="0">
-                                      <EmptySpace min="-2" pref="181" max="-2" attributes="0"/>
-                                      <Component id="checkBox2D_" min="-2" max="-2" attributes="0"/>
+                                      <Component id="simpleZPanel_" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                      <Component id="panel2D_" min="-2" max="-2" attributes="0"/>
+                                      <Group type="103" groupAlignment="0" attributes="0">
+                                          <Group type="102" attributes="0">
+                                              <Component id="checkBox2D_" min="-2" max="-2" attributes="0"/>
+                                              <EmptySpace max="-2" attributes="0"/>
+                                              <Component id="panel2D_" min="-2" max="-2" attributes="0"/>
+                                          </Group>
+                                          <Group type="102" attributes="0">
+                                              <Component id="volumeBetweenZPanel_" min="-2" max="-2" attributes="0"/>
+                                              <EmptySpace max="-2" attributes="0"/>
+                                              <Component id="fixedDistanceZPanel_" min="-2" max="-2" attributes="0"/>
+                                          </Group>
+                                      </Group>
                                   </Group>
                               </Group>
-                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                              <Component id="fixedDistanceZPanel_" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace pref="92" max="32767" attributes="0"/>
+                              <EmptySpace pref="57" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -966,14 +1074,19 @@
                                           <Component id="volumeBetweenZPanel_" max="32767" attributes="0"/>
                                           <Component id="fixedDistanceZPanel_" max="32767" attributes="0"/>
                                       </Group>
-                                      <EmptySpace max="-2" attributes="0"/>
                                       <Group type="103" groupAlignment="0" attributes="0">
-                                          <Component id="checkBox2D_" min="-2" max="-2" attributes="0"/>
-                                          <Component id="panel2D_" min="-2" max="-2" attributes="0"/>
+                                          <Group type="102" attributes="0">
+                                              <EmptySpace max="-2" attributes="0"/>
+                                              <Component id="panel2D_" min="-2" max="-2" attributes="0"/>
+                                          </Group>
+                                          <Group type="102" alignment="0" attributes="0">
+                                              <EmptySpace min="-2" pref="26" max="-2" attributes="0"/>
+                                              <Component id="checkBox2D_" min="-2" max="-2" attributes="0"/>
+                                          </Group>
                                       </Group>
                                   </Group>
                               </Group>
-                              <EmptySpace min="0" pref="26" max="32767" attributes="0"/>
+                              <EmptySpace min="0" pref="2" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -1051,6 +1164,9 @@
                             <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
                               <ComponentRef name="zStackModeButtonGroup_"/>
                             </Property>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="text" type="java.lang.String" value="Simple Z stack"/>
                           </Properties>
                           <Events>
@@ -1059,21 +1175,33 @@
                         </Component>
                         <Component class="javax.swing.JLabel" name="zStartLabel">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="text" type="java.lang.String" value="Z-start (&#xb5;m)"/>
                           </Properties>
                         </Component>
                         <Component class="javax.swing.JLabel" name="zEndLabel">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="text" type="java.lang.String" value="Z-end (&#xb5;m)"/>
                           </Properties>
                         </Component>
                         <Component class="javax.swing.JLabel" name="jLabel2">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="text" type="java.lang.String" value="Surface/Grid XY footprint:"/>
                           </Properties>
                         </Component>
                         <Component class="javax.swing.JComboBox" name="simpleZStackFootprintCombo_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
                               <Connection code="createSurfaceAndRegionComboBoxModel(true,true)" type="code"/>
                             </Property>
@@ -1084,6 +1212,9 @@
                         </Component>
                         <Component class="javax.swing.JSpinner" name="zStartSpinner_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                               <SpinnerModel initial="0.0" numberType="java.lang.Double" stepSize="1.0" type="number"/>
                             </Property>
@@ -1097,6 +1228,9 @@
                         </Component>
                         <Component class="javax.swing.JSpinner" name="zEndSpinner_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                               <SpinnerModel initial="0.0" numberType="java.lang.Double" stepSize="1.0" type="number"/>
                             </Property>
@@ -1156,7 +1290,7 @@
                                       <Group type="102" alignment="0" attributes="0">
                                           <Component id="jLabel5" min="-2" max="-2" attributes="0"/>
                                           <EmptySpace max="-2" attributes="0"/>
-                                          <Component id="volumeBetweenFootprintCombo_" max="32767" attributes="0"/>
+                                          <Component id="volumeBetweenFootprintCombo_" pref="158" max="32767" attributes="0"/>
                                       </Group>
                                   </Group>
                                   <EmptySpace max="-2" attributes="0"/>
@@ -1187,7 +1321,7 @@
                                       <Component id="jLabel5" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="volumeBetweenFootprintCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
                                   </Group>
-                                  <EmptySpace pref="15" max="32767" attributes="0"/>
+                                  <EmptySpace max="32767" attributes="0"/>
                               </Group>
                           </Group>
                         </DimensionLayout>
@@ -1198,6 +1332,9 @@
                             <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
                               <ComponentRef name="zStackModeButtonGroup_"/>
                             </Property>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="text" type="java.lang.String" value="Volume between two surfaces"/>
                           </Properties>
                           <Events>
@@ -1206,16 +1343,25 @@
                         </Component>
                         <Component class="javax.swing.JLabel" name="topSurfaceLabel_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="text" type="java.lang.String" value="Z-start"/>
                           </Properties>
                         </Component>
                         <Component class="javax.swing.JLabel" name="bottomSurfaceLabel_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="text" type="java.lang.String" value="Z-end"/>
                           </Properties>
                         </Component>
                         <Component class="javax.swing.JComboBox" name="topSurfaceCombo_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
                               <Connection code="createSurfaceAndRegionComboBoxModel(true,false)" type="code"/>
                             </Property>
@@ -1226,6 +1372,9 @@
                         </Component>
                         <Component class="javax.swing.JComboBox" name="bottomSurfaceCombo_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
                               <Connection code="createSurfaceAndRegionComboBoxModel(true,false)" type="code"/>
                             </Property>
@@ -1236,11 +1385,17 @@
                         </Component>
                         <Component class="javax.swing.JLabel" name="jLabel5">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="text" type="java.lang.String" value="XY positions from:"/>
                           </Properties>
                         </Component>
                         <Component class="javax.swing.JComboBox" name="volumeBetweenFootprintCombo_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
                               <StringArray count="2">
                                 <StringItem index="0" value="Top surface"/>
@@ -1264,6 +1419,9 @@
                         </Component>
                         <Component class="javax.swing.JLabel" name="umAboveVolBetweenLabel_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="text" type="java.lang.String" value="&#xb5;m above"/>
                           </Properties>
                         </Component>
@@ -1279,6 +1437,9 @@
                         </Component>
                         <Component class="javax.swing.JLabel" name="umBelowVolBetweenLabel_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="text" type="java.lang.String" value="&#xb5;m below"/>
                           </Properties>
                         </Component>
@@ -1373,6 +1534,9 @@
                             <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
                               <ComponentRef name="zStackModeButtonGroup_"/>
                             </Property>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="label" type="java.lang.String" value="Within distance from surface"/>
                           </Properties>
                           <Events>
@@ -1381,11 +1545,17 @@
                         </Component>
                         <Component class="javax.swing.JLabel" name="distanceBelowSurfaceLabel_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="text" type="java.lang.String" value="Z-end"/>
                           </Properties>
                         </Component>
                         <Component class="javax.swing.JSpinner" name="distanceBelowFixedSurfaceSpinner_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                               <SpinnerModel initial="0.0" minimum="0.0" numberType="java.lang.Double" stepSize="0.001" type="number"/>
                             </Property>
@@ -1399,11 +1569,17 @@
                         </Component>
                         <Component class="javax.swing.JLabel" name="distanceAboveSurfaceLabel_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="text" type="java.lang.String" value="Z-start"/>
                           </Properties>
                         </Component>
                         <Component class="javax.swing.JSpinner" name="distanceAboveFixedSurfaceSpinner_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                               <SpinnerModel initial="0.0" minimum="0.0" numberType="java.lang.Double" stepSize="0.001" type="number"/>
                             </Property>
@@ -1417,21 +1593,33 @@
                         </Component>
                         <Component class="javax.swing.JLabel" name="umAboveLabel_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="text" type="java.lang.String" value="&#xb5;m above"/>
                           </Properties>
                         </Component>
                         <Component class="javax.swing.JLabel" name="umBelowLabel_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="text" type="java.lang.String" value="&#xb5;m below"/>
                           </Properties>
                         </Component>
                         <Component class="javax.swing.JLabel" name="fixedSurfaceLabel_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="text" type="java.lang.String" value="Surface: "/>
                           </Properties>
                         </Component>
                         <Component class="javax.swing.JComboBox" name="fixedDistanceSurfaceComboBox_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
                               <Connection code="createSurfaceAndRegionComboBoxModel(true,false)" type="code"/>
                             </Property>
@@ -1444,6 +1632,9 @@
                     </Container>
                     <Component class="javax.swing.JLabel" name="zStepLabel">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Z-step (&#xb5;m):"/>
                       </Properties>
                     </Component>
@@ -1484,11 +1675,17 @@
                       <SubComponents>
                         <Component class="javax.swing.JLabel" name="footprin2DLabel_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="text" type="java.lang.String" value="Surface/Grid footprint:"/>
                           </Properties>
                         </Component>
                         <Component class="javax.swing.JComboBox" name="footprint2DComboBox_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
                               <Connection code="createSurfaceAndRegionComboBoxModel(true,true)" type="code"/>
                             </Property>
@@ -1501,6 +1698,9 @@
                     </Container>
                     <Component class="javax.swing.JCheckBox" name="checkBox3D_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="3D"/>
                       </Properties>
                       <Events>
@@ -1509,6 +1709,9 @@
                     </Component>
                     <Component class="javax.swing.JCheckBox" name="checkBox2D_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="2D"/>
                       </Properties>
                       <Events>
@@ -1517,6 +1720,9 @@
                     </Component>
                     <Component class="javax.swing.JSpinner" name="zStepSpinner_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                           <SpinnerModel initial="1.0" numberType="java.lang.Double" stepSize="1.0" type="number"/>
                         </Property>
@@ -1530,11 +1736,17 @@
                     </Component>
                     <Component class="javax.swing.JLabel" name="acqTileOverlapLabel_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Tile overlap:"/>
                       </Properties>
                     </Component>
                     <Component class="javax.swing.JSpinner" name="acqOverlapPercentSpinner_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                           <SpinnerModel initial="5.0" maximum="99.0" minimum="0.0" numberType="java.lang.Double" stepSize="1.0" type="number"/>
                         </Property>
@@ -1545,6 +1757,9 @@
                     </Component>
                     <Component class="javax.swing.JLabel" name="jLabel4">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="%"/>
                       </Properties>
                     </Component>
@@ -1562,7 +1777,7 @@
                   <Layout>
                     <DimensionLayout dim="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jScrollPane1" pref="838" max="32767" attributes="0"/>
+                          <Component id="jScrollPane1" pref="869" max="32767" attributes="0"/>
                           <Group type="102" attributes="0">
                               <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
@@ -1579,7 +1794,7 @@
                                   <Component id="ChannelGroupCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jScrollPane1" pref="230" max="32767" attributes="0"/>
+                              <Component id="jScrollPane1" pref="261" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -1600,11 +1815,17 @@
                     </Container>
                     <Component class="javax.swing.JLabel" name="jLabel3">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Channel group:"/>
                       </Properties>
                     </Component>
                     <Component class="javax.swing.JComboBox" name="ChannelGroupCombo_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
                           <Connection code="new ChannelComboBoxModel()" type="code"/>
                         </Property>
@@ -1632,7 +1853,7 @@
                                   <Group type="102" attributes="0">
                                       <EmptySpace min="-2" pref="15" max="-2" attributes="0"/>
                                       <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace min="244" pref="311" max="32767" attributes="0"/>
+                                      <EmptySpace min="244" pref="320" max="32767" attributes="0"/>
                                   </Group>
                                   <Component id="propertyPairingsScrollpane_" pref="0" max="32767" attributes="0"/>
                               </Group>
@@ -1656,7 +1877,7 @@
                               <Component id="addCovariedPairingValueButton_" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="deleteCovariedPairingValueButton_" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace max="-2" attributes="0"/>
+                              <EmptySpace min="-2" pref="116" max="-2" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -1681,7 +1902,7 @@
                                   <Component id="addCovariedPairingValueButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="deleteCovariedPairingValueButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace pref="48" max="32767" attributes="0"/>
+                              <EmptySpace pref="77" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -1715,7 +1936,7 @@
                     <Component class="javax.swing.JButton" name="newParingButton_">
                       <Properties>
                         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                          <Font name="Tahoma" size="11" style="1"/>
+                          <Font name="Tahoma" size="14" style="1"/>
                         </Property>
                         <Property name="text" type="java.lang.String" value="+"/>
                       </Properties>
@@ -1726,7 +1947,7 @@
                     <Component class="javax.swing.JButton" name="removePairingButton">
                       <Properties>
                         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                          <Font name="Tahoma" size="11" style="1"/>
+                          <Font name="Tahoma" size="14" style="1"/>
                         </Property>
                         <Property name="text" type="java.lang.String" value="-"/>
                       </Properties>
@@ -1752,6 +1973,9 @@
                     </Container>
                     <Component class="javax.swing.JButton" name="savePairingsButton_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Save"/>
                       </Properties>
                       <Events>
@@ -1760,6 +1984,9 @@
                     </Component>
                     <Component class="javax.swing.JButton" name="loadPairingsButton_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Load"/>
                       </Properties>
                       <Events>
@@ -1769,7 +1996,7 @@
                     <Component class="javax.swing.JButton" name="addCovariedPairingValueButton_">
                       <Properties>
                         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                          <Font name="Tahoma" size="11" style="1"/>
+                          <Font name="Tahoma" size="14" style="1"/>
                         </Property>
                         <Property name="text" type="java.lang.String" value="+"/>
                       </Properties>
@@ -1780,7 +2007,7 @@
                     <Component class="javax.swing.JButton" name="deleteCovariedPairingValueButton_">
                       <Properties>
                         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                          <Font name="Tahoma" size="11" style="1"/>
+                          <Font name="Tahoma" size="14" style="1"/>
                         </Property>
                         <Property name="text" type="java.lang.String" value="-"/>
                       </Properties>
@@ -1790,11 +2017,17 @@
                     </Component>
                     <Component class="javax.swing.JLabel" name="jLabel6">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Covariant pairings"/>
                       </Properties>
                     </Component>
                     <Component class="javax.swing.JLabel" name="jLabel8">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Interpolation points"/>
                       </Properties>
                     </Component>
@@ -1818,7 +2051,7 @@
                                   <Component id="useAutofocusCheckBox_" min="-2" max="-2" attributes="0"/>
                                   <Component id="autofocusComponentsPanel_" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace pref="536" max="32767" attributes="0"/>
+                              <EmptySpace pref="509" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -1829,7 +2062,7 @@
                               <Component id="useAutofocusCheckBox_" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="autofocusComponentsPanel_" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace pref="56" max="32767" attributes="0"/>
+                              <EmptySpace pref="55" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -1837,6 +2070,9 @@
                   <SubComponents>
                     <Component class="javax.swing.JCheckBox" name="useAutofocusCheckBox_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Activate cross-correlation based drift compensation"/>
                       </Properties>
                       <Events>
@@ -1907,11 +2143,17 @@
                       <SubComponents>
                         <Component class="javax.swing.JLabel" name="autofocusZLabel_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="text" type="java.lang.String" value="Drift compensation Z device: "/>
                           </Properties>
                         </Component>
                         <Component class="javax.swing.JComboBox" name="autofocusZDeviceComboBox_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
                               <Connection code="afzModel" type="code"/>
                             </Property>
@@ -1925,11 +2167,17 @@
                         </Component>
                         <Component class="javax.swing.JLabel" name="autofocusMaxDisplacementLabel_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="text" type="java.lang.String" value="Maxmimum displacement (um): "/>
                           </Properties>
                         </Component>
                         <Component class="javax.swing.JSpinner" name="autofocusMaxDisplacementSpinner_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                               <SpinnerModel initial="1.0" minimum="0.0" numberType="java.lang.Double" stepSize="1.0" type="number"/>
                             </Property>
@@ -1940,11 +2188,17 @@
                         </Component>
                         <Component class="javax.swing.JLabel" name="jLabel7">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="text" type="java.lang.String" value="Use channel:"/>
                           </Properties>
                         </Component>
                         <Component class="javax.swing.JComboBox" name="autofocusChannelCombo_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.RADConnectionPropertyEditor">
                               <Connection code="afucModel" type="code"/>
                             </Property>
@@ -1958,6 +2212,9 @@
                         </Component>
                         <Component class="javax.swing.JSpinner" name="autofocusInitialPositionSpinner_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                               <SpinnerModel initial="1.0" numberType="java.lang.Double" stepSize="1.0" type="number"/>
                             </Property>
@@ -1968,6 +2225,9 @@
                         </Component>
                         <Component class="javax.swing.JCheckBox" name="autofocusInitialPositionCheckBox_">
                           <Properties>
+                            <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                              <Font name="Tahoma" size="14" style="0"/>
+                            </Property>
                             <Property name="text" type="java.lang.String" value="Set initial position"/>
                           </Properties>
                           <Events>
@@ -2092,7 +2352,7 @@
                                   <Component id="ch5OffsetSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="ch5OffsetLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace pref="70" max="32767" attributes="0"/>
+                              <EmptySpace pref="58" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -2102,6 +2362,9 @@
                       <Properties>
                         <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
                           <ComponentRef name="filterMethodButtonGroup_"/>
+                        </Property>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
                         </Property>
                         <Property name="selected" type="boolean" value="true"/>
                         <Property name="text" type="java.lang.String" value="Frame average"/>
@@ -2115,6 +2378,9 @@
                         <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
                           <ComponentRef name="filterMethodButtonGroup_"/>
                         </Property>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Rank filter"/>
                       </Properties>
                       <Events>
@@ -2123,6 +2389,9 @@
                     </Component>
                     <Component class="javax.swing.JSpinner" name="rankSpinner_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                           <SpinnerModel initial="0.95" maximum="1.0" minimum="0.0" numberType="java.lang.Double" stepSize="0.01" type="number"/>
                         </Property>
@@ -2133,11 +2402,17 @@
                     </Component>
                     <Component class="javax.swing.JLabel" name="jLabel9">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Rank:"/>
                       </Properties>
                     </Component>
                     <Component class="javax.swing.JSpinner" name="ch0OffsetSpinner_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                           <SpinnerModel initial="0" numberType="java.lang.Integer" stepSize="1" type="number"/>
                         </Property>
@@ -2167,16 +2442,25 @@
                     </Component>
                     <Component class="javax.swing.JLabel" name="ch0OffsetLabel_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Ch0"/>
                       </Properties>
                     </Component>
                     <Component class="javax.swing.JLabel" name="ch1OffsetLabel_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Ch1"/>
                       </Properties>
                     </Component>
                     <Component class="javax.swing.JSpinner" name="ch1OffsetSpinner_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                           <SpinnerModel initial="0" numberType="java.lang.Integer" stepSize="1" type="number"/>
                         </Property>
@@ -2190,11 +2474,17 @@
                     </Component>
                     <Component class="javax.swing.JLabel" name="ch2OffsetLabel_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Ch2"/>
                       </Properties>
                     </Component>
                     <Component class="javax.swing.JSpinner" name="ch2OffsetSpinner_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                           <SpinnerModel initial="0" numberType="java.lang.Integer" stepSize="1" type="number"/>
                         </Property>
@@ -2208,11 +2498,17 @@
                     </Component>
                     <Component class="javax.swing.JLabel" name="ch3OffsetLabel_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Ch3"/>
                       </Properties>
                     </Component>
                     <Component class="javax.swing.JSpinner" name="ch3OffsetSpinner_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                           <SpinnerModel initial="0" numberType="java.lang.Integer" stepSize="1" type="number"/>
                         </Property>
@@ -2226,11 +2522,17 @@
                     </Component>
                     <Component class="javax.swing.JLabel" name="ch4OffsetLabel_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Ch4"/>
                       </Properties>
                     </Component>
                     <Component class="javax.swing.JSpinner" name="ch4OffsetSpinner_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                           <SpinnerModel initial="0" numberType="java.lang.Integer" stepSize="1" type="number"/>
                         </Property>
@@ -2244,11 +2546,17 @@
                     </Component>
                     <Component class="javax.swing.JLabel" name="ch5OffsetLabel_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Ch5"/>
                       </Properties>
                     </Component>
                     <Component class="javax.swing.JSpinner" name="ch5OffsetSpinner_">
                       <Properties>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
                           <SpinnerModel initial="0" numberType="java.lang.Integer" stepSize="1" type="number"/>
                         </Property>
@@ -2265,6 +2573,9 @@
                         <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
                           <ComponentRef name="filterMethodButtonGroup_"/>
                         </Property>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
+                        </Property>
                         <Property name="text" type="java.lang.String" value="Frame summation"/>
                       </Properties>
                       <Events>
@@ -2275,6 +2586,9 @@
                       <Properties>
                         <Property name="buttonGroup" type="javax.swing.ButtonGroup" editor="org.netbeans.modules.form.RADComponent$ButtonGroupPropertyEditor">
                           <ComponentRef name="filterMethodButtonGroup_"/>
+                        </Property>
+                        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                          <Font name="Tahoma" size="14" style="0"/>
                         </Property>
                         <Property name="text" type="java.lang.String" value="Burst mode"/>
                       </Properties>
@@ -2288,6 +2602,9 @@
             </Container>
             <Component class="javax.swing.JButton" name="runAcqButton_">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
                 <Property name="text" type="java.lang.String" value="Run acquisition"/>
               </Properties>
               <Events>
@@ -2296,6 +2613,9 @@
             </Component>
             <Component class="javax.swing.JButton" name="configPropsButton_">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
                 <Property name="text" type="java.lang.String" value="Configure device control"/>
               </Properties>
               <Events>
@@ -2304,6 +2624,9 @@
             </Component>
             <Component class="javax.swing.JButton" name="jButton1">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
                 <Property name="text" type="java.lang.String" value="Calibrate"/>
               </Properties>
               <Events>
@@ -2313,13 +2636,16 @@
             <Component class="javax.swing.JLabel" name="createdByHenryLabel_">
               <Properties>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                  <Font name="Lucida Grande" size="10" style="0"/>
+                  <Font name="Tahoma" size="14" style="0"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Created by Henry Pinkard at the University of California San Francisco 2014-2015"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JButton" name="openDatasetButton_">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
                 <Property name="text" type="java.lang.String" value="Open dataset"/>
               </Properties>
               <Events>
@@ -2331,6 +2657,9 @@
                 <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                   <Color blue="c8" green="ff" red="c8" type="rgb"/>
                 </Property>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
                 <Property name="text" type="java.lang.String" value="Setup"/>
               </Properties>
               <Events>
@@ -2339,6 +2668,9 @@
             </Component>
             <Component class="javax.swing.JLabel" name="userGuideLink_">
               <Properties>
+                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                  <Font name="Tahoma" size="14" style="0"/>
+                </Property>
                 <Property name="text" type="java.lang.String" value="&lt;html&gt;&lt;a href=\u005c&quot;https://micro-manager.org/wiki/MicroMagellan\u005c&quot;&gt;Micro-Magellan User Guide&lt;/a&gt;&lt;/html&gt;" containsInvalidXMLChars="true"/>
               </Properties>
             </Component>

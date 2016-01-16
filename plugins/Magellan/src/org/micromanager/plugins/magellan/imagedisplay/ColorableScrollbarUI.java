@@ -23,7 +23,6 @@ import java.awt.Rectangle;
 import javax.swing.JComponent;
 import javax.swing.JScrollBar;
 import javax.swing.plaf.basic.BasicScrollBarUI;
-import javax.swing.plaf.synth.SynthScrollBarUI;
 
 /**
  *
