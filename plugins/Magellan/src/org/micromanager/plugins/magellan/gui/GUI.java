@@ -889,7 +889,7 @@ public class GUI extends javax.swing.JFrame {
         controlPanelName_.setLayout(controlPanelName_Layout);
         controlPanelName_Layout.setHorizontalGroup(
             controlPanelName_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(deviceControlScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 869, Short.MAX_VALUE)
+            .addComponent(deviceControlScrollPane_, javax.swing.GroupLayout.DEFAULT_SIZE, 919, Short.MAX_VALUE)
         );
         controlPanelName_Layout.setVerticalGroup(
             controlPanelName_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1039,9 +1039,9 @@ public class GUI extends javax.swing.JFrame {
         gridsPanel_.setLayout(gridsPanel_Layout);
         gridsPanel_Layout.setHorizontalGroup(
             gridsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 869, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 919, Short.MAX_VALUE)
             .addGroup(gridsPanel_Layout.createSequentialGroup()
-                .addContainerGap(357, Short.MAX_VALUE)
+                .addContainerGap(407, Short.MAX_VALUE)
                 .addComponent(deleteSelectedRegionButton_)
                 .addGap(41, 41, 41)
                 .addComponent(deleteAllRegionsButton_)
@@ -1112,7 +1112,7 @@ public class GUI extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(deleteAllSurfacesButton_)
                 .addGap(362, 362, 362))
-            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 869, Short.MAX_VALUE)
+            .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 919, Short.MAX_VALUE)
         );
         surfacesPanel_Layout.setVerticalGroup(
             surfacesPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1180,7 +1180,7 @@ public class GUI extends javax.swing.JFrame {
         });
 
         exploreZStepLabel_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        exploreZStepLabel_.setText("Z-step (µm):");
+        exploreZStepLabel_.setText("<html>Z-step (&mu;m):</html>");
 
         exploreBrowseButton_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         exploreBrowseButton_.setText("Browse");
@@ -1231,7 +1231,7 @@ public class GUI extends javax.swing.JFrame {
                         .addGap(6, 6, 6)
                         .addComponent(savingNameTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, 686, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(savingNameLabel_))
-                .addContainerGap(162, Short.MAX_VALUE))
+                .addContainerGap(212, Short.MAX_VALUE))
         );
         savingTab_Layout.setVerticalGroup(
             savingTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1330,7 +1330,7 @@ public class GUI extends javax.swing.JFrame {
                 .addGroup(timePointsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(timePointsCheckBox_)
                     .addComponent(timePointsPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(612, Short.MAX_VALUE))
+                .addContainerGap(662, Short.MAX_VALUE))
         );
         timePointsTab_Layout.setVerticalGroup(
             timePointsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1360,10 +1360,10 @@ public class GUI extends javax.swing.JFrame {
         });
 
         zStartLabel.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        zStartLabel.setText("Z-start (µm)");
+        zStartLabel.setText("<html>Z-start (&mu;m)</html>");
 
         zEndLabel.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        zEndLabel.setText("Z-end (µm)");
+        zEndLabel.setText("<html>Z-end (&mu;m)</html>");
 
         jLabel2.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         jLabel2.setText("Surface/Grid XY footprint:");
@@ -1404,11 +1404,11 @@ public class GUI extends javax.swing.JFrame {
                         .addGroup(simpleZPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(simpleZStackRadioButton_)
                             .addComponent(jLabel2))
-                        .addGap(0, 30, Short.MAX_VALUE))
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(simpleZPanel_Layout.createSequentialGroup()
                         .addGroup(simpleZPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(zStartLabel)
-                            .addComponent(zEndLabel))
+                            .addComponent(zStartLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(zEndLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(simpleZPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(zEndSpinner_)
@@ -1422,11 +1422,11 @@ public class GUI extends javax.swing.JFrame {
                 .addComponent(simpleZStackRadioButton_)
                 .addGap(5, 5, 5)
                 .addGroup(simpleZPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(zStartLabel)
+                    .addComponent(zStartLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(zStartSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(simpleZPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(zEndLabel)
+                    .addComponent(zEndLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(zEndSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel2)
@@ -1490,7 +1490,7 @@ public class GUI extends javax.swing.JFrame {
         });
 
         umAboveVolBetweenLabel_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        umAboveVolBetweenLabel_.setText("µm above");
+        umAboveVolBetweenLabel_.setText("<html>&mu;m above</html>");
 
         umBelowBottomSurfaceSpinner_.setModel(new javax.swing.SpinnerNumberModel(0.0d, 0.0d, null, 1.0d));
         umBelowBottomSurfaceSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
@@ -1500,7 +1500,7 @@ public class GUI extends javax.swing.JFrame {
         });
 
         umBelowVolBetweenLabel_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        umBelowVolBetweenLabel_.setText("µm below");
+        umBelowVolBetweenLabel_.setText("<html>&mu;m below</html>");
 
         javax.swing.GroupLayout volumeBetweenZPanel_Layout = new javax.swing.GroupLayout(volumeBetweenZPanel_);
         volumeBetweenZPanel_.setLayout(volumeBetweenZPanel_Layout);
@@ -1522,8 +1522,8 @@ public class GUI extends javax.swing.JFrame {
                             .addComponent(umBelowBottomSurfaceSpinner_))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(volumeBetweenZPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(umAboveVolBetweenLabel_)
-                            .addComponent(umBelowVolBetweenLabel_))
+                            .addComponent(umAboveVolBetweenLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(umBelowVolBetweenLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(volumeBetweenZPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(topSurfaceCombo_, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -1544,13 +1544,13 @@ public class GUI extends javax.swing.JFrame {
                     .addComponent(topSurfaceLabel_)
                     .addComponent(topSurfaceCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(umAboveTopSurfaceSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(umAboveVolBetweenLabel_))
+                    .addComponent(umAboveVolBetweenLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(volumeBetweenZPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(bottomSurfaceLabel_)
                     .addComponent(bottomSurfaceCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(umBelowBottomSurfaceSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(umBelowVolBetweenLabel_))
+                    .addComponent(umBelowVolBetweenLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(volumeBetweenZPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel5)
@@ -1592,10 +1592,10 @@ public class GUI extends javax.swing.JFrame {
         });
 
         umAboveLabel_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        umAboveLabel_.setText("µm above");
+        umAboveLabel_.setText("<html>&mu;m above</html>");
 
         umBelowLabel_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        umBelowLabel_.setText("µm below");
+        umBelowLabel_.setText("<html>&mu;m below</html>");
 
         fixedSurfaceLabel_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         fixedSurfaceLabel_.setText("Surface: ");
@@ -1631,8 +1631,8 @@ public class GUI extends javax.swing.JFrame {
                                         .addComponent(distanceBelowFixedSurfaceSpinner_)))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 8, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGroup(fixedDistanceZPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(umAboveLabel_, javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(umBelowLabel_, javax.swing.GroupLayout.Alignment.TRAILING)))
+                                    .addComponent(umAboveLabel_, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(umBelowLabel_, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                             .addGroup(fixedDistanceZPanel_Layout.createSequentialGroup()
                                 .addComponent(fixedDistanceFromSurfaceRadioButton_)
                                 .addGap(0, 0, Short.MAX_VALUE)))
@@ -1652,12 +1652,12 @@ public class GUI extends javax.swing.JFrame {
                 .addGroup(fixedDistanceZPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(distanceAboveSurfaceLabel_)
                     .addComponent(distanceAboveFixedSurfaceSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(umAboveLabel_))
+                    .addComponent(umAboveLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(fixedDistanceZPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(distanceBelowSurfaceLabel_)
                     .addComponent(distanceBelowFixedSurfaceSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(umBelowLabel_))
+                    .addComponent(umBelowLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(fixedDistanceZPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(fixedSurfaceLabel_)
@@ -1669,7 +1669,7 @@ public class GUI extends javax.swing.JFrame {
         addTextEditListener(distanceAboveFixedSurfaceSpinner_);
 
         zStepLabel.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        zStepLabel.setText("Z-step (µm):");
+        zStepLabel.setText("<html>Z-step (&mu;m):</html>");
 
         panel2D_.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
 
@@ -1753,7 +1753,7 @@ public class GUI extends javax.swing.JFrame {
                     .addGroup(spaceTab_Layout.createSequentialGroup()
                         .addComponent(checkBox3D_)
                         .addGap(40, 40, 40)
-                        .addComponent(zStepLabel)
+                        .addComponent(zStepLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(zStepSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(37, 37, 37)
@@ -1774,7 +1774,7 @@ public class GUI extends javax.swing.JFrame {
                                 .addComponent(volumeBetweenZPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(fixedDistanceZPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))))
-                .addContainerGap(57, Short.MAX_VALUE))
+                .addContainerGap(137, Short.MAX_VALUE))
         );
         spaceTab_Layout.setVerticalGroup(
             spaceTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1784,7 +1784,7 @@ public class GUI extends javax.swing.JFrame {
                     .addComponent(checkBox3D_)
                     .addGroup(spaceTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(zStepSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(zStepLabel)
+                        .addComponent(zStepLabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(acqTileOverlapLabel_)
                         .addComponent(acqOverlapPercentSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(jLabel4)))
@@ -1836,7 +1836,7 @@ public class GUI extends javax.swing.JFrame {
         ChannelsTab_.setLayout(ChannelsTab_Layout);
         ChannelsTab_Layout.setHorizontalGroup(
             ChannelsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 869, Short.MAX_VALUE)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 919, Short.MAX_VALUE)
             .addGroup(ChannelsTab_Layout.createSequentialGroup()
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -1938,7 +1938,7 @@ public class GUI extends javax.swing.JFrame {
                     .addGroup(covariedSettingsTab_Layout.createSequentialGroup()
                         .addGap(15, 15, 15)
                         .addComponent(jLabel6)
-                        .addGap(244, 320, Short.MAX_VALUE))
+                        .addGap(244, 370, Short.MAX_VALUE))
                     .addComponent(propertyPairingsScrollpane_, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addGap(8, 8, 8)
                 .addGroup(covariedSettingsTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -2009,7 +2009,7 @@ public class GUI extends javax.swing.JFrame {
         });
 
         autofocusMaxDisplacementLabel_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        autofocusMaxDisplacementLabel_.setText("Maxmimum displacement (um): ");
+        autofocusMaxDisplacementLabel_.setText("<html>Maxmimum displacement (&mu;m): </html>");
 
         autofocusMaxDisplacementSpinner_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         autofocusMaxDisplacementSpinner_.setModel(new javax.swing.SpinnerNumberModel(1.0d, 0.0d, null, 1.0d));
@@ -2059,7 +2059,7 @@ public class GUI extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(autofocusChannelCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(autofocusComponentsPanel_Layout.createSequentialGroup()
-                        .addComponent(autofocusMaxDisplacementLabel_)
+                        .addComponent(autofocusMaxDisplacementLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(autofocusMaxDisplacementSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 64, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(autofocusComponentsPanel_Layout.createSequentialGroup()
@@ -2082,7 +2082,7 @@ public class GUI extends javax.swing.JFrame {
                 .addGap(18, 18, 18)
                 .addGroup(autofocusComponentsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(autofocusMaxDisplacementSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(autofocusMaxDisplacementLabel_))
+                    .addComponent(autofocusMaxDisplacementLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(autofocusComponentsPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(autofocusZLabel_)
@@ -2103,7 +2103,7 @@ public class GUI extends javax.swing.JFrame {
                 .addGroup(autofocusTab_lLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(useAutofocusCheckBox_)
                     .addComponent(autofocusComponentsPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(509, Short.MAX_VALUE))
+                .addContainerGap(559, Short.MAX_VALUE))
         );
         autofocusTab_lLayout.setVerticalGroup(
             autofocusTab_lLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -2390,7 +2390,7 @@ public class GUI extends javax.swing.JFrame {
                         .addContainerGap()
                         .addGroup(splitPaneBottomPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(splitPaneBottomPanel_Layout.createSequentialGroup()
-                                .addComponent(exploreZStepLabel_)
+                                .addComponent(exploreZStepLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(exploreZStepSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -2460,7 +2460,7 @@ public class GUI extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(splitPaneBottomPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(exploreZStepSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(exploreZStepLabel_)
+                    .addComponent(exploreZStepLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(channelGroupLabel_)
                     .addComponent(exploreChannelGroupCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(exploreOverlapLabel_)
