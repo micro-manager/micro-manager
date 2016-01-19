@@ -137,10 +137,13 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          }
       }
       try {
+         PositionList posListToUse = posList_;
+         if (posList_ == null && useMultiPosition_) {
+            posListToUse = studio_.compat().getPositionList();
+         }
          // Start up the acquisition engine
          BlockingQueue<TaggedImage> engineOutputQueue = getAcquisitionEngine2010().run(
-                 acquisitionSettings, true,
-                 studio_.compat().getPositionList(),
+                 acquisitionSettings, true, posListToUse,
                  studio_.getAutofocusManager().getDevice());
          summaryMetadata_ = getAcquisitionEngine2010().getSummaryMetadata();
 
