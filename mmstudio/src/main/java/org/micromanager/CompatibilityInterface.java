@@ -58,9 +58,18 @@ public interface CompatibilityInterface {
     * Note that this function should not be executed on the EDT (which is the
     * thread running the UI).  
     * @return The Datastore containing the images from the acquisition.
-    * @throws MMScriptException
+    * @throws MMScriptException if the acquisition is started on the EDT
     */
    public Datastore runAcquisition() throws MMScriptException;
+
+   /**
+    * As runAcquisition, but will return as soon as the acquisition is set up
+    * and started; useful for code that wants access to the Datastore for the
+    * acquisition before it finishes.
+    * @return The Datastore containing the images from the acquisition.
+    * @throws MMScriptException if the acquisition is started on the EDT
+    */
+   public Datastore runAcquisitionNonblocking() throws MMScriptException;
 
    /**
     * Halt any ongoing acquisition as soon as possible.

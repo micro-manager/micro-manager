@@ -1384,18 +1384,29 @@ public class MMStudio implements Studio, CompatibilityInterface {
    
    @Override
    public Datastore runAcquisition() throws MMScriptException {
+      return executeAcquisition(true);
+   }
+
+   @Override
+   public Datastore runAcquisitionNonblocking() throws MMScriptException {
+      return executeAcquisition(false);
+   }
+
+   private Datastore executeAcquisition(boolean isBlocking) throws MMScriptException {
       if (SwingUtilities.isEventDispatchThread()) {
          throw new MMScriptException("Acquisition can not be run from this (EDT) thread");
       }
       testForAbortRequests();
       if (acqControlWin_ != null) {
          Datastore store = acqControlWin_.runAcquisition();
-         try {
-            while (acqControlWin_.isAcquisitionRunning()) {
-               Thread.sleep(50);
+         if (isBlocking) {
+            try {
+               while (acqControlWin_.isAcquisitionRunning()) {
+                  Thread.sleep(50);
+               }
+            } catch (InterruptedException e) {
+               ReportingUtils.showError(e);
             }
-         } catch (InterruptedException e) {
-            ReportingUtils.showError(e);
          }
          return store;
       } else {
