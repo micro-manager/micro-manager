@@ -70,7 +70,8 @@ XCite120PC::XCite120PC(const char* name) :
    lampIntensity_("0"),
    lampState_("On"),
    shutterDwellTime_(0),	// shutter close setteling time initialized to 0
-   timeShutterClosed_(0)	// shutter closed time initialized to 0
+   timeShutterClosed_(0),	// shutter closed time initialized to 0
+   lastShutterTime_(0)
 {
   InitializeDefaultErrorMessages();
 
@@ -78,6 +79,8 @@ XCite120PC::XCite120PC(const char* name) :
 
   CPropertyAction* pAct = new CPropertyAction(this, &XCite120PC::OnPort);
   CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
+
+  EnableDelay();
 }
 
 XCite120PC::~XCite120PC()
@@ -214,6 +217,7 @@ int XCite120PC::Initialize()
 
    // initialize the shutter closed time to current time
    timeShutterClosed_ = GetCurrentMMTime();
+   lastShutterTime_ = GetCurrentMMTime();
 
    initialized_ = true;
    return DEVICE_OK;
@@ -232,15 +236,23 @@ void XCite120PC::GetName(char* Name) const
 
 bool XCite120PC::Busy()
 {
-   // All commands wait for a response, so we should never be busy
+   double elapsedMs = (GetCurrentMMTime() - lastShutterTime_).getMsec();
+   if (elapsedMs < GetDelayMs())
+   {
+      return true;
+   }
    return false;
 }
 
 int XCite120PC::SetOpen(bool open)
 {
+   if (open == shutterOpen_)
+      return DEVICE_OK;
+
    shutterOpen_ = open;
 
    char cBuff[20];
+   int ret = DEVICE_ERR;
 
    if (open)
    {
@@ -263,7 +275,7 @@ int XCite120PC::SetOpen(bool open)
 		  } while ( timeElapsed < (double)shutterDwellTime_);
 	  }
 
-      return ExecuteCommand(cmdOpenShutter);
+      ret = ExecuteCommand(cmdOpenShutter);
    }
    else
    {
@@ -273,8 +285,11 @@ int XCite120PC::SetOpen(bool open)
 	  sprintf(cBuff, "[%.2f]", timeShutterClosed_.getMsec()), 
 	  LogMessage("XCite120PC: Shutter Closed Time..." + string(cBuff));
 
-      return ExecuteCommand(cmdCloseShutter);
+      ret = ExecuteCommand(cmdCloseShutter);
    }
+
+   lastShutterTime_ = GetCurrentMMTime();
+   return ret;
 }
 
 int XCite120PC::GetOpen(bool& open)
