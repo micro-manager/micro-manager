@@ -535,13 +535,25 @@ public class DefaultUserProfile implements UserProfile {
 
    @Override
    public void exportProfileSubsetToFile(Class<?> c, String path) throws IOException {
+      // NOTE: this should match genKey()
+      exportSubsetWithKey(c.getCanonicalName(), path);
+   }
+
+   @Override
+   public void exportPackageProfileToFile(String packageName, String path) throws IOException {
+      exportSubsetWithKey(packageName, path);
+   }
+
+   /**
+    * Exports a subset of the profile to the specified file. The subset is
+    * all keys that begin with the provided leading key.
+    */
+   private void exportSubsetWithKey(String leadingPattern, String path) throws IOException {
       // Make a copy profile, and save that.
       DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();
-      // NOTE: this should match genKey()
-      String className = c.getCanonicalName();
       synchronized(lockObject_) {
          for (String key : userProfile_.getKeys()) {
-            if (key.startsWith(className)) {
+            if (key.startsWith(leadingPattern)) {
                builder.putProperty(key, userProfile_.getProperty(key));
             }
          }
