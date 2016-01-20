@@ -321,6 +321,17 @@ public interface UserProfile {
    public void clearProfileSubset(Class<?> c);
 
    /**
+    * Remove all keys from the profile that are associated with the provided
+    * package. For example, using a package of "org.micromanager.display" would
+    * cause the user's saved settings relating to the org.micromanager.display
+    * package to be lost, and the next time those settings would be read,
+    * default values would be used instead.
+    * @param packageName Package name indicating subset of the profile to be
+    *        cleared.
+    */
+   public void clearPackageProfile(String packageName);
+
+   /**
     * Merge the profile at the specified path into the current active user
     * profile. All keys specified in the file will overwrite keys in the
     * active profile.
