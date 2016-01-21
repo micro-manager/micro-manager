@@ -1384,35 +1384,59 @@ public class MMStudio implements Studio, CompatibilityInterface {
    
    @Override
    public Datastore runAcquisition() throws MMScriptException {
-      return executeAcquisition(true);
+      return executeAcquisition(null, true);
    }
 
    @Override
    public Datastore runAcquisitionNonblocking() throws MMScriptException {
-      return executeAcquisition(false);
+      return executeAcquisition(null, false);
    }
 
-   private Datastore executeAcquisition(boolean isBlocking) throws MMScriptException {
+   @Override
+   public Datastore runAcquisitionWithSettings(SequenceSettings settings,
+         boolean shouldBlock) throws MMScriptException {
+      return executeAcquisition(settings, shouldBlock);
+   }
+
+   private Datastore executeAcquisition(SequenceSettings settings, boolean isBlocking) throws MMScriptException {
       if (SwingUtilities.isEventDispatchThread()) {
          throw new MMScriptException("Acquisition can not be run from this (EDT) thread");
       }
       testForAbortRequests();
-      if (acqControlWin_ != null) {
-         Datastore store = acqControlWin_.runAcquisition();
-         if (isBlocking) {
-            try {
-               while (acqControlWin_.isAcquisitionRunning()) {
-                  Thread.sleep(50);
-               }
-            } catch (InterruptedException e) {
-               ReportingUtils.showError(e);
+      Datastore store = null;
+      if (settings == null) {
+         // Use the MDA dialog's runAcquisition logic.
+         if (acqControlWin_ != null) {
+            store = acqControlWin_.runAcquisition();
+         }
+         else {
+            // I'm not sure how this could ever happen, but we have null
+            // checks for acqControlWin_ everywhere in this code, with no
+            // explanation.
+            studio_.logs().showError("Unable to run acquisition as MDA dialog is null");
+         }
+      }
+      else {
+         // Use the provided settings.
+         engine_.setSequenceSettings(settings);
+         try {
+            store = engine_.acquire();
+         }
+         catch (MMException e) {
+            throw new MMScriptException(e.toString());
+         }
+      }
+      if (isBlocking) {
+         try {
+            while (engine_.isAcquisitionRunning()) {
+               Thread.sleep(50);
             }
          }
-         return store;
-      } else {
-         throw new MMScriptException(
-               "Acquisition setup window must be open for this command to work.");
+         catch (InterruptedException e) {
+            ReportingUtils.showError(e);
+         }
       }
+      return store;
    }
 
    @Override

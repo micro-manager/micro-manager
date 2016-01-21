@@ -52,7 +52,7 @@ public interface CompatibilityInterface {
    public void refreshGUIFromCache();
    
    /**
-    * Executes Acquisition with current settings
+    * Executes Acquisition with settings as in the MDA dialog.
     * Will open the Acquisition Dialog when it is not open yet
     * Returns after Acquisition finishes
     * Note that this function should not be executed on the EDT (which is the
@@ -70,6 +70,19 @@ public interface CompatibilityInterface {
     * @throws MMScriptException if the acquisition is started on the EDT
     */
    public Datastore runAcquisitionNonblocking() throws MMScriptException;
+
+   /**
+    * Execute an acquisition using the provided SequenceSettings. This function
+    * should not be called on the EDT.
+    * @param settings SequenceSettings to use for the acquisition, or null
+    *        to use the settings in the MDA dialog.
+    * @param shouldBlock if true, the method will block until the acquisition
+    *        is completed.
+    * @return The Datastore containing the images from the acquisition.
+    * @throws MMScriptException if the acquisition is started on the EDT.
+    */
+   public Datastore runAcquisitionWithSettings(SequenceSettings settings,
+         boolean shouldBlock) throws MMScriptException;
 
    /**
     * Halt any ongoing acquisition as soon as possible.
