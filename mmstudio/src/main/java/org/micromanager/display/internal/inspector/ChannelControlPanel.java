@@ -802,7 +802,19 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     * Receive new histogram data.
     */
    @Subscribe
-   public void onNewHistograms(NewHistogramsEvent event) {
+   public void onNewHistograms(final NewHistogramsEvent event) {
+      // We don't know what thread we may be called in from, and as we modify
+      // the GUI (especially if initialize() is called), we need to be on the
+      // EDT.
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               onNewHistograms(event);
+            }
+         });
+         return;
+      }
       try {
          if (event.getChannel() != channelIndex_ && hasChannelAxis_) {
             // Wrong channel.
