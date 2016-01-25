@@ -34,6 +34,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
+import org.micromanager.data.ImageExistsException;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
@@ -72,8 +73,8 @@ public class DefaultDatastore implements Datastore {
          MULTIPAGE_TIFF);
 
    private static final String PREFERRED_SAVE_FORMAT = "default format for saving data";
-   private Storage storage_ = null;
-   private PrioritizedEventBus bus_;
+   protected Storage storage_ = null;
+   protected PrioritizedEventBus bus_;
    private boolean isFrozen_ = false;
    private String savePath_ = null;
 
@@ -99,7 +100,10 @@ public class DefaultDatastore implements Datastore {
          }
       }
       catch (DatastoreFrozenException e) {
-         ReportingUtils.logError("Can't copy to datastore: we're frozen");
+         ReportingUtils.logError("Can't copy from datastore: we're frozen");
+      }
+      catch (ImageExistsException e) {
+         ReportingUtils.logError("Can't copy from datastore: we already have an image at one of its coords.");
       }
       catch (IllegalArgumentException e) {
          ReportingUtils.logError("Inconsistent image coordinates in datastore");
@@ -166,9 +170,12 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public void putImage(Image image) throws DatastoreFrozenException, IllegalArgumentException {
+   public void putImage(Image image) throws DatastoreFrozenException, ImageExistsException, IllegalArgumentException {
       if (isFrozen_) {
          throw new DatastoreFrozenException();
+      }
+      if (getImage(image.getCoords()) != null) {
+         throw new ImageExistsException();
       }
       // Check for validity of axes.
       Coords coords = image.getCoords();
@@ -410,6 +417,9 @@ public class DefaultDatastore implements Datastore {
       }
       catch (DatastoreFrozenException e) {
          ReportingUtils.logError("Couldn't modify newly-created datastore; this should never happen!");
+      }
+      catch (ImageExistsException e) {
+         ReportingUtils.logError("Couldn't insert an image into newly-created datastore; this should never happen!");
       }
       return false;
    }

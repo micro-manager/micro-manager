@@ -37,6 +37,7 @@ import org.json.JSONException;
 
 import org.micromanager.data.DataManager;
 import org.micromanager.data.Datastore;
+import org.micromanager.data.ErasableDatastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.ImageJConverter;
 import org.micromanager.data.Metadata;
@@ -84,6 +85,13 @@ public class DefaultDataManager implements DataManager {
    @Override
    public Datastore createRAMDatastore() {
       Datastore result = new DefaultDatastore();
+      result.setStorage(new StorageRAM(result));
+      return result;
+   }
+
+   @Override
+   public ErasableDatastore createErasableRAMDatastore() {
+      ErasableDatastore result = new DefaultErasableDatastore();
       result.setStorage(new StorageRAM(result));
       return result;
    }

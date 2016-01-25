@@ -33,6 +33,7 @@ import org.micromanager.data.internal.StorageRAM;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
+import org.micromanager.data.ImageExistsException;
 import org.micromanager.data.Metadata;
 import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayDestroyedEvent;
@@ -44,7 +45,7 @@ import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.data.NewPipelineEvent;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.PipelineErrorException;
-import org.micromanager.data.internal.DefaultDatastore;
+import org.micromanager.data.internal.DefaultErasableDatastore;
 import org.micromanager.data.internal.DefaultImage;
 
 import org.micromanager.display.DisplayWindow;
@@ -77,7 +78,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    private final CMMCore core_;
    private DisplayWindow display_;
    private Object displayLock_ = new Object();
-   private DefaultDatastore store_;
+   private DefaultErasableDatastore store_;
    private Pipeline pipeline_;
    private Object pipelineLock_ = new Object();
    private final ArrayList<LiveModeListener> listeners_;
@@ -338,7 +339,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          }
          // Note that unlike in most situations, we do *not* ask the
          // DataManager to track this Datastore for us.
-         store_ = new DefaultDatastore();
+         store_ = new DefaultErasableDatastore();
          store_.registerForEvents(this);
          store_.setStorage(new StorageRAM(store_));
          if (pipeline_ != null) {
@@ -485,6 +486,12 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
             synchronized(pipelineLock_) {
                try {
                   pipeline_.insertImage(newImage);
+               }
+               catch (ImageExistsException e) {
+                  // This should never happen, because we use an erasable
+                  // Datastore.
+                  studio_.logs().showError(e,
+                        "Unable to insert image into pipeline; this should never happen.");
                }
                catch (PipelineErrorException e) {
                   // Notify the user, then continue on.

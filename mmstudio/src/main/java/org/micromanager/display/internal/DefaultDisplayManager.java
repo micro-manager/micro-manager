@@ -36,6 +36,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
+import org.micromanager.data.ImageExistsException;
 
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.ControlsFactory;
@@ -98,6 +99,10 @@ public final class DefaultDisplayManager implements DisplayManager {
       catch (DatastoreFrozenException e) {
          // This should never happen.
          ReportingUtils.showError(e, "Somehow managed to create an immediately-frozen RAM datastore.");
+      }
+      catch (ImageExistsException e) {
+         // This should also never happen.
+         ReportingUtils.showError(e, "Somehow managed to create a Datastore that already had an image in it.");
       }
       createDisplay(result);
       return result;

@@ -45,6 +45,8 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenEvent;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
+import org.micromanager.data.ImageExistsException;
+import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
 
@@ -220,6 +222,14 @@ public class CommentsPanel extends InspectorPanel {
                   shouldIgnoreUpdates_ = true;
                   imageCommentsTextArea_.setText(curImage.getMetadata().getComments());
                   summaryCommentsTextArea_.setText(store.getSummaryMetadata().getComments());
+                  shouldIgnoreUpdates_ = false;
+               }
+               catch (ImageExistsException e) {
+                  errorLabel_.setText("Comments of images cannot be changed because the datastore is not erasable.");
+                  // Prevent redundant errors by forcing the image text back
+                  // to what it should be.
+                  Image curImage = display_.getDisplayedImages().get(0);
+                  imageCommentsTextArea_.setText(curImage.getMetadata().getComments());
                   shouldIgnoreUpdates_ = false;
                }
                imageToSaveTimer_.remove(image);

@@ -55,16 +55,20 @@ public interface Pipeline {
     * resulting in incorrect processed images), then you must call
     * clearExceptions() first.
     *
-    * Throws a DatastoreFrozenException if the Datastore is frozen at the
-    * time this method is called, or if this pipeline has no Processors in it
-    * and the Datastore is frozen. If the Datastore is frozen at some point
-    * after this method is called, then the exception will not be thrown.
-    *
     * @param image Image to be processed by the Pipeline.
-    * @throws org.micromanager.data.DatastoreFrozenException
-    * @throws org.micromanager.data.PipelineErrorException
+    * @throws org.micromanager.data.DatastoreFrozenException if the Datastore
+    *         is frozen at the time this method is called, or if this pipeline
+    *         has no Processors in it and the Datastore is frozen. If the
+    *         Datastore is frozen at some point after this method is called,
+    *         then the exception will not be thrown.
+    * @throws ImageExistsException if this pipeline has no Processors in it and
+    *         the inserted Image has coordinates that match an Image that is
+    *         already in the Datastore.
+    * @throws org.micromanager.data.PipelineErrorException if the pipeline is
+    *         in an error state; see the getExceptions() and clearExceptions()
+    *         methods.
     */
-   public void insertImage(Image image) throws DatastoreFrozenException, PipelineErrorException;
+   public void insertImage(Image image) throws DatastoreFrozenException, ImageExistsException, PipelineErrorException;
 
    /**
     * Get the output Datastore for this Pipeline. This Datastore is the

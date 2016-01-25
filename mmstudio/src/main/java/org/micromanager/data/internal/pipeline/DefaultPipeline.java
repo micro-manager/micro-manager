@@ -27,6 +27,7 @@ import java.util.List;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
+import org.micromanager.data.ImageExistsException;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.PipelineErrorException;
 import org.micromanager.data.Processor;
@@ -67,7 +68,7 @@ public class DefaultPipeline implements Pipeline {
    }
 
    @Override
-   public synchronized void insertImage(Image image) throws DatastoreFrozenException, PipelineErrorException {
+   public synchronized void insertImage(Image image) throws DatastoreFrozenException, ImageExistsException, PipelineErrorException {
       if (isHalted_) {
          // Ignore it.
          return;

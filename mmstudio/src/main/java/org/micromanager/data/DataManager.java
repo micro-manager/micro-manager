@@ -54,6 +54,15 @@ public interface DataManager {
    public Datastore createRAMDatastore();
 
    /**
+    * Generate a new, "blank" ErasableDatastore with RAM-based Storage and
+    * return it.  This Datastore will not be managed by Micro-Manager by
+    * default (see the org.micromanager.api.display.DisplayManager.manage()
+    * method for more information).
+    * @return an empty RAM-based ErasableDatastore.
+    */
+   public ErasableDatastore createErasableRAMDatastore();
+
+   /**
     * Generate a new, "blank" Datastore with multipage TIFF-based Storage and
     * return it. This format stores multiple 2D image planes in the same file,
     * up to 4GB per file. This Datastore will not be managed by Micro-Manager

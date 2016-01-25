@@ -106,12 +106,14 @@ public interface Datastore extends Closeable {
     *
     * @param image Micro-Manager Image object
     * @throws DatastoreFrozenException if the freeze() method has been called.
+    * @throws ImageExistsException if an Image with the same coordinates
+    *         already exists in the Datastore.
     * @throws IllegalArgumentException if the image's axes do not match the
     *         axes of images previously added to the Datastore. All images
     *         in a Datastore are required to have the same set of axes in
     *         their Coords objects.
     */
-   public void putImage(Image image) throws DatastoreFrozenException, IllegalArgumentException;
+   public void putImage(Image image) throws DatastoreFrozenException, ImageExistsException, IllegalArgumentException;
 
    /**
     * Return the maximum Image position along the specified access that this

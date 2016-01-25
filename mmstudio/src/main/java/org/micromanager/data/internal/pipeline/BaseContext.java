@@ -25,6 +25,7 @@ import java.util.concurrent.CountDownLatch;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
+import org.micromanager.data.ImageExistsException;
 import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
 import org.micromanager.data.SummaryMetadata;
@@ -57,7 +58,10 @@ public abstract class BaseContext implements ProcessorContext {
             store_.putImage(image);
          }
          catch (DatastoreFrozenException e) {
-            ReportingUtils.logError(e, "Unable to store processed image.");
+            ReportingUtils.logError(e, "Unable to store processed image: datastore is frozen.");
+         }
+         catch (ImageExistsException e) {
+            ReportingUtils.logError(e, "Unable to store processed image: image already exists at " + image.getCoords());
          }
       }
       else {
