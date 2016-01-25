@@ -3,9 +3,9 @@
 //SUBSYSTEM:     Data API
 //-----------------------------------------------------------------------------
 //
-// AUTHOR:       Chris Weisiger, 2015
+// AUTHOR:       Chris Weisiger, 2016
 //
-// COPYRIGHT:    University of California, San Francisco, 2015
+// COPYRIGHT:    Open Imaging, Inc 2016
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
