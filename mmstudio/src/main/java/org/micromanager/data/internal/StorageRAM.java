@@ -29,7 +29,7 @@ import java.util.List;
 
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.ErasableStorage;
+import org.micromanager.data.RewritableStorage;
 import org.micromanager.data.Image;
 import org.micromanager.data.NewImageEvent;
 import org.micromanager.data.NewSummaryMetadataEvent;
@@ -44,7 +44,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Simple RAM-based storage for Datastores. Methods that interact with the
  * HashMap that is our image storage are synchronized.
  */
-public class StorageRAM implements ErasableStorage {
+public class StorageRAM implements RewritableStorage {
    private HashMap<Coords, Image> coordsToImage_;
    private Coords maxIndex_;
    private SummaryMetadata summaryMetadata_;

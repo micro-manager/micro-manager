@@ -24,9 +24,9 @@ import java.util.List;
 
 /**
  * This interface is for Storage entities that allow the overwriting and
- * deletion of Images, as per ErasableDatastore.
+ * deletion of Images and SummaryMetadata, as per RewritableDatastore.
  */
-public interface ErasableStorage extends Storage {
+public interface RewritableStorage extends Storage {
    /**
     * Delete an image from the Storage. Posts an ImageDeletedEvent to the
     * event bus. Throws an IllegalArgumentException if the provided coordinates

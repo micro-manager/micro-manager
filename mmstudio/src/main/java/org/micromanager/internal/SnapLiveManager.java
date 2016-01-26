@@ -45,7 +45,7 @@ import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.data.NewPipelineEvent;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.PipelineErrorException;
-import org.micromanager.data.internal.DefaultErasableDatastore;
+import org.micromanager.data.internal.DefaultRewritableDatastore;
 import org.micromanager.data.internal.DefaultImage;
 
 import org.micromanager.display.DisplayWindow;
@@ -78,7 +78,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    private final CMMCore core_;
    private DisplayWindow display_;
    private Object displayLock_ = new Object();
-   private DefaultErasableDatastore store_;
+   private DefaultRewritableDatastore store_;
    private Pipeline pipeline_;
    private Object pipelineLock_ = new Object();
    private final ArrayList<LiveModeListener> listeners_;
@@ -339,7 +339,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          }
          // Note that unlike in most situations, we do *not* ask the
          // DataManager to track this Datastore for us.
-         store_ = new DefaultErasableDatastore();
+         store_ = new DefaultRewritableDatastore();
          store_.registerForEvents(this);
          store_.setStorage(new StorageRAM(store_));
          if (pipeline_ != null) {

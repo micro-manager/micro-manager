@@ -25,19 +25,20 @@ import java.io.Closeable;
 import java.util.List;
 
 /**
- * ErasableDatastores are Datastores that allow images to be deleted or
- * overwritten after they have been inserted. They also publish additional
- * events when those actions are performed. You can create an ErasableDatastore
- * using the DataManager. Note that not all types of Datastores support
- * being erased (e.g. file-based Datastores may not be erasable).
+ * RewritableDatastores are Datastores that allow images and SummaryMetadata
+ * to be deleted or overwritten after they have been inserted. They also
+ * publish additional events when those actions are performed. You can create
+ * an RewritableDatastore using the DataManager. Note that not all types of
+ * Datastores support rewriting (e.g. file-based Datastores).
  */
-public interface ErasableDatastore extends Datastore {
+public interface RewritableDatastore extends Datastore {
    /**
     * Insert an image into the Datastore. Posts a NewImageEvent to the event
     * bus. Unlike the base Datastore method, this method will allow images to
-    * be overwritten, if an image with the same coordinates is already in the
-    * Datastore. An ImageOverwrittenEvent will be published on the Datastore's
-    * EventBus if this occurs.
+    * be overwritten (i.e. will not cause a DatastoreRewriteException), if an
+    * image with the same coordinates is already in the Datastore. An
+    * ImageOverwrittenEvent will be published on the Datastore's EventBus if
+    * this occurs.
     *
     * @param image Micro-Manager Image object
     * @throws DatastoreFrozenException if the freeze() method has been called.
@@ -48,6 +49,17 @@ public interface ErasableDatastore extends Datastore {
     */
    @Override
    public void putImage(Image image) throws DatastoreFrozenException, IllegalArgumentException;
+
+   /**
+    * Set the SummaryMetadata. Posts a NewSummaryMetadataEvent to the event
+    * bus. Unlike with standard Datastores, this method may be called
+    * multiple times.
+    *
+    * @param metadata Object representing the summary metadata
+    * @throws DatastoreFrozenException if the freeze() method has been called.
+    */
+   public void setSummaryMetadata(SummaryMetadata metadata)
+           throws DatastoreFrozenException;
 
    /**
     * Delete an image from the Datastore. Posts an ImageDeletedEvent to the

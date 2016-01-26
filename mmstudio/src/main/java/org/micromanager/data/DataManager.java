@@ -54,13 +54,13 @@ public interface DataManager {
    public Datastore createRAMDatastore();
 
    /**
-    * Generate a new, "blank" ErasableDatastore with RAM-based Storage and
+    * Generate a new, "blank" RewritableDatastore with RAM-based Storage and
     * return it.  This Datastore will not be managed by Micro-Manager by
     * default (see the org.micromanager.api.display.DisplayManager.manage()
     * method for more information).
-    * @return an empty RAM-based ErasableDatastore.
+    * @return an empty RAM-based RewritableDatastore.
     */
-   public ErasableDatastore createErasableRAMDatastore();
+   public RewritableDatastore createRewritableRAMDatastore();
 
    /**
     * Generate a new, "blank" Datastore with multipage TIFF-based Storage and

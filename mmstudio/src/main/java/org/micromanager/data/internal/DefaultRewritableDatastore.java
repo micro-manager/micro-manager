@@ -21,23 +21,32 @@
 package org.micromanager.data.internal;
 
 import org.micromanager.data.Coords;
-import org.micromanager.data.ErasableDatastore;
-import org.micromanager.data.ErasableStorage;
+import org.micromanager.data.RewritableDatastore;
+import org.micromanager.data.RewritableStorage;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Storage;
+import org.micromanager.data.SummaryMetadata;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
-public class DefaultErasableDatastore extends DefaultDatastore implements ErasableDatastore {
+public class DefaultRewritableDatastore extends DefaultDatastore implements RewritableDatastore {
 
    @Override
    public void setStorage(Storage storage) {
-      if (!(storage instanceof ErasableStorage)) {
-         throw new IllegalArgumentException("ErasableDatastore must use ErasableStorage");
+      if (!(storage instanceof RewritableStorage)) {
+         throw new IllegalArgumentException("RewritableDatastore must use RewritableStorage");
       }
       super.setStorage(storage);
+   }
+
+   @Override
+   public void setSummaryMetadata(SummaryMetadata metadata) throws DatastoreFrozenException {
+      if (isFrozen_) {
+         throw new DatastoreFrozenException();
+      }
+      bus_.post(new NewSummaryMetadataEvent(metadata));
    }
 
    @Override
@@ -49,7 +58,7 @@ public class DefaultErasableDatastore extends DefaultDatastore implements Erasab
          Image oldImage = storage_.getImage(image.getCoords());
          // We call the storage's method directly instead of using our
          // deleteImage() method, to avoid posting an ImageDeletedEvent.
-         ((ErasableStorage) storage_).deleteImage(image.getCoords());
+         ((RewritableStorage) storage_).deleteImage(image.getCoords());
          try {
             super.putImage(image);
             bus_.post(new DefaultImageOverwrittenEvent(image, oldImage, this));
@@ -64,7 +73,7 @@ public class DefaultErasableDatastore extends DefaultDatastore implements Erasab
    @Override
    public void deleteImage(Coords coords) {
       Image image = getImage(coords);
-      ((ErasableStorage) storage_).deleteImage(coords);
+      ((RewritableStorage) storage_).deleteImage(coords);
       bus_.post(new DefaultImageDeletedEvent(image, this));
    }
 
