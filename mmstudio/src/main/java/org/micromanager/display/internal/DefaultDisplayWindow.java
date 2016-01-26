@@ -607,7 +607,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             canvasQueue_.halt();
          }
          // TODO: assuming mode 1 for now.
-         ijImage_ = new MMCompositeImage(ijImage_, 1, ijImage_.getTitle());
+         ijImage_ = new MMCompositeImage(this, ijImage_, 1, ijImage_.getTitle());
          ijImage_.setOpenAsHyperStack(true);
          MMCompositeImage composite = (MMCompositeImage) ijImage_;
          int numChannels = store_.getAxisLength(Coords.CHANNEL);
