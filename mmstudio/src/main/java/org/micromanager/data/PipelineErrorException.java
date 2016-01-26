@@ -26,4 +26,12 @@ package org.micromanager.data;
  * that the Pipeline may be in a bad or inconsistent state. You can resume
  * calling Pipeline.insertImage() only after calling Pipeline.clearErrors().
  */
-public class PipelineErrorException extends Exception {}
+public class PipelineErrorException extends Exception {
+   public PipelineErrorException() {
+      super();
+   }
+
+   public PipelineErrorException(String description) {
+      super(description);
+   }
+}
