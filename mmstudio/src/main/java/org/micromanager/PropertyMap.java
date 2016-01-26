@@ -1,5 +1,7 @@
 package org.micromanager;
 
+import java.io.IOException;
+
 import java.util.Set;
 
 /**
@@ -379,4 +381,13 @@ public interface PropertyMap {
     *         the property, or null if the property is not found.
     */
    public Class getPropertyType(String key);
+
+   /**
+    * Save this PropertyMap to disk at the specified location. This will
+    * overwrite any existing file at the location. Saved PropertyMaps can be
+    * loaded using DataManager.loadPropertyMap().
+    * @param path Location on disk to save the PropertyMap.
+    * @throws IOException if there was any error in saving the PropertyMap.
+    */
+   public void save(String path) throws IOException;
 }

@@ -22,11 +22,18 @@ package org.micromanager.data.internal;
 
 import com.google.common.io.BaseEncoding;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.ObjectStreamException;
+import java.io.Serializable;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -40,7 +47,7 @@ import org.micromanager.PropertyMap;
 import org.micromanager.internal.utils.ReportingUtils;
 
 // TODO: there is an awful lot of duplicated code here!
-public class DefaultPropertyMap implements PropertyMap {
+public class DefaultPropertyMap implements PropertyMap, Serializable {
    private static final String TYPE = "PropType";
    private static final String VALUE = "PropVal";
    private static final String STRING = "String";
@@ -772,6 +779,42 @@ public class DefaultPropertyMap implements PropertyMap {
    }
 
    @Override
+   public void save(String path) throws IOException {
+      File file = new File(path);
+      FileWriter writer = null;
+      try {
+         writer = new FileWriter(file, true);
+         writer.write(toJSON().toString(1));
+         writer.close();
+      }
+      catch (JSONException e) {
+         throw new IOException(e);
+      }
+      finally {
+         if (writer != null) {
+            writer.close();
+         }
+      }
+   }
+
+   public static PropertyMap loadPropertyMap(String path) throws FileNotFoundException, IOException {
+      File file = new File(path);
+      BufferedReader reader = new BufferedReader(new FileReader(file));
+      String content = "";
+      String curLine = reader.readLine();
+      while (curLine != null) {
+         content += curLine;
+         curLine = reader.readLine();
+      }
+      try {
+         return fromJSON(new JSONObject(content));
+      }
+      catch (JSONException e) {
+         throw new IOException(e);
+      }
+   }
+
+   @Override
    public String toString() {
       try {
          return toJSON().toString(2);
@@ -795,5 +838,36 @@ public class DefaultPropertyMap implements PropertyMap {
          }
       }
       return true;
+   }
+
+   /**
+    * Required by the Serializable interface.
+    */
+   private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+      byte[] bytes = new byte[stream.available()];
+      stream.read(bytes, 0, bytes.length);
+      try {
+         propMap_ = fromJSON(new JSONObject(new String(bytes))).propMap_;
+      }
+      catch (JSONException e) {
+         throw new IOException(e);
+      }
+   }
+
+   /**
+    * Required by the Serializable interface.
+    */
+   private void writeObject(ObjectOutputStream stream) throws IOException {
+      ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+      byte[] bytes = toJSON().toString().getBytes();
+      byteStream.write(bytes, 0, bytes.length);
+      byteStream.writeTo(stream);
+   }
+
+   /**
+    * Required by the Serializable interface.
+    */
+   private void readObjectNoData() throws ObjectStreamException {
+      propMap_ = new HashMap<String, PropertyValue>();
    }
 }

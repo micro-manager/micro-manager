@@ -266,6 +266,11 @@ public class DefaultDataManager implements DataManager {
    }
 
    @Override
+   public PropertyMap loadPropertyMap(String path) throws IOException {
+      return DefaultPropertyMap.loadPropertyMap(path);
+   }
+
+   @Override
    public Pipeline createPipeline(List<ProcessorFactory> factories,
          Datastore store, boolean isSynchronous) {
       ArrayList<Processor> processors = new ArrayList<Processor>();

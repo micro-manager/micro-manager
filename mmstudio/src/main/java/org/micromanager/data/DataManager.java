@@ -21,6 +21,7 @@
 package org.micromanager.data;
 
 import java.awt.Window;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 
@@ -244,6 +245,15 @@ public interface DataManager {
     * @return a PropertyMapBuilder for creating new PropertyMap instances.
     */
    public PropertyMap.PropertyMapBuilder getPropertyMapBuilder();
+
+   /**
+    * Attempt to load a file that contains PropertyMap data.
+    * @param path Path to the file to load.
+    * @return new PropertyMap based on data in the specified file.
+    * @throws FileNotFoundException if the path does not point to a file.
+    * @throws IOException if there was an error reading the file.
+    */
+   public PropertyMap loadPropertyMap(String path) throws FileNotFoundException, IOException;
 
    /**
     * Create a new Pipeline using the provided list of ProcessorFactories.
