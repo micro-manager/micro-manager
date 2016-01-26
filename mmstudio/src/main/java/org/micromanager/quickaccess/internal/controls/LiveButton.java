@@ -131,7 +131,15 @@ public class LiveButton extends WidgetPlugin implements SciJavaPlugin {
          public void hierarchyChanged(HierarchyEvent e) {
             if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
                if (!result.isDisplayable()) {
-                  studio_.events().unregisterForEvents(this);
+                  try {
+                     studio_.events().unregisterForEvents(this);
+                  }
+                  catch (IllegalArgumentException ex) {
+                     // We were already unsubscribed; ignore it.
+                  }
+               }
+               else {
+                  studio_.events().registerForEvents(this);
                }
             }
          }
