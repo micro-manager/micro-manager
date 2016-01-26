@@ -25,7 +25,7 @@ import org.micromanager.data.ErasableDatastore;
 import org.micromanager.data.ErasableStorage;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
-import org.micromanager.data.ImageExistsException;
+import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Storage;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -45,7 +45,7 @@ public class DefaultErasableDatastore extends DefaultDatastore implements Erasab
       try {
          super.putImage(image);
       }
-      catch (ImageExistsException e) {
+      catch (DatastoreRewriteException e) {
          Image oldImage = storage_.getImage(image.getCoords());
          // We call the storage's method directly instead of using our
          // deleteImage() method, to avoid posting an ImageDeletedEvent.
@@ -54,7 +54,7 @@ public class DefaultErasableDatastore extends DefaultDatastore implements Erasab
             super.putImage(image);
             bus_.post(new DefaultImageOverwrittenEvent(image, oldImage, this));
          }
-         catch (ImageExistsException e2) {
+         catch (DatastoreRewriteException e2) {
             // This should never happen.
             ReportingUtils.logError(e2, "Unable to insert image after having cleared space for it.");
          }

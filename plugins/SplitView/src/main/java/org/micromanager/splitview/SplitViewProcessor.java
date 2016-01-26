@@ -43,7 +43,6 @@ public class SplitViewProcessor extends Processor {
 
    private Studio studio_;
    private String orientation_ = SplitViewFrame.LR;
-   private boolean haveUpdatedMetadata_ = false;
 
    public SplitViewProcessor(Studio studio, String orientation) {
       studio_ = studio;
@@ -70,33 +69,26 @@ public class SplitViewProcessor extends Processor {
    }
 
    @Override
+   public SummaryMetadata processSummaryMetadata(SummaryMetadata summary) {
+      // Update channel names in summary metadata.
+      String[] names = summary.getChannelNames();
+      if (names == null) {
+         // Can't do anything as we don't know how many names there'll be.
+         return summary;
+      }
+      String[] newNames = new String[names.length * 2];
+      for (int i = 0; i < names.length; ++i) {
+         String base = summary.getSafeChannelName(i);
+         newNames[i * 2] = base + getChannelSuffix(i * 2);
+         newNames[i * 2 + 1] = base + getChannelSuffix(i * 2 + 1);
+      }
+      return summary.copy().channelNames(newNames).build();
+   }
+
+   @Override
    public void processImage(Image image, ProcessorContext context) {
       ImageProcessor proc = studio_.data().ij().createProcessor(image);
       int channelIndex = image.getCoords().getChannel();
-
-      // Update channel names in summary metadata.
-      if (!haveUpdatedMetadata_) {
-         SummaryMetadata summary = context.getSummaryMetadata();
-         String[] names = summary.getChannelNames();
-         if (names == null) {
-            names = new String[image.getCoords().getChannel() + 1];
-         }
-         String[] newNames = new String[names.length * 2];
-         for (int i = 0; i < names.length; ++i) {
-            newNames[i] = names[i];
-         }
-         String base = summary.getSafeChannelName(channelIndex);
-         newNames[channelIndex * 2] = base + getChannelSuffix(channelIndex * 2);
-         newNames[channelIndex * 2 + 1] = base + getChannelSuffix(channelIndex * 2 + 1);
-         summary = summary.copy().channelNames(newNames).build();
-         try {
-            context.setSummaryMetadata(summary);
-         }
-         catch (DatastoreFrozenException e) {
-            studio_.logs().logError("Unable to update channel names because datastore is frozen.");
-         }
-         haveUpdatedMetadata_ = true;
-      }
 
       proc.setPixels(image.getRawPixels());
 

@@ -31,6 +31,23 @@ import java.util.List;
  */
 public interface Pipeline {
    /**
+    * Pass a SummaryMetadata through the Pipeline to be modified by the
+    * Processors in it. The resulting, updated SummaryMetadata will be set
+    * into the Datastore. This method may only be called if the Datastore does
+    * not already have SummaryMetadata set for it, and only prior to any images
+    * being inserted into the Pipeline by the insertImage() method.
+    * This method is synchronous even for asynchronous Pipelines.
+    * @param source Source SummaryMetadata to be input into the Pipeline.
+    * @throws org.micromanager.data.DatastoreFrozenException if the Datastore
+    *         is frozen at the time this method is called.
+    * @throws DatastoreRewriteException if the Datastore has already had
+    *         SummaryMetadata set for it at the time this method is called.
+    * @throws PipelineErrorException if processing of images has already
+    *         started at the time this method is called.
+    */
+   public void insertSummaryMetadata(SummaryMetadata source) throws DatastoreFrozenException, DatastoreRewriteException, PipelineErrorException;
+
+   /**
     * Insert an Image into the Pipeline. The Image will be processed by the
     * first Processor in the Pipeline, any Images output by that Processor
     * will be processed by the second Processor, etc. until the Image sequence
@@ -61,14 +78,14 @@ public interface Pipeline {
     *         has no Processors in it and the Datastore is frozen. If the
     *         Datastore is frozen at some point after this method is called,
     *         then the exception will not be thrown.
-    * @throws ImageExistsException if this pipeline has no Processors in it and
+    * @throws DatastoreRewriteException if this pipeline has no Processors in it and
     *         the inserted Image has coordinates that match an Image that is
     *         already in the Datastore.
     * @throws org.micromanager.data.PipelineErrorException if the pipeline is
     *         in an error state; see the getExceptions() and clearExceptions()
     *         methods.
     */
-   public void insertImage(Image image) throws DatastoreFrozenException, ImageExistsException, PipelineErrorException;
+   public void insertImage(Image image) throws DatastoreFrozenException, DatastoreRewriteException, PipelineErrorException;
 
    /**
     * Get the output Datastore for this Pipeline. This Datastore is the

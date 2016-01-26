@@ -106,14 +106,14 @@ public interface Datastore extends Closeable {
     *
     * @param image Micro-Manager Image object
     * @throws DatastoreFrozenException if the freeze() method has been called.
-    * @throws ImageExistsException if an Image with the same coordinates
+    * @throws DatastoreRewriteException if an Image with the same coordinates
     *         already exists in the Datastore.
     * @throws IllegalArgumentException if the image's axes do not match the
     *         axes of images previously added to the Datastore. All images
     *         in a Datastore are required to have the same set of axes in
     *         their Coords objects.
     */
-   public void putImage(Image image) throws DatastoreFrozenException, ImageExistsException, IllegalArgumentException;
+   public void putImage(Image image) throws DatastoreFrozenException, DatastoreRewriteException, IllegalArgumentException;
 
    /**
     * Return the maximum Image position along the specified access that this
@@ -165,13 +165,16 @@ public interface Datastore extends Closeable {
    public SummaryMetadata getSummaryMetadata();
 
    /**
-    * Set the SummaryMetadata. Posts a NewSummaryMetadataEvent to the event bus.
+    * Set the SummaryMetadata. Posts a NewSummaryMetadataEvent to the event
+    * bus. This method may only be called once for a given Datastore.
     *
     * @param metadata Object representing the summary metadata
     * @throws DatastoreFrozenException if the freeze() method has been called.
+    * @throws DatastoreRewriteException if the Datastore already has
+    *         SummaryMetadata.
     */
-   public void setSummaryMetadata(SummaryMetadata metadata) 
-           throws DatastoreFrozenException;
+   public void setSummaryMetadata(SummaryMetadata metadata)
+           throws DatastoreFrozenException, DatastoreRewriteException;
 
    /**
     * Freeze the Datastore. Methods that modify its contents will throw

@@ -34,7 +34,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
-import org.micromanager.data.ImageExistsException;
+import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
@@ -77,6 +77,7 @@ public class DefaultDatastore implements Datastore {
    protected PrioritizedEventBus bus_;
    private boolean isFrozen_ = false;
    private String savePath_ = null;
+   private boolean haveSetSummary_ = false;
 
    public DefaultDatastore() {
       bus_ = new PrioritizedEventBus();
@@ -102,7 +103,7 @@ public class DefaultDatastore implements Datastore {
       catch (DatastoreFrozenException e) {
          ReportingUtils.logError("Can't copy from datastore: we're frozen");
       }
-      catch (ImageExistsException e) {
+      catch (DatastoreRewriteException e) {
          ReportingUtils.logError("Can't copy from datastore: we already have an image at one of its coords.");
       }
       catch (IllegalArgumentException e) {
@@ -170,12 +171,12 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public void putImage(Image image) throws DatastoreFrozenException, ImageExistsException, IllegalArgumentException {
+   public void putImage(Image image) throws DatastoreFrozenException, DatastoreRewriteException, IllegalArgumentException {
       if (isFrozen_) {
          throw new DatastoreFrozenException();
       }
       if (getImage(image.getCoords()) != null) {
-         throw new ImageExistsException();
+         throw new DatastoreRewriteException();
       }
       // Check for validity of axes.
       Coords coords = image.getCoords();
@@ -216,9 +217,12 @@ public class DefaultDatastore implements Datastore {
          }
          if (didAdd) {
             // Update summary metadata.
+            // TODO: this is cheating: normally a Datastore can only have its
+            // summary metadata be set once, which is why we just post an
+            // event rather than call our setSummaryMetadata() method.
             summary = summary.copy().axisOrder(
                   axisOrderList.toArray(new String[] {})).build();
-            setSummaryMetadata(summary);
+            bus_.post(new NewSummaryMetadataEvent(summary));
          }
       }
    }
@@ -266,10 +270,14 @@ public class DefaultDatastore implements Datastore {
    }
    
    @Override
-   public synchronized void setSummaryMetadata(SummaryMetadata metadata) throws DatastoreFrozenException {
+   public synchronized void setSummaryMetadata(SummaryMetadata metadata) throws DatastoreFrozenException, DatastoreRewriteException {
       if (isFrozen_) {
          throw new DatastoreFrozenException();
       }
+      if (haveSetSummary_) {
+         throw new DatastoreRewriteException();
+      }
+      haveSetSummary_ = true;
       bus_.post(new NewSummaryMetadataEvent(metadata));
    }
 
@@ -418,7 +426,7 @@ public class DefaultDatastore implements Datastore {
       catch (DatastoreFrozenException e) {
          ReportingUtils.logError("Couldn't modify newly-created datastore; this should never happen!");
       }
-      catch (ImageExistsException e) {
+      catch (DatastoreRewriteException e) {
          ReportingUtils.logError("Couldn't insert an image into newly-created datastore; this should never happen!");
       }
       return false;

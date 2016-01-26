@@ -21,9 +21,25 @@
 package org.micromanager.data;
 
 /**
- * Processors manipulate images before they are added to a Datastore.
+ * Processors manipulate images before they are added to a Datastore. They
+ * are arranged into a sequence by a Pipeline.
  */
 public abstract class Processor {
+   /**
+    * Update the SummaryMetadata of the Datastore that images will ultimately
+    * be stored in. This method will be called at most once, prior to any
+    * images being processed, and is the Processor's only chance to log what
+    * manner of changes it expects to make to the data.
+    * The default implementation of this method returns the passed-in
+    * SummaryMetadata unmodified.
+    * @param source Source SummaryMetadata, as generated from the input to this
+    *        Processor.
+    * @return New SummaryMetadata, modified from the source by the Processor.
+    */
+   public SummaryMetadata processSummaryMetadata(SummaryMetadata source) {
+      return source;
+   }
+
    /**
     * Process an Image. Instead of returning a result Image, the Image should
     * be "handed" to the provided ProcessorContext using its outputImage()

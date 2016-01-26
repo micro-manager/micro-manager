@@ -38,7 +38,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
-import org.micromanager.data.ImageExistsException;
+import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.data.Metadata;
 
@@ -384,7 +384,7 @@ public class DefaultImage implements Image {
     * current index, with the channel incrementing by 1 for each new
     * component.
     */
-   public List<Image> splitMultiComponentIntoStore(Datastore store) throws DatastoreFrozenException, ImageExistsException {
+   public List<Image> splitMultiComponentIntoStore(Datastore store) throws DatastoreFrozenException, DatastoreRewriteException {
       List<Image> result = splitMultiComponent();
       for (Image image : result) {
          store.putImage(image);

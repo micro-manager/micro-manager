@@ -153,12 +153,10 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          curStore_ = acq.getDatastore();
          studio_.events().post(new DefaultAcquisitionStartedEvent(curStore_,
                   acquisitionSettings));
-         Pipeline pipeline = studio_.data().copyApplicationPipeline(curStore_,
-               false);
 
          // Start pumping images through the pipeline and into the datastore.
          DefaultTaggedImageSink sink = new DefaultTaggedImageSink(
-                 engineOutputQueue, pipeline, curStore_, this);
+                 engineOutputQueue, acq.getPipeline(), curStore_, this);
          sink.start(new Runnable() {
             @Override
             public void run() {

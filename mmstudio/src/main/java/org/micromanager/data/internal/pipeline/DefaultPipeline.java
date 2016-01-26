@@ -27,10 +27,11 @@ import java.util.List;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
-import org.micromanager.data.ImageExistsException;
+import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.PipelineErrorException;
 import org.micromanager.data.Processor;
+import org.micromanager.data.SummaryMetadata;
 
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -40,6 +41,7 @@ public class DefaultPipeline implements Pipeline {
    private List<BaseContext> contexts_;
    private Datastore store_;
    private boolean isSynchronous_;
+   private boolean haveInsertedImages_ = false;
    private boolean isHalted_ = false;
    private boolean isFlushComplete_ = false;
    private ArrayList<Exception> exceptions_;
@@ -68,7 +70,24 @@ public class DefaultPipeline implements Pipeline {
    }
 
    @Override
-   public synchronized void insertImage(Image image) throws DatastoreFrozenException, ImageExistsException, PipelineErrorException {
+   public void insertSummaryMetadata(SummaryMetadata summary) throws DatastoreFrozenException, DatastoreRewriteException, PipelineErrorException {
+      if (isHalted_) {
+         throw new PipelineErrorException("Attempted to pass summary metadata through pipeline after it has been halted.");
+      }
+      else if (haveInsertedImages_) {
+         throw new PipelineErrorException("Attempted to pass summary metadata through pipeline after it has started image processing.");
+      }
+      if (contexts_.size() == 0) {
+         // Insert directly.
+         store_.setSummaryMetadata(summary);
+      }
+      else {
+         contexts_.get(0).insertSummaryMetadata(summary);
+      }
+   }
+
+   @Override
+   public synchronized void insertImage(Image image) throws DatastoreFrozenException, DatastoreRewriteException, PipelineErrorException {
       if (isHalted_) {
          // Ignore it.
          return;
@@ -77,6 +96,7 @@ public class DefaultPipeline implements Pipeline {
          // Currently in an error state.
          throw new PipelineErrorException();
       }
+      haveInsertedImages_ = true;
       isFlushComplete_ = false;
       // Manually check for frozen; otherwise for asynchronous pipelines,
       // there's no way for the caller to be informed when we later try to

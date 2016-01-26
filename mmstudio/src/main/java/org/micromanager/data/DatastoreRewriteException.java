@@ -22,7 +22,8 @@ package org.micromanager.data;
 
 /**
  * This exception is thrown when an attempt is made to insert an image into
- * a non-erasable Datastore when that Datastore already contains an image at
- * the specified coordinates.
+ * a Datastore when that Datastore already contains an image at the specified
+ * coordinates, or an attempt is made to modify the Datastore's SummaryMetadata
+ * when it already has SummaryMetadata.
  */
-public class ImageExistsException extends Exception {}
+public class DatastoreRewriteException extends Exception {}

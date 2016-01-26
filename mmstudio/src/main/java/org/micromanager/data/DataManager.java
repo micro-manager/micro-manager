@@ -304,17 +304,18 @@ public interface DataManager {
     * configuration window will be opened if it is not already open. The new
     * processor will be inserted onto the end of the pipeline, and the
     * appropriate ProcessorConfigurator for that plugin will be run.
-    * @param plugin  instance of a ProcessorPlugin that will be added to the 
-    * current application image processing pipeline
+    * @param plugin instance of a ProcessorPlugin that will be added to the
+    *        current application image processing pipeline
     */
    public void addAndConfigureProcessor(ProcessorPlugin plugin);
 
    /**
     * Add the provide ProcessorConfigurator onto the end of the application
     * image processing pipeline.
-    * @param config The ProcessorConfigurator that is responsible for configuring this
-    *        processor.
-    * @param plugin The ProcessorPlugin that the ProcessorConfigurator came from.
+    * @param config The ProcessorConfigurator that is responsible for
+    *        configuring this processor.
+    * @param plugin The ProcessorPlugin that the ProcessorConfigurator came
+    *        from.
     */
    public void addConfiguredProcessor(ProcessorConfigurator config,
          ProcessorPlugin plugin);
@@ -325,8 +326,8 @@ public interface DataManager {
     * it is not already open, as will the ProcessorConfigurators for each
     * of the ProcessorPlugins provided. Equivalent to calling clearPipeline()
     * and then iteratively calling addAndConfigureProcessor().
-    * @param plugins List of ProcessorPlugins that will henceforth be used as the
-    * application's processor pipeline
+    * @param plugins List of ProcessorPlugins that will henceforth be used as
+    *        the application's processor pipeline
     */
    public void setApplicationPipeline(List<ProcessorPlugin> plugins);
 

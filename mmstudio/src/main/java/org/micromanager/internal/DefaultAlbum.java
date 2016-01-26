@@ -28,7 +28,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
-import org.micromanager.data.ImageExistsException;
+import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.display.DisplayWindow;
 
@@ -88,7 +88,7 @@ public class DefaultAlbum implements Album {
       catch (DatastoreFrozenException e) {
          ReportingUtils.showError(e, "Album datastore is locked.");
       }
-      catch (ImageExistsException e) {
+      catch (DatastoreRewriteException e) {
          // This should never happen.
          ReportingUtils.showError(e, "Unable to add image at " + newCoords + " to album as another image with those coords already exists.");
       }
