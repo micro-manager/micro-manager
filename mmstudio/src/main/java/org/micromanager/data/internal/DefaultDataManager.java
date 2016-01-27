@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.ProgressMonitor;
 
 import mmcorej.TaggedImage;
 
@@ -35,6 +37,7 @@ import org.json.JSONException;
 
 import org.micromanager.data.DataManager;
 import org.micromanager.data.Datastore;
+import org.micromanager.data.RewritableDatastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.ImageJConverter;
 import org.micromanager.data.Metadata;
@@ -55,6 +58,7 @@ import org.micromanager.data.ProcessorFactory;
 
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.JavaUtils;
 // TODO: this should be moved into the API.
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -65,6 +69,9 @@ import org.micromanager.PropertyMap;
  * access to Micro-Manager's data objects.
  */
 public class DefaultDataManager implements DataManager {
+   private static final String CANCEL_OPTION = "Cancel";
+   private static final String CONTINUE_OPTION = "Continue";
+   private static final String VIRTUAL_OPTION = "Use Virtual";
    private static final DefaultDataManager staticInstance_;
    static {
       staticInstance_ = new DefaultDataManager();
@@ -78,6 +85,13 @@ public class DefaultDataManager implements DataManager {
    @Override
    public Datastore createRAMDatastore() {
       Datastore result = new DefaultDatastore();
+      result.setStorage(new StorageRAM(result));
+      return result;
+   }
+
+   @Override
+   public RewritableDatastore createRewritableRAMDatastore() {
+      RewritableDatastore result = new DefaultRewritableDatastore();
       result.setStorage(new StorageRAM(result));
       return result;
    }
@@ -164,10 +178,48 @@ public class DefaultDataManager implements DataManager {
                   false));
       }
       if (!isVirtual) {
+         // Check for available RAM. I'm fairly certain that we should only
+         // need to consider the RAM that will be used as direct memory, i.e.
+         // not the memory used by the metadata.
+         Image image = result.getAnyImage();
+         // Must cast a value to long in the arithmetic or else we end up with
+         // an overflow situation before converting to (signed) long in the
+         // assignment.
+         long bytes = ((long) result.getNumImages()) * image.getWidth() *
+            image.getHeight() * image.getBytesPerPixel();
+         if (bytes > JavaUtils.getAvailableUnusedMemory() * 0.9) {
+            // Allow the user to back out of loading to RAM.
+            String[] options = new String[] {CONTINUE_OPTION, CANCEL_OPTION,
+               VIRTUAL_OPTION};
+            int selection = JOptionPane.showOptionDialog(null,
+                  "There may not be enough memory to load this data into RAM. Continue anyway, or open as a virtual dataset?",
+                  "Insufficient Memory Warning", 0,
+                  JOptionPane.WARNING_MESSAGE, null, options, VIRTUAL_OPTION);
+            if (options[selection].equals(CANCEL_OPTION)) {
+               // Give up.
+               return null;
+            }
+            else if (options[selection].equals(VIRTUAL_OPTION)) {
+               // We already have the virtual dataset ready.
+               return result;
+            }
+         }
          // Copy into a StorageRAM.
-         DefaultDatastore tmp = (DefaultDatastore) createRAMDatastore();
-         tmp.copyFrom(result);
-         result = tmp;
+         ProgressMonitor monitor = new ProgressMonitor(null,
+               "Loading images into RAM...", null, 0, result.getNumImages());
+         try {
+            DefaultDatastore tmp = (DefaultDatastore) createRAMDatastore();
+            tmp.copyFrom(result, monitor);
+            result = tmp;
+         }
+         catch (OutOfMemoryError e) {
+            // Unable to allocate enough direct memory for our images.
+            ReportingUtils.showError("Insufficient memory to open dataset. Try opening in virtual mode instead.");
+            return null;
+         }
+         finally {
+            monitor.close();
+         }
       }
       result.setSavePath(directory);
       result.freeze();

@@ -115,6 +115,11 @@ import org.micromanager.Studio;
  * refactored.
  */
 public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
+   /**
+    * Default key to use when reading or writing DisplaySettings from/to the
+    * user's profile. See setDisplaySettingsKey() for more information.
+    */
+   public static final String DEFAULT_SETTINGS_KEY = "Default";
 
    // Keeps track of unique names that we are forced to invent for anonymous
    // datasets. Note we use hashCode here so we don't maintain a reference to
@@ -125,6 +130,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    private Studio studio_;
    private final Datastore store_;
    private DisplaySettings displaySettings_;
+   // Used for storing DisplaySettings under different locations in the profile
+   // than the default (e.g. for snap/live).
+   private String settingsProfileKey_ = DEFAULT_SETTINGS_KEY;
    private MMVirtualStack stack_;
    private ImagePlus ijImage_;
    private final EventBus displayBus_;
@@ -232,7 +240,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          // Combine the default global display settings from
          // getStandardSettings() with the channel-specific settings from
          // RememberedChannelSettings.
-         displaySettings_ = DefaultDisplaySettings.getStandardSettings();
+         displaySettings_ = DefaultDisplaySettings.getStandardSettings(
+               settingsProfileKey_);
          displaySettings_ = RememberedChannelSettings.updateSettings(
                store_.getSummaryMetadata(), displaySettings_,
                store_.getAxisLength(Coords.CHANNEL));
@@ -598,7 +607,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             canvasQueue_.halt();
          }
          // TODO: assuming mode 1 for now.
-         ijImage_ = new MMCompositeImage(ijImage_, 1, ijImage_.getTitle());
+         ijImage_ = new MMCompositeImage(this, ijImage_, 1, ijImage_.getTitle());
          ijImage_.setOpenAsHyperStack(true);
          MMCompositeImage composite = (MMCompositeImage) ijImage_;
          int numChannels = store_.getAxisLength(Coords.CHANNEL);
@@ -696,17 +705,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       // Synchronized so we don't try to change the display while we also
       // change our UI (e.g. in shiftToCompositeImage).
       synchronized(guiLock_) {
-         if (ijImage_ instanceof CompositeImage &&
-               ((CompositeImage) ijImage_).getMode() == CompositeImage.COMPOSITE) {
-            // Must enqueue all channels at these coords.
-            for (int i = 0; i < store_.getAxisLength(Coords.CHANNEL); ++i) {
-               canvasQueue_.enqueue(
-                        coords.copy().channel(i).build());
-            }
-         }
-         else {
-            canvasQueue_.enqueue(coords);
-         }
+         canvasQueue_.enqueue(coords);
       }
    }
 
@@ -762,14 +761,15 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    @Override
    public void setDisplaySettings(DisplaySettings settings) {
       displaySettings_ = settings;
-      boolean magChanged = (settings.getMagnification() != null &&
-            settings.getMagnification() != canvas_.getMagnification());
-      DefaultDisplaySettings.setStandardSettings(settings);
-      RememberedChannelSettings.saveSettingsToProfile(settings,
-            store_.getSummaryMetadata(), store_.getAxisLength(Coords.CHANNEL));
-      // This will cause the canvas to pick up magnification changes, note.
-      displayBus_.post(new NewDisplaySettingsEvent(settings, this));
       if (haveCreatedGUI_) {
+         boolean magChanged = (settings.getMagnification() != null &&
+               settings.getMagnification() != canvas_.getMagnification());
+         DefaultDisplaySettings.setStandardSettings(settings,
+               settingsProfileKey_);
+         RememberedChannelSettings.saveSettingsToProfile(settings,
+               store_.getSummaryMetadata(), store_.getAxisLength(Coords.CHANNEL));
+         // This will cause the canvas to pick up magnification changes, note.
+         displayBus_.post(new NewDisplaySettingsEvent(settings, this));
          if (magChanged) {
             // Ensure that any changes in the canvas size (and thus in our
             // window size) properly adjust other elements.
@@ -875,6 +875,14 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             new GlobalDisplayDestroyedEvent(this));
       DefaultEventManager.getInstance().unregisterForEvents(this);
       store_.unregisterForEvents(this);
+      synchronized(guiLock_) {
+         if (!haveCreatedGUI_) {
+            // This window is closed before it is even created.
+            dispose();
+            haveClosed_ = true;
+            return;
+         }
+      }
       // Closing the window immediately invalidates the ImagePlus
       // ImageProcessor that we use for drawing, even if our CanvasUpdateQueue
       // is in the middle of performing a drawing operation. This synchronized
@@ -884,6 +892,10 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       synchronized(drawLock_) {
          canvasQueue_.halt();
          dispose();
+         if (fullScreenFrame_ != null) {
+            fullScreenFrame_.dispose();
+            fullScreenFrame_ = null;
+         }
          haveClosed_ = true;
       }
    }
@@ -909,6 +921,10 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    /**
     * Turn fullscreen mode on or off. Fullscreen is actually a separate
     * frame due to how Java handles the GUI.
+    * Note that the order of operations regarding when fullScreenFrame_ is
+    * set/unset and when our normal window is shown/hidden is important, to
+    * make certain that getIsClosed() doesn't briefly return false while we're
+    * transitioning to/from fullscreen mode.
     * TODO: should this really be exposed in the API?
     */
    @Override
@@ -924,14 +940,14 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             // away now. Retrieve our contents from it first, of course.
             add(contentsPanel_);
             fullScreenFrame_.dispose();
+            setVisible(true);
             fullScreenFrame_ = null;
             constrainWindowShape();
-            setVisible(true);
          }
          else {
             // Transfer our contents to a new JFrame for the fullscreen mode.
-            setVisible(false);
             fullScreenFrame_ = new JFrame();
+            setVisible(false);
             fullScreenFrame_.setUndecorated(true);
             fullScreenFrame_.setBounds(
                   GUIUtils.getFullScreenBounds(getScreenConfig()));
@@ -1179,9 +1195,17 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          name = store_.getSummaryMetadata().getName();
       }
       if (name == null) {
-         // Must be an anonymous RAM datastore. Invent a new name and store it
+         // Must be an anonymous RAM datastore. First, scan for other displays
+         // for this datastore that may already have had a name invented for
+         // them; if that fails, then invent a new name and store it
          // in our static hashmap (because we can't count on storing it in
          // the datastore, which may be frozen).
+         for (DisplayWindow display : studio_.displays().getAllImageWindows()) {
+            if (display.getDatastore() == store_ &&
+                  displayHashToUniqueName_.containsKey(display.hashCode())) {
+               return displayHashToUniqueName_.get(display.hashCode());
+            }
+         }
          if (!displayHashToUniqueName_.containsKey(this.hashCode())) {
             displayHashToUniqueName_.put(this.hashCode(),
                   getUniqueDisplayName(this));
@@ -1210,13 +1234,35 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
 
    @Override
    public DisplayWindow duplicate() {
-      DisplayWindow result = createDisplay(studio_, store_, controlsFactory_);
+      DefaultDisplayWindow result = createDisplay(studio_, store_, controlsFactory_);
+      result.setDisplaySettingsKey(settingsProfileKey_);
       result.setDisplaySettings(displaySettings_);
       result.setCustomTitle(customName_);
       // HACK: for some unknown reason, duplicating the display causes our own
       // LUTs to get "reset", so we have to re-apply them after duplicating.
       canvasQueue_.reapplyLUTs();
       return result;
+   }
+
+   /**
+    * Choose a custom string to use when saving this display's DisplaySettings
+    * to the user's profile (which happens automatically whenever the user
+    * makes a change to those settings). Any future changes to this display's
+    * DisplaySettings will be saved under this key, and when this method is
+    * called, the display will load any saved settings under this key and use
+    * them as the new DisplaySettings.
+    * @param key New key to use when reading from/writing to the profile to
+    *        store DisplaySettings. If null, then revert to
+    *        DEFAULT_SETTINGS_KEY.
+    */
+   public void setDisplaySettingsKey(String newKey) {
+      settingsProfileKey_ = newKey;
+      if (newKey == null) {
+         settingsProfileKey_ = DEFAULT_SETTINGS_KEY;
+      }
+      // Load the new display settings now.
+      setDisplaySettings(
+            DefaultDisplaySettings.getStandardSettings(settingsProfileKey_));
    }
 
    // Implemented to help out DummyImageWindow.

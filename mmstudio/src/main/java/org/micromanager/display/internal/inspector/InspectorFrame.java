@@ -130,7 +130,6 @@ public class InspectorFrame extends MMFrame implements Inspector {
    }
 
    private DataViewer display_;
-   private final Stack<DataViewer> displayHistory_;
    // Maps InspectorPanels to the JPanels that contain them in our UI.
    private HashMap<InspectorPanel, JPanel> panelToWrapper_;
    private final JPanel contents_;
@@ -141,7 +140,6 @@ public class InspectorFrame extends MMFrame implements Inspector {
    public InspectorFrame(DataViewer display) {
       super();
       haveCreatedInspector_ = true;
-      displayHistory_ = new Stack<DataViewer>();
       setTitle("Image Inspector");
       setAlwaysOnTop(true);
       // Use a small title bar.
@@ -270,9 +268,6 @@ public class InspectorFrame extends MMFrame implements Inspector {
       displayChooser_.addItem(nullItem);
       List<DataViewer> allDisplays = new ArrayList<DataViewer>(DefaultDisplayManager.getInstance().getAllDataViewers());
       for (DataViewer display : allDisplays) {
-         if (!displayHistory_.contains(display)) {
-            displayHistory_.push(display);
-         }
          DisplayMenuItem newItem = new DisplayMenuItem(display);
          displayChooser_.addItem(newItem);
          if (display_ == display && curItem.getDisplay() != null) {
@@ -412,9 +407,14 @@ public class InspectorFrame extends MMFrame implements Inspector {
 
    @Subscribe
    public void onDisplayDestroyed(DisplayDestroyedEvent event) {
-      event.getDisplay().unregisterForEvents(this);
+      DataViewer viewer = event.getDisplay();
+      viewer.unregisterForEvents(this);
       populateChooser();
-      setDisplay(null);
+      if (viewer == display_) {
+         // Ensure we're looking at the topmost display.
+         DisplayWindow currentDisplay = DefaultDisplayManager.getInstance().getCurrentWindow();
+         setDisplay(currentDisplay);
+      }
    }
 
    @Subscribe
@@ -444,21 +444,6 @@ public class InspectorFrame extends MMFrame implements Inspector {
    }
 
    private void setDisplay(DataViewer display) {
-      if (display == null) {
-         // Remove the top display from the history, and switch to the most
-         // recent next one, if possible.
-         displayHistory_.remove(display_);
-         if (!displayHistory_.empty()) {
-            display = displayHistory_.peek();
-         }
-      }
-      // Update the display history so the new display is in front.
-      if (display != null) {
-         if (displayHistory_.contains(display)) {
-            displayHistory_.remove(display);
-         }
-         displayHistory_.push(display_);
-      }
       // Update our listing of displays.
       display_ = display;
       populateChooser();

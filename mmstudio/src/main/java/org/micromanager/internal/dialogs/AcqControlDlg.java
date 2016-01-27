@@ -1675,10 +1675,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       }
    }
 
-   public boolean isAcquisitionRunning() {
-      return acqEng_.isAcquisitionRunning();
-   }
-
    public static int search(int[] numbers, int key) {
       for (int index = 0; index < numbers.length; index++) {
          if (numbers[index] == key) {

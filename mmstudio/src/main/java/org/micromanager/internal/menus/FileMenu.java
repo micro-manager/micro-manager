@@ -105,7 +105,11 @@ public class FileMenu {
       try {
          Datastore store = studio_.data().promptForDataToLoad(
                MMStudio.getInstance().getFrame(), isVirtual);
-         if (store == null || store.getAnyImage() == null) {
+         if (store == null) {
+            // User cancelled.
+            return;
+         }
+         if (store.getAnyImage() == null) {
             studio_.logs().showError("Unable to load any images; file may be invalid.");
             return;
          }

@@ -42,6 +42,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
+import org.micromanager.data.DatastoreRewriteException;
 
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplaySettings;
@@ -141,6 +142,10 @@ public class DemoDisplay extends JFrame implements DataViewer {
       catch (DatastoreFrozenException e) {
          // This should be impossible.
          studio_.logs().showError("Datastore has been frozen.");
+      }
+      catch (DatastoreRewriteException e) {
+         // This should also be impossible.
+         studio_.logs().showError("Image already exists at " + newImage.getCoords());
       }
       imageCount_ += 1;
       // Draw the new image, and ensure the inspector histograms are up to

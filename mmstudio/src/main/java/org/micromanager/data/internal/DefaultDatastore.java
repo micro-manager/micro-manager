@@ -28,11 +28,13 @@ import java.util.List;
 
 import javax.swing.filechooser.FileFilter;
 import javax.swing.JFileChooser;
+import javax.swing.ProgressMonitor;
 
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
+import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
@@ -71,27 +73,38 @@ public class DefaultDatastore implements Datastore {
          MULTIPAGE_TIFF);
 
    private static final String PREFERRED_SAVE_FORMAT = "default format for saving data";
-   private Storage storage_ = null;
-   private PrioritizedEventBus bus_;
-   private boolean isFrozen_ = false;
+   protected Storage storage_ = null;
+   protected PrioritizedEventBus bus_;
+   protected boolean isFrozen_ = false;
    private String savePath_ = null;
+   private boolean haveSetSummary_ = false;
 
    public DefaultDatastore() {
       bus_ = new PrioritizedEventBus();
    }
 
    /**
-    * Copy all data from the provided other Datastore into ourselves.
+    * Copy all data from the provided other Datastore into ourselves. The
+    * optional ProgressMonitor can be used to keep callers appraised of our
+    * progress.
     */
-   public void copyFrom(Datastore alt) {
+   public void copyFrom(Datastore alt, ProgressMonitor monitor) {
+      int imageCount = 0;
       try {
          setSummaryMetadata(alt.getSummaryMetadata());
          for (Coords coords : alt.getUnorderedImageCoords()) {
             putImage(alt.getImage(coords));
+            imageCount++;
+            if (monitor != null) {
+               monitor.setProgress(imageCount);
+            }
          }
       }
       catch (DatastoreFrozenException e) {
-         ReportingUtils.logError("Can't copy to datastore: we're frozen");
+         ReportingUtils.logError("Can't copy from datastore: we're frozen");
+      }
+      catch (DatastoreRewriteException e) {
+         ReportingUtils.logError("Can't copy from datastore: we already have an image at one of its coords.");
       }
       catch (IllegalArgumentException e) {
          ReportingUtils.logError("Inconsistent image coordinates in datastore");
@@ -158,9 +171,12 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public void putImage(Image image) throws DatastoreFrozenException, IllegalArgumentException {
+   public void putImage(Image image) throws DatastoreFrozenException, DatastoreRewriteException, IllegalArgumentException {
       if (isFrozen_) {
          throw new DatastoreFrozenException();
+      }
+      if (getImage(image.getCoords()) != null) {
+         throw new DatastoreRewriteException();
       }
       // Check for validity of axes.
       Coords coords = image.getCoords();
@@ -201,9 +217,12 @@ public class DefaultDatastore implements Datastore {
          }
          if (didAdd) {
             // Update summary metadata.
+            // TODO: this is cheating: normally a Datastore can only have its
+            // summary metadata be set once, which is why we just post an
+            // event rather than call our setSummaryMetadata() method.
             summary = summary.copy().axisOrder(
                   axisOrderList.toArray(new String[] {})).build();
-            setSummaryMetadata(summary);
+            bus_.post(new NewSummaryMetadataEvent(summary));
          }
       }
    }
@@ -251,10 +270,14 @@ public class DefaultDatastore implements Datastore {
    }
    
    @Override
-   public synchronized void setSummaryMetadata(SummaryMetadata metadata) throws DatastoreFrozenException {
+   public synchronized void setSummaryMetadata(SummaryMetadata metadata) throws DatastoreFrozenException, DatastoreRewriteException {
       if (isFrozen_) {
          throw new DatastoreFrozenException();
       }
+      if (haveSetSummary_) {
+         throw new DatastoreRewriteException();
+      }
+      haveSetSummary_ = true;
       bus_.post(new NewSummaryMetadataEvent(metadata));
    }
 
@@ -388,8 +411,13 @@ public class DefaultDatastore implements Datastore {
          for (Coords coords : tmp) {
             duplicate.putImage(getImage(coords));
          }
+         // We set the save path and freeze *both* datastores; our own because
+         // we should not be modified post-saving, and the other because it
+         // may trigger side-effects that "finish" the process of saving.
          setSavePath(path);
          freeze();
+         duplicate.setSavePath(path);
+         duplicate.freeze();
          return true;
       }
       catch (java.io.IOException e) {
@@ -397,6 +425,9 @@ public class DefaultDatastore implements Datastore {
       }
       catch (DatastoreFrozenException e) {
          ReportingUtils.logError("Couldn't modify newly-created datastore; this should never happen!");
+      }
+      catch (DatastoreRewriteException e) {
+         ReportingUtils.logError("Couldn't insert an image into newly-created datastore; this should never happen!");
       }
       return false;
    }

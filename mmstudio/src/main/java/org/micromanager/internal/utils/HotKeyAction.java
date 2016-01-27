@@ -47,7 +47,12 @@ public class HotKeyAction {
                   snapLiveManager_.setLiveMode(!snapLiveManager_.getIsLiveModeOn());
                   return true;
                case TOGGLESHUTTER:
-                  studio_.toggleShutter();
+                  try {
+                     studio_.shutter().setShutter(!studio_.shutter().getShutter());
+                  }
+                  catch (Exception e) {
+                     studio_.logs().logError(e, "Error setting shutter");
+                  }
                   return true;
                case ADD_TO_ALBUM:
                   studio_.album().addImages(studio_.live().snap(false));

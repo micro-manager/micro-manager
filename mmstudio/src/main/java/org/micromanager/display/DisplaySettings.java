@@ -177,7 +177,7 @@ public interface DisplaySettings {
             ContrastSettings newSettings, int channelIndex);
 
       DisplaySettingsBuilder magnification(Double magnification);
-      DisplaySettingsBuilder animationFPS(Integer animationFPS);
+      DisplaySettingsBuilder animationFPS(Double animationFPS);
       DisplaySettingsBuilder channelColorMode(ColorMode channelColorMode);
       DisplaySettingsBuilder histogramUpdateRate(Double histogramUpdateRate);
       DisplaySettingsBuilder shouldSyncChannels(Boolean shouldSyncChannels);
@@ -301,7 +301,7 @@ public interface DisplaySettings {
     * Animation speed, when animation of the display is turned on
     * @return Animation speed in frames per second
     */
-   public Integer getAnimationFPS();
+   public Double getAnimationFPS();
 
    /**
     * This enum defines the order in which values in the "color mode"

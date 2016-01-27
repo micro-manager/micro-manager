@@ -57,6 +57,9 @@ import org.micromanager.internal.MMStudio;
 
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
+import org.micromanager.data.DatastoreRewriteException;
+import org.micromanager.data.Pipeline;
+import org.micromanager.data.PipelineErrorException;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
 
@@ -115,23 +118,23 @@ public class MMAcquisition {
    private String rootDirectory_;
    private Studio studio_;
    private DefaultDatastore store_;
+   private Pipeline pipeline_;
    private DisplayWindow display_;
-   private final boolean existing_;
    private final boolean virtual_;
    private AcquisitionEngine eng_;
    private final boolean show_;
    private JSONObject summary_ = new JSONObject();
    private final String NOTINITIALIZED = "Acquisition was not initialized";
 
-   public MMAcquisition(Studio studio, String name, JSONObject summaryMetadata, boolean diskCached, 
-           AcquisitionEngine eng, boolean show) {
+   public MMAcquisition(Studio studio, String name, JSONObject summaryMetadata,
+         boolean diskCached, AcquisitionEngine eng, boolean show) {
       studio_ = studio;
       name_ = name;
       virtual_ = diskCached;
-      existing_ = false;
       eng_ = eng;
       show_ = show;
       store_ = new DefaultDatastore();
+      pipeline_ = studio_.data().copyApplicationPipeline(store_, false);
       try {
          if (summaryMetadata.has("Directory") && summaryMetadata.get("Directory").toString().length() > 0) {
             // Set up saving to the target directory.
@@ -153,10 +156,16 @@ public class MMAcquisition {
       }
 
       try {
-         store_.setSummaryMetadata(DefaultSummaryMetadata.legacyFromJSON(summaryMetadata));
+         pipeline_.insertSummaryMetadata(DefaultSummaryMetadata.legacyFromJSON(summaryMetadata));
       }
       catch (DatastoreFrozenException e) {
-         ReportingUtils.logError(e, "Couldn't set summary metadata");
+         ReportingUtils.logError(e, "Datastore is frozen; can't set summary metadata");
+      }
+      catch (DatastoreRewriteException e) {
+         ReportingUtils.logError(e, "Summary metadata has already been set");
+      }
+      catch (PipelineErrorException e) {
+         ReportingUtils.logError(e, "Can't insert summary metadata: processing already started.");
       }
       if (show_) {
          display_ = studio_.displays().createDisplay(
@@ -206,36 +215,7 @@ public class MMAcquisition {
       
       store_ = new DefaultDatastore();
 
-      if (virtual_ && existing_) {
-         String dirName = rootDirectory_ + File.separator + name;
-         try {
-            boolean multipageTiff = MultipageTiffReader.isMMMultipageTiff(dirName);
-            if (multipageTiff) {
-               imageFileManager = new StorageMultipageTiff(store_, dirName,
-                     false);
-            } else {
-               imageFileManager = new StorageSinglePlaneTiffSeries(
-                     store_, dirName, false);
-            }
-         } catch (Exception ex) {
-            ReportingUtils.showError(ex, "Failed to open file");
-         }
-
-         store_.setStorage(imageFileManager);
-         store_.setSavePath(dirName);
-         try {
-            store_.setSummaryMetadata((new DefaultSummaryMetadata.Builder().build()));
-         }
-         catch (DatastoreFrozenException e) {
-            ReportingUtils.logError(e, "Couldn't set summary metadata");
-         }
-         // Now that the datastore is set up, create the display(s).
-         if (show_) {
-            List<DisplayWindow> displays = studio_.displays().loadDisplays(store_);
-         }
-      }
-
-      if (virtual_ && !existing_) {
+      if (virtual_) {
          String dirName = rootDirectory_ + File.separator + name;
          if ((new File(dirName)).exists()) {
             try {
@@ -254,69 +234,42 @@ public class MMAcquisition {
          SummaryMetadata summary = DefaultSummaryMetadata.legacyFromJSON(summary_);
          try {
             store_.setStorage(getAppropriateStorage(store_, dirName, true));
-            store_.setSummaryMetadata(summary);
+            pipeline_.insertSummaryMetadata(summary);
          }
          catch (IOException e) {
             ReportingUtils.showError(e, "Unable to prepare saving");
          }
          catch (DatastoreFrozenException e) {
-            ReportingUtils.logError("Unable to set summary metadata; datastore pre-emptively locked. This should never happen!");
+            ReportingUtils.logError("Unable to set summary metadata: datastore pre-emptively locked. This should never happen!");
+         }
+         catch (DatastoreRewriteException e) {
+            ReportingUtils.logError("Unable to set summary metadata: datastore has already had summary metadata set. This should never happen!");
+         }
+         catch (PipelineErrorException e) {
+            ReportingUtils.logError(e, "Can't insert summary metadata: processing already started.");
          }
       }
-
-      if (!virtual_ && !existing_) {
+      else { // Not a disk-based data store.
          store_.setStorage(new StorageRAM(store_));
          try {
-            store_.setSummaryMetadata((new DefaultSummaryMetadata.Builder().build()));
+            pipeline_.insertSummaryMetadata(new DefaultSummaryMetadata.Builder().build());
          }
          catch (DatastoreFrozenException e) {
-            ReportingUtils.logError(e, "Couldn't set summary metadata");
+            ReportingUtils.logError(e, "Couldn't set summary metadata: datastore is frozen.");
          }
-      }
-
-      if (!virtual_ && existing_) {
-         String dirName = rootDirectory_ + File.separator + name;
-         Storage tempImageFileManager = null;
-         boolean multipageTiff;
-         try {
-            multipageTiff = MultipageTiffReader.isMMMultipageTiff(dirName);
-            if (multipageTiff) {
-               tempImageFileManager = new StorageMultipageTiff(store_, dirName, false);
-            } else {
-               tempImageFileManager = new StorageSinglePlaneTiffSeries(
-                     store_, dirName, false);
-            }
-         } catch (Exception ex) {
-            ReportingUtils.showError(ex, "Failed to open file");
-            return;
+         catch (DatastoreRewriteException e) {
+            ReportingUtils.logError(e, "Couldn't set summary metadata: it's already been set.");
          }
-
-         // Copy from the TIFF storage to a RAM-backed storage.
-         store_.setStorage(tempImageFileManager);
-         DefaultDatastore duplicate = new DefaultDatastore();
-         duplicate.setStorage(new StorageRAM(duplicate));
-         duplicate.setSavePath(dirName);
-         duplicate.copyFrom(store_);
-         store_ = duplicate;
-         if (show_) {
-            List<DisplayWindow> displays = studio_.displays().loadDisplays(store_);
+         catch (PipelineErrorException e) {
+            ReportingUtils.logError(e, "Can't insert summary metadata: processing already started.");
          }
-         // TODO: re-implement the check below before loading images into RAM
-//         imageCache_ = new MMImageCache(tempImageFileManager);
-//         if (tempImageFileManager.getDataSetSize() > 0.9 * JavaUtils.getAvailableUnusedMemory()) {
-//            throw new MMScriptException("Not enough room in memory for this data set.\nTry opening as a virtual data set instead.");
-//         }
-//         imageFileManager = new TaggedImageStorageRamFast(null);
-//         imageCache_.saveAs(imageFileManager);
       }
 
       CMMCore core = studio_.core();
-      if (!existing_) {
-         createDefaultAcqSettings();
-      }
+      createDefaultAcqSettings();
 
       if (store_.getSummaryMetadata() != null) {
-         if (show_ && !existing_) {
+         if (show_) {
             // NB pre-existing setups will have loaded saved display settings.
             display_ = studio_.displays().createDisplay(
                   store_, makeControlsFactory());
@@ -488,10 +441,16 @@ public class MMAcquisition {
          summaryMetadata.put("Width", width_);
          startTimeMs_ = System.currentTimeMillis();
          try {
-            store_.setSummaryMetadata(DefaultSummaryMetadata.legacyFromJSON(summaryMetadata));
+            pipeline_.insertSummaryMetadata(DefaultSummaryMetadata.legacyFromJSON(summaryMetadata));
          }
          catch (DatastoreFrozenException e) {
-            ReportingUtils.logError(e, "Couldn't set summary metadata");
+            ReportingUtils.logError(e, "Couldn't set summary metadata: datastore is frozen.");
+         }
+         catch (DatastoreRewriteException e) {
+            ReportingUtils.logError(e, "Couldn't set summary metadata: it's already been set.");
+         }
+         catch (PipelineErrorException e) {
+            ReportingUtils.logError(e, "Can't insert summary metadata: processing already started.");
          }
       } catch (JSONException ex) {
          ReportingUtils.showError(ex);
@@ -576,6 +535,10 @@ public class MMAcquisition {
 
    public Datastore getDatastore() {
       return store_;
+   }
+
+   public Pipeline getPipeline() {
+      return pipeline_;
    }
 
    public void setAsynchronous() {

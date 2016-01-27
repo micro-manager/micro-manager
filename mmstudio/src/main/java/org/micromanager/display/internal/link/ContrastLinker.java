@@ -143,10 +143,10 @@ public class ContrastLinker extends SettingsLinker {
    public DisplaySettings copySettings(DataViewer sourceDisplay,
          DisplaySettings source, DisplaySettings dest) {
       int sourceIndex = getIndex(sourceDisplay, source);
-      DisplaySettings.ContrastSettings oldSettings = source.getSafeContrastSettings(
+      DisplaySettings.ContrastSettings oldSettings = dest.getSafeContrastSettings(
             channelIndex_, DefaultDisplayManager.getInstance().getContrastSettings(
                0, 0, 1.0, null));
-      DisplaySettings.ContrastSettings newSettings = dest.getSafeContrastSettings(
+      DisplaySettings.ContrastSettings newSettings = source.getSafeContrastSettings(
             sourceIndex, null);
       if (oldSettings == newSettings) {
          // Our channel settings have not changed.
@@ -154,6 +154,7 @@ public class ContrastLinker extends SettingsLinker {
       }
       DisplaySettings.DisplaySettingsBuilder builder = dest.copy();
       builder.safeUpdateContrastSettings(newSettings, channelIndex_);
+      builder.shouldAutostretch(source.getShouldAutostretch());
       return builder.build();
    }
 

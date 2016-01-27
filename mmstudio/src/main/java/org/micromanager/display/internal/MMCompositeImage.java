@@ -35,11 +35,14 @@ import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
+   private final DefaultDisplayWindow display_;
    private final ImagePlus hyperImage_;
    private final String title_;
 
-   public MMCompositeImage(ImagePlus imgp, int type, String title) {
+   public MMCompositeImage(DefaultDisplayWindow display, ImagePlus imgp,
+         int type, String title) {
       super(imgp, type);
+      display_ = display;
       hyperImage_ = imgp;
       title_ = title;
    }
@@ -103,7 +106,12 @@ public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
          SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-               superReset();
+               // HACK: only do this if our parent display is currently
+               // still open. Otherwise we spew (harmless) errors when
+               // the display closes while doing resets.
+               if (!display_.getIsClosed()) {
+                  superReset();
+               }
             }
          });
       }

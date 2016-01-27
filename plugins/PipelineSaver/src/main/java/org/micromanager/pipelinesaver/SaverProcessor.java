@@ -26,6 +26,7 @@ import java.io.IOException;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
+import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
 import org.micromanager.Studio;
@@ -76,6 +77,9 @@ public class SaverProcessor extends Processor {
       }
       catch (DatastoreFrozenException e) {
          studio_.logs().logError(e, "Unable to save data: datastore is frozen");
+      }
+      catch (DatastoreRewriteException e) {
+         studio_.logs().logError(e, "Unable to save data: image already exists at " + image.getCoords());
       }
       context.outputImage(image);
    }

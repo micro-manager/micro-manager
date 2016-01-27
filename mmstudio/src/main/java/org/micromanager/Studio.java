@@ -209,4 +209,17 @@ public interface Studio {
     * @return QuickAccessManager instance.
     */
    public QuickAccessManager getQuickAccessManager();
+
+   /**
+    * Provides access to the ShutterManager for controlling the shutter state.
+    * @return ShutterManager instance.
+    */
+   public ShutterManager shutter();
+
+   /**
+    * Provides access to the ShutterManager for controlling the shutter state.
+    * Identical to shutter() except in name.
+    * @return ShutterManager instance.
+    */
+   public ShutterManager getShutterManager();
 }

@@ -36,6 +36,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
+import org.micromanager.data.DatastoreRewriteException;
 
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.ControlsFactory;
@@ -99,6 +100,10 @@ public final class DefaultDisplayManager implements DisplayManager {
          // This should never happen.
          ReportingUtils.showError(e, "Somehow managed to create an immediately-frozen RAM datastore.");
       }
+      catch (DatastoreRewriteException e) {
+         // This should also never happen.
+         ReportingUtils.showError(e, "Somehow managed to create a Datastore that already had an image in it.");
+      }
       createDisplay(result);
       return result;
    }
@@ -158,7 +163,8 @@ public final class DefaultDisplayManager implements DisplayManager {
 
    @Override
    public DisplaySettings getStandardDisplaySettings() {
-      return DefaultDisplaySettings.getStandardSettings();
+      return DefaultDisplaySettings.getStandardSettings(
+            DefaultDisplayWindow.DEFAULT_SETTINGS_KEY);
    }
 
    @Override
@@ -487,30 +493,34 @@ public final class DefaultDisplayManager implements DisplayManager {
 
    /**
     * Ensure that we don't think the display still exists.
-    */
-   @Subscribe
-   public void onDisplayDestroyed(DisplayDestroyedEvent event) {
-      DisplayWindow display = event.getDisplay();
-      Datastore store = display.getDatastore();
-      if (getIsManaged(store)) {
-         storeToDisplays_.get(store).remove(display);
-      }
-      if (staticInstance_.displayFocusHistory_.contains(display)) {
-         staticInstance_.displayFocusHistory_.remove(display);
-      }
-      else {
-         // This should never happen.
-         ReportingUtils.logError("DisplayManager informed of destruction of display it didn't know existed.");
-      }
-   }
-
-   /**
     * Translate the display-destroyed event into a viewer-removed event.
     */
    @Subscribe
    public void onGlobalDisplayDestroyed(GlobalDisplayDestroyedEvent event) {
-      DefaultEventManager.getInstance().post(
-            new ViewerRemovedEvent(event.getDisplay()));
+      try {
+         DisplayWindow display = event.getDisplay();
+         Datastore store = display.getDatastore();
+         if (getIsManaged(store) &&
+               storeToDisplays_.get(store).contains(display)) {
+            storeToDisplays_.get(store).remove(display);
+         }
+         if (displayFocusHistory_.contains(display)) {
+            displayFocusHistory_.remove(display);
+            if (displayFocusHistory_.size() > 0) {
+               // The next display in the stack must be on top now.
+               raisedToTop(displayFocusHistory_.peek());
+            }
+         }
+         else {
+            // This should never happen.
+            ReportingUtils.logError("DisplayManager informed of destruction of display it didn't know existed.");
+         }
+         DefaultEventManager.getInstance().post(
+               new ViewerRemovedEvent(event.getDisplay()));
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error handling destroyed display");
+      }
    }
 
    public static DefaultDisplayManager getInstance() {

@@ -17,6 +17,7 @@ import javax.swing.JTextField;
 import javax.swing.table.TableCellEditor;
 
 import org.micromanager.acquisition.internal.AcquisitionEngine;
+import org.micromanager.display.internal.ColorSets;
 import org.micromanager.internal.utils.ChannelSpec;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -29,7 +30,7 @@ public class ChannelCellEditor extends AbstractCellEditor implements TableCellEd
 
    private static final long serialVersionUID = -8374637422965302637L;
    JTextField text_ = new JTextField();
-   JComboBox combo_ = new JComboBox();
+   JComboBox channelSelect_ = new JComboBox();
    JCheckBox checkBox_ = new JCheckBox();
    JLabel colorLabel_ = new JLabel();
    int editCol_ = -1;
@@ -77,14 +78,14 @@ public class ChannelCellEditor extends AbstractCellEditor implements TableCellEd
          return text_;
       } else if (colIndex == 1) {
          // channel
-         combo_.removeAllItems();
+         channelSelect_.removeAllItems();
 
          // remove old listeners
-         ActionListener[] listeners = combo_.getActionListeners();
+         ActionListener[] listeners = channelSelect_.getActionListeners();
          for (int i = 0; i < listeners.length; i++) {
-            combo_.removeActionListener(listeners[i]);
+            channelSelect_.removeActionListener(listeners[i]);
          }
-         combo_.removeAllItems();
+         channelSelect_.removeAllItems();
 
          // Only allow channels that aren't already selected in a different
          // row.
@@ -97,28 +98,31 @@ public class ChannelCellEditor extends AbstractCellEditor implements TableCellEd
          String configs[] = model.getAvailableChannels();
          for (int i = 0; i < configs.length; i++) {
             if (!usedChannels.contains(configs[i])) {
-               combo_.addItem(configs[i]);
+               channelSelect_.addItem(configs[i]);
             }
          }
-         combo_.setSelectedItem(channel.config);
+         channelSelect_.setSelectedItem(channel.config);
          
          // end editing on selection change
-         combo_.addActionListener(new ActionListener() {
+         channelSelect_.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
+               // Our fallback color is the colorblind-friendly color for our
+               // current row index.
                channel_.color = new Color(AcqControlDlg.getChannelColor(
                      acqEng_.getChannelGroup(),
-                     (String) combo_.getSelectedItem(), Color.white.getRGB()));
+                     (String) channelSelect_.getSelectedItem(),
+                     ColorSets.COLORBLIND_COLORS[editRow_].getRGB()));
                channel_.exposure = AcqControlDlg.getChannelExposure(
                   acqEng_.getChannelGroup(),
-                  (String) combo_.getSelectedItem(), 10.0);
+                  (String) channelSelect_.getSelectedItem(), 10.0);
                fireEditingStopped();
             }
          });
 
          // Return the configured component
-         return combo_;
+         return channelSelect_;
       } else {
          // ColorEditor takes care of this
          return colorLabel_;
@@ -136,13 +140,16 @@ public class ChannelCellEditor extends AbstractCellEditor implements TableCellEd
          if (editCol_ == 0) {
             return checkBox_.isSelected();
          } else if (editCol_ == 1) {
-            // As a side effect, change to the color and exposure of the new channel
+            // As a side effect, change to the color and exposure of the new
+            // channel. If no color is available, use the "next" colorblind-
+            // friendly color, based on our row index.
             channel_.color = new Color(AcqControlDlg.getChannelColor(
                      acqEng_.getChannelGroup(),
-                     (String) combo_.getSelectedItem(), Color.white.getRGB()));
+                     (String) channelSelect_.getSelectedItem(),
+                     ColorSets.COLORBLIND_COLORS[editRow_].getRGB()));
             channel_.exposure = AcqControlDlg.getChannelExposure(
                   acqEng_.getChannelGroup(), channel_.config, 10.0);
-            return combo_.getSelectedItem();
+            return channelSelect_.getSelectedItem();
          } else if (editCol_ == 2 || editCol_ == 3) {
             return new Double(NumberUtils.displayStringToDouble(text_.getText()));
          } else if (editCol_ == 4) {

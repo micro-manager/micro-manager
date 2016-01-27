@@ -137,10 +137,13 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          }
       }
       try {
+         PositionList posListToUse = posList_;
+         if (posList_ == null && useMultiPosition_) {
+            posListToUse = studio_.compat().getPositionList();
+         }
          // Start up the acquisition engine
          BlockingQueue<TaggedImage> engineOutputQueue = getAcquisitionEngine2010().run(
-                 acquisitionSettings, true,
-                 studio_.compat().getPositionList(),
+                 acquisitionSettings, true, posListToUse,
                  studio_.getAutofocusManager().getDevice());
          summaryMetadata_ = getAcquisitionEngine2010().getSummaryMetadata();
 
@@ -150,12 +153,10 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          curStore_ = acq.getDatastore();
          studio_.events().post(new DefaultAcquisitionStartedEvent(curStore_,
                   acquisitionSettings));
-         Pipeline pipeline = studio_.data().copyApplicationPipeline(curStore_,
-               false);
 
          // Start pumping images through the pipeline and into the datastore.
          DefaultTaggedImageSink sink = new DefaultTaggedImageSink(
-                 engineOutputQueue, pipeline, curStore_, this);
+                 engineOutputQueue, acq.getPipeline(), curStore_, this);
          sink.start(new Runnable() {
             @Override
             public void run() {
