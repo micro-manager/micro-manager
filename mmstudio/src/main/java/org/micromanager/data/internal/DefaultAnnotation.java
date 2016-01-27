@@ -20,10 +20,17 @@
 
 package org.micromanager.data.internal;
 
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
+
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
@@ -31,17 +38,17 @@ import org.micromanager.data.Annotation;
 
 import org.micromanager.PropertyMap;
 
+import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Fairly naive Annotation implementation that stores PropertyMaps as JSON in a
- * plaintext file.
+ * plaintext file. We have a "header" that contains the version string.
  */
 public class DefaultAnnotation implements Annotation {
    private PropertyMap data_;
    private String filename_;
 
-   private static final String VERSION_KEY = "Annotation version";
    private static final Double CURRENT_VERSION = 1.0;
    private static final String GENERAL_KEY = "General annotation";
    private static final String COORDS_KEY = "Image coordinates";
@@ -56,12 +63,26 @@ public class DefaultAnnotation implements Annotation {
       File target = getFile(store, filename);
       if (target.exists()) {
          try {
-            PropertyMap data = DefaultPropertyMap.loadPropertyMap(target.getAbsolutePath());
-            if (data.containsKey(VERSION_KEY)) {
-               Double version = data.getDouble(VERSION_KEY);
+            String contents = Files.toString(target, Charsets.UTF_8);
+            // Split the contents into the first line, which has our version
+            // info, and the rest.
+            String[] splitContents = contents.split("\n", 2);
+            String firstLine = splitContents[0];
+            try {
+               Double version = Double.parseDouble(firstLine);
                if (version > CURRENT_VERSION) {
                   ReportingUtils.logError("Warning: trying to load annotation from a future version (version " + version + " > our loader " + CURRENT_VERSION);
                }
+            }
+            catch (NumberFormatException e) {
+               ReportingUtils.logError("Warning: unable to determine version of annotation file from line [" + firstLine + "]");
+            }
+            PropertyMap data = null;
+            try {
+               data = DefaultPropertyMap.fromJSON(new JSONObject(splitContents[1]));
+            }
+            catch (JSONException e) {
+               throw new IOException(e);
             }
             // Load general annotations.
             if (data.containsKey(GENERAL_KEY)) {
@@ -70,7 +91,7 @@ public class DefaultAnnotation implements Annotation {
             }
             // Load per-image annotations.
             for (String key : data.getKeys()) {
-               if (key.equals(VERSION_KEY) || key.equals(GENERAL_KEY)) {
+               if (key.equals(GENERAL_KEY)) {
                   continue;
                }
                // Convert key into Coords of image.
@@ -99,9 +120,7 @@ public class DefaultAnnotation implements Annotation {
       if (store_.getSavePath() == null) {
          throw new RuntimeException("Asked to save Annotation when store has no save path");
       }
-      File file = getFile(store_, filename_);
       DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();
-      builder.putDouble(VERSION_KEY, CURRENT_VERSION);
       if (generalAnnotation_ != null) {
          builder.putPropertyMap(GENERAL_KEY, generalAnnotation_);
       }
@@ -109,7 +128,34 @@ public class DefaultAnnotation implements Annotation {
          String coordsKey = COORDS_KEY + ((DefaultCoords) coords).toNormalizedString();
          builder.putPropertyMap(coordsKey, imageAnnotations_.get(coords));
       }
-      builder.build().save(file.getAbsolutePath());
+      /**
+       * Annoyingly, since we have to include the header at the top of the
+       * file, we can't just use PropertyMap.save() here.
+       * TODO: much of the logic of PropertyMap.save() is replicated here.
+       */
+      File tmpFile = getFile(store_, filename_ + ".tmp");
+      File destFile = getFile(store_, filename_);
+      FileWriter writer = null;
+      try {
+         writer = new FileWriter(tmpFile, true);
+         writer.write(Double.toString(CURRENT_VERSION) + "\n");
+         writer.write(
+               ((DefaultPropertyMap) builder.build()).toJSON().toString(1));
+         writer.close();
+         if (JavaUtils.isWindows() && destFile.exists()) {
+            // Must delete the destination before copying over it.
+            destFile.delete();
+         }
+         tmpFile.renameTo(destFile);
+      }
+      catch (JSONException e) {
+         throw new IOException(e);
+      }
+      finally {
+         if (writer != null) {
+            writer.close();
+         }
+      }
    }
 
    @Override
