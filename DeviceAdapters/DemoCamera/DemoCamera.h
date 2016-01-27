@@ -36,6 +36,7 @@
 #include <string>
 #include <map>
 #include <algorithm>
+#include <stdint.h>
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
@@ -604,7 +605,7 @@ private:
 class DemoDA : public CSignalIOBase<DemoDA>
 {
 public:
-   DemoDA ();
+   DemoDA (uint8_t n);
    ~DemoDA ();
 
    int Shutdown() {return DEVICE_OK;}
@@ -651,6 +652,7 @@ public:
    int OnRealVoltage(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
+   uint8_t n_;
    double volt_;
    double gatedVolts_;
    bool open_;

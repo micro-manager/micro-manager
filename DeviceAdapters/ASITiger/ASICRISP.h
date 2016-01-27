@@ -66,6 +66,8 @@ public:
    int OnSNR               (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDitherError       (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnLogAmpAGC         (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnNumSkips          (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnInFocusRange      (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    string axisLetter_;
@@ -74,6 +76,7 @@ private:
 
    int UpdateFocusState();
    int SetFocusState(string focusState);
+   int ForceSetFocusState(string focusState);
 };
 
 #endif //_ASICRISP_H_
