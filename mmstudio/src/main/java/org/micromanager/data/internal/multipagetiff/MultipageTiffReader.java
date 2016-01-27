@@ -43,8 +43,8 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import org.micromanager.data.Annotation;
 import org.micromanager.data.Coords;
+import org.micromanager.data.Datastore;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultCoords;
@@ -367,13 +367,12 @@ public class MultipageTiffReader {
     * any comments we find here into an Annotation.
     */
    private void readComments()  {
-      if (masterStorage_.getDatastore().hasAnnotation(
-               CommentsPanel.COMMENTS_FILE)) {
+      Datastore store = masterStorage_.getDatastore();
+      if (CommentsPanel.hasAnnotation(store)) {
          // Already have a comments annotation set up; bail.
          return;
       }
-      Annotation annotation = masterStorage_.getDatastore().createNewAnnotation(
-               CommentsPanel.COMMENTS_FILE);
+      CommentsPanel.createAnnotation(store);
       ByteBuffer buffer = null;
       try {
          long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.COMMENTS_OFFSET_HEADER, 24);
@@ -387,9 +386,7 @@ public class MultipageTiffReader {
          Coords.CoordsBuilder builder = new DefaultCoords.Builder();
          for (String key : MDUtils.getKeys(comments)) {
             if (key.equals("Summary")) {
-               PropertyMap prop = new DefaultPropertyMap.Builder().putString(
-                     CommentsPanel.COMMENTS_KEY, comments.getString(key)).build();
-               annotation.setGeneralAnnotation(prop);
+               CommentsPanel.setSummaryComment(store, comments.getString(key));
                continue;
             }
             // Generate a Coords object from the key string. The string is
@@ -397,11 +394,10 @@ public class MultipageTiffReader {
             int[] indices = MDUtils.getIndices(key);
             builder.channel(indices[0]).z(indices[1]).time(indices[2])
                .stagePosition(indices[3]);
-            PropertyMap prop = new DefaultPropertyMap.Builder().putString(
-                  CommentsPanel.COMMENTS_KEY, comments.getString(key)).build();
-            annotation.setImageAnnotation(builder.build(), prop);
+            CommentsPanel.setImageComment(store, builder.build(),
+                  comments.getString(key));
          }
-         annotation.save();
+         CommentsPanel.save(store);
       }
       catch (JSONException e) {
          ReportingUtils.logError(e, "Unable to generate JSON from buffer " + getString(buffer));

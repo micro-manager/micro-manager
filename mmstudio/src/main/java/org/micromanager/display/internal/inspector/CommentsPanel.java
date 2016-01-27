@@ -64,9 +64,9 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 public class CommentsPanel extends InspectorPanel {
    /** File that comments are saved in. */
-   public static final String COMMENTS_FILE = "comments.txt";
+   private static final String COMMENTS_FILE = "comments.txt";
    /** String key used to access comments in annotations. */
-   public static final String COMMENTS_KEY = "comments";
+   private static final String COMMENTS_KEY = "comments";
 
    private JTextArea imageCommentsTextArea_;
    private JTextArea summaryCommentsTextArea_;
@@ -346,6 +346,24 @@ public class CommentsPanel extends InspectorPanel {
    }
 
    /**
+    * Write a new summary comment for the given Datastore.
+    */
+   public static void setSummaryComment(Datastore store, String comment) {
+      try {
+         Annotation annotation = store.loadAnnotation(COMMENTS_FILE);
+         PropertyMap prop = annotation.getGeneralAnnotation();
+         if (prop == null) {
+            prop = MMStudio.getInstance().data().getPropertyMapBuilder().build();
+         }
+         prop = prop.copy().putString(COMMENTS_KEY, comment).build();
+         annotation.setGeneralAnnotation(prop);
+      }
+      catch (IOException e) {
+         ReportingUtils.logError(e, "Error setting summary comment");
+      }
+   }
+
+   /**
     * Returns the comment for the specified Image in the specified Datastore,
     * or "" if it does not exist.
     */
@@ -363,6 +381,52 @@ public class CommentsPanel extends InspectorPanel {
       catch (IOException e) {
          ReportingUtils.logError(e, "Error accessing comments annotation");
          return "";
+      }
+   }
+
+   /**
+    * Write a new image comment for the given Datastore.
+    */
+   public static void setImageComment(Datastore store, Coords coords,
+         String comment) {
+      try {
+         Annotation annotation = store.loadAnnotation(COMMENTS_FILE);
+         PropertyMap prop = annotation.getImageAnnotation(coords);
+         if (prop == null) {
+            prop = MMStudio.getInstance().data().getPropertyMapBuilder().build();
+         }
+         prop = prop.copy().putString(COMMENTS_KEY, comment).build();
+         annotation.setImageAnnotation(coords, prop);
+      }
+      catch (IOException e) {
+         ReportingUtils.logError(e, "Error setting image comment");
+      }
+   }
+
+   /**
+    * Return true if there's a comments annotation.
+    */
+   public static boolean hasAnnotation(Datastore store) {
+      return store.hasAnnotation(COMMENTS_FILE);
+   }
+
+   /**
+    * Create a new comments annotation.
+    */
+   public static void createAnnotation(Datastore store) {
+      store.createNewAnnotation(COMMENTS_FILE);
+   }
+
+   /**
+    * Save the store's comments annotation.
+    */
+   public static void save(Datastore store) {
+      try {
+         Annotation annotation = store.loadAnnotation(COMMENTS_FILE);
+         annotation.save();
+      }
+      catch (IOException e) {
+         ReportingUtils.logError(e, "Error saving comment annotations");
       }
    }
 }
