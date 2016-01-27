@@ -33,7 +33,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.ObjectStreamException;
-import java.io.Serializable;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -44,10 +43,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.micromanager.PropertyMap;
+import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 // TODO: there is an awful lot of duplicated code here!
-public class DefaultPropertyMap implements PropertyMap, Serializable {
+public class DefaultPropertyMap implements PropertyMap {
    private static final String TYPE = "PropType";
    private static final String VALUE = "PropVal";
    private static final String STRING = "String";
@@ -60,6 +60,7 @@ public class DefaultPropertyMap implements PropertyMap, Serializable {
    private static final String DOUBLE_ARRAY = "Double array";
    private static final String BOOLEAN = "Boolean";
    private static final String BOOLEAN_ARRAY = "Boolean array";
+   private static final String PROPERTY_MAP = "Property map";
    private static final String OBJECT = "Object";
 
    // This class stores one value in the mapping.
@@ -110,6 +111,11 @@ public class DefaultPropertyMap implements PropertyMap, Serializable {
       public PropertyValue(Boolean[] val) {
          val_ = val;
          type_ = Boolean[].class;
+      }
+
+      public PropertyValue(PropertyMap val) {
+         val_ = val;
+         type_ = PropertyMap.class;
       }
 
       // Used for storing generic objects.
@@ -181,6 +187,13 @@ public class DefaultPropertyMap implements PropertyMap, Serializable {
             throw new PropertyMap.TypeMismatchException("Type of value is not Boolean[]");
          }
          return (Boolean[]) val_;
+      }
+
+      public PropertyMap getAsPropertyMap() {
+         if (type_ != PropertyMap.class) {
+            throw new PropertyMap.TypeMismatchException("Type of value is not PropertyMap");
+         }
+         return (PropertyMap) val_;
       }
 
       public byte[] getAsByteArray() {
@@ -260,6 +273,10 @@ public class DefaultPropertyMap implements PropertyMap, Serializable {
                   tmp.put(vals[i]);
                }
                result.put(VALUE, tmp);
+            }
+            else if (type_ == PropertyMap.class) {
+               result.put(TYPE, PROPERTY_MAP);
+               result.put(VALUE, ((DefaultPropertyMap) val_).toJSON().toString());
             }
             else if (type_ == byte[].class) {
                result.put(TYPE, OBJECT);
@@ -370,6 +387,12 @@ public class DefaultPropertyMap implements PropertyMap, Serializable {
       @Override
       public PropertyMap.PropertyMapBuilder putBooleanArray(String key, Boolean[] values) {
          propMap_.put(key, new PropertyValue(values));
+         return this;
+      }
+
+      @Override
+      public PropertyMap.PropertyMapBuilder putPropertyMap(String key, PropertyMap value) {
+         propMap_.put(key, new PropertyValue(value));
          return this;
       }
 
@@ -571,6 +594,22 @@ public class DefaultPropertyMap implements PropertyMap, Serializable {
    }
 
    @Override
+   public PropertyMap getPropertyMap(String key) {
+      if (propMap_.containsKey(key)) {
+         return propMap_.get(key).getAsPropertyMap();
+      }
+      return null;
+   }
+
+   @Override
+   public PropertyMap getPropertyMap(String key, PropertyMap defaultVal) {
+      if (propMap_.containsKey(key)) {
+         return propMap_.get(key).getAsPropertyMap();
+      }
+      return defaultVal;
+   }
+
+   @Override
    public <T> T getObject(String key, T defaultVal) {
       if (propMap_.containsKey(key)) {
          byte[] bytes = propMap_.get(key).getAsByteArray();
@@ -760,6 +799,10 @@ public class DefaultPropertyMap implements PropertyMap, Serializable {
                }
                builder.putBooleanArray(key, valArr);
             }
+            else if (type.contentEquals(PROPERTY_MAP)) {
+               JSONObject tmp = new JSONObject(property.getString(VALUE));
+               builder.putPropertyMap(key, fromJSON(tmp));
+            }
             else if (type.contentEquals(OBJECT)) {
                String tmp = property.getString(VALUE);
                byte[] bytes = BaseEncoding.base64().decode(tmp);
@@ -780,12 +823,20 @@ public class DefaultPropertyMap implements PropertyMap, Serializable {
 
    @Override
    public void save(String path) throws IOException {
-      File file = new File(path);
+      // Write to a temporary file adjacent to the final destination, then
+      // move the file into position, for a "more atomic" write.
+      File file = new File(path + ".tmp");
       FileWriter writer = null;
       try {
          writer = new FileWriter(file, true);
          writer.write(toJSON().toString(1));
          writer.close();
+         File dest = new File(path);
+         if (JavaUtils.isWindows() && dest.exists()) {
+            // Must delete the destination first.
+            dest.delete();
+         }
+         file.renameTo(dest);
       }
       catch (JSONException e) {
          throw new IOException(e);
@@ -838,36 +889,5 @@ public class DefaultPropertyMap implements PropertyMap, Serializable {
          }
       }
       return true;
-   }
-
-   /**
-    * Required by the Serializable interface.
-    */
-   private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {
-      byte[] bytes = new byte[stream.available()];
-      stream.read(bytes, 0, bytes.length);
-      try {
-         propMap_ = fromJSON(new JSONObject(new String(bytes))).propMap_;
-      }
-      catch (JSONException e) {
-         throw new IOException(e);
-      }
-   }
-
-   /**
-    * Required by the Serializable interface.
-    */
-   private void writeObject(ObjectOutputStream stream) throws IOException {
-      ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-      byte[] bytes = toJSON().toString().getBytes();
-      byteStream.write(bytes, 0, bytes.length);
-      byteStream.writeTo(stream);
-   }
-
-   /**
-    * Required by the Serializable interface.
-    */
-   private void readObjectNoData() throws ObjectStreamException {
-      propMap_ = new HashMap<String, PropertyValue>();
    }
 }

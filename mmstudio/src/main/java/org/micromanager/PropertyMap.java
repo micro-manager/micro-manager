@@ -134,6 +134,18 @@ public interface PropertyMap {
       PropertyMapBuilder putBooleanArray(String key, Boolean[] values);
 
       /**
+       * Put a PropertyMap into the mapping. Be careful not to make
+       * recursive PropertyMaps (i.e. put a PropertyMap into itself) as this
+       * will lead to errors when saving the PropertyMap.
+       * @param key a string identifying this property. If there is already
+       *        a property with this key in the builder, that property will
+       *        be overwritten.
+       * @param values values to associate with the key.
+       * @return The PropertyMapBuilder, so that puts can be chained together
+       */
+      PropertyMapBuilder putPropertyMap(String key, PropertyMap value);
+
+      /**
        * Put a generic object into the mapping. The object will be internally
        * converted into a byte array and serialized with a base64 encoding.
        * @param key a string identifying this property. If there is already
@@ -337,6 +349,25 @@ public interface PropertyMap {
     *         if the key is not found.
     */
    public Boolean[] getBooleanArray(String key, Boolean[] defaultVal);
+
+   /**
+    * Retrieve a PropertyMap value from the mapping. Will return null if the
+    * key is not found. If the mapped value is not a PropertyMap, a
+    * TypeMismatchException will be thrown.
+    * @param key
+    * @return The PropertyMap corresponding to the provided key.
+    */
+   public PropertyMap getPropertyMap(String key);
+   /**
+    * Retrieve a PropertyMap value from the mapping. If the key is not found,
+    * then the provided default value will be returned. If the mapped value is
+    * not a PropertyMap, a TypeMismatchException will be thrown.
+    * @param key
+    * @param defaultVal the default value to use if the key is not found.
+    * @return The PropertyMap corresponding to the provided key, or defaultVal
+    *         if the key is not found.
+    */
+   public PropertyMap getPropertyMap(String key, PropertyMap defaultVal);
 
    /**
     * Retrieve an object from the mapping. If the key is not found, then the
