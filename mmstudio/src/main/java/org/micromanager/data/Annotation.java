@@ -20,6 +20,8 @@
 
 package org.micromanager.data;
 
+import java.io.IOException;
+
 import org.micromanager.PropertyMap;
 
 /**
@@ -72,4 +74,15 @@ public interface Annotation {
     *         information in.
     */
    public String getFilename();
+
+   /**
+    * Save the annotation to disk, to a file adjacent to the Datastore's data,
+    * based on this Annotation's filename. This method is automatically called
+    * when Datastore.save() is called; however, you may want to call it
+    * manually after making changes to an annotation after having saved the
+    * Datastore's data.
+    * @throws IOException if there were any problems writing the annotation
+    *         data.
+    */
+   public void save() throws IOException;
 }

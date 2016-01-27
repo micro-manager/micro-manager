@@ -93,6 +93,7 @@ public class DefaultAnnotation implements Annotation {
       }
    }
 
+   @Override
    public void save() throws IOException {
       if (store_.getSavePath() == null) {
          throw new RuntimeException("Asked to save Annotation when store has no save path");
