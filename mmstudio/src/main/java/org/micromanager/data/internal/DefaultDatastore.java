@@ -22,14 +22,17 @@ package org.micromanager.data.internal;
 
 import java.awt.Window;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.swing.filechooser.FileFilter;
 import javax.swing.JFileChooser;
 import javax.swing.ProgressMonitor;
 
+import org.micromanager.data.Annotation;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
@@ -74,6 +77,7 @@ public class DefaultDatastore implements Datastore {
 
    private static final String PREFERRED_SAVE_FORMAT = "default format for saving data";
    protected Storage storage_ = null;
+   protected HashMap<String, DefaultAnnotation> annotations_ = new HashMap<String, DefaultAnnotation>();
    protected PrioritizedEventBus bus_;
    protected boolean isFrozen_ = false;
    private String savePath_ = null;
@@ -282,6 +286,37 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
+   public Annotation loadAnnotation(String filename) throws IOException {
+      if (annotations_.containsKey(filename)) {
+         // We already have an Annotation for this store/filename combo.
+         return annotations_.get(filename);
+      }
+      DefaultAnnotation result = new DefaultAnnotation(this, filename);
+      annotations_.put(filename, result);
+      return result;
+   }
+
+   @Override
+   public Annotation createNewAnnotation(String filename) {
+      if (annotations_.containsKey(filename) ||
+            DefaultAnnotation.isAnnotationOnDisk(this, filename)) {
+         throw new IllegalArgumentException("Annotation \"" + filename +
+               "\" for datastore at " + savePath_ + " already exists");
+      }
+      try {
+         DefaultAnnotation result = new DefaultAnnotation(this, filename);
+         annotations_.put(filename, result);
+         return result;
+      }
+      catch (IOException e) {
+         // This should never happen.
+         throw new IllegalArgumentException("Annotation \"" + filename +
+               "\" for datastore at " + savePath_ +
+               " nominally does not exist but we couldn't create a new one anyway.");
+      }
+   }
+
+   @Override
    public synchronized void freeze() {
       if (!isFrozen_) {
          isFrozen_ = true;
@@ -418,6 +453,10 @@ public class DefaultDatastore implements Datastore {
          freeze();
          duplicate.setSavePath(path);
          duplicate.freeze();
+         // Save our annotations now.
+         for (DefaultAnnotation annotation : annotations_.values()) {
+            annotation.save();
+         }
          return true;
       }
       catch (java.io.IOException e) {

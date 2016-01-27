@@ -22,6 +22,7 @@ package org.micromanager.data;
 
 import java.awt.Window;
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -175,6 +176,33 @@ public interface Datastore extends Closeable {
     */
    public void setSummaryMetadata(SummaryMetadata metadata)
            throws DatastoreFrozenException, DatastoreRewriteException;
+
+   /**
+    * Create a Annotation, whose data is stored in the specified file alongside
+    * the Datastore's own data. If a Annotation already exists for the
+    * Datastore, using that filename, then it will be returned instead.
+    * Alternatively, if the Datastore has been saved to disk, and the filename
+    * parameter indicates a file that already exists, then it will be loaded
+    * and a new Annotation with the loaded data will be returned.
+    * This method will always succeed: either it creates a new "empty"
+    * Annotation, returns an existing already-loaded Annotation, or it loads a
+    * Annotation's data from disk and returns the result.
+    * @param filename Filename to use to save and load the Annotation's data.
+    * @throws IOException if there is a file for this Annotation already, but
+    *         we are unable to load its contents.
+    */
+   public Annotation loadAnnotation(String filename) throws IOException;
+
+   /**
+    * Create a new, empty Annotation, whose data is to be saved to disk at the
+    * specified filename alongside the Datastore's own data.
+    * @param filename Filename to use to save the Annotation's data.
+    * @throws IllegalArgumentException if the filename is already claimed
+    *         (either a file of that name exists on disk where the Datastore
+    *         is saved, or we already have a Annotation in memory using that
+    *         filename).
+    */
+   public Annotation createNewAnnotation(String filename) throws IllegalArgumentException;
 
    /**
     * Freeze the Datastore. Methods that modify its contents will throw
