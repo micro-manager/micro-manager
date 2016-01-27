@@ -194,6 +194,16 @@ public interface Datastore extends Closeable {
    public Annotation loadAnnotation(String filename) throws IOException;
 
    /**
+    * Return true if there is an existing Annotation using the specified
+    * filename. This does not necessarily indicate that a file using the
+    * provided filename exists; the Annotation may not yet have saved data to
+    * the file, but it has still "reserved" the file for use.
+    * @param filename Filename the Annotation would use if it exists.
+    * @return true if the Annotation exists.
+    */
+   public boolean hasAnnotation(String filename);
+
+   /**
     * Create a new, empty Annotation, whose data is to be saved to disk at the
     * specified filename alongside the Datastore's own data.
     * @param filename Filename to use to save the Annotation's data.

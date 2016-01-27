@@ -297,9 +297,14 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
+   public boolean hasAnnotation(String filename) {
+      return (annotations_.containsKey(filename) ||
+            DefaultAnnotation.isAnnotationOnDisk(this, filename));
+   }
+
+   @Override
    public Annotation createNewAnnotation(String filename) {
-      if (annotations_.containsKey(filename) ||
-            DefaultAnnotation.isAnnotationOnDisk(this, filename)) {
+      if (hasAnnotation(filename)) {
          throw new IllegalArgumentException("Annotation \"" + filename +
                "\" for datastore at " + savePath_ + " already exists");
       }
