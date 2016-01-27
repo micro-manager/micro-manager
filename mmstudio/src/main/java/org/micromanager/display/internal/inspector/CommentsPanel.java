@@ -24,6 +24,7 @@ import com.google.common.eventbus.Subscribe;
 
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.io.IOException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.HashMap;
 import java.util.List;
@@ -41,9 +42,9 @@ import javax.swing.SwingUtilities;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.micromanager.data.Annotation;
+import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreFrozenEvent;
-import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Image;
@@ -55,25 +56,32 @@ import org.micromanager.display.Inspector;
 import org.micromanager.display.InspectorPanel;
 import org.micromanager.display.PixelsSetEvent;
 
+import org.micromanager.PropertyMap;
+
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
 public class CommentsPanel extends InspectorPanel {
+   /** File that comments are saved in. */
+   private static final String COMMENTS_FILE = "comments.txt";
+   /** String key used to access comments in annotations. */
+   private static final String COMMENTS_KEY = "comments";
+
    private JTextArea imageCommentsTextArea_;
    private JTextArea summaryCommentsTextArea_;
    private boolean shouldIgnoreUpdates_ = false;
    private JLabel errorLabel_;
    private DataViewer display_;
    private Datastore store_;
+   private Annotation annotation_;
    private Thread updateThread_;
    private boolean shouldShowUpdates_ = true;
    private Image curImage_ = null;
    private LinkedBlockingQueue<Image> updateQueue_;
-   private final HashMap<Image, Timer> imageToSaveTimer_;
 
    public CommentsPanel() {
       updateQueue_ = new LinkedBlockingQueue<Image>();
-      imageToSaveTimer_ = new HashMap<Image, Timer>();
       initialize();
       addTextChangeListeners();
 
@@ -130,13 +138,6 @@ public class CommentsPanel extends InspectorPanel {
       return result;
    }
 
-   /**
-    * Every time we change the metadata on an Image, we have to call putImage()
-    * on the Datastore to replace the old image, which in turn causes the
-    * displayed image to "change" and our imageChangedUpdate method to be
-    * called. To avoid flicker, we delay saves using a timer to wait until
-    * after the user is done typing (5s).
-    */
    private void recordCommentsChanges() {
       if (display_.getDisplayedImages().isEmpty()) {
          // No images to record for.
@@ -146,96 +147,35 @@ public class CommentsPanel extends InspectorPanel {
          // We're in the middle of manually updating the text fields.
          return;
       }
-      Image curImage = display_.getDisplayedImages().get(0);
+      if (annotation_ == null) {
+         // Unable to load annotation.
+         return;
+      }
+      Coords imageCoords = display_.getDisplayedImages().get(0).getCoords();
       // Determine if anything has actually changed.
       String imageText = imageCommentsTextArea_.getText();
       String summaryText = summaryCommentsTextArea_.getText();
 
-      Metadata metadata = curImage.getMetadata();
-      String oldComments = metadata.getComments();
-      SummaryMetadata summary = store_.getSummaryMetadata();
-      String oldSummary = summary.getComments();
-
-      if (imageText.equals(oldComments) ||
-            (imageText.equals("") && oldComments == null)) {
-         // Don't update image text.
-         imageText = null;
+      PropertyMap imageProps = annotation_.getImageAnnotation(imageCoords);
+      if (imageProps == null) {
+         imageProps = MMStudio.getInstance().data().getPropertyMapBuilder().build();
       }
-      if (summaryText.equals(oldSummary) ||
-            (summaryText.equals("") && oldSummary == null)) {
-         // Don't update summary text.
-         summaryText = null;
-      }
+      imageProps = imageProps.copy().putString(COMMENTS_KEY, imageText).build();
+      annotation_.setImageAnnotation(imageCoords, imageProps);
 
-      if (imageText == null && summaryText == null) {
-         // Nothing has changed.
-         return;
+      PropertyMap generalProps = annotation_.getGeneralAnnotation();
+      if (generalProps == null) {
+         generalProps = MMStudio.getInstance().data().getPropertyMapBuilder().build();
       }
-
-      synchronized(imageToSaveTimer_) {
-         if (imageToSaveTimer_.containsKey(curImage)) {
-            // Cancel the current timer. Since the task is synchronized around
-            // imageToSaveTimer_, there should be no race condition here.
-            imageToSaveTimer_.get(curImage).cancel();
-         }
-         Timer timer = new Timer("Ephemeral comments save timer");
-         timer.schedule(makeSaveTask(curImage, imageText, summaryText, store_),
-               5000);
-         imageToSaveTimer_.put(curImage, timer);
-         errorLabel_.setText("Saving...");
+      generalProps = generalProps.copy().putString(COMMENTS_KEY, summaryText).build();
+      annotation_.setGeneralAnnotation(generalProps);
+      try {
+         annotation_.save();
       }
-   }
-
-   /**
-    * Create a task that will record changes in the comments text for the
-    * given image. Only makes changes if the input strings are non-null.
-    * Takes the Datastore as a passed-in parameter because setDisplay may
-    * change store_ out from under us otherwise.
-    */
-   private TimerTask makeSaveTask(final Image image,
-         final String imageText, final String summaryText,
-         final Datastore store) {
-      return new TimerTask() {
-         @Override
-         public void run() {
-            synchronized(imageToSaveTimer_) {
-               errorLabel_.setText("");
-               try {
-                  if (imageText != null) {
-                     // Comments have changed.
-                     Metadata metadata = image.getMetadata();
-                     metadata = metadata.copy().comments(imageText).build();
-                     store.putImage(image.copyWithMetadata(metadata));
-                  }
-                  if (summaryText != null) {
-                     // Summary comments have changed.
-                     SummaryMetadata summary = store.getSummaryMetadata();
-                     summary = summary.copy().comments(summaryText).build();
-                     store.setSummaryMetadata(summary);
-                  }
-               }
-               catch (DatastoreFrozenException e) {
-                  errorLabel_.setText("Comments cannot be changed because the datastore has been locked.");
-                  // Prevent redundant errors by forcing the text back to
-                  // what it should be.
-                  Image curImage = display_.getDisplayedImages().get(0);
-                  shouldIgnoreUpdates_ = true;
-                  imageCommentsTextArea_.setText(curImage.getMetadata().getComments());
-                  summaryCommentsTextArea_.setText(store.getSummaryMetadata().getComments());
-                  shouldIgnoreUpdates_ = false;
-               }
-               catch (DatastoreRewriteException e) {
-                  errorLabel_.setText("Comments of images cannot be changed because the datastore is not erasable.");
-                  // Prevent redundant errors by forcing the image text back
-                  // to what it should be.
-                  Image curImage = display_.getDisplayedImages().get(0);
-                  imageCommentsTextArea_.setText(curImage.getMetadata().getComments());
-                  shouldIgnoreUpdates_ = false;
-               }
-               imageToSaveTimer_.remove(image);
-            }
-         }
-      };
+      catch (IOException e) {
+         errorLabel_.setText("Error writing comments to disk.");
+         ReportingUtils.logError(e, "Error writing comments to disk");
+      }
    }
 
    private void addTextChangeListeners() {
@@ -296,17 +236,24 @@ public class CommentsPanel extends InspectorPanel {
       if (image == curImage_) {
          return;
       }
+      if (annotation_ == null) {
+         // Unable to get annotation.
+         return;
+      }
       curImage_ = image;
-      final String newComments = image.getMetadata().getComments();
-      // Run this in the EDT.
-      SwingUtilities.invokeLater(new Runnable() {
-         @Override
-         public void run() {
-            shouldIgnoreUpdates_ = true;
-            imageCommentsTextArea_.setText(newComments);
-            shouldIgnoreUpdates_ = false;
-         }
-      });
+      Coords coords = image.getCoords();
+      if (annotation_.getImageAnnotation(coords) != null) {
+         final String newComments = annotation_.getImageAnnotation(coords).getString(COMMENTS_KEY, "");
+         // Run this in the EDT.
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               shouldIgnoreUpdates_ = true;
+               imageCommentsTextArea_.setText(newComments);
+               shouldIgnoreUpdates_ = false;
+            }
+         });
+      }
    }
 
    @Subscribe
@@ -317,16 +264,6 @@ public class CommentsPanel extends InspectorPanel {
       catch (InterruptedException e) {
          ReportingUtils.logError(e, "Interrupted when enqueueing image for comments update");
       }
-   }
-
-   /**
-    * Disable our text fields when the datastore becomes frozen.
-    */
-   @Subscribe
-   public void onDatastoreFrozen(DatastoreFrozenEvent event) {
-      imageCommentsTextArea_.setEnabled(false);
-      summaryCommentsTextArea_.setEnabled(false);
-      errorLabel_.setText("This dataset is frozen; comments cannot be edited.");
    }
 
    @Override
@@ -347,16 +284,18 @@ public class CommentsPanel extends InspectorPanel {
          return;
       }
       store_ = display_.getDatastore();
-      boolean isEditable = !store_.getIsFrozen();
-      imageCommentsTextArea_.setEditable(isEditable);
-      imageCommentsTextArea_.setEnabled(isEditable);
-      summaryCommentsTextArea_.setEditable(isEditable);
-      summaryCommentsTextArea_.setEnabled(isEditable);
-      errorLabel_.setText(isEditable? "" : "This dataset is frozen; comments cannot be edited.");
+
+      try {
+         annotation_ = store_.loadAnnotation(COMMENTS_FILE);
+      }
+      catch (IOException e) {
+         errorLabel_.setText("Unable to load comments file.");
+      }
 
       shouldIgnoreUpdates_ = true;
-      summaryCommentsTextArea_.setText(
-            store_.getSummaryMetadata().getComments());
+      if (annotation_.getGeneralAnnotation() != null) {
+         summaryCommentsTextArea_.setText(annotation_.getGeneralAnnotation().getString(COMMENTS_KEY, ""));
+      }
       shouldIgnoreUpdates_ = false;
       display_.registerForEvents(this);
       store_.registerForEvents(this);
