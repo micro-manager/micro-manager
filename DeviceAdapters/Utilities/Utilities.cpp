@@ -9,7 +9,7 @@
 // AUTHOR:        Nico Stuurman, nico@cmp.ucsf.edu, 11/07/2008
 //                DAXYStage by Ed Simmon, 11/28/2011
 // COPYRIGHT:     University of California, San Francisco, 2008
-//                2015, Open Imaging, Inc.
+//                2015-2016, Open Imaging, Inc.
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
 //
@@ -3009,7 +3009,7 @@ int StateDeviceShutter::OnStateDevice(MM::PropertyBase* pProp, MM::ActionType eA
   {
       // Avoid leaving a State device in the closed positions!
       SetOpen(true);
-      
+
       std::string stateDeviceName;
       pProp->Get(stateDeviceName);
       if (stateDeviceName == g_NoDevice) {
@@ -3024,6 +3024,9 @@ int StateDeviceShutter::OnStateDevice(MM::PropertyBase* pProp, MM::ActionType eA
             return ERR_INVALID_DEVICE_NAME;
          }
       }
+
+      // Start with gate closed
+      SetOpen(false);
    }
    return DEVICE_OK;
 }
