@@ -20,7 +20,9 @@
 
 package org.micromanager.data.internal;
 
+import com.google.common.base.Charsets;
 import com.google.common.io.BaseEncoding;
+import com.google.common.io.Files;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -849,14 +851,7 @@ public class DefaultPropertyMap implements PropertyMap {
    }
 
    public static PropertyMap loadPropertyMap(String path) throws FileNotFoundException, IOException {
-      File file = new File(path);
-      BufferedReader reader = new BufferedReader(new FileReader(file));
-      String content = "";
-      String curLine = reader.readLine();
-      while (curLine != null) {
-         content += curLine;
-         curLine = reader.readLine();
-      }
+      String content = Files.toString(new File(path), Charsets.UTF_8);
       try {
          return fromJSON(new JSONObject(content));
       }
