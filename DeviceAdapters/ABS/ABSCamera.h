@@ -193,9 +193,6 @@ public:
   int   GetPropertyString( const char* name, std::string & value );
 
 protected:
-  static u08  accquireDeviceNumber( void );
-  static void releaseDeviceNumber( const u08  deviceNo );
-
   double  getFramerate() const;
   void    setFramerate( double fps );
 
@@ -260,8 +257,6 @@ private:
   string getDeviceNameString( void ) const;
   string getDeviceNameString( const S_CAMERA_VERSION & sCamVer ) const;
 
-
-  static volatile int staticDeviceNo;
   string                    cameraDeviceID_;
   int                       deviceNo_;
   bool                      colorCamera_;

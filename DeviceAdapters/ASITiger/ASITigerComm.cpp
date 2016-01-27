@@ -168,11 +168,14 @@ int CTigerCommHub::DetectInstalledDevices()
    MM::Device* pDev;
    string name;
    bool twoaxis = 0;
+   unsigned int channels=1;
    char splitAxisLetter = ' '; // used only if XY stage split across two cards
    string splitAddrHex = "";  // used only if XY stage split across two cards
+   int ret=0;
    for (unsigned int i=0; i<build.numAxes; i++)
    {
       twoaxis = 0;
+	  channels=1; // One Channel per Axis is default
       name = "";
       ostringstream command;
       command << "Adding axis " << build.vAxesLetter[i] << " with type " << build.vAxesType[i] << " at address " << build.vAxesAddrHex[i];
@@ -254,6 +257,22 @@ int CTigerCommHub::DetectInstalledDevices()
          case 'g': // programmable logic
             name = g_PLogicDeviceName;
             break;
+         case 'i': // TGLED
+            name = g_LEDDeviceName;
+			// on TGLED card multiple channels fall under 1 axis
+			//Now lets figure out how channels there are onboard
+			 command.str("");
+			 command << build.vAxesAddr[i] << "BU";
+			 ret=QueryCommandVerify(command.str(), "TGLED");
+		     if(ret == ERR_UNRECOGNIZED_ANSWER)
+			 { //error , lets go with a guess which is 4
+			 channels=4;
+			 }
+			 else
+			 {
+			 ParseAnswerAfterUnderscore(channels);
+			 }
+            break; 
          default:
             command.str("");
             command << "Device type " <<  build.vAxesType[i] << " not supported by Tiger device adapter, skipping it";
@@ -268,9 +287,23 @@ int CTigerCommHub::DetectInstalledDevices()
       name.push_back(build.vAxesLetter[i]);
       name.push_back(g_NameInfoDelimiter);
       name.append(build.vAxesAddrHex[i]);
-      pDev = CreateDevice(name.c_str());
-      AddInstalledDevice(pDev);
-   }
+     if(channels>1)
+	 {
+		  for(unsigned int j=1;j<=channels;j++)  //create devices based on number of channels
+		  {
+			command.str("");
+			command<<name<<g_NameInfoDelimiter<<j;
+			pDev = CreateDevice(command.str().c_str());
+			AddInstalledDevice(pDev);
+		  }
+	 }
+	 else
+	 {
+	       pDev = CreateDevice(name.c_str());
+           AddInstalledDevice(pDev);
+	 }
+
+}
 
    // now look for CRISP
    for (unsigned int i=0; i<build.numAxes; i++)

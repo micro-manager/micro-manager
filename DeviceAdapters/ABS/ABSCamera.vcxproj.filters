@@ -42,7 +42,7 @@
     <ClCompile Include="absdelayloaddll.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="include\stringtools.cpp">
+    <ClCompile Include="ImageHeader.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
@@ -72,6 +72,9 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="ABSDelayLoadDll.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="ImageHeader.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>

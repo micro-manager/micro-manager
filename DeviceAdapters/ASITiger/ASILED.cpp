@@ -49,9 +49,39 @@ using namespace std;
 CLED::CLED(const char* name) :
    ASIPeripheralBase< ::CShutterBase, CLED >(name),
    open_(false),
-   intensity_(50)
+   intensity_(50),
+   channel_(1),
+   channelAxisChar_('X')
 {
-   // no body needed
+   //Figure out what channel we are on
+   if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
+   {
+      channel_= GetChannelFromExtName(name);
+   }
+
+   //Pick AxisChar to use.
+   switch(channel_)
+   {
+   case 2:
+      channelAxisChar_='Y';
+      break;
+   case 3:
+      channelAxisChar_='Z';
+      break;
+   case 4:
+      channelAxisChar_='F';
+      break;
+   case 5:
+      channelAxisChar_='T';
+      break;
+   case 6:
+      channelAxisChar_='R';
+      break;
+   case 1:
+   default:
+      channelAxisChar_='X';
+      break;
+   }
 }
 
 int CLED::Initialize()
@@ -62,15 +92,18 @@ int CLED::Initialize()
    // create MM description; this doesn't work during hardware configuration wizard but will work afterwards
    ostringstream command;
    command.str("");
-   command << g_LEDDeviceDescription << " HexAddr=" << addressString_;
+   command << g_LEDDeviceDescription << " HexAddr=" << addressString_<<" Channel="<<channel_<<":"<<channelAxisChar_;
    CreateProperty(MM::g_Keyword_Description, command.str().c_str(), MM::String, true);
-
+   
    CPropertyAction* pAct;
 
    pAct = new CPropertyAction (this, &CLED::OnIntensity);
    CreateProperty(g_LEDIntensityPropertyName, "50", MM::Integer, false, pAct);
    SetPropertyLimits(g_LEDIntensityPropertyName, 1, 100);
    UpdateProperty(g_LEDIntensityPropertyName);  // this takes care of initializing open_ and intensity_
+
+   // always start shutter in closed state
+   SetOpen(false);
 
    pAct = new CPropertyAction (this, &CLED::OnState);
    CreateProperty(g_ShutterState, g_OpenState, MM::String, false, pAct);
@@ -104,13 +137,13 @@ int CLED::SetOpen(bool open)
    ostringstream command; command.str("");
    if(open)
    {
-      command << addressChar_ << "LED X=" << intensity_;
+      command << addressChar_ << "LED " << channelAxisChar_ << "="<< intensity_;
    }
    else
    {
-      command << addressChar_ << "LED X=0";
+      command << addressChar_ << "LED " << channelAxisChar_ << "=0";
    }
-   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A") );
    open_ = open;
    return DEVICE_OK;
 }
@@ -128,9 +161,11 @@ int CLED::UpdateOpenIntensity()
 //   we don't update intensity_ if controller reports 0, only set open_ to false
 {
    ostringstream command; command.str("");
+   ostringstream replyprefix; replyprefix.str("");
    long tmp = 0;
-   command << addressChar_ << "LED X?";
-   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), "X="));
+   command << addressChar_ << "LED " << channelAxisChar_ << "?";
+   replyprefix << channelAxisChar_ << "=";
+   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), replyprefix.str()) );
    RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
    if (tmp > 0)
    {
@@ -166,7 +201,7 @@ int CLED::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
          command << 'X';
       else if (tmpstr.compare(g_SaveSettingsZ) == 0)
          command << 'Z';
-      RETURN_ON_MM_ERROR (hub_->QueryCommandVerify(command.str(), ":A", (long)200));  // note 200ms delay added
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A", (long)200) );  // note 200ms delay added
       pProp->Set(g_SaveSettingsDone);
    }
    return DEVICE_OK;
@@ -201,8 +236,8 @@ int CLED::OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmp);
       if(open_)  // if we are closed then don't actually want to set the controller, only the internal
       {
-         command << addressChar_ << "LED X=" << tmp;
-         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+         command << addressChar_ << "LED " << channelAxisChar_ << "=" << tmp;
+         RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A") );
       }
       intensity_ = tmp;
    }
@@ -226,7 +261,7 @@ int CLED::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       string tmpstr;
       pProp->Get(tmpstr);
-      RETURN_ON_MM_ERROR ( SetOpen(tmpstr.compare(g_OpenState) == 0) );
+      RETURN_ON_MM_ERROR( SetOpen(tmpstr.compare(g_OpenState) == 0) );
    }
 
    return DEVICE_OK;

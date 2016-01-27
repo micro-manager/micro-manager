@@ -1,6 +1,7 @@
 #include "AbsImgBuffer.h"
 #include "CamUSB_API_Util.h"
 #include <assert.h>
+#include "ImageHeader.h"
 
 CAbsImgBuffer::CAbsImgBuffer(void)
 : ImgBuffer()
@@ -242,4 +243,20 @@ void CAbsImgBuffer::Resize(unsigned xSize, unsigned ySize )
   imagePtr_       = GetPixelsRW();
   imageHeaderPtr_ = &imageHeader_;
 
+}
+
+//! return image time stamp as u64 value in ms since 1970;
+unsigned long long CAbsImgBuffer::getTimeStamp( )
+{
+  MMThreadGuard g( *this );
+  CImageHeader cImgHdr( imageHeader_ );
+  return cImgHdr.getTimeStamp();
+}
+
+//! return image time stamp as string value in ms since 1970;
+string CAbsImgBuffer::getTimeStampString( )
+{
+  MMThreadGuard g( *this );
+  CImageHeader cImgHdr( imageHeader_ );
+  return cImgHdr.getTimeStampStr();
 }

@@ -1261,7 +1261,7 @@ int AndorCamera::GetListOfAvailableCameras()
 		   }
 
       }
-
+      
       //DMA parameters
       //if(caps.ulSetFunctions & AC_SETFUNCTION_DMAPARAMETERS)
       { 
@@ -1271,7 +1271,7 @@ int AndorCamera::GetListOfAvailableCameras()
          if (DRV_SUCCESS != ret)
             return (int)ret;
       } 
-
+      
 
       pAct = new CPropertyAction (this, &AndorCamera::OnTimeOut);
       nRet = CreateProperty(g_TimeOut, CDeviceUtils::ConvertToString(imageTimeOut_ms_), MM::Integer, false, pAct);
@@ -3925,14 +3925,19 @@ int AndorCamera::GetListOfAvailableCameras()
       LogMessage(os.str().c_str());
 
       LogMessage("Setting DMA Parameters", true);
-      int imagesPerDma = 64;
-      if(imagesPerDma>numImages)
-         imagesPerDma=numImages;
+      
+      if (EXTERNAL != iCurrentTriggerMode_ && EXTERNALEXPOSURE != iCurrentTriggerMode_ && FASTEXTERNAL != iCurrentTriggerMode_) {
+        // optimise the DMA setting unless we are running in external trigger or external exposure
+        // in those modes, the SDK set up the DMA to 1 which prevents time outs in case of slow trigger
+        int imagesPerDma = 64;
+        if(imagesPerDma>numImages)
+           imagesPerDma=numImages;
 
-      // Limit number of images per DMA to sequence length in-case we're using external trig
-      int ret = SetDMAParameters(imagesPerDma, 0.001f);
-      if (DRV_SUCCESS != ret)
-         return (int)ret;
+        int ret = SetDMAParameters(imagesPerDma, 0.001f);
+      
+        if (DRV_SUCCESS != ret)
+           return (int)ret;
+      }
       
 
       LogMessage("Setting Trigger Mode", true);
@@ -3943,7 +3948,7 @@ int AndorCamera::GetListOfAvailableCameras()
 
 
       // prepare the camera
-      ret = SetAcquisitionMode(5); // run till abort
+      int ret = SetAcquisitionMode(5); // run till abort
       if (ret != DRV_SUCCESS)
          return ret;
       LogMessage("Set acquisition mode to 5", true);
