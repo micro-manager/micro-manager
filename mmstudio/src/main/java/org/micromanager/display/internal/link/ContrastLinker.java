@@ -154,6 +154,7 @@ public class ContrastLinker extends SettingsLinker {
       }
       DisplaySettings.DisplaySettingsBuilder builder = dest.copy();
       builder.safeUpdateContrastSettings(newSettings, channelIndex_);
+      builder.shouldAutostretch(source.getShouldAutostretch());
       return builder.build();
    }
 

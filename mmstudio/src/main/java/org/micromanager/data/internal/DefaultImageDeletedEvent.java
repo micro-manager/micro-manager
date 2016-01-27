@@ -1,11 +1,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     Data API
+//SUBSYSTEM:     Data API implementation
 //-----------------------------------------------------------------------------
 //
-// AUTHOR:       Chris Weisiger, 2015
+// AUTHOR:       Chris Weisiger, 2016
 //
-// COPYRIGHT:    University of California, San Francisco, 2015
+// COPYRIGHT:    Open Imaging, Inc 2016
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -18,20 +18,31 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.data;
+package org.micromanager.data.internal;
+
+import org.micromanager.data.Datastore;
+import org.micromanager.data.Image;
+import org.micromanager.data.ImageDeletedEvent;
 
 /**
- * This exception is thrown when Pipeline.insertImage() has been called after
- * an error occurred in one of the Processors in the Pipeline. It indicates
- * that the Pipeline may be in a bad or inconsistent state. You can resume
- * calling Pipeline.insertImage() only after calling Pipeline.clearErrors().
+ * This class signifies that an image has been added to a Datastore.
  */
-public class PipelineErrorException extends Exception {
-   public PipelineErrorException() {
-      super();
+public class DefaultImageDeletedEvent implements org.micromanager.data.ImageDeletedEvent {
+   private Image image_;
+   private Datastore store_;
+
+   public DefaultImageDeletedEvent(Image image, Datastore store) {
+      image_ = image;
+      store_ = store;
    }
 
-   public PipelineErrorException(String description) {
-      super(description);
+   @Override
+   public Image getImage() {
+      return image_;
+   }
+
+   @Override
+   public Datastore getDatastore() {
+      return store_;
    }
 }

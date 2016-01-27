@@ -33,16 +33,19 @@ import org.micromanager.data.internal.StorageRAM;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
+import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Metadata;
 import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayDestroyedEvent;
+import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.PixelsSetEvent;
 import org.micromanager.display.RequestToCloseEvent;
 
 import org.micromanager.data.NewPipelineEvent;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.PipelineErrorException;
-import org.micromanager.data.internal.DefaultDatastore;
+import org.micromanager.data.internal.DefaultRewritableDatastore;
 import org.micromanager.data.internal.DefaultImage;
 
 import org.micromanager.display.DisplayWindow;
@@ -68,12 +71,14 @@ import org.micromanager.internal.utils.ReportingUtils;
  * "snap image" display (which is the same display as that used for live mode).
  */
 public class SnapLiveManager implements org.micromanager.SnapLiveManager {
+   private static final String TITLE = "Snap/Live View";
    private static final int MAX_DISPLAY_HISTORY = 20;
+
    private final Studio studio_;
    private final CMMCore core_;
    private DisplayWindow display_;
    private Object displayLock_ = new Object();
-   private DefaultDatastore store_;
+   private DefaultRewritableDatastore store_;
    private Pipeline pipeline_;
    private Object pipelineLock_ = new Object();
    private final ArrayList<LiveModeListener> listeners_;
@@ -87,7 +92,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    private boolean shouldForceReset_ = false;
    private Thread grabberThread_;
    private ArrayList<Long> displayUpdateTimes_;
-   // Maps channel to the last image we have received for that channel.
+   // Maps channel index to the last image we have received for that channel.
    private final HashMap<Integer, DefaultImage> channelToLastImage_;
 
    public SnapLiveManager(Studio studio, CMMCore core) {
@@ -213,11 +218,11 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          displayUpdateTimes_.clear();
       }
 
-      long numChannels = core_.getNumberOfCameraChannels();
+      long numCameras = core_.getNumberOfCameraChannels();
       String camName = core_.getCameraDevice();
       while (!shouldStopGrabberThread_) {
          displayRate = waitForNextDisplay(displayRate);
-         grabAndAddImages(numChannels, camName);
+         grabAndAddImages(numCameras, camName);
       }
    }
 
@@ -225,14 +230,14 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
     * This method takes images out of the Core and inserts them into our
     * pipeline.
     */
-   private void grabAndAddImages(long numChannels, String camName) {
+   private void grabAndAddImages(long numCameras, String camName) {
       try {
-         // We scan over 2*numChannels here because, in multi-camera
+         // We scan over 2*numCameras here because, in multi-camera
          // setups, one camera could be generating images faster than the
          // other(s). Of course, 2x isn't guaranteed to be enough here,
          // either, but it's what we've historically used.
          HashSet<Integer> channelsSet = new HashSet<Integer>();
-         for (int c = 0; c < 2 * numChannels; ++c) {
+         for (int c = 0; c < 2 * numCameras; ++c) {
             TaggedImage tagged;
             try {
                tagged = core_.getNBeforeLastTaggedImage(c);
@@ -260,7 +265,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
                .uuid(UUID.randomUUID()).build();
             displayImage(image.copyWith(newCoords, newMetadata));
             channelsSet.add(imageChannel);
-            if (channelsSet.size() == numChannels) {
+            if (channelsSet.size() == numCameras) {
                // Got every channel.
                break;
             }
@@ -334,7 +339,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          }
          // Note that unlike in most situations, we do *not* ask the
          // DataManager to track this Datastore for us.
-         store_ = new DefaultDatastore();
+         store_ = new DefaultRewritableDatastore();
          store_.registerForEvents(this);
          store_.setStorage(new StorageRAM(store_));
          if (pipeline_ != null) {
@@ -357,8 +362,22 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
                   return createControls(display);
                }
          });
+         // Store our display settings separately in the profile from other
+         // displays.
+         ((DefaultDisplayWindow) display_).setDisplaySettingsKey(TITLE);
+         // HACK: coerce single-camera setups to grayscale (instead of the
+         // default of composite mode) if there is no existing profile settings
+         // for the user and we do not have a multicamera setup.
+         DisplaySettings.ColorMode mode = DefaultDisplaySettings.getStandardColorMode(TITLE, null);
+         if (mode == null && core_.getNumberOfCameraChannels() == 1) {
+            DisplaySettings settings = display_.getDisplaySettings();
+            settings = settings.copy()
+               .channelColorMode(DisplaySettings.ColorMode.GRAYSCALE)
+               .build();
+            display_.setDisplaySettings(settings);
+         }
          display_.registerForEvents(this);
-         display_.setCustomTitle("Snap/Live View");
+         display_.setCustomTitle(TITLE);
       }
    }
 
@@ -410,7 +429,8 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    /**
     * Display the provided image. Due to limitations of ImageJ, if the image's
     * parameters (width, height, or pixel type) change, we have to recreate
-    * the display and datastore.
+    * the display and datastore. We also do this if the channel names change,
+    * as an inefficient way to force the channel colors to update.
     * @param image Image to be displayed
     */
    @Override
@@ -418,8 +438,25 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       synchronized(displayLock_) {
          // Check for changes in the number of channels, indicating e.g.
          // changing multicamera.
+         long numCameras = core_.getNumberOfCameraChannels();
          boolean shouldReset = shouldForceReset_;
-         long numChannels = core_.getNumberOfCameraChannels();
+         if (store_ != null) {
+            String[] channelNames = store_.getSummaryMetadata().getChannelNames();
+            String curChannel = "";
+            try {
+               curChannel = core_.getCurrentConfig(core_.getChannelGroup());
+            }
+            catch (Exception e) {
+               ReportingUtils.logError(e, "Error getting current channel");
+            }
+            for (int i = 0; i < numCameras; ++i) {
+               String name = makeChannelName(curChannel, i, (int) numCameras);
+               if (i >= channelNames.length || !name.equals(channelNames[i])) {
+                  // Channel name changed.
+                  shouldReset = true;
+               }
+            }
+         }
          try {
             DefaultImage newImage = new DefaultImage(image, image.getCoords(), image.getMetadata());
             // Find any image to compare against, at all.
@@ -449,6 +486,12 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
             synchronized(pipelineLock_) {
                try {
                   pipeline_.insertImage(newImage);
+               }
+               catch (DatastoreRewriteException e) {
+                  // This should never happen, because we use an erasable
+                  // Datastore.
+                  studio_.logs().showError(e,
+                        "Unable to insert image into pipeline; this should never happen.");
                }
                catch (PipelineErrorException e) {
                   // Notify the user, then continue on.
@@ -483,7 +526,42 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          display_.getAsWindow().setLocation(displayLoc);
       }
       channelToLastImage_.clear();
+      // Set up the channel names in the store's summary metadata. This will
+      // as a side-effect ensure that our channels are displayed with the
+      // correct colors.
+      try {
+         String channel = core_.getCurrentConfig(core_.getChannelGroup());
+         // Fun fact: Java (at least, Java 6) requires an int size for arrays.
+         int numCameras = (int) core_.getNumberOfCameraChannels();
+         String[] channelNames = new String[numCameras];
+         for (int i = 0; i < numCameras; ++i) {
+            channelNames[i] = makeChannelName(channel, i, numCameras);
+         }
+         try {
+            store_.setSummaryMetadata(store_.getSummaryMetadata().copy()
+                  .channelNames(channelNames).build());
+         }
+         catch (DatastoreFrozenException e) {
+            ReportingUtils.logError(e,
+                  "Unable to update store summary metadata");
+         }
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error getting channel name");
+      }
       shouldForceReset_ = false;
+   }
+
+   /**
+    * Make a name up for the given channel/camera number combination.
+    */
+   private String makeChannelName(String channel, int cameraIndex,
+         int numCameras) {
+      String result = channel;
+      if (numCameras > 1) {
+         result = result + " " + cameraIndex;
+      }
+      return result;
    }
 
    /**

@@ -47,10 +47,6 @@ class MetadataTableModel extends AbstractTableModel {
       return data_.size();
    }
 
-   public void addRow(Vector<String> rowData) {
-      data_.add(rowData);
-   }
-
    @Override
    public int getColumnCount() {
       return 2;
@@ -62,16 +58,14 @@ class MetadataTableModel extends AbstractTableModel {
          Vector<String> row = data_.get(rowIndex);
          if (row.size() > columnIndex) {
             return data_.get(rowIndex).get(columnIndex);
-         } else {
+         }
+         else {
             return "";
          }
-      } else {
+      }
+      else {
          return "";
       }
-   }
-
-   public void clear() {
-      data_.clear();
    }
 
    @Override
@@ -81,7 +75,7 @@ class MetadataTableModel extends AbstractTableModel {
 
    public synchronized void setMetadata(JSONObject newMetadata,
          boolean shouldShowUnchangingValues) {
-      clear();
+      data_.clear();
       JSONObject displayedMetadata = newMetadata;
       if (!shouldShowUnchangingValues && priorMetadata_ != null) {
          // Determine which keys in the new metadata differ from the old
@@ -123,10 +117,11 @@ class MetadataTableModel extends AbstractTableModel {
          rowData.add(key);
          try {
             rowData.add(displayedMetadata.getString(key));
-         } catch (JSONException ex) {
+         }
+         catch (JSONException ex) {
             //ReportingUtils.logError(ex);
          }
-         addRow(rowData);
+         data_.add(rowData);
       }
 
       fireTableDataChanged();

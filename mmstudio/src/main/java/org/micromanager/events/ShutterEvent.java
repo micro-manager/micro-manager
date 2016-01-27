@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     Data API
+//SUBSYSTEM:     Events API
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
@@ -18,20 +18,14 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.data;
+package org.micromanager.events;
 
 /**
- * This exception is thrown when Pipeline.insertImage() has been called after
- * an error occurred in one of the Processors in the Pipeline. It indicates
- * that the Pipeline may be in a bad or inconsistent state. You can resume
- * calling Pipeline.insertImage() only after calling Pipeline.clearErrors().
+ * This event is posted when the shutter is opened or closed.
  */
-public class PipelineErrorException extends Exception {
-   public PipelineErrorException() {
-      super();
-   }
-
-   public PipelineErrorException(String description) {
-      super(description);
-   }
+public interface ShutterEvent {
+   /**
+    * @return true if the shutter is open, false if it is closed.
+    */
+   public boolean getShutter();
 }

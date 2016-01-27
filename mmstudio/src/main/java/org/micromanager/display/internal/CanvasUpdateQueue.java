@@ -30,6 +30,7 @@ import ij.process.ImageProcessor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Timer;
@@ -52,6 +53,7 @@ import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
 import org.micromanager.display.internal.events.DefaultPixelsSetEvent;
 import org.micromanager.display.internal.events.HistogramRecalcEvent;
 import org.micromanager.display.internal.events.HistogramRequestEvent;
+import org.micromanager.display.internal.link.ContrastEvent;
 
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -401,14 +403,42 @@ public class CanvasUpdateQueue {
          history.lastUpdateTime_ = System.currentTimeMillis();
          display_.postEvent(new NewHistogramsEvent(channel, history.datas_));
          if (shouldUpdate) {
-            DisplaySettings.DisplaySettingsBuilder builder = settings.copy();
-            builder.safeUpdateContrastSettings(
-                  new DefaultDisplaySettings.DefaultContrastSettings(
-                     mins, maxes, gammas, true),
-                  channel);
-            amSettingDisplaySettings_ = true;
-            display_.setDisplaySettings(builder.build());
-            amSettingDisplaySettings_ = false;
+            // Check to see if we actually changed anything: there were no
+            // contrast settings previously, or any of the old contrast values
+            // doesn't match a new contrast value.
+            boolean didChange = false;
+            DisplaySettings.ContrastSettings oldContrast = settings.getSafeContrastSettings(channel, null);
+            if (oldContrast == null) {
+               didChange = true;
+            }
+            else {
+               Integer[] oldMins = oldContrast.getContrastMins();
+               Integer[] oldMaxes = oldContrast.getContrastMaxes();
+               Double[] oldGammas = oldContrast.getContrastGammas();
+               if (oldMins == null || oldMaxes == null || oldGammas == null) {
+                  didChange = true;
+               }
+               else {
+                  didChange = (!Arrays.equals(mins, oldMins) ||
+                        !Arrays.equals(maxes, oldMaxes) ||
+                        !Arrays.equals(gammas, oldGammas));
+               }
+            }
+            if (didChange) {
+               DisplaySettings.DisplaySettingsBuilder builder = settings.copy();
+               builder.safeUpdateContrastSettings(
+                     new DefaultDisplaySettings.DefaultContrastSettings(
+                        mins, maxes, gammas, true),
+                     channel);
+               amSettingDisplaySettings_ = true;
+               DisplaySettings newSettings = builder.build();
+               display_.setDisplaySettings(newSettings);
+               // And post a contrast event so linked displays also get updated.
+               display_.postEvent(new ContrastEvent(channel,
+                        display_.getDatastore().getSummaryMetadata().getSafeChannelName(channel),
+                        newSettings));
+               amSettingDisplaySettings_ = false;
+            }
          }
          // Allow future jobs to be scheduled.
          history.timer_ = null;

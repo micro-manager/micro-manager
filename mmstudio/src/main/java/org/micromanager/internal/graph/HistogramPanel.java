@@ -227,16 +227,21 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
       }
 
       int width = PIXELS_PER_HANDLE_DIGIT * text.length() + TOP_HANDLE_OFFSET;
+      int textOffset = x - width;
+      if (textOffset < 0) {
+         // Put the text on the other side of the handle.
+         textOffset = x + LUT_HANDLE_SIZE;
+      }
       if (contrastMaxEditable_) {
          g.setColor(HIGHLIGHT_COLOR);
          g.fillRect(x - width, y - LUT_HANDLE_SIZE, width, LUT_HANDLE_SIZE);
          g.setColor(UIManager.getColor("Panel.background"));
-         g.drawString(text, x - width, y - 1);
+         g.drawString(text, textOffset, y - 1);
       } else {
          g.setColor(UIManager.getColor("Panel.background"));
          g.fillRect(x - width, y - LUT_HANDLE_SIZE, width, LUT_HANDLE_SIZE);
          g.setColor(Color.black);
-         g.drawString(text, x - width, y - 1);
+         g.drawString(text, textOffset, y - 1);
       }
    }
 
@@ -248,17 +253,27 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
          text = newContrast_;
       }
       int width = PIXELS_PER_HANDLE_DIGIT * text.length() + 7;
+      // Intensity string normally goes on the right side of the handle, but
+      // should go on the left if that will cause it to overlap with the X
+      // scale indicator from the graph.
+      int textOffset = x + BOTTOM_HANDLE_OFFSET;
+      int textWidth = PIXELS_PER_HANDLE_DIGIT * text.length();
+      if (textOffset + textWidth > getBox().width - 50) { // fiddle factor
+         // Put the text on the other side of the handle and away from the
+         // X bounds.
+         textOffset = x - PIXELS_PER_HANDLE_DIGIT * (text.length() + Integer.toString((int) bounds_.xMax).length());
+      }
       if (contrastMinEditable_) {
          g.setColor(HIGHLIGHT_COLOR);
          g.fillRect(x, y, width, LUT_HANDLE_SIZE + 1);
          g.setColor(UIManager.getColor("Panel.background"));
-         g.drawString(newContrast_.length() != 0 ? newContrast_ : text, 
-               x + BOTTOM_HANDLE_OFFSET, y + 10);
+         g.drawString(newContrast_.length() != 0 ? newContrast_ : text,
+               textOffset, y + 10);
       } else {
          g.setColor(UIManager.getColor("Panel.background"));
          g.fillRect(x, y, width, LUT_HANDLE_SIZE + 1);
          g.setColor(Color.black);
-         g.drawString(text, x + BOTTOM_HANDLE_OFFSET, y + 10);
+         g.drawString(text, textOffset, y + 10);
       }
    }
 

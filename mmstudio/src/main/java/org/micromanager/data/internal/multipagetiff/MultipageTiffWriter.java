@@ -56,6 +56,7 @@ import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.display.internal.DefaultDisplaySettings;
+import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMScriptException;
@@ -152,7 +153,7 @@ public class MultipageTiffWriter {
       augmentWithImageMetadata(summaryJSON,
             (DefaultImage) masterStorage_.getAnyImage());
       augmentWithDisplaySettings(summaryJSON,
-            DefaultDisplaySettings.getStandardSettings());
+            DefaultDisplaySettings.getStandardSettings(DefaultDisplayWindow.DEFAULT_SETTINGS_KEY));
       reader_ = new MultipageTiffReader(summary, summaryJSON, firstImageTags);
 
       //This is an overestimate of file size because file gets truncated at end
@@ -793,7 +794,8 @@ public class MultipageTiffWriter {
          bufferPosition += 2;
       }
 
-      DisplaySettings settings = DefaultDisplaySettings.getStandardSettings();
+      DisplaySettings settings = DefaultDisplaySettings.getStandardSettings(
+            DefaultDisplayWindow.DEFAULT_SETTINGS_KEY);
       DisplaySettings.ContrastSettings[] contrastSettings = settings.getChannelContrastSettings();
       if (contrastSettings != null && contrastSettings.length > numChannels) {
          for (int i = 0; i < numChannels; i++) {
@@ -857,7 +859,8 @@ public class MultipageTiffWriter {
          sb.append("spacing=").append(zStepUm_).append("\n");
       }
       //write single channel contrast settings or display mode if multi channel
-      DisplaySettings settings = DefaultDisplaySettings.getStandardSettings();
+      DisplaySettings settings = DefaultDisplaySettings.getStandardSettings(
+            DefaultDisplayWindow.DEFAULT_SETTINGS_KEY);
       if (numChannels_ == 1) {
          sb.append("min=").append(settings.getSafeContrastMin(0, 0, 0)).append("\n");
          sb.append("max=").append(settings.getSafeContrastMax(0, 0, 0)).append("\n");
@@ -908,29 +911,56 @@ public class MultipageTiffWriter {
    }
 
    private void writeComments() throws IOException {
-      //Write 4 byte header, 4 byte number of bytes
-      String comments = masterStorage_.getSummaryMetadata().getComments();
-      if (comments == null) {
-         comments = "";
-      }
-      byte[] commentsBytes = getBytesFromString(comments);
-      ByteBuffer header = allocateByteBuffer(8);
-      header.putInt(0, COMMENTS_HEADER);
-      header.putInt(4, commentsBytes.length);
-      ByteBuffer buffer = ByteBuffer.wrap(commentsBytes);
-      fileChannelWrite(header, filePosition_);
-      fileChannelWrite(buffer, filePosition_ + 8);
+      try {
+         // Get the summary comments, then comments for each image.
+         JSONObject comments = new JSONObject();
+         String summaryComments = masterStorage_.getSummaryMetadata().getComments();
+         if (summaryComments == null) {
+            summaryComments = "";
+         }
+         comments.put("Summary", summaryComments);
+         for (Coords coords : masterStorage_.getUnorderedImageCoords()) {
+            Image image = masterStorage_.getImage(coords);
+            String imageComments = image.getMetadata().getComments();
+            if (imageComments == null) {
+               // No comment for this image.
+               continue;
+            }
+            // HACK: produce a 1.4-style "coordinate string" to use as a key.
+            // See also MDUtils.getLabel(), though we can't use it directly.
+            int channel = coords.getChannel() < 0 ? 0 : coords.getChannel();
+            int z = coords.getZ() < 0 ? 0 : coords.getZ();
+            int time = coords.getTime() < 0 ? 0 : coords.getTime();
+            int stagePos = coords.getStagePosition() < 0 ? 0 : coords.getStagePosition();
+            String key = String.format("%d_%d_%d_%d", channel, z, time, stagePos);
+            comments.put(key, imageComments);
+         }
 
-      ByteBuffer offsetHeader = allocateByteBuffer(8);
-      offsetHeader.putInt(0, COMMENTS_OFFSET_HEADER);
-      offsetHeader.putInt(4, (int) filePosition_);
-      fileChannelWrite(offsetHeader, 24);
-      filePosition_ += 8 + commentsBytes.length;
+         String commentStr = comments.toString();
+         //Write 4 byte header, 4 byte number of bytes
+         byte[] commentsBytes = getBytesFromString(commentStr);
+         ByteBuffer header = allocateByteBuffer(8);
+         header.putInt(0, COMMENTS_HEADER);
+         header.putInt(4, commentsBytes.length);
+         ByteBuffer buffer = ByteBuffer.wrap(commentsBytes);
+         fileChannelWrite(header, filePosition_);
+         fileChannelWrite(buffer, filePosition_ + 8);
+
+         ByteBuffer offsetHeader = allocateByteBuffer(8);
+         offsetHeader.putInt(0, COMMENTS_OFFSET_HEADER);
+         offsetHeader.putInt(4, (int) filePosition_);
+         fileChannelWrite(offsetHeader, 24);
+         filePosition_ += 8 + commentsBytes.length;
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Unable to convert comments to JSON");
+      }
    }
 
    // TODO: is this identical to a similar function in the Reader?
    private void writeDisplaySettings() throws IOException {
-      DefaultDisplaySettings settings = DefaultDisplaySettings.getStandardSettings();
+      DefaultDisplaySettings settings = DefaultDisplaySettings.getStandardSettings(
+            DefaultDisplayWindow.DEFAULT_SETTINGS_KEY);
       int numReservedBytes = numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL;
       ByteBuffer header = allocateByteBuffer(8);
       ByteBuffer buffer = ByteBuffer.wrap(

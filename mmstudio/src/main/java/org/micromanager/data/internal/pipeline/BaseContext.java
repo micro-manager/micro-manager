@@ -25,6 +25,7 @@ import java.util.concurrent.CountDownLatch;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
+import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
 import org.micromanager.data.SummaryMetadata;
@@ -57,7 +58,10 @@ public abstract class BaseContext implements ProcessorContext {
             store_.putImage(image);
          }
          catch (DatastoreFrozenException e) {
-            ReportingUtils.logError(e, "Unable to store processed image.");
+            ReportingUtils.logError(e, "Unable to store processed image: datastore is frozen.");
+         }
+         catch (DatastoreRewriteException e) {
+            ReportingUtils.logError(e, "Unable to store processed image: image already exists at " + image.getCoords());
          }
       }
       else {
@@ -82,6 +86,19 @@ public abstract class BaseContext implements ProcessorContext {
    }
 
    /**
+    * Feed SummaryMetadata through the pipeline. This is always synchronous.
+    */
+   public void insertSummaryMetadata(SummaryMetadata summary) throws DatastoreFrozenException, DatastoreRewriteException {
+      summary = processor_.processSummaryMetadata(summary);
+      if (sink_ == null) {
+         store_.setSummaryMetadata(summary);
+      }
+      else {
+         sink_.insertSummaryMetadata(summary);
+      }
+   }
+
+   /**
     * Receive a new image for processing.
     */
    abstract public void insertImage(ImageWrapper wrapper);
@@ -89,10 +106,5 @@ public abstract class BaseContext implements ProcessorContext {
    @Override
    public SummaryMetadata getSummaryMetadata() {
       return store_.getSummaryMetadata();
-   }
-
-   @Override
-   public void setSummaryMetadata(SummaryMetadata metadata) throws DatastoreFrozenException {
-      store_.setSummaryMetadata(metadata);
    }
 }

@@ -26,6 +26,8 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
 import java.awt.Insets;
 import java.awt.Frame;
 
@@ -89,13 +91,8 @@ public class SnapButton extends WidgetPlugin implements SciJavaPlugin {
    @Override
    public JComponent createControl(final PropertyMap config) {
       // Make button size mostly fill the cell.
-      JButton result = new JButton("Snap",
+      final JButton result = new JButton("Snap",
             IconLoader.getIcon("/org/micromanager/icons/camera.png")) {
-         @Subscribe
-         public void onLiveMode(LiveModeEvent event) {
-            setEnabled(!event.getIsOn());
-         }
-
          @Override
          public Dimension getPreferredSize() {
             if (config.getBoolean("isBig", false)) {
@@ -113,7 +110,35 @@ public class SnapButton extends WidgetPlugin implements SciJavaPlugin {
          }
       });
       result.setEnabled(!studio_.live().getIsLiveModeOn());
-      studio_.events().registerForEvents(result);
+      // This is a little convoluted: we need to change the snap button's
+      // state depending on if live mode is active or not, which requires an
+      // event subscription. We need to clean up that subscription when the
+      // button is destroyed, which we do using a HeirarchyListener.
+      HierarchyListener subscriber = new HierarchyListener() {
+         @Subscribe
+         public void onLiveMode(LiveModeEvent event) {
+            result.setEnabled(!event.getIsOn());
+         }
+
+         @Override
+         public void hierarchyChanged(HierarchyEvent e) {
+            if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
+               if (!result.isDisplayable()) {
+                  try {
+                     studio_.events().unregisterForEvents(this);
+                  }
+                  catch (IllegalArgumentException ex) {
+                     // We were already unsubscribed; ignore it.
+                  }
+               }
+               else {
+                  studio_.events().registerForEvents(this);
+               }
+            }
+         }
+      };
+      result.addHierarchyListener(subscriber);
+      studio_.events().registerForEvents(subscriber);
       return result;
    }
 

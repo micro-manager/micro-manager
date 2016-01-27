@@ -3,9 +3,9 @@
 //SUBSYSTEM:     Data API
 //-----------------------------------------------------------------------------
 //
-// AUTHOR:       Chris Weisiger, 2015
+// AUTHOR:       Chris Weisiger, 2016
 //
-// COPYRIGHT:    University of California, San Francisco, 2015
+// COPYRIGHT:    Open Imaging, Inc 2016
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -21,17 +21,19 @@
 package org.micromanager.data;
 
 /**
- * This exception is thrown when Pipeline.insertImage() has been called after
- * an error occurred in one of the Processors in the Pipeline. It indicates
- * that the Pipeline may be in a bad or inconsistent state. You can resume
- * calling Pipeline.insertImage() only after calling Pipeline.clearErrors().
+ * This class signifies that an image has been deleted in the Datastore.
  */
-public class PipelineErrorException extends Exception {
-   public PipelineErrorException() {
-      super();
-   }
+public interface ImageDeletedEvent {
+   /**
+    * Provides the Image that was deleted.
+    * @return the Image that was just deleted from the Datastore.
+    */
+   public Image getImage();
 
-   public PipelineErrorException(String description) {
-      super(description);
-   }
+   /**
+    * Provides the Datastore this image was added to; potentially useful for
+    * code that listens to events from multiple Datastores.
+    * @return the Datastore this image was added to.
+    */
+   public Datastore getDatastore();
 }

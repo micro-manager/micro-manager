@@ -36,6 +36,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
+import org.micromanager.data.DatastoreRewriteException;
 
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.ControlsFactory;
@@ -99,6 +100,10 @@ public final class DefaultDisplayManager implements DisplayManager {
          // This should never happen.
          ReportingUtils.showError(e, "Somehow managed to create an immediately-frozen RAM datastore.");
       }
+      catch (DatastoreRewriteException e) {
+         // This should also never happen.
+         ReportingUtils.showError(e, "Somehow managed to create a Datastore that already had an image in it.");
+      }
       createDisplay(result);
       return result;
    }
@@ -158,7 +163,8 @@ public final class DefaultDisplayManager implements DisplayManager {
 
    @Override
    public DisplaySettings getStandardDisplaySettings() {
-      return DefaultDisplaySettings.getStandardSettings();
+      return DefaultDisplaySettings.getStandardSettings(
+            DefaultDisplayWindow.DEFAULT_SETTINGS_KEY);
    }
 
    @Override

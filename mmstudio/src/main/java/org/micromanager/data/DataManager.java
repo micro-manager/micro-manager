@@ -54,6 +54,15 @@ public interface DataManager {
    public Datastore createRAMDatastore();
 
    /**
+    * Generate a new, "blank" RewritableDatastore with RAM-based Storage and
+    * return it.  This Datastore will not be managed by Micro-Manager by
+    * default (see the org.micromanager.api.display.DisplayManager.manage()
+    * method for more information).
+    * @return an empty RAM-based RewritableDatastore.
+    */
+   public RewritableDatastore createRewritableRAMDatastore();
+
+   /**
     * Generate a new, "blank" Datastore with multipage TIFF-based Storage and
     * return it. This format stores multiple 2D image planes in the same file,
     * up to 4GB per file. This Datastore will not be managed by Micro-Manager
@@ -295,17 +304,18 @@ public interface DataManager {
     * configuration window will be opened if it is not already open. The new
     * processor will be inserted onto the end of the pipeline, and the
     * appropriate ProcessorConfigurator for that plugin will be run.
-    * @param plugin  instance of a ProcessorPlugin that will be added to the 
-    * current application image processing pipeline
+    * @param plugin instance of a ProcessorPlugin that will be added to the
+    *        current application image processing pipeline
     */
    public void addAndConfigureProcessor(ProcessorPlugin plugin);
 
    /**
     * Add the provide ProcessorConfigurator onto the end of the application
     * image processing pipeline.
-    * @param config The ProcessorConfigurator that is responsible for configuring this
-    *        processor.
-    * @param plugin The ProcessorPlugin that the ProcessorConfigurator came from.
+    * @param config The ProcessorConfigurator that is responsible for
+    *        configuring this processor.
+    * @param plugin The ProcessorPlugin that the ProcessorConfigurator came
+    *        from.
     */
    public void addConfiguredProcessor(ProcessorConfigurator config,
          ProcessorPlugin plugin);
@@ -316,8 +326,8 @@ public interface DataManager {
     * it is not already open, as will the ProcessorConfigurators for each
     * of the ProcessorPlugins provided. Equivalent to calling clearPipeline()
     * and then iteratively calling addAndConfigureProcessor().
-    * @param plugins List of ProcessorPlugins that will henceforth be used as the
-    * application's processor pipeline
+    * @param plugins List of ProcessorPlugins that will henceforth be used as
+    *        the application's processor pipeline
     */
    public void setApplicationPipeline(List<ProcessorPlugin> plugins);
 

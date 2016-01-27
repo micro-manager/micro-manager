@@ -27,9 +27,9 @@ import ij.gui.ImageWindow;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.UUID;
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -37,6 +37,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
 import net.miginfocom.swing.MigLayout;
@@ -59,6 +60,13 @@ import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
+/**
+ * This class handles displaying metadata about the currently-displayed image.
+ * As with several other aspects of the GUI that do things about the "current
+ * image", we maintain a queue of images that are pending updates, and discard
+ * all but the most recent image so that we don't fall behind during periods
+ * of rapid display updates.
+ */
 public class MetadataPanel extends InspectorPanel {
    private JTable imageMetadataTable_;
    private JCheckBox showUnchangingPropertiesCheckbox_;
@@ -68,7 +76,10 @@ public class MetadataPanel extends InspectorPanel {
    private ImageWindow currentWindow_;
    private Datastore store_;
    private DataViewer display_;
-   private Timer updateTimer_;
+   private Thread updateThread_;
+   private LinkedBlockingQueue<Image> updateQueue_;
+   private boolean shouldShowUpdates_ = true;
+   private UUID lastImageUUID_ = null;
 
    /** This class makes smaller JTables, since the default size is absurd. */
    private class SmallerJTable extends JTable {
@@ -87,6 +98,14 @@ public class MetadataPanel extends InspectorPanel {
       initialize();
       imageMetadataTable_.setModel(imageMetadataModel_);
       summaryMetadataTable_.setModel(summaryMetadataModel_);
+      updateQueue_ = new LinkedBlockingQueue<Image>();
+      updateThread_ = new Thread(new Runnable() {
+         @Override
+         public void run() {
+            updateMetadata();
+         }
+      });
+      updateThread_.start();
    }
 
    private void initialize() {
@@ -167,7 +186,12 @@ public class MetadataPanel extends InspectorPanel {
             new ActionListener() {
                @Override
                public void actionPerformed(ActionEvent e) {
-                  imageChangedUpdate(display_.getDisplayedImages().get(0));
+                  try {
+                     updateQueue_.put(display_.getDisplayedImages().get(0));
+                  }
+                  catch (InterruptedException ex) {
+                     ReportingUtils.logError(ex, "Interrupted while putting image into metadata queue");
+                  }
                }
       });
 
@@ -188,75 +212,103 @@ public class MetadataPanel extends InspectorPanel {
    }
 
    /**
-    * We postpone metadata display updates slightly in case the image display
-    * is changing rapidly, to ensure that we don't end up with a race condition
-    * that causes us to display the wrong metadata.
+    * This method runs continuously in a separate thread, consuming images from
+    * the updateQueue_ and updating our tables to show the corresponding
+    * metadata. When multiple images arrive while we're doing one update, we
+    * throw away all but the most recent image, to avoid falling behind during
+    * rapid changes.
     */
-   public void imageChangedUpdate(final Image image) { 
-      if (updateTimer_ == null) {
-         updateTimer_ = new Timer("Metadata update");
+   private void updateMetadata() {
+      while (shouldShowUpdates_) {
+         Image image = null;
+         while (!updateQueue_.isEmpty()) {
+            image = updateQueue_.poll();
+         }
+         if (image == null) {
+            // No updates available; just wait for a bit.
+            try {
+               Thread.sleep(100);
+            }
+            catch (InterruptedException e) {
+               if (!shouldShowUpdates_) {
+                  return;
+               }
+            }
+            continue;
+         }
+         imageChangedUpdate(image);
       }
-      TimerTask task = new TimerTask() {
+   }
+
+   /**
+    * Extract metadata from the provided image, and from the summary metadata,
+    * and update our tables. We may need to do some modification of the
+    * metadata to format it nicely for our tables.
+    */
+   public void imageChangedUpdate(final Image image) {
+      Metadata data = image.getMetadata();
+      if (data.getUUID() == lastImageUUID_) {
+         // We're already displaying this image's metadata.
+         return;
+      }
+      final JSONObject metadata = ((DefaultMetadata) data).toJSON();
+      try {
+         // If the "userData" and/or "scopeData" properties are present,
+         // we need to "flatten" them a bit -- their keys and values
+         // have been serialized into the JSON using PropertyMap
+         // serialization rules, which create a JSONObject for each
+         // property. userData additionally is stored within its own
+         // distinct JSONObject while scopeData is stored within the
+         // metadata as a whole.
+         // TODO: this is awfully tightly-bound to the hacks we've put in
+         // to maintain backwards compatibility with our file formats.
+         if (data.getScopeData() != null) {
+            DefaultPropertyMap scopeData = (DefaultPropertyMap) data.getScopeData();
+            scopeData.flattenJSONSerialization(metadata);
+         }
+         if (data.getUserData() != null) {
+            DefaultPropertyMap userData = (DefaultPropertyMap) data.getUserData();
+            JSONObject userJSON = metadata.getJSONObject("userData");
+            userData.flattenJSONSerialization(userJSON);
+            for (String key : MDUtils.getKeys(userJSON)) {
+               metadata.put(key, userJSON.get(key));
+            }
+         }
+         // Enhance this structure with information about basic image
+         // properties.
+         metadata.put("Width", image.getWidth());
+         metadata.put("Height", image.getHeight());
+         if (image.getCoords() != null) {
+            for (String axis : image.getCoords().getAxes()) {
+               metadata.put(axis + " index",
+                     image.getCoords().getIndex(axis));
+            }
+         }
+      }
+      catch (JSONException e) {
+         ReportingUtils.logError(e, "Failed to update metadata display");
+      }
+      // Update the tables in the EDT.
+      SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
-            Metadata data = image.getMetadata();
-            JSONObject metadata = ((DefaultMetadata) data).toJSON();
-            try {
-               // If the "userData" and/or "scopeData" properties are present,
-               // we need to "flatten" them a bit -- their keys and values
-               // have been serialized into the JSON using PropertyMap
-               // serialization rules, which create a JSONObject for each
-               // property. userData additionally is stored within its own
-               // distinct JSONObject while scopeData is stored within the
-               // metadata as a whole.
-               // TODO: this is awfully tightly-bound to the hacks we've put in
-               // to maintain backwards compatibility with our file formats.
-               if (data.getScopeData() != null) {
-                  DefaultPropertyMap scopeData = (DefaultPropertyMap) data.getScopeData();
-                  scopeData.flattenJSONSerialization(metadata);
-               }
-               if (data.getUserData() != null) {
-                  DefaultPropertyMap userData = (DefaultPropertyMap) data.getUserData();
-                  JSONObject userJSON = metadata.getJSONObject("userData");
-                  userData.flattenJSONSerialization(userJSON);
-                  for (String key : MDUtils.getKeys(userJSON)) {
-                     metadata.put(key, userJSON.get(key));
-                  }
-               }
-               // Enhance this structure with information about basic image
-               // properties.
-               metadata.put("Width", image.getWidth());
-               metadata.put("Height", image.getHeight());
-               if (image.getCoords() != null) {
-                  for (String axis : image.getCoords().getAxes()) {
-                     metadata.put(axis + " index",
-                           image.getCoords().getIndex(axis));
-                  }
-               }
-            }
-            catch (JSONException e) {
-               ReportingUtils.logError(e, "Failed to update metadata display");
-            }
             imageMetadataModel_.setMetadata(metadata,
                   showUnchangingPropertiesCheckbox_.isSelected());
             summaryMetadataModel_.setMetadata(
                   ((DefaultSummaryMetadata) store_.getSummaryMetadata()).toJSON(),
                   true);
          }
-      };
-      // Cancel all pending tasks and then schedule our task for execution
-      // 125ms in the future.
-      updateTimer_.purge();
-      updateTimer_.schedule(task, 125);
+      });
+      lastImageUUID_ = data.getUUID();
    }
 
    @Subscribe
    public void onPixelsSet(PixelsSetEvent event) {
       try {
-         imageChangedUpdate(event.getImage());
+         updateQueue_.put(event.getImage());
       }
-      catch (Exception e) {
-         ReportingUtils.logError(e, "Error updating displayed metadata");
+      catch (InterruptedException e) {
+         ReportingUtils.logError(e, "Interrupted while enqueueing image for metadata display");
       }
    }
 
@@ -281,11 +333,16 @@ public class MetadataPanel extends InspectorPanel {
          // Show metadata for the displayed images, if any.
          List<Image> images = display_.getDisplayedImages();
          if (images.size() > 0) {
-            imageChangedUpdate(display_.getDisplayedImages().get(0));
+            try {
+               updateQueue_.put(images.get(0));
+            }
+            catch (InterruptedException e) {
+               ReportingUtils.logError(e, "Interrupted when shifting metadata display to new viewer");
+            }
          }
       }
-      display_.registerForEvents(this);
       store_ = display.getDatastore();
+      display_.registerForEvents(this);
    }
 
    @Override
@@ -298,5 +355,7 @@ public class MetadataPanel extends InspectorPanel {
       if (display_ != null) {
          display_.unregisterForEvents(this);
       }
+      shouldShowUpdates_ = false;
+      updateThread_.interrupt(); // It will then close.
    }
 }

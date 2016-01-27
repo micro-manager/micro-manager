@@ -26,6 +26,8 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
 import java.awt.Frame;
 import java.awt.Insets;
 
@@ -104,9 +106,18 @@ public class LiveButton extends WidgetPlugin implements SciJavaPlugin {
             return super.getPreferredSize();
          }
       };
+      result.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            studio_.live().setLiveMode(!studio_.live().getIsLiveModeOn());
+         }
+      });
       result.setFont(GUIUtils.buttonFont);
       result.setMargin(new Insets(0, 0, 0, 0));
-      Object wrapper = new Object() {
+      // This wrapper a) handles changing the button's state when
+      // LiveModeEvents happen, and b) unsubscribes itself from events when
+      // the button is destroyed.
+      HierarchyListener wrapper = new HierarchyListener() {
          @Subscribe
          public void onLiveMode(LiveModeEvent event) {
             boolean isOn = event.getIsOn();
@@ -115,14 +126,26 @@ public class LiveButton extends WidgetPlugin implements SciJavaPlugin {
                   "/org/micromanager/icons/camera_go.png"));
             result.setText(isOn ? "Stop Live" : "Live");
          }
-      };
-      studio_.events().registerForEvents(wrapper);
-      result.addActionListener(new ActionListener() {
+
          @Override
-         public void actionPerformed(ActionEvent e) {
-            studio_.live().setLiveMode(!studio_.live().getIsLiveModeOn());
+         public void hierarchyChanged(HierarchyEvent e) {
+            if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
+               if (!result.isDisplayable()) {
+                  try {
+                     studio_.events().unregisterForEvents(this);
+                  }
+                  catch (IllegalArgumentException ex) {
+                     // We were already unsubscribed; ignore it.
+                  }
+               }
+               else {
+                  studio_.events().registerForEvents(this);
+               }
+            }
          }
-      });
+      };
+      result.addHierarchyListener(wrapper);
+      studio_.events().registerForEvents(wrapper);
       return result;
    }
 

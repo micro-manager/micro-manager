@@ -223,7 +223,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       markButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            markPosition();
+            markPosition(true);
             posTable_.clearSelection();
             updateMarkButtonText();
          }
@@ -643,28 +643,32 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    /**
     * Store current xyPosition.
     * Use data collected in refreshCurrentPosition()
+    * @param shouldOverwrite if true, overwrite the selected marked position.
     */
-   public void markPosition() {
+   public void markPosition(boolean shouldOverwrite) {
       refreshCurrentPosition();
       MultiStagePosition msp = curMsp_;
 
       PositionTableModel ptm = (PositionTableModel) posTable_.getModel();
-      MultiStagePosition selMsp = 
-              ptm.getPositionList().getPosition(posTable_.getSelectedRow() -1);
+      MultiStagePosition selMsp = null;
+      if (shouldOverwrite) {
+         selMsp = ptm.getPositionList().getPosition(posTable_.getSelectedRow() -1);
+      };
 
       if (selMsp == null) {
          msp.setLabel(ptm.getPositionList().generateLabel());
          ptm.getPositionList().addPosition(msp);
          ptm.fireTableDataChanged();
          acqControlDlg_.updateGUIContents();
-      } else { // replace instead of add 
+      }
+      else { // replace instead of add
          msp.setLabel(ptm.getPositionList().getPosition(
                  posTable_.getSelectedRow() - 1).getLabel() );
          int selectedRow = posTable_.getSelectedRow();
          ptm.getPositionList().replacePosition(
                  posTable_.getSelectedRow() -1, msp);
-         ptm.fireTableCellUpdated(selectedRow, 1);
-         // Not sure why this is here as we undo the selecion after 
+         ptm.fireTableDataChanged();
+         // Not sure why this is here as we undo the selection after
          // this functions exits...
          posTable_.setRowSelectionInterval(selectedRow, selectedRow);
       }

@@ -47,6 +47,7 @@ import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
+import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -178,7 +179,8 @@ public class OMEMetadata {
 
       // TODO these don't necessarily have anything to do with how the user is
       // viewing data in Micro-Manager.
-      DisplaySettings displaySettings = DefaultDisplaySettings.getStandardSettings();
+      DisplaySettings displaySettings = DefaultDisplaySettings.getStandardSettings(
+            DefaultDisplayWindow.DEFAULT_SETTINGS_KEY);
       String[] names = mptStorage_.getSummaryMetadata().getChannelNames();
       java.awt.Color[] colors = displaySettings.getChannelColors();
       for (int channel = 0; channel < mptStorage_.getIntendedSize(Coords.CHANNEL);

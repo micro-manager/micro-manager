@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     Data API
+//SUBSYSTEM:     Events API
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
@@ -18,20 +18,18 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.data;
+package org.micromanager.events.internal;
 
-/**
- * This exception is thrown when Pipeline.insertImage() has been called after
- * an error occurred in one of the Processors in the Pipeline. It indicates
- * that the Pipeline may be in a bad or inconsistent state. You can resume
- * calling Pipeline.insertImage() only after calling Pipeline.clearErrors().
- */
-public class PipelineErrorException extends Exception {
-   public PipelineErrorException() {
-      super();
+import org.micromanager.events.AutoShutterEvent;
+
+public class DefaultAutoShutterEvent implements AutoShutterEvent {
+   private boolean isAutoOn_;
+   public DefaultAutoShutterEvent(boolean isOn) {
+      isAutoOn_ = isOn;
    }
 
-   public PipelineErrorException(String description) {
-      super(description);
+   @Override
+   public boolean getAutoShutter() {
+      return isAutoOn_;
    }
 }

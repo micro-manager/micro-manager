@@ -57,6 +57,9 @@ import org.micromanager.internal.MMStudio;
 
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
+import org.micromanager.data.DatastoreRewriteException;
+import org.micromanager.data.Pipeline;
+import org.micromanager.data.PipelineErrorException;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
 
@@ -115,6 +118,7 @@ public class MMAcquisition {
    private String rootDirectory_;
    private Studio studio_;
    private DefaultDatastore store_;
+   private Pipeline pipeline_;
    private DisplayWindow display_;
    private final boolean virtual_;
    private AcquisitionEngine eng_;
@@ -130,6 +134,7 @@ public class MMAcquisition {
       eng_ = eng;
       show_ = show;
       store_ = new DefaultDatastore();
+      pipeline_ = studio_.data().copyApplicationPipeline(store_, false);
       try {
          if (summaryMetadata.has("Directory") && summaryMetadata.get("Directory").toString().length() > 0) {
             // Set up saving to the target directory.
@@ -151,10 +156,16 @@ public class MMAcquisition {
       }
 
       try {
-         store_.setSummaryMetadata(DefaultSummaryMetadata.legacyFromJSON(summaryMetadata));
+         pipeline_.insertSummaryMetadata(DefaultSummaryMetadata.legacyFromJSON(summaryMetadata));
       }
       catch (DatastoreFrozenException e) {
-         ReportingUtils.logError(e, "Couldn't set summary metadata");
+         ReportingUtils.logError(e, "Datastore is frozen; can't set summary metadata");
+      }
+      catch (DatastoreRewriteException e) {
+         ReportingUtils.logError(e, "Summary metadata has already been set");
+      }
+      catch (PipelineErrorException e) {
+         ReportingUtils.logError(e, "Can't insert summary metadata: processing already started.");
       }
       if (show_) {
          display_ = studio_.displays().createDisplay(
@@ -223,22 +234,34 @@ public class MMAcquisition {
          SummaryMetadata summary = DefaultSummaryMetadata.legacyFromJSON(summary_);
          try {
             store_.setStorage(getAppropriateStorage(store_, dirName, true));
-            store_.setSummaryMetadata(summary);
+            pipeline_.insertSummaryMetadata(summary);
          }
          catch (IOException e) {
             ReportingUtils.showError(e, "Unable to prepare saving");
          }
          catch (DatastoreFrozenException e) {
-            ReportingUtils.logError("Unable to set summary metadata; datastore pre-emptively locked. This should never happen!");
+            ReportingUtils.logError("Unable to set summary metadata: datastore pre-emptively locked. This should never happen!");
+         }
+         catch (DatastoreRewriteException e) {
+            ReportingUtils.logError("Unable to set summary metadata: datastore has already had summary metadata set. This should never happen!");
+         }
+         catch (PipelineErrorException e) {
+            ReportingUtils.logError(e, "Can't insert summary metadata: processing already started.");
          }
       }
       else { // Not a disk-based data store.
          store_.setStorage(new StorageRAM(store_));
          try {
-            store_.setSummaryMetadata((new DefaultSummaryMetadata.Builder().build()));
+            pipeline_.insertSummaryMetadata(new DefaultSummaryMetadata.Builder().build());
          }
          catch (DatastoreFrozenException e) {
-            ReportingUtils.logError(e, "Couldn't set summary metadata");
+            ReportingUtils.logError(e, "Couldn't set summary metadata: datastore is frozen.");
+         }
+         catch (DatastoreRewriteException e) {
+            ReportingUtils.logError(e, "Couldn't set summary metadata: it's already been set.");
+         }
+         catch (PipelineErrorException e) {
+            ReportingUtils.logError(e, "Can't insert summary metadata: processing already started.");
          }
       }
 
@@ -418,10 +441,16 @@ public class MMAcquisition {
          summaryMetadata.put("Width", width_);
          startTimeMs_ = System.currentTimeMillis();
          try {
-            store_.setSummaryMetadata(DefaultSummaryMetadata.legacyFromJSON(summaryMetadata));
+            pipeline_.insertSummaryMetadata(DefaultSummaryMetadata.legacyFromJSON(summaryMetadata));
          }
          catch (DatastoreFrozenException e) {
-            ReportingUtils.logError(e, "Couldn't set summary metadata");
+            ReportingUtils.logError(e, "Couldn't set summary metadata: datastore is frozen.");
+         }
+         catch (DatastoreRewriteException e) {
+            ReportingUtils.logError(e, "Couldn't set summary metadata: it's already been set.");
+         }
+         catch (PipelineErrorException e) {
+            ReportingUtils.logError(e, "Can't insert summary metadata: processing already started.");
          }
       } catch (JSONException ex) {
          ReportingUtils.showError(ex);
@@ -506,6 +535,10 @@ public class MMAcquisition {
 
    public Datastore getDatastore() {
       return store_;
+   }
+
+   public Pipeline getPipeline() {
+      return pipeline_;
    }
 
    public void setAsynchronous() {

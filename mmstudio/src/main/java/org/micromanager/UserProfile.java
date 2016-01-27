@@ -296,9 +296,21 @@ public interface UserProfile {
     * conjunction with appendFile(), below.
     * @param c only setting belonging to this class will be saved
     * @param path file path where the data will be saved
-    * @throws java.io.IOException
+    * @throws IOException if the file cannot be written for any reason.
     */
    public void exportProfileSubsetToFile(Class<?> c, String path) throws IOException;
+
+   /**
+    * Export a portion of the user's profile to the specified file. This works
+    * like exportProfileSubsetToFile(), except that all classes under the
+    * provided package name will be exported. For example, using a package of
+    * "org.micromanager.display" would grab all portions of the profile that
+    * are in the org.micromanager.display package or any of its child packages.
+    * @param packageName Package name indicating subset of profile to be saved
+    * @param path file path to save to
+    * @throws IOException if the file cannot be written for any reason.
+    */
+   public void exportPackageProfileToFile(String packageName, String path) throws IOException;
 
    /**
     * Remove all keys from the profile that are associated with the provided
@@ -307,6 +319,17 @@ public interface UserProfile {
     * @param c Key-values belonging to this class will be removed
     */
    public void clearProfileSubset(Class<?> c);
+
+   /**
+    * Remove all keys from the profile that are associated with the provided
+    * package. For example, using a package of "org.micromanager.display" would
+    * cause the user's saved settings relating to the org.micromanager.display
+    * package to be lost, and the next time those settings would be read,
+    * default values would be used instead.
+    * @param packageName Package name indicating subset of the profile to be
+    *        cleared.
+    */
+   public void clearPackageProfile(String packageName);
 
    /**
     * Merge the profile at the specified path into the current active user
