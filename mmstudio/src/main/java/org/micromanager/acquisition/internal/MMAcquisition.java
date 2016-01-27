@@ -79,8 +79,7 @@ import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.internal.DefaultDisplaySettings;
-import org.micromanager.display.internal.DefaultDisplayWindow;
+import org.micromanager.display.internal.inspector.CommentsPanel;
 import org.micromanager.display.RequestToCloseEvent;
 
 import org.micromanager.internal.utils.JavaUtils;
@@ -155,6 +154,17 @@ public class MMAcquisition {
          ReportingUtils.logError(e, "Couldn't adjust summary metadata.");
       }
 
+      // Transfer any summary comment from the acquisition engine.
+      if (summaryMetadata != null && MDUtils.hasComments(summaryMetadata)) {
+         try {
+            CommentsPanel.setSummaryComment(store_,
+                  MDUtils.getComments(summaryMetadata));
+         }
+         catch (JSONException e) {
+            ReportingUtils.logError(e, "Unable to set summary comment");
+         }
+      }
+
       try {
          pipeline_.insertSummaryMetadata(DefaultSummaryMetadata.legacyFromJSON(summaryMetadata));
       }
@@ -203,83 +213,6 @@ public class MMAcquisition {
          }
       }
       return maxNumber;
-   }
-
-   public void initialize() throws MMScriptException {
-      if (initialized_) {
-         throw new MMScriptException("Acquisition is already initialized");
-      }
-
-      Storage imageFileManager = null;
-      String name = name_;
-      
-      store_ = new DefaultDatastore();
-
-      if (virtual_) {
-         String dirName = rootDirectory_ + File.separator + name;
-         if ((new File(dirName)).exists()) {
-            try {
-               String acqDirectory = createAcqDirectory(rootDirectory_, name_);
-               if (summary_ != null) {
-                  summary_.put("Prefix", acqDirectory);
-                  summary_.put("Channels", numChannels_);
-                  MDUtils.setPixelTypeFromByteDepth(summary_, byteDepth_);
-               }
-               dirName = rootDirectory_ + File.separator + acqDirectory;
-            } catch (Exception ex) {
-               throw new MMScriptException("Failed to figure out acq saving path.");
-            }
-         }
-
-         SummaryMetadata summary = DefaultSummaryMetadata.legacyFromJSON(summary_);
-         try {
-            store_.setStorage(getAppropriateStorage(store_, dirName, true));
-            pipeline_.insertSummaryMetadata(summary);
-         }
-         catch (IOException e) {
-            ReportingUtils.showError(e, "Unable to prepare saving");
-         }
-         catch (DatastoreFrozenException e) {
-            ReportingUtils.logError("Unable to set summary metadata: datastore pre-emptively locked. This should never happen!");
-         }
-         catch (DatastoreRewriteException e) {
-            ReportingUtils.logError("Unable to set summary metadata: datastore has already had summary metadata set. This should never happen!");
-         }
-         catch (PipelineErrorException e) {
-            ReportingUtils.logError(e, "Can't insert summary metadata: processing already started.");
-         }
-      }
-      else { // Not a disk-based data store.
-         store_.setStorage(new StorageRAM(store_));
-         try {
-            pipeline_.insertSummaryMetadata(new DefaultSummaryMetadata.Builder().build());
-         }
-         catch (DatastoreFrozenException e) {
-            ReportingUtils.logError(e, "Couldn't set summary metadata: datastore is frozen.");
-         }
-         catch (DatastoreRewriteException e) {
-            ReportingUtils.logError(e, "Couldn't set summary metadata: it's already been set.");
-         }
-         catch (PipelineErrorException e) {
-            ReportingUtils.logError(e, "Can't insert summary metadata: processing already started.");
-         }
-      }
-
-      CMMCore core = studio_.core();
-      createDefaultAcqSettings();
-
-      if (store_.getSummaryMetadata() != null) {
-         if (show_) {
-            // NB pre-existing setups will have loaded saved display settings.
-            display_ = studio_.displays().createDisplay(
-                  store_, makeControlsFactory());
-            display_.registerForEvents(this);
-         }
-         initialized_ = true;
-      }
-      else {
-         ReportingUtils.logError("Null summary metadata");
-      }
    }
 
    /**
