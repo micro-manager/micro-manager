@@ -9,6 +9,7 @@
 // AUTHOR:        Nico Stuurman, nico@cmp.ucsf.edu, 11/07/2008
 //                DAXYStage by Ed Simmon, 11/28/2011
 // COPYRIGHT:     University of California, San Francisco, 2008
+//                2015, Open Imaging, Inc.
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
 //
@@ -32,6 +33,8 @@
    #define snprintf _snprintf 
 #endif
 
+#include <boost/lexical_cast.hpp>
+
 
 const char* g_Undefined = "Undefined";
 const char* g_NoDevice = "None";
@@ -41,6 +44,7 @@ const char* g_DeviceNameDAShutter = "DA Shutter";
 const char* g_DeviceNameDAMonochromator = "DA Monochromator";
 const char* g_DeviceNameDAZStage = "DA Z Stage";
 const char* g_DeviceNameDAXYStage = "DA XY Stage";
+const char* g_DeviceNameDATTLStateDevice = "DA TTL State Device";
 const char* g_DeviceNameAutoFocusStage = "AutoFocus Stage";
 const char* g_DeviceNameStateDeviceShutter = "State Device Shutter";
 
@@ -58,6 +62,7 @@ MODULE_API void InitializeModuleData()
    RegisterDevice(g_DeviceNameDAMonochromator, MM::ShutterDevice, "DA used to control a monochromator");
    RegisterDevice(g_DeviceNameDAZStage, MM::StageDevice, "DA-controlled Z-stage");
    RegisterDevice(g_DeviceNameDAXYStage, MM::XYStageDevice, "DA-controlled XY-stage");
+   RegisterDevice(g_DeviceNameDATTLStateDevice, MM::StateDevice, "Several DAs as a TTL state device");
    RegisterDevice(g_DeviceNameAutoFocusStage, MM::StageDevice, "AutoFocus offset acting as a Z-stage");
    RegisterDevice(g_DeviceNameStateDeviceShutter, MM::ShutterDevice, "State device used as a shutter");
 }
@@ -79,6 +84,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       return new DAZStage();
    } else if (strcmp(deviceName, g_DeviceNameDAXYStage) == 0) { 
       return new DAXYStage();
+   } else if (strcmp(deviceName, g_DeviceNameDATTLStateDevice) == 0) {
+      return new DATTLStateDevice();
    } else if (strcmp(deviceName, g_DeviceNameAutoFocusStage) == 0) { 
       return new AutoFocusStage();
    } else if (strcmp(deviceName, g_DeviceNameStateDeviceShutter) == 0) {
@@ -2340,6 +2347,338 @@ int DAXYStage::OnStageMaxPosY(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    return DEVICE_OK;
 }
+
+
+DATTLStateDevice::DATTLStateDevice() :
+   numberOfDADevices_(1),
+   initialized_(false)
+{
+   CPropertyAction* pAct = new CPropertyAction(this,
+      &DATTLStateDevice::OnNumberOfDADevices);
+   CreateIntegerProperty("NumberOfDADevices",
+      static_cast<long>(numberOfDADevices_),
+      false, pAct, true);
+   for (int i = 1; i <= 8; ++i)
+   {
+      AddAllowedValue("NumberOfDADevices", boost::lexical_cast<std::string>(i).c_str());
+   }
+}
+
+
+DATTLStateDevice::~DATTLStateDevice()
+{
+   Shutdown();
+}
+
+
+int DATTLStateDevice::Initialize()
+{
+   if (initialized_)
+      return DEVICE_OK;
+
+   daDeviceLabels_.clear();
+   daDevices_.clear();
+   for (int i = 0; i < numberOfDADevices_; ++i)
+   {
+      daDeviceLabels_.push_back("");
+      daDevices_.push_back(0);
+   }
+
+   // Get labels of DA (SignalIO) devices
+   std::vector<std::string> daDevices;
+   char deviceName[MM::MaxStrLength];
+   unsigned int deviceIterator = 0;
+   for (;;)
+   {
+      GetLoadedDeviceOfType(MM::SignalIODevice, deviceName, deviceIterator++);
+      if( 0 < strlen(deviceName))
+      {
+         daDevices.push_back(std::string(deviceName));
+      }
+      else
+         break;
+   }
+
+   for (int i = 0; i < numberOfDADevices_; ++i)
+   {
+      const std::string propName =
+         "DADevice-" + boost::lexical_cast<std::string>(i);
+      CPropertyActionEx* pAct = new CPropertyActionEx(this,
+         &DATTLStateDevice::OnDADevice, i);
+      int ret = CreateStringProperty(propName.c_str(), "", false, pAct);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      AddAllowedValue(propName.c_str(), "");
+      for (std::vector<std::string>::const_iterator it = daDevices.begin(),
+         end = daDevices.end(); it != end; ++it)
+      {
+         AddAllowedValue(propName.c_str(), it->c_str());
+      }
+   }
+
+   int numPos = GetNumberOfPositions();
+   for (int i = 0; i < numPos; ++i)
+   {
+      SetPositionLabel(i, boost::lexical_cast<std::string>(i).c_str());
+   }
+
+   CPropertyAction* pAct = new CPropertyAction(this, &DATTLStateDevice::OnState);
+   int ret = CreateIntegerProperty(MM::g_Keyword_State, 0, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+   SetPropertyLimits(MM::g_Keyword_State, 0, numPos - 1);
+
+   pAct = new CPropertyAction(this, &DATTLStateDevice::OnLabel);
+   ret = CreateStringProperty(MM::g_Keyword_Label, "0", false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   ret = CreateIntegerProperty(MM::g_Keyword_Closed_Position, 0, false);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   initialized_ = true;
+   return DEVICE_OK;
+}
+
+
+int DATTLStateDevice::Shutdown()
+{
+   if (!initialized_)
+      return DEVICE_OK;
+
+   daDeviceLabels_.clear();
+   daDevices_.clear();
+
+   initialized_ = false;
+   return DEVICE_OK;
+}
+
+
+void DATTLStateDevice::GetName(char* name) const
+{
+   CDeviceUtils::CopyLimitedString(name, g_DeviceNameDATTLStateDevice);
+}
+
+
+bool DATTLStateDevice::Busy()
+{
+   for (int i = 0; i < numberOfDADevices_; ++i)
+   {
+      MM::SignalIO* da = daDevices_[i];
+      if (da && da->Busy())
+         return true;
+   }
+   return false;
+}
+
+
+unsigned long DATTLStateDevice::GetNumberOfPositions() const
+{
+   return 1 << numberOfDADevices_;
+}
+
+
+int DATTLStateDevice::OnNumberOfDADevices(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(static_cast<long>(numberOfDADevices_));
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long num;
+      pProp->Get(num);
+      numberOfDADevices_ = num;
+   }
+   return DEVICE_OK;
+}
+
+
+int DATTLStateDevice::OnDADevice(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(daDeviceLabels_[index].c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string da;
+      pProp->Get(da);
+      daDeviceLabels_[index] = da;
+      if (!da.empty())
+      {
+         MM::Device* daDevice = GetDevice(da.c_str());
+         daDevices_[index] = static_cast<MM::SignalIO*>(daDevice);
+      }
+      else
+      {
+         daDevices_[index] = 0;
+      }
+   }
+   return DEVICE_OK;
+}
+
+
+int DATTLStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      bool gateOpen;
+      GetGateOpen(gateOpen);
+      if (!gateOpen)
+      {
+         pProp->Set(mask_);
+      }
+      else
+      {
+         // Read signal where possible; otherwise use stored value.
+         long mask = 0;
+         for (int i = 0; i < numberOfDADevices_; ++i)
+         {
+            if (daDevices_[i])
+            {
+               double voltage = 0.0;
+               int ret = daDevices_[i]->GetSignal(voltage);
+               if (ret != DEVICE_OK)
+               {
+                  if (ret == DEVICE_UNSUPPORTED_COMMAND)
+                  {
+                     mask |= (mask_ & (1 << i));
+                  }
+                  else
+                  {
+                     return ret;
+                  }
+               }
+               if (voltage > 0.0)
+               {
+                  mask |= (1 << i);
+               }
+            }
+         }
+         pProp->Set(mask);
+      }
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      bool gateOpen;
+      GetGateOpen(gateOpen);
+      long gatedMask = 0;
+      pProp->Get(gatedMask);
+      long mask = gatedMask;
+      if (!gateOpen)
+      {
+         GetProperty(MM::g_Keyword_Closed_Position, mask);
+      }
+
+      for (int i = 0; i < numberOfDADevices_; ++i)
+      {
+         if (daDevices_[i])
+         {
+            int ret = daDevices_[i]->SetSignal((mask & (1 << i)) ? 5.0 : 0.0);
+            if (ret != DEVICE_OK)
+               return ret;
+         }
+      }
+      mask_ = gatedMask;
+   }
+   else if (eAct == MM::IsSequenceable)
+   {
+      bool allSequenceable = true;
+      long maxSeqLen = LONG_MAX;
+      for (int i = 0; i < numberOfDADevices_; ++i)
+      {
+         if (daDevices_[i])
+         {
+            bool sequenceable = false;
+            int ret = daDevices_[i]->IsDASequenceable(sequenceable);
+            if (ret != DEVICE_OK)
+               return ret;
+            if (sequenceable)
+            {
+               long daMaxLen = 0;
+               int ret = daDevices_[i]->GetDASequenceMaxLength(daMaxLen);
+               if (ret != DEVICE_OK)
+                  return ret;
+               if (daMaxLen < maxSeqLen)
+                  maxSeqLen = daMaxLen;
+            }
+            else
+            {
+               allSequenceable = false;
+            }
+         }
+      }
+      if (maxSeqLen == LONG_MAX) // No device?
+         maxSeqLen = 0;
+      pProp->SetSequenceable(maxSeqLen);
+   }
+   else if (eAct == MM::AfterLoadSequence)
+   {
+      std::vector<std::string> sequence = pProp->GetSequence();
+      std::vector<long> values;
+      for (std::vector<std::string>::const_iterator it = sequence.begin(),
+         end = sequence.end(); it != end; ++it)
+      {
+         try
+         {
+            values.push_back(boost::lexical_cast<long>(*it));
+         }
+         catch (boost::bad_lexical_cast&)
+         {
+            return DEVICE_ERR;
+         }
+      }
+
+      for (int i = 0; i < numberOfDADevices_; ++i)
+      {
+         if (daDevices_[i])
+         {
+            int ret = daDevices_[i]->ClearDASequence();
+            if (ret != DEVICE_OK)
+               return ret;
+            for (std::vector<long>::const_iterator it = values.begin(),
+               end = values.end(); it != end; ++it)
+            {
+               int ret = daDevices_[i]->AddToDASequence(*it & (1 << i) ? 5.0 : 0.0);
+               if (ret != DEVICE_OK)
+                  return ret;
+            }
+            ret = daDevices_[i]->SendDASequence();
+            if (ret != DEVICE_OK)
+               return ret;
+         }
+      }
+   }
+   else if (eAct == MM::StartSequence)
+   {
+      for (int i = 0; i < numberOfDADevices_; ++i)
+      {
+         if (daDevices_[i])
+         {
+            int ret = daDevices_[i]->StartDASequence();
+            if (ret != DEVICE_OK)
+               return ret;
+         }
+      }
+   }
+   else if (eAct == MM::StopSequence)
+   {
+      for (int i = 0; i < numberOfDADevices_; ++i)
+      {
+         if (daDevices_[i])
+         {
+            int ret = daDevices_[i]->StopDASequence();
+            if (ret != DEVICE_OK)
+               return ret;
+         }
+      }
+   }
+   return DEVICE_OK;
+}
+
 
 /**************************
  * AutoFocusStage implementation

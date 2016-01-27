@@ -8,6 +8,7 @@
 //
 // AUTHOR:        Nico Stuurman, nico@cmp.ucsf.edu, 11/07/2008
 // COPYRIGHT:     University of California, San Francisco, 2008
+//                2015 Open Imaging, Inc.
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
 //
@@ -411,6 +412,38 @@ private:
    double stepSizeYUm_;
 
 };
+
+
+// Use several DA (SignalIO) devices as a TTL state device
+class DATTLStateDevice : public CStateDeviceBase<DATTLStateDevice>
+{
+public:
+   DATTLStateDevice();
+   virtual ~DATTLStateDevice();
+
+   virtual int Initialize();
+   virtual int Shutdown();
+   virtual void GetName(char* name) const;
+   virtual bool Busy();
+
+   virtual unsigned long GetNumberOfPositions() const;
+
+private:
+   // Pre-init property action handlers
+   int OnNumberOfDADevices(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+   // Post-init property action handlers
+   int OnDADevice(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   size_t numberOfDADevices_;
+   std::vector<std::string> daDeviceLabels_;
+   std::vector<MM::SignalIO*> daDevices_;
+   bool initialized_;
+   long mask_;
+};
+
 
 /**
  * Treats an AutoFocus device as a Drive.
