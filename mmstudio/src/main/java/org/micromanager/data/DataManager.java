@@ -46,6 +46,27 @@ public interface DataManager {
    public Coords.CoordsBuilder getCoordsBuilder();
 
    /**
+    * Generate a Coords object from the provided normalized coordinate string.
+    * Coordinate strings are comma-delimited strings of axis/position pairs
+    * separated by equals signs. Case matters, but whitespace is ignored.
+    * Positions must be integers. For example, "z=8" or
+    * "time = 5, channel = 2", but not "stagePosition = 1.5" because the
+    * position is not an integer.  For this method, it is acceptable to use the
+    * shorthand axis names Coords.CHANNEL_SHORT, Coords.TIME_SHORT, and
+    * Coords.STAGE_POSITION_SHORT, for example "t=4,p=8,c=0,z=5".  If you are
+    * using custom axes, be aware that axis names must start with an
+    * alphabetical character, and may otherwise contain alphanumerics and
+    * underscores. For example, "filter2_pos" is a valid axis, but
+    * "1filter-pos" is not, because it starts with a number, and because it
+    * contains a "-" which is not a legal character.
+    * @param def Normalized coordinate definition string.
+    * @return Coords generated based on the definition string.
+    * @throws IllegalArgumentException if the definition string is
+    *         malformatted.
+    */
+   public Coords createCoords(String def) throws IllegalArgumentException;
+
+   /**
     * Generate a new, "blank" Datastore with RAM-based Storage and return it.
     * This Datastore will not be managed by Micro-Manager by default (see the
     * org.micromanager.api.display.DisplayManager.manage() method for more

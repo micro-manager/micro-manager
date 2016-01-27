@@ -83,6 +83,11 @@ public class DefaultDataManager implements DataManager {
    }
 
    @Override
+   public Coords createCoords(String def) throws IllegalArgumentException {
+      return DefaultCoords.fromNormalizedString(def);
+   }
+
+   @Override
    public Datastore createRAMDatastore() {
       Datastore result = new DefaultDatastore();
       result.setStorage(new StorageRAM(result));

@@ -292,4 +292,63 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
       }
       return builder.build();
    }
+
+   /**
+    * Generate a normalized string representation of this Coords, that we can
+    * later parse out using fromNormalizedString().
+    */
+   public String toNormalizedString() {
+      String result = "";
+      ArrayList<String> axes = new ArrayList<String>(axisToPos_.keySet());
+      Collections.sort(axes);
+      for (String axis : axes) {
+         result += String.format("%s=%d,", axis, axisToPos_.get(axis));
+      }
+      return result;
+   }
+
+   /**
+    * Generate a DefaultCoords from a string using our normalized string
+    * format.
+    */
+   public static DefaultCoords fromNormalizedString(String def) throws IllegalArgumentException {
+      Builder builder = new Builder();
+
+      def = def.replaceAll("\\s+", "");
+      for (String token : def.split(",")) {
+         String[] components = token.split("=");
+         if (components.length != 2) {
+            throw new IllegalArgumentException("Malformatted coords string");
+         }
+         String axis = components[0];
+         if (!isValidAxis(axis)) {
+            throw new IllegalArgumentException("Malformatted coords string: axis " + axis + " is not a valid name");
+         }
+         // Convert shorthands of standard axes into long forms.
+         if (axis.equals(Coords.CHANNEL_SHORT)) {
+            axis = Coords.CHANNEL;
+         }
+         else if (axis.equals(Coords.TIME_SHORT)) {
+            axis = Coords.TIME;
+         }
+         else if (axis.equals(Coords.STAGE_POSITION_SHORT)) {
+            axis = Coords.STAGE_POSITION;
+         }
+         try {
+            int position = Integer.parseInt(components[1]);
+            builder.index(axis, position);
+         }
+         catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Malformatted coords string: position of axis " + axis + " is not an integer");
+         }
+      }
+      return builder.build();
+   }
+
+   /**
+    * Utility method to declare if an axis label is valid.
+    */
+   public static boolean isValidAxis(String axis) {
+      return axis.matches("[A-Za-z]+[A-Za-z0-9_]*");
+   }
 }
