@@ -316,6 +316,11 @@ public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
 
       def = def.replaceAll("\\s+", "");
       for (String token : def.split(",")) {
+         if (token.equals("")) {
+            // Either a trailing comma or an "empty" entry; either way we'll
+            // just ignore it.
+            continue;
+         }
          String[] components = token.split("=");
          if (components.length != 2) {
             throw new IllegalArgumentException("Malformatted coords string");
