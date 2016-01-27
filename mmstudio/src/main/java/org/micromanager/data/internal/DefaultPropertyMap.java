@@ -65,6 +65,8 @@ public class DefaultPropertyMap implements PropertyMap {
    private static final String PROPERTY_MAP = "Property map";
    private static final String OBJECT = "Object";
 
+   private static final Double SERIALIZATION_VERSION = 1.0;
+
    // This class stores one value in the mapping.
    private static class PropertyValue {
       private Object val_;
@@ -831,6 +833,7 @@ public class DefaultPropertyMap implements PropertyMap {
       FileWriter writer = null;
       try {
          writer = new FileWriter(file, true);
+         writer.write(SERIALIZATION_VERSION + "\n");
          writer.write(toJSON().toString(1));
          writer.close();
          File dest = new File(path);
@@ -852,8 +855,20 @@ public class DefaultPropertyMap implements PropertyMap {
 
    public static PropertyMap loadPropertyMap(String path) throws FileNotFoundException, IOException {
       String content = Files.toString(new File(path), Charsets.UTF_8);
+      // Separate out the header from the property map definition.
+      String[] splits = content.split("\n", 2);
       try {
-         return fromJSON(new JSONObject(content));
+         Double version = Double.parseDouble(splits[0]);
+         if (version > SERIALIZATION_VERSION) {
+            ReportingUtils.logError(String.format("Warning: property map version in file at %s is greater than version used by this program (%f > %f)",
+                     path, version, SERIALIZATION_VERSION));
+         }
+      }
+      catch (NumberFormatException e) {
+         throw new IOException("Unable to parse version of property map");
+      }
+      try {
+         return fromJSON(new JSONObject(splits[1]));
       }
       catch (JSONException e) {
          throw new IOException(e);
