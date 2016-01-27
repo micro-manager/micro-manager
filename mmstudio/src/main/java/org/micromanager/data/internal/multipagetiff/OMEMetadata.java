@@ -48,6 +48,7 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.DefaultDisplayWindow;
+import org.micromanager.display.internal.inspector.CommentsPanel;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -172,10 +173,8 @@ public class OMEMetadata {
       // link Instrument and Image
       metadata_.setImageInstrumentRef(instrumentID, seriesIndex);
 
-      SummaryMetadata summary = mptStorage_.getSummaryMetadata();
-      if (summary.getComments() != null) {
-         metadata_.setImageDescription(summary.getComments(), seriesIndex);
-      }
+      metadata_.setImageDescription(CommentsPanel.getSummaryComment(
+               mptStorage_.getDatastore()), seriesIndex);
 
       // TODO these don't necessarily have anything to do with how the user is
       // viewing data in Micro-Manager.

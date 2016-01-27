@@ -184,7 +184,7 @@ public final class StorageMultipageTiff implements Storage {
          if (f.getName().endsWith(".tif") || f.getName().endsWith(".TIF")) {
             try {
                //this is where fixing dataset code occurs
-               reader = new MultipageTiffReader(f);
+               reader = new MultipageTiffReader(this, f);
                Set<Coords> readerCoords = reader.getIndexKeys();
                for (Coords coords : readerCoords) {
                   coordsToReader_.put(coords, reader);
@@ -541,7 +541,7 @@ public final class StorageMultipageTiff implements Storage {
          try {
             r.rewriteDisplaySettings(DefaultDisplaySettings.getStandardSettings(
                      DefaultDisplayWindow.DEFAULT_SETTINGS_KEY));
-            r.rewriteComments(summaryMetadata_.getComments());
+            r.rewriteComments();
          } catch (JSONException ex) {
             ReportingUtils.logError("Error writing display settings");
          } catch (IOException ex) {
@@ -641,6 +641,10 @@ public final class StorageMultipageTiff implements Storage {
          return getAxisLength(axis);
       }
       return summaryMetadata_.getIntendedDimensions().getIndex(axis);
+   }
+
+   public Datastore getDatastore() {
+      return store_;
    }
 
    @Override

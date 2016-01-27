@@ -64,9 +64,9 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 public class CommentsPanel extends InspectorPanel {
    /** File that comments are saved in. */
-   private static final String COMMENTS_FILE = "comments.txt";
+   public static final String COMMENTS_FILE = "comments.txt";
    /** String key used to access comments in annotations. */
-   private static final String COMMENTS_KEY = "comments";
+   public static final String COMMENTS_KEY = "comments";
 
    private JTextArea imageCommentsTextArea_;
    private JTextArea summaryCommentsTextArea_;
@@ -322,5 +322,47 @@ public class CommentsPanel extends InspectorPanel {
       }
       shouldShowUpdates_ = false;
       updateThread_.interrupt(); // It will then close.
+   }
+
+   /**
+    * Returns the summary comment for the specified Datastore, or "" if it
+    * does not exist.
+    */
+   public static String getSummaryComment(Datastore store) {
+      if (!store.hasAnnotation(COMMENTS_FILE)) {
+         return "";
+      }
+      try {
+         Annotation annotation = store.loadAnnotation(COMMENTS_FILE);
+         if (annotation.getGeneralAnnotation() == null) {
+            return "";
+         }
+         return annotation.getGeneralAnnotation().getString(COMMENTS_KEY, "");
+      }
+      catch (IOException e) {
+         ReportingUtils.logError(e, "Error accessing comments annotation");
+         return "";
+      }
+   }
+
+   /**
+    * Returns the comment for the specified Image in the specified Datastore,
+    * or "" if it does not exist.
+    */
+   public static String getImageComment(Datastore store, Coords coords) {
+      if (!store.hasAnnotation(COMMENTS_FILE)) {
+         return "";
+      }
+      try {
+         Annotation annotation = store.loadAnnotation(COMMENTS_FILE);
+         if (annotation.getImageAnnotation(coords) == null) {
+            return "";
+         }
+         return annotation.getImageAnnotation(coords).getString(COMMENTS_KEY, "");
+      }
+      catch (IOException e) {
+         ReportingUtils.logError(e, "Error accessing comments annotation");
+         return "";
+      }
    }
 }
