@@ -406,8 +406,6 @@ private:
    double posY_;
    double originPosX_;
    double originPosY_;
-  
-   double answerTimeoutMs_;
    double stepSizeXUm_;
    double stepSizeYUm_;
 

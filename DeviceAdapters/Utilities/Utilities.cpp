@@ -1740,8 +1740,6 @@ int DAZStage::OnStageMaxPos(MM::PropertyBase* pProp, MM::ActionType eAct)
  */
 
 DAXYStage::DAXYStage() :
-   stepSizeXUm_(1),
-   stepSizeYUm_(1),
    DADeviceNameX_ (""),
    DADeviceNameY_ (""),
    initialized_ (false),
@@ -1760,7 +1758,9 @@ DAXYStage::DAXYStage() :
    posX_ (0.0),
    posY_ (0.0),
    originPosX_ (0.0),
-   originPosY_ (0.0)
+   originPosY_ (0.0),
+   stepSizeXUm_(1),
+   stepSizeYUm_(1)
 {
    InitializeDefaultErrorMessages();
 
