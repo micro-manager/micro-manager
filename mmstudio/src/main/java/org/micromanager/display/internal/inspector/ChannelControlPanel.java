@@ -186,7 +186,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       Insets zeroInsets = new Insets(0, 0, 0, 0);
       Dimension buttonSize = new Dimension(90, 25);
 
-      fullButton_.setFont(fullButton_.getFont().deriveFont((float) 9));
+      fullButton_.setFont(new Font("Arial", Font.PLAIN, 9));
       fullButton_.setMargin(zeroInsets);
       fullButton_.setName("Full channel histogram width");
       fullButton_.setText("Full");
@@ -200,7 +200,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
 
-      autoButton_.setFont(autoButton_.getFont().deriveFont((float) 9));
+      autoButton_.setFont(new Font("Arial", Font.PLAIN, 9));
       autoButton_.setMargin(zeroInsets);
       autoButton_.setName("Auto channel histogram width");
       autoButton_.setText("Auto once");
