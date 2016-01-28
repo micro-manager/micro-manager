@@ -134,14 +134,15 @@ public class Display {
 
 	public void updateAndDraw() {
 		imgp_.updateAndDraw();
-		/*ImageStatistics stats = imgp_.getStatistics();
-      double displayRange = imgp_.getDisplayRangeMax()-imgp_.getDisplayRangeMin();
-      double actualRange = stats.max - stats.min;
-	if (! contrastAutoAdjusted_) // Only do this once.
+      if (! contrastAutoAdjusted_) {// Only do this once.
+         ImageStatistics stats = imgp_.getStatistics();
+         double displayRange = imgp_.getDisplayRangeMax()-imgp_.getDisplayRangeMin();
+         double actualRange = stats.max - stats.min;
          if ((displayRange < 5) || (displayRange/actualRange < 0.6667) || (displayRange/actualRange > 1.5)) {
             imgp_.setDisplayRange(stats.min, stats.max);
             contrastAutoAdjusted_ = true;
-         }*/
+         }
+      }
 	}
 
 	public void show() {
