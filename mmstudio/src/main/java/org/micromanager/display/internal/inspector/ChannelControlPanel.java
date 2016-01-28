@@ -108,6 +108,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
    }
 
+   private HistogramsPanel parent_;
    private HistogramData[] lastHistograms_;
    private final int channelIndex_;
    private int curComponent_;
@@ -133,9 +134,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    private final AtomicBoolean haveInitialized_;
 
-   public ChannelControlPanel(int channelIndex, Datastore store,
-         ContrastLinker linker, DataViewer display) {
+   public ChannelControlPanel(HistogramsPanel parent, int channelIndex,
+         Datastore store, ContrastLinker linker, DataViewer display) {
       haveInitialized_ = new AtomicBoolean(false);
+      parent_ = parent;
       channelIndex_ = channelIndex;
       curComponent_ = 0;
       // Start with 1 component; extend array as needed later.
@@ -166,6 +168,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       histRangeComboBox_.setSelectedIndex(0);
 
       haveInitialized_.set(true);
+      parent_.relayout();
    }
 
    private void initComponents() {

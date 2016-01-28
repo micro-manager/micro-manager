@@ -373,25 +373,28 @@ public class InspectorFrame extends MMFrame implements Inspector {
        * on. Bottom line is, if we do the below code immediately instead of
        * in an invokeLater(), then the window size is wrong.
        */
-      SwingUtilities.invokeLater(new Runnable() {
-         @Override
-         public void run() {
-            for (InspectorPanel panel : panelToWrapper_.keySet()) {
-               if (display_ != null) {
-                  panelToWrapper_.get(panel).setVisible(
-                     panel.getIsValid(display_));
-               }
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               relayout();
             }
-            // HACK: coerce minimum size to our default size for the duration
-            // of this pack; otherwise our default size effectively gets
-            // ignored on a routine basis.
-            Dimension minSize = getMinimumSize();
-            int width = getDefaultWidth();
-            setMinimumSize(new Dimension(width, (int) minSize.getHeight()));
-            pack();
-            setMinimumSize(minSize);
+         });
+      }
+      for (InspectorPanel panel : panelToWrapper_.keySet()) {
+         if (display_ != null) {
+            panelToWrapper_.get(panel).setVisible(
+               panel.getIsValid(display_));
          }
-      });
+      }
+      // HACK: coerce minimum size to our default size for the duration
+      // of this pack; otherwise our default size effectively gets
+      // ignored on a routine basis.
+      Dimension minSize = getMinimumSize();
+      int width = getDefaultWidth();
+      setMinimumSize(new Dimension(width, (int) minSize.getHeight()));
+      pack();
+      setMinimumSize(minSize);
    }
 
    @Subscribe

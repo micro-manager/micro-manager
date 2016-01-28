@@ -242,7 +242,7 @@ public final class HistogramsPanel extends InspectorPanel {
    }
 
    private void addPanel(DataViewer display, int channelIndex) {
-      ChannelControlPanel panel = new ChannelControlPanel(channelIndex,
+      ChannelControlPanel panel = new ChannelControlPanel(this, channelIndex,
             display.getDatastore(),
             DisplayGroupManager.getContrastLinker(channelIndex, display),
             display);
@@ -514,6 +514,14 @@ public final class HistogramsPanel extends InspectorPanel {
       result.add(updateRate);
 
       return result;
+   }
+
+   /**
+    * This is called by our ChannelControlPanels after their set up their
+    * GUIs, which can only happen after they have histogram data to show.
+    */
+   public void relayout() {
+      inspector_.relayout();
    }
 
    @Override
