@@ -57,8 +57,8 @@ import org.micromanager.display.NewDisplaySettingsEvent;
 import org.micromanager.display.NewHistogramsEvent;
 
 import org.micromanager.internal.graph.GraphData;
-import org.micromanager.internal.graph.HistogramPanel;
-import org.micromanager.internal.graph.HistogramPanel.CursorListener;
+import org.micromanager.internal.graph.HistogramCanvas;
+import org.micromanager.internal.graph.HistogramCanvas.CursorListener;
 
 import org.micromanager.display.internal.events.MouseExitedEvent;
 import org.micromanager.display.internal.events.MouseMovedEvent;
@@ -112,7 +112,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private HistogramData[] lastHistograms_;
    private final int channelIndex_;
    private int curComponent_;
-   private HistogramPanel histogram_;
+   private HistogramCanvas histogram_;
    private final ContrastLinker linker_;
    private final Datastore store_;
    private final DataViewer display_;
@@ -340,7 +340,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
       JPanel secondColumn = new JPanel(new MigLayout("insets 0, flowy, fill"));
 
-      histogram_ = makeHistogramPanel();
+      histogram_ = makeHistogramCanvas();
       updateHistogramColor(display_.getDisplaySettings().getSafeChannelColor(
                channelIndex_, Color.WHITE));
       histogram_.setMinimumSize(new Dimension(100, 100));
@@ -606,8 +606,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             curComponent_, null, null, null, true);
    }
 
-   private HistogramPanel makeHistogramPanel() {
-      HistogramPanel hp = new HistogramPanel() {
+   private HistogramCanvas makeHistogramCanvas() {
+      HistogramCanvas canvas = new HistogramCanvas() {
          @Override
          public void paint(Graphics g) {
             super.paint(g);
@@ -621,10 +621,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       };
 
-      hp.setMargins(12, 12);
-      hp.setToolTipText("Click and drag curve to adjust gamma");
-      hp.addCursorListener(this);
-      return hp;
+      canvas.setMargins(12, 12);
+      canvas.setToolTipText("Click and drag curve to adjust gamma");
+      canvas.addCursorListener(this);
+      return canvas;
    }
 
    /**

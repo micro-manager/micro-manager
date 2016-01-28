@@ -39,7 +39,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 /**
  * Histogram view.
  */
-public class HistogramPanel extends JPanel implements FocusListener, KeyListener {
+public class HistogramCanvas extends JPanel implements FocusListener, KeyListener {
 
    private static final int LUT_HANDLE_SIZE = 10;
    private static final Color HIGHLIGHT_COLOR = Color.blue;
@@ -79,7 +79,7 @@ public class HistogramPanel extends JPanel implements FocusListener, KeyListener
 
    private boolean isLogScale_ = false;
 
-   public HistogramPanel() {
+   public HistogramCanvas() {
       super();
       addFocusListener(this);
       addKeyListener(this);
