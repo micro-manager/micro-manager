@@ -496,7 +496,12 @@ public class InspectorFrame extends MMFrame implements Inspector {
 
    @Override
    public void dispose() {
-      cleanup();
+      try {
+         cleanup();
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error cleaning up inspector");
+      }
       super.dispose();
    }
 
