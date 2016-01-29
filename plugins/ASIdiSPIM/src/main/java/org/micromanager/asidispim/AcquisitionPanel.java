@@ -97,6 +97,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Coords.CoordsBuilder;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
+import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
@@ -2216,10 +2217,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @throws org.micromanager.internal.utils.MMScriptException
     * @throws org.json.JSONException
     * @throws org.micromanager.data.DatastoreFrozenException
+     * @throws org.micromanager.data.DatastoreRewriteException
     */
    public void addImageToAcquisition(Datastore store, int frame, int channel, 
            int slice, int position, long ms, TaggedImage taggedImg) 
-           throws MMScriptException, JSONException, DatastoreFrozenException {
+           throws MMScriptException, JSONException, DatastoreFrozenException, 
+           DatastoreRewriteException
+            {
 
       CoordsBuilder cb = gui_.data().getCoordsBuilder();
 
