@@ -45,18 +45,14 @@ import org.micromanager.Studio;
 /**
  * This class shows a status display when an acquisition is started, to let
  * the user know that something is happening prior to images being displayed.
- * It disappears as soon as any images are available for the acquisition --
- * or, if the acquisition has no associated display, then it disappears
- * when the acquisition ends, and in the meantime shows progress information.
+ * It disappears as soon as any images are available for the acquisition.
  */
 public class StatusDisplay extends JFrame {
    private static final int DISPLAY_DELAY_MS = 1000;
 
    private Datastore store_;
    private Studio studio_;
-   private JLabel imageCount_ = new JLabel("");
    private boolean hasVisibleContent_ = false;
-   private int imagesReceived_ = 0;
 
    public StatusDisplay(Studio studio, Datastore store) {
       studio_ = studio;
@@ -78,7 +74,6 @@ public class StatusDisplay extends JFrame {
          }
       }).start();
       studio_.events().registerForEvents(this);
-      store_.registerForEvents(this);
    }
 
    /**
@@ -89,8 +84,7 @@ public class StatusDisplay extends JFrame {
       setUndecorated(true);
       JPanel contents = new JPanel(new MigLayout("flowy"));
       contents.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
-      contents.add(new JLabel("Waiting for images..."));
-      contents.add(imageCount_);
+      contents.add(new JLabel("Acquisition started, waiting for images..."));
       add(contents);
       pack();
       // Put us centered, on the same display as the main window.
@@ -113,16 +107,9 @@ public class StatusDisplay extends JFrame {
    }
 
    @Subscribe
-   public void onNewImage(NewImageEvent event) {
-      imagesReceived_++;
-      imageCount_.setText(String.format("Received %d images", imagesReceived_));
-   }
-
-   @Subscribe
    public void onAcquisitionEnded(AcquisitionEndedEvent event) {
       if (event.getStore() == store_) {
          // All done here.
-         store_.unregisterForEvents(this);
          studio_.events().unregisterForEvents(this);
          dispose();
       }
