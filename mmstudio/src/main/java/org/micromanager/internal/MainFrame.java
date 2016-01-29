@@ -171,16 +171,9 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       setJMenuBar(menuBar);
       // Set minimum size so we can't resize smaller and hide some of our
       // contents. Our insets are only available after the first call to
-      // pack(), and the second call is needed in case we're too small.
+      // pack().
       pack();
-      Dimension contentSize = contents.getPreferredSize();
-      Insets insets = getInsets();
-      Dimension minSize = new Dimension(
-            contentSize.width + insets.left + insets.right,
-            contentSize.height + insets.top + insets.bottom +
-            menuBar.getSize().height);
-      setMinimumSize(minSize);
-      pack();
+      setMinimumSize(getSize());
       DefaultEventManager.getInstance().registerForEvents(this);
    }
 
