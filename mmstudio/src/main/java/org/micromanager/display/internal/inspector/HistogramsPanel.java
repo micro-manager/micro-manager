@@ -468,7 +468,7 @@ public final class HistogramsPanel extends InspectorPanel {
       displayMode.add(custom);
       result.add(displayMode);
 
-      JMenu updateRate = new JMenu("Histogram update rate");
+      JMenu updateRate = new JMenu("Histogram Update Rate");
 
       JCheckBoxMenuItem never = new JCheckBoxMenuItem("Never");
       never.addActionListener(new ActionListener() {
@@ -509,8 +509,8 @@ public final class HistogramsPanel extends InspectorPanel {
       // Else must be a custom value.
 
       updateRate.add(always);
-      updateRate.add(never);
       updateRate.add(oncePerSec);
+      updateRate.add(never);
       result.add(updateRate);
 
       return result;
