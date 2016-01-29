@@ -151,6 +151,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
                  summaryMetadata_, acquisitionSettings.save, this,
                  !AcqControlDlg.getShouldHideMDADisplay());
          curStore_ = acq.getDatastore();
+         new StatusDisplay(studio_, curStore_);
+
          studio_.events().post(new DefaultAcquisitionStartedEvent(curStore_,
                   acquisitionSettings));
 
