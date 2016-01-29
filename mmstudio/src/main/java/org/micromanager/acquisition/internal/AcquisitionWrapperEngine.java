@@ -69,7 +69,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private boolean useAutoFocus_;
    private int afSkipInterval_;
    private boolean absoluteZ_;
-   private int cameraTimeout_;
+   private int cameraTimeout_ = 20000;
    private IAcquisitionEngine2010 acquisitionEngine2010_;
    private ArrayList<Double> customTimeIntervalsMs_;
    private boolean useCustomIntervals_;
