@@ -841,7 +841,7 @@ bool CMemoryIniFile::getSection( const std::string & strSection, CStdStringLst &
   while ( iter != m_cIniFile.end() )
   { 
     // sections are equal ?
-    if ( 0 == str::compareLowCase( iter->getName(), strSection ) )
+    if ( 0 == str::compareNoCase( iter->getName(), strSection ) )
     {
       assert( iter->cEntries.size() == 1 );
       strSectionData = iter->cEntries[0].getValueList();
@@ -861,7 +861,7 @@ bool CMemoryIniFile::setSection( const std::string & strSection, const CStdStrin
   while ( iter != m_cIniFile.end() )
   { 
     // sections are equal ?
-    if ( 0 == str::compareLowCase( iter->getName(), strSection ) )
+    if ( 0 == str::compareNoCase( iter->getName(), strSection ) )
     {
       assert( iter->cEntries.size() == 1 );
       iter->cEntries[0] = CMemoryIniFileEntry( strSectionData );

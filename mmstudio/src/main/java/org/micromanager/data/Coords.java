@@ -41,10 +41,33 @@ import java.util.List;
  */
 public interface Coords {
 
+   /** Axis label for the channel axis. */
    public static final String CHANNEL = "channel";
+   /** Axis label for the time axis. */
    public static final String TIME = "time";
+   /** Axis label for the stage position axis. */
    public static final String STAGE_POSITION = "position";
+   /** Axis label for the Z axis. */
    public static final String Z = "z";
+
+   /**
+     * Shorthand axis label for the channel axis, usable only when generating
+     * Coords from normalized strings as described in
+     * DataManager.createCoords().
+     */
+   public static final String CHANNEL_SHORT = "c";
+   /**
+     * Shorthand axis label for the time axis, usable only when generating
+     * Coords from normalized strings as described in
+     * DataManager.createCoords().
+     */
+   public static final String TIME_SHORT = "t";
+   /**
+     * Shorthand axis label for the stage position axis, usable only when
+     * generating Coords from normalized strings as described in
+     * DataManager.createCoords().
+     */
+   public static final String STAGE_POSITION_SHORT = "p";
 
    interface CoordsBuilder {
 

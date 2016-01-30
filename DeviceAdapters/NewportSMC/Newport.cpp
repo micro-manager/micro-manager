@@ -36,7 +36,6 @@
 
 const char* g_Newport_ZStageDeviceName = "NewportZStage";
 
-using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
@@ -70,8 +69,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // NewportZStage
 
 NewportZStage::NewportZStage() :
-   //port_("Undefined"),   ;HCA 2013-02-15
-   port_("COM5"),         //need to recompile with COM5 listed.
+   port_("Undefined"),
    stepSizeUm_(1),
    conversionFactor_(1000.0),    // divide request by this number
                  // to accomodate for units in mm rather than microns
@@ -105,6 +103,10 @@ NewportZStage::NewportZStage() :
    pAct = new CPropertyAction (this, &NewportZStage::OnConversionFactor);
    CreateFloatProperty("Conversion Factor", conversionFactor_, false, pAct, true);
 
+   // Maximum allowed position (will only be used if smaller than the hardware limit
+   pAct = new CPropertyAction (this, &NewportZStage::OnMaxPosition);
+   CreateFloatProperty("Max Position (mm)", 100.0, false, pAct, true);
+
    // Controller address
    pAct = new CPropertyAction (this, &NewportZStage::OnControllerAddress);
    CreateIntegerProperty("Controller Address", cAddress_, false, pAct, true);
@@ -124,12 +126,10 @@ void NewportZStage::GetName(char* Name) const
 
 int NewportZStage::Initialize()
 {
-   const char* command;
-
    // Ask for errors and controller state.  This will also clear errors from the
    // controller, needed for my controller before anything is possible
-   command = MakeCommand("TS").c_str();
-   int ret = SendSerialCommand(port_.c_str(), command, "\r\n");
+   std::string command = MakeCommand("TS").c_str();
+   int ret = SendSerialCommand(port_.c_str(), command.c_str(), "\r\n");
    if (ret != DEVICE_OK)
       return ret;
    std::string answer;
@@ -137,6 +137,11 @@ int NewportZStage::Initialize()
    if (ret != DEVICE_OK)
       return ret;
    LogMessage(answer.c_str(), true);
+
+   // Controller info only reads maximum velocity
+   ret = GetControllerInfo();
+   if (ret != DEVICE_OK)
+      return ret;
 
    // Send the "homing" command to init stage
    ret = SetOrigin();
@@ -150,19 +155,16 @@ int NewportZStage::Initialize()
    // do not return an error if we get one, since the user will never be able
    // to get out of the error if there is no other software
 
-   // get the lower software limit
-   ret = GetValue("SL?", lowerLimit_);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // get the upper software limit
-   ret = GetValue("SR?", upperLimit_);
-   if (ret != DEVICE_OK)
-      return ret;
-
    // Position property
+   std::ostringstream oss;
+   double pos = 0.0;
+   ret = GetPositionUm(pos);
+   if (ret != DEVICE_OK)
+	   return ret;
+   oss << pos;
    CPropertyAction* pAct = new CPropertyAction (this, &NewportZStage::OnPosition);
-   CreateProperty(MM::g_Keyword_Position, "0", MM::Float, false, pAct);
+   CreateProperty(MM::g_Keyword_Position, oss.str().c_str(), MM::Float, false, pAct);
+   SetPropertyLimits(MM::g_Keyword_Position, lowerLimit_ * conversionFactor_, upperLimit_ * conversionFactor_);
 
    // Velocity property
    pAct = new CPropertyAction (this, &NewportZStage::OnVelocity);
@@ -173,14 +175,14 @@ int NewportZStage::Initialize()
 
    // Ask for controller version and report in read-only property
    command = MakeCommand("VE").c_str();
-   ret = SendSerialCommand(port_.c_str(), command, "\r\n");
+   ret = SendSerialCommand(port_.c_str(), command.c_str(), "\r\n");
    if (ret != DEVICE_OK)
       return ret;
    ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
    if (ret != DEVICE_OK)
       return ret;
 
-   CreateProperty("Controller version", answer.substr(strlen(command)).c_str(),
+   CreateProperty("Controller version", answer.substr(command.length()).c_str(),
          MM::String, true);
 
    ret = UpdateStatus();
@@ -208,7 +210,7 @@ bool NewportZStage::Busy()
    if (ret != DEVICE_OK)
       return ret;
 
-   string answer;
+   std::string answer;
    ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
    if (ret != DEVICE_OK)
       return false;
@@ -255,8 +257,8 @@ int NewportZStage::SetPositionUm(double pos)
    }
 
    // Send the "move" command
-   ostringstream command;
-   string answer;
+   std::ostringstream command;
+   std::string answer;
    command << MakeCommand("PA") << pos;
    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r\n");
    if (ret != DEVICE_OK)
@@ -285,8 +287,8 @@ int NewportZStage::SetRelativePositionUm(double pos)
    pos /= conversionFactor_;
 
    // Send the "relative move" command
-   ostringstream command;
-   string answer;
+   std::ostringstream command;
+   std::string answer;
    command << MakeCommand("PR") << pos;
    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r\n");
    if (ret != DEVICE_OK)
@@ -309,22 +311,20 @@ int NewportZStage::SetRelativePositionUm(double pos)
 
 int NewportZStage::GetPositionUm(double& pos)
 {
-   const char* command;
-   string answer;
-
    // Ask position
-   command = MakeCommand("TP").c_str();
-   int ret = SendSerialCommand(port_.c_str(), command, "\r\n");
+   std::string command = MakeCommand("TP");
+   int ret = SendSerialCommand(port_.c_str(), command.c_str(), "\r\n");
    if (ret != DEVICE_OK)
       return ret;
 
    // Receive answer
+   std::string answer;
    ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
    if (ret != DEVICE_OK)
       return ret;
 
    // Get the value from the reply string
-   pos = atof(answer.substr(strlen(command),15).c_str());
+   pos = atof(answer.substr(command.length(),15).c_str());
 
    // convert from mm to microns:
    pos *= conversionFactor_;
@@ -332,11 +332,13 @@ int NewportZStage::GetPositionUm(double& pos)
    return DEVICE_OK;
 }
 
+
+
 int NewportZStage::SetOrigin()
 {
    // Send the "homing" command to init stage
-   const char* command = MakeCommand("OR").c_str();
-   int ret = SendSerialCommand(port_.c_str(), command, "\r\n");
+   std::string command = MakeCommand("OR").c_str();
+   int ret = SendSerialCommand(port_.c_str(), command.c_str(), "\r\n");
    if (ret != DEVICE_OK)
       return ret;
 
@@ -368,7 +370,7 @@ int NewportZStage::GetError(bool& error, std::string& errorCode)
       return ret;
 
    // Check that there is no error
-   ostringstream dbg;
+   std::ostringstream dbg;
    errorCode = answer.substr(cmd.size(), 1);
 
    error = true;
@@ -406,8 +408,8 @@ int NewportZStage::WaitForBusy()
  */
 int NewportZStage::GetValue(const char* cmd, double& val)
 {
-   const char* command = MakeCommand(cmd).c_str();
-   int ret = SendSerialCommand(port_.c_str(), command, "\r\n");
+   std::string command = MakeCommand(cmd).c_str();
+   int ret = SendSerialCommand(port_.c_str(), command.c_str(), "\r\n");
    if (ret != DEVICE_OK)
       return ret;
 
@@ -418,7 +420,7 @@ int NewportZStage::GetValue(const char* cmd, double& val)
       return ret;
 
    // Get the value from the reply string
-   val = atof(answer.substr(strlen(command) - 1).c_str());
+   val = atof(answer.substr(command.length() - 1).c_str());
 
    return DEVICE_OK;
 }
@@ -450,7 +452,7 @@ int NewportZStage::GetVelocity(double& velocity)
       return ret;
 
    // Receive answer
-   string answer;
+   std::string answer;
    ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
    if (ret != DEVICE_OK)
       return DEVICE_OK;
@@ -462,6 +464,46 @@ int NewportZStage::GetVelocity(double& velocity)
    LogMessage(os.str().c_str());
 
    return DEVICE_OK;
+}
+
+
+/**
+ * Asks the controller for all its axis information
+ * Now only used to read the maximum velocity
+ * Can be extended in the future to store more information about the controller
+ * and drive
+ */
+int NewportZStage::GetControllerInfo()
+{
+   // length of controller address as returned by controller in chars
+   int offset = 1;
+   if (cAddress_ > 9)
+      offset = 2;
+   std::string command = MakeCommand("ZT");
+   int ret = SendSerialCommand(port_.c_str(), command.c_str(), "\r\n");
+   if (ret != DEVICE_OK)
+      return ret;
+   std::string answer;
+   bool done = false;
+   while (ret == DEVICE_OK && !done) { // keep on reading until we time out
+      ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+      LogMessage(answer.c_str(), true);
+	  if (answer.substr(offset, 2) == "SL") {
+		  lowerLimit_ = atof(answer.substr(offset + 2).c_str());
+	  }
+	  if (answer.substr(offset, 2) == "SR") {
+		  double tmp = atof(answer.substr(offset + 2).c_str());
+		  if (tmp < upperLimit_)
+			  upperLimit_ = tmp;
+	  }
+      if (answer.substr(offset,2) == "VA") {
+         velocityUpperLimit_ = atof(answer.substr(offset + 2).c_str());
+      }
+      if (answer.substr(offset,3) == "PW0") {
+         done = true;
+      }
+   }
+   return ret;
 }
 
 
@@ -536,6 +578,22 @@ int NewportZStage::OnConversionFactor(MM::PropertyBase* pProp, MM::ActionType eA
       double pos;
       pProp->Get(pos);
       conversionFactor_ = pos;
+   }
+
+   return DEVICE_OK;
+}
+
+int NewportZStage::OnMaxPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(upperLimit_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double pos;
+      pProp->Get(pos);
+      upperLimit_ = pos;
    }
 
    return DEVICE_OK;

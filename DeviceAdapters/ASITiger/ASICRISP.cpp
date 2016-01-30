@@ -138,6 +138,18 @@ int CCRISP::Initialize()
    CreateProperty(g_CRISPLogAmpAGCPropertyName, "", MM::Integer, true, pAct);
    UpdateProperty(g_CRISPLogAmpAGCPropertyName);
 
+   if (FirmwareVersionAtLeast(3.12))
+   {
+   	pAct = new CPropertyAction(this, &CCRISP::OnNumSkips);
+   	CreateProperty(g_CRISPNumberSkipsPropertyName, "0", MM::Integer, false, pAct);
+   	SetPropertyLimits(g_CRISPNumberSkipsPropertyName, 0, 100);
+   	UpdateProperty(g_CRISPNumberSkipsPropertyName);
+
+   	pAct = new CPropertyAction(this, &CCRISP::OnInFocusRange);
+   	CreateProperty(g_CRISPInFocusRangePropertyName, "0.1", MM::Float, false, pAct);
+   	UpdateProperty(g_CRISPInFocusRangePropertyName);
+   }
+
    initialized_ = true;
    return DEVICE_OK;
 }
@@ -152,19 +164,30 @@ bool CCRISP::Busy()
 int CCRISP::SetContinuousFocusing(bool state)
 {
    ostringstream command; command.str("");
-   command << addressChar_ << "LK F=";
-   if(state)
-      command << "83";
-   else
-      command << "85";
-   return hub_->QueryCommandVerify(command.str(), ":A");
+   bool focusingOn;
+   RETURN_ON_MM_ERROR( GetContinuousFocusing(focusingOn) );  // will update focusState_
+   if (focusingOn && !state) {
+   	// was on, turning off
+   	command << addressChar_ << "UL";
+   	RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A") );
+   } else if (!focusingOn && state) {
+   	// was off, turning on
+   	if (focusState_ == g_CRISP_R ) {
+   		return ForceSetFocusState(g_CRISP_K);
+   	} else {  // need to move to ready state, then turn on
+   		RETURN_ON_MM_ERROR( ForceSetFocusState(g_CRISP_R) );
+   		RETURN_ON_MM_ERROR( ForceSetFocusState(g_CRISP_K) );
+   	}
+   }
+   // if was already in state requested we don't need to do anything
+   return DEVICE_OK;
 }
 
 int CCRISP::GetContinuousFocusing(bool& state)
 {
-   // this returns true if trying to focus but not yet locked, not sure if that is intended use
+   // this returns true if focusing is turned on, whether or not we are locked yet
    RETURN_ON_MM_ERROR( UpdateFocusState() );
-   state = (focusState_ == g_CRISP_K);
+   state = ((focusState_ == g_CRISP_K) || (focusState_ == g_CRISP_F));
    return DEVICE_OK;
 }
 
@@ -270,6 +293,32 @@ int CCRISP::UpdateFocusState()
    return DEVICE_OK;
 }
 
+int CCRISP::ForceSetFocusState(string focusState)
+{
+   ostringstream command; command.str("");
+   if (focusState == g_CRISP_R)
+   	command << addressChar_ << "LK F=85";
+   else if (focusState == g_CRISP_K)
+   	command << addressChar_ << "LK F=83";
+   else if (focusState == g_CRISP_SSZ) // save settings to controller
+      command << addressChar_ << "SS Z";
+   else if (focusState == g_CRISP_I)  // Idle (switch off LED)
+      command << addressChar_ << "LK F=79";
+   else if (focusState == g_CRISP_G) // log-amp calibration
+         command << addressChar_ << "LK F=72";
+   else if (focusState == g_CRISP_SG) // gain_cal (servo) calibration
+         command << addressChar_ << "LK F=67";
+   else if (focusState == g_CRISP_f) // dither
+         command << addressChar_ << "LK F=102";
+   else if (focusState == g_CRISP_RFO) // reset focus offset
+         command << addressChar_ << "LK F=108";
+
+   if (command.str() == "")
+      return DEVICE_OK;  // don't complain if we try to set to something else
+   else
+      return hub_->QueryCommandVerify(command.str(), ":A");
+}
+
 int CCRISP::SetFocusState(string focusState)
 {
    RETURN_ON_MM_ERROR ( UpdateFocusState() );
@@ -277,30 +326,7 @@ int CCRISP::SetFocusState(string focusState)
    if (focusState == focusState_)
       return DEVICE_OK;
 
-   if (focusState == g_CRISP_R)  // Unlock
-      return SetContinuousFocusing(false);
-
-   if (focusState == g_CRISP_K)  // Unlock
-      return SetContinuousFocusing(true);
-
-   ostringstream command; command.str("");
-   if (focusState == g_CRISP_SSZ) // save settings to controller
-      command << addressChar_ << "SS Z";
-   else if (focusState == g_CRISP_I)  // Idle (switch off LED)
-      command << addressChar_ << "LK F=" << "79";
-   else if (focusState == g_CRISP_G) // log-amp calibration
-         command << addressChar_ << "LK F=" << "72";
-   else if (focusState == g_CRISP_SG) // gain_cal (servo) calibration
-         command << addressChar_ << "LK F=" << "67";
-   else if (focusState == g_CRISP_f) // dither
-         command << addressChar_ << "LK F=" << "102";
-   else if (focusState == g_CRISP_RFO) // reset focus offset
-         command << addressChar_ << "LK F=" << "108";
-
-   if (command.str() == "")
-      return DEVICE_OK;  // don't complain if we try to set to something else
-   else
-      return hub_->QueryCommandVerify(command.str(), ":A");
+   return ForceSetFocusState(focusState);
 }
 
 
@@ -371,6 +397,12 @@ int CCRISP::OnNA(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmp);
       command << addressChar_ << "LR Y=" << tmp;
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A") );
+      // setting NA affects the in-focus range
+      if (FirmwareVersionAtLeast(3.12)) {
+         refreshOverride_ = true;
+         RETURN_ON_MM_ERROR( UpdateProperty(g_CRISPInFocusRangePropertyName) );
+         refreshOverride_ = false;
+      }
    }
    return DEVICE_OK;
 }
@@ -452,7 +484,7 @@ int CCRISP::OnLoopGainMultiplier(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << addressChar_ << "KA " << axisLetter_ << "?";
+      command << "KA " << axisLetter_ << "?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
@@ -461,7 +493,7 @@ int CCRISP::OnLoopGainMultiplier(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet)
    {
       pProp->Get(tmp);
-      command << addressChar_ << "KA " << axisLetter_ << "="<< tmp;
+      command << "KA " << axisLetter_ << "="<< tmp;
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
@@ -535,6 +567,52 @@ int CCRISP::OnLogAmpAGC(MM::PropertyBase* pProp, MM::ActionType eAct)
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   return DEVICE_OK;
+}
+
+int CCRISP::OnNumSkips(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "UL Y?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Y="));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(tmp);
+      command << addressChar_ << "UL Y=" << tmp;
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CCRISP::OnInFocusRange(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_ && !refreshOverride_)
+         return DEVICE_OK;
+      command << addressChar_ << "AFLIM Z?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp*1000))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(tmp);
+      command << addressChar_ << "AFLIM Z=" << tmp/1000;
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }

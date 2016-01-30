@@ -53,6 +53,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
@@ -135,7 +136,8 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    private AbstractButton clearRoiButton_;
 
    @SuppressWarnings("LeakingThisInConstructor")
-   public MainFrame(MMStudio studio, CMMCore core, SnapLiveManager manager) {
+   public MainFrame(MMStudio studio, CMMCore core, SnapLiveManager manager,
+         JMenuBar menuBar) {
       super("main micro manager frame");
       org.micromanager.internal.diagnostics.ThreadExceptionLogger.setUp();
 
@@ -145,7 +147,6 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       snapLiveManager_.addLiveModeListener(this);
 
       setTitle(MICRO_MANAGER_TITLE + " " + MMVersion.VERSION_STRING);
-      setMinimumSize(new Dimension(595, 250));
 
       JPanel contents = new JPanel();
       // Minimize insets.
@@ -167,7 +168,12 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       setIconImage(Toolkit.getDefaultToolkit().getImage(
                getClass().getResource("/org/micromanager/icons/microscope.gif")));
 
+      setJMenuBar(menuBar);
+      // Set minimum size so we can't resize smaller and hide some of our
+      // contents. Our insets are only available after the first call to
+      // pack().
       pack();
+      setMinimumSize(getSize());
       DefaultEventManager.getInstance().registerForEvents(this);
    }
 
@@ -449,7 +455,9 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       subPanel.add(createPleaLabel(), "span, wrap");
       overPanel.add(subPanel, "gapbottom push, grow 0");
       overPanel.add(createConfigurationControls(), "grow, wrap");
-      labelImageDimensions_ = createLabel("", false);
+      // Must not be a completely empty label or else our size calculations
+      // fail when setting the minimum size of the frame.
+      labelImageDimensions_ = createLabel(" ", false);
       overPanel.add(labelImageDimensions_, "growx, span, gap 2 0 2 0");
       return overPanel;
    }

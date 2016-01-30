@@ -397,8 +397,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
       }
 
       // The MainFrame relies on plugins.
-      frame_ = new MainFrame(this, core_, snapLiveManager_);
-      frame_.setJMenuBar(menuBar_);
+      frame_ = new MainFrame(this, core_, snapLiveManager_, menuBar_);
       frame_.paintToFront();
       staticInfo_ = new StaticInfo(core_, frame_);
 

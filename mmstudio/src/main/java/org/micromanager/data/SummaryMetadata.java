@@ -61,7 +61,6 @@ public interface SummaryMetadata {
       SummaryMetadataBuilder metadataVersion(String metadataVersion);
       SummaryMetadataBuilder computerName(String computerName);
       SummaryMetadataBuilder directory(String directory);
-      SummaryMetadataBuilder comments(String comments);
 
       SummaryMetadataBuilder channelGroup(String channelGroup);
       SummaryMetadataBuilder channelNames(String[] channelNames);
@@ -135,13 +134,6 @@ public interface SummaryMetadata {
     * @return directory the data was originally saved to
     */
    public String getDirectory();
-
-   /**
-    * Any comments attached to the acquisition as a whole (not to individual
-    * images within the acquisition)
-    * @return Any comments attached to the acquisition as a whole
-    */
-   public String getComments();
 
    /**
     * The config group that was used to switch between channels.

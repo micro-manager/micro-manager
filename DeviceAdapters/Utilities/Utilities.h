@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// FILE:          Utilitiesr.h
+// FILE:          Utilities.h
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
@@ -43,6 +43,7 @@
 #define ERR_NO_AUTOFOCUS_DEVICE_FOUND      10009
 #define ERR_NO_AUTOFOCUS_DEVICE_FOUND      10009
 #define ERR_NO_PHYSICAL_CAMERA             10010
+#define ERR_NO_EQUAL_SIZE                  10011
 #define ERR_TIMEOUT                        10021
 
 
@@ -94,16 +95,22 @@ private:
 class CameraSnapThread : public MMDeviceThreadBase
 {
    public:
-      CameraSnapThread(){};
-      ~CameraSnapThread();
+      CameraSnapThread() :
+         camera_(0),
+         started_(false)
+      {}
 
-      void SetCamera(MM::Camera* camera) {camera_ = camera;};
-      int svc();
-      void Start();
-      CameraSnapThread & operator = (const CameraSnapThread & ) {return *this;};
+      ~CameraSnapThread() { if (started_) wait(); }
+
+      void SetCamera(MM::Camera* camera) { camera_ = camera; }
+
+      int svc() { camera_->SnapImage(); return 0; }
+
+      void Start() { activate(); started_ = true; }
 
    private:
       MM::Camera* camera_;
+      bool started_;
 };
 
 /*
@@ -152,6 +159,7 @@ public:
 
 private:
    int Logical2Physical(int logical);
+   bool ImageSizesAreEqual();
    unsigned char* imageBuffer_;
 
    std::vector<std::string> availableCameras_;
@@ -340,8 +348,6 @@ public:
   int Home();
   int Stop();
   int SetOrigin();
-  //int Calibrate();
-  //int Calibrate1();
   int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax);
   int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax);
   double GetStepSizeXUm() {return stepSizeXUm_;}
@@ -365,8 +371,6 @@ public:
    int OnDADeviceY(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStepSizeX(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStepSizeY(MM::PropertyBase* pProp, MM::ActionType eAct);
-  // int OnPositionX(MM::PropertyBase* pProp, MM::ActionType eAct);
-  // int OnPositionY(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStageMinVoltX(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStageMaxVoltX(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStageMinPosX(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -376,31 +380,9 @@ public:
    int OnStageMinPosY(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStageMaxPosY(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-   double stepSizeXUm_;
-   double stepSizeYUm_;
 
 private:
-	/*
-   int OnBacklash(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnFinishError(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnError(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnOverShoot(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnWait(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnMotorCtrl(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnNrMoveRepetitions(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnJSMirror(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnJSSwapXY(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnJSFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnJSSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int GetPositionStepsSingle(char axis, long& steps);
-   int SetAxisDirection();
-   bool hasCommand(std::string commnand);
-   void Wait();
-   */
-
-
+   void UpdateStepSize();
    std::vector<std::string> availableDAs_;
    std::string DADeviceNameX_;
    std::string DADeviceNameY_;
@@ -425,6 +407,8 @@ private:
    double originPosY_;
   
    double answerTimeoutMs_;
+   double stepSizeXUm_;
+   double stepSizeYUm_;
 
 };
 

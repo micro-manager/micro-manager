@@ -83,6 +83,11 @@ public class DefaultDataManager implements DataManager {
    }
 
    @Override
+   public Coords createCoords(String def) throws IllegalArgumentException {
+      return DefaultCoords.fromNormalizedString(def);
+   }
+
+   @Override
    public Datastore createRAMDatastore() {
       Datastore result = new DefaultDatastore();
       result.setStorage(new StorageRAM(result));
@@ -263,6 +268,11 @@ public class DefaultDataManager implements DataManager {
    @Override
    public PropertyMap.PropertyMapBuilder getPropertyMapBuilder() {
       return new DefaultPropertyMap.Builder();
+   }
+
+   @Override
+   public PropertyMap loadPropertyMap(String path) throws IOException {
+      return DefaultPropertyMap.loadPropertyMap(path);
    }
 
    @Override

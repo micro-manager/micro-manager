@@ -340,21 +340,20 @@ int MM::PropertyCollection::CreateProperty(const char* pszName, const char* pszV
 
    switch(eType)
    {
-   case MM::String:
-         pProp = new MM::StringProperty();
-      break;
-      
+      case MM::String:
+         pProp = new MM::StringProperty(pszName);
+         break;
+
       case MM::Integer:
-         pProp = new MM::IntegerProperty();
-      break;
+         pProp = new MM::IntegerProperty(pszName);
+         break;
 
       case MM::Float:
-         pProp = new MM::FloatProperty();
-      break;
+         pProp = new MM::FloatProperty(pszName);
+         break;
 
       default:
-         return DEVICE_INVALID_PROPERTY_TYPE; // unsupported type
-      break;
+         return DEVICE_INVALID_PROPERTY_TYPE;
    }
 
    if (!pProp->Set(pszValue))

@@ -21,6 +21,7 @@
 package org.micromanager.data;
 
 import java.awt.Window;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 
@@ -43,6 +44,27 @@ public interface DataManager {
     * @return a CoordsBuilder used to construct new Coords instances.
     */
    public Coords.CoordsBuilder getCoordsBuilder();
+
+   /**
+    * Generate a Coords object from the provided normalized coordinate string.
+    * Coordinate strings are comma-delimited strings of axis/position pairs
+    * separated by equals signs. Case matters, but whitespace is ignored.
+    * Positions must be integers. For example, "z=8" or
+    * "time = 5, channel = 2", but not "stagePosition = 1.5" because the
+    * position is not an integer.  For this method, it is acceptable to use the
+    * shorthand axis names Coords.CHANNEL_SHORT, Coords.TIME_SHORT, and
+    * Coords.STAGE_POSITION_SHORT, for example "t=4,p=8,c=0,z=5".  If you are
+    * using custom axes, be aware that axis names must start with an
+    * alphabetical character, and may otherwise contain alphanumerics and
+    * underscores. For example, "filter2_pos" is a valid axis, but
+    * "1filter-pos" is not, because it starts with a number, and because it
+    * contains a "-" which is not a legal character.
+    * @param def Normalized coordinate definition string.
+    * @return Coords generated based on the definition string.
+    * @throws IllegalArgumentException if the definition string is
+    *         malformatted.
+    */
+   public Coords createCoords(String def) throws IllegalArgumentException;
 
    /**
     * Generate a new, "blank" Datastore with RAM-based Storage and return it.
@@ -244,6 +266,15 @@ public interface DataManager {
     * @return a PropertyMapBuilder for creating new PropertyMap instances.
     */
    public PropertyMap.PropertyMapBuilder getPropertyMapBuilder();
+
+   /**
+    * Attempt to load a file that contains PropertyMap data.
+    * @param path Path to the file to load.
+    * @return new PropertyMap based on data in the specified file.
+    * @throws FileNotFoundException if the path does not point to a file.
+    * @throws IOException if there was an error reading the file.
+    */
+   public PropertyMap loadPropertyMap(String path) throws FileNotFoundException, IOException;
 
    /**
     * Create a new Pipeline using the provided list of ProcessorFactories.

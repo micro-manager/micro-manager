@@ -20,6 +20,8 @@
 #include <string>       //!< standard c++ string class: std::string 
 #include <vector>       //!< standard c++ vector class: std::vector 
 
+#pragma warning( disable: 4505 )
+
 /////////////////////////////////////////////////////////////////////////////
 //! \name Functions: Configuration
 //!@{

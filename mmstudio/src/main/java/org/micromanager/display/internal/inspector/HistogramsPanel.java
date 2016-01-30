@@ -242,7 +242,7 @@ public final class HistogramsPanel extends InspectorPanel {
    }
 
    private void addPanel(DataViewer display, int channelIndex) {
-      ChannelControlPanel panel = new ChannelControlPanel(channelIndex,
+      ChannelControlPanel panel = new ChannelControlPanel(this, channelIndex,
             display.getDatastore(),
             DisplayGroupManager.getContrastLinker(channelIndex, display),
             display);
@@ -468,7 +468,7 @@ public final class HistogramsPanel extends InspectorPanel {
       displayMode.add(custom);
       result.add(displayMode);
 
-      JMenu updateRate = new JMenu("Histogram update rate");
+      JMenu updateRate = new JMenu("Histogram Update Rate");
 
       JCheckBoxMenuItem never = new JCheckBoxMenuItem("Never");
       never.addActionListener(new ActionListener() {
@@ -509,11 +509,19 @@ public final class HistogramsPanel extends InspectorPanel {
       // Else must be a custom value.
 
       updateRate.add(always);
-      updateRate.add(never);
       updateRate.add(oncePerSec);
+      updateRate.add(never);
       result.add(updateRate);
 
       return result;
+   }
+
+   /**
+    * This is called by our ChannelControlPanels after their set up their
+    * GUIs, which can only happen after they have histogram data to show.
+    */
+   public void relayout() {
+      inspector_.relayout();
    }
 
    @Override
