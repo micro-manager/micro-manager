@@ -741,6 +741,10 @@ public class MDUtils {
       map.put("Summary", summary);
    }
 
+   public static boolean hasComments(JSONObject map) {
+      return map.has("Comment");
+   }
+
    public static String getComments(JSONObject map) throws JSONException {
       return map.getString("Comment");
    }

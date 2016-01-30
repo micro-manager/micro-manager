@@ -58,7 +58,6 @@ public interface Metadata {
       MetadataBuilder binning(Integer binning);
       MetadataBuilder bitDepth(Integer bitDepth);
       MetadataBuilder camera(String camera);
-      MetadataBuilder comments(String comments);
       MetadataBuilder elapsedTimeMs(Double elapsedTimeMs);
       MetadataBuilder emissionLabel(String emissionLabel);
       MetadataBuilder excitationLabel(String excitationLabel);
@@ -226,12 +225,6 @@ public interface Metadata {
     * @return Camera name
     */
    String getCamera();
-   
-   /** 
-    * Any user-supplied comments for this specific image 
-    * @return user-supplied image comments
-    */
-   String getComments();
    
    /** 
     * The emission filter for this image

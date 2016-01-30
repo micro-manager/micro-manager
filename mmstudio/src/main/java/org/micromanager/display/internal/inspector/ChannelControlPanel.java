@@ -57,8 +57,8 @@ import org.micromanager.display.NewDisplaySettingsEvent;
 import org.micromanager.display.NewHistogramsEvent;
 
 import org.micromanager.internal.graph.GraphData;
-import org.micromanager.internal.graph.HistogramPanel;
-import org.micromanager.internal.graph.HistogramPanel.CursorListener;
+import org.micromanager.internal.graph.HistogramCanvas;
+import org.micromanager.internal.graph.HistogramCanvas.CursorListener;
 
 import org.micromanager.display.internal.events.MouseExitedEvent;
 import org.micromanager.display.internal.events.MouseMovedEvent;
@@ -108,10 +108,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
    }
 
+   private HistogramsPanel parent_;
    private HistogramData[] lastHistograms_;
    private final int channelIndex_;
    private int curComponent_;
-   private HistogramPanel histogram_;
+   private HistogramCanvas histogram_;
    private final ContrastLinker linker_;
    private final Datastore store_;
    private final DataViewer display_;
@@ -133,9 +134,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    private final AtomicBoolean haveInitialized_;
 
-   public ChannelControlPanel(int channelIndex, Datastore store,
-         ContrastLinker linker, DataViewer display) {
+   public ChannelControlPanel(HistogramsPanel parent, int channelIndex,
+         Datastore store, ContrastLinker linker, DataViewer display) {
       haveInitialized_ = new AtomicBoolean(false);
+      parent_ = parent;
       channelIndex_ = channelIndex;
       curComponent_ = 0;
       // Start with 1 component; extend array as needed later.
@@ -166,6 +168,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       histRangeComboBox_.setSelectedIndex(0);
 
       haveInitialized_.set(true);
+      parent_.relayout();
    }
 
    private void initComponents() {
@@ -186,7 +189,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       Insets zeroInsets = new Insets(0, 0, 0, 0);
       Dimension buttonSize = new Dimension(90, 25);
 
-      fullButton_.setFont(fullButton_.getFont().deriveFont((float) 9));
+      fullButton_.setFont(new Font("Arial", Font.PLAIN, 9));
       fullButton_.setMargin(zeroInsets);
       fullButton_.setName("Full channel histogram width");
       fullButton_.setText("Full");
@@ -200,7 +203,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       });
 
-      autoButton_.setFont(autoButton_.getFont().deriveFont((float) 9));
+      autoButton_.setFont(new Font("Arial", Font.PLAIN, 9));
       autoButton_.setMargin(zeroInsets);
       autoButton_.setName("Auto channel histogram width");
       autoButton_.setText("Auto once");
@@ -337,7 +340,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
       JPanel secondColumn = new JPanel(new MigLayout("insets 0, flowy, fill"));
 
-      histogram_ = makeHistogramPanel();
+      histogram_ = makeHistogramCanvas();
       updateHistogramColor(display_.getDisplaySettings().getSafeChannelColor(
                channelIndex_, Color.WHITE));
       histogram_.setMinimumSize(new Dimension(100, 100));
@@ -603,8 +606,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             curComponent_, null, null, null, true);
    }
 
-   private HistogramPanel makeHistogramPanel() {
-      HistogramPanel hp = new HistogramPanel() {
+   private HistogramCanvas makeHistogramCanvas() {
+      HistogramCanvas canvas = new HistogramCanvas() {
          @Override
          public void paint(Graphics g) {
             super.paint(g);
@@ -618,10 +621,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
       };
 
-      hp.setMargins(12, 12);
-      hp.setToolTipText("Click and drag curve to adjust gamma");
-      hp.addCursorListener(this);
-      return hp;
+      canvas.setMargins(12, 12);
+      canvas.setToolTipText("Click and drag curve to adjust gamma");
+      canvas.addCursorListener(this);
+      return canvas;
    }
 
    /**

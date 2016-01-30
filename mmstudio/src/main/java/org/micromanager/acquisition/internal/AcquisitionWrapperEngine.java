@@ -69,7 +69,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private boolean useAutoFocus_;
    private int afSkipInterval_;
    private boolean absoluteZ_;
-   private int cameraTimeout_;
+   private int cameraTimeout_ = 20000;
    private IAcquisitionEngine2010 acquisitionEngine2010_;
    private ArrayList<Double> customTimeIntervalsMs_;
    private boolean useCustomIntervals_;
@@ -147,10 +147,15 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
                  studio_.getAutofocusManager().getDevice());
          summaryMetadata_ = getAcquisitionEngine2010().getSummaryMetadata();
 
+         boolean shouldShow = !AcqControlDlg.getShouldHideMDADisplay();
          MMAcquisition acq = new MMAcquisition(studio_, "Acq",
                  summaryMetadata_, acquisitionSettings.save, this,
-                 !AcqControlDlg.getShouldHideMDADisplay());
+                 shouldShow);
          curStore_ = acq.getDatastore();
+         if (shouldShow) {
+            new StatusDisplay(studio_, curStore_);
+         }
+
          studio_.events().post(new DefaultAcquisitionStartedEvent(curStore_,
                   acquisitionSettings));
 

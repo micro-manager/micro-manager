@@ -73,9 +73,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          ReportingUtils.logError(e, "Couldn't get computer name for standard summary metadata.");
       }
 
-      builder.comments(profile.getString(DefaultSummaryMetadata.class,
-               "comments", ""));
-
       return builder.build();
    }
 
@@ -89,8 +86,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
              "userName", summary.getUserName());
       profile.setString(DefaultSummaryMetadata.class,
              "computerName", summary.getComputerName());
-      profile.setString(DefaultSummaryMetadata.class,
-             "comments", summary.getComments());
    }
 
    public static class Builder implements SummaryMetadata.SummaryMetadataBuilder {
@@ -103,7 +98,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       private String metadataVersion_ = null;
       private String computerName_ = null;
       private String directory_ = null;
-      private String comments_ = null;
       
       private String channelGroup_ = null;
       private String[] channelNames_ = null;
@@ -167,12 +161,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       @Override
       public SummaryMetadataBuilder directory(String directory) {
          directory_ = directory;
-         return this;
-      }
-
-      @Override
-      public SummaryMetadataBuilder comments(String comments) {
-         comments_ = comments;
          return this;
       }
 
@@ -245,7 +233,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    private String metadataVersion_ = null;
    private String computerName_ = null;
    private String directory_ = null;
-   private String comments_ = null;
 
    private String channelGroup_ = null;
    private String[] channelNames_ = null;
@@ -268,7 +255,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       metadataVersion_ = builder.metadataVersion_;
       computerName_ = builder.computerName_;
       directory_ = builder.directory_;
-      comments_ = builder.comments_;
 
       channelGroup_ = builder.channelGroup_;
       channelNames_ = builder.channelNames_;
@@ -321,11 +307,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    @Override
    public String getDirectory() {
       return directory_;
-   }
-
-   @Override
-   public String getComments() {
-      return comments_;
    }
 
    @Override
@@ -398,7 +379,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
             .metadataVersion(metadataVersion_)
             .computerName(computerName_)
             .directory(directory_)
-            .comments(comments_)
             .channelGroup(channelGroup_)
             .channelNames(channelNames_)
             .zStepUm(zStepUm_)
@@ -480,13 +460,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
       catch (JSONException e) {
          ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field directory");
-      }
-
-      try {
-         builder.comments(MDUtils.getComments(tags));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field comments");
       }
 
       try {
@@ -664,7 +637,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          result.put("MetadataVersion", metadataVersion_);
          result.put("ComputerName", computerName_);
          result.put("Directory", directory_);
-         MDUtils.setComments(result, comments_);
          result.put("ChannelGroup", channelGroup_);
          if (channelNames_ != null) {
             JSONArray names = new JSONArray();

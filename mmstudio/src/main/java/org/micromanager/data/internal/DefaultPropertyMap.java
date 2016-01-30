@@ -20,13 +20,21 @@
 
 package org.micromanager.data.internal;
 
+import com.google.common.base.Charsets;
 import com.google.common.io.BaseEncoding;
+import com.google.common.io.Files;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.ObjectStreamException;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -37,6 +45,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.micromanager.PropertyMap;
+import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 // TODO: there is an awful lot of duplicated code here!
@@ -53,7 +62,10 @@ public class DefaultPropertyMap implements PropertyMap {
    private static final String DOUBLE_ARRAY = "Double array";
    private static final String BOOLEAN = "Boolean";
    private static final String BOOLEAN_ARRAY = "Boolean array";
+   private static final String PROPERTY_MAP = "Property map";
    private static final String OBJECT = "Object";
+
+   private static final Double SERIALIZATION_VERSION = 1.0;
 
    // This class stores one value in the mapping.
    private static class PropertyValue {
@@ -103,6 +115,11 @@ public class DefaultPropertyMap implements PropertyMap {
       public PropertyValue(Boolean[] val) {
          val_ = val;
          type_ = Boolean[].class;
+      }
+
+      public PropertyValue(PropertyMap val) {
+         val_ = val;
+         type_ = PropertyMap.class;
       }
 
       // Used for storing generic objects.
@@ -174,6 +191,13 @@ public class DefaultPropertyMap implements PropertyMap {
             throw new PropertyMap.TypeMismatchException("Type of value is not Boolean[]");
          }
          return (Boolean[]) val_;
+      }
+
+      public PropertyMap getAsPropertyMap() {
+         if (type_ != PropertyMap.class) {
+            throw new PropertyMap.TypeMismatchException("Type of value is not PropertyMap");
+         }
+         return (PropertyMap) val_;
       }
 
       public byte[] getAsByteArray() {
@@ -253,6 +277,10 @@ public class DefaultPropertyMap implements PropertyMap {
                   tmp.put(vals[i]);
                }
                result.put(VALUE, tmp);
+            }
+            else if (type_ == PropertyMap.class) {
+               result.put(TYPE, PROPERTY_MAP);
+               result.put(VALUE, ((DefaultPropertyMap) val_).toJSON().toString());
             }
             else if (type_ == byte[].class) {
                result.put(TYPE, OBJECT);
@@ -363,6 +391,12 @@ public class DefaultPropertyMap implements PropertyMap {
       @Override
       public PropertyMap.PropertyMapBuilder putBooleanArray(String key, Boolean[] values) {
          propMap_.put(key, new PropertyValue(values));
+         return this;
+      }
+
+      @Override
+      public PropertyMap.PropertyMapBuilder putPropertyMap(String key, PropertyMap value) {
+         propMap_.put(key, new PropertyValue(value));
          return this;
       }
 
@@ -564,6 +598,22 @@ public class DefaultPropertyMap implements PropertyMap {
    }
 
    @Override
+   public PropertyMap getPropertyMap(String key) {
+      if (propMap_.containsKey(key)) {
+         return propMap_.get(key).getAsPropertyMap();
+      }
+      return null;
+   }
+
+   @Override
+   public PropertyMap getPropertyMap(String key, PropertyMap defaultVal) {
+      if (propMap_.containsKey(key)) {
+         return propMap_.get(key).getAsPropertyMap();
+      }
+      return defaultVal;
+   }
+
+   @Override
    public <T> T getObject(String key, T defaultVal) {
       if (propMap_.containsKey(key)) {
          byte[] bytes = propMap_.get(key).getAsByteArray();
@@ -753,6 +803,10 @@ public class DefaultPropertyMap implements PropertyMap {
                }
                builder.putBooleanArray(key, valArr);
             }
+            else if (type.contentEquals(PROPERTY_MAP)) {
+               JSONObject tmp = new JSONObject(property.getString(VALUE));
+               builder.putPropertyMap(key, fromJSON(tmp));
+            }
             else if (type.contentEquals(OBJECT)) {
                String tmp = property.getString(VALUE);
                byte[] bytes = BaseEncoding.base64().decode(tmp);
@@ -769,6 +823,56 @@ public class DefaultPropertyMap implements PropertyMap {
          }
       }
       return (DefaultPropertyMap) builder.build();
+   }
+
+   @Override
+   public void save(String path) throws IOException {
+      // Write to a temporary file adjacent to the final destination, then
+      // move the file into position, for a "more atomic" write.
+      File file = new File(path + ".tmp");
+      FileWriter writer = null;
+      try {
+         writer = new FileWriter(file, true);
+         writer.write(SERIALIZATION_VERSION + "\n");
+         writer.write(toJSON().toString(1));
+         writer.close();
+         File dest = new File(path);
+         if (JavaUtils.isWindows() && dest.exists()) {
+            // Must delete the destination first.
+            dest.delete();
+         }
+         file.renameTo(dest);
+      }
+      catch (JSONException e) {
+         throw new IOException(e);
+      }
+      finally {
+         if (writer != null) {
+            writer.close();
+         }
+      }
+   }
+
+   public static PropertyMap loadPropertyMap(String path) throws FileNotFoundException, IOException {
+      String content = Files.toString(new File(path), Charsets.UTF_8);
+      // Separate out the header from the property map definition.
+      String[] splits = content.split("\n", 2);
+      try {
+         Double version = Double.parseDouble(splits[0]);
+         if (version > SERIALIZATION_VERSION) {
+            ReportingUtils.logError(String.format("Warning: property map version in file at %s is greater than version used by this program (%f > %f)",
+                     path, version, SERIALIZATION_VERSION));
+         }
+      }
+      catch (NumberFormatException e) {
+         throw new IOException("Unable to parse version of property map");
+      }
+      try {
+         return fromJSON(new JSONObject(splits[1]));
+      }
+      catch (JSONException e) {
+         throw new IOException(e);
+      }
    }
 
    @Override

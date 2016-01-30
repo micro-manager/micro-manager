@@ -66,7 +66,6 @@ CScanner::CScanner(const char* name) :
    ring_buffer_supported_(false),
    laser_side_(0),   // will be set to 1 or 2 if used
    laserTTLenabled_(false),
-   refreshOverride_(false),
    mmTarget_(false),
    targetExposure_(0),
    targetSettling_(5),
@@ -804,7 +803,7 @@ int CScanner::SetIlluminationState(bool on)
       else if (!on && illuminationState_) // was on, turning off
       {
          illuminationState_ = false;
-         command << addressChar_ << "TTL Y=11";
+         command << addressChar_ << "TTL Y=" << (FirmwareVersionAtLeast(3.12) ? 21 : 11);
          RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
       }
       // if was off, turning off do nothing

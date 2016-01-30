@@ -54,6 +54,12 @@ public:
   //! be recycled by caller
   bool getUnusedExternalBuffer( u08* & pImg, S_IMAGE_HEADER* & pImgHdr );
 
+  //! return image time stamp as u64 value in ms since 1970;
+  unsigned long long getTimeStamp( );
+
+  //! return image time stamp as string value in ms since 1970;
+  string getTimeStampString( );
+
 private:
   S_IMAGE_HEADER  imageHeader_;
   S_IMAGE_HEADER* imageHeaderPtr_;

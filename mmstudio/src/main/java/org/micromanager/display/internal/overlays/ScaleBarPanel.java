@@ -82,20 +82,25 @@ public class ScaleBarPanel extends OverlayPanel {
    private final JComboBox position_;
 
    private boolean haveLoggedError_ = false;
+   private boolean shouldIgnoreEvents_ = false;
 
    public ScaleBarPanel() {
       ActionListener changeListener = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
-               saveSettings();
-               redraw();
+               if (!shouldIgnoreEvents_) {
+                   saveSettings();
+                   redraw();
+               }
             }
       };
       KeyAdapter keyAdapter = new KeyAdapter() {
          @Override
          public void keyPressed(KeyEvent event) {
-            saveSettings();
-            redraw();
+            if (!shouldIgnoreEvents_) {
+               saveSettings();
+               redraw();
+            }
          }
       };
       setLayout(new MigLayout("flowy"));
@@ -186,6 +191,8 @@ public class ScaleBarPanel extends OverlayPanel {
          userData = MMStudio.getInstance().data().getPropertyMapBuilder().build();
       }
 
+      // Don't cause redraws while we're busy resetting our values.
+      shouldIgnoreEvents_ = true;
       color_.setSelectedIndex(userData.getInt(COLOR, 0));
       shouldDrawText_.setSelected(userData.getBoolean(DRAW_TEXT, true));
       fontSize_.setText(userData.getString(FONT_SIZE, "14"));
@@ -195,6 +202,8 @@ public class ScaleBarPanel extends OverlayPanel {
       barWidth_.setText(userData.getString(BAR_WIDTH, "5"));
       position_.setSelectedIndex(userData.getInt(POSITION, 0));
       scaleSize_.setText(userData.getString(SIZE, "100"));
+      shouldIgnoreEvents_ = false;
+      redraw();
    }
 
    @Override

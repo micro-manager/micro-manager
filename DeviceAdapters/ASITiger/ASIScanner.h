@@ -156,7 +156,6 @@ private:
    double lastX_;    // used to cache position (in degrees)
    double lastY_;    // used to cache position (in degrees)
    bool illuminationState_;  // true if on, false if beam is turned off
-   bool refreshOverride_;  // true temporarily if refreshing property
    bool mmTarget_;    // true iff MM_TARGET firmware in place for phototargeting
    long targetExposure_;  // exposure time for targeting, stored locally
    long targetSettling_;  // settling time for targeting, stored locally

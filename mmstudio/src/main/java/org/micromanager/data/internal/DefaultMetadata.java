@@ -78,7 +78,6 @@ public class DefaultMetadata implements Metadata {
       private String excitationLabel_ = null;
       private String emissionLabel_ = null;
       private Rectangle ROI_ = null;
-      private String comments_ = null;
 
       private Double pixelAspect_ = null;
 
@@ -247,12 +246,6 @@ public class DefaultMetadata implements Metadata {
       }
 
       @Override
-      public MetadataBuilder comments(String comments) {
-         comments_ = comments;
-         return this;
-      }
-
-      @Override
       public MetadataBuilder pixelAspect(Double pixelAspect) {
          pixelAspect_ = pixelAspect;
          return this;
@@ -301,7 +294,6 @@ public class DefaultMetadata implements Metadata {
    private String excitationLabel_ = null;
    private String emissionLabel_ = null;
    private Rectangle ROI_ = null;
-   private String comments_ = null;
 
    private Double pixelAspect_ = null;
 
@@ -339,7 +331,6 @@ public class DefaultMetadata implements Metadata {
       excitationLabel_ = builder.excitationLabel_;
       emissionLabel_ = builder.emissionLabel_;
       ROI_ = builder.ROI_;
-      comments_ = builder.comments_;
 
       pixelAspect_ = builder.pixelAspect_;
 
@@ -375,7 +366,6 @@ public class DefaultMetadata implements Metadata {
             .excitationLabel(excitationLabel_)
             .emissionLabel(emissionLabel_)
             .ROI(ROI_)
-            .comments(comments_)
             .pixelAspect(pixelAspect_);
    }
 
@@ -508,11 +498,6 @@ public class DefaultMetadata implements Metadata {
    }
 
    @Override
-   public String getComments() {
-      return comments_;
-   }
-
-   @Override
    public Double getPixelAspect() {
       return pixelAspect_;
    }
@@ -540,7 +525,6 @@ public class DefaultMetadata implements Metadata {
                (getBinning() == null) ? 0 : getBinning());
          MDUtils.setBitDepth(result, getBitDepth());
          result.put("Camera", getCamera());
-         MDUtils.setComments(result, getComments());
          MDUtils.setElapsedTimeMs(result, 
                (getElapsedTimeMs() == null) ? 0 : getElapsedTimeMs());
          result.put("emissionLabel", getEmissionLabel());
@@ -626,13 +610,6 @@ public class DefaultMetadata implements Metadata {
       }
       catch (JSONException e) {
          ReportingUtils.logDebugMessage("Metadata failed to extract field camera");
-      }
-
-      try {
-         builder.comments(MDUtils.getComments(tags));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Metadata failed to extract field comments");
       }
 
       try {

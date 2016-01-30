@@ -136,7 +136,7 @@ private:
 	static vector<char> ConvertStringVector2CharVector(const vector<string> v);
 	static vector<int> ConvertStringVector2IntVector(const vector<string> v);
 
-   string serialAnswer_;      // the last answer received from any call of
+   string serialAnswer_;      // the last answer received from any communication with the controller
    string manualSerialAnswer_; // last answer received when the SerialCommand property was used
    string serialCommand_;     // the last command sent, or can be set for calling commands without args
    string serialTerminator_;  // only used when parsing command sent via OnSerialCommand action handler

@@ -27,7 +27,6 @@ import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.prefs.Preferences;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -54,7 +53,7 @@ public class RolesPage extends PagePanel {
    private JCheckBox autoshutterCheckBox_;
    private final JPanel focusDirectionPanel_;
    private static final String HELP_FILE_NAME = "conf_roles_page.html";
-   
+
    /**
     * Create the panel
     */
@@ -65,7 +64,6 @@ public class RolesPage extends PagePanel {
       "This is especially important for systems with multiple cameras, shutters or stages." +
       " The GUI needs to know which ones are going to be treated as default.\n\n" +
       "These roles can be changed on-the-fly thorugh configuration presets (in one of the subsequent steps).";
-      setHelpFileName(HELP_FILE_NAME);
       setLayout(null);
       
       final JLabel cameraLabel = new JLabel();
@@ -237,9 +235,10 @@ public class RolesPage extends PagePanel {
       // Remove anything left in the focus direction panel, and reconstruct it
       // Note that the panel is constructed with a MigLayout
       focusDirectionPanel_.removeAll();
-      JLabel focusDirectionLabel = new JLabel("Stage focus directions");
-      focusDirectionPanel_.add(focusDirectionLabel, "wrap");
-      if (stages != null) {
+      if (stages != null && stages.size() > 0) {
+         JLabel focusDirectionLabel = new JLabel("Stage focus directions (advanced)");
+         focusDirectionPanel_.add(focusDirectionLabel, "wrap");
+
          try {
             model_.loadFocusDirectionsFromHardware(core_);
          }

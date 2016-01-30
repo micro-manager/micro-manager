@@ -47,11 +47,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.micromanager.internal.MMStudio;
+import org.micromanager.data.Annotation;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.internal.inspector.CommentsPanel;
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
@@ -61,7 +63,7 @@ import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
-
+import org.micromanager.PropertyMap;
 
 public class MultipageTiffWriter {
 
@@ -154,7 +156,8 @@ public class MultipageTiffWriter {
             (DefaultImage) masterStorage_.getAnyImage());
       augmentWithDisplaySettings(summaryJSON,
             DefaultDisplaySettings.getStandardSettings(DefaultDisplayWindow.DEFAULT_SETTINGS_KEY));
-      reader_ = new MultipageTiffReader(summary, summaryJSON, firstImageTags);
+      reader_ = new MultipageTiffReader(masterStorage_, summary, summaryJSON,
+            firstImageTags);
 
       //This is an overestimate of file size because file gets truncated at end
       long fileSize = Math.min(MAX_FILE_SIZE,
@@ -372,16 +375,8 @@ public class MultipageTiffWriter {
     * OME/IJ metadata, and truncates the file to a reasonable length
     */
    public void close(String omeXML) throws IOException {
-      String summaryComment = "";
-      try 
-      {
-         String comments = masterStorage_.getSummaryMetadata().getComments();
-         if (comments != null) {
-            summaryComment = comments;
-         }    
-      } catch (Exception e) {
-         ReportingUtils.logError("Could't get acquisition summary comment");
-      }
+      String summaryComment = CommentsPanel.getSummaryComment(
+            masterStorage_.getDatastore());
       writeImageJMetadata(numChannels_, summaryComment);
 
       try {
@@ -914,18 +909,12 @@ public class MultipageTiffWriter {
       try {
          // Get the summary comments, then comments for each image.
          JSONObject comments = new JSONObject();
-         String summaryComments = masterStorage_.getSummaryMetadata().getComments();
-         if (summaryComments == null) {
-            summaryComments = "";
-         }
+         String summaryComments = CommentsPanel.getSummaryComment(
+               masterStorage_.getDatastore());
          comments.put("Summary", summaryComments);
          for (Coords coords : masterStorage_.getUnorderedImageCoords()) {
-            Image image = masterStorage_.getImage(coords);
-            String imageComments = image.getMetadata().getComments();
-            if (imageComments == null) {
-               // No comment for this image.
-               continue;
-            }
+            String imageComments = CommentsPanel.getImageComment(
+                  masterStorage_.getDatastore(), coords);
             // HACK: produce a 1.4-style "coordinate string" to use as a key.
             // See also MDUtils.getLabel(), though we can't use it directly.
             int channel = coords.getChannel() < 0 ? 0 : coords.getChannel();

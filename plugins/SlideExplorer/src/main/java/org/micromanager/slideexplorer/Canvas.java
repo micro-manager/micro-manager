@@ -18,7 +18,6 @@ public class Canvas extends ImageCanvas {
 
     protected static final long serialVersionUID = 1L;
     private Display display_;
-    int multiClickInterval_ = (Integer) Toolkit.getDefaultToolkit().getDesktopProperty("awt.multiClickInterval");
     private boolean wasDragged_ = false;
     private Frame win_;
 
