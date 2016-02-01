@@ -196,7 +196,6 @@ public class ContrastCalculator {
          HistogramData result = new HistogramData(histogram_,
                numPixels_, minVal_, maxVal_, contrastMin,
                contrastMax, (int) meanVal_, depthPower_, binSize_);
-         long end = System.currentTimeMillis();
          return result;
       }
 
