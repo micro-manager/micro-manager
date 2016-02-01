@@ -67,11 +67,9 @@ public class ContrastCalculator {
       private int maxVal_;
       private long meanVal_;
       private int numPixels_;
-      private long start_;
 
       public InternalCalculator(Image image, ImagePlus plus, int component,
             int binPower, int depthPower, double extremaPercentage) {
-         start_ = System.currentTimeMillis();
          width_ = image.getWidth();
          height_ = image.getHeight();
          bytesPerPixel_ = image.getBytesPerPixel();
@@ -189,7 +187,6 @@ public class ContrastCalculator {
                numPixels_, minVal_, maxVal_, contrastMin,
                contrastMax, (int) meanVal_, depthPower_, binSize_);
          long end = System.currentTimeMillis();
-         ReportingUtils.logError("Runtime: " + (end - start_));
          return result;
       }
 
