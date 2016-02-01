@@ -209,7 +209,8 @@ public class ContrastCalculator {
                // Java doesn't have unsigned number types, so we have to
                // manually convert; otherwise large numbers will set the sign
                // bit and show as negative.
-               int pixelVal = ImageUtils.unsignedValue(pixels[index]);
+               // This conversion logic is copied from ImageUtils.unsignedValue
+               int pixelVal = ((int) pixels[index]) & 0x000000ff;
                if (pixelVal >= 0 && pixelVal < range_) {
                   histogram_[pixelVal / binSize_]++;
                }
@@ -228,7 +229,7 @@ public class ContrastCalculator {
 
       /**
        * HACK: completely identical to calculate8Bit except for the type of the
-       * pixels array.
+       * pixels array and the unsigned conversion mask.
        */
       private void calculate16Bit(short[] pixels) {
          for (int x = xMin_; x < xMax_; ++x) {
@@ -246,7 +247,8 @@ public class ContrastCalculator {
                // Java doesn't have unsigned number types, so we have to
                // manually convert; otherwise large numbers will set the sign
                // bit and show as negative.
-               int pixelVal = ImageUtils.unsignedValue(pixels[index]);
+               // This conversion logic is copied from ImageUtils.unsignedValue
+               int pixelVal = ((int) pixels[index]) & 0x0000ffff;
                if (pixelVal >= 0 && pixelVal < range_) {
                   histogram_[pixelVal / binSize_]++;
                }
