@@ -235,8 +235,7 @@ public class ExportMovieDlg extends JDialog {
        * @param doneFlag True when all images are done drawing. Signals that
        *        exporting is done and cleanup can begin.
        */
-      public void runLoop(Coords coords, AtomicBoolean drawFlag,
-            AtomicBoolean doneFlag) {
+      public void runLoop(Coords coords, AtomicBoolean drawFlag) {
          // Correct for the 1-indexed GUI values, since coords are 0-indexed.
          int minVal = (Integer) (minSpinner_.getValue()) - 1;
          int maxVal = (Integer) (maxSpinner_.getValue()) - 1;
@@ -258,10 +257,9 @@ public class ExportMovieDlg extends JDialog {
             }
             else {
                // Recurse.
-               child_.runLoop(newCoords, drawFlag, doneFlag);
+               child_.runLoop(newCoords, drawFlag);
             }
          }
-         doneFlag.set(true);
       }
 
       @Override
@@ -277,6 +275,7 @@ public class ExportMovieDlg extends JDialog {
     * call to DisplayWindow.setDisplayedImageTo()).
     */
    private static class Exporter {
+      private DefaultDisplayWindow display_;
       private int sequenceNum_ = 0;
       private ImageStack stack_;
       private File outputDir_;
@@ -287,9 +286,10 @@ public class ExportMovieDlg extends JDialog {
       private boolean isSingleShot_;
       private int jpegQuality_;
 
-      public Exporter(File outputDir, String prefix, String mode,
-            AtomicBoolean drawFlag, AtomicBoolean doneFlag,
-            boolean isSingleShot, int jpegQuality) {
+      public Exporter(DefaultDisplayWindow display, File outputDir,
+            String prefix, String mode, AtomicBoolean drawFlag,
+            AtomicBoolean doneFlag, boolean isSingleShot, int jpegQuality) {
+         display_ = display;
          outputDir_ = outputDir;
          prefix_ = prefix;
          mode_ = mode;
@@ -301,7 +301,18 @@ public class ExportMovieDlg extends JDialog {
 
       @Subscribe
       public void onDrawComplete(CanvasDrawCompleteEvent event) {
-         BufferedImage image = event.getBufferedImage();
+         // We now know that the correct image is visible on the canvas, so
+         // have it paint that image to our own Graphics object. This is
+         // inefficient (having to paint the same image twice), but
+         // unfortunately there's no way (so far as I'm aware) to get an Image
+         // from a component except by painting.
+         // HACK: the getCanvas() and paintImageWithGraphics methods aren't
+         // exposed in DisplayWindow; hence why we need display_ to be
+         // DefaultDisplayWindow.
+         Dimension canvasSize = display_.getCanvas().getSize();
+         BufferedImage image = new BufferedImage(canvasSize.width,
+               canvasSize.height, BufferedImage.TYPE_INT_RGB);
+         display_.paintImageWithGraphics(image.getGraphics());
          if (mode_.equals(FORMAT_IMAGEJ)) {
             if (stack_ == null) {
                // Create the ImageJ stack object to add images to.
@@ -547,15 +558,16 @@ public class ExportMovieDlg extends JDialog {
             @Override
             public void run() {
                Coords baseCoords = display_.getDisplayedImages().get(0).getCoords();
-               axisPanels_.get(0).runLoop(baseCoords, drawFlag, doneFlag);
+               axisPanels_.get(0).runLoop(baseCoords, drawFlag);
+               doneFlag.set(true);
             }
          }, "Image export thread");
       }
 
       String prefix = prefixText_.getText();
       setDefaultPrefix(prefix);
-      final Exporter exporter = new Exporter(outputDir, prefix, mode,
-            drawFlag, doneFlag, isSingleShot,
+      final Exporter exporter = new Exporter((DefaultDisplayWindow) display_,
+            outputDir, prefix, mode, drawFlag, doneFlag, isSingleShot,
             ((Integer) jpegQualitySpinner_.getValue()));
       display_.registerForEvents(exporter);
 
