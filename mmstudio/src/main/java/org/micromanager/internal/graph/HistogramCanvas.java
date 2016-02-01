@@ -816,7 +816,12 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
       Stroke oldStroke = g2d.getStroke();
 
       g2d.setPaint(Color.black);
-      g2d.setStroke(new BasicStroke(2.0f));
+      if (datas_.length == 1) {
+         g2d.setStroke(new BasicStroke(2.0f));
+      }
+      else {
+         g2d.setStroke(new BasicStroke(1.0f));
+      }
 
       for (int i = 0; i < datas_.length; ++i) {
          drawGraph(g2d, i, box);
