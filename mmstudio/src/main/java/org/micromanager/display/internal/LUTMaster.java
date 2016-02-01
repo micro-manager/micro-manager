@@ -346,8 +346,11 @@ public class LUTMaster {
          return;
       }
 
-      LUT lut = ImageUtils.makeLUT(color,
-            contrastSettings.getSafeContrastGamma(0, 1.0));
+      double gamma = contrastSettings.getSafeContrastGamma(0, 1.0);
+      if (gamma < 0) {
+         gamma = 1.0;
+      }
+      LUT lut = ImageUtils.makeLUT(color, gamma);
       if (hasCustomLUT) {
          // Get the current LUT from ImageJ instead.
          // TODO: Ignore gamma settings for custom LUTs.
@@ -376,12 +379,9 @@ public class LUTMaster {
       // here because of the call to getSafeContrastSettings() earlier.
       lut.min = contrastSettings.getSafeContrastMin(0, 0);
       lut.max = contrastSettings.getSafeContrastMax(0, 0);
-      processor.setMinAndMax(lut.min, lut.max);
       if (composite == null) {
          // Single-channel.
-         if (!hasCustomLUT) {
-            processor.setColorModel(lut);
-         }
+         processor.setColorModel(lut);
       }
       else {
          if (!hasCustomLUT) {
@@ -408,6 +408,7 @@ public class LUTMaster {
          }
          composite.updateImage();
       } // End multi-channel case.
+      processor.setMinAndMax(lut.min, lut.max);
    }
 
    /**
