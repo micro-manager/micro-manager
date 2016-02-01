@@ -78,8 +78,8 @@ public class ContrastCalculator {
          depthPower_ = depthPower;
          extremaPercentage_ = extremaPercentage;
 
-         minVal_ = -1;
-         maxVal_ = -1;
+         minVal_ = Integer.MAX_VALUE;
+         maxVal_ = Integer.MIN_VALUE;
          meanVal_ = 0;
          numPixels_ = 0;
          numBins_ = (int) Math.pow(2, binPower);
@@ -132,10 +132,20 @@ public class ContrastCalculator {
          // inner loop, so we don't have to examine the type of the pixels array
          // once for every component of every pixel.
          if (pixels_ instanceof byte[]) {
-            calculate8Bit((byte[]) pixels_);
+            if (maskPixels_ != null) {
+               calculate8BitMasked((byte[]) pixels_);
+            }
+            else {
+               calculate8Bit((byte[]) pixels_);
+            }
          }
          else if (pixels_ instanceof short[]) {
-            calculate16Bit((short[]) pixels_);
+            if (maskPixels_ != null) {
+               calculate16BitMasked((short[]) pixels_);
+            }
+            else {
+               calculate16Bit((short[]) pixels_);
+            }
          }
          else {
             throw new IllegalArgumentException("Unrecognized pixel format " + pixels_);
@@ -211,14 +221,34 @@ public class ContrastCalculator {
                if (pixelVal >= 0 && pixelVal < range_) {
                   histogram_[pixelVal / binSize_]++;
                }
-               if (minVal_ == -1) {
-                  minVal_ = pixelVal;
-                  maxVal_ = pixelVal;
+               minVal_ = Math.min(minVal_, pixelVal);
+               maxVal_ = Math.max(maxVal_, pixelVal);
+               meanVal_ += pixelVal;
+            }
+         }
+      }
+
+      private void calculate8BitMasked(byte[] pixels) {
+         for (int x = xMin_; x < xMax_; ++x) {
+            for (int y = yMin_; y < yMax_; ++y) {
+               int maskIndex = (y - roiRect_.y) * roiRect_.width +
+                  (x - roiRect_.x);
+               if (maskPixels_[maskIndex] == 0) {
+                  // Outside of the mask.
+                  continue;
                }
-               else {
-                  minVal_ = Math.min(minVal_, pixelVal);
-                  maxVal_ = Math.max(maxVal_, pixelVal);
+               numPixels_++;
+               int index = y * width_ + x + component_;
+               // Java doesn't have unsigned number types, so we have to
+               // manually convert; otherwise large numbers will set the sign
+               // bit and show as negative.
+               // This conversion logic is copied from ImageUtils.unsignedValue
+               int pixelVal = ((int) pixels[index]) & 0x000000ff;
+               if (pixelVal >= 0 && pixelVal < range_) {
+                  histogram_[pixelVal / binSize_]++;
                }
+               minVal_ = Math.min(minVal_, pixelVal);
+               maxVal_ = Math.max(maxVal_, pixelVal);
                meanVal_ += pixelVal;
             }
          }
@@ -231,13 +261,35 @@ public class ContrastCalculator {
       private void calculate16Bit(short[] pixels) {
          for (int x = xMin_; x < xMax_; ++x) {
             for (int y = yMin_; y < yMax_; ++y) {
-               if (maskPixels_ != null) {
-                  int index = (y - roiRect_.y) * roiRect_.width +
-                     (x - roiRect_.x);
-                  if (maskPixels_[index] == 0) {
-                     // Outside of the mask.
-                     continue;
-                  }
+               numPixels_++;
+               int index = y * width_ + x + component_;
+               // Java doesn't have unsigned number types, so we have to
+               // manually convert; otherwise large numbers will set the sign
+               // bit and show as negative.
+               // This conversion logic is copied from ImageUtils.unsignedValue
+               int pixelVal = ((int) pixels[index]) & 0x0000ffff;
+               if (pixelVal >= 0 && pixelVal < range_) {
+                  histogram_[pixelVal / binSize_]++;
+               }
+               minVal_ = Math.min(minVal_, pixelVal);
+               maxVal_ = Math.max(maxVal_, pixelVal);
+               meanVal_ += pixelVal;
+            }
+         }
+      }
+
+      /**
+       * HACK: completely identical to calculate8BitMasked except for the type
+       * of the pixels array and the unsigned conversion mask.
+       */
+      private void calculate16BitMasked(short[] pixels) {
+         for (int x = xMin_; x < xMax_; ++x) {
+            for (int y = yMin_; y < yMax_; ++y) {
+               int maskIndex = (y - roiRect_.y) * roiRect_.width +
+                  (x - roiRect_.x);
+               if (maskPixels_[maskIndex] == 0) {
+                  // Outside of the mask.
+                  continue;
                }
                numPixels_++;
                int index = y * width_ + x + component_;
@@ -249,14 +301,8 @@ public class ContrastCalculator {
                if (pixelVal >= 0 && pixelVal < range_) {
                   histogram_[pixelVal / binSize_]++;
                }
-               if (minVal_ == -1) {
-                  minVal_ = pixelVal;
-                  maxVal_ = pixelVal;
-               }
-               else {
-                  minVal_ = Math.min(minVal_, pixelVal);
-                  maxVal_ = Math.max(maxVal_, pixelVal);
-               }
+               minVal_ = Math.min(minVal_, pixelVal);
+               maxVal_ = Math.max(maxVal_, pixelVal);
                meanVal_ += pixelVal;
             }
          }
