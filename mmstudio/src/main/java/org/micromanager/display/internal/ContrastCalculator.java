@@ -203,14 +203,6 @@ public class ContrastCalculator {
       private void calculate8Bit(byte[] pixels) {
          for (int x = xMin_; x < xMax_; ++x) {
             for (int y = yMin_; y < yMax_; ++y) {
-               if (maskPixels_ != null) {
-                  int index = (y - roiRect_.y) * roiRect_.width +
-                     (x - roiRect_.x);
-                  if (maskPixels_[index] == 0) {
-                     // Outside of the mask.
-                     continue;
-                  }
-               }
                numPixels_++;
                int index = y * width_ + x + component_;
                // Java doesn't have unsigned number types, so we have to
