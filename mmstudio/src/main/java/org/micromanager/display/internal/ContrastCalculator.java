@@ -203,7 +203,7 @@ public class ContrastCalculator {
          for (int x = xMin_; x < xMax_; ++x) {
             for (int y = yMin_; y < yMax_; ++y) {
                numPixels_++;
-               int index = y * width_ + x + component_;
+               int index = (y * width_ + x) * bytesPerPixel_ + component_;
                // Java doesn't have unsigned number types, so we have to
                // manually convert; otherwise large numbers will set the sign
                // bit and show as negative.
@@ -229,7 +229,7 @@ public class ContrastCalculator {
                   continue;
                }
                numPixels_++;
-               int index = y * width_ + x + component_;
+               int index = (y * width_ + x) * bytesPerPixel_ + component_;
                // Java doesn't have unsigned number types, so we have to
                // manually convert; otherwise large numbers will set the sign
                // bit and show as negative.
@@ -250,10 +250,12 @@ public class ContrastCalculator {
        * pixels array and the unsigned conversion mask.
        */
       private void calculate16Bit(short[] pixels) {
+         // Since we step 2 bytes at a time in a short[] array.
+         int stride = bytesPerPixel_ / 2;
          for (int x = xMin_; x < xMax_; ++x) {
             for (int y = yMin_; y < yMax_; ++y) {
                numPixels_++;
-               int index = y * width_ + x + component_;
+               int index = (y * width_ + x) * stride + component_;
                // Java doesn't have unsigned number types, so we have to
                // manually convert; otherwise large numbers will set the sign
                // bit and show as negative.
@@ -274,6 +276,8 @@ public class ContrastCalculator {
        * of the pixels array and the unsigned conversion mask.
        */
       private void calculate16BitMasked(short[] pixels) {
+         // Since we step 2 bytes at a time in a short[] array.
+         int stride = bytesPerPixel_ / 2;
          for (int x = xMin_; x < xMax_; ++x) {
             for (int y = yMin_; y < yMax_; ++y) {
                int maskIndex = (y - roiRect_.y) * roiRect_.width +
@@ -283,7 +287,7 @@ public class ContrastCalculator {
                   continue;
                }
                numPixels_++;
-               int index = y * width_ + x + component_;
+               int index = (y * width_ + x) * stride + component_;
                // Java doesn't have unsigned number types, so we have to
                // manually convert; otherwise large numbers will set the sign
                // bit and show as negative.
