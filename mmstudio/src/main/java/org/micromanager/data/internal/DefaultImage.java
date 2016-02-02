@@ -78,6 +78,10 @@ public class DefaultImage implements Image {
    // indicates the range of values that the camera can output (e.g. a 12-bit
    // pixel has values in [0, 4095].
    int bytesPerPixel_;
+   // How many bytes are allocated to a single component's intensity in a
+   // given pixel. For example, 1 for single-component 8-bit, 2 for
+   // single-component 16-bit, 1 for RGB-32bit.
+   int bytesPerComponent_;
    // How many components are packed into each pixel's worth of data (e.g. an
    // RGB or CMYK image).
    int numComponents_;
@@ -149,6 +153,7 @@ public class DefaultImage implements Image {
       pixelWidth_ = MDUtils.getWidth(tags);
       pixelHeight_ = MDUtils.getHeight(tags);
       bytesPerPixel_ = MDUtils.getBytesPerPixel(tags);
+      setBytesPerComponent();
       numComponents_ = MDUtils.getNumberOfComponents(tags);
    }
 
@@ -172,6 +177,7 @@ public class DefaultImage implements Image {
       pixelWidth_ = width;
       pixelHeight_ = height;
       bytesPerPixel_ = bytesPerPixel;
+      setBytesPerComponent();
       numComponents_ = numComponents;
    }
 
@@ -191,7 +197,20 @@ public class DefaultImage implements Image {
       pixelWidth_ = source.getWidth();
       pixelHeight_ = source.getHeight();
       bytesPerPixel_ = source.getBytesPerPixel();
+      setBytesPerComponent();
       numComponents_ = source.getNumComponents();
+   }
+
+   private void setBytesPerComponent() {
+      if (rawPixels_ instanceof ByteBuffer) {
+         bytesPerComponent_ = 1;
+      }
+      else if (rawPixels_ instanceof ShortBuffer) {
+         bytesPerComponent_ = 2;
+      }
+      else {
+         throw new IllegalArgumentException("Unsupported number of bytes per component");
+      }
    }
 
    @Override
@@ -300,23 +319,24 @@ public class DefaultImage implements Image {
 
    @Override
    public long getComponentIntensityAt(int x, int y, int component) {
-      int pixelIndex = y * pixelWidth_ + x + component;
+      int pixelIndex = (y * pixelWidth_ + x) * bytesPerPixel_ / bytesPerComponent_ + component;
       if (pixelIndex < 0 || pixelIndex >= rawPixels_.capacity()) {
          throw new IllegalArgumentException(
                String.format("Asked for pixel at (%d, %d) component %d outside of pixel array size of %d (calculated index %d)",
                   x, y, component, rawPixels_.capacity(), pixelIndex));
       }
       long result = 0;
-      int divisor = numComponents_;
       int exponent = 8;
+      // "Value" meaning "entry in our buffer".
+      int numValues = bytesPerComponent_;
       if (rawPixels_ instanceof ShortBuffer) {
-         divisor *= 2;
          exponent = 16;
+         numValues /= 2;
       }
-      for (int i = 0; i < bytesPerPixel_ / divisor; ++i) {
+      for (int i = 0; i < numValues; ++i) {
          // NB Java will let you use "<<=" in this situation.
          result = result << exponent;
-         int index = y * pixelWidth_ + x + component + i;
+         int index = (y * pixelWidth_ + x) * bytesPerPixel_ / bytesPerComponent_ + component * bytesPerComponent_ + i;
          // Java doesn't have unsigned number types, so we have to manually
          // convert; otherwise large numbers will set the sign bit and show
          // as negative.
