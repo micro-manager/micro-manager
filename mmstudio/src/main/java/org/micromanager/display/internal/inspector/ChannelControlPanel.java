@@ -666,6 +666,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          isEnabledButton_.setVisible(
                mode == DisplaySettings.ColorMode.COMPOSITE);
       }
+      Double updateRate = settings.getHistogramUpdateRate();
+      if (updateRate != null && updateRate < 0) {
+         histogram_.setOverlayText("Updates disabled");
+      }
+      else {
+         histogram_.setOverlayText(null);
+      }
       redraw();
    }
 
