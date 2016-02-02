@@ -151,20 +151,20 @@ class MMImageCanvas extends ImageCanvas {
     *   normal image), so that a copy of the drawn image (with overlays, etc.)
     *   is available when we post a CanvasDrawCompleteEvent. Effectively we're
     *   doing manual double-buffering.
-    * TODO: ideally we'd replace the manual double-buffering with an API
-    * method that hands the DisplayWindow a Graphics object to draw to.
     */
    @Override
    public void paint(Graphics g) {
-      if (bufferedImage_ == null || bufferedImage_.getWidth() != getWidth() ||
-            bufferedImage_.getHeight() != getHeight()) {
-         // Dimensions have changed; must recreate the BufferedImage.
-         bufferedImage_ = new BufferedImage(getWidth(), getHeight(),
-               BufferedImage.TYPE_INT_RGB);
-      }
-      Graphics bufG = bufferedImage_.createGraphics();
+      paintToGraphics(g);
+      display_.postEvent(new CanvasDrawCompleteEvent());
+   }
+
+   /**
+    * Paint to the provided Graphics object. This allows outside code to get
+    * a copy of the "image as rendered".
+    */
+   public void paintToGraphics(Graphics g) {
       // Draw the actual canvas image
-      super.paint(bufG);
+      super.paint(g);
 
       // Determine the color to use for the border (default is black).
       if (ijImage_.isComposite()) {
@@ -174,10 +174,10 @@ class MMImageCanvas extends ImageCanvas {
          if (Color.green.equals(color)) {
             color = new Color(0, 180, 0);
          }
-         bufG.setColor(color);
+         g.setColor(color);
       }
       else {
-         bufG.setColor(Color.BLACK);
+         g.setColor(Color.BLACK);
       }
 
       // This rectangle is relative to the panel we're in, but we're drawing
@@ -190,15 +190,11 @@ class MMImageCanvas extends ImageCanvas {
       rect.width -= 2;
       rect.height -= 2;
       if (!Prefs.noBorder && !IJ.isLinux()) {
-         bufG.drawRect(rect.x - 1, rect.y - 1,
+         g.drawRect(rect.x - 1, rect.y - 1,
                rect.width + 1, rect.height + 1);
       }
 
-      display_.postEvent(new CanvasDrawEvent(bufG, this));
-      // Drawing to the buffered image is done; now draw to ourselves.
-      bufG.dispose();
-      g.drawImage(bufferedImage_, 0, 0, null);
-      display_.postEvent(new CanvasDrawCompleteEvent(bufferedImage_));
+      display_.postEvent(new CanvasDrawEvent(g, this));
    }
 
    /**

@@ -169,4 +169,13 @@ public class GraphData {
       result.setData(newYs);
       return result;
    }
+
+   @Override
+   public String toString() {
+      String result = "<GraphData:\n";
+      for (int i = 0; i < xVals_.length; ++i) {
+         result += String.format("%d: %.2f,%.2f;\n", i, xVals_[i], yVals_[i]);
+      }
+      return result + ">";
+   }
 }
