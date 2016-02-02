@@ -96,8 +96,7 @@ public interface DisplayManager {
     * @param component The component of the image (use 0 for grayscale images).
     * @param binPower The number of bins in the resulting histogram, expressed
     *        as an exponent for a power of 2. For example, using 8 here will
-    *        result in a histogram with 256 bins. Micro-Manager uses 256 bins
-    *        by default.
+    *        result in a histogram with 256 bins.
     * @param bitDepth The range of values accepted by the histogram, expressed
     *        as a power of 2. For example, using 10 here would result in a
     *        histogram whose bins accept values from 0 through 1023,
