@@ -526,12 +526,25 @@ public class CanvasUpdateQueue {
    @Subscribe
    public void onHistogramRequest(HistogramRequestEvent event) {
       int channel = event.getChannel();
+      Double updateRate = display_.getDisplaySettings().getHistogramUpdateRate();
       if (channelToHistory_.containsKey(channel)) {
          HistogramHistory history = channelToHistory_.get(channel);
          if (history.datas_.size() > 0) {
             // Can't post new histograms if we don't have any.
             display_.postEvent(
                   new NewHistogramsEvent(channel, history.datas_));
+         }
+      }
+      else if (updateRate != null && updateRate < 0) {
+         // Histograms are disabled, but we still need them, so calculate
+         // them just this once.
+         HistogramHistory history = new HistogramHistory();
+         channelToHistory_.put(channel, history);
+         for (Image image : display_.getDisplayedImages()) {
+            if (image.getCoords().getChannel() == channel) {
+               updateHistogram(image, history);
+               break;
+            }
          }
       }
    }
