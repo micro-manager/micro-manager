@@ -714,11 +714,11 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
       if (isLogScale_) {
          data = data.logScale();
       }
-      double xUnit = 1.0;
       if (data.getBounds().getRangeY() < 1) {
          // We have an array of all zeros, i.e. nothing to draw, so don't try.
          return;
       }
+      double xUnit = Math.max(1.0, box.width / data.getBounds().getRangeX());
       double yUnit = (box.height / data.getBounds().getRangeY());
 
       GeneralPath trace = new GeneralPath(
@@ -816,7 +816,12 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
       Stroke oldStroke = g2d.getStroke();
 
       g2d.setPaint(Color.black);
-      g2d.setStroke(new BasicStroke(2.0f));
+      if (datas_.length == 1) {
+         g2d.setStroke(new BasicStroke(2.0f));
+      }
+      else {
+         g2d.setStroke(new BasicStroke(1.0f));
+      }
 
       for (int i = 0; i < datas_.length; ++i) {
          drawGraph(g2d, i, box);

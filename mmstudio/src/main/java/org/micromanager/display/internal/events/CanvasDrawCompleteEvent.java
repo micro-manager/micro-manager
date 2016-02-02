@@ -20,21 +20,9 @@
 
 package org.micromanager.display.internal.events;
 
-import java.awt.image.BufferedImage;
-
 
 /**
  * This class is used to signify when the canvas has completed performing a
  * pant event.
  */
-public class CanvasDrawCompleteEvent {
-   private BufferedImage bufferedImage_;
-
-   public CanvasDrawCompleteEvent(BufferedImage bufferedImage) {
-      bufferedImage_ = bufferedImage;
-   }
-
-   public BufferedImage getBufferedImage() {
-      return bufferedImage_;
-   }
-}
+public class CanvasDrawCompleteEvent {}

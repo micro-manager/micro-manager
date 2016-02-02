@@ -34,6 +34,7 @@ import ij.WindowManager;
 
 import java.awt.Dimension;
 import java.awt.Frame;
+import java.awt.Graphics;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
@@ -1230,6 +1231,14 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    public void setCustomTitle(String title) {
       customName_ = title;
       resetTitle();
+   }
+
+   /**
+    * This allows capturing the "image as displayed" (e.g. for the Export Movie
+    * dialog); we may want to expose it in the API in the future.
+    */
+   public void paintImageWithGraphics(Graphics g) {
+      canvas_.paintToGraphics(g);
    }
 
    @Override

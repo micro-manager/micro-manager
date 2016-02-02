@@ -41,6 +41,270 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class ContrastCalculator {
 
    /**
+    * This class just encapsulates necessary state for doing the calculations.
+    */
+   private static class InternalCalculator {
+      private final int width_;
+      private final int height_;
+      private final int bytesPerPixel_;
+      private final int numComponents_;
+      private final int component_;
+      private final int numBins_;
+      private final int binSize_;
+      private final int range_;
+      private final int[] histogram_;
+      private final byte[] maskPixels_;
+      private final Rectangle roiRect_;
+      private final int xMin_;
+      private final int xMax_;
+      private final int yMin_;
+      private final int yMax_;
+      private final Object pixels_;
+      private final double extremaPercentage_;
+      private final int depthPower_;
+
+      private int minVal_;
+      private int maxVal_;
+      private long meanVal_;
+      private int numPixels_;
+
+      public InternalCalculator(Image image, ImagePlus plus, int component,
+            int binPower, int depthPower, double extremaPercentage) {
+         width_ = image.getWidth();
+         height_ = image.getHeight();
+         bytesPerPixel_ = image.getBytesPerPixel();
+         numComponents_ = image.getNumComponents();
+         component_ = component;
+         depthPower_ = depthPower;
+         extremaPercentage_ = extremaPercentage;
+
+         minVal_ = Integer.MAX_VALUE;
+         maxVal_ = Integer.MIN_VALUE;
+         meanVal_ = 0;
+         numPixels_ = 0;
+         numBins_ = (int) Math.pow(2, binPower);
+         range_ = (int) Math.pow(2, depthPower);
+         binSize_ = Math.max(1, range_ / numBins_);
+
+         histogram_ = new int[numBins_];
+
+         pixels_ = image.getRawPixels();
+
+         // Get ROI information. This consists of a rectangle containing the
+         // ROI, and then, for non-rectangular ROIs, a pixel mask (fortunately
+         // not a *bit* mask though; each byte is one pixel).
+         if (plus != null) {
+            if (plus.getMask() != null) {
+               maskPixels_ = (byte[]) (plus.getMask().getPixels());
+            }
+            else {
+               maskPixels_ = null;
+            }
+            Roi roi = plus.getRoi();
+            if (roi != null) {
+               roiRect_ = roi.getBounds();
+            }
+            else {
+               roiRect_ = null;
+            }
+         }
+         else {
+            maskPixels_ = null;
+            roiRect_ = null;
+         }
+
+         if (roiRect_ == null) {
+            xMin_ = 0;
+            xMax_ = width_;
+            yMin_ = 0;
+            yMax_ = height_;
+         }
+         else {
+            xMin_ = roiRect_.x;
+            xMax_ = roiRect_.x + roiRect_.width;
+            yMin_ = roiRect_.y;
+            yMax_ = roiRect_.y + roiRect_.height;
+         }
+      }
+
+      public HistogramData calculate() {
+         // As an optimization, we split out the different "variants" of the
+         // inner loop, so we don't have to examine the type of the pixels array
+         // once for every component of every pixel.
+         if (pixels_ instanceof byte[]) {
+            if (maskPixels_ != null) {
+               calculate8BitMasked((byte[]) pixels_);
+            }
+            else {
+               calculate8Bit((byte[]) pixels_);
+            }
+         }
+         else if (pixels_ instanceof short[]) {
+            if (maskPixels_ != null) {
+               calculate16BitMasked((short[]) pixels_);
+            }
+            else {
+               calculate16Bit((short[]) pixels_);
+            }
+         }
+         else {
+            throw new IllegalArgumentException("Unrecognized pixel format " + pixels_);
+         }
+
+         int contrastMin = -1;
+         int contrastMax = -1;
+         // Need to interpolate into the histogram to get the correct
+         // contrast min/max values. This number is the number of the pixel
+         // whose intensity we want.
+         double pixelCount = width_ * height_ * .01 * extremaPercentage_;
+         // Start with finding the min.
+         double curCount = pixelCount;
+         for (int i = 0; i < histogram_.length; ++i) {
+            if (curCount >= histogram_[i]) {
+               curCount -= histogram_[i];
+               continue;
+            }
+            // The target min pixel intensity is somewhere in this bucket.
+            // Linearly interpolate between the min and max values of the
+            // bucket based on the current count. Note that at the ends of
+            // the histogram, the interpolation limits are minVal/maxVal.
+            int interpMin = Math.max(minVal_, i * binSize_);
+            int interpMax = Math.min((i + 1) * binSize_, maxVal_);
+            double frac = curCount / histogram_[i];
+            contrastMin = (int) (frac * (interpMax - interpMin) + interpMin);
+            break;
+         }
+         // Now find the max. Same as above, except we start counting from the
+         // top of the histogram instead of the bottom.
+         curCount = pixelCount;
+         for (int i = histogram_.length - 1; i >= 0; --i) {
+            if (curCount >= histogram_[i]) {
+               curCount -= histogram_[i];
+               continue;
+            }
+            int interpMin = Math.max(minVal_, i * binSize_);
+            int interpMax = Math.min((i + 1) * binSize_, maxVal_);
+            double frac = curCount / histogram_[i];
+            contrastMax = (int) (frac * (interpMax - interpMin) + interpMin);
+            break;
+         }
+
+         if (numPixels_ > 0) {
+            meanVal_ = meanVal_ / numPixels_;
+         }
+
+         HistogramData result = new HistogramData(histogram_,
+               numPixels_, minVal_, maxVal_, contrastMin,
+               contrastMax, (int) meanVal_, depthPower_, binSize_);
+         return result;
+      }
+
+      private void calculate8Bit(byte[] pixels) {
+         for (int x = xMin_; x < xMax_; ++x) {
+            for (int y = yMin_; y < yMax_; ++y) {
+               numPixels_++;
+               int index = (y * width_ + x) * bytesPerPixel_ + component_;
+               // Java doesn't have unsigned number types, so we have to
+               // manually convert; otherwise large numbers will set the sign
+               // bit and show as negative.
+               // This conversion logic is copied from ImageUtils.unsignedValue
+               int pixelVal = ((int) pixels[index]) & 0x000000ff;
+               if (pixelVal >= 0 && pixelVal < range_) {
+                  histogram_[pixelVal / binSize_]++;
+               }
+               minVal_ = Math.min(minVal_, pixelVal);
+               maxVal_ = Math.max(maxVal_, pixelVal);
+               meanVal_ += pixelVal;
+            }
+         }
+      }
+
+      private void calculate8BitMasked(byte[] pixels) {
+         for (int x = xMin_; x < xMax_; ++x) {
+            for (int y = yMin_; y < yMax_; ++y) {
+               int maskIndex = (y - roiRect_.y) * roiRect_.width +
+                  (x - roiRect_.x);
+               if (maskPixels_[maskIndex] == 0) {
+                  // Outside of the mask.
+                  continue;
+               }
+               numPixels_++;
+               int index = (y * width_ + x) * bytesPerPixel_ + component_;
+               // Java doesn't have unsigned number types, so we have to
+               // manually convert; otherwise large numbers will set the sign
+               // bit and show as negative.
+               // This conversion logic is copied from ImageUtils.unsignedValue
+               int pixelVal = ((int) pixels[index]) & 0x000000ff;
+               if (pixelVal >= 0 && pixelVal < range_) {
+                  histogram_[pixelVal / binSize_]++;
+               }
+               minVal_ = Math.min(minVal_, pixelVal);
+               maxVal_ = Math.max(maxVal_, pixelVal);
+               meanVal_ += pixelVal;
+            }
+         }
+      }
+
+      /**
+       * HACK: completely identical to calculate8Bit except for the type of the
+       * pixels array and the unsigned conversion mask.
+       */
+      private void calculate16Bit(short[] pixels) {
+         // Since we step 2 bytes at a time in a short[] array.
+         int stride = bytesPerPixel_ / 2;
+         for (int x = xMin_; x < xMax_; ++x) {
+            for (int y = yMin_; y < yMax_; ++y) {
+               numPixels_++;
+               int index = (y * width_ + x) * stride + component_;
+               // Java doesn't have unsigned number types, so we have to
+               // manually convert; otherwise large numbers will set the sign
+               // bit and show as negative.
+               // This conversion logic is copied from ImageUtils.unsignedValue
+               int pixelVal = ((int) pixels[index]) & 0x0000ffff;
+               if (pixelVal >= 0 && pixelVal < range_) {
+                  histogram_[pixelVal / binSize_]++;
+               }
+               minVal_ = Math.min(minVal_, pixelVal);
+               maxVal_ = Math.max(maxVal_, pixelVal);
+               meanVal_ += pixelVal;
+            }
+         }
+      }
+
+      /**
+       * HACK: completely identical to calculate8BitMasked except for the type
+       * of the pixels array and the unsigned conversion mask.
+       */
+      private void calculate16BitMasked(short[] pixels) {
+         // Since we step 2 bytes at a time in a short[] array.
+         int stride = bytesPerPixel_ / 2;
+         for (int x = xMin_; x < xMax_; ++x) {
+            for (int y = yMin_; y < yMax_; ++y) {
+               int maskIndex = (y - roiRect_.y) * roiRect_.width +
+                  (x - roiRect_.x);
+               if (maskPixels_[maskIndex] == 0) {
+                  // Outside of the mask.
+                  continue;
+               }
+               numPixels_++;
+               int index = (y * width_ + x) * stride + component_;
+               // Java doesn't have unsigned number types, so we have to
+               // manually convert; otherwise large numbers will set the sign
+               // bit and show as negative.
+               // This conversion logic is copied from ImageUtils.unsignedValue
+               int pixelVal = ((int) pixels[index]) & 0x0000ffff;
+               if (pixelVal >= 0 && pixelVal < range_) {
+                  histogram_[pixelVal / binSize_]++;
+               }
+               minVal_ = Math.min(minVal_, pixelVal);
+               maxVal_ = Math.max(maxVal_, pixelVal);
+               meanVal_ += pixelVal;
+            }
+         }
+      }
+   }
+
+   /**
     * @param image Image whose pixel data we will calculate the histogram for.
     * @param plus ImageJ ImagePlus object, needed for constraining
     *        the histogram area to the current ROI. May be null, in which case
@@ -59,149 +323,8 @@ public class ContrastCalculator {
    public static HistogramData calculateHistogram(Image image,
          ImagePlus plus, int component, int binPower, int depthPower,
          double extremaPercentage) {
-      int channel = image.getCoords().getChannel();
-      int width = image.getWidth();
-      int height = image.getHeight();
-      int bytesPerPixel = image.getBytesPerPixel();
-
-      int minVal = -1;
-      int maxVal = -1;
-      long meanVal = 0;
-      int numPixels = 0;
-      int numBins = (int) Math.pow(2, binPower);
-      int range = (int) Math.pow(2, depthPower);
-      int binSize = Math.max(1, range / numBins);
-
-      int[] histogram = new int[numBins];
-
-      Object pixels = image.getRawPixels();
-      int divisor = image.getNumComponents();
-      int exponent = 8;
-      if (pixels instanceof short[]) {
-         divisor *= 2;
-         exponent = 16;
-      }
-
-      // Get ROI information. This consists of a rectangle containing the
-      // ROI, and then, for non-rectangular ROIs, a pixel mask (fortunately
-      // not a *bit* mask though; each byte is one pixel).
-      byte[] maskPixels = null;
-      Rectangle roiRect = null;
-      if (plus != null) {
-         if (plus.getMask() != null) {
-            maskPixels = (byte[]) (plus.getMask().getPixels());
-         }
-         Roi roi = plus.getRoi();
-         if (roi != null) {
-            roiRect = roi.getBounds();
-         }
-      }
-
-      int xMin = 0;
-      int xMax = width;
-      int yMin = 0;
-      int yMax = height;
-      if (roiRect != null) {
-         xMin = roiRect.x;
-         xMax = roiRect.x + roiRect.width;
-         yMin = roiRect.y;
-         yMax = roiRect.y + roiRect.height;
-      }
-
-      for (int x = xMin; x < xMax; ++x) {
-         for (int y = yMin; y < yMax; ++y) {
-            if (maskPixels != null) {
-               int index = (y - roiRect.y) * roiRect.width + (x - roiRect.x);
-               if (maskPixels[index] == 0) {
-                  // Outside of the mask.
-                  continue;
-               }
-            }
-            numPixels++;
-            // TODO this code is copied not-quite-verbatim from
-            // Image.getComponentIntensityAt(). The chief difference being that
-            // we operate on the Java pixels array instead of the Image's
-            // native array buffer, and of course we get the intensity for
-            // every pixel in the image.
-            int pixelVal = 0;
-            for (int i = 0; i < bytesPerPixel / divisor; ++i) {
-               // NB Java will let you use "<<=" in this situation.
-               pixelVal = pixelVal << exponent;
-               int index = y * width + x + component + i;
-               // Java doesn't have unsigned number types, so we have to
-               // manually convert; otherwise large numbers will set the sign
-               // bit and show as negative.
-               int addend = 0;
-               if (pixels instanceof byte[]) {
-                  addend = ImageUtils.unsignedValue(
-                        ((byte[]) pixels)[index]);
-               }
-               else if (pixels instanceof short[]) {
-                  addend = ImageUtils.unsignedValue(
-                        ((short[]) pixels)[index]);
-               }
-               pixelVal += addend;
-            }
-            if (pixelVal >= 0 && pixelVal < range) {
-               histogram[pixelVal / binSize]++;
-            }
-            if (minVal == -1) {
-               minVal = pixelVal;
-               maxVal = pixelVal;
-            }
-            else {
-               minVal = Math.min(minVal, pixelVal);
-               maxVal = Math.max(maxVal, pixelVal);
-            }
-            meanVal += pixelVal;
-         }
-      }
-      int contrastMin = -1;
-      int contrastMax = -1;
-      // Need to interpolate into the histogram to get the correct
-      // contrast min/max values. This number is the number of the pixel
-      // whose intensity we want.
-      double pixelCount = width * height * .01 * extremaPercentage;
-      // Start with finding the min.
-      double curCount = pixelCount;
-      for (int i = 0; i < histogram.length; ++i) {
-         if (curCount >= histogram[i]) {
-            curCount -= histogram[i];
-            continue;
-         }
-         // The target min pixel intensity is somewhere in this bucket.
-         // Linearly interpolate between the min and max values of the
-         // bucket based on the current count. Note that at the ends of
-         // the histogram, the interpolation limits are minVal/maxVal.
-         int interpMin = Math.max(minVal, i * binSize);
-         int interpMax = Math.min((i + 1) * binSize, maxVal);
-         double frac = curCount / histogram[i];
-         contrastMin = (int) (frac * (interpMax - interpMin) + interpMin);
-         break;
-      }
-      // Now find the max. Same as above, except we start counting from the
-      // top of the histogram instead of the bottom.
-      curCount = pixelCount;
-      for (int i = histogram.length - 1; i >= 0; --i) {
-         if (curCount >= histogram[i]) {
-            curCount -= histogram[i];
-            continue;
-         }
-         int interpMin = Math.max(minVal, i * binSize);
-         int interpMax = Math.min((i + 1) * binSize, maxVal);
-         double frac = curCount / histogram[i];
-         contrastMax = (int) (frac * (interpMax - interpMin) + interpMin);
-         break;
-      }
-
-      if (numPixels > 0) {
-         meanVal = meanVal / numPixels;
-      }
-
-      HistogramData result = new HistogramData(histogram, numPixels,
-            minVal, maxVal, contrastMin, contrastMax,
-            (int) meanVal, depthPower, binSize);
-      return result;
+      return new InternalCalculator(image, plus, component, binPower,
+            depthPower, extremaPercentage).calculate();
    }
 
    /**
