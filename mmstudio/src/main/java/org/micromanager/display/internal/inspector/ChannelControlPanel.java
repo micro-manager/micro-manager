@@ -849,16 +849,22 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          return;
       }
       DisplaySettings settings = display_.getDisplaySettings();
-      int minVal = settings.getSafeContrastMin(channelIndex_, curComponent_,
-            lastHistograms_[curComponent_].getMinVal());
-      int maxVal = settings.getSafeContrastMax(channelIndex_, curComponent_,
-            lastHistograms_[curComponent_].getMaxVal());
+      DisplaySettings.ContrastSettings contrasts = settings.getSafeContrastSettings(
+            channelIndex_, new DefaultDisplaySettings.DefaultContrastSettings(
+               0, 0, 1.0, true));
       int binSize = lastHistograms_[curComponent_].getBinSize();
-      double gamma = settings.getSafeContrastGamma(
-            channelIndex_, curComponent_, 1.0);
-      histogram_.setCursorText(minVal + "", maxVal + "");
-      histogram_.setCursors(curComponent_,
-            minVal / binSize, (maxVal + 1) / binSize, gamma);
+      for (int i = 0; i < contrasts.getNumComponents(); ++i) {
+         int minVal = contrasts.getSafeContrastMin(i,
+               lastHistograms_[i].getMinVal());
+         int maxVal = contrasts.getSafeContrastMax(i,
+               lastHistograms_[i].getMaxVal());
+         double gamma = contrasts.getSafeContrastGamma(i, 1.0);
+         histogram_.setCursors(i, minVal / binSize, (maxVal + 1) / binSize,
+               gamma);
+         if (i == curComponent_) {
+            histogram_.setCursorText(minVal + "", maxVal + "");
+         }
+      }
       histogram_.setCurComponent(curComponent_);
       histogram_.repaint();
       minMaxLabel_.setText(String.format(
