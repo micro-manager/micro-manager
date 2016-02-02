@@ -851,7 +851,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             channelIndex_, new DefaultDisplaySettings.DefaultContrastSettings(
                0, 0, 1.0, true));
       int binSize = lastHistograms_[curComponent_].getBinSize();
-      for (int i = 0; i < contrasts.getNumComponents(); ++i) {
+      for (int i = 0; i < Math.min(lastHistograms_.length, contrasts.getNumComponents()); ++i) {
          int minVal = contrasts.getSafeContrastMin(i,
                lastHistograms_[i].getMinVal());
          int maxVal = contrasts.getSafeContrastMax(i,
