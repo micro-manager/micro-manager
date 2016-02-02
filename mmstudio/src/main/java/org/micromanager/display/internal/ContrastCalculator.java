@@ -150,6 +150,9 @@ public class ContrastCalculator {
          else {
             throw new IllegalArgumentException("Unrecognized pixel format " + pixels_);
          }
+         for (int i = 0; i < histogram_.length; ++i) {
+            numPixels_ += histogram_[i];
+         }
 
          int contrastMin = -1;
          int contrastMax = -1;
@@ -202,7 +205,6 @@ public class ContrastCalculator {
       private void calculate8Bit(byte[] pixels) {
          for (int x = xMin_; x < xMax_; ++x) {
             for (int y = yMin_; y < yMax_; ++y) {
-               numPixels_++;
                int index = (y * width_ + x) * bytesPerPixel_ + component_;
                // Java doesn't have unsigned number types, so we have to
                // manually convert; otherwise large numbers will set the sign
@@ -226,7 +228,6 @@ public class ContrastCalculator {
                   // Outside of the mask.
                   continue;
                }
-               numPixels_++;
                int index = (y * width_ + x) * bytesPerPixel_ + component_;
                // Java doesn't have unsigned number types, so we have to
                // manually convert; otherwise large numbers will set the sign
@@ -250,7 +251,6 @@ public class ContrastCalculator {
          int stride = bytesPerPixel_ / 2;
          for (int x = xMin_; x < xMax_; ++x) {
             for (int y = yMin_; y < yMax_; ++y) {
-               numPixels_++;
                int index = (y * width_ + x) * stride + component_;
                // Java doesn't have unsigned number types, so we have to
                // manually convert; otherwise large numbers will set the sign
@@ -280,7 +280,6 @@ public class ContrastCalculator {
                   // Outside of the mask.
                   continue;
                }
-               numPixels_++;
                int index = (y * width_ + x) * stride + component_;
                // Java doesn't have unsigned number types, so we have to
                // manually convert; otherwise large numbers will set the sign
