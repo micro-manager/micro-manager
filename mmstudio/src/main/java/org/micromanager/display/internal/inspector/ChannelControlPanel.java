@@ -84,16 +84,17 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private static final String[] COMPONENT_NAMES = new String[] {
       "red", "green", "blue"};
    // Icons to go with the components. These are completely hand-done (not
-   // based on any external work).
+   // based on any external work). Note the reversal of the expected order
+   // (BGR instead of RGB), due to how ImageJ renders RGB images.
    private static final Icon[] COMPONENT_ICONS_ACTIVE = new Icon[] {
-      IconLoader.getIcon("/org/micromanager/icons/rgb_red.png"),
+      IconLoader.getIcon("/org/micromanager/icons/rgb_blue.png"),
       IconLoader.getIcon("/org/micromanager/icons/rgb_green.png"),
-      IconLoader.getIcon("/org/micromanager/icons/rgb_blue.png")
+      IconLoader.getIcon("/org/micromanager/icons/rgb_red.png")
    };
    private static final Icon[] COMPONENT_ICONS_INACTIVE = new Icon[] {
-      IconLoader.getIcon("/org/micromanager/icons/rgb_red_blank.png"),
+      IconLoader.getIcon("/org/micromanager/icons/rgb_blue_blank.png"),
       IconLoader.getIcon("/org/micromanager/icons/rgb_green_blank.png"),
-      IconLoader.getIcon("/org/micromanager/icons/rgb_blue_blank.png")
+      IconLoader.getIcon("/org/micromanager/icons/rgb_red_blank.png")
    };
 
    // Event to tell other panels to go to "full" contrast.
@@ -637,10 +638,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          histogram_.setTraceStyle(true, 0, color);
       }
       else {
-         // Multi-component images default to RGB.
-         histogram_.setTraceStyle(false, 0, Color.RED);
+         // Multi-component images default to RGB. Except the components must
+         // be reversed to match ImageJ's rendering order.
+         histogram_.setTraceStyle(false, 0, Color.BLUE);
          histogram_.setTraceStyle(false, 1, Color.GREEN);
-         histogram_.setTraceStyle(false, 2, Color.BLUE);
+         histogram_.setTraceStyle(false, 2, Color.RED);
       }
    }
 
