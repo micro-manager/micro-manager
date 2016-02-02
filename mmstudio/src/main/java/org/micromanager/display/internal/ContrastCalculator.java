@@ -209,9 +209,6 @@ public class ContrastCalculator {
                // bit and show as negative.
                // This conversion logic is copied from ImageUtils.unsignedValue
                int pixelVal = ((int) pixels[index]) & 0x000000ff;
-               if (pixelVal >= 0 && pixelVal < range_) {
-                  histogram_[pixelVal / binSize_]++;
-               }
                minVal_ = Math.min(minVal_, pixelVal);
                maxVal_ = Math.max(maxVal_, pixelVal);
                meanVal_ += pixelVal;
@@ -235,9 +232,6 @@ public class ContrastCalculator {
                // bit and show as negative.
                // This conversion logic is copied from ImageUtils.unsignedValue
                int pixelVal = ((int) pixels[index]) & 0x000000ff;
-               if (pixelVal >= 0 && pixelVal < range_) {
-                  histogram_[pixelVal / binSize_]++;
-               }
                minVal_ = Math.min(minVal_, pixelVal);
                maxVal_ = Math.max(maxVal_, pixelVal);
                meanVal_ += pixelVal;
@@ -261,9 +255,6 @@ public class ContrastCalculator {
                // bit and show as negative.
                // This conversion logic is copied from ImageUtils.unsignedValue
                int pixelVal = ((int) pixels[index]) & 0x0000ffff;
-               if (pixelVal >= 0 && pixelVal < range_) {
-                  histogram_[pixelVal / binSize_]++;
-               }
                minVal_ = Math.min(minVal_, pixelVal);
                maxVal_ = Math.max(maxVal_, pixelVal);
                meanVal_ += pixelVal;
@@ -293,9 +284,6 @@ public class ContrastCalculator {
                // bit and show as negative.
                // This conversion logic is copied from ImageUtils.unsignedValue
                int pixelVal = ((int) pixels[index]) & 0x0000ffff;
-               if (pixelVal >= 0 && pixelVal < range_) {
-                  histogram_[pixelVal / binSize_]++;
-               }
                minVal_ = Math.min(minVal_, pixelVal);
                maxVal_ = Math.max(maxVal_, pixelVal);
                meanVal_ += pixelVal;
