@@ -726,8 +726,8 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
          // We have an array of all zeros, i.e. nothing to draw, so don't try.
          return;
       }
-      double xUnit = Math.max(1.0, box.width / data.getBounds().getRangeX());
-      double yUnit = (box.height / data.getBounds().getRangeY());
+      double xUnit = box.width / data.getBounds().getRangeX();
+      double yUnit = box.height / data.getBounds().getRangeY();
 
       GeneralPath trace = new GeneralPath(
             GeneralPath.WIND_EVEN_ODD, data.getSize() + 1);
