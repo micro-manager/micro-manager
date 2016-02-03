@@ -58,9 +58,9 @@ import org.micromanager.display.internal.inspector.InspectorFrame;
 import org.micromanager.display.internal.link.DisplayGroupManager;
 
 import org.micromanager.events.DatastoreClosingEvent;
+import org.micromanager.events.DisplayAboutToShowEvent;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
-import org.micromanager.events.NewDisplayEvent;
 
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -480,7 +480,7 @@ public final class DefaultDisplayManager implements DisplayManager {
     * if the Datastore is being managed.
     */
    @Subscribe
-   public void onNewDisplayEvent(NewDisplayEvent event) {
+   public void onDisplayAboutToShowEvent(DisplayAboutToShowEvent event) {
       DisplayWindow display = event.getDisplay();
       Datastore store = display.getDatastore();
       if (getIsManaged(store)) {

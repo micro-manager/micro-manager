@@ -84,17 +84,16 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private static final String[] COMPONENT_NAMES = new String[] {
       "red", "green", "blue"};
    // Icons to go with the components. These are completely hand-done (not
-   // based on any external work). Note the reversal of the expected order
-   // (BGR instead of RGB), due to how ImageJ renders RGB images.
+   // based on any external work).
    private static final Icon[] COMPONENT_ICONS_ACTIVE = new Icon[] {
-      IconLoader.getIcon("/org/micromanager/icons/rgb_blue.png"),
+      IconLoader.getIcon("/org/micromanager/icons/rgb_red.png"),
       IconLoader.getIcon("/org/micromanager/icons/rgb_green.png"),
-      IconLoader.getIcon("/org/micromanager/icons/rgb_red.png")
+      IconLoader.getIcon("/org/micromanager/icons/rgb_blue.png")
    };
    private static final Icon[] COMPONENT_ICONS_INACTIVE = new Icon[] {
-      IconLoader.getIcon("/org/micromanager/icons/rgb_blue_blank.png"),
+      IconLoader.getIcon("/org/micromanager/icons/rgb_red_blank.png"),
       IconLoader.getIcon("/org/micromanager/icons/rgb_green_blank.png"),
-      IconLoader.getIcon("/org/micromanager/icons/rgb_red_blank.png")
+      IconLoader.getIcon("/org/micromanager/icons/rgb_blue_blank.png")
    };
 
    // Event to tell other panels to go to "full" contrast.
@@ -642,11 +641,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          histogram_.setTraceStyle(true, 0, color);
       }
       else {
-         // Multi-component images default to RGB. Except the components must
-         // be reversed to match ImageJ's rendering order.
-         histogram_.setTraceStyle(false, 0, Color.BLUE);
+         // Multi-component images default to RGB.
+         histogram_.setTraceStyle(false, 0, Color.RED);
          histogram_.setTraceStyle(false, 1, Color.GREEN);
-         histogram_.setTraceStyle(false, 2, Color.RED);
+         histogram_.setTraceStyle(false, 2, Color.BLUE);
       }
    }
 
@@ -671,6 +669,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (mode != null) {
          isEnabledButton_.setVisible(
                mode == DisplaySettings.ColorMode.COMPOSITE);
+      }
+      Double updateRate = settings.getHistogramUpdateRate();
+      if (updateRate != null && updateRate < 0) {
+         histogram_.setOverlayText("Updates disabled");
+      }
+      else {
+         histogram_.setOverlayText(null);
       }
       redraw();
    }
@@ -860,7 +865,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             channelIndex_, new DefaultDisplaySettings.DefaultContrastSettings(
                0, 0, 1.0, true));
       int binSize = lastHistograms_[curComponent_].getBinSize();
-      for (int i = 0; i < contrasts.getNumComponents(); ++i) {
+      for (int i = 0; i < Math.min(lastHistograms_.length, contrasts.getNumComponents()); ++i) {
          int minVal = contrasts.getSafeContrastMin(i,
                lastHistograms_[i].getMinVal());
          int maxVal = contrasts.getSafeContrastMax(i,
