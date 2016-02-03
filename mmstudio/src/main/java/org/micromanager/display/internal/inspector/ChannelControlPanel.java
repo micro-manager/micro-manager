@@ -614,8 +614,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             //For drawing max label
             g.setColor(Color.black);
             g.setFont(new Font("Lucida Grande", 0, 10));
-            String maxLabel = "" + Math.pow(2,
-                  lastHistograms_[curComponent_].getBitDepth());
+            int maxVal = (int) Math.pow(2, histRangeComboBox_.getSelectedIndex() + 3);
+            if (histRangeComboBox_.getSelectedIndex() == 0) {
+               // Use camera depth instead.
+               maxVal = (int) Math.pow(2,
+                     lastHistograms_[curComponent_].getBitDepth());
+            }
+            String maxLabel = Integer.toString(maxVal);
             g.drawString(maxLabel, getSize().width - 8 * maxLabel.length(),
                   getSize().height);
          }
