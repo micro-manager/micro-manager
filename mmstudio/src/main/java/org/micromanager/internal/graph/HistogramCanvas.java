@@ -61,7 +61,8 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
    private Double ptDevTopUnclippedX_;
    private boolean contrastMinEditable_ = false, contrastMaxEditable_ = false;
    private String newContrast_ = "";
-   private String cursorTextLow_ = "",cursorTextHigh_ = "";   
+   private String cursorTextLow_ = "",cursorTextHigh_ = "";
+   private String overlayText_ = null;
 
    private GraphData[] datas_ = new GraphData[0];
    protected GraphData.Bounds bounds_;
@@ -620,6 +621,13 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
       cursorTextHigh_ = high;
    }
 
+   /**
+    * Set text for drawing on top of everything.
+    */
+   public void setOverlayText(String newText) {
+      overlayText_ = newText;
+   }
+
    public void setCursors(int component, double low, double high, double gamma) {
       extendArraysIfNeeded(component);
       cursorLowPositions_[component] = low;
@@ -835,6 +843,11 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
       }
       drawMapping(g2d, box, cursorLowPositions_[curComponent_],
             cursorHighPositions_[curComponent_], gamma_);
+
+      if (overlayText_ != null) {
+         g.setColor(Color.GRAY);
+         g.drawString(overlayText_, box.x + 25, box.y + box.height / 2);
+      }
 
       // restore settings
       g2d.setPaint(oldPaint);
