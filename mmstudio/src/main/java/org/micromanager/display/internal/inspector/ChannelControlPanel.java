@@ -620,7 +620,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                maxVal = (int) Math.pow(2,
                      lastHistograms_[curComponent_].getBitDepth());
             }
-            String maxLabel = Integer.toString(maxVal);
+            String maxLabel = Integer.toString(maxVal - 1);
             g.drawString(maxLabel, getSize().width - 8 * maxLabel.length(),
                   getSize().height);
          }
