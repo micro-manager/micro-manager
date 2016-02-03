@@ -207,9 +207,10 @@ public class ContrastCalculator {
                minVal_ = i * binSize_;
             }
          }
-         for (int i = histogram_.length; i >= 0; --i) {
-            if (maxVal_ == Integer.MIN_VALUE) {
+         for (int i = histogram_.length - 1; i >= 0; --i) {
+            if (histogram_[i] > 0 && maxVal_ == Integer.MIN_VALUE) {
                maxVal_ = (i + 1) * binSize_ - 1;
+               break;
             }
          }
 
