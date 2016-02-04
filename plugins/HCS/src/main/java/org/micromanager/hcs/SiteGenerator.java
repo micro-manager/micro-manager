@@ -52,6 +52,10 @@ import java.awt.event.FocusListener;
  */
 public class SiteGenerator extends MMFrame implements ParentPlateGUI {
 
+   private static final String EQUAL_SPACING = "Equal XY";
+   private static final String DIFFERENT_SPACING = "Different XY";
+   private static final String VIEW_SPACING = "Field of View";
+
    private CMMCore core_;
    private JTextField spacingFieldX_;
    private JTextField spacingFieldY_;
@@ -87,30 +91,32 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
    private final JLabel statusLabel_;
    private final JCheckBox chckbxThreePt_;
    private final ButtonGroup toolButtonGroup = new ButtonGroup();
-   private final ButtonGroup spacingButtonGroup = new ButtonGroup();
-   private JToggleButton toggleEqualXYSpacing_;
-   private JToggleButton toggleDifferentXYSpacing_;
-   private JToggleButton toggleFieldOfViewSpacing_;
+   private final JComboBox spacingMode_;
 
-   private double xSpacing = 0.0;
-   private double ySpacing = 0.0;
+   private double xSpacing_ = 0.0;
+   private double ySpacing_ = 0.0;
 
 
    private void updateXySpacing() {
-     if (toggleFieldOfViewSpacing_.isSelected()) {
+      String mode = (String) spacingMode_.getSelectedItem();
+      if (mode.equals(VIEW_SPACING)) {
        core_ = app_.getCMMCore();
        long width  = core_.getImageWidth();
        long height = core_.getImageHeight();
        double cameraXFieldOfView = core_.getPixelSizeUm() * width;
        double cameraYFieldOfView = core_.getPixelSizeUm() * height;
        double overlap = Double.parseDouble(overlapField_.getText().replace(',', '.'));
-       xSpacing = cameraXFieldOfView - overlap;
-       ySpacing = cameraYFieldOfView - overlap;
+       xSpacing_ = cameraXFieldOfView - overlap;
+       ySpacing_ = cameraYFieldOfView - overlap;
      }
      else {
-       xSpacing = Double.parseDouble(spacingFieldX_.getText().replace(',','.'));
-       if (toggleEqualXYSpacing_.isSelected()) ySpacing = xSpacing;
-       else ySpacing = Double.parseDouble(spacingFieldY_.getText().replace(',', '.'));
+       xSpacing_ = Double.parseDouble(spacingFieldX_.getText().replace(',','.'));
+       if (mode.equals(EQUAL_SPACING)) {
+          ySpacing_ = xSpacing_;
+         }
+       else {
+          ySpacing_ = Double.parseDouble(spacingFieldY_.getText().replace(',', '.'));
+       }
      }
    }
 
@@ -262,7 +268,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
             PositionList sites = generateSites(
                Integer.parseInt(rowsField_.getText()),
                Integer.parseInt(columnsField_.getText()),
-               xSpacing, ySpacing);
+               xSpacing_, ySpacing_);
             try {
                platePanel_.refreshImagingSites(sites);
             } catch (HCSException e1) {
@@ -357,56 +363,38 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
 
       sidebar.add(new JLabel("Spacing Rule:"), "gaptop 10");
 
-      toggleEqualXYSpacing_ = new JToggleButton("Equal XY");
-      toggleEqualXYSpacing_.addActionListener(new ActionListener() {
+      spacingMode_ = new JComboBox(new String[] {
+         EQUAL_SPACING, DIFFERENT_SPACING, VIEW_SPACING});
+      sidebar.add(spacingMode_, "growx");
+      spacingMode_.addActionListener(new ActionListener() {
          @Override
-         public void actionPerformed(ActionEvent arg0) {
-            if (toggleEqualXYSpacing_.isSelected()) {
-                spacingLabel.setText("Spacing [um]");
-                spacingFieldX_.setVisible(true);
-                spacingFieldY_.setVisible(false);
-                overlapField_.setVisible(false);
+         public void actionPerformed(ActionEvent e) {
+            String mode = (String) spacingMode_.getSelectedItem();
+            if (mode.equals(EQUAL_SPACING)) {
+               spacingLabel.setText("Spacing [um]");
+               spacingFieldX_.setVisible(true);
+               spacingFieldY_.setVisible(false);
+               overlapField_.setVisible(false);
             }
+            else if (mode.equals(DIFFERENT_SPACING)) {
+               spacingLabel.setText("Spacing X,Y [um]");
+               spacingFieldX_.setVisible(true);
+               spacingFieldY_.setVisible(true);
+               overlapField_.setVisible(false);
+            }
+            else if (mode.equals(VIEW_SPACING)) {
+               spacingLabel.setText("Overlap [um]");
+               overlapField_.setVisible(true);
+               spacingFieldX_.setVisible(false);
+               spacingFieldY_.setVisible(false);
+            }
+            else {
+               app_.logs().showError("Unrecognized spacing mode " + mode);
+            }
+            regenerate();
          }
       });
-
-      toggleDifferentXYSpacing_ = new JToggleButton("Different XY");
-      toggleDifferentXYSpacing_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            if (toggleDifferentXYSpacing_.isSelected()) {
-                spacingLabel.setText("Spacing X,Y [um]");
-                spacingFieldX_.setVisible(true);
-                spacingFieldY_.setVisible(true);
-                overlapField_.setVisible(false);
-            }
-         }
-      });
-
-      toggleFieldOfViewSpacing_ = new JToggleButton("Field of View");
-      toggleFieldOfViewSpacing_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            if (toggleFieldOfViewSpacing_.isSelected()) {
-                spacingLabel.setText("Overlap [um]");
-                overlapField_.setVisible(true);
-                spacingFieldX_.setVisible(false);
-                spacingFieldY_.setVisible(false);
-            }
-         }
-      });
-
-      spacingButtonGroup.add(toggleEqualXYSpacing_);
-      spacingButtonGroup.add(toggleDifferentXYSpacing_);
-      spacingButtonGroup.add(toggleFieldOfViewSpacing_);
-
-      toggleEqualXYSpacing_.setSelected(true);
-      toggleDifferentXYSpacing_.setSelected(false);
-      toggleFieldOfViewSpacing_.setSelected(false);
-
-      sidebar.add(toggleEqualXYSpacing_, "growx");
-      sidebar.add(toggleDifferentXYSpacing_, "growx");
-      sidebar.add(toggleFieldOfViewSpacing_, "growx");
+      spacingMode_.setSelectedIndex(0);
 
       chckbxThreePt_ = new JCheckBox("Use 3-Point AF");
       chckbxThreePt_.addActionListener(new ActionListener() {
@@ -455,7 +443,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       updateXySpacing();
 
       PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()),
-            xSpacing, ySpacing);
+            xSpacing_, ySpacing_);
       try {
          platePanel_.refreshImagingSites(sites);
       } catch (HCSException e1) {
@@ -685,7 +673,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       WellPositionList[] selectedWells = platePanel_.getSelectedWellPositions();
       updateXySpacing();
       PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()),
-              xSpacing, ySpacing);
+              xSpacing_, ySpacing_);
       plate_.initialize((String) plateIDCombo_.getSelectedItem());
       try {
          platePanel_.refreshImagingSites(sites);
@@ -727,7 +715,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
          app_.logs().logError(e);
       }
       PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()),
-              xSpacing, ySpacing);
+              xSpacing_, ySpacing_);
       try {
          platePanel_.refreshImagingSites(sites);
       } catch (HCSException e1) {
