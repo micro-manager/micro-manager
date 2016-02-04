@@ -75,16 +75,18 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
    private final String SITE_OVERLAP    = "site_overlap"; //in µm
    private final String SITE_ROWS       = "site_rows";
    private final String SITE_COLS       = "site_cols";
+   private final String USE_SNAKE       = "use_snake";
 
    public static final String menuName = "HCS Site Generator";
    public static final String tooltipDescription =
            "Generate position list for multi-well plates";
    private final JLabel statusLabel_;
-   static private final String VERSION_INFO = "1.4.2";
-   static private final String COPYRIGHT_NOTICE = "Copyright by UCSF, 2013";
+   static private final String VERSION_INFO = "1.4.3";
+   static private final String COPYRIGHT_NOTICE = "Copyright by UCSF, 2013-2016";
    static private final String DESCRIPTION = "Generate imaging site positions for micro-well plates and slides";
    static private final String INFO = "Not available";
    private final JCheckBox chckbxThreePt_;
+   private final JCheckBox useSnake_;
    private final ButtonGroup toolButtonGroup = new ButtonGroup();
    private JRadioButton rdbtnSelectWells_;
    private JRadioButton rdbtnMoveStage_;
@@ -155,7 +157,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
     */
    public SiteGenerator() {
       super();
-      setMinimumSize(new Dimension(815, 600));
+      setMinimumSize(new Dimension(600, 600));
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(final WindowEvent e) {
@@ -181,7 +183,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 
       platePanel_ = new PlatePanel(plate_, null, this);
       springLayout.putConstraint(SpringLayout.NORTH, platePanel_, 5, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, platePanel_, -136, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, platePanel_, -180, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, platePanel_, 5, SpringLayout.WEST, getContentPane());
       try {
          platePanel_.setApp(app_);
@@ -211,10 +213,11 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
          @Override
          public void actionPerformed(final ActionEvent e) {
             plate_.initialize((String) plateIDCombo_.getSelectedItem());
-            
-      updateXYspacing();         
-      PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()),
-              Xspacing,Yspacing);
+
+            updateXYspacing();
+            PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()),
+                    Integer.parseInt(columnsField_.getText()),
+                    Xspacing, Yspacing, useSnake_.isSelected());
             try {
                platePanel_.refreshImagingSites(sites);
             } catch (HCSException e1) {
@@ -234,14 +237,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       plateFormatLabel.setText("Plate format");
       getContentPane().add(plateFormatLabel);
 
-      rowsField_ = new JTextField();
-      rowsField_.setText("1");
-      getContentPane().add(rowsField_);
-      springLayout.putConstraint(SpringLayout.EAST, rowsField_, -65, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, rowsField_, -105, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, rowsField_, 195, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, rowsField_, 175, SpringLayout.NORTH, getContentPane());
-
       final JLabel imagingSitesLabel = new JLabel();
       springLayout.putConstraint(SpringLayout.SOUTH, plateIDCombo_, -11, SpringLayout.NORTH, imagingSitesLabel);
       springLayout.putConstraint(SpringLayout.NORTH, imagingSitesLabel, 135, SpringLayout.NORTH, getContentPane());
@@ -249,20 +244,36 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       springLayout.putConstraint(SpringLayout.EAST, imagingSitesLabel, -24, SpringLayout.EAST, getContentPane());
       imagingSitesLabel.setText("Imaging Sites");
       getContentPane().add(imagingSitesLabel);
+      
+      final JLabel rowsColumnsLabel = new JLabel();
+      springLayout.putConstraint(SpringLayout.NORTH, rowsColumnsLabel, 153, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, rowsColumnsLabel, 6, SpringLayout.EAST, platePanel_);
+      springLayout.putConstraint(SpringLayout.EAST, rowsColumnsLabel, -40, SpringLayout.EAST, getContentPane());
+      rowsColumnsLabel.setText("Rows, Columns");
+      getContentPane().add(rowsColumnsLabel);
+      
+      rowsField_ = new JTextField();
+      rowsField_.setText("1");
+      getContentPane().add(rowsField_);
+      springLayout.putConstraint(SpringLayout.EAST, rowsField_, 56, SpringLayout.EAST, platePanel_);
+      springLayout.putConstraint(SpringLayout.WEST, rowsField_, 6, SpringLayout.EAST, platePanel_);
+      springLayout.putConstraint(SpringLayout.SOUTH, rowsField_, 195, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, rowsField_, 175, SpringLayout.NORTH, getContentPane());
+
 
       columnsField_ = new JTextField();
       columnsField_.setText("1");
       getContentPane().add(columnsField_);
       springLayout.putConstraint(SpringLayout.SOUTH, columnsField_, 195, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, columnsField_, 175, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, columnsField_, -20, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, columnsField_, -60, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, columnsField_, 56, SpringLayout.EAST, rowsField_);
+      springLayout.putConstraint(SpringLayout.WEST, columnsField_, 6, SpringLayout.EAST, rowsField_);
 
       spacingFieldX_ = new JTextField();
       spacingFieldX_.setText("1000");
       getContentPane().add(spacingFieldX_);
-      springLayout.putConstraint(SpringLayout.EAST, spacingFieldX_, -65, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, spacingFieldX_, -105, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, spacingFieldX_, 56, SpringLayout.EAST, platePanel_);
+      springLayout.putConstraint(SpringLayout.WEST, spacingFieldX_, 6, SpringLayout.EAST, platePanel_);
       springLayout.putConstraint(SpringLayout.SOUTH, spacingFieldX_, 240, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, spacingFieldX_, 220, SpringLayout.NORTH, getContentPane());
 
@@ -271,33 +282,25 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       getContentPane().add(spacingFieldY_);
       springLayout.putConstraint(SpringLayout.SOUTH, spacingFieldY_, 240, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, spacingFieldY_, 220, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, spacingFieldY_, -20, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, spacingFieldY_, -60, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, spacingFieldY_, 56, SpringLayout.EAST, spacingFieldX_);
+      springLayout.putConstraint(SpringLayout.WEST, spacingFieldY_, 6, SpringLayout.EAST, spacingFieldX_);
       spacingFieldY_.setVisible(false);
 
       //same size and position like X_
       overlapField_ = new JTextField();
       overlapField_.setText("0");
       getContentPane().add(overlapField_);
-      springLayout.putConstraint(SpringLayout.EAST, overlapField_, -65, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, overlapField_, -105, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, overlapField_, 56, SpringLayout.EAST, platePanel_);
+      springLayout.putConstraint(SpringLayout.WEST, overlapField_, 6, SpringLayout.EAST, platePanel_);
       springLayout.putConstraint(SpringLayout.SOUTH, overlapField_, 240, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, overlapField_, 220, SpringLayout.NORTH, getContentPane());
       overlapField_.setVisible(false);
 
-
-      final JLabel rowsColumnsLabel = new JLabel();
-      springLayout.putConstraint(SpringLayout.NORTH, rowsColumnsLabel, 153, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, rowsColumnsLabel, 6, SpringLayout.EAST, platePanel_);
-      springLayout.putConstraint(SpringLayout.EAST, rowsColumnsLabel, -40, SpringLayout.EAST, getContentPane());
-      rowsColumnsLabel.setText("Rows, Columns");
-      getContentPane().add(rowsColumnsLabel);
-
       final JLabel spacingLabel = new JLabel();
       spacingLabel.setText("Spacing [um]");
       getContentPane().add(spacingLabel);
-      springLayout.putConstraint(SpringLayout.EAST, spacingLabel, -20, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, spacingLabel, -105, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, spacingLabel, 120, SpringLayout.EAST, platePanel_);
+      springLayout.putConstraint(SpringLayout.WEST, spacingLabel, 6, SpringLayout.EAST, platePanel_);
       springLayout.putConstraint(SpringLayout.SOUTH, spacingLabel, 216, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, spacingLabel, 200, SpringLayout.NORTH, getContentPane());
 
@@ -316,11 +319,42 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       refreshButton.setText("Refresh");
       getContentPane().add(refreshButton);
 
+
+      useSnake_ = new JCheckBox("Use Snake Pattern");
+      springLayout.putConstraint(SpringLayout.NORTH, useSnake_, 350, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, useSnake_, 6, SpringLayout.EAST, platePanel_);
+      springLayout.putConstraint(SpringLayout.EAST, useSnake_, -4, SpringLayout.EAST, getContentPane());
+      useSnake_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            platePanel_.repaint();
+         }
+      });
+      getContentPane().add(useSnake_);
+
+      final JButton setPositionListButton = new JButton();
+      springLayout.putConstraint(SpringLayout.WEST, setPositionListButton, 6, SpringLayout.EAST, platePanel_);
+      springLayout.putConstraint(SpringLayout.NORTH, setPositionListButton, 380, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, setPositionListButton, 25, SpringLayout.NORTH, setPositionListButton);
+      springLayout.putConstraint(SpringLayout.EAST, setPositionListButton, -4, SpringLayout.EAST, getContentPane());
+      setPositionListButton.setIcon(SwingResourceManager.getIcon(SiteGenerator.class, "/org/micromanager/icons/table.png"));
+      setPositionListButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+            regenerate();
+            setPositionList();
+         }
+      });
+      setPositionListButton.setText("Build MM List");
+      getContentPane().add(setPositionListButton);
+
+      
+      
       final JButton calibrateXyButton = new JButton();
       springLayout.putConstraint(SpringLayout.WEST, calibrateXyButton, 6, SpringLayout.EAST, platePanel_);
-      springLayout.putConstraint(SpringLayout.SOUTH, calibrateXyButton, 405, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, calibrateXyButton, 435, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.EAST, calibrateXyButton, -4, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, calibrateXyButton, 380, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, calibrateXyButton, 410, SpringLayout.NORTH, getContentPane());
       calibrateXyButton.setIcon(SwingResourceManager.getIcon(SiteGenerator.class, "/org/micromanager/icons/cog.png"));
       calibrateXyButton.addActionListener(new ActionListener() {
          @Override
@@ -331,33 +365,8 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       calibrateXyButton.setText("Calibrate XY...");
       getContentPane().add(calibrateXyButton);
 
-
-      final JButton setPositionListButton = new JButton();
-      springLayout.putConstraint(SpringLayout.WEST, setPositionListButton, 6, SpringLayout.EAST, platePanel_);
-      springLayout.putConstraint(SpringLayout.NORTH, setPositionListButton, 350, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, setPositionListButton, 375, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, setPositionListButton, -4, SpringLayout.EAST, getContentPane());
-      setPositionListButton.setIcon(SwingResourceManager.getIcon(SiteGenerator.class, "/org/micromanager/icons/table.png"));
-      setPositionListButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            setPositionList();
-         }
-      });
-      setPositionListButton.setText("Build MM List");
-      getContentPane().add(setPositionListButton);
-
-      statusLabel_ = new JLabel();
-      springLayout.putConstraint(SpringLayout.SOUTH, platePanel_, -6, SpringLayout.NORTH, statusLabel_);
-      springLayout.putConstraint(SpringLayout.SOUTH, statusLabel_, -5, SpringLayout.SOUTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, statusLabel_, -25, SpringLayout.SOUTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, statusLabel_, 5, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, statusLabel_, -4, SpringLayout.EAST, getContentPane());
-      statusLabel_.setBorder(new LineBorder(new Color(0, 0, 0)));
-      getContentPane().add(statusLabel_);
-
       chckbxThreePt_ = new JCheckBox("Use 3-Point AF");
-      springLayout.putConstraint(SpringLayout.NORTH, chckbxThreePt_, 419, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, chckbxThreePt_, 440, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, chckbxThreePt_, 6, SpringLayout.EAST, platePanel_);
       springLayout.putConstraint(SpringLayout.EAST, chckbxThreePt_, -4, SpringLayout.EAST, getContentPane());
       chckbxThreePt_.addActionListener(new ActionListener() {
@@ -370,9 +379,9 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 
       JButton btnMarkPt = new JButton("Mark Point");
       springLayout.putConstraint(SpringLayout.SOUTH, chckbxThreePt_, -6, SpringLayout.NORTH, btnMarkPt);
-      springLayout.putConstraint(SpringLayout.NORTH, btnMarkPt, 440, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, btnMarkPt, 470, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, btnMarkPt, 6, SpringLayout.EAST, platePanel_);
-      springLayout.putConstraint(SpringLayout.SOUTH, btnMarkPt, 465, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, btnMarkPt, 495, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.EAST, btnMarkPt, -4, SpringLayout.EAST, getContentPane());
       btnMarkPt.setIcon(SwingResourceManager.getIcon(SiteGenerator.class, "/org/micromanager/icons/plus.png"));
       btnMarkPt.addActionListener(new ActionListener() {
@@ -397,6 +406,15 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
          }
       });
       getContentPane().add(btnSetThreePt);
+          
+      statusLabel_ = new JLabel();
+      springLayout.putConstraint(SpringLayout.SOUTH, platePanel_, -6, SpringLayout.NORTH, statusLabel_);
+      springLayout.putConstraint(SpringLayout.SOUTH, statusLabel_, -5, SpringLayout.SOUTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, statusLabel_, -25, SpringLayout.SOUTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, statusLabel_, 5, SpringLayout.WEST, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, statusLabel_, -4, SpringLayout.EAST, getContentPane());
+      statusLabel_.setBorder(new LineBorder(new Color(0, 0, 0)));
+      getContentPane().add(statusLabel_);
 
       rdbtnSelectWells_ = new JRadioButton("Select Wells");
       rdbtnSelectWells_.addActionListener(new ActionListener() {
@@ -511,8 +529,9 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
 
       loadSettings();
       updateXYspacing();         
-      PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()),
-              Xspacing,Yspacing);
+      PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), 
+              Integer.parseInt(columnsField_.getText()),
+              Xspacing,Yspacing, useSnake_.isSelected());
       plate_.initialize((String) plateIDCombo_.getSelectedItem());
       try {
          platePanel_.refreshImagingSites(sites);
@@ -530,6 +549,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       prefs.put(SITE_OVERLAP, overlapField_.getText());
       prefs.put(SITE_ROWS, rowsField_.getText());
       prefs.put(SITE_COLS, columnsField_.getText());
+      prefs.putBoolean(USE_SNAKE, useSnake_.isSelected());
    }
 
    protected final void loadSettings() {
@@ -540,6 +560,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       overlapField_.setText(prefs.get(SITE_OVERLAP, "10")); // 10%
       rowsField_.setText(prefs.get(SITE_ROWS, "1"));
       columnsField_.setText(prefs.get(SITE_COLS, "1"));
+      useSnake_.setSelected(prefs.getBoolean(USE_SNAKE, true));
    }
 
    private void setPositionList() {
@@ -614,46 +635,76 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       }
    }
 
-   private PositionList generateSites(int rows, int cols, double spacingX,  double spacingY) {
+   private PositionList generateSites(int rows, int cols, double spacingX,  double spacingY, 
+           boolean snakePattern) {
       PositionList sites = new PositionList();
       System.out.println("# Rows : " + rows + ", # Cols : " + cols + " ,spacingX = " + spacingX + " ,spacingY = " + spacingY);
-      for (int i = 0; i < rows; i++) {
-         // create snake-like pattern inside the well:
-         boolean isEven = i % 2 == 0;
-         int start = isEven ? 0 : cols - 1;
-         int end = isEven ? cols : - 1;
-         int j = start;
-         // instead of using a for loop, cycle backwards on odd rows
-         while ( (isEven && j < end) || (!isEven && j > end)  ) {
-            double x;
-            double y;
-            if (cols > 1) {
-               x = -cols * spacingX / 2.0 + spacingX * j + spacingX / 2.0;
-            } else {
-               x = 0.0;
+      if (snakePattern) {
+         for (int i = 0; i < rows; i++) {
+            // create snake-like pattern inside the well:
+            boolean isEven = i % 2 == 0;
+            int start = isEven ? 0 : cols - 1;
+            int end = isEven ? cols : - 1;
+            int j = start;
+            // instead of using a for loop, cycle backwards on odd rows
+            while ((isEven && j < end) || (!isEven && j > end)) {
+               double x;
+               double y;
+               if (cols > 1) {
+                  x = -cols * spacingX / 2.0 + spacingX * j + spacingX / 2.0;
+               } else {
+                  x = 0.0;
+               }
+
+               if (rows > 1) {
+                  y = -rows * spacingY / 2.0 + spacingY * i + spacingY / 2.0;
+               } else {
+                  y = 0.0;
+               }
+
+               MultiStagePosition mps = new MultiStagePosition();
+               StagePosition sp = new StagePosition();
+               sp.numAxes = 2;
+               sp.x = x;
+               sp.y = y;
+               System.out.println("(" + i + "," + j + ") = " + x + "," + y);
+
+               mps.add(sp);
+               sites.addPosition(mps);
+               if (isEven) {
+                  j++;
+               } else {
+                  j--;
+               }
+
             }
+         }
+      } else { // not a snake patterm
+         for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+               double x;
+               double y;
+               if (cols > 1) {
+                  x = -cols * spacingX / 2.0 + spacingX * j + spacingX / 2.0;
+               } else {
+                  x = 0.0;
+               }
+               if (rows > 1) {
+                  y = -rows * spacingY / 2.0 + spacingY * i + spacingY / 2.0;
+               } else {
+                  y = 0.0;
+               }
 
-            if (rows > 1) {
-               y = -rows * spacingY / 2.0 + spacingY * i + spacingY / 2.0;
-            } else {
-               y = 0.0;
+               MultiStagePosition mps = new MultiStagePosition();
+               StagePosition sp = new StagePosition();
+               sp.numAxes = 2;
+               sp.x = x;
+               sp.y = y;
+               System.out.println("(" + i + "," + j + ") = " + x + "," + y);
+
+               mps.add(sp);
+               sites.addPosition(mps);
             }
-
-            MultiStagePosition mps = new MultiStagePosition();
-            StagePosition sp = new StagePosition();
-            sp.numAxes = 2;
-            sp.x = x;
-            sp.y = y;
-            System.out.println("(" + i + "," + j + ") = " + x + "," + y);
-
-            mps.add(sp);
-            sites.addPosition(mps);
-            if (isEven) {
-               j++;
-            } else {
-               j--;
-            }
-
          }
       }
 
@@ -661,7 +712,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
    }
 
    @Override
-   public void updatePointerXYPosition(double x, double y, String wellLabel, 
+   public void updatePointerXYPosition(double x, double y, String wellLabel,
            String siteLabel) {
       cursorPos_.x = x;
       cursorPos_.y = y;
@@ -730,8 +781,9 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI, MMPlugin {
       WellPositionList[] selectedWells = platePanel_.getSelectedWellPositions();
       
       updateXYspacing();         
-      PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()),
-              Xspacing,Yspacing);
+      PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), 
+              Integer.parseInt(columnsField_.getText()),
+              Xspacing,Yspacing, useSnake_.isSelected());
       plate_.initialize((String) plateIDCombo_.getSelectedItem());
       try {
          platePanel_.refreshImagingSites(sites);
