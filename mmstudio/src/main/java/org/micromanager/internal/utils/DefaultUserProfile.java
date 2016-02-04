@@ -245,8 +245,8 @@ public class DefaultUserProfile implements UserProfile {
     * Append a class name to the provided key to generate a unique-across-MM
     * key.
     * Note that exportProfileSubsetToFile(), exportPackageProfileToFile(),
-    * clearProfileSubset(), and clearPackageProfile() all assume that
-    * keys start with the class' canonical name.
+    * extractProfileSubset(), clearProfileSubset(), and clearPackageProfile()
+    * all assume that keys start with the class' canonical name.
     */
    private String genKey(Class<?> c, String key) {
       return c.getCanonicalName() + ":" + key;
@@ -712,6 +712,33 @@ public class DefaultUserProfile implements UserProfile {
 
    public boolean getIsDefaultUser() {
       return profileName_.equals(DEFAULT_USER);
+   }
+
+   @Override
+   public PropertyMap extractProfileSubset(Class<?> c) {
+      DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();
+      String keyBase = genKey(c, "");
+      for (String key : userProfile_.getKeys()) {
+         if (key.startsWith(keyBase)) {
+            builder.putProperty(key.replace(keyBase, ""),
+                  userProfile_.getProperty(key));
+         }
+      }
+      return builder.build();
+   }
+
+   @Override
+   public void insertProperties(Class<?> c, PropertyMap properties) {
+      synchronized(lockObject_) {
+         // Cast to DefaultPropertyMap so we can use [get|put]Property().
+         DefaultPropertyMap.Builder builder = (DefaultPropertyMap.Builder) userProfile_.copy();
+         DefaultPropertyMap source = (DefaultPropertyMap) properties;
+         for (String key : properties.getKeys()) {
+            String newKey = genKey(c, key);
+            builder.putProperty(newKey, source.getProperty(key));
+         }
+         userProfile_ = (DefaultPropertyMap) builder.build();
+      }
    }
 
    @Override

@@ -321,11 +321,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
       else {
          boolean isFirst = true;
-         JPanel subPanel = new JPanel(new MigLayout("flowx, insets 0"));
+         JPanel subPanel = new JPanel(new MigLayout("flowx, insets 0, gap 0"));
          for (JToggleButton button : componentPickerButtons_) {
             subPanel.add(button, "aligny center, w 16!, h 16!, gap 0! 0!");
          }
-         firstColumn.add(subPanel);
+         firstColumn.add(subPanel, "aligny center");
       }
       if (linker_ != null) {
          linkButton_ = new LinkButton(linker_, display_);
