@@ -330,38 +330,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       sidebar.add(overlapField_, "hidemode 2");
       overlapField_.setVisible(false);
 
-      final JButton refreshButton = new JButton("Refresh",
-            IconLoader.getIcon("/org/micromanager/icons/arrow_refresh.png"));
-      refreshButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            regenerate();
-         }
-      });
-      sidebar.add(refreshButton, "growx");
-
-      final JButton calibrateXyButton = new JButton("Calibrate XY...",
-            IconLoader.getIcon("/org/micromanager/icons/cog.png"));
-      calibrateXyButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            calibrateXY();
-         }
-      });
-      sidebar.add(calibrateXyButton, "growx");
-
-
-      final JButton setPositionListButton = new JButton("Build MM List",
-            IconLoader.getIcon("/org/micromanager/icons/table.png"));
-      setPositionListButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            setPositionList();
-         }
-      });
-      sidebar.add(setPositionListButton, "growx");
-
-      sidebar.add(new JLabel("Spacing Rule:"), "gaptop 10");
+      sidebar.add(new JLabel("Spacing Rule:"));
 
       spacingMode_ = new JComboBox(new String[] {
          EQUAL_SPACING, DIFFERENT_SPACING, VIEW_SPACING});
@@ -395,6 +364,37 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
          }
       });
       spacingMode_.setSelectedIndex(0);
+
+      final JButton refreshButton = new JButton("Refresh",
+            IconLoader.getIcon("/org/micromanager/icons/arrow_refresh.png"));
+      refreshButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+            regenerate();
+         }
+      });
+      sidebar.add(refreshButton, "growx, gaptop 10");
+
+      final JButton calibrateXyButton = new JButton("Calibrate XY...",
+            IconLoader.getIcon("/org/micromanager/icons/cog.png"));
+      calibrateXyButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+            calibrateXY();
+         }
+      });
+      sidebar.add(calibrateXyButton, "growx");
+
+
+      final JButton setPositionListButton = new JButton("Build MM List",
+            IconLoader.getIcon("/org/micromanager/icons/table.png"));
+      setPositionListButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+            setPositionList();
+         }
+      });
+      sidebar.add(setPositionListButton, "growx");
 
       chckbxThreePt_ = new JCheckBox("Use 3-Point AF");
       chckbxThreePt_.addActionListener(new ActionListener() {
