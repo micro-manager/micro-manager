@@ -521,7 +521,9 @@ public final class HistogramsPanel extends InspectorPanel {
     * GUIs, which can only happen after they have histogram data to show.
     */
    public void relayout() {
-      inspector_.relayout();
+      if (inspector_ != null) {
+         inspector_.relayout();
+      }
    }
 
    @Override
