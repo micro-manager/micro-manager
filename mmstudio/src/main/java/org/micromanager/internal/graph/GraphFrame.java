@@ -86,7 +86,12 @@ public class GraphFrame extends MMFrame {
       panel_.setData(data);
       refresh();
    }
-   
+
+   public void setLabels(String xLabel, String yLabel) {
+      panel_.setLabels(xLabel, yLabel);
+      refresh();
+   }
+
    public void refresh() {
       GraphData.Bounds bounds = panel_.getGraphBounds();
       if (fldXMin.getText().length() > 0 && fldYMin.getText().length() > 0 && 

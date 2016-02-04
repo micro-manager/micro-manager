@@ -75,6 +75,11 @@ public class GraphPanel extends JPanel {
       data_ = d;
    }
 
+   public void setLabels(String xLabel, String yLabel) {
+      xLabel_ = xLabel;
+      yLabel_ = yLabel;
+   }
+
    public void setGamma(double gamma) {
       gamma_ = gamma;
    }

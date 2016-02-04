@@ -48,6 +48,7 @@ public class LineProfile {
       });
       profileWin_.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
       profileWin_.setData(lineProfileData_);
+      profileWin_.setLabels("Pixel", "Intensity");
       profileWin_.setAutoScale();
       profileWin_.setTitle("Line profile for " + display_.getName());
       profileWin_.setVisible(true);
