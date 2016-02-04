@@ -237,7 +237,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
 
       final JLabel plateFormatLabel = new JLabel();
       plateFormatLabel.setAlignmentY(Component.TOP_ALIGNMENT);
-      plateFormatLabel.setText("Plate format");
+      plateFormatLabel.setText("Plate Format:");
       sidebar.add(plateFormatLabel);
 
       plateIDCombo_ = new JComboBox();
@@ -292,39 +292,43 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
          }
       };
 
-      final JLabel imagingSitesLabel = new JLabel();
-      imagingSitesLabel.setText("Imaging Sites");
-      sidebar.add(imagingSitesLabel);
-      final JLabel rowsColumnsLabel = new JLabel();
-      rowsColumnsLabel.setText("Rows, Columns");
-      sidebar.add(rowsColumnsLabel);
+      sidebar.add(new JLabel("Imaging Sites"));
+      JPanel gridPanel = new JPanel(new MigLayout("flowx, gap 0, insets 0",
+               "0[]0[]0", "0[]0[]0"));
+      gridPanel.add(new JLabel("Rows"));
+      gridPanel.add(new JLabel("Columns"), "wrap");
 
       rowsField_ = new JTextField(3);
       rowsField_.setText("1");
-      sidebar.add(rowsField_, "split 2, flowx");
+      gridPanel.add(rowsField_);
       rowsField_.addFocusListener(regeneratePlateOnLossOfFocus);
 
+      sidebar.add(new JLabel("Columns"));
       columnsField_ = new JTextField(3);
       columnsField_.setText("1");
-      sidebar.add(columnsField_);
+      gridPanel.add(columnsField_);
       columnsField_.addFocusListener(regeneratePlateOnLossOfFocus);
+      sidebar.add(gridPanel);
 
       final JLabel spacingLabel = new JLabel();
-      spacingLabel.setText("Spacing [um]");
+      spacingLabel.setText("Spacing [\u00b5m]");
       sidebar.add(spacingLabel);
 
       spacingFieldX_ = new JTextField(3);
       spacingFieldX_.setText("1000");
+      spacingFieldX_.addFocusListener(regeneratePlateOnLossOfFocus);
       sidebar.add(spacingFieldX_, "split 2, flowx, hidemode 2");
 
       spacingFieldY_ = new JTextField();
       spacingFieldY_.setText("1000");
+      spacingFieldY_.addFocusListener(regeneratePlateOnLossOfFocus);
       // Take zero space when invisible.
       sidebar.add(spacingFieldY_, "hidemode 2");
       spacingFieldY_.setVisible(false);
 
       //same size and position like X_
       overlapField_ = new JTextField();
+      overlapField_.addFocusListener(regeneratePlateOnLossOfFocus);
       overlapField_.setText("0");
       // Take zero space when invisible.
       sidebar.add(overlapField_, "hidemode 2");
@@ -340,19 +344,19 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
          public void actionPerformed(ActionEvent e) {
             String mode = (String) spacingMode_.getSelectedItem();
             if (mode.equals(EQUAL_SPACING)) {
-               spacingLabel.setText("Spacing [um]");
+               spacingLabel.setText("Spacing [\u00b5m]");
                spacingFieldX_.setVisible(true);
                spacingFieldY_.setVisible(false);
                overlapField_.setVisible(false);
             }
             else if (mode.equals(DIFFERENT_SPACING)) {
-               spacingLabel.setText("Spacing X,Y [um]");
+               spacingLabel.setText("Spacing X,Y [\u00b5m]");
                spacingFieldX_.setVisible(true);
                spacingFieldY_.setVisible(true);
                overlapField_.setVisible(false);
             }
             else if (mode.equals(VIEW_SPACING)) {
-               spacingLabel.setText("Overlap [um]");
+               spacingLabel.setText("Overlap [\u00b5m]");
                overlapField_.setVisible(true);
                spacingFieldX_.setVisible(false);
                spacingFieldY_.setVisible(false);
