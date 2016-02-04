@@ -41,8 +41,8 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
 /**
+ * This is the primary user interface for the plugin.
  * @author nenad
- *
  */
 public class SiteGenerator extends MMFrame implements ParentPlateGUI {
 
@@ -643,8 +643,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
    private PositionList generateSites(int rows, int cols,
          double spacingX, double spacingY) {
       PositionList sites = new PositionList();
-      System.out.println("# Rows : " + rows + ", # Cols : " + cols +
-            ", spacingX = " + spacingX + ", spacingY = " + spacingY);
       for (int i = 0; i < rows; i++) {
          // create snake-like pattern inside the well:
          boolean isEven = i % 2 == 0;
@@ -672,7 +670,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
             sp.numAxes = 2;
             sp.x = x;
             sp.y = y;
-            System.out.println("(" + i + "," + j + ") = " + x + "," + y);
 
             mps.add(sp);
             sites.addPosition(mps);
