@@ -48,6 +48,7 @@ public class StoredFloatLabel extends JLabel {
     * @param prefKey - Key used to store the value in preferences
     * @param defaultValue - default value in case nothing is found in prefs
     * @param prefs - Global preferences object used in this plugin
+    * @param gui - MM ScriptInterface instance
     * @param units - string to be displayed after the float, usually containing units
     */
    public StoredFloatLabel(String prefNode, String prefKey, float defaultValue, 

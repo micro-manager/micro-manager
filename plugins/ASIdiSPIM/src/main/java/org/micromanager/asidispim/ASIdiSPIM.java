@@ -43,7 +43,6 @@ public class ASIdiSPIM implements MenuPlugin, SciJavaPlugin {
       return myFrame_;
    }
  
-
    @Override
    public String getVersion() {
       return "0.3";
@@ -51,7 +50,7 @@ public class ASIdiSPIM implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public String getCopyright() {
-      return "University of California and ASI, 2013-2015";
+      return "University of California and ASI, 2013-2016";
    }
 
    @Override
@@ -70,7 +69,6 @@ public class ASIdiSPIM implements MenuPlugin, SciJavaPlugin {
       // create brand new instance of plugin frame every time
       try {
          myFrame_ = new ASIdiSPIMFrame(gui_);
-         //gui_.addMMListener(myFrame_);
       } catch (Exception e) {
          gui_.logs().showError(e);
       }

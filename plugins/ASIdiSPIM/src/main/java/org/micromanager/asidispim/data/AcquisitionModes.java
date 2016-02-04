@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          CameraModes.java
+//FILE:          AcquisitionModes.java
 //PROJECT:       Micro-Manager 
 //SUBSYSTEM:     ASIdiSPIM plugin
 //-----------------------------------------------------------------------------
@@ -34,14 +34,13 @@ import org.micromanager.asidispim.utils.MyDialogUtils;
 
 
 /**
- * Class that holds utilities camera readout mode
+ * Class that holds utilities related to SPIM acquisition mode
  * 
  * @author Jon
  */
-public class CameraModes {
+public class AcquisitionModes {
    
    private final Devices devices_;   // object holding information about selected/available devices
-   private final Properties props_;  // object handling all property read/writes
    private final Prefs prefs_;
    
    /**
@@ -50,11 +49,13 @@ public class CameraModes {
     * can be easily changed. 
     */
    public static enum Keys { 
-      EDGE("Edge trigger", 1),
-      OVERLAP("Overlap/synchronous", 2),
-      LEVEL("Level trigger (not yet implemented)", 3),
-      PSEUDO_OVERLAP("Pseudo Overlap", 4),
-      INTERNAL("Internal", 0);
+      PIEZO_SLICE_SCAN("Synchronous piezo/slice scan", 1),
+      NO_SCAN(         "No scan (fixed sheet)", 3),
+      STAGE_SCAN(      "Stage scan", 4),
+      STAGE_SCAN_INTERLEAVED("Stage scan interleaved", 5),
+      SLICE_SCAN_ONLY( "Slice scan only (unusual)", 2),
+      PIEZO_SCAN_ONLY("Piezo scan only (unusual)", 6),
+      NONE(            "None", 0);
       private final String text;
       private final int prefCode;
       Keys(String text, int prefCode) {
@@ -70,9 +71,8 @@ public class CameraModes {
       }
    };
    
-   public CameraModes(Devices devices, Properties props, Prefs prefs) {
+   public AcquisitionModes(Devices devices, Prefs prefs) {
       devices_ = devices;
-      props_ = props;
       prefs_ = prefs;
    }
    
@@ -80,7 +80,7 @@ public class CameraModes {
     * @param prefCode
     * @return null if prefCode not found, or the Key if it is
     */
-   public static Keys getKeyFromPrefCode(final int prefCode) {
+   public static Keys getKeyFromPrefCode(int prefCode) {
       for (Keys k : Keys.values()) {
          if (k.getPrefCode() == prefCode) {
             return k;
@@ -89,29 +89,29 @@ public class CameraModes {
       return null;
    }
    
+   
    public JComboBox getComboBox() {
       JComboBox jcb = new JComboBox();
-      ActionListener l = new CameraModeComboBoxListener(jcb);
+      ActionListener l = new ComboBoxListener(jcb);
       jcb.addActionListener(l);
       // when devices are changed we want to regenerate the list
       devices_.addListener((DevicesListenerInterface) l);
       return jcb;
    }
    
-   private class CameraModeComboBoxListener implements ActionListener,
-      DevicesListenerInterface {
+   private class ComboBoxListener implements ActionListener, DevicesListenerInterface {
       
       private final JComboBox jcb_;
       
-      public CameraModeComboBoxListener(JComboBox jcb) {
+      public ComboBoxListener(JComboBox jcb) {
          jcb_ = jcb;
          updateSelections();  // do initial rendering
       }
       
       @Override
       public void actionPerformed(ActionEvent ae) {
-         prefs_.putInt(MyStrings.PanelNames.SETTINGS.toString(),
-               Properties.Keys.PLUGIN_CAMERA_MODE,
+         prefs_.putInt(MyStrings.PanelNames.ACQUSITION.toString(),
+               Properties.Keys.PLUGIN_ACQUSITION_MODE,
                ((Keys) jcb_.getSelectedItem()).getPrefCode());
       }
       
@@ -130,9 +130,8 @@ public class CameraModes {
        */
       private void updateSelections() {
          // save the existing selection if it exists
-         // could use props_ with PLUGIN device too
-         int origCode = prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
-               Properties.Keys.PLUGIN_CAMERA_MODE, 0);
+         int origCode = prefs_.getInt(MyStrings.PanelNames.ACQUSITION.toString(),
+               Properties.Keys.PLUGIN_ACQUSITION_MODE, 0);
          
          DefaultComboBoxModel cbModel = new DefaultComboBoxModel();
          
@@ -149,95 +148,34 @@ public class CameraModes {
             jcb_.setSelectedItem(origItem);
          } else {
             // if existing selection isn't valid now then write new selection to prefs
-            MyDialogUtils.showError("For preference " + Properties.Keys.PLUGIN_CAMERA_MODE.toString()
+            MyDialogUtils.showError("For preference " + Properties.Keys.PLUGIN_ACQUSITION_MODE.toString()
                   + " the previous selection \""
                   + getKeyFromPrefCode(origCode) + "\" is not valid.  Changing to default.");
-            if (jcb_.getSelectedItem() != null) {
-               prefs_.putInt(MyStrings.PanelNames.SETTINGS.toString(),
-                  Properties.Keys.PLUGIN_CAMERA_MODE, ((Keys) jcb_.getSelectedItem()).getPrefCode());     
-            }
+            prefs_.putInt(MyStrings.PanelNames.ACQUSITION.toString(),
+                  Properties.Keys.PLUGIN_ACQUSITION_MODE, ((Keys)jcb_.getSelectedItem()).getPrefCode());
          }
       }//updateSelections
-      
-      
-      /**
-       * Does camera support overlap/synchronous mode?
-       * @param devKey
-       * @return
-       */
-      private boolean cameraSupportsOverlap(Devices.Keys devKey) {
-         Devices.Libraries devLib = devices_.getMMDeviceLibrary(devKey);
-         return (devLib == Devices.Libraries.HAMCAM ||
-               devLib == Devices.Libraries.ANDORCAM ||
-               devLib == Devices.Libraries.DEMOCAM);
-      }
-      
-      /**
-       * Does camera support pseudo overlap/synchronous mode?
-       * This is just PCO for the moment.
-       * @param devKey
-       * @return
-       */
-      private boolean cameraSupportsPseudoOverlap(Devices.Keys devKey) {
-         Devices.Libraries devLib = devices_.getMMDeviceLibrary(devKey);
-         return (devLib == Devices.Libraries.PCOCAM);
-      }
-      
-      private boolean cameraInvalid(Devices.Keys devKey) {
-         Devices.Libraries devLib = devices_.getMMDeviceLibrary(devKey);
-         return (devLib == Devices.Libraries.UNKNOWN ||
-               devLib == Devices.Libraries.NODEVICE);
-      }
-      
+
+
       /**
        * Returns whatever acquisition modes are available based on devices
-       * and installed firmware.  Can be expanded in the future
-       * (will use devices_ and props_)
+       * and installed firmware.  Can be expanded.
+       * Decided to show all options and decide later whether they are doable with the
+       * existing firmware/hardware, that way the end user at least knows such features exist 
        * @return
        */
       private List<Keys> getValidModeKeys() {
-         // TODO add level ("bulb") triggering
          List<Keys> keyList = new ArrayList<Keys>();
-         boolean twoSided = 
-               (props_.getPropValueInteger(Devices.Keys.PLUGIN,
-            Properties.Keys.PLUGIN_NUM_SIDES)) != 1;
-               //true; // ASIdiSPIM.getFrame().getAcquisitionPanel().isTwoSided();
-         boolean sideAFirst = 
-               (props_.getPropValueString(Devices.Keys.PLUGIN,
-                     Properties.Keys.PLUGIN_FIRST_SIDE).equals("A"));
-                     //true; // ASIdiSPIM.getFrame().getAcquisitionPanel().isFirstSideA();
-         
-         if (twoSided) {
-            if (cameraInvalid(Devices.Keys.CAMERAA) ||
-                  cameraInvalid(Devices.Keys.CAMERAB)) {
-               return keyList;
-            }
-            keyList.add(Keys.EDGE);
-//          keyList.add(Keys.LEVEL);
-            if (cameraSupportsOverlap(Devices.Keys.CAMERAA) &&
-                  cameraSupportsOverlap(Devices.Keys.CAMERAB)) {
-               keyList.add(Keys.OVERLAP);
-            } else if (cameraSupportsPseudoOverlap(Devices.Keys.CAMERAA) &&
-                  cameraSupportsPseudoOverlap(Devices.Keys.CAMERAB)) {
-               keyList.add(Keys.PSEUDO_OVERLAP);
-            }
-         } else {
-            Devices.Keys camKey = sideAFirst ? Devices.Keys.CAMERAA : Devices.Keys.CAMERAB;
-            if (cameraInvalid(camKey)) {
-               return keyList;
-            }
-            keyList.add(Keys.EDGE);
-//          keyList.add(Keys.LEVEL);
-            if (cameraSupportsOverlap(camKey)) {
-               keyList.add(Keys.OVERLAP);
-            } else if (cameraSupportsPseudoOverlap(camKey)) {
-               keyList.add(Keys.PSEUDO_OVERLAP);
-            }
-         }
-
+         keyList.add(Keys.PIEZO_SLICE_SCAN);
+         keyList.add(Keys.NO_SCAN);
+         keyList.add(Keys.STAGE_SCAN);
+         keyList.add(Keys.STAGE_SCAN_INTERLEAVED);
+         keyList.add(Keys.SLICE_SCAN_ONLY);
+         keyList.add(Keys.PIEZO_SCAN_ONLY);
          return keyList;
       }
 
-   } // end CameraModeComboBoxListener
+      
+   }
 
 }

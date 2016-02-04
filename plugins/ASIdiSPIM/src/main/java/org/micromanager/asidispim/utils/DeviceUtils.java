@@ -34,6 +34,7 @@ import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
+
 import org.micromanager.Studio;
 import org.micromanager.asidispim.data.Devices;
 import org.micromanager.asidispim.data.Properties;
@@ -99,6 +100,10 @@ public class DeviceUtils {
                MyDialogUtils.showError("Device " + devices_.getMMDevice(key)
                        + ": Micromirror firmware is old; not all timing parameters are supported."
                        + " Contact ASI for updated firmware.");
+            } else if (firmwareVersion < (float) 2.889) {
+               MyDialogUtils.showError("Device " + devices_.getMMDevice(key)
+                     + ": Micromirror firmware is old; some properties used by plugin aren't present."
+                     + " Contact ASI for updated firmware.");
             }
             break;
          case PLOGIC:
@@ -227,7 +232,6 @@ public class DeviceUtils {
          box_ = box;
       }
       
-      @Override
       public void actionPerformed(ActionEvent ae) {
          devices_.setMMDevice(key_, (String) box_.getSelectedItem());
          doDeviceChecks(key_);
@@ -265,7 +269,6 @@ public class DeviceUtils {
    /**
     * Constructs a special JComboBox with all cameras that have only 1 channel
     * @param deviceName
-    * @param maximumWidth maximum width of the dropdown box
     * @return
     */
    public JComboBox makeSingleCameraDeviceBox(Devices.Keys deviceName, int maximumWidth) {

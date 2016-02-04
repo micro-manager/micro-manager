@@ -70,7 +70,7 @@ public class MyDialogUtils {
    
    /**
     * Convenience method to show an error message (also logged) over the plugin frame.
-    * Calls org.micromanager.utils.ReportingUtils() 
+    * Calls org.micromanager.internal.utils.ReportingUtils() 
     * @param e exception
     * @param message
     */
@@ -80,7 +80,7 @@ public class MyDialogUtils {
    
    /**
     * Convenience method to show an error message (also logged) over the plugin frame.
-    * Calls org.micromanager.utils.ReportingUtils() 
+    * Calls org.micromanager.internal.utils.ReportingUtils() 
     * @param e exception
     */
    public static void showError(Throwable e) {

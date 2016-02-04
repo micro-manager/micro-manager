@@ -40,7 +40,7 @@ import mmcorej.TaggedImage;
 import org.jfree.data.xy.XYSeries;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.Studio;
+
 import org.micromanager.asidispim.data.AcquisitionModes;
 import org.micromanager.asidispim.data.Cameras;
 import org.micromanager.asidispim.data.Devices;
@@ -52,15 +52,20 @@ import org.micromanager.asidispim.data.Prefs;
 import org.micromanager.asidispim.data.Properties;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.asidispim.fit.Fitter;
+
+import org.micromanager.Studio;
+import org.micromanager.asidispim.ASIdiSPIM;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.internal.utils.AutofocusManager;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * @author nico
+ * @author Jon
  */
 public class AutofocusUtils {
 
@@ -72,6 +77,7 @@ public class AutofocusUtils {
    private final StagePositionUpdater posUpdater_;
    private final Positions positions_;
    private final ControllerUtils controller_;
+   private FocusResult lastFocusResult_;
    private DisplayWindow ourWindow_;
 
    public AutofocusUtils(Studio gui, Devices devices, Properties props,
@@ -85,45 +91,101 @@ public class AutofocusUtils {
       posUpdater_ = stagePosUpdater;
       positions_ = positions;
       controller_ = controller;
+      lastFocusResult_ = new FocusResult(false, 0.0, 0.0, 0.0);
+      
    }
 
+   public class FocusResult {
+      private final boolean focusSuccess_;
+      private final double galvoPosition_;
+      private final double piezoPosition_;
+      private final double offsetDelta_;
+      
+      public FocusResult(boolean focusSuccess, double galvoPosition, double piezoPosition, double offsetDelta) {
+         focusSuccess_ = focusSuccess;
+         galvoPosition_ = galvoPosition;
+         piezoPosition_ = piezoPosition;
+         offsetDelta_ = offsetDelta;  // amount in um that the offset will shift, could be positive or negative
+      }
+      
+      public boolean getFocusSuccess()      { return focusSuccess_; }
+      public double getGalvoFocusPosition() { return galvoPosition_; }
+      public double getPiezoFocusPosition() { return piezoPosition_; }
+      public double getOffsetDelta()        { return offsetDelta_; }
+   }
+   
+   public FocusResult getLastFocusResult() {
+      return lastFocusResult_;
+   }
+   
    /**
     * Acquires image stack by scanning the mirror, calculates focus scores
     * Acquires around the current piezo position. As a side effect, will
     * temporarily set the center position to the current position.  If the 
     * autofocus is successful (based on the goodness of fit of the focus curve),
-    * the scanner slice position will  be set to the in-focus position, otherwise
-    * it will be returned to the original position
+    * either the scanner slice position will  be set to the in-focus position
+    * (for option "fix piezo, sweep slice") or else the piezo position will be 
+    * set to the in-focus position (for option "fix slice, sweep piezo").
+    * Immediately following if the user calls updateCalibrationOffset() in the 
+    * setup panel then the calibration offset will be changed to be in-focus.
+    * If the goodness of fit is insufficient or else the best fit position is
+    * at the extreme of the sweep range then the piezo and sheet will be returned
+    * to their original positions. 
     *
     * @param caller - calling panel, used to restore settings after focusing
     * @param side - A or B
     * @param centerAtCurrentZ - whether to focus around the current position (true), or
     *                            around the imaging center set in the setup panel (false)
     * @param sliceTiming - Data structure with current device timing setting
-    * @param runAsynchronously - whether or not to run the function asynchronously
-    * @return R-square for Gaussian fit to the focus data
+    * @param runAsynchronously - whether or not to run the function asynchronously (in own thread)
+    *          (true when run from Setup panel and false when run during acquisition)
+    * @return FocusResult object.  Will be bogus  if runAsynchronously is true, but in that case the
+    *          actual result can be accessed via getLastFocusResult() in the caller's refreshSelected() method
     *
     */
-   public double runFocus(
+   public FocusResult runFocus(
            final ListeningJPanel caller,
            final Devices.Sides side,
            final boolean centerAtCurrentZ,
            final SliceTiming sliceTiming,
            final boolean runAsynchronously) {
 
-      class FocusWorker extends SwingWorker<Double, Object> {
+      class FocusWorker extends SwingWorker<FocusResult, Object> {
 
          @Override
-         protected Double doInBackground() throws Exception {
-
-            double bestGalvoPosition = 0;
+         protected FocusResult doInBackground() throws Exception {
             
-            double r2 = 0;
-
-            if (gui_.getAutofocusManager().getDevice() == null) {
-               throw new ASIdiSPIMException("Please define an autofocus methods first");
+            if (ASIdiSPIM.getFrame().getHardwareInUse()) {
+               throw new ASIdiSPIMException("Cannot run autofocus while another"
+                     + " autofocus or acquisition is ongoing.");
             }
-            gui_.getAutofocusManager().getDevice().applySettings();
+
+            // Score indicating goodness of the fit
+            double r2 = 0;
+            double bestGalvoPosition = 0;
+            double bestPiezoPosition = 0;
+            
+            AutofocusManager afManager = gui_.getAutofocusManager();
+            afManager.selectDevice("OughtaFocus");
+            
+            //Autofocus afDevice = gui_.getAutofocus();
+
+            if (afDevice == null) {
+               throw new ASIdiSPIMException("Please define autofocus methods first");
+            }
+            
+            // select the appropriate algorithm
+            afDevice.setPropertyValue("Maximize",
+                  Fitter.getAlgorithmFromPrefCode(
+                        prefs_.getInt(MyStrings.PanelNames.AUTOFOCUS.toString(),
+                        Properties.Keys.AUTOFOCUS_SCORING_ALGORITHM,
+                        Fitter.Algorithm.VOLATH.getPrefCode())).toString());
+            
+            // make sure that the currently selected MM autofocus device uses the 
+            // settings in its dialog
+            afDevice.applySettings();
+
+            // gui_.getAutofocusManager().getDevice().applySettings();
             
             // if the Snap/Live window has an ROI set, we will use the same 
             // ROI for our focus calculations
@@ -154,56 +216,69 @@ public class AutofocusUtils {
 
             final int nrImages = props_.getPropValueInteger(
                     Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_AUTOFOCUS_NRIMAGES);
-            final boolean debug = prefs_.getBoolean(
-                    MyStrings.PanelNames.AUTOFOCUS.toString(),
-                    Properties.Keys.PLUGIN_AUTOFOCUS_DEBUG, false);
-            final float piezoStepSize = props_.getPropValueFloat(Devices.Keys.PLUGIN,
+            final boolean showImages = prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(),
+                    Properties.Keys.PLUGIN_AUTOFOCUS_SHOWIMAGES, false);
+            final boolean showPlot = prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(),
+                    Properties.Keys.PLUGIN_AUTOFOCUS_SHOWPLOT, false);
+            float piezoStepSize = props_.getPropValueFloat(Devices.Keys.PLUGIN,
                     Properties.Keys.PLUGIN_AUTOFOCUS_STEPSIZE);  // user specifies step size in um, we translate to galvo and move only galvo
             final float imagingCenter = prefs_.getFloat(
                     MyStrings.PanelNames.SETUP.toString() + side.toString(),
                     Properties.Keys.PLUGIN_PIEZO_CENTER_POS, 0);
             final float minimumRSquare =  props_.getPropValueFloat(Devices.Keys.PLUGIN,
-                     Properties.Keys.PLUGIN_AUTOFOCUS_MINIMUMR2, null);
+                     Properties.Keys.PLUGIN_AUTOFOCUS_MINIMUMR2);
             final double originalPiezoPosition = positions_.getUpdatedPosition(piezoDevice);
-            final double originalGalvoPosition = positions_.getUpdatedPosition(galvoDevice);
+            final double originalGalvoPosition = positions_.getUpdatedPosition(galvoDevice, Directions.Y);
             final double piezoCenter = centerAtCurrentZ ? originalPiezoPosition : imagingCenter;
             
-            if (!centerAtCurrentZ) {
-               positions_.setPosition(piezoDevice, piezoCenter);
-            }
+            String acqModeString = props_.getPropValueString(Devices.Keys.PLUGIN, Properties.Keys.AUTOFOCUS_ACQUSITION_MODE);
+            final boolean isPiezoScan = acqModeString.equals("Fix slice, sweep piezo");
             
             posUpdater_.pauseUpdates(true);
+            
+            // start with current acquisition settings, then modify a few of them for the focus acquisition
+            AcquisitionSettings acqSettings = ASIdiSPIM.getFrame().getAcquisitionPanel().getCurrentAcquisitionSettings();
+            acqSettings.hardwareTimepoints = false;
+            acqSettings.channelMode = MultichannelModes.Keys.NONE;
+            acqSettings.useChannels = false;
+            acqSettings.numChannels = 1;
+            acqSettings.numSlices = nrImages;
+            acqSettings.numTimepoints = 1;
+            acqSettings.timepointInterval = 1;
+            acqSettings.numSides = 1;
+            acqSettings.firstSideIsA = side.equals(Sides.A);
+            acqSettings.useTimepoints = false;
+            acqSettings.spimMode = isPiezoScan? AcquisitionModes.Keys.PIEZO_SCAN_ONLY : AcquisitionModes.Keys.SLICE_SCAN_ONLY;
+            acqSettings.centerAtCurrentZ = centerAtCurrentZ;
+            acqSettings.stepSizeUm = piezoStepSize;
 
-            // TODO: run this on its own thread
-            controller_.prepareControllerForAquisition(
-                    false, // no hardware timepoints
-                    MultichannelModes.Keys.NONE,
-                    false, // do not use channels
-                    1, // numChannels
-                    nrImages, // numSlices
-                    1, // numTimepoints
-                    1, // timeInterval
-                    1, // numSides
-                    side.toString(), // firstside
-                    false, // useTimepoints
-                    AcquisitionModes.Keys.SLICE_SCAN_ONLY, // scan only the mirror
-                    centerAtCurrentZ,  // center around the current Z or the middle set in the setup panel
-                    0.0f, // delay before side (move piezo ahead of time so 0 delay should be OK with >100ms comm time) 
-                    piezoStepSize, // piezoStepSize in microns, used in SLICE_SCAN_ONLY to compute slice movement
-                    sliceTiming);
-
-            final float galvoRate = prefs_.getFloat(
+            controller_.prepareControllerForAquisition(acqSettings);
+            
+            final float calibrationRate = prefs_.getFloat(
                      MyStrings.PanelNames.SETUP.toString() + side.toString(), 
                      Properties.Keys.PLUGIN_RATE_PIEZO_SHEET, 100);
-            // TODO remove below comments when fixed
-            // galvoOffset is named inappropriately for now
-            // will be changing with change in calibration representation later on
-            final float galvoOffset = prefs_.getFloat(
+            final float calibrationOffset = prefs_.getFloat(
                      MyStrings.PanelNames.SETUP.toString() + side.toString(),
                      Properties.Keys.PLUGIN_OFFSET_PIEZO_SHEET, 0);
-            final double galvoStepSize = piezoStepSize / galvoRate;
-            final double galvoCenter = (piezoCenter - galvoOffset) / galvoRate;
-            final double galvoStart = galvoCenter - 0.5 * (nrImages - 1) * galvoStepSize;
+            final double galvoStepSize = isPiezoScan ? 0 : piezoStepSize / calibrationRate;
+            final double galvoCenter = (piezoCenter - calibrationOffset) / calibrationRate;
+            final double galvoRange = (nrImages - 1) * galvoStepSize;
+            final double piezoRange = (nrImages - 1) * piezoStepSize;
+            final double galvoStart = galvoCenter - 0.5 * galvoRange;
+            final double piezoStart = piezoCenter - 0.5 * piezoRange;
+            if (!isPiezoScan) {
+               // change this to 0 for calculating actual position if we aren't moving piezo
+               piezoStepSize = 0;
+            }
+            
+            double piezoPosition = originalPiezoPosition;
+            double galvoPosition = originalGalvoPosition;
+            if (!centerAtCurrentZ) {
+               positions_.setPosition(piezoDevice, piezoCenter);
+               piezoPosition = piezoCenter;
+               positions_.setPosition(galvoDevice, Directions.Y, galvoCenter);
+               galvoPosition = galvoCenter;
+            }
             
             double[] focusScores = new double[nrImages];
             TaggedImage[] imageStore = new TaggedImage[nrImages];
@@ -213,7 +288,7 @@ public class AutofocusUtils {
             XYSeries[] scoresToPlot = new XYSeries[2];
             scoresToPlot[0] = new XYSeries(nrImages);
 
-            boolean liveModeOriginally = false;
+            boolean liveModeOriginally;
             String originalCamera = gui_.core().getCameraDevice();
             String acqName = "diSPIM Autofocus";
             
@@ -226,6 +301,8 @@ public class AutofocusUtils {
                   gui_.core().waitForDevice(originalCamera);
                }
                
+               ASIdiSPIM.getFrame().setHardwareInUse(true);
+               
                // deal with shutter before starting acquisition
                // needed despite core's handling because of DemoCamera
                boolean autoShutter = gui_.core().getAutoShutter();
@@ -237,6 +314,7 @@ public class AutofocusUtils {
                   }
                }
                
+
                gui_.core().setCameraDevice(camera);
                Datastore store = null;
                if (debug) {
@@ -252,8 +330,8 @@ public class AutofocusUtils {
                gui_.core().clearCircularBuffer();
                gui_.core().initializeCircularBuffer();
                cameras_.setSPIMCamerasForAcquisition(true);
-               gui_.core().setExposure((double) sliceTiming.cameraExposure);
 
+               gui_.core().setExposure((double) sliceTiming.cameraExposure);
                gui_.core().startSequenceAcquisition(camera, nrImages, 0, true);
 
                boolean success = controller_.triggerControllerStartAcquisition(
@@ -305,11 +383,15 @@ public class AutofocusUtils {
                      imageStore[counter] = timg;
                      ReportingUtils.logDebugMessage("Autofocus, image: " + counter
                              + ", score: " + focusScores[counter]);
-                     if (debug) {
+                     
+                     double galvoPos = galvoStart + counter * galvoStepSize;
+                     double piezoPos = piezoStart + counter * piezoStepSize;
+                     scoresToPlot[0].add(isPiezoScan ? piezoPos : galvoPos, focusScores[counter]);
+                     if (showImages) {
                         // we are using the slow way to insert images, should be OK
                         // as long as the circular buffer is big enough
-                        double galvoPos = galvoStart + counter * galvoStepSize;
                         timg.tags.put("SlicePosition", galvoPos);
+
                         timg.tags.put("ZPositionUm", piezoCenter);
                         Image img = gui_.data().convertTaggedImage(timg);
                         Coords coords = gui_.data().getCoordsBuilder().z(counter).build();
@@ -342,14 +424,25 @@ public class AutofocusUtils {
                // fit the focus scores
                // limit the best position to the range of galvo range we used
                double[] fitParms = Fitter.fit(scoresToPlot[0], function, null);
-               bestGalvoPosition = Fitter.getXofMaxY(scoresToPlot[0], function, fitParms);
-               highestIndex = Fitter.getIndex(scoresToPlot[0], bestGalvoPosition);
-               scoresToPlot[1] = Fitter.getFittedSeries(scoresToPlot[0], 
-                       function, fitParms);
-               r2 = Fitter.getRSquare(scoresToPlot[0], function, fitParms);
+               if (isPiezoScan) {
+                  bestPiezoPosition = Fitter.getXofMaxY(scoresToPlot[0], function, fitParms);
+                  highestIndex = Fitter.getIndex(scoresToPlot[0], bestPiezoPosition);
+                  
+               } else {
+                  bestGalvoPosition = Fitter.getXofMaxY(scoresToPlot[0], function, fitParms);
+                  highestIndex = Fitter.getIndex(scoresToPlot[0], bestGalvoPosition);
+               }
+
+               scoresToPlot[1] = Fitter.getFittedSeries(scoresToPlot[0], function, fitParms);
+               if (function == Fitter.FunctionType.NoFit) {
+                  r2 = 1;
+               } else {
+                  r2 = Fitter.getRSquare(scoresToPlot[0], function, fitParms);
+               }
                
                // display the best scoring image in the debug stack if it exists
                // or if not then in the snap/live window if it exists
+
                if (debug) {
                   Coords coords = gui_.data().getCoordsBuilder().z(highestIndex).build();
                   ourWindow_.setDisplayedImageTo(coords);
@@ -358,12 +451,12 @@ public class AutofocusUtils {
                           imageStore[highestIndex]));
                }
                
-               if (debug) {
+               if (showPlot) {
                   PlotUtils plotter = new PlotUtils(prefs_, "AutofocusUtils");
                   boolean[] showSymbols = {true, false};
                   plotter.plotDataN("Focus curve", 
                         scoresToPlot, 
-                        "Galvo position [\u00B0]", 
+                        isPiezoScan ? "Piezo position [\u00B5m]" : "Galvo position [\u00B0]", 
                         "Focus Score", 
                         showSymbols, 
                         "R^2 = " + NumberUtils.doubleToDisplayString(r2));
@@ -375,8 +468,16 @@ public class AutofocusUtils {
             } catch (Exception ex) {
                throw new ASIdiSPIMException(ex);
             } finally {
+               
+               ASIdiSPIM.getFrame().setHardwareInUse(false);
+               
+               // set result to be a dummy value for now; we will overwrite it later
+               //  unless we encounter an exception in the meantime
+               lastFocusResult_ = new FocusResult(false, galvoPosition, piezoPosition, 0.0);
+               
                try {
                   caller.setCursor(Cursor.getDefaultCursor());
+
 
                   gui_.core().stopSequenceAcquisition(camera);
                   gui_.core().setCameraDevice(originalCamera);
@@ -384,25 +485,58 @@ public class AutofocusUtils {
                      // gui_.promptToSaveAcquisition(acqName, false);
                   }
 
-                  controller_.cleanUpControllerAfterAcquisition(1, side.toString(), false);
+                  controller_.cleanUpControllerAfterAcquisition(1, acqSettings.firstSideIsA, false);
+                  
+                  if (runAsynchronously)
+                     cameras_.setSPIMCamerasForAcquisition(false);
 
-                  cameras_.setSPIMCamerasForAcquisition(false);
-
-                  // move piezo back to original position if needed
+                  // move back to original position if needed
                   if (!centerAtCurrentZ) {
                      positions_.setPosition(piezoDevice, originalPiezoPosition);
-                  }
-                  
-                  // move galvo to maximal focus position if we found one
-                  // if for some reason we were unsuccessful then restore to original position
-                  // TODO: 
-                  if (highestIndex >= 0 && r2 > minimumRSquare) {
-                     positions_.setPosition(galvoDevice, Directions.Y, bestGalvoPosition);
-                  } else {
                      positions_.setPosition(galvoDevice, Directions.Y, originalGalvoPosition);
                   }
                   
+                  // determine if it was "successful" which for now we define as
+                  //   - "maximal focus" position is inside the center 80% of the search range
+                  //   - curve fit has sufficient R^2 value
+                  // if we are successful then stay at that position, otherwise restore the original position
+                  //   (don't bother moving anything if we are doing this during acquisition)
+                  // the caller may (and usually will) apply further logic to decide whether or not this was a
+                  //   successful autofocus, e.g. before automatically updating the offset
+                  boolean focusSuccess = false; 
+                  if (isPiezoScan) {
+                     final double end1 = piezoStart + 0.1*piezoRange;
+                     final double end2 = piezoStart + 0.9*piezoRange;
+                     focusSuccess = (r2 > minimumRSquare
+                           && bestPiezoPosition > Math.min(end1, end2)
+                           && bestPiezoPosition < Math.max(end1, end2));
+                     double focusDelta = piezoCenter-bestPiezoPosition;
+                     lastFocusResult_ = new FocusResult(focusSuccess, galvoPosition, bestPiezoPosition, focusDelta);
+                  } else { // slice scan
+                     final double end1 = galvoStart + 0.1*galvoRange;
+                     final double end2 = galvoStart + 0.9*galvoRange;
+                     focusSuccess = (r2 > minimumRSquare
+                           && bestGalvoPosition > Math.min(end1, end2)
+                           && bestGalvoPosition < Math.max(end1, end2));
+                     double focusDelta = (galvoCenter-bestGalvoPosition) * calibrationRate;
+                     lastFocusResult_ = new FocusResult(focusSuccess, bestGalvoPosition, piezoPosition, focusDelta);
+                  }
+                  
+                  // if we are in Setup panel, move to either the best-focus position (if found)
+                  //   or else back to the original position.  If we are doing autofocus during
+                  //   acquisition this is an unnecessary step.
+                  if (runAsynchronously) {  // proxy for "running from setup"
+                     if (isPiezoScan) {
+                        positions_.setPosition(piezoDevice, 
+                              focusSuccess ? bestPiezoPosition : originalPiezoPosition);
+                     } else {
+                        positions_.setPosition(galvoDevice, Directions.Y,
+                              focusSuccess ? bestGalvoPosition : originalGalvoPosition);
+                     }
+                  }
+                  
                   // let the calling panel restore appropriate settings
+                  // currently only used by setup panels
                   caller.refreshSelected();
                      
                   posUpdater_.pauseUpdates(false);
@@ -417,7 +551,9 @@ public class AutofocusUtils {
                   throw new ASIdiSPIMException(ex, "Error while restoring hardware state after autofocus.");
                }
             }
-            return r2;
+            ReportingUtils.logMessage("finished autofocus: " + (lastFocusResult_.getFocusSuccess() ? "successful" : "not successful")
+               + " with galvo position " + lastFocusResult_.getGalvoFocusPosition() + " and piezo position " + lastFocusResult_.getPiezoFocusPosition());
+            return lastFocusResult_;
          }
 
          @Override
@@ -439,7 +575,7 @@ public class AutofocusUtils {
          FocusWorker fw = new FocusWorker();
          fw.execute();
          try {
-            double result = fw.get();
+            FocusResult result = fw.get();
             return result;
          } catch (InterruptedException ex) {
             MyDialogUtils.showError(ex);
@@ -449,7 +585,7 @@ public class AutofocusUtils {
       }
       
       // we can only return a bogus score 
-      return 0;
+      return new FocusResult(false, 0.0, 0.0, 0.0);
    }
 
    public static ImageProcessor makeProcessor(TaggedImage taggedImage)

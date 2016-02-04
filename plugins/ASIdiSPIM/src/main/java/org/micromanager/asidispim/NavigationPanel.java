@@ -26,8 +26,11 @@ import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.EnumSet;
+import java.util.Set;
 
 import javax.swing.BorderFactory;
+
 
 import org.micromanager.asidispim.data.Cameras;
 import org.micromanager.asidispim.data.Devices;
@@ -51,9 +54,13 @@ import javax.swing.JPanel;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.Studio;
-import org.micromanager.internal.interfaces.LiveModeListener;
 
+import com.swtdesigner.SwingResourceManager;
+import org.micromanager.Studio;
+
+/**
+ * TODO: Add live mode listener
+ */
 
 /**
  *
@@ -61,7 +68,7 @@ import org.micromanager.internal.interfaces.LiveModeListener;
  * @author Jon
  */
 @SuppressWarnings("serial")
-public class NavigationPanel extends ListeningJPanel implements LiveModeListener {
+public class NavigationPanel extends ListeningJPanel  {
    private final Devices devices_;
    private final Properties props_;
    private final Joystick joystick_;
@@ -87,6 +94,9 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
    private final JLabel galvoBxPositionLabel_;
    private final JLabel galvoByPositionLabel_;
    
+   private final JFormattedTextField headUpPosition_;
+   private final JFormattedTextField headDownPosition_;
+   
    /**
     * Navigation panel constructor.
     * @param gui Micro-Manager script interface
@@ -105,7 +115,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
             new MigLayout(
               "", 
               "[center]8[center]",
-              "[]16[]16[]"));
+              "[]8[]8[]"));
       devices_ = devices;
       props_ = props;
       joystick_ = joystick;
@@ -117,12 +127,50 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       core_ = gui_.getCMMCore();
       PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
       
+      JPanel loadPanel = new JPanel(new MigLayout(
+            "",
+            "[center]",
+            "[]4[]4[]10[]4[]4[]"));
+      
+      loadPanel.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
+
+      // buttons to move the head to top/bottom for easy sample loading
+      JButton headUpGo = new JButton();
+      headUpGo.setIcon(SwingResourceManager.getIcon(Studio.class, "icons/arrow_up.png"));
+      headUpGo.setText("");
+      headUpGo.setToolTipText("Move SPIM head to set height for sample loading");
+      headUpGo.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            raiseSPIMHead();
+         }
+      });
+      JButton headDownGo = new JButton();
+      headDownGo.setIcon(SwingResourceManager.getIcon(Studio.class, "icons/arrow_down.png"));
+      headDownGo.setText("");
+      headDownGo.setToolTipText("Move SPIM head to set height after sample loading");
+      headDownGo.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            lowerSPIMHead();
+         }
+      });
+
+      loadPanel.add(new JLabel("Load Sample"), "wrap");
+      loadPanel.add(headUpGo, "wrap");
+      headUpPosition_ = pu.makeFloatEntryField(panelName_, "HeadUpPosition", 25000, 5);
+      headDownPosition_ = pu.makeFloatEntryField(panelName_, "HeadDownPosition", 1000, 5);
+      loadPanel.add(headUpPosition_, "wrap");
+      loadPanel.add(headDownPosition_, "wrap");
+      loadPanel.add(headDownGo, "wrap");
+      loadPanel.add(new JLabel("Start Hunting"));
+      
       final int positionWidth = 60;
       
       // panel for stage positions / virtual joysticks
       JPanel navPanel = new JPanel(new MigLayout(
             "",
-            "[right]8[" + positionWidth + "px!,left]8[center]8[center]2[center]2[center]8[center]8[center]8[center]",
+            "[right]8[" + positionWidth + "px!,left]8[center]8[center]2[center]2[center]8[center]8[center]8[center]8[center]",
             "[]4[]"));
       navPanel.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
       
@@ -135,7 +183,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       navPanel.add(deltaXField);
       navPanel.add(makeIncrementButton(Devices.Keys.XYSTAGE, Directions.X, deltaXField, "+", 1));
       navPanel.add(makeMoveToOriginButton(Devices.Keys.XYSTAGE, Directions.X));
-      navPanel.add(makeSetOriginHereButton(Devices.Keys.XYSTAGE, Directions.X), "wrap");
+      navPanel.add(makeSetOriginHereButton(Devices.Keys.XYSTAGE, Directions.X), "skip 1, wrap");
       
       navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.XYSTAGE, Directions.Y) + ":"));
       yPositionLabel_ = new JLabel("");
@@ -146,7 +194,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       navPanel.add(deltaYField);
       navPanel.add(makeIncrementButton(Devices.Keys.XYSTAGE, Directions.Y, deltaYField, "+", 1));
       navPanel.add(makeMoveToOriginButton(Devices.Keys.XYSTAGE, Directions.Y));
-      navPanel.add(makeSetOriginHereButton(Devices.Keys.XYSTAGE, Directions.Y), "wrap");
+      navPanel.add(makeSetOriginHereButton(Devices.Keys.XYSTAGE, Directions.Y), "skip 1, wrap");
       
       navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.LOWERZDRIVE) + ":"));
       lowerZPositionLabel_ = new JLabel("");
@@ -157,6 +205,17 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       navPanel.add(deltaZField);
       navPanel.add(makeIncrementButton(Devices.Keys.LOWERZDRIVE, Directions.NONE, deltaZField, "+", 1));
       navPanel.add(makeMoveToOriginButton(Devices.Keys.LOWERZDRIVE, Directions.NONE));
+      JButton syncZtoF = new JButton("Sync");
+      syncZtoF.setMargin(new Insets(4,8,4,8));
+      syncZtoF.setToolTipText("Move lower Z position to match SPIM head height");
+      syncZtoF.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            double upperPosition = positions_.getUpdatedPosition(Devices.Keys.UPPERZDRIVE);
+            positions_.setPosition(Devices.Keys.LOWERZDRIVE, -upperPosition);
+         }
+      });
+      navPanel.add(syncZtoF);
       navPanel.add(makeSetOriginHereButton(Devices.Keys.LOWERZDRIVE, Directions.NONE), "wrap");
       
       navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.UPPERZDRIVE) + ":"));
@@ -168,8 +227,19 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       navPanel.add(deltaFField);
       navPanel.add(makeIncrementButton(Devices.Keys.UPPERZDRIVE, Directions.NONE, deltaFField, "+", 1));
       navPanel.add(makeMoveToOriginButton(Devices.Keys.UPPERZDRIVE, Directions.NONE));
-      navPanel.add(makeSetOriginHereButton(Devices.Keys.UPPERZDRIVE, Directions.NONE), "wrap");   
-      
+      JButton syncFtoZ = new JButton("Sync");
+      syncFtoZ.setMargin(new Insets(4,8,4,8));
+      syncFtoZ.setToolTipText("Move SPIM head height to match lower Z position");
+      syncFtoZ.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            double lowerPosition = positions_.getUpdatedPosition(Devices.Keys.LOWERZDRIVE);
+            positions_.setPosition(Devices.Keys.UPPERZDRIVE, -lowerPosition);
+         }
+      });
+      navPanel.add(syncFtoZ);
+      navPanel.add(makeSetOriginHereButton(Devices.Keys.UPPERZDRIVE, Directions.NONE), "wrap");
+            
       navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.PIEZOA) + ":"));
       piezoAPositionLabel_ = new JLabel("");
       navPanel.add(piezoAPositionLabel_);
@@ -230,41 +300,28 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       navPanel.add(makeIncrementButton(Devices.Keys.GALVOB, Directions.Y, deltaDField, "+", 1));
       navPanel.add(makeMoveToOriginButton(Devices.Keys.GALVOB, Directions.Y), "wrap");
       
+      navPanel.add(loadPanel, "cell 7 4, span 2 6, center, wrap");
+      
       JButton buttonHalt = new JButton("Halt!");
       buttonHalt.setMargin(new Insets(4,8,4,8));
       buttonHalt.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            try {
-               String mmDevice = devices_.getMMDevice(Devices.Keys.UPPERZDRIVE);
-               if (mmDevice == null) {
-                  mmDevice = devices_.getMMDevice(Devices.Keys.XYSTAGE);
-               }
-               if (mmDevice == null) {
-                  mmDevice = devices_.getMMDevice(Devices.Keys.LOWERZDRIVE);
-               }
-               if (mmDevice != null) {
-                  String hubname = core_.getParentLabel(mmDevice);
-                  String port = core_.getProperty(hubname, Properties.Keys.SERIAL_COM_PORT.toString());
-                  core_.setSerialPortCommand(port, "\\",  "\r");
-               }
-            } catch (Exception ex) {
-               MyDialogUtils.showError("could not halt motion");
-            }
+            haltAllMotion();
          }
       });
-      navPanel.add(buttonHalt, "cell 11 0, span 1 10, growy");
-
+      navPanel.add(buttonHalt, "cell 12 0, span 1 10, growy, wrap");
+      
       joystickPanel_ = new JoystickSubPanel(joystick_, devices_, panelName_, Devices.Sides.NONE, prefs_);
       this.add(joystickPanel_);
       
       this.add(navPanel, "aligny top, span 1 3, wrap");
-
+      
       beamPanel_ = new BeamSubPanel(gui_, devices_, panelName_, Devices.Sides.NONE, prefs_, props_);
       this.add(beamPanel_, "wrap");
 
       cameraPanel_ = new CameraSubPanel(gui_, cameras_, devices_, panelName_, 
-            Devices.Sides.NONE, prefs_, true);
+            Devices.Sides.NONE, prefs_);
       this.add(cameraPanel_);
       
       xPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));
@@ -388,14 +445,6 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       return jb;
    }
    
-   /**
-    * required by LiveModeListener interface; just pass call along to camera panel
-    * @param enable
-    */
-   @Override
-   public void liveModeEnabled(boolean enable) {
-      cameraPanel_.liveModeEnabled(enable);
-   } 
    
    @Override
    public void saveSettings() {
@@ -459,7 +508,61 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
    /**
     * created so that Navigation panel's joystick settings could be invoked from elsewhere
     */
-   public void doJoystickSettings() {
-      joystickPanel_.gotSelected();
+   public void doJoystickSettings(boolean selected) {
+      if (selected) {
+         joystickPanel_.gotSelected();
+      } else {
+         joystickPanel_.gotDeSelected();
+      }
+   }
+
+   public void raiseSPIMHead() {
+      positions_.setPosition(Devices.Keys.UPPERZDRIVE, ((Number)headUpPosition_.getValue()).doubleValue());
+   }
+   
+   public void lowerSPIMHead() {
+      positions_.setPosition(Devices.Keys.UPPERZDRIVE, ((Number)headDownPosition_.getValue()).doubleValue());
+   }
+
+
+   public void setSPIMHeadRaisedPosition(double raised) {
+      headUpPosition_.setValue(raised);
+   }
+   
+   public double getSPIMHeadRaisedPosition() {
+      return ((Number)headUpPosition_.getValue()).doubleValue();
+   }
+   
+   public void setSPIMHeadLoweredPosition(double lowered) {
+      headDownPosition_.setValue(lowered);
+   }
+   
+   public double getSPIMHeadLoweredPosition() {
+      return ((Number)headDownPosition_.getValue()).doubleValue();
+   }
+
+
+   public void haltAllMotion() {
+      try {
+         final Set<Devices.Keys> TigerDevices = EnumSet.of(
+               Devices.Keys.UPPERZDRIVE, Devices.Keys.LOWERZDRIVE, Devices.Keys.XYSTAGE);
+         String mmDevice = null;
+         for (Devices.Keys dev : TigerDevices) {
+            if (devices_.isValidMMDevice(dev)
+                  && devices_.getMMDeviceLibrary(dev) == Devices.Libraries.ASITIGER) {
+               mmDevice = devices_.getMMDevice(dev);
+               break;
+            }
+         }
+         if (mmDevice != null) {
+            String hubname = core_.getParentLabel(mmDevice);
+            String port = core_.getProperty(hubname, Properties.Keys.SERIAL_COM_PORT.toString());
+            core_.setSerialPortCommand(port, "\\",  "\r");
+         } else {
+            throw new Exception("could not find a valid Tiger device");
+         }
+      } catch (Exception ex) {
+         MyDialogUtils.showError(ex, "could not halt motion");
+      }
    }
 }
