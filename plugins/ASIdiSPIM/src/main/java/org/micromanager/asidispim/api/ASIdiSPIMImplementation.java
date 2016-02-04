@@ -82,9 +82,9 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    }
    
    @Override
-   public ij.ImagePlus runAcquisitionBlocking(double x, double y, double f) throws ASIdiSPIMException {
-      setXYPosition(x, y);
-      setSPIMHeadPosition(f);
+   public ij.ImagePlus runAcquisitionBlocking(CMMCore core, double x, double y, double f) throws ASIdiSPIMException {
+      setXYPosition(core, x, y);
+      setSPIMHeadPosition(core, f);
       return runAcquisitionBlocking();
    }
    
@@ -119,16 +119,6 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       return getAcquisitionPanel().getLastAcquisitionName();
    }
 
-   @Override
-   public void closeLastAcquisitionWindow() throws ASIdiSPIMException {
-      closeAcquisitionWindow(getLastAcquisitionName());
-   }
-
-   @Override
-   public void closeAcquisitionWindow(String acquisitionName) throws ASIdiSPIMException {
-         getGui().closeAcquisitionWindow(acquisitionName);
-   }
-   
    @Override
    public void setAcquisitionNamePrefix(String acqName) throws ASIdiSPIMException {
       getAcquisitionPanel().setAcquisitionNamePrefix(acqName);
@@ -236,14 +226,6 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       getAcquisitionPanel().setMultiplePositionsDelay(delayMs);
    }
    
-   @Override
-   public PositionList getPositionList() throws ASIdiSPIMException {
-      try {
-         return getGui().getPositionList();
-      } catch (Exception ex) {
-         throw new ASIdiSPIMException(ex);
-      }
-   }
    
    @Override
    public boolean getChannelsEnabled() throws ASIdiSPIMException {
@@ -608,54 +590,54 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    }
    
    @Override
-   public void setXYPosition(double x, double y) throws ASIdiSPIMException {
+   public void setXYPosition(CMMCore core, double x, double y) throws ASIdiSPIMException {
       try {
-         getCore().setXYPosition(getDevices().getMMDevice(Devices.Keys.XYSTAGE), x, y);
+         core.setXYPosition(getDevices().getMMDevice(Devices.Keys.XYSTAGE), x, y);
       } catch (Exception e) {
          throw new ASIdiSPIMException(e);
       }
    }
 
    @Override
-   public java.awt.geom.Point2D.Double getXYPosition() throws ASIdiSPIMException {
+   public java.awt.geom.Point2D.Double getXYPosition(CMMCore core) throws ASIdiSPIMException {
       try {
-         return getCore().getXYStagePosition(getDevices().getMMDevice(Devices.Keys.XYSTAGE));
+         return core.getXYStagePosition(getDevices().getMMDevice(Devices.Keys.XYSTAGE));
       } catch (Exception e) {
          throw new ASIdiSPIMException(e);
       }
    }
 
    @Override
-   public void setLowerZPosition(double z) throws ASIdiSPIMException {
+   public void setLowerZPosition(CMMCore core, double z) throws ASIdiSPIMException {
       try {
-         getCore().setPosition(getDevices().getMMDevice(Devices.Keys.LOWERZDRIVE), z);
+         core.setPosition(getDevices().getMMDevice(Devices.Keys.LOWERZDRIVE), z);
       } catch (Exception e) {
          throw new ASIdiSPIMException(e);
       }
    }
 
    @Override
-   public double getLowerZPosition() throws ASIdiSPIMException {
+   public double getLowerZPosition(CMMCore core) throws ASIdiSPIMException {
       try {
-         return getCore().getPosition(getDevices().getMMDevice(Devices.Keys.LOWERZDRIVE));
+         return core.getPosition(getDevices().getMMDevice(Devices.Keys.LOWERZDRIVE));
       } catch (Exception e) {
          throw new ASIdiSPIMException(e);
       }
    }
 
    @Override
-   public void setSPIMHeadPosition(double z) throws ASIdiSPIMException {
+   public void setSPIMHeadPosition(CMMCore core, double z) throws ASIdiSPIMException {
       try {
-         getCore().setPosition(getDevices().getMMDevice(Devices.Keys.UPPERZDRIVE), z);
+         core.setPosition(getDevices().getMMDevice(Devices.Keys.UPPERZDRIVE), z);
       } catch (Exception e) {
          throw new ASIdiSPIMException(e);
       }
    }
 
    @Override
-   public double getSPIMHeadPosition() throws ASIdiSPIMException {
+   public double getSPIMHeadPosition(CMMCore core) throws ASIdiSPIMException {
       try {
-         return getCore().getPosition(getDevices().getMMDevice(Devices.Keys.UPPERZDRIVE));
+         return core.getPosition(getDevices().getMMDevice(Devices.Keys.UPPERZDRIVE));
       } catch (Exception e) {
          throw new ASIdiSPIMException(e);
       }

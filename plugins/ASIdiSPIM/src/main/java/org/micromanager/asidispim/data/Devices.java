@@ -37,6 +37,7 @@ import mmcorej.StrVector;
 
 
 import org.micromanager.Studio;
+import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.asidispim.utils.DevicesListenerInterface;
 import org.micromanager.asidispim.utils.MyDialogUtils;
 
@@ -741,7 +742,7 @@ public class Devices {
     */
    public Devices(Studio gui, Prefs prefs) throws ASIdiSPIMException {
       prefs_ = prefs;
-      core_ = gui.getMMCore();
+      core_ = gui.getCMMCore();
 
       // create synchronized version of data structure containing Device
       // information and populate it
