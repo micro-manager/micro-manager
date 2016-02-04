@@ -134,6 +134,11 @@ public class Joystick {
          }
          return this.direction == other.direction;
       }
+      
+      @Override
+      public String toString() {
+         return displayString;
+      }
    }
    
    /**
@@ -152,13 +157,11 @@ public class Joystick {
          }
       }
       // don't include the XY stage on wheel list since the device adapter doesn't support that
+      // only add the slice position, not sheet position because we don't expect it to ever be used
       for (Devices.Keys devKey : Devices.GALVOS) {
          // must be Tiger devices
-         Directions[] dirs = {Directions.X, Directions.Y};
-         for (Directions dir : dirs) {  // gets for X and Y for now
-            String dispKey = devices_.getDeviceDisplayWithRole(devKey, dir, side);
-            list.add(new JSAxisData(dispKey, devKey, dir));
-         }
+         String dispKey = devices_.getDeviceDisplayWithRole(devKey, Directions.Y, side);
+         list.add(new JSAxisData(dispKey, devKey, Directions.Y));
       }
       List<JSAxisData> noduplicates = new ArrayList<JSAxisData>(new LinkedHashSet<JSAxisData>(list));
       return noduplicates.toArray(new JSAxisData[0]);
@@ -244,8 +247,11 @@ public class Joystick {
     * @param JSAxisData
     */
    public void unsetJoystick(Joystick.Keys jkey, JSAxisData JSAxisData) {
+      if (JSAxisData == null) {
+         return;
+      }
       Devices.Keys dev = JSAxisData.deviceKey;
-      if (!devices_.isTigerDevice(dev)) {
+      if (!devices_.isTigerDevice(dev)) {  // includes "None"
          return;
       }
       try {

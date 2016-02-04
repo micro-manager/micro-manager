@@ -21,26 +21,41 @@
 
 package org.micromanager.asidispim;
 
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.text.ParseException;
 
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.text.DefaultFormatter;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+
+import org.micromanager.MMStudio;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.CameraModes;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
+import org.micromanager.asidispim.Utils.ImageJUtils;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
+import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
+import org.micromanager.utils.FileDialogs;
 
+import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 
 /**
@@ -50,10 +65,15 @@ import net.miginfocom.swing.MigLayout;
 @SuppressWarnings("serial")
 public class SettingsPanel extends ListeningJPanel {
    
+   private final CMMCore core_;
    private final Devices devices_;
    private final Properties props_;
    private final Prefs prefs_;
    private final StagePositionUpdater stagePosUpdater_;
+   
+   private final JFormattedTextField rawPath_;
+   private final JSpinner liveScanMs_;
+
    
    /**
     * 
@@ -62,7 +82,7 @@ public class SettingsPanel extends ListeningJPanel {
     * @param prefs
     * @param stagePosUpdater
     */
-   public SettingsPanel(Devices devices, Properties props, 
+   public SettingsPanel(final ScriptInterface gui, Devices devices, Properties props, 
          Prefs prefs, StagePositionUpdater stagePosUpdater) {    
       super (MyStrings.PanelNames.SETTINGS.toString(), 
             new MigLayout(
@@ -70,6 +90,7 @@ public class SettingsPanel extends ListeningJPanel {
               "[right]16[center]16[center]",
               "[]16[]"));
      
+      core_ = gui.getMMCore();
       devices_ = devices;
       props_ = props;
       prefs_ = prefs;
@@ -146,10 +167,6 @@ public class SettingsPanel extends ListeningJPanel {
             Properties.Keys.SCANNER_FILTER_Y, 0.4);
       scannerPanel.add(scannerFilterY, "wrap");
       
-      final JCheckBox scanOppositeDirectionsCB = pu.makeCheckBox("Scan beam opposite directions each slice",
-            Properties.Keys.PREFS_SCAN_OPPOSITE_DIRECTIONS, panelName_, false);
-      scannerPanel.add(scanOppositeDirectionsCB, "center, span 2, wrap");
-      
       // end scanner panel
       
       
@@ -157,15 +174,96 @@ public class SettingsPanel extends ListeningJPanel {
       
       final JPanel cameraPanel = new JPanel(new MigLayout(
             "",
-            "[right]16[center]",
+            "[right]16[left]",
             "[]8[]"));
       cameraPanel.setBorder(PanelUtils.makeTitledBorder("Camera"));
+      cameraPanel.add(new JLabel("Acq. Trigger Mode:"));
       CameraModes camModeObject = new CameraModes(devices_, props_, prefs_);
       JComboBox camModeCB = camModeObject.getComboBox();
-      cameraPanel.add(camModeCB);
+      cameraPanel.add(camModeCB, "wrap");
+      
+      cameraPanel.add(new JLabel("Live exposure [ms]:"));
+      JFormattedTextField liveExposureMs = pu.makeFloatEntryField(panelName_, 
+            Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE.toString(), 100, 6);
+      liveExposureMs.addPropertyChangeListener("value", new PropertyChangeListener() {
+         @Override
+         public void propertyChange(PropertyChangeEvent evt) {
+            try {
+               core_.setExposure((Double)evt.getNewValue());
+            } catch (Exception e) {
+               MyDialogUtils.showError("Could not change exposure setting for live mode");
+            }
+         }
+      });
+      cameraPanel.add(liveExposureMs, "wrap");
+      
+      
+      cameraPanel.add(new JLabel("Live scan time [ms]:"));
+      liveScanMs_ = pu.makeSpinnerInteger(1, 10000,
+            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_CAMERA_LIVE_SCAN, 10);
+      liveScanMs_.addChangeListener(new ChangeListener() {
+         @Override
+         public void stateChanged(ChangeEvent arg0) {
+            int scan = (Integer) liveScanMs_.getValue(); 
+            props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+                  Properties.Keys.SPIM_LINESCAN_PERIOD, scan, true);
+         }
+      });
+      cameraPanel.add(liveScanMs_, "wrap");
       
       // end camera panel
       
+      
+      // start test acquisition panel
+      
+      final JPanel testAcqPanel = new JPanel(new MigLayout(
+            "",
+            "[right]16[center]",
+            "[]8[]"));
+      testAcqPanel.setBorder(PanelUtils.makeTitledBorder("Test Acquisition"));
+      
+      final JCheckBox testAcqSave = pu.makeCheckBox("Save test acquisition as raw data",
+            Properties.Keys.PLUGIN_TESTACQ_SAVE, panelName_, false);
+      testAcqPanel.add(testAcqSave, "span 2, wrap");
+      
+      DefaultFormatter formatter = new DefaultFormatter();
+      rawPath_ = new JFormattedTextField(formatter);
+      rawPath_.setText( prefs_.getString(panelName_, 
+              Properties.Keys.PLUGIN_TESTACQ_PATH, "") );
+      rawPath_.addPropertyChangeListener(new PropertyChangeListener() {
+         // will respond to commitEdit() as well as GUI edit on commit
+         @Override
+         public void propertyChange(PropertyChangeEvent evt) {
+            prefs_.putString(panelName_, Properties.Keys.PLUGIN_TESTACQ_PATH,
+                  rawPath_.getText());
+         }
+      });
+      rawPath_.setColumns(20);
+      testAcqPanel.add(rawPath_);
+
+      JButton browseFileButton = new JButton();
+      browseFileButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+            File result = FileDialogs.openFile(null,
+                  "Please choose a file for raw image data",
+                  MMStudio.MM_DATA_SET);
+            if (result != null) {
+               rawPath_.setText(result.getAbsolutePath());
+               try {
+                  rawPath_.commitEdit();
+               } catch (ParseException ex) {
+                  MyDialogUtils.showError("Invalid file selected for test acquisition raw data");
+               }
+            }
+         }
+      });
+      browseFileButton.setMargin(new Insets(2, 5, 2, 5));
+      browseFileButton.setText("...");
+      testAcqPanel.add(browseFileButton, "wrap");
+      
+      // end test acquisition panel
+
       
       // start stage scan panel
       
@@ -174,21 +272,52 @@ public class SettingsPanel extends ListeningJPanel {
             "[right]16[center]",
             "[]8[]"));
       stageScanPanel.setBorder(PanelUtils.makeTitledBorder("Stage scanning"));
-
-      stageScanPanel.add(new JLabel("Motor acceleration time [ms]:"));
-      final JSpinner stageAccelTime = pu.makeSpinnerFloat(10, 1000, 10,
-            Devices.Keys.XYSTAGE,
-            Properties.Keys.STAGESCAN_MOTOR_ACCEL, 50);
-      stageScanPanel.add(stageAccelTime, "wrap");
+      
+      // TODO create method to determine this instead of separate code here and in AcquisitionPanel
+      if (devices_.isTigerDevice(Devices.Keys.XYSTAGE)
+            && props_.hasProperty(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_NUMLINES)) {
+         stageScanPanel.add(new JLabel("Motor acceleration time [ms]:"));
+         final JSpinner stageAccelTime = pu.makeSpinnerFloat(10, 1000, 10,
+               Devices.Keys.XYSTAGE,
+               Properties.Keys.STAGESCAN_MOTOR_ACCEL, 50);
+         stageScanPanel.add(stageAccelTime, "wrap");
+      } else {
+         stageScanPanel.add(new JLabel("Stage scanning not supported by your firmware."), "left, wrap");
+         stageScanPanel.add(new JLabel("See http://dispim.org for further information."), "left, wrap");
+      }
       
       // end stage scan panel
+      
+      
+      // start ImageJ settings panel
+      
+      final JPanel imageJPanel = new JPanel(new MigLayout(
+            "",
+            "[right]16[center]",
+            "[]8[]"));
+      imageJPanel.setBorder(PanelUtils.makeTitledBorder("ImageJ"));
+      
+      final JCheckBox useToolset = pu.makeCheckBox("Load diSPIM toolset on launch",
+            Properties.Keys.PLUGIN_USE_TOOLSET, panelName_, true);
+      useToolset.setToolTipText("places icons in ImageJ toolbar for quick access of commonly-used image manipulation tasks");
+      if (useToolset.isSelected()) {
+         ImageJUtils.loadToolset();
+      }
+      imageJPanel.add(useToolset, "span 2, wrap");
+      
+      // end ImageJ settings panel
+      
+      
       
       // construct main panel
       add(guiPanel);
       add(scannerPanel);
       add(cameraPanel, "wrap");
+      add(testAcqPanel);
       add(stageScanPanel, "growx");
+      add(imageJPanel, "growx");
       
+
       
    }
    

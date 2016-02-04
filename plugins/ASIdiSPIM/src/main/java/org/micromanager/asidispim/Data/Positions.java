@@ -46,12 +46,12 @@ public class Positions {
    
    /**
     * Constructor
-    * @param gui MM Studio
-    * @param devices Devices that should be tracked
+    * @param gui Micro-Manager scriptinterface
+    * @param devices ASIdiSPIM class that holds information about the devices
     */
-   public Positions(Studio gui, Devices devices) {
+   public Positions(ScriptInterface gui, Devices devices) {
       devices_ = devices;
-      core_ = gui.getCMMCore();
+      core_ = gui.getMMCore();
       
       // fill the hashmaps with correct keys, leave values blank for now
       oneAxisDrivePositions_ = new HashMap<Devices.Keys, Double>();
@@ -142,7 +142,7 @@ public class Positions {
          }
          Point2D.Double pt;
          if (devices_.isXYStage(devKey)) {
-            pt = core_.getXYPosition(mmDevice);
+            pt = core_.getXYStagePosition(mmDevice);
          } else if (devices_.isGalvo(devKey)) {
             pt = core_.getGalvoPosition(mmDevice);
          } else {
@@ -371,7 +371,7 @@ public class Positions {
          Point2D.Double pt;
          try {
             if (devices_.isXYStage(devKey)) {
-               pt = core_.getXYPosition(mmDevice);
+               pt = core_.getXYStagePosition(mmDevice);
             } else if (devices_.isGalvo(devKey)) {
                pt = core_.getGalvoPosition(mmDevice);
             } else {

@@ -25,7 +25,7 @@ import javax.swing.JOptionPane;
 
 import org.micromanager.asidispim.ASIdiSPIM;
 
-import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  *

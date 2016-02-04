@@ -21,6 +21,8 @@
 
 package org.micromanager.asidispim.Utils;
 
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -439,12 +441,15 @@ public class PanelUtils {
          public void actionPerformed(ActionEvent ae) {
             // unlike analogous int/float functions, this handler is called on any setSelectedItem 
             String boxValue = getBoxValue();
+            if (boxValue == null) {
+               boxValue = "";
+            }
             for (Devices.Keys devKey : devKeys_) {
                // property reads (core calls) are inexpensive compared to 
                //   property writes (serial comm) so only write if needed
                // however, this doesn't solve problem of properties that are really
                //    for the card (not for the axis) because other devices on same
-               //    card may have been changed but not refreshed in micro-Manager
+               //    card may have been changed but not refreshed in Micro-Manager
                if (!props_.getPropValueString(devKey, propKey_).equals(boxValue)) {
                   props_.setPropValue(devKey, propKey_, boxValue, true);
                }
@@ -781,9 +786,82 @@ public class PanelUtils {
     */
    public static TitledBorder makeTitledBorder(String title) {
       TitledBorder myBorder = BorderFactory.createTitledBorder(
-              BorderFactory.createLineBorder(ASIdiSPIM.borderColor), title);
+              BorderFactory.createLineBorder(ASIdiSPIM.borderColor), " " + title + " ");
       myBorder.setTitleJustification(TitledBorder.CENTER);
       return myBorder;
    }
    
+//   /**
+//    * Recursively get list of all the components inside a container
+//    * credit http://stackoverflow.com/questions/6495769/how-to-get-all-elements-inside-a-jframe
+//    * @param c
+//    * @return
+//    */
+//   private static List<Component> getAllComponents(final Container c) {
+//      Component[] comps = c.getComponents();
+//      List<Component> compList = new ArrayList<Component>();
+//      for (Component comp : comps) {
+//          compList.add(comp);
+//          if (comp instanceof Container)
+//              compList.addAll(getAllComponents((Container) comp));
+//      }
+//      return compList;
+//  }
+//   
+//   /**
+//   * call setEnabled(boolean) recursively on all components in frame/panel
+//    * @param panel
+//    * @param enabled
+//    */
+//   public static void componentsSetEnabledRecursive(Container container, boolean enabled) {
+//      List<Component> compList = new ArrayList<Component>();
+//      compList = getAllComponents(container);
+//      for (Component comp : compList) {
+//         comp.setEnabled(enabled);
+//      }
+//   }
+//   
+//   /**
+//   * call setEnabled(boolean) recursively on all components in list of frame/panel
+//    * @param panel
+//    * @param enabled
+//    */
+//   public static void componentsSetEnabledRecursive(Container[] containers, boolean enabled) {
+//      for (Container cont : containers) {
+//         componentsSetEnabledRecursive(cont, enabled);
+//      }
+//   }
+   
+   /**
+   * call setEnabled(boolean) on all top-level components in frame/panel
+    * @param panel
+    * @param enabled
+    */
+   public static void componentsSetEnabled(Container container, boolean enabled) {
+      for (Component comp : container.getComponents()) {
+         comp.setEnabled(enabled);
+      }
+   }
+   
+   /**
+   * call setEnabled(boolean) on all top-level components in list of frame/panel
+    * @param panel
+    * @param enabled
+    */
+   public static void componentsSetEnabled(Container[] containers, boolean enabled) {
+      for (Container cont : containers) {
+         componentsSetEnabled(cont, enabled);
+      }
+   }
+   
+   /**
+    * call setEnabled(boolean) on all components in list
+    * @param components
+    * @param enabled
+    */
+   public static void componentsSetEnabled(JComponent[] components, boolean enabled) {
+      for (JComponent c : components) {
+         c.setEnabled(enabled);
+      }
+   }
 }

@@ -23,8 +23,9 @@ package org.micromanager.asidispim.Utils;
 
 
 /**
- * Associative container for slice timing information.
- * Public elements so they can be get/set directly, like C++ struct
+ * Associative container or "plain old data structure" for slice timing information.
+ * Public elements so they can be get/set directly, like C/C++ struct
+ * Note that this container doesn't work with collections (https://www.artima.com/lejava/articles/equality.html)
  * @author Jon
  *
  */
@@ -36,7 +37,8 @@ public class SliceTiming {
    public float laserDuration;
    public float cameraDelay;
    public float cameraDuration;
-   public float cameraExposure;  // used to set exposure in Micro-Manager, not the controller timing 
+   public float cameraExposure;  // used to set exposure in Micro-Manager, not the controller timing
+   public float sliceDuration;   // depends on first 7 values by formula, up to users to keep updated
 
    /**
     * Chooses some reasonable defaults (may not be controller defaults).
@@ -50,6 +52,22 @@ public class SliceTiming {
       cameraDelay = 0;
       cameraDuration = 1;
       cameraExposure = 1;
+      sliceDuration = 2;
+   }
+   
+   /**
+    * copy constructor (unused?)
+    */
+   public SliceTiming(SliceTiming orig) {
+      scanDelay = orig.scanDelay;
+      scanNum = orig.scanNum;
+      scanPeriod = orig.scanPeriod;
+      laserDelay = orig.laserDelay;
+      laserDuration = orig.laserDuration;
+      cameraDelay = orig.cameraDelay;
+      cameraDuration = orig.cameraDuration;
+      cameraExposure = orig.cameraExposure;
+      sliceDuration = orig.sliceDuration;
    }
    
    @Override
@@ -63,11 +81,13 @@ public class SliceTiming {
                && laserDuration == s.laserDuration
                && cameraDelay == s.cameraDelay
                && cameraDuration == s.cameraDuration
-               && cameraExposure == s.cameraExposure);
+               && cameraExposure == s.cameraExposure
+               && sliceDuration == s.sliceDuration);
       } else {
          return false;
       }
       
       
    }
+
 }

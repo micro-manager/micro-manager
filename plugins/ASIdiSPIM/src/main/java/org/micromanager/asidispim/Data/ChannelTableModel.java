@@ -29,7 +29,7 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 
 import org.micromanager.asidispim.MultiChannelSubPanel;
-import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.utils.ReportingUtils;
 
 
 /**

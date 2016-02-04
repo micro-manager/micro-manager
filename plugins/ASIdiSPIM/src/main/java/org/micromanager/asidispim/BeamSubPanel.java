@@ -30,7 +30,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 
-import org.micromanager.Studio;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
@@ -68,7 +68,7 @@ public final class BeamSubPanel extends ListeningJPanel {
     * @param prefs 
     * @param props
     */
-   public BeamSubPanel(Studio gui, Devices devices, String instanceLabel, 
+   public BeamSubPanel(ScriptInterface gui, Devices devices, String instanceLabel, 
          Devices.Sides side, Prefs prefs, Properties props) {    
       super (MyStrings.PanelNames.BEAM_SUBPANEL.toString() + instanceLabel,
             new MigLayout(
@@ -159,7 +159,6 @@ public final class BeamSubPanel extends ListeningJPanel {
       }
 
       // only called when the user selects/deselects from GUI
-      @Override
       public void actionPerformed(ActionEvent e) {
          if (beamBox_.isSelected()) {
             sheetBox_.setEnabled(true);
@@ -264,5 +263,51 @@ public final class BeamSubPanel extends ListeningJPanel {
       // other 4 settings are updated on checkbox click instead of here
    }
    
-   
+   /**
+    * @return true if beam A is on (navigation panel)
+    *  or if imaging beam is on (setup panel)
+    */
+   public boolean isBeamAOn() {
+      return beamABox_.isSelected();
+   }
+
+   /**
+    * @return true if beam B is on (navigation panel)
+    *  or if epi beam is on (setup panel)
+    */
+   public boolean isBeamBOn() {
+      return beamBBox_.isSelected();
+   }
+
+   /**
+    * @return true if sheet A is on (navigation panel)
+    *  or if imaging sheet is on (setup panel)
+    */
+   public boolean isSheetAOn() {
+      return sheetABox_.isSelected();
+   }
+
+   /**
+    * @return true if sheet B is on (navigation panel)
+    *  or if epi sheet is on (setup panel)
+    */
+   public boolean isSheetBOn() {
+      return sheetBBox_.isSelected();
+   }
+
+   /**
+    * sets the imaging beam (or path A from navigation panel)
+    *   to the desired state
+    * @param enable true for on, false for off
+    */
+   public void setBeamA(boolean enable) {
+      sheetABox_.setSelected(enable);
+   }
+
+   /**
+    * @return true if "Change settings on tab activate" is enabled
+    */
+   public boolean isUpdateOnTab() {
+      return updateOnTab_.isSelected();
+   }
 }

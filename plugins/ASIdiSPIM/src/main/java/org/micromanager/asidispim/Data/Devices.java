@@ -29,13 +29,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.swing.JOptionPane;
+
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
-import org.micromanager.Studio;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
+import org.micromanager.asidispim.api.ASIdiSPIMException;
 
 
 /**
@@ -96,6 +99,8 @@ public class Devices {
    
    public final static Set<Devices.Keys> STAGES1D = EnumSet.of(
          Devices.Keys.LOWERZDRIVE, Devices.Keys.UPPERZDRIVE,
+         Devices.Keys.PIEZOA, Devices.Keys.PIEZOB);
+   public final static Set<Devices.Keys> PIEZOS = EnumSet.of(
          Devices.Keys.PIEZOA, Devices.Keys.PIEZOB);
    public final static Set<Devices.Keys> STAGES2D = EnumSet.of(
          Devices.Keys.XYSTAGE, Devices.Keys.GALVOA, Devices.Keys.GALVOB);
@@ -477,8 +482,8 @@ public class Devices {
       case GALVOA:
       case GALVOB:
          switch (dir) {
-         case X: ret += ", sheet"; break;
-         case Y: ret += ", slice"; break;
+         case X: ret += " Sheet"; break;
+         case Y: ret += " Slice"; break;
          default: break;
          }
          break;
@@ -519,9 +524,9 @@ public class Devices {
       case GALVOA:
       case GALVOB:
         if (side == d.side) {
-           ret = "Imaging Beam";
+           ret = "Imaging";
         } else if (side == Devices.getOppositeSide(d.side)) {
-           ret = "Epi Beam";
+           ret = "Epi";
         } else {
            ret = getDeviceDisplay(key);
         }
@@ -620,16 +625,28 @@ public class Devices {
    /**
     * Reads mapping between Device keys and Micro-manager device names from
     * preferences. Assumes loadedDevices_ contains all available devices, and
-    * sets any no-longer-existing device to null. Changes deviceInfo_.
+    * sets any no-longer-existing device to empty string. Changes deviceInfo_.
+    * @return true if successful, false if problem (cancelled by user)
+    * @throws ASIdiSPIMException 
     */
-   public final void restoreSettings() {
+   public final void restoreSettings() throws ASIdiSPIMException {
       for (Devices.Keys key : Devices.Keys.values()) {
          if (deviceInfo_.get(key).saveInPref) {
             String mmDevice = prefs_.getString(DEVICES_PREF_NODE, key.toString(), "");
+            DeviceData d = deviceInfo_.get(key);
             if (!loadedDevices_.contains(mmDevice)) {
+               if (!mmDevice.equals("")) {
+                  // if the device isn't present now but was last time
+                  if (!MyDialogUtils.getConfirmDialogResult(
+                     "Device " + mmDevice + " which was previously as " + d.displayName
+                     + " is no longer present and will be cleared.  OK to "
+                     + "proceed with plugin launch or cancel?",
+                     JOptionPane.OK_CANCEL_OPTION)) {
+                     throw new ASIdiSPIMException("Missing device, user cancelled");
+                  }
+               }
                mmDevice = "";
             }
-            DeviceData d = deviceInfo_.get(key);
             d.mmDevice = mmDevice;
             deviceInfo_.put(key, d);
          }
@@ -720,10 +737,11 @@ public class Devices {
     * constructor
     * @param gui
     * @param prefs
+    * @throws ASIdiSPIMException 
     */
-   public Devices(Studio gui, Prefs prefs) {
+   public Devices(ScriptInterface gui, Prefs prefs) throws ASIdiSPIMException {
       prefs_ = prefs;
-      core_ = gui.getCMMCore();
+      core_ = gui.getMMCore();
 
       // create synchronized version of data structure containing Device
       // information and populate it

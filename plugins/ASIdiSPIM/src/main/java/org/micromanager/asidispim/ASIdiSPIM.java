@@ -24,8 +24,8 @@ package org.micromanager.asidispim;
 import java.awt.Color;
 import java.awt.event.WindowEvent;
 
-import org.micromanager.MMPlugin;
-import org.micromanager.Studio;
+import org.micromanager.api.MMPlugin;
+import org.micromanager.api.ScriptInterface;
 
 
 public class ASIdiSPIM implements MMPlugin {
@@ -33,11 +33,11 @@ public class ASIdiSPIM implements MMPlugin {
    public final static String tooltipDescription = "Control the ASI diSPIM";
    public final static Color borderColor = Color.gray;
 
-   private Studio gui_;
+   private ScriptInterface gui_;
    private static ASIdiSPIMFrame myFrame_ = null;
 
    @Override
-   public void setApp(Studio app) {
+   public void setApp(ScriptInterface app) {
       gui_ = app;
       // close frame before re-load if already open
       // if frame has been opened and then closed (myFrame != null) but it won't be displayable 
@@ -48,7 +48,9 @@ public class ASIdiSPIM implements MMPlugin {
       // create brand new instance of plugin frame every time
       try {
          myFrame_ = new ASIdiSPIMFrame(gui_);
+         myFrame_.setBackground(gui_.getBackgroundColor());
          gui_.addMMListener(myFrame_);
+         gui_.addMMBackgroundListener(myFrame_);
       } catch (Exception e) {
          gui_.showError(e);
       }

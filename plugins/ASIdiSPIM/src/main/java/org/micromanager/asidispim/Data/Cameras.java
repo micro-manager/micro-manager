@@ -28,9 +28,9 @@ import java.util.List;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.Studio;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
-import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * Holds utility functions for cameras
@@ -43,17 +43,21 @@ public class Cameras {
                                    // selected/available devices
    private final Properties props_; // object handling all property read/writes
    private final Prefs prefs_;
-   private final Studio gui_;
+   private final ScriptInterface gui_;
    private final CMMCore core_;
    private Devices.Keys currentCameraKey_;
 
 
-   public Cameras(Studio gui, Devices devices, Properties props, Prefs prefs) {
+   public Cameras(ScriptInterface gui, Devices devices, Properties props, Prefs prefs) {
       devices_ = devices;
       props_ = props;
       prefs_ = prefs;
       gui_ = gui;
-      core_ = gui_.getCMMCore();
+      core_ = gui_.getMMCore();
+      
+      // try to initialize currentCameraKey_ with camera selected in main UI
+      currentCameraKey_ = getCurrentCamera();
+      
    }// constructor
 
    /**
@@ -159,12 +163,29 @@ public class Cameras {
    }
 
    /**
+    * Get the device key of the selected camera after making sure the plugin's
+    *   representation of the current camera matches the core (core is master)
     * @return device key, e.g. CAMERAA or CAMERALOWER
     */
    public Devices.Keys getCurrentCamera() {
+      String camera = core_.getCameraDevice();
+      // if we haven't initialized it yet or there is a mismatch
+      // then try to find the key (based on core's settings)
+      // un-initialize if not found
+      if (currentCameraKey_ == null ||
+            !camera.equals(devices_.getMMDevice(currentCameraKey_))) {
+         currentCameraKey_ = null;
+         for (Devices.Keys camKey : Devices.CAMERAS) {
+            if (devices_.isValidMMDevice(camKey) &&
+                  devices_.getMMDevice(camKey).equals(camera)) {
+               setCamera(camKey);  // updates currentCameraKey_
+               break;
+            }
+         }
+      }
       return currentCameraKey_;
    }
-
+   
    /**
     * @return false if and only if a camera is not set (checks this class, not
     *         Core-Camera)
@@ -530,13 +551,7 @@ public class Cameras {
       double rowReadoutTime = getRowReadoutTime(camKey);
       int numReadoutRows;
 
-      Rectangle roi = new Rectangle();
-      try {
-         roi = core_.getROI(devices_.getMMDevice(camKey));
-      } catch (Exception e) {
-         MyDialogUtils.showError(e);
-      }
-      
+      Rectangle roi = getCameraROI(camKey);
       Rectangle sensorSize = getSensorSize(camKey);
 
       switch (devices_.getMMDeviceLibrary(camKey)) {
@@ -616,9 +631,33 @@ public class Cameras {
                prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
                      Properties.Keys.PLUGIN_CAMERA_MODE, 0));
          setSPIMTriggerMode(cameraMode);
+         // exposure time set by acquisition setup code
       } else { // for Live mode
          setSPIMTriggerMode(CameraModes.Keys.INTERNAL);
+         // also set exposure time to the live mode value
+         float exposure = prefs_.getFloat(MyStrings.PanelNames.SETTINGS.toString(),
+               Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE.toString(), 100f);
+         try {
+            core_.setExposure(exposure);
+         } catch (Exception e) {
+            MyDialogUtils.showError("Could not change exposure setting for live mode");
+         }
       }
+   }
+   
+   /**
+    * Gets the camera ROI
+    * @param camKey
+    * @return
+    */
+   public Rectangle getCameraROI(Devices.Keys camKey) {
+      Rectangle roi = new Rectangle();
+      try {
+         roi = core_.getROI(devices_.getMMDevice(camKey));
+      } catch (Exception e) {
+         MyDialogUtils.showError(e);
+      }
+      return roi;
    }
    
 
