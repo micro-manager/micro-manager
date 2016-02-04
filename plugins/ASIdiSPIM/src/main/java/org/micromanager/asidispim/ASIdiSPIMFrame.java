@@ -46,6 +46,7 @@ import org.micromanager.Studio;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.asidispim.utils.AutofocusUtils;
 import org.micromanager.asidispim.utils.ControllerUtils;
+import org.micromanager.asidispim.utils.ListeningJTabbedPane;
 import static org.micromanager.asidispim.utils.MyJavaUtils.isMac;
 import org.micromanager.asidispim.utils.StagePositionUpdater;
 import org.micromanager.internal.utils.MMFrame;
@@ -110,6 +111,7 @@ public class ASIdiSPIMFrame extends MMFrame
    private final HelpPanel helpPanel_;
    private final StatusSubPanel statusSubPanel_;
    private final StagePositionUpdater stagePosUpdater_;
+   private final ListeningJTabbedPane tabbedPane_;
    
    private final AtomicBoolean hardwareInUse_ = new AtomicBoolean(false);   // true if acquisition or autofocus running
    
@@ -135,10 +137,10 @@ public class ASIdiSPIMFrame extends MMFrame
       
       // make sure Live mode is turned off (panels assume it can manipulate
       //   cameras which requires live mode to be turned off)
-      boolean liveModeOriginally = gui_.isLiveModeOn();
-      String cameraOriginal = gui_.getMMCore().getCameraDevice();
+      boolean liveModeOriginally = gui_.live().getIsLiveModeOn();
+      String cameraOriginal = gui_.getCMMCore().getCameraDevice();
       if (liveModeOriginally) {
-         gui_.enableLiveMode(false);
+         gui_.live().setLiveMode(false);
       }
       
       // create the panels themselves
@@ -200,12 +202,13 @@ public class ASIdiSPIMFrame extends MMFrame
       stagePosUpdater_.addPanel(statusSubPanel_);
 
       // attach live mode listeners
-<<<<<<< HEAD
-      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelB_);
-      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelA_);
-      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) navigationPanel_);
-      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener(new LiveModeListener() {
+
+      //MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelB_);
+      //MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelA_);
+      //MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) navigationPanel_);
+      //MMStudio.getInstance().getSnapLiveManager().addLiveModeListener(new LiveModeListener() {
          // make sure to "wake up" any piezos with autosleep enabled before we start imaging 
+         /*
          @Override
          public void liveModeEnabled(boolean enabled) {
             if (enabled) {
@@ -236,11 +239,8 @@ public class ASIdiSPIMFrame extends MMFrame
             }
          }
       });
-=======
-      //MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelB_);
-      //MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelA_);
-      //MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) navigationPanel_);
->>>>>>> mm2diSPIM
+         */
+
       
       // make sure gotDeSelected() and gotSelected() get called whenever we switch tabs
       tabbedPane_.addChangeListener(new ChangeListener() {
@@ -283,10 +283,10 @@ public class ASIdiSPIMFrame extends MMFrame
       
       // restore live mode and camera
       if (liveModeOriginally) {
-         gui_.enableLiveMode(true);
+         gui_.live().setLiveMode(true);
       }
       try {
-         gui_.getMMCore().setCameraDevice(cameraOriginal);
+         gui_.getCMMCore().setCameraDevice(cameraOriginal);
       } catch (Exception ex) {
          // do nothing
       }
@@ -323,7 +323,6 @@ public class ASIdiSPIMFrame extends MMFrame
       return navigationPanel_;
    }
    
-<<<<<<< HEAD
    /**
     * For use by the acquisition panel code (to update offset setting)
     * Do not get into the internals of this plugin without relying on
@@ -359,48 +358,6 @@ public class ASIdiSPIMFrame extends MMFrame
       return devices_;
    }
    
-   // MMListener mandated member functions
-   @Override
-   public void propertiesChangedAlert() {
-      // doesn't seem to actually be called by core when property changes
-     // props_.callListeners();
-   }
-
-   @Override
-   public void propertyChangedAlert(String device, String property, String value) {
-     // props_.callListeners();
-   }
-
-   @Override
-   public void configGroupChangedAlert(String groupName, String newConfig) {
-   }
-
-   @Override
-   public void systemConfigurationLoaded() {
-   }
-
-   @Override
-   public void pixelSizeChangedAlert(double newPixelSizeUm) {
-   }
-
-   @Override
-   public void stagePositionChangedAlert(String deviceName, double pos) {
-   }
-
-   @Override
-   public void xyStagePositionChanged(String deviceName, double xPos, double yPos) {
-   }
-
-   @Override
-   public void exposureChanged(String cameraName, double newExposureTime) {
-   }
-   
-   @Override
-   public void slmExposureChanged(String cameraName, double newExposureTime) {
-   }
-=======
-  
->>>>>>> mm2diSPIM
    
    // TODO make this automatically call all panels' method
    private void saveSettings() {
