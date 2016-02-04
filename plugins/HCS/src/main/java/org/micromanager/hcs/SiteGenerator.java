@@ -184,36 +184,49 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       JPanel sidebar = new JPanel(new MigLayout("flowy, gap 0, insets 0"));
       contentsPanel.add(sidebar, "growprio 0, shrinkprio 200, gap 0, wrap");
 
+      // Mutually-exclusive toggle buttons for what the mouse does.
       final JToggleButton selectWells = new JToggleButton("Select",
-            IconLoader.getIcon("/org/micromanager/icons/mouse_cursor.png"));
+            IconLoader.getIcon("/org/micromanager/icons/mouse_cursor_on.png"));
+      final JToggleButton moveStage = new JToggleButton("Move",
+            IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
+
       selectWells.setToolTipText("Click and drag to select wells.");
       selectWells.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
             if (selectWells.isSelected()) {
                platePanel_.setTool(PlatePanel.Tool.SELECT);
+               selectWells.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor_on.png"));
+               moveStage.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
+            }
+            else {
+               selectWells.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor.png"));
+               moveStage.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand_on.png"));
             }
          }
       });
       toolButtonGroup.add(selectWells);
-      selectWells.setSelected(true);
       // set default tool
       platePanel_.setTool(PlatePanel.Tool.SELECT);
       sidebar.add(selectWells, "split 2, alignx center, flowx");
 
-      final JToggleButton moveStage = new JToggleButton("Move",
-            IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
       moveStage.setToolTipText("Click to move the stage");
       moveStage.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             if (moveStage.isSelected()) {
                platePanel_.setTool(PlatePanel.Tool.MOVE);
+               moveStage.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand_on.png"));
+               selectWells.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor.png"));
+            }
+            else {
+               moveStage.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
+               selectWells.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor_on.png"));
             }
          }
       });
       toolButtonGroup.add(moveStage);
-      selectWells.setSelected(false);
+      selectWells.setSelected(true);
       sidebar.add(moveStage);
 
       final JLabel plateFormatLabel = new JLabel();
