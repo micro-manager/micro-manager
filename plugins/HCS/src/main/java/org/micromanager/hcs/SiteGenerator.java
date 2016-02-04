@@ -309,7 +309,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
 
       spacingFieldX_ = new JTextField(3);
       spacingFieldX_.setText("1000");
-      sidebar.add(spacingFieldX_, "split 2, flowx");
+      sidebar.add(spacingFieldX_, "split 2, flowx, hidemode 2");
 
       spacingFieldY_ = new JTextField();
       spacingFieldY_.setText("1000");
