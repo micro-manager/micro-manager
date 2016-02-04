@@ -53,6 +53,8 @@ public class GraphPanel extends JPanel {
    private int TEXT_SIZE = 10;
    private float TEXT_OFFSET_X = 40;
    private float TEXT_OFFSET_Y = 20;
+   private String xLabel_ = null;
+   private String yLabel_ = null;
    
    float cursorLoPos_;
    float cursorHiPos_;
@@ -320,6 +322,18 @@ public class GraphPanel extends JPanel {
       drawCursor(g2d, box, cursorLoPos_);
       drawCursor(g2d, box, cursorHiPos_);
       drawMapping(g2d, box, cursorLoPos_, cursorHiPos_, gamma_);
+      if (xLabel_ != null) {
+         int strWidth = g2d.getFontMetrics(g2d.getFont()).stringWidth(xLabel_);
+         int x = box.x + box.width / 2 - strWidth / 2;
+         g2d.drawString(xLabel_, x, box.y + box.height + 15);
+      }
+      if (yLabel_ != null) {
+         int strWidth = g2d.getFontMetrics(g2d.getFont()).stringWidth(yLabel_);
+         int strHeight = g2d.getFontMetrics(g2d.getFont()).getHeight();
+         int x = box.x - strWidth - 4;
+         int y = box.y + box.height / 2 - strHeight / 2;
+         g2d.drawString(yLabel_, x, y);
+      }
            
       // restore settings
       g2d.setPaint(oldPaint);
