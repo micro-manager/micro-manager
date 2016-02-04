@@ -52,24 +52,6 @@ public interface CompatibilityInterface {
    public void refreshGUIFromCache();
 
    /**
-    * Makes this the 'current' PositionList, i.e., the one used by the 
-    * Acquisition Protocol.
-    * Replaces the list in the PositionList Window
-    * It will open a position list dialog if it was not already open.
-    * @param pl PosiionLIst to be made the current one
-    * @throws MMScriptException
-    */
-   public void setPositionList(PositionList pl) throws MMScriptException;
-   
-   /**
-    * Returns a copy of the current PositionList, the one used by the 
-    * Acquisition Protocol
-    * @return copy of the current PositionList
-    * @throws MMScriptException
-    */
-   public PositionList getPositionList() throws MMScriptException;
-   
-   /**
     * Updates the exposure time associated with the given preset
     * If the channel-group and channel name match the current state
     * the exposure time will also be updated
@@ -137,12 +119,6 @@ public interface CompatibilityInterface {
     * @throws MMScriptException
     */
    public void setROI(Rectangle r) throws MMScriptException;
-
-   /**
-    * Opens the XYPositionList when it is not opened.
-    * Adds the current position to the list (same as pressing the "Mark" button in the XYPositionList)
-    */
-   public void markCurrentPosition();
 
    /**
     * Displays an error message and returns true if the run-time Micro-Manager version
@@ -219,11 +195,6 @@ public interface CompatibilityInterface {
     * @param status 
     */
    public void setConfigChanged(boolean status);
-
-   /**
-    * shows the position list dialog
-    */
-   public void showXYPositionList();
 
    /**
     * Enabled or disable the ROI buttons on the main window.

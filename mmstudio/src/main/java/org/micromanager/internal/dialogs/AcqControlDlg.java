@@ -442,7 +442,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       listButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            studio_.compat().showXYPositionList();
+            studio_.positions().showPositionList();
          }
       });
       listButton_.setToolTipText("Open XY list dialog");
@@ -1484,7 +1484,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
               (Math.abs(zTop - zBottom) /  zStep))));
       int numPositions = 1;
       try {
-         numPositions = Math.max(1, studio_.compat().getPositionList().getNumberOfPositions());
+         numPositions = Math.max(1, studio_.positions().getPositionList().getNumberOfPositions());
       } catch (MMScriptException ex) {
          ReportingUtils.showError(ex);
       }

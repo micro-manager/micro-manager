@@ -140,7 +140,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       try {
          PositionList posListToUse = posList_;
          if (posList_ == null && useMultiPosition_) {
-            posListToUse = studio_.compat().getPositionList();
+            posListToUse = studio_.positions().getPositionList();
          }
          // Start up the acquisition engine
          BlockingQueue<TaggedImage> engineOutputQueue = getAcquisitionEngine2010().run(

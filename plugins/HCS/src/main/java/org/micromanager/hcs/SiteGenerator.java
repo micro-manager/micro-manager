@@ -533,7 +533,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
 
       try {
          if (app_ != null) {
-            app_.compat().setPositionList(platePl);
+            app_.positions().setPositionList(platePl);
          }
       } catch (MMScriptException e) {
          displayError(e.getMessage());
@@ -545,12 +545,12 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
     * Mark current position as one point in the 3-pt set
     */
    private void markOnePoint() {
-      app_.compat().markCurrentPosition();
+      app_.positions().markCurrentPosition();
    }
 
    private void setThreePoint() {
       try {
-         PositionList plist = app_.compat().getPositionList();
+         PositionList plist = app_.positions().getPositionList();
          if (plist.getNumberOfPositions() != 3) {
             displayError("We need exactly three positions to fit AF plane. Please create XY list with 3 positions.");
             return;

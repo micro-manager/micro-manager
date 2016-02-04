@@ -531,7 +531,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
             new Runnable() {
                @Override
                public void run() {
-                  studio_.showXYPositionList();
+                  studio_.positions().showPositionList();
                }
             });
       stagePanel.add(listButton, SMALLBUTTON_SIZE);

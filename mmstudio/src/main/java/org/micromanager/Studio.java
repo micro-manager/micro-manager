@@ -210,6 +210,20 @@ public interface Studio {
    public PluginManager getPluginManager();
 
    /**
+    * Provides access to the PositionListManager for interacting with the
+    * Stage Position List.
+    * @return PositionListManager instance.
+    */
+   public PositionListManager positions();
+
+   /**
+    * Provides access to the PositionListManager for interacting with the
+    * Stage Position List. Identical to positions() except in name.
+    * @return PositionListManager instance.
+    */
+   public PositionListManager getPositionListManager();
+
+   /**
     * Provides access to the QuickAccessManager for accessing the Quick-Access
     * Panel system.
     * @return QuickAccessManager instance.
