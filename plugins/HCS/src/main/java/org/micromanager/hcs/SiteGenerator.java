@@ -1,5 +1,7 @@
 package org.micromanager.hcs;
 
+import com.bulenkov.iconloader.IconLoader;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -14,6 +16,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
+import javax.swing.JToggleButton;
 
 import org.micromanager.MenuPlugin;
 import org.micromanager.MultiStagePosition;
@@ -84,19 +87,17 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
    private final JLabel statusLabel_;
    private final JCheckBox chckbxThreePt_;
    private final ButtonGroup toolButtonGroup = new ButtonGroup();
-   private JRadioButton rdbtnSelectWells_;
-   private JRadioButton rdbtnMoveStage_;
    private final ButtonGroup spacingButtonGroup = new ButtonGroup();
-   private JRadioButton rdbtnEqualXYSpacing_;
-   private JRadioButton rdbtnDifferentXYSpacing_;
-   private JRadioButton rdbtnFieldOfViewSpacing_;
+   private JToggleButton toggleEqualXYSpacing_;
+   private JToggleButton toggleDifferentXYSpacing_;
+   private JToggleButton toggleFieldOfViewSpacing_;
 
    private double xSpacing = 0.0;
    private double ySpacing = 0.0;
 
 
    private void updateXySpacing() {
-     if (rdbtnFieldOfViewSpacing_.isSelected()) {
+     if (toggleFieldOfViewSpacing_.isSelected()) {
        core_ = app_.getCMMCore();
        long width  = core_.getImageWidth();
        long height = core_.getImageHeight();
@@ -108,7 +109,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
      }
      else {
        xSpacing = Double.parseDouble(spacingFieldX_.getText().replace(',','.'));
-       if (rdbtnEqualXYSpacing_.isSelected()) ySpacing = xSpacing;
+       if (toggleEqualXYSpacing_.isSelected()) ySpacing = xSpacing;
        else ySpacing = Double.parseDouble(spacingFieldY_.getText().replace(',', '.'));
      }
    }
@@ -178,10 +179,48 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       loadAndRestorePosition(100, 100, 1000, 640);
 
       platePanel_ = new PlatePanel(plate_, null, this, app);
-      contentsPanel.add(platePanel_, "grow, split 2");
+      contentsPanel.add(platePanel_, "grow, push");
 
       JPanel sidebar = new JPanel(new MigLayout("flowy, gap 0, insets 0"));
-      contentsPanel.add(sidebar, "growx 0, wrap");
+      contentsPanel.add(sidebar, "growprio 0, shrinkprio 200, gap 0, wrap");
+
+      final JToggleButton selectWells = new JToggleButton("Select",
+            IconLoader.getIcon("/org/micromanager/icons/mouse_cursor.png"));
+      selectWells.setToolTipText("Click and drag to select wells.");
+      selectWells.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent arg0) {
+            if (selectWells.isSelected()) {
+               platePanel_.setTool(PlatePanel.Tool.SELECT);
+            }
+         }
+      });
+      toolButtonGroup.add(selectWells);
+      selectWells.setSelected(true);
+      // set default tool
+      platePanel_.setTool(PlatePanel.Tool.SELECT);
+      sidebar.add(selectWells, "split 2, alignx center, flowx");
+
+      final JToggleButton moveStage = new JToggleButton("Move",
+            IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
+      moveStage.setToolTipText("Click to move the stage");
+      moveStage.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            if (moveStage.isSelected()) {
+               platePanel_.setTool(PlatePanel.Tool.MOVE);
+            }
+         }
+      });
+      toolButtonGroup.add(moveStage);
+      selectWells.setSelected(false);
+      sidebar.add(moveStage);
+
+      final JLabel plateFormatLabel = new JLabel();
+      plateFormatLabel.setAlignmentY(Component.TOP_ALIGNMENT);
+      plateFormatLabel.setText("Plate format");
+      sidebar.add(plateFormatLabel);
+
       plateIDCombo_ = new JComboBox();
       sidebar.add(plateIDCombo_);
       plateIDCombo_.addItem(SBSPlate.SBS_6_WELL);
@@ -194,7 +233,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       plateIDCombo_.addItem(SBSPlate.LOAD_CUSTOM);
 
       JButton customButton = new JButton("Create Custom");
-      sidebar.add(customButton);
+      sidebar.add(customButton, "growx");
       customButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -234,145 +273,82 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
          }
       };
 
-      final JLabel plateFormatLabel = new JLabel();
-      plateFormatLabel.setAlignmentY(Component.TOP_ALIGNMENT);
-      plateFormatLabel.setText("Plate format");
-      sidebar.add(plateFormatLabel);
-
-      rowsField_ = new JTextField();
-      rowsField_.setText("1");
-      sidebar.add(rowsField_);
-      rowsField_.addFocusListener(regeneratePlateOnLossOfFocus);
-
       final JLabel imagingSitesLabel = new JLabel();
       imagingSitesLabel.setText("Imaging Sites");
       sidebar.add(imagingSitesLabel);
-
-      columnsField_ = new JTextField();
-      columnsField_.setText("1");
-      sidebar.add(columnsField_);
-      columnsField_.addFocusListener(regeneratePlateOnLossOfFocus);
-
-      spacingFieldX_ = new JTextField();
-      spacingFieldX_.setText("1000");
-      sidebar.add(spacingFieldX_);
-
-      spacingFieldY_ = new JTextField();
-      spacingFieldY_.setText("1000");
-      sidebar.add(spacingFieldY_);
-      spacingFieldY_.setVisible(false);
-
-      //same size and position like X_
-      overlapField_ = new JTextField();
-      overlapField_.setText("0");
-      sidebar.add(overlapField_);
-      overlapField_.setVisible(false);
-
-
       final JLabel rowsColumnsLabel = new JLabel();
       rowsColumnsLabel.setText("Rows, Columns");
       sidebar.add(rowsColumnsLabel);
+
+      rowsField_ = new JTextField(3);
+      rowsField_.setText("1");
+      sidebar.add(rowsField_, "split 2, flowx");
+      rowsField_.addFocusListener(regeneratePlateOnLossOfFocus);
+
+      columnsField_ = new JTextField(3);
+      columnsField_.setText("1");
+      sidebar.add(columnsField_);
+      columnsField_.addFocusListener(regeneratePlateOnLossOfFocus);
 
       final JLabel spacingLabel = new JLabel();
       spacingLabel.setText("Spacing [um]");
       sidebar.add(spacingLabel);
 
-      final JButton refreshButton = new JButton();
-      refreshButton.setIcon(SwingResourceManager.getIcon(SiteGenerator.class, "/org/micromanager/icons/arrow_refresh.png"));
+      spacingFieldX_ = new JTextField(3);
+      spacingFieldX_.setText("1000");
+      sidebar.add(spacingFieldX_, "split 2, flowx");
+
+      spacingFieldY_ = new JTextField();
+      spacingFieldY_.setText("1000");
+      // Take zero space when invisible.
+      sidebar.add(spacingFieldY_, "hidemode 2");
+      spacingFieldY_.setVisible(false);
+
+      //same size and position like X_
+      overlapField_ = new JTextField();
+      overlapField_.setText("0");
+      // Take zero space when invisible.
+      sidebar.add(overlapField_, "hidemode 2");
+      overlapField_.setVisible(false);
+
+      final JButton refreshButton = new JButton("Refresh",
+            IconLoader.getIcon("/org/micromanager/icons/arrow_refresh.png"));
       refreshButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(final ActionEvent e) {
             regenerate();
          }
       });
-      refreshButton.setText("Refresh");
-      sidebar.add(refreshButton);
+      sidebar.add(refreshButton, "growx");
 
-      final JButton calibrateXyButton = new JButton();
-      calibrateXyButton.setIcon(SwingResourceManager.getIcon(SiteGenerator.class, "/org/micromanager/icons/cog.png"));
+      final JButton calibrateXyButton = new JButton("Calibrate XY...",
+            IconLoader.getIcon("/org/micromanager/icons/cog.png"));
       calibrateXyButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(final ActionEvent e) {
             calibrateXY();
          }
       });
-      calibrateXyButton.setText("Calibrate XY...");
-      sidebar.add(calibrateXyButton);
+      sidebar.add(calibrateXyButton, "growx");
 
 
-      final JButton setPositionListButton = new JButton();
-      setPositionListButton.setIcon(SwingResourceManager.getIcon(SiteGenerator.class, "/org/micromanager/icons/table.png"));
+      final JButton setPositionListButton = new JButton("Build MM List",
+            IconLoader.getIcon("/org/micromanager/icons/table.png"));
       setPositionListButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(final ActionEvent e) {
             setPositionList();
          }
       });
-      setPositionListButton.setText("Build MM List");
-      sidebar.add(setPositionListButton);
+      sidebar.add(setPositionListButton, "growx");
 
-      chckbxThreePt_ = new JCheckBox("Use 3-Point AF");
-      chckbxThreePt_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            platePanel_.repaint();
-         }
-      });
-      sidebar.add(chckbxThreePt_);
+      sidebar.add(new JLabel("Spacing Rule:"), "gaptop 10");
 
-      JButton btnMarkPt = new JButton("Mark Point");
-      btnMarkPt.setIcon(SwingResourceManager.getIcon(SiteGenerator.class, "/org/micromanager/icons/plus.png"));
-      btnMarkPt.addActionListener(new ActionListener() {
+      toggleEqualXYSpacing_ = new JToggleButton("Equal XY");
+      toggleEqualXYSpacing_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            markOnePoint();
-         }
-      });
-      sidebar.add(btnMarkPt);
-
-      JButton btnSetThreePt = new JButton("Set 3-Point List");
-      btnSetThreePt.setIcon(SwingResourceManager.getIcon(SiteGenerator.class, "/org/micromanager/icons/asterisk_orange.png"));
-      btnSetThreePt.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            setThreePoint();
-         }
-      });
-      sidebar.add(btnSetThreePt);
-
-      rdbtnSelectWells_ = new JRadioButton("Select Wells");
-      rdbtnSelectWells_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            if (rdbtnSelectWells_.isSelected()) {
-               platePanel_.setTool(PlatePanel.Tool.SELECT);
-            }
-         }
-      });
-      toolButtonGroup.add(rdbtnSelectWells_);
-      rdbtnSelectWells_.setSelected(true);
-      // set default tool
-      platePanel_.setTool(PlatePanel.Tool.SELECT);
-      sidebar.add(rdbtnSelectWells_);
-
-      rdbtnMoveStage_ = new JRadioButton("Move Stage");
-      rdbtnMoveStage_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            if (rdbtnMoveStage_.isSelected()) {
-               platePanel_.setTool(PlatePanel.Tool.MOVE);
-            }
-         }
-      });
-      toolButtonGroup.add(rdbtnMoveStage_);
-      rdbtnSelectWells_.setSelected(false);
-      sidebar.add(rdbtnMoveStage_);
-
-      rdbtnEqualXYSpacing_ = new JRadioButton("Equal XY Spacing");
-      rdbtnEqualXYSpacing_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            if (rdbtnEqualXYSpacing_.isSelected()) {
+            if (toggleEqualXYSpacing_.isSelected()) {
                 spacingLabel.setText("Spacing [um]");
                 spacingFieldX_.setVisible(true);
                 spacingFieldY_.setVisible(false);
@@ -381,11 +357,11 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
          }
       });
 
-      rdbtnDifferentXYSpacing_ = new JRadioButton("Different XY Spacing");
-      rdbtnDifferentXYSpacing_.addActionListener(new ActionListener() {
+      toggleDifferentXYSpacing_ = new JToggleButton("Different XY");
+      toggleDifferentXYSpacing_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            if (rdbtnDifferentXYSpacing_.isSelected()) {
+            if (toggleDifferentXYSpacing_.isSelected()) {
                 spacingLabel.setText("Spacing X,Y [um]");
                 spacingFieldX_.setVisible(true);
                 spacingFieldY_.setVisible(true);
@@ -394,11 +370,11 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
          }
       });
 
-      rdbtnFieldOfViewSpacing_ = new JRadioButton("Field of View Spacing");
-      rdbtnFieldOfViewSpacing_.addActionListener(new ActionListener() {
+      toggleFieldOfViewSpacing_ = new JToggleButton("Field of View");
+      toggleFieldOfViewSpacing_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            if (rdbtnFieldOfViewSpacing_.isSelected()) {
+            if (toggleFieldOfViewSpacing_.isSelected()) {
                 spacingLabel.setText("Overlap [um]");
                 overlapField_.setVisible(true);
                 spacingFieldX_.setVisible(false);
@@ -407,19 +383,46 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
          }
       });
 
-      spacingButtonGroup.add(rdbtnEqualXYSpacing_);
-      spacingButtonGroup.add(rdbtnDifferentXYSpacing_);
-      spacingButtonGroup.add(rdbtnFieldOfViewSpacing_);
+      spacingButtonGroup.add(toggleEqualXYSpacing_);
+      spacingButtonGroup.add(toggleDifferentXYSpacing_);
+      spacingButtonGroup.add(toggleFieldOfViewSpacing_);
 
-      rdbtnEqualXYSpacing_.setSelected(true);
-      rdbtnDifferentXYSpacing_.setSelected(false);      
-      rdbtnFieldOfViewSpacing_.setSelected(false);
+      toggleEqualXYSpacing_.setSelected(true);
+      toggleDifferentXYSpacing_.setSelected(false);
+      toggleFieldOfViewSpacing_.setSelected(false);
 
-      sidebar.add(rdbtnEqualXYSpacing_);
+      sidebar.add(toggleEqualXYSpacing_, "growx");
+      sidebar.add(toggleDifferentXYSpacing_, "growx");
+      sidebar.add(toggleFieldOfViewSpacing_, "growx");
 
-      sidebar.add(rdbtnDifferentXYSpacing_);
+      chckbxThreePt_ = new JCheckBox("Use 3-Point AF");
+      chckbxThreePt_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            platePanel_.repaint();
+         }
+      });
+      sidebar.add(chckbxThreePt_, "gaptop 10");
 
-      sidebar.add(rdbtnFieldOfViewSpacing_);
+      JButton btnMarkPt = new JButton("Mark Point",
+            IconLoader.getIcon("/org/micromanager/icons/plus.png"));
+      btnMarkPt.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent arg0) {
+            markOnePoint();
+         }
+      });
+      sidebar.add(btnMarkPt, "growx");
+
+      JButton btnSetThreePt = new JButton("Set 3-Point List",
+            IconLoader.getIcon("/org/micromanager/icons/asterisk_orange.png"));
+      btnSetThreePt.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            setThreePoint();
+         }
+      });
+      sidebar.add(btnSetThreePt, "growx");
 
       JButton btnAbout = new JButton("About...");
       btnAbout.addActionListener(new ActionListener() {
@@ -429,11 +432,11 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
             dlgAbout.setVisible(true);
          }
       });
-      sidebar.add(btnAbout);
+      sidebar.add(btnAbout, "growx");
 
       statusLabel_ = new JLabel();
       statusLabel_.setBorder(new LineBorder(new Color(0, 0, 0)));
-      contentsPanel.add(statusLabel_, "growx");
+      contentsPanel.add(statusLabel_, "dock south, gap 0");
 
       loadSettings();
       updateXySpacing();
