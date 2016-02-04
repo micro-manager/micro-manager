@@ -21,13 +21,13 @@
 
 package org.micromanager.asidispim;
 
-import org.micromanager.asidispim.Data.Cameras;
-import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.MyStrings;
-import org.micromanager.asidispim.Data.Prefs;
-import org.micromanager.asidispim.Utils.DevicesListenerInterface;
-import org.micromanager.asidispim.Utils.ListeningJPanel;
-import org.micromanager.asidispim.Utils.UpdateFromPropertyListenerInterface;
+
+import org.micromanager.asidispim.data.Cameras;
+import org.micromanager.asidispim.data.Devices;
+import org.micromanager.asidispim.data.MyStrings;
+import org.micromanager.asidispim.data.Prefs;
+import org.micromanager.asidispim.utils.DevicesListenerInterface;
+import org.micromanager.asidispim.utils.ListeningJPanel;
 
 import java.awt.Dimension;
 import java.awt.Insets;
@@ -44,13 +44,13 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.MMStudio;
-import org.micromanager.internalinterfaces.LiveModeListener;
+
+import org.micromanager.Studio;
 
 import com.swtdesigner.SwingResourceManager;
 
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.asidispim.utils.UpdateFromPropertyListenerInterface;
 
 
 /**
@@ -58,12 +58,12 @@ import net.miginfocom.swing.MigLayout;
  * @author Jon
  */
 @SuppressWarnings("serial")
-public final class CameraSubPanel extends ListeningJPanel implements LiveModeListener {
+public final class CameraSubPanel extends ListeningJPanel  {
    
    private final Devices devices_;
    private final Prefs prefs_;
    private final Cameras cameras_;
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    private final Devices.Sides side_;
    private final String instanceLabel_;
    private final JComboBox cameraBox_;
@@ -84,7 +84,7 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
     * @param prefs
     * @param showLiveButton if false then the live button is omitted
     */
-   public CameraSubPanel(ScriptInterface gui, 
+   public CameraSubPanel(Studio gui, 
            Cameras cameras, 
            Devices devices, 
            String instanceLabel,
@@ -151,25 +151,27 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
       add(cameraBox_, "wrap");
       
       toggleButtonLive_ = new JToggleButton();
+
       toggleButtonLive_.setMargin(new Insets(2, 15, 2, 15));
       toggleButtonLive_.setIconTextGap(6);
       toggleButtonLive_.setToolTipText("Continuous live view");
-      setLiveButtonAppearance(gui_.isLiveModeOn());
+      setLiveButtonAppearance(gui_.live().getIsLiveModeOn());
       toggleButtonLive_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            setLiveButtonAppearance(!gui_.isLiveModeOn());
-            cameras_.enableLiveMode(!gui_.isLiveModeOn());
+            setLiveButtonAppearance(!gui_.live().getIsLiveModeOn());
+            cameras_.enableLiveMode(!gui_.live().getIsLiveModeOn());
          }
       });
       add(toggleButtonLive_, "center, width " + columnWidth + "px, span 2");
+
    }
    
    /**
     * required by LiveModeListener interface
     * @param enable
     */
-   @Override
+   //@Override
    public void liveModeEnabled(boolean enable) {
       setLiveButtonAppearance(enable);
    } 
@@ -180,9 +182,9 @@ public final class CameraSubPanel extends ListeningJPanel implements LiveModeLis
    */ 
    public final void setLiveButtonAppearance(boolean enable) {
       toggleButtonLive_.setIcon(enable ? SwingResourceManager.
-            getIcon(MMStudio.class,
+            getIcon(Studio.class,
             "/org/micromanager/icons/cancel.png")
-            : SwingResourceManager.getIcon(MMStudio.class,
+            : SwingResourceManager.getIcon(Studio.class,
                   "/org/micromanager/icons/camera_go.png"));
       toggleButtonLive_.setSelected(false);
       toggleButtonLive_.setText(enable ? "Stop Live" : "Live");

@@ -30,17 +30,18 @@ import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 
-import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.Joystick;
-import org.micromanager.asidispim.Data.Joystick.Directions;
-import org.micromanager.asidispim.Data.Joystick.JSAxisData;
-import org.micromanager.asidispim.Data.MyStrings;
-import org.micromanager.asidispim.Data.Prefs;
-import org.micromanager.asidispim.Utils.DevicesListenerInterface;
-import org.micromanager.asidispim.Utils.ListeningJPanel;
-import org.micromanager.asidispim.Utils.MyDialogUtils;
+
+import org.micromanager.asidispim.data.Devices;
+import org.micromanager.asidispim.data.Joystick;
+import org.micromanager.asidispim.data.MyStrings;
+import org.micromanager.asidispim.data.Prefs;
+import org.micromanager.asidispim.utils.DevicesListenerInterface;
+import org.micromanager.asidispim.utils.ListeningJPanel;
 
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.asidispim.data.Joystick.Directions;
+import org.micromanager.asidispim.data.Joystick.JSAxisData;
+import org.micromanager.asidispim.utils.MyDialogUtils;
 
 // known issue: quirky way of handling case where user removes the device that a joystick is currently associated with
 //   without the plugin knowing the device, the joystick can't actually be disabled so will continue to function with that physical device
@@ -191,13 +192,14 @@ public final class JoystickSubPanel extends ListeningJPanel {
          // it later from the preference value in makeJoystickSelectionBox()
          JSAxisData itemOrig = (JSAxisData) cb_.getSelectedItem();
          if (itemOrig == null) {
-            itemOrig = new JSAxisData(devices_.getDeviceDisplayVerbose(Devices.Keys.NONE), Devices.Keys.NONE, Directions.NONE);
+            itemOrig = new JSAxisData(devices_.getDeviceDisplayVerbose(Devices.Keys.NONE), 
+                    Devices.Keys.NONE, Directions.NONE);
          }
          joystick_.unsetAllDevicesFromJoystick(jkey_);
          
          // get the appropriate list of strings (in form of JSAxisData array) depending on joystick device type
          // already includes "None" at the top of each list
-         Joystick.JSAxisData[] JSAxisDataItems = null;
+         Joystick.JSAxisData[] JSAxisDataItems;
          if (jkey_==Joystick.Keys.LEFT_WHEEL || jkey_==Joystick.Keys.RIGHT_WHEEL) {
             JSAxisDataItems = joystick_.getWheelJSAxisData(side_);
          }

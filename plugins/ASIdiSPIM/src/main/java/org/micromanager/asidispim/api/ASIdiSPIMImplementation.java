@@ -23,8 +23,8 @@ package org.micromanager.asidispim.api;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.MMStudio;
-import org.micromanager.api.PositionList;
+import org.micromanager.Studio;
+import org.micromanager.PositionList;
 import org.micromanager.asidispim.ASIdiSPIM;
 import org.micromanager.asidispim.ASIdiSPIMFrame;
 import org.micromanager.asidispim.AcquisitionPanel;
@@ -32,11 +32,12 @@ import org.micromanager.asidispim.AutofocusPanel;
 import org.micromanager.asidispim.AutofocusPanel.Modes;
 import org.micromanager.asidispim.NavigationPanel;
 import org.micromanager.asidispim.SetupPanel;
-import org.micromanager.asidispim.Data.AcquisitionModes.Keys;
-import org.micromanager.asidispim.Data.AcquisitionSettings;
-import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.Devices.Sides;
-import org.micromanager.utils.MMScriptException;
+import org.micromanager.asidispim.data.AcquisitionModes.Keys;
+import org.micromanager.asidispim.data.AcquisitionSettings;
+import org.micromanager.asidispim.data.Devices;
+import org.micromanager.asidispim.data.Devices.Sides;
+import org.micromanager.asidispim.data.MultichannelModes;
+import org.micromanager.internal.utils.MMScriptException;
 
 /**
  * Implementation of the ASidiSPIMInterface
@@ -125,11 +126,7 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
 
    @Override
    public void closeAcquisitionWindow(String acquisitionName) throws ASIdiSPIMException {
-      try {
          getGui().closeAcquisitionWindow(acquisitionName);
-      } catch (MMScriptException e) {
-         throw new ASIdiSPIMException(e);
-      }
    }
    
    @Override
@@ -183,7 +180,7 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    }
 
    @Override
-   public void setAcquisitionMode(org.micromanager.asidispim.Data.AcquisitionModes.Keys mode) throws ASIdiSPIMException {
+   public void setAcquisitionMode(org.micromanager.asidispim.data.AcquisitionModes.Keys mode) throws ASIdiSPIMException {
       getAcquisitionPanel().setAcquisitionMode(mode);
    }
    
@@ -313,13 +310,13 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    }
    
    @Override
-   public org.micromanager.asidispim.Data.MultichannelModes.Keys getChannelChangeMode() throws ASIdiSPIMException {
+   public org.micromanager.asidispim.data.MultichannelModes.Keys getChannelChangeMode() throws ASIdiSPIMException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public void setChannelChangeMode(org.micromanager.asidispim.Data.MultichannelModes.Keys mode) throws ASIdiSPIMException {
+   public void setChannelChangeMode(org.micromanager.asidispim.data.MultichannelModes.Keys mode) throws ASIdiSPIMException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();
    }
@@ -727,9 +724,10 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    
    
    //** Private methods.  Only for internal use **//
-
-   private MMStudio getGui() throws ASIdiSPIMException {
-      MMStudio studio = MMStudio.getInstance();
+/*
+   private Studio getGui() throws ASIdiSPIMException {
+       
+      Studio studio = Studio.getInstance();
       if (studio == null) {
          throw new ASIdiSPIMException ("MM Studio is not open"); 
       }
@@ -744,6 +742,7 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
        }
        return core;
    }
+*/
    
    private ASIdiSPIMFrame getFrame() throws ASIdiSPIMException {
       ASIdiSPIMFrame frame = ASIdiSPIM.getFrame();
@@ -792,5 +791,6 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       }
       return devices;
    }
+
 
 }

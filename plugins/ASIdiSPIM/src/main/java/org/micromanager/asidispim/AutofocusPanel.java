@@ -33,17 +33,19 @@ import javax.swing.JSpinner;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.MyStrings;
-import org.micromanager.asidispim.Data.Prefs;
-import org.micromanager.asidispim.Data.Properties;
-import org.micromanager.asidispim.Utils.AutofocusUtils;
-import org.micromanager.asidispim.Utils.ListeningJPanel;
-import org.micromanager.asidispim.Utils.MyNumberUtils;
-import org.micromanager.asidispim.Utils.PanelUtils;
+import org.micromanager.Studio;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
+
+import org.micromanager.asidispim.data.Devices;
+import org.micromanager.asidispim.data.MyStrings;
+import org.micromanager.asidispim.data.Prefs;
+import org.micromanager.asidispim.data.Properties;
+import org.micromanager.asidispim.utils.AutofocusUtils;
+import org.micromanager.asidispim.utils.ListeningJPanel;
+import org.micromanager.asidispim.utils.PanelUtils;
+
 import org.micromanager.asidispim.fit.Fitter;
+import org.micromanager.asidispim.utils.MyNumberUtils;
 
 /**
  *
@@ -51,6 +53,8 @@ import org.micromanager.asidispim.fit.Fitter;
  */
 @SuppressWarnings("serial")
 public class AutofocusPanel extends ListeningJPanel{
+
+   final private Studio gui_;
    final private Properties props_;
    final private Prefs prefs_;
    final private Devices devices_;
@@ -64,7 +68,7 @@ public class AutofocusPanel extends ListeningJPanel{
    private final JLabel maxOffsetChangeSetupLabel2_;
    private final JSpinner eachNTimePointsSpinner_;
    
-   public AutofocusPanel(final ScriptInterface gui, final Devices devices, 
+   public AutofocusPanel(final Studio gui, final Devices devices, 
            final Properties props, final Prefs prefs, 
            final AutofocusUtils autofocus) {
       
@@ -73,6 +77,7 @@ public class AutofocusPanel extends ListeningJPanel{
               "",
               "[center]8[center]",
               "[]16[]16[]"));
+      gui_ = gui;
       prefs_ = prefs;
       props_ = props;
       devices_ = devices;
@@ -84,12 +89,14 @@ public class AutofocusPanel extends ListeningJPanel{
             "",
             "[right]16[left]",
             "[]8[]"));
-      optionsPanel_.setBorder(PanelUtils.makeTitledBorder("General Options"));
-      
+     
       // show images checkbox
       final JCheckBox showImagesCheckBox = pu.makeCheckBox("Show images",
               Properties.Keys.PLUGIN_AUTOFOCUS_SHOWIMAGES, panelName_, false);
       optionsPanel_.add(showImagesCheckBox);
+
+      optionsPanel_.setBorder(PanelUtils.makeTitledBorder("Autofocus Options", 
+              optionsPanel_));
       
       // show plot checkbox
       final JCheckBox showPlotCheckBox = pu.makeCheckBox("Show plot",
@@ -130,8 +137,10 @@ public class AutofocusPanel extends ListeningJPanel{
       scoringAlgorithmCB.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
+
             prefs_.putInt(panelName_, Properties.Keys.AUTOFOCUS_SCORING_ALGORITHM,
                   Fitter.getPrefCodeFromString(scoringAlgorithmCB.getSelectedItem().toString()));
+            gui_.getAutofocusManager().showOptionsDialog();
          }
       });
       optionsPanel_.add(scoringAlgorithmCB, "wrap");
@@ -166,7 +175,7 @@ public class AutofocusPanel extends ListeningJPanel{
             "[right]8[center]8[left]",
             "[]8[]"));
       acqOptionsPanel_.setBorder(PanelUtils.makeTitledBorder(
-              "Options During Acquisition"));
+              "Autofocus Options during Acquisition", acqOptionsPanel_));
       
       // whether or not to run autofocus at the start of the acquisition
       final JCheckBox beforeStartCheckBox = pu.makeCheckBox("Autofocus before starting acquisition",
@@ -185,7 +194,7 @@ public class AutofocusPanel extends ListeningJPanel{
       // TODO: need to update combobox when the channel group changes
       String channelGroup_  = props_.getPropValueString(Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_MULTICHANNEL_GROUP);
-      StrVector channels = gui.getMMCore().getAvailableConfigs(channelGroup_);
+      StrVector channels = gui.core().getAvailableConfigs(channelGroup_);
       final JComboBox channelSelect = pu.makeDropDownBox(channels.toArray(), 
               Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_AUTOFOCUS_CHANNEL, "");
       // make sure to explicitly set it to something so pref gets written
@@ -205,7 +214,7 @@ public class AutofocusPanel extends ListeningJPanel{
             "[right]8[center]8[left]",
             "[]8[]"));
       setupOptionsPanel_.setBorder(PanelUtils.makeTitledBorder(
-              "Options During Setup"));
+              "Options During Setup", setupOptionsPanel_));
 
       autoUpdateOffset_ = pu.makeCheckBox("Automatically update offset if focus found",
             Properties.Keys.PLUGIN_AUTOFOCUS_AUTOUPDATE_OFFSET, panelName_, false);

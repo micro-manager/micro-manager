@@ -26,13 +26,13 @@ import java.awt.Color;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.Joystick;
-import org.micromanager.asidispim.Data.MyStrings;
-import org.micromanager.asidispim.Data.Positions;
-import org.micromanager.asidispim.Data.Properties;
-import org.micromanager.asidispim.Utils.ListeningJPanel;
-import org.micromanager.asidispim.Utils.StagePositionUpdater;
+import org.micromanager.asidispim.data.Devices;
+import org.micromanager.asidispim.data.Joystick;
+import org.micromanager.asidispim.data.MyStrings;
+import org.micromanager.asidispim.data.Positions;
+import org.micromanager.asidispim.data.Properties;
+import org.micromanager.asidispim.utils.ListeningJPanel;
+import org.micromanager.asidispim.utils.StagePositionUpdater;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -56,6 +56,10 @@ public final class StatusSubPanel extends ListeningJPanel {
    
    /**
     * 
+     * @param devices
+     * @param props
+     * @param positions
+     * @param stagePosUpdater
     */
    public StatusSubPanel(Devices devices, Properties props, Positions positions,
          StagePositionUpdater stagePosUpdater) {
@@ -150,7 +154,6 @@ public final class StatusSubPanel extends ListeningJPanel {
       } else {
          square.setColor(Color.RED);
       }
-      return;
    }
    
    /**
@@ -174,7 +177,6 @@ public final class StatusSubPanel extends ListeningJPanel {
       } else {
          square.setColor(Color.RED);
       }
-      return;
    }
    
 

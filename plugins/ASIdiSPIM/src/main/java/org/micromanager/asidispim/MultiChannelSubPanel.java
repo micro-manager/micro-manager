@@ -31,19 +31,20 @@ import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.micromanager.acquisition.ComponentTitledBorder;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.asidispim.Data.ChannelConfigEditor;
-import org.micromanager.asidispim.Data.ChannelTableModel;
-import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.MultichannelModes;
-import org.micromanager.asidispim.Data.MyStrings;
-import org.micromanager.asidispim.Data.Prefs;
-import org.micromanager.asidispim.Data.Properties;
-import org.micromanager.asidispim.Utils.ListeningJPanel;
-import org.micromanager.asidispim.Utils.MyDialogUtils;
-import org.micromanager.asidispim.Utils.PanelUtils;
-import org.micromanager.utils.ReportingUtils;
+
+import org.micromanager.internal.dialogs.ComponentTitledBorder;
+import org.micromanager.Studio;
+import org.micromanager.asidispim.data.ChannelConfigEditor;
+import org.micromanager.asidispim.data.ChannelSpec;
+import org.micromanager.asidispim.data.ChannelTableModel;
+import org.micromanager.asidispim.data.Devices;
+import org.micromanager.asidispim.data.MultichannelModes;
+import org.micromanager.asidispim.data.MyStrings;
+import org.micromanager.asidispim.data.Prefs;
+import org.micromanager.asidispim.data.Properties;
+import org.micromanager.asidispim.utils.ListeningJPanel;
+import org.micromanager.asidispim.utils.MyDialogUtils;
+import org.micromanager.asidispim.utils.PanelUtils;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
@@ -65,7 +66,6 @@ import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.asidispim.Data.ChannelSpec;
 
 
 /**
@@ -75,6 +75,7 @@ import org.micromanager.asidispim.Data.ChannelSpec;
  */
 @SuppressWarnings("serial")
 public class MultiChannelSubPanel extends ListeningJPanel {
+   private final Studio gui_;
    private final CMMCore core_;
    private final Devices devices_;
    private final Properties props_;
@@ -129,14 +130,15 @@ public class MultiChannelSubPanel extends ListeningJPanel {
     * @param props
     * @param prefs
     */
-   public MultiChannelSubPanel(ScriptInterface gui, Devices devices, 
+   public MultiChannelSubPanel(Studio gui, Devices devices, 
            Properties props, Prefs prefs) {
       super (MyStrings.PanelNames.CHANNELS_SUBPANEL.toString(),
             new MigLayout(
                   "",
                   "[right]10[left]",
                   "[]8[]"));
-      core_ = gui.getMMCore();
+      gui_ = gui;
+      core_ = gui.getCMMCore();
       devices_ = devices;
       props_ = props;
       prefs_ = prefs;
@@ -334,7 +336,9 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       try {
          groups = core_.getAllowedPropertyValues("Core", "ChannelGroup");
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+
+         gui_.logs().logError(ex);
+         
          return new String[0];
       }
       ArrayList<String> strGroups = new ArrayList<String>();
@@ -438,7 +442,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       try {
          return core_.getCurrentConfigFromCache(channelGroup_.getSelectedItem().toString());
       } catch (Exception e) {
-         ReportingUtils.logError("Failed to get current configuration");
+        gui_.logs().logError("Failed to get current configuration");
       }
       return null;
    }
@@ -452,7 +456,9 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       try {
          core_.setConfig(channelGroup_.getSelectedItem().toString(), config);
       } catch (Exception e) {
-         ReportingUtils.logError(e, "Failed to set config.");
+
+         gui_.logs().logError(e, "Failed to set config.");
+         
       }
    }
    

@@ -22,22 +22,23 @@
 package org.micromanager.asidispim;
 
 
-import org.micromanager.asidispim.Data.AcquisitionModes;
-import org.micromanager.asidispim.Data.CameraModes;
-import org.micromanager.asidispim.Data.Cameras;
-import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.MultichannelModes;
-import org.micromanager.asidispim.Data.MyStrings;
-import org.micromanager.asidispim.Data.Positions;
-import org.micromanager.asidispim.Data.Prefs;
-import org.micromanager.asidispim.Data.Properties;
-import org.micromanager.asidispim.Utils.DevicesListenerInterface;
-import org.micromanager.asidispim.Utils.ListeningJPanel;
-import org.micromanager.asidispim.Utils.MyDialogUtils;
-import org.micromanager.asidispim.Utils.MyNumberUtils;
-import org.micromanager.asidispim.Utils.PanelUtils;
-import org.micromanager.asidispim.Utils.SliceTiming;
-import org.micromanager.asidispim.Utils.StagePositionUpdater;
+
+import org.micromanager.asidispim.data.AcquisitionModes;
+import org.micromanager.asidispim.data.CameraModes;
+import org.micromanager.asidispim.data.Cameras;
+import org.micromanager.asidispim.data.Devices;
+import org.micromanager.asidispim.data.MultichannelModes;
+import org.micromanager.asidispim.data.MyStrings;
+import org.micromanager.asidispim.data.Positions;
+import org.micromanager.asidispim.data.Prefs;
+import org.micromanager.asidispim.data.Properties;
+import org.micromanager.asidispim.utils.DevicesListenerInterface;
+import org.micromanager.asidispim.utils.ListeningJPanel;
+import org.micromanager.asidispim.utils.MyDialogUtils;
+import org.micromanager.asidispim.utils.MyNumberUtils;
+import org.micromanager.asidispim.utils.PanelUtils;
+import org.micromanager.asidispim.utils.SliceTiming;
+import org.micromanager.asidispim.utils.StagePositionUpdater;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -70,32 +71,12 @@ import javax.swing.text.DefaultFormatter;
 import net.miginfocom.swing.MigLayout;
 
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import mmcorej.TaggedImage;
 
-import org.micromanager.api.MultiStagePosition;
-import org.micromanager.api.PositionList;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.api.ImageCache;
-import org.micromanager.api.MMTags;
-import org.micromanager.MMStudio;
-import org.micromanager.acquisition.ComponentTitledBorder;
-import org.micromanager.acquisition.DefaultTaggedImageSink;
-import org.micromanager.acquisition.MMAcquisition;
-import org.micromanager.acquisition.TaggedImageQueue;
-import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
-import org.micromanager.acquisition.TaggedImageStorageMultipageTiff;
-import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
-import org.micromanager.utils.ImageUtils;
-import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.FileDialogs;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.MMFrame;
-import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.ReportingUtils;
+
 
 import com.swtdesigner.SwingResourceManager;
 
@@ -112,13 +93,37 @@ import java.beans.PropertyChangeListener;
 
 import javax.swing.BorderFactory;
 
-import org.micromanager.asidispim.Data.AcquisitionSettings;
-import org.micromanager.asidispim.Data.ChannelSpec;
-import org.micromanager.asidispim.Data.Devices.Sides;
-import org.micromanager.asidispim.Data.Joystick.Directions;
-import org.micromanager.asidispim.Utils.ControllerUtils;
-import org.micromanager.asidispim.Utils.AutofocusUtils;
+import org.micromanager.MultiStagePosition;
+import org.micromanager.PositionList;
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMap.PropertyMapBuilder;
+import org.micromanager.Studio;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
+import org.micromanager.asidispim.data.AcquisitionSettings;
+
+import org.micromanager.asidispim.data.ChannelSpec;
+import org.micromanager.asidispim.data.Devices.Sides;
+import org.micromanager.asidispim.utils.ControllerUtils;
+import org.micromanager.asidispim.utils.AutofocusUtils;
+import org.micromanager.data.Coords;
+import org.micromanager.data.Coords.CoordsBuilder;
+import org.micromanager.data.Datastore;
+import org.micromanager.data.DatastoreFrozenException;
+import org.micromanager.data.DatastoreRewriteException;
+import org.micromanager.data.Image;
+import org.micromanager.data.Metadata;
+import org.micromanager.data.SummaryMetadata;
+import org.micromanager.display.DisplaySettings.DisplaySettingsBuilder;
+import org.micromanager.display.DisplayWindow;
+
+import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.dialogs.ComponentTitledBorder;
+import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.MMFrame;
+import org.micromanager.internal.utils.MMScriptException;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
+
 
 /**
  *
@@ -136,7 +141,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final AutofocusUtils autofocus_;
    private final Positions positions_;
    private final CMMCore core_;
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    private final JCheckBox advancedSliceTimingCB_;
    private final JSpinner numSlices_;
    private final JComboBox numSides_;
@@ -148,7 +153,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JSpinner delayCamera_;
    private final JSpinner durationCamera_;  // NB: not the same as camera exposure
    private final JSpinner exposureCamera_;  // NB: only used in advanced timing mode
-   private JCheckBox alternateBeamScanCB_;
+   private final JCheckBox alternateBeamScanCB_;
    private final JSpinner durationLaser_;
    private final JSpinner delaySide_;
    private final JLabel actualSlicePeriodLabel_;
@@ -198,7 +203,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private String[] channelNames_;
    private int nrRepeats_;  // how many separate acquisitions to perform
    
-   public AcquisitionPanel(ScriptInterface gui, 
+   public AcquisitionPanel(Studio gui, 
            Devices devices, 
            Properties props, 
            Cameras cameras, 
@@ -221,7 +226,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       positions_ = positions;
       controller_ = controller;
       autofocus_ = autofocus;
-      core_ = gui_.getMMCore();
+      core_ = gui_.core();
       numTimePointsDone_ = 0;
       sliceTiming_ = new SliceTiming();
       lastAcquisitionPath_ = "";
@@ -259,7 +264,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               "[right]10[center]",
               "[]8[]"));
 
-      volPanel_.setBorder(PanelUtils.makeTitledBorder("Volume Settings"));
+      volPanel_.setBorder(PanelUtils.makeTitledBorder("Volume Settings", volPanel_));
 
       volPanel_.add(new JLabel("Number of sides:"));
       String [] str12 = {"1", "2"};
@@ -566,7 +571,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
               "",
               "[right]10[center]8[left]",
               "[]4[]"));
-      savePanel_.setBorder(PanelUtils.makeTitledBorder("Data Saving Settings"));
+      savePanel_.setBorder(PanelUtils.makeTitledBorder("Data Saving Settings", savePanel_));
       
       separateTimePointsCB_ = pu.makeCheckBox("Separate viewer / file for each time point",
             Properties.Keys.PREFS_SEPARATE_VIEWERS_FOR_TIMEPOINTS, panelName_, false); 
@@ -647,7 +652,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             "",
             "[right]6[left, 40%!]",
             "[]5[]"));
-      durationPanel_.setBorder(PanelUtils.makeTitledBorder("Durations"));
+      durationPanel_.setBorder(PanelUtils.makeTitledBorder("Durations", durationPanel_));
       durationPanel_.setPreferredSize(new Dimension(125, 0));  // fix width so it doesn't constantly change depending on text
       
       durationPanel_.add(new JLabel("Slice:"));
@@ -720,7 +725,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       editPositionListButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            gui_.showXYPositionList();
+            gui_.compat().showXYPositionList();
          }
       });
       positionPanel.add(editPositionListButton, "span 2, center");
@@ -1231,7 +1236,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // (could be wildly off but was estimated using actual system
             // and then slightly padded to be conservative to avoid errors
             // where positions aren't completed in time for next position)
-            return gui_.getPositionList().getNumberOfPositions() *
+            return gui_.compat().getPositionList().getNumberOfPositions() *
                   (volumeDuration + 1500 + PanelUtils.getSpinnerFloatValue(positionDelay_));
          } catch (MMScriptException ex) {
             MyDialogUtils.showError(ex, "Error getting position list for multiple XY positions");
@@ -1487,22 +1492,24 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @param testAcqSide only applies to test acquisition, passthrough from runTestAcquisition() 
     * @return true if ran without any fatal errors.
     */
-   private boolean runAcquisitionPrivate(boolean testAcq, Devices.Sides testAcqSide) {
+   private boolean runAcquisitionPrivate(boolean testAcq, Devices.Sides testAcqSide) throws DatastoreFrozenException, DatastoreRewriteException, Exception {
       
+
       // sanity check, shouldn't call this unless we aren't running an acquisition
-      if (gui_.isAcquisitionRunning()) {
+      if (gui_.compat().isAcquisitionRunning()) {
          MyDialogUtils.showError("An acquisition is already running");
          return false;
       }
-      
+
       if (ASIdiSPIM.getFrame().getHardwareInUse()) {
          MyDialogUtils.showError("Hardware is being used by something else (maybe autofocus?)");
          return false;
       }
-      
-      boolean liveModeOriginally = gui_.isLiveModeOn();
+
+      boolean liveModeOriginally = gui_.live().getIsLiveModeOn();
+
       if (liveModeOriginally) {
-         gui_.enableLiveMode(false);
+         gui_.live().setLiveMode(false);
       }
       
       // stop the serial traffic for position updates during acquisition
@@ -1643,7 +1650,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       PositionList positionList = new PositionList();
       if (acqSettings.useMultiPositions) {
          try {
-            positionList = gui_.getPositionList();
+            positionList = gui_.compat().getPositionList();
             nrPositions = positionList.getNumberOfPositions();
          } catch (MMScriptException ex) {
             MyDialogUtils.showError(ex, "Error getting position list for multiple XY positions");
@@ -1772,7 +1779,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          if (acqSettings.useChannels) {
             String channelGroup  = props_.getPropValueString(Devices.Keys.PLUGIN,
                   Properties.Keys.PLUGIN_MULTICHANNEL_GROUP);
-            StrVector channels = gui_.getMMCore().getAvailableConfigs(channelGroup);
+            StrVector channels = gui_.getCMMCore().getAvailableConfigs(channelGroup);
             boolean found = false;
             for (String channel : channels) {
                if (channel.equals(autofocusChannel)) {
@@ -1840,10 +1847,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // force saving as image stacks, not individual files
       // implementation assumes just two options, either 
       //  TaggedImageStorageDiskDefault.class or TaggedImageStorageMultipageTiff.class
+   /* TODO: check if this is OK
       boolean separateImageFilesOriginally =
             ImageUtils.getImageStorageClass().equals(TaggedImageStorageDiskDefault.class);
       ImageUtils.setImageStorageClass(TaggedImageStorageMultipageTiff.class);
-      
+    */  
       // Set up controller SPIM parameters (including from Setup panel settings)
       // want to do this, even with demo cameras, so we can test everything else
       if (!controller_.prepareControllerForAquisition(acqSettings)) {
@@ -1855,6 +1863,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       String acqName = "";
 
       // do not want to return from within this loop => throw exception instead
+
+      /*
+      <<<<<<< HEAD
       // loop is executed once per acquisition (i.e. once if separate viewers isn't selected
       //   or once per timepoint if separate viewers is selected)
       long repeatStart = System.currentTimeMillis();
@@ -1900,18 +1911,49 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          VirtualAcquisitionDisplay vad = null;
          WindowListener wl_acq = null;
          WindowListener[] wls_orig = null;
+=======
+      */
+      // loop is executed once per acquisition (i.e. once if separate viewers isn't selected)
+
+      for (int tp = 0; tp < nrRepeats_; tp++) {
+
+         BlockingQueue<TaggedImage> bq = new LinkedBlockingQueue<TaggedImage>(10);
+         //String acqName;
+         //if (singleTimePointViewers) {
+         //   acqName = gui_.getUniqueAcquisitionName(nameField_.getText() + "_" + tp);
+         //} else {
+         //   acqName = gui_.getUniqueAcquisitionName(nameField_.getText());
+         //}
+         Datastore store = null;
+         
          try {
+            if (save) {
+               store = gui_.data().createMultipageTIFFDatastore(rootDir, false, 
+                       usePositionsCB_.isSelected());
+            } else {
+               store = gui_.data().createRAMDatastore();
+            }
+            DisplayWindow display = gui_.displays().createDisplay(store);
+            gui_.displays().manage(store);
+            
             // check for stop button before each acquisition
             if (cancelAcquisition_.get()) {
                throw new IllegalMonitorStateException("User stopped the acquisition");
             }
             
+
             // flag that we are actually running acquisition now
             acquisitionRunning_.set(true);
             
             ReportingUtils.logMessage("diSPIM plugin starting acquisition " + acqName);
             
             if (spimMode == AcquisitionModes.Keys.NO_SCAN && !acqSettings.separateTimepoints) {
+
+            // ReportingUtils.logMessage("diSPIM plugin starting acquisition " + nameField_.getText() + "_" + tp);
+            
+            /*
+            if (spimMode == AcquisitionModes.Keys.NO_SCAN && ! singleTimePointViewers) {
+>>>>>>> mm2diSPIM
                // swap nrFrames and nrSlices
                gui_.openAcquisition(acqName, rootDir, nrSlices, nrSides * nrChannels,
                   nrFrames, nrPositions, true, save);
@@ -1919,6 +1961,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                gui_.openAcquisition(acqName, rootDir, nrFrames, nrSides * nrChannels,
                   nrSlices, nrPositions, true, save);
             }
+            */
             
             core_.setExposure(firstCamera, exposureTime);
             if (twoSided) {
@@ -1932,8 +1975,22 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             String viewString = "";
             final String SEPARATOR = "_";
             // set up channels (side A/B is treated as channel too)
+ 
+            DisplaySettingsBuilder dsb = display.getDisplaySettings().copy();
+            SummaryMetadata sm = store.getSummaryMetadata();
+            String[] chNames = sm.getChannelNames();
+            SummaryMetadata.SummaryMetadataBuilder smb = sm.copy();
+            Color[] acqColors = display.getDisplaySettings().getChannelColors();
+            
             if (acqSettings.useChannels) {
                ChannelSpec[] channels = multiChannelPanel_.getUsedChannels();
+               int channelNr = channels.length;
+               if (twoSided)
+                  channelNr *= 2;
+               if (acqColors.length != channelNr)
+                  acqColors = new Color[channelNr];
+               if (chNames.length != channelNr)
+                  chNames = new String[channelNr];
                for (int i = 0; i < channels.length; i++) {
                   String chName = "-" + channels[i].config_;
                   // same algorithm for channel index vs. specified channel and side as below
@@ -1941,6 +1998,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   if (twoSided) {
                      channelIndex *= 2;
                   }
+
                   channelNames_[channelIndex] = firstCamera + chName;
                   viewString += NumberUtils.intToDisplayString(0) + SEPARATOR;
                   if (twoSided) {
@@ -1948,114 +2006,74 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      viewString += NumberUtils.intToDisplayString(90) + SEPARATOR;
                   }
                }
-            } else {
-               channelNames_[0] = firstCamera;
+            } else { 
+               int channelNr = 1;
+               if (twoSided)
+                  channelNr *= 2;
+               if (acqColors == null || acqColors.length != channelNr)
+                  acqColors = new Color[channelNr];
+               if (chNames == null || chNames.length != channelNr)
+                  chNames = new String[channelNr];
+               chNames[0] = firstCamera;
+               acqColors[0] = getChannelColor(0);
                viewString += NumberUtils.intToDisplayString(0) + SEPARATOR;
                if (twoSided) {
-                  channelNames_[1] = secondCamera;
+                  chNames[1] = secondCamera;
+                  acqColors[1] = getChannelColor(1);
                   viewString += NumberUtils.intToDisplayString(90) + SEPARATOR;
                }
             }
-            // strip last separator of viewString (for Multiview Reconstruction)
+            store.setSummaryMetadata(smb.build());
+            //display.setDisplaySettings(dsb.build());
+            
+            // strip last separators:
             viewString = viewString.substring(0, viewString.length() - 1);
             
-            // assign channel names and colors
-            for (int i = 0; i < nrSides * nrChannels; i++) {
-               gui_.setChannelName(acqName, i, channelNames_[i]);
-               gui_.setChannelColor(acqName, i, getChannelColor(i));
-            }
-            
-            
-            // initialize acquisition
-            gui_.initializeAcquisition(acqName, (int) core_.getImageWidth(),
-                    (int) core_.getImageHeight(), (int) core_.getBytesPerPixel(),
-                    (int) core_.getImageBitDepth());
-            gui_.promptToSaveAcquisition(acqName, !testAcq);
-            
-            // These metadata have to added after initialization, otherwise they will not be shown?!
-            gui_.setAcquisitionProperty(acqName, "NumberOfSides", 
-                    NumberUtils.doubleToDisplayString(acqSettings.numSides));
-            gui_.setAcquisitionProperty(acqName, "FirstSide", acqSettings.firstSideIsA ? "A" : "B");
-            gui_.setAcquisitionProperty(acqName, "SlicePeriod_ms", 
-                  actualSlicePeriodLabel_.getText());
-            gui_.setAcquisitionProperty(acqName, "LaserExposure_ms",
-                  NumberUtils.doubleToDisplayString(acqSettings.desiredLightExposure));
-            gui_.setAcquisitionProperty(acqName, "VolumeDuration",
+            sm = store.getSummaryMetadata();
+            PropertyMap pm = sm.getUserData();
+            PropertyMapBuilder pmb = gui_.data().getPropertyMapBuilder();
+            if (pm != null)
+               pmb = pm.copy();
+            pmb.putInt("NumberOfSides", getNumSides());
+
+            String firstSide = "B";
+            if (firstSideA) {
+               firstSide = "A";
+            } 
+            pmb.putString( "FirstSide", firstSide);
+            pmb.putString("SlicePeriod_ms", actualSlicePeriodLabel_.getText());
+            pmb.putDouble("LaserExposure_ms", 
+                    (double)PanelUtils.getSpinnerFloatValue(durationLaser_));
+            pmb.putString("VolumeDuration", 
                     actualVolumeDurationLabel_.getText());
-            gui_.setAcquisitionProperty(acqName, "SPIMmode", spimMode.toString()); 
-            // Multi-page TIFF saving code wants this one (cameras are all 16-bits, so not much reason for anything else)
-            gui_.setAcquisitionProperty(acqName, "PixelType", "GRAY16");
-            gui_.setAcquisitionProperty(acqName, "UseAutofocus", 
-                  acqSettings.useAutofocus ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
-            gui_.setAcquisitionProperty(acqName, "HardwareTimepoints", 
-                  acqSettings.hardwareTimepoints ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
-            gui_.setAcquisitionProperty(acqName, "SeparateTimepoints", 
-                  acqSettings.separateTimepoints ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
-            gui_.setAcquisitionProperty(acqName, "CameraMode", acqSettings.cameraMode.toString()); 
-            gui_.setAcquisitionProperty(acqName, "z-step_um",
-                  NumberUtils.doubleToDisplayString(acqSettings.stepSizeUm));
+            pmb.putString("SPIMmode", spimMode.toString());
+            // Multi-page TIFF saving code wants this one:
+            // TODO: support other types than GRAY16  (NS: Why?? Cameras are all 16-bits, so not much reason for anything else
+            pmb.putString("PixelType", "GRAY16");
+            pmb.putDouble("z-step_um",  (double) getStepSizeUm());
             // Properties for use by MultiViewRegistration plugin
             // Format is: x_y_z, set to 1 if we should rotate around this axis.
-            gui_.setAcquisitionProperty(acqName, "MVRotationAxis", "0_1_0");
-            gui_.setAcquisitionProperty(acqName, "MVRotations", viewString);
-            // save XY and SPIM head position in metadata
-            // update positions first at expense of two extra serial transactions
-            positions_.getUpdatedPosition(Devices.Keys.XYSTAGE, Directions.X);  // / will update cache for Y too
-            gui_.setAcquisitionProperty(acqName, "Position_X",
-                  positions_.getPositionString(Devices.Keys.XYSTAGE, Directions.X));
-            gui_.setAcquisitionProperty(acqName, "Position_Y",
-                  positions_.getPositionString(Devices.Keys.XYSTAGE, Directions.Y));
-            positions_.getUpdatedPosition(Devices.Keys.UPPERZDRIVE);
-            gui_.setAcquisitionProperty(acqName, "Position_SPIM_Head",
-                  positions_.getPositionString(Devices.Keys.UPPERZDRIVE));
-                      
+            pmb.putString("MVRotationAxis", "0_1_0");
+            pmb.putString("MVRotations", viewString);
+            store.setSummaryMetadata(sm.copy().userData(pmb.build()).build());
+            
             // get circular buffer ready
             // do once here but not per-trigger; need to ensure ROI changes registered
             core_.initializeCircularBuffer();
             
             // TODO: use new acquisition interface that goes through the pipeline
             //gui_.setAcquisitionAddImageAsynchronous(acqName); 
-            MMAcquisition acq = gui_.getAcquisition(acqName);
+            //MMAcquisition acq = gui_.getAcquisition(acqName);
             
             // Dive into MM internals since script interface does not support pipelines
-            ImageCache imageCache = acq.getImageCache();
-            vad = acq.getAcquisitionWindow();
-            imageCache.addImageCacheListener(vad);
+            //ImageCache imageCache = acq.getImageCache();
+            //vad = acq.getAcquisitionWindow();
+            //imageCache.addImageCacheListener(vad);
             
             // Start pumping images into the ImageCache
-            DefaultTaggedImageSink sink = new DefaultTaggedImageSink(bq, imageCache);
-            sink.start();
+            //DefaultTaggedImageSink sink = new DefaultTaggedImageSink(bq, imageCache);
+            //sink.start();
             
-            // remove usual window listener(s) and replace it with our own
-            //   that will prompt before closing and cancel acquisition if confirmed
-            // this should be considered a hack, it may not work perfectly
-            // I have confirmed that there is only one windowListener and it seems to 
-            //   also be related to window closing
-            // Note that ImageJ's acquisition window is AWT instead of Swing
-            wls_orig = vad.getImagePlus().getWindow().getWindowListeners();
-            for (WindowListener l : wls_orig) {
-               vad.getImagePlus().getWindow().removeWindowListener(l);
-            }
-            wl_acq = new WindowAdapter() {
-               @Override
-               public void windowClosing(WindowEvent arg0) {
-                  // if running acquisition only close if user confirms
-                  if (acquisitionRunning_.get()) {
-                     boolean stop = MyDialogUtils.getConfirmDialogResult(
-                           "Do you really want to abort the acquisition?",
-                           JOptionPane.YES_NO_OPTION);
-                     if (stop) {
-                        cancelAcquisition_.set(true);                        
-                     }
-                  }
-               }
-            };
-            vad.getImagePlus().getWindow().addWindowListener(wl_acq);
-            
-            // patterned after implementation in MMStudio.java
-            // will be null if not saving to disk
-            lastAcquisitionPath_ = acq.getImageCache().getDiskLocation();
-            lastAcquisitionName_ = acqName;
             
             // make sure all devices have arrived, e.g. a stage isn't still moving
             try {
@@ -2064,11 +2082,23 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                ReportingUtils.logError("error waiting for system");
             }
             
+            //MMAcquisition acq = gui_.getAcquisition(acqName);
+        
+            // Dive into MM internals since script interface does not support pipelines
+            //ImageCache imageCache = acq.getImageCache();
+            //VirtualAcquisitionDisplay vad = acq.getAcquisitionWindow();
+            //imageCache.addImageCacheListener(vad);
+
+            // Start pumping images into the ImageCache
+            //DefaultTaggedImageSink sink = new DefaultTaggedImageSink(bq, imageCache);
+            //sink.start();
+
             // Loop over all the times we trigger the controller's acquisition
             //  (although if multi-channel with volume switching is selected there
             //   is inner loop to trigger once per channel)
             // remember acquisition start time for software-timed timepoints
             // For hardware-timed timepoints we only trigger the controller once
+            
             long acqStart = System.currentTimeMillis();
             for (int trigNum = 0; trigNum < nrFrames; trigNum++) {
                // handle intervals between (software-timed) time points
@@ -2269,13 +2299,21 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                  // add image to acquisition
                                  if (spimMode == AcquisitionModes.Keys.NO_SCAN && !acqSettings.separateTimepoints) {
                                     // create time series for no scan
+<<<<<<< HEAD
                                     addImageToAcquisition(acqName,
                                           frNumber[channelIndex], channelIndex, actualTimePoint, 
                                           positionNum, now - acqStart, timg, bq);
                                  } else { // standard, create Z-stacks
                                     addImageToAcquisition(acqName, actualTimePoint, channelIndex,
+=======
+                                    addImageToAcquisition(store,
+                                          frNumber[channelIndex], channelIndex, timePoint, 
+                                          positionNum, now - acqStart, timg);
+                                 } else { // standard, create Z-stacks
+                                    addImageToAcquisition(store, timePoint, channelIndex,
+>>>>>>> mm2diSPIM
                                           frNumber[channelIndex], positionNum,
-                                          now - acqStart, timg, bq);
+                                          now - acqStart, timg);
                                  }
 
                                  // update our counters to be ready for next image
@@ -2363,6 +2401,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             MyDialogUtils.showError(ex);
          } finally {  // end of this acquisition (could be about to restart if separate viewers)
             try {
+<<<<<<< HEAD
                // restore original window listeners
                try {
                   vad.getImagePlus().getWindow().removeWindowListener(wl_acq);
@@ -2378,13 +2417,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                }
                
                bq.put(TaggedImageQueue.POISON);
+=======
+               if (store != null)
+                  store.freeze();
+               // bq.put(TaggedImageQueue.POISON);
+>>>>>>> mm2diSPIM
                // TODO: evaluate closeAcquisition call
                // at the moment, the Micro-Manager api has a bug that causes 
                // a closed acquisition not be really closed, causing problems
                // when the user closes a window of the previous acquisition
                // changed r14705 (2014-11-24)
                // gui_.closeAcquisition(acqName);
-               ReportingUtils.logMessage("diSPIM plugin acquisition " + acqName + 
+               ReportingUtils.logMessage("diSPIM plugin acquisition " +  
                      " took: " + (System.currentTimeMillis() - acqButtonStart) + "ms");
                
                // flag that we are done with acquisition
@@ -2448,20 +2492,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
       
-      if (separateImageFilesOriginally) {
-         ImageUtils.setImageStorageClass(TaggedImageStorageDiskDefault.class);
-      }
+      //if (separateImageFilesOriginally) {
+      //   ImageUtils.setImageStorageClass(TaggedImageStorageDiskDefault.class);
+      //}
+      
       cameras_.setSPIMCamerasForAcquisition(false);
-      if (liveModeOriginally) {
-         gui_.enableLiveMode(true);
-      }
+      gui_.live().setLiveMode(liveModeOriginally);
       
       if (nonfatalError) {
          MyDialogUtils.showError("Missed some images during acquisition, see core log for details");
       }
-
+      }
       return true;
    }
+   
 
    @Override
    public void saveSettings() {
@@ -2550,7 +2594,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * much faster than the one currently implemented in the ScriptInterface
     * Eventually, this function should be replaced by the ScriptInterface version
     * of the same.
-    * @param name - named acquisition to add image to
+    * @param store - Datastore in which the image will be inserted
     * @param frame - frame nr at which to insert the image
     * @param channel - channel at which to insert image
     * @param slice - (z) slice at which to insert image
@@ -2559,38 +2603,31 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @param taggedImg - image + metadata to be added
     * @param bq - Blocking queue to which the image should be added.  This queue
     * should be hooked up to the ImageCache belonging to this acquisitions
-    * @throws java.lang.InterruptedException
-    * @throws org.micromanager.utils.MMScriptException
+    * @throws org.micromanager.internal.utils.MMScriptException
+    * @throws org.json.JSONException
+    * @throws org.micromanager.data.DatastoreFrozenException
+     * @throws org.micromanager.data.DatastoreRewriteException
     */
-   public void addImageToAcquisition(String name,
-           int frame,
-           int channel,
-           int slice,
-           int position,
-           long ms,
-           TaggedImage taggedImg,
-           BlockingQueue<TaggedImage> bq) throws MMScriptException, InterruptedException {
+   public void addImageToAcquisition(Datastore store, int frame, int channel, 
+           int slice, int position, long ms, TaggedImage taggedImg) 
+           throws MMScriptException, JSONException, DatastoreFrozenException, 
+           DatastoreRewriteException
+            {
 
-      MMAcquisition acq = gui_.getAcquisition(name);
+      CoordsBuilder cb = gui_.data().getCoordsBuilder();
 
-      // verify position number is allowed 
-      if (acq.getPositions() <= position) {
-         throw new MMScriptException("The position number must not exceed declared"
-               + " number of positions (" + acq.getPositions() + ")");
-      }
-
-      // verify that channel number is allowed 
-      if (acq.getChannels() <= channel) {
-         throw new MMScriptException("The channel number must not exceed declared"
-               + " number of channels (" + + acq.getChannels() + ")");
-      }
-
-      JSONObject tags = taggedImg.tags;
-
-      if (!acq.isInitialized()) {
-         throw new MMScriptException("Error in the ASIdiSPIM logic.  Acquisition should have been initialized");
-      }
-
+      Coords coord = cb.time(frame).channel(channel).z(slice).stagePosition(position).build();
+      Image img = gui_.data().convertTaggedImage(taggedImg);
+      Metadata md = img.getMetadata();
+      PropertyMap ud = md.getUserData();
+      ud = ud.copy().putDouble("Z-Step-um", 
+              (double) PanelUtils.getSpinnerFloatValue(stepSize_)).build();
+      md = md.copy().elapsedTimeMs((double)ms).userData(ud).build();
+      img = img.copyWith(coord, md);
+      
+      store.putImage(img);
+      
+      /*
       // create required coordinate tags
       try {
          MDUtils.setFrameIndex(tags, frame);
@@ -2626,6 +2663,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
 
       bq.put(taggedImg);
+              */
    }
    
    
@@ -2720,11 +2758,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       saveCB_.setSelected(save);
    }
 
-   public org.micromanager.asidispim.Data.AcquisitionModes.Keys getAcquisitionMode() {
-      return (org.micromanager.asidispim.Data.AcquisitionModes.Keys) spimMode_.getSelectedItem();
+   public org.micromanager.asidispim.data.AcquisitionModes.Keys getAcquisitionMode() {
+      return (org.micromanager.asidispim.data.AcquisitionModes.Keys) spimMode_.getSelectedItem();
    }
 
-   public void setAcquisitionMode(org.micromanager.asidispim.Data.AcquisitionModes.Keys mode) {
+   public void setAcquisitionMode(org.micromanager.asidispim.data.AcquisitionModes.Keys mode) {
       spimMode_.setSelectedItem(mode);
    }
 

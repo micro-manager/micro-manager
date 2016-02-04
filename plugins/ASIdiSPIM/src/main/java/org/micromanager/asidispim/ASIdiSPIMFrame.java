@@ -23,15 +23,13 @@ package org.micromanager.asidispim;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.asidispim.Data.Cameras;
-import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.Joystick;
-import org.micromanager.asidispim.Data.Positions;
-import org.micromanager.asidispim.Data.Prefs;
-import org.micromanager.asidispim.Data.Properties;
-import org.micromanager.asidispim.Utils.ListeningJPanel;
-import org.micromanager.asidispim.Utils.ListeningJTabbedPane;
-import org.micromanager.asidispim.Utils.MyDialogUtils;
+import org.micromanager.asidispim.data.Cameras;
+import org.micromanager.asidispim.data.Devices;
+import org.micromanager.asidispim.data.Joystick;
+import org.micromanager.asidispim.data.Positions;
+import org.micromanager.asidispim.data.Prefs;
+import org.micromanager.asidispim.data.Properties;
+import org.micromanager.asidispim.utils.ListeningJPanel;
 
 import java.awt.Container;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -41,21 +39,17 @@ import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-import org.micromanager.api.MMListenerInterface;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.MMStudio;
-import org.micromanager.asidispim.Utils.AutofocusUtils;
-import org.micromanager.asidispim.Utils.ControllerUtils;
-
-import static org.micromanager.asidispim.Utils.MyJavaUtils.isMac;
-
-import org.micromanager.asidispim.Utils.StagePositionUpdater;
-import org.micromanager.asidispim.api.ASIdiSPIMException;
-import org.micromanager.internalinterfaces.LiveModeListener; 
-import org.micromanager.utils.MMFrame;
-
 import mmcorej.CMMCore;
+
+
+import org.micromanager.Studio;
+import org.micromanager.asidispim.api.ASIdiSPIMException;
+import org.micromanager.asidispim.utils.AutofocusUtils;
+import org.micromanager.asidispim.utils.ControllerUtils;
+import static org.micromanager.asidispim.utils.MyJavaUtils.isMac;
+import org.micromanager.asidispim.utils.StagePositionUpdater;
+import org.micromanager.internal.utils.MMFrame;
+
 
 //TODO devices tab automatically recognize default device names
 //TODO "swap sides" button (during alignment)
@@ -92,9 +86,9 @@ import mmcorej.CMMCore;
  */
 @SuppressWarnings("serial")
 public class ASIdiSPIMFrame extends MMFrame  
-      implements MMListenerInterface {
+       {
    
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    private final CMMCore core_;
    private final Properties props_; 
    private final Prefs prefs_;
@@ -116,7 +110,6 @@ public class ASIdiSPIMFrame extends MMFrame
    private final HelpPanel helpPanel_;
    private final StatusSubPanel statusSubPanel_;
    private final StagePositionUpdater stagePosUpdater_;
-   private final ListeningJTabbedPane tabbedPane_;
    
    private final AtomicBoolean hardwareInUse_ = new AtomicBoolean(false);   // true if acquisition or autofocus running
    
@@ -127,11 +120,11 @@ public class ASIdiSPIMFrame extends MMFrame
     * @param gui - Micro-Manager script interface
     * @throws ASIdiSPIMException
     */
-   public ASIdiSPIMFrame(ScriptInterface gui) throws ASIdiSPIMException {
+   public ASIdiSPIMFrame(Studio gui) throws ASIdiSPIMException {
 
       // create interface objects used by panels
       gui_ = gui;
-      core_ = gui.getMMCore();
+      core_ = gui.getCMMCore();
       prefs_ = new Prefs(Preferences.userNodeForPackage(this.getClass()));
       devices_ = new Devices(gui_, prefs_);
       props_ = new Properties(gui_, devices_, prefs_);
@@ -207,6 +200,7 @@ public class ASIdiSPIMFrame extends MMFrame
       stagePosUpdater_.addPanel(statusSubPanel_);
 
       // attach live mode listeners
+<<<<<<< HEAD
       MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelB_);
       MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelA_);
       MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) navigationPanel_);
@@ -242,6 +236,11 @@ public class ASIdiSPIMFrame extends MMFrame
             }
          }
       });
+=======
+      //MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelB_);
+      //MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelA_);
+      //MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) navigationPanel_);
+>>>>>>> mm2diSPIM
       
       // make sure gotDeSelected() and gotSelected() get called whenever we switch tabs
       tabbedPane_.addChangeListener(new ChangeListener() {
@@ -324,6 +323,7 @@ public class ASIdiSPIMFrame extends MMFrame
       return navigationPanel_;
    }
    
+<<<<<<< HEAD
    /**
     * For use by the acquisition panel code (to update offset setting)
     * Do not get into the internals of this plugin without relying on
@@ -398,6 +398,9 @@ public class ASIdiSPIMFrame extends MMFrame
    @Override
    public void slmExposureChanged(String cameraName, double newExposureTime) {
    }
+=======
+  
+>>>>>>> mm2diSPIM
    
    // TODO make this automatically call all panels' method
    private void saveSettings() {

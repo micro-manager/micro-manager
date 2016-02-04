@@ -31,33 +31,31 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-import org.micromanager.asidispim.Data.Cameras;
-import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.Joystick;
-import org.micromanager.asidispim.Data.Joystick.Directions;
-import org.micromanager.asidispim.Data.MyStrings;
-import org.micromanager.asidispim.Data.Positions;
-import org.micromanager.asidispim.Data.Prefs;
-import org.micromanager.asidispim.Data.Properties;
-import org.micromanager.asidispim.Utils.DevicesListenerInterface;
-import org.micromanager.asidispim.Utils.ListeningJPanel;
-import org.micromanager.asidispim.Utils.MyDialogUtils;
-import org.micromanager.asidispim.Utils.MyNumberUtils;
-import org.micromanager.asidispim.Utils.PanelUtils;
-import org.micromanager.asidispim.Utils.StagePositionUpdater;
-import org.micromanager.asidispim.Utils.StoredFloatLabel;
+import org.micromanager.asidispim.data.Cameras;
+import org.micromanager.asidispim.data.Devices;
+import org.micromanager.asidispim.data.Joystick;
+import org.micromanager.asidispim.data.Joystick.Directions;
+import org.micromanager.asidispim.data.MyStrings;
+import org.micromanager.asidispim.data.Positions;
+import org.micromanager.asidispim.data.Prefs;
+import org.micromanager.asidispim.data.Properties;
+import org.micromanager.asidispim.utils.ListeningJPanel;
+import org.micromanager.asidispim.utils.MyDialogUtils;
+import org.micromanager.asidispim.utils.PanelUtils;
+import org.micromanager.asidispim.utils.StagePositionUpdater;
+import org.micromanager.asidispim.utils.StoredFloatLabel;
+
 
 import javax.swing.*;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.MMStudio;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.asidispim.Utils.AutofocusUtils;
+import org.micromanager.Studio;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
-import org.micromanager.internalinterfaces.LiveModeListener;
-import org.micromanager.utils.MMFrame;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.asidispim.utils.AutofocusUtils;
+import org.micromanager.asidispim.utils.MyNumberUtils;
+import org.micromanager.internal.utils.MMFrame;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *
@@ -65,7 +63,8 @@ import org.micromanager.utils.ReportingUtils;
  * @author Jon
  */
 @SuppressWarnings("serial")
-public final class SetupPanel extends ListeningJPanel implements LiveModeListener, DevicesListenerInterface {
+
+public final class SetupPanel extends ListeningJPanel {
 
    private final Devices devices_;
    private final Properties props_;
@@ -76,7 +75,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private final AutofocusUtils autofocus_;
    private final Prefs prefs_;
    private final StagePositionUpdater posUpdater_;
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    private final JoystickSubPanel joystickPanel_;
    private final CameraSubPanel cameraPanel_;
    private final BeamSubPanel beamPanel_;
@@ -111,14 +110,15 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private final JButton sheetDecButton_;
    private final JSlider sheetWidthSlider_;
 
-   public SetupPanel(ScriptInterface gui, 
-           Devices devices,
-           Properties props,
-           Joystick joystick,
-           Devices.Sides side,
-           Positions positions,
-           Cameras cameras,
-           Prefs prefs,
+
+   public SetupPanel(Studio gui, 
+           Devices devices, 
+           Properties props, 
+           Joystick joystick, 
+           final Devices.Sides side, 
+           Positions positions, 
+           Cameras cameras, 
+           Prefs prefs, 
            StagePositionUpdater posUpdater,
            AutofocusUtils autofocus) {
       super(MyStrings.PanelNames.SETUP.toString() + side.toString(),
@@ -175,7 +175,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       piezoDeltaField_.setToolTipText("Piezo increment used by up/down arrow buttons");
       
       JButton upButton = new JButton();
-      upButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "icons/arrow_up.png"));
+      upButton.setIcon(SwingResourceManager.getIcon(Studio.class, "icons/arrow_up.png"));
       upButton.setText("");
       upButton.setToolTipText("Move slice and piezo up together");
       upButton.addActionListener(new ActionListener() {
@@ -186,7 +186,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       });
       
       JButton downButton = new JButton();
-      downButton.setIcon(SwingResourceManager.getIcon(MMStudio.class, "icons/arrow_down.png"));
+      downButton.setIcon(SwingResourceManager.getIcon(Studio.class, "icons/arrow_down.png"));
       downButton.setText("");
       downButton.setToolTipText("Move slice and piezo down together");
       downButton.addActionListener(new ActionListener() {
@@ -533,7 +533,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          public void actionPerformed(ActionEvent e) {
             if (devices_.isValidMMDevice(piezoIlluminationDeviceKey_)) {
                try {
-                  gui_.getMMCore().home(devices_.getMMDevice(piezoIlluminationDeviceKey_));
+                  gui_.getCMMCore().home(devices_.getMMDevice(piezoIlluminationDeviceKey_));
                } catch (Exception e1) {
                   ReportingUtils.showError(e1, "Could not move piezo to home");
                }
@@ -829,16 +829,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    }
 
    /**
-    * required by LiveModeListener interface; just pass call along to camera
-    * panel
-    * @param enable - signals whether or not live mode is enabled
-    */
-   @Override
-   public void liveModeEnabled(boolean enable) {
-      cameraPanel_.liveModeEnabled(enable);
-   }
-
-   /**
     * Gets called when this tab gets focus. Uses the ActionListeners of the UI
     * components
     */
@@ -854,7 +844,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       if (illumPiezoHomeEnable_.isSelected() && 
             devices_.isValidMMDevice(piezoIlluminationDeviceKey_)) {
          try {
-            gui_.getMMCore().home(devices_.getMMDevice(piezoIlluminationDeviceKey_));
+            gui_.getCMMCore().home(devices_.getMMDevice(piezoIlluminationDeviceKey_));
          } catch (Exception e) {
             ReportingUtils.showError(e, "could not move illumination piezo to home");
          }
@@ -914,10 +904,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       cameraDeviceKey_ = Devices.getSideSpecificKey(Devices.Keys.CAMERAA, side_);
    }
    
-   @Override
-   public void devicesChangedAlert() {
-      updateKeyAssignments();
-   }
 
    public double getImagingCenter() {
       return imagingCenterPos_;

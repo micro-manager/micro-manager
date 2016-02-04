@@ -26,15 +26,19 @@ import javax.swing.SwingWorker;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.api.MMWindow;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.asidispim.Data.MyStrings;
-import org.micromanager.asidispim.Data.Prefs;
-import org.micromanager.asidispim.Data.Properties;
-import org.micromanager.asidispim.Utils.ListeningJPanel;
-import org.micromanager.asidispim.Utils.MyDialogUtils;
-import org.micromanager.asidispim.Utils.PanelUtils;
-import org.micromanager.utils.FileDialogs;
+import org.micromanager.Studio;
+import org.micromanager.asidispim.data.MyStrings;
+import org.micromanager.asidispim.data.Prefs;
+import org.micromanager.asidispim.data.Properties;
+import org.micromanager.asidispim.utils.ImageJUtils.IJCommandThread;
+import org.micromanager.asidispim.utils.ImageUtils;
+import org.micromanager.asidispim.utils.ListeningJPanel;
+import org.micromanager.asidispim.utils.MyDialogUtils;
+import org.micromanager.asidispim.utils.PanelUtils;
+import org.micromanager.data.Coords;
+import org.micromanager.data.Datastore;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.internal.utils.FileDialogs;
 
 
 /**
@@ -48,8 +52,10 @@ import org.micromanager.utils.FileDialogs;
  */
 @SuppressWarnings("serial")
 public class DataAnalysisPanel extends ListeningJPanel {
+   private final Studio gui_;
    private final Prefs prefs_;
    private final JPanel exportPanel_;
+   private final JPanel imageJPanel_;
    private final JTextField saveDestinationField_;
    private final JTextField baseNameField_;
    
@@ -68,12 +74,13 @@ public class DataAnalysisPanel extends ListeningJPanel {
     * @param gui
     * @param prefs - Plugin-wide preferences
     */
-   public DataAnalysisPanel(ScriptInterface gui, Prefs prefs) {    
+   public DataAnalysisPanel(Studio gui, Prefs prefs) {    
       super(MyStrings.PanelNames.DATAANALYSIS.toString(),
               new MigLayout(
               "",
               "[right]",
               "[]16[]"));
+      gui_ = gui;
       prefs_ = prefs;
             
       int textFieldWidth = 35;
@@ -83,9 +90,10 @@ public class DataAnalysisPanel extends ListeningJPanel {
               "",
               "[right]4[center]4[left]",
               "[]8[]"));
-      
-      exportPanel_.setBorder(PanelUtils.makeTitledBorder("Export diSPIM data"));
-     
+
+
+      exportPanel_.setBorder(PanelUtils.makeTitledBorder("Export diSPIM data", 
+              exportPanel_));
       
       exportPanel_.add(new JLabel("Export directory:"), "");
       
@@ -206,9 +214,49 @@ public class DataAnalysisPanel extends ListeningJPanel {
       exportPanel_.add(infoLabel,"");
       exportPanel_.add(progBar, "span3, center, wrap");    
       
-      // end export sub-panel
-      
       this.add(exportPanel_);
+      // end export sub-panel
+
+      // start ImageJ sub-panel
+      imageJPanel_ = new JPanel(new MigLayout(
+              "",
+              "[center]",
+              "[]8[]"));
+
+      imageJPanel_.setBorder(PanelUtils.makeTitledBorder("ImageJ", imageJPanel_));
+
+      JButton adjustBC = new JButton("Brightness/Contrast");
+      adjustBC.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            IJCommandThread t = new IJCommandThread("Brightness/Contrast...");
+            t.start();
+         }
+      });
+      imageJPanel_.add(adjustBC, "wrap");
+
+      JButton splitChannels = new JButton("Split Channels");
+      splitChannels.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            IJCommandThread t = new IJCommandThread("Split Channels");
+            t.start();
+         }
+      });
+      imageJPanel_.add(splitChannels, "wrap");
+
+      JButton zProjection = new JButton("Z Projection");
+      zProjection.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            IJCommandThread t = new IJCommandThread("Z Project...", "projection=[Max Intensity]");
+            t.start();
+         }
+      });
+      imageJPanel_.add(zProjection, "wrap");
+
+      // end ImageJ sub-panel
+      this.add(imageJPanel_);
    }
    
    @Override
@@ -226,154 +274,147 @@ public class DataAnalysisPanel extends ListeningJPanel {
    }
    
    
-   /**
-    * Worker thread that executes file saving.  Updates the progress bar
-    * using the setProgress method, which results in a PropertyChangedEvent
-    * in attached listeners
-    */
-   class ExportTask extends SwingWorker<Void, Void> {
-      final String targetDirectory_;
-      final String baseName_;
-      final int transformIndex_;
-      final int exportFormat_;
-      ExportTask (String targetDirectory, String baseName, 
-              int transformIndex, int exportFormat) {
-         targetDirectory_ = targetDirectory;
-         baseName_ = baseName.replaceAll("[^a-zA-Z0-9_\\.\\-]", "_");
-         transformIndex_ = transformIndex;
-         exportFormat_ = exportFormat;
-      }
-   
-      @Override
-      protected Void doInBackground() throws Exception {
-         setProgress(0);
-         ImagePlus ip = IJ.getImage();
-         MMWindow mmW = new MMWindow(ip);
+    /**
+     * Worker thread that executes file saving. Updates the progress bar using
+     * the setProgress method, which results in a PropertyChangedEvent in
+     * attached listeners
+     */
+    class ExportTask extends SwingWorker<Void, Void> {
 
-         if (!mmW.isMMWindow()) {
-            throw new SaveTaskException("Can only convert Micro-Manager data set ");
-         }
+        final String targetDirectory_;
+        final String baseName_;
+        final int transformIndex_;
+        final int exportFormat_;
 
-         if (exportFormat_ == 0) { // mipav
-            
-            boolean multiPosition = false;
-            if (mmW.getNumberOfPositions() > 1) {
-               multiPosition = true;
+        ExportTask(String targetDirectory, String baseName,
+                int transformIndex, int exportFormat) {
+            targetDirectory_ = targetDirectory;
+            baseName_ = baseName.replaceAll("[^a-zA-Z0-9_\\.\\-]", "_");
+            transformIndex_ = transformIndex;
+            exportFormat_ = exportFormat;
+        }
+
+        @Override
+        protected Void doInBackground() throws Exception {
+            setProgress(0);
+            DisplayWindow dw = gui_.displays().getCurrentWindow();
+
+            if (null == dw) {
+                throw new SaveTaskException("Can only convert Micro-Manager data set ");
             }
-            
-            for (int position = 0; position < mmW.getNumberOfPositions(); position++) {
-               
-               ImageProcessor iProc = ip.getProcessor();
-               int nrSides = 0;
-               if (mmW.getSummaryMetaData().getString("NumberOfSides").equals("2")) {
-                  nrSides = 2;
-               } else if (mmW.getSummaryMetaData().getString("NumberOfSides").equals("1")) {
-                  nrSides = 1;
-               } else {
-                  throw new SaveTaskException("unsupported number of sides");
-               }
+            ImagePlus ip = dw.getImagePlus();
+            Datastore store = dw.getDatastore();
 
-               boolean usesChannels = (mmW.getNumberOfChannels()/nrSides) > 1;  // if have channels besides two cameras
-               String [] channelDirArray = new String[mmW.getNumberOfChannels()];
-               if (usesChannels) {
-                  for (int c = 0; c < mmW.getNumberOfChannels(); c++) {
-                     String chName = (String)mmW.getSummaryMetaData().getJSONArray("ChNames").get(c);
-                     String colorName = chName.substring(chName.indexOf("-")+1);  // matches with AcquisitionPanel naming convention
-                     channelDirArray[c] = targetDirectory_ + File.separator + baseName_ + File.separator
-                           + (multiPosition ? ("Pos" + position + File.separator) : "")
-                           + (((c % nrSides) == 0) ? "SPIMA" : "SPIMB") + File.separator + colorName;
-                  }
-               } else {  // two channels are from two views, no need for separate folders for each channel
-                  channelDirArray[0] = targetDirectory_ + File.separator + baseName_ + File.separator
-                        + (multiPosition ? ("Pos" + position + File.separator) : "")
-                        + "SPIMA";
-                  if (nrSides > 1) {
-                     channelDirArray[1] = targetDirectory_ + File.separator + baseName_ + File.separator
-                           + (multiPosition ? ("Pos" + position + File.separator) : "")
-                           + "SPIMB";
-                  }
-               }
+            if (exportFormat_ == 0) { // mipav
 
-               for (String dir : channelDirArray) {
-                  if (new File(dir).exists()) {
-                     throw new SaveTaskException("Output directory already exists");
-                  }
-               }
+                ImageProcessor iProc = ip.getProcessor();
+                if (!store.getSummaryMetadata().getUserData().getString("NumberOfSides").equals("2")) {
+                    throw new SaveTaskException("mipav export only works with two-sided data for now.");
+                }
+                if (store.getAxisLength(Coords.STAGE_POSITION) > 1) {
+                    throw new SaveTaskException("mipav export does not yet work with multiple positions");
+                }
 
-               for (String dir : channelDirArray) {
-                  new File(dir).mkdirs();
-               }
+                boolean usesChannels = store.getAxisLength(Coords.CHANNEL) > 2;  // if have channels besides two cameras
+                String[] channelDirArray = new String[store.getAxisLength(Coords.CHANNEL)];
+                if (usesChannels) {
+                    for (int c = 0; c < store.getAxisLength(Coords.CHANNEL); c++) {
+                        String chName = store.getSummaryMetadata().getUserData().
+                                getStringArray("ChNames")[c];
+                        String colorName = chName.substring(chName.indexOf("-") + 1);  // matches with AcquisitionPanel naming convention
+                        channelDirArray[c] = targetDirectory_ + File.separator + baseName_ + File.separator
+                                + (((c % 2) == 0) ? "SPIMA" : "SPIMB") + File.separator + colorName;
+                    }
+                } else {
+                    channelDirArray[0] = targetDirectory_ + File.separator + baseName_
+                            + File.separator + "SPIMA";
+                    channelDirArray[1] = targetDirectory_ + File.separator + baseName_
+                            + File.separator + "SPIMB";
+                }
 
-               int totalNr = mmW.getNumberOfChannels() * mmW.getNumberOfFrames() * mmW.getNumberOfSlices();
-               int counter = 0;
+                for (String dir : channelDirArray) {
+                    if (new File(dir).exists()) {
+                        throw new SaveTaskException("Output directory already exists");
+                    }
+                }
 
-               for (int c = 0; c < mmW.getNumberOfChannels(); c++) {  // for each channel
-                  for (int t = 0; t < mmW.getNumberOfFrames(); t++) {  // for each timepoint
-                     ImageStack stack = new ImageStack(iProc.getWidth(), iProc.getHeight());
-                     for (int i = 0; i < mmW.getNumberOfSlices(); i++) {
-                        ImageProcessor iProc2;
-                        iProc2 = mmW.getImageProcessor(c, i, t, 1);
+                for (String dir : channelDirArray) {
+                    new File(dir).mkdirs();
+                }
 
-                        // optional transformation
-                        switch (transformIndex_) {
-                        case 1: {
-                           iProc2.rotate(90);
-                           break;
+                final int nrCh = store.getAxisLength(Coords.CHANNEL);
+                final int nrFr = store.getAxisLength(Coords.TIME);
+                final int nrZ = store.getAxisLength(Coords.Z);
+                final int totalNr = nrCh * nrFr * nrZ;
+                int counter = 0;
+
+                for (int c = 0; c < nrCh; c++) {  // for each channel
+                    for (int t = 0; t < nrFr; t++) {  // for each timepoint
+                        ImageStack stack = new ImageStack(iProc.getWidth(), iProc.getHeight());
+                        for (int i = 0; i < store.getAxisLength(Coords.Z); i++) {
+                            Coords coords = gui_.data().getCoordsBuilder().channel(c).time(t).z(i).build();
+                            // TODO make utility that converts Image into ImageProcessor
+                            ImageProcessor iProc2 = ImageUtils.getImageProcessor(store.getImage(coords));
+
+                            // optional transformation
+                            switch (transformIndex_) {
+                                case 1: {
+                                    iProc2.rotate(90);
+                                    break;
+                                }
+                                case 2: {
+                                    iProc2.rotate(-90);
+                                    break;
+                                }
+                                case 3: {
+                                    iProc2.rotate(((c % 2) == 1) ? 90 : -90);
+                                    break;
+                                }
+                            }
+
+                            stack.addSlice(iProc2);
+                            counter++;
+                            double rate = ((double) counter / (double) totalNr) * 100.0;
+                            setProgress((int) Math.round(rate));
                         }
-                        case 2: {
-                           iProc2.rotate(-90);
-                           break;
-                        }
-                        case 3: {
-                           iProc2.rotate(((c % 2) == 1) ? 90 : -90);
-                           break;
-                        }
-                        }
+                        ImagePlus ipN = new ImagePlus("tmp", stack);
+                        ipN.setCalibration(ip.getCalibration());
+                        ij.IJ.save(ipN, channelDirArray[c] + File.separator
+                                + (((c % 2) == 0) ? "SPIMA" : "SPIMB")
+                                + "-" + t + ".tif");
+                    }
+                }
 
-                        stack.addSlice(iProc2);
-                        counter++;
-                        double rate = ((double) counter / (double) totalNr) * 100.0;
-                        setProgress((int) Math.round(rate));
-                     }
-                     ImagePlus ipN = new ImagePlus("tmp", stack);
-                     ipN.setCalibration(ip.getCalibration());
-                     ij.IJ.save(ipN, channelDirArray[c] + File.separator 
-                           + (((c % nrSides) == 0) ? "SPIMA" : "SPIMB")
-                           + "-" + t + ".tif");
-                  }
-               }
+            } else if (exportFormat_
+                    == 1) {  // Multiview reconstruction
+                throw new SaveTaskException("Should import Micro-Manager datasets "
+                        + "directly into Fiji Multiview reconstruction as of April 2015.");
             }
-            
-         } else 
-         if (exportFormat_ == 1) {  // Multiview reconstruction
-            throw new SaveTaskException("Should import Micro-Manager datasets "
-                  + "directly into Fiji Multiview reconstruction as of April 2015.");
-         }
-      return null;
-      }
-      
-      
-      @Override
-      public void done() {
-         setCursor(null);
-         try {
-            get();
-            setProgress(100);
-         } catch (ExecutionException ex) {
-            Throwable cause = ex.getCause();
-            if (!cause.getMessage().equals("Macro canceled")) {
-               if (cause instanceof SaveTaskException) {
-                  MyDialogUtils.showError(cause, "Data Export Error");
-               } else {
-                  MyDialogUtils.showError(ex);
-               }
+
+            return null;
+        }
+
+        @Override
+        public void done() {
+            setCursor(null);
+            try {
+                get();
+                setProgress(100);
+            } catch (ExecutionException ex) {
+                Throwable cause = ex.getCause();
+                if (!cause.getMessage().equals("Macro canceled")) {
+                    if (cause instanceof SaveTaskException) {
+                        MyDialogUtils.showError(cause, "Data Export Error");
+                    } else {
+                        MyDialogUtils.showError(ex);
+                    }
+                }
+            } catch (InterruptedException ex) {
+                MyDialogUtils.showError(ex, "Interrupted while exporting data");
             }
-         } catch (InterruptedException ex) {
-            MyDialogUtils.showError(ex, "Interrupted while exporting data");
-         }
-      }
-   }
-   
+        }
+    }
+
    /**
     * Since java 1.6 does not seem to have this functionality....
     * @param folder folder to be deleted

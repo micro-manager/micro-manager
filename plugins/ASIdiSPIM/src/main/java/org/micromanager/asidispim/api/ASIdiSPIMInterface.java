@@ -21,8 +21,8 @@
 
 package org.micromanager.asidispim.api;
 
-import org.micromanager.api.PositionList;
-import org.micromanager.asidispim.Data.Devices;
+import org.micromanager.PositionList;
+import org.micromanager.asidispim.data.Devices;
 
 /**
  * This interface defines an API for interfacing with the ASIdiSPIM plugin.
@@ -195,13 +195,13 @@ public interface ASIdiSPIMInterface {
    /**
     * @return mode is which acquisition mode is current selected
     */
-   public org.micromanager.asidispim.Data.AcquisitionModes.Keys getAcquisitionMode() throws ASIdiSPIMException;
+   public org.micromanager.asidispim.data.AcquisitionModes.Keys getAcquisitionMode() throws ASIdiSPIMException;
    
    /**
     * @param mode determines whether the piezo/slice are moved synchronously,
     *   only one is moved, stage scanning is used, etc. 
     */
-   public void setAcquisitionMode(org.micromanager.asidispim.Data.AcquisitionModes.Keys mode) throws ASIdiSPIMException;
+   public void setAcquisitionMode(org.micromanager.asidispim.data.AcquisitionModes.Keys mode) throws ASIdiSPIMException;
    
    /**
     * @return true if time points have been enabled
@@ -335,14 +335,14 @@ public interface ASIdiSPIMInterface {
     *   VOLUME_HW for PLogic-based volume-by-volume, and SLICE_HW for PLogic-based slice-by-slice
     * @deprecated out of laziness, can add if needed
     */
-   public org.micromanager.asidispim.Data.MultichannelModes.Keys getChannelChangeMode() throws ASIdiSPIMException;
+   public org.micromanager.asidispim.data.MultichannelModes.Keys getChannelChangeMode() throws ASIdiSPIMException;
    
    /**
     * Sets the switching mode between the channels.
     * @param mode
     * @deprecated out of laziness, can add if needed
     */
-   public void setChannelChangeMode(org.micromanager.asidispim.Data.MultichannelModes.Keys mode) throws ASIdiSPIMException;
+   public void setChannelChangeMode(org.micromanager.asidispim.data.MultichannelModes.Keys mode) throws ASIdiSPIMException;
    
    /**
     * @return number of sides per volume, either 1 or 2
@@ -742,7 +742,7 @@ public interface ASIdiSPIMInterface {
     *   to change the acquisition settings.  The fields of the AcquisitionSettings
     *   object may change in the future.
     */
-   public org.micromanager.asidispim.Data.AcquisitionSettings getAcquisitionSettings() throws ASIdiSPIMException;
+   public org.micromanager.asidispim.data.AcquisitionSettings getAcquisitionSettings() throws ASIdiSPIMException;
    
    /**
     * @return estimated duration of each slice in milliseconds according to current timing

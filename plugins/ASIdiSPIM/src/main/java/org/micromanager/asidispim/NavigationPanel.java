@@ -31,19 +31,19 @@ import java.util.Set;
 
 import javax.swing.BorderFactory;
 
-import org.micromanager.MMStudio;
-import org.micromanager.asidispim.Data.Cameras;
-import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.Joystick;
-import org.micromanager.asidispim.Data.Joystick.Directions;
-import org.micromanager.asidispim.Data.MyStrings;
-import org.micromanager.asidispim.Data.Positions;
-import org.micromanager.asidispim.Data.Prefs;
-import org.micromanager.asidispim.Data.Properties;
-import org.micromanager.asidispim.Utils.ListeningJPanel;
-import org.micromanager.asidispim.Utils.MyDialogUtils;
-import org.micromanager.asidispim.Utils.PanelUtils;
-import org.micromanager.asidispim.Utils.StagePositionUpdater;
+
+import org.micromanager.asidispim.data.Cameras;
+import org.micromanager.asidispim.data.Devices;
+import org.micromanager.asidispim.data.Joystick;
+import org.micromanager.asidispim.data.Joystick.Directions;
+import org.micromanager.asidispim.data.MyStrings;
+import org.micromanager.asidispim.data.Positions;
+import org.micromanager.asidispim.data.Prefs;
+import org.micromanager.asidispim.data.Properties;
+import org.micromanager.asidispim.utils.ListeningJPanel;
+import org.micromanager.asidispim.utils.MyDialogUtils;
+import org.micromanager.asidispim.utils.PanelUtils;
+import org.micromanager.asidispim.utils.StagePositionUpdater;
 
 import javax.swing.JButton;
 import javax.swing.JFormattedTextField;
@@ -54,11 +54,13 @@ import javax.swing.JPanel;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.internalinterfaces.LiveModeListener;
 
 import com.swtdesigner.SwingResourceManager;
+import org.micromanager.Studio;
 
+/**
+ * TODO: Add live mode listener
+ */
 
 /**
  *
@@ -66,7 +68,7 @@ import com.swtdesigner.SwingResourceManager;
  * @author Jon
  */
 @SuppressWarnings("serial")
-public class NavigationPanel extends ListeningJPanel implements LiveModeListener {
+public class NavigationPanel extends ListeningJPanel  {
    private final Devices devices_;
    private final Properties props_;
    private final Joystick joystick_;
@@ -74,7 +76,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
    private final Prefs prefs_;
    private final Cameras cameras_;
    private final StagePositionUpdater posUpdater_;
-   private final ScriptInterface gui_;
+   private final Studio gui_;
    private final CMMCore core_;
    
    private final JoystickSubPanel joystickPanel_;
@@ -106,7 +108,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
     * @param cameras
     * @param posUpdater Class that will continuously update the stage positions
     */
-   public NavigationPanel(ScriptInterface gui, Devices devices, Properties props, 
+   public NavigationPanel(Studio gui, Devices devices, Properties props, 
            Joystick joystick, Positions positions, Prefs prefs, Cameras cameras,
            StagePositionUpdater posUpdater) {    
       super (MyStrings.PanelNames.NAVIGATION.toString(),
@@ -122,7 +124,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       cameras_ = cameras;
       posUpdater_ = posUpdater;
       gui_ = gui;
-      core_ = gui_.getMMCore();
+      core_ = gui_.getCMMCore();
       PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
       
       JPanel loadPanel = new JPanel(new MigLayout(
@@ -134,7 +136,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
 
       // buttons to move the head to top/bottom for easy sample loading
       JButton headUpGo = new JButton();
-      headUpGo.setIcon(SwingResourceManager.getIcon(MMStudio.class, "icons/arrow_up.png"));
+      headUpGo.setIcon(SwingResourceManager.getIcon(Studio.class, "icons/arrow_up.png"));
       headUpGo.setText("");
       headUpGo.setToolTipText("Move SPIM head to set height for sample loading");
       headUpGo.addActionListener(new ActionListener() {
@@ -144,7 +146,7 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
          }
       });
       JButton headDownGo = new JButton();
-      headDownGo.setIcon(SwingResourceManager.getIcon(MMStudio.class, "icons/arrow_down.png"));
+      headDownGo.setIcon(SwingResourceManager.getIcon(Studio.class, "icons/arrow_down.png"));
       headDownGo.setText("");
       headDownGo.setToolTipText("Move SPIM head to set height after sample loading");
       headDownGo.addActionListener(new ActionListener() {
@@ -443,14 +445,6 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       return jb;
    }
    
-   /**
-    * required by LiveModeListener interface; just pass call along to camera panel
-    * @param enable
-    */
-   @Override
-   public void liveModeEnabled(boolean enable) {
-      cameraPanel_.liveModeEnabled(enable);
-   } 
    
    @Override
    public void saveSettings() {

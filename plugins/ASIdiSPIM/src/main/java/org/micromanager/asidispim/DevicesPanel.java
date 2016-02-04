@@ -21,12 +21,12 @@
 
 package org.micromanager.asidispim;
 
-import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.MyStrings;
-import org.micromanager.asidispim.Data.Properties;
-import org.micromanager.asidispim.Utils.DeviceUtils;
-import org.micromanager.asidispim.Utils.ListeningJPanel;
-import org.micromanager.asidispim.Utils.MyDialogUtils;
+import org.micromanager.asidispim.data.Devices;
+import org.micromanager.asidispim.data.MyStrings;
+import org.micromanager.asidispim.data.Properties;
+import org.micromanager.asidispim.utils.DeviceUtils;
+import org.micromanager.asidispim.utils.ListeningJPanel;
+import org.micromanager.asidispim.utils.MyDialogUtils;
 
 import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
@@ -37,7 +37,7 @@ import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.Studio;
 
 
 /**
@@ -58,7 +58,7 @@ public class DevicesPanel extends ListeningJPanel {
     * @param devices - instance of class that holds information about devices
     * @param props
     */
-   public DevicesPanel(ScriptInterface gui, Devices devices, Properties props) {
+   public DevicesPanel(Studio gui, Devices devices, Properties props) {
       super(MyStrings.PanelNames.DEVICES.toString(), 
             new MigLayout(
               "",
@@ -66,7 +66,7 @@ public class DevicesPanel extends ListeningJPanel {
               + maxSelectorWidth + "!]8[]8[]",
               "[]12[]"));
       devices_ = devices;
-      core_ = gui.getMMCore();
+      core_ = gui.core();
       
       DeviceUtils du = new DeviceUtils(gui, devices, props);
       
