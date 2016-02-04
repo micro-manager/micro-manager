@@ -50,67 +50,7 @@ public interface CompatibilityInterface {
     * Does not communicate with hardware, only checks Cache
     */
    public void refreshGUIFromCache();
-   
-   /**
-    * Executes Acquisition with settings as in the MDA dialog.
-    * Will open the Acquisition Dialog when it is not open yet
-    * Returns after Acquisition finishes
-    * Note that this function should not be executed on the EDT (which is the
-    * thread running the UI).  
-    * @return The Datastore containing the images from the acquisition.
-    * @throws MMScriptException if the acquisition is started on the EDT
-    */
-   public Datastore runAcquisition() throws MMScriptException;
 
-   /**
-    * As runAcquisition, but will return as soon as the acquisition is set up
-    * and started; useful for code that wants access to the Datastore for the
-    * acquisition before it finishes.
-    * @return The Datastore containing the images from the acquisition.
-    * @throws MMScriptException if the acquisition is started on the EDT
-    */
-   public Datastore runAcquisitionNonblocking() throws MMScriptException;
-
-   /**
-    * Execute an acquisition using the provided SequenceSettings. This function
-    * should not be called on the EDT.
-    * @param settings SequenceSettings to use for the acquisition, or null
-    *        to use the settings in the MDA dialog.
-    * @param shouldBlock if true, the method will block until the acquisition
-    *        is completed.
-    * @return The Datastore containing the images from the acquisition.
-    * @throws MMScriptException if the acquisition is started on the EDT.
-    */
-   public Datastore runAcquisitionWithSettings(SequenceSettings settings,
-         boolean shouldBlock) throws MMScriptException;
-
-   /**
-    * Halt any ongoing acquisition as soon as possible.
-    */
-   public void haltAcquisition();
-
-   /**
-    * Executes Acquisition with current settings but allows for changing the data path.
-    * Will open the Acquisition Dialog when it is not open yet.
-    * Returns after Acquisition finishes.
-    * Note that this function should not be executed on the EDT (which is the
-    * thread running the UI).
-    * @param name Name of this acquisition.
-    * @param root Place in the file system where data can be stored.
-    * @return The Datastore containing the images from the acquisition.
-    * @throws MMScriptException
-    */
-   public Datastore runAcquisition(String name, String root) throws MMScriptException;
-
-   /**
-    * Loads setting for Acquisition Dialog from file
-    * Will open Acquisition Dialog when it is not open yet
-    * @param path file path from which setting for acquisition dialog should 
-    * be loaded
-    * @throws MMScriptException
-    */  
-   public void loadAcquisition(String path) throws MMScriptException;
-   
    /**
     * Makes this the 'current' PositionList, i.e., the one used by the 
     * Acquisition Protocol.
@@ -205,13 +145,6 @@ public interface CompatibilityInterface {
    public void markCurrentPosition();
 
    /**
-    * Returns true when an acquisition is currently running (note: this function will
-    * not return true if live mode, snap, or "Camera --&gt; Album" is currently running
-    * @return true when an acquisition is currently running
-    */
-   public boolean isAcquisitionRunning();
-
-   /**
     * Displays an error message and returns true if the run-time Micro-Manager version
     * is less than the one specified.
     * Versions in Micro-Manager are of the format:
@@ -297,61 +230,6 @@ public interface CompatibilityInterface {
     * @param enabled true: enable, false: disable ROI buttons
     */
    public void enableRoiButtons(final boolean enabled);
-
-   /**
-    * Returns the pipeline
-    * @return instance of the acquisition engine
-    */
-   public IAcquisitionEngine2010 getAcquisitionEngine2010();
-   
-   /**
-    * Returns true if user has chosen to hide MDA window when it runs.
-    * @return true if user has chosen to hide MDA window
-    */
-   public boolean getHideMDADisplayOption();
-   
-   /**
-    * Pause/Unpause a running acquisition
-    * @param state true if paused, false if no longer paused
-    */
-   public void setPause(boolean state);
-   
-   /**
-    * Returns true if the acquisition is currently paused.
-    * @return true if paused, false if not paused
-    */
-   public boolean isPaused();
-
-   /**
-    * Attach a runnable to the acquisition engine. Each index (f, p, c, s) can
-    * be specified. Passing a value of -1 should result in the runnable being attached
-    * at all values of that index. For example, if the first argument is -1,
-    * then the runnable should execute at every frame.
-    * @param frame 0-based frame number
-    * @param position 0-based position number
-    * @param channel 0-based channel number
-    * @param slice 0-based (z) slice number 
-    * @param runnable code to be run
-    */
-   public void attachRunnable(int frame, int position, int channel, int slice, 
-           Runnable runnable);
-
-   /**
-    * Remove runnables from the acquisition engine
-    */
-   public void clearRunnables();
-   
-   /**
-    * Return current acquisition settings
-    * @return acquisition settings instance
-    */ 
-   SequenceSettings getAcquisitionSettings();
-    
-   /**
-    * Apply new acquisition settings
-    * @param settings acquisition settings
-    */ 
-   public void setAcquisitionSettings(SequenceSettings settings);
 
    /**
     * Retrieve the affine transform describing how the camera image maps to

@@ -82,6 +82,19 @@ public interface Studio {
    public LogManager getLogManager();
 
    /**
+    * Provide access to the AcquisitionManager, for running data acquisition
+    * using the Micro-Manager acquisition engine.
+    */
+   public AcquisitionManager acquisitions();
+
+   /**
+    * Provide access to the AcquisitionManager, for running data acquisition
+    * using the Micro-Manager acquisition engine. Identical to acquisitions()
+    * except in name.
+    */
+   public AcquisitionManager getAcquisitionManager();
+
+   /**
     * @return the currently selected AutoFocusManger object
     */
    public AutofocusManager getAutofocusManager();

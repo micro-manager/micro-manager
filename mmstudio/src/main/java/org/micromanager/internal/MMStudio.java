@@ -57,6 +57,7 @@ import mmcorej.DeviceType;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 
+import org.micromanager.AcquisitionManager;
 import org.micromanager.Album;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.CompatibilityInterface;
@@ -135,7 +136,7 @@ import org.micromanager.internal.utils.WaitDialog;
  * Implements the Studio (i.e. primary API) and does various other
  * tasks that should probably be refactored out at some point.
  */
-public class MMStudio implements Studio, CompatibilityInterface {
+public class MMStudio implements Studio, CompatibilityInterface, AcquisitionManager {
 
    private static final long serialVersionUID = 3556500289598574541L;
    private static final String OPEN_ACQ_DIR = "openDataDir";
@@ -1529,7 +1530,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       return core_;
    }
 
-   @Override
    public IAcquisitionEngine2010 getAcquisitionEngine2010() {
       try {
          acquisitionEngine2010LoadingThread_.join();
@@ -1763,6 +1763,16 @@ public class MMStudio implements Studio, CompatibilityInterface {
    @Override
    public ShutterManager getShutterManager() {
       return shutter();
+   }
+
+   @Override
+   public AcquisitionManager acquisitions() {
+      return this;
+   }
+
+   @Override
+   public AcquisitionManager getAcquisitionManager() {
+      return acquisitions();
    }
 
    @Override

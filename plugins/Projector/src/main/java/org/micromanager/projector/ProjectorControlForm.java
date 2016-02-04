@@ -236,8 +236,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          if (targetingChannel_ != null && targetingChannel_.length() > 0) {
             originalConfig = core_.getConfigGroupState(channelGroup);
             if (!originalConfig.isConfigurationIncluded(core_.getConfigData(channelGroup, targetingChannel_))) {
-               if (app_.compat().isAcquisitionRunning()) {
-                  app_.compat().setPause(true);
+               if (app_.acquisitions().isAcquisitionRunning()) {
+                  app_.acquisitions().setPause(true);
                }
                core_.setConfig(channelGroup, targetingChannel_);
             }
@@ -257,8 +257,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       if (originalConfig != null) {
          try {
             core_.setSystemState(originalConfig);
-            if (app_.compat().isAcquisitionRunning() && app_.compat().isPaused()) {
-               app_.compat().setPause(false);
+            if (app_.acquisitions().isAcquisitionRunning() && app_.acquisitions().isPaused()) {
+               app_.acquisitions().setPause(false);
             }
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
@@ -1029,7 +1029,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    
    // Save ROIs in the acquisition path, if it exists.
    private void recordPolygons() {
-      if (app_.compat().isAcquisitionRunning()) {
+      if (app_.acquisitions().isAcquisitionRunning()) {
          // TODO: The MM2.0 refactor broke this code by removing the below
          // method.
 //         String location = app_.compat().getAcquisitionPath();
@@ -1113,13 +1113,13 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    */
    public void attachRoisToMDA(int firstFrame, boolean repeat, 
            int frameRepeatInveral, Runnable runPolygons) {
-      app_.compat().clearRunnables();
+      app_.acquisitions().clearRunnables();
       if (repeat) {
-         for (int i = firstFrame; i < app_.compat().getAcquisitionSettings().numFrames * 10; i += frameRepeatInveral) {
-            app_.compat().attachRunnable(i, -1, 0, 0, runPolygons);
+         for (int i = firstFrame; i < app_.acquisitions().getAcquisitionSettings().numFrames * 10; i += frameRepeatInveral) {
+            app_.acquisitions().attachRunnable(i, -1, 0, 0, runPolygons);
          }
       } else {
-         app_.compat().attachRunnable(firstFrame, -1, 0, 0, runPolygons);
+         app_.acquisitions().attachRunnable(firstFrame, -1, 0, 0, runPolygons);
       }
    }
 
@@ -1127,7 +1127,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * Remove the attached ROIs from the multi-dimensional acquisition.
     */
    public void removeFromMDA() {
-      app_.compat().clearRunnables();
+      app_.acquisitions().clearRunnables();
    }
   
    // ## GUI
@@ -1302,7 +1302,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             final Callable<Boolean> mdaRunning = new Callable<Boolean>() {
                @Override
                public Boolean call() throws Exception {
-                  return app_.compat().isAcquisitionRunning();
+                  return app_.acquisitions().isAcquisitionRunning();
                }
             };
             attachRoisToMDA(1, false, 0,

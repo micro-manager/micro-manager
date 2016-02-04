@@ -132,8 +132,8 @@ public class SavedMDAButton extends WidgetPlugin implements SciJavaPlugin {
          @Override
          public void run() {
             try {
-               studio_.compat().loadAcquisition(path);
-               studio_.compat().runAcquisition();
+               studio_.acquisitions().loadAcquisition(path);
+               studio_.acquisitions().runAcquisition();
             }
             catch (MMScriptException e) {
                studio_.logs().showError(e, "Unable to run acquisition");

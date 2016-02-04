@@ -34,6 +34,7 @@ import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.AcqOrderMode;
 import org.micromanager.internal.utils.AutofocusManager;
 import org.micromanager.internal.utils.ChannelSpec;
@@ -105,7 +106,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    
    protected IAcquisitionEngine2010 getAcquisitionEngine2010() {
       if (acquisitionEngine2010_ == null) {
-         acquisitionEngine2010_ = studio_.compat().getAcquisitionEngine2010();
+         acquisitionEngine2010_ = ((MMStudio) studio_).getAcquisitionEngine2010();
       }
       return acquisitionEngine2010_;
    }
