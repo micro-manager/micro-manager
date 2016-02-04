@@ -56,6 +56,9 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
    private static final String DIFFERENT_SPACING = "Different XY";
    private static final String VIEW_SPACING = "Field of View";
 
+   private static final String SNAKE_ORDER = "Snake";
+   private static final String TYPEWRITER_ORDER = "Typewriter";
+
    private CMMCore core_;
    private JTextField spacingFieldX_;
    private JTextField spacingFieldY_;
@@ -92,6 +95,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
    private final JCheckBox chckbxThreePt_;
    private final ButtonGroup toolButtonGroup = new ButtonGroup();
    private final JComboBox spacingMode_;
+   private final JComboBox visitOrder_;
 
    private double xSpacing_ = 0.0;
    private double ySpacing_ = 0.0;
@@ -265,10 +269,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
          public void actionPerformed(final ActionEvent e) {
             plate_.initialize((String) plateIDCombo_.getSelectedItem());
             updateXySpacing();
-            PositionList sites = generateSites(
-               Integer.parseInt(rowsField_.getText()),
-               Integer.parseInt(columnsField_.getText()),
-               xSpacing_, ySpacing_);
+            PositionList sites = generateSites();
             try {
                platePanel_.refreshImagingSites(sites);
             } catch (HCSException e1) {
@@ -316,19 +317,16 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
 
       spacingFieldX_ = new JTextField(3);
       spacingFieldX_.setText("1000");
-      spacingFieldX_.addFocusListener(regeneratePlateOnLossOfFocus);
       sidebar.add(spacingFieldX_, "split 2, flowx, hidemode 2");
 
       spacingFieldY_ = new JTextField();
       spacingFieldY_.setText("1000");
-      spacingFieldY_.addFocusListener(regeneratePlateOnLossOfFocus);
       // Take zero space when invisible.
       sidebar.add(spacingFieldY_, "hidemode 2");
       spacingFieldY_.setVisible(false);
 
       //same size and position like X_
       overlapField_ = new JTextField();
-      overlapField_.addFocusListener(regeneratePlateOnLossOfFocus);
       overlapField_.setText("0");
       // Take zero space when invisible.
       sidebar.add(overlapField_, "hidemode 2");
@@ -339,6 +337,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       spacingMode_ = new JComboBox(new String[] {
          EQUAL_SPACING, DIFFERENT_SPACING, VIEW_SPACING});
       sidebar.add(spacingMode_, "growx");
+      spacingMode_.setSelectedIndex(0);
       spacingMode_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -367,7 +366,16 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
             regenerate();
          }
       });
-      spacingMode_.setSelectedIndex(0);
+
+      sidebar.add(new JLabel("Site visit order:"));
+      visitOrder_ = new JComboBox(new String[] {SNAKE_ORDER, TYPEWRITER_ORDER});
+      visitOrder_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            regenerate();
+         }
+      });
+      sidebar.add(visitOrder_, "growx");
 
       final JButton refreshButton = new JButton("Refresh",
             IconLoader.getIcon("/org/micromanager/icons/arrow_refresh.png"));
@@ -446,8 +454,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       loadSettings();
       updateXySpacing();
 
-      PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()),
-            xSpacing_, ySpacing_);
+      PositionList sites = generateSites();
       try {
          platePanel_.refreshImagingSites(sites);
       } catch (HCSException e1) {
@@ -559,27 +566,40 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       }
    }
 
-   private PositionList generateSites(int rows, int cols,
-         double spacingX, double spacingY) {
+
+   private PositionList generateSites() {
+      int rows = Integer.parseInt(rowsField_.getText());
+      int cols = Integer.parseInt(columnsField_.getText());
+      boolean isTypewriterMode =
+            ((String) visitOrder_.getSelectedItem()).equals(TYPEWRITER_ORDER);
       PositionList sites = new PositionList();
       for (int i = 0; i < rows; i++) {
-         // create snake-like pattern inside the well:
-         boolean isEven = i % 2 == 0;
-         int start = isEven ? 0 : cols - 1;
-         int end = isEven ? cols : - 1;
-         int j = start;
-         // instead of using a for loop, cycle backwards on odd rows
-         while ( (isEven && j < end) || (!isEven && j > end)  ) {
+         // In "snake" mode we go in one X direction on odd rows and the other
+         // X direction on even rows; in "typewriter" mode we always use the
+         // same X direction.
+         int start, end, stepDir;
+         if (isTypewriterMode) {
+            start = 0;
+            end = cols;
+            stepDir = 1;
+         }
+         else {
+            boolean isEven = i % 2 == 0;
+            start = isEven ? 0 : cols - 1;
+            end = isEven ? cols : - 1;
+            stepDir = isEven ? 1 : -1;
+         }
+         for (int j = start; j != end; j += stepDir) {
             double x;
             double y;
             if (cols > 1) {
-               x = -cols * spacingX / 2.0 + spacingX * j + spacingX / 2.0;
+               x = -cols * xSpacing_ / 2.0 + xSpacing_ * j + xSpacing_ / 2.0;
             } else {
                x = 0.0;
             }
 
             if (rows > 1) {
-               y = -rows * spacingY / 2.0 + spacingY * i + spacingY / 2.0;
+               y = -rows * ySpacing_ / 2.0 + ySpacing_ * i + ySpacing_ / 2.0;
             } else {
                y = 0.0;
             }
@@ -592,12 +612,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
 
             mps.add(sp);
             sites.addPosition(mps);
-            if (isEven) {
-               j++;
-            } else {
-               j--;
-            }
-
          }
       }
 
@@ -676,8 +690,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
    private void regenerate() {
       WellPositionList[] selectedWells = platePanel_.getSelectedWellPositions();
       updateXySpacing();
-      PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()),
-              xSpacing_, ySpacing_);
+      PositionList sites = generateSites();
       plate_.initialize((String) plateIDCombo_.getSelectedItem());
       try {
          platePanel_.refreshImagingSites(sites);
@@ -718,8 +731,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       } catch (HCSException e) {
          app_.logs().logError(e);
       }
-      PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()),
-              xSpacing_, ySpacing_);
+      PositionList sites = generateSites();
       try {
          platePanel_.refreshImagingSites(sites);
       } catch (HCSException e1) {
