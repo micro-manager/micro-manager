@@ -21,6 +21,7 @@
 
 package org.micromanager.asidispim.api;
 
+import mmcorej.CMMCore;
 import org.micromanager.PositionList;
 import org.micromanager.asidispim.data.Devices;
 
@@ -60,13 +61,14 @@ public interface ASIdiSPIMInterface {
     * as visible in the acquisition panel.  The definition of current
     * settings may change in the future.  Throws exception if an acquisition
     * is currently running or has been requested.  Blocks until complete.
+    * @param core
     * @param x requested position of X axis
     * @param y requested position of Y axis
     * @param f requested position of SPIM head, usually the F axis
     * @return ImagePlus object with acquisition data
     * @throws ASIdiSPIMException
     */
-   public ij.ImagePlus runAcquisitionBlocking(double x, double y, double f) throws ASIdiSPIMException; 
+   public ij.ImagePlus runAcquisitionBlocking(CMMCore core, double x, double y, double f) throws ASIdiSPIMException; 
    
    /**
     * Stops an acquisition, if one is currently running.  Also cancels a 
@@ -120,21 +122,6 @@ public interface ASIdiSPIMInterface {
     *   have appended characters for uniqueness.
     */
    public String getLastAcquisitionName() throws ASIdiSPIMException;
-   
-   /**
-    * Closes the window associated with the last acquisition.
-    * Equivalent to closeAcquisitionWindow(getLastAcquisitionName()).
-    */
-   public void closeLastAcquisitionWindow() throws ASIdiSPIMException;
-   
-   /**
-    * Closes the acquisition window corresponding to the specified acquisition
-    *   name.  Note that the acquisition name may be different from the
-    *   prefix and also from the final field of the filesystem's pathname
-    *   if it was saved to disk.
-    * @param acquisitionName
-    */
-   public void closeAcquisitionWindow(String acquisitionName) throws ASIdiSPIMException;
    
    /**
     * @return directory is a string comprising the pathname on filesystem
@@ -269,7 +256,6 @@ public interface ASIdiSPIMInterface {
     *   You can do operations such as adding and removing positions, moving to a
     *   specified position in the list, etc.
     */
-   public PositionList getPositionList() throws ASIdiSPIMException;
    
    /**
     * @return true if multi-channel acquisition has been enabled (whole box enabled/disabled).
@@ -666,37 +652,37 @@ public interface ASIdiSPIMInterface {
     * @param x in microns
     * @param y in microns
     */
-   public void setXYPosition(double x, double y) throws ASIdiSPIMException;
+   public void setXYPosition(CMMCore core, double x, double y) throws ASIdiSPIMException;
 
    /**
     * Convenience method.
     * @return XY position of the stage in microns
     */
-   public java.awt.geom.Point2D.Double getXYPosition() throws ASIdiSPIMException;
+   public java.awt.geom.Point2D.Double getXYPosition(CMMCore core) throws ASIdiSPIMException;
    
    /**
     * Convenience method to set the position of the lower Z stage.
     * @param z in microns
     */
-   public void setLowerZPosition(double z) throws ASIdiSPIMException;
+   public void setLowerZPosition(CMMCore core, double z) throws ASIdiSPIMException;
    
    /**
     * Convenience method to set the position of the lower Z stage
     * @return position in microns
     */
-   public double getLowerZPosition() throws ASIdiSPIMException;
+   public double getLowerZPosition(CMMCore core) throws ASIdiSPIMException;
    
    /**
     * Convenience method to set the position of the SPIM head.
     * @param z in microns
     */
-   public void setSPIMHeadPosition(double z) throws ASIdiSPIMException;
+   public void setSPIMHeadPosition(CMMCore core, double z) throws ASIdiSPIMException;
    
    /**
     * Convenience method to set the position of the SPIM head.
     * @return position in microns
     */
-   public double getSPIMHeadPosition() throws ASIdiSPIMException;
+   public double getSPIMHeadPosition(CMMCore core) throws ASIdiSPIMException;
    
    /**
     * Raises the SPIM head to the position on the Navigation panel indicated
