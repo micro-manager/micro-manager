@@ -34,6 +34,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
 import javax.swing.JCheckBox;
@@ -244,6 +245,24 @@ public class TimestampPanel extends OverlayPanel {
       String text = null;
       if (formatMode.equals(ABSOLUTE_TIME)) {
          text = metadata.getReceivedTime();
+         if (text == null) {
+            text = "No absolute timestamp";
+         }
+         else {
+            // Strip out timezone. HACK: this format string matches the one in
+            // the acquisition engine (mm.clj) that generates the datetime
+            // string.
+            SimpleDateFormat source = new SimpleDateFormat(
+                  "yyyy-MM-dd HH:mm:ss Z");
+            SimpleDateFormat dest = new SimpleDateFormat(
+                  "yyyy-MM-dd HH:mm:ss");
+            try {
+               text = dest.format(source.parse(text));
+            }
+            catch (Exception e) {
+               text = "Unable to parse";
+            }
+         }
       }
       else {
          Double elapsedTime = metadata.getElapsedTimeMs();
