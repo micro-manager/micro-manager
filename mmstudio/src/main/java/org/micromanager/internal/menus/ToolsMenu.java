@@ -126,7 +126,7 @@ public class ToolsMenu {
               new Runnable() {
                  @Override
                  public void run() {
-                    studio_.showXYPositionList();
+                    studio_.positions().showPositionList();
                  }
               },
               "application_view_list.png");

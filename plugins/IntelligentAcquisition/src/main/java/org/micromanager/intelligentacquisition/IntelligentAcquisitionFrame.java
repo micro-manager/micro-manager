@@ -552,7 +552,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       @Override
       public void run() {
          try {
-            gui_.compat().runAcquisition();
+            gui_.acquisitions().runAcquisition();
          } catch (MMScriptException ex) {
             gui_.logs().showError(ex, "Error during acquisition");
          }
@@ -603,7 +603,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
             // Preload acqFileNameB_ to make sure that it works
             try {
                acqFileNameB_ = acqTextField2_.getText();
-               gui_.compat().loadAcquisition(acqFileNameB_);
+               gui_.acquisitions().loadAcquisition(acqFileNameB_);
             } catch (MMScriptException ex) {
                gui_.logs().showError("Unable to load Imaging Acquisition Settings. "
                        + "Please select a valid file and try again");
@@ -613,11 +613,11 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
             // load the exploration acq settings, give a second chance if it does not work
             try {
                acqFileNameA_ = acqTextField1_.getText();
-               gui_.compat().loadAcquisition(acqFileNameA_);
+               gui_.acquisitions().loadAcquisition(acqFileNameA_);
             } catch (MMScriptException ex) {
                try {
                   acqSettingsButton1_ActionPerformed(null);
-                  gui_.compat().loadAcquisition(acqFileNameA_);
+                  gui_.acquisitions().loadAcquisition(acqFileNameA_);
                } catch (MMScriptException ex1) {
                   gui_.logs().showError(ex1, "Failed to load exploration acquisition settings");
                   return;
@@ -640,7 +640,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                // run exploration acquisition
                Datastore store;
                try {
-                  store = gui_.compat().runAcquisition();
+                  store = gui_.acquisitions().runAcquisition();
                } catch (MMScriptException e) {
                   gui_.logs().showError(e, "Exploration acquisition failed");
                   break;
@@ -677,8 +677,8 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                            "Imaging interesting cell at position: " +
                            xPos + ", " + yPos);
 
-                     gui_.compat().loadAcquisition(acqFileNameB_);
-                     Datastore tmpStore = gui_.compat().runAcquisition();
+                     gui_.acquisitions().loadAcquisition(acqFileNameB_);
+                     Datastore tmpStore = gui_.acquisitions().runAcquisition();
                      gui_.displays().closeDisplaysFor(tmpStore);
                      core_.setRelativeXYPosition(xyStage_, -xPos * pixelWidthMicron_, -yPos * pixelWidthMicron_);
                      core_.clearROI();
@@ -721,7 +721,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
    private void stopButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButton_ActionPerformed
       stop_.set(true);
       // try to stop ongoing acquisitions here
-      gui_.compat().getAcquisitionEngine2010().stop();
+      gui_.acquisitions().haltAcquisition();
    }//GEN-LAST:event_stopButton_ActionPerformed
 
    private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed

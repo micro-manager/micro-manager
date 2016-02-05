@@ -313,6 +313,27 @@ public interface UserProfile {
    public void exportPackageProfileToFile(String packageName, String path) throws IOException;
 
    /**
+    * Extract a portion of the current user's profile and provide it in the
+    * form of a PropertyMap. This works like exportProfileSubsetToFile,
+    * except that the result is made immediately available instead of being
+    * saved to disk.
+    * @param c Class whose key-value pairs will be extracted.
+    * @return A PropertyMap containing all keys associated with the given
+    *         class.
+    */
+   public PropertyMap extractProfileSubset(Class<?> c);
+
+   /**
+    * Load the provided PropertyMap (e.g. as provided by
+    * extractProfileSubset()) and insert all keys it contains into the current
+    * user's profile.
+    * @param c Class to associate with all keys in the PropertyMap.
+    * @param properties PropertyMap containing keys and values to insert into
+    *        the current user's profile.
+    */
+   public void insertProperties(Class<?> c, PropertyMap properties);
+
+   /**
     * Remove all keys from the profile that are associated with the provided
     * class. This functionally allows you to reset the profile to use the
     * default values (or the values specified in the global settings file).

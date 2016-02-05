@@ -150,7 +150,7 @@ public class MDAButtons extends WidgetPlugin implements SciJavaPlugin {
                   @Override
                   public void run() {
                      try {
-                        studio_.compat().runAcquisition();
+                        studio_.acquisitions().runAcquisition();
                      }
                      catch (Exception e) {
                         studio_.logs().showError(e,
@@ -160,7 +160,7 @@ public class MDAButtons extends WidgetPlugin implements SciJavaPlugin {
                }).start();
             }
             else {
-               studio_.compat().haltAcquisition();
+               studio_.acquisitions().haltAcquisition();
             }
          }
       });

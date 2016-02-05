@@ -70,7 +70,7 @@ public class AcquisitionWrapperEngineAdapter extends AcquisitionWrapperEngine {
             //assorted things copied from MMStudio to ensure compatibility
             setParentGUI(gui);
             setZStageDevice(gui.getCore().getFocusDevice());
-            setPositionList(gui.getPositionList());
+            setPositionList(gui.positions().getPositionList());
             JavaUtils.setRestrictedFieldValue(gui.getAcqDlg(), AcqControlDlg.class, "acqEng_", this);
         } catch (Exception ex) {
             ReportingUtils.showError("Could't override acquisition engine");

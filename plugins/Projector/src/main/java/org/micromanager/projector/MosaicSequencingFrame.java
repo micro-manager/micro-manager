@@ -746,7 +746,7 @@ public class MosaicSequencingFrame extends MMFrame {
       if (getSequenceCount() == 0) {
          throw new Exception("Please upload a sequence to the Mosaic for attaching to multi-dimensional acquisition.");
       }
-      gui_.compat().attachRunnable(0, 0, 0, 0,
+      gui_.acquisitions().attachRunnable(0, 0, 0, 0,
             ProjectorControlForm.makeRunnableAsync(
                   new Runnable() {
                      @Override
@@ -763,7 +763,7 @@ public class MosaicSequencingFrame extends MMFrame {
    // The acquisition engine will no longer run phototargeting after this
    // is called. Called by the "detach" button.
    public void detachFromAcquisition() {
-      gui_.compat().clearRunnables();
+      gui_.acquisitions().clearRunnables();
    }
    
    // ## Constructor and main window.

@@ -260,7 +260,7 @@ private JCheckBox drawGrid_, drawPosNames_;
 
       GUIUtils.registerImageFocusListener(this);
       //attach depth list runnable
-      MMStudio.getInstance().getAcquisitionEngine2010().attachRunnable(-1, -1, -1, -1,
+      app_.acquisitions().attachRunnable(-1, -1, -1, -1,
               new Runnable() {
                  @Override
                  public void run() {        

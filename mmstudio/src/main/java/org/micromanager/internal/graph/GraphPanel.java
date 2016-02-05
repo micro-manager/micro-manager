@@ -30,6 +30,7 @@ import java.awt.Paint;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
@@ -53,6 +54,8 @@ public class GraphPanel extends JPanel {
    private int TEXT_SIZE = 10;
    private float TEXT_OFFSET_X = 40;
    private float TEXT_OFFSET_Y = 20;
+   private String xLabel_ = null;
+   private String yLabel_ = null;
    
    float cursorLoPos_;
    float cursorHiPos_;
@@ -71,6 +74,11 @@ public class GraphPanel extends JPanel {
    
    public void setData(GraphData d) {
       data_ = d;
+   }
+
+   public void setLabels(String xLabel, String yLabel) {
+      xLabel_ = xLabel;
+      yLabel_ = yLabel;
    }
 
    public void setGamma(double gamma) {
@@ -320,6 +328,23 @@ public class GraphPanel extends JPanel {
       drawCursor(g2d, box, cursorLoPos_);
       drawCursor(g2d, box, cursorHiPos_);
       drawMapping(g2d, box, cursorLoPos_, cursorHiPos_, gamma_);
+      if (xLabel_ != null) {
+         int strWidth = g2d.getFontMetrics(g2d.getFont()).stringWidth(xLabel_);
+         int x = box.x + box.width / 2 - strWidth / 2;
+         g2d.drawString(xLabel_, x, box.y + box.height + 15);
+      }
+      if (yLabel_ != null) {
+         // Draw this label rotated 90 degrees.
+         int strWidth = g2d.getFontMetrics(g2d.getFont()).stringWidth(yLabel_);
+         int strHeight = g2d.getFontMetrics(g2d.getFont()).getHeight();
+         int x = box.x - strHeight - 4;
+         int y = box.y + box.height / 2 - strWidth / 2;
+         AffineTransform orig = g2d.getTransform();
+         g2d.translate(x, y);
+         g2d.rotate(Math.PI / 2);
+         g2d.drawString(yLabel_, 0, 0);
+         g2d.setTransform(orig);
+      }
            
       // restore settings
       g2d.setPaint(oldPaint);

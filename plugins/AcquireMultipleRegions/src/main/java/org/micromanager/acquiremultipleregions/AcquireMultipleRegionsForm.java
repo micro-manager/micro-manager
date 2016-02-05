@@ -228,17 +228,17 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
             try {
                 statusText.setText("Acquiring region " + String.valueOf(i));
                 //turn on position list, turn off time lapse
-                SequenceSettings currSettings = gui_.compat().getAcquisitionSettings();
+                SequenceSettings currSettings = gui_.acquisitions().getAcquisitionSettings();
                 currSettings.usePositionList = true;
                 currSettings.numFrames = 1;
-                gui_.compat().setAcquisitionSettings(currSettings);
+                gui_.acquisitions().setAcquisitionSettings(currSettings);
                 // TODO: ensure saving chooses the correct format. This logic
                 // became lost in the MM2.0 refactoring.
 //                gui_.compat().setImageSavingFormat(org.micromanager.acquisition.internal.TaggedImageStorageMultipageTiff.class);
                 //update positionlist with grid
-                gui_.compat().setPositionList(currRegion.tileGrid(getXFieldSize(), getYFieldSize(), axisList_, zGenType_));               
+                gui_.positions().setPositionList(currRegion.tileGrid(getXFieldSize(), getYFieldSize(), axisList_, zGenType_));               
                 gui_.compat().refreshGUI();
-                Datastore store = gui_.compat().runAcquisition(currRegion.filename, currRegion.directory);
+                Datastore store = gui_.acquisitions().runAcquisition(currRegion.filename, currRegion.directory);
                 gui_.displays().closeDisplaysFor(store);
             } catch (MMScriptException ex) {
                 handleError(ex);

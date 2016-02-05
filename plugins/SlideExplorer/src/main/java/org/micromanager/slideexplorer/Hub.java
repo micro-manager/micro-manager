@@ -318,8 +318,8 @@ public class Hub {
    void acquireMosaics() {
       roiManager_.updateMappings();
       try {
-         app_.setPositionList(roiManager_.convertRoiManagerToPositionList());
-         app_.showXYPositionList();
+         app_.positions().setPositionList(roiManager_.convertRoiManagerToPositionList());
+         app_.positions().showPositionList();
       } catch (MMScriptException ex) {
          ex.printStackTrace();
       }
