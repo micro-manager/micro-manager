@@ -63,12 +63,16 @@ public class TimestampPanel extends OverlayPanel {
    private static final String LOWER_LEFT = "Lower left";
    private static final String LOWER_RIGHT = "Lower right";
 
+   private static final String ABSOLUTE_TIME = "Absolute";
+   private static final String RELATIVE_TIME = "Relative to Start";
+
    private final JCheckBox amMultiChannel_;
    private final JCheckBox shouldDrawBackground_;
    private final JTextField xOffset_;
    private final JTextField yOffset_;
    private final JComboBox position_;
    private final JComboBox color_;
+   private final JComboBox format_;
 
    public TimestampPanel() {
       setLayout(new MigLayout("flowx"));
@@ -84,7 +88,12 @@ public class TimestampPanel extends OverlayPanel {
       position_ = new JComboBox(new String[] {
             UPPER_LEFT, UPPER_RIGHT, LOWER_RIGHT, LOWER_LEFT});
       position_.addActionListener(redrawListener);
-      add(position_, "wrap");
+      add(position_);
+
+      add(new JLabel("Time format:"), "split 2, flowy");
+      format_ = new JComboBox(new String[] {RELATIVE_TIME, ABSOLUTE_TIME});
+      format_.addActionListener(redrawListener);
+      add(format_, "wrap");
 
       shouldDrawBackground_ = new JCheckBox("Draw background");
       shouldDrawBackground_.setToolTipText("Draw a background (black, unless black text is selected) underneath the timestamp(s) to improve contrast");
@@ -230,17 +239,40 @@ public class TimestampPanel extends OverlayPanel {
       }
       colors.add(textColor);
 
+      String formatMode = (String) format_.getSelectedItem();
       Metadata metadata = image.getMetadata();
-      // Try various fallback options for the timestamp.
-      String text = metadata.getReceivedTime();
-      if (text == null) {
+      String text = null;
+      if (formatMode.equals(ABSOLUTE_TIME)) {
+         text = metadata.getReceivedTime();
+      }
+      else {
          Double elapsedTime = metadata.getElapsedTimeMs();
          if (elapsedTime != null) {
-            text = String.format("T+%.2fms", elapsedTime);
+            text = "";
+            int hours = (int) (elapsedTime / 3600000);
+            if (hours != 0) {
+               text += hours + "h";
+            }
+            elapsedTime -= hours * 3600000;
+            int minutes = (int) (elapsedTime / 60000);
+            if (minutes != 0) {
+               text += minutes + "m";
+            }
+            elapsedTime -= minutes * 60000;
+            int seconds = (int) (elapsedTime / 1000);
+            if (seconds != 0) {
+               text += seconds + "s";
+            }
+            elapsedTime -= seconds * 1000;
+            int ms = elapsedTime.intValue();
+            text = "T+" + text + ms + "ms";
          }
          else {
-            text = "No timestamp";
+            text = "No relative timestamp";
          }
+      }
+      if (text == null) {
+         text = "No timestamp";
       }
       timestamps.add(text);
    }
