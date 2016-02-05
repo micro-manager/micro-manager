@@ -40,6 +40,7 @@ import mmcorej.TaggedImage;
 import org.jfree.data.xy.XYSeries;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.AutofocusPlugin;
 
 import org.micromanager.asidispim.data.AcquisitionModes;
 import org.micromanager.asidispim.data.Cameras;
@@ -55,6 +56,8 @@ import org.micromanager.asidispim.fit.Fitter;
 
 import org.micromanager.Studio;
 import org.micromanager.asidispim.ASIdiSPIM;
+import org.micromanager.asidispim.data.AcquisitionSettings;
+import org.micromanager.asidispim.data.Devices.Sides;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
@@ -167,8 +170,7 @@ public class AutofocusUtils {
             
             AutofocusManager afManager = gui_.getAutofocusManager();
             afManager.selectDevice("OughtaFocus");
-            
-            //Autofocus afDevice = gui_.getAutofocus();
+            AutofocusPlugin afDevice = afManager.getDevice();
 
             if (afDevice == null) {
                throw new ASIdiSPIMException("Please define autofocus methods first");
@@ -184,8 +186,6 @@ public class AutofocusUtils {
             // make sure that the currently selected MM autofocus device uses the 
             // settings in its dialog
             afDevice.applySettings();
-
-            // gui_.getAutofocusManager().getDevice().applySettings();
             
             // if the Snap/Live window has an ROI set, we will use the same 
             // ROI for our focus calculations
@@ -288,7 +288,7 @@ public class AutofocusUtils {
             XYSeries[] scoresToPlot = new XYSeries[2];
             scoresToPlot[0] = new XYSeries(nrImages);
 
-            boolean liveModeOriginally;
+            boolean liveModeOriginally = false;
             String originalCamera = gui_.core().getCameraDevice();
             String acqName = "diSPIM Autofocus";
             
@@ -317,7 +317,7 @@ public class AutofocusUtils {
 
                gui_.core().setCameraDevice(camera);
                Datastore store = null;
-               if (debug) {
+               if (showImages) {
                   if (gui_.displays().getAllImageWindows().contains(ourWindow_)) {
                       ourWindow_.getDatastore().close();
                       ourWindow_.requestToClose();
@@ -442,8 +442,7 @@ public class AutofocusUtils {
                
                // display the best scoring image in the debug stack if it exists
                // or if not then in the snap/live window if it exists
-
-               if (debug) {
+               if (showImages) {
                   Coords coords = gui_.data().getCoordsBuilder().z(highestIndex).build();
                   ourWindow_.setDisplayedImageTo(coords);
                } else if (gui_.live().getDisplay() != null) {
@@ -481,9 +480,6 @@ public class AutofocusUtils {
 
                   gui_.core().stopSequenceAcquisition(camera);
                   gui_.core().setCameraDevice(originalCamera);
-                  if (debug) {
-                     // gui_.promptToSaveAcquisition(acqName, false);
-                  }
 
                   controller_.cleanUpControllerAfterAcquisition(1, acqSettings.firstSideIsA, false);
                   
