@@ -321,11 +321,11 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
       else {
          boolean isFirst = true;
-         JPanel subPanel = new JPanel(new MigLayout("flowx, insets 0"));
+         JPanel subPanel = new JPanel(new MigLayout("flowx, insets 0, gap 0"));
          for (JToggleButton button : componentPickerButtons_) {
             subPanel.add(button, "aligny center, w 16!, h 16!, gap 0! 0!");
          }
-         firstColumn.add(subPanel);
+         firstColumn.add(subPanel, "aligny center");
       }
       if (linker_ != null) {
          linkButton_ = new LinkButton(linker_, display_);
@@ -614,8 +614,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             //For drawing max label
             g.setColor(Color.black);
             g.setFont(new Font("Lucida Grande", 0, 10));
-            String maxLabel = "" + Math.pow(2,
-                  lastHistograms_[curComponent_].getBitDepth());
+            int maxVal = (int) Math.pow(2, histRangeComboBox_.getSelectedIndex() + 3);
+            if (histRangeComboBox_.getSelectedIndex() == 0) {
+               // Use camera depth instead.
+               maxVal = (int) Math.pow(2,
+                     lastHistograms_[curComponent_].getBitDepth());
+            }
+            String maxLabel = Integer.toString(maxVal - 1);
             g.drawString(maxLabel, getSize().width - 8 * maxLabel.length(),
                   getSize().height);
          }

@@ -82,6 +82,19 @@ public interface Studio {
    public LogManager getLogManager();
 
    /**
+    * Provide access to the AcquisitionManager, for running data acquisition
+    * using the Micro-Manager acquisition engine.
+    */
+   public AcquisitionManager acquisitions();
+
+   /**
+    * Provide access to the AcquisitionManager, for running data acquisition
+    * using the Micro-Manager acquisition engine. Identical to acquisitions()
+    * except in name.
+    */
+   public AcquisitionManager getAcquisitionManager();
+
+   /**
     * @return the currently selected AutoFocusManger object
     */
    public AutofocusManager getAutofocusManager();
@@ -195,6 +208,20 @@ public interface Studio {
     * @return PluginManager instance.
     */
    public PluginManager getPluginManager();
+
+   /**
+    * Provides access to the PositionListManager for interacting with the
+    * Stage Position List.
+    * @return PositionListManager instance.
+    */
+   public PositionListManager positions();
+
+   /**
+    * Provides access to the PositionListManager for interacting with the
+    * Stage Position List. Identical to positions() except in name.
+    * @return PositionListManager instance.
+    */
+   public PositionListManager getPositionListManager();
 
    /**
     * Provides access to the QuickAccessManager for accessing the Quick-Access

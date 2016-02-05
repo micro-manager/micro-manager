@@ -1,5 +1,7 @@
 package org.micromanager.hcs;
 
+import com.bulenkov.iconloader.IconLoader;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -11,9 +13,10 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
-import javax.swing.SpringLayout;
+import javax.swing.JToggleButton;
 
 import org.micromanager.MenuPlugin;
 import org.micromanager.MultiStagePosition;
@@ -31,6 +34,9 @@ import javax.swing.border.LineBorder;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.geom.AffineTransform;
+
+import net.miginfocom.swing.MigLayout;
+
 import mmcorej.CMMCore;
 
 import javax.swing.JRadioButton;
@@ -41,10 +47,17 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
 /**
+ * This is the primary user interface for the plugin.
  * @author nenad
- *
  */
 public class SiteGenerator extends MMFrame implements ParentPlateGUI {
+
+   private static final String EQUAL_SPACING = "Equal XY";
+   private static final String DIFFERENT_SPACING = "Different XY";
+   private static final String VIEW_SPACING = "Field of View";
+
+   private static final String SNAKE_ORDER = "Snake";
+   private static final String TYPEWRITER_ORDER = "Typewriter";
 
    private CMMCore core_;
    private JTextField spacingFieldX_;
@@ -54,7 +67,6 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
    private JTextField rowsField_;
    private JComboBox plateIDCombo_;
    private static final long serialVersionUID = 1L;
-   private final SpringLayout springLayout;
    private SBSPlate plate_;
    private PlatePanel platePanel_;
    private Studio app_;
@@ -82,32 +94,33 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
    private final JLabel statusLabel_;
    private final JCheckBox chckbxThreePt_;
    private final ButtonGroup toolButtonGroup = new ButtonGroup();
-   private JRadioButton rdbtnSelectWells_;
-   private JRadioButton rdbtnMoveStage_;
-   private final ButtonGroup spacingButtonGroup = new ButtonGroup();
-   private JRadioButton rdbtnEqualXYSpacing_;
-   private JRadioButton rdbtnDifferentXYSpacing_;
-   private JRadioButton rdbtnFieldOfViewSpacing_;
+   private final JComboBox spacingMode_;
+   private final JComboBox visitOrder_;
 
-   private double xSpacing = 0.0;
-   private double ySpacing = 0.0;
+   private double xSpacing_ = 0.0;
+   private double ySpacing_ = 0.0;
 
 
    private void updateXySpacing() {
-     if (rdbtnFieldOfViewSpacing_.isSelected()) {
+      String mode = (String) spacingMode_.getSelectedItem();
+      if (mode.equals(VIEW_SPACING)) {
        core_ = app_.getCMMCore();
        long width  = core_.getImageWidth();
        long height = core_.getImageHeight();
        double cameraXFieldOfView = core_.getPixelSizeUm() * width;
        double cameraYFieldOfView = core_.getPixelSizeUm() * height;
        double overlap = Double.parseDouble(overlapField_.getText().replace(',', '.'));
-       xSpacing = cameraXFieldOfView - overlap;
-       ySpacing = cameraYFieldOfView - overlap;
+       xSpacing_ = cameraXFieldOfView - overlap;
+       ySpacing_ = cameraYFieldOfView - overlap;
      }
      else {
-       xSpacing = Double.parseDouble(spacingFieldX_.getText().replace(',','.'));
-       if (rdbtnEqualXYSpacing_.isSelected()) ySpacing = xSpacing;
-       else ySpacing = Double.parseDouble(spacingFieldY_.getText().replace(',', '.'));
+       xSpacing_ = Double.parseDouble(spacingFieldX_.getText().replace(',','.'));
+       if (mode.equals(EQUAL_SPACING)) {
+          ySpacing_ = xSpacing_;
+         }
+       else {
+          ySpacing_ = Double.parseDouble(spacingFieldY_.getText().replace(',', '.'));
+       }
      }
    }
 
@@ -158,8 +171,9 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
          }
       });
 
-      springLayout = new SpringLayout();
-      getContentPane().setLayout(springLayout);
+      JPanel contentsPanel = new JPanel(
+            new MigLayout("fill, flowx, insets 0, gap 0"));
+      add(contentsPanel);
       plate_ = new SBSPlate();
 
       xyStagePos_ = new Point2D.Double(0.0, 0.0);
@@ -175,17 +189,63 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       loadAndRestorePosition(100, 100, 1000, 640);
 
       platePanel_ = new PlatePanel(plate_, null, this, app);
-      springLayout.putConstraint(SpringLayout.NORTH, platePanel_, 5, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, platePanel_, -136, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, platePanel_, 5, SpringLayout.WEST, getContentPane());
+      contentsPanel.add(platePanel_, "grow, push");
 
-      getContentPane().add(platePanel_);
+      JPanel sidebar = new JPanel(new MigLayout("flowy, gap 0, insets 0"));
+      contentsPanel.add(sidebar, "growprio 0, shrinkprio 200, gap 0, wrap");
+
+      // Mutually-exclusive toggle buttons for what the mouse does.
+      final JToggleButton selectWells = new JToggleButton("Select",
+            IconLoader.getIcon("/org/micromanager/icons/mouse_cursor_on.png"));
+      final JToggleButton moveStage = new JToggleButton("Move",
+            IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
+
+      selectWells.setToolTipText("Click and drag to select wells.");
+      selectWells.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent arg0) {
+            if (selectWells.isSelected()) {
+               platePanel_.setTool(PlatePanel.Tool.SELECT);
+               selectWells.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor_on.png"));
+               moveStage.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
+            }
+            else {
+               selectWells.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor.png"));
+               moveStage.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand_on.png"));
+            }
+         }
+      });
+      toolButtonGroup.add(selectWells);
+      // set default tool
+      platePanel_.setTool(PlatePanel.Tool.SELECT);
+      sidebar.add(selectWells, "split 2, alignx center, flowx");
+
+      moveStage.setToolTipText("Click to move the stage");
+      moveStage.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            if (moveStage.isSelected()) {
+               platePanel_.setTool(PlatePanel.Tool.MOVE);
+               moveStage.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand_on.png"));
+               selectWells.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor.png"));
+            }
+            else {
+               moveStage.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
+               selectWells.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor_on.png"));
+            }
+         }
+      });
+      toolButtonGroup.add(moveStage);
+      selectWells.setSelected(true);
+      sidebar.add(moveStage);
+
+      final JLabel plateFormatLabel = new JLabel();
+      plateFormatLabel.setAlignmentY(Component.TOP_ALIGNMENT);
+      plateFormatLabel.setText("Plate Format:");
+      sidebar.add(plateFormatLabel);
 
       plateIDCombo_ = new JComboBox();
-      plateIDCombo_.setAlignmentX(Component.LEFT_ALIGNMENT);
-      springLayout.putConstraint(SpringLayout.WEST, plateIDCombo_, 6, SpringLayout.EAST, platePanel_);
-      springLayout.putConstraint(SpringLayout.EAST, plateIDCombo_, -4, SpringLayout.EAST, getContentPane());
-      getContentPane().add(plateIDCombo_);
+      sidebar.add(plateIDCombo_);
       plateIDCombo_.addItem(SBSPlate.SBS_6_WELL);
       plateIDCombo_.addItem(SBSPlate.SBS_12_WELL);
       plateIDCombo_.addItem(SBSPlate.SBS_24_WELL);
@@ -196,10 +256,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       plateIDCombo_.addItem(SBSPlate.LOAD_CUSTOM);
 
       JButton customButton = new JButton("Create Custom");
-      springLayout.putConstraint(SpringLayout.NORTH, customButton, 105, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, customButton, 6, SpringLayout.EAST, platePanel_);
-      springLayout.putConstraint(SpringLayout.EAST, customButton, -4, SpringLayout.EAST, getContentPane());
-      getContentPane().add(customButton);
+      sidebar.add(customButton, "growx");
       customButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -207,16 +264,12 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
          }
       });
 
-      //comboBox.addItem(SBSPlate.CUSTOM);
       plateIDCombo_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(final ActionEvent e) {
             plate_.initialize((String) plateIDCombo_.getSelectedItem());
             updateXySpacing();
-            PositionList sites = generateSites(
-               Integer.parseInt(rowsField_.getText()),
-               Integer.parseInt(columnsField_.getText()),
-               xSpacing, ySpacing);
+            PositionList sites = generateSites();
             try {
                platePanel_.refreshImagingSites(sites);
             } catch (HCSException e1) {
@@ -227,8 +280,8 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
             platePanel_.repaint();
          }
       });
-      
-      
+
+
       FocusListener regeneratePlateOnLossOfFocus = new FocusListener() {
          @Override
          public void focusGained(FocusEvent e) {
@@ -240,278 +293,150 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
          }
       };
 
-      final JLabel plateFormatLabel = new JLabel();
-      springLayout.putConstraint(SpringLayout.NORTH, plateIDCombo_, 6, SpringLayout.SOUTH, plateFormatLabel);
-      springLayout.putConstraint(SpringLayout.NORTH, plateFormatLabel, 60, SpringLayout.NORTH, getContentPane());
-      plateFormatLabel.setAlignmentY(Component.TOP_ALIGNMENT);
-      springLayout.putConstraint(SpringLayout.SOUTH, plateFormatLabel, 75, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, plateFormatLabel, 6, SpringLayout.EAST, platePanel_);
-      springLayout.putConstraint(SpringLayout.EAST, plateFormatLabel, -9, SpringLayout.EAST, getContentPane());
-      plateFormatLabel.setText("Plate format");
-      getContentPane().add(plateFormatLabel);
+      sidebar.add(new JLabel("Imaging Sites"));
+      JPanel gridPanel = new JPanel(new MigLayout("flowx, gap 0, insets 0",
+               "0[]0[]0", "0[]0[]0"));
+      gridPanel.add(new JLabel("Rows"));
+      gridPanel.add(new JLabel("Columns"), "wrap");
 
-      rowsField_ = new JTextField();
+      rowsField_ = new JTextField(3);
       rowsField_.setText("1");
-      getContentPane().add(rowsField_);
-      springLayout.putConstraint(SpringLayout.EAST, rowsField_, -85, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, rowsField_, -125, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, rowsField_, 195, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, rowsField_, 175, SpringLayout.NORTH, getContentPane());
+      gridPanel.add(rowsField_);
       rowsField_.addFocusListener(regeneratePlateOnLossOfFocus);
-      
-      final JLabel imagingSitesLabel = new JLabel();
-      springLayout.putConstraint(SpringLayout.SOUTH, plateIDCombo_, -31, SpringLayout.NORTH, imagingSitesLabel);
-      springLayout.putConstraint(SpringLayout.NORTH, imagingSitesLabel, 135, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, imagingSitesLabel, 6, SpringLayout.EAST, platePanel_);
-      springLayout.putConstraint(SpringLayout.EAST, imagingSitesLabel, -24, SpringLayout.EAST, getContentPane());
-      imagingSitesLabel.setText("Imaging Sites");
-      getContentPane().add(imagingSitesLabel);
-      
-      columnsField_ = new JTextField();
+
+      sidebar.add(new JLabel("Columns"));
+      columnsField_ = new JTextField(3);
       columnsField_.setText("1");
-      getContentPane().add(columnsField_);
-      springLayout.putConstraint(SpringLayout.SOUTH, columnsField_, 195, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, columnsField_, 175, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, columnsField_, -40, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, columnsField_, -80, SpringLayout.EAST, getContentPane());
+      gridPanel.add(columnsField_);
       columnsField_.addFocusListener(regeneratePlateOnLossOfFocus);
-     
-      spacingFieldX_ = new JTextField();
+      sidebar.add(gridPanel);
+
+      final JLabel spacingLabel = new JLabel();
+      spacingLabel.setText("Spacing [\u00b5m]");
+      sidebar.add(spacingLabel);
+
+      spacingFieldX_ = new JTextField(3);
       spacingFieldX_.setText("1000");
-      getContentPane().add(spacingFieldX_);
-      springLayout.putConstraint(SpringLayout.EAST, spacingFieldX_, -85, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, spacingFieldX_, -125, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, spacingFieldX_, 240, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, spacingFieldX_, 220, SpringLayout.NORTH, getContentPane());
+      sidebar.add(spacingFieldX_, "split 2, flowx, hidemode 2");
 
       spacingFieldY_ = new JTextField();
       spacingFieldY_.setText("1000");
-      getContentPane().add(spacingFieldY_);
-      springLayout.putConstraint(SpringLayout.SOUTH, spacingFieldY_, 240, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, spacingFieldY_, 220, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, spacingFieldY_, -40, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, spacingFieldY_, -80, SpringLayout.EAST, getContentPane());
+      // Take zero space when invisible.
+      sidebar.add(spacingFieldY_, "hidemode 2");
       spacingFieldY_.setVisible(false);
 
       //same size and position like X_
       overlapField_ = new JTextField();
       overlapField_.setText("0");
-      getContentPane().add(overlapField_);
-      springLayout.putConstraint(SpringLayout.EAST, overlapField_, -65, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, overlapField_, -105, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, overlapField_, 240, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, overlapField_, 220, SpringLayout.NORTH, getContentPane());
+      // Take zero space when invisible.
+      sidebar.add(overlapField_, "hidemode 2");
       overlapField_.setVisible(false);
 
-      
-      final JLabel rowsColumnsLabel = new JLabel();
-      springLayout.putConstraint(SpringLayout.NORTH, rowsColumnsLabel, 153, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, rowsColumnsLabel, 6, SpringLayout.EAST, platePanel_);
-      springLayout.putConstraint(SpringLayout.EAST, rowsColumnsLabel, -30, SpringLayout.EAST, getContentPane());
-      rowsColumnsLabel.setText("Rows, Columns");
-      getContentPane().add(rowsColumnsLabel);
+      sidebar.add(new JLabel("Spacing Rule:"));
 
-      final JLabel spacingLabel = new JLabel();
-      spacingLabel.setText("Spacing [um]");
-      getContentPane().add(spacingLabel);
-      springLayout.putConstraint(SpringLayout.EAST, spacingLabel, -40, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, spacingLabel, -125, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, spacingLabel, 216, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, spacingLabel, 200, SpringLayout.NORTH, getContentPane());
+      spacingMode_ = new JComboBox(new String[] {
+         EQUAL_SPACING, DIFFERENT_SPACING, VIEW_SPACING});
+      sidebar.add(spacingMode_, "growx");
+      spacingMode_.setSelectedIndex(0);
+      spacingMode_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            String mode = (String) spacingMode_.getSelectedItem();
+            if (mode.equals(EQUAL_SPACING)) {
+               spacingLabel.setText("Spacing [\u00b5m]");
+               spacingFieldX_.setVisible(true);
+               spacingFieldY_.setVisible(false);
+               overlapField_.setVisible(false);
+            }
+            else if (mode.equals(DIFFERENT_SPACING)) {
+               spacingLabel.setText("Spacing X,Y [\u00b5m]");
+               spacingFieldX_.setVisible(true);
+               spacingFieldY_.setVisible(true);
+               overlapField_.setVisible(false);
+            }
+            else if (mode.equals(VIEW_SPACING)) {
+               spacingLabel.setText("Overlap [\u00b5m]");
+               overlapField_.setVisible(true);
+               spacingFieldX_.setVisible(false);
+               spacingFieldY_.setVisible(false);
+            }
+            else {
+               app_.logs().showError("Unrecognized spacing mode " + mode);
+            }
+            regenerate();
+         }
+      });
 
-      final JButton refreshButton = new JButton();
-      springLayout.putConstraint(SpringLayout.NORTH, refreshButton, 320, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, refreshButton, 345, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, refreshButton,  6, SpringLayout.EAST, platePanel_);
-      springLayout.putConstraint(SpringLayout.EAST, refreshButton, -4, SpringLayout.EAST, getContentPane());
-      refreshButton.setIcon(SwingResourceManager.getIcon(SiteGenerator.class, "/org/micromanager/icons/arrow_refresh.png"));
+      sidebar.add(new JLabel("Site visit order:"));
+      visitOrder_ = new JComboBox(new String[] {SNAKE_ORDER, TYPEWRITER_ORDER});
+      visitOrder_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            regenerate();
+         }
+      });
+      sidebar.add(visitOrder_, "growx");
+
+      final JButton refreshButton = new JButton("Refresh",
+            IconLoader.getIcon("/org/micromanager/icons/arrow_refresh.png"));
       refreshButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(final ActionEvent e) {
             regenerate();
          }
       });
-      refreshButton.setText("Refresh");
-      getContentPane().add(refreshButton);
+      sidebar.add(refreshButton, "growx, gaptop 10");
 
-      final JButton calibrateXyButton = new JButton();
-      springLayout.putConstraint(SpringLayout.WEST, calibrateXyButton, 6, SpringLayout.EAST, platePanel_);
-      springLayout.putConstraint(SpringLayout.SOUTH, calibrateXyButton, 405, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, calibrateXyButton, -4, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, calibrateXyButton, 380, SpringLayout.NORTH, getContentPane());
-      calibrateXyButton.setIcon(SwingResourceManager.getIcon(SiteGenerator.class, "/org/micromanager/icons/cog.png"));
+      final JButton calibrateXyButton = new JButton("Calibrate XY...",
+            IconLoader.getIcon("/org/micromanager/icons/cog.png"));
       calibrateXyButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(final ActionEvent e) {
             calibrateXY();
          }
       });
-      calibrateXyButton.setText("Calibrate XY...");
-      getContentPane().add(calibrateXyButton);
+      sidebar.add(calibrateXyButton, "growx");
 
 
-      final JButton setPositionListButton = new JButton();
-      springLayout.putConstraint(SpringLayout.WEST, setPositionListButton, 6, SpringLayout.EAST, platePanel_);
-      springLayout.putConstraint(SpringLayout.NORTH, setPositionListButton, 350, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, setPositionListButton, 375, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, setPositionListButton, -4, SpringLayout.EAST, getContentPane());
-      setPositionListButton.setIcon(SwingResourceManager.getIcon(SiteGenerator.class, "/org/micromanager/icons/table.png"));
+      final JButton setPositionListButton = new JButton("Build MM List",
+            IconLoader.getIcon("/org/micromanager/icons/table.png"));
       setPositionListButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(final ActionEvent e) {
             setPositionList();
          }
       });
-      setPositionListButton.setText("Build MM List");
-      getContentPane().add(setPositionListButton);
-
-      statusLabel_ = new JLabel();
-      springLayout.putConstraint(SpringLayout.SOUTH, platePanel_, -6, SpringLayout.NORTH, statusLabel_);
-      springLayout.putConstraint(SpringLayout.SOUTH, statusLabel_, -5, SpringLayout.SOUTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, statusLabel_, -25, SpringLayout.SOUTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, statusLabel_, 5, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, statusLabel_, -4, SpringLayout.EAST, getContentPane());
-      statusLabel_.setBorder(new LineBorder(new Color(0, 0, 0)));
-      getContentPane().add(statusLabel_);
+      sidebar.add(setPositionListButton, "growx");
 
       chckbxThreePt_ = new JCheckBox("Use 3-Point AF");
-      springLayout.putConstraint(SpringLayout.NORTH, chckbxThreePt_, 419, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, chckbxThreePt_, 6, SpringLayout.EAST, platePanel_);
-      springLayout.putConstraint(SpringLayout.EAST, chckbxThreePt_, -4, SpringLayout.EAST, getContentPane());
       chckbxThreePt_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             platePanel_.repaint();
          }
       });
-      getContentPane().add(chckbxThreePt_);
+      sidebar.add(chckbxThreePt_, "gaptop 10");
 
-      JButton btnMarkPt = new JButton("Mark Point");
-      springLayout.putConstraint(SpringLayout.SOUTH, chckbxThreePt_, -6, SpringLayout.NORTH, btnMarkPt);
-      springLayout.putConstraint(SpringLayout.NORTH, btnMarkPt, 440, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, btnMarkPt, 6, SpringLayout.EAST, platePanel_);
-      springLayout.putConstraint(SpringLayout.SOUTH, btnMarkPt, 465, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, btnMarkPt, -4, SpringLayout.EAST, getContentPane());
-      btnMarkPt.setIcon(SwingResourceManager.getIcon(SiteGenerator.class, "/org/micromanager/icons/plus.png"));
+      JButton btnMarkPt = new JButton("Mark Point",
+            IconLoader.getIcon("/org/micromanager/icons/plus.png"));
       btnMarkPt.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
             markOnePoint();
          }
       });
-      getContentPane().add(btnMarkPt);
+      sidebar.add(btnMarkPt, "growx");
 
-      JButton btnSetThreePt = new JButton("Set 3-Point List");
-      springLayout.putConstraint(SpringLayout.NORTH, btnSetThreePt, 6, SpringLayout.SOUTH, btnMarkPt);
-      springLayout.putConstraint(SpringLayout.WEST, btnSetThreePt, 6, SpringLayout.EAST, platePanel_);
-      springLayout.putConstraint(SpringLayout.SOUTH, btnSetThreePt, 31, SpringLayout.SOUTH, btnMarkPt);
-      //springLayout.putConstraint(SpringLayout.SOUTH, btnSetThreePt, -67, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, btnSetThreePt, -4, SpringLayout.EAST, getContentPane());
-      btnSetThreePt.setIcon(SwingResourceManager.getIcon(SiteGenerator.class, "/org/micromanager/icons/asterisk_orange.png"));
+      JButton btnSetThreePt = new JButton("Set 3-Point List",
+            IconLoader.getIcon("/org/micromanager/icons/asterisk_orange.png"));
       btnSetThreePt.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             setThreePoint();
          }
       });
-      getContentPane().add(btnSetThreePt);
+      sidebar.add(btnSetThreePt, "growx");
 
-      rdbtnSelectWells_ = new JRadioButton("Select Wells");
-      rdbtnSelectWells_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            if (rdbtnSelectWells_.isSelected()) {
-               platePanel_.setTool(PlatePanel.Tool.SELECT);
-            }
-         }
-      });
-      toolButtonGroup.add(rdbtnSelectWells_);
-      rdbtnSelectWells_.setSelected(true);
-      // set default tool
-      platePanel_.setTool(PlatePanel.Tool.SELECT);
-      springLayout.putConstraint(SpringLayout.NORTH, rdbtnSelectWells_, 10, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, rdbtnSelectWells_, 6, SpringLayout.EAST, platePanel_);
-      springLayout.putConstraint(SpringLayout.EAST, rdbtnSelectWells_, 0, SpringLayout.EAST, plateIDCombo_);
-      getContentPane().add(rdbtnSelectWells_);
-
-      rdbtnMoveStage_ = new JRadioButton("Move Stage");
-      rdbtnMoveStage_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            if (rdbtnMoveStage_.isSelected()) {
-               platePanel_.setTool(PlatePanel.Tool.MOVE);
-            }
-         }
-      });
-      toolButtonGroup.add(rdbtnMoveStage_);
-      rdbtnSelectWells_.setSelected(false);
-      springLayout.putConstraint(SpringLayout.NORTH, rdbtnMoveStage_, 2, SpringLayout.SOUTH, rdbtnSelectWells_);
-      springLayout.putConstraint(SpringLayout.WEST, rdbtnMoveStage_, 6, SpringLayout.EAST, platePanel_);
-      springLayout.putConstraint(SpringLayout.EAST, rdbtnMoveStage_, 0, SpringLayout.EAST, plateIDCombo_);
-      getContentPane().add(rdbtnMoveStage_);
-
-      rdbtnEqualXYSpacing_ = new JRadioButton("Equal XY Spacing");
-      rdbtnEqualXYSpacing_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            if (rdbtnEqualXYSpacing_.isSelected()) {
-                spacingLabel.setText("Spacing [um]");
-                spacingFieldX_.setVisible(true);
-                spacingFieldY_.setVisible(false);
-                overlapField_.setVisible(false);
-            }
-         }
-      });
-      
-      rdbtnDifferentXYSpacing_ = new JRadioButton("Different XY Spacing");
-      rdbtnDifferentXYSpacing_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            if (rdbtnDifferentXYSpacing_.isSelected()) {
-                spacingLabel.setText("Spacing X,Y [um]");
-                spacingFieldX_.setVisible(true);
-                spacingFieldY_.setVisible(true);
-                overlapField_.setVisible(false);
-            }
-         }
-      });
-      
-      rdbtnFieldOfViewSpacing_ = new JRadioButton("Field of View Spacing");
-      rdbtnFieldOfViewSpacing_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            if (rdbtnFieldOfViewSpacing_.isSelected()) {
-                spacingLabel.setText("Overlap [um]");
-                overlapField_.setVisible(true);
-                spacingFieldX_.setVisible(false);
-                spacingFieldY_.setVisible(false);
-            }
-         }
-      });
-      
-      spacingButtonGroup.add(rdbtnEqualXYSpacing_);
-      spacingButtonGroup.add(rdbtnDifferentXYSpacing_);
-      spacingButtonGroup.add(rdbtnFieldOfViewSpacing_);
-      
-      rdbtnEqualXYSpacing_.setSelected(true);
-      rdbtnDifferentXYSpacing_.setSelected(false);      
-      rdbtnFieldOfViewSpacing_.setSelected(false);
-      
-      springLayout.putConstraint(SpringLayout.NORTH, rdbtnEqualXYSpacing_, 250, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, rdbtnEqualXYSpacing_, 6, SpringLayout.EAST, platePanel_);
-      springLayout.putConstraint(SpringLayout.EAST, rdbtnEqualXYSpacing_, 0, SpringLayout.EAST, plateIDCombo_);
-      getContentPane().add(rdbtnEqualXYSpacing_);
-      
-      springLayout.putConstraint(SpringLayout.NORTH, rdbtnDifferentXYSpacing_, 0, SpringLayout.SOUTH, rdbtnEqualXYSpacing_);
-      springLayout.putConstraint(SpringLayout.WEST, rdbtnDifferentXYSpacing_, 6, SpringLayout.EAST, platePanel_);
-      springLayout.putConstraint(SpringLayout.EAST, rdbtnDifferentXYSpacing_, 0, SpringLayout.EAST, plateIDCombo_);
-      getContentPane().add(rdbtnDifferentXYSpacing_);
-      
-      springLayout.putConstraint(SpringLayout.NORTH, rdbtnFieldOfViewSpacing_, 0, SpringLayout.SOUTH, rdbtnDifferentXYSpacing_);
-      springLayout.putConstraint(SpringLayout.WEST, rdbtnFieldOfViewSpacing_, 6, SpringLayout.EAST, platePanel_);
-      springLayout.putConstraint(SpringLayout.EAST, rdbtnFieldOfViewSpacing_, 0, SpringLayout.EAST, plateIDCombo_);
-      getContentPane().add(rdbtnFieldOfViewSpacing_);
-      
       JButton btnAbout = new JButton("About...");
       btnAbout.addActionListener(new ActionListener() {
          @Override
@@ -520,15 +445,16 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
             dlgAbout.setVisible(true);
          }
       });
-      springLayout.putConstraint(SpringLayout.SOUTH, btnAbout, 0, SpringLayout.SOUTH, platePanel_);
-      springLayout.putConstraint(SpringLayout.EAST, btnAbout, 0, SpringLayout.EAST, plateIDCombo_);
-      getContentPane().add(btnAbout);
+      sidebar.add(btnAbout, "growx");
+
+      statusLabel_ = new JLabel();
+      statusLabel_.setBorder(new LineBorder(new Color(0, 0, 0)));
+      contentsPanel.add(statusLabel_, "dock south, gap 0");
 
       loadSettings();
       updateXySpacing();
 
-      PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()),
-            xSpacing, ySpacing);
+      PositionList sites = generateSites();
       try {
          platePanel_.refreshImagingSites(sites);
       } catch (HCSException e1) {
@@ -607,7 +533,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
 
       try {
          if (app_ != null) {
-            app_.compat().setPositionList(platePl);
+            app_.positions().setPositionList(platePl);
          }
       } catch (MMScriptException e) {
          displayError(e.getMessage());
@@ -619,12 +545,12 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
     * Mark current position as one point in the 3-pt set
     */
    private void markOnePoint() {
-      app_.compat().markCurrentPosition();
+      app_.positions().markCurrentPosition();
    }
 
    private void setThreePoint() {
       try {
-         PositionList plist = app_.compat().getPositionList();
+         PositionList plist = app_.positions().getPositionList();
          if (plist.getNumberOfPositions() != 3) {
             displayError("We need exactly three positions to fit AF plane. Please create XY list with 3 positions.");
             return;
@@ -640,29 +566,40 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       }
    }
 
-   private PositionList generateSites(int rows, int cols,
-         double spacingX, double spacingY) {
+
+   private PositionList generateSites() {
+      int rows = Integer.parseInt(rowsField_.getText());
+      int cols = Integer.parseInt(columnsField_.getText());
+      boolean isTypewriterMode =
+            ((String) visitOrder_.getSelectedItem()).equals(TYPEWRITER_ORDER);
       PositionList sites = new PositionList();
-      System.out.println("# Rows : " + rows + ", # Cols : " + cols +
-            ", spacingX = " + spacingX + ", spacingY = " + spacingY);
       for (int i = 0; i < rows; i++) {
-         // create snake-like pattern inside the well:
-         boolean isEven = i % 2 == 0;
-         int start = isEven ? 0 : cols - 1;
-         int end = isEven ? cols : - 1;
-         int j = start;
-         // instead of using a for loop, cycle backwards on odd rows
-         while ( (isEven && j < end) || (!isEven && j > end)  ) {
+         // In "snake" mode we go in one X direction on odd rows and the other
+         // X direction on even rows; in "typewriter" mode we always use the
+         // same X direction.
+         int start, end, stepDir;
+         if (isTypewriterMode) {
+            start = 0;
+            end = cols;
+            stepDir = 1;
+         }
+         else {
+            boolean isEven = i % 2 == 0;
+            start = isEven ? 0 : cols - 1;
+            end = isEven ? cols : - 1;
+            stepDir = isEven ? 1 : -1;
+         }
+         for (int j = start; j != end; j += stepDir) {
             double x;
             double y;
             if (cols > 1) {
-               x = -cols * spacingX / 2.0 + spacingX * j + spacingX / 2.0;
+               x = -cols * xSpacing_ / 2.0 + xSpacing_ * j + xSpacing_ / 2.0;
             } else {
                x = 0.0;
             }
 
             if (rows > 1) {
-               y = -rows * spacingY / 2.0 + spacingY * i + spacingY / 2.0;
+               y = -rows * ySpacing_ / 2.0 + ySpacing_ * i + ySpacing_ / 2.0;
             } else {
                y = 0.0;
             }
@@ -672,16 +609,9 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
             sp.numAxes = 2;
             sp.x = x;
             sp.y = y;
-            System.out.println("(" + i + "," + j + ") = " + x + "," + y);
 
             mps.add(sp);
             sites.addPosition(mps);
-            if (isEven) {
-               j++;
-            } else {
-               j--;
-            }
-
          }
       }
 
@@ -760,15 +690,14 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
    private void regenerate() {
       WellPositionList[] selectedWells = platePanel_.getSelectedWellPositions();
       updateXySpacing();
-      PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()),
-              xSpacing, ySpacing);
+      PositionList sites = generateSites();
       plate_.initialize((String) plateIDCombo_.getSelectedItem());
       try {
          platePanel_.refreshImagingSites(sites);
       } catch (HCSException e) {
          displayError(e.getMessage());
       }
-      
+
       platePanel_.setSelectedWells(selectedWells);
       platePanel_.repaint();
    }
@@ -802,8 +731,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       } catch (HCSException e) {
          app_.logs().logError(e);
       }
-      PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()),
-              xSpacing, ySpacing);
+      PositionList sites = generateSites();
       try {
          platePanel_.refreshImagingSites(sites);
       } catch (HCSException e1) {

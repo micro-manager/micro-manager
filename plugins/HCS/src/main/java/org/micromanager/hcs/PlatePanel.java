@@ -224,10 +224,8 @@ public class PlatePanel extends JPanel {
    }
 
    protected void onMouseClicked(MouseEvent e) throws HCSException {
-      System.out.println("Mouse clicked: " + e.getX() + "," + e.getY());
       Point2D.Double pt = scalePixelToDevice(e.getX(), e.getY());
       String well = plate_.getWellLabel(pt.x, pt.y);
-      System.out.println("Device coordinates: " + pt.x + "," + pt.y + " : " + well);
       
       if (mode_ == Tool.MOVE) {
          if (app_ == null)
@@ -280,13 +278,11 @@ public class PlatePanel extends JPanel {
    }
    
    protected void onMouseDragged(MouseEvent e) {
-      System.out.println("Mouse dragged: " + e.getX() + "," + e.getY());
       drawSelRect(previous_);
       previous_ = e.getPoint();
       drawSelRect(e.getPoint());   }
 
    protected void onMouseReleased(MouseEvent e) {
-      System.out.println("Mouse released: " + e.getX() + "," + e.getY());
       drawSelRect(previous_);
       Rectangle selRect = new Rectangle(anchor_.x, anchor_.y, 
               e.getX()- anchor_.x, e.getY() - anchor_.y);
@@ -302,7 +298,6 @@ public class PlatePanel extends JPanel {
    }
 
    protected void onMousePressed(MouseEvent e) {
-      System.out.println("Mouse pressed: " + e.getX() + "," + e.getY());
       if (!e.isControlDown())
          clearSelection();
       anchor_ = e.getPoint();
@@ -386,7 +381,6 @@ public class PlatePanel extends JPanel {
    }
 
    private void rescale() {
-      System.out.println("rescale!");
       activeRect_ = getBounds();
 
       // shrink drawing area by the margin amount
@@ -397,8 +391,6 @@ public class PlatePanel extends JPanel {
       
       // calculate drawing parameters based on the active area
       drawingParams_ = new DrawingParams();
-      System.out.println("Plate: " + plate_ + ", " + plate_.getXSize() + " X " + plate_.getYSize());
-      System.out.println("Active rect: " + activeRect_);
       
       drawingParams_.xFactor = activeRect_.getWidth()/plate_.getXSize();
       drawingParams_.yFactor = activeRect_.getHeight()/plate_.getYSize();
@@ -416,8 +408,6 @@ public class PlatePanel extends JPanel {
    }
 
    private void drawWells(Graphics2D g) {
-
-      System.out.println("drawWells()");
 
       double wellX = plate_.getWellSpacingX() * drawingParams_.xFactor;
       double wellY = plate_.getWellSpacingY() * drawingParams_.yFactor;
@@ -539,10 +529,7 @@ public class PlatePanel extends JPanel {
       
       if (xyStagePos_ == null)
          xyStagePos_ = new Point2D.Double(0.0, 0.0);
-      System.out.println("Stage pointer in um: " + xyStagePos_);
       Point pt = scaleDeviceToPixel(xyStagePos_.x, xyStagePos_.y);
-      System.out.println("Stage pointer in pixels: " + pt);
-      System.out.println("Drawing params: " + drawingParams_);
 
       stagePointer_.setLocation(pt);
       
@@ -580,7 +567,6 @@ public class PlatePanel extends JPanel {
    }
    
    public void refreshImagingSites(PositionList sites) throws HCSException {
-      System.out.println("refreshSites()");
       rescale();
       
       wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME, sites);

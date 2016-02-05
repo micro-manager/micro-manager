@@ -57,6 +57,7 @@ import mmcorej.DeviceType;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 
+import org.micromanager.AcquisitionManager;
 import org.micromanager.Album;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.CompatibilityInterface;
@@ -79,6 +80,7 @@ import org.micromanager.MMListenerInterface;
 import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
 import org.micromanager.PluginManager;
 import org.micromanager.PositionList;
+import org.micromanager.PositionListManager;
 import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
 import org.micromanager.quickaccess.QuickAccessManager;
 import org.micromanager.ScriptController;
@@ -135,7 +137,7 @@ import org.micromanager.internal.utils.WaitDialog;
  * Implements the Studio (i.e. primary API) and does various other
  * tasks that should probably be refactored out at some point.
  */
-public class MMStudio implements Studio, CompatibilityInterface {
+public class MMStudio implements Studio, CompatibilityInterface, AcquisitionManager, PositionListManager {
 
    private static final long serialVersionUID = 3556500289598574541L;
    private static final String OPEN_ACQ_DIR = "openDataDir";
@@ -829,7 +831,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
    @Override
    public void markCurrentPosition() {
       if (posListDlg_ == null) {
-         showXYPositionList();
+         showPositionList();
       }
       if (posListDlg_ != null) {
          posListDlg_.markPosition(false);
@@ -1302,7 +1304,7 @@ public class MMStudio implements Studio, CompatibilityInterface {
     * Opens a dialog to record stage positions
     */
    @Override
-   public void showXYPositionList() {
+   public void showPositionList() {
       checkPosListDlg();
       posListDlg_.setVisible(true);
    }
@@ -1529,7 +1531,6 @@ public class MMStudio implements Studio, CompatibilityInterface {
       return core_;
    }
 
-   @Override
    public IAcquisitionEngine2010 getAcquisitionEngine2010() {
       try {
          acquisitionEngine2010LoadingThread_.join();
@@ -1763,6 +1764,26 @@ public class MMStudio implements Studio, CompatibilityInterface {
    @Override
    public ShutterManager getShutterManager() {
       return shutter();
+   }
+
+   @Override
+   public AcquisitionManager acquisitions() {
+      return this;
+   }
+
+   @Override
+   public AcquisitionManager getAcquisitionManager() {
+      return acquisitions();
+   }
+
+   @Override
+   public PositionListManager positions() {
+      return this;
+   }
+
+   @Override
+   public PositionListManager getPositionListManager() {
+      return positions();
    }
 
    @Override

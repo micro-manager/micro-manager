@@ -33,6 +33,8 @@ import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
 import javax.swing.JCheckBox;
@@ -50,12 +52,20 @@ import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.OverlayPanel;
 
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * This overlay draws the timestamps of the currently-displayed images.
  */
 public class TimestampPanel extends OverlayPanel {
-   private static final int LINE_HEIGHT = 13;
+
+   private static final String UPPER_LEFT = "Upper left";
+   private static final String UPPER_RIGHT = "Upper right";
+   private static final String LOWER_LEFT = "Lower left";
+   private static final String LOWER_RIGHT = "Lower right";
+
+   private static final String ABSOLUTE_TIME = "Absolute";
+   private static final String RELATIVE_TIME = "Relative to Start";
 
    private final JCheckBox amMultiChannel_;
    private final JCheckBox shouldDrawBackground_;
@@ -63,6 +73,7 @@ public class TimestampPanel extends OverlayPanel {
    private final JTextField yOffset_;
    private final JComboBox position_;
    private final JComboBox color_;
+   private final JComboBox format_;
 
    public TimestampPanel() {
       setLayout(new MigLayout("flowx"));
@@ -76,9 +87,14 @@ public class TimestampPanel extends OverlayPanel {
 
       add(new JLabel("Position: "), "split 2, flowy");
       position_ = new JComboBox(new String[] {
-            "Upper left", "Upper right", "Lower right", "Lower left"});
+            UPPER_LEFT, UPPER_RIGHT, LOWER_RIGHT, LOWER_LEFT});
       position_.addActionListener(redrawListener);
-      add(position_, "wrap");
+      add(position_);
+
+      add(new JLabel("Time format:"), "split 2, flowy");
+      format_ = new JComboBox(new String[] {RELATIVE_TIME, ABSOLUTE_TIME});
+      format_.addActionListener(redrawListener);
+      add(format_, "wrap");
 
       shouldDrawBackground_ = new JCheckBox("Draw background");
       shouldDrawBackground_.setToolTipText("Draw a background (black, unless black text is selected) underneath the timestamp(s) to improve contrast");
@@ -97,7 +113,7 @@ public class TimestampPanel extends OverlayPanel {
       add(color_, "wrap");
 
       add(new JLabel("X offset: "), "split 2");
-      xOffset_ = new JTextField("5", 3);
+      xOffset_ = new JTextField("0", 3);
       xOffset_.addKeyListener(new KeyAdapter() {
          @Override
          public void keyPressed(KeyEvent event) {
@@ -107,7 +123,7 @@ public class TimestampPanel extends OverlayPanel {
       add(xOffset_);
 
       add(new JLabel("Y offset: "), "split 2");
-      yOffset_ = new JTextField("15", 3);
+      yOffset_ = new JTextField("0", 3);
       yOffset_.addKeyListener(new KeyAdapter() {
          @Override
          public void keyPressed(KeyEvent event) {
@@ -122,8 +138,9 @@ public class TimestampPanel extends OverlayPanel {
     * provided image's timestamp in normal mode.
     */
    @Override
-   public void drawOverlay(Graphics g, DisplayWindow display, Image image,
-         ImageCanvas canvas) {
+   public void drawOverlay(Graphics graphics, DisplayWindow display,
+         Image image, ImageCanvas canvas) {
+      Graphics2D g = (Graphics2D) graphics;
       ArrayList<String> timestamps = new ArrayList<String>();
       ArrayList<Color> colors = new ArrayList<Color>();
       Datastore store = display.getDatastore();
@@ -140,10 +157,23 @@ public class TimestampPanel extends OverlayPanel {
          addTimestamp(image, display, timestamps, colors);
       }
 
+      // Determine text width, and check for background clashes.
+      int textWidth = 0;
+      Color backgroundColor = Color.BLACK;
+      for (int i = 0; i < timestamps.size(); ++i) {
+         textWidth = Math.max(textWidth,
+               g.getFontMetrics(g.getFont()).stringWidth(timestamps.get(i)));
+         if (colors.get(i) == Color.BLACK) {
+            // Can't use black, so use white instead.
+            backgroundColor = Color.WHITE;
+         }
+      }
+
       // This code is copied from the ScaleBarOverlayPanel, and then
       // slightly adapted to our different Y-positioning needs.
       int xOffset = 0, yOffset = 0;
       int yStep = 1;
+      int textHeight = g.getFontMetrics(g.getFont()).getHeight();
       try {
          xOffset = Integer.parseInt(xOffset_.getText());
          yOffset = Integer.parseInt(yOffset_.getText());
@@ -152,40 +182,36 @@ public class TimestampPanel extends OverlayPanel {
 
       String location = (String) position_.getSelectedItem();
       Dimension canvasSize = canvas.getPreferredSize();
-      if (location.equals("Upper right") ||
-            location.equals("Lower right")) {
-         xOffset = canvasSize.width - xOffset - 80;
+      if (location.equals(UPPER_RIGHT) || location.equals(LOWER_RIGHT)) {
+         xOffset = canvasSize.width - xOffset - textWidth;
       }
-      if (location.equals("Lower left") ||
-            location.equals("Lower right")) {
-         yOffset = canvasSize.height - yOffset - LINE_HEIGHT;
+      if (location.equals(LOWER_LEFT) || location.equals(LOWER_RIGHT)) {
+         yOffset = canvasSize.height - yOffset;
          // Change our step direction.
          yStep = -1;
       }
+      if (location.equals(UPPER_LEFT) || location.equals(UPPER_RIGHT)) {
+         // Need to move text down slightly.
+         yOffset += textHeight;
+      }
 
       if (shouldDrawBackground_.isSelected()) {
-         // Determine size and color of background based on our color settings
-         // and number/length of timestamps.
-         int width = 0;
-         int height = LINE_HEIGHT * (timestamps.size() - 1) + 4;
-         Color backgroundColor = Color.BLACK;
-         for (int i = 0; i < timestamps.size(); ++i) {
-            // TODO: find a better way to determine timestamp width than just
-            // multiplying number of characters by a constant.
-            width = Math.max(width, getStringWidth(timestamps.get(i), g));
-            if (colors.get(i) == Color.BLACK) {
-               // Can't use black, so use white instead.
-               backgroundColor = Color.WHITE;
-            }
+         int x = xOffset - 2;
+         int width = textWidth + 4;
+         int y = yOffset - textHeight - 2;
+         if (yStep == -1) {
+            // yOffset is the bottom of the box instead of the top.
+            y = yOffset - textHeight * timestamps.size() - 2;
          }
+         int height = textHeight * timestamps.size() + 4;
          g.setColor(backgroundColor);
-         g.fillRect(xOffset - 2, yOffset - LINE_HEIGHT,
-               xOffset + width + 2, yOffset + height * yStep - 2);
+         g.fillRect(x, y, width, height);
       }
 
       for (int i = 0; i < timestamps.size(); ++i) {
          g.setColor(colors.get(i));
-         g.drawString(timestamps.get(i), xOffset, yOffset + yStep * i * LINE_HEIGHT);
+         g.drawString(timestamps.get(i), xOffset,
+               yOffset + yStep * i * textHeight);
       }
    }
 
@@ -214,28 +240,50 @@ public class TimestampPanel extends OverlayPanel {
       }
       colors.add(textColor);
 
+      String formatMode = (String) format_.getSelectedItem();
       Metadata metadata = image.getMetadata();
-      // Try various fallback options for the timestamp.
-      String text = metadata.getReceivedTime();
-      if (text == null) {
-         Double elapsedTime = metadata.getElapsedTimeMs();
-         if (elapsedTime != null) {
-            text = String.format("T+%.2fms", elapsedTime);
+      String text = null;
+      if (formatMode.equals(ABSOLUTE_TIME)) {
+         text = metadata.getReceivedTime();
+         if (text == null) {
+            text = "No absolute timestamp";
          }
          else {
-            text = "No timestamp";
+            // Strip out timezone. HACK: this format string matches the one in
+            // the acquisition engine (mm.clj) that generates the datetime
+            // string.
+            SimpleDateFormat source = new SimpleDateFormat(
+                  "yyyy-MM-dd HH:mm:ss Z");
+            SimpleDateFormat dest = new SimpleDateFormat(
+                  "yyyy-MM-dd HH:mm:ss");
+            try {
+               text = dest.format(source.parse(text));
+            }
+            catch (Exception e) {
+               text = "Unable to parse";
+            }
          }
       }
+      else {
+         Double elapsedTime = metadata.getElapsedTimeMs();
+         if (elapsedTime != null) {
+            int hours = (int) (elapsedTime / 3600000);
+            elapsedTime -= hours * 3600000;
+            int minutes = (int) (elapsedTime / 60000);
+            elapsedTime -= minutes * 60000;
+            int seconds = (int) (elapsedTime / 1000);
+            elapsedTime -= seconds * 1000;
+            int ms = elapsedTime.intValue();
+            text = String.format("T+%02d:%02d:%02d.%03d", hours, minutes,
+                  seconds, ms);
+         }
+         else {
+            text = "No relative timestamp";
+         }
+      }
+      if (text == null) {
+         text = "No timestamp";
+      }
       timestamps.add(text);
-   }
-
-   /**
-    * Given a string, determine how many pixels wide it is.
-    */
-   private int getStringWidth(String text, Graphics g) {
-      Font font = getFont();
-      Rectangle2D textBounds = font.getStringBounds(text,
-            new FontRenderContext(new AffineTransform(), true, false));
-      return (int) Math.round(textBounds.getWidth());
    }
 }
