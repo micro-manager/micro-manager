@@ -248,24 +248,15 @@ public class TimestampPanel extends OverlayPanel {
       else {
          Double elapsedTime = metadata.getElapsedTimeMs();
          if (elapsedTime != null) {
-            text = "";
             int hours = (int) (elapsedTime / 3600000);
-            if (hours != 0) {
-               text += hours + "h";
-            }
             elapsedTime -= hours * 3600000;
             int minutes = (int) (elapsedTime / 60000);
-            if (minutes != 0) {
-               text += minutes + "m";
-            }
             elapsedTime -= minutes * 60000;
             int seconds = (int) (elapsedTime / 1000);
-            if (seconds != 0) {
-               text += seconds + "s";
-            }
             elapsedTime -= seconds * 1000;
             int ms = elapsedTime.intValue();
-            text = "T+" + text + ms + "ms";
+            text = String.format("T+%02d:%02d:%02d.%03d", hours, minutes,
+                  seconds, ms);
          }
          else {
             text = "No relative timestamp";
