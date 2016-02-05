@@ -90,6 +90,8 @@ import java.awt.event.WindowListener;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
 
@@ -1428,16 +1430,22 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     *   Devices.Side.A or B to run only that side
     */
    public void runTestAcquisition(Devices.Sides side) {
-      cancelAcquisition_.set(false);
-      acquisitionRequested_.set(true);
-      updateStartButton();
-      boolean success = runAcquisitionPrivate(true, side);
-      if (!success) {
-         ReportingUtils.logError("Fatal error running test diSPIM acquisition.");
+      try {
+         cancelAcquisition_.set(false);
+         acquisitionRequested_.set(true);
+         updateStartButton();
+         boolean success = runAcquisitionPrivate(true, side);
+         if (!success) {
+            ReportingUtils.logError("Fatal error running test diSPIM acquisition.");
+         }
+         acquisitionRequested_.set(false);
+         acquisitionRunning_.set(false);
+         updateStartButton();
+      } catch (DatastoreRewriteException ex) {
+         
+      } catch (Exception ex) {
+         
       }
-      acquisitionRequested_.set(false);
-      acquisitionRunning_.set(false);
-      updateStartButton();
    }
 
    /**
@@ -1458,22 +1466,28 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
          @Override
          public void run() {
-            ReportingUtils.logDebugMessage("User requested start of diSPIM acquisition.");
-            if (isAcquisitionRequested()) { // don't allow acquisition to be requested again, just return
-               ReportingUtils.logError("another acquisition already running");
-               return;
+            try {
+               ReportingUtils.logDebugMessage("User requested start of diSPIM acquisition.");
+               if (isAcquisitionRequested()) { // don't allow acquisition to be requested again, just return
+                  ReportingUtils.logError("another acquisition already running");
+                  return;
+               }
+               cancelAcquisition_.set(false);
+               acquisitionRequested_.set(true);
+               ASIdiSPIM.getFrame().tabsSetEnabled(false);
+               updateStartButton();
+               boolean success = runAcquisitionPrivate(false, Devices.Sides.NONE);
+               if (!success) {
+                  ReportingUtils.logError("Fatal error running diSPIM acquisition.");
+               }
+               acquisitionRequested_.set(false);
+               updateStartButton();
+               ASIdiSPIM.getFrame().tabsSetEnabled(true);
+            } catch (DatastoreRewriteException ex) {
+               
+            } catch (Exception ex) {
+               
             }
-            cancelAcquisition_.set(false);
-            acquisitionRequested_.set(true);
-            ASIdiSPIM.getFrame().tabsSetEnabled(false);
-            updateStartButton();
-            boolean success = runAcquisitionPrivate(false, Devices.Sides.NONE);
-            if (!success) {
-               ReportingUtils.logError("Fatal error running diSPIM acquisition.");
-            }
-            acquisitionRequested_.set(false);
-            updateStartButton();
-            ASIdiSPIM.getFrame().tabsSetEnabled(true);
          }
       }            
       acqThread acqt = new acqThread("diSPIM Acquisition");
@@ -2050,7 +2064,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // Multi-page TIFF saving code wants this one:
             // TODO: support other types than GRAY16  (NS: Why?? Cameras are all 16-bits, so not much reason for anything else
             pmb.putString("PixelType", "GRAY16");
-            pmb.putDouble("z-step_um",  (double) getStepSizeUm());
+            pmb.putDouble("z-step_um",  (double) getVolumeSliceStepSize());
             // Properties for use by MultiViewRegistration plugin
             // Format is: x_y_z, set to 1 if we should rotate around this axis.
             pmb.putString("MVRotationAxis", "0_1_0");
@@ -2120,6 +2134,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   throw new IllegalMonitorStateException("User stopped the acquisition");
                }
                
+               int acqNum = 0;
                int timePoint = acqSettings.separateTimepoints ? acqNum : trigNum ;
                
                // this is where we autofocus if requested
@@ -2299,19 +2314,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                  // add image to acquisition
                                  if (spimMode == AcquisitionModes.Keys.NO_SCAN && !acqSettings.separateTimepoints) {
                                     // create time series for no scan
-<<<<<<< HEAD
-                                    addImageToAcquisition(acqName,
-                                          frNumber[channelIndex], channelIndex, actualTimePoint, 
-                                          positionNum, now - acqStart, timg, bq);
-                                 } else { // standard, create Z-stacks
-                                    addImageToAcquisition(acqName, actualTimePoint, channelIndex,
-=======
+
                                     addImageToAcquisition(store,
                                           frNumber[channelIndex], channelIndex, timePoint, 
                                           positionNum, now - acqStart, timg);
                                  } else { // standard, create Z-stacks
                                     addImageToAcquisition(store, timePoint, channelIndex,
->>>>>>> mm2diSPIM
                                           frNumber[channelIndex], positionNum,
                                           now - acqStart, timg);
                                  }
@@ -2392,6 +2400,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   break;
                }
             }
+            }
          } catch (IllegalMonitorStateException ex) {
             // do nothing, the acquisition was simply halted during its operation
             // will log error message during finally clause
@@ -2401,33 +2410,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             MyDialogUtils.showError(ex);
          } finally {  // end of this acquisition (could be about to restart if separate viewers)
             try {
-<<<<<<< HEAD
-               // restore original window listeners
-               try {
-                  vad.getImagePlus().getWindow().removeWindowListener(wl_acq);
-                  for (WindowListener l : wls_orig) {
-                     vad.getImagePlus().getWindow().addWindowListener(l);
-                  }
-               } catch (Exception ex) {
-                  // do nothing, window is probably gone
-               }
-               
-               if (cancelAcquisition_.get()) {
-                  ReportingUtils.logMessage("User stopped the acquisition");
-               }
-               
-               bq.put(TaggedImageQueue.POISON);
-=======
+
                if (store != null)
                   store.freeze();
-               // bq.put(TaggedImageQueue.POISON);
->>>>>>> mm2diSPIM
-               // TODO: evaluate closeAcquisition call
-               // at the moment, the Micro-Manager api has a bug that causes 
-               // a closed acquisition not be really closed, causing problems
-               // when the user closes a window of the previous acquisition
-               // changed r14705 (2014-11-24)
-               // gui_.closeAcquisition(acqName);
+
                ReportingUtils.logMessage("diSPIM plugin acquisition " +  
                      " took: " + (System.currentTimeMillis() - acqButtonStart) + "ms");
                
@@ -2485,7 +2471,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          try {
             path = prefs_.getString(MyStrings.PanelNames.SETTINGS.toString(),
                   Properties.Keys.PLUGIN_TESTACQ_PATH, "");
-            IJ.saveAs(gui_.getAcquisition(acqName).getAcquisitionWindow().getImagePlus(), "raw", path);
+            throw new ASIdiSPIMException("Not sure what is going on here");
+            //IJ.saveAs(gui_.getAcquisition(acqName).getAcquisitionWindow().getImagePlus(), "raw", path);
             // TODO consider generating a short metadata file to assist in interpretation
          } catch (Exception ex) {
             MyDialogUtils.showError("Could not save raw data from test acquisition to path " + path);
@@ -2502,7 +2489,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       if (nonfatalError) {
          MyDialogUtils.showError("Missed some images during acquisition, see core log for details");
       }
-      }
+      
       return true;
    }
    
@@ -2709,11 +2696,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    public ij.ImagePlus getLastAcquisitionImagePlus() throws ASIdiSPIMException {
-      try {
-         return gui_.getAcquisition(lastAcquisitionName_).getAcquisitionWindow().getImagePlus();
-      } catch (MMScriptException e) {
-         throw new ASIdiSPIMException(e);
-      }
+         throw new ASIdiSPIMException("Not yet implemented");
    }
    
    public String getSavingDirectoryRoot() {
