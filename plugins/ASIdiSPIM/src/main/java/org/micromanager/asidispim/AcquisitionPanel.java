@@ -727,7 +727,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       editPositionListButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            gui_.compat().showXYPositionList();
+            gui_.getPositionListManager().showPositionList();
          }
       });
       positionPanel.add(editPositionListButton, "span 2, center");
@@ -1238,7 +1238,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // (could be wildly off but was estimated using actual system
             // and then slightly padded to be conservative to avoid errors
             // where positions aren't completed in time for next position)
-            return gui_.compat().getPositionList().getNumberOfPositions() *
+            return gui_.positions().getPositionList().getNumberOfPositions() *
                   (volumeDuration + 1500 + PanelUtils.getSpinnerFloatValue(positionDelay_));
          } catch (MMScriptException ex) {
             MyDialogUtils.showError(ex, "Error getting position list for multiple XY positions");
@@ -1510,7 +1510,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
 
       // sanity check, shouldn't call this unless we aren't running an acquisition
-      if (gui_.compat().isAcquisitionRunning()) {
+      if (gui_.acquisitions().isAcquisitionRunning()) {
          MyDialogUtils.showError("An acquisition is already running");
          return false;
       }
@@ -1664,7 +1664,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       PositionList positionList = new PositionList();
       if (acqSettings.useMultiPositions) {
          try {
-            positionList = gui_.compat().getPositionList();
+            positionList = gui_.positions().getPositionList();
             nrPositions = positionList.getNumberOfPositions();
          } catch (MMScriptException ex) {
             MyDialogUtils.showError(ex, "Error getting position list for multiple XY positions");
