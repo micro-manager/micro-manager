@@ -49,14 +49,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.text.ParseException;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
-import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -80,18 +77,14 @@ import mmcorej.TaggedImage;
 
 import com.swtdesigner.SwingResourceManager;
 
-import ij.IJ;
 
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
 
@@ -200,8 +193,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final MultiChannelSubPanel multiChannelPanel_;
    private final Color[] colors = {Color.RED, Color.GREEN, Color.BLUE, Color.MAGENTA,
             Color.PINK, Color.CYAN, Color.YELLOW, Color.ORANGE};
-   private String lastAcquisitionPath_;
-   private String lastAcquisitionName_;
+   private final String lastAcquisitionPath_;
+   private final String lastAcquisitionName_;
    private String[] channelNames_;
    private int nrRepeats_;  // how many separate acquisitions to perform
    
@@ -914,6 +907,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    /**
     * convenience method to avoid having to regenerate acquisition settings
     * public for API use
+    * @return number of sides used in acquisition (1 or 2)
     */
    public int getNumSides() {
       if (numSides_.getSelectedIndex() == 1) {
@@ -926,6 +920,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    /**
     * convenience method to avoid having to regenerate acquisition settings
     * public for API use
+    * @return true if first side is side A
     */
    public boolean isFirstSideA() {
       return ((String) firstSide_.getSelectedItem()).equals("A");
@@ -934,6 +929,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    /**
     * convenience method to avoid having to regenerate acquisition settings.
     * public for API use
+    * @return Interval between start of consecutive time points
     */
    public double getTimepointInterval() {
       return PanelUtils.getSpinnerFloatValue(acquisitionInterval_);
@@ -1179,6 +1175,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    /**
     * Compute the volume duration in ms based on controller's timing settings.
     * Includes time for multiple channels.  However, does not include for multiple positions.
+    * @param acqSettings Struct that contains all settings relevant for the acquisition
     * @return duration in ms
     */
    public double computeActualVolumeDuration(AcquisitionSettings acqSettings) {
@@ -1856,16 +1853,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       cameras_.setSPIMCamerasForAcquisition(true);
 
-      numTimePointsDone_ = 0;
-      
-      // force saving as image stacks, not individual files
-      // implementation assumes just two options, either 
-      //  TaggedImageStorageDiskDefault.class or TaggedImageStorageMultipageTiff.class
-   /* TODO: check if this is OK
-      boolean separateImageFilesOriginally =
-            ImageUtils.getImageStorageClass().equals(TaggedImageStorageDiskDefault.class);
-      ImageUtils.setImageStorageClass(TaggedImageStorageMultipageTiff.class);
-    */  
+      numTimePointsDone_ = 0;      
+
       // Set up controller SPIM parameters (including from Setup panel settings)
       // want to do this, even with demo cameras, so we can test everything else
       if (!controller_.prepareControllerForAquisition(acqSettings)) {
@@ -1931,7 +1920,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       for (int tp = 0; tp < nrRepeats_; tp++) {
 
-         BlockingQueue<TaggedImage> bq = new LinkedBlockingQueue<TaggedImage>(10);
+         // BlockingQueue<TaggedImage> bq = new LinkedBlockingQueue<TaggedImage>(10);
          //String acqName;
          //if (singleTimePointViewers) {
          //   acqName = gui_.getUniqueAcquisitionName(nameField_.getText() + "_" + tp);
@@ -1954,7 +1943,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             if (cancelAcquisition_.get()) {
                throw new IllegalMonitorStateException("User stopped the acquisition");
             }
-            
 
             // flag that we are actually running acquisition now
             acquisitionRunning_.set(true);
@@ -1962,6 +1950,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             ReportingUtils.logMessage("diSPIM plugin starting acquisition " + acqName);
             
             if (spimMode == AcquisitionModes.Keys.NO_SCAN && !acqSettings.separateTimepoints) {
+               ReportingUtils.logMessage("Need to implements this mode");
+            }
 
             // ReportingUtils.logMessage("diSPIM plugin starting acquisition " + nameField_.getText() + "_" + tp);
             
@@ -1993,7 +1983,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             DisplaySettingsBuilder dsb = display.getDisplaySettings().copy();
             SummaryMetadata sm = store.getSummaryMetadata();
             String[] chNames = sm.getChannelNames();
-            SummaryMetadata.SummaryMetadataBuilder smb = sm.copy();
+            //SummaryMetadata.SummaryMetadataBuilder smb = sm.copy();
             Color[] acqColors = display.getDisplaySettings().getChannelColors();
             
             if (acqSettings.useChannels) {
@@ -2001,10 +1991,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                int channelNr = channels.length;
                if (twoSided)
                   channelNr *= 2;
-               if (acqColors.length != channelNr)
-                  acqColors = new Color[channelNr];
-               if (chNames.length != channelNr)
-                  chNames = new String[channelNr];
+               // if (acqColors.length != channelNr)
+               //   acqColors = new Color[channelNr];
+               // if (chNames.length != channelNr)
+               //   chNames = new String[channelNr];
                for (int i = 0; i < channels.length; i++) {
                   String chName = "-" + channels[i].config_;
                   // same algorithm for channel index vs. specified channel and side as below
@@ -2037,13 +2027,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   viewString += NumberUtils.intToDisplayString(90) + SEPARATOR;
                }
             }
-            store.setSummaryMetadata(smb.build());
-            //display.setDisplaySettings(dsb.build());
+            // store.setSummaryMetadata(smb.build());
+            display.setDisplaySettings(dsb.build());
             
             // strip last separators:
             viewString = viewString.substring(0, viewString.length() - 1);
             
-            sm = store.getSummaryMetadata();
+            // sm = store.getSummaryMetadata();
             PropertyMap pm = sm.getUserData();
             PropertyMapBuilder pmb = gui_.data().getPropertyMapBuilder();
             if (pm != null)
@@ -2399,7 +2389,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                if (acqSettings.hardwareTimepoints) {
                   break;
                }
-            }
             }
          } catch (IllegalMonitorStateException ex) {
             // do nothing, the acquisition was simply halted during its operation
