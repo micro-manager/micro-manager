@@ -20,6 +20,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 package org.micromanager.asidispim;
 
+import com.google.common.eventbus.Subscribe;
 import com.swtdesigner.SwingResourceManager;
 
 import java.awt.Color;
@@ -54,6 +55,7 @@ import org.micromanager.Studio;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.asidispim.utils.AutofocusUtils;
 import org.micromanager.asidispim.utils.MyNumberUtils;
+import org.micromanager.events.LiveModeEvent;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -930,6 +932,11 @@ public final class SetupPanel extends ListeningJPanel {
 
    public void setSideCalibrationOffset(double offset) {
       offsetField_.setValue((Double) offset);
+   }
+   
+   @Subscribe
+   public void liveModeEnabled(LiveModeEvent liveEvent) {
+      cameraPanel_.liveModeEnabled(liveEvent.getIsOn());
    }
 
 }

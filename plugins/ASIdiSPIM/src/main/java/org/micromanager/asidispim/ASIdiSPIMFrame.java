@@ -21,6 +21,7 @@
 
 package org.micromanager.asidispim;
 
+import com.google.common.eventbus.Subscribe;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.asidispim.data.Cameras;
@@ -39,16 +40,16 @@ import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import mmcorej.CMMCore;
-
 
 import org.micromanager.Studio;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.asidispim.utils.AutofocusUtils;
 import org.micromanager.asidispim.utils.ControllerUtils;
 import org.micromanager.asidispim.utils.ListeningJTabbedPane;
+import org.micromanager.asidispim.utils.MyDialogUtils;
 import static org.micromanager.asidispim.utils.MyJavaUtils.isMac;
 import org.micromanager.asidispim.utils.StagePositionUpdater;
+import org.micromanager.events.LiveModeEvent;
 import org.micromanager.internal.utils.MMFrame;
 
 
@@ -90,7 +91,6 @@ public class ASIdiSPIMFrame extends MMFrame
        {
    
    private final Studio gui_;
-   private final CMMCore core_;
    private final Properties props_; 
    private final Prefs prefs_;
    private final Devices devices_;
@@ -126,7 +126,6 @@ public class ASIdiSPIMFrame extends MMFrame
 
       // create interface objects used by panels
       gui_ = gui;
-      core_ = gui.getCMMCore();
       prefs_ = new Prefs(Preferences.userNodeForPackage(this.getClass()));
       devices_ = new Devices(gui_, prefs_);
       props_ = new Properties(gui_, devices_, prefs_);
@@ -202,45 +201,9 @@ public class ASIdiSPIMFrame extends MMFrame
       stagePosUpdater_.addPanel(statusSubPanel_);
 
       // attach live mode listeners
-
-      //MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelB_);
-      //MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelA_);
-      //MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) navigationPanel_);
-      //MMStudio.getInstance().getSnapLiveManager().addLiveModeListener(new LiveModeListener() {
-         // make sure to "wake up" any piezos with autosleep enabled before we start imaging 
-         /*
-         @Override
-         public void liveModeEnabled(boolean enabled) {
-            if (enabled) {
-               try {
-                  for (Devices.Keys piezoKey : Devices.PIEZOS) {
-                     if (devices_.isValidMMDevice(piezoKey)) {
-                        if (props_.getPropValueInteger(piezoKey, Properties.Keys.AUTO_SLEEP_DELAY) > 0) {
-                           core_.setRelativePosition(devices_.getMMDevice(piezoKey), 0);
-                        }
-                     }
-                  }
-               } catch (Exception e) {
-                  MyDialogUtils.showError("Could not reset piezo's positions");
-               }
-            }
-         }
-      });
-      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener(new LiveModeListener() {
-         // update camera/scanner settings
-         @Override
-         public void liveModeEnabled(boolean enabled) {
-            if (enabled) {
-               int scan = props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_CAMERA_LIVE_SCAN);
-               props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
-                     Properties.Keys.SPIM_LINESCAN_PERIOD, scan, true);
-               props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
-                     Properties.Keys.SA_PATTERN_X, Properties.Values.SAM_TRIANGLE, true);
-            }
-         }
-      });
-         */
-
+      gui_.events().registerForEvents(setupPanelA_);
+      gui_.events().registerForEvents(setupPanelB_);
+      gui_.events().registerForEvents(navigationPanel_);
       
       // make sure gotDeSelected() and gotSelected() get called whenever we switch tabs
       tabbedPane_.addChangeListener(new ChangeListener() {
@@ -388,4 +351,29 @@ public class ASIdiSPIMFrame extends MMFrame
       windowClosing();
       super.dispose();
    }
+  
+   @Subscribe
+   public void liveModeEnabled(LiveModeEvent liveEvent) {
+      if (liveEvent.getIsOn()) {
+         // make sure to "wake up" any piezos with autosleep enabled before we start imaging 
+         try {
+            for (Devices.Keys piezoKey : Devices.PIEZOS) {
+               if (devices_.isValidMMDevice(piezoKey)) {
+                  if (props_.getPropValueInteger(piezoKey, Properties.Keys.AUTO_SLEEP_DELAY) > 0) {
+                     gui_.getCMMCore().setRelativePosition(devices_.getMMDevice(piezoKey), 0);
+                  }
+               }
+            }
+         } catch (Exception e) {
+            MyDialogUtils.showError("Could not reset piezo's positions");
+         }
+         // update camera/scanner settings
+         int scan = props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_CAMERA_LIVE_SCAN);
+         props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+                 Properties.Keys.SPIM_LINESCAN_PERIOD, scan, true);
+         props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+                 Properties.Keys.SA_PATTERN_X, Properties.Values.SAM_TRIANGLE, true);
+      }
+   }
+
 }

@@ -69,6 +69,7 @@ public class ASIdiSPIM implements MenuPlugin, SciJavaPlugin {
       // create brand new instance of plugin frame every time
       try {
          myFrame_ = new ASIdiSPIMFrame(gui_);
+         gui_.events().registerForEvents(myFrame_);
       } catch (Exception e) {
          gui_.logs().showError(e);
       }

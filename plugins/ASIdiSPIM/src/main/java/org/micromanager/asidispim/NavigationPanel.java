@@ -22,6 +22,7 @@
 package org.micromanager.asidispim;
 
 
+import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
@@ -54,9 +55,9 @@ import javax.swing.JPanel;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 
-
 import com.swtdesigner.SwingResourceManager;
 import org.micromanager.Studio;
+import org.micromanager.events.LiveModeEvent;
 
 /**
  * TODO: Add live mode listener
@@ -335,6 +336,8 @@ public class NavigationPanel extends ListeningJPanel  {
       galvoBxPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));
       galvoByPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));
       
+
+      
    }// constructor
 
    
@@ -565,4 +568,9 @@ public class NavigationPanel extends ListeningJPanel  {
          MyDialogUtils.showError(ex, "could not halt motion");
       }
    }
+   
+   @Subscribe
+   public void liveModeEnabled(LiveModeEvent liveEvent) {
+      cameraPanel_.liveModeEnabled(liveEvent.getIsOn());
+   } 
 }
