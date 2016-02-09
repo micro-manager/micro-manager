@@ -331,7 +331,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          linkButton_ = new LinkButton(linker_, display_);
          linkButton_.setMinimumSize(new Dimension(linkButton_.getWidth(),
                   smallButtonSize.height));
-         firstColumn.add(linkButton_, "aligny center");
+         firstColumn.add(linkButton_, "aligny center, hidemode 2");
       }
       firstColumn.add(fullButton_, "alignx center, width 70!");
       firstColumn.add(autoButton_, "alignx center, width 70!");
@@ -639,7 +639,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private void updateHistogramColor(Color color) {
       if (lastHistograms_.length == 1) {
          // Just one component.
-         histogram_.setTraceStyle(true, 0, color);
+         DisplaySettings.ColorMode mode = display_.getDisplaySettings().getChannelColorMode();
+         if (mode != null && mode == DisplaySettings.ColorMode.GRAYSCALE) {
+            histogram_.setTraceStyle(true, 0, Color.WHITE);
+         }
+         else {
+            histogram_.setTraceStyle(true, 0, color);
+         }
       }
       else {
          // Multi-component images default to RGB.
@@ -917,5 +923,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
       histogram_.setAutoScale();
       histogram_.repaint();
+   }
+
+   @Override
+   public String toString() {
+      return String.format("ChannelControlPanel for channel %d>", channelIndex_);
    }
 }

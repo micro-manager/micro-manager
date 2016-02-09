@@ -64,6 +64,8 @@ import org.micromanager.internal.utils.MMFrame;
 final public class PipelineFrame extends MMFrame
       implements ListSelectionListener {
 
+   private static final String TITLE = "On-The-Fly Processor Pipeline";
+
    private final Studio studio_;
 
    private final JPopupMenu addProcessorPopup_;
@@ -76,7 +78,8 @@ final public class PipelineFrame extends MMFrame
    private final JButton moveDownButton_;
 
    public PipelineFrame(Studio studio) {
-      super("On-The-Fly Processor Pipeline");
+      super(TITLE);
+      setTitle(TITLE);
       studio_ = studio;
 
       setLayout(new MigLayout("fill, flowy, insets dialog",

@@ -28,7 +28,9 @@ import ij.IJ;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GraphicsConfiguration;
 import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -63,6 +65,7 @@ import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -215,9 +218,10 @@ public class IntroDlg extends JDialog {
       getContentPane().add(contentsPanel);
       pack();
       Dimension winSize = contentsPanel.getPreferredSize();
-      Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-      // Center the dialog on the screen.
-      setLocation(screenSize.width/2 - (winSize.width/2), screenSize.height/2 - (winSize.height/2));
+      GraphicsConfiguration config = GUIUtils.getGraphicsConfigurationContaining(0, 0);
+      Rectangle bounds = config.getBounds();
+      setLocation(bounds.x + bounds.width / 2 - winSize.width / 2,
+            bounds.y + bounds.height / 2 - winSize.height / 2);
       setConfigFile(sysConfigFile);
       toFront();
       setVisible(true);

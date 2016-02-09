@@ -30,6 +30,10 @@ class MergeStageDevicePopupMenu extends JPopupMenu {
       for (int i = 0; i < options.size(); ++i) {
          final String deviceName = options.get(i);
          JMenuItem item = new JMenuItem(String.format("Merge with %s current position", deviceName));
+         if (!parent.useDrive(deviceName)) {
+            item.setEnabled(false);
+            item.setText(item.getText() + " (inactive)");
+         }
          item.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {

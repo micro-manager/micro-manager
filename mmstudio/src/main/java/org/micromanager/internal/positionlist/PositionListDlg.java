@@ -703,11 +703,11 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
          y = subPos.y;
          z = subPos.z;
       }
-      
       for (int row : selectedRows) {
          // Find the appropriate StagePosition in this MultiStagePosition and
          // update its values.
          MultiStagePosition listPos = positionModel_.getPositionList().getPosition(row - 1);
+         boolean foundPos = false;
          for (int posIndex = 0; posIndex < listPos.size(); ++posIndex) {
             StagePosition subPos = listPos.get(posIndex);
             if (!subPos.stageName.equals(deviceName)) {
@@ -716,6 +716,33 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
             subPos.x = x;
             subPos.y = y;
             subPos.z = z;
+            foundPos = true;
+         }
+         if (!foundPos) {
+            // No existing StagePosition for this location; add a new one.
+            StagePosition subPos = new StagePosition();
+            subPos.stageName = deviceName;
+            DeviceType type;
+            try {
+               type = core_.getDeviceType(deviceName);
+            }
+            catch (Exception e) {
+               ReportingUtils.logError(e, "Unable to determine stage device type");
+               continue;
+            }
+            if (type == DeviceType.StageDevice) {
+               subPos.x = x;
+               subPos.numAxes = 1;
+            }
+            else if (type == DeviceType.XYStageDevice) {
+               subPos.x = x;
+               subPos.y = y;
+               subPos.numAxes = 2;
+            }
+            else {
+               throw new IllegalArgumentException("Unrecognized stage device type " + type + " for stage " + deviceName);
+            }
+            listPos.add(subPos);
          }
       }
       positionModel_.fireTableDataChanged();

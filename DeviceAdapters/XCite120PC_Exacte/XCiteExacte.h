@@ -105,6 +105,7 @@ private:
    string powerFactor_;
    long shutterDwellTime_;	// delay time between "Close Shutter" and "Open Shutter" sequence
    MM::MMTime timeShutterClosed_;	// time shutter closed
+   MM::MMTime lastShutterTime_;
 
    static const char* cmdConnect;
    static const char* cmdLockFrontPanel;
