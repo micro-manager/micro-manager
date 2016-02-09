@@ -152,7 +152,7 @@ public interface ASIdiSPIMInterface {
    
    /**
     * Deprecated version of setSavingNamePrefix
-    * @deprecated replaced by setSavingNamePrefix()
+    * @Deprecated replaced by setSavingNamePrefix()
     */
    public void setAcquisitionNamePrefix(String acqName) throws ASIdiSPIMException;
    
@@ -319,14 +319,14 @@ public interface ASIdiSPIMInterface {
    /**
     * @return the channel change mode, VOLUME for (software) volume-by-volume,
     *   VOLUME_HW for PLogic-based volume-by-volume, and SLICE_HW for PLogic-based slice-by-slice
-    * @deprecated out of laziness, can add if needed
+    * @Deprecated out of laziness, can add if needed
     */
    public org.micromanager.asidispim.data.MultichannelModes.Keys getChannelChangeMode() throws ASIdiSPIMException;
    
    /**
     * Sets the switching mode between the channels.
     * @param mode
-    * @deprecated out of laziness, can add if needed
+    * @Deprecated out of laziness, can add if needed
     */
    public void setChannelChangeMode(org.micromanager.asidispim.data.MultichannelModes.Keys mode) throws ASIdiSPIMException;
    
@@ -454,77 +454,77 @@ public interface ASIdiSPIMInterface {
    /**
     * @param side Devices.Sides.A or Devices.Sides.B
     * @return position of slice axis
-    * @deprecated out of laziness, can add if needed
+    * @Deprecated out of laziness, can add if needed
     */
    public double getSideSlicePosition(Devices.Sides side) throws ASIdiSPIMException;
    
    /**
     * @param side Devices.Sides.A or Devices.Sides.B
     * @param position new position of slice axis
-    * @deprecated out of laziness, can add if needed
+    * @Deprecated out of laziness, can add if needed
     */
    public void setSideSlicePosition(Devices.Sides side, double position) throws ASIdiSPIMException;
 
    /**
     * @param side Devices.Sides.A or Devices.Sides.B
     * @return position of imaging piezo
-    * @deprecated out of laziness, can add if needed
+    * @Deprecated out of laziness, can add if needed
     */
    public double getSideImagingPiezoPosition(Devices.Sides side) throws ASIdiSPIMException;
    
    /**
     * @param side Devices.Sides.A or Devices.Sides.B
     * @param position new position of imaging piezo
-    * @deprecated out of laziness, can add if needed
+    * @Deprecated out of laziness, can add if needed
     */
    public void setSideImagingPiezoPosition(Devices.Sides side, double position) throws ASIdiSPIMException;
 
    /**
     * @param side Devices.Sides.A or Devices.Sides.B
     * @return position of illumination piezo
-    * @deprecated out of laziness, can add if needed
+    * @Deprecated out of laziness, can add if needed
     */
    public double getSideIlluminationPiezoPosition(Devices.Sides side) throws ASIdiSPIMException;
    
    /**
     * @param side Devices.Sides.A or Devices.Sides.B
     * @param position new position of illumination piezo
-    * @deprecated out of laziness, can add if needed
+    * @Deprecated out of laziness, can add if needed
     */
    public void setSideIlluminationPiezoPosition(Devices.Sides side, double position) throws ASIdiSPIMException;
    
    /**
     * @param side Devices.Sides.A or Devices.Sides.B
     * @param position makes current position of the illumination piezo the new home position
-    * @deprecated out of laziness, can add if needed
+    * @Deprecated out of laziness, can add if needed
     */
    public void setSideIlluminationPiezoHome(Devices.Sides side) throws ASIdiSPIMException;
 
    /**
     * @param side Devices.Sides.A or Devices.Sides.B
     * @return the sheet width in units of degrees
-    * @deprecated out of laziness, can add if needed
+    * @Deprecated out of laziness, can add if needed
     */
    public double getSideSheetWidth(Devices.Sides side) throws ASIdiSPIMException;
    
    /**
     * @param side Devices.Sides.A or Devices.Sides.B
     * @param width the sheet width in units of degrees
-    * @deprecated out of laziness, can add if needed
+    * @Deprecated out of laziness, can add if needed
     */
    public void setSideSheetWidth(Devices.Sides side, double width) throws ASIdiSPIMException;
 
    /**
     * @param side Devices.Sides.A or Devices.Sides.B
     * @return sheet offset from center in units of degrees (not calibration offset)
-    * @deprecated out of laziness, can add if needed
+    * @Deprecated out of laziness, can add if needed
     */
    public double getSideSheetOffset(Devices.Sides side) throws ASIdiSPIMException;
    
    /**
     * @param side Devices.Sides.A or Devices.Sides.B
     * @param the sheet offset from center in units of degrees (not calibration offset)
-    * @deprecated out of laziness, can add if needed
+    * @Deprecated out of laziness, can add if needed
     */
    public void setSideSheetOffset(Devices.Sides side, double offset) throws ASIdiSPIMException;
    
@@ -532,14 +532,14 @@ public interface ASIdiSPIMInterface {
     * @param side Devices.Sides.A or Devices.Sides.B
     * @return calibration slope for specified side
     * @throws ASIdiSPIMException
-    * @deprecated out of laziness, can add if needed
+    * @Deprecated out of laziness, can add if needed
     */
    public double getSideCalibrationSlope(Devices.Sides side) throws ASIdiSPIMException;
    
    /**
     * @param side Devices.Sides.A or Devices.Sides.B
     * @param slope slope of calibration in um/degree
-    * @deprecated out of laziness, can add if needed
+    * @Deprecated out of laziness, can add if needed
     */
    public void setSideCalibrationSlope(Devices.Sides side, double slope) throws ASIdiSPIMException;
    
@@ -574,53 +574,53 @@ public interface ASIdiSPIMInterface {
    // following are not included out of laziness for now, if they are needed they can be added
    /**
     * @return number of images in each autofocus stack
-    * @deprecated out of laziness, can add if needed
+    * @Deprecated out of laziness, can add if needed
     */
    public int getAutofocusNumImages() throws ASIdiSPIMException;
    
    /**
     * @param numImages number of images to take in autofocus stack
-    * @deprecated out of laziness, can add if needed
+    * @Deprecated out of laziness, can add if needed
     */
    public void setAutofocusNumImages(int numImages) throws ASIdiSPIMException;
    
    /**
     * @return step size in microns between images in autofocus stack
-    * @deprecated out of laziness, can add if needed
+    * @Deprecated out of laziness, can add if needed
     */
    public double getAutofocusStepSize() throws ASIdiSPIMException; 
    
    /**
     * @param stepSizeUm step size between successive autofocus images
-    * @deprecated out of laziness, can add if needed
+    * @Deprecated out of laziness, can add if needed
     */
    public void setAutofocusStepSize(double stepSizeUm) throws ASIdiSPIMException; 
 
    /**
     * @return mode used by autofocus, either FIX_PIEZO for fixing the piezo and sweeping the slice
     *   or FIX_SLICE for fixing the slice and sweeping the piezo
-    * @deprecated out of laziness, can add if needed
+    * @Deprecated out of laziness, can add if needed
     */
    public org.micromanager.asidispim.AutofocusPanel.Modes getAutofocusMode() throws ASIdiSPIMException;
    
    /**
     * @param mode either FIX_PIEZO or FIX_SLICE depending on whether piezo is fixed and
     *   slice is swept or vice versa.
-    * @deprecated out of laziness, can add if needed
+    * @Deprecated out of laziness, can add if needed
     */
    public void setAutofocusMode(org.micromanager.asidispim.AutofocusPanel.Modes mode) throws ASIdiSPIMException;
    
    /**
     * @return true if autofocus will be performed before starting the acquisition.
     *   Only applies if "autofocus during acquisition" has been enabled
-    * @deprecated out of laziness, can add if needed
+    * @Deprecated out of laziness, can add if needed
     */
    public boolean getAutofocusBeforeAcquisition() throws ASIdiSPIMException;
    
    /**
     * @param enable true will run autofocus before the acquisition begins.
     *   Only applies if "autofocus during acquisition" has been enabled
-    * @deprecated out of laziness, can add if needed
+    * @Deprecated out of laziness, can add if needed
     */
    public void setAutofocusBeforeAcquisition(boolean enable) throws ASIdiSPIMException;
    
@@ -636,13 +636,13 @@ public interface ASIdiSPIMInterface {
    
    /**
     * @return which channel will be used for autofocus during acquisition
-    * @deprecated out of laziness, can add if needed
+    * @Deprecated out of laziness, can add if needed
     */
    public String getAutofocusChannel() throws ASIdiSPIMException;
    
    /**
     * @param channel set the channel to be used for autofocus during acquisition
-    * @deprecated out of laziness, can add if needed
+    * @Deprecated out of laziness, can add if needed
     */
    public void setAutofocusChannel(String channel) throws ASIdiSPIMException;
    

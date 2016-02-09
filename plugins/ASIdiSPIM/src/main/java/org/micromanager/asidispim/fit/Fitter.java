@@ -121,6 +121,7 @@ public class Fitter {
                gf.withStartPoint(guess);
             }
             result = gf.fit(obs.toList());
+            break;
          default:
             break;
       }
