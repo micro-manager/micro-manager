@@ -108,6 +108,7 @@ import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
+import org.micromanager.data.Metadata.MetadataBuilder;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplaySettings.DisplaySettingsBuilder;
 import org.micromanager.display.DisplayWindow;
@@ -1979,22 +1980,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // also builds viewString for MultiViewRegistration metadata
             String viewString = "";
             final String SEPARATOR = "_";
+            
             // set up channels (side A/B is treated as channel too)
  
             DisplaySettingsBuilder dsb = display.getDisplaySettings().copy();
-            SummaryMetadata sm = store.getSummaryMetadata();
-            String[] chNames = sm.getChannelNames();
-            Color[] acqColors = display.getDisplaySettings().getChannelColors();
             
+            int channelNr = 1;
             if (acqSettings.useChannels) {
                ChannelSpec[] channels = multiChannelPanel_.getUsedChannels();
-               int channelNr = channels.length;
+               channelNr = channels.length;
                if (twoSided)
                   channelNr *= 2;
-               // if (acqColors.length != channelNr)
-               //   acqColors = new Color[channelNr];
-               // if (chNames.length != channelNr)
-               //   chNames = new String[channelNr];
                for (int i = 0; i < channels.length; i++) {
                   String chName = "-" + channels[i].config_;
                   // same algorithm for channel index vs. specified channel and side as below
@@ -2011,32 +2007,28 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   }
                }
             } else { 
-               int channelNr = 1;
                if (twoSided)
                   channelNr *= 2;
-               if (acqColors == null || acqColors.length != channelNr)
-                  acqColors = new Color[channelNr];
-               if (chNames == null || chNames.length != channelNr)
-                  chNames = new String[channelNr];
-               chNames[0] = firstCamera;
-               acqColors[0] = getChannelColor(0);
+               if (channelNames_ == null || channelNames_.length != channelNr)
+                  channelNames_ = new String[channelNr];
+               channelNames_[0] = firstCamera;
                viewString += NumberUtils.intToDisplayString(0) + SEPARATOR;
                if (twoSided) {
-                  chNames[1] = secondCamera;
-                  acqColors[1] = getChannelColor(1);
+                  channelNames_[1] = secondCamera;
                   viewString += NumberUtils.intToDisplayString(90) + SEPARATOR;
                }
             }
-            // dsb.channelColors(acqColors);
             display.setDisplaySettings(dsb.build());
             
-            
+            String name = prefs_.getString(panelName_, 
+                    Properties.Keys.PLUGIN_NAME_PREFIX, "diSPIM Data");
+            if (tp > 0)
+               name +=  "_" + tp;
             SummaryMetadata.SummaryMetadataBuilder smb = gui_.data().getSummaryMetadataBuilder();
             smb = smb.channelNames(channelNames_).
                     channelGroup(multiChannelPanel_.getChannelGroup()).
                     microManagerVersion(gui_.compat().getVersion()).
-                    name(prefs_.getString(panelName_, 
-                    Properties.Keys.PLUGIN_NAME_PREFIX, "diSPIM Data")).
+                    name(name).
                     startDate((new Date()).toString());
             if (acqSettings.useMultiPositions) {
                smb = smb.stagePositions(gui_.positions().getPositionList().getPositions());
@@ -2047,7 +2039,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // strip last separators:
             viewString = viewString.substring(0, viewString.length() - 1);
             
-            PropertyMap pm = sm.getUserData();
+            PropertyMap pm = store.getSummaryMetadata().getUserData();
             PropertyMapBuilder pmb = gui_.data().getPropertyMapBuilder();
             if (pm != null)
                pmb = pm.copy();
@@ -2612,7 +2604,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       PropertyMap ud = md.getUserData();
       ud = ud.copy().putDouble("Z-Step-um", 
               (double) PanelUtils.getSpinnerFloatValue(stepSize_)).build();
-      md = md.copy().elapsedTimeMs((double)ms).userData(ud).build();
+      String posName = "Pos-0";
+      PositionList pl = gui_.positions().getPositionList();
+      if (pl != null) {
+         MultiStagePosition pos = pl.getPosition(position);
+         if (pos != null) {
+            posName = pos.getLabel();
+         }
+      }
+      // md = md.copy().elapsedTimeMs((double)ms).positionName(posName).userData(ud).build();
+      MetadataBuilder mdb = gui_.data().getMetadataBuilder();
+      md = mdb.positionName(posName).userData(ud).build();
       img = img.copyWith(coord, md);
       
       store.putImage(img);
