@@ -2764,7 +2764,6 @@ void CMMCore::initializeCircularBuffer() throw (CMMError)
    }
    else
    {
-      logError(getDeviceName(camera).c_str(), getCoreErrorText(MMERR_CameraNotAvailable).c_str());
       throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
    }
    LOG_DEBUG(coreLogger_) << "Circular buffer initialized based on current camera";
