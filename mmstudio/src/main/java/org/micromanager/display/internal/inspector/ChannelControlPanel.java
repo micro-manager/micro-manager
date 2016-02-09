@@ -918,4 +918,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       histogram_.setAutoScale();
       histogram_.repaint();
    }
+
+   @Override
+   public String toString() {
+      return String.format("ChannelControlPanel for channel %d>", channelIndex_);
+   }
 }
