@@ -85,6 +85,7 @@ import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Date;
 
 import javax.swing.BorderFactory;
 
@@ -1983,7 +1984,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             DisplaySettingsBuilder dsb = display.getDisplaySettings().copy();
             SummaryMetadata sm = store.getSummaryMetadata();
             String[] chNames = sm.getChannelNames();
-            //SummaryMetadata.SummaryMetadataBuilder smb = sm.copy();
             Color[] acqColors = display.getDisplaySettings().getChannelColors();
             
             if (acqSettings.useChannels) {
@@ -2027,13 +2027,26 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   viewString += NumberUtils.intToDisplayString(90) + SEPARATOR;
                }
             }
-            // store.setSummaryMetadata(smb.build());
+            // dsb.channelColors(acqColors);
             display.setDisplaySettings(dsb.build());
+            
+            
+            SummaryMetadata.SummaryMetadataBuilder smb = gui_.data().getSummaryMetadataBuilder();
+            smb = smb.channelNames(channelNames_).
+                    channelGroup(multiChannelPanel_.getChannelGroup()).
+                    microManagerVersion(gui_.compat().getVersion()).
+                    name(prefs_.getString(panelName_, 
+                    Properties.Keys.PLUGIN_NAME_PREFIX, "diSPIM Data")).
+                    startDate((new Date()).toString());
+            if (acqSettings.useMultiPositions) {
+               smb = smb.stagePositions(gui_.positions().getPositionList().getPositions());
+            }
+            // smb = smb.intendeDimensions (new Coord());
+            
             
             // strip last separators:
             viewString = viewString.substring(0, viewString.length() - 1);
             
-            // sm = store.getSummaryMetadata();
             PropertyMap pm = sm.getUserData();
             PropertyMapBuilder pmb = gui_.data().getPropertyMapBuilder();
             if (pm != null)
@@ -2059,7 +2072,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // Format is: x_y_z, set to 1 if we should rotate around this axis.
             pmb.putString("MVRotationAxis", "0_1_0");
             pmb.putString("MVRotations", viewString);
-            store.setSummaryMetadata(sm.copy().userData(pmb.build()).build());
+            
+            store.setSummaryMetadata(smb.userData(pmb.build()).build());
             
             // get circular buffer ready
             // do once here but not per-trigger; need to ensure ROI changes registered
