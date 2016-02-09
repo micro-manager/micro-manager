@@ -526,25 +526,26 @@ public class CanvasUpdateQueue {
    @Subscribe
    public void onHistogramRequest(HistogramRequestEvent event) {
       int channel = event.getChannel();
-      Double updateRate = display_.getDisplaySettings().getHistogramUpdateRate();
+      // Find or create a valid HistogramHistory to post.
+      boolean haveValidHistory = false;
+      HistogramHistory history = null;
       if (channelToHistory_.containsKey(channel)) {
-         HistogramHistory history = channelToHistory_.get(channel);
-         if (history.datas_.size() > 0) {
-            // Can't post new histograms if we don't have any.
-            display_.postEvent(
-                  new NewHistogramsEvent(channel, history.datas_));
-         }
+         history = channelToHistory_.get(channel);
+         haveValidHistory = history.datas_.size() > 0;
       }
-      else if (updateRate != null && updateRate < 0) {
-         // Histograms are disabled, but we still need them, so calculate
-         // them just this once.
-         HistogramHistory history = new HistogramHistory();
-         channelToHistory_.put(channel, history);
-         for (Image image : display_.getDisplayedImages()) {
-            if (image.getCoords().getChannel() == channel) {
-               updateHistogram(image, history);
-               break;
-            }
+      if (haveValidHistory) {
+         display_.postEvent(new NewHistogramsEvent(channel, history.datas_));
+      }
+      else {
+         // Must calculate a new histogram.
+         history = new HistogramHistory();
+         Coords coords = display_.getDisplayedImages().get(0).getCoords();
+         coords = coords.copy().channel(channel).build();
+         Image image = store_.getImage(coords);
+         if (image != null) {
+            // This posts the new histograms.
+            updateHistogram(image, history);
+            channelToHistory_.put(channel, history);
          }
       }
    }

@@ -43,6 +43,7 @@ import javax.swing.JMenu;
 import javax.swing.JPopupMenu;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -67,11 +68,10 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 // This class tracks all histograms for all displays in a given inspector
 // window.
-// HACK TODO: all methods that interact with channelPanels_ are synchronized
-// to prevent concurrent modification exceptions. In fact, I don't think we
-// really need this class to be so tightly-bound to the ChannelControlPanels it
-// contains. Everything should be doable by event-passing between the various
-// histograms without using this as a go-between.
+// HACK: I don't think we really need this class to be so tightly-bound to the
+// ChannelControlPanels it contains. Everything should be doable by
+// event-passing between the various histograms without using this as a
+// go-between.
 public final class HistogramsPanel extends InspectorPanel {
    public static final Color[] RGB_COLORS = new Color[] {
          Color.RED, Color.GREEN, Color.BLUE, Color.CYAN, Color.MAGENTA,
@@ -94,8 +94,6 @@ public final class HistogramsPanel extends InspectorPanel {
    // multiple Inspector windows open, as each will have a complete set of
    // histograms. Make this a static singleton, maybe?
    private final HashMap<DataViewer, ArrayList<ChannelControlPanel>> displayToPanels_;
-   // The current active (displayed) set of histograms.
-   private ArrayList<ChannelControlPanel> channelPanels_;
    private JCheckBox shouldAutostretch_;
    private JLabel extremaLabel_;
    private JSpinner extrema_;
@@ -120,16 +118,27 @@ public final class HistogramsPanel extends InspectorPanel {
 
    // Create a list of histograms for the display, and register to it and its
    // datastore for events.
-   private void setupDisplay(DataViewer display) {
+   private void setupDisplay(final DataViewer display) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               setupDisplay(display);
+            }
+         });
+         return;
+      }
       displayToPanels_.put(display, new ArrayList<ChannelControlPanel>());
+      // Need to register *before* we manually add panels, in case any images
+      // arrive while we're doing our setup.
+      display.registerForEvents(this);
+      display.getDatastore().registerForEvents(this);
       synchronized(panelLock_) {
          // Check the display to see how many histograms it needs at the start.
          for (int i = 0; i < display.getDatastore().getAxisLength(Coords.CHANNEL); ++i) {
             addPanel(display, i);
          }
       }
-      display.registerForEvents(this);
-      display.getDatastore().registerForEvents(this);
    }
 
    /**
@@ -147,15 +156,15 @@ public final class HistogramsPanel extends InspectorPanel {
          return;
       }
 
-      channelPanels_ = displayToPanels_.get(viewer_);
-      if (channelPanels_ == null) {
+      List<ChannelControlPanel> panels = displayToPanels_.get(viewer_);
+      if (panels == null) {
          // This should never happen (it means that this object didn't know
          // about the new display), but could potentially if there's a bug
          // in event unregistering.
          ReportingUtils.logError("Somehow defunct HistogramsPanel got notified of existence of " + viewer_);
          return;
       }
-      for (ChannelControlPanel panel : channelPanels_) {
+      for (ChannelControlPanel panel : panels) {
          add(panel, "grow, gap 0");
       }
 
@@ -242,14 +251,15 @@ public final class HistogramsPanel extends InspectorPanel {
    }
 
    private void addPanel(DataViewer display, int channelIndex) {
-      ChannelControlPanel panel = new ChannelControlPanel(this, channelIndex,
-            display.getDatastore(),
+      if (!SwingUtilities.isEventDispatchThread()) {
+         throw new RuntimeException("Don't create histograms outside the EDT!");
+      }
+      ChannelControlPanel panel = new ChannelControlPanel(this,
+            channelIndex, display.getDatastore(),
             DisplayGroupManager.getContrastLinker(channelIndex, display),
             display);
       displayToPanels_.get(display).add(panel);
       if (display == viewer_) {
-         // Also add the panel to our contents, and tell our inspector frame
-         // to relayout.
          add(panel, "grow, gap 0");
          revalidate();
          inspector_.relayout();
@@ -266,7 +276,17 @@ public final class HistogramsPanel extends InspectorPanel {
    }
 
    @Subscribe
-   public synchronized void onNewImage(NewImageEvent event) {
+   public void onNewImage(final NewImageEvent event) {
+      // This may add new histogram panels, so only run it on the EDT.
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               onNewImage(event);
+            }
+         });
+         return;
+      }
       try {
          // Make certain we have enough histograms for the relevant display(s).
          Datastore store = event.getDatastore();
@@ -312,7 +332,7 @@ public final class HistogramsPanel extends InspectorPanel {
    }
 
    @Subscribe
-   public synchronized void onNewDisplaySettings(NewDisplaySettingsEvent event) {
+   public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
       try {
          if (event.getDisplay() == viewer_) {
             // Check if autostretch is modified.
@@ -339,7 +359,7 @@ public final class HistogramsPanel extends InspectorPanel {
    // An external display has been added, so we need to start tracking its
    // histograms.
    @Subscribe
-   public synchronized void onViewerAdded(ViewerAddedEvent event) {
+   public void onViewerAdded(ViewerAddedEvent event) {
       try {
          setupDisplay(event.getViewer());
       }
@@ -349,7 +369,7 @@ public final class HistogramsPanel extends InspectorPanel {
    }
 
    @Subscribe
-   public synchronized void onViewerRemoved(ViewerRemovedEvent event) {
+   public void onViewerRemoved(ViewerRemovedEvent event) {
       removeDisplay(event.getViewer());
    }
 
@@ -527,7 +547,7 @@ public final class HistogramsPanel extends InspectorPanel {
    }
 
    @Override
-   public synchronized void setDataViewer(DataViewer viewer) {
+   public void setDataViewer(DataViewer viewer) {
       viewer_ = viewer;
       if (viewer_ == null) {
          removeAll();
@@ -546,7 +566,7 @@ public final class HistogramsPanel extends InspectorPanel {
    }
 
    @Override
-   public synchronized void cleanup() {
+   public void cleanup() {
       DefaultEventManager.getInstance().unregisterForEvents(this);
       HashSet<Datastore> stores = new HashSet<Datastore>();
       for (DataViewer display : displayToPanels_.keySet()) {

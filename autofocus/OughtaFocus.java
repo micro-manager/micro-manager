@@ -57,6 +57,7 @@ import org.micromanager.internal.utils.TextUtils;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
+@Plugin(type = AutofocusPlugin.class)
 public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJavaPlugin {
 
    private Studio app_;
