@@ -64,7 +64,8 @@ public class ImageJUtils {
               File.separator + "diSPIM_Tools.txt";
       File spimTools = new File(spimToolsName);
       if (spimTools.exists()) {
-         IJCommandThread t = new IJCommandThread("Install...", "install=[macros\\toolsets\\diSPIM_Tools.txt]");
+         IJCommandThread t = new IJCommandThread("Install...", "install=" + spimToolsName);
+         
          t.start();
       } else
          ReportingUtils.logMessage("Failed to find diSPIm macros at " + spimToolsName);
