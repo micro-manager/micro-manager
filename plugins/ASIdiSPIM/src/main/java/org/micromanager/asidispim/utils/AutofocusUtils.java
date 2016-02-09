@@ -190,10 +190,16 @@ public class AutofocusUtils {
             // if the Snap/Live window has an ROI set, we will use the same 
             // ROI for our focus calculations
             // TODO: should this be an option?
-            ImageWindow iw = gui_.getSnapLiveManager().getDisplay().getImageWindow();
             Roi roi = null;
-            if (iw != null)
-               roi = iw.getImagePlus().getRoi();
+            try {
+               gui_.getSnapLiveManager().getDisplay();
+               ImageWindow iw = gui_.getSnapLiveManager().getDisplay().getImageWindow();
+               if (iw != null) {
+                  roi = iw.getImagePlus().getRoi();
+               }
+            } catch (NullPointerException npw) {
+               // nothing to do, could also test every call above for null
+            }
             
             // TODO implement this pref as numeric code like other pull-downs
             final Fitter.FunctionType function = Fitter.getFunctionTypeAsType(
