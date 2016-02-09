@@ -23,6 +23,8 @@
 package org.micromanager.asidispim.utils;
 
 import ij.IJ;
+import java.io.File;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Utility class for ImageJ interaction
@@ -58,8 +60,14 @@ public class ImageJUtils {
    }
    
    public static void loadToolset() {
-      IJCommandThread t = new IJCommandThread("Install...", "install=[macros\\toolsets\\diSPIM_Tools.txt]");
-      t.start();
+      String spimToolsName = IJ.getDirectory("macros") + File.separator + "toolsets" + 
+              File.separator + "diSPIM_Tools.txt";
+      File spimTools = new File(spimToolsName);
+      if (spimTools.exists()) {
+         IJCommandThread t = new IJCommandThread("Install...", "install=[macros\\toolsets\\diSPIM_Tools.txt]");
+         t.start();
+      } else
+         ReportingUtils.logMessage("Failed to find diSPIm macros at " + spimToolsName);
    }
 
 }
