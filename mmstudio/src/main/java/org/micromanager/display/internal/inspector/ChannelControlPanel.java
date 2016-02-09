@@ -331,7 +331,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          linkButton_ = new LinkButton(linker_, display_);
          linkButton_.setMinimumSize(new Dimension(linkButton_.getWidth(),
                   smallButtonSize.height));
-         firstColumn.add(linkButton_, "aligny center");
+         firstColumn.add(linkButton_, "aligny center, hidemode 2");
       }
       firstColumn.add(fullButton_, "alignx center, width 70!");
       firstColumn.add(autoButton_, "alignx center, width 70!");
