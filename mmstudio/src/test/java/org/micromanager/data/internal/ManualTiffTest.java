@@ -32,9 +32,11 @@ import java.util.UUID;
 import org.junit.Test;
 import org.junit.Assert;
 
+import org.micromanager.data.Annotation;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
+import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
@@ -47,6 +49,7 @@ import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 
 import org.micromanager.MultiStagePosition;
+import org.micromanager.PropertyMap;
 
 /**
  * This class tests reading and writing TIFFs from manual acquisitions.
@@ -67,6 +70,10 @@ public class ManualTiffTest {
     * not using MDA) singleplane TIFF acquisition.
     */
    private static final String ALPHA2_PATH = System.getProperty("user.dir") + "/src/test/resources/org/micromanager/data/internal/alpha_2.0_singleplane_manual";
+
+   private static final String COMMENT_KEY = "comment";
+   private static final String IMAGE_COMMENT = "This is an image comment";
+   private static final String SUMMARY_COMMENT = "This is a summary comment";
 
    private static class ImageInfo {
       private Coords coords_;
@@ -96,8 +103,6 @@ public class ManualTiffTest {
          Assert.assertEquals(metadata_.getBinning(), metadata.getBinning());
          Assert.assertEquals(metadata_.getBitDepth(), metadata.getBitDepth());
          Assert.assertEquals(metadata_.getCamera(), metadata.getCamera());
-         Assert.assertEquals(metadata_.getChannelName(), metadata.getChannelName());
-         Assert.assertEquals(metadata_.getComments(), metadata.getComments());
          Assert.assertEquals(metadata_.getElapsedTimeMs(), metadata.getElapsedTimeMs());
          Assert.assertEquals(metadata_.getEmissionLabel(), metadata.getEmissionLabel());
          Assert.assertEquals(metadata_.getExcitationLabel(), metadata.getExcitationLabel());
@@ -136,7 +141,6 @@ public class ManualTiffTest {
          .microManagerVersion("made-up version")
          .metadataVersion("manual metadata").computerName("my arduino")
          .directory("/dev/null")
-         .comments("This is some manually made-up comments")
          .channelGroup("Some channel group")
          .channelNames(new String[] {"Alpha", "Beta", "Romeo"})
          .zStepUm(123456789.012345).waitInterval(-1234.5678)
@@ -156,8 +160,7 @@ public class ManualTiffTest {
       DefaultMetadata.Builder imageMetadata = new DefaultMetadata.Builder();
       imageMetadata.binning(1).bitDepth(16).pixelType("GRAY16")
          .positionName("Pos0").pixelSizeUm(1.0)
-         .camera("My camera").channelName("some channel")
-         .comments("These are comments on an image!")
+         .camera("My camera")
          .elapsedTimeMs(4334.3443).emissionLabel("whatever GFP outputs")
          .excitationLabel("something you should wear goggles for")
          .exposureMs(new Double(8888)).gridColumn(97).gridRow(79).ijType(-5)
@@ -220,7 +223,6 @@ public class ManualTiffTest {
       Assert.assertEquals(ref.getMetadataVersion(), summary.getMetadataVersion());
       Assert.assertEquals(ref.getComputerName(), summary.getComputerName());
       Assert.assertEquals(ref.getDirectory(), summary.getDirectory());
-      Assert.assertEquals(ref.getComments(), summary.getComments());
       Assert.assertEquals(ref.getChannelGroup(), summary.getChannelGroup());
       Assert.assertArrayEquals(ref.getChannelNames(), summary.getChannelNames());
       Assert.assertEquals(ref.getZStepUm(), summary.getZStepUm());
@@ -236,6 +238,20 @@ public class ManualTiffTest {
    private void testImages(String path, Datastore store) {
       for (ImageInfo info : IMAGES.get(path)) {
          info.test(store);
+      }
+   }
+
+   public void testComments(Datastore store) {
+      try {
+         Annotation annotation = store.loadAnnotation("comments.txt");
+         Assert.assertEquals(annotation.getGeneralAnnotation().getString(
+                  COMMENT_KEY, null), SUMMARY_COMMENT);
+         Coords coords = new DefaultDataManager().getCoordsBuilder().time(0).stagePosition(0).channel(0).z(0).build();
+         Assert.assertEquals(annotation.getImageAnnotation(coords).getString(
+                  COMMENT_KEY, null), IMAGE_COMMENT);
+      }
+      catch (IOException e) {
+         Assert.fail("Couldn't load comments annotation: " + e);
       }
    }
 
@@ -289,6 +305,20 @@ public class ManualTiffTest {
       catch (DatastoreFrozenException e) {
          Assert.fail("Unable to add images or set summary metadata: " + e);
       }
+      catch (DatastoreRewriteException e) {
+         Assert.fail("Unable to add images or set summary metadata: " + e);
+      }
+      try {
+         Annotation annotation = store.loadAnnotation("comments.txt");
+         PropertyMap.PropertyMapBuilder commentsBuilder = manager.getPropertyMapBuilder();
+         annotation.setImageAnnotation(image.getCoords(),
+               commentsBuilder.putString(COMMENT_KEY, IMAGE_COMMENT).build());
+         annotation.setGeneralAnnotation(commentsBuilder.putString(COMMENT_KEY,
+                  SUMMARY_COMMENT).build());
+      }
+      catch (IOException e) {
+         Assert.fail("Couldn't create comments annotation: " + e);
+      }
       File tempDir = Files.createTempDir();
       store.save(Datastore.SaveMode.MULTIPAGE_TIFF, tempDir.getPath());
       store.setSavePath(tempDir.toString());
@@ -299,6 +329,7 @@ public class ManualTiffTest {
          Datastore loadedStore = manager.loadData(tempDir.getPath(), true);
          testSummary(ALPHA2_PATH, loadedStore.getSummaryMetadata());
          info.test(loadedStore);
+         testComments(loadedStore);
       }
       catch (IOException e) {
          Assert.fail("Unable to load newly-generated datastore: " + e);
