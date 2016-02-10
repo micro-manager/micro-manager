@@ -74,7 +74,7 @@ public class ChannelTableModel extends AbstractTableModel {
       int nrChannels = prefs_.getInt(prefNode_ + "_" + channelGroup, 
               Prefs.Keys.NRCHANNELROWS, 1);
       // Check if the first channel is actually present.  If not reset the number
-      // of channels
+      // of channels so that we will not list stale channels
       if (!hasChannel(channelGroup))
          nrChannels = 1;
       for (int i=0; i < nrChannels; i++) {
@@ -202,6 +202,12 @@ public class ChannelTableModel extends AbstractTableModel {
          }
       }
       return result.toArray(new ChannelSpec[0]);
+   }
+   
+   // Final function of this function is here to avoid warning in the constructor
+   @Override
+   public final void addTableModelListener(TableModelListener tml) {
+      super.addTableModelListener(tml);
    }
 
 }

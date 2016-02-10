@@ -56,6 +56,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
+import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -328,8 +329,9 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    /**
     * gets all valid groups from Core-ChannelGroup that have more than 1 preset 
     * ("config").  Different from the MDA method of getting valid groups.
+    * @return all Configuration groups that have more than 1 preset
     */
-   public String[] getAvailableGroups() {
+   public final String[] getAvailableGroups() {
       StrVector groups;
       try {
          groups = core_.getAllowedPropertyValues("Core", "ChannelGroup");
@@ -513,5 +515,22 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       }
    }
 
+   // Functions to avoid warnings about overridable methods in the constructor
+   @Override
+   public final Component add (Component c) {
+      return super.add(c);
+   }
+   @Override
+   public final void add (Component c, Object constraints) {
+      super.add(c, constraints);
+   }
+   @Override
+   public final void setBorder(Border border) {
+      super.setBorder(border);
+   }
+   @Override
+   public final Component[] getComponents() {
+      return super.getComponents();
+   }
 
 }
