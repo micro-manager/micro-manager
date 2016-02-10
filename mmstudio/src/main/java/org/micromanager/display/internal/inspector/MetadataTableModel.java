@@ -21,6 +21,7 @@
 package org.micromanager.display.internal.inspector;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Vector;
 
 import javax.swing.table.AbstractTableModel;
@@ -32,14 +33,15 @@ import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 class MetadataTableModel extends AbstractTableModel {
+   private static final String[] columnNames_ = {"Property", "Value"};
 
    private Vector<Vector<String>> data_;
    private JSONObject priorMetadata_;
-
-   private static final String[] columnNames_ = {"Property", "Value"};
+   private HashSet<String> changedKeys_;
 
    MetadataTableModel() {
       data_ = new Vector<Vector<String>>();
+      changedKeys_ = new HashSet<String>();
    }
 
    @Override
@@ -100,6 +102,12 @@ class MetadataTableModel extends AbstractTableModel {
                if (!priorVal.contentEquals(newVal)) {
                   // Values differ.
                   changingMetadata.put(key, newVal);
+                  changedKeys_.add(key);
+               }
+            }
+            for (String key : changedKeys_) {
+               if (newMetadata.has(key)) {
+                  changingMetadata.put(key, newMetadata.get(key));
                }
             }
             displayedMetadata = changingMetadata;
