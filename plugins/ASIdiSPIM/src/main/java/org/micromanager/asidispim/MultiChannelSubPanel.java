@@ -31,19 +31,20 @@ import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
 
+
 import org.micromanager.internal.dialogs.ComponentTitledBorder;
 import org.micromanager.Studio;
-import org.micromanager.asidispim.Data.ChannelConfigEditor;
-import org.micromanager.asidispim.Data.ChannelSpec;
-import org.micromanager.asidispim.Data.ChannelTableModel;
-import org.micromanager.asidispim.Data.Devices;
-import org.micromanager.asidispim.Data.MultichannelModes;
-import org.micromanager.asidispim.Data.MyStrings;
-import org.micromanager.asidispim.Data.Prefs;
-import org.micromanager.asidispim.Data.Properties;
-import org.micromanager.asidispim.Utils.ListeningJPanel;
-import org.micromanager.asidispim.Utils.MyDialogUtils;
-import org.micromanager.asidispim.Utils.PanelUtils;
+import org.micromanager.asidispim.data.ChannelConfigEditor;
+import org.micromanager.asidispim.data.ChannelSpec;
+import org.micromanager.asidispim.data.ChannelTableModel;
+import org.micromanager.asidispim.data.Devices;
+import org.micromanager.asidispim.data.MultichannelModes;
+import org.micromanager.asidispim.data.MyStrings;
+import org.micromanager.asidispim.data.Prefs;
+import org.micromanager.asidispim.data.Properties;
+import org.micromanager.asidispim.utils.ListeningJPanel;
+import org.micromanager.asidispim.utils.MyDialogUtils;
+import org.micromanager.asidispim.utils.PanelUtils;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
@@ -55,6 +56,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
+import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -136,8 +138,8 @@ public class MultiChannelSubPanel extends ListeningJPanel {
                   "",
                   "[right]10[left]",
                   "[]8[]"));
-      core_ = gui.getCMMCore();
       gui_ = gui;
+      core_ = gui.getCMMCore();
       devices_ = devices;
       props_ = props;
       prefs_ = prefs;
@@ -185,7 +187,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
             
       updateGroupsCombo(); 
             
-      channelTableModel_ = new ChannelTableModel(prefs_, panelName_,
+      channelTableModel_ = new ChannelTableModel(gui_, prefs_, panelName_,
               (String) channelGroup_.getSelectedItem(), this);
       channelTable = new JTable(channelTableModel_);
 
@@ -194,9 +196,15 @@ public class MultiChannelSubPanel extends ListeningJPanel {
          public void itemStateChanged(ItemEvent e) {
             // clear configs when changing the channel group
             if (e.getStateChange() == ItemEvent.SELECTED) {
-               channelTableModel_.setChannelGroup((String) 
-                       channelGroup_.getSelectedItem());
+               String selected = (String) channelGroup_.getSelectedItem();
+               channelTableModel_.setChannelGroup(selected);
                channelTableModel_.fireTableDataChanged();
+               try {
+                  core_.setChannelGroup(selected);
+               } catch (Exception ex) {
+                  // fail silently, this isn't crucial but we do to be consistent
+                  //   with usual MM operation
+               }
             }
          }
       });
@@ -209,10 +217,8 @@ public class MultiChannelSubPanel extends ListeningJPanel {
                   "",
                   "") );
       channelTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-      TableColumn column_useChannel = channelTable.getColumnModel().getColumn(
-              ChannelTableModel.columnIndex_useChannel);
-      TableColumn column_config = channelTable.getColumnModel().getColumn(
-              ChannelTableModel.columnIndex_config);
+      TableColumn column_useChannel = channelTable.getColumnModel().getColumn(ChannelTableModel.COLUMNINDEX_USECHANNEL);
+      TableColumn column_config = channelTable.getColumnModel().getColumn(ChannelTableModel.COLUMNINDEX_CONFIG);
       column_useChannel.setPreferredWidth(40);
       column_config.setPreferredWidth(155);
       column_useChannel.setCellRenderer(new UseChannelTableCellRenderer());
@@ -298,6 +304,14 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    public boolean isPanelEnabled() {
       return useChannelsCB_.isSelected();
    }
+   
+   /**
+    * used to externally (e.g. from API) enable or disable channels
+    * @param enabled
+    */
+   public void setPanelEnabled(boolean enabled) {
+      useChannelsCB_.setSelected(enabled);
+   }
 
    /**
     * Sets up the combo box for channel group.
@@ -315,13 +329,16 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    /**
     * gets all valid groups from Core-ChannelGroup that have more than 1 preset 
     * ("config").  Different from the MDA method of getting valid groups.
+    * @return all Configuration groups that have more than 1 preset
     */
-   private String[] getAvailableGroups() {
+   public final String[] getAvailableGroups() {
       StrVector groups;
       try {
          groups = core_.getAllowedPropertyValues("Core", "ChannelGroup");
       } catch (Exception ex) {
-         gui_.logError(ex);
+
+         gui_.logs().logError(ex);
+         
          return new String[0];
       }
       ArrayList<String> strGroups = new ArrayList<String>();
@@ -338,12 +355,45 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       return channelGroup_.getSelectedItem().toString();
    }
    
+   public void setChannelGroup(String channelGroup) {
+      channelGroup_.setSelectedItem(channelGroup);
+   }
+   
    /**
     * @return array of channels that are currently set be "used".
     * Ordered same as in the GUI.
     */
    public ChannelSpec[] getUsedChannels() {
       return channelTableModel_.getUsedChannels();
+   }
+   
+   /**
+    * @return MultichannelModes.Keys.NONE if channels are disabled, or actual 
+    * selection otherwise
+    */
+   public MultichannelModes.Keys getChannelMode() {
+      if (isMultiChannel()) {
+      return MultichannelModes.getKeyFromPrefCode(
+            props_.getPropValueInteger(Devices.Keys.PLUGIN, 
+                    Properties.Keys.PLUGIN_MULTICHANNEL_MODE));
+      } else {
+         return MultichannelModes.Keys.NONE;
+      }
+   }
+   
+   // could in theory do this from preferences but so much easier to do using multiChanelPanel_ object
+   // originally this was false if panel was enabled and only 1 channel was selected
+   public boolean isMultiChannel() {
+      return isPanelEnabled();
+   }
+   
+   // could in theory do this from preferences but so much easier to do using multiChanelPanel_ object
+   public int getNumChannels() {
+      if (isPanelEnabled()) {
+         return getUsedChannels().length;
+      } else {
+         return 1;
+      }
    }
    
    /**
@@ -384,26 +434,65 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    /**
     * Gets the current configuration/preset from the selected channel group, even if that
     * preset isn't represented in the channel table.  Thus we can go back to the original
-    * preset after changing it via selectNextChannel.
+    * preset after changing it via selectNextChannel using setConfig().
     * @return
+    * @see MultiChannelSubPanel#setConfig(String)
     */
    public String getCurrentConfig() {
       try {
          return core_.getCurrentConfigFromCache(channelGroup_.getSelectedItem().toString());
       } catch (Exception e) {
-         gui_.logError("Failed to get current configuration");
+        gui_.logs().logError("Failed to get current configuration");
       }
       return null;
    }
    
+   /**
+    * Sets the channel group preset, even if that preset isn't represented in the channel table
+    * @param config
+    * @see MultiChannelSubPanel#getCurrentConfig()
+    */
    public void setConfig(String config) {
       try {
          core_.setConfig(channelGroup_.getSelectedItem().toString(), config);
       } catch (Exception e) {
-         gui_.logError(e, "Failed to set config.");
+
+         gui_.logs().logError(e, "Failed to set config.");
+         
       }
    }
+   
+   /**
+    * @return list of all channels/presets available for selected channel group
+    */
+   public String[] getAvailableChannels() {
+      return core_.getAvailableConfigs(channelGroup_.getSelectedItem().toString()).toArray();
+   }
 
+   /**
+    * Adds an entry to the table for the specified channel if it doesn't already exist.
+    * Marks that channel enabled/disabled as asked
+    * @param channel
+    * @param enabled
+    */
+   public void setChannelEnabled(String channel, boolean enabled) {
+      boolean found = false;
+      for (int i = 0; i < channelTableModel_.getRowCount(); i++) {
+         // hard-coding column indices here
+         if (((String) channelTableModel_.getValueAt(i, 1)).equals(channel)) {
+            found = true;
+            channelTableModel_.setValueAt(enabled, i, 0);
+            channelTableModel_.fireTableDataChanged();
+            break;
+         }
+      }
+      if (!found) {
+         channelTableModel_.addChannel((String) channelGroup_.getSelectedItem());
+         channelTableModel_.setValueAt(channel, channelTableModel_.getRowCount()-1, 1);
+         channelTableModel_.setValueAt(enabled, channelTableModel_.getRowCount()-1, 0);
+         channelTableModel_.fireTableDataChanged();
+      }
+   }
    
    @Override
    public void saveSettings() {
@@ -424,6 +513,24 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       for (ListeningJPanel panel : panels_) {
          panel.refreshDisplay();
       }
+   }
+
+   // Functions to avoid warnings about overridable methods in the constructor
+   @Override
+   public final Component add (Component c) {
+      return super.add(c);
+   }
+   @Override
+   public final void add (Component c, Object constraints) {
+      super.add(c, constraints);
+   }
+   @Override
+   public final void setBorder(Border border) {
+      super.setBorder(border);
+   }
+   @Override
+   public final Component[] getComponents() {
+      return super.getComponents();
    }
 
 }

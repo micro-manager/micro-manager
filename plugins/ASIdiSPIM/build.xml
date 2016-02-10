@@ -1,0 +1,9 @@
+<project name="ASIdiSPIM" default="jar">
+    <import file="../javapluginbuild.xml"/>
+   <!-- Override javabuild.xml's 'copy-files' target -->
+   <target name="copy-files" depends="mm.javabuild.copy-files">
+      <copy todir="${intdir}">
+         <fileset dir="${srcdir}" includes="**/*.png"/>
+      </copy>
+   </target>
+</project>
