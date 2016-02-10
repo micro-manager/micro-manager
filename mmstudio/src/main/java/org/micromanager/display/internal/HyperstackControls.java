@@ -360,7 +360,8 @@ public class HyperstackControls extends JPanel {
 
    /**
     * Update our status line to show some information about the image:
-    * position name, acquisition time, Z altitude, and camera name.
+    * channel name, position name, acquisition time, Z altitude, and camera
+    * name.
     */
    private void updateStatus(Image image) {
       ArrayList<String> tokens = new ArrayList<String>();
