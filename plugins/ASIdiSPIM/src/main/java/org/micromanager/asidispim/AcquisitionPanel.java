@@ -2583,8 +2583,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @param position - position at which to insert image
     * @param ms - Time stamp to be added to the image metadata
     * @param taggedImg - image + metadata to be added
-    * @param bq - Blocking queue to which the image should be added.  This queue
-    * should be hooked up to the ImageCache belonging to this acquisitions
     * @throws org.micromanager.internal.utils.MMScriptException
     * @throws org.json.JSONException
     * @throws org.micromanager.data.DatastoreFrozenException
@@ -2613,7 +2611,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
       // md = md.copy().elapsedTimeMs((double)ms).positionName(posName).userData(ud).build();
-      MetadataBuilder mdb = gui_.data().getMetadataBuilder();
+      MetadataBuilder mdb = md.copy();
+      
       md = mdb.positionName(posName).userData(ud).build();
       img = img.copyWith(coord, md);
       
