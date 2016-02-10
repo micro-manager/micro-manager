@@ -34,11 +34,15 @@ mm.displays().manage(store);
 for (int p=0; p < pl.getNumberOfPositions(); p++) {	
 
 	String posName = "Pos-0";
+	x = 0.0;
+	y = 0.0;
 	PositionList pl = mm.positions().getPositionList();
 	if (pl != null) {
  	  MultiStagePosition pos = pl.getPosition(p);
 		  if (pos != null) {
 	  	   posName = pos.getLabel();
+	  	   x = pos.getX();
+	  	   y = pos.getY();
 	   }
 	}
 
@@ -46,7 +50,7 @@ for (int p=0; p < pl.getNumberOfPositions(); p++) {
 	TaggedImage tmp = mm.getCore().getTaggedImage();
 	Image image1 = mm.data().convertTaggedImage(tmp);
 	MetadataBuilder mdb = image1.getMetadata().copy();
-	md = mdb.positionName(posName).build();
+	md = mdb.positionName(posName).xPositionUm(x).yPositionUm(y).build();
    Coords coord = image1.getCoords().copy().channel(0).stagePosition(p).build();
 	image1 = image1.copyWith(coord, md);
 	
@@ -54,7 +58,7 @@ for (int p=0; p < pl.getNumberOfPositions(); p++) {
 	tmp = mm.getCore().getTaggedImage();
 	Image image2 = mm.data().convertTaggedImage(tmp);
 	MetadataBuilder mdb2 = image2.getMetadata().copy();
-	md = mdb2.positionName(posName).build();
+	md = mdb2.positionName(posName).xPositionUm(x).yPositionUm(y).build();
 	Coords coord = image1.getCoords().copy().channel(1).stagePosition(p).build();
 	image2 = image2.copyWith(coord, md);
 	store.putImage(image1);
