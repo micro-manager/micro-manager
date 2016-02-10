@@ -2612,9 +2612,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             mdb = mdb.xPositionUm(pos.getX()).yPositionUm(pos.getY());
          }
       }
-      // md = md.copy().elapsedTimeMs((double)ms).positionName(posName).userData(ud).build();
-
-      
+       
       md = mdb.positionName(posName).userData(ud).build();
       img = img.copyWith(coord, md);
       

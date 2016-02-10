@@ -186,7 +186,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
             
       updateGroupsCombo(); 
             
-      channelTableModel_ = new ChannelTableModel(prefs_, panelName_,
+      channelTableModel_ = new ChannelTableModel(gui_, prefs_, panelName_,
               (String) channelGroup_.getSelectedItem(), this);
       channelTable = new JTable(channelTableModel_);
 
@@ -216,10 +216,8 @@ public class MultiChannelSubPanel extends ListeningJPanel {
                   "",
                   "") );
       channelTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-      TableColumn column_useChannel = channelTable.getColumnModel().getColumn(
-              ChannelTableModel.columnIndex_useChannel);
-      TableColumn column_config = channelTable.getColumnModel().getColumn(
-              ChannelTableModel.columnIndex_config);
+      TableColumn column_useChannel = channelTable.getColumnModel().getColumn(ChannelTableModel.COLUMNINDEX_USECHANNEL);
+      TableColumn column_config = channelTable.getColumnModel().getColumn(ChannelTableModel.COLUMNINDEX_CONFIG);
       column_useChannel.setPreferredWidth(40);
       column_config.setPreferredWidth(155);
       column_useChannel.setCellRenderer(new UseChannelTableCellRenderer());

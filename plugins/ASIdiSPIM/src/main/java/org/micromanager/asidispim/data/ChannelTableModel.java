@@ -27,6 +27,7 @@ import java.util.List;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
+import org.micromanager.Studio;
 
 import org.micromanager.asidispim.MultiChannelSubPanel;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -41,22 +42,25 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 @SuppressWarnings("serial")
 public class ChannelTableModel extends AbstractTableModel {
-   public static final String[] columnNames = {"Use?", "Preset"};
-   public static final int columnIndex_useChannel = 0;
-   public static final int columnIndex_config = 1;
+   public static final String[] COLUMNNAMES = {"Use?", "Preset"};
+   public static final int COLUMNINDEX_USECHANNEL = 0;
+   public static final int COLUMNINDEX_CONFIG = 1;
+   private final Studio gui_;
    private final ArrayList<ChannelSpec> channels_;
    private final Prefs prefs_;
    private final String prefNode_;
    private final MultiChannelSubPanel multiChannelSubPanel_;  // needed for update duration callback
 
 
-   public ChannelTableModel(Prefs prefs, String prefNode, String channelGroup,
-         MultiChannelSubPanel multiChannelSubPanel) {
+   public ChannelTableModel(Studio gui, Prefs prefs, String prefNode, 
+           String channelGroup, MultiChannelSubPanel multiChannelSubPanel) {
       channels_ = new ArrayList<ChannelSpec>();
+      gui_ = gui;
       prefs_ = prefs;
       prefNode_ = prefNode;
       setChannelGroup(channelGroup);
       multiChannelSubPanel_ = multiChannelSubPanel;
+      
       this.addTableModelListener(new TableModelListener() {
          @Override
          public void tableChanged(TableModelEvent arg0) {
@@ -69,20 +73,37 @@ public class ChannelTableModel extends AbstractTableModel {
       channels_.clear();
       int nrChannels = prefs_.getInt(prefNode_ + "_" + channelGroup, 
               Prefs.Keys.NRCHANNELROWS, 1);
+      // Check if the first channel is actually present.  If not reset the number
+      // of channels
+      if (!hasChannel(channelGroup))
+         nrChannels = 1;
       for (int i=0; i < nrChannels; i++) {
          addChannel(channelGroup);
       }
    }
+   
+   private boolean hasChannel(String channelGroup) {
+      String prefKey = prefNode_ + "_" + channelGroup + "_" + channels_.size();
+      String channel = prefs_.getString(prefKey,
+              Prefs.Keys.CHANNEL_CONFIG, "");
+      return gui_.getCMMCore().isConfigDefined(channelGroup, channel);
+   }
 
    public final void addChannel(String channelGroup) {
       String prefKey = prefNode_ + "_" + channelGroup + "_" + channels_.size();
+      String channel = prefs_.getString(prefKey,
+              Prefs.Keys.CHANNEL_CONFIG, "");
+      // only list this channel if it is actually in the current channel group
+      if (!gui_.getCMMCore().isConfigDefined(channelGroup, channel)) {
+         channel = "";
+      }
       addNewChannel(new ChannelSpec(
-               prefs_.getBoolean(prefKey, 
-                       Prefs.Keys.CHANNEL_USE_CHANNEL, false),
-               channelGroup,
-               prefs_.getString(prefKey, 
-                       Prefs.Keys.CHANNEL_CONFIG, "") )) ;
-      prefs_.putInt(prefNode_ + "_" + channelGroup, Prefs.Keys.NRCHANNELROWS, 
+              prefs_.getBoolean(prefKey,
+                      Prefs.Keys.CHANNEL_USE_CHANNEL, false),
+              channelGroup,
+              channel)
+      );
+      prefs_.putInt(prefNode_ + "_" + channelGroup, Prefs.Keys.NRCHANNELROWS,
               channels_.size());
    }
    
@@ -98,12 +119,12 @@ public class ChannelTableModel extends AbstractTableModel {
    
    @Override
    public int getColumnCount() {
-      return columnNames.length;
+      return COLUMNNAMES.length;
    }
 
    @Override
    public String getColumnName(int columnIndex) {
-      return columnNames[columnIndex];
+      return COLUMNNAMES[columnIndex];
    }
 
    @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -127,14 +148,14 @@ public class ChannelTableModel extends AbstractTableModel {
       ChannelSpec channel = channels_.get(rowIndex);
       String prefNode = prefNode_ + "_" + channel.group_ + "_" + rowIndex;
       switch (columnIndex) {
-      case columnIndex_useChannel:
+      case COLUMNINDEX_USECHANNEL:
          if (value instanceof Boolean) {
             boolean val = (Boolean) value;
             channel.useChannel_ = val;
             prefs_.putBoolean(prefNode, Prefs.Keys.CHANNEL_USE_CHANNEL, (Boolean) val);
          }
          break;
-      case columnIndex_config:
+      case COLUMNINDEX_CONFIG:
          if (value instanceof String) {
             String val = (String) value;
             channel.config_ = val;
@@ -149,9 +170,9 @@ public class ChannelTableModel extends AbstractTableModel {
    public Object getValueAt(int rowIndex, int columnIndex) {
       ChannelSpec channel = channels_.get(rowIndex);
       switch (columnIndex) {
-      case columnIndex_useChannel:
+      case COLUMNINDEX_USECHANNEL:
          return channel.useChannel_;
-      case columnIndex_config:
+      case COLUMNINDEX_CONFIG:
          return channel.config_;
       default: 
          ReportingUtils.logError("ColorTableModel getValuAt() didn't match");
