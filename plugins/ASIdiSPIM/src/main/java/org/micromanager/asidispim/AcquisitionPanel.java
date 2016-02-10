@@ -2599,6 +2599,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       Coords coord = cb.time(frame).channel(channel).z(slice).stagePosition(position).build();
       Image img = gui_.data().convertTaggedImage(taggedImg);
       Metadata md = img.getMetadata();
+      MetadataBuilder mdb = md.copy();
       PropertyMap ud = md.getUserData();
       ud = ud.copy().putDouble("Z-Step-um", 
               (double) PanelUtils.getSpinnerFloatValue(stepSize_)).build();
@@ -2608,10 +2609,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          MultiStagePosition pos = pl.getPosition(position);
          if (pos != null) {
             posName = pos.getLabel();
+            mdb = mdb.xPositionUm(pos.getX()).yPositionUm(pos.getY());
          }
       }
       // md = md.copy().elapsedTimeMs((double)ms).positionName(posName).userData(ud).build();
-      MetadataBuilder mdb = md.copy();
+
       
       md = mdb.positionName(posName).userData(ud).build();
       img = img.copyWith(coord, md);
