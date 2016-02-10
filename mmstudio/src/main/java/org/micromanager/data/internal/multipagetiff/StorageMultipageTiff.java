@@ -386,11 +386,16 @@ public final class StorageMultipageTiff implements Storage {
          finished_ = true;
          return;
       }
-      ProgressBar progressBar = new ProgressBar("Finishing Files", 0, positionToFileSet_.size());
+      ProgressBar progressBar = null;
+      if (!GraphicsEnvironment.isHeadless()) {
+         progressBar = new ProgressBar("Finishing Files", 0, positionToFileSet_.size());
+      }
       try {
          int count = 0;
-         progressBar.setProgress(count);
-         progressBar.setVisible(true);
+         if (progressBar != null) {
+            progressBar.setProgress(count);
+            progressBar.setVisible(true);
+         }
          for (FileSet p : positionToFileSet_.values()) {
             p.finishAbortedAcqIfNeeded();
          }
@@ -422,7 +427,9 @@ public final class StorageMultipageTiff implements Storage {
                p.finished(fullOMEXMLMetadata);
                master = p;
                count++;
-               progressBar.setProgress(count);
+               if (progressBar != null) {
+                  progressBar.setProgress(count);
+               }
                break;
             }
          }
@@ -447,7 +454,9 @@ public final class StorageMultipageTiff implements Storage {
             }
             p.finished(partialOME);
             count++;
-            progressBar.setProgress(count);
+            if (progressBar != null) {
+               progressBar.setProgress(count);
+            }
          }
          //shut down writing executor--pause here until all tasks have finished
          //writing so that no attempt is made to close the dataset (and thus
@@ -472,7 +481,9 @@ public final class StorageMultipageTiff implements Storage {
          ReportingUtils.logError(ex);
       }
       finally {
-         progressBar.setVisible(false);
+         if (progressBar != null) {
+            progressBar.setVisible(false);
+         }
       }
       finished_ = true;
    }
