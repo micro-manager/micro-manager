@@ -521,44 +521,85 @@ public class DefaultMetadata implements Metadata {
          // methods, we get null pointer exceptions because the argument type
          // for MDUtils here is a double or int, not Double or Integer.
          JSONObject result = new JSONObject();
-         MDUtils.setBinning(result,
-               (getBinning() == null) ? 0 : getBinning());
-         MDUtils.setBitDepth(result, getBitDepth());
-         result.put("Camera", getCamera());
-         MDUtils.setElapsedTimeMs(result, 
-               (getElapsedTimeMs() == null) ? 0 : getElapsedTimeMs());
-         result.put("emissionLabel", getEmissionLabel());
-         result.put("excitationLabel", getExcitationLabel());
-         MDUtils.setExposureMs(result,
-               (getExposureMs() == null) ? 0 : getExposureMs());
-         result.put("gridColumn", getGridColumn());
-         result.put("gridRow", getGridRow());
-         result.put("IJType", getIjType());
-         MDUtils.setSequenceNumber(result,
-               (getImageNumber() == null) ? -1 : getImageNumber());
+         if (getBinning() != null) {
+            MDUtils.setBinning(result, getBinning());
+         }
+         if (getBitDepth() != null) {
+            MDUtils.setBitDepth(result, getBitDepth());
+         }
+         if (getCamera() != null) {
+            result.put("Camera", getCamera());
+         }
+         if (getElapsedTimeMs() != null) {
+            MDUtils.setElapsedTimeMs(result, getElapsedTimeMs());
+         }
+         if (getEmissionLabel() != null) {
+            result.put("emissionLabel", getEmissionLabel());
+         }
+         if (getExcitationLabel() != null) {
+            result.put("excitationLabel", getExcitationLabel());
+         }
+         if (getExposureMs() != null) {
+            MDUtils.setExposureMs(result, getExposureMs());
+         }
+         if (getGridColumn() != null) {
+            result.put("gridColumn", getGridColumn());
+         }
+         if (getGridRow() != null) {
+            result.put("gridRow", getGridRow());
+         }
+         if (getIjType() != null) {
+            result.put("IJType", getIjType());
+         }
+         if (getImageNumber() != null) {
+            MDUtils.setSequenceNumber(result, getImageNumber());
+         }
          if (initialPositionList_ != null) {
             result.put("initialPositionList",
                   DefaultSummaryMetadata.MultiStagePositionToJSON(initialPositionList_));
          }
-         result.put("keepShutterOpenChannels", getKeepShutterOpenChannels());
-         result.put("keepShutterOpenSlices", getKeepShutterOpenSlices());
-         result.put("pixelAspect", getPixelAspect());
-         MDUtils.setPixelSizeUm(result, getPixelSizeUm());
-         MDUtils.setPixelTypeFromString(result, getPixelType());
-         MDUtils.setPositionName(result, getPositionName());
-         result.put("receivedTime", getReceivedTime());
+         if (getKeepShutterOpenChannels() != null) {
+            result.put("keepShutterOpenChannels", getKeepShutterOpenChannels());
+         }
+         if (getKeepShutterOpenSlices() != null) {
+            result.put("keepShutterOpenSlices", getKeepShutterOpenSlices());
+         }
+         if (getPixelAspect() != null) {
+            result.put("pixelAspect", getPixelAspect());
+         }
+         if (getPixelSizeUm() != null) {
+            MDUtils.setPixelSizeUm(result, getPixelSizeUm());
+         }
+         if (getPixelType() != null) {
+            MDUtils.setPixelTypeFromString(result, getPixelType());
+         }
+         if (getPositionName() != null) {
+            MDUtils.setPositionName(result, getPositionName());
+         }
+         if (getReceivedTime() != null) {
+            result.put("receivedTime", getReceivedTime());
+         }
          if (ROI_ != null) {
             MDUtils.setROI(result, getROI());
          }
-         result.put("Source", getSource());
-         result.put("startTimeMs", getStartTimeMs());
-         MDUtils.setUUID(result, getUUID());
-         MDUtils.setXPositionUm(result,
-               (getXPositionUm() == null) ? 0 : getXPositionUm());
-         MDUtils.setYPositionUm(result,
-               (getYPositionUm() == null) ? 0 : getYPositionUm());
-         MDUtils.setZPositionUm(result,
-               (getZPositionUm() == null) ? 0 : getZPositionUm());
+         if (getSource() != null) {
+            result.put("Source", getSource());
+         }
+         if (getStartTimeMs() != null) {
+            result.put("startTimeMs", getStartTimeMs());
+         }
+         if (getUUID() != null) {
+            MDUtils.setUUID(result, getUUID());
+         }
+         if (getXPositionUm() != null) {
+            MDUtils.setXPositionUm(result, getXPositionUm());
+         }
+         if (getYPositionUm() != null) {
+            MDUtils.setYPositionUm(result, getYPositionUm());
+         }
+         if (getZPositionUm() != null) {
+            MDUtils.setZPositionUm(result, getZPositionUm());
+         }
 
          if (scopeData_ != null) {
             JSONArray keys = new JSONArray();
