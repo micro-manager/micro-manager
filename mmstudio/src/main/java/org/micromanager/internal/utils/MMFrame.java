@@ -25,8 +25,8 @@ package org.micromanager.internal.utils;
 import java.awt.Frame;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 
 import javax.swing.JFrame;
 
@@ -130,13 +130,12 @@ public class MMFrame extends JFrame {
     */
    protected void loadAndRestorePosition(int x, int y, int width, int height) {
       loadPosition(x, y, width, height);
-      this.addWindowListener(new WindowAdapter() {
+      addComponentListener(new ComponentAdapter() {
          @Override
-         public void windowClosing(WindowEvent arg0) {
+         public void componentMoved(ComponentEvent e) {
             savePosition();
          }
-      }
-      );
+      });
    }
    
     /**
@@ -149,13 +148,12 @@ public class MMFrame extends JFrame {
     */
    protected void loadAndRestorePosition(int x, int y) {
       loadPosition(x, y);
-      this.addWindowListener(new WindowAdapter() {
+      addComponentListener(new ComponentAdapter() {
          @Override
-         public void windowClosing(WindowEvent arg0) {
+         public void componentMoved(ComponentEvent e) {
             savePosition();
          }
-      }
-      );
+      });
    }
    
 
