@@ -46,6 +46,7 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.display.DisplayWindow;
 
+import org.micromanager.display.PixelsSetEvent;
 import org.micromanager.data.internal.IncomingImageEvent;
 import org.micromanager.data.internal.NewImageEvent;
 import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
@@ -221,6 +222,14 @@ public class HyperstackControls extends JPanel {
    public void onNewImage(NewImageEvent event) {
       imagesReceived_++;
       updateFPS(event.getImage());
+   }
+
+   /**
+    * Changed which image is displayed; update our short status line text about
+    * the displayed image.
+    */
+   @Subscribe
+   public void onPixelsSet(PixelsSetEvent event) {
       updateStatus(event.getImage());
    }
 
