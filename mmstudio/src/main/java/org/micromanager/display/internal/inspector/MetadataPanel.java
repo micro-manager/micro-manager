@@ -87,7 +87,7 @@ public class MetadataPanel extends InspectorPanel {
       public Dimension getPreferredScrollableViewportSize() {
          Dimension defSize = super.getPreferredScrollableViewportSize();
          return new Dimension(Math.min(defSize.width, 325),
-               Math.min(defSize.height, 75));
+               Math.min(defSize.height, 500));
       }
    }
 
