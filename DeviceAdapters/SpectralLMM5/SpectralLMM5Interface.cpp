@@ -121,7 +121,7 @@ int SpectralLMM5Interface::DetectLaserLines(MM::Device& device, MM::Core& core)
    const unsigned long bufLen = 1;
    unsigned char buf[bufLen];
    buf[0]=0x08;
-   const unsigned long answerLen = 11;
+   const unsigned long answerLen = 17;
    unsigned char answer[answerLen];
    unsigned long read;
    int ret = ExecuteCommand(device, core, buf, bufLen, answer, answerLen, read);

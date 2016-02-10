@@ -224,7 +224,10 @@ public class MetadataPanel extends InspectorPanel {
          while (!updateQueue_.isEmpty()) {
             image = updateQueue_.poll();
          }
-         if (image == null) {
+         if (image != null) {
+            imageChangedUpdate(image);
+         }
+         else {
             // No updates available; just wait for a bit.
             try {
                Thread.sleep(100);
@@ -234,9 +237,7 @@ public class MetadataPanel extends InspectorPanel {
                   return;
                }
             }
-            continue;
          }
-         imageChangedUpdate(image);
       }
    }
 
@@ -247,7 +248,7 @@ public class MetadataPanel extends InspectorPanel {
     */
    public void imageChangedUpdate(final Image image) {
       Metadata data = image.getMetadata();
-      if (data.getUUID() == lastImageUUID_) {
+      if (data.getUUID() != null && data.getUUID() == lastImageUUID_) {
          // We're already displaying this image's metadata.
          return;
       }

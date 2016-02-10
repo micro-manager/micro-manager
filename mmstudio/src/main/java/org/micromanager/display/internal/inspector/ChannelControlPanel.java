@@ -639,7 +639,13 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private void updateHistogramColor(Color color) {
       if (lastHistograms_.length == 1) {
          // Just one component.
-         histogram_.setTraceStyle(true, 0, color);
+         DisplaySettings.ColorMode mode = display_.getDisplaySettings().getChannelColorMode();
+         if (mode != null && mode == DisplaySettings.ColorMode.GRAYSCALE) {
+            histogram_.setTraceStyle(true, 0, Color.WHITE);
+         }
+         else {
+            histogram_.setTraceStyle(true, 0, color);
+         }
       }
       else {
          // Multi-component images default to RGB.

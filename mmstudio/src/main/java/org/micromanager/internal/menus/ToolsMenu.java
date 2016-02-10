@@ -49,7 +49,7 @@ public class ToolsMenu {
    public ToolsMenu(MMStudio studio, CMMCore core) {
       studio_ = studio;
       core_ = core;
-      quickAccessMenu_ = new JMenu("Quick Access Panels (Beta)");
+      quickAccessMenu_ = new JMenu("Quick Access Panels");
       switchConfigurationMenu_ = new JMenu();
       studio_.events().registerForEvents(this);
    }
