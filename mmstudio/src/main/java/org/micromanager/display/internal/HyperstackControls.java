@@ -365,6 +365,9 @@ public class HyperstackControls extends JPanel {
    private void updateStatus(Image image) {
       ArrayList<String> tokens = new ArrayList<String>();
       Metadata metadata = image.getMetadata();
+      String name = store_.getSummaryMetadata().getSafeChannelName(
+            image.getCoords().getChannel());
+      tokens.add(name);
       if (metadata.getPositionName() != null) {
          tokens.add(metadata.getPositionName());
       }
