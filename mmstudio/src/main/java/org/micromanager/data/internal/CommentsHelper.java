@@ -25,9 +25,9 @@ import java.io.IOException;
 import org.micromanager.data.Annotation;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
+import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.PropertyMap;
 
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -67,7 +67,7 @@ public class CommentsHelper {
          Annotation annotation = store.loadAnnotation(COMMENTS_FILE);
          PropertyMap prop = annotation.getGeneralAnnotation();
          if (prop == null) {
-            prop = MMStudio.getInstance().data().getPropertyMapBuilder().build();
+            prop = new DefaultPropertyMap.Builder().build();
          }
          prop = prop.copy().putString(COMMENTS_KEY, comment).build();
          annotation.setGeneralAnnotation(prop);
@@ -108,7 +108,7 @@ public class CommentsHelper {
          Annotation annotation = store.loadAnnotation(COMMENTS_FILE);
          PropertyMap prop = annotation.getImageAnnotation(coords);
          if (prop == null) {
-            prop = MMStudio.getInstance().data().getPropertyMapBuilder().build();
+            prop = new DefaultPropertyMap.Builder().build();
          }
          prop = prop.copy().putString(COMMENTS_KEY, comment).build();
          annotation.setImageAnnotation(coords, prop);
