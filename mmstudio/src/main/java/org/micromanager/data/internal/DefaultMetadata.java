@@ -75,8 +75,6 @@ public class DefaultMetadata implements Metadata {
       private Double pixelSizeUm_ = null;
       private String camera_ = null;
       private String receivedTime_ = null;
-      private String excitationLabel_ = null;
-      private String emissionLabel_ = null;
       private Rectangle ROI_ = null;
 
       private Double pixelAspect_ = null;
@@ -228,18 +226,6 @@ public class DefaultMetadata implements Metadata {
       }
 
       @Override
-      public MetadataBuilder excitationLabel(String excitationLabel) {
-         excitationLabel_ = excitationLabel;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder emissionLabel(String emissionLabel) {
-         emissionLabel_ = emissionLabel;
-         return this;
-      }
-
-      @Override
       public MetadataBuilder ROI(Rectangle ROI) {
          ROI_ = ROI;
          return this;
@@ -291,8 +277,6 @@ public class DefaultMetadata implements Metadata {
    private Double pixelSizeUm_ = null;
    private String camera_ = null;
    private String receivedTime_ = null;
-   private String excitationLabel_ = null;
-   private String emissionLabel_ = null;
    private Rectangle ROI_ = null;
 
    private Double pixelAspect_ = null;
@@ -328,8 +312,6 @@ public class DefaultMetadata implements Metadata {
       pixelSizeUm_ = builder.pixelSizeUm_;
       camera_ = builder.camera_;
       receivedTime_ = builder.receivedTime_;
-      excitationLabel_ = builder.excitationLabel_;
-      emissionLabel_ = builder.emissionLabel_;
       ROI_ = builder.ROI_;
 
       pixelAspect_ = builder.pixelAspect_;
@@ -363,8 +345,6 @@ public class DefaultMetadata implements Metadata {
             .pixelSizeUm(pixelSizeUm_)
             .camera(camera_)
             .receivedTime(receivedTime_)
-            .excitationLabel(excitationLabel_)
-            .emissionLabel(emissionLabel_)
             .ROI(ROI_)
             .pixelAspect(pixelAspect_);
    }
@@ -480,16 +460,6 @@ public class DefaultMetadata implements Metadata {
    }
 
    @Override
-   public String getExcitationLabel() {
-      return excitationLabel_;
-   }
-
-   @Override
-   public String getEmissionLabel() {
-      return emissionLabel_;
-   }
-
-   @Override
    public Rectangle getROI() {
       if (ROI_ != null) {
          return new Rectangle(ROI_);
@@ -532,12 +502,6 @@ public class DefaultMetadata implements Metadata {
          }
          if (getElapsedTimeMs() != null) {
             MDUtils.setElapsedTimeMs(result, getElapsedTimeMs());
-         }
-         if (getEmissionLabel() != null) {
-            result.put("emissionLabel", getEmissionLabel());
-         }
-         if (getExcitationLabel() != null) {
-            result.put("excitationLabel", getExcitationLabel());
          }
          if (getExposureMs() != null) {
             MDUtils.setExposureMs(result, getExposureMs());
@@ -651,16 +615,6 @@ public class DefaultMetadata implements Metadata {
 
       try {
          builder.elapsedTimeMs(MDUtils.getElapsedTimeMs(tags));
-      }
-      catch (JSONException e) {}
-
-      try {
-         builder.emissionLabel(tags.getString("emissionLabel"));
-      }
-      catch (JSONException e) {}
-
-      try {
-         builder.excitationLabel(tags.getString("excitationLabel"));
       }
       catch (JSONException e) {}
 

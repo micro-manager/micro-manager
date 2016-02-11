@@ -800,8 +800,6 @@ public class MDUtils {
       IGNORED_KEYS.add("ChannelIndex");
       IGNORED_KEYS.add("Comment");
       IGNORED_KEYS.add("ElapsedTime-ms");
-      IGNORED_KEYS.add("emissionLabel");
-      IGNORED_KEYS.add("excitationLabel");
       IGNORED_KEYS.add("Exposure-ms");
       IGNORED_KEYS.add("Frame");
       IGNORED_KEYS.add("FrameIndex");

@@ -59,8 +59,6 @@ public interface Metadata {
       MetadataBuilder bitDepth(Integer bitDepth);
       MetadataBuilder camera(String camera);
       MetadataBuilder elapsedTimeMs(Double elapsedTimeMs);
-      MetadataBuilder emissionLabel(String emissionLabel);
-      MetadataBuilder excitationLabel(String excitationLabel);
       MetadataBuilder exposureMs(Double exposureMs);
       MetadataBuilder gridColumn(Integer gridColumn);
       MetadataBuilder gridRow(Integer gridRow);
@@ -225,20 +223,6 @@ public interface Metadata {
     * @return Camera name
     */
    String getCamera();
-   
-   /** 
-    * The emission filter for this image
-    * TODO: Is this used? Remove?
-    * @return  Emission Label
-    */
-   String getEmissionLabel();
-   
-   /** 
-    * The excitation filter for this image 
-    * TODO: Is this used? Remove?
-    * @return Excitation label
-    */
-   String getExcitationLabel();
    
    /** 
     * Seems to be a string version of the "IjType" field (TODO: remove?) 
