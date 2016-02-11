@@ -397,7 +397,7 @@ public class MultipageTiffReader {
             CommentsHelper.setImageComment(store, builder.build(),
                   comments.getString(key));
          }
-         CommentsHelper.save(store);
+         CommentsHelper.saveComments(store);
       }
       catch (JSONException e) {
          ReportingUtils.logError(e, "Unable to generate JSON from buffer " + getString(buffer));
