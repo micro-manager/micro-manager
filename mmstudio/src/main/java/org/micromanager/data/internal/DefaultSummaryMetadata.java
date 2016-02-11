@@ -90,7 +90,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
 
    public static class Builder implements SummaryMetadata.SummaryMetadataBuilder {
 
-      private String name_ = null;
       private String prefix_ = null;
       private String userName_ = null;
       private String profileName_ = null;
@@ -116,12 +115,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          return new DefaultSummaryMetadata(this);
       }
       
-      @Override
-      public SummaryMetadataBuilder name(String name) {
-         name_ = name;
-         return this;
-      }
-
       @Override
       public SummaryMetadataBuilder prefix(String prefix) {
          prefix_ = prefix;
@@ -225,7 +218,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
    }
    
-   private String name_ = null;
    private String prefix_ = null;
    private String userName_ = null;
    private String profileName_ = null;
@@ -247,7 +239,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    private PropertyMap userData_ = null;
 
    public DefaultSummaryMetadata(Builder builder) {
-      name_ = builder.name_;
       prefix_ = builder.prefix_;
       userName_ = builder.userName_;
       profileName_ = builder.profileName_;
@@ -267,11 +258,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       stagePositions_ = builder.stagePositions_;
 
       userData_ = builder.userData_;
-   }
-
-   @Override
-   public String getName() {
-      return name_;
    }
 
    @Override
@@ -371,7 +357,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    @Override
    public SummaryMetadataBuilder copy() {
       return new Builder()
-            .name(name_)
             .prefix(prefix_)
             .userName(userName_)
             .profileName(profileName_)
@@ -405,13 +390,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       // in the first place).
       // TODO: not preserving the index-related metadata.
       Builder builder = new Builder();
-
-      try {
-         builder.name(tags.getString("Name"));
-      }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field name");
-      }
 
       try {
          builder.prefix(tags.getString("Prefix"));
@@ -642,8 +620,6 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    public JSONObject toJSON() {
       try {
          JSONObject result = new JSONObject();
-         MDUtils.setFileName(result, name_);
-         result.put("Name", name_);
          result.put("Prefix", prefix_);
          result.put("UserName", userName_);
          result.put("ProfileName", profileName_);

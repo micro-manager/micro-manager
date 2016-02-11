@@ -2028,7 +2028,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             smb = smb.channelNames(channelNames_).
                     channelGroup(multiChannelPanel_.getChannelGroup()).
                     microManagerVersion(gui_.compat().getVersion()).
-                    name(name).
+                    prefix(name).
                     startDate((new Date()).toString());
             if (acqSettings.useMultiPositions) {
                smb = smb.stagePositions(gui_.positions().getPositionList().getPositions());

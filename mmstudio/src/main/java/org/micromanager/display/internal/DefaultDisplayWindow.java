@@ -658,7 +658,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
 
          FileInfo info = new FileInfo();
          info.directory = summary.getDirectory();
-         info.fileName = summary.getName();
+         info.fileName = summary.getPrefix();
          info.width = sample.getWidth();
          info.height = sample.getHeight();
          ijImage_.setFileInfo(info);
@@ -1192,8 +1192,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          name = store_.getSavePath();
       }
       if (name == null) {
-         // Use the filename instead.
-         name = store_.getSummaryMetadata().getName();
+         // Use the file prefix instead.
+         name = store_.getSummaryMetadata().getPrefix();
       }
       if (name == null) {
          // Must be an anonymous RAM datastore. First, scan for other displays
