@@ -646,7 +646,10 @@ public final class StorageMultipageTiff implements Storage {
          // Return the current size instead.
          return getAxisLength(axis);
       }
-      return summaryMetadata_.getIntendedDimensions().getIndex(axis);
+      // The SummaryMetadata will return -1 for axes that are not present, but
+      // all of our uses of this method require a minimum size of 1.
+      return Math.max(summaryMetadata_.getIntendedDimensions().getIndex(axis),
+            1);
    }
 
    public Datastore getDatastore() {
