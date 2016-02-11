@@ -60,8 +60,6 @@ public interface Metadata {
       MetadataBuilder camera(String camera);
       MetadataBuilder elapsedTimeMs(Double elapsedTimeMs);
       MetadataBuilder exposureMs(Double exposureMs);
-      MetadataBuilder gridColumn(Integer gridColumn);
-      MetadataBuilder gridRow(Integer gridRow);
       MetadataBuilder ijType(Integer ijType);
       MetadataBuilder imageNumber(Long imageNumber);
       MetadataBuilder initialPositionList(MultiStagePosition initialPositionList);
@@ -161,18 +159,6 @@ public interface Metadata {
     * @return Number of bits used to represent each pixel
      */
    Integer getBitDepth();
-   
-   /** 
-    * When acquiring a grid of stage positions, the Y position in the grid 
-    * @return Y position in the grid
-    */
-   Integer getGridColumn();
-   
-   /** 
-    * When acquiring a grid of stage positions, the X position in the grid 
-    * @return X position in the grid
-    */
-   Integer getGridRow();
    
    /** 
     * The ImageJ pixel type, e.g. ImagePlus.GRAY8, ImagePlus.RGB32 

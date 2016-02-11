@@ -65,8 +65,6 @@ public class DefaultMetadata implements Metadata {
       private Integer binning_ = null;
       
       private Long imageNumber_ = null;
-      private Integer gridRow_ = null;
-      private Integer gridColumn_ = null;
       private String positionName_ = null;
       private Double xPositionUm_ = null;
       private Double yPositionUm_ = null;
@@ -172,18 +170,6 @@ public class DefaultMetadata implements Metadata {
       }
 
       @Override
-      public MetadataBuilder gridRow(Integer gridRow) {
-         gridRow_ = gridRow;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder gridColumn(Integer gridColumn) {
-         gridColumn_ = gridColumn;
-         return this;
-      }
-
-      @Override
       public MetadataBuilder positionName(String positionName) {
          positionName_ = positionName;
          return this;
@@ -267,8 +253,6 @@ public class DefaultMetadata implements Metadata {
    private Integer binning_ = null;
    
    private Long imageNumber_ = null;
-   private Integer gridRow_ = null;
-   private Integer gridColumn_ = null;
    private String positionName_ = null;
    private Double xPositionUm_ = null;
    private Double yPositionUm_ = null;
@@ -302,8 +286,6 @@ public class DefaultMetadata implements Metadata {
       binning_ = builder.binning_;
       
       imageNumber_ = builder.imageNumber_;
-      gridRow_ = builder.gridRow_;
-      gridColumn_ = builder.gridColumn_;
       positionName_ = builder.positionName_;
       xPositionUm_ = builder.xPositionUm_;
       yPositionUm_ = builder.yPositionUm_;
@@ -336,8 +318,6 @@ public class DefaultMetadata implements Metadata {
             .startTimeMs(startTimeMs_)
             .binning(binning_)
             .imageNumber(imageNumber_)
-            .gridRow(gridRow_)
-            .gridColumn(gridColumn_)
             .positionName(positionName_)
             .xPositionUm(xPositionUm_)
             .yPositionUm(yPositionUm_)
@@ -412,16 +392,6 @@ public class DefaultMetadata implements Metadata {
    @Override
    public Long getImageNumber() {
       return imageNumber_;
-   }
-
-   @Override
-   public Integer getGridRow() {
-      return gridRow_;
-   }
-
-   @Override
-   public Integer getGridColumn() {
-      return gridColumn_;
    }
 
    @Override
@@ -505,12 +475,6 @@ public class DefaultMetadata implements Metadata {
          }
          if (getExposureMs() != null) {
             MDUtils.setExposureMs(result, getExposureMs());
-         }
-         if (getGridColumn() != null) {
-            result.put("gridColumn", getGridColumn());
-         }
-         if (getGridRow() != null) {
-            result.put("gridRow", getGridRow());
          }
          if (getIjType() != null) {
             result.put("IJType", getIjType());
@@ -620,16 +584,6 @@ public class DefaultMetadata implements Metadata {
 
       try {
          builder.exposureMs(MDUtils.getExposureMs(tags));
-      }
-      catch (JSONException e) {}
-
-      try {
-         builder.gridColumn(tags.getInt("gridColumn"));
-      }
-      catch (JSONException e) {}
-
-      try {
-         builder.gridRow(tags.getInt("gridRow"));
       }
       catch (JSONException e) {}
 

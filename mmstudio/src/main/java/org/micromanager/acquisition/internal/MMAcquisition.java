@@ -339,8 +339,6 @@ public class MMAcquisition {
          summaryMetadata.put("Date", new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime()));
          summaryMetadata.put("Depth", core.getBytesPerPixel());
          summaryMetadata.put("Frames", numFrames_);
-         summaryMetadata.put("GridColumn", 0);
-         summaryMetadata.put("GridRow", 0);
          summaryMetadata.put("Height", height_);
          int ijType = -1;
          if (byteDepth_ == 1) {
