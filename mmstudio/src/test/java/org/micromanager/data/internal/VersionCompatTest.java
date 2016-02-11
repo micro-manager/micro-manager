@@ -204,10 +204,16 @@ public class VersionCompatTest {
       DefaultDataManager manager = new DefaultDataManager();
       Datastore store = manager.loadData(
             "/Users/chriswei/proj/vale/data/testData/1.4compatTest", true);
-      testStore(store, true);
+      testStore(store);
+
+      File tempDir = Files.createTempDir();
+      store.save(Datastore.SaveMode.MULTIPAGE_TIFF, tempDir.getPath());
+      store.setSavePath(tempDir.toString());
+      store = manager.loadData(tempDir.getAbsolutePath(), true);
+      testStore(store);
    }
 
-   private void testStore(Datastore store, boolean isFrom14) {
+   private void testStore(Datastore store) {
       SummaryMetadata summary = store.getSummaryMetadata();
       Assert.assertArrayEquals("Channel names", summary.getChannelNames(),
             new String[] {"Cy5", "DAPI"});
@@ -234,6 +240,7 @@ public class VersionCompatTest {
          // TODO: our test file does not test the sequence number
          // (ImageNumber), initial position list,
          // keepShutterOpen[Channels|Slices], pixelAspect, startTimeMs,
+         // ijType (not set in 1.4)
          Assert.assertEquals("Binning for " + coords,
                (int) metadata.getBinning(), 1);
          Assert.assertEquals("Bitdepth for " + coords,
@@ -244,11 +251,6 @@ public class VersionCompatTest {
          Assert.assertEquals("Exposure time for " + coords,
                coords.getChannel() == 0 ? 25.0 : 50.0,
                metadata.getExposureMs(), .00001);
-         if (!isFrom14) {
-            // This field is not in 1.4, which only uses pixelType.
-            Assert.assertEquals("ijType for " + coords,
-                  (int) metadata.getIjType(), ij.ImagePlus.GRAY16);
-         }
          Assert.assertEquals("pixelSizeUm for " + coords,
                metadata.getPixelSizeUm(), 1.0, .00001);
          Assert.assertEquals("pixelType for " + coords,
