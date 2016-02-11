@@ -106,7 +106,7 @@ public class ManualTiffTest {
          .positionName("Pos0").pixelSizeUm(1.0)
          .camera("My camera")
          .elapsedTimeMs(4334.3443)
-         .exposureMs(new Double(8888)).gridColumn(97).gridRow(79).ijType(-5)
+         .exposureMs(new Double(8888)).ijType(-5)
          .imageNumber(new Long(9999))
          .initialPositionList(
                new MultiStagePosition("a third xy stage", 98, 76, "a third z stage", 54))
