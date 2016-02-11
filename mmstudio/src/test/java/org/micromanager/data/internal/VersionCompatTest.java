@@ -31,6 +31,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+
 import org.junit.Test;
 import org.junit.Assert;
 
@@ -200,12 +203,14 @@ public class VersionCompatTest {
     * it to disk using the 2.0 format.
     */
    @Test
-   public void test14Load() throws IOException {
+   public void test14Load() throws IOException, JSONException {
       DefaultDataManager manager = new DefaultDataManager();
       Datastore store = manager.loadData(
             "/Users/chriswei/proj/vale/data/testData/1.4compatTest", true);
       testStore(store);
 
+      // Now save to disk and then re-load, and verify that this doesn't
+      // actually change our data any.
       File tempDir = Files.createTempDir();
       store.save(Datastore.SaveMode.MULTIPAGE_TIFF, tempDir.getPath());
       store.setSavePath(tempDir.toString());
@@ -213,12 +218,50 @@ public class VersionCompatTest {
       testStore(store);
    }
 
-   private void testStore(Datastore store) {
+   private void testStore(Datastore store) throws JSONException {
+      // Test summary metadata.
+      // TODO: our test does not include the "name" (unsure if this is set
+      // anywhere in our code), profileName (not relevant in 1.4), channelGroup
+      // (part of per-image metadata in 1.4), axisOrder (not set in 1.4),
+      // startDate (not set in 1.4),
       SummaryMetadata summary = store.getSummaryMetadata();
       Assert.assertArrayEquals("Channel names", summary.getChannelNames(),
             new String[] {"Cy5", "DAPI"});
       Assert.assertEquals("Z step", summary.getZStepUm(),
             5.0, .00001);
+      Assert.assertEquals("Prefix", summary.getPrefix(), "1.4compatTest_3");
+      Assert.assertEquals("UserName", summary.getUserName(), "chriswei");
+      Assert.assertEquals("MicroManagerVersion",
+            summary.getMicroManagerVersion(), "1.4.23-20160209");
+      Assert.assertEquals("MetadataVersion", summary.getMetadataVersion(),
+            "10");
+      Assert.assertEquals("ComputerName", summary.getComputerName(),
+            "Chriss-MacBook-Pro-2.local");
+      Assert.assertEquals("Directory", summary.getDirectory(),
+            "/Users/chriswei/proj/vale/data/testData");
+      Assert.assertEquals("WaitInterval", summary.getWaitInterval(),
+            5000.0, .00001);
+      Assert.assertArrayEquals("customIntervalsMs",
+            summary.getCustomIntervalsMs(), new Double[] {});
+      Assert.assertEquals("intendedDimensions",
+            summary.getIntendedDimensions(),
+            DefaultCoords.fromNormalizedString("t=2,z=2,p=4,c=2"));
+
+      // Construct position list from JSON copied from 1.4 dump.
+      JSONArray json = new JSONArray("[{\"DeviceCoordinatesUm\":{\"XY\":[-32,-32],\"Z\":[-0]},\"GridColumnIndex\":0,\"Label\":\"1-Pos_000_000\",\"GridRowIndex\":0},{\"DeviceCoordinatesUm\":{\"XY\":[32,-32],\"Z\":[0]},\"GridColumnIndex\":1,\"Label\":\"1-Pos_001_000\",\"GridRowIndex\":0},{\"DeviceCoordinatesUm\":{\"XY\":[32,32],\"Z\":[0]},\"GridColumnIndex\":1,\"Label\":\"1-Pos_001_001\",\"GridRowIndex\":1},{\"DeviceCoordinatesUm\":{\"XY\":[-32,32],\"Z\":[0]},\"GridColumnIndex\":0,\"Label\":\"1-Pos_000_001\",\"GridRowIndex\":1}]");
+      MultiStagePosition[] positions = new MultiStagePosition[json.length()];
+      for (int i = 0; i < json.length(); ++i) {
+         positions[i] = DefaultSummaryMetadata.MultiStagePositionFromJSON(json.getJSONObject(i));
+      }
+      Assert.assertArrayEquals("stagePositions", summary.getStagePositions(),
+            positions);
+
+
+      // Test image metadata and pixel hashes.
+      // TODO: our test file does not test the sequence number
+      // (ImageNumber), initial position list,
+      // keepShutterOpen[Channels|Slices], pixelAspect, startTimeMs,
+      // ijType (not set in 1.4)
       for (Coords coords : store.getUnorderedImageCoords()) {
          Image image = store.getImage(coords);
          Assert.assertEquals("Pixel hash for " + coords,
@@ -237,10 +280,6 @@ public class VersionCompatTest {
                metadata.getZPositionUm(),
                coords.getZ() == 0 ? 0.0 : 5.0, .00001);
 
-         // TODO: our test file does not test the sequence number
-         // (ImageNumber), initial position list,
-         // keepShutterOpen[Channels|Slices], pixelAspect, startTimeMs,
-         // ijType (not set in 1.4)
          Assert.assertEquals("Binning for " + coords,
                (int) metadata.getBinning(), 1);
          Assert.assertEquals("Bitdepth for " + coords,
