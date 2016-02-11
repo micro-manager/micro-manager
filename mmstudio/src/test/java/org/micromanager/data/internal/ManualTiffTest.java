@@ -105,8 +105,7 @@ public class ManualTiffTest {
       imageMetadata.binning(1).bitDepth(16).pixelType("GRAY16")
          .positionName("Pos0").pixelSizeUm(1.0)
          .camera("My camera")
-         .elapsedTimeMs(4334.3443).emissionLabel("whatever GFP outputs")
-         .excitationLabel("something you should wear goggles for")
+         .elapsedTimeMs(4334.3443)
          .exposureMs(new Double(8888)).gridColumn(97).gridRow(79).ijType(-5)
          .imageNumber(new Long(9999))
          .initialPositionList(

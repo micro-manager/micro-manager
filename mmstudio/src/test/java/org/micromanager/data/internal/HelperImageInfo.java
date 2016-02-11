@@ -81,8 +81,6 @@ public class HelperImageInfo {
       Assert.assertEquals(metadata_.getBitDepth(), metadata.getBitDepth());
       Assert.assertEquals(metadata_.getCamera(), metadata.getCamera());
       Assert.assertEquals(metadata_.getElapsedTimeMs(), metadata.getElapsedTimeMs());
-      Assert.assertEquals(metadata_.getEmissionLabel(), metadata.getEmissionLabel());
-      Assert.assertEquals(metadata_.getExcitationLabel(), metadata.getExcitationLabel());
       Assert.assertEquals(metadata_.getExposureMs(), metadata.getExposureMs());
       Assert.assertEquals(metadata_.getGridColumn(), metadata.getGridColumn());
       Assert.assertEquals(metadata_.getGridRow(), metadata.getGridRow());
