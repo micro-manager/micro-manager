@@ -140,6 +140,8 @@
 			<batchtest unless="test.class" todir="${test.reportdir}">
 				<fileset dir="${testdir}">
 					<include name="**/*.java"/>
+					<!-- Allow some helper classes that should not be tested themselves -->
+					<exclude name="**/Helper*.java"/>
 				</fileset>
 			</batchtest>
 		</junit>

@@ -63,7 +63,7 @@ public class ManualTiffTest {
     * Maps file paths to descriptors of the images we expect to find there.
     * We test the image metadata and spot-test the image data.
     */
-   private static final HashMap<String, ArrayList<ImageInfo>> IMAGES;
+   private static final HashMap<String, ArrayList<HelperImageInfo>> IMAGES;
 
    /**
     * Path for one of the file sets we use. This is a manually-created (i.e.
@@ -75,65 +75,9 @@ public class ManualTiffTest {
    private static final String IMAGE_COMMENT = "This is an image comment";
    private static final String SUMMARY_COMMENT = "This is a summary comment";
 
-   private static class ImageInfo {
-      private Coords coords_;
-      private Metadata metadata_;
-      // Maps x/y coordinates to the pixel intensity at that location.
-      private HashMap<Coords, Integer> values_;
-      public ImageInfo(Coords coords, Metadata metadata,
-            HashMap<Coords, Integer> values) {
-         coords_ = coords;
-         metadata_ = metadata;
-         values_ = values;
-      }
-
-      public Metadata getMetadata() {
-         return metadata_;
-      }
-
-      public void test(Datastore store) {
-         Image image = store.getImage(coords_);
-         Assert.assertNotNull("Image at " + coords_ + " is null", image);
-         for (Coords c : values_.keySet()) {
-            Assert.assertEquals(
-                  (int) values_.get(c),
-                  image.getIntensityAt(c.getIndex("x"), c.getIndex("y")));
-         }
-         Metadata metadata = image.getMetadata();
-         Assert.assertEquals(metadata_.getBinning(), metadata.getBinning());
-         Assert.assertEquals(metadata_.getBitDepth(), metadata.getBitDepth());
-         Assert.assertEquals(metadata_.getCamera(), metadata.getCamera());
-         Assert.assertEquals(metadata_.getElapsedTimeMs(), metadata.getElapsedTimeMs());
-         Assert.assertEquals(metadata_.getEmissionLabel(), metadata.getEmissionLabel());
-         Assert.assertEquals(metadata_.getExcitationLabel(), metadata.getExcitationLabel());
-         Assert.assertEquals(metadata_.getExposureMs(), metadata.getExposureMs());
-         Assert.assertEquals(metadata_.getGridColumn(), metadata.getGridColumn());
-         Assert.assertEquals(metadata_.getGridRow(), metadata.getGridRow());
-         Assert.assertEquals(metadata_.getIjType(), metadata.getIjType());
-         Assert.assertEquals(metadata_.getImageNumber(), metadata.getImageNumber());
-         Assert.assertEquals(metadata_.getInitialPositionList(), metadata.getInitialPositionList());
-         Assert.assertEquals(metadata_.getKeepShutterOpenChannels(), metadata.getKeepShutterOpenChannels());
-         Assert.assertEquals(metadata_.getKeepShutterOpenSlices(), metadata.getKeepShutterOpenSlices());
-         Assert.assertEquals(metadata_.getPixelAspect(), metadata.getPixelAspect());
-         Assert.assertEquals(metadata_.getPixelSizeUm(), metadata.getPixelSizeUm());
-         Assert.assertEquals(metadata_.getPixelType(), metadata.getPixelType());
-         Assert.assertEquals(metadata_.getPositionName(), metadata.getPositionName());
-         Assert.assertEquals(metadata_.getReceivedTime(), metadata.getReceivedTime());
-         Assert.assertEquals(metadata_.getROI(), metadata.getROI());
-         Assert.assertEquals(metadata_.getSource(), metadata.getSource());
-         Assert.assertEquals(metadata_.getStartTimeMs(), metadata.getStartTimeMs());
-         Assert.assertEquals(metadata_.getScopeData(), metadata.getScopeData());
-         Assert.assertEquals(metadata_.getUserData(), metadata.getUserData());
-         Assert.assertEquals(metadata_.getUUID(), metadata.getUUID());
-         Assert.assertEquals(metadata_.getXPositionUm(), metadata.getXPositionUm());
-         Assert.assertEquals(metadata_.getYPositionUm(), metadata.getYPositionUm());
-         Assert.assertEquals(metadata_.getZPositionUm(), metadata.getZPositionUm());
-      }
-   }
-
    static {
       SUMMARIES = new HashMap<String, SummaryMetadata>();
-      IMAGES = new HashMap<String, ArrayList<ImageInfo>>();
+      IMAGES = new HashMap<String, ArrayList<HelperImageInfo>>();
 
       DefaultSummaryMetadata.Builder summary = new DefaultSummaryMetadata.Builder();
       summary.name("alpha-2 manual").prefix("thisIsAPrefix")
@@ -201,42 +145,35 @@ public class ManualTiffTest {
          .xPositionUm(new Double(128)).yPositionUm(new Double(256))
          .zPositionUm(new Double(512));
 
-      HashMap<Coords, Integer> values = new HashMap<Coords, Integer>();
-      DefaultCoords.Builder coords = new DefaultCoords.Builder();
-      values.put(coords.index("x", 0).index("y", 0).build(), 3276);
-      values.put(coords.index("y", 8).build(), 5093);
-      values.put(coords.index("x", 4).build(), 1459);
-      values.put(coords.index("x", 11).build(), 3276);
-      values.put(coords.index("y", 13).build(), 2065);
-      IMAGES.put(ALPHA2_PATH, new ArrayList<ImageInfo>());
-      IMAGES.get(ALPHA2_PATH).add(new ImageInfo(imageCoords.build(),
-               imageMetadata.build(), values));
+      IMAGES.put(ALPHA2_PATH, new ArrayList<HelperImageInfo>());
+      IMAGES.get(ALPHA2_PATH).add(new HelperImageInfo(imageCoords.build(),
+               imageMetadata.build(), -232768128));
    }
 
    private void testSummary(String path, SummaryMetadata summary) {
       SummaryMetadata ref = SUMMARIES.get(path);
-      Assert.assertEquals(ref.getName(), summary.getName());
-      Assert.assertEquals(ref.getPrefix(), summary.getPrefix());
-      Assert.assertEquals(ref.getUserName(), summary.getUserName());
-      Assert.assertEquals(ref.getProfileName(), summary.getProfileName());
-      Assert.assertEquals(ref.getMicroManagerVersion(), summary.getMicroManagerVersion());
-      Assert.assertEquals(ref.getMetadataVersion(), summary.getMetadataVersion());
-      Assert.assertEquals(ref.getComputerName(), summary.getComputerName());
-      Assert.assertEquals(ref.getDirectory(), summary.getDirectory());
-      Assert.assertEquals(ref.getChannelGroup(), summary.getChannelGroup());
-      Assert.assertArrayEquals(ref.getChannelNames(), summary.getChannelNames());
-      Assert.assertEquals(ref.getZStepUm(), summary.getZStepUm());
-      Assert.assertEquals(ref.getWaitInterval(), summary.getWaitInterval());
-      Assert.assertArrayEquals(ref.getCustomIntervalsMs(), summary.getCustomIntervalsMs());
-      Assert.assertArrayEquals(ref.getAxisOrder(), summary.getAxisOrder());
-      Assert.assertEquals(ref.getIntendedDimensions(), summary.getIntendedDimensions());
-      Assert.assertEquals(ref.getStartDate(), summary.getStartDate());
-      Assert.assertArrayEquals(ref.getStagePositions(), summary.getStagePositions());
-      Assert.assertEquals(ref.getUserData(), summary.getUserData());
+      Assert.assertEquals("Summary name", ref.getName(), summary.getName());
+      Assert.assertEquals("Summary prefix", ref.getPrefix(), summary.getPrefix());
+      Assert.assertEquals("Summary user name", ref.getUserName(), summary.getUserName());
+      Assert.assertEquals("Summary profile name", ref.getProfileName(), summary.getProfileName());
+      Assert.assertEquals("Summary MM version", ref.getMicroManagerVersion(), summary.getMicroManagerVersion());
+      Assert.assertEquals("Summary metadata version", ref.getMetadataVersion(), summary.getMetadataVersion());
+      Assert.assertEquals("Summary computer name", ref.getComputerName(), summary.getComputerName());
+      Assert.assertEquals("Summary directory", ref.getDirectory(), summary.getDirectory());
+      Assert.assertEquals("Summary channel group", ref.getChannelGroup(), summary.getChannelGroup());
+      Assert.assertArrayEquals("Summary channel name", ref.getChannelNames(), summary.getChannelNames());
+      Assert.assertEquals("Summary Z-step", ref.getZStepUm(), summary.getZStepUm());
+      Assert.assertEquals("Summary wait interval", ref.getWaitInterval(), summary.getWaitInterval());
+      Assert.assertArrayEquals("Summary custom interval", ref.getCustomIntervalsMs(), summary.getCustomIntervalsMs());
+      Assert.assertArrayEquals("Summary axis order", ref.getAxisOrder(), summary.getAxisOrder());
+      Assert.assertEquals("Summary intended dims", ref.getIntendedDimensions(), summary.getIntendedDimensions());
+      Assert.assertEquals("Summary start date", ref.getStartDate(), summary.getStartDate());
+      Assert.assertArrayEquals("Summary stage positions", ref.getStagePositions(), summary.getStagePositions());
+      Assert.assertEquals("Summary user data", ref.getUserData(), summary.getUserData());
    }
 
    private void testImages(String path, Datastore store) {
-      for (ImageInfo info : IMAGES.get(path)) {
+      for (HelperImageInfo info : IMAGES.get(path)) {
          info.test(store);
       }
    }
@@ -281,14 +218,9 @@ public class ManualTiffTest {
       // Manufacture an Image.
       short[] pixels = new short[16*24];
       HashMap<Coords, Integer> values = new HashMap<Coords, Integer>();
-      Coords.CoordsBuilder valBuilder = manager.getCoordsBuilder();
       for (int i = 0; i < 16; ++i) {
-         valBuilder.index("y", i);
          for (int j = 0; j < 24; ++j) {
-            valBuilder.index("x", j);
-            short val = (short) (i * 100 + j);
-            values.put(valBuilder.build(), new Integer(val));
-            pixels[i * 24 + j] = val;
+            pixels[i * 24 + j] = (short) (i * 100 + j);;
          }
       }
       Coords.CoordsBuilder builder = manager.getCoordsBuilder();
@@ -296,7 +228,8 @@ public class ManualTiffTest {
       Metadata metadata = IMAGES.get(ALPHA2_PATH).get(0).getMetadata();
       Image image = new DefaultImage(pixels, 24, 16, 2, 1, builder.build(),
             metadata);
-      ImageInfo info = new ImageInfo(builder.build(), metadata, values);
+      HelperImageInfo info = new HelperImageInfo(builder.build(), metadata,
+            HelperImageInfo.hashPixels(image));
       try {
          store.putImage(image);
          SummaryMetadata summary = SUMMARIES.get(ALPHA2_PATH);
