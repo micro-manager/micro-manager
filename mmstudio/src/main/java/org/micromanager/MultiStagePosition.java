@@ -366,4 +366,11 @@ public final class MultiStagePosition {
       }
       return true;
    }
+
+   @Override
+   public String toString() {
+      return String.format("<MultiStagePosition %s with defaults XY %s, Z %s; grid %d/%d, properties %s>",
+            label_, defaultXYStage_, defaultZStage_, gridCol_, gridRow_,
+            properties_);
+   }
 }
