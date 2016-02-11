@@ -208,6 +208,9 @@ public class DefaultDatastore implements Datastore {
          }
       }
 
+      if (storage_ != null) {
+         storage_.putImage(image);
+      }
       bus_.post(new NewImageEvent(image, this));
 
       if (summary != null) {
@@ -325,6 +328,9 @@ public class DefaultDatastore implements Datastore {
    public synchronized void freeze() {
       if (!isFrozen_) {
          isFrozen_ = true;
+         if (storage_ != null) {
+            storage_.freeze();
+         }
          bus_.post(new DefaultDatastoreFrozenEvent());
       }
    }

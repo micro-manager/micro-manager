@@ -109,17 +109,8 @@ public class StorageSinglePlaneTiffSeries implements Storage {
       }
    }
 
-   @Subscribe
-   public void onNewImage(NewImageEvent event) {
-      try {
-         addImage(event.getImage());
-      }
-      catch (Exception e) {
-         ReportingUtils.logError(e, "Failed to add image to storage");
-      }
-   }
-
-   private void addImage(Image image) {
+   @Override
+   public void putImage(Image image) {
       // Require images to only have time/channel/z/position axes.
       for (String axis : image.getCoords().getAxes()) {
          if (!ALLOWED_AXES.contains(axis)) {
@@ -189,6 +180,12 @@ public class StorageSinglePlaneTiffSeries implements Storage {
             maxIndices_ = maxIndices_.copy().index(axis, coords.getIndex(axis)).build();
          }
       }
+   }
+
+   @Override
+   public void freeze() {
+      closeMetadataStreams();
+      isDatasetWritable_ = false;
    }
 
    // TODO: consider caching frequently-requested images to cut down on
@@ -535,16 +532,6 @@ public class StorageSinglePlaneTiffSeries implements Storage {
             "Summary");
    }
 
-   @Subscribe
-   public void onDatastoreFrozen(DatastoreFrozenEvent event) {
-      finish();
-   }
-
-   private void finish() {
-      closeMetadataStreams();
-      isDatasetWritable_ = false;
-   }
-
    private void closeMetadataStreams() {
       if (isDatasetWritable_) {
          try {
@@ -647,7 +634,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
                   // the disk, as amLoading_ is true.
                   coordsToFilename_.put(coords, fileName);
                   Image image = getImage(coords);
-                  addImage(image);
+                  putImage(image);
                } catch (Exception ex) {
                   ReportingUtils.showError(ex);
                }

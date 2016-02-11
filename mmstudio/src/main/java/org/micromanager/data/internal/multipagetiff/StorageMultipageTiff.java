@@ -221,9 +221,9 @@ public final class StorageMultipageTiff implements Storage {
       }
    }
 
-   @Subscribe
-   public void onNewImage(NewImageEvent event) {
-      DefaultImage image = (DefaultImage) event.getImage();
+   @Override
+   public void putImage(Image newImage) {
+      DefaultImage image = (DefaultImage) newImage;
       // Require images to only have time/channel/z/position axes.
       for (String axis : image.getCoords().getAxes()) {
          if (!ALLOWED_AXES.contains(axis)) {
@@ -235,25 +235,20 @@ public final class StorageMultipageTiff implements Storage {
          firstImage_ = image;
       }
       try {
-         putImage(image, false);
+         writeImage(image, false);
       }
       catch (Exception e) {
          ReportingUtils.showError(e, "Failed to write image at " + image.getCoords());
       }
    }
 
-   @Subscribe
-   public void onDatastoreFrozen(DatastoreFrozenEvent event) {
-      try {
-         finished();
-      }
-      catch (Exception e) {
-         ReportingUtils.logError(e, "Failed to finish saving");
-      }
+   @Override
+   public void freeze() {
+      finished();
    }
 
-   private void putImage(DefaultImage image, boolean waitForWritingToFinish) throws MMException, InterruptedException, ExecutionException, IOException {
-      putImage(image);
+   private void writeImage(DefaultImage image, boolean waitForWritingToFinish) throws MMException, InterruptedException, ExecutionException, IOException {
+      writeImage(image);
       if (waitForWritingToFinish) {
          Future f = writingExecutor_.submit(new Runnable() {
             @Override
@@ -272,7 +267,7 @@ public final class StorageMultipageTiff implements Storage {
     * finished-writing) image if our getImage() method is called before writing
     * is completed.
     */
-   private void putImage(DefaultImage image) throws MMException, IOException {
+   private void writeImage(DefaultImage image) throws MMException, IOException {
       if (!amInWriteMode_) {
          ReportingUtils.showError("Tried to write image to a finished data set");
          throw new MMException("This ImageFileManager is read-only.");

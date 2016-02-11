@@ -37,6 +37,18 @@ import java.util.List;
  */
 public interface Storage {
    /**
+    * Freeze the Storage, preventing any changes to its contents.
+    */
+   public void freeze();
+
+   /**
+    * Insert an Image into the Storage, so that it may be returned by later
+    * getImage() calls.
+    * @param image Image to be inserted.
+    */
+   public void putImage(Image image);
+
+   /**
     * Retrieve the Image located at the specified coordinates.
     * @param coords Coordinates specifying which image to retrieve
     * @return desired Image

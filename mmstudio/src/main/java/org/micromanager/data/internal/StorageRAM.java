@@ -70,7 +70,8 @@ public class StorageRAM implements RewritableStorage {
    /**
     * Add a new image to our storage, and update maxIndex_.
     */
-   private synchronized void addImage(Image image) {
+   @Override
+   public synchronized void putImage(Image image) {
       Coords coords = image.getCoords();
       coordsToImage_.put(coords, image);
       for (String axis : coords.getAxes()) {
@@ -82,6 +83,12 @@ public class StorageRAM implements RewritableStorage {
                   .build();
          }
       }
+   }
+
+   @Override
+   public void freeze() {
+      // The Datastore handles making certain writes don't occur, and we don't
+      // do anything special to "finish" storing data, so this is a no-op.
    }
 
    @Override
@@ -99,7 +106,7 @@ public class StorageRAM implements RewritableStorage {
       try {
          List<Image> images = studio.live().snap(false);
          Image result = images.get(0).copyAtCoords(coords);
-         addImage(result);
+         putImage(result);
          return result;
       }
       catch (Exception e) {
@@ -156,11 +163,6 @@ public class StorageRAM implements RewritableStorage {
    @Subscribe
    public void onNewSummary(NewSummaryMetadataEvent event) {
       summaryMetadata_ = event.getSummaryMetadata();
-   }
-
-   @Subscribe
-   public void onNewImage(NewImageEvent event) {
-      addImage(event.getImage());
    }
 
    @Override
