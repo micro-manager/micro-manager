@@ -62,6 +62,9 @@ import org.micromanager.asidispim.data.Devices.Sides;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
+import org.micromanager.data.SummaryMetadata.SummaryMetadataBuilder;
+import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.DisplaySettings.DisplaySettingsBuilder;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -173,7 +176,7 @@ public class AutofocusUtils {
             AutofocusPlugin afDevice = afManager.getAutofocusMethod();
 
             if (afDevice == null) {
-               throw new ASIdiSPIMException("Please define autofocus methods first");
+               throw new ASIdiSPIMException("Please define autofocus method in the Autofocus panel");
             }
             
             // select the appropriate algorithm
@@ -298,7 +301,7 @@ public class AutofocusUtils {
             String originalCamera = gui_.core().getCameraDevice();
             String acqName = "diSPIM Autofocus";
             
-            int highestIndex = -1;
+            int highestIndex;
 
             try {
                liveModeOriginally = gui_.live().getIsLiveModeOn();
@@ -332,6 +335,15 @@ public class AutofocusUtils {
                   store = gui_.data().createRAMDatastore();
                   ourWindow_ = gui_.displays().createDisplay(store);
                   ourWindow_.toFront();
+                  DisplaySettingsBuilder dsb = ourWindow_.getDisplaySettings().copy();
+                  ourWindow_.setDisplaySettings(dsb.
+                          channelColorMode(DisplaySettings.ColorMode.GRAYSCALE).
+                          build());
+                  SummaryMetadataBuilder smb = 
+                          DefaultSummaryMetadata.defaultBuilder(gui_, acqName);
+                  Coords dim = gui_.data().getCoordsBuilder().z(nrImages).
+                          channel(1).stagePosition(1).time(1).build();
+                  store.setSummaryMetadata(smb.intendedDimensions(dim).build());
                }
                gui_.core().clearCircularBuffer();
                gui_.core().initializeCircularBuffer();
@@ -397,7 +409,6 @@ public class AutofocusUtils {
                         // we are using the slow way to insert images, should be OK
                         // as long as the circular buffer is big enough
                         timg.tags.put("SlicePosition", galvoPos);
-
                         timg.tags.put("ZPositionUm", piezoCenter);
                         Image img = gui_.data().convertTaggedImage(timg);
                         Coords coords = gui_.data().getCoordsBuilder().z(counter).build();
@@ -482,7 +493,6 @@ public class AutofocusUtils {
                
                try {
                   caller.setCursor(Cursor.getDefaultCursor());
-
 
                   gui_.core().stopSequenceAcquisition(camera);
                   gui_.core().setCameraDevice(originalCamera);
