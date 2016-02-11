@@ -63,6 +63,7 @@ import org.micromanager.data.PipelineErrorException;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
 
+import org.micromanager.data.internal.CommentsHelper;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
@@ -79,7 +80,6 @@ import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.internal.inspector.CommentsPanel;
 import org.micromanager.display.RequestToCloseEvent;
 
 import org.micromanager.internal.utils.JavaUtils;
@@ -157,7 +157,7 @@ public class MMAcquisition {
       // Transfer any summary comment from the acquisition engine.
       if (summaryMetadata != null && MDUtils.hasComments(summaryMetadata)) {
          try {
-            CommentsPanel.setSummaryComment(store_,
+            CommentsHelper.setSummaryComment(store_,
                   MDUtils.getComments(summaryMetadata));
          }
          catch (JSONException e) {

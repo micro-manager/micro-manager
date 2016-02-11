@@ -53,7 +53,7 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.internal.inspector.CommentsPanel;
+import org.micromanager.data.internal.CommentsHelper;
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
@@ -375,7 +375,7 @@ public class MultipageTiffWriter {
     * OME/IJ metadata, and truncates the file to a reasonable length
     */
    public void close(String omeXML) throws IOException {
-      String summaryComment = CommentsPanel.getSummaryComment(
+      String summaryComment = CommentsHelper.getSummaryComment(
             masterStorage_.getDatastore());
       writeImageJMetadata(numChannels_, summaryComment);
 
@@ -909,11 +909,11 @@ public class MultipageTiffWriter {
       try {
          // Get the summary comments, then comments for each image.
          JSONObject comments = new JSONObject();
-         String summaryComments = CommentsPanel.getSummaryComment(
+         String summaryComments = CommentsHelper.getSummaryComment(
                masterStorage_.getDatastore());
          comments.put("Summary", summaryComments);
          for (Coords coords : masterStorage_.getUnorderedImageCoords()) {
-            String imageComments = CommentsPanel.getImageComment(
+            String imageComments = CommentsHelper.getImageComment(
                   masterStorage_.getDatastore(), coords);
             // HACK: produce a 1.4-style "coordinate string" to use as a key.
             // See also MDUtils.getLabel(), though we can't use it directly.

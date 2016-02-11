@@ -47,6 +47,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.data.internal.CommentsHelper;
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultMetadata;
@@ -55,7 +56,6 @@ import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.DefaultDisplayWindow;
-import org.micromanager.display.internal.inspector.CommentsPanel;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.MMScriptException;
@@ -368,11 +368,11 @@ public class MultipageTiffReader {
     */
    private void readComments()  {
       Datastore store = masterStorage_.getDatastore();
-      if (CommentsPanel.hasAnnotation(store)) {
+      if (CommentsHelper.hasAnnotation(store)) {
          // Already have a comments annotation set up; bail.
          return;
       }
-      CommentsPanel.createAnnotation(store);
+      CommentsHelper.createAnnotation(store);
       ByteBuffer buffer = null;
       try {
          long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.COMMENTS_OFFSET_HEADER, 24);
@@ -386,7 +386,7 @@ public class MultipageTiffReader {
          Coords.CoordsBuilder builder = new DefaultCoords.Builder();
          for (String key : MDUtils.getKeys(comments)) {
             if (key.equals("Summary")) {
-               CommentsPanel.setSummaryComment(store, comments.getString(key));
+               CommentsHelper.setSummaryComment(store, comments.getString(key));
                continue;
             }
             // Generate a Coords object from the key string. The string is
@@ -394,10 +394,10 @@ public class MultipageTiffReader {
             int[] indices = MDUtils.getIndices(key);
             builder.channel(indices[0]).z(indices[1]).time(indices[2])
                .stagePosition(indices[3]);
-            CommentsPanel.setImageComment(store, builder.build(),
+            CommentsHelper.setImageComment(store, builder.build(),
                   comments.getString(key));
          }
-         CommentsPanel.save(store);
+         CommentsHelper.save(store);
       }
       catch (JSONException e) {
          ReportingUtils.logError(e, "Unable to generate JSON from buffer " + getString(buffer));
@@ -408,7 +408,7 @@ public class MultipageTiffReader {
    }
 
    public void rewriteComments() throws IOException {
-      String comments = CommentsPanel.getSummaryComment(
+      String comments = CommentsHelper.getSummaryComment(
             masterStorage_.getDatastore());
       if (writingFinished_) {
          byte[] bytes = getBytesFromString(comments.toString());

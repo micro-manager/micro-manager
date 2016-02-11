@@ -43,12 +43,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
+import org.micromanager.data.internal.CommentsHelper;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.DefaultDisplayWindow;
-import org.micromanager.display.internal.inspector.CommentsPanel;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -173,7 +173,7 @@ public class OMEMetadata {
       // link Instrument and Image
       metadata_.setImageInstrumentRef(instrumentID, seriesIndex);
 
-      metadata_.setImageDescription(CommentsPanel.getSummaryComment(
+      metadata_.setImageDescription(CommentsHelper.getSummaryComment(
                mptStorage_.getDatastore()), seriesIndex);
 
       // TODO these don't necessarily have anything to do with how the user is
