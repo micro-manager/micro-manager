@@ -324,6 +324,7 @@ public class MetadataPanel extends InspectorPanel {
          }
       }
       display_ = display;
+      imageMetadataModel_.resetChangedKeys();
       if (display_ == null) {
          // Don't show stale metadata info.
          imageMetadataModel_.setMetadata(new JSONObject(), false);

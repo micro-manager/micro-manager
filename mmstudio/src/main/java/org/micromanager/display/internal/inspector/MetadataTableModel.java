@@ -134,4 +134,9 @@ class MetadataTableModel extends AbstractTableModel {
 
       fireTableDataChanged();
    }
+
+   public synchronized void resetChangedKeys() {
+      changedKeys_.clear();
+      priorMetadata_ = null;
+   }
 }
