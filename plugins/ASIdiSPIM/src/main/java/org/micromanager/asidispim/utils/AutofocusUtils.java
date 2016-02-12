@@ -411,7 +411,8 @@ public class AutofocusUtils {
                         timg.tags.put("SlicePosition", galvoPos);
                         timg.tags.put("ZPositionUm", piezoCenter);
                         Image img = gui_.data().convertTaggedImage(timg);
-                        Coords coords = gui_.data().getCoordsBuilder().z(counter).build();
+                        Coords coords = gui_.data().getCoordsBuilder().
+                                channel(0).time(0).stagePosition(0).z(counter).build();
                         img = img.copyAtCoords(coords);
                         if (store != null)
                            store.putImage(img);
@@ -457,16 +458,6 @@ public class AutofocusUtils {
                   r2 = Fitter.getRSquare(scoresToPlot[0], function, fitParms);
                }
                
-               // display the best scoring image in the debug stack if it exists
-               // or if not then in the snap/live window if it exists
-               if (showImages) {
-                  Coords coords = gui_.data().getCoordsBuilder().z(highestIndex).build();
-                  ourWindow_.setDisplayedImageTo(coords);
-               } else if (gui_.live().getDisplay() != null) {
-                  gui_.live().displayImage(gui_.data().convertTaggedImage(
-                          imageStore[highestIndex]));
-               }
-               
                if (showPlot) {
                   PlotUtils plotter = new PlotUtils(prefs_, "AutofocusUtils");
                   boolean[] showSymbols = {true, false};
@@ -478,7 +469,19 @@ public class AutofocusUtils {
                         "R^2 = " + NumberUtils.doubleToDisplayString(r2));
                   // TODO add annotations with piezo position, bestGalvoPosition, etc.
                }
-
+                              
+               // display the best scoring image in the debug stack if it exists
+               // or if not then in the snap/live window if it exists
+               if (showImages) {
+                  if (store != null)
+                     store.freeze();
+                  Coords coords = MMUtils.zeroedCoordsBuilder(gui_).z(highestIndex).build();
+                  ourWindow_.setDisplayedImageTo(coords);
+               } else if (gui_.live().getDisplay() != null) {
+                  gui_.live().displayImage(gui_.data().convertTaggedImage(
+                          imageStore[highestIndex]));
+               }
+               
             } catch (ASIdiSPIMException ex) {
                throw ex;
             } catch (Exception ex) {

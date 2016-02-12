@@ -42,7 +42,7 @@ public class DefaultSummaryMetadata {
               computerName(hostname).
               metadataVersion(null).
               microManagerVersion(gui.compat().getVersion()).
-              name(name).
+              prefix(name).
               profileName(gui.profile().getProfileName()).
               startDate((new Date().toString()));
    }
