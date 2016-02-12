@@ -282,7 +282,6 @@ public class MMVirtualStack extends ij.VirtualStack {
     * ImagePlus object has the right dimensions to encompass these coordinates.
     */
    public void setCoords(Coords coords) {
-      curCoords_ = coords;
       int numChannels = Math.max(1, store_.getAxisLength(Coords.CHANNEL));
       int numFrames = Math.max(1, store_.getAxisLength(Coords.TIME));
       int numSlices = Math.max(1, store_.getAxisLength(Coords.Z));
@@ -306,6 +305,32 @@ public class MMVirtualStack extends ij.VirtualStack {
       if (z != plus_.getSlice() || time != plus_.getFrame() ||
             (!isCompositeMode && channel != plus_.getChannel())) {
          plus_.setPosition(channel, z, time);
+      }
+      // HACK: if we're in a composite view mode and any non-Z/Time/Channel
+      // axis has changed, ImageJ doesn't know about it and won't bother
+      // redrawing, so we'll need to force a redraw.
+      boolean mustForceRedraw = false;
+      if (isCompositeMode) {
+         for (String axis : coords.getAxes()) {
+            if (!axis.equals(Coords.CHANNEL) && !axis.equals(Coords.TIME) &&
+                  !axis.equals(Coords.Z) &&
+                  coords.getIndex(axis) != curCoords_.getIndex(axis)) {
+               mustForceRedraw = true;
+               break;
+            }
+         }
+      }
+      curCoords_ = coords;
+      if (mustForceRedraw) {
+         // Manually grab the pixels for each channel and set them into the
+         // corresponding ImageProcessor.
+         for (int i = 0; i < numChannels; ++i) {
+            // ImageJ uses 1-indexing...
+            ImageProcessor proc = ((CompositeImage) plus_).getProcessor(i + 1);
+            Object pixels = getPixels(
+                  plus_.getCurrentSlice() - plus_.getChannel() + i + 1);
+            proc.setPixels(pixels);
+         }
       }
       displayBus_.post(new StackPositionChangedEvent(curCoords_));
    }
