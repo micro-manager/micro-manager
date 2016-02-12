@@ -844,8 +844,12 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
       drawMapping(g2d, box, cursorLowPositions_[curComponent_],
             cursorHighPositions_[curComponent_], gamma_);
 
+      g.setColor(Color.GRAY);
+      if (isLogScale_) {
+         g.drawString("LOG", box.x + box.width - 30, box.y + 15);
+      }
+
       if (overlayText_ != null) {
-         g.setColor(Color.GRAY);
          g.drawString(overlayText_, box.x + 25, box.y + box.height / 2);
       }
 
