@@ -18,6 +18,9 @@
 //
 package org.micromanager.acquisition.internal;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
 import javax.swing.SwingUtilities;
 
 import org.micromanager.AcquisitionManager;
@@ -36,7 +39,7 @@ import org.micromanager.internal.utils.MMScriptException;
 
 /**
  * TODO: this class still depends on MMStudio for the testForAbortRequests
- * method, and for access to the LogManager.
+ * method, and for access to the profile and the LogManager.
  */
 public class DefaultAcquisitionManager implements AcquisitionManager {
    private Studio studio_;
@@ -197,5 +200,21 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
 
       engine_.setSequenceSettings(ss);
       mdaDialog_.updateGUIContents();
+   }
+
+   @Override
+   public SummaryMetadata generateSummaryMetadata() {
+      String computerName = null;
+      try {
+         computerName = InetAddress.getLocalHost().getHostName();
+      }
+      catch (UnknownHostException e) {}
+      return new DefaultSummaryMetadata.Builder()
+         .userName(System.getProperty("user.name"))
+         .profileName(studio_.profile().getProfileName())
+         .microManagerVersion(studio_.compat().getVersion())
+         .metadataVersion(DefaultSummaryMetadata.METADATA_VERSION)
+         .computerName(computerName)
+         .build();
    }
 }

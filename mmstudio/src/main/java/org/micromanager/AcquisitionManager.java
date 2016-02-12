@@ -147,4 +147,13 @@ public interface AcquisitionManager {
     * @param settings acquisition settings
     */
    public void setAcquisitionSettings(SequenceSettings settings);
+
+   /**
+    * Generate a new SummaryMetadata that contains pre-populated fields based
+    * on the current state of the program. The following fields will be set:
+    * userName, profileName, microManagerVersion, metadataVersion,
+    * computerName.
+    * @return A pre-populated SummaryMetadata.
+    */
+   public SummaryMetadata generateSummaryMetadata();
 }
