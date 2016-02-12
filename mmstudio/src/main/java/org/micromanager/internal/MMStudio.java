@@ -57,6 +57,7 @@ import mmcorej.DeviceType;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 
+import org.micromanager.acquisition.internal.DefaultAcquisitionManager;
 import org.micromanager.AcquisitionManager;
 import org.micromanager.Album;
 import org.micromanager.AutofocusManager;
@@ -138,7 +139,7 @@ import org.micromanager.internal.utils.WaitDialog;
  * Implements the Studio (i.e. primary API) and does various other
  * tasks that should probably be refactored out at some point.
  */
-public class MMStudio implements Studio, CompatibilityInterface, AcquisitionManager, PositionListManager {
+public class MMStudio implements Studio, CompatibilityInterface, PositionListManager {
 
    private static final long serialVersionUID = 3556500289598574541L;
    private static final String OPEN_ACQ_DIR = "openDataDir";
@@ -159,6 +160,7 @@ public class MMStudio implements Studio, CompatibilityInterface, AcquisitionMana
    private PropertyEditor propertyBrowser_;
    private CalibrationListDlg calibrationListDlg_;
    private AcqControlDlg acqControlWin_;
+   private AcquisitionManager acquisitionManager_;
    private DataManager dataManager_;
    private DisplayManager displayManager_;
    private DefaultPluginManager pluginManager_;
@@ -425,6 +427,8 @@ public class MMStudio implements Studio, CompatibilityInterface, AcquisitionMana
       // This window needs to be created in order to properly set the 
       // "ChannelGroup" based on the Multi-D parameters
       acqControlWin_ = new AcqControlDlg(engine_, studio_);
+      acquisitionManager_ = new DefaultAcquisitionManager(this, engine_,
+            acqControlWin_);
 
       frame_.initializeConfigPad();
 
@@ -821,13 +825,6 @@ public class MMStudio implements Studio, CompatibilityInterface, AcquisitionMana
       if (posListDlg_ != null) {
          posListDlg_.markPosition(false);
       }
-   }
-
-   @Override
-   public boolean isAcquisitionRunning() {
-      if (engine_ == null)
-         return false;
-      return engine_.isAcquisitionRunning();
    }
 
    @Override
@@ -1239,7 +1236,7 @@ public class MMStudio implements Studio, CompatibilityInterface, AcquisitionMana
       }
    }
    
-   private void testForAbortRequests() throws MMScriptException {
+   public void testForAbortRequests() throws MMScriptException {
       if (scriptPanel_ != null) {
          if (scriptPanel_.stopRequestPending()) {
             throw new MMScriptException("Script interrupted by the user!");
@@ -1367,110 +1364,6 @@ public class MMStudio implements Studio, CompatibilityInterface, AcquisitionMana
       return DaytimeNighttime.getBackgroundMode();
    }
 
-   
-   @Override
-   public Datastore runAcquisition() throws MMScriptException {
-      return executeAcquisition(null, true);
-   }
-
-   @Override
-   public Datastore runAcquisitionNonblocking() throws MMScriptException {
-      return executeAcquisition(null, false);
-   }
-
-   @Override
-   public Datastore runAcquisitionWithSettings(SequenceSettings settings,
-         boolean shouldBlock) throws MMScriptException {
-      return executeAcquisition(settings, shouldBlock);
-   }
-
-   private Datastore executeAcquisition(SequenceSettings settings, boolean isBlocking) throws MMScriptException {
-      if (SwingUtilities.isEventDispatchThread()) {
-         throw new MMScriptException("Acquisition can not be run from this (EDT) thread");
-      }
-      testForAbortRequests();
-      Datastore store = null;
-      if (settings == null) {
-         // Use the MDA dialog's runAcquisition logic.
-         if (acqControlWin_ != null) {
-            store = acqControlWin_.runAcquisition();
-         }
-         else {
-            // I'm not sure how this could ever happen, but we have null
-            // checks for acqControlWin_ everywhere in this code, with no
-            // explanation.
-            studio_.logs().showError("Unable to run acquisition as MDA dialog is null");
-         }
-      }
-      else {
-         // Use the provided settings.
-         engine_.setSequenceSettings(settings);
-         try {
-            store = engine_.acquire();
-         }
-         catch (MMException e) {
-            throw new MMScriptException(e.toString());
-         }
-      }
-      if (isBlocking) {
-         try {
-            while (engine_.isAcquisitionRunning()) {
-               Thread.sleep(50);
-            }
-         }
-         catch (InterruptedException e) {
-            ReportingUtils.showError(e);
-         }
-      }
-      return store;
-   }
-
-   @Override
-   public void haltAcquisition() {
-      engine_.abortRequest();
-   }
-
-   @Override
-   public Datastore runAcquisition(String name, String root)
-         throws MMScriptException {
-      testForAbortRequests();
-      if (acqControlWin_ != null) {
-         Datastore store = acqControlWin_.runAcquisition(name, root);
-         try {
-            while (!store.getIsFrozen()) {
-               Thread.sleep(100);
-            }
-         } catch (InterruptedException e) {
-            ReportingUtils.showError(e);
-         }
-         return store;
-      } else {
-         throw new MMScriptException(
-               "Acquisition setup window must be open for this command to work.");
-      }
-   }
-
-   /**
-    * Loads acquisition settings from file
-    * @param path file containing previously saved acquisition settings
-    * @throws MMScriptException 
-    */
-   @Override
-   public void loadAcquisition(String path) throws MMScriptException {
-      testForAbortRequests();
-      try {
-         engine_.shutdown();
-
-         // load protocol
-         if (acqControlWin_ != null) {
-            acqControlWin_.loadAcqSettingsFromFile(path);
-         }
-      } catch (MMScriptException ex) {
-         throw new MMScriptException(ex.getMessage());
-      }
-
-   }
-
    @Override
    public void setPositionList(PositionList pl) throws MMScriptException {
       testForAbortRequests();
@@ -1545,42 +1438,6 @@ public class MMStudio implements Studio, CompatibilityInterface, AcquisitionMana
          ReportingUtils.logError(e);
          return null;
       }
-   }
-   
-   @Override
-   public void setPause(boolean state) {
-	   getAcquisitionEngine().setPause(state);
-   }
-
-   @Override
-   public boolean isPaused() {
-	   return getAcquisitionEngine().isPaused();
-   }
-   
-   @Override
-   public void attachRunnable(int frame, int position, int channel, int slice, Runnable runnable) {
-	   getAcquisitionEngine().attachRunnable(frame, position, channel, slice, runnable);
-   }
-
-   @Override
-   public void clearRunnables() {
-	   getAcquisitionEngine().clearRunnables();
-   }
-   
-   @Override
-   public SequenceSettings getAcquisitionSettings() {
-	   if (engine_ == null)
-		   return new SequenceSettings();
-	   return engine_.getSequenceSettings();
-   }
-
-   @Override
-   public void setAcquisitionSettings(SequenceSettings ss) {
-      if (engine_ == null)
-         return;
-      
-      engine_.setSequenceSettings(ss);
-      acqControlWin_.updateGUIContents();
    }
 
    @Override
@@ -1746,7 +1603,7 @@ public class MMStudio implements Studio, CompatibilityInterface, AcquisitionMana
 
    @Override
    public AcquisitionManager acquisitions() {
-      return this;
+      return acquisitionManager_;
    }
 
    @Override

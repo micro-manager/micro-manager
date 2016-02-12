@@ -23,6 +23,8 @@ package org.micromanager;
 
 
 import org.micromanager.data.Datastore;
+import org.micromanager.data.Metadata;
+import org.micromanager.data.SummaryMetadata;
 
 // These ought not be part of the public API and methods that refer to them are
 // deprecated.
@@ -104,12 +106,6 @@ public interface AcquisitionManager {
    public boolean isAcquisitionRunning();
 
    /**
-    * Returns true if user has chosen to hide MDA window when it runs.
-    * @return true if user has chosen to hide MDA window
-    */
-   public boolean getHideMDADisplayOption();
-
-   /**
     * Pause/Unpause a running acquisition
     * @param state true if paused, false if no longer paused
     */
@@ -144,7 +140,7 @@ public interface AcquisitionManager {
     * Return current acquisition settings
     * @return acquisition settings instance
     */
-   SequenceSettings getAcquisitionSettings();
+   public SequenceSettings getAcquisitionSettings();
 
    /**
     * Apply new acquisition settings

@@ -152,6 +152,12 @@ public interface CompatibilityInterface {
    public String getVersion();
 
    /**
+    * Returns true if user has chosen to hide MDA window when it runs.
+    * @return true if user has chosen to hide MDA window
+    */
+   public boolean getHideMDADisplayOption();
+
+   /**
     * One of the allowed inputs to setBackgroundStyle(), to set the program
     * to a bright, high-contrast "daytime" mode.
     */
