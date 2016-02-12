@@ -161,7 +161,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       // Add our own keyboard manager that handles Micro-Manager shortcuts
       MMKeyDispatcher mmKD = new MMKeyDispatcher();
       KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(mmKD);
-      DropTarget dropTarget = new DropTarget(this, new DragDropUtil());
+      DropTarget dropTarget = new DropTarget(this, new DragDropUtil(studio_));
 
       resetPosition();
       setExitStrategy(OptionsDlg.getShouldCloseOnExit());
