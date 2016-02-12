@@ -23,6 +23,7 @@ package org.micromanager;
 
 
 import org.micromanager.data.Datastore;
+import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
 
@@ -156,4 +157,16 @@ public interface AcquisitionManager {
     * @return A pre-populated SummaryMetadata.
     */
    public SummaryMetadata generateSummaryMetadata();
+
+   /**
+    * Generate a new Metadata that contains pre-populated fields based on the
+    * current state of the program and the provided Image. The following fields
+    * will be set: binning, bitDepth, camera, ijType, pixelType, receivedTime
+    * (to the current time), uuid, xPositionUm, yPositionUm, zPositionUm (all
+    * three based on the current stage position(s).
+    * @return A pre-populated Metadata.
+    * @throws Exception If there were any errors communicating with the Core to
+    * get required values.
+    */
+   public Metadata generateMetadata(Image image) throws Exception;
 }

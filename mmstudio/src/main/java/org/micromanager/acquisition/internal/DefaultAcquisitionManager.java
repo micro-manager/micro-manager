@@ -18,13 +18,19 @@
 //
 package org.micromanager.acquisition.internal;
 
+import ij.ImagePlus;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.UUID;
 
 import javax.swing.SwingUtilities;
 
 import org.micromanager.AcquisitionManager;
 import org.micromanager.data.Datastore;
+import org.micromanager.data.Image;
 import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.data.Metadata;
@@ -38,10 +44,12 @@ import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.MMScriptException;
 
 /**
- * TODO: this class still depends on MMStudio for the testForAbortRequests
- * method, and for access to the profile and the LogManager.
+ * TODO: this class still depends on MMStudio for many things.
  */
 public class DefaultAcquisitionManager implements AcquisitionManager {
+   // NOTE: should match the format used by the acquisition engine.
+   private static final SimpleDateFormat formatter_ = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+
    private Studio studio_;
    private AcquisitionWrapperEngine engine_;
    private AcqControlDlg mdaDialog_;
@@ -215,6 +223,48 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
          .microManagerVersion(studio_.compat().getVersion())
          .metadataVersion(DefaultSummaryMetadata.METADATA_VERSION)
          .computerName(computerName)
+         .build();
+   }
+
+   @Override
+   public Metadata generateMetadata(Image image) throws Exception {
+      String camera = studio_.core().getCameraDevice();
+      int ijType = -1;
+      String pixelType = null;
+      if (image.getNumComponents() == 1) {
+         if (image.getBytesPerPixel() == 1) {
+            ijType = ImagePlus.GRAY8;
+            pixelType = "GRAY8";
+         }
+         else if (image.getBytesPerPixel() == 2) {
+            ijType = ImagePlus.GRAY16;
+            pixelType = "GRAY16";
+         }
+         else {
+            throw new IllegalArgumentException("Unrecognized pixel type");
+         }
+      }
+      else {
+         if (image.getBytesPerPixel() == 4) {
+            ijType = ImagePlus.COLOR_RGB;
+            pixelType = "RGB32";
+         }
+         else {
+            throw new IllegalArgumentException("Unrecognized pixel type");
+         }
+      }
+      return new DefaultMetadata.Builder()
+         // TODO: do we have a better way to get integer property values?
+         .binning(Integer.parseInt(studio_.core().getProperty(camera, "Binning")))
+         .bitDepth((int) studio_.core().getImageBitDepth())
+         .camera(camera)
+         .ijType(ijType)
+         .pixelType(pixelType)
+         .receivedTime(formatter_.format(new Date()))
+         .uuid(UUID.randomUUID())
+         .xPositionUm(studio_.core().getXYStagePosition().x)
+         .yPositionUm(studio_.core().getXYStagePosition().y)
+         .zPositionUm(studio_.core().getPosition())
          .build();
    }
 }
