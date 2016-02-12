@@ -35,7 +35,6 @@ import org.micromanager.data.Datastore;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
-import org.micromanager.internal.utils.AutofocusManager;
 import org.micromanager.internal.utils.ChannelSpec;
 import org.micromanager.internal.utils.ContrastSettings;
 import org.micromanager.internal.utils.MMException;
@@ -54,9 +53,6 @@ public interface AcquisitionEngine {
    public static final DecimalFormat FMT2 = new DecimalFormat("#0.00");
    public static final String DEFAULT_ROOT_NAME = "C:/AcquisitionData";
    
-   // initialization
-   public void setCore(CMMCore core_, AutofocusManager afMgr);
-
    /**
     * Sets the global position list attached to the parent Micro-Manager gui.
     */

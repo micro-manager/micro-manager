@@ -30,7 +30,6 @@ import org.micromanager.data.Datastore;
 
 // These ought not be part of the public API and methods that refer to them are
 // deprecated.
-import org.micromanager.internal.utils.AutofocusManager;
 import org.micromanager.internal.utils.MMScriptException;
 
 
@@ -81,12 +80,6 @@ public interface CompatibilityInterface {
     * Save current configuration
     */
    public void saveConfigPresets();
-
-   /**
-    * Currently active autofocus device (can be either a Java or C++ coded device).
-    * @return currently active autofocus device
-    */
-   public AutofocusPlugin getAutofocus();
 
    /**
     * Shows the dialog with options for the currently active autofocus device.
@@ -147,11 +140,6 @@ public interface CompatibilityInterface {
     * Make the main window the frontmost, active window again
     */
    public void makeActive();
-
-   /**
-    * @return the currently selected AutoFocusManger object
-    */
-   public AutofocusManager getAutofocusManager();
 
    /**
     * @return the currently running Micro-Manager version

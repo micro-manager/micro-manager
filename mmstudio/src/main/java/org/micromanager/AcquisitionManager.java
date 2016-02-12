@@ -26,7 +26,6 @@ import org.micromanager.data.Datastore;
 
 // These ought not be part of the public API and methods that refer to them are
 // deprecated.
-import org.micromanager.internal.utils.AutofocusManager;
 import org.micromanager.internal.utils.MMScriptException;
 
 

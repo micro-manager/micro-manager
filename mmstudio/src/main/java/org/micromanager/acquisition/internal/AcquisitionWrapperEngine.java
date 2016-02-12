@@ -36,7 +36,6 @@ import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.AcqOrderMode;
-import org.micromanager.internal.utils.AutofocusManager;
 import org.micromanager.internal.utils.ChannelSpec;
 import org.micromanager.internal.utils.ContrastSettings;
 import org.micromanager.internal.utils.MMException;
@@ -145,7 +144,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          // Start up the acquisition engine
          BlockingQueue<TaggedImage> engineOutputQueue = getAcquisitionEngine2010().run(
                  acquisitionSettings, true, posListToUse,
-                 studio_.getAutofocusManager().getDevice());
+                 studio_.getAutofocusManager().getAutofocusMethod());
          summaryMetadata_ = getAcquisitionEngine2010().getSummaryMetadata();
 
          boolean shouldShow = !AcqControlDlg.getShouldHideMDADisplay();
@@ -504,10 +503,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
 
 //////////////////// Setters and Getters ///////////////////////////////
-   @Override
-   public void setCore(CMMCore core_, AutofocusManager afMgr) {
-      this.core_ = core_;
-   }
 
    @Override
    public void setPositionList(PositionList posList) {
@@ -517,6 +512,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    @Override
    public void setParentGUI(Studio parent) {
       studio_ = parent;
+      core_ = studio_.core();
       studio_.events().registerForEvents(this);
    }
 

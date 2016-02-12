@@ -54,6 +54,7 @@ import org.micromanager.asidispim.data.Properties;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.asidispim.fit.Fitter;
 
+import org.micromanager.AutofocusManager;
 import org.micromanager.Studio;
 import org.micromanager.asidispim.ASIdiSPIM;
 import org.micromanager.asidispim.data.AcquisitionSettings;
@@ -62,7 +63,6 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.internal.utils.AutofocusManager;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -169,8 +169,13 @@ public class AutofocusUtils {
             double bestPiezoPosition = 0;
             
             AutofocusManager afManager = gui_.getAutofocusManager();
-            afManager.selectDevice("OughtaFocus");
-            AutofocusPlugin afDevice = afManager.getDevice();
+            for (AutofocusPlugin plugin : gui_.plugins().getAutofocusPlugins().values()) {
+               if (plugin.getName().equals("OughtaFocus")) {
+                  afManager.setAutofocusMethod(plugin);
+                  break;
+               }
+            }
+            AutofocusPlugin afDevice = afManager.getAutofocusMethod();
 
             if (afDevice == null) {
                throw new ASIdiSPIMException("Please define autofocus methods first");
@@ -381,7 +386,7 @@ public class AutofocusUtils {
                         ip = ip.crop();
                      }
                      try {
-                        focusScores[counter] = gui_.getAutofocusManager().getDevice().computeScore(ip);
+                        focusScores[counter] = gui_.getAutofocusManager().getAutofocusMethod().computeScore(ip);
                      } catch (Exception ex) {
                         done = true;
                         throw new ASIdiSPIMException("Selected autofocus device didn't return a focus score.");

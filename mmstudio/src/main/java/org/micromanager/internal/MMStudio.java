@@ -59,6 +59,7 @@ import mmcorej.StrVector;
 
 import org.micromanager.AcquisitionManager;
 import org.micromanager.Album;
+import org.micromanager.AutofocusManager;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.CompatibilityInterface;
 import org.micromanager.data.DataManager;
@@ -116,7 +117,7 @@ import org.micromanager.internal.navigation.ZWheelListener;
 import org.micromanager.internal.pipelineinterface.PipelineFrame;
 import org.micromanager.internal.positionlist.PositionListDlg;
 import org.micromanager.internal.script.ScriptPanel;
-import org.micromanager.internal.utils.AutofocusManager;
+import org.micromanager.internal.utils.DefaultAutofocusManager;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs;
@@ -166,7 +167,7 @@ public class MMStudio implements Studio, CompatibilityInterface, AcquisitionMana
 
    private List<Component> MMFrames_
            = Collections.synchronizedList(new ArrayList<Component>());
-   private AutofocusManager afMgr_;
+   private DefaultAutofocusManager afMgr_;
    private String sysConfigFile_;
    private String startupScriptFile_;
 
@@ -364,10 +365,9 @@ public class MMStudio implements Studio, CompatibilityInterface, AcquisitionMana
       dataManager_ = new DefaultDataManager();
       displayManager_ = new DefaultDisplayManager(this);
 
-      afMgr_ = new AutofocusManager(studio_);
+      afMgr_ = new DefaultAutofocusManager(studio_);
       pluginManager_ = new DefaultPluginManager(studio_, menuBar_);
 
-      engine_.setCore(core_, afMgr_);
       posList_ = new PositionList();
       engine_.setPositionList(posList_);
       // load (but do no show) the scriptPanel
@@ -440,12 +440,7 @@ public class MMStudio implements Studio, CompatibilityInterface, AcquisitionMana
 
       String afDevice = profile().getString(MMStudio.class, AUTOFOCUS_DEVICE, "");
       if (afMgr_.hasDevice(afDevice)) {
-         try {
-            afMgr_.selectDevice(afDevice);
-         } catch (MMException ex) {
-            // this error should never happen
-            ReportingUtils.showError(ex);
-         }
+         afMgr_.setMethodByName(afDevice);
       }
 
       zWheelListener_ = new ZWheelListener(core_, studio_);
@@ -908,7 +903,7 @@ public class MMStudio implements Studio, CompatibilityInterface, AcquisitionMana
             posListDlg_.rebuildAxisList();
          }
 
-         frame_.updateAutofocusButtons(afMgr_.getDevice() != null);
+         frame_.updateAutofocusButtons(afMgr_.getAutofocusMethod() != null);
          updateGUI(true);
       } catch (Exception e) {
          ReportingUtils.showError(e);
@@ -952,7 +947,7 @@ public class MMStudio implements Studio, CompatibilityInterface, AcquisitionMana
             frame_.setBinSize(binSize);
          }
 
-         frame_.updateAutofocusButtons(afMgr_.getDevice() != null);
+         frame_.updateAutofocusButtons(afMgr_.getAutofocusMethod() != null);
 
          ConfigGroupPad pad = frame_.getConfigPad();
          // state devices
@@ -1062,9 +1057,9 @@ public class MMStudio implements Studio, CompatibilityInterface, AcquisitionMana
       profile().setString(MMStudio.class, OPEN_ACQ_DIR, openAcqDirectory_);
 
       // NOTE: do not save auto shutter state
-      if (afMgr_ != null && afMgr_.getDevice() != null) {
+      if (afMgr_ != null && afMgr_.getAutofocusMethod() != null) {
          profile().setString(MMStudio.class,
-               AUTOFOCUS_DEVICE, afMgr_.getDevice().getName());
+               AUTOFOCUS_DEVICE, afMgr_.getAutofocusMethod().getName());
       }
    }
 
@@ -1237,14 +1232,14 @@ public class MMStudio implements Studio, CompatibilityInterface, AcquisitionMana
    }
      
    public void autofocusNow() {
-      if (afMgr_.getDevice() != null) {
+      if (afMgr_.getAutofocusMethod() != null) {
          new Thread() {
 
             @Override
             public void run() {
                try {
                   live().setSuspended(true);
-                  afMgr_.getDevice().fullFocus();
+                  afMgr_.getAutofocusMethod().fullFocus();
                   live().setSuspended(false);
                } catch (MMException ex) {
                   ReportingUtils.logError(ex);
@@ -1613,15 +1608,10 @@ public class MMStudio implements Studio, CompatibilityInterface, AcquisitionMana
    public void setAcquisitionEngine(AcquisitionWrapperEngine eng) {
       engine_ = eng;
    }
-   
-   @Override
-   public AutofocusPlugin getAutofocus() {
-      return afMgr_.getDevice();
-   }
 
    @Override
    public void showAutofocusDialog() {
-      if (afMgr_.getDevice() != null) {
+      if (afMgr_.getAutofocusMethod() != null) {
          afMgr_.showOptionsDialog();
       }
    }

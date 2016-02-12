@@ -73,11 +73,11 @@ public class AutofocusPropertyEditor extends MMDialog {
    
    private static final String PREF_SHOW_READONLY = "show_readonly";
    private final JScrollPane scrollPane_;
-   private final AutofocusManager afMgr_;
+   private final DefaultAutofocusManager afMgr_;
    private final JButton btnClose;
    private JComboBox methodCombo_;
    
-   public AutofocusPropertyEditor(AutofocusManager afmgr) {
+   public AutofocusPropertyEditor(DefaultAutofocusManager afmgr) {
       super("autofocus property editor");
       afMgr_ = afmgr;
       setModal(false);
@@ -190,8 +190,8 @@ public class AutofocusPropertyEditor extends MMDialog {
          for (String devName : afDevs) {
             methodCombo_.addItem(devName);
          }
-         if (afMgr_.getDevice() != null) {
-            methodCombo_.setSelectedItem(afMgr_.getDevice().getName());
+         if (afMgr_.getAutofocusMethod() != null) {
+            methodCombo_.setSelectedItem(afMgr_.getAutofocusMethod().getName());
          } 
          methodCombo_.addActionListener(new ActionListener() {
             @Override
@@ -209,13 +209,9 @@ public class AutofocusPropertyEditor extends MMDialog {
    }
    
    protected void changeAFMethod(String focusDev) {
-      try  {
-         cellEditor_.stopEditing();
-         afMgr_.selectDevice(focusDev);
-      } catch (MMException e) {
-         handleException(e);
-      }
-      
+      cellEditor_.stopEditing();
+      afMgr_.setMethodByName(focusDev);
+
       updateStatus();
    }
 
@@ -224,7 +220,7 @@ public class AutofocusPropertyEditor extends MMDialog {
    }
 
    public void rebuild() {
-      String afDevice = afMgr_.getDevice().getName();
+      String afDevice = afMgr_.getAutofocusMethod().getName();
       ActionListener l = methodCombo_.getActionListeners()[0];
       
       try {
@@ -249,8 +245,8 @@ public class AutofocusPropertyEditor extends MMDialog {
          if (afDevice != null)
             methodCombo_.setSelectedItem(afDevice);
          else
-            if (afMgr_.getDevice() != null) {
-               methodCombo_.setSelectedItem(afMgr_.getDevice().getName());
+            if (afMgr_.getAutofocusMethod() != null) {
+               methodCombo_.setSelectedItem(afMgr_.getAutofocusMethod().getName());
          }
       }
    }
@@ -270,9 +266,9 @@ public class AutofocusPropertyEditor extends MMDialog {
             AutofocusPropertyEditor.class, PREF_SHOW_READONLY, 
               showReadonlyCheckBox_.isSelected());
       if (afMgr_ != null)
-         if (afMgr_.getDevice() != null) {
-            afMgr_.getDevice().applySettings();
-            afMgr_.getDevice().saveSettings();
+         if (afMgr_.getAutofocusMethod() != null) {
+            afMgr_.getAutofocusMethod().applySettings();
+            afMgr_.getAutofocusMethod().saveSettings();
          }
    }
 
@@ -328,14 +324,14 @@ public class AutofocusPropertyEditor extends MMDialog {
       @Override
       public void setValueAt(Object value, int row, int col) {
          PropertyItem item = propList_.get(row);
-         if (col == 1 && afMgr_.getDevice() != null) {
+         if (col == 1 && afMgr_.getAutofocusMethod() != null) {
             try {
                if (item.isInteger()) {
-                  afMgr_.getDevice().setPropertyValue(item.name, NumberUtils.intStringDisplayToCore(value));
+                  afMgr_.getAutofocusMethod().setPropertyValue(item.name, NumberUtils.intStringDisplayToCore(value));
                } else if (item.isFloat()) {
-                  afMgr_.getDevice().setPropertyValue(item.name, NumberUtils.doubleStringDisplayToCore(value));
+                  afMgr_.getAutofocusMethod().setPropertyValue(item.name, NumberUtils.doubleStringDisplayToCore(value));
                } else  {
-                  afMgr_.getDevice().setPropertyValue(item.name, value.toString());
+                  afMgr_.getAutofocusMethod().setPropertyValue(item.name, value.toString());
                }
 
                refresh();
@@ -363,13 +359,13 @@ public class AutofocusPropertyEditor extends MMDialog {
       }
             
       public void refresh(){
-         if (afMgr_.getDevice() == null)
+         if (afMgr_.getAutofocusMethod() == null)
             return;
          
          try {            
         	
             for (PropertyItem item : propList_) {
-               item.value = afMgr_.getDevice().getPropertyValue(item.name);
+               item.value = afMgr_.getAutofocusMethod().getPropertyValue(item.name);
             }
         	
             this.fireTableDataChanged();
@@ -383,8 +379,8 @@ public class AutofocusPropertyEditor extends MMDialog {
          propList_.clear();                
          PropertyItem properties[] = new PropertyItem[0];
          
-         if (afMgr_.getDevice() != null)
-            properties = afMgr_.getDevice().getProperties();
+         if (afMgr_.getAutofocusMethod() != null)
+            properties = afMgr_.getAutofocusMethod().getProperties();
          
          for (PropertyItem propertie : properties) {
             if (!propertie.preInit) {

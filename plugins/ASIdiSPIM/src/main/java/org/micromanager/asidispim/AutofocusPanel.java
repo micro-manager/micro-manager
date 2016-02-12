@@ -140,7 +140,7 @@ public class AutofocusPanel extends ListeningJPanel{
 
             prefs_.putInt(panelName_, Properties.Keys.AUTOFOCUS_SCORING_ALGORITHM,
                   Fitter.getPrefCodeFromString(scoringAlgorithmCB.getSelectedItem().toString()));
-            gui_.getAutofocusManager().showOptionsDialog();
+            gui_.compat().showAutofocusDialog();
          }
       });
       optionsPanel_.add(scoringAlgorithmCB, "wrap");

@@ -677,11 +677,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
             if (acqEng_.setChannelGroup(newGroup)) {
                model_.cleanUpConfigurationList();
                if (studio_.getAutofocusManager() != null) {
-                  try {
-                     studio_.getAutofocusManager().refresh();
-                  } catch (MMException e) {
-                     ReportingUtils.showError(e);
-                  }
+                  studio_.getAutofocusManager().refresh();
                }
             } else {
                updateGroupsCombo();
@@ -1102,9 +1098,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    }
 
    protected void afOptions() {
-      if (studio_.getAutofocusManager().getDevice() != null) {
-         studio_.getAutofocusManager().showOptionsDialog();
-      }
+      studio_.compat().showAutofocusDialog();
    }
 
    public boolean inArray(String member, String[] group) {
