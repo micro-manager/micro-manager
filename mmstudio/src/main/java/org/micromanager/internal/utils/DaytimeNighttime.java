@@ -54,7 +54,7 @@ public class DaytimeNighttime {
          "FormattedTextField", "InternalFrame", "Label", "List", "MenuBar",
          "OptionPane", "Panel", "PasswordField", "ProgressBar",
          "RadioButton", "ScrollBar", "ScrollPane", "Slider", "Spinner",
-         "SplitPane", "TabbedPane", "Table", "TableHeader", "TextArea",
+         "SplitPane", "Table", "TableHeader", "TextArea",
          "TextField", "TextPane", "ToggleButton", "TollBar", "Tree",
          "Viewport"
    };
@@ -74,7 +74,7 @@ public class DaytimeNighttime {
          "InternalFrame", "Label", "List",
          "OptionPane", "Panel", "ProgressBar",
          "RadioButton", "ScrollPane", "Slider", "Spinner",
-         "SplitPane", "TabbedPane", "Table", "TextArea", "TextField",
+         "SplitPane", "Table", "TextArea", "TextField",
          "TollBar", "Tree", "Viewport"
    };
 
