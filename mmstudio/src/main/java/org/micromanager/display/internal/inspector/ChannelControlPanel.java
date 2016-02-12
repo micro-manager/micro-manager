@@ -46,6 +46,7 @@ import javax.swing.JToggleButton;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.NewSummaryMetadataEvent;
@@ -111,6 +112,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    private HistogramsPanel parent_;
    private HistogramData[] lastHistograms_;
    private final int channelIndex_;
+   private boolean hasChannelAxis_;
    private int curComponent_;
    private HistogramCanvas histogram_;
    private final ContrastLinker linker_;
@@ -149,6 +151,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       // TODO: hardcoded to 3 elements for now.
       componentPickerButtons_ = new JToggleButton[3];
 
+      // HACK: check for a lack of channel axis in the datastore; this requires
+      // different behaviors at various points.
+      hasChannelAxis_ = store_.getAxisLength(Coords.CHANNEL) > 0;
+
       // Must be registered for events before we start modifying images, since
       // that relies on LUTUpdateEvent.
       store.registerForEvents(this);
@@ -156,7 +162,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       // We can't create our GUI until we have histogram data to use, so
       // request it. If it's available it'll ping our NewHistogramsEvent
       // handler.
-      display.postEvent(new HistogramRequestEvent(channelIndex_));
+      display.postEvent(new HistogramRequestEvent(
+               hasChannelAxis_ ? channelIndex_ : -1));
    }
 
    private void initialize() {
@@ -476,7 +483,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          DisplaySettings newSettings = builder.build();
          postContrastEvent(newSettings);
          display_.setDisplaySettings(newSettings);
-         display_.postEvent(new HistogramRecalcEvent(channelIndex_));
+         display_.postEvent(new HistogramRecalcEvent(
+                  hasChannelAxis_ ? channelIndex_ : -1));
       }
       return builder;
    }
@@ -589,7 +597,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (channelNames != null && channelNames.length > channelIndex_) {
          name = channelNames[channelIndex_];
       }
-      display_.postEvent(new ContrastEvent(channelIndex_, name, newSettings));
+      display_.postEvent(new ContrastEvent(
+               hasChannelAxis_ ? channelIndex_ : -1, name, newSettings));
    }
 
    private void isEnabledAction() {
@@ -773,8 +782,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          // See TODO note in onNewDisplaySettings.
          return;
       }
-      nameLabel_.setText(event.getSummaryMetadata().getSafeChannelName(
-               channelIndex_));
+      nameLabel_.setText(
+            event.getSummaryMetadata().getSafeChannelName(channelIndex_));
    }
 
    /**
@@ -783,7 +792,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    @Subscribe
    public void onNewHistograms(NewHistogramsEvent event) {
       try {
-         if (event.getChannel() != channelIndex_) {
+         if (event.getChannel() != channelIndex_ && hasChannelAxis_) {
             // Wrong channel.
             return;
          }
@@ -835,7 +844,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             // Highlight the intensity of the pixel the mouse is on in the
             // image.
             for (Image image : display_.getDisplayedImages()) {
-               if (image.getCoords().getChannel() == channelIndex_) {
+               int channel = image.getCoords().getChannel();
+               if (channel == channelIndex_ ||
+                     (!hasChannelAxis_ && channel == -1)) {
                   long intensity = image.getComponentIntensityAt(
                         lastX_, lastY_, curComponent_);
                   HistogramData data = lastHistograms_[curComponent_];
@@ -927,6 +938,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
    @Override
    public String toString() {
-      return String.format("ChannelControlPanel for channel %d>", channelIndex_);
+      return String.format("ChannelControlPanel for channel %d>",
+            hasChannelAxis_ ? channelIndex_ : -1);
    }
 }

@@ -135,7 +135,10 @@ public final class HistogramsPanel extends InspectorPanel {
       display.getDatastore().registerForEvents(this);
       synchronized(panelLock_) {
          // Check the display to see how many histograms it needs at the start.
-         for (int i = 0; i < display.getDatastore().getAxisLength(Coords.CHANNEL); ++i) {
+         // If there's no channel axis, then it gets 1 histogram.
+         int numChannels = Math.max(1,
+               display.getDatastore().getAxisLength(Coords.CHANNEL));
+         for (int i = 0; i < numChannels; ++i) {
             addPanel(display, i);
          }
       }
@@ -150,9 +153,7 @@ public final class HistogramsPanel extends InspectorPanel {
 
       addStandardControls();
 
-      final int nChannels = store_.getAxisLength(Coords.CHANNEL);
-      if (nChannels == 0) {
-         // Just wait for some images to arrive.
+      if (store_.getAnyImage() == null) {
          return;
       }
 
@@ -292,13 +293,11 @@ public final class HistogramsPanel extends InspectorPanel {
          Datastore store = event.getDatastore();
          List<DataViewer> displays = new ArrayList<DataViewer>(DisplayGroupManager.getDisplaysForDatastore(store));
          for (DataViewer display : displays) {
-            if (display.getDatastore() != store) {
-               continue;
-            }
             ArrayList<ChannelControlPanel> panels = displayToPanels_.get(display);
             synchronized(panelLock_) {
-               Coords imageCoords = event.getImage().getCoords();
-               while (imageCoords.getChannel() >= panels.size()) {
+               // HACK: no-channel-axis datasets get 1 histogram.
+               int channel = Math.max(0, event.getImage().getCoords().getChannel());
+               while (channel >= panels.size()) {
                   // Need to add a new channel histogram. Note that this will
                   // modify the "panels" object's length, incrementing the
                   // value returned by panels.size() here and ensuring the

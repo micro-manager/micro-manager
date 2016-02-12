@@ -366,7 +366,8 @@ public class CanvasUpdateQueue {
     */
    private void updateHistogram(Image image, HistogramHistory history) {
       DisplaySettings settings = display_.getDisplaySettings();
-      int channel = image.getCoords().getChannel();
+      // HACK: if there's no valid channel axis, then use a coordinate of 0.
+      int channel = Math.max(0, image.getCoords().getChannel());
       // If autostretch is on, then we need to apply our newly-calculated
       // values to the display contrast settings.
       boolean shouldUpdate = (settings.getShouldAutostretch() != null &&

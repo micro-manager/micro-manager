@@ -277,7 +277,8 @@ public class LUTMaster {
          SwingUtilities.invokeLater(runnable);
          return;
       }
-      for (int i = 0; i < display.getDatastore().getAxisLength(Coords.CHANNEL); ++i) {
+      // HACK: if there's no channel axis, force a single update.
+      for (int i = 0; i < Math.max(1, display.getDatastore().getAxisLength(Coords.CHANNEL)); ++i) {
          updateDisplayLUTForChannel(display, i);
       }
    }
