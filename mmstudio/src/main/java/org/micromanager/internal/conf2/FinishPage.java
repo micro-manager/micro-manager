@@ -133,7 +133,7 @@ public class FinishPage extends PagePanel {
         String suffixes[] = {".cfg"};
         File f = FileDialogs.save(this.parent_,
                 "Select a configuration file name",
-                MMStudio.MM_CONFIG_FILE);
+                FileDialogs.MM_CONFIG_FILE);
         if (f != null) {
             setFilePath(f);
             overwrite_ = true;

@@ -126,7 +126,7 @@ public class ToolsMenu {
               new Runnable() {
                  @Override
                  public void run() {
-                    studio_.positions().showPositionList();
+                    studio_.compat().showPositionList();
                  }
               },
               "application_view_list.png");
@@ -248,7 +248,7 @@ public class ToolsMenu {
 
    private void loadConfiguration() {
       File configFile = FileDialogs.openFile(MMStudio.getFrame(), 
-            "Load a config file", MMStudio.MM_CONFIG_FILE);
+            "Load a config file", FileDialogs.MM_CONFIG_FILE);
       if (configFile != null) {
          studio_.setSysConfigFile(configFile.getAbsolutePath());
       }

@@ -442,7 +442,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       listButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            studio_.positions().showPositionList();
+            studio_.compat().showPositionList();
          }
       });
       listButton_.setToolTipText("Open XY list dialog");
@@ -1374,7 +1374,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    protected void setRootDirectory() {
       File result = FileDialogs.openDir(this,
               "Please choose a directory root for image data",
-              MMStudio.MM_DATA_SET);
+              FileDialogs.MM_DATA_SET);
       if (result != null) {
          rootField_.setText(result.getAbsolutePath());
          acqEng_.setRootName(result.getAbsolutePath());

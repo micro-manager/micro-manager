@@ -155,7 +155,7 @@ public class DefaultDataManager implements DataManager {
    @Override
    public Datastore promptForDataToLoad(Window parent, boolean isVirtual) throws IOException {
       File file = FileDialogs.openDir(parent,
-            "Please select an image data set", MMStudio.MM_DATA_SET);
+            "Please select an image data set", FileDialogs.MM_DATA_SET);
       if (file == null) {
          return null;
       }

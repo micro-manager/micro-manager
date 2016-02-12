@@ -373,14 +373,14 @@ public class DefaultDatastore implements Datastore {
          chooser.setFileFilter(singleplaneFilter_);
       }
       chooser.setSelectedFile(
-            new File(FileDialogs.getSuggestedFile(MMStudio.MM_DATA_SET)));
+            new File(FileDialogs.getSuggestedFile(FileDialogs.MM_DATA_SET)));
       chooser.showSaveDialog(window);
       File file = chooser.getSelectedFile();
       if (file == null) {
          // User cancelled.
          return false;
       }
-      FileDialogs.storePath(MMStudio.MM_DATA_SET, file);
+      FileDialogs.storePath(FileDialogs.MM_DATA_SET, file);
 
       // Determine the mode the user selected.
       FileFilter filter = chooser.getFileFilter();

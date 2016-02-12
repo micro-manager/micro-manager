@@ -186,11 +186,6 @@ public class MMStudio implements Studio, CompatibilityInterface, AcquisitionMana
    private org.micromanager.internal.utils.HotKeys hotKeys_;
    private ZWheelListener zWheelListener_;
    private XYZKeyListener xyzKeyListener_;
-   public static final FileType MM_CONFIG_FILE
-            = new FileType("MM_CONFIG_FILE",
-                           "Micro-Manager Config File",
-                           "./MyScope.cfg",
-                           true, "cfg");
 
    // Our instance
    private static MMStudio studio_;
@@ -203,11 +198,6 @@ public class MMStudio implements Studio, CompatibilityInterface, AcquisitionMana
 
    private final JMenuBar menuBar_;
    private JCheckBoxMenuItem centerAndDragMenuItem_;
-   public static final FileType MM_DATA_SET 
-           = new FileType("MM_DATA_SET",
-                 "Micro-Manager Image Location",
-                 System.getProperty("user.home") + "/Untitled",
-                 false, (String[]) null);
    private Thread acquisitionEngine2010LoadingThread_ = null;
    private Class<?> acquisitionEngine2010Class_ = null;
    private IAcquisitionEngine2010 acquisitionEngine2010_ = null;
@@ -667,7 +657,7 @@ public class MMStudio implements Studio, CompatibilityInterface, AcquisitionMana
          model.createSetupConfigsFromHardware(core_);
          model.createResolutionsFromHardware(core_);
          File f = FileDialogs.save(frame_,
-               "Save the configuration file", MM_CONFIG_FILE);
+               "Save the configuration file", FileDialogs.MM_CONFIG_FILE);
          if (f != null) {
             model.saveToFile(f.getAbsolutePath());
             sysConfigFile_ = f.getAbsolutePath();
@@ -1200,7 +1190,7 @@ public class MMStudio implements Studio, CompatibilityInterface, AcquisitionMana
 
       toolsMenu_.updateSwitchConfigurationMenu();
 
-      FileDialogs.storePath(MM_CONFIG_FILE, new File(sysConfigFile_));
+      FileDialogs.storePath(FileDialogs.MM_CONFIG_FILE, new File(sysConfigFile_));
 
       return result;
    }

@@ -113,7 +113,6 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplaySettings.DisplaySettingsBuilder;
 import org.micromanager.display.DisplayWindow;
 
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.dialogs.ComponentTitledBorder;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.MMFrame;
@@ -722,7 +721,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       editPositionListButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            gui_.getPositionListManager().showPositionList();
+            gui_.getCompatibilityInterface().showPositionList();
          }
       });
       positionPanel.add(editPositionListButton, "span 2, center");
@@ -878,9 +877,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       buttonStart_.setBackground(started ? Color.red : Color.green);
       buttonStart_.setIcon(started ?
             SwingResourceManager.
-            getIcon(MMStudio.class,
+            getIcon(Studio.class,
             "/org/micromanager/icons/cancel.png")
-            : SwingResourceManager.getIcon(MMStudio.class,
+            : SwingResourceManager.getIcon(Studio.class,
                   "/org/micromanager/icons/arrow_right.png"));
       buttonTestAcq_.setEnabled(!started);
    }
@@ -2563,7 +2562,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private void setRootDirectory(JTextField rootField) {
       File result = FileDialogs.openDir(null,
               "Please choose a directory root for image data",
-              MMStudio.MM_DATA_SET);
+              FileDialogs.MM_DATA_SET);
       if (result != null) {
          rootField.setText(result.getAbsolutePath());
       }

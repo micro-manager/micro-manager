@@ -43,6 +43,13 @@ public class FileDialogs {
       }
    }
 
+   public static final FileType MM_CONFIG_FILE = new FileType("MM_CONFIG_FILE",
+      "Micro-Manager Config File", "./MyScope.cfg", true, "cfg");
+
+   public static final FileType MM_DATA_SET = new FileType("MM_DATA_SET",
+      "Micro-Manager Image Location", System.getProperty("user.home") + "/Untitled",
+      false, (String[]) null);
+
    private static class GeneralFileFilter
            extends javax.swing.filechooser.FileFilter
            implements java.io.FilenameFilter

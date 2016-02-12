@@ -87,6 +87,11 @@ public interface CompatibilityInterface {
    public void showAutofocusDialog();
 
    /**
+    * Shows the position list dialog
+    */
+   public void showPositionList();
+
+   /**
     * Allows MMListeners to register themselves so that they will receive
     * alerts as defined in the MMListenerInterface
     * @param newL

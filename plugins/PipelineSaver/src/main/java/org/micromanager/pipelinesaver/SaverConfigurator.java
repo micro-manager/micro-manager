@@ -38,7 +38,6 @@ import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.MMFrame;
 
@@ -88,7 +87,7 @@ public class SaverConfigurator extends MMFrame implements ProcessorConfigurator 
             // Pop up a browse dialog.
             File path = FileDialogs.save(SaverConfigurator.this,
                "Please choose a directory to save to",
-               MMStudio.MM_DATA_SET);
+               FileDialogs.MM_DATA_SET);
             if (path != null) {
                savePath_.setText(path.getAbsolutePath());
             }

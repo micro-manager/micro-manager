@@ -402,7 +402,7 @@ public class IntroDlg extends JDialog {
    
    // User wants to use a file browser to select a hardware config file.
    protected void loadConfigFile() {
-      File f = FileDialogs.openFile(this, "Choose a config file", MMStudio.MM_CONFIG_FILE);
+      File f = FileDialogs.openFile(this, "Choose a config file", FileDialogs.MM_CONFIG_FILE);
       if (f != null) {
          setConfigFile(f.getAbsolutePath());
       }

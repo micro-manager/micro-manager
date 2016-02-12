@@ -58,9 +58,4 @@ public interface PositionListManager {
     * in the XYPositionList)
     */
    public void markCurrentPosition();
-
-   /**
-    * shows the position list dialog
-    */
-   public void showPositionList();
 }

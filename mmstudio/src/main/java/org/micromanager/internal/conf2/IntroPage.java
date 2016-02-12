@@ -163,7 +163,7 @@ public class IntroPage extends PagePanel {
    
    private void loadConfiguration() {
       File f = FileDialogs.openFile(parent_, "Choose a config file",
-              MMStudio.MM_CONFIG_FILE);
+              FileDialogs.MM_CONFIG_FILE);
       if (f == null)
          return;
       filePathField_.setText(f.getAbsolutePath());

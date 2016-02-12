@@ -448,7 +448,7 @@ public class ConfiguratorDlg2 extends MMDialog {
 
     private void saveConfiguration() {
         File f = FileDialogs.save(this,
-                "Create a config file", MMStudio.MM_CONFIG_FILE);
+                "Create a config file", FileDialogs.MM_CONFIG_FILE);
 
         if (f == null) {
             return;
