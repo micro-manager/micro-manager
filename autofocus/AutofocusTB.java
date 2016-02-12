@@ -6,7 +6,6 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
 import java.awt.Color;
-import java.util.prefs.Preferences;
 import java.util.Date;
 import java.awt.Rectangle;
 
@@ -91,8 +90,6 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
    private boolean verbose_ = true;
    // displaying debug info or not
 
-   private Preferences prefs_;
-   //********
 
    private String channelGroup_;
 
@@ -164,7 +161,7 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
       }
 
       if (arg.compareTo("options") == 0) {
-         app_.getAutofocusManager().showOptionsDialog();
+         app_.compat().showAutofocusDialog();
       }
 
       if (core_ == null) {
@@ -604,38 +601,6 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
       return super.getProperties();
    }
                                                                                                       
-
-   /**
-    *  Description of the Method
-    *
-   public void loadSettings() {
-      SIZE_FIRST = prefs_.getDouble(KEY_SIZE_FIRST, SIZE_FIRST);
-      NUM_FIRST = prefs_.getDouble(KEY_NUM_FIRST, NUM_FIRST);
-      SIZE_SECOND = prefs_.getDouble(KEY_SIZE_SECOND, SIZE_SECOND);
-      NUM_SECOND = prefs_.getDouble(KEY_NUM_SECOND, NUM_SECOND);
-      THRES = prefs_.getDouble(KEY_THRES, THRES);
-      CROP_SIZE = prefs_.getDouble(KEY_CROP_SIZE, CROP_SIZE);
-      CHANNEL1 = prefs_.get(KEY_CHANNEL1, CHANNEL1);
-      CHANNEL2 = prefs_.get(KEY_CHANNEL2, CHANNEL2);
-   }
-   */
-
-
-   /**
-    *  Description of the Method
-    */
-   /*
-   public void saveSettings() {
-      prefs_.putDouble(KEY_SIZE_FIRST, SIZE_FIRST);
-      prefs_.putDouble(KEY_NUM_FIRST, NUM_FIRST);
-      prefs_.putDouble(KEY_SIZE_SECOND, SIZE_SECOND);
-      prefs_.putDouble(KEY_NUM_SECOND, NUM_SECOND);
-      prefs_.putDouble(KEY_THRES, THRES);
-      prefs_.putDouble(KEY_CROP_SIZE, CROP_SIZE);
-      prefs_.put(KEY_CHANNEL1, CHANNEL1);
-      prefs_.put(KEY_CHANNEL2, CHANNEL2);
-   }
-   */
 
    @Override
    public double getCurrentFocusScore() {

@@ -20,6 +20,8 @@
 //
 package org.micromanager.internal.utils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 
 
@@ -54,12 +56,8 @@ public class DefaultAutofocusManager implements AutofocusManager {
       currentAfDevice_ = plugin;
    }
 
-   /**
-    * NOTE: we operate based on the "device name" rather than the plugin class
-    * name, because the latter is the same for all autofocus device adapters
-    * (it's always CoreAutofocus).
-    */
-   public void setMethodByName(String name) {
+   @Override
+   public void setAutofocusMethodByName(String name) {
       for (AutofocusPlugin plugin : afs_) {
          if (plugin.getName().equals(name)) {
             currentAfDevice_ = plugin;
@@ -72,6 +70,15 @@ public class DefaultAutofocusManager implements AutofocusManager {
    @Override
    public AutofocusPlugin getAutofocusMethod() {
       return currentAfDevice_;
+   }
+
+   @Override
+   public List<String> getAllAutofocusMethods() {
+      ArrayList<String> result = new ArrayList<String>();
+      for (AutofocusPlugin plugin : afs_) {
+         result.add(plugin.getName());
+      }
+      return result;
    }
 
    @Override

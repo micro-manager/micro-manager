@@ -169,12 +169,7 @@ public class AutofocusUtils {
             double bestPiezoPosition = 0;
             
             AutofocusManager afManager = gui_.getAutofocusManager();
-            for (AutofocusPlugin plugin : gui_.plugins().getAutofocusPlugins().values()) {
-               if (plugin.getName().equals("OughtaFocus")) {
-                  afManager.setAutofocusMethod(plugin);
-                  break;
-               }
-            }
+            afManager.setAutofocusMethodByName("OughtaFocus");
             AutofocusPlugin afDevice = afManager.getAutofocusMethod();
 
             if (afDevice == null) {

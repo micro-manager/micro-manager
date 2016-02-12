@@ -22,7 +22,8 @@
 
 import ij.IJ;
 import ij.process.ImageProcessor;
-import java.util.prefs.Preferences;
+
+import java.util.List;
 
 import mmcorej.CMMCore;
 
@@ -57,8 +58,6 @@ public class AutofocusDuo extends AutofocusBase implements AutofocusPlugin, SciJ
 
    private boolean verbose_ = true; // displaying debug info or not
 
-   private Preferences prefs_;
-
    private String autoFocus1_;
    private String autoFocus2_;
 
@@ -90,7 +89,7 @@ public class AutofocusDuo extends AutofocusBase implements AutofocusPlugin, SciJ
       verbose_ = arg.compareTo("silent") != 0;
 
       if (arg.compareTo("options") == 0){
-         app_.getAutofocusManager().showOptionsDialog();
+         app_.compat().showAutofocusDialog();
       }  
 
       if (core_ == null) {
@@ -109,14 +108,14 @@ public class AutofocusDuo extends AutofocusBase implements AutofocusPlugin, SciJ
 
       try{
          if (autoFocus1_ != null) {
-            app_.getAutofocusManager().selectDevice(autoFocus1_);
-            app_.getAutofocusManager().getDevice().fullFocus();
+            app_.getAutofocusManager().setAutofocusMethodByName(autoFocus1_);
+            app_.getAutofocusManager().getAutofocusMethod().fullFocus();
          }
          if (autoFocus2_ != null) {
-            app_.getAutofocusManager().selectDevice(autoFocus2_);
-            app_.getAutofocusManager().getDevice().fullFocus();
+            app_.getAutofocusManager().setAutofocusMethodByName(autoFocus2_);
+            app_.getAutofocusManager().getAutofocusMethod().fullFocus();
          }
-         app_.getAutofocusManager().selectDevice(AF_DEVICE_NAME);
+         app_.getAutofocusManager().setAutofocusMethodByName(AF_DEVICE_NAME);
       }
       catch(Exception e)
       {
@@ -147,8 +146,8 @@ public class AutofocusDuo extends AutofocusBase implements AutofocusPlugin, SciJ
    public PropertyItem[] getProperties() {
       // use default dialog
             
-      String afDevices[] = app_.getAutofocusManager().getAfDevices();
-      String allowedAfDevices[] = new String[afDevices.length - 1];
+      List<String> afDevices = app_.getAutofocusManager().getAllAutofocusMethods();
+      String[] allowedAfDevices = new String[afDevices.size() - 1];
 
       try {
          PropertyItem p1 = getProperty(KEY_AUTOFOCUS1);

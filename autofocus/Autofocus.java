@@ -34,7 +34,6 @@ import ij.process.ShortProcessor;
 import java.awt.Color;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.prefs.Preferences;
 
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
@@ -91,8 +90,6 @@ public class Autofocus extends AutofocusBase implements AutofocusPlugin, SciJava
 
    private boolean verbose_ = true; // displaying debug info or not
 
-   private Preferences prefs_;//********
-
    private String channelGroup_;
    private double curDist;
    private double baseDist;
@@ -105,8 +102,6 @@ public class Autofocus extends AutofocusBase implements AutofocusPlugin, SciJava
 
    public Autofocus(){ //constructor!!!
       super();
-      //Preferences root = Preferences.userNodeForPackage(this.getClass());
-      //prefs_ = root.node(root.absolutePath()+"/"+AF_SETTINGS_NODE);
       
       // set-up properties
       createProperty(KEY_SIZE_FIRST, Double.toString(SIZE_FIRST));
@@ -149,7 +144,7 @@ public class Autofocus extends AutofocusBase implements AutofocusPlugin, SciJava
       verbose_ = arg.compareTo("silent") != 0;
 
       if (arg.compareTo("options") == 0){
-         app_.getAutofocusManager().showOptionsDialog();
+         app_.compat().showAutofocusDialog();
       }
 
       if (core_ == null) {

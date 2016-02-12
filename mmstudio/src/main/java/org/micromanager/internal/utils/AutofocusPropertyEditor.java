@@ -210,7 +210,7 @@ public class AutofocusPropertyEditor extends MMDialog {
    
    protected void changeAFMethod(String focusDev) {
       cellEditor_.stopEditing();
-      afMgr_.setMethodByName(focusDev);
+      afMgr_.setAutofocusMethodByName(focusDev);
 
       updateStatus();
    }

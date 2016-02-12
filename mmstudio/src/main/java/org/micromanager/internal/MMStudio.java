@@ -440,7 +440,7 @@ public class MMStudio implements Studio, CompatibilityInterface, AcquisitionMana
 
       String afDevice = profile().getString(MMStudio.class, AUTOFOCUS_DEVICE, "");
       if (afMgr_.hasDevice(afDevice)) {
-         afMgr_.setMethodByName(afDevice);
+         afMgr_.setAutofocusMethodByName(afDevice);
       }
 
       zWheelListener_ = new ZWheelListener(core_, studio_);
@@ -1611,9 +1611,7 @@ public class MMStudio implements Studio, CompatibilityInterface, AcquisitionMana
 
    @Override
    public void showAutofocusDialog() {
-      if (afMgr_.getAutofocusMethod() != null) {
-         afMgr_.showOptionsDialog();
-      }
+      afMgr_.showOptionsDialog();
    }
 
    @Override
