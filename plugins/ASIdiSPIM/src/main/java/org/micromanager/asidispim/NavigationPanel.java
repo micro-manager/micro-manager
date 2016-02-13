@@ -133,7 +133,7 @@ public class NavigationPanel extends ListeningJPanel  {
             "[center]",
             "[]4[]4[]10[]4[]4[]"));
       
-      loadPanel.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
+      loadPanel.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.BORDERCOLOR));
 
       // buttons to move the head to top/bottom for easy sample loading
       JButton headUpGo = new JButton();
@@ -173,7 +173,7 @@ public class NavigationPanel extends ListeningJPanel  {
             "",
             "[right]8[" + positionWidth + "px!,left]8[center]8[center]2[center]2[center]8[center]8[center]8[center]8[center]",
             "[]4[]"));
-      navPanel.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
+      navPanel.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.BORDERCOLOR));
       
       navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.XYSTAGE, Directions.X) + ":"));
       xPositionLabel_ = new JLabel("");

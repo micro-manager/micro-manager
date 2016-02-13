@@ -76,7 +76,7 @@ public final class BeamSubPanel extends ListeningJPanel {
               "", 
               "[right]8[left]",
               "[]4[]"));
-      setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
+      setBorder(BorderFactory.createLineBorder(ASIdiSPIM.BORDERCOLOR));
       
       devices_ = devices;
       prefs_ = prefs;

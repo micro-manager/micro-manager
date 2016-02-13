@@ -632,7 +632,7 @@ public final class SetupPanel extends ListeningJPanel {
             "",
             "[]8[]",
             "[]8[]"));
-      superPanel.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
+      superPanel.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.BORDERCOLOR));
       
       superPanel.add(slicePanel);
       superPanel.add(new JSeparator(SwingConstants.VERTICAL), "growy, shrinkx, center");

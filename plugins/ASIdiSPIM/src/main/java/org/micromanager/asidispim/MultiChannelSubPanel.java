@@ -177,7 +177,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       useChannelsCB_.addChangeListener(recalculateTimingDisplayCL);
       ComponentTitledBorder componentBorder = 
             new ComponentTitledBorder(useChannelsCB_, this, 
-                  BorderFactory.createLineBorder(ASIdiSPIM.borderColor)); 
+                  BorderFactory.createLineBorder(ASIdiSPIM.BORDERCOLOR)); 
       this.setBorder(componentBorder);
       
       this.add(new JLabel("Channel group:"));

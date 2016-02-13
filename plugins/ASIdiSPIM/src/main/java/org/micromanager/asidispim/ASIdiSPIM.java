@@ -29,11 +29,15 @@ import org.micromanager.Studio;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
+/**
+ *
+ * @author nico
+ */
 @Plugin(type = MenuPlugin.class)
 public class ASIdiSPIM implements MenuPlugin, SciJavaPlugin {
-   public final static String menuName = "ASI diSPIM";
-   public final static String tooltipDescription = "Control the ASI diSPIM";
-   public final static Color borderColor = Color.gray;
+   public final static String MENUNAME = "ASI diSPIM";
+   public final static String TOOLTIPDESCRIPTION = "Control the ASI diSPIM";
+   public final static Color BORDERCOLOR = Color.gray;
 
    private Studio gui_;
    private static ASIdiSPIMFrame myFrame_ = null;
@@ -88,6 +92,6 @@ public class ASIdiSPIM implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public String getHelpText() {
-      return tooltipDescription;
+      return TOOLTIPDESCRIPTION;
    }
 }

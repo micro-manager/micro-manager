@@ -509,7 +509,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       useTimepointsCB_.setFocusPainted(false); 
       ComponentTitledBorder componentBorder = 
             new ComponentTitledBorder(useTimepointsCB_, timepointPanel_, 
-                  BorderFactory.createLineBorder(ASIdiSPIM.borderColor)); 
+                  BorderFactory.createLineBorder(ASIdiSPIM.BORDERCOLOR)); 
       timepointPanel_.setBorder(componentBorder);
       
       ChangeListener recalculateTimeLapseDisplay = new ChangeListener() {
@@ -712,7 +712,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       usePositionsCB_.setFocusPainted(false); 
       componentBorder = 
             new ComponentTitledBorder(usePositionsCB_, positionPanel, 
-                  BorderFactory.createLineBorder(ASIdiSPIM.borderColor)); 
+                  BorderFactory.createLineBorder(ASIdiSPIM.BORDERCOLOR)); 
       positionPanel.setBorder(componentBorder);
       
       usePositionsCB_.addChangeListener(recalculateTimingDisplayCL);
@@ -2058,7 +2058,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // Multi-page TIFF saving code wants this one:
             // TODO: support other types than GRAY16  (NS: Why?? Cameras are all 16-bits, so not much reason for anything else
             pmb.putString("PixelType", "GRAY16");
-            pmb.putDouble("z-step_um",  (double) getVolumeSliceStepSize());
+            pmb.putDouble("z-step_um",  getVolumeSliceStepSize());
             // Properties for use by MultiViewRegistration plugin
             // Format is: x_y_z, set to 1 if we should rotate around this axis.
             pmb.putString("MVRotationAxis", "0_1_0");

@@ -78,7 +78,7 @@ public final class JoystickSubPanel extends ListeningJPanel {
               "", 
               "[right]8[align center]",
               "[]16[]"));
-      setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
+      setBorder(BorderFactory.createLineBorder(ASIdiSPIM.BORDERCOLOR));
       
       joystick_ = joystick;
       devices_ = devices;

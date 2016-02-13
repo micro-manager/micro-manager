@@ -87,8 +87,7 @@ import org.micromanager.internal.utils.MMFrame;
  * @author Jon
  */
 @SuppressWarnings("serial")
-public class ASIdiSPIMFrame extends MMFrame  
-       {
+public class ASIdiSPIMFrame extends MMFrame  {
    
    private final Studio gui_;
    private final Properties props_; 

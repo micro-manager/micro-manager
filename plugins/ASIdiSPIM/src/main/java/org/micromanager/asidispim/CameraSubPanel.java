@@ -95,7 +95,7 @@ public final class CameraSubPanel extends ListeningJPanel  {
               "", 
               "[right]8[center]",
               "[]8[]"));
-      setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
+      setBorder(BorderFactory.createLineBorder(ASIdiSPIM.BORDERCOLOR));
 
       final int columnWidth = 105;
       
