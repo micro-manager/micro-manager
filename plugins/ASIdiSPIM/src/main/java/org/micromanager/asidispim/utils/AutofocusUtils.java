@@ -167,7 +167,7 @@ public class AutofocusUtils {
             }
 
             // Score indicating goodness of the fit
-            double r2 = 0;
+            double r2;
             double bestGalvoPosition = 0;
             double bestPiezoPosition = 0;
             
@@ -526,7 +526,8 @@ public class AutofocusUtils {
                
                // set result to be a dummy value for now; we will overwrite it later
                // unless we encounter an exception in the meantime
-               lastFocusResult_ = new FocusResult(false, galvoPosition, piezoPosition, 0.0);
+               lastFocusResult_ = new FocusResult(false, 
+                       galvoPosition, piezoPosition, 0.0);
                
                try {
                   caller.setCursor(Cursor.getDefaultCursor());
@@ -534,27 +535,32 @@ public class AutofocusUtils {
                   gui_.core().stopSequenceAcquisition(camera);
                   gui_.core().setCameraDevice(originalCamera);
 
-                  controller_.cleanUpControllerAfterAcquisition(1, acqSettings.firstSideIsA, false);
+                  controller_.cleanUpControllerAfterAcquisition(1, 
+                          acqSettings.firstSideIsA, false);
                   
                   if (runAsynchronously)
                      cameras_.setSPIMCamerasForAcquisition(false);
 
                   // move back to original position if needed
                   if (!centerAtCurrentZ) {
-                     positions_.setPosition(piezoDevice, originalPiezoPosition);
-                     positions_.setPosition(galvoDevice, Directions.Y, originalGalvoPosition);
+                     if (devices_.isValidMMDevice(piezoDevice))
+                        positions_.setPosition(piezoDevice, originalPiezoPosition);
+                     if (devices_.isValidMMDevice(galvoDevice))
+                        positions_.setPosition(galvoDevice, Directions.Y, 
+                                originalGalvoPosition);
                   }
                   
                   // if we are in Setup panel, move to either the best-focus position (if found)
                   //   or else back to the original position.  If we are doing autofocus during
                   //   acquisition this is an unnecessary step.
                   if (runAsynchronously) {  // proxy for "running from setup"
-                     if (isPiezoScan) {
+                     if (isPiezoScan && devices_.isValidMMDevice(piezoDevice)) {
                         positions_.setPosition(piezoDevice, 
                               focusSuccess ? bestPiezoPosition : originalPiezoPosition);
                      } else {
-                        positions_.setPosition(galvoDevice, Directions.Y,
-                              focusSuccess ? bestGalvoPosition : originalGalvoPosition);
+                        if (devices_.isValidMMDevice(galvoDevice))
+                           positions_.setPosition(galvoDevice, Directions.Y,
+                                 focusSuccess ? bestGalvoPosition : originalGalvoPosition);
                      }
                   }
                   
@@ -571,11 +577,14 @@ public class AutofocusUtils {
                   }
 
                } catch (Exception ex) {
-                  throw new ASIdiSPIMException(ex, "Error while restoring hardware state after autofocus.");
+                  throw new ASIdiSPIMException(ex, 
+                          "Error while restoring hardware state after autofocus.");
                }
             }
-            ReportingUtils.logMessage("finished autofocus: " + (lastFocusResult_.getFocusSuccess() ? "successful" : "not successful")
-               + " with galvo position " + lastFocusResult_.getGalvoFocusPosition() + " and piezo position " + lastFocusResult_.getPiezoFocusPosition());
+            ReportingUtils.logMessage("finished autofocus: " + 
+                    (lastFocusResult_.getFocusSuccess() ? "successful" : "not successful")
+               + " with galvo position " + lastFocusResult_.getGalvoFocusPosition() + 
+                    " and piezo position " + lastFocusResult_.getPiezoFocusPosition());
             return lastFocusResult_;
          }
 

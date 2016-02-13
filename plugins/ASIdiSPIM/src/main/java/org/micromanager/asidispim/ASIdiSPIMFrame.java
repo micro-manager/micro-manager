@@ -50,6 +50,7 @@ import org.micromanager.asidispim.utils.MyDialogUtils;
 import static org.micromanager.asidispim.utils.MyJavaUtils.isMac;
 import org.micromanager.asidispim.utils.StagePositionUpdater;
 import org.micromanager.events.LiveModeEvent;
+
 import org.micromanager.internal.utils.MMFrame;
 
 
