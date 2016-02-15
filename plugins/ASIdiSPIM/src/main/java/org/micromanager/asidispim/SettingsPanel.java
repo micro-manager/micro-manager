@@ -77,6 +77,7 @@ public class SettingsPanel extends ListeningJPanel {
    
    /**
     * 
+    * @param gui MM ScriptInterface object
     * @param devices the (single) instance of the Devices class
     * @param props 
     * @param prefs

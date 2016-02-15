@@ -1,7 +1,6 @@
 
 package org.micromanager.asidispim;
 
-import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;

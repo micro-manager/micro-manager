@@ -50,7 +50,7 @@ public class DevicesPanel extends ListeningJPanel {
    private final Devices devices_;
    private final CMMCore core_;
 
-   private final static int maxSelectorWidth = 110;
+   private final static int MAX_SELECTOR_WIDTH = 110;
    
    /**
     * Constructs the GUI Panel that lets the user specify which device to use
@@ -62,8 +62,8 @@ public class DevicesPanel extends ListeningJPanel {
       super(MyStrings.PanelNames.DEVICES.toString(), 
             new MigLayout(
               "",
-              "[right]15[center, " + maxSelectorWidth + "!]16[center, "
-              + maxSelectorWidth + "!]8[]8[]",
+              "[right]15[center, " + MAX_SELECTOR_WIDTH + "!]16[center, "
+              + MAX_SELECTOR_WIDTH + "!]8[]8[]",
               "[]12[]"));
       devices_ = devices;
       core_ = gui.core();
@@ -75,27 +75,27 @@ public class DevicesPanel extends ListeningJPanel {
 
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.XYSTAGE) + ":"));
       final JComboBox boxXY_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.XYStageDevice,
-            Devices.Keys.XYSTAGE, maxSelectorWidth*2); 
+            Devices.Keys.XYSTAGE, MAX_SELECTOR_WIDTH*2); 
       add(boxXY_, "span 2, center, wrap");
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.LOWERZDRIVE) + ":"));
       final JComboBox boxLowerZ_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
-            Devices.Keys.LOWERZDRIVE, maxSelectorWidth*2);
+            Devices.Keys.LOWERZDRIVE, MAX_SELECTOR_WIDTH*2);
       add(boxLowerZ_, "span 2, center, wrap");
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.UPPERZDRIVE) + ":"));
       final JComboBox boxUpperZ_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
-            Devices.Keys.UPPERZDRIVE, maxSelectorWidth*2);
+            Devices.Keys.UPPERZDRIVE, MAX_SELECTOR_WIDTH*2);
       add(boxUpperZ_, "span 2, center, wrap");
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.PLOGIC) + ":"));
       final JComboBox boxPLogic_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.ShutterDevice,
-            Devices.Keys.PLOGIC, maxSelectorWidth*2);
+            Devices.Keys.PLOGIC, MAX_SELECTOR_WIDTH*2);
       add(boxPLogic_, "span 2, center, wrap");
       
       add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.CAMERALOWER) + ":"));
       final JComboBox boxLowerCam_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERALOWER,
-            maxSelectorWidth*2);
+            MAX_SELECTOR_WIDTH*2);
       add(boxLowerCam_, "span 2, center, wrap");
       
       add(new JLabel("Imaging Path A"), "skip 1");
@@ -105,25 +105,25 @@ public class DevicesPanel extends ListeningJPanel {
       label.setToolTipText("Should be the first two axes on the MicroMirror card, usually AB");
       add (label);
       final JComboBox boxScannerA_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.GalvoDevice,
-            Devices.Keys.GALVOA, maxSelectorWidth);
+            Devices.Keys.GALVOA, MAX_SELECTOR_WIDTH);
       add(boxScannerA_);
       final JComboBox boxScannerB_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.GalvoDevice,
-            Devices.Keys.GALVOB, maxSelectorWidth);
+            Devices.Keys.GALVOB, MAX_SELECTOR_WIDTH);
       add(boxScannerB_, "wrap");
       
       add(new JLabel(devices_.getDeviceDisplayGeneric(Devices.Keys.PIEZOA) + ":"));
       final JComboBox boxPiezoA_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
-            Devices.Keys.PIEZOA, maxSelectorWidth);
+            Devices.Keys.PIEZOA, MAX_SELECTOR_WIDTH);
       
       add(boxPiezoA_);
       final JComboBox boxPiezoB_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
-            Devices.Keys.PIEZOB, maxSelectorWidth);
+            Devices.Keys.PIEZOB, MAX_SELECTOR_WIDTH);
       add(boxPiezoB_, "wrap");
 
       add(new JLabel("Camera:"));
-      final JComboBox boxCameraA_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERAA, maxSelectorWidth);
+      final JComboBox boxCameraA_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERAA, MAX_SELECTOR_WIDTH);
       add(boxCameraA_);
-      final JComboBox boxCameraB_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERAB, maxSelectorWidth);
+      final JComboBox boxCameraB_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERAB, MAX_SELECTOR_WIDTH);
       add(boxCameraB_, "wrap");
       
       add(new JLabel("Note: plugin must be restarted for some changes to take full effect."), "span 3");

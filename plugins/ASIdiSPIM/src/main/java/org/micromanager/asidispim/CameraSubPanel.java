@@ -82,7 +82,6 @@ public final class CameraSubPanel extends ListeningJPanel  {
     * @param instanceLabel name of the panel calling this class
     * @param side A, B, or none
     * @param prefs
-    * @param showLiveButton if false then the live button is omitted
     */
    public CameraSubPanel(Studio gui, 
            Cameras cameras, 

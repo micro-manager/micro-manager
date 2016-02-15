@@ -510,6 +510,7 @@ public class NavigationPanel extends ListeningJPanel  {
    
    /**
     * created so that Navigation panel's joystick settings could be invoked from elsewhere
+    * @param selected true if Joystick panel was selected
     */
    public void doJoystickSettings(boolean selected) {
       if (selected) {

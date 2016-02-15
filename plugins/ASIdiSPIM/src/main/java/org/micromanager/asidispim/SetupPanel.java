@@ -682,7 +682,7 @@ public final class SetupPanel extends ListeningJPanel {
     * Update the calibration offset according to the autofocus score.
     * Caller should make sure to apply any required criteria before calling this.
     * method because no error/range checking is done here.
-    * @param newValue - new value for the piezo/slice calibration offset
+    * @param score Autofocus-result
     */
    public void updateCalibrationOffset(AutofocusUtils.FocusResult score) {
       double rate = (Double) rateField_.getValue();

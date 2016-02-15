@@ -505,7 +505,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    public void gotSelected() {
    }
 
-   public void addDurationLabelListener(ListeningJPanel panel) {
+   public final void addDurationLabelListener(ListeningJPanel panel) {
       panels_.add(panel);      
    }
    
