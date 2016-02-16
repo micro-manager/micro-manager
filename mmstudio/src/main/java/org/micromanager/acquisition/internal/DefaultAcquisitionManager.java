@@ -31,6 +31,8 @@ import java.util.UUID;
 import javax.swing.SwingUtilities;
 
 import mmcorej.CMMCore;
+import mmcorej.Configuration;
+import mmcorej.PropertySetting;
 import mmcorej.TaggedImage;
 
 import org.micromanager.acquisition.AcquisitionManager;
@@ -39,9 +41,11 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultMetadata;
+import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.PropertyMap;
 import org.micromanager.SequenceSettings;
 import org.micromanager.Studio;
 
@@ -254,7 +258,7 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
    }
 
    @Override
-   public Metadata generateMetadata(Image image) throws Exception {
+   public Metadata generateMetadata(Image image, boolean includeHardwareState) throws Exception {
       String camera = studio_.core().getCameraDevice();
       int ijType = -1;
       String pixelType = null;
@@ -280,7 +284,7 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
             throw new IllegalArgumentException("Unrecognized pixel type");
          }
       }
-      return new DefaultMetadata.Builder()
+      Metadata.MetadataBuilder result = new DefaultMetadata.Builder()
          // TODO: do we have a better way to get integer property values?
          .binning(Integer.parseInt(studio_.core().getProperty(camera, "Binning")))
          .bitDepth((int) studio_.core().getImageBitDepth())
@@ -291,7 +295,20 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
          .uuid(UUID.randomUUID())
          .xPositionUm(studio_.core().getXYStagePosition().x)
          .yPositionUm(studio_.core().getXYStagePosition().y)
-         .zPositionUm(studio_.core().getPosition())
-         .build();
+         .zPositionUm(studio_.core().getPosition());
+      if (includeHardwareState) {
+         PropertyMap.PropertyMapBuilder scopeBuilder = studio_.data().getPropertyMapBuilder();
+         Configuration config = studio_.core().getSystemStateCache();
+         for (long i = 0; i < config.size(); ++i) {
+            PropertySetting setting = config.getSetting(i);
+            // NOTE: this key format chosen to match that used by the current
+            // acquisition engine.
+            scopeBuilder.putString(
+                  setting.getDeviceLabel() + "-" + setting.getPropertyName(),
+                  setting.getPropertyValue());
+         }
+         result.scopeData(scopeBuilder.build());
+      }
+      return result.build();
    }
 }

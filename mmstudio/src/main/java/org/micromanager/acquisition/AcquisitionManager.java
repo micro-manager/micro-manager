@@ -176,10 +176,16 @@ public interface AcquisitionManager {
     * current state of the program and the provided Image. The following fields
     * will be set: binning, bitDepth, camera, ijType, pixelType, receivedTime
     * (to the current time), uuid, xPositionUm, yPositionUm, zPositionUm (all
-    * three based on the current stage position(s).
+    * three based on the current stage position(s). Additionally, if the
+    * includeHardwareState boolean is set to true, then the current state of
+    * the system state cache (i.e. Micro-Manager's understanding of all device
+    * property values) will be included in the scopeData property.
+    * @param image Image whose metadata should be populated.
+    * @param includeHardwareState if true, then the scopeData field will be
+    *        populated in the result Metadata.
     * @return A pre-populated Metadata.
     * @throws Exception If there were any errors communicating with the Core to
     * get required values.
     */
-   public Metadata generateMetadata(Image image) throws Exception;
+   public Metadata generateMetadata(Image image, boolean includeHardwareState) throws Exception;
 }
