@@ -38,6 +38,8 @@ public interface SnapLiveManager {
     * image(s).
     * If live mode is currently on, then instead of performing a snap, the
     * most recent images from live mode will be returned immediately.
+    * Otherwise, this method will call AcquisitionManager.snap() to perform the
+    * snap.
     * @param shouldDisplay If true, then the snapped images will be added to
     *        the Datastore and displayed.
     * @return A list of acquired Images from the snap.

@@ -569,10 +569,6 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
     */
    @Override
    public List<Image> snap(boolean shouldDisplay) {
-      if (core_.getCameraDevice().length() == 0) {
-         ReportingUtils.showError("No camera configured.");
-         return new ArrayList<Image>();
-      }
       if (isLiveOn_) {
          // Just return the most recent images.
          ArrayList<Image> result = new ArrayList<Image>();
@@ -584,24 +580,14 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          return result;
       }
       try {
-         core_.snapImage();
-         ArrayList<Image> result = new ArrayList<Image>();
-         for (int c = 0; c < core_.getNumberOfCameraChannels(); ++c) {
-            TaggedImage tagged = core_.getTaggedImage(c);
-            Image temp = new DefaultImage(tagged);
-            Coords newCoords = temp.getCoords().copy().channel(c).build();
-            Metadata newMetadata = temp.getMetadata().copy()
-               .uuid(UUID.randomUUID()).build();
-            temp = temp.copyWith(newCoords, newMetadata);
-            result.add(temp);
-         }
+         List<Image> images = studio_.acquisitions().snap();
          if (shouldDisplay) {
-            for (Image image : result) {
+            for (Image image : images) {
                displayImage(image);
             }
             display_.toFront();
          }
-         return result;
+         return images;
       }
       catch (Exception e) {
          ReportingUtils.showError(e, "Failed to snap image");

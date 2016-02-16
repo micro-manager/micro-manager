@@ -23,14 +23,21 @@ import ij.ImagePlus;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 import javax.swing.SwingUtilities;
 
+import mmcorej.CMMCore;
+import mmcorej.TaggedImage;
+
 import org.micromanager.AcquisitionManager;
+import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
+import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.data.Metadata;
@@ -208,6 +215,26 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
 
       engine_.setSequenceSettings(ss);
       mdaDialog_.updateGUIContents();
+   }
+
+   @Override
+   public List<Image> snap() throws Exception {
+      CMMCore core = studio_.core();
+      if (core.getCameraDevice().length() == 0) {
+         throw new RuntimeException("No camera configured.");
+      }
+      core.snapImage();
+      ArrayList<Image> result = new ArrayList<Image>();
+      for (int c = 0; c < core.getNumberOfCameraChannels(); ++c) {
+         TaggedImage tagged = core.getTaggedImage(c);
+         Image temp = new DefaultImage(tagged);
+         Coords newCoords = temp.getCoords().copy().channel(c).build();
+         Metadata newMetadata = temp.getMetadata().copy()
+            .uuid(UUID.randomUUID()).build();
+         temp = temp.copyWith(newCoords, newMetadata);
+         result.add(temp);
+      }
+      return result;
    }
 
    @Override

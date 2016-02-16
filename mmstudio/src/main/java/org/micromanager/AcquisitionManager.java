@@ -21,6 +21,7 @@
 
 package org.micromanager;
 
+import java.util.List;
 
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
@@ -148,6 +149,17 @@ public interface AcquisitionManager {
     * @param settings acquisition settings
     */
    public void setAcquisitionSettings(SequenceSettings settings);
+
+   /**
+    * Snap images using the current camera(s) and return them. See also
+    * SnapLiveManager.snap(), which can be safely called when live mode is on,
+    * and may optionally display images in the Snap/Live View.
+    * @return A list of images acquired by the snap.
+    * @throws Exception If there is an error when communicating with the Core
+    * (for example, because Live mode is on), or if the current hardware
+    * configuration contains no cameras.
+    */
+   public List<Image> snap() throws Exception;
 
    /**
     * Generate a new SummaryMetadata that contains pre-populated fields based
