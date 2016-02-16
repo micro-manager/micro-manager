@@ -49,7 +49,7 @@ public class ASIdiSPIM implements MenuPlugin, SciJavaPlugin {
  
    @Override
    public String getVersion() {
-      return "0.3";
+      return "0.4";
    }
 
    @Override
