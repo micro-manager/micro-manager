@@ -38,6 +38,7 @@ import java.io.ObjectStreamException;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.json.JSONArray;
@@ -892,8 +893,10 @@ public class DefaultPropertyMap implements PropertyMap {
          return false;
       }
       DefaultPropertyMap alt = (DefaultPropertyMap) obj;
-      for (String key : getKeys()) {
-         if (!alt.hasProperty(key) ||
+      HashSet<String> keys = new HashSet<String>(getKeys());
+      keys.addAll(alt.getKeys());
+      for (String key : keys) {
+         if (!hasProperty(key) || !alt.hasProperty(key) ||
                !alt.getProperty(key).equals(getProperty(key))) {
             return false;
          }
