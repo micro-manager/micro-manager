@@ -19,7 +19,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager;
+package org.micromanager.acquisition;
 
 import java.util.List;
 
@@ -27,6 +27,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.SequenceSettings;
 
 // These ought not be part of the public API and methods that refer to them are
 // deprecated.

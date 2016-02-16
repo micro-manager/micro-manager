@@ -57,8 +57,8 @@ import mmcorej.DeviceType;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 
+import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.acquisition.internal.DefaultAcquisitionManager;
-import org.micromanager.AcquisitionManager;
 import org.micromanager.Album;
 import org.micromanager.AutofocusManager;
 import org.micromanager.AutofocusPlugin;

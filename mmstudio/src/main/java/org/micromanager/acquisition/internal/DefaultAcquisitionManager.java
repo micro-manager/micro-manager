@@ -33,7 +33,7 @@ import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 
-import org.micromanager.AcquisitionManager;
+import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
