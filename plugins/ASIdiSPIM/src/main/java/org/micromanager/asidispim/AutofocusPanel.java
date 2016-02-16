@@ -48,6 +48,7 @@ import org.micromanager.asidispim.utils.PanelUtils;
 import org.micromanager.asidispim.fit.Fitter;
 import org.micromanager.asidispim.utils.MyDialogUtils;
 import org.micromanager.asidispim.utils.MyNumberUtils;
+
 import org.micromanager.internal.utils.MMException;
 
 /**
@@ -268,9 +269,9 @@ public class AutofocusPanel extends ListeningJPanel{
       
       
       // construct the main panel
-      add(optionsPanel_);
-      add(acqOptionsPanel_);
-      add(setupOptionsPanel_);
+      super.add(optionsPanel_);
+      super.add(acqOptionsPanel_);
+      super.add(setupOptionsPanel_);
    }//constructor
    
    /**

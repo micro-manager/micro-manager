@@ -56,7 +56,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
-import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -178,9 +177,9 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       ComponentTitledBorder componentBorder = 
             new ComponentTitledBorder(useChannelsCB_, this, 
                   BorderFactory.createLineBorder(ASIdiSPIM.BORDERCOLOR)); 
-      this.setBorder(componentBorder);
+      super.setBorder(componentBorder);
       
-      this.add(new JLabel("Channel group:"));
+      super.add(new JLabel("Channel group:"));
       String groups[] = getAvailableGroups();
       channelGroup_  = pu.makeDropDownBox(groups, Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_MULTICHANNEL_GROUP, "");
@@ -208,7 +207,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
             }
          }
       });
-      this.add(channelGroup_, "wrap");
+      super.add(channelGroup_, "wrap");
       
       // put table and buttons in its own miglayout
       final JPanel tablePanel = new JPanel();
@@ -264,18 +263,18 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       );
       tablePanel.add(minusButton, "wrap");
       
-      this.add(tablePanel, "span 2, align left, wrap");
+      super.add(tablePanel, "span 2, align left, wrap");
       
-      this.add(new JLabel("Change channel:"));
+      super.add(new JLabel("Change channel:"));
       MultichannelModes channelModes = new MultichannelModes(devices_, props_,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_MULTICHANNEL_MODE,
             MultichannelModes.Keys.VOLUME);
       channelMode = channelModes.getComboBox();
       pu.addListenerLast(channelMode, recalculateTimingDisplayAL);
-      this.add(channelMode, "wrap");
+      super.add(channelMode, "wrap");
       
       // enable/disable panel elements depending on checkbox state
-      final Component[] channelPaneComponents = this.getComponents();
+      final Component[] channelPaneComponents = super.getComponents();
       useChannelsCB_.addActionListener(new ActionListener(){ 
          @Override
          public void actionPerformed(ActionEvent e){ 
@@ -513,24 +512,6 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       for (ListeningJPanel panel : panels_) {
          panel.refreshDisplay();
       }
-   }
-
-   // Functions to avoid warnings about overridable methods in the constructor
-   @Override
-   public final Component add (Component c) {
-      return super.add(c);
-   }
-   @Override
-   public final void add (Component c, Object constraints) {
-      super.add(c, constraints);
-   }
-   @Override
-   public final void setBorder(Border border) {
-      super.setBorder(border);
-   }
-   @Override
-   public final Component[] getComponents() {
-      return super.getComponents();
    }
 
 }

@@ -78,7 +78,7 @@ public final class JoystickSubPanel extends ListeningJPanel {
               "", 
               "[right]8[align center]",
               "[]16[]"));
-      setBorder(BorderFactory.createLineBorder(ASIdiSPIM.BORDERCOLOR));
+      super.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.BORDERCOLOR));
       
       joystick_ = joystick;
       devices_ = devices;
@@ -88,17 +88,17 @@ public final class JoystickSubPanel extends ListeningJPanel {
       
       // TODO actually use side specifier in code below
       
-      add(new JLabel(Joystick.Keys.JOYSTICK.toString() + ":"));
+      super.add(new JLabel(Joystick.Keys.JOYSTICK.toString() + ":"));
       joystickBox_ = makeJoystickSelectionBox(Joystick.Keys.JOYSTICK);
-      add(joystickBox_, "wrap");
+      super.add(joystickBox_, "wrap");
       
-      add(new JLabel(Joystick.Keys.LEFT_WHEEL.toString() + ":"));
+      super.add(new JLabel(Joystick.Keys.LEFT_WHEEL.toString() + ":"));
       leftWheelBox_ = makeJoystickSelectionBox(Joystick.Keys.LEFT_WHEEL);
-      add(leftWheelBox_, "wrap");
+      super.add(leftWheelBox_, "wrap");
       
-      add(new JLabel(Joystick.Keys.RIGHT_WHEEL.toString() + ":"));
+      super.add(new JLabel(Joystick.Keys.RIGHT_WHEEL.toString() + ":"));
       rightWheelBox_ = makeJoystickSelectionBox(Joystick.Keys.RIGHT_WHEEL);
-      add(rightWheelBox_);
+      super.add(rightWheelBox_);
    }
    
    private JComboBox makeJoystickSelectionBox(Joystick.Keys jkey) {

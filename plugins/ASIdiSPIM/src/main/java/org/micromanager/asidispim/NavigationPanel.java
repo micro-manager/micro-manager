@@ -30,9 +30,6 @@ import java.awt.event.ActionListener;
 import java.util.EnumSet;
 import java.util.Set;
 
-import javax.swing.BorderFactory;
-
-
 import org.micromanager.asidispim.data.Cameras;
 import org.micromanager.asidispim.data.Devices;
 import org.micromanager.asidispim.data.Joystick;
@@ -51,13 +48,15 @@ import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.BorderFactory;
 
-import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 
 import com.swtdesigner.SwingResourceManager;
+
 import org.micromanager.Studio;
 import org.micromanager.events.LiveModeEvent;
+import mmcorej.CMMCore;
 
 /**
  * TODO: Add live mode listener
@@ -314,16 +313,16 @@ public class NavigationPanel extends ListeningJPanel  {
       navPanel.add(buttonHalt, "cell 12 0, span 1 10, growy, wrap");
       
       joystickPanel_ = new JoystickSubPanel(joystick_, devices_, panelName_, Devices.Sides.NONE, prefs_);
-      this.add(joystickPanel_);
+      super.add(joystickPanel_);
       
-      this.add(navPanel, "aligny top, span 1 3, wrap");
+      super.add(navPanel, "aligny top, span 1 3, wrap");
       
       beamPanel_ = new BeamSubPanel(gui_, devices_, panelName_, Devices.Sides.NONE, prefs_, props_);
-      this.add(beamPanel_, "wrap");
+      super.add(beamPanel_, "wrap");
 
       cameraPanel_ = new CameraSubPanel(gui_, cameras_, devices_, panelName_, 
             Devices.Sides.NONE, prefs_);
-      this.add(cameraPanel_);
+      super.add(cameraPanel_);
       
       xPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));
       yPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));

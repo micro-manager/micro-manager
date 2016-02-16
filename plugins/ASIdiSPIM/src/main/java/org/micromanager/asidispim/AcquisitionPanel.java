@@ -94,13 +94,6 @@ import org.micromanager.PositionList;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMap.PropertyMapBuilder;
 import org.micromanager.Studio;
-import org.micromanager.asidispim.api.ASIdiSPIMException;
-import org.micromanager.asidispim.data.AcquisitionSettings;
-
-import org.micromanager.asidispim.data.ChannelSpec;
-import org.micromanager.asidispim.data.Devices.Sides;
-import org.micromanager.asidispim.utils.ControllerUtils;
-import org.micromanager.asidispim.utils.AutofocusUtils;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Coords.CoordsBuilder;
 import org.micromanager.data.Datastore;
@@ -115,10 +108,17 @@ import org.micromanager.display.DisplayWindow;
 
 import org.micromanager.internal.dialogs.ComponentTitledBorder;
 import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
+
+import org.micromanager.asidispim.api.ASIdiSPIMException;
+import org.micromanager.asidispim.data.AcquisitionSettings;
+import org.micromanager.asidispim.data.ChannelSpec;
+import org.micromanager.asidispim.data.Devices.Sides;
+import org.micromanager.asidispim.utils.ControllerUtils;
+import org.micromanager.asidispim.utils.AutofocusUtils;
+import org.micromanager.asidispim.utils.SPIMFrame;
 
 
 /**
@@ -189,7 +189,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JPanel leftColumnPanel_;
    private final JPanel centerColumnPanel_;
    private final JPanel rightColumnPanel_;
-   private final MMFrame sliceFrameAdvanced_;
+   private final SPIMFrame sliceFrameAdvanced_;
    private SliceTiming sliceTiming_;
    private final MultiChannelSubPanel multiChannelPanel_;
    private final Color[] colors = {Color.RED, Color.GREEN, Color.BLUE, Color.MAGENTA,
@@ -362,7 +362,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // visibility of this frame is controlled from advancedTiming checkbox
       // this frame is separate from main plugin window
       
-      sliceFrameAdvanced_ = new MMFrame();
+      sliceFrameAdvanced_ = new SPIMFrame(gui_);
       sliceFrameAdvanced_.setTitle("Advanced timing");
       sliceFrameAdvanced_.loadPosition(100, 100);
 
@@ -816,9 +816,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       rightColumnPanel_.add(volPanel_);
       
       // add the column panels to the main panel
-      this.add(leftColumnPanel_);
-      this.add(centerColumnPanel_);
-      this.add(rightColumnPanel_);
+      super.add(leftColumnPanel_);
+      super.add(centerColumnPanel_);
+      super.add(rightColumnPanel_);
       
       // properly initialize the advanced slice timing
       advancedSliceTimingCB_.addItemListener(sliceTimingDisableGUIInputs);
