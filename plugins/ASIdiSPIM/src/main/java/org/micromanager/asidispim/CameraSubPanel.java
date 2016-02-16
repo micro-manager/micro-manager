@@ -33,14 +33,13 @@ import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
+import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
 import org.micromanager.Studio;
-
-import com.swtdesigner.SwingResourceManager;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -180,11 +179,11 @@ public final class CameraSubPanel extends ListeningJPanel  {
    * @param enable - true: live mode is switched on 
    */ 
    public final void setLiveButtonAppearance(boolean enable) {
-      toggleButtonLive_.setIcon(enable ? SwingResourceManager.
-            getIcon(Studio.class,
-            "/org/micromanager/icons/cancel.png")
-            : SwingResourceManager.getIcon(Studio.class,
-                  "/org/micromanager/icons/camera_go.png"));
+      ImageIcon cancelIcon = new ImageIcon (
+               getClass().getResource("/org/micromanager/icons/cancel.png"));
+      ImageIcon goIcon = new ImageIcon (
+               getClass().getResource("/org/micromanager/icons/camera_go.png"));
+      toggleButtonLive_.setIcon(enable ? cancelIcon : goIcon);
       toggleButtonLive_.setSelected(false);
       toggleButtonLive_.setText(enable ? "Stop Live" : "Live");
    }

@@ -21,7 +21,6 @@
 package org.micromanager.asidispim;
 
 import com.google.common.eventbus.Subscribe;
-import com.swtdesigner.SwingResourceManager;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -180,7 +179,8 @@ public final class SetupPanel extends ListeningJPanel {
       piezoDeltaField_.setToolTipText("Piezo increment used by up/down arrow buttons");
       
       JButton upButton = new JButton();
-      upButton.setIcon(SwingResourceManager.getIcon(Studio.class, "icons/arrow_up.png"));
+      upButton.setIcon(new ImageIcon (
+               getClass().getResource("/org/micromanager/icons/arrow_up.png")));
       upButton.setText("");
       upButton.setToolTipText("Move slice and piezo up together");
       upButton.addActionListener(new ActionListener() {
@@ -191,7 +191,8 @@ public final class SetupPanel extends ListeningJPanel {
       });
       
       JButton downButton = new JButton();
-      downButton.setIcon(SwingResourceManager.getIcon(Studio.class, "icons/arrow_down.png"));
+      downButton.setIcon(new ImageIcon (
+               getClass().getResource("/org/micromanager/icons/arrow_down.png")));
       downButton.setText("");
       downButton.setToolTipText("Move slice and piezo down together");
       downButton.addActionListener(new ActionListener() {

@@ -73,11 +73,6 @@ import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import mmcorej.TaggedImage;
 
-
-
-import com.swtdesigner.SwingResourceManager;
-
-
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
@@ -88,6 +83,7 @@ import java.beans.PropertyChangeListener;
 import java.util.Date;
 
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
@@ -875,12 +871,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       buttonStart_.setSelected(started);
       buttonStart_.setText(started ? "Stop Acquisition!" : "Start Acquisition!");
       buttonStart_.setBackground(started ? Color.red : Color.green);
-      buttonStart_.setIcon(started ?
-            SwingResourceManager.
-            getIcon(Studio.class,
-            "/org/micromanager/icons/cancel.png")
-            : SwingResourceManager.getIcon(Studio.class,
-                  "/org/micromanager/icons/arrow_right.png"));
+      ImageIcon cancelIcon = new ImageIcon (
+               getClass().getResource("/org/micromanager/icons/cancel.png"));
+      ImageIcon arrowIcon = new ImageIcon (
+               getClass().getResource("/org/micromanager/icons/arrow_right.png"));
+      buttonStart_.setIcon(started ? cancelIcon : arrowIcon);
       buttonTestAcq_.setEnabled(!started);
    }
    

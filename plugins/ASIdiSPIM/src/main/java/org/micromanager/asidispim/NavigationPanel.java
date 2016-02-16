@@ -23,6 +23,7 @@ package org.micromanager.asidispim;
 
 
 import com.google.common.eventbus.Subscribe;
+
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
@@ -49,10 +50,9 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 
 import net.miginfocom.swing.MigLayout;
-
-import com.swtdesigner.SwingResourceManager;
 
 import org.micromanager.Studio;
 import org.micromanager.events.LiveModeEvent;
@@ -136,7 +136,8 @@ public class NavigationPanel extends ListeningJPanel  {
 
       // buttons to move the head to top/bottom for easy sample loading
       JButton headUpGo = new JButton();
-      headUpGo.setIcon(SwingResourceManager.getIcon(Studio.class, "icons/arrow_up.png"));
+      headUpGo.setIcon(new ImageIcon (
+               getClass().getResource("/org/micromanager/icons/arrow_up.png")));
       headUpGo.setText("");
       headUpGo.setToolTipText("Move SPIM head to set height for sample loading");
       headUpGo.addActionListener(new ActionListener() {
@@ -146,7 +147,8 @@ public class NavigationPanel extends ListeningJPanel  {
          }
       });
       JButton headDownGo = new JButton();
-      headDownGo.setIcon(SwingResourceManager.getIcon(Studio.class, "icons/arrow_down.png"));
+      headDownGo.setIcon(new ImageIcon (
+               getClass().getResource("/org/micromanager/icons/arrow_dpwn.png")));
       headDownGo.setText("");
       headDownGo.setToolTipText("Move SPIM head to set height after sample loading");
       headDownGo.addActionListener(new ActionListener() {
