@@ -525,6 +525,8 @@ public class LUTMaster {
       if (plus instanceof CompositeImage) {
          CompositeImage composite = (CompositeImage) plus;
          if (mode == DisplaySettings.ColorMode.COMPOSITE) {
+            // TODO: we may show this error multiple times per display, due
+            // to the invokeLater logic above.
             if (display.getDatastore().getAxisLength(Coords.CHANNEL) > 7) {
                JOptionPane.showMessageDialog(null,
                   "Images with more than 7 channels cannot be displayed in Composite mode.");
