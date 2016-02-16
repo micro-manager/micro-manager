@@ -148,7 +148,7 @@ public class NavigationPanel extends ListeningJPanel  {
       });
       JButton headDownGo = new JButton();
       headDownGo.setIcon(new ImageIcon (
-               getClass().getResource("/org/micromanager/icons/arrow_dpwn.png")));
+               getClass().getResource("/org/micromanager/icons/arrow_down.png")));
       headDownGo.setText("");
       headDownGo.setToolTipText("Move SPIM head to set height after sample loading");
       headDownGo.addActionListener(new ActionListener() {
