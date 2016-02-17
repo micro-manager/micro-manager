@@ -80,7 +80,7 @@ public class ManualTiffTest {
       IMAGES = new HashMap<String, ArrayList<HelperImageInfo>>();
 
       DefaultSummaryMetadata.Builder summary = new DefaultSummaryMetadata.Builder();
-      summary.name("alpha-2 manual").prefix("thisIsAPrefix")
+      summary.prefix("thisIsAPrefix")
          .userName("John Doe").profileName("John's Profile")
          .microManagerVersion("made-up version")
          .metadataVersion("manual metadata").computerName("my arduino")
@@ -151,7 +151,6 @@ public class ManualTiffTest {
 
    private void testSummary(String path, SummaryMetadata summary) {
       SummaryMetadata ref = SUMMARIES.get(path);
-      Assert.assertEquals("Summary name", ref.getName(), summary.getName());
       Assert.assertEquals("Summary prefix", ref.getPrefix(), summary.getPrefix());
       Assert.assertEquals("Summary user name", ref.getUserName(), summary.getUserName());
       Assert.assertEquals("Summary profile name", ref.getProfileName(), summary.getProfileName());
