@@ -113,6 +113,90 @@ public class InspectorFrame extends MMFrame implements Inspector {
       }
    }
 
+   /**
+    * Simple container class that has a header for an InspectorPanel and then
+    * the panel itself.
+    */
+   private class WrapperPanel extends JPanel {
+      private JPanel header_;
+      private InspectorPanel panel_;
+      public WrapperPanel(String title, InspectorPanel panel) {
+         super(new MigLayout("flowy, insets 0, fillx"));
+         setBorder(BorderFactory.createRaisedBevelBorder());
+         panel_ = panel;
+
+         // Create a clickable header to show/hide contents, and hold a gear
+         // menu if available.
+         header_ = new JPanel(new MigLayout("flowx, insets 0, fillx",
+                  "[fill]push[]"));
+         final JLabel label = new JLabel(title,
+                  UIManager.getIcon("Tree.collapsedIcon"),
+                  SwingConstants.LEFT);
+         // Ignore day/night settings for the label text, since the background
+         // (i.e. the header panel we're in) also ignores day/night settings.
+         label.setForeground(new Color(50, 50, 50));
+         header_.add(label, "growx");
+
+         final JPopupMenu gearMenu = panel_.getGearMenu();
+         final JButton gearButton;
+         if (gearMenu != null) {
+            gearButton = new JButton(IconLoader.getIcon(
+                     "/org/micromanager/icons/gear.png"));
+            gearButton.addMouseListener(new MouseAdapter() {
+               @Override
+               public void mouseReleased(MouseEvent e) {
+                  // Regenerate the menu as it may have changed.
+                  panel_.getGearMenu().show(gearButton, e.getX(), e.getY());
+               }
+            });
+            header_.add(gearButton, "growx 0, hidemode 2");
+         }
+         else {
+            // Final variables must be set to *something*.
+            gearButton = null;
+         }
+
+         header_.setCursor(new Cursor(Cursor.HAND_CURSOR));
+         header_.setBackground(new Color(220, 220, 220));
+         header_.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+               boolean shouldShow = !panel_.isVisible();
+               panel_.setVisible(shouldShow);
+               if (shouldShow) {
+                  label.setIcon(UIManager.getIcon("Tree.expandedIcon"));
+               }
+               else {
+                  label.setIcon(UIManager.getIcon("Tree.collapsedIcon"));
+               }
+               if (gearButton != null) {
+                  gearButton.setVisible(panel_.isVisible());
+               }
+               refillContents();
+            }
+         });
+         add(header_, "growx");
+         add(panel_, "grow, gap 0, hidemode 2");
+         // HACK: the specific panel with the "Contrast" title is automatically
+         // visible.
+         if (title.contentEquals(CONTRAST_TITLE)) {
+            panel_.setVisible(true);
+            label.setIcon(UIManager.getIcon("Tree.expandedIcon"));
+         }
+         else {
+            panel_.setVisible(false); // So the first click will show it.
+         }
+      }
+
+      public InspectorPanel getPanel() {
+         return panel_;
+      }
+
+      public boolean getIsActive() {
+         return panel_.isVisible();
+      }
+   }
+
    private static final String TOPMOST_DISPLAY = "Topmost Window";
    private static final String CONTRAST_TITLE = "Histograms and Settings";
    private static final String WINDOW_WIDTH = "width of the inspector frame";
@@ -130,8 +214,8 @@ public class InspectorFrame extends MMFrame implements Inspector {
    }
 
    private DataViewer display_;
-   // Maps InspectorPanels to the JPanels that contain them in our UI.
-   private HashMap<InspectorPanel, JPanel> panelToWrapper_;
+   // Maps InspectorPanels to the WrapperPanels that contain them in our UI.
+   private ArrayList<WrapperPanel> wrapperPanels_;
    private final JPanel contents_;
    private JComboBox displayChooser_;
    private JButton raiseButton_;
@@ -140,11 +224,14 @@ public class InspectorFrame extends MMFrame implements Inspector {
    public InspectorFrame(DataViewer display) {
       super();
       haveCreatedInspector_ = true;
+      wrapperPanels_ = new ArrayList<WrapperPanel>();
       setTitle("Image Inspector");
       setAlwaysOnTop(true);
       // Use a small title bar.
       getRootPane().putClientProperty("Window.style", "small");
 
+      // Initialize all of our components; they'll be inserted into our frame
+      // in refillContents().
       contents_ = new JPanel(new MigLayout("flowy, insets 0, gap 0, fillx"));
 
       // Create a dropdown menu to select which display to show info/controls
@@ -182,14 +269,8 @@ public class InspectorFrame extends MMFrame implements Inspector {
       });
       raiseButton_.setVisible(false);
 
-      contents_.add(new JLabel("Show info for:"), "flowx, split 3");
-      contents_.add(displayChooser_);
-      contents_.add(raiseButton_);
-
       curDisplayTitle_ = new JLabel("");
       curDisplayTitle_.setVisible(false);
-      // This hidemode causes invisible elements to take up no space.
-      contents_.add(curDisplayTitle_, "hidemode 2");
 
       JScrollPane scroller = new JScrollPane(contents_,
             ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -197,7 +278,6 @@ public class InspectorFrame extends MMFrame implements Inspector {
       add(scroller);
       setVisible(true);
 
-      panelToWrapper_ = new HashMap<InspectorPanel, JPanel>();
       // Hard-coded initial panels.
       addPanel(CONTRAST_TITLE, new HistogramsPanel());
       addPanel("Metadata", new MetadataPanel());
@@ -245,6 +325,8 @@ public class InspectorFrame extends MMFrame implements Inspector {
             savePosition();
          }
       });
+
+      refillContents();
    }
 
    /**
@@ -288,79 +370,24 @@ public class InspectorFrame extends MMFrame implements Inspector {
     */
    public final void addPanel(String title, final InspectorPanel panel) {
       panel.setInspector(this);
-      // Wrap the panel in our own panel which includes the header.
-      final JPanel wrapper = new JPanel(
-            new MigLayout("flowy, insets 0, fillx"));
-      panelToWrapper_.put(panel, wrapper);
-      wrapper.setBorder(BorderFactory.createRaisedBevelBorder());
+      wrapperPanels_.add(new WrapperPanel(title, panel));
+   }
 
-      // Create a clickable header to show/hide contents, and hold a gear
-      // menu if available.
-      JPanel header = new JPanel(new MigLayout("flowx, insets 0, fillx",
-               "[fill]push[]"));
-      final JLabel label = new JLabel(title,
-               UIManager.getIcon("Tree.collapsedIcon"),
-               SwingConstants.LEFT);
-      // Ignore day/night settings for the label text, since the background
-      // (i.e. the header panel we're in) also ignores day/night settings.
-      label.setForeground(new Color(50, 50, 50));
-      header.add(label, "growx");
-
-      final JPopupMenu gearMenu = panel.getGearMenu();
-      final JButton gearButton;
-      if (gearMenu != null) {
-         gearButton = new JButton(IconLoader.getIcon(
-                  "/org/micromanager/icons/gear.png"));
-         gearButton.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent e) {
-               // Regenerate the menu as it may have changed.
-               panel.getGearMenu().show(gearButton, e.getX(), e.getY());
-            }
-         });
-         header.add(gearButton, "growx 0, hidemode 2");
+   /**
+    * Reset the layout, so that we allocate any additional vertical space only
+    * to panels that are currently visible.
+    */
+   private void refillContents() {
+      contents_.removeAll();
+      contents_.add(new JLabel("Show info for:"), "flowx, split 3, pushy 0");
+      contents_.add(displayChooser_);
+      contents_.add(raiseButton_);
+      contents_.add(curDisplayTitle_, "hidemode 2, pushy 0");
+      for (WrapperPanel wrapper : wrapperPanels_) {
+         contents_.add(wrapper,
+               wrapper.getIsActive() ? "grow, pushy 100" : "growx");
       }
-      else {
-         // Final variables must be set to *something*.
-         gearButton = null;
-      }
-
-      header.setCursor(new Cursor(Cursor.HAND_CURSOR));
-      header.setBackground(new Color(220, 220, 220));
-      header.addMouseListener(new MouseAdapter() {
-         @Override
-         public void mouseClicked(MouseEvent e) {
-            boolean shouldShow = !panel.isVisible();
-            panel.setVisible(shouldShow);
-            if (shouldShow) {
-               wrapper.add(panel, "growx, gap 0");
-               label.setIcon(UIManager.getIcon("Tree.expandedIcon"));
-            }
-            else {
-               wrapper.remove(panel);
-               label.setIcon(UIManager.getIcon("Tree.collapsedIcon"));
-            }
-            if (gearButton != null) {
-               gearButton.setVisible(panel.isVisible());
-            }
-            pack();
-         }
-      });
-      wrapper.add(header, "growx");
-      // HACK: the specific panel with the "Contrast" title is automatically
-      // visible.
-      if (title.contentEquals(CONTRAST_TITLE)) {
-         wrapper.add(panel, "growx, gap 0");
-         panel.setVisible(true);
-         label.setIcon(UIManager.getIcon("Tree.expandedIcon"));
-      }
-      else {
-         panel.setVisible(false); // So the first click will show it.
-      }
-
-      // Make wrappers take no space when hidden.
-      contents_.add(wrapper, "growx, hidemode 2");
-      validate();
+      pack();
    }
 
    @Override
@@ -381,10 +408,9 @@ public class InspectorFrame extends MMFrame implements Inspector {
             }
          });
       }
-      for (InspectorPanel panel : panelToWrapper_.keySet()) {
+      for (WrapperPanel wrapper : wrapperPanels_) {
          if (display_ != null) {
-            panelToWrapper_.get(panel).setVisible(
-               panel.getIsValid(display_));
+            wrapper.setVisible(wrapper.getPanel().getIsValid(display_));
          }
       }
       // HACK: coerce minimum size to our default size for the duration
@@ -450,14 +476,14 @@ public class InspectorFrame extends MMFrame implements Inspector {
       // Update our listing of displays.
       display_ = display;
       populateChooser();
-      for (InspectorPanel panel : panelToWrapper_.keySet()) {
+      for (WrapperPanel wrapper : wrapperPanels_) {
          try {
-            if (panel.getIsValid(display_)) {
-               panel.setDataViewer(display_);
+            if (wrapper.getPanel().getIsValid(display_)) {
+               wrapper.getPanel().setDataViewer(display_);
             }
          }
          catch (Exception e) {
-            ReportingUtils.logError(e, "Error dispatching new display to " + panel);
+            ReportingUtils.logError(e, "Error dispatching new display to " + wrapper.getPanel().getName());
          }
       }
       if (display_ == null) {
@@ -513,8 +539,8 @@ public class InspectorFrame extends MMFrame implements Inspector {
     * references lying around.
     */
    private void cleanup() {
-      for (InspectorPanel panel : panelToWrapper_.keySet()) {
-         panel.cleanup();
+      for (WrapperPanel wrapper : wrapperPanels_) {
+         wrapper.getPanel().cleanup();
       }
       savePosition();
       DefaultEventManager.getInstance().unregisterForEvents(
