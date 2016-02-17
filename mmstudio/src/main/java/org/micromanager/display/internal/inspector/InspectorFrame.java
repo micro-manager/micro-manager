@@ -121,7 +121,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
       private JPanel header_;
       private InspectorPanel panel_;
       public WrapperPanel(String title, InspectorPanel panel) {
-         super(new MigLayout("flowy, insets 0, fillx"));
+         super(new MigLayout("flowy, insets 0, fill"));
          setBorder(BorderFactory.createRaisedBevelBorder());
          panel_ = panel;
 
@@ -175,8 +175,8 @@ public class InspectorFrame extends MMFrame implements Inspector {
                refillContents();
             }
          });
-         add(header_, "growx");
-         add(panel_, "grow, gap 0, hidemode 2");
+         add(header_, "growx, pushy 0");
+         add(panel_, "grow, gap 0, hidemode 2, pushy 100");
          // HACK: the specific panel with the "Contrast" title is automatically
          // visible.
          if (title.contentEquals(CONTRAST_TITLE)) {
@@ -232,7 +232,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
 
       // Initialize all of our components; they'll be inserted into our frame
       // in refillContents().
-      contents_ = new JPanel(new MigLayout("flowy, insets 0, gap 0, fillx"));
+      contents_ = new JPanel(new MigLayout("flowy, insets 0, gap 0, fill"));
 
       // Create a dropdown menu to select which display to show info/controls
       // for. By default, we show info on the topmost display (changing when

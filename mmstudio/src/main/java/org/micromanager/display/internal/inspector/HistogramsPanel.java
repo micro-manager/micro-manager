@@ -106,7 +106,7 @@ public final class HistogramsPanel extends InspectorPanel {
 
    public HistogramsPanel() {
       super();
-      setLayout(new MigLayout("flowy, fillx, insets 0"));
+      setLayout(new MigLayout("flowy, fill, insets 0"));
       setMinimumSize(new java.awt.Dimension(280, 0));
       displayToPanels_ = new HashMap<DataViewer, ArrayList<ChannelControlPanel>>();
       // Populate displayToPanels now.
@@ -166,7 +166,7 @@ public final class HistogramsPanel extends InspectorPanel {
          return;
       }
       for (ChannelControlPanel panel : panels) {
-         add(panel, "grow, gap 0");
+         add(panel, "grow, gap 0, pushy 100");
       }
 
       validate();

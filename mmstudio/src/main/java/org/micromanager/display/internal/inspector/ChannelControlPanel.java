@@ -353,7 +353,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       histogram_.setMinimumSize(new Dimension(100, 100));
       histogram_.setToolTipText("Adjust the brightness and contrast by dragging triangles at top and bottom. Change the gamma by dragging the curve. (These controls only change display, and do not edit the image data.)");
 
-      secondColumn.add(histogram_, "grow, gapright 0");
+      secondColumn.add(histogram_, "grow, gapright 0, pushy 100");
 
       // The two buttons should be right next to the dropdown they control.
       JPanel scalePanel = new JPanel(new MigLayout("fill, insets 0",
@@ -366,8 +366,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
             "gapleft 0, width ::15, height 20!, pad -1 -4 0 0, aligny center center");
       scalePanel.add(minMaxLabel_);
 
-      secondColumn.add(scalePanel);
-      add(secondColumn, "growx");
+      secondColumn.add(scalePanel, "pushy 0");
+      add(secondColumn, "grow");
 
       validate();
    }
