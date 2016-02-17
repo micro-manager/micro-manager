@@ -88,12 +88,17 @@ public class VersionCompatTest {
     * directory.
     */
    private static final HashMap<Coords, Integer> imageHashes_ = new HashMap<Coords, Integer>();
+   // ms since start at which image was received.
    private static final HashMap<Coords, Double> imageElapsedTimes_ = new HashMap<Coords, Double>();
+   // Datetime at which image was received.
    private static final HashMap<Coords, String> imageReceivedTimes_ = new HashMap<Coords, String>();
+   // Unique ID per-image.
    private static final HashMap<Coords, UUID> imageUUIDs_ = new HashMap<Coords, UUID>();
+   // Device property values. These are the same for all images.
+   private static final HashMap<String, String> deviceProperties_ = new HashMap<String, String>();
    static {
-      // Set up the above hashes. These values all need to be in the same
-      // order!
+      // Set up the above hashes. All per-image values need to be in the same
+      // order or else the coords array won't map up correctly!
       Coords[] coords = new Coords[] {
          DefaultCoords.fromNormalizedString("time=0,z=0,channel=0,position=0"),
          DefaultCoords.fromNormalizedString("time=0,z=0,channel=0,position=1"),
@@ -204,6 +209,105 @@ public class VersionCompatTest {
          imageReceivedTimes_.put(coords[i], dates[i]);
          imageUUIDs_.put(coords[i], uuids[i]);
       }
+
+      deviceProperties_.put("Autofocus-Description", "Demo auto-focus adapter");
+      deviceProperties_.put("Autofocus-HubID", "");
+      deviceProperties_.put("Autofocus-Name", "DAutoFocus");
+      deviceProperties_.put("Camera-Binning", "1");
+      deviceProperties_.put("Camera-BitDepth", "16");
+      deviceProperties_.put("Camera-CCDTemperature", "0.0000");
+      deviceProperties_.put("Camera-CCDTemperature RO", "0.0000");
+      deviceProperties_.put("Camera-CameraID", "V1.0");
+      deviceProperties_.put("Camera-CameraName", "DemoCamera-MultiMode");
+      deviceProperties_.put("Camera-Description", "Demo Camera Device Adapter");
+      deviceProperties_.put("Camera-DisplayImageNumber", "0");
+      deviceProperties_.put("Camera-DropPixels", "0");
+      deviceProperties_.put("Camera-FastImage", "0");
+      deviceProperties_.put("Camera-FractionOfPixelsToDropOrSaturate", "0.0020");
+      deviceProperties_.put("Camera-Gain", "0");
+      deviceProperties_.put("Camera-HubID", "");
+      deviceProperties_.put("Camera-MaximumExposureMs", "10000.0000");
+      deviceProperties_.put("Camera-Mode", "Artificial Waves");
+      deviceProperties_.put("Camera-Name", "DCam");
+      deviceProperties_.put("Camera-Offset", "0");
+      deviceProperties_.put("Camera-OnCameraCCDXSize", "64");
+      deviceProperties_.put("Camera-OnCameraCCDYSize", "64");
+      deviceProperties_.put("Camera-PixelType", "16bit");
+      deviceProperties_.put("Camera-ReadoutTime", "0.0000");
+      deviceProperties_.put("Camera-RotateImages", "0");
+      deviceProperties_.put("Camera-SaturatePixels", "0");
+      deviceProperties_.put("Camera-ScanMode", "1");
+      deviceProperties_.put("Camera-SimulateCrash", "");
+      deviceProperties_.put("Camera-StripeWidth", "1.0000");
+      deviceProperties_.put("Camera-TestProperty1", "0.0000");
+      deviceProperties_.put("Camera-TestProperty2", "0.0000");
+      deviceProperties_.put("Camera-TestProperty3", "0.0000");
+      deviceProperties_.put("Camera-TestProperty4", "0.0000");
+      deviceProperties_.put("Camera-TestProperty5", "0.0000");
+      deviceProperties_.put("Camera-TestProperty6", "0.0000");
+      deviceProperties_.put("Camera-TransposeCorrection", "0");
+      deviceProperties_.put("Camera-TransposeMirrorX", "0");
+      deviceProperties_.put("Camera-TransposeMirrorY", "0");
+      deviceProperties_.put("Camera-TransposeXY", "0");
+      deviceProperties_.put("Camera-TriggerDevice", "");
+      deviceProperties_.put("Camera-UseExposureSequences", "No");
+      deviceProperties_.put("Core-AutoFocus", "Autofocus");
+      deviceProperties_.put("Core-AutoShutter", "1");
+      deviceProperties_.put("Core-Camera", "Camera");
+      deviceProperties_.put("Core-ChannelGroup", "Channel");
+      deviceProperties_.put("Core-Focus", "Z");
+      deviceProperties_.put("Core-Galvo", "");
+      deviceProperties_.put("Core-ImageProcessor", "");
+      deviceProperties_.put("Core-Initialize", "1");
+      deviceProperties_.put("Core-SLM", "");
+      deviceProperties_.put("Core-Shutter", "Shutter");
+      deviceProperties_.put("Core-TimeoutMs", "5000");
+      deviceProperties_.put("Core-XYStage", "XY");
+      deviceProperties_.put("Dichroic-ClosedPosition", "0");
+      deviceProperties_.put("Dichroic-Description", "Demo filter wheel driver");
+      deviceProperties_.put("Dichroic-HubID", "");
+      deviceProperties_.put("Dichroic-Label", "400DCLP");
+      deviceProperties_.put("Dichroic-Name", "DWheel");
+      deviceProperties_.put("Dichroic-State", "0");
+      deviceProperties_.put("Emission-ClosedPosition", "0");
+      deviceProperties_.put("Emission-Description", "Demo filter wheel driver");
+      deviceProperties_.put("Emission-HubID", "");
+      deviceProperties_.put("Emission-Label", "Chroma-HQ620");
+      deviceProperties_.put("Emission-Label", "Chroma-HQ700");
+      deviceProperties_.put("Emission-Name", "DWheel");
+      deviceProperties_.put("Emission-State", "0");
+      deviceProperties_.put("Excitation-ClosedPosition", "0");
+      deviceProperties_.put("Excitation-Description", "Demo filter wheel driver");
+      deviceProperties_.put("Excitation-HubID", "");
+      deviceProperties_.put("Excitation-Label", "Chroma-D360");
+      deviceProperties_.put("Excitation-Label", "Chroma-HQ570");
+      deviceProperties_.put("Excitation-Name", "DWheel");
+      deviceProperties_.put("Excitation-State", "0");
+      deviceProperties_.put("Objective-Description", "Demo objective turret driver");
+      deviceProperties_.put("Objective-HubID", "");
+      deviceProperties_.put("Objective-Label", "Nikon 10X S Fluor");
+      deviceProperties_.put("Objective-Name", "DObjective");
+      deviceProperties_.put("Objective-State", "1");
+      deviceProperties_.put("Objective-Trigger", "-");
+      deviceProperties_.put("Path-Description", "Demo light-path driver");
+      deviceProperties_.put("Path-HubID", "");
+      deviceProperties_.put("Path-Label", "State-0");
+      deviceProperties_.put("Path-Name", "DLightPath");
+      deviceProperties_.put("Path-State", "0");
+      deviceProperties_.put("Shutter-Description", "Demo shutter driver");
+      deviceProperties_.put("Shutter-HubID", "");
+      deviceProperties_.put("Shutter-Name", "DShutter");
+      deviceProperties_.put("Shutter-State", "0");
+      deviceProperties_.put("XY-Description", "Demo XY stage driver");
+      deviceProperties_.put("XY-HubID", "");
+      deviceProperties_.put("XY-Name", "DXYStage");
+      deviceProperties_.put("XY-TransposeMirrorX", "0");
+      deviceProperties_.put("XY-TransposeMirrorY", "0");
+      deviceProperties_.put("Z-Description", "Demo stage driver");
+      deviceProperties_.put("Z-HubID", "");
+      deviceProperties_.put("Z-Name", "DStage");
+      deviceProperties_.put("Z-Position", "0.0000");
+      deviceProperties_.put("Z-UseSequences", "No");
    }
 
    /**
@@ -314,6 +418,17 @@ public class VersionCompatTest {
                "Camera");
          Assert.assertEquals("uuid for " + coords, metadata.getUUID(),
                imageUUIDs_.get(coords));
+
+         // Note: for backwards-compatibility, all unknown fields in old
+         // datasets are imported into the userData structure, even though as
+         // it happens these fields would all normally go into the scopeData
+         // structure.
+         PropertyMap userData = metadata.getUserData();
+         Assert.assertNotNull("Non-null user data", userData);
+         for (String key : userData.getKeys()) {
+            Assert.assertEquals(key + " for " + coords,
+                  userData.getString(key), deviceProperties_.get(key));
+         }
      }
    }
 }
