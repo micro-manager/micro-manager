@@ -789,49 +789,49 @@ public class MDUtils {
     * Set of keys that are known to not be user-data metadata properties. See
     * extractUserData, below.
     */
-   static HashSet<String> IGNORED_KEYS = new HashSet<String>();
+   public static HashSet<String> RESERVED_KEYS = new HashSet<String>();
    static {
-      IGNORED_KEYS.add("Binning");
-      IGNORED_KEYS.add("BitDepth");
-      IGNORED_KEYS.add("Camera");
-      IGNORED_KEYS.add("CameraChannelIndex");
-      IGNORED_KEYS.add("Channel");
-      IGNORED_KEYS.add("channelName");
-      IGNORED_KEYS.add("ChannelIndex");
-      IGNORED_KEYS.add("Comment");
-      IGNORED_KEYS.add("ElapsedTime-ms");
-      IGNORED_KEYS.add("Exposure-ms");
-      IGNORED_KEYS.add("Frame");
-      IGNORED_KEYS.add("FrameIndex");
-      IGNORED_KEYS.add("gridColumn");
-      IGNORED_KEYS.add("gridRow");
-      IGNORED_KEYS.add("Height");
-      IGNORED_KEYS.add("IJType");
-      IGNORED_KEYS.add("ImageNumber");
-      IGNORED_KEYS.add("keepShutterOpenChannels");
-      IGNORED_KEYS.add("keepShutterOpenSlices");
-      IGNORED_KEYS.add("NextFrame");
-      IGNORED_KEYS.add("pixelAspect");
-      IGNORED_KEYS.add("PixelSizeUm");
-      IGNORED_KEYS.add("PixelType");
-      IGNORED_KEYS.add("Position");
-      IGNORED_KEYS.add("PositionIndex");
-      IGNORED_KEYS.add("PositionName");
-      IGNORED_KEYS.add("receivedTime");
-      IGNORED_KEYS.add("ROI");
-      IGNORED_KEYS.add("Slice");
-      IGNORED_KEYS.add("SliceIndex");
-      IGNORED_KEYS.add("SlicePosition");
-      IGNORED_KEYS.add("Source");
-      IGNORED_KEYS.add("startTimeMs");
-      IGNORED_KEYS.add("Summary");
-      IGNORED_KEYS.add("Time");
-      IGNORED_KEYS.add("userData");
-      IGNORED_KEYS.add("UUID");
-      IGNORED_KEYS.add("Width");
-      IGNORED_KEYS.add("XPositionUm");
-      IGNORED_KEYS.add("YPositionUm");
-      IGNORED_KEYS.add("ZPositionUm");
+      RESERVED_KEYS.add("Binning");
+      RESERVED_KEYS.add("BitDepth");
+      RESERVED_KEYS.add("Camera");
+      RESERVED_KEYS.add("CameraChannelIndex");
+      RESERVED_KEYS.add("Channel");
+      RESERVED_KEYS.add("channelName");
+      RESERVED_KEYS.add("ChannelIndex");
+      RESERVED_KEYS.add("Comment");
+      RESERVED_KEYS.add("ElapsedTime-ms");
+      RESERVED_KEYS.add("Exposure-ms");
+      RESERVED_KEYS.add("Frame");
+      RESERVED_KEYS.add("FrameIndex");
+      RESERVED_KEYS.add("gridColumn");
+      RESERVED_KEYS.add("gridRow");
+      RESERVED_KEYS.add("Height");
+      RESERVED_KEYS.add("IJType");
+      RESERVED_KEYS.add("ImageNumber");
+      RESERVED_KEYS.add("keepShutterOpenChannels");
+      RESERVED_KEYS.add("keepShutterOpenSlices");
+      RESERVED_KEYS.add("NextFrame");
+      RESERVED_KEYS.add("pixelAspect");
+      RESERVED_KEYS.add("PixelSizeUm");
+      RESERVED_KEYS.add("PixelType");
+      RESERVED_KEYS.add("Position");
+      RESERVED_KEYS.add("PositionIndex");
+      RESERVED_KEYS.add("PositionName");
+      RESERVED_KEYS.add("receivedTime");
+      RESERVED_KEYS.add("ROI");
+      RESERVED_KEYS.add("Slice");
+      RESERVED_KEYS.add("SliceIndex");
+      RESERVED_KEYS.add("SlicePosition");
+      RESERVED_KEYS.add("Source");
+      RESERVED_KEYS.add("startTimeMs");
+      RESERVED_KEYS.add("Summary");
+      RESERVED_KEYS.add("Time");
+      RESERVED_KEYS.add("userData");
+      RESERVED_KEYS.add("UUID");
+      RESERVED_KEYS.add("Width");
+      RESERVED_KEYS.add("XPositionUm");
+      RESERVED_KEYS.add("YPositionUm");
+      RESERVED_KEYS.add("ZPositionUm");
    }
 
    /**
@@ -850,7 +850,7 @@ public class MDUtils {
          JSONObject userData = tags.getJSONObject("userData");
          for (String key : getKeys(userData)) {
             if ((ignoredKeys == null || !ignoredKeys.contains(key)) &&
-                  !IGNORED_KEYS.contains(key)) {
+                  !RESERVED_KEYS.contains(key)) {
                try {
                   putProperty(builder, key, userData.get(key));
                }
