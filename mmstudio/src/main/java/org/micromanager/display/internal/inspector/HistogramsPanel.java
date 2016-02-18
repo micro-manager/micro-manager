@@ -261,7 +261,7 @@ public final class HistogramsPanel extends InspectorPanel {
             display);
       displayToPanels_.get(display).add(panel);
       if (display == viewer_) {
-         add(panel, "grow, gap 0");
+         add(panel, "grow, gap 0, pushy 100");
          revalidate();
          inspector_.relayout();
       }
