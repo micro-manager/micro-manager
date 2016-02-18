@@ -68,9 +68,12 @@ import org.micromanager.internal.utils.ReportingUtils;
  * of rapid display updates.
  */
 public class MetadataPanel extends InspectorPanel {
+   private JSplitPane metadataSplitPane_;
    private JTable imageMetadataTable_;
+   private JPanel imageMetadataPanel_;
    private JCheckBox showUnchangingPropertiesCheckbox_;
    private JTable summaryMetadataTable_;
+   private JScrollPane summaryMetadataScrollPane_;
    private final MetadataTableModel imageMetadataModel_;
    private final MetadataTableModel summaryMetadataModel_;
    private ImageWindow currentWindow_;
@@ -85,9 +88,15 @@ public class MetadataPanel extends InspectorPanel {
    private class SmallerJTable extends JTable {
       @Override
       public Dimension getPreferredScrollableViewportSize() {
-         Dimension defSize = super.getPreferredScrollableViewportSize();
-         return new Dimension(Math.min(defSize.width, 325),
-               Math.min(defSize.height, 500));
+         return getPreferredSize();
+      }
+      @Override
+      public boolean getFillsViewportHeight() {
+         return true;
+      }
+      @Override
+      public int getAutoResizeMode() {
+         return JTable.AUTO_RESIZE_OFF;
       }
    }
 
@@ -109,20 +118,33 @@ public class MetadataPanel extends InspectorPanel {
    }
 
    private void initialize() {
-      JSplitPane metadataSplitPane = new JSplitPane();
-      JPanel imageMetadataScrollPane = new JPanel();
-      JScrollPane imageMetadataTableScrollPane = new JScrollPane();
-      imageMetadataTable_ = new SmallerJTable();
-      showUnchangingPropertiesCheckbox_ = new JCheckBox();
-      JLabel jLabel2 = new JLabel();
-      JPanel summaryMetadataPanel = new JPanel();
-      JScrollPane summaryMetadataScrollPane = new JScrollPane();
+      metadataSplitPane_ = new JSplitPane() {
+         /**
+          * HACK: we have to constrain the size of our scroll pane based on
+          * the available size of our panel as a whole. Otherwise their
+          * preferred sizes get blown out when the tables they contain get
+          * large numbers of rows.
+          */
+         @Override
+         public Dimension getPreferredSize() {
+            Dimension defaultSize = super.getPreferredSize();
+            Dimension ourSize = MetadataPanel.this.getSize();
+            // HACK: subtract a significant amount off of these preferred sizes
+            // so that we can properly shrink when there's less space
+            // available.
+            // TODO: despite this, if the user shrinks the Inspector window
+            // sufficiently quickly, a scrollbar (for the inspector window as
+            // a whole) may briefly appear.
+            return new Dimension(
+                  Math.min(ourSize.width, defaultSize.width) - 100,
+                  Math.min(ourSize.height, defaultSize.height) - 100);
+         }
+      };
+
+      metadataSplitPane_.setBorder(null);
+      metadataSplitPane_.setOrientation(JSplitPane.VERTICAL_SPLIT);
+
       summaryMetadataTable_ = new SmallerJTable();
-      JLabel jLabel3 = new JLabel();
-
-      metadataSplitPane.setBorder(null);
-      metadataSplitPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
-
       summaryMetadataTable_.setModel(new DefaultTableModel(
               new Object[][]{
                  {null, null},
@@ -145,16 +167,33 @@ public class MetadataPanel extends InspectorPanel {
       });
       summaryMetadataTable_.setToolTipText(
             "Metadata tags for the whole acquisition");
-      summaryMetadataScrollPane.setViewportView(summaryMetadataTable_);
 
-      jLabel3.setText("Summary metadata");
+      JScrollPane summaryMetadataScrollPane_ = new JScrollPane();
+      summaryMetadataScrollPane_.setViewportView(summaryMetadataTable_);
 
-      summaryMetadataPanel.setLayout(new MigLayout("flowy, fillx, insets 0"));
-      summaryMetadataPanel.add(jLabel3);
-      summaryMetadataPanel.add(summaryMetadataScrollPane, "grow");
+      JPanel summaryMetadataPanel = new JPanel();
+      summaryMetadataPanel.setLayout(new MigLayout("flowy, fill, insets 0"));
+      summaryMetadataPanel.add(new JLabel("Summary metadata"), "pushy 0");
+      summaryMetadataPanel.add(summaryMetadataScrollPane_, "grow, pushy 100");
 
-      metadataSplitPane.setLeftComponent(summaryMetadataPanel);
+      metadataSplitPane_.setLeftComponent(summaryMetadataPanel);
 
+      showUnchangingPropertiesCheckbox_ = new JCheckBox("Show unchanging properties");
+      showUnchangingPropertiesCheckbox_.setToolTipText("Show/hide properties that are the same for all images in the dataset");
+      showUnchangingPropertiesCheckbox_.addActionListener(
+            new ActionListener() {
+               @Override
+               public void actionPerformed(ActionEvent e) {
+                  try {
+                     updateQueue_.put(display_.getDisplayedImages().get(0));
+                  }
+                  catch (InterruptedException ex) {
+                     ReportingUtils.logError(ex, "Interrupted while putting image into metadata queue");
+                  }
+               }
+      });
+
+      imageMetadataTable_ = new SmallerJTable();
       imageMetadataTable_.setModel(new DefaultTableModel(
               new Object[][]{},
               new String[]{"Property", "Value"}) {
@@ -178,37 +217,24 @@ public class MetadataPanel extends InspectorPanel {
       });
       imageMetadataTable_.setToolTipText("Individual image metadata");
       imageMetadataTable_.setDoubleBuffered(true);
+
+      JScrollPane imageMetadataTableScrollPane = new JScrollPane();
       imageMetadataTableScrollPane.setViewportView(imageMetadataTable_);
 
-      showUnchangingPropertiesCheckbox_.setText("Show unchanging properties");
-      showUnchangingPropertiesCheckbox_.setToolTipText("Show/hide properties that are the same for all images in the dataset");
-      showUnchangingPropertiesCheckbox_.addActionListener(
-            new ActionListener() {
-               @Override
-               public void actionPerformed(ActionEvent e) {
-                  try {
-                     updateQueue_.put(display_.getDisplayedImages().get(0));
-                  }
-                  catch (InterruptedException ex) {
-                     ReportingUtils.logError(ex, "Interrupted while putting image into metadata queue");
-                  }
-               }
-      });
+      imageMetadataPanel_ = new JPanel();
+      imageMetadataPanel_.setLayout(
+            new MigLayout("insets 0, flowy, fill"));
+      imageMetadataPanel_.add(new JLabel("Image metadata"), "pushy 0");
+      imageMetadataPanel_.add(showUnchangingPropertiesCheckbox_,
+            "pushy 0");
+      imageMetadataPanel_.add(imageMetadataTableScrollPane,
+            "grow, pushy 100");
 
-      jLabel2.setText("Image metadata");
+      metadataSplitPane_.setRightComponent(imageMetadataPanel_);
+      metadataSplitPane_.setResizeWeight(.5);
 
-      imageMetadataScrollPane.setLayout(
-            new MigLayout("insets 0, flowy, fillx"));
-      imageMetadataScrollPane.add(jLabel2);
-      imageMetadataScrollPane.add(showUnchangingPropertiesCheckbox_);
-      imageMetadataScrollPane.add(imageMetadataTableScrollPane, "grow");
-
-      metadataSplitPane.setRightComponent(imageMetadataScrollPane);
-      metadataSplitPane.setResizeWeight(.5);
-
-      setLayout(new MigLayout("flowy, fillx"));
-      add(metadataSplitPane, "grow");
-      setMaximumSize(new Dimension(800, 500));
+      setLayout(new MigLayout("debug, flowy, fill, insets 0, gap 0"));
+      add(metadataSplitPane_, "grow, pushy 100");
    }
 
    /**
@@ -301,6 +327,11 @@ public class MetadataPanel extends InspectorPanel {
          }
       });
       lastImageUUID_ = data.getUUID();
+   }
+
+   @Override
+   public Dimension getMinimumSize() {
+      return new Dimension(100, 300);
    }
 
    @Subscribe
