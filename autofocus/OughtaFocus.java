@@ -39,11 +39,16 @@ import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.TaggedImage;
 
-import org.apache.commons.math.FunctionEvaluationException;
-import org.apache.commons.math.analysis.UnivariateRealFunction;
-import org.apache.commons.math.optimization.GoalType;
-import org.apache.commons.math.optimization.univariate.BrentOptimizer;
+import org.apache.commons.math3.analysis.UnivariateFunction;
+import org.apache.commons.math3.optim.MaxEval;
+import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
+import org.apache.commons.math3.optim.univariate.BrentOptimizer;
+import org.apache.commons.math3.optim.univariate.SearchInterval;
+import org.apache.commons.math3.optim.univariate.UnivariateObjectiveFunction;
+import org.apache.commons.math3.optim.univariate.UnivariatePointValuePair;
+
 import org.json.JSONException;
+
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.AutofocusBase;
@@ -93,14 +98,14 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
 
    public OughtaFocus() {
       super();
-      createProperty(SEARCH_RANGE, NumberUtils.doubleToDisplayString(searchRange));
-      createProperty(TOLERANCE, NumberUtils.doubleToDisplayString(tolerance));
-      createProperty(CROP_FACTOR, NumberUtils.doubleToDisplayString(cropFactor));
-      createProperty(EXPOSURE, NumberUtils.doubleToDisplayString(exposure));
-      createProperty(FFT_LOWER_CUTOFF, NumberUtils.doubleToDisplayString(fftLowerCutoff));
-      createProperty(FFT_UPPER_CUTOFF, NumberUtils.doubleToDisplayString(fftUpperCutoff));
-      createProperty(SHOW_IMAGES, show, SHOWVALUES);
-      createProperty(SCORING_METHOD, scoringMethod, SCORINGMETHODS);
+      super.createProperty(SEARCH_RANGE, NumberUtils.doubleToDisplayString(searchRange));
+      super.createProperty(TOLERANCE, NumberUtils.doubleToDisplayString(tolerance));
+      super.createProperty(CROP_FACTOR, NumberUtils.doubleToDisplayString(cropFactor));
+      super.createProperty(EXPOSURE, NumberUtils.doubleToDisplayString(exposure));
+      super.createProperty(FFT_LOWER_CUTOFF, NumberUtils.doubleToDisplayString(fftLowerCutoff));
+      super.createProperty(FFT_UPPER_CUTOFF, NumberUtils.doubleToDisplayString(fftUpperCutoff));
+      super.createProperty(SHOW_IMAGES, show, SHOWVALUES);
+      super.createProperty(SCORING_METHOD, scoringMethod, SCORINGMETHODS);
       imageCount_ = 0;
    }
 
@@ -175,32 +180,58 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       }
    }
 
+   private static class LocalException extends RuntimeException {
+     // The x value that caused the problem.
+     private final double x_;
+     private final Exception ex_;
+
+     public LocalException(double x, Exception ex) {
+         x_ = x;
+         ex_ = ex;
+     }
+
+     public double getX() {
+         return x_;
+     }
+     
+     public Exception getException() {
+        return ex_;
+     } 
+ }
+   
    private double runAutofocusAlgorithm() throws Exception {
-      UnivariateRealFunction scoreFun = new UnivariateRealFunction() {
+      UnivariateFunction scoreFun = new UnivariateFunction() {
 
          @Override
-         public double value(double d) throws FunctionEvaluationException {
+         public double value(double d) throws LocalException {
             try {
                return measureFocusScore(d);
             } catch (Exception e) {
-               throw new FunctionEvaluationException(e, d);
+               throw new LocalException(d, e);
             }
          }
       };
-      BrentOptimizer brentOptimizer = new BrentOptimizer();
-      brentOptimizer.setAbsoluteAccuracy(tolerance);
+      
+      UnivariateObjectiveFunction uof = new UnivariateObjectiveFunction(scoreFun);
+      
+      BrentOptimizer brentOptimizer = new BrentOptimizer(1.0, tolerance);
       imageCount_ = 0;
 
       CMMCore core = app_.getCMMCore();
       double z = core.getPosition(core.getFocusDevice());
       startZUm_ = z;
 //      getCurrentFocusScore();
-      double zResult = brentOptimizer.optimize(scoreFun, GoalType.MAXIMIZE, z - searchRange / 2, z + searchRange / 2);
-      ReportingUtils.logMessage("OughtaFocus Iterations: " + brentOptimizer.getIterationCount()
-              + ", z=" + TextUtils.FMT2.format(zResult)
-              + ", dz=" + TextUtils.FMT2.format(zResult - startZUm_)
+      
+      UnivariatePointValuePair result = brentOptimizer.optimize(uof, 
+              GoalType.MAXIMIZE,
+              new MaxEval(100),
+              new SearchInterval(z - searchRange / 2, z + searchRange / 2));
+      // double zResult = brentOptimizer.optimize(uof, GoalType.MAXIMIZE);, z - searchRange / 2, z + searchRange / 2);
+      ReportingUtils.logMessage("OughtaFocus Iterations: " + brentOptimizer.getIterations()
+              + ", z=" + TextUtils.FMT2.format(result.getPoint())
+              + ", dz=" + TextUtils.FMT2.format(result.getPoint() - startZUm_)
               + ", t=" + (System.currentTimeMillis() - startTimeMs_));
-      return zResult;
+      return result.getPoint();
    }
 
    private void setZPosition(double z) throws Exception {
@@ -766,8 +797,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       private void BitRevRArr (float[] x, int base, int bitlen, int maxN) {
          for (int i=0; i<maxN; i++)
             tempArr_[i] = x[base+bitrev_[i]];
-         for (int i=0; i<maxN; i++)
-            x[base+i] = tempArr_[i];
+         System.arraycopy(tempArr_, 0, x, base, maxN);
       }
 
       private int bitRevX (int  x, int bitlen) {
