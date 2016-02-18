@@ -1217,25 +1217,28 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
          acqControlWin_.updateChannelAndGroupCombo();
       }
    }
-     
+
    public void autofocusNow() {
       if (afMgr_.getAutofocusMethod() != null) {
          new Thread() {
-
             @Override
             public void run() {
                try {
                   live().setSuspended(true);
                   afMgr_.getAutofocusMethod().fullFocus();
                   live().setSuspended(false);
-               } catch (MMException ex) {
-                  ReportingUtils.logError(ex);
+               }
+               catch (MMException ex) {
+                  ReportingUtils.showError(ex, "An error occurred during autofocus");
                }
             }
          }.start();
       }
+      else {
+         ReportingUtils.showError("No autofocus device is selected.");
+      }
    }
-   
+
    public void testForAbortRequests() throws MMScriptException {
       if (scriptPanel_ != null) {
          if (scriptPanel_.stopRequestPending()) {
