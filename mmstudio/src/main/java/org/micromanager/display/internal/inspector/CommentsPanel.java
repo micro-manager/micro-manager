@@ -92,28 +92,28 @@ public class CommentsPanel extends InspectorPanel {
 
    private void initialize() {
       JPanel summaryPanel = new JPanel(
-            new MigLayout("flowy, insets 0, fillx"));
+            new MigLayout("flowy, insets 0, fill"));
 
       errorLabel_ = new JLabel("                                          ");
-      summaryPanel.add(errorLabel_);
-      summaryPanel.add(new JLabel("Acquisition comments:"));
+      summaryPanel.add(errorLabel_, "pushy 0");
+      summaryPanel.add(new JLabel("Acquisition comments:"), "pushy 0");
 
       summaryCommentsTextArea_ = makeTextArea();
       summaryCommentsTextArea_.setToolTipText("Enter your comments for the whole acquisition here");
 
-      summaryPanel.add(new JScrollPane(summaryCommentsTextArea_), "grow");
+      summaryPanel.add(new JScrollPane(summaryCommentsTextArea_), "grow, pushy 100");
 
       JPanel commentsPanel = new JPanel(
-            new MigLayout("flowy, insets 0, fillx"));
+            new MigLayout("flowy, insets 0, fill"));
 
-      commentsPanel.add(new JLabel("Per-image comments:"));
+      commentsPanel.add(new JLabel("Per-image comments:"), "pushy 0");
 
       imageCommentsTextArea_ = makeTextArea();
       imageCommentsTextArea_.setToolTipText("Comments for each image may be entered here.");
 
-      commentsPanel.add(new JScrollPane(imageCommentsTextArea_), "grow");
+      commentsPanel.add(new JScrollPane(imageCommentsTextArea_), "grow, pushy 100");
 
-      setLayout(new MigLayout("fillx"));
+      setLayout(new MigLayout("fill"));
       JSplitPane splitter = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
             summaryPanel, commentsPanel);
       // Don't draw a border around the outside of the SplitPane.
@@ -126,7 +126,7 @@ public class CommentsPanel extends InspectorPanel {
       JTextArea result = new JTextArea();
       result.setLineWrap(true);
       // Semi-experimentally-derived sizes that look decent.
-      result.setRows(6);
+      result.setRows(2);
       result.setColumns(22);
       result.setTabSize(3);
       result.setWrapStyleWord(true);
