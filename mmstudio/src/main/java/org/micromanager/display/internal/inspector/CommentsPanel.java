@@ -24,7 +24,6 @@ import com.google.common.eventbus.Subscribe;
 
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.io.IOException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.HashMap;
 import java.util.List;
@@ -152,7 +151,7 @@ public class CommentsPanel extends InspectorPanel {
       try {
          CommentsHelper.saveComments(store_);
       }
-      catch (IOException e) {
+      catch (Exception e) {
          errorLabel_.setText("Error writing comments to disk.");
          ReportingUtils.logError(e, "Error writing comments to disk");
       }
