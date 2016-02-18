@@ -1,13 +1,16 @@
 ///////////////////////////////////////////////////////////////////////////////
 //FILE:           OughtaFocus.java
 //PROJECT:        Micro-Manager
-//SUBSYSTEM:      Autofocusing plug-in for mciro-manager and ImageJ
+//SUBSYSTEM:      Autofocusing plug-in for micro-manager and ImageJ
 //-----------------------------------------------------------------------------
 //
 //AUTHOR:         Arthur Edelstein, October 2010
 //                Based on SimpleAutofocus by Karl Hoover
 //                and the Autofocus "H&P" plugin
 //                by Pakpoom Subsoontorn & Hernan Garcia
+//                Contributions by Jon Daniels (ASI): FFTBandpass and MedianEdges
+//                Chris Weisiger: 2.0 port
+//                Nico Stuurman: 2.0 port and Math3 port
 //
 //COPYRIGHT:      University of California San Francisco
 //                
@@ -214,19 +217,27 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       
       UnivariateObjectiveFunction uof = new UnivariateObjectiveFunction(scoreFun);
       
-      BrentOptimizer brentOptimizer = new BrentOptimizer(1.0, tolerance);
+      // NS: Not sure how to set the relative and absolute tolerance
+      // From the math3 documentation:
+      // "The arguments are used implement the original stopping criterion of 
+      // Brent's algorithm. abs and rel define a tolerance 
+      // tol = rel |x| + abs. rel should be no smaller than 2 macheps 
+      // and preferably not much less than sqrt(macheps), where macheps is 
+      // the relative machine precision. abs must be positive."
+      // 
+      // In our case, macheps would be the smallest stepsize of the z-stage,
+      // which we do not know.  0 is no accepted, so try 50nm
+      BrentOptimizer brentOptimizer = new BrentOptimizer(0.05, tolerance);
       imageCount_ = 0;
 
       CMMCore core = app_.getCMMCore();
       double z = core.getPosition(core.getFocusDevice());
       startZUm_ = z;
-//      getCurrentFocusScore();
       
       UnivariatePointValuePair result = brentOptimizer.optimize(uof, 
               GoalType.MAXIMIZE,
               new MaxEval(100),
               new SearchInterval(z - searchRange / 2, z + searchRange / 2));
-      // double zResult = brentOptimizer.optimize(uof, GoalType.MAXIMIZE);, z - searchRange / 2, z + searchRange / 2);
       ReportingUtils.logMessage("OughtaFocus Iterations: " + brentOptimizer.getIterations()
               + ", z=" + TextUtils.FMT2.format(result.getPoint())
               + ", dz=" + TextUtils.FMT2.format(result.getPoint() - startZUm_)
@@ -937,11 +948,11 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
 
    @Override
    public String getVersion() {
-      return "1.0";
+      return "2.0";
    }
 
    @Override
    public String getCopyright() {
-      return "University of California, 2010";
+      return "University of California, 2010-2016";
    }
 }
