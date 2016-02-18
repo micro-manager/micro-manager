@@ -152,8 +152,11 @@ public class CommentsPanel extends InspectorPanel {
          CommentsHelper.saveComments(store_);
       }
       catch (Exception e) {
-         errorLabel_.setText("Error writing comments to disk.");
-         ReportingUtils.logError(e, "Error writing comments to disk");
+         // Only log exceptions if we expect saving to have succeeded.
+         if (store_.getSavePath() != null) {
+            errorLabel_.setText("Error writing comments to disk.");
+            ReportingUtils.logError(e, "Error writing comments to disk");
+         }
       }
    }
 
