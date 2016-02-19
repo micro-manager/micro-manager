@@ -2159,7 +2159,7 @@ int LeicaMonitoringThread::svc()
                    break;
                 case (g_IL_Turret) :
                    switch (commandId) {
-                      case(22) :
+                      case (22) :
                          scopeModel_->ILTurret_.SetBusy(false);
                          break;
                       case (4) :
@@ -2259,6 +2259,11 @@ int LeicaMonitoringThread::svc()
                             scopeModel_->ObjectiveTurret_.SetBusy(false);
                             break;
                          }
+                      case (27) : // Acknowledge of set immersion method
+                         // BUG: We need to manage 'busy' separately for
+                         // position and immersion method
+                         scopeModel_->ObjectiveTurret_.SetBusy(false);
+                         break;
                       case (28) : //Immersion method
                          {
                             char method;
@@ -2483,6 +2488,9 @@ int LeicaMonitoringThread::svc()
                                scopeModel_->apertureDiaphragmTL_.SetBusy(false);
                          }
                          break;
+                      case (22) : // Acknowledge of set position
+                         scopeModel_->apertureDiaphragmTL_.SetBusy(false);
+                         break;
                       case (23) : // Absolute position
                          {
                             int pos;
@@ -2505,6 +2513,9 @@ int LeicaMonitoringThread::svc()
                             else
                                scopeModel_->fieldDiaphragmIL_.SetBusy(false);
                          }
+                         break;
+                      case (22) : // Acknowledge of set position
+                         scopeModel_->fieldDiaphragmIL_.SetBusy(false);
                          break;
                       case (23) : // Absolute position
                          {
@@ -2529,6 +2540,9 @@ int LeicaMonitoringThread::svc()
                                scopeModel_->apertureDiaphragmIL_.SetBusy(false);
                          }
                          break;
+                      case (22) : // Acknowledge of set position
+                         scopeModel_->apertureDiaphragmIL_.SetBusy(false);
+                         break;
                       case (23) : // Absolute position
                          {
                             int pos;
@@ -2550,6 +2564,9 @@ int LeicaMonitoringThread::svc()
                         }
                         break;
                      }
+                     case (22) : // Acknowledge of set position
+                        scopeModel_->magChanger_.SetBusy(false);
+                        break;
                      case (23) : // Absolute position
                      {
                         int pos;
@@ -2580,6 +2597,9 @@ int LeicaMonitoringThread::svc()
                            }
                            break;
                         }
+                     case (22) : // Acknowledge of set position
+                        scopeModel_->sidePort_.SetBusy(false);
+                        break;
                      case (23) : // Absolute position
                         {
                            int pos;
@@ -2610,6 +2630,9 @@ int LeicaMonitoringThread::svc()
                         }
                         break;
                      }
+                     case (22) : // Acknowledge of set position
+                        scopeModel_->tlPolarizer_.SetBusy(false);
+                        break;
                      case (23) : // Absolute position
                      {
                         int pos;
@@ -2631,6 +2654,9 @@ int LeicaMonitoringThread::svc()
                   break;
                case (g_DIC_Turret) :
                   switch (commandId) {
+                     case (22) : // Acknowledge of set position
+                        scopeModel_->dicTurret_.SetBusy(false);
+                        break;
                      case (23) : // Absolute position
                      {
                         int pos;
