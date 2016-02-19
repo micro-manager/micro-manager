@@ -163,7 +163,6 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(mmKD);
       DropTarget dropTarget = new DropTarget(this, new DragDropUtil(studio_));
 
-      resetPosition();
       setExitStrategy(OptionsDlg.getShouldCloseOnExit());
       setIconImage(Toolkit.getDefaultToolkit().getImage(
                getClass().getResource("/org/micromanager/icons/microscope.gif")));
@@ -174,6 +173,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       // pack().
       pack();
       setMinimumSize(getSize());
+      resetPosition();
       DefaultEventManager.getInstance().registerForEvents(this);
    }
 
