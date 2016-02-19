@@ -506,6 +506,12 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       if (ret != DEVICE_OK)
          return ret;
       command.str("");
+
+      command << g_Revolver << "028";
+      ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
    }
 
    for (int filterWheelIndex = 1; filterWheelIndex <= 4; ++filterWheelIndex) {
