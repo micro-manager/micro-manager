@@ -2114,42 +2114,6 @@ int LeicaMonitoringThread::svc()
                deviceId = atoi(command.substr(0,2).c_str());
             }
             switch (deviceId) {
-
-					case (::g_Side_Port) :
-                  switch (commandId) {
-                     case (4) :
-                     {
-                        int status;
-                        os >> status;
-                        if (status == 1) {
-                           scopeModel_->sidePort_.SetBusy(false);
-                        }
-                        break;
-                     }
-							case (22) :
-							{
-								// the scope echoed the command
-							   //scopeModel_->sidePort_.SetBusy(false);
-							}
-							break;
-                     case (23) : // Absolute position
-                     {
-
-								int pos;
-								os >> pos;
-								scopeModel_->sidePort_.SetPosition(pos);
-                        scopeModel_->sidePort_.SetBusy(false);
-                        
-                     }
-							break;
-                     case (28) : // Absolute position
-                     {
-                        scopeModel_->sidePort_.SetBusy(false);
-                        break;
-                     }
-                     break;
-                  }
-                  break;
                case (g_Master) :
                    switch (commandId) {
                       // Set Method command, signals completion of command sends
@@ -2603,6 +2567,36 @@ int LeicaMonitoringThread::svc()
                         break;
                      }
                      break;
+                  }
+                  break;
+               case (g_Side_Port) :
+                  switch (commandId) {
+                     case (4) :
+                        {
+                           int status;
+                           os >> status;
+                           if (status == 1) {
+                              scopeModel_->sidePort_.SetBusy(false);
+                           }
+                           break;
+                        }
+                     case (23) : // Absolute position
+                        {
+                           int pos;
+                           os >> pos;
+                           scopeModel_->sidePort_.SetPosition(pos);
+                           scopeModel_->sidePort_.SetBusy(false);
+                           break;
+                        }
+                     case (28) : // Absolute position
+                        {
+                           int pos;
+                           os >> pos;
+                           scopeModel_->sidePort_.SetPosition(pos);
+                           scopeModel_->sidePort_.SetBusy(false);
+                           break;
+                        }
+                        break;
                   }
                   break;
                case (g_TL_Polarizer) :
