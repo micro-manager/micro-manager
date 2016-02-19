@@ -1968,6 +1968,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             SummaryMetadata.SummaryMetadataBuilder smb = gui_.data().getSummaryMetadataBuilder();
             smb = smb.channelNames(channelNames_).
                     channelGroup(multiChannelPanel_.getChannelGroup()).
+                    zStepUm( (double) acqSettings.stepSizeUm).
                     microManagerVersion(gui_.compat().getVersion()).
                     prefix(name).
                     startDate((new Date()).toString());
@@ -1978,7 +1979,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                     channel(channelNr).
                     z(nrSlices).
                     time(nrFrames).
-                    stagePosition(nrPositions).
+                    stagePosition(nrPositions).                    
                     build());
 
             // strip last separators:
