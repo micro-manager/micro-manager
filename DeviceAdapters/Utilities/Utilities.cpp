@@ -2351,7 +2351,9 @@ int DAXYStage::OnStageMaxPosY(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 DATTLStateDevice::DATTLStateDevice() :
    numberOfDADevices_(1),
-   initialized_(false)
+   initialized_(false),
+   mask_(0L),
+   lastChangeTime_(0, 0)
 {
    CPropertyAction* pAct = new CPropertyAction(this,
       &DATTLStateDevice::OnNumberOfDADevices);
@@ -2362,6 +2364,8 @@ DATTLStateDevice::DATTLStateDevice() :
    {
       AddAllowedValue("NumberOfDADevices", boost::lexical_cast<std::string>(i).c_str());
    }
+
+   EnableDelay(true);
 }
 
 
@@ -2464,12 +2468,20 @@ void DATTLStateDevice::GetName(char* name) const
 
 bool DATTLStateDevice::Busy()
 {
+   // We are busy if any of the underlying DA devices are busy, OR
+   // the delay interval has not yet elapsed.
+
    for (int i = 0; i < numberOfDADevices_; ++i)
    {
       MM::SignalIO* da = daDevices_[i];
       if (da && da->Busy())
          return true;
    }
+
+   MM::MMTime delay(GetDelayMs() * 1000.0);
+   if (GetCurrentMMTime() < lastChangeTime_ + delay)
+      return true;
+
    return false;
 }
 
@@ -2578,6 +2590,7 @@ int DATTLStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
          if (daDevices_[i])
          {
             int ret = daDevices_[i]->SetSignal((mask & (1 << i)) ? 5.0 : 0.0);
+            lastChangeTime_ = GetCurrentMMTime();
             if (ret != DEVICE_OK)
                return ret;
          }

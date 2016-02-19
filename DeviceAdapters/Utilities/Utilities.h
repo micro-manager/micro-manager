@@ -435,11 +435,17 @@ private:
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
+   // Invariant: daDeviceLabels_ and daDevices_ are always size
+   // numberOfDADevices_ once Initialize() returns.
    size_t numberOfDADevices_;
    std::vector<std::string> daDeviceLabels_;
    std::vector<MM::SignalIO*> daDevices_;
+
    bool initialized_;
+
    long mask_;
+
+   MM::MMTime lastChangeTime_;
 };
 
 
