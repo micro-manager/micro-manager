@@ -358,7 +358,9 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
             studio_.compat().showPositionList();
          }
       });
-      positionsPanel_.add(listButton_, "alignx center");
+      // This "wrap" *looks* pointless, but prevents the alignment from
+      // mysteriously changing as soon as we refresh the GUI.
+      positionsPanel_.add(listButton_, "alignx center, wrap");
       return positionsPanel_;
    }
 
