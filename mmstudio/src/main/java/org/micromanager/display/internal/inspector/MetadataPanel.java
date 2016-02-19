@@ -82,6 +82,7 @@ public class MetadataPanel extends InspectorPanel {
    private Thread updateThread_;
    private LinkedBlockingQueue<Image> updateQueue_;
    private boolean shouldShowUpdates_ = true;
+   private boolean shouldForceUpdate_ = false;
    private UUID lastImageUUID_ = null;
 
    /** This class makes smaller JTables, since the default size is absurd. */
@@ -184,6 +185,9 @@ public class MetadataPanel extends InspectorPanel {
             new ActionListener() {
                @Override
                public void actionPerformed(ActionEvent e) {
+                  // If we don't force it, then it'll think we're showing
+                  // the correct data and thus don't need to do any updates.
+                  shouldForceUpdate_ = true;
                   try {
                      updateQueue_.put(display_.getDisplayedImages().get(0));
                   }
@@ -274,10 +278,12 @@ public class MetadataPanel extends InspectorPanel {
     */
    public void imageChangedUpdate(final Image image) {
       Metadata data = image.getMetadata();
-      if (data.getUUID() != null && data.getUUID() == lastImageUUID_) {
+      if (data.getUUID() != null && data.getUUID() == lastImageUUID_ &&
+            !shouldForceUpdate_) {
          // We're already displaying this image's metadata.
          return;
       }
+      shouldForceUpdate_ = false;
       final JSONObject metadata = ((DefaultMetadata) data).toJSON();
       try {
          // If the "userData" and/or "scopeData" properties are present,

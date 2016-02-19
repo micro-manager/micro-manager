@@ -81,7 +81,7 @@ class MetadataTableModel extends AbstractTableModel {
       JSONObject displayedMetadata = newMetadata;
       if (!shouldShowUnchangingValues && priorMetadata_ != null) {
          // Determine which keys in the new metadata differ from the old
-         // metadata.
+         // metadata, and set displayedMetadata accordingly.
          try {
             JSONObject changingMetadata = new JSONObject();
             for (String key : MDUtils.getKeys(newMetadata)) {
