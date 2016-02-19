@@ -3,7 +3,8 @@ package org.micromanager.internal.utils;
 import java.util.ArrayList;
 
 public class AcqOrderMode {
-
+   // HACK: This value chosen to make the text box in the MDA dialog look nice.
+   private static final int MAX_LINE_LEN = 60;
    public static final int TIME_POS_SLICE_CHANNEL = 0;
    public static final int TIME_POS_CHANNEL_SLICE = 1;
    public static final int POS_TIME_SLICE_CHANNEL = 2;
@@ -60,27 +61,34 @@ public class AcqOrderMode {
          return "";
       }
 
-      StringBuffer result = new StringBuffer("<html><body>");
+      StringBuffer result = new StringBuffer();
       // Provide one entry per changing axis, in which that axis' index is 2,
       // all other axes' indices are 1, except the last axis which changes from
       // 1 to 2.
       String lastAxis = ordering.get(ordering.size() - 1);
+      int lineLen = 0;
       for (int i = ordering.size() - 1; i >= 0; i--) {
-         result.append("(");
+         StringBuffer line = new StringBuffer();
+         line.append("(");
          for (String axis : ordering) {
             // Note using ==/!= here is safe as lastAxis is an element from the
             // ordering array.
             int index = (axis != lastAxis && axis == ordering.get(i)) ? 2 : 1;
-            result.append(axis + index);
+            line.append(axis + index);
          }
-         result.append(") (");
+         line.append(") (");
          for (String axis : ordering) {
             int index = (axis == lastAxis || axis == ordering.get(i)) ? 2 : 1;
-            result.append(axis + index);
+            line.append(axis + index);
          }
-         result.append(") ... ");
+         line.append(") ... ");
+         if (lineLen + line.length() > MAX_LINE_LEN) {
+            result.append("\n");
+            lineLen = 0;
+         }
+         result.append(line);
+         lineLen += line.length();
       }
-      result.append("</body></html>");
       return result.toString();
    }
 

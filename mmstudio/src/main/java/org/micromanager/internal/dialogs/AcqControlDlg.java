@@ -20,6 +20,8 @@
 
 package org.micromanager.internal.dialogs;
 
+import com.bulenkov.iconloader.IconLoader;
+
 import com.google.common.eventbus.Subscribe;
 
 import java.awt.*;
@@ -41,6 +43,8 @@ import javax.swing.event.ChangeListener;
 import javax.swing.table.*;
 
 import mmcorej.CMMCore;
+
+import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.data.Datastore;
@@ -76,48 +80,52 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
         AcqSettingsListener { 
 
    private static final long serialVersionUID = 1L;
-   protected JButton listButton_;
-   private final JButton afButton_;
-   private JSpinner afSkipInterval_;
-   private final JComboBox acqOrderBox_;
-   private final JLabel acquisitionOrderText_;
+   private static final Font DEFAULT_FONT = new Font("Arial", Font.PLAIN, 10);
+   private static final String RELATIVE_Z = "Relative Z";
+   private static final String ABSOLUTE_Z = "Absolute Z";
    private static final String SHOULD_SYNC_EXPOSURE = "should sync exposure times between main window and Acquire dialog";
    private static final String SHOULD_HIDE_DISPLAY = "should hide image display windows for multi-dimensional acquisitions";
    private static final String SAVE_MODE = "default save mode";
    private static final String SHOULD_CHECK_EXPOSURE_SANITY = "whether to prompt the user if their exposure times seem excessively long";
+   private static final String BUTTON_SIZE = "width 80!, height 22!";
+
+   protected JButton listButton_;
+   private JSpinner afSkipInterval_;
+   private JComboBox acqOrderBox_;
+   private JTextArea acquisitionOrderText_;
    private JComboBox channelGroupCombo_;
-   private final JTextArea commentTextArea_;
-   private final JComboBox zValCombo_;
-   private final JTextField nameField_;
-   private final JTextField rootField_;
-   private final JTextArea summaryTextArea_;
-   private final JComboBox timeUnitCombo_;
-   private final JFormattedTextField interval_;
-   private final JFormattedTextField zStep_;
-   private final JFormattedTextField zTop_;
-   private final JFormattedTextField zBottom_;
+   private JTextArea commentTextArea_;
+   private JComboBox zValCombo_;
+   private JTextField nameField_;
+   private JTextField rootField_;
+   private JTextArea summaryTextArea_;
+   private JComboBox timeUnitCombo_;
+   private JFormattedTextField interval_;
+   private JFormattedTextField zStep_;
+   private JFormattedTextField zTop_;
+   private JFormattedTextField zBottom_;
    private AcquisitionEngine acqEng_;
-   private final JScrollPane channelTablePane_;
+   private JScrollPane channelTablePane_;
    private JTable channelTable_;
-   private final JSpinner numFrames_;
+   private JSpinner numFrames_;
    private ChannelTableModel model_;
    private File acqFile_;
    private String acqDir_;
    private int zVals_ = 0;
-   private final JButton acquireButton_;
-   private final JButton setBottomButton_;
-   private final JButton setTopButton_;
+   private JButton acquireButton_;
+   private JButton setBottomButton_;
+   private JButton setTopButton_;
    private MMStudio studio_;
-   private final NumberFormat numberFormat_;
-   private final JLabel namePrefixLabel_;
-   private final JLabel saveTypeLabel_;
-   private final JRadioButton singleButton_;
-   private final JRadioButton multiButton_;
-   private final JLabel rootLabel_;
-   private final JButton browseRootButton_;
-   private final JCheckBox stackKeepShutterOpenCheckBox_;
-   private final JCheckBox chanKeepShutterOpenCheckBox_;
-   private final AcqOrderMode[] acqOrderModes_;
+   private NumberFormat numberFormat_;
+   private JLabel namePrefixLabel_;
+   private JLabel saveTypeLabel_;
+   private JRadioButton singleButton_;
+   private JRadioButton multiButton_;
+   private JLabel rootLabel_;
+   private JButton browseRootButton_;
+   private JCheckBox stackKeepShutterOpenCheckBox_;
+   private JCheckBox chanKeepShutterOpenCheckBox_;
+   private AcqOrderMode[] acqOrderModes_;
    private AdvancedOptionsDialog advancedOptionsWindow_;
    // persistent properties (app settings)
    private static final String ACQ_FILE_DIR = "dir";
@@ -166,10 +174,8 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    private int columnWidth_[];
    private int columnOrder_[];
    private CheckBoxPanel framesPanel_;
-   private final JPanel framesSubPanel_;
-   private final CardLayout framesSubPanelLayout_;
-   private static final String DEFAULT_FRAMES_PANEL_NAME = "Default frames panel";
-   private static final String OVERRIDE_FRAMES_PANEL_NAME = "Override frames panel";
+   private JPanel defaultTimesPanel_;
+   private JPanel customTimesPanel_;
    private CheckBoxPanel channelsPanel_;
    private CheckBoxPanel slicesPanel_;
    protected CheckBoxPanel positionsPanel_;
@@ -178,9 +184,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    private JPanel summaryPanel_;
    private CheckBoxPanel savePanel_;
    private ComponentTitledPanel commentsPanel_;
-   private Border dayBorder_;
-   private Border nightBorder_;
-   private ArrayList<JPanel> panelList_;
    private boolean disableGUItoSettings_ = false;
 
    public final void createChannelTable() {
@@ -190,9 +193,8 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       channelTable_ = new DaytimeNighttime.Table() {
          @Override
          @SuppressWarnings("serial")
-         protected JTableHeader createDefaultTableHeader() {          
+         protected JTableHeader createDefaultTableHeader() {
             return new JTableHeader(columnModel) {
-
                @Override
                public String getToolTipText(MouseEvent e) {
                   String tip = null;
@@ -241,45 +243,627 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       channelTablePane_.setViewportView(channelTable_);
    }
 
-   public JPanel createPanel(String text, int left, int top, int right, int bottom) {
-      return createPanel(text, left, top, right, bottom, false);
-   }
-
-   public JPanel createPanel(String text, int left, int top, int right, int bottom, boolean checkBox) {
-      ComponentTitledPanel thePanel;
-      if (checkBox) {
-         thePanel = new CheckBoxPanel(text);
-      } else {
-         thePanel = new LabelPanel(text);
-      }
-
-      thePanel.setTitleFont(new Font("Dialog", Font.BOLD, 12));
-      panelList_.add(thePanel);
-      thePanel.setBounds(left, top, right - left, bottom - top);
-      dayBorder_ = BorderFactory.createEtchedBorder();
-      nightBorder_ = BorderFactory.createEtchedBorder(Color.gray, Color.darkGray);
-
-      thePanel.setLayout(null);
-      getContentPane().add(thePanel);
+   private CheckBoxPanel createCheckBoxPanel(String text) {
+      CheckBoxPanel thePanel = new CheckBoxPanel(text);
+      setupPanel(thePanel);
       return thePanel;
    }
 
-   public final void createEmptyPanels() {
-      panelList_ = new ArrayList<JPanel>();
+   private LabelPanel createLabelPanel(String text) {
+      LabelPanel thePanel = new LabelPanel(text);
+      setupPanel(thePanel);
+      return thePanel;
+   }
 
-      framesPanel_ = (CheckBoxPanel) createPanel("Time points", 5, 5, 220, 91, true); // (text, left, top, right, bottom)
-      positionsPanel_ = (CheckBoxPanel) createPanel("Multiple positions (XY)", 5, 93, 220, 154, true);
-      slicesPanel_ = (CheckBoxPanel) createPanel("Z-stacks (slices)", 5, 156, 220, 306, true);
+   private void setupPanel(ComponentTitledPanel thePanel) {
+      thePanel.setTitleFont(new Font("Dialog", Font.BOLD, 12));
+      thePanel.setLayout(null);
+   }
 
-      acquisitionOrderPanel_ = createPanel("Acquisition order", 226, 5, 427, 93);
+   /**
+    * Create the panel for showing the timepoints settings. This one can have
+    * its contents overridden by the custom time intervals system, in which
+    * case its normal contents get hidden.
+    */
+   private JPanel createTimePoints() {
+      framesPanel_ = createCheckBoxPanel("Time points");
+      framesPanel_.setLayout(new MigLayout("fillx, gap 0, insets 0"));
+      defaultTimesPanel_ = new JPanel(new MigLayout("flowx, gap 0, insets 0"));
+      framesPanel_.add(defaultTimesPanel_, "hidemode 2");
+      customTimesPanel_ = new JPanel(new MigLayout("flowx, gap 0, insets 0"));
+      customTimesPanel_.setVisible(false);
+      framesPanel_.add(customTimesPanel_, "hidemode 2");
 
-      summaryPanel_ = createPanel("Summary", 226, 176, 427, 306);
-      afPanel_ = (CheckBoxPanel) createPanel("Autofocus", 226, 95, 427, 174, true);
+      final JLabel numberLabel = new JLabel("Number");
+      numberLabel.setFont(DEFAULT_FONT);
 
-      channelsPanel_ = (CheckBoxPanel) createPanel("Channels", 5, 308, 510, 451, true);
-      savePanel_ = (CheckBoxPanel) createPanel("Save images", 5, 453, 510, 560, true);
-      commentsPanel_ = (ComponentTitledPanel) createPanel("Acquisition Comments",5, 564, 530,650,false);
+      defaultTimesPanel_.add(numberLabel);
 
+      SpinnerModel sModel = new SpinnerNumberModel(1, 1, null, 1);
+
+      numFrames_ = new JSpinner(sModel);
+      JTextField field = ((JSpinner.DefaultEditor) numFrames_.getEditor()).getTextField();
+      field.setColumns(5);
+      ((JSpinner.DefaultEditor) numFrames_.getEditor()).getTextField().setFont(DEFAULT_FONT);
+      numFrames_.addChangeListener(new ChangeListener() {
+         @Override
+         public void stateChanged(ChangeEvent e) {
+            applySettings();
+         }
+      });
+
+      defaultTimesPanel_.add(numFrames_, "wrap");
+
+      final JLabel intervalLabel = new JLabel("Interval");
+      intervalLabel.setFont(DEFAULT_FONT);
+      intervalLabel.setToolTipText(
+            "Interval between successive time points.  Setting an interval " +
+            "less than the exposure time will cause micromanager to acquire a 'burst' of images as fast as possible");
+      defaultTimesPanel_.add(intervalLabel, "split 3, spanx");
+
+      interval_ = new JFormattedTextField(numberFormat_);
+      interval_.setColumns(5);
+      interval_.setFont(DEFAULT_FONT);
+      interval_.setValue(1.0);
+      interval_.addPropertyChangeListener("value", this);
+      defaultTimesPanel_.add(interval_);
+
+      timeUnitCombo_ = new JComboBox();
+      timeUnitCombo_.setModel(new DefaultComboBoxModel(new String[]{"ms", "s", "min"}));
+      timeUnitCombo_.setFont(DEFAULT_FONT);
+      timeUnitCombo_.setBounds(120, 27, 67, 24);
+      defaultTimesPanel_.add(timeUnitCombo_);
+
+
+      JLabel overrideLabel = new JLabel("Custom time intervals enabled");
+      overrideLabel.setFont(new Font("Arial", Font.BOLD, 12));
+      overrideLabel.setForeground(Color.red);
+
+      JButton disableCustomIntervalsButton = new JButton("Disable custom intervals");
+      disableCustomIntervalsButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            acqEng_.enableCustomTimeIntervals(false);
+            updateGUIContents();
+         }
+      });
+      disableCustomIntervalsButton.setFont(DEFAULT_FONT);
+
+      customTimesPanel_.add(overrideLabel, "alignx center, wrap");
+      customTimesPanel_.add(disableCustomIntervalsButton,
+            "growx, alignx center");
+
+      framesPanel_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            applySettings();
+         }
+      });
+      return framesPanel_;
+   }
+
+   private JPanel createMultiPositions() {
+      positionsPanel_ = createCheckBoxPanel("Multiple positions (XY)");
+      positionsPanel_.setMinimumSize(new Dimension(190, 0));
+      positionsPanel_.setLayout(new MigLayout("fillx, insets 0, gap 0"));
+      listButton_ = new JButton("Edit position list...");
+      listButton_.setToolTipText("Open XY list dialog");
+      listButton_.setIcon(IconLoader.getIcon(
+            "/org/micromanager/icons/application_view_list.png"));
+      listButton_.setMargin(new Insets(2, 5, 2, 5));
+      listButton_.setFont(new Font("Dialog", Font.PLAIN, 10));
+      listButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            studio_.compat().showPositionList();
+         }
+      });
+      positionsPanel_.add(listButton_, "alignx center");
+      return positionsPanel_;
+   }
+
+   private JPanel createZStacks() {
+      slicesPanel_ = createCheckBoxPanel("Z-stacks (slices)");
+      slicesPanel_.setLayout(new MigLayout("fillx, flowx, gap 0, insets 0"));
+
+      final JLabel zbottomLabel = new JLabel("Z-start [\u00b5m]");
+      zbottomLabel.setFont(DEFAULT_FONT);
+      slicesPanel_.add(zbottomLabel);
+
+      zBottom_ = new JFormattedTextField(numberFormat_);
+      zBottom_.setColumns(5);
+      zBottom_.setFont(DEFAULT_FONT);
+      zBottom_.setValue(1.0);
+      zBottom_.addPropertyChangeListener("value", this);
+      slicesPanel_.add(zBottom_);
+
+      // Slightly smaller than BUTTON_SIZE
+      String buttonSize = "width 50!, height 20!";
+
+      setBottomButton_ = new JButton("Set");
+      setBottomButton_.setMargin(new Insets(-5, -5, -5, -5));
+      setBottomButton_.setFont(new Font("", Font.PLAIN, 10));
+      setBottomButton_.setToolTipText("Set value as microscope's current Z position");
+      setBottomButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+            setBottomPosition();
+         }
+      });
+      slicesPanel_.add(setBottomButton_, buttonSize + ", wrap");
+
+      final JLabel ztopLabel = new JLabel("Z-end [\u00b5m]");
+      ztopLabel.setFont(DEFAULT_FONT);
+      slicesPanel_.add(ztopLabel);
+
+      zTop_ = new JFormattedTextField(numberFormat_);
+      zTop_.setColumns(5);
+      zTop_.setFont(DEFAULT_FONT);
+      zTop_.setValue(1.0);
+      zTop_.addPropertyChangeListener("value", this);
+      slicesPanel_.add(zTop_);
+
+      setTopButton_ = new JButton("Set");
+      setTopButton_.setMargin(new Insets(-5, -5, -5, -5));
+      setTopButton_.setFont(new Font("Dialog", Font.PLAIN, 10));
+      setTopButton_.setToolTipText("Set value as microscope's current Z position");
+      setTopButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+            setTopPosition();
+         }
+      });
+      slicesPanel_.add(setTopButton_, buttonSize + ", wrap");
+
+      final JLabel zstepLabel = new JLabel("Z-step [\u00b5m]");
+      zstepLabel.setFont(DEFAULT_FONT);
+      slicesPanel_.add(zstepLabel);
+
+      zStep_ = new JFormattedTextField(numberFormat_);
+      zStep_.setColumns(5);
+      zStep_.setFont(DEFAULT_FONT);
+      zStep_.setValue(1.0);
+      zStep_.addPropertyChangeListener("value", this);
+      slicesPanel_.add(zStep_, "wrap");
+
+      zValCombo_ = new JComboBox(new String[] {RELATIVE_Z, ABSOLUTE_Z});
+      zValCombo_.setFont(DEFAULT_FONT);
+      zValCombo_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+            zValCalcChanged();
+         }
+      });
+      slicesPanel_.add(zValCombo_, "alignx center, spanx, wrap");
+
+      stackKeepShutterOpenCheckBox_ = new JCheckBox("Keep shutter open");
+      stackKeepShutterOpenCheckBox_.setFont(DEFAULT_FONT);
+      stackKeepShutterOpenCheckBox_.setSelected(false);
+      stackKeepShutterOpenCheckBox_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+            applySettings();
+         }
+      });
+      slicesPanel_.add(stackKeepShutterOpenCheckBox_, "alignx center, spanx");
+
+      slicesPanel_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+            // enable disable all related contrtols
+            applySettings();
+         }
+      });
+      return slicesPanel_;
+   }
+
+   private JPanel createAcquisitionOrder() {
+      acquisitionOrderPanel_ = createLabelPanel("Acquisition order");
+      acquisitionOrderPanel_.setLayout(
+            new MigLayout("fillx, flowy, insets 0, gap 0"));
+      acquisitionOrderPanel_.setMinimumSize(new Dimension(200, 80));
+      acqOrderBox_ = new JComboBox();
+      acqOrderBox_.setFont(new Font("", Font.PLAIN, 10));
+      acquisitionOrderPanel_.add(acqOrderBox_, "alignx center");
+      acquisitionOrderText_ = new JTextArea(3, 25);
+      acquisitionOrderText_.setEditable(false);
+      acquisitionOrderText_.setFont(new Font("", Font.PLAIN, 9));
+      acquisitionOrderPanel_.add(acquisitionOrderText_);
+
+      acqOrderModes_ = new AcqOrderMode[4];
+      acqOrderModes_[0] = new AcqOrderMode(AcqOrderMode.TIME_POS_SLICE_CHANNEL);
+      acqOrderModes_[1] = new AcqOrderMode(AcqOrderMode.TIME_POS_CHANNEL_SLICE);
+      acqOrderModes_[2] = new AcqOrderMode(AcqOrderMode.POS_TIME_SLICE_CHANNEL);
+      acqOrderModes_[3] = new AcqOrderMode(AcqOrderMode.POS_TIME_CHANNEL_SLICE);
+      acqOrderBox_.addItem(acqOrderModes_[0]);
+      acqOrderBox_.addItem(acqOrderModes_[1]);
+      acqOrderBox_.addItem(acqOrderModes_[2]);
+      acqOrderBox_.addItem(acqOrderModes_[3]);
+      return acquisitionOrderPanel_;
+   }
+
+   private JPanel createAutoFocus() {
+      afPanel_ = createCheckBoxPanel("Autofocus");
+      afPanel_.setLayout(new MigLayout("fillx, flowx, gap 0, insets 0"));
+
+      JButton afButton = new JButton("Options...");
+      afButton.setToolTipText("Set autofocus options");
+      afButton.setIcon(IconLoader.getIcon(
+            "/org/micromanager/icons/wrench_orange.png"));
+      afButton.setMargin(new Insets(2, 5, 2, 5));
+      afButton.setFont(new Font("Dialog", Font.PLAIN, 10));
+      afButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent arg0) {
+            afOptions();
+         }
+      });
+      afPanel_.add(afButton, "alignx center, wrap");
+
+      final JLabel afSkipFrame1 = new JLabel("Skip frame(s): ");
+      afSkipFrame1.setFont(new Font("Dialog", Font.PLAIN, 10));
+      afSkipFrame1.setToolTipText("How many frames to skip between running autofocus. Autofocus is always run at new stage positions");
+
+      afPanel_.add(afSkipFrame1, "split, spanx, alignx center");
+
+      afSkipInterval_ = new JSpinner(new SpinnerNumberModel(0, 0, null, 1));
+      JSpinner.DefaultEditor editor = (JSpinner.DefaultEditor) afSkipInterval_.getEditor();
+      editor.setFont(DEFAULT_FONT);
+      editor.getTextField().setColumns(3);
+      afSkipInterval_.setValue(acqEng_.getAfSkipInterval());
+      afSkipInterval_.addChangeListener(new ChangeListener() {
+         @Override
+         public void stateChanged(ChangeEvent e) {
+            applySettings();
+            afSkipInterval_.setValue(acqEng_.getAfSkipInterval());
+         }
+      });
+      afPanel_.add(afSkipInterval_);
+
+      afPanel_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent arg0) {
+            applySettings();
+         }
+      });
+      return afPanel_;
+   }
+
+   private JPanel createSummary() {
+      summaryPanel_ = createLabelPanel("Summary");
+      summaryPanel_.setLayout(new MigLayout("fill, insets 0, gap 0"));
+      summaryTextArea_ = new JTextArea(8, 25);
+      summaryTextArea_.setFont(new Font("Arial", Font.PLAIN, 11));
+      summaryTextArea_.setEditable(false);
+      summaryTextArea_.setMargin(new Insets(2, 2, 2, 2));
+      summaryTextArea_.setOpaque(false);
+      summaryPanel_.add(summaryTextArea_, "grow");
+      return summaryPanel_;
+   }
+
+   private JPanel createChannelsPanel() {
+      channelsPanel_ = createCheckBoxPanel("Channels");
+      channelsPanel_.setLayout(new MigLayout("fill, flowx, insets 0, gap 0"));
+
+      final JLabel channelsLabel = new JLabel("Channel group:");
+      channelsLabel.setFont(DEFAULT_FONT);
+      channelsPanel_.add(channelsLabel, "split 3, spanx");
+
+      channelGroupCombo_ = new JComboBox();
+      channelGroupCombo_.setFont(new Font("", Font.PLAIN, 10));
+      updateGroupsCombo();
+      channelGroupCombo_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent arg0) {
+            String newGroup = (String) channelGroupCombo_.getSelectedItem();
+
+            if (acqEng_.setChannelGroup(newGroup)) {
+               model_.cleanUpConfigurationList();
+               if (studio_.getAutofocusManager() != null) {
+                  studio_.getAutofocusManager().refresh();
+               }
+            } else {
+               updateGroupsCombo();
+            }
+         }
+      });
+      channelsPanel_.add(channelGroupCombo_);
+
+      chanKeepShutterOpenCheckBox_ = new JCheckBox("Keep shutter open");
+      chanKeepShutterOpenCheckBox_.setFont(DEFAULT_FONT);
+      chanKeepShutterOpenCheckBox_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+            applySettings();
+         }
+      });
+      chanKeepShutterOpenCheckBox_.setSelected(false);
+      channelsPanel_.add(chanKeepShutterOpenCheckBox_, "wrap");
+
+      channelTablePane_ = new JScrollPane() {
+         @Override
+         public Dimension getMinimumSize() {
+            return new Dimension(450, 90);
+         }
+         // HACK: manually set preferred size based on number of rows, because
+         // JTable preferred sizes tend to be ridiculously tall.
+         @Override
+         public Dimension getPreferredSize() {
+            Dimension superSize = super.getPreferredSize();
+            int rowHeight = channelTable_.getRowHeight();
+            int numRows = channelTable_.getRowCount();
+            return new Dimension(superSize.width,
+                  Math.min(superSize.height, rowHeight * numRows + 5));
+         }
+      };
+      channelTablePane_.setFont(DEFAULT_FONT);
+      channelsPanel_.add(channelTablePane_, "grow");
+
+      // Slightly smaller than BUTTON_SIZE
+      String buttonSize = "width 60!, height 20!";
+
+      final JButton addButton = new JButton("New");
+      addButton.setFont(DEFAULT_FONT);
+      addButton.setMargin(new Insets(0, 0, 0, 0));
+      addButton.setToolTipText("Add an additional channel");
+      addButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            applySettings();
+            model_.addNewChannel();
+            model_.fireTableStructureChanged();
+         }
+      });
+      channelsPanel_.add(addButton, buttonSize + ", flowy, spany, split");
+
+      final JButton removeButton = new JButton("Remove");
+      removeButton.setFont(DEFAULT_FONT);
+      removeButton.setMargin(new Insets(-5, -5, -5, -5));
+      removeButton.setToolTipText("Remove currently selected channel");
+      removeButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            int sel = channelTable_.getSelectedRow();
+            if (sel > -1) {
+               applySettings();
+               model_.removeChannel(sel);
+               model_.fireTableStructureChanged();
+               if (channelTable_.getRowCount() > sel) {
+                  channelTable_.setRowSelectionInterval(sel, sel);
+               }
+            }
+         }
+      });
+      channelsPanel_.add(removeButton, buttonSize);
+
+      final JButton upButton = new JButton("Up");
+      upButton.setFont(DEFAULT_FONT);
+      upButton.setMargin(new Insets(0, 0, 0, 0));
+      upButton.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(
+              "Move currently selected channel up (Channels higher on list are acquired first)"));
+      upButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            int sel = channelTable_.getSelectedRow();
+            if (sel > -1) {
+               applySettings();
+               int newSel = model_.rowUp(sel);
+               model_.fireTableStructureChanged();
+               channelTable_.setRowSelectionInterval(newSel, newSel);
+               //applySettings();
+            }
+         }
+      });
+      channelsPanel_.add(upButton, buttonSize);
+
+      final JButton downButton = new JButton("Down");
+      downButton.setFont(DEFAULT_FONT);
+      downButton.setMargin(new Insets(0, 0, 0, 0));
+      downButton.setText("Down");
+      downButton.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(
+              "Move currently selected channel down (Channels lower on list are acquired later)"));
+      downButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            int sel = channelTable_.getSelectedRow();
+            if (sel > -1) {
+               applySettings();
+               int newSel = model_.rowDown(sel);
+               model_.fireTableStructureChanged();
+               channelTable_.setRowSelectionInterval(newSel, newSel);
+               //applySettings();
+            }
+         }
+      });
+      channelsPanel_.add(downButton, buttonSize);
+
+      channelsPanel_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            applySettings();
+         }
+      });
+      return channelsPanel_;
+   }
+
+   private JComponent createCloseButton() {
+      final JButton closeButton = new JButton("Close");
+      closeButton.setFont(DEFAULT_FONT);
+      closeButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            saveSettings();
+            saveAcqSettings();
+            AcqControlDlg.this.dispose();
+            studio_.compat().makeActive();
+         }
+      });
+      return closeButton;
+   }
+
+   private JPanel createRunButtons() {
+      JPanel result = new JPanel(new MigLayout("flowy, insets 0, gap 0"));
+      acquireButton_ = new JButton("Acquire!");
+      acquireButton_.setMargin(new Insets(-9, -9, -9, -9));
+      acquireButton_.setFont(new Font("Arial", Font.BOLD, 12));
+      acquireButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            AbstractCellEditor ae = (AbstractCellEditor) channelTable_.getCellEditor();
+            if (ae != null) {
+               ae.stopCellEditing();
+            }
+            runAcquisition();
+         }
+      });
+      result.add(acquireButton_, BUTTON_SIZE);
+
+      final JButton stopButton = new JButton("Stop");
+      stopButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+            acqEng_.abortRequest();
+         }
+      });
+      stopButton.setFont(new Font("Arial", Font.BOLD, 12));
+      result.add(stopButton, BUTTON_SIZE);
+      return result;
+   }
+
+   private JPanel createSaveButtons() {
+      JPanel result = new JPanel(new MigLayout("flowy, insets 0, gap 0"));
+      final JButton loadButton = new JButton("Load...");
+      loadButton.setToolTipText("Load acquisition settings");
+      loadButton.setFont(DEFAULT_FONT);
+      loadButton.setMargin(new Insets(-5, -5, -5, -5));
+      loadButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            loadAcqSettingsFromFile();
+         }
+      });
+      result.add(loadButton, BUTTON_SIZE);
+
+      final JButton saveAsButton = new JButton("Save as...");
+      saveAsButton.setToolTipText("Save current acquisition settings as");
+      saveAsButton.setFont(DEFAULT_FONT);
+      saveAsButton.setMargin(new Insets(-5, -5, -5, -5));
+      saveAsButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            saveAsAcqSettingsToFile();
+         }
+      });
+      result.add(saveAsButton, BUTTON_SIZE);
+      return result;
+   }
+
+   private JComponent createCustomTimesButton() {
+      final JButton advancedButton = new JButton("Advanced");
+      advancedButton.setFont(DEFAULT_FONT);
+      advancedButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            showAdvancedDialog();
+            updateGUIContents();
+         }
+      });
+      return advancedButton;
+   }
+
+   private JPanel createSavePanel() {
+      savePanel_ = createCheckBoxPanel("Save images");
+      savePanel_.setLayout(new MigLayout("fillx, flowx, insets 0, gap 0"));
+
+      rootLabel_ = new JLabel("Directory root:");
+      rootLabel_.setFont(DEFAULT_FONT);
+      savePanel_.add(rootLabel_);
+
+      rootField_ = new JTextField();
+      rootField_.setFont(DEFAULT_FONT);
+      savePanel_.add(rootField_, "grow, pushx 100");
+
+      browseRootButton_ = new JButton("...");
+      browseRootButton_.setToolTipText("Browse");
+      browseRootButton_.setMargin(new Insets(2, 5, 2, 5));
+      browseRootButton_.setFont(new Font("Dialog", Font.PLAIN, 10));
+      browseRootButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+            setRootDirectory();
+         }
+      });
+      savePanel_.add(browseRootButton_, "wrap");
+
+      namePrefixLabel_ = new JLabel("Name prefix:");
+      namePrefixLabel_.setFont(DEFAULT_FONT);
+      savePanel_.add(namePrefixLabel_);
+
+      nameField_ = new JTextField();
+      nameField_.setFont(DEFAULT_FONT);
+      savePanel_.add(nameField_, "grow, pushx 100, wrap");
+
+      saveTypeLabel_ = new JLabel("Saving format: ");
+      saveTypeLabel_.setFont(DEFAULT_FONT);
+      savePanel_.add(saveTypeLabel_, "split, spanx");
+
+      singleButton_ = new JRadioButton("Separate image files");
+      singleButton_.setFont(DEFAULT_FONT);
+      singleButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            DefaultDatastore.setPreferredSaveMode(
+               Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
+         }
+      });
+      savePanel_.add(singleButton_);
+
+      multiButton_ = new JRadioButton("Image stack file");
+      multiButton_.setFont(DEFAULT_FONT);
+      multiButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            DefaultDatastore.setPreferredSaveMode(
+               Datastore.SaveMode.MULTIPAGE_TIFF);
+         }
+      });
+      savePanel_.add(multiButton_);
+
+      ButtonGroup buttonGroup = new ButtonGroup();
+      buttonGroup.add(singleButton_);
+      buttonGroup.add(multiButton_);
+      updateSavingTypeButtons();
+
+      savePanel_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+            applySettings();
+         }
+      });
+      return savePanel_;
+   }
+
+   private JPanel createCommentsPanel() {
+      commentsPanel_ = createLabelPanel("Acquisition Comments");
+      commentsPanel_.setLayout(new MigLayout("fillx, insets 0, gap 0"));
+
+      commentTextArea_ = new JTextArea() {
+         @Override
+         public Dimension getMinimumSize() {
+            return new Dimension(0, 45);
+         }
+      };
+      commentTextArea_.setRows(4);
+      commentTextArea_.setFont(new Font("", Font.PLAIN, 10));
+      commentTextArea_.setToolTipText("Comment for the current acquisition");
+      commentTextArea_.setWrapStyleWord(true);
+      commentTextArea_.setLineWrap(true);
+      commentTextArea_.setBorder(BorderFactory.createCompoundBorder(
+               BorderFactory.createLoweredBevelBorder(),
+               BorderFactory.createEtchedBorder()));
+
+      commentsPanel_.add(commentTextArea_, "grow");
+      return commentsPanel_;
    }
 
    private void createToolTips() {
@@ -336,651 +920,29 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       acqEng_ = acqEng;
       acqEng.addSettingsListener(this);
 
-      getContentPane().setLayout(null);
-      setResizable(false);
+      getContentPane().setLayout(new MigLayout("insets 2, gap 2"));
       setTitle("Multi-Dimensional Acquisition");
-
-      createEmptyPanels();
-
-
-      // Frames panel
-      JPanel defaultPanel = new JPanel();
-      JPanel overridePanel = new JPanel();
-      defaultPanel.setLayout(null);
-      JLabel overrideLabel = new JLabel("Custom time intervals enabled");
-
-      overrideLabel.setFont(new Font("Arial", Font.BOLD, 12));
-      overrideLabel.setForeground(Color.red);
-
-      JButton disableCustomIntervalsButton = new JButton("Disable custom intervals");
-      disableCustomIntervalsButton.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            acqEng_.enableCustomTimeIntervals(false);
-            updateGUIContents();
-         }
-      });
-      disableCustomIntervalsButton.setFont(new Font("Arial", Font.PLAIN, 10));
-
-      overridePanel.add(overrideLabel, BorderLayout.PAGE_START);
-      overridePanel.add(disableCustomIntervalsButton, BorderLayout.PAGE_END);
-
-      framesPanel_.setLayout(new BorderLayout());
-      framesSubPanelLayout_ = new CardLayout();
-      framesSubPanel_ = new JPanel(framesSubPanelLayout_);
-      //this subpanel is needed for the time points panel to properly render
-      framesPanel_.add(framesSubPanel_);
-
-      framesSubPanel_.add(defaultPanel, DEFAULT_FRAMES_PANEL_NAME);
-      framesSubPanel_.add(overridePanel, OVERRIDE_FRAMES_PANEL_NAME);
-
-      framesSubPanelLayout_.show(framesSubPanel_, DEFAULT_FRAMES_PANEL_NAME);
-
-
-      framesPanel_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            applySettings();
-         }
-      });
-
-      final JLabel numberLabel = new JLabel();
-      numberLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-
-      numberLabel.setText("Number");
-      defaultPanel.add(numberLabel);
-      numberLabel.setBounds(15, 0, 54, 24);
-
-      SpinnerModel sModel = new SpinnerNumberModel(
-              new Integer(1),
-              new Integer(1),
-              null,
-              new Integer(1));
-
-      numFrames_ = new JSpinner(sModel);
-      ((JSpinner.DefaultEditor) numFrames_.getEditor()).getTextField().setFont(new Font("Arial", Font.PLAIN, 10));
-
-      //numFrames_.setValue((int) acqEng_.getNumFrames());
-      defaultPanel.add(numFrames_);
-      numFrames_.setBounds(60, 0, 70, 24);
-      numFrames_.addChangeListener(new ChangeListener() {
-
-         @Override
-         public void stateChanged(ChangeEvent e) {
-            applySettings();
-         }
-      });
-
-      final JLabel intervalLabel = new JLabel();
-      intervalLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-      intervalLabel.setText("Interval");
-      intervalLabel.setToolTipText("Interval between successive time points.  Setting an interval"
-              + "of 0 will cause micromanager to acquire 'burts' of images as fast as possible");
-      defaultPanel.add(intervalLabel);
-      intervalLabel.setBounds(15, 27, 43, 24);
-
-      interval_ = new JFormattedTextField(numberFormat_);
-      interval_.setFont(new Font("Arial", Font.PLAIN, 10));
-      interval_.setValue(1.0);
-      interval_.addPropertyChangeListener("value", this);
-      defaultPanel.add(interval_);
-      interval_.setBounds(60, 27, 55, 24);
-
-      timeUnitCombo_ = new JComboBox();
-      timeUnitCombo_.setModel(new DefaultComboBoxModel(new String[]{"ms", "s", "min"}));
-      timeUnitCombo_.setFont(new Font("Arial", Font.PLAIN, 10));
-      timeUnitCombo_.setBounds(120, 27, 67, 24);
-      defaultPanel.add(timeUnitCombo_);
-
-
-      // Positions (XY) panel
-
-
-      listButton_ = new JButton();
-      listButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            studio_.compat().showPositionList();
-         }
-      });
-      listButton_.setToolTipText("Open XY list dialog");
-      listButton_.setIcon(new ImageIcon(MMStudio.class.getResource(
-              "/org/micromanager/icons/application_view_list.png")));
-      listButton_.setText("Edit position list...");
-      listButton_.setMargin(new Insets(2, 5, 2, 5));
-      listButton_.setFont(new Font("Dialog", Font.PLAIN, 10));
-      listButton_.setBounds(42, 25, 136, 26);
-      positionsPanel_.add(listButton_);
-
-      // Slices panel
-
-      slicesPanel_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            // enable disable all related contrtols
-            applySettings();
-         }
-      });
-
-      final JLabel zbottomLabel = new JLabel();
-      zbottomLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-      zbottomLabel.setText("Z-start [um]");
-      zbottomLabel.setBounds(30, 30, 69, 15);
-      slicesPanel_.add(zbottomLabel);
-
-      zBottom_ = new JFormattedTextField(numberFormat_);
-      zBottom_.setFont(new Font("Arial", Font.PLAIN, 10));
-      zBottom_.setBounds(95, 27, 54, 21);
-      zBottom_.setValue(1.0);
-      zBottom_.addPropertyChangeListener("value", this);
-      slicesPanel_.add(zBottom_);
-
-      setBottomButton_ = new JButton();
-      setBottomButton_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            setBottomPosition();
-         }
-      });
-      setBottomButton_.setMargin(new Insets(-5, -5, -5, -5));
-      setBottomButton_.setFont(new Font("", Font.PLAIN, 10));
-      setBottomButton_.setText("Set");
-      setBottomButton_.setToolTipText("Set value as microscope's current Z position");
-      setBottomButton_.setBounds(150, 27, 50, 22);
-      slicesPanel_.add(setBottomButton_);
-
-      final JLabel ztopLabel = new JLabel();
-      ztopLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-      ztopLabel.setText("Z-end [um]");
-      ztopLabel.setBounds(30, 53, 69, 15);
-      slicesPanel_.add(ztopLabel);
-
-      zTop_ = new JFormattedTextField(numberFormat_);
-      zTop_.setFont(new Font("Arial", Font.PLAIN, 10));
-      zTop_.setBounds(95, 50, 54, 21);
-      zTop_.setValue(1.0);
-      zTop_.addPropertyChangeListener("value", this);
-      slicesPanel_.add(zTop_);
-
-      setTopButton_ = new JButton();
-      setTopButton_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            setTopPosition();
-         }
-      });
-      setTopButton_.setMargin(new Insets(-5, -5, -5, -5));
-      setTopButton_.setFont(new Font("Dialog", Font.PLAIN, 10));
-      setTopButton_.setText("Set");
-      setTopButton_.setToolTipText("Set value as microscope's current Z position");
-      setTopButton_.setBounds(150, 50, 50, 22);
-      slicesPanel_.add(setTopButton_);
-
-      final JLabel zstepLabel = new JLabel();
-      zstepLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-      zstepLabel.setText("Z-step [um]");
-      zstepLabel.setBounds(30, 76, 69, 15);
-      slicesPanel_.add(zstepLabel);
-
-      zStep_ = new JFormattedTextField(numberFormat_);
-      zStep_.setFont(new Font("Arial", Font.PLAIN, 10));
-      zStep_.setBounds(95, 73, 54, 21);
-      zStep_.setValue(1.0);
-      zStep_.addPropertyChangeListener("value", this);
-      slicesPanel_.add(zStep_);
-
-      zValCombo_ = new JComboBox();
-      zValCombo_.setFont(new Font("Arial", Font.PLAIN, 10));
-      zValCombo_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            zValCalcChanged();
-         }
-      });
-      zValCombo_.setModel(new DefaultComboBoxModel(new String[]{"relative Z", "absolute Z"}));
-      zValCombo_.setBounds(30, 97, 110, 22);
-      slicesPanel_.add(zValCombo_);
-
-      stackKeepShutterOpenCheckBox_ = new JCheckBox();
-      stackKeepShutterOpenCheckBox_.setText("Keep shutter open");
-      stackKeepShutterOpenCheckBox_.setFont(new Font("Arial", Font.PLAIN, 10));
-      stackKeepShutterOpenCheckBox_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            applySettings();
-         }
-      });
-      stackKeepShutterOpenCheckBox_.setSelected(false);
-      stackKeepShutterOpenCheckBox_.setBounds(60, 121, 150, 22);
-      slicesPanel_.add(stackKeepShutterOpenCheckBox_);
-
-      // Acquisition order panel
-
-      acqOrderBox_ = new JComboBox();
-      acqOrderBox_.setFont(new Font("", Font.PLAIN, 10));
-      acqOrderBox_.setBounds(2, 26, 195, 22);
-      acquisitionOrderPanel_.add(acqOrderBox_);
-      acquisitionOrderText_ = new JLabel(" ");
-      acquisitionOrderText_.setFont(new Font("", Font.PLAIN, 9));
-      acquisitionOrderText_.setBounds(5, 32, 195, 60);
-      acquisitionOrderPanel_.add(acquisitionOrderText_);
-
-      acqOrderModes_ = new AcqOrderMode[4];
-      acqOrderModes_[0] = new AcqOrderMode(AcqOrderMode.TIME_POS_SLICE_CHANNEL);
-      acqOrderModes_[1] = new AcqOrderMode(AcqOrderMode.TIME_POS_CHANNEL_SLICE);
-      acqOrderModes_[2] = new AcqOrderMode(AcqOrderMode.POS_TIME_SLICE_CHANNEL);
-      acqOrderModes_[3] = new AcqOrderMode(AcqOrderMode.POS_TIME_CHANNEL_SLICE);
-      acqOrderBox_.addItem(acqOrderModes_[0]);
-      acqOrderBox_.addItem(acqOrderModes_[1]);
-      acqOrderBox_.addItem(acqOrderModes_[2]);
-      acqOrderBox_.addItem(acqOrderModes_[3]);
-
-
-      // Summary panel
-
-      summaryTextArea_ = new JTextArea();
-      summaryTextArea_.setFont(new Font("Arial", Font.PLAIN, 11));
-      summaryTextArea_.setEditable(false);
-      summaryTextArea_.setBounds(4, 19, 350, 120);
-      summaryTextArea_.setMargin(new Insets(2, 2, 2, 2));
-      summaryTextArea_.setOpaque(false);
-      summaryPanel_.add(summaryTextArea_);
-
-      // Autofocus panel
-
-      afPanel_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            applySettings();
-         }
-      });
-
-      afButton_ = new JButton();
-      afButton_.setToolTipText("Set autofocus options");
-      afButton_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            afOptions();
-         }
-      });
-      afButton_.setText("Options...");
-      afButton_.setIcon(new ImageIcon(MMStudio.class.getResource(
-              "/org/micromanager/icons/wrench_orange.png")));
-      afButton_.setMargin(new Insets(2, 5, 2, 5));
-      afButton_.setFont(new Font("Dialog", Font.PLAIN, 10));
-      afButton_.setBounds(50, 26, 100, 28);
-      afPanel_.add(afButton_);
-
-
-      final JLabel afSkipFrame1 = new JLabel();
-      afSkipFrame1.setFont(new Font("Dialog", Font.PLAIN, 10));
-      afSkipFrame1.setText("Skip frame(s): ");
-      afSkipFrame1.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip("The number of 'frames skipped' corresponds"
-              + "to the number of time intervals of image acquisition that pass before micromanager autofocuses again.  Micromanager "
-              + "will always autofocus when moving to a new position regardless of this value"));
-
-
-      afSkipFrame1.setBounds(35, 54, 70, 21);
-      afPanel_.add(afSkipFrame1);
-
-
-      afSkipInterval_ = new JSpinner(new SpinnerNumberModel(0, 0, null, 1));
-      ((JSpinner.DefaultEditor) afSkipInterval_.getEditor()).getTextField().setFont(new Font("Arial", Font.PLAIN, 10));
-      afSkipInterval_.setBounds(105, 54, 55, 22);
-      afSkipInterval_.setValue(acqEng_.getAfSkipInterval());
-      afSkipInterval_.addChangeListener(new ChangeListener() {
-
-         @Override
-         public void stateChanged(ChangeEvent e) {
-            applySettings();
-            afSkipInterval_.setValue(acqEng_.getAfSkipInterval());
-         }
-      });
-      afPanel_.add(afSkipInterval_);
-
-
-      // Channels panel
-      channelsPanel_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            applySettings();
-         }
-      });
-
-      final JLabel channelsLabel = new JLabel();
-      channelsLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-      channelsLabel.setBounds(90, 19, 80, 24);
-      channelsLabel.setText("Channel group:");
-      channelsPanel_.add(channelsLabel);
-
-
-      channelGroupCombo_ = new JComboBox();
-      channelGroupCombo_.setFont(new Font("", Font.PLAIN, 10));
-      updateGroupsCombo();
-
-      channelGroupCombo_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent arg0) {
-            String newGroup = (String) channelGroupCombo_.getSelectedItem();
-
-            if (acqEng_.setChannelGroup(newGroup)) {
-               model_.cleanUpConfigurationList();
-               if (studio_.getAutofocusManager() != null) {
-                  studio_.getAutofocusManager().refresh();
-               }
-            } else {
-               updateGroupsCombo();
-            }
-         }
-      });
-      channelGroupCombo_.setBounds(165, 20, 150, 22);
-      channelsPanel_.add(channelGroupCombo_);
-
-      channelTablePane_ = new JScrollPane();
-      channelTablePane_.setFont(new Font("Arial", Font.PLAIN, 10));
-      channelTablePane_.setBounds(10, 45, 414, 90);
-      channelsPanel_.add(channelTablePane_);
-
-
-      final JButton addButton = new JButton();
-      addButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      addButton.setMargin(new Insets(0, 0, 0, 0));
-      addButton.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            applySettings();
-            model_.addNewChannel();
-            model_.fireTableStructureChanged();
-         }
-      });
-      addButton.setText("New");
-      addButton.setToolTipText("Create new channel for currently selected channel group");
-      addButton.setBounds(430, 45, 68, 22);
-      channelsPanel_.add(addButton);
-
-      final JButton removeButton = new JButton();
-      removeButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      removeButton.setMargin(new Insets(-5, -5, -5, -5));
-      removeButton.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            int sel = channelTable_.getSelectedRow();
-            if (sel > -1) {
-               applySettings();
-               model_.removeChannel(sel);
-               model_.fireTableStructureChanged();
-               if (channelTable_.getRowCount() > sel) {
-                  channelTable_.setRowSelectionInterval(sel, sel);
-               }
-            }
-         }
-      });
-      removeButton.setText("Remove");
-      removeButton.setToolTipText("Remove currently selected channel");
-      removeButton.setBounds(430, 69, 68, 22);
-      channelsPanel_.add(removeButton);
-
-      final JButton upButton = new JButton();
-      upButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      upButton.setMargin(new Insets(0, 0, 0, 0));
-      upButton.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            int sel = channelTable_.getSelectedRow();
-            if (sel > -1) {
-               applySettings();
-               int newSel = model_.rowUp(sel);
-               model_.fireTableStructureChanged();
-               channelTable_.setRowSelectionInterval(newSel, newSel);
-               //applySettings();
-            }
-         }
-      });
-      upButton.setText("Up");
-      upButton.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(
-              "Move currently selected channel up (Channels higher on list are acquired first)"));
-      upButton.setBounds(430, 93, 68, 22);
-      channelsPanel_.add(upButton);
-
-      final JButton downButton = new JButton();
-      downButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      downButton.setMargin(new Insets(0, 0, 0, 0));
-      downButton.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            int sel = channelTable_.getSelectedRow();
-            if (sel > -1) {
-               applySettings();
-               int newSel = model_.rowDown(sel);
-               model_.fireTableStructureChanged();
-               channelTable_.setRowSelectionInterval(newSel, newSel);
-               //applySettings();
-            }
-         }
-      });
-      downButton.setText("Down");
-      downButton.setToolTipText(TooltipTextMaker.addHTMLBreaksForTooltip(
-              "Move currently selected channel down (Channels lower on list are acquired later)"));
-      downButton.setBounds(430, 117, 68, 22);
-      channelsPanel_.add(downButton);
-
-      chanKeepShutterOpenCheckBox_ = new JCheckBox();
-      chanKeepShutterOpenCheckBox_.setText("Keep shutter open");
-      chanKeepShutterOpenCheckBox_.setFont(new Font("Arial", Font.PLAIN, 10));
-      chanKeepShutterOpenCheckBox_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            applySettings();
-         }
-      });
-      chanKeepShutterOpenCheckBox_.setSelected(false);
-      chanKeepShutterOpenCheckBox_.setBounds(330, 20, 150, 22);
-      channelsPanel_.add(chanKeepShutterOpenCheckBox_);
-
-
-      // Save panel
-      savePanel_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            applySettings();
-         }
-      });
-
-      rootLabel_ = new JLabel();
-      rootLabel_.setFont(new Font("Arial", Font.PLAIN, 10));
-      rootLabel_.setText("Directory root");
-      rootLabel_.setBounds(10, 30, 72, 22);
-      savePanel_.add(rootLabel_);
-
-      rootField_ = new JTextField();
-      rootField_.setFont(new Font("Arial", Font.PLAIN, 10));
-      rootField_.setBounds(90, 30, 354, 22);
-      savePanel_.add(rootField_);
-
-      browseRootButton_ = new JButton();
-      browseRootButton_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            setRootDirectory();
-         }
-      });
-      browseRootButton_.setMargin(new Insets(2, 5, 2, 5));
-      browseRootButton_.setFont(new Font("Dialog", Font.PLAIN, 10));
-      browseRootButton_.setText("...");
-      browseRootButton_.setBounds(445, 30, 47, 24);
-      savePanel_.add(browseRootButton_);
-      browseRootButton_.setToolTipText("Browse");
-
-      namePrefixLabel_ = new JLabel();
-      namePrefixLabel_.setFont(new Font("Arial", Font.PLAIN, 10));
-      namePrefixLabel_.setText("Name prefix");
-      namePrefixLabel_.setBounds(10, 55, 76, 22);
-      savePanel_.add(namePrefixLabel_);
-
-      nameField_ = new JTextField();
-      nameField_.setFont(new Font("Arial", Font.PLAIN, 10));
-      nameField_.setBounds(90, 55, 354, 22);
-      savePanel_.add(nameField_);
-      
-      saveTypeLabel_ = new JLabel("Saving format: ");         
-      saveTypeLabel_.setFont(new Font("Arial", Font.PLAIN, 10));
-      saveTypeLabel_.setBounds(10,80, 100,22);
-      savePanel_.add(saveTypeLabel_);
-
-      
-      singleButton_ = new JRadioButton("Separate image files");
-      singleButton_.setFont(new Font("Arial", Font.PLAIN, 10));
-      singleButton_.setBounds(110,80,150,22);
-      savePanel_.add(singleButton_);
-      singleButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            DefaultDatastore.setPreferredSaveMode(
-               Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
-         }});
-
-      multiButton_ = new JRadioButton("Image stack file");
-      multiButton_.setFont(new Font("Arial", Font.PLAIN, 10));      
-      multiButton_.setBounds(260,80,200,22);
-      savePanel_.add(multiButton_);
-      multiButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            DefaultDatastore.setPreferredSaveMode(
-               Datastore.SaveMode.MULTIPAGE_TIFF);
-         }});
-      
-      ButtonGroup buttonGroup = new ButtonGroup();
-      buttonGroup.add(singleButton_);
-      buttonGroup.add(multiButton_);
-      updateSavingTypeButtons();
-
-      JScrollPane commentScrollPane = new JScrollPane();
-      commentScrollPane.setBounds(10, 28, 485, 50);
-      commentsPanel_.add(commentScrollPane);
-
-      commentTextArea_ = new JTextArea();
-      commentScrollPane.setViewportView(commentTextArea_);
-      commentTextArea_.setFont(new Font("", Font.PLAIN, 10));
-      commentTextArea_.setToolTipText("Comment for the current acquisition");
-      commentTextArea_.setWrapStyleWord(true);
-      commentTextArea_.setLineWrap(true);
-      commentTextArea_.setBorder(new EtchedBorder(EtchedBorder.LOWERED));
-
-
-
-      // Main buttons
-      final JButton closeButton = new JButton();
-      closeButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      closeButton.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            saveSettings();
-            saveAcqSettings();
-            AcqControlDlg.this.dispose();
-            studio_.compat().makeActive();
-         }
-      });
-      closeButton.setText("Close");
-      closeButton.setBounds(432, 10, 80, 22);
-      getContentPane().add(closeButton);
-
-      acquireButton_ = new JButton();
-      acquireButton_.setMargin(new Insets(-9, -9, -9, -9));
-      acquireButton_.setFont(new Font("Arial", Font.BOLD, 12));
-      acquireButton_.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            AbstractCellEditor ae = (AbstractCellEditor) channelTable_.getCellEditor();
-            if (ae != null) {
-               ae.stopCellEditing();
-            }
-            runAcquisition();
-         }
-      });
-      acquireButton_.setText("Acquire!");
-      acquireButton_.setBounds(432, 44, 80, 22);
-      getContentPane().add(acquireButton_);
-
-
-      final JButton stopButton = new JButton();
-      stopButton.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(final ActionEvent e) {
-            acqEng_.abortRequest();
-         }
-      });
-      stopButton.setText("Stop");
-      stopButton.setFont(new Font("Arial", Font.BOLD, 12));
-      stopButton.setBounds(432, 68, 80, 22);
-      getContentPane().add(stopButton);
-
-
-
-      final JButton loadButton = new JButton();
-      loadButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      loadButton.setMargin(new Insets(-5, -5, -5, -5));
-      loadButton.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            loadAcqSettingsFromFile();
-         }
-      });
-
-      loadButton.setText("Load...");
-      loadButton.setBounds(432, 102, 80, 22);
-      getContentPane().add(loadButton);
-      loadButton.setToolTipText("Load acquisition settings");
-
-      final JButton saveAsButton = new JButton();
-      saveAsButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      saveAsButton.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            saveAsAcqSettingsToFile();
-         }
-      });
-      saveAsButton.setToolTipText("Save current acquisition settings as");
-      saveAsButton.setText("Save as...");
-      saveAsButton.setBounds(432, 126, 80, 22);
-      saveAsButton.setMargin(new Insets(-5, -5, -5, -5));
-      getContentPane().add(saveAsButton);
-
-      final JButton advancedButton = new JButton();
-      advancedButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      advancedButton.addActionListener(new ActionListener() {
-
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            showAdvancedDialog();
-            updateGUIContents();
-         }
-      });
-      advancedButton.setText("Advanced");
-      advancedButton.setBounds(432, 170, 80, 22);
-      getContentPane().add(advancedButton);
+      setLayout(new MigLayout("flowy, insets 2, gap 0"));
+
+      // Contains timepoints, multiple positions, and Z-slices; acquisition
+      // order, autofocus, and summary; control buttons, in three columns.
+      JPanel topPanel = new JPanel(new MigLayout("flowy, insets 0, gap 0"));
+      topPanel.add(createTimePoints(), "growx, split, spany");
+      topPanel.add(createMultiPositions(), "growx");
+      topPanel.add(createZStacks(), "grow, wrap");
+      topPanel.add(createAcquisitionOrder(), "growx, split, spany");
+      topPanel.add(createAutoFocus(), "growx");
+      topPanel.add(createSummary(), "growx, wrap");
+      topPanel.add(createCloseButton(), BUTTON_SIZE + ", split, spany");
+      topPanel.add(createRunButtons(), "gaptop 10");
+      topPanel.add(createSaveButtons(), "gaptop 10");
+      topPanel.add(createCustomTimesButton(),
+            BUTTON_SIZE + ", gaptop 30, gapbottom push");
+
+      add(topPanel);
+      add(createChannelsPanel(), "grow");
+      add(createSavePanel(), "growx");
+      add(createCommentsPanel(), "growx");
 
       // update GUI contents
       // -------------------
@@ -1016,10 +978,9 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       applySettings();
 
       createToolTips();
-      
-      // load window position from prefs
+
       this.loadAndRestorePosition(100, 100);
-      this.setSize(521, 690);
+      pack();
 
       studio_.events().registerForEvents(this);
    }
@@ -1178,15 +1139,12 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       acqEng_.enableFramesSetting(profile.getBoolean(
                this.getClass(), ACQ_ENABLE_MULTI_FRAME, false));
 
-      boolean framesEnabled = acqEng_.isFramesSettingEnabled(); 
+      boolean framesEnabled = acqEng_.isFramesSettingEnabled();
       framesPanel_.setSelected(framesEnabled);
-      framesPanel_.setSelected(framesEnabled);
-      Component[] comps = framesSubPanel_.getComponents();
-      for (Component c: comps)
-         for (Component co: ((JPanel)c).getComponents() )
-            co.setEnabled(framesEnabled);
+      defaultTimesPanel_.setVisible(!framesEnabled);
+      customTimesPanel_.setVisible(framesEnabled);
       framesPanel_.repaint();
-            
+
       numFrames_.setValue(acqEng_.getNumFrames());
 
       int unit = profile.getInt(this.getClass(), ACQ_TIME_UNIT, 0);
@@ -1679,11 +1637,9 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    }
 
    private void checkForCustomTimeIntervals() {
-      if (acqEng_.customTimeIntervalsEnabled()) {
-         framesSubPanelLayout_.show(framesSubPanel_, OVERRIDE_FRAMES_PANEL_NAME);
-      } else {
-         framesSubPanelLayout_.show(framesSubPanel_, DEFAULT_FRAMES_PANEL_NAME);
-      }
+      boolean isCustom = acqEng_.customTimeIntervalsEnabled();
+      defaultTimesPanel_.setVisible(!isCustom);
+      customTimesPanel_.setVisible(isCustom);
    }
 
    public final void updateGUIContents() {
@@ -1706,12 +1662,9 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
       boolean framesEnabled = acqEng_.isFramesSettingEnabled(); 
       framesPanel_.setSelected(framesEnabled);
-      Component[] comps = framesSubPanel_.getComponents();
-      for (Component c: comps)
-         for (Component co: ((JPanel)c).getComponents() )
-            co.setEnabled(framesEnabled);
-      
-      
+      defaultTimesPanel_.setVisible(!framesEnabled);
+      customTimesPanel_.setVisible(framesEnabled);
+
       checkForCustomTimeIntervals();
       slicesPanel_.setSelected(acqEng_.isZSliceSettingEnabled());
       positionsPanel_.setSelected(acqEng_.isMultiPositionEnabled());
@@ -1895,7 +1848,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    }
 
    private void zValCalcChanged() {
-      if (zValCombo_.getSelectedIndex() == 0) {
+      if (((String) zValCombo_.getSelectedItem()).equals(RELATIVE_Z)) {
          setTopButton_.setEnabled(false);
          setBottomButton_.setEnabled(false);
       } else {
