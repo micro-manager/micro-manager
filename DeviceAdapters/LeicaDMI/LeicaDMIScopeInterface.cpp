@@ -567,6 +567,14 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       command.str("");
    }
 
+   if (scopeModel_->IsDeviceAvailable(g_Side_Port)) {
+      command << g_Side_Port << "023";
+      ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
    if (scopeModel_->IsDeviceAvailable(g_DIC_Turret)) {
       command << g_DIC_Turret << "023";
       ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
