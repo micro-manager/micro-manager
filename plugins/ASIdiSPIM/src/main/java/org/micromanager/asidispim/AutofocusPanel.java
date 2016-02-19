@@ -33,9 +33,11 @@ import javax.swing.JSpinner;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 
+import org.micromanager.AutofocusPlugin;
+import org.micromanager.AutofocusManager;
 import org.micromanager.Studio;
-import org.micromanager.asidispim.api.ASIdiSPIMException;
 
+import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.asidispim.data.Devices;
 import org.micromanager.asidispim.data.MyStrings;
 import org.micromanager.asidispim.data.Prefs;
@@ -43,9 +45,11 @@ import org.micromanager.asidispim.data.Properties;
 import org.micromanager.asidispim.utils.AutofocusUtils;
 import org.micromanager.asidispim.utils.ListeningJPanel;
 import org.micromanager.asidispim.utils.PanelUtils;
-
 import org.micromanager.asidispim.fit.Fitter;
+import org.micromanager.asidispim.utils.MyDialogUtils;
 import org.micromanager.asidispim.utils.MyNumberUtils;
+
+import org.micromanager.internal.utils.MMException;
 
 /**
  *
@@ -139,8 +143,29 @@ public class AutofocusPanel extends ListeningJPanel{
          public void actionPerformed(ActionEvent e) {
 
             prefs_.putInt(panelName_, Properties.Keys.AUTOFOCUS_SCORING_ALGORITHM,
-                  Fitter.getPrefCodeFromString(scoringAlgorithmCB.getSelectedItem().toString()));
-            gui_.compat().showAutofocusDialog();
+               Fitter.getPrefCodeFromString(scoringAlgorithmCB.getSelectedItem().toString()));
+            // push this change to the autofocus device now so that it is clear
+            // to the semi-knowledgeable user what will happen
+            try {
+               AutofocusManager afManager = gui_.getAutofocusManager();
+               afManager.setAutofocusMethodByName("OughtaFocus");
+               AutofocusPlugin afDevice = afManager.getAutofocusMethod();
+
+               if (afDevice == null) {
+                  throw new ASIdiSPIMException("Please define autofocus method in the Autofocus panel");
+               }
+
+               // select the appropriate algorithm
+               afDevice.setPropertyValue("Maximize",
+                       Fitter.getAlgorithmFromPrefCode(
+                               prefs_.getInt(MyStrings.PanelNames.AUTOFOCUS.toString(),
+                                       Properties.Keys.AUTOFOCUS_SCORING_ALGORITHM,
+                                       Fitter.Algorithm.VOLATH.getPrefCode())).toString());
+            } catch (MMException mmse) {
+               MyDialogUtils.showError("Failed to select the Oughtafocus plugin.  Is it present in the mmautofocus directory?");
+            } catch (ASIdiSPIMException se) {
+               MyDialogUtils.showError(se.getMessage());
+            }
          }
       });
       optionsPanel_.add(scoringAlgorithmCB, "wrap");
@@ -244,9 +269,9 @@ public class AutofocusPanel extends ListeningJPanel{
       
       
       // construct the main panel
-      add(optionsPanel_);
-      add(acqOptionsPanel_);
-      add(setupOptionsPanel_);
+      super.add(optionsPanel_);
+      super.add(acqOptionsPanel_);
+      super.add(setupOptionsPanel_);
    }//constructor
    
    /**

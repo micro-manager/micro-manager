@@ -21,6 +21,14 @@
 
 package org.micromanager.asidispim;
 
+import java.awt.Container;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.prefs.Preferences;
+import javax.swing.JFrame;
+import javax.swing.JTabbedPane;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
 import com.google.common.eventbus.Subscribe;
 import net.miginfocom.swing.MigLayout;
 
@@ -31,17 +39,6 @@ import org.micromanager.asidispim.data.Positions;
 import org.micromanager.asidispim.data.Prefs;
 import org.micromanager.asidispim.data.Properties;
 import org.micromanager.asidispim.utils.ListeningJPanel;
-
-import java.awt.Container;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.prefs.Preferences;
-
-import javax.swing.JFrame;
-import javax.swing.JTabbedPane;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
-import org.micromanager.Studio;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.asidispim.utils.AutofocusUtils;
 import org.micromanager.asidispim.utils.ControllerUtils;
@@ -49,8 +46,11 @@ import org.micromanager.asidispim.utils.ListeningJTabbedPane;
 import org.micromanager.asidispim.utils.MyDialogUtils;
 import static org.micromanager.asidispim.utils.MyJavaUtils.isMac;
 import org.micromanager.asidispim.utils.StagePositionUpdater;
+import org.micromanager.asidispim.utils.SPIMFrame;
+
+import org.micromanager.Studio;
 import org.micromanager.events.LiveModeEvent;
-import org.micromanager.internal.utils.MMFrame;
+
 
 
 //TODO devices tab automatically recognize default device names
@@ -87,8 +87,7 @@ import org.micromanager.internal.utils.MMFrame;
  * @author Jon
  */
 @SuppressWarnings("serial")
-public class ASIdiSPIMFrame extends MMFrame  
-       {
+public class ASIdiSPIMFrame extends SPIMFrame  {
    
    private final Studio gui_;
    private final Properties props_; 
@@ -123,7 +122,8 @@ public class ASIdiSPIMFrame extends MMFrame
     * @throws ASIdiSPIMException
     */
    public ASIdiSPIMFrame(Studio gui) throws ASIdiSPIMException {
-
+      super(gui);
+      
       // create interface objects used by panels
       gui_ = gui;
       prefs_ = new Prefs(Preferences.userNodeForPackage(this.getClass()));
@@ -217,7 +217,7 @@ public class ASIdiSPIMFrame extends MMFrame
       });
       
       // put frame back where it was last time
-      this.loadAndRestorePosition(100, 100);
+      super.loadAndRestorePosition(100, 100);
       
       // clear any previous joystick settings
       joystick_.unsetAllJoysticks();
@@ -227,21 +227,21 @@ public class ASIdiSPIMFrame extends MMFrame
       tabbedPane_.setSelectedIndex(prefs_.getInt(MAIN_PREF_NODE, Prefs.Keys.TAB_INDEX, deviceTabIndex));  // default to devicesPanel_ on first run
 
       // set up the window
-      add(tabbedPane_);  // add the pane to the GUI window
-      setTitle("ASI diSPIM Control"); 
-      pack();           // shrinks the window as much as it can
-      setResizable(false);
+      super.add(tabbedPane_);  // add the pane to the GUI window
+      super.setTitle("ASI diSPIM Control"); 
+      super.pack();           // shrinks the window as much as it can
+      super.setResizable(false);
       
       // take care of shutdown tasks when window is closed
-      setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+      super.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
       
       // add status panel as an overlay that is visible from all tabs
-      Container glassPane = (Container) getGlassPane();
+      Container glassPane = (Container) super.getGlassPane();
       glassPane.setVisible(true);
       glassPane.setLayout(new MigLayout(
             "",
-            "[" + this.getWidth() + "]",
-            "[" + this.getHeight() + "]"));
+            "[" + super.getWidth() + "]",
+            "[" + super.getHeight() + "]"));
       glassPane.add(statusSubPanel_, "dock south");
       
       // restore live mode and camera

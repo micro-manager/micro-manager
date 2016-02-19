@@ -43,6 +43,8 @@ public class Fitter {
    private static final String GAUSSIAN = "Gaussian";
    
    public static enum FunctionType {NoFit, Pol1, Pol2, Pol3, Gaussian};
+   // TODO: Remove the Algorithm stuff here and get this information directly 
+   // from the Oughtafocus plugin
    public static enum Algorithm {
       NONE("None", 0),
       EDGES("Edges", 1),

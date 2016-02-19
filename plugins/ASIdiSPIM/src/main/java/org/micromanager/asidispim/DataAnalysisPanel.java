@@ -1,7 +1,6 @@
 
 package org.micromanager.asidispim;
 
-import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
@@ -27,6 +26,8 @@ import javax.swing.SwingWorker;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.Studio;
+import org.micromanager.internal.utils.FileDialogs;
+
 import org.micromanager.asidispim.data.MyStrings;
 import org.micromanager.asidispim.data.Prefs;
 import org.micromanager.asidispim.data.Properties;
@@ -38,7 +39,6 @@ import org.micromanager.asidispim.utils.PanelUtils;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.internal.utils.FileDialogs;
 
 
 /**
@@ -214,7 +214,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
       exportPanel_.add(infoLabel,"");
       exportPanel_.add(progBar, "span3, center, wrap");    
       
-      this.add(exportPanel_);
+      super.add(exportPanel_);
       // end export sub-panel
 
       // start ImageJ sub-panel
@@ -256,7 +256,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
       imageJPanel_.add(zProjection, "wrap");
 
       // end ImageJ sub-panel
-      this.add(imageJPanel_);
+      super.add(imageJPanel_);
    }
    
    @Override

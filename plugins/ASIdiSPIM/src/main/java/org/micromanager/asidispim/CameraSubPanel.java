@@ -22,12 +22,6 @@
 package org.micromanager.asidispim;
 
 
-import org.micromanager.asidispim.data.Cameras;
-import org.micromanager.asidispim.data.Devices;
-import org.micromanager.asidispim.data.MyStrings;
-import org.micromanager.asidispim.data.Prefs;
-import org.micromanager.asidispim.utils.DevicesListenerInterface;
-import org.micromanager.asidispim.utils.ListeningJPanel;
 
 import java.awt.Dimension;
 import java.awt.Insets;
@@ -39,17 +33,22 @@ import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
+import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
-
 import org.micromanager.Studio;
 
-import com.swtdesigner.SwingResourceManager;
-
 import net.miginfocom.swing.MigLayout;
+
+import org.micromanager.asidispim.data.Cameras;
+import org.micromanager.asidispim.data.Devices;
+import org.micromanager.asidispim.data.MyStrings;
+import org.micromanager.asidispim.data.Prefs;
+import org.micromanager.asidispim.utils.DevicesListenerInterface;
+import org.micromanager.asidispim.utils.ListeningJPanel;
 import org.micromanager.asidispim.utils.UpdateFromPropertyListenerInterface;
 
 
@@ -82,7 +81,6 @@ public final class CameraSubPanel extends ListeningJPanel  {
     * @param instanceLabel name of the panel calling this class
     * @param side A, B, or none
     * @param prefs
-    * @param showLiveButton if false then the live button is omitted
     */
    public CameraSubPanel(Studio gui, 
            Cameras cameras, 
@@ -95,7 +93,7 @@ public final class CameraSubPanel extends ListeningJPanel  {
               "", 
               "[right]8[center]",
               "[]8[]"));
-      setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
+      super.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.BORDERCOLOR));
 
       final int columnWidth = 105;
       
@@ -144,11 +142,11 @@ public final class CameraSubPanel extends ListeningJPanel  {
       group.add(camMultiButton_);
       group.add(camBotButton_);
 
-      add(camButtonPanel, "span 2, center, wrap");
+      super.add(camButtonPanel, "span 2, center, wrap");
       
-      add(new JLabel("On tab activate:"));
+      super.add(new JLabel("On tab activate:"));
       cameraBox_ = makeCameraSelectionBox(columnWidth);
-      add(cameraBox_, "wrap");
+      super.add(cameraBox_, "wrap");
       
       toggleButtonLive_ = new JToggleButton();
 
@@ -163,7 +161,7 @@ public final class CameraSubPanel extends ListeningJPanel  {
             cameras_.enableLiveMode(!gui_.live().getIsLiveModeOn());
          }
       });
-      add(toggleButtonLive_, "center, width " + columnWidth + "px, span 2");
+      super.add(toggleButtonLive_, "center, width " + columnWidth + "px, span 2");
 
    }
    
@@ -181,11 +179,11 @@ public final class CameraSubPanel extends ListeningJPanel  {
    * @param enable - true: live mode is switched on 
    */ 
    public final void setLiveButtonAppearance(boolean enable) {
-      toggleButtonLive_.setIcon(enable ? SwingResourceManager.
-            getIcon(Studio.class,
-            "/org/micromanager/icons/cancel.png")
-            : SwingResourceManager.getIcon(Studio.class,
-                  "/org/micromanager/icons/camera_go.png"));
+      ImageIcon cancelIcon = new ImageIcon (
+               getClass().getResource("/org/micromanager/icons/cancel.png"));
+      ImageIcon goIcon = new ImageIcon (
+               getClass().getResource("/org/micromanager/icons/camera_go.png"));
+      toggleButtonLive_.setIcon(enable ? cancelIcon : goIcon);
       toggleButtonLive_.setSelected(false);
       toggleButtonLive_.setText(enable ? "Stop Live" : "Live");
    }

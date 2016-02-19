@@ -23,15 +23,13 @@ package org.micromanager.asidispim;
 
 
 import com.google.common.eventbus.Subscribe;
+
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.EnumSet;
 import java.util.Set;
-
-import javax.swing.BorderFactory;
-
 
 import org.micromanager.asidispim.data.Cameras;
 import org.micromanager.asidispim.data.Devices;
@@ -51,13 +49,14 @@ import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 
-import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 
-import com.swtdesigner.SwingResourceManager;
 import org.micromanager.Studio;
 import org.micromanager.events.LiveModeEvent;
+import mmcorej.CMMCore;
 
 /**
  * TODO: Add live mode listener
@@ -133,11 +132,12 @@ public class NavigationPanel extends ListeningJPanel  {
             "[center]",
             "[]4[]4[]10[]4[]4[]"));
       
-      loadPanel.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
+      loadPanel.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.BORDERCOLOR));
 
       // buttons to move the head to top/bottom for easy sample loading
       JButton headUpGo = new JButton();
-      headUpGo.setIcon(SwingResourceManager.getIcon(Studio.class, "icons/arrow_up.png"));
+      headUpGo.setIcon(new ImageIcon (
+               getClass().getResource("/org/micromanager/icons/arrow_up.png")));
       headUpGo.setText("");
       headUpGo.setToolTipText("Move SPIM head to set height for sample loading");
       headUpGo.addActionListener(new ActionListener() {
@@ -147,7 +147,8 @@ public class NavigationPanel extends ListeningJPanel  {
          }
       });
       JButton headDownGo = new JButton();
-      headDownGo.setIcon(SwingResourceManager.getIcon(Studio.class, "icons/arrow_down.png"));
+      headDownGo.setIcon(new ImageIcon (
+               getClass().getResource("/org/micromanager/icons/arrow_down.png")));
       headDownGo.setText("");
       headDownGo.setToolTipText("Move SPIM head to set height after sample loading");
       headDownGo.addActionListener(new ActionListener() {
@@ -173,7 +174,7 @@ public class NavigationPanel extends ListeningJPanel  {
             "",
             "[right]8[" + positionWidth + "px!,left]8[center]8[center]2[center]2[center]8[center]8[center]8[center]8[center]",
             "[]4[]"));
-      navPanel.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
+      navPanel.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.BORDERCOLOR));
       
       navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.XYSTAGE, Directions.X) + ":"));
       xPositionLabel_ = new JLabel("");
@@ -314,16 +315,16 @@ public class NavigationPanel extends ListeningJPanel  {
       navPanel.add(buttonHalt, "cell 12 0, span 1 10, growy, wrap");
       
       joystickPanel_ = new JoystickSubPanel(joystick_, devices_, panelName_, Devices.Sides.NONE, prefs_);
-      this.add(joystickPanel_);
+      super.add(joystickPanel_);
       
-      this.add(navPanel, "aligny top, span 1 3, wrap");
+      super.add(navPanel, "aligny top, span 1 3, wrap");
       
       beamPanel_ = new BeamSubPanel(gui_, devices_, panelName_, Devices.Sides.NONE, prefs_, props_);
-      this.add(beamPanel_, "wrap");
+      super.add(beamPanel_, "wrap");
 
       cameraPanel_ = new CameraSubPanel(gui_, cameras_, devices_, panelName_, 
             Devices.Sides.NONE, prefs_);
-      this.add(cameraPanel_);
+      super.add(cameraPanel_);
       
       xPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));
       yPositionLabel_.setMaximumSize(new Dimension(positionWidth, 20));
@@ -510,6 +511,7 @@ public class NavigationPanel extends ListeningJPanel  {
    
    /**
     * created so that Navigation panel's joystick settings could be invoked from elsewhere
+    * @param selected true if Joystick panel was selected
     */
    public void doJoystickSettings(boolean selected) {
       if (selected) {

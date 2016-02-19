@@ -43,9 +43,10 @@ for (int p=0; p < pl.getNumberOfPositions(); p++) {
 	  	   posName = pos.getLabel();
 	  	   x = pos.getX();
 	  	   y = pos.getY();
+	  	   MultiStagePosition.goToPosition(pos, mm.getCore());
 	   }
 	}
-
+   Thread.sleep(500);
 	mm.getCore().snapImage();
 	TaggedImage tmp = mm.getCore().getTaggedImage();
 	Image image1 = mm.data().convertTaggedImage(tmp);
@@ -64,6 +65,8 @@ for (int p=0; p < pl.getNumberOfPositions(); p++) {
 	store.putImage(image1);
 	store.putImage(image2);
 }
+
+store.freeze();
 
 
 

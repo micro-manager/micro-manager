@@ -41,7 +41,6 @@ import javax.swing.text.DefaultFormatter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-
 import org.micromanager.asidispim.data.CameraModes;
 import org.micromanager.asidispim.data.Devices;
 import org.micromanager.asidispim.data.MyStrings;
@@ -51,8 +50,9 @@ import org.micromanager.asidispim.utils.ListeningJPanel;
 import org.micromanager.asidispim.utils.PanelUtils;
 import org.micromanager.asidispim.utils.StagePositionUpdater;
 
-import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
+
+import mmcorej.CMMCore;
 import org.micromanager.Studio;
 import org.micromanager.asidispim.utils.ImageJUtils;
 import org.micromanager.asidispim.utils.MyDialogUtils;
@@ -77,6 +77,7 @@ public class SettingsPanel extends ListeningJPanel {
    
    /**
     * 
+    * @param gui MM ScriptInterface object
     * @param devices the (single) instance of the Devices class
     * @param props 
     * @param prefs
@@ -315,12 +316,12 @@ public class SettingsPanel extends ListeningJPanel {
       
       
       // construct main panel
-      add(guiPanel);
-      add(scannerPanel);
-      add(cameraPanel, "wrap");
-      add(testAcqPanel);
-      add(stageScanPanel, "growx");
-      add(imageJPanel, "growx");
+      super.add(guiPanel);
+      super.add(scannerPanel);
+      super.add(cameraPanel, "wrap");
+      super.add(testAcqPanel);
+      super.add(stageScanPanel, "growx");
+      super.add(imageJPanel, "growx");
       
 
       

@@ -21,7 +21,6 @@
 package org.micromanager.asidispim;
 
 import com.google.common.eventbus.Subscribe;
-import com.swtdesigner.SwingResourceManager;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -52,12 +51,15 @@ import javax.swing.*;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.Studio;
+import org.micromanager.events.LiveModeEvent;
+
+import org.micromanager.internal.utils.ReportingUtils;
+
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.asidispim.utils.AutofocusUtils;
 import org.micromanager.asidispim.utils.MyNumberUtils;
-import org.micromanager.events.LiveModeEvent;
-import org.micromanager.internal.utils.MMFrame;
-import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.asidispim.utils.SPIMFrame;
+
 
 /**
  *
@@ -81,7 +83,7 @@ public final class SetupPanel extends ListeningJPanel {
    private final JoystickSubPanel joystickPanel_;
    private final CameraSubPanel cameraPanel_;
    private final BeamSubPanel beamPanel_;
-   private final MMFrame slopeCalibrationFrame_;
+   private final SPIMFrame slopeCalibrationFrame_;
    // TODO rearrange these variables
    // used to store the start/stop positions of the single-axis moves for imaging piezo and micromirror sheet move axis
    private final StoredFloatLabel sheetStartPositionLabel_;
@@ -177,7 +179,8 @@ public final class SetupPanel extends ListeningJPanel {
       piezoDeltaField_.setToolTipText("Piezo increment used by up/down arrow buttons");
       
       JButton upButton = new JButton();
-      upButton.setIcon(SwingResourceManager.getIcon(Studio.class, "icons/arrow_up.png"));
+      upButton.setIcon(new ImageIcon (
+               getClass().getResource("/org/micromanager/icons/arrow_up.png")));
       upButton.setText("");
       upButton.setToolTipText("Move slice and piezo up together");
       upButton.addActionListener(new ActionListener() {
@@ -188,7 +191,8 @@ public final class SetupPanel extends ListeningJPanel {
       });
       
       JButton downButton = new JButton();
-      downButton.setIcon(SwingResourceManager.getIcon(Studio.class, "icons/arrow_down.png"));
+      downButton.setIcon(new ImageIcon (
+               getClass().getResource("/org/micromanager/icons/arrow_down.png")));
       downButton.setText("");
       downButton.setToolTipText("Move slice and piezo down together");
       downButton.addActionListener(new ActionListener() {
@@ -260,7 +264,7 @@ public final class SetupPanel extends ListeningJPanel {
       // start 2-point calibration frame
       // this frame is separate from main plugin window
       
-      slopeCalibrationFrame_ = new MMFrame();
+      slopeCalibrationFrame_ = new SPIMFrame(gui_);
       slopeCalibrationFrame_.setTitle("Slope and Offset Calibration");
       slopeCalibrationFrame_.loadPosition(100, 100);
       
@@ -632,7 +636,7 @@ public final class SetupPanel extends ListeningJPanel {
             "",
             "[]8[]",
             "[]8[]"));
-      superPanel.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
+      superPanel.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.BORDERCOLOR));
       
       superPanel.add(slicePanel);
       superPanel.add(new JSeparator(SwingConstants.VERTICAL), "growy, shrinkx, center");
@@ -642,15 +646,15 @@ public final class SetupPanel extends ListeningJPanel {
 
       // Layout of the SetupPanel
       joystickPanel_ = new JoystickSubPanel(joystick_, devices_, panelName_, side_, prefs_);
-      add(joystickPanel_, "center");
+      super.add(joystickPanel_, "center");
 
-      add(superPanel, "center, aligny top, span 1 3, wrap");
+      super.add(superPanel, "center, aligny top, span 1 3, wrap");
 
       beamPanel_ = new BeamSubPanel(gui_, devices_, panelName_, side_, prefs_, props_);
-      add(beamPanel_, "center, wrap");
+      super.add(beamPanel_, "center, wrap");
 
       cameraPanel_ = new CameraSubPanel(gui_, cameras_, devices_, panelName_, side_, prefs_);
-      add(cameraPanel_, "center");
+      super.add(cameraPanel_, "center");
 
    }// end of SetupPanel constructor
 
@@ -682,7 +686,7 @@ public final class SetupPanel extends ListeningJPanel {
     * Update the calibration offset according to the autofocus score.
     * Caller should make sure to apply any required criteria before calling this.
     * method because no error/range checking is done here.
-    * @param newValue - new value for the piezo/slice calibration offset
+    * @param score Autofocus-result
     */
    public void updateCalibrationOffset(AutofocusUtils.FocusResult score) {
       double rate = (Double) rateField_.getValue();

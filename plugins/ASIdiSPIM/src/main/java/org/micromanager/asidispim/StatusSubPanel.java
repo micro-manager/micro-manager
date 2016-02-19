@@ -75,30 +75,30 @@ public final class StatusSubPanel extends ListeningJPanel {
       stagePosUpdater_ = stagePosUpdater;
       
       galvoA_ = new ColorSquare();
-      add(galvoA_);
-      add(new JLabel("Scan A"), "wrap");
+      super.add(galvoA_);
+      super.add(new JLabel("Scan A"), "wrap");
       galvoA_.setToolTipText("Black = blanked; Gray = no device; Green = centered;"
             + " Orange = near center; Red = far from center; Pink = making sheet");
       
       galvoB_ = new ColorSquare();
-      add(galvoB_);
-      add(new JLabel("Scan B"), "wrap");
+      super.add(galvoB_);
+      super.add(new JLabel("Scan B"), "wrap");
       galvoB_.setToolTipText("Black = blanked; Gray = no device; Green = centered;"
             + " Orange = near center; Red = far from center; Pink = making sheet");
       
       piezoA_ = new ColorSquare();
-      add(piezoA_);
-      add(new JLabel("Piezo A"), "wrap");
+      super.add(piezoA_);
+      super.add(new JLabel("Piezo A"), "wrap");
       piezoA_.setToolTipText("Gray = no device; Green = centered;"
             + " Orange = near center; Red = far from center");
       
       piezoB_ = new ColorSquare();
-      add(piezoB_);
-      add(new JLabel("Piezo B"), "wrap");
+      super.add(piezoB_);
+      super.add(new JLabel("Piezo B"), "wrap");
       piezoB_.setToolTipText("Gray = no device; Green = centered;"
             + " Orange = near center; Red = far from center");
       
-      setOpaque(false);
+      super.setOpaque(false);
      
    }// constructor
    
@@ -111,12 +111,12 @@ public final class StatusSubPanel extends ListeningJPanel {
    public class ColorSquare extends JPanel {
       
       public ColorSquare() {
-         this.setOpaque(true);
-         this.setBackground(Color.LIGHT_GRAY);
+         super.setOpaque(true);
+         super.setBackground(Color.LIGHT_GRAY);
       }
       
       public void setColor(Color c) {
-         this.setBackground(c);
+         super.setBackground(c);
       }
    }
    

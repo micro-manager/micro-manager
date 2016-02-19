@@ -30,8 +30,8 @@ import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 
-
 import org.micromanager.Studio;
+
 import org.micromanager.asidispim.data.Devices;
 import org.micromanager.asidispim.data.MyStrings;
 import org.micromanager.asidispim.data.Prefs;
@@ -76,7 +76,7 @@ public final class BeamSubPanel extends ListeningJPanel {
               "", 
               "[right]8[left]",
               "[]4[]"));
-      setBorder(BorderFactory.createLineBorder(ASIdiSPIM.borderColor));
+      super.setBorder(BorderFactory.createLineBorder(ASIdiSPIM.BORDERCOLOR));
       
       devices_ = devices;
       prefs_ = prefs;
@@ -117,19 +117,19 @@ public final class BeamSubPanel extends ListeningJPanel {
             Properties.Keys.SA_MODE_X, instanceLabel_, Prefs.Keys.EPI_SCAN_ENABLED);
       
       if (noSide) {
-         add(new JLabel("Path A:"));
-         add(beamABox_);
-         add(sheetABox_, "wrap");
-         add(new JLabel("Path B:"));
-         add(beamBBox_);
-         add(sheetBBox_, "wrap");         
+         super.add(new JLabel("Path A:"));
+         super.add(beamABox_);
+         super.add(sheetABox_, "wrap");
+         super.add(new JLabel("Path B:"));
+         super.add(beamBBox_);
+         super.add(sheetBBox_, "wrap");         
       } else {
-         add(new JLabel("Excitation side:"));
-         add(beamABox_);
-         add(sheetABox_, "wrap");
-         add(new JLabel("Epi side:"));
-         add(beamBBox_);
-         add(sheetBBox_, "wrap");   
+         super.add(new JLabel("Excitation side:"));
+         super.add(beamABox_);
+         super.add(sheetABox_, "wrap");
+         super.add(new JLabel("Epi side:"));
+         super.add(beamBBox_);
+         super.add(sheetBBox_, "wrap");   
       }
       
       // mechanism to disable the sheetA/B boxes when beam is off and vice versa
@@ -138,7 +138,7 @@ public final class BeamSubPanel extends ListeningJPanel {
       
       updateOnTab_ = new JCheckBox("Change settings on tab activate");
       updateOnTab_.setSelected(prefs_.getBoolean(instanceLabel_, Prefs.Keys.ENABLE_BEAM_SETTINGS, true));
-      add(updateOnTab_, "center, span 3");
+      super.add(updateOnTab_, "center, span 3");
    }//constructor
    
    /**
@@ -160,6 +160,7 @@ public final class BeamSubPanel extends ListeningJPanel {
       }
 
       // only called when the user selects/deselects from GUI
+      @Override
       public void actionPerformed(ActionEvent e) {
          if (beamBox_.isSelected()) {
             sheetBox_.setEnabled(true);
