@@ -2356,13 +2356,14 @@ public:
          int ret = this->IsPropertySequenceable(MM::g_Keyword_State, sequenceable);
          if (ret != DEVICE_OK)
             return ret;
+
+         long nrEvents = 0;
          if (sequenceable) {
-            long nrEvents;
-            ret =  this->GetPropertySequenceMaxLength(MM::g_Keyword_State, nrEvents);
+            ret = this->GetPropertySequenceMaxLength(MM::g_Keyword_State, nrEvents);
             if (ret != DEVICE_OK)
                return ret;
-            pProp->SetSequenceable(nrEvents);
          }
+         pProp->SetSequenceable(nrEvents);
       }
       else if (eAct == MM::AfterLoadSequence) {
          assert(this->HasProperty(MM::g_Keyword_State));
