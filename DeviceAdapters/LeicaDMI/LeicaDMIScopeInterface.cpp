@@ -191,6 +191,15 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       command.str("");
    }
 
+   // Suppress event reporting for side port
+   if (scopeModel_->IsDeviceAvailable(::g_Side_Port)) {
+      command << ::g_Side_Port << "003 0 0 0 0 0 0 0 0 0";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
    // Suppress event reporting for DIC Turret
    if (scopeModel_->IsDeviceAvailable(g_DIC_Turret)) {
       command << g_DIC_Turret << "003 0";
@@ -217,15 +226,7 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
          return ret;
       command.str("");
    }
-	
-   // Suppress event reporting for side port
-	if (scopeModel_->IsDeviceAvailable(::g_Side_Port)) {
-		command << ::g_Side_Port << "003 0 0 0 0 0 0 0 0 0";
-      ret = GetAnswer(device, core, command.str().c_str(), answer);
-      if (ret != DEVICE_OK)
-         return ret;
-      command.str("");
-   }
+
    CDeviceUtils::SleepMs(100);
 
    if (scopeModel_->IsDeviceAvailable(g_Lamp)) {
@@ -301,6 +302,13 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
          return ret;
    }
 
+   if(scopeModel_->IsDeviceAvailable(g_Side_Port))
+   {
+      ret = GetSidePortInfo(device, core);
+      if( DEVICE_OK != ret)
+         return ret;
+   }
+
    if (scopeModel_->IsDeviceAvailable(g_TL_Polarizer)) {
       ret = GetTLPolarizerInfo(device, core);
       if (ret != DEVICE_OK)
@@ -318,13 +326,6 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       if (ret != DEVICE_OK)
          return ret;
    }
-
-	if(scopeModel_->IsDeviceAvailable(g_Side_Port))
-	{
-		ret = GetSidePortInfo(device, core);
-			if( DEVICE_OK != ret)
-				return ret;
-	}
 
    // Start all events at this point
 
@@ -420,6 +421,15 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       command.str("");
    }
 
+   // Start event reporting for side port
+   if (scopeModel_->IsDeviceAvailable(::g_Side_Port)) {
+      command << g_Side_Port << "003 1";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
    // Start event reporting for Polarizer
    if (scopeModel_->IsDeviceAvailable(g_TL_Polarizer)) {
       command << g_TL_Polarizer << "003 1";
@@ -444,15 +454,6 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
    // Start event reporting for AFC
    if (scopeModel_->IsDeviceAvailable(g_AFC)) {
       command << g_AFC << "003 1 0 0 1 1 0 1 0 0";
-      ret = GetAnswer(device, core, command.str().c_str(), answer);
-      if (ret != DEVICE_OK)
-         return ret;
-      command.str("");
-   }
-
-	   // Start event reporting for side port
-	if (scopeModel_->IsDeviceAvailable(::g_Side_Port)) {
-      command << g_Side_Port << "003 1";
       ret = GetAnswer(device, core, command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
