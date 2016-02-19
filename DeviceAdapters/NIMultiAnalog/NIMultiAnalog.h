@@ -132,6 +132,7 @@ private:
    // Pre-init property action handlers
    int OnMinVolts(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnMaxVolts(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSequenceable(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    // Post-init property action handlers
    int OnVoltage(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -153,6 +154,7 @@ private:
 
    double minVolts_; // User-selected for this port
    double maxVolts_; // User-selected for this port
+   bool neverSequenceable_;
 
    TaskHandle task_;
 

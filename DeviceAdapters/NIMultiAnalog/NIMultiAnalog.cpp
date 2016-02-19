@@ -34,6 +34,9 @@ const char* g_DeviceNameMultiAnalogOutPortPrefix = "NIMultiAnalogOut-";
 const char* g_On = "On";
 const char* g_Off = "Off";
 
+const char* g_Never = "Never";
+const char* g_UseHubSetting = "Use hub setting";
+
 
 const int ERR_SEQUENCE_RUNNING = 2001;
 const int ERR_SEQUENCE_TOO_LONG = 2002;
@@ -623,12 +626,18 @@ MultiAnalogOutPort::MultiAnalogOutPort(const std::string& port) :
    sequenceRunning_(false),
    minVolts_(0.0),
    maxVolts_(5.0),
+   neverSequenceable_(false),
    task_(0)
 {
    CPropertyAction* pAct = new CPropertyAction(this, &MultiAnalogOutPort::OnMinVolts);
    CreateFloatProperty("MinVolts", minVolts_, false, pAct, true);
    pAct = new CPropertyAction(this, &MultiAnalogOutPort::OnMaxVolts);
    CreateFloatProperty("MaxVolts", maxVolts_, false, pAct, true);
+
+   pAct = new CPropertyAction(this, &MultiAnalogOutPort::OnSequenceable);
+   CreateStringProperty("Sequencing", g_UseHubSetting, false, pAct, true);
+   AddAllowedValue("Sequencing", g_UseHubSetting);
+   AddAllowedValue("Sequencing", g_Never);
 }
 
 
@@ -745,6 +754,9 @@ int MultiAnalogOutPort::GetLimits(double& minVolts, double& maxVolts)
 
 int MultiAnalogOutPort::IsDASequenceable(bool& isSequenceable) const
 {
+   if (neverSequenceable_)
+      return false;
+
    return GetAOHub()->IsSequencingEnabled(isSequenceable);
 }
 
@@ -841,6 +853,22 @@ int MultiAnalogOutPort::OnMaxVolts(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet)
    {
       pProp->Get(maxVolts_);
+   }
+   return DEVICE_OK;
+}
+
+
+int MultiAnalogOutPort::OnSequenceable(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(neverSequenceable_ ? g_Never : g_UseHubSetting);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string s;
+      pProp->Get(s);
+      neverSequenceable_ = (s == g_Never);
    }
    return DEVICE_OK;
 }
