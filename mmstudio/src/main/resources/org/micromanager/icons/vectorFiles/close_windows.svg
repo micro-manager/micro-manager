@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.5 r10040"
+   sodipodi:docname="New document 1">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.98994949"
+     inkscape:cx="367.50956"
+     inkscape:cy="645.78221"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1041"
+     inkscape:window-height="710"
+     inkscape:window-x="243"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       style="fill:#7c00ab;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;fill-opacity:1"
+       d="m 180.81731,526.07271 -1.01016,-48.48733 270.72089,-143.44166 -1.01016,191.92899"
+       id="path3773"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/Users/chriswei/close_windows.png"
+       inkscape:export-xdpi="4.2885065"
+       inkscape:export-ydpi="4.2885065" />
+    <path
+       style="fill:#0000ab;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;fill-opacity:1"
+       d="M 448.50773,255.35182 181.82746,257.37213 179.80715,483.6463 449.51788,337.17418"
+       id="path3771"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/Users/chriswei/close_windows.png"
+       inkscape:export-xdpi="4.2885065"
+       inkscape:export-ydpi="4.2885065" />
+    <rect
+       style="fill:none;stroke:#000000;stroke-width:5;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="rect3769"
+       width="269.71072"
+       height="269.71072"
+       x="180.81731"
+       y="256.36197"
+       ry="1.2742856"
+       inkscape:export-filename="/Users/chriswei/close_windows.png"
+       inkscape:export-xdpi="4.2885065"
+       inkscape:export-ydpi="4.2885065" />
+    <rect
+       style="fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:9.10208893000000074;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="rect2985"
+       width="288.57144"
+       height="326.65793"
+       x="171.42857"
+       y="246.6479"
+       ry="1.2742856"
+       inkscape:export-filename="/Users/chriswei/close_windows.png"
+       inkscape:export-xdpi="4.2885065"
+       inkscape:export-ydpi="4.2885065" />
+    <path
+       style="fill:none;stroke:#ff0000;stroke-width:40;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="M 185.20989,434.80699 363.80801,256.20887"
+       id="path3757"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/Users/chriswei/close_windows.png"
+       inkscape:export-xdpi="4.2885065"
+       inkscape:export-ydpi="4.2885065" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#path3757"
+       id="use3759"
+       transform="matrix(-1,0,0,1,549.0179,-2.1995075e-6)"
+       width="744.09448"
+       height="1052.3622"
+       inkscape:export-filename="/Users/chriswei/close_windows.png"
+       inkscape:export-xdpi="4.2885065"
+       inkscape:export-ydpi="4.2885065"
+       style="stroke-width:40;stroke-miterlimit:4;stroke-dasharray:none" />
+    <rect
+       style="fill:#404040;fill-opacity:1;fill-rule:nonzero;stroke:#404040;stroke-width:5;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="rect3775"
+       width="80.812195"
+       height="23.233521"
+       x="182.83762"
+       y="537.18439"
+       ry="1.2742856"
+       inkscape:export-filename="/Users/chriswei/close_windows.png"
+       inkscape:export-xdpi="4.2885065"
+       inkscape:export-ydpi="4.2885065" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#rect3775"
+       id="use3777"
+       transform="translate(91.944187,0)"
+       width="744.09448"
+       height="1052.3622"
+       inkscape:export-filename="/Users/chriswei/close_windows.png"
+       inkscape:export-xdpi="4.2885065"
+       inkscape:export-ydpi="4.2885065" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#use3777"
+       id="use3779"
+       transform="translate(91.903577,0)"
+       width="744.09448"
+       height="1052.3622"
+       inkscape:export-filename="/Users/chriswei/close_windows.png"
+       inkscape:export-xdpi="4.2885065"
+       inkscape:export-ydpi="4.2885065" />
+  </g>
+</svg>

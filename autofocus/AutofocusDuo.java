@@ -22,16 +22,20 @@
 
 import ij.IJ;
 import ij.process.ImageProcessor;
-import java.util.prefs.Preferences;
+
+import java.util.List;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.api.Autofocus;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.AutofocusBase;
-import org.micromanager.utils.MMException;
-import org.micromanager.utils.PropertyItem;
-import org.micromanager.utils.ReportingUtils;
+import org.micromanager.AutofocusPlugin;
+import org.micromanager.Studio;
+import org.micromanager.internal.utils.AutofocusBase;
+import org.micromanager.internal.utils.MMException;
+import org.micromanager.internal.utils.PropertyItem;
+import org.micromanager.internal.utils.ReportingUtils;
+
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
 
 /**
  * ImageJ plugin wrapper for uManager.
@@ -40,7 +44,8 @@ import org.micromanager.utils.ReportingUtils;
 /* This plugin take a stack of snapshots and computes their sharpness
 
  */
-public class AutofocusDuo extends AutofocusBase implements Autofocus  {
+@Plugin(type = AutofocusPlugin.class)
+public class AutofocusDuo extends AutofocusBase implements AutofocusPlugin, SciJavaPlugin  {
 
    //private static final String AF_SETTINGS_NODE = "micro-manager/extensions/autofocus";
    private static final String KEY_AUTOFOCUS1 = "AutoFocus-1";
@@ -48,12 +53,10 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
    
    private static final String AF_DEVICE_NAME = "Duo";
 
-   private ScriptInterface app_;
+   private Studio app_;
    private CMMCore core_;
 
    private boolean verbose_ = true; // displaying debug info or not
-
-   private Preferences prefs_;
 
    private String autoFocus1_;
    private String autoFocus2_;
@@ -86,12 +89,12 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
       verbose_ = arg.compareTo("silent") != 0;
 
       if (arg.compareTo("options") == 0){
-         app_.getAutofocusManager().showOptionsDialog();
+         app_.compat().showAutofocusDialog();
       }  
 
       if (core_ == null) {
          // if core object is not set attempt to get its global handle
-         core_ = app_.getMMCore();
+         core_ = app_.getCMMCore();
       }
 
       if (core_ == null) {
@@ -105,14 +108,14 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
 
       try{
          if (autoFocus1_ != null) {
-            app_.getAutofocusManager().selectDevice(autoFocus1_);
-            app_.getAutofocusManager().getDevice().fullFocus();
+            app_.getAutofocusManager().setAutofocusMethodByName(autoFocus1_);
+            app_.getAutofocusManager().getAutofocusMethod().fullFocus();
          }
          if (autoFocus2_ != null) {
-            app_.getAutofocusManager().selectDevice(autoFocus2_);
-            app_.getAutofocusManager().getDevice().fullFocus();
+            app_.getAutofocusManager().setAutofocusMethodByName(autoFocus2_);
+            app_.getAutofocusManager().getAutofocusMethod().fullFocus();
          }
-         app_.getAutofocusManager().selectDevice(AF_DEVICE_NAME);
+         app_.getAutofocusManager().setAutofocusMethodByName(AF_DEVICE_NAME);
       }
       catch(Exception e)
       {
@@ -140,16 +143,11 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
    }
 
    @Override
-   public void focus(double coarseStep, int numCoarse, double fineStep, int numFine) {
-      run("silent");
-   }
-
-   @Override
    public PropertyItem[] getProperties() {
       // use default dialog
             
-      String afDevices[] = app_.getAutofocusManager().getAfDevices();
-      String allowedAfDevices[] = new String[afDevices.length - 1];
+      List<String> afDevices = app_.getAutofocusManager().getAllAutofocusMethods();
+      String[] allowedAfDevices = new String[afDevices.size() - 1];
 
       try {
          PropertyItem p1 = getProperty(KEY_AUTOFOCUS1);
@@ -203,14 +201,28 @@ public class AutofocusDuo extends AutofocusBase implements Autofocus  {
    }
 
    @Override
-   public String getDeviceName() {
-      return AF_DEVICE_NAME;
-   }
-   
-   @Override
-   public void setApp(ScriptInterface app) {
+   public void setContext(Studio app) {
       app_ = app;
-      core_ = app.getMMCore();
+      core_ = app.getCMMCore();
    }
 
+   @Override
+   public String getName() {
+      return AF_DEVICE_NAME;
+   }
+
+   @Override
+   public String getHelpText() {
+      return AF_DEVICE_NAME;
+   }
+
+   @Override
+   public String getVersion() {
+      return "1.0";
+   }
+
+   @Override
+   public String getCopyright() {
+      return "University of California, 2009";
+   }
 }   

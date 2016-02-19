@@ -6,19 +6,21 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
 import java.awt.Color;
-import java.util.prefs.Preferences;
 import java.util.Date;
 import java.awt.Rectangle;
 
 import mmcorej.StrVector;
 
-import org.micromanager.api.Autofocus;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.AutofocusBase;
-import org.micromanager.utils.MMException;
-import org.micromanager.utils.PropertyItem;
+import org.micromanager.AutofocusPlugin;
+import org.micromanager.Studio;
+import org.micromanager.internal.utils.AutofocusBase;
+import org.micromanager.internal.utils.MMException;
+import org.micromanager.internal.utils.PropertyItem;
 
 import mmcorej.CMMCore;
+
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
 
 /*
 *  Created on June 2nd 2007
@@ -28,7 +30,8 @@ import mmcorej.CMMCore;
 /*
 *  This plugin take a stack of snapshots and computes their sharpness
 */
-public class AutofocusTB extends AutofocusBase implements Autofocus {
+@Plugin(type = AutofocusPlugin.class)
+public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJavaPlugin {
 
    private final static String KEY_SIZE_FIRST = "1st step size";
    private final static String KEY_NUM_FIRST = "1st setp number";
@@ -42,7 +45,7 @@ public class AutofocusTB extends AutofocusBase implements Autofocus {
    private final static String AF_SETTINGS_NODE = "micro-manager/extensions/autofocus";
    private static final String AF_DEVICE_NAME = "JAF(TB)";
 
-   private ScriptInterface app_;
+   private Studio app_;
    private CMMCore core_;
    private ImageProcessor ipCurrent_ = null;
 
@@ -81,14 +84,12 @@ public class AutofocusTB extends AutofocusBase implements Autofocus {
     */
    public String CHANNEL2 = "DAPI";
 
-   private double indx = 0;
+   private final double indx = 0;
    //snapshot show new window iff indx = 1
 
    private boolean verbose_ = true;
    // displaying debug info or not
 
-   private Preferences prefs_;
-   //********
 
    private String channelGroup_;
 
@@ -121,6 +122,7 @@ public class AutofocusTB extends AutofocusBase implements Autofocus {
       loadSettings();
    }
 
+   @Override
    public void applySettings() {
       try {
          SIZE_FIRST = Double.parseDouble(getPropertyValue(KEY_SIZE_FIRST));
@@ -159,12 +161,12 @@ public class AutofocusTB extends AutofocusBase implements Autofocus {
       }
 
       if (arg.compareTo("options") == 0) {
-         app_.getAutofocusManager().showOptionsDialog();
+         app_.compat().showAutofocusDialog();
       }
 
       if (core_ == null) {
          // if core object is not set attempt to get its global handle
-         core_ = app_.getMMCore();
+         core_ = app_.getCMMCore();
       }
 
       if (core_ == null) {
@@ -600,54 +602,40 @@ public class AutofocusTB extends AutofocusBase implements Autofocus {
    }
                                                                                                       
 
-   /**
-    *  Description of the Method
-    *
-   public void loadSettings() {
-      SIZE_FIRST = prefs_.getDouble(KEY_SIZE_FIRST, SIZE_FIRST);
-      NUM_FIRST = prefs_.getDouble(KEY_NUM_FIRST, NUM_FIRST);
-      SIZE_SECOND = prefs_.getDouble(KEY_SIZE_SECOND, SIZE_SECOND);
-      NUM_SECOND = prefs_.getDouble(KEY_NUM_SECOND, NUM_SECOND);
-      THRES = prefs_.getDouble(KEY_THRES, THRES);
-      CROP_SIZE = prefs_.getDouble(KEY_CROP_SIZE, CROP_SIZE);
-      CHANNEL1 = prefs_.get(KEY_CHANNEL1, CHANNEL1);
-      CHANNEL2 = prefs_.get(KEY_CHANNEL2, CHANNEL2);
-   }
-   */
-
-
-   /**
-    *  Description of the Method
-    */
-   /*
-   public void saveSettings() {
-      prefs_.putDouble(KEY_SIZE_FIRST, SIZE_FIRST);
-      prefs_.putDouble(KEY_NUM_FIRST, NUM_FIRST);
-      prefs_.putDouble(KEY_SIZE_SECOND, SIZE_SECOND);
-      prefs_.putDouble(KEY_NUM_SECOND, NUM_SECOND);
-      prefs_.putDouble(KEY_THRES, THRES);
-      prefs_.putDouble(KEY_CROP_SIZE, CROP_SIZE);
-      prefs_.put(KEY_CHANNEL1, CHANNEL1);
-      prefs_.put(KEY_CHANNEL2, CHANNEL2);
-   }
-   */
-
+   @Override
    public double getCurrentFocusScore() {
       return 0;
    }
 
+   @Override
    public int getNumberOfImages() {
       // TODO Auto-generated method stub
       return 0;
    }
 
-   public String getDeviceName() {
+   @Override
+   public void setContext(Studio app) {
+      app_ = app;
+      core_ = app.getCMMCore();
+   }
+
+   @Override
+   public String getName() {
       return AF_DEVICE_NAME;
    }
 
-   public void setApp(ScriptInterface app) {
-      app_ = app;
-      core_ = app.getMMCore();
+   @Override
+   public String getHelpText() {
+      return AF_DEVICE_NAME;
    }
 
+   @Override
+   public String getVersion() {
+      return "1.0";
+   }
+
+   @Override
+   public String getCopyright() {
+      return "Pakpoom Subsoontorn & Hernan Garcia, 2007";
+   }
 }

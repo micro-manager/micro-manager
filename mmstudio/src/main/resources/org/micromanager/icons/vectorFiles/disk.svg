@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg2"
+   sodipodi:docname="disk.svg"
+   inkscape:export-filename="/home/jimmac/gfx/ximian/tango-icon-theme/scalable/devices/media-floppy.png"
+   viewBox="0 0 48 48"
+   sodipodi:version="0.32"
+   inkscape:export-xdpi="90"
+   version="1.0"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   inkscape:export-ydpi="90"
+   inkscape:version="0.48.5 r10040"
+   width="100%"
+   height="100%">
+  <defs
+     id="defs4">
+    <radialGradient
+       id="radialGradient6719"
+       xlink:href="#linearGradient5060"
+       gradientUnits="userSpaceOnUse"
+       cy="486.65"
+       cx="605.71"
+       gradientTransform="matrix(-2.7744 0 0 1.9697 112.76 -872.89)"
+       r="117.14"
+       inkscape:collect="always" />
+    <linearGradient
+       id="linearGradient5060"
+       inkscape:collect="always">
+      <stop
+         id="stop5062"
+         style="stop-color:black"
+         offset="0" />
+      <stop
+         id="stop5064"
+         style="stop-color:black;stop-opacity:0"
+         offset="1" />
+    </linearGradient>
+    <radialGradient
+       id="radialGradient6717"
+       xlink:href="#linearGradient5060"
+       gradientUnits="userSpaceOnUse"
+       cy="486.65"
+       cx="605.71"
+       gradientTransform="matrix(2.7744 0 0 1.9697 -1891.6 -872.89)"
+       r="117.14"
+       inkscape:collect="always" />
+    <linearGradient
+       id="linearGradient6715"
+       y2="609.51"
+       gradientUnits="userSpaceOnUse"
+       x2="302.86"
+       gradientTransform="matrix(2.7744 0 0 1.9697 -1892.2 -872.89)"
+       y1="366.65"
+       x1="302.86"
+       inkscape:collect="always">
+      <stop
+         id="stop5050"
+         style="stop-color:black;stop-opacity:0"
+         offset="0" />
+      <stop
+         id="stop5056"
+         style="stop-color:black"
+         offset=".5" />
+      <stop
+         id="stop5052"
+         style="stop-color:black;stop-opacity:0"
+         offset="1" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient2283"
+       y2="55.702"
+       gradientUnits="userSpaceOnUse"
+       x2="33.075"
+       gradientTransform="matrix(0.98543,0,0,-1.1482,0.64107,49.9618)"
+       y1="-.99673"
+       x1="13.784"
+       inkscape:collect="always">
+      <stop
+         id="stop2279"
+         style="stop-color:#ffffff"
+         offset="0" />
+      <stop
+         id="stop2281"
+         style="stop-color:#ffffff;stop-opacity:0"
+         offset="1" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient2348"
+       y2="42.469"
+       gradientUnits="userSpaceOnUse"
+       x2="28.562"
+       gradientTransform="matrix(1.0677,0,0,-1.1215,-1.3689,52.6024)"
+       y1="21.844"
+       x1="20.125"
+       inkscape:collect="always">
+      <stop
+         id="stop2352"
+         style="stop-color:#858585"
+         offset="0" />
+      <stop
+         id="stop2356"
+         style="stop-color:#cbcbcb"
+         offset=".5" />
+      <stop
+         id="stop2354"
+         style="stop-color:#6b6b6b"
+         offset="1" />
+    </linearGradient>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     bordercolor="#666666"
+     inkscape:grid-points="false"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1037"
+     pagecolor="#efefef"
+     inkscape:showpageshadow="false"
+     inkscape:zoom="9.754717"
+     inkscape:window-x="39"
+     inkscape:window-height="695"
+     showgrid="false"
+     borderopacity="1.0"
+     inkscape:current-layer="layer1"
+     inkscape:cx="23.552789"
+     inkscape:cy="22.5"
+     inkscape:window-y="9"
+     borderlayer="top"
+     showborder="true"
+     inkscape:pageopacity="1"
+     inkscape:document-units="px"
+     inkscape:window-maximized="0">
+    <inkscape:grid
+       id="GridFromPre046Settings"
+       opacity=".10196"
+       color="#9f9f9f"
+       originy="0px"
+       originx="0px"
+       empspacing="10"
+       spacingy="1px"
+       spacingx="1px"
+       empopacity="0.25490196"
+       type="xygrid"
+       empcolor="#9f9f9f" />
+  </sodipodi:namedview>
+  <g
+     id="layer1"
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer">
+    <path
+       id="rect2259"
+       sodipodi:nodetypes="ccccccccc"
+       style="fill:#78a7e0;fill-opacity:1;stroke:#25375f;stroke-linecap:round;stroke-linejoin:round"
+       d="m 4.5578,43.4603 h 38.89 c 0.589,0 1.064,-0.4744 1.064,-1.0637 V 4.6316 c 0,-0.59 -0.475,-1.064 -1.064,-1.064 h -36.89 c -2e-4,0 -3.0639,3.064 -3.0639,3.064 v 35.765 c 0,0.589 0.4744,1.0634 1.0637,1.0634 z"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/Users/chriswei/disk.png"
+       inkscape:export-xdpi="34.290001"
+       inkscape:export-ydpi="34.290001" />
+    <rect
+       id="rect2328"
+       style="fill:#ffffff"
+       height="23"
+       width="30"
+       y="-43.027901"
+       x="9"
+       transform="scale(1,-1)"
+       inkscape:export-filename="/Users/chriswei/disk.png"
+       inkscape:export-xdpi="34.290001"
+       inkscape:export-ydpi="34.290001" />
+    <rect
+       id="rect2330"
+       style="fill:#d31c00"
+       rx="0.12621"
+       ry="0.12621"
+       height="4"
+       width="30"
+       y="-43.027901"
+       x="9"
+       transform="scale(1,-1)"
+       inkscape:export-filename="/Users/chriswei/disk.png"
+       inkscape:export-xdpi="34.290001"
+       inkscape:export-ydpi="34.290001" />
+    <rect
+       id="rect2332"
+       style="opacity:0.73863998;fill:#000000"
+       rx="0.12621"
+       ry="0.12621"
+       height="2"
+       width="2"
+       y="-41.027901"
+       x="6"
+       transform="scale(1,-1)"
+       inkscape:export-filename="/Users/chriswei/disk.png"
+       inkscape:export-xdpi="34.290001"
+       inkscape:export-ydpi="34.290001" />
+    <path
+       id="path2334"
+       style="opacity:0.13067998;fill:#000000;stroke:#000000"
+       d="M 11,34.5279 H 37"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/Users/chriswei/disk.png"
+       inkscape:export-xdpi="34.290001"
+       inkscape:export-ydpi="34.290001" />
+    <path
+       id="path2336"
+       style="opacity:0.13067998;fill:#000000;stroke:#000000"
+       d="M 11,29.5279 H 37"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/Users/chriswei/disk.png"
+       inkscape:export-xdpi="34.290001"
+       inkscape:export-ydpi="34.290001" />
+    <path
+       id="path2338"
+       style="opacity:0.13067998;fill:#000000;stroke:#000000"
+       d="M 11,24.5279 H 37"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/Users/chriswei/disk.png"
+       inkscape:export-xdpi="34.290001"
+       inkscape:export-ydpi="34.290001" />
+    <path
+       id="rect2273"
+       sodipodi:nodetypes="ccccccccc"
+       style="opacity:0.59658999;fill:none;stroke:url(#linearGradient2283);stroke-linecap:round"
+       d="m 4.6189,42.5002 h 38.768 c 0.07,0 0.127,-0.0563 0.127,-0.1262 V 4.726 c 0,-0.07 -0.057,-0.126 -0.127,-0.126 H 6.9279 c 3e-4,0 -2.4353,2.391 -2.4353,2.391 v 35.383 c 0,0.07 0.0563,0.1263 0.1262,0.1263 z"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/Users/chriswei/disk.png"
+       inkscape:export-xdpi="34.290001"
+       inkscape:export-ydpi="34.290001" />
+    <path
+       id="rect2340"
+       sodipodi:nodetypes="ccccccc"
+       style="fill:url(#linearGradient2348);stroke:#525252"
+       d="m 14.114,18.4659 h 19.75 c 0.888,0 1.603,-0.751 1.603,-1.684 V 3.5809 H 12.511 v 13.201 c 0,0.933 0.715,1.684 1.603,1.684 z"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/Users/chriswei/disk.png"
+       inkscape:export-xdpi="34.290001"
+       inkscape:export-ydpi="34.290001" />
+    <rect
+       id="rect2359"
+       style="fill:#4967a2;stroke:#525252"
+       rx="0.75120997"
+       ry="0.75120997"
+       height="10.066"
+       width="5.0297999"
+       y="-16.5709"
+       x="16.464001"
+       transform="scale(1,-1)"
+       inkscape:export-filename="/Users/chriswei/disk.png"
+       inkscape:export-xdpi="34.290001"
+       inkscape:export-ydpi="34.290001" />
+  </g>
+  <metadata
+     id="metadata6948">
+    <rdf:RDF>
+      <cc:Work>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/publicdomain/" />
+        <dc:publisher>
+          <cc:Agent
+             rdf:about="http://openclipart.org/">
+            <dc:title>Openclipart</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:title>tango media floppy</dc:title>
+        <dc:date>2010-03-27T10:19:49</dc:date>
+        <dc:description>&quot;Floppy disk&quot; icon from &lt;a href=&quot;http://tango.freedesktop.org/Tango_Desktop_Project&quot;&gt; Tango Project &lt;/a&gt; \n&lt;br&gt;&lt;br&gt;\nSince version 0.8.90 Tango Project icons are Public Domain: &lt;a href=&quot;http://tango.freedesktop.org/Frequently_Asked_Questions#Terms_of_Use.3F&quot;&gt; Tango Project FAQ &lt;/a&gt;</dc:description>
+        <dc:source>https://openclipart.org/detail/34579/tango-media-floppy-by-warszawianka</dc:source>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>warszawianka</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>device</rdf:li>
+            <rdf:li>externalsource</rdf:li>
+            <rdf:li>floppy</rdf:li>
+            <rdf:li>floppy disk</rdf:li>
+            <rdf:li>hardware</rdf:li>
+            <rdf:li>icon</rdf:li>
+            <rdf:li>save</rdf:li>
+            <rdf:li>storage</rdf:li>
+            <rdf:li>tango</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/publicdomain/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>

@@ -1,0 +1,72 @@
+// Script to test the metadata system in MM 2.0
+// To start, I am trying to add the position name to the per-image metadata
+// To test, add  a few positions to the StagePosition List and run the script 
+// Based on the datastoreExample.bsh script by Chris Weisiger
+
+// Nico Stuurman, 2016
+
+import org.micromanager.PositionList;
+import org.micromanager.MultiStagePosition;
+import org.micromanager.data.Coords;
+import org.micromanager.data.Image;
+import org.micromanager.data.Datastore;
+import org.micromanager.data.Metadata;
+import org.micromanager.data.Metadata.MetadataBuilder;
+import org.micromanager.display.DisplayWindow;
+
+import mmcorej.TaggedImage;
+
+
+PositionList pl = mm.positions().getPositionList();
+if (pl == null) {
+	mm.scripter().message("No Positionlist found");
+	exit;
+}
+if (pl.getNumberOfPositions() < 1) {
+	mm.scripter().message("PositionList is empty");
+	exit;
+}
+
+Datastore store = mm.data().createRAMDatastore();
+DisplayWindow display = mm.displays().createDisplay(store);
+mm.displays().manage(store);
+
+for (int p=0; p < pl.getNumberOfPositions(); p++) {	
+
+	String posName = "Pos-0";
+	x = 0.0;
+	y = 0.0;
+	PositionList pl = mm.positions().getPositionList();
+	if (pl != null) {
+ 	  MultiStagePosition pos = pl.getPosition(p);
+		  if (pos != null) {
+	  	   posName = pos.getLabel();
+	  	   x = pos.getX();
+	  	   y = pos.getY();
+	  	   MultiStagePosition.goToPosition(pos, mm.getCore());
+	   }
+	}
+   Thread.sleep(500);
+	mm.getCore().snapImage();
+	TaggedImage tmp = mm.getCore().getTaggedImage();
+	Image image1 = mm.data().convertTaggedImage(tmp);
+	MetadataBuilder mdb = image1.getMetadata().copy();
+	md = mdb.positionName(posName).xPositionUm(x).yPositionUm(y).build();
+   Coords coord = image1.getCoords().copy().channel(0).stagePosition(p).build();
+	image1 = image1.copyWith(coord, md);
+	
+	mm.getCore().snapImage();
+	tmp = mm.getCore().getTaggedImage();
+	Image image2 = mm.data().convertTaggedImage(tmp);
+	MetadataBuilder mdb2 = image2.getMetadata().copy();
+	md = mdb2.positionName(posName).xPositionUm(x).yPositionUm(y).build();
+	Coords coord = image1.getCoords().copy().channel(1).stagePosition(p).build();
+	image2 = image2.copyWith(coord, md);
+	store.putImage(image1);
+	store.putImage(image2);
+}
+
+store.freeze();
+
+
+

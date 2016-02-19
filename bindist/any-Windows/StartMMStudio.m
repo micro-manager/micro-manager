@@ -21,7 +21,7 @@ function S = StartMMStudio(varargin)
 % This function checks if MATLAB's Java classpath is set up correctly in order
 % to run MMStudio, and if so, starts MMStudio.
 %
-% The return value is the org.micromanager.api.ScriptInterface object if
+% The return value is the org.micromanager.Studio object if
 % MMStudio was started. If the classpath was not correct, [] is returned.
 %
 % If called with '-setup', adds the necessary classpath configuration. In this
@@ -374,7 +374,7 @@ function studio = CreateMMStudio(pathToMM)
 
    % TODO We could do some health checks on MMCoreJ here
 
-   studio = org.micromanager.MMStudio(false);
+   studio = org.micromanager.internal.MMStudio(false);
 end
 
 

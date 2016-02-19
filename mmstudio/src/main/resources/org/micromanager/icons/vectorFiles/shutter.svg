@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.5 r10040"
+   sodipodi:docname="shutter.svg">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.49887768"
+     inkscape:cx="367.58391"
+     inkscape:cy="526.18109"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1078"
+     inkscape:window-height="701"
+     inkscape:window-x="25"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 96.843642,385.98873 402.83914,315.83125 305.61289,214.11604 c 0,0 -111.6264,-5.27016 -208.769248,171.87269 z"
+       id="path3777"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cccc"
+       inkscape:export-filename="/Users/chriswei/shutter_closed.png"
+       inkscape:export-xdpi="2.72"
+       inkscape:export-ydpi="2.72" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#path3777"
+       id="use3779"
+       transform="matrix(0.5,-0.8660254,0.8660254,0.5,-245.71612,572.45888)"
+       width="744.09448"
+       height="1052.3622"
+       inkscape:export-filename="/Users/chriswei/shutter_closed.png"
+       inkscape:export-xdpi="2.72"
+       inkscape:export-ydpi="2.72" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#use3779"
+       id="use3781"
+       transform="matrix(0.5,-0.8660254,0.8660254,0.5,-250.39263,575.99699)"
+       width="744.09448"
+       height="1052.3622"
+       inkscape:export-filename="/Users/chriswei/shutter_closed.png"
+       inkscape:export-xdpi="2.72"
+       inkscape:export-ydpi="2.72" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#path3777"
+       id="use3783"
+       transform="matrix(-1,0,0,-1,743.56641,1004.7598)"
+       width="744.09448"
+       height="1052.3622"
+       inkscape:export-filename="/Users/chriswei/shutter_closed.png"
+       inkscape:export-xdpi="2.72"
+       inkscape:export-ydpi="2.72" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#use3779"
+       id="use3785"
+       transform="matrix(-1,0,0,-1,745.56641,1002.7598)"
+       width="744.09448"
+       height="1052.3622"
+       inkscape:export-filename="/Users/chriswei/shutter_closed.png"
+       inkscape:export-xdpi="2.72"
+       inkscape:export-ydpi="2.72" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#use3781"
+       id="use3787"
+       transform="matrix(-1,0,0,-1,745.56641,1006.7598)"
+       width="744.09448"
+       height="1052.3622"
+       inkscape:export-filename="/Users/chriswei/shutter_closed.png"
+       inkscape:export-xdpi="2.72"
+       inkscape:export-ydpi="2.72" />
+    <path
+       sodipodi:type="arc"
+       style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="path3808"
+       sodipodi:cx="366.82339"
+       sodipodi:cy="495.11136"
+       sodipodi:rx="100.22497"
+       sodipodi:ry="100.22497"
+       d="m 467.04836,495.11136 a 100.22497,100.22497 0 1 1 -200.44993,0 100.22497,100.22497 0 1 1 200.44993,0 z"
+       transform="matrix(1.5625,0,0,1.5625,-200.32466,-272.48664)"
+       inkscape:export-filename="/Users/chriswei/shutter_open_auto.png"
+       inkscape:export-xdpi="2.72"
+       inkscape:export-ydpi="2.72" />
+    <rect
+       style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:#ff7f00;stroke-width:10;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="rect3857"
+       width="304.6839"
+       height="304.6839"
+       x="356.80988"
+       y="485.10684"
+       ry="1.5381"
+       inkscape:export-filename="/Users/chriswei/shutter_closed_auto@2x.png"
+       inkscape:export-xdpi="5.4400001"
+       inkscape:export-ydpi="5.4400001" />
+    <text
+       xml:space="preserve"
+       style="font-size:350px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ff7f00;fill-opacity:1;stroke:#ff7f00;font-family:Avenir;-inkscape-font-specification:Avenir;stroke-width:30;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       x="388.88187"
+       y="757.71881"
+       id="text4367"
+       sodipodi:linespacing="125%"
+       inkscape:export-filename="/Users/chriswei/shutter_closed_auto@2x.png"
+       inkscape:export-xdpi="5.4400001"
+       inkscape:export-ydpi="5.4400001"><tspan
+         sodipodi:role="line"
+         id="tspan4369"
+         x="388.88187"
+         y="757.71881">A</tspan></text>
+  </g>
+</svg>

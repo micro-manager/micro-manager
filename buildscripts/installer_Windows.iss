@@ -22,24 +22,24 @@
 ;;
 
 [Setup]
-AppName=Micro-Manager-1.4
-AppVerName=Micro-Manager-1.4
+AppName=Micro-Manager-2.0beta
+AppVerName=Micro-Manager-2.0beta
 AppPublisher=UCSF
 AppPublisherURL=http://www.micro-manager.org
 AppSupportURL=http://www.micro-manager.org
 AppUpdatesURL=http://www.micro-manager.org
-DefaultDirName=C:/Program Files/Micro-Manager-1.4
-DefaultGroupName=Micro-Manager-1.4
+DefaultDirName=C:/Program Files/Micro-Manager-2.0beta
+DefaultGroupName=Micro-Manager-2.0beta
 OutputBaseFilename=MMSetup_{#MMArch_bits}bit
 Compression=lzma
 SolidCompression=true
-VersionInfoVersion=1.4
+VersionInfoVersion=0.0.0.0
 VersionInfoCompany=(c)University of California San Francisco
 VersionInfoCopyright=(c)University of California San Francisco, (c)100XImaging Inc
 AppCopyright=University of California San Francisco, 100XImaging Inc
 ShowLanguageDialog=yes
-AppVersion=1.4
-AppID=31830087-F23D-4198-B67D-AD4A2A69147F
+AppVersion=2.0beta
+AppID=fc0550d5-cb09-4d4f-ad9c-3538b1c12d29
 
 #if MMArch == "x64"
 ArchitecturesAllowed=x64
@@ -167,9 +167,6 @@ Source: {#MMStageDir}\MMCoreJ_wrap.dll; DestDir: {app}; Flags: ignoreversion
 Source: {#MMStageDir}\mmgr_dal_*.dll; DestDir: {app}; Flags: ignoreversion
 Source: {#MMStageDir}\*.dll; DestDir: {app}; Flags: ignoreversion
 
-; Okolab library extra files
-Source: {#MMStageDir}\okolib\*; DestDir: {app}\okolib; Flags: ignoreversion recursesubdirs createallsubdirs
-
 ; Olympus IX*3 control module
 Source: {#MMStageDir}\OlympusIX3Control\*; DestDir: {app}\OlympusIX3Control; Flags: ignoreversion recursesubdirs createallsubdirs
 
@@ -207,9 +204,9 @@ Name: "{app}\mmplugins"; Permissions: users-modify
 Name: "{app}\mmautofocus"; Permissions: users-modify
 
 [Icons]
-Name: {group}\Micro-Manager-1.4; Filename: {app}\ImageJ.exe; WorkingDir: {app}
-Name: {group}\{cm:UninstallProgram,Micro-Manager-1.4}; Filename: {uninstallexe}
-Name: {commondesktop}\Micro-Manager 1.4; Filename: {app}\ImageJ.exe; Tasks: desktopicon; WorkingDir: {app}; IconIndex: 0
+Name: {group}\Micro-Manager-2.0beta; Filename: {app}\ImageJ.exe; WorkingDir: {app}
+Name: {group}\{cm:UninstallProgram,Micro-Manager-2.0beta}; Filename: {uninstallexe}
+Name: {commondesktop}\Micro-Manager 2.0beta; Filename: {app}\ImageJ.exe; Tasks: desktopicon; WorkingDir: {app}; IconIndex: 0
 
 [Run]
-Filename: "{app}\ImageJ.exe"; WorkingDir: "{app}"; Description: {cm:LaunchProgram,Micro-Manager-1.4}; Flags: nowait postinstall skipifsilent
+Filename: "{app}\ImageJ.exe"; WorkingDir: "{app}"; Description: {cm:LaunchProgram,Micro-Manager-2.0beta}; Flags: nowait postinstall skipifsilent

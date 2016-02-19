@@ -57,6 +57,9 @@
 	<!-- C++ DLLs matching the build system architecture -->
 	<property name="mm.build.cpp.outdir" location="${mm.outdir}/${mm.configuration}/${mm.build.architecture}"/>
 
+	<!-- Only include demo device adapter -->
+	<property name="mm.build.stage.demo.only" value="false"/>
+
 	<!-- Swig output -->
 	<property name="mm.swig.javasrcdir" location="${mm.intdir}/Swig"/>
 	<property name="mm.swig.pysrcdir" location="${mm.outdir}/Swig"/>

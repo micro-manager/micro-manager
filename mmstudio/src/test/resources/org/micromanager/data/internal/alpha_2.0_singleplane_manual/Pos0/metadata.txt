@@ -1,0 +1,106 @@
+{
+"Summary": {
+  "ChannelGroup": "Some channel group",
+  "Slices": -1,
+  "Comments": "This is some manually made-up comments",
+  "ChNames": [
+    "Alpha",
+    "Beta",
+    "Romeo"
+  ],
+  "AxisOrder": [
+    "axis 5",
+    "axis 3",
+    "axis 97"
+  ],
+  "UserName": "John Doe",
+  "UserData": {
+    "Ha ha I'm some user data": {
+      "PropVal": "and I'm the value",
+      "PropType": "String"
+    },
+    "I'm a number": {
+      "PropVal": 42,
+      "PropType": "Integer"
+    }
+  },
+  "Frames": -1,
+  "Prefix": "thisIsAPrefix",
+  "StagePositions": [
+    {
+      "gridRow": 0,
+      "subpositions": [
+        {
+          "stageName": "some xy stage",
+          "numAxes": 2,
+          "z": 0,
+          "y": 43.2,
+          "x": 24.3
+        },
+        {
+          "stageName": "some z stage",
+          "numAxes": 1,
+          "z": 0,
+          "y": 0,
+          "x": 1.01
+        }
+      ],
+      "label": "Undefined",
+      "properties": {},
+      "defaultZStage": "some z stage",
+      "defaultXYStage": "some xy stage",
+      "gridCol": 0
+    },
+    {
+      "gridRow": 0,
+      "subpositions": [
+        {
+          "stageName": "some other xy stage",
+          "numAxes": 2,
+          "z": 0,
+          "y": 88.9,
+          "x": 99.8
+        },
+        {
+          "stageName": "some other z stage",
+          "numAxes": 1,
+          "z": 0,
+          "y": 0,
+          "x": 2.02
+        }
+      ],
+      "label": "Undefined",
+      "properties": {},
+      "defaultZStage": "some other z stage",
+      "defaultXYStage": "some other xy stage",
+      "gridCol": 0
+    }
+  ],
+  "Channels": -1,
+  "Name": "alpha-2 manual",
+  "ComputerName": "my arduino",
+  "CustomIntervals_ms": [
+    12.34,
+    56.78
+  ],
+  "ProfileName": "John's Profile",
+  "FileName": "alpha-2 manual",
+  "MetadataVersion": "manual metadata",
+  "z-step_um": 1.23456789012345E8,
+  "StartTime": "The age of Aquarius",
+  "IntendedDimensions": {
+    "axis 3": 9,
+    "axis 97": 8,
+    "axis 5": 2
+  },
+  "Positions": -1,
+  "WaitInterval": -1234.5678,
+  "Directory": "/dev/null",
+  "MicroManagerVersion": "made-up version"
+},
+"Coords-img_channel000_position000_time000000000_z000.tif": {
+  "position": 0,
+  "time": 0,
+  "z": 0,
+  "channel": 0
+}

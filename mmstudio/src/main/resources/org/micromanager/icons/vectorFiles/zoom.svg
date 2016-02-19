@@ -1,0 +1,541 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg3811"
+   sodipodi:docname="zoom.svg"
+   viewBox="0 0 428.85 548.21"
+   version="1.1"
+   inkscape:version="0.48.5 r10040"
+   width="100%"
+   height="100%">
+  <defs
+     id="defs3813">
+    <linearGradient
+       id="linearGradient4512">
+      <stop
+         id="stop4514"
+         style="stop-color:#ffffff"
+         offset="0" />
+      <stop
+         id="stop4516"
+         style="stop-color:#ffffff;stop-opacity:0"
+         offset="1" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient3838"
+       y2="356.45"
+       gradientUnits="userSpaceOnUse"
+       x2="469.55"
+       gradientTransform="matrix(-0.86603,0.5,0.5,0.86603,465.89946,-131.98)"
+       y1="75.41"
+       x1="467.61"
+       inkscape:collect="always">
+      <stop
+         id="stop3834"
+         style="stop-color:#bcecfc"
+         offset="0" />
+      <stop
+         id="stop3840"
+         style="stop-color:#005ce0"
+         offset=".5" />
+      <stop
+         id="stop3836"
+         style="stop-color:#e4fcfc"
+         offset="1" />
+    </linearGradient>
+    <radialGradient
+       id="radialGradient3854"
+       gradientUnits="userSpaceOnUse"
+       cy="136.51"
+       cx="385.95"
+       gradientTransform="matrix(0.22949,1.4333,-1.4916,0.21693,457.63,-400.11)"
+       r="139.91"
+       inkscape:collect="always">
+      <stop
+         id="stop3850"
+         style="stop-color:#0080e8;stop-opacity:0"
+         offset="0" />
+      <stop
+         id="stop3852"
+         style="stop-color:#808080"
+         offset="1" />
+    </radialGradient>
+    <linearGradient
+       id="linearGradient3862"
+       y2="306.87"
+       gradientUnits="userSpaceOnUse"
+       x2="287.89"
+       gradientTransform="matrix(-0.86603,0.5,0.5,0.86603,465.89946,-131.98)"
+       y1="69.989"
+       x1="303.05"
+       inkscape:collect="always">
+      <stop
+         id="stop3858"
+         style="stop-color:#00a0f0"
+         offset="0" />
+      <stop
+         id="stop3860"
+         style="stop-color:#0048d8"
+         offset="1" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient3875"
+       y2="194.59"
+       gradientUnits="userSpaceOnUse"
+       x2="333.96"
+       gradientTransform="matrix(-0.86603,0.5,0.5,0.86603,465.89946,-131.98)"
+       y1="94.505"
+       x1="307.14"
+       inkscape:collect="always">
+      <stop
+         id="stop3871"
+         style="stop-color:#ffffff"
+         offset="0" />
+      <stop
+         id="stop3873"
+         style="stop-color:#ffffff;stop-opacity:0"
+         offset="1" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient3900"
+       y2="166.46"
+       xlink:href="#linearGradient4512"
+       gradientUnits="userSpaceOnUse"
+       x2="485.88"
+       y1="167.97"
+       x1="470.73"
+       inkscape:collect="always" />
+    <filter
+       id="filter3908"
+       inkscape:menu="Blurs"
+       inkscape:menu-tooltip="Smooth colorized contour which allows desaturation and hue rotation"
+       inkscape:label="Fancy blur"
+       color-interpolation-filters="sRGB">
+      <feGaussianBlur
+         id="feGaussianBlur3910"
+         stdDeviation="5"
+         result="result1" />
+      <feComposite
+         id="feComposite3912"
+         k4="0"
+         in2="result1"
+         k3="0"
+         k2="2"
+         k1="0"
+         in="result1"
+         operator="arithmetic" />
+    </filter>
+    <linearGradient
+       id="linearGradient3931"
+       y2="354.15"
+       gradientUnits="userSpaceOnUse"
+       x2="354.29"
+       gradientTransform="matrix(-0.76604897,0.64278841,0.53877256,0.64208789,442.43163,-124.49919)"
+       y1="354.15"
+       x1="317.86"
+       inkscape:collect="always">
+      <stop
+         id="stop3927"
+         style="stop-color:#000058"
+         offset="0" />
+      <stop
+         id="stop3929"
+         style="stop-color:#0048d8"
+         offset="1" />
+    </linearGradient>
+    <radialGradient
+       id="radialGradient3939"
+       gradientUnits="userSpaceOnUse"
+       cy="394.48"
+       cx="333.59"
+       gradientTransform="matrix(1.2738,-0.040544,0.01782,0.55986,-96.693,181.51)"
+       r="29.286"
+       inkscape:collect="always">
+      <stop
+         id="stop3935"
+         style="stop-color:#000058;stop-opacity:.68607"
+         offset="0" />
+      <stop
+         id="stop3937"
+         style="stop-color:#0044d8"
+         offset="1" />
+    </radialGradient>
+    <linearGradient
+       id="linearGradient3954"
+       y2="487.69"
+       gradientUnits="userSpaceOnUse"
+       x2="374.77"
+       gradientTransform="matrix(-0.64420188,0.51131286,0.53575332,0.60395195,403.07125,-65.618075)"
+       y1="487.69"
+       x1="297.76"
+       inkscape:collect="always">
+      <stop
+         id="stop3958"
+         style="stop-color:#0024d0"
+         offset="0" />
+      <stop
+         id="stop3962"
+         style="stop-color:#0048d8"
+         offset="1" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient4506"
+       y2="395.76"
+       gradientUnits="userSpaceOnUse"
+       x2="319.71"
+       gradientTransform="matrix(-0.76604897,0.64278841,0.64278841,0.76604897,408.31049,-165.17203)"
+       y1="379.6"
+       x1="323.25"
+       inkscape:collect="always">
+      <stop
+         id="stop4502"
+         style="stop-color:#ffffff"
+         offset="0" />
+      <stop
+         id="stop4504"
+         style="stop-color:#ffffff;stop-opacity:0"
+         offset="1" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient4510"
+       y2="465.93"
+       xlink:href="#linearGradient4512"
+       gradientUnits="userSpaceOnUse"
+       x2="335.01"
+       gradientTransform="matrix(-0.76604897,0.64278841,0.64278841,0.76604897,408.31049,-165.17203)"
+       y1="465.93"
+       x1="300"
+       inkscape:collect="always" />
+    <linearGradient
+       id="linearGradient4520"
+       y2="465.93"
+       xlink:href="#linearGradient4512"
+       gradientUnits="userSpaceOnUse"
+       x2="335.01"
+       gradientTransform="matrix(-0.30894004,0.24521556,0.53575332,0.60395195,301.3189,13.671184)"
+       y1="465.93"
+       x1="300"
+       inkscape:collect="always" />
+    <linearGradient
+       id="linearGradient4530"
+       y2="353.84"
+       gradientUnits="userSpaceOnUse"
+       x2="332.85"
+       gradientTransform="translate(-418.94864,135.92585)"
+       y1="353.84"
+       x1="322.24"
+       inkscape:collect="always">
+      <stop
+         id="stop4526"
+         style="stop-color:#ffffff"
+         offset="0" />
+      <stop
+         id="stop4528"
+         style="stop-color:#ffffff;stop-opacity:0"
+         offset="1" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient4543"
+       y2="85.646"
+       gradientUnits="userSpaceOnUse"
+       x2="373.76"
+       gradientTransform="matrix(-0.86603,0.5,0.5,0.86603,465.89946,-131.98)"
+       y1="272.52"
+       x1="276.78"
+       inkscape:collect="always">
+      <stop
+         id="stop4539"
+         style="stop-color:#ffffff"
+         offset="0" />
+      <stop
+         id="stop4541"
+         style="stop-color:#ffffff;stop-opacity:0"
+         offset="1" />
+    </linearGradient>
+    <filter
+       id="filter4563"
+       inkscape:menu="Blurs"
+       height="1"
+       width="1"
+       color-interpolation-filters="sRGB"
+       y="0"
+       x="0"
+       inkscape:menu-tooltip="Edges are partly feathered out"
+       inkscape:label="Apparition">
+      <feMorphology
+         id="feMorphology4565"
+         result="result0"
+         radius="4"
+         in="SourceGraphic" />
+      <feGaussianBlur
+         id="feGaussianBlur4567"
+         result="result91"
+         stdDeviation="8"
+         in="result0" />
+      <feComposite
+         id="feComposite4569"
+         operator="in"
+         in2="result91"
+         in="SourceGraphic" />
+    </filter>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     bordercolor="#666666"
+     inkscape:pageshadow="2"
+     inkscape:window-y="0"
+     fit-margin-left="0"
+     pagecolor="#ffffff"
+     inkscape:window-height="756"
+     inkscape:window-maximized="1"
+     inkscape:zoom="0.70710678"
+     inkscape:window-x="4"
+     showgrid="false"
+     borderopacity="1.0"
+     inkscape:current-layer="layer1"
+     inkscape:cx="-89.227862"
+     inkscape:cy="300.97301"
+     fit-margin-top="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:window-width="1276"
+     inkscape:pageopacity="0.0"
+     inkscape:document-units="px" />
+  <g
+     id="layer1"
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     transform="translate(-142.43 -64.006)">
+    <path
+       id="rect3923"
+       sodipodi:nodetypes="czcczcc"
+       style="fill:url(#linearGradient3954)"
+       inkscape:connector-curvature="0"
+       d="m 415.41148,313.31066 c 0,0 -2.03846,15.13356 -19.31334,28.84481 -17.27552,13.71135 -32.09495,11.95884 -32.09495,11.95884 l 130.61548,147.23718 c 0,0 15.58659,2.33114 33.35748,-11.77385 17.77089,-14.10501 18.05083,-29.02972 18.05083,-29.02972 z"
+       inkscape:export-filename="/Users/chriswei/proj/vale/svn/micromanager/mmstudio/src/org/micromanager/internal/icons/zoom_in@2x.png"
+       inkscape:export-xdpi="5.4238291"
+       inkscape:export-ydpi="5.4238291" />
+    <path
+       id="path3921"
+       sodipodi:rx="29.285715"
+       sodipodi:ry="7.5"
+       style="fill:url(#radialGradient3939)"
+       sodipodi:type="arc"
+       d="m 365.00001,381.29074 a 29.285715,7.5 0 1 1 -58.57143,0 29.285715,7.5 0 1 1 58.57143,0 z"
+       transform="matrix(-1.0435077,0.87559547,1.273506,1.5177155,260.56479,-532.76076)"
+       sodipodi:cy="381.29074"
+       sodipodi:cx="335.71429"
+       inkscape:export-filename="/Users/chriswei/proj/vale/svn/micromanager/mmstudio/src/org/micromanager/internal/icons/zoom_in@2x.png"
+       inkscape:export-xdpi="5.4238291"
+       inkscape:export-ydpi="5.4238291" />
+    <path
+       id="rect3919"
+       sodipodi:nodetypes="ccczcc"
+       style="fill:url(#linearGradient3931)"
+       inkscape:connector-curvature="0"
+       d="m 379.69515,287.11828 -33.66164,28.24539 28.53852,34.01104 c 0,0 10.42821,-0.35828 20.96325,-9.19807 10.53504,-8.83978 12.69837,-19.04742 12.69837,-19.04742 z"
+       inkscape:export-filename="/Users/chriswei/proj/vale/svn/micromanager/mmstudio/src/org/micromanager/internal/icons/zoom_in@2x.png"
+       inkscape:export-xdpi="5.4238291"
+       inkscape:export-ydpi="5.4238291" />
+    <rect
+       id="rect4522"
+       style="fill:url(#linearGradient4530)"
+       transform="matrix(-0.76604444,0.64278761,0.64278761,0.76604444,0,0)"
+       height="51.380001"
+       width="11.923"
+       y="465.04584"
+       x="-100.72865"
+       inkscape:export-filename="/Users/chriswei/proj/vale/svn/micromanager/mmstudio/src/org/micromanager/internal/icons/zoom_in@2x.png"
+       inkscape:export-xdpi="5.4238291"
+       inkscape:export-ydpi="5.4238291" />
+    <path
+       id="path3821"
+       sodipodi:nodetypes="ccccsccccsc"
+       style="fill:url(#linearGradient3838)"
+       inkscape:connector-curvature="0"
+       d="m 172.84946,95.635 c 8.62,-4.94 11.17,-5.983 26.21,-14.371 l -37.499,42.252 3.6717,-13.703 c -35.583,42.527 -41.945,106.22 -11.377,159.17 29.405,50.931 84.518,77.24 137.29,70.667 l -15.637,-1.8336 71.537,-18.532 c -12.053,7.2978 -34.017,19.814 -38.952,22.345 -63.257,32.792 -143.18,7.8755 -180.92,-57.491 -38.773002,-67.158 -18.324,-151.55 45.682,-188.5 z"
+       inkscape:export-filename="/Users/chriswei/proj/vale/svn/micromanager/mmstudio/src/org/micromanager/internal/icons/zoom_in@2x.png"
+       inkscape:export-xdpi="5.4238291"
+       inkscape:export-ydpi="5.4238291" />
+    <path
+       id="path3819"
+       style="fill:url(#linearGradient3862)"
+       inkscape:connector-curvature="0"
+       d="m 199.34946,81.164 c 63.776,-36.821 146.8,-12.426 185.43,54.49 38.634,66.916 18.25,151.01 -45.526,187.83 -63.776,36.821 -146.77,12.41 -185.41,-54.506 -38.634,-66.916 -18.277,-151 45.499,-187.82 z m 16.125,27.929 c -49.064,28.327 -64.715,93.035 -34.994,144.51 29.722,51.48 93.571,70.252 142.63,41.925 49.064,-28.327 64.758,-93.023 35.036,-144.5 -29.722,-51.48 -93.613,-70.263 -142.68,-41.936 z"
+       inkscape:export-filename="/Users/chriswei/proj/vale/svn/micromanager/mmstudio/src/org/micromanager/internal/icons/zoom_in@2x.png"
+       inkscape:export-xdpi="5.4238291"
+       inkscape:export-ydpi="5.4238291" />
+    <path
+       id="path3877"
+       style="opacity:0.5;fill:url(#linearGradient3900);filter:url(#filter3908)"
+       inkscape:connector-curvature="0"
+       d="m 369.28,54.438 v 0.9375 c 58.235,14.996 101.44,70.11 101.44,135.84 0,65.74 -43.195,120.88 -101.44,135.88 v 2.9062 c 62.53,-11.57 110.03,-68.86 110.03,-137.79 0,-68.93 -47.5,-126.22 -110.03,-137.78 z"
+       transform="matrix(-0.86603,0.5,0.5,0.86603,465.89946,-131.98)"
+       inkscape:export-filename="/Users/chriswei/proj/vale/svn/micromanager/mmstudio/src/org/micromanager/internal/icons/zoom_in@2x.png"
+       inkscape:export-xdpi="5.4238291"
+       inkscape:export-ydpi="5.4238291" />
+    <path
+       id="path3842"
+       sodipodi:rx="139.90613"
+       sodipodi:ry="139.90613"
+       style="fill:url(#radialGradient3854)"
+       sodipodi:type="arc"
+       d="m 483.86307,191.20714 a 139.90613,139.90613 0 1 1 -279.81226,0 139.90613,139.90613 0 1 1 279.81226,0 z"
+       transform="matrix(-0.63498,0.36661,0.38466,0.66625,414.16946,-51.18)"
+       sodipodi:cy="191.20714"
+       sodipodi:cx="343.95694"
+       inkscape:export-filename="/Users/chriswei/proj/vale/svn/micromanager/mmstudio/src/org/micromanager/internal/icons/zoom_in@2x.png"
+       inkscape:export-xdpi="5.4238291"
+       inkscape:export-ydpi="5.4238291" />
+    <path
+       id="path3864"
+       style="fill:url(#linearGradient3875)"
+       inkscape:connector-curvature="0"
+       d="m 215.47946,109.09 c 31.08,-17.944 68.12,-16.97 98.64,-0.77 l -29.919,79.303 c 0,0 -14.788,-3.5161 -33.936,-0.21712 -14.253,2.4556 -25.836,6.6889 -25.836,6.6889 l -35.443,-62.639 c 7.274,-8.7688 16.12,-16.38 26.491,-22.367 z"
+       inkscape:export-filename="/Users/chriswei/proj/vale/svn/micromanager/mmstudio/src/org/micromanager/internal/icons/zoom_in@2x.png"
+       inkscape:export-xdpi="5.4238291"
+       inkscape:export-ydpi="5.4238291" />
+    <path
+       id="path3990"
+       style="fill:url(#linearGradient4506)"
+       inkscape:connector-curvature="0"
+       d="m 407.44903,346.9072 c 0,0 7.35134,-6.16846 12.30555,-13.62179 4.95424,-7.45373 5.90144,-14.18223 5.90144,-14.18223 l -18.72327,9.11717 -7.72484,10.43788 z"
+       inkscape:export-filename="/Users/chriswei/proj/vale/svn/micromanager/mmstudio/src/org/micromanager/internal/icons/zoom_in@2x.png"
+       inkscape:export-xdpi="5.4238291"
+       inkscape:export-ydpi="5.4238291" />
+    <path
+       id="path4508"
+       sodipodi:nodetypes="cczccsc"
+       style="opacity:0.5;fill:url(#linearGradient4510)"
+       inkscape:connector-curvature="0"
+       d="m 426.28289,320.74933 155.6447,185.4906 c 0,0 -1.54799,5.05176 -5.31128,11.45025 -3.76334,6.3982 -6.60061,8.80211 -6.60061,8.80211 L 415.06256,341.81394 c 0,0 4.12584,-3.69508 7.55823,-9.6056 3.43239,-5.91053 3.66495,-11.46763 3.66495,-11.46763 z"
+       inkscape:export-filename="/Users/chriswei/proj/vale/svn/micromanager/mmstudio/src/org/micromanager/internal/icons/zoom_in@2x.png"
+       inkscape:export-xdpi="5.4238291"
+       inkscape:export-ydpi="5.4238291" />
+    <path
+       id="path4518"
+       d="m 415.8407,319.97178 128.5812,144.95065 c 0,0 0.17065,2.82329 -0.66069,6.03787 -0.83133,3.21457 -1.97077,4.13713 -1.97077,4.13713 L 412.6314,329.49864 c 0,0 1.61454,-1.46524 2.35695,-4.44363 0.74241,-2.97838 0.84852,-5.08427 0.84852,-5.08427 z"
+       sodipodi:nodetypes="cczccsc"
+       style="fill:url(#linearGradient4520)"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/Users/chriswei/proj/vale/svn/micromanager/mmstudio/src/org/micromanager/internal/icons/zoom_in@2x.png"
+       inkscape:export-xdpi="5.4238291"
+       inkscape:export-ydpi="5.4238291" />
+    <path
+       id="path4532"
+       style="fill:url(#linearGradient4543)"
+       inkscape:connector-curvature="0"
+       d="m 215.47946,109.09 c 49.064,-28.327 112.96,-9.5435 142.68,41.936 29.722,51.48 14.027,116.18 -35.036,144.5 -49.064,28.327 -112.91,9.555 -142.63,-41.925 -29.722,-51.48 -14.07,-116.19 34.994,-144.51 z m 2.25,3.8971 c -47.014,27.143 -62.016,89.148 -33.536,138.48 28.48,49.329 89.663,67.312 136.68,40.168 47.014,-27.143 62.059,-89.136 33.579,-138.47 -28.48,-49.329 -89.705,-67.323 -136.72,-40.18 z"
+       inkscape:export-filename="/Users/chriswei/proj/vale/svn/micromanager/mmstudio/src/org/micromanager/internal/icons/zoom_in@2x.png"
+       inkscape:export-xdpi="5.4238291"
+       inkscape:export-ydpi="5.4238291" />
+    <rect
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-opacity:1"
+       id="rect7663"
+       width="507.09659"
+       height="507.09659"
+       x="-592.95801"
+       y="50.571182"
+       inkscape:export-filename="/Users/chriswei/proj/vale/svn/micromanager/mmstudio/src/org/micromanager/internal/icons/zoom_out.png"
+       inkscape:export-xdpi="2.8399999"
+       inkscape:export-ydpi="2.8399999"
+       transform="scale(-1,1)" />
+    <path
+       sodipodi:type="inkscape:offset"
+       inkscape:radius="0"
+       inkscape:original="M 130.3125 415.4375 L 130.3125 476.0625 L 375.375 476.0625 L 375.375 415.4375 L 130.3125 415.4375 z "
+       style="fill:#b40000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+       id="path7740"
+       d="m 130.3125,415.4375 0,60.625 245.0625,0 0,-60.625 -245.0625,0 z"
+       transform="translate(-2.8284302,-26.870057)" />
+    <g
+       id="g7828"
+       transform="translate(-1.4142117,50.911687)">
+      <path
+         d="m -334.15625,346.34375 0,63.625 246.0625,0 0,-63.625 -246.0625,0 z"
+         id="path7804"
+         style="fill:#00a000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         inkscape:original="M -334.15625 346.34375 L -334.15625 409.96875 L -88.09375 409.96875 L -88.09375 346.34375 L -334.15625 346.34375 z "
+         inkscape:radius="0"
+         sodipodi:type="inkscape:offset" />
+      <image
+         style="stroke:none"
+         transform="matrix(0,1,-1,0,0,0)"
+         width="247"
+         height="64"
+         xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPcAAABACAYAAADGQ+GeAAAABHNCSVQICAgIfAhkiAAAAPFJREFU
+eJzt00ENg0AAAMErKSL4oaAyMIUZjFUG37YmaEg2Mwr2s49xjO8AUvbXvk53RwD/YW6IMjdEmRui
+zA1R5oYoc0OUuSHK3BBlbogyN0SZG6LMDVHmhihzQ5S5IcrcEGVuiDI3RJkboswNUeaGKHNDlLkh
+ytwQZW6IMjdEmRuizA1R5oYoc0OUuSHK3BBlbogyN0SZG6LMDVHmhihzQ5S5IcrcEGVuiDI3RJkb
+oswNUeaGKHNDlLkhytwQZW6IMjdEmRuizA1R5oYoc0OUuSHK3BBlbogyN0SZG6LMDVHmhqjntmzv
+uyOAa82f+fwBp2YG5HtKByYAAAAASUVORK5CYII=
+"
+         id="image7825"
+         x="253.95654"
+         y="180.53763" />
+    </g>
+  </g>
+  <metadata
+     id="metadata7145">
+    <rdf:RDF>
+      <cc:Work>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/publicdomain/" />
+        <dc:publisher>
+          <cc:Agent
+             rdf:about="http://openclipart.org/">
+            <dc:title>Openclipart</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:title>Magnifier, search, zoom</dc:title>
+        <dc:date>2012-06-13T03:12:09</dc:date>
+        <dc:description>Magnifier, search, icon</dc:description>
+        <dc:source>https://openclipart.org/detail/170636/magnifier-search-zoom-by-diamonjohn-170636</dc:source>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>diamonjohn</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>find</rdf:li>
+            <rdf:li>glass</rdf:li>
+            <rdf:li>icon</rdf:li>
+            <rdf:li>lens</rdf:li>
+            <rdf:li>magnifier</rdf:li>
+            <rdf:li>magnifier icon</rdf:li>
+            <rdf:li>optics</rdf:li>
+            <rdf:li>search</rdf:li>
+            <rdf:li>search icon</rdf:li>
+            <rdf:li>see</rdf:li>
+            <rdf:li>zoom</rdf:li>
+            <rdf:li>zoom icon</rdf:li>
+            <rdf:li>zoom in</rdf:li>
+            <rdf:li>zoom out</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/publicdomain/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>

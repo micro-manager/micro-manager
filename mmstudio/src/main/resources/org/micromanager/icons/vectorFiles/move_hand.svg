@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg2"
+   sodipodi:docname="move_hand.svg"
+   viewBox="0 0 610 610"
+   version="1.1"
+   inkscape:version="0.48.5 r10040"
+   width="100%"
+   height="100%">
+  <defs
+     id="defs3353" />
+  <sodipodi:namedview
+     id="base"
+     inkscape:zoom="0.70000002"
+     borderopacity="1.0"
+     inkscape:current-layer="layer3"
+     inkscape:cx="77.375316"
+     guidetolerance="10"
+     inkscape:window-maximized="0"
+     showgrid="false"
+     inkscape:guide-bbox="true"
+     showguides="true"
+     bordercolor="#666666"
+     inkscape:window-x="1344"
+     inkscape:window-y="0"
+     objecttolerance="1"
+     inkscape:window-width="1680"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     pagecolor="#ffffff"
+     gridtolerance="3"
+     inkscape:cy="307.96481"
+     inkscape:document-units="px"
+     inkscape:window-height="1025">
+    <inkscape:grid
+       id="grid5833"
+       enabled="true"
+       visible="true"
+       snapvisiblegridlinesonly="true"
+       type="xygrid"
+       empspacing="50" />
+  </sodipodi:namedview>
+  <g
+     id="layer3"
+     inkscape:label="1"
+     inkscape:groupmode="layer">
+    <g
+       id="g4386"
+       transform="matrix(8.4892723,0,0,8.4892723,-44.679451,-0.39371759)">
+      <path
+         d="M 29.827,4.6873 20.18,13.614 27.581,13.586 V 27.61 H 13.586 l 0.028,-7.401 -8.9267,9.647 8.8407,9.964 0.029,-7.401 h 14.024 v 13.995 l -7.401,-0.028 9.647,8.927 9.964,-8.841 -7.401,-0.029 V 32.419 h 14.024 l 0.029,7.401 8.87,-9.964 -8.927,-9.647 0.028,7.401 H 32.39 V 13.586 l 7.401,-0.029 -9.964,-8.8697 z"
+         style="fill:none;stroke:#ffffff;stroke-width:8.125;stroke-linecap:round;stroke-linejoin:round"
+         id="path1717"
+         inkscape:connector-curvature="0" />
+      <path
+         d="M 29.827,4.6873 20.18,13.614 27.581,13.586 V 27.61 H 13.586 l 0.028,-7.401 -8.9267,9.647 8.8407,9.964 0.029,-7.401 h 14.024 v 13.995 l -7.401,-0.028 9.647,8.927 9.964,-8.841 -7.401,-0.029 V 32.419 h 14.024 l 0.029,7.401 8.87,-9.964 -8.927,-9.647 0.028,7.401 H 32.39 V 13.586 l 7.401,-0.029 -9.964,-8.8697 z"
+         style="fill:#000000;fill-rule:evenodd;stroke:#000000;stroke-width:3.125;stroke-linecap:round;stroke-linejoin:round"
+         id="path878"
+         inkscape:connector-curvature="0" />
+    </g>
+    <path
+       id="path2914"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-opacity:1;stroke-width:10;stroke-miterlimit:4;stroke-dasharray:none"
+       d="m 323.53,65.156 c -8.0951,-0.06253 -16.241,7.976 -18.812,30.438 l -3.8438,48.875 -2.7812,43.281 0.34375,52 c -2.297,11.259 -8.4753,10.924 -15.375,8.375 -29.131,-36.268 -32.562,-92.352 -52.344,-134.72 -18.143,-27.991 -32.124,-17.064 -37,6.9688 3.0974,19.957 6.7861,32.721 10.812,41.531 l 7.35,27.59 c 3.6068,17.106 7.2057,35.402 10.812,45.375 l 7.3438,30 9.75,48.875 c 1.58,12.161 2.4705,24.085 -4.1875,33.5 0,0 -41.145,-3.4859 -40.844,-9.0625 -14.389,-18.581 -31.12,-31.514 -46.344,-41.656 -24.237,-16.147 -47.831,-10.358 -49.844,0.65625 -0.94095,5.1493 5.0091,9.3001 11.375,15.531 6.9188,2.9357 11.238,12.264 17.344,19.281 6.6825,7.6801 11.123,17.456 19.625,23.938 10.243,7.8085 15.254,20.987 22.719,30.406 11.76,28.443 25.19,52.447 43.625,65.969 34.385,29.203 43.563,58.28 56.219,88.656 2.2444,6.9 4.5722,13.051 6.125,19.031 l 134.16,-0.01 c -4.3533,-26.298 -8.1065,-56.359 -9.75,-100 1.2178,-6.0191 1.2384,-11.428 5.9375,-19.188 10.65,-22.858 15.984,-48.39 19.531,-81 2.3133,-21.268 9.0155,-29.613 12.562,-37.688 0.42485,1.0217 23.156,-26.071 42.438,-53.5 11.928,-16.967 24.73,-32.958 26.344,-34.469 5.9857,-5.6043 13.216,-24.733 11.875,-24.062 8.0301,-16.64 -0.3213,-18.797 -16.406,-15.031 -10.177,6.2584 -18.111,15.888 -26.531,24.781 -20.605,20.747 -38.856,41.89 -64.594,61.781 -13.637,2.9548 -16.384,-0.77158 -16.75,-15.344 l 8.75,-33.5 5.9062,-25.125 c 2.3415,-35.021 10.017,-55.887 15.031,-83.781 1.8104,-36.113 -27.722,-31.926 -33.875,-13.969 l -11.156,48.875 -5.5938,24.062 -17.438,54.469 c -6.6212,6.6662 -14.82,19.175 -14.312,0 l 2.77,-29.66 c -1.3883,-13.733 -2.4275,-29.406 -2.0938,-44 -2.3554,-27.065 -1.8224,-50.652 0,-71.562 1.837,-13.397 -8.467,-26.857 -18.875,-26.938 z"
+       inkscape:connector-curvature="0" />
+  </g>
+  <metadata
+     id="metadata3351">
+    <rdf:RDF>
+      <cc:Work>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/publicdomain/" />
+        <dc:publisher>
+          <cc:Agent
+             rdf:about="http://openclipart.org/">
+            <dc:title>Openclipart</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:title>eco green hand icon</dc:title>
+        <dc:date>2012-05-31T17:18:49</dc:date>
+        <dc:description />
+        <dc:source>https://openclipart.org/detail/170328/eco-green-hand-icon-by-cybergedeon-170328</dc:source>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>dominiquechappard</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>green</rdf:li>
+            <rdf:li>hand; ecology</rdf:li>
+            <rdf:li>icon</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/publicdomain/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>

@@ -34,15 +34,18 @@ import ij.process.ShortProcessor;
 import java.awt.Color;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.prefs.Preferences;
 
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.AutofocusBase;
-import org.micromanager.utils.MMException;
-import org.micromanager.utils.PropertyItem;
+import org.micromanager.AutofocusPlugin;
+import org.micromanager.Studio;
+import org.micromanager.internal.utils.AutofocusBase;
+import org.micromanager.internal.utils.MMException;
+import org.micromanager.internal.utils.PropertyItem;
+
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
 
 /*
  * Created on June 2nd 2007
@@ -56,7 +59,8 @@ import org.micromanager.utils.PropertyItem;
 /* This plugin take a stack of snapshots and computes their sharpness
 
  */
-public class Autofocus extends AutofocusBase implements org.micromanager.api.Autofocus  {
+@Plugin(type = AutofocusPlugin.class)
+public class Autofocus extends AutofocusBase implements AutofocusPlugin, SciJavaPlugin  {
 
    private static final String KEY_SIZE_FIRST = "1st step size";
    private static final String KEY_NUM_FIRST = "1st step number";
@@ -70,7 +74,7 @@ public class Autofocus extends AutofocusBase implements org.micromanager.api.Aut
    
    private static final String AF_DEVICE_NAME = "JAF(H&P)";
 
-   private ScriptInterface app_;
+   private Studio app_;
    private CMMCore core_;
    private ImageProcessor ipCurrent_ = null;
 
@@ -82,11 +86,9 @@ public class Autofocus extends AutofocusBase implements org.micromanager.api.Aut
    public double CROP_SIZE = 0.2; 
    public String CHANNEL="";
 
-   private double indx = 0; //snapshot show new window iff indx = 1 
+   private final double indx = 0; //snapshot show new window iff indx = 1 
 
    private boolean verbose_ = true; // displaying debug info or not
-
-   private Preferences prefs_;//********
 
    private String channelGroup_;
    private double curDist;
@@ -100,8 +102,6 @@ public class Autofocus extends AutofocusBase implements org.micromanager.api.Aut
 
    public Autofocus(){ //constructor!!!
       super();
-      //Preferences root = Preferences.userNodeForPackage(this.getClass());
-      //prefs_ = root.node(root.absolutePath()+"/"+AF_SETTINGS_NODE);
       
       // set-up properties
       createProperty(KEY_SIZE_FIRST, Double.toString(SIZE_FIRST));
@@ -115,6 +115,7 @@ public class Autofocus extends AutofocusBase implements org.micromanager.api.Aut
       loadSettings();
    }
    
+   @Override
    public void applySettings() {
       try {
          SIZE_FIRST = Double.parseDouble(getPropertyValue(KEY_SIZE_FIRST));
@@ -140,18 +141,15 @@ public class Autofocus extends AutofocusBase implements org.micromanager.api.Aut
       bestDist = 5000;
       bestSh = 0;
       //############# CHECK INPUT ARG AND CORE ########
-      if (arg.compareTo("silent") == 0)
-         verbose_ = false;
-      else
-         verbose_ = true;
+      verbose_ = arg.compareTo("silent") != 0;
 
       if (arg.compareTo("options") == 0){
-         app_.getAutofocusManager().showOptionsDialog();
+         app_.compat().showAutofocusDialog();
       }
 
       if (core_ == null) {
          // if core object is not set attempt to get its global handle
-         core_ = app_.getMMCore();
+         core_ = app_.getCMMCore();
       }
 
       if (core_ == null) {
@@ -454,29 +452,24 @@ public class Autofocus extends AutofocusBase implements org.micromanager.api.Aut
       return (newArray.length%2 == 1) ? newArray[middle] : (newArray[middle-1] + newArray[middle]) / 2.0;
    }
 
+   @Override
    public double fullFocus() {
       run("silent");
       return 0;
    }
 
+   @Override
    public String getVerboseStatus() {
-      return new String("OK");
+      return "OK";
    }
 
+   @Override
    public double incrementalFocus() {
       run("silent");
       return 0;
    }
 
-   public void focus(double coarseStep, int numCoarse, double fineStep, int numFine) {
-      SIZE_FIRST = coarseStep;
-      NUM_FIRST = numCoarse;
-      SIZE_SECOND = fineStep;
-      NUM_SECOND = numFine;
-
-      run("silent");
-   }
-
+   @Override
    public PropertyItem[] getProperties() {
       // use default dialog
       // make sure we have the right list of channels
@@ -514,22 +507,40 @@ public class Autofocus extends AutofocusBase implements org.micromanager.api.Aut
       THRES = thr;
    }
 
+   @Override
    public double getCurrentFocusScore() {
       // TODO Auto-generated method stub
       return 0;
    }
 
+   @Override
    public int getNumberOfImages() {
       // TODO Auto-generated method stub
       return 0;
    }
 
-   public String getDeviceName() {
+   public void setContext(Studio app) {
+      app_ = app;
+      core_ = app.getCMMCore();
+   }
+
+   @Override
+   public String getName() {
       return AF_DEVICE_NAME;
    }
 
-   public void setApp(ScriptInterface app) {
-      app_ = app;
-      core_ = app.getMMCore();
+   @Override
+   public String getHelpText() {
+      return AF_DEVICE_NAME;
+   }
+
+   @Override
+   public String getCopyright() {
+      return "Copyright UCSF, 100x Imaging 2007";
+   }
+
+   @Override
+   public String getVersion() {
+      return "1.0";
    }
 }   

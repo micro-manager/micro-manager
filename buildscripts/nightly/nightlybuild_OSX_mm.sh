@@ -65,7 +65,7 @@ if [ -z "$MM_VERSION" ]; then
    MM_VERSION="$(cat version.txt)"
    [ "$use_release_version" = yes ] || MM_VERSION="$MM_VERSION-$(date +%Y%m%d)"
 fi
-sed -e "s/@VERSION_STRING@/$MM_VERSION/" buildscripts/MMVersion.java.in > mmstudio/src/org/micromanager/MMVersion.java || exit
+sed -e "s/@VERSION_STRING@/$MM_VERSION/" buildscripts/MMVersion.java.in > mmstudio/src/main/java/org/micromanager/internal/MMVersion.java || exit
 
 if [ "$skip_autogen" != yes ]; then
    sh autogen.sh
@@ -193,7 +193,7 @@ buildscripts/nightly/mkportableapp_OSX/mkportableapp.py \
 
 
 # Stage third-party JARs.
-cp $MM_SRCDIR/dependencies/artifacts/{compile,optional,runtime}/*.jar $MM_JARDIR
+cp $MM_SRCDIR/dependencies/artifacts/{compile,runtime}/*.jar $MM_JARDIR
 cp $MM_SRCDIR/dependencies/artifacts/imagej/ij-*.jar $MM_STAGEDIR/ij.jar
 
 # Ensure no SVN data gets into the installer (e.g. when copying from bindist/)
@@ -222,13 +222,14 @@ fi
 cd $MM_BUILDDIR
 rm -f Micro-Manager.dmg Micro-Manager.sparseimage
 
-hdiutil convert $MM_SRCDIR/MacInstaller/Micro-Manager1.4.dmg -format UDSP -o Micro-Manager.sparseimage
+hdiutil convert $MM_SRCDIR/MacInstaller/Micro-Manager.dmg -format UDSP -o Micro-Manager.sparseimage
 mkdir -p mm-mnt
 hdiutil attach Micro-Manager.sparseimage -mountpoint mm-mnt
-cp -R $MM_STAGEDIR/* mm-mnt/Micro-Manager1.4
+cp -R $MM_STAGEDIR/* mm-mnt/Micro-Manager
+mv mm-mnt/Micro-Manager mm-mnt/Micro-Manager-$MM_VERSION
 hdiutil detach mm-mnt
 rmdir mm-mnt
-hdiutil convert Micro-Manager.sparseimage -format UDBZ -o Micro-Manager$MM_VERSION.dmg
+hdiutil convert Micro-Manager.sparseimage -format UDBZ -o Micro-Manager-$MM_VERSION.dmg
 
 
 ##

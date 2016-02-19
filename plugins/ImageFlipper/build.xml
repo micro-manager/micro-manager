@@ -1,0 +1,8 @@
+<project name="ImageFlipper" default="jar">
+    <import file="../javapluginbuild.xml"/>
+    <target name="copy-files" depends="mm.javabuild.copy-files">
+        <copy todir="${intdir}">
+            <fileset dir="${rscdir}" includes="**/*.png"/>
+        </copy>
+    </target>
+</project>

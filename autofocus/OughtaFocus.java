@@ -1,17 +1,19 @@
 ///////////////////////////////////////////////////////////////////////////////
 //FILE:           OughtaFocus.java
 //PROJECT:        Micro-Manager
-//SUBSYSTEM:      Autofocusing plug-in for mciro-manager and ImageJ
+//SUBSYSTEM:      Autofocusing plug-in for micro-manager and ImageJ
 //-----------------------------------------------------------------------------
 //
 //AUTHOR:         Arthur Edelstein, October 2010
 //                Based on SimpleAutofocus by Karl Hoover
 //                and the Autofocus "H&P" plugin
 //                by Pakpoom Subsoontorn & Hernan Garcia
-//                Additions by Jon Daniels (Applied Scientific Instrumentation)
+//                Contributions by Jon Daniels (ASI): FFTBandpass and MedianEdges
+//                Chris Weisiger: 2.0 port
+//                Nico Stuurman: 2.0 port and Math3 port
 //
 //COPYRIGHT:      University of California San Francisco
-//
+//                
 //LICENSE:        This file is distributed under the BSD license.
 //                License text is included with the source distribution.
 //
@@ -22,42 +24,53 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
+//CVS:            $Id: MetadataDlg.java 1275 2008-06-03 21:31:24Z nenad $
 
+import ij.gui.OvalRoi;
 import ij.process.ByteProcessor;
+import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
-import ij.process.FloatProcessor;
-import ij.gui.OvalRoi;
 
 import java.awt.Rectangle;
 import java.text.ParseException;
-
 import javax.swing.SwingUtilities;
 
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.TaggedImage;
 
-import org.apache.commons.math.FunctionEvaluationException;
-import org.apache.commons.math.analysis.UnivariateRealFunction;
-import org.apache.commons.math.optimization.GoalType;
-import org.apache.commons.math.optimization.univariate.BrentOptimizer;
+import org.apache.commons.math3.analysis.UnivariateFunction;
+import org.apache.commons.math3.optim.MaxEval;
+import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
+import org.apache.commons.math3.optim.univariate.BrentOptimizer;
+import org.apache.commons.math3.optim.univariate.SearchInterval;
+import org.apache.commons.math3.optim.univariate.UnivariateObjectiveFunction;
+import org.apache.commons.math3.optim.univariate.UnivariatePointValuePair;
+
 import org.json.JSONException;
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.AutofocusBase;
-import org.micromanager.utils.ImageUtils;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.MMException;
-import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.MathFunctions;
-import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.ReportingUtils;
-import org.micromanager.utils.TextUtils;
 
-public class OughtaFocus extends AutofocusBase implements org.micromanager.api.Autofocus {
+import org.micromanager.AutofocusPlugin;
+import org.micromanager.Studio;
+import org.micromanager.internal.utils.AutofocusBase;
+import org.micromanager.internal.utils.ImageUtils;
+import org.micromanager.internal.utils.MDUtils;
+import org.micromanager.internal.utils.MMException;
+import org.micromanager.internal.utils.MMScriptException;
+import org.micromanager.internal.utils.MathFunctions;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.TextUtils;
 
-   private ScriptInterface app_;
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
+
+@Plugin(type = AutofocusPlugin.class)
+public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJavaPlugin {
+
+   private Studio app_;
    private static final String AF_DEVICE_NAME = "OughtaFocus";
    private static final String SEARCH_RANGE = "SearchRange_um";
    private static final String TOLERANCE = "Tolerance_um";
@@ -66,8 +79,8 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    private static final String EXPOSURE = "Exposure";
    private static final String SHOW_IMAGES = "ShowImages";
    private static final String SCORING_METHOD = "Maximize";
-   private static final String showValues[] = {"Yes", "No"};
-   private final static String scoringMethods[] = {"Edges", "StdDev", "Mean", "NormalizedVariance",
+   private static final String[] SHOWVALUES = {"Yes", "No"};
+   private final static String[] SCORINGMETHODS = {"Edges", "StdDev", "Mean", "NormalizedVariance",
       "SharpEdges", "Redondo", "Volath", "Volath5", "MedianEdges", "FFTBandpass"};
    private final static String FFT_UPPER_CUTOFF = "FFTUpperCutoff(%)";
    private final static String FFT_LOWER_CUTOFF = "FFTLowerCutoff(%)";
@@ -78,8 +91,8 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    private double exposure = 100;
    private String show = "No";
    private String scoringMethod = "Edges";
-   private double fft_upper_cutoff = 14;
-   private double fft_lower_cutoff = 2.5;
+   private double fftUpperCutoff = 14;
+   private double fftLowerCutoff = 2.5;
    private int imageCount_;
    private long startTimeMs_;
    private double startZUm_;
@@ -88,14 +101,14 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
 
    public OughtaFocus() {
       super();
-      createProperty(SEARCH_RANGE, NumberUtils.doubleToDisplayString(searchRange));
-      createProperty(TOLERANCE, NumberUtils.doubleToDisplayString(tolerance));
-      createProperty(CROP_FACTOR, NumberUtils.doubleToDisplayString(cropFactor));
-      createProperty(EXPOSURE, NumberUtils.doubleToDisplayString(exposure));
-      createProperty(FFT_LOWER_CUTOFF, NumberUtils.doubleToDisplayString(fft_lower_cutoff));
-      createProperty(FFT_UPPER_CUTOFF, NumberUtils.doubleToDisplayString(fft_upper_cutoff));
-      createProperty(SHOW_IMAGES, show, showValues);
-      createProperty(SCORING_METHOD, scoringMethod, scoringMethods);
+      super.createProperty(SEARCH_RANGE, NumberUtils.doubleToDisplayString(searchRange));
+      super.createProperty(TOLERANCE, NumberUtils.doubleToDisplayString(tolerance));
+      super.createProperty(CROP_FACTOR, NumberUtils.doubleToDisplayString(cropFactor));
+      super.createProperty(EXPOSURE, NumberUtils.doubleToDisplayString(exposure));
+      super.createProperty(FFT_LOWER_CUTOFF, NumberUtils.doubleToDisplayString(fftLowerCutoff));
+      super.createProperty(FFT_UPPER_CUTOFF, NumberUtils.doubleToDisplayString(fftUpperCutoff));
+      super.createProperty(SHOW_IMAGES, show, SHOWVALUES);
+      super.createProperty(SCORING_METHOD, scoringMethod, SCORINGMETHODS);
       imageCount_ = 0;
    }
 
@@ -108,10 +121,10 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          cropFactor = MathFunctions.clip(0.01, cropFactor, 1.0);
          channel = getPropertyValue(CHANNEL);
          exposure = NumberUtils.displayStringToDouble(getPropertyValue(EXPOSURE));
-         fft_lower_cutoff = NumberUtils.displayStringToDouble(getPropertyValue(FFT_LOWER_CUTOFF));
-         fft_lower_cutoff = MathFunctions.clip(0.0, fft_lower_cutoff, 100.0);
-         fft_upper_cutoff = NumberUtils.displayStringToDouble(getPropertyValue(FFT_UPPER_CUTOFF));
-         fft_upper_cutoff = MathFunctions.clip(0.0, fft_upper_cutoff, 100.0);
+         fftLowerCutoff = NumberUtils.displayStringToDouble(getPropertyValue(FFT_LOWER_CUTOFF));
+         fftLowerCutoff = MathFunctions.clip(0.0, fftLowerCutoff, 100.0);
+         fftUpperCutoff = NumberUtils.displayStringToDouble(getPropertyValue(FFT_UPPER_CUTOFF));
+         fftUpperCutoff = MathFunctions.clip(0.0, fftUpperCutoff, 100.0);
          show = getPropertyValue(SHOW_IMAGES);
          scoringMethod = getPropertyValue(SCORING_METHOD);
 
@@ -123,18 +136,13 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    }
 
    @Override
-   public String getDeviceName() {
-      return AF_DEVICE_NAME;
-   }
-
-   @Override
    public double fullFocus() throws MMException {
       startTimeMs_ = System.currentTimeMillis();
       applySettings();
       try {
-         Rectangle oldROI = app_.getROI();
-         CMMCore core = app_.getMMCore();
-         liveModeOn_ = app_.isLiveModeOn();
+         Rectangle oldROI = app_.compat().getROI();
+         CMMCore core = app_.getCMMCore();
+         liveModeOn_ = app_.live().getIsLiveModeOn();
 
          //ReportingUtils.logMessage("Original ROI: " + oldROI);
          int w = (int) (oldROI.width * cropFactor);
@@ -152,7 +160,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
 
          // avoid wasting time on setting roi if it is the same
          if (cropFactor < 1.0) {
-            app_.setROI(newROI);
+            app_.compat().setROI(newROI);
             core.waitForDevice(core.getCameraDevice());
          }
          double oldExposure = core.getExposure();
@@ -161,7 +169,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          double z = runAutofocusAlgorithm();
 
          if (cropFactor < 1.0) {
-            app_.setROI(oldROI);
+            app_.compat().setROI(oldROI);
             core.waitForDevice(core.getCameraDevice());
          }
          if (oldState != null) {
@@ -175,35 +183,70 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       }
    }
 
-   private double runAutofocusAlgorithm() throws Exception {
-      UnivariateRealFunction scoreFun = new UnivariateRealFunction() {
+   private static class LocalException extends RuntimeException {
+     // The x value that caused the problem.
+     private final double x_;
+     private final Exception ex_;
 
-         public double value(double d) throws FunctionEvaluationException {
+     public LocalException(double x, Exception ex) {
+         x_ = x;
+         ex_ = ex;
+     }
+
+     public double getX() {
+         return x_;
+     }
+     
+     public Exception getException() {
+        return ex_;
+     } 
+ }
+   
+   private double runAutofocusAlgorithm() throws Exception {
+      UnivariateFunction scoreFun = new UnivariateFunction() {
+
+         @Override
+         public double value(double d) throws LocalException {
             try {
                return measureFocusScore(d);
             } catch (Exception e) {
-               throw new FunctionEvaluationException(e, d);
+               throw new LocalException(d, e);
             }
          }
       };
-      BrentOptimizer brentOptimizer = new BrentOptimizer();
-      brentOptimizer.setAbsoluteAccuracy(tolerance);
+      
+      UnivariateObjectiveFunction uof = new UnivariateObjectiveFunction(scoreFun);
+      
+      // NS: Not sure how to set the relative and absolute tolerance
+      // From the math3 documentation:
+      // "The arguments are used implement the original stopping criterion of 
+      // Brent's algorithm. abs and rel define a tolerance 
+      // tol = rel |x| + abs. rel should be no smaller than 2 macheps 
+      // and preferably not much less than sqrt(macheps), where macheps is 
+      // the relative machine precision. abs must be positive."
+      // 
+      // In our case, macheps would be the smallest stepsize of the z-stage,
+      // which we do not know.  0 is no accepted, so try 50nm
+      BrentOptimizer brentOptimizer = new BrentOptimizer(0.05, tolerance);
       imageCount_ = 0;
 
-      CMMCore core = app_.getMMCore();
+      CMMCore core = app_.getCMMCore();
       double z = core.getPosition(core.getFocusDevice());
       startZUm_ = z;
-//      getCurrentFocusScore();
-      double zResult = brentOptimizer.optimize(scoreFun, GoalType.MAXIMIZE, z - searchRange / 2, z + searchRange / 2);
-      ReportingUtils.logMessage("OughtaFocus Iterations: " + brentOptimizer.getIterationCount()
-              + ", z=" + TextUtils.FMT2.format(zResult)
-              + ", dz=" + TextUtils.FMT2.format(zResult - startZUm_)
+      
+      UnivariatePointValuePair result = brentOptimizer.optimize(uof, 
+              GoalType.MAXIMIZE,
+              new MaxEval(100),
+              new SearchInterval(z - searchRange / 2, z + searchRange / 2));
+      ReportingUtils.logMessage("OughtaFocus Iterations: " + brentOptimizer.getIterations()
+              + ", z=" + TextUtils.FMT2.format(result.getPoint())
+              + ", dz=" + TextUtils.FMT2.format(result.getPoint() - startZUm_)
               + ", t=" + (System.currentTimeMillis() - startTimeMs_));
-      return zResult;
+      return result.getPoint();
    }
 
    private void setZPosition(double z) throws Exception {
-      CMMCore core = app_.getMMCore();
+      CMMCore core = app_.getCMMCore();
       String focusDevice = core.getFocusDevice();
       core.setPosition(focusDevice, z);
       core.waitForDevice(focusDevice);
@@ -246,7 +289,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
 
 
    public double measureFocusScore(double z) throws Exception {
-      CMMCore core = app_.getMMCore();
+      CMMCore core = app_.getCMMCore();
       long start = System.currentTimeMillis();
       try {
          setZPosition(z);
@@ -263,8 +306,16 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
             if (show.contentEquals("Yes")) {
                SwingUtilities.invokeLater(new Runnable() {
 
+                  @Override
                   public void run() {
-                     app_.displayImage(img1);
+                     try {
+                        app_.live().displayImage(app_.data().convertTaggedImage(img1));
+                     }
+                     catch (JSONException e) {
+                        app_.logs().showError(e);
+                     } catch (MMScriptException e) {
+                        app_.logs().showError(e);
+                     }
                   }
                });
             }
@@ -302,7 +353,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
 
    @Override
    public double getCurrentFocusScore() {
-      CMMCore core = app_.getMMCore();
+      CMMCore core = app_.getCMMCore();
       double score = 0.0;
       try {
          double z = core.getPosition(core.getFocusDevice());
@@ -310,7 +361,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          core.snapImage();
          TaggedImage img = core.getTaggedImage();
          if (show.contentEquals("Yes")) {
-            app_.displayImage(img);
+            app_.live().displayImage(app_.data().convertTaggedImage(img));
          }
          ImageProcessor proc = ImageUtils.makeProcessor(core, img);
          score = computeScore(proc);
@@ -322,19 +373,11 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       return score;
    }
 
-   @Override
-   public void focus(double coarseStep, int numCoarse, double fineStep, int numFine) throws MMException {
-      throw new UnsupportedOperationException("Not supported yet.");
-   }
-
    private double computeEdges(ImageProcessor proc) {
       // mean intensity for the original image
       double meanIntensity = proc.getStatistics().mean;
       ImageProcessor proc1 = proc.duplicate();
       // mean intensity of the edge map
-      // looks for horizontal and vertical edges with 3x3 Sobel
-      // filter and then combines them in RMS fashion
-      // http://rsb.info.nih.gov/ij/developer/source/ij/process/ByteProcessor.java.html
       proc1.findEdges();
       double meanEdge = proc1.getStatistics().mean;
 
@@ -425,7 +468,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       return (sum1 - sum2);
    }
 
-   // Volath 5 - smoothes out high-frequency (suppresses noise)
+   // Volath 5 - smooths out high-frequency (suppresses noise)
    // Volath  D., "The influence of the scene parameters and of noise on
    // the behavior of automatic focusing algorithms,"
    // J. Microsc. 151, (2), 133 –146 (1988).
@@ -445,8 +488,9 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       sum -= ((w - 1) * h * stats.mean * stats.mean);
       return sum;
    }
-
-   /**
+   
+   
+ /**
     * Modified version of the algorithm used by the AutoFocus JAF(H&P) code
     * in Micro-Manager's Autofocus.java by Pakpoom Subsoontorn & Hernan Garcia.
     * Looks for diagonal edges in both directions, then combines them (RMS).
@@ -487,9 +531,9 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          myFHT.transform();
          ImageProcessor ps = myFHT.getPowerSpectrum_noScaling();
          int midpoint = ps.getHeight()/2;
-         final int scaled_lower = (int) Math.round(fft_lower_cutoff/100*midpoint);
+         final int scaled_lower = (int) Math.round(fftLowerCutoff/100*midpoint);
          final int start_lower = Math.round(midpoint-scaled_lower);
-         final int scaled_upper = (int) Math.round(fft_upper_cutoff/100*midpoint);
+         final int scaled_upper = (int) Math.round(fftUpperCutoff/100*midpoint);
          final int start_upper = Math.round(midpoint-scaled_upper);
          OvalRoi innerCutoff = new OvalRoi(start_lower, start_lower,
                2*scaled_lower+1, 2*scaled_lower+1);
@@ -505,7 +549,8 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          return 0;
       }
    }
-
+   
+   
    @Override
    public double computeScore(final ImageProcessor proc) {
       if (scoringMethod.contentEquals("Mean")) {
@@ -532,28 +577,8 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          return 0;
       }
    }
-
-   public void setApp(ScriptInterface app) {
-      app_ = app;
-      CMMCore core = app_.getMMCore();
-      String chanGroup = core.getChannelGroup();
-      String curChan;
-      try {
-         curChan = core.getCurrentConfig(chanGroup);
-         createProperty(CHANNEL, curChan,
-                 core.getAvailableConfigs(core.getChannelGroup()).toArray());
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-      }
-
-      if (!settingsLoaded_) {
-         super.loadSettings();
-         settingsLoaded_ = true;
-      }
-   }
-
-
-
+   
+   
    /**
     * This is a modified version of ImageJ FHT class which is in the public domain
     *   (http://rsb.info.nih.gov/ij/developer/source/ij/process/FHT.java.html).
@@ -570,12 +595,12 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
     * @author Jon
     */
    static class FHT_NoScaling extends FloatProcessor {
-      private boolean isFrequencyDomain;
-      private int maxN;
-      private float[] C;
-      private float[] S;
-      private int[] bitrev;
-      private float[] tempArr;
+      private boolean isFrequencyDomain_;
+      private int maxN_;
+      private float[] C_;
+      private float[] S_;
+      private int[] bitrev_;
+      private float[] tempArr_;
 
       /** Constructs a FHT object from an ImageProcessor. Byte, short and RGB images
        are converted to float. Float images are duplicated. */
@@ -585,8 +610,8 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
 
       private FHT_NoScaling(ImageProcessor ip, boolean isFrequencyDomain) {
          super(ip.getWidth(), ip.getHeight(), (float[])((ip instanceof FloatProcessor)?ip.duplicate().getPixels():ip.convertToFloat().getPixels()), null);
-         this.isFrequencyDomain = isFrequencyDomain;
-         maxN = getWidth();
+         this.isFrequencyDomain_ = isFrequencyDomain;
+         maxN_ = getWidth();
          resetRoi();
       }
 
@@ -606,12 +631,12 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       private void transform(boolean inverse) {
          if (!powerOf2Size())
             throw new  IllegalArgumentException("Image not power of 2 size or not square: "+width+"x"+height);
-         maxN = width;
-         if (S==null)
-            initializeTables(maxN);
+         maxN_ = width;
+         if (S_==null)
+            initializeTables(maxN_);
          float[] fht = (float[])getPixels();
-         rc2DFHT(fht, inverse, maxN);
-         isFrequencyDomain = !inverse;
+         rc2DFHT(fht, inverse, maxN_);
+         isFrequencyDomain_ = !inverse;
       }
 
       private void initializeTables(int maxN) {
@@ -619,32 +644,32 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
             throw new  IllegalArgumentException("Too large for FHT:  "+maxN+" >2^30");
          makeSinCosTables(maxN);
          makeBitReverseTable(maxN);
-         tempArr = new float[maxN];
+         tempArr_ = new float[maxN];
       }
 
       private void makeSinCosTables(int maxN) {
          int n = maxN/4;
-         C = new float[n];
-         S = new float[n];
+         C_ = new float[n];
+         S_ = new float[n];
          double theta = 0.0;
          double dTheta = 2.0 * Math.PI/maxN;
          for (int i=0; i<n; i++) {
-            C[i] = (float)Math.cos(theta);
-            S[i] = (float)Math.sin(theta);
+            C_[i] = (float)Math.cos(theta);
+            S_[i] = (float)Math.sin(theta);
             theta += dTheta;
          }
       }
 
       private void makeBitReverseTable(int maxN) {
-         bitrev = new int[maxN];
+         bitrev_ = new int[maxN];
          int nLog2 = log2(maxN);
          for (int i=0; i<maxN; i++)
-            bitrev[i] = bitRevX(i, nLog2);
+            bitrev_[i] = bitRevX(i, nLog2);
       }
 
       /** Performs a 2D FHT (Fast Hartley Transform). */
       private void rc2DFHT(float[] x, boolean inverse, int maxN) {
-         if (S==null) initializeTables(maxN);
+         if (S_==null) initializeTables(maxN);
          for (int row=0; row<maxN; row++)
             dfht3(x, row*maxN, inverse, maxN);
          transposeR(x, maxN);
@@ -685,7 +710,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          int Ad0, Ad1, Ad2, Ad3, Ad4, CSAd;
          float rt1, rt2, rt3, rt4;
 
-         if (S==null) initializeTables(maxN);
+         if (S_==null) initializeTables(maxN);
          Nlog2 = log2(maxN);
          BitRevRArr(x, base, Nlog2, maxN);   //bitReverse the input array
          gpSize = 2;     //first & second stages - do radix 4 butterflies once thru
@@ -731,8 +756,8 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
                      Ad4 = Ad3 + gpSize;
 
                      CSAd = bfNum * numGps;
-                     rt1 = x[base+Ad2] * C[CSAd] + x[base+Ad4] * S[CSAd];
-                     rt2 = x[base+Ad4] * C[CSAd] - x[base+Ad2] * S[CSAd];
+                     rt1 = x[base+Ad2] * C_[CSAd] + x[base+Ad4] * S_[CSAd];
+                     rt2 = x[base+Ad4] * C_[CSAd] - x[base+Ad2] * S_[CSAd];
 
                      x[base+Ad2] = x[base+Ad1] - rt1;
                      x[base+Ad1] = x[base+Ad1] + rt1;
@@ -782,9 +807,8 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
 
       private void BitRevRArr (float[] x, int base, int bitlen, int maxN) {
          for (int i=0; i<maxN; i++)
-            tempArr[i] = x[base+bitrev[i]];
-         for (int i=0; i<maxN; i++)
-            x[base+i] = tempArr[i];
+            tempArr_[i] = x[base+bitrev_[i]];
+         System.arraycopy(tempArr_, 0, x, base, maxN);
       }
 
       private int bitRevX (int  x, int bitlen) {
@@ -799,23 +823,23 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
        FHT is assumed to be in the frequency domain.
        Modified to remove scaling per William Mohler's tweaks. */
       public ImageProcessor getPowerSpectrum_noScaling () {
-         if (!isFrequencyDomain)
+         if (!isFrequencyDomain_)
             throw new  IllegalArgumentException("Frequency domain image required");
          int base;
          float  r;
-         float[] fps = new float[maxN*maxN];
-         byte[] ps = new byte[maxN*maxN];
+         float[] fps = new float[maxN_*maxN_];
+         byte[] ps = new byte[maxN_*maxN_];
          float[] fht = (float[])getPixels();
 
-         for (int row=0; row<maxN; row++) {
-            FHTps(row, maxN, fht, fps);
+         for (int row=0; row<maxN_; row++) {
+            FHTps(row, maxN_, fht, fps);
          }
 
          // no longer use min (=0), max, or scale (=1)
 
-         for (int row=0; row<maxN; row++) {
-            base = row*maxN;
-            for (int col=0; col<maxN; col++) {
+         for (int row=0; row<maxN_; row++) {
+            base = row*maxN_;
+            for (int col=0; col<maxN_; col++) {
                r = fps[base+col];
                if (Float.isNaN(r) || r<1f)  // modified for no scaling
                   r = 0f;
@@ -824,7 +848,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
                ps[base+col] = (byte)(r+1f); // 1 is min value
             }
          }
-         ImageProcessor ip = new ByteProcessor(maxN, maxN, ps, null);
+         ImageProcessor ip = new ByteProcessor(maxN_, maxN_, ps, null);
          swapQuadrants(ip);
          return ip;
       }
@@ -892,4 +916,43 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
 
    }
 
+   @Override
+   public void setContext(Studio app) {
+      app_ = app;
+      CMMCore core = app_.getCMMCore();
+      String chanGroup = core.getChannelGroup();
+      String curChan;
+      try {
+         curChan = core.getCurrentConfig(chanGroup);
+         createProperty(CHANNEL, curChan,
+                 core.getAvailableConfigs(core.getChannelGroup()).toArray());
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
+
+      if (!settingsLoaded_) {
+         super.loadSettings();
+         settingsLoaded_ = true;
+      }
+   }
+
+   @Override
+   public String getName() {
+      return AF_DEVICE_NAME;
+   }
+
+   @Override
+   public String getHelpText() {
+      return AF_DEVICE_NAME;
+   }
+
+   @Override
+   public String getVersion() {
+      return "2.0";
+   }
+
+   @Override
+   public String getCopyright() {
+      return "University of California, 2010-2016";
+   }
 }

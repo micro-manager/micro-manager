@@ -1,0 +1,22 @@
+int hashArr(arr) {
+	int result = 0;
+	for (int i = 0; i < 64*64; ++i) {
+		result = result * 23 + arr[i];
+	}
+	return result;
+}
+
+setAccessibility(true);
+acq = gui.getAcquisition("Acq");
+cache = acq.imageCache_;
+for (t = 0; t < 2; ++t) {
+	for (z = 0; z < 2; ++z) {
+		for (c = 0; c < 2; ++c) {
+			for (p = 0; p < 4; ++p) {
+				image = cache.getImage(c, z, t, p);
+				hash = hashArr(image.pix);
+				print(t + ", " + z + ", " + c + ", " + p + ": " + hash);
+			}
+		}
+	}
+}

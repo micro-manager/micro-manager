@@ -23,8 +23,8 @@ javadoc:
 	javadoc -public \
 		-classpath ../MMCoreJ_wrap/MMCoreJ.jar:MMJ_.jar:../dependencies/artifacts/compile/"*":../dependencies/artifacts/imagej/"*" \
 		-d doc \
-		-sourcepath $(srcdir)/src \
-		-subpackages org.micromanager.api
+		-sourcepath $(srcdir)/src/main/java \
+		-subpackages org.micromanager
 
 
 clean-local:
