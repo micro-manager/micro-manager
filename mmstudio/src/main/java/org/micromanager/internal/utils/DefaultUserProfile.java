@@ -32,7 +32,6 @@ import org.micromanager.internal.MMStudio;
 
 public class DefaultUserProfile implements UserProfile {
    private static final String USERNAME_MAPPING_FILE = "Profiles.txt";
-   private static final String GLOBAL_USER = "Global defaults";
    public static final String DEFAULT_USER = "Default user";
    private static final String ALWAYS_USE_DEFAULT_USER = "always use the default user profile";
 
@@ -664,7 +663,6 @@ public class DefaultUserProfile implements UserProfile {
       // HACK: don't reveal the global profile since it's not technically a
       // "user".
       HashSet<String> result = new HashSet<String>(nameToFile_.keySet());
-      result.remove(GLOBAL_USER);
       return result;
    }
 
