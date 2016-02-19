@@ -1848,13 +1848,17 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    }
 
    private void zValCalcChanged() {
-      if (((String) zValCombo_.getSelectedItem()).equals(RELATIVE_Z)) {
-         setTopButton_.setEnabled(false);
-         setBottomButton_.setEnabled(false);
-      } else {
-         setTopButton_.setEnabled(true);
-         setBottomButton_.setEnabled(true);
-      }
+      final boolean isEnabled = ((String) zValCombo_.getSelectedItem()).equals(ABSOLUTE_Z);
+      // HACK: push this to a later call; even though this method should only
+      // be called from the EDT, for some reason if we do this action
+      // immediately, then the buttons don't visually become disabled.
+      SwingUtilities.invokeLater(new Runnable() {
+         @Override
+         public void run() {
+            setTopButton_.setEnabled(isEnabled);
+            setBottomButton_.setEnabled(isEnabled);
+         }
+      });
 
       if (zVals_ == zValCombo_.getSelectedIndex()) {
          return;
