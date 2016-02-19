@@ -501,7 +501,7 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
    }
 
    if (scopeModel_->IsDeviceAvailable(g_Revolver)) {
-      command << g_IL_Turret << "023";
+      command << g_Revolver << "023";
       ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
       if (ret != DEVICE_OK)
          return ret;
