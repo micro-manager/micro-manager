@@ -233,7 +233,7 @@ public class MetadataPanel extends InspectorPanel {
       metadataSplitPane_.setRightComponent(imageMetadataPanel_);
       metadataSplitPane_.setResizeWeight(.5);
 
-      setLayout(new MigLayout("debug, flowy, fill, insets 0, gap 0"));
+      setLayout(new MigLayout("flowy, fill, insets 0, gap 0"));
       add(metadataSplitPane_, "grow, pushy 100");
    }
 
