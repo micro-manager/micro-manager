@@ -427,6 +427,9 @@ public class MainFrame extends MMFrame implements LiveModeListener {
             studio_.plugins().getQuickAccessPlugins().get(
                "org.micromanager.quickaccess.internal.controls.CloseAllButton"));
       closeAllButton.setFont(defaultFont_);
+      // HACK: Windows will helpfully replace "All" with "..." unless we do
+      // this.
+      closeAllButton.setMargin(new Insets(0, 0, 0, 0));
       subPanel.add(closeAllButton, BIGBUTTON_SIZE);
       return subPanel;
    }
