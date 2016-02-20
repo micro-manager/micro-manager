@@ -84,8 +84,53 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       "SharpEdges", "Redondo", "Volath", "Volath5", "MedianEdges", "FFTBandpass"};
    private final static String FFT_UPPER_CUTOFF = "FFTUpperCutoff(%)";
    private final static String FFT_LOWER_CUTOFF = "FFTLowerCutoff(%)";
+
+   // Note on the tolerance settings for the Brent optimizer:
+   //
+   // The reason BrentOptimizer needs both a relative and absolute tolerance
+   // (the _rel_ and _abs_ arguments to the constructor) is that it is
+   // designed for use with arbitrary floating-point numbers. A given
+   // floating point type (e.g. double) always has a certain relative
+   // precision, but larger values have less absolute precision (e.g.
+   // 1.0e100 + 1.0 == 1.0e100).
+   //
+   // So if the result of the optimization is a large FP number, having just
+   // an absolute tolerance (say, 0.01) would result in the algorithm
+   // never terminating (or failing when it reaches the max iterations
+   // constraint, if any). Using a reasonable relative tolerance can prevent
+   // this and allow the optimization to finish when it reaches the
+   // nearly-best-achievable optimum given the FP type.
+   //
+   // Z stage positions, of course, don't have this property and behave like
+   // a fixed-point data type, so only the absolute tolerance is important.
+   // As long as we have a value of _abs_ that is greater than the stage's
+   // minimum step size, the optimizer should always converge (barring other
+   // issues, such as a pathological target function (=focus score)), as
+   // long as we don't run into the FP data type limitations.
+   //
+   // So here we need to select _rel_ to be large enough for
+   // the `double` type and small enough to be negligible in terms of stage
+   // position values. Since we don't expect huge values for the stage
+   // position, we can be relatively conservative and use a value that is
+   // much larger than the recommended minimum (2 x epsilon).
+   //
+   // For the user, it remains important to set a reasonable absolute
+   // tolerance.
+   //
+   // 1.0e-9 is a reasonable relative tolerance to use here, since it
+   // translates to 1 nm when the stage position is 1 m (1e6 µm). Thinking
+   // of piezo stages, a generous position of 1000 µm would give relative
+   // tolerance of 1 pm, again small enough to be negligible.
+   //
+   // The machine epsilon for double is 2e-53, so we could use a much
+   // smaller value (down to 2e-27 or so) if we wanted to, but OughtaFocus
+   // has been tested for quite some time with _rel_ = 1e-9 (the default
+   // relative tolerance in commons-math 2) and appeared to function
+   // correctly.
+   private static final double BRENT_RELATIVE_TOLERANCE = 1e-9;
+
    private double searchRange = 10;
-   private double tolerance = 1;
+   private double absTolerance = 1.0;
    private double cropFactor = 1;
    private String channel = "";
    private double exposure = 100;
@@ -102,7 +147,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    public OughtaFocus() {
       super();
       super.createProperty(SEARCH_RANGE, NumberUtils.doubleToDisplayString(searchRange));
-      super.createProperty(TOLERANCE, NumberUtils.doubleToDisplayString(tolerance));
+      super.createProperty(TOLERANCE, NumberUtils.doubleToDisplayString(absTolerance));
       super.createProperty(CROP_FACTOR, NumberUtils.doubleToDisplayString(cropFactor));
       super.createProperty(EXPOSURE, NumberUtils.doubleToDisplayString(exposure));
       super.createProperty(FFT_LOWER_CUTOFF, NumberUtils.doubleToDisplayString(fftLowerCutoff));
@@ -116,7 +161,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    public void applySettings() {
       try {
          searchRange = NumberUtils.displayStringToDouble(getPropertyValue(SEARCH_RANGE));
-         tolerance = NumberUtils.displayStringToDouble(getPropertyValue(TOLERANCE));
+         absTolerance = NumberUtils.displayStringToDouble(getPropertyValue(TOLERANCE));
          cropFactor = NumberUtils.displayStringToDouble(getPropertyValue(CROP_FACTOR));
          cropFactor = MathFunctions.clip(0.01, cropFactor, 1.0);
          channel = getPropertyValue(CHANNEL);
@@ -216,18 +261,10 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       };
       
       UnivariateObjectiveFunction uof = new UnivariateObjectiveFunction(scoreFun);
-      
-      // NS: Not sure how to set the relative and absolute tolerance
-      // From the math3 documentation:
-      // "The arguments are used implement the original stopping criterion of 
-      // Brent's algorithm. abs and rel define a tolerance 
-      // tol = rel |x| + abs. rel should be no smaller than 2 macheps 
-      // and preferably not much less than sqrt(macheps), where macheps is 
-      // the relative machine precision. abs must be positive."
-      // 
-      // In our case, macheps would be the smallest stepsize of the z-stage,
-      // which we do not know.  0 is no accepted, so try 50nm
-      BrentOptimizer brentOptimizer = new BrentOptimizer(0.05, tolerance);
+
+      BrentOptimizer brentOptimizer =
+         new BrentOptimizer(BRENT_RELATIVE_TOLERANCE, absTolerance);
+
       imageCount_ = 0;
 
       CMMCore core = app_.getCMMCore();
