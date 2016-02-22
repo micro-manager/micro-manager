@@ -271,7 +271,14 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       // Channel group.
       subPanel.add(createLabel("Changroup", false), "split 2");
 
-      chanGroupSelect_ = new JComboBox();
+      // HACK: limit the width of this combo box, ignoring the width of the
+      // entries inside of it.
+      chanGroupSelect_ = new JComboBox() {
+         @Override
+         public Dimension getMinimumSize() {
+            return new Dimension(110, super.getSize().height);
+         }
+      };
       chanGroupSelect_.setFont(defaultFont_);
       chanGroupSelect_.addActionListener(new ActionListener() {
          @Override
