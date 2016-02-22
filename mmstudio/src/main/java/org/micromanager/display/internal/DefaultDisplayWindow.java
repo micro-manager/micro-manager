@@ -644,8 +644,18 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          }
          Double pixelSize = sample.getMetadata().getPixelSizeUm();
          if (pixelSize != null) {
-            cal.pixelWidth = pixelSize;
-            cal.pixelHeight = pixelSize;
+            if (pixelSize == 0) {
+               // If we don't have a valid pixel size, use "pixel" units
+               // instead.  This is necessary to make line ROIs behave, which
+               // are needed by the Line Profile.
+               cal.setUnit("px");
+               cal.pixelWidth = 1.0;
+               cal.pixelHeight = 1.0;
+            }
+            else {
+               cal.pixelWidth = pixelSize;
+               cal.pixelHeight = pixelSize;
+            }
          }
          SummaryMetadata summary = store_.getSummaryMetadata();
          if (summary.getWaitInterval() != null) {
