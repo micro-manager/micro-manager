@@ -68,7 +68,8 @@ public class StatusDisplay extends JFrame {
             catch (InterruptedException e) {
                return;
             }
-            if (!hasVisibleContent_) {
+            if (!hasVisibleContent_ &&
+               studio_.acquisitions().isAcquisitionRunning()) {
                showStatusDisplay();
             }
          }
