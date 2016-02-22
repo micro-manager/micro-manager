@@ -1,3 +1,5 @@
+package org.micromanager.autofocus;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;

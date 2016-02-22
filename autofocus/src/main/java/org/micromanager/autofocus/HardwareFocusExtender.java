@@ -20,6 +20,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
+package org.micromanager.autofocus;
 
 
 import ij.process.ImageProcessor;
