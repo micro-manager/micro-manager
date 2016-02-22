@@ -56,6 +56,13 @@ public interface Storage {
    public Image getImage(Coords coords);
 
    /**
+    * Returns whether or not an image exists at the specified coordinates.
+    * @param coords Coordinates to test
+    * @return True if an image exists at the coordinates, false otherwise.
+    */
+   public boolean hasImage(Coords coords);
+
+   /**
     * Return any Image, or null if there are no images. Only really useful if
     * you need a representative image to work with. No guarantees are made
     * about which image will be provided.

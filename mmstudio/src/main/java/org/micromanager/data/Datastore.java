@@ -102,6 +102,14 @@ public interface Datastore extends Closeable {
    public Iterable<Coords> getUnorderedImageCoords();
 
    /**
+    * Returns whether or not an image exists at the specified coordinates.
+    * @param coords Coordinates to test
+    * @return True if the Datastore has valid Storage and an image exists at
+    *         the coordinates, false otherwise.
+    */
+   public boolean hasImage(Coords coords);
+
+   /**
     * Insert an image into the Datastore. Posts a NewImageEvent to the event
     * bus.
     *

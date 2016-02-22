@@ -698,6 +698,12 @@ public final class StorageMultipageTiff implements Storage {
       return coordsToReader_.keySet();
    }
 
+   @Override
+   public boolean hasImage(Coords coords) {
+      return coordsToPendingImage_.containsKey(coords) ||
+         coordsToReader_.containsKey(coords);
+   }
+
    public static boolean getShouldGenerateMetadataFile() {
       return DefaultUserProfile.getInstance().getBoolean(
             StorageMultipageTiff.class, SHOULD_GENERATE_METADATA_FILE, false);

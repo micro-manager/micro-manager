@@ -141,6 +141,11 @@ public class StorageRAM implements RewritableStorage {
    }
 
    @Override
+   public boolean hasImage(Coords coords) {
+      return coordsToImage_.containsKey(coords);
+   }
+
+   @Override
    public Integer getMaxIndex(String axis) {
       return maxIndex_.getIndex(axis);
    }

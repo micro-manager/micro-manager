@@ -175,11 +175,16 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
+   public boolean hasImage(Coords coords) {
+      return storage_ != null && storage_.hasImage(coords);
+   }
+
+   @Override
    public void putImage(Image image) throws DatastoreFrozenException, DatastoreRewriteException, IllegalArgumentException {
       if (isFrozen_) {
          throw new DatastoreFrozenException();
       }
-      if (getImage(image.getCoords()) != null) {
+      if (hasImage(image.getCoords())) {
          throw new DatastoreRewriteException();
       }
       // Check for validity of axes.

@@ -299,6 +299,11 @@ public class StorageSinglePlaneTiffSeries implements Storage {
    }
 
    @Override
+   public boolean hasImage(Coords coords) {
+      return coordsToFilename_.containsKey(coords);
+   }
+
+   @Override
    public Integer getMaxIndex(String axis) {
       return maxIndices_.getIndex(axis);
    }
