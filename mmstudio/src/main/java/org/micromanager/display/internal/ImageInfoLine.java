@@ -47,7 +47,7 @@ public class ImageInfoLine extends JLabel {
       Double pixelSize = metadata.getPixelSizeUm();
       int width = image.getWidth();
       int height = image.getHeight();
-      if (pixelSize != null) {
+      if (pixelSize != null && pixelSize != 0) {
          // TODO: assuming square pixels.
          text += String.format("%.2fx%.2f \u00b5m ",
                pixelSize * width, pixelSize * height);
