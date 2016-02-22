@@ -384,8 +384,8 @@ public class InspectorFrame extends MMFrame implements Inspector {
       contents_.add(raiseButton_);
       contents_.add(curDisplayTitle_, "hidemode 2, pushy 0");
       for (WrapperPanel wrapper : wrapperPanels_) {
-         contents_.add(wrapper,
-               wrapper.getIsActive() ? "grow, pushy 100" : "growx");
+         contents_.add(wrapper, "hidemode 2, " +
+               (wrapper.getIsActive() ? "grow, pushy 100" : "growx"));
       }
       pack();
    }
