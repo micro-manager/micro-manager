@@ -712,6 +712,10 @@ public class DefaultUserProfile implements UserProfile {
       return profileName_.equals(DEFAULT_USER);
    }
 
+   public boolean hasUser(String userName) {
+      return nameToFile_.containsKey(userName);
+   }
+
    @Override
    public PropertyMap extractProfileSubset(Class<?> c) {
       DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();

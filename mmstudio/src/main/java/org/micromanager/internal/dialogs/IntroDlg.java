@@ -306,7 +306,7 @@ public class IntroDlg extends JDialog {
                      DefaultUserProfile.DEFAULT_USER);
                   return;
                }
-               else if (profilesAsList.contains(profileName)) {
+               else if (profile.hasUser(profileName)) {
                   ReportingUtils.showError("That profile name is already in use.");
                }
                else {
