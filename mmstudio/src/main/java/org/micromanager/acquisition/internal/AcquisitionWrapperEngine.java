@@ -29,6 +29,7 @@ import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.SequenceSettings;
 import org.micromanager.events.internal.ChannelGroupEvent;
+import org.micromanager.events.internal.DefaultAcquisitionEndedEvent;
 import org.micromanager.events.internal.DefaultAcquisitionStartedEvent;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
@@ -173,6 +174,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
       } catch (Throwable ex) {
          ReportingUtils.showError(ex);
+         studio_.events().post(new DefaultAcquisitionEndedEvent(curStore_));
          return null;
       }
    }
