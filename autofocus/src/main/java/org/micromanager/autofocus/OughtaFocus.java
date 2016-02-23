@@ -55,12 +55,12 @@ import org.json.JSONException;
 
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
+
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.MMScriptException;
-import org.micromanager.internal.utils.MathFunctions;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TextUtils;
@@ -164,13 +164,13 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          searchRange = NumberUtils.displayStringToDouble(getPropertyValue(SEARCH_RANGE));
          absTolerance = NumberUtils.displayStringToDouble(getPropertyValue(TOLERANCE));
          cropFactor = NumberUtils.displayStringToDouble(getPropertyValue(CROP_FACTOR));
-         cropFactor = MathFunctions.clip(0.01, cropFactor, 1.0);
+         cropFactor = clip(0.01, cropFactor, 1.0);
          channel = getPropertyValue(CHANNEL);
          exposure = NumberUtils.displayStringToDouble(getPropertyValue(EXPOSURE));
          fftLowerCutoff = NumberUtils.displayStringToDouble(getPropertyValue(FFT_LOWER_CUTOFF));
-         fftLowerCutoff = MathFunctions.clip(0.0, fftLowerCutoff, 100.0);
+         fftLowerCutoff = clip(0.0, fftLowerCutoff, 100.0);
          fftUpperCutoff = NumberUtils.displayStringToDouble(getPropertyValue(FFT_UPPER_CUTOFF));
-         fftUpperCutoff = MathFunctions.clip(0.0, fftUpperCutoff, 100.0);
+         fftUpperCutoff = clip(0.0, fftUpperCutoff, 100.0);
          show = getPropertyValue(SHOW_IMAGES);
          scoringMethod = getPropertyValue(SCORING_METHOD);
 
@@ -972,6 +972,10 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          super.loadSettings();
          settingsLoaded_ = true;
       }
+   }
+   
+   private static double clip(double min, double val, double max) {
+      return Math.min(Math.max(min, val), max);
    }
 
    @Override
