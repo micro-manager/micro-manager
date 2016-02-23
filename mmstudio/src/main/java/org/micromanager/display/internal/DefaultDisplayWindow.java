@@ -806,8 +806,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       }
       DisplaySettings.DisplaySettingsBuilder builder = displaySettings_.copy();
       for (int i = 0; i < store_.getAxisLength(Coords.CHANNEL); ++i) {
-         Image image = store_.getImage(baseCoords.copy().channel(i).build());
-         if (image != null) {
+         Coords tmp = baseCoords.copy().channel(i).build();
+         if (store_.hasImage(tmp)) {
+            Image image = store_.getImage(tmp);
             int numComponents = image.getNumComponents();
             Integer[] mins = new Integer[numComponents];
             Integer[] maxes = new Integer[numComponents];
@@ -835,17 +836,16 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             ((CompositeImage) ijImage_).getMode() == CompositeImage.COMPOSITE) {
          // Return all channels at current coordinates.
          for (int i = 0; i < store_.getAxisLength(Coords.CHANNEL); ++i) {
-            Image tmp = store_.getImage(curCoords.copy().channel(i).build());
-            if (tmp != null) {
-               result.add(tmp);
+            Coords tmp = curCoords.copy().channel(i).build();
+            if (store_.hasImage(tmp)) {
+               result.add(store_.getImage(tmp));
             }
          }
       }
       if (result.size() == 0) {
          // No channel axis; just return the current image.
-         Image tmp = store_.getImage(curCoords);
-         if (tmp != null) {
-            result.add(tmp);
+         if (store_.hasImage(curCoords)) {
+            result.add(store_.getImage(curCoords));
          }
       }
       return result;

@@ -167,10 +167,10 @@ public class HyperstackControls extends JPanel {
          String intensity = "[";
          for (int i = 0; i < numChannels; ++i) {
             Coords imageCoords = stack_.getCurrentImageCoords().copy().channel(i).build();
-            Image image = store_.getImage(imageCoords);
-            // It can be null if not all channels for this imaging event have
-            // arrived yet.
-            if (image != null) {
+            // We may not have an image yet for these coords (e.g. for the
+            // second channel of a multi-channel acquisition).
+            if (store_.hasImage(imageCoords)) {
+               Image image = store_.getImage(imageCoords);
                intensity += image.getIntensityStringAt(x, y);
             }
             if (i != numChannels - 1) {
@@ -182,8 +182,9 @@ public class HyperstackControls extends JPanel {
       }
       else {
          // Single-channel case; simple.
-         Image image = store_.getImage(stack_.getCurrentImageCoords());
-         if (image != null) {
+         Coords coords = stack_.getCurrentImageCoords();
+         if (store_.hasImage(coords)) {
+            Image image = store_.getImage(coords);
             try {
                return image.getIntensityStringAt(x, y);
             }

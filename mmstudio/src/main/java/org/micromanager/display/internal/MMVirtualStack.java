@@ -137,10 +137,13 @@ public class MMVirtualStack extends ij.VirtualStack {
                " that exceeds total of " + plus_.getStackSize() + " images");
          return null;
       }
+      Image result = null;
       Coords coords = mapFlatIndexToCoords(flatIndex);
-      Image result = store_.getImage(coords);
       int channel = coords.getChannel();
-      if (result == null) {
+      if (store_.hasImage(coords)) {
+         result = store_.getImage(coords);
+      }
+      else {
          // HACK: ImageJ may ask us for images that aren't available yet,
          // for example if a draw attempt happens in-between images for a
          // multichannel Z-stack. For now, we return the most recent image

@@ -205,16 +205,14 @@ public class CanvasUpdateQueue {
       }
       if (isComposite) {
          for (Coords c : channelToCoords.values()) {
-            Image image = store_.getImage(c);
-            if (image != null) {
-               showImage(image);
+            if (store_.hasImage(c)) {
+               showImage(store_.getImage(c));
             }
          }
       }
       else {
-         Image image = store_.getImage(lastCoords);
-         if (image != null) {
-            showImage(image);
+         if (store_.hasImage(lastCoords)) {
+            showImage(store_.getImage(lastCoords));
          }
       }
    }
@@ -542,10 +540,9 @@ public class CanvasUpdateQueue {
          history = new HistogramHistory();
          Coords coords = display_.getDisplayedImages().get(0).getCoords();
          coords = coords.copy().channel(channel).build();
-         Image image = store_.getImage(coords);
-         if (image != null) {
+         if (store_.hasImage(coords)) {
             // This posts the new histograms.
-            updateHistogram(image, history);
+            updateHistogram(store_.getImage(coords), history);
             channelToHistory_.put(channel, history);
          }
       }
