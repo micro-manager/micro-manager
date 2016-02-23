@@ -602,10 +602,11 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
          }
       };
       channelTablePane_.setFont(DEFAULT_FONT);
-      channelsPanel_.add(channelTablePane_, "grow");
+      channelsPanel_.add(channelTablePane_, "grow, pushx 100");
 
-      // Slightly smaller than BUTTON_SIZE
-      String buttonSize = "width 60!, height 20!";
+      // Slightly smaller than BUTTON_SIZE, and the gap matches the insets of
+      // the panel.
+      String buttonConstraint = "width 60!, height 20!, gapleft 2, pushx 0";
 
       final JButton addButton = new JButton("New");
       addButton.setFont(DEFAULT_FONT);
@@ -619,7 +620,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
             model_.fireTableStructureChanged();
          }
       });
-      channelsPanel_.add(addButton, buttonSize + ", flowy, spany, split");
+      channelsPanel_.add(addButton, buttonConstraint + ", flowy, spany, split");
 
       final JButton removeButton = new JButton("Remove");
       removeButton.setFont(DEFAULT_FONT);
@@ -639,7 +640,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
             }
          }
       });
-      channelsPanel_.add(removeButton, buttonSize);
+      channelsPanel_.add(removeButton, buttonConstraint);
 
       final JButton upButton = new JButton("Up");
       upButton.setFont(DEFAULT_FONT);
@@ -659,7 +660,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
             }
          }
       });
-      channelsPanel_.add(upButton, buttonSize);
+      channelsPanel_.add(upButton, buttonConstraint);
 
       final JButton downButton = new JButton("Down");
       downButton.setFont(DEFAULT_FONT);
@@ -680,7 +681,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
             }
          }
       });
-      channelsPanel_.add(downButton, buttonSize);
+      channelsPanel_.add(downButton, buttonConstraint);
 
       channelsPanel_.addActionListener(new ActionListener() {
          @Override
@@ -930,20 +931,25 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
       // Contains timepoints, multiple positions, and Z-slices; acquisition
       // order, autofocus, and summary; control buttons, in three columns.
-      JPanel topPanel = new JPanel(new MigLayout("flowy, insets 0, gap 0"));
+      JPanel topPanel = new JPanel(new MigLayout(
+               "fillx, flowy, insets 0, gap 0", "[grow][grow][]"));
       topPanel.add(createTimePoints(), "growx, split, spany");
       topPanel.add(createMultiPositions(), "growx");
       topPanel.add(createZStacks(), "grow, wrap");
       topPanel.add(createAcquisitionOrder(), "growx, split, spany");
       topPanel.add(createAutoFocus(), "growx");
       topPanel.add(createSummary(), "growx, wrap");
-      topPanel.add(createCloseButton(), BUTTON_SIZE + ", split, spany");
-      topPanel.add(createRunButtons(), "gaptop 10");
-      topPanel.add(createSaveButtons(), "gaptop 10");
+      // This matches the insets of the overall dialog, making the button
+      // column look centered when at the default size.
+      String gapleft = "gapleft 6";
+      topPanel.add(createCloseButton(),
+            BUTTON_SIZE + ", split, spany, " + gapleft);
+      topPanel.add(createRunButtons(), "gaptop 10, " + gapleft);
+      topPanel.add(createSaveButtons(), "gaptop 10, " + gapleft);
       topPanel.add(createCustomTimesButton(),
-            BUTTON_SIZE + ", gaptop 30, gapbottom push");
+            BUTTON_SIZE + ", gaptop 30, gapbottom push, " + gapleft);
 
-      add(topPanel);
+      add(topPanel, "growx");
       add(createChannelsPanel(), "grow");
       add(createSavePanel(), "growx");
       add(createCommentsPanel(), "growx");
