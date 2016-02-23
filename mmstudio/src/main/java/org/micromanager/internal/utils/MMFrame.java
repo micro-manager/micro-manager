@@ -104,7 +104,7 @@ public class MMFrame extends JFrame {
          foundOverlap = false;
          for (Frame frame : Frame.getFrames()) {
             if (frame != this && frame.getClass() == getClass() &&
-                  frame.getLocation().equals(newLoc)) {
+                  frame.isVisible() && frame.getLocation().equals(newLoc)) {
                foundOverlap = true;
                newLoc.x += 22;
                newLoc.y += 22;
