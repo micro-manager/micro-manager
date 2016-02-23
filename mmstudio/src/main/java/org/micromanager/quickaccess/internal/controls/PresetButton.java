@@ -149,6 +149,13 @@ public class PresetButton extends WidgetPlugin implements SciJavaPlugin {
 
       contents.add(new JLabel("Config group: "));
       final String[] groups = studio_.core().getAvailableConfigGroups().toArray();
+      if (groups.length == 0) {
+         JOptionPane.showMessageDialog(parent,
+               "There are no configuration groups available. Please create at least one configuration group before using this control.",
+               "No configuration groups found",
+               JOptionPane.ERROR_MESSAGE);
+         return null;
+      }
       final JComboBox groupSelector = new JComboBox(groups);
       contents.add(groupSelector, "wrap");
 
@@ -199,17 +206,24 @@ public class PresetButton extends WidgetPlugin implements SciJavaPlugin {
          }
       });
       // Default to the Channel group, if available.
+      boolean didSetDefault = false;
       for (String group : groups) {
          if (group.toLowerCase().contains("channel")) {
             groupSelector.setSelectedItem(group);
             try {
                presetSelector.setSelectedItem(studio_.core().getCurrentConfig(group));
+               didSetDefault = true;
             }
             catch (Exception e) {
                studio_.logs().logError(e, "Unable to get config for group " + group);
             }
             break;
          }
+      }
+      if (!didSetDefault) {
+         // Couldn't find a channel group, but we need to select *something*
+         // or else the presets dropdown will be invalid.
+         groupSelector.setSelectedItem(groups[0]);
       }
 
       contents.add(new JLabel("Background color: "));
