@@ -955,7 +955,7 @@ int MultiStage::Initialize()
    if (initialized_)
       return DEVICE_OK;
 
-   for (int i = 0; i < nrPhysicalStages_; ++i)
+   for (unsigned i = 0; i < nrPhysicalStages_; ++i)
    {
       usedStages_.push_back(g_Undefined);
       physicalStages_.push_back(0);
@@ -1082,7 +1082,7 @@ int MultiStage::Home()
 
 int MultiStage::SetPositionUm(double pos)
 {
-   for (int i = 0; i < nrPhysicalStages_; ++i)
+   for (unsigned i = 0; i < nrPhysicalStages_; ++i)
    {
       if (!physicalStages_[i])
          continue;
@@ -1100,7 +1100,7 @@ int MultiStage::GetPositionUm(double& pos)
 {
    // TODO We should allow user to select which stage to use for position
    // readout. For now, it is the first physical stage assigned.
-   for (int i = 0; i < nrPhysicalStages_; ++i)
+   for (unsigned i = 0; i < nrPhysicalStages_; ++i)
    {
       if (!physicalStages_[i])
          continue;
@@ -1145,7 +1145,7 @@ int MultiStage::GetLimits(double& lower, double& upper)
    // compiler-independent way.
    double maxLower = -1e300, minUpper = +1e300;
    bool hasStage = false;
-   for (int i = 0; i < nrPhysicalStages_; ++i)
+   for (unsigned i = 0; i < nrPhysicalStages_; ++i)
    {
       if (!physicalStages_[i])
          continue;
@@ -1323,7 +1323,7 @@ int MultiStage::ClearStageSequence()
 
 int MultiStage::AddToStageSequence(double pos)
 {
-   for (int i = 0; i < nrPhysicalStages_; ++i)
+   for (unsigned i = 0; i < nrPhysicalStages_; ++i)
    {
       if (!physicalStages_[i])
          continue;

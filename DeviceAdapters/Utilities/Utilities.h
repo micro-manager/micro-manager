@@ -190,7 +190,7 @@ public:
 
    virtual bool Busy();
 
-   virtual int Move(double velocity) { return DEVICE_UNSUPPORTED_COMMAND; }
+   virtual int Move(double) { return DEVICE_UNSUPPORTED_COMMAND; }
    virtual int Stop();
    virtual int Home();
 
