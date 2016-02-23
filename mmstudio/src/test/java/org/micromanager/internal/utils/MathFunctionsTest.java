@@ -5,6 +5,7 @@ package org.micromanager.internal.utils;
 import java.util.Map;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.util.HashMap;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -24,7 +25,7 @@ public class MathFunctionsTest {
       pointPairs.put(new Point2D.Double(9, 1), new Point2D.Double(18, 18));
 
       // Run the computation to be tested:
-      AffineTransform affineTransform = generateAffineTransformFromPointPairs(pointPairs);
+      AffineTransform affineTransform = MathFunctions.generateAffineTransformFromPointPairs(pointPairs);
 
       // Print input and output:
       // System.out.println(pointPairs);
