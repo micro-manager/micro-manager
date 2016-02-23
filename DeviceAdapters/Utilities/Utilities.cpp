@@ -22,18 +22,20 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
+#ifdef _WIN32
+// Prevent windows.h from defining min and max macros,
+// which clash with std::min and std::max.
+#define NOMINMAX
+#endif
+
 #include "Utilities.h"
-#include <algorithm>
+
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMDevice/MMDevice.h"
 
-#ifdef WIN32
-   #define WIN32_LEAN_AND_MEAN
-   #include <windows.h>
-   #define snprintf _snprintf 
-#endif
-
 #include <boost/lexical_cast.hpp>
+
+#include <algorithm>
 
 
 const char* g_Undefined = "Undefined";
