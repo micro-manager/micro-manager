@@ -62,7 +62,6 @@ import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.NumberUtils;
-import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TextUtils;
 
 import org.scijava.plugin.Plugin;
@@ -175,9 +174,9 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          scoringMethod = getPropertyValue(SCORING_METHOD);
 
       } catch (MMException ex) {
-         ReportingUtils.logError(ex);
+         app_.logs().logError(ex);
       } catch (ParseException ex) {
-         ReportingUtils.logError(ex);
+         app_.logs().logError(ex);
       }
    }
 
@@ -276,7 +275,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
               GoalType.MAXIMIZE,
               new MaxEval(100),
               new SearchInterval(z - searchRange / 2, z + searchRange / 2));
-      ReportingUtils.logMessage("OughtaFocus Iterations: " + brentOptimizer.getIterations()
+      app_.logs().logMessage("OughtaFocus Iterations: " + brentOptimizer.getIterations()
               + ", z=" + TextUtils.FMT2.format(result.getPoint())
               + ", dz=" + TextUtils.FMT2.format(result.getPoint() - startZUm_)
               + ", t=" + (System.currentTimeMillis() - startTimeMs_));
@@ -362,14 +361,14 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          ImageProcessor proc = makeMonochromeProcessor(core, getMonochromePixels(img));
          double score = computeScore(proc);
          long tC = System.currentTimeMillis() - start - tZ - tI;
-         ReportingUtils.logMessage("OughtaFocus: image=" + imageCount_++
+         app_.logs().logMessage("OughtaFocus: image=" + imageCount_++
                  + ", t=" + (System.currentTimeMillis() - startTimeMs_)
                  + ", z=" + TextUtils.FMT2.format(z)
                  + ", score=" + TextUtils.FMT2.format(score)
                  + ", Tz=" + tZ + ", Ti=" + tI + ", Tc=" + tC);
          return score;
       } catch (Exception e) {
-         ReportingUtils.logError(e);
+         app_.logs().logError(e);
          throw e;
       }
    }
@@ -403,10 +402,10 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          }
          ImageProcessor proc = ImageUtils.makeProcessor(core, img);
          score = computeScore(proc);
-         ReportingUtils.logMessage("OughtaFocus: z=" + TextUtils.FMT2.format(z)
+         app_.logs().logMessage("OughtaFocus: z=" + TextUtils.FMT2.format(z)
                  + ", score=" + TextUtils.FMT2.format(score));
       } catch (Exception e) {
-         ReportingUtils.logError(e);
+         app_.logs().logError(e);
       }
       return score;
    }
@@ -583,7 +582,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          ps.setRoi(outerCutoff);
          return ps.getStatistics().mean;
       } catch (Exception e) {
-         ReportingUtils.logError(e);
+         app_.logs().logError(e);
          return 0;
       }
    }
@@ -965,7 +964,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          createProperty(CHANNEL, curChan,
                  core.getAvailableConfigs(core.getChannelGroup()).toArray());
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         app_.logs().logError(ex);
       }
 
       if (!settingsLoaded_) {
