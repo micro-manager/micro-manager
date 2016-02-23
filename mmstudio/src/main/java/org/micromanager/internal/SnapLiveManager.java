@@ -193,7 +193,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
 
    /**
     * This function is expected to run in its own thread. It continuously
-    * polls the core for new images, which then get inserted into the 
+    * polls the core for new images, which then get inserted into the
     * Datastore (which in turn propagates them to the display).
     * TODO: our polling approach blindly assigns images to channels on the
     * assumption that a) images always arrive from cameras in the same order,
@@ -224,6 +224,42 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          displayRate = waitForNextDisplay(displayRate);
          grabAndAddImages(numCameras, camName);
       }
+   }
+
+   /**
+    * This method waits for the next time at which we should grab images. It
+    * takes as a parameter the current known rate at which the display is
+    * showing images (which thus takes into account delays e.g. due to image
+    * processing), and returns the updated display rate.
+    */
+   private long waitForNextDisplay(long displayRate) {
+      // Update our sleep time based on image display times (a.k.a. the
+      // amount of time passed between PixelsSetEvents). Only if we
+      // aren't using a nontrivial pipeline.
+      if (pipeline_ == null || pipeline_.getProcessors().size() == 0) {
+         synchronized(displayUpdateTimes_) {
+            long average = 0;
+            for (int i = 0; i < displayUpdateTimes_.size() - 1; ++i) {
+               average += displayUpdateTimes_.get(i + 1) - displayUpdateTimes_.get(i);
+            }
+            if (displayUpdateTimes_.size() > 1) {
+               average /= (displayUpdateTimes_.size() - 1);
+            }
+            if (average > 1) {
+               // Sample faster than the achieved rate because glitches
+               // should not cause the system to permanently bog down; this
+               // allows us to recover if we temporarily end up displaying
+               // images slowly than we normally can.
+               // Don't sample more slowly than 2x/second.
+               displayRate = (long) Math.min(500, Math.max(33, average * .75));
+            }
+         }
+      }
+      try {
+         Thread.sleep((int) displayRate);
+      }
+      catch (InterruptedException e) {}
+      return displayRate;
    }
 
    /**
@@ -277,39 +313,6 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       catch (MMScriptException e) {
          ReportingUtils.logError(e, "Exception in image grabber thread.");
       }
-   }
-
-   /**
-    * This method waits for the next time at which we should grab images.
-    */
-   private long waitForNextDisplay(long displayRate) {
-      // Update our sleep time based on image display times (a.k.a. the
-      // amount of time passed between PixelsSetEvents). Only if we
-      // aren't using a nontrivial pipeline.
-      if (pipeline_ == null || pipeline_.getProcessors().size() == 0) {
-         synchronized(displayUpdateTimes_) {
-            long average = 0;
-            for (int i = 0; i < displayUpdateTimes_.size() - 1; ++i) {
-               average += displayUpdateTimes_.get(i + 1) - displayUpdateTimes_.get(i);
-            }
-            if (displayUpdateTimes_.size() > 1) {
-               average /= (displayUpdateTimes_.size() - 1);
-            }
-            if (average > 1) {
-               // Sample faster than the achieved rate because glitches
-               // should not cause the system to permanently bog down; this
-               // allows us to recover if we temporarily end up displaying
-               // images slowly than we normally can.
-               // Don't sample more slowly than 2x/second.
-               displayRate = (long) Math.min(500, Math.max(33, average * .75));
-            }
-         }
-      }
-      try {
-         Thread.sleep((int) displayRate);
-      }
-      catch (InterruptedException e) {}
-      return displayRate;
    }
 
    public void addLiveModeListener(LiveModeListener listener) {
@@ -522,6 +525,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       }
       createDatastore();
       createDisplay();
+      displayUpdateTimes_.clear();
       if (displayLoc != null) {
          display_.getAsWindow().setLocation(displayLoc);
       }
