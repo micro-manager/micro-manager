@@ -88,6 +88,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    private static final String SAVE_MODE = "default save mode";
    private static final String SHOULD_CHECK_EXPOSURE_SANITY = "whether to prompt the user if their exposure times seem excessively long";
    private static final String BUTTON_SIZE = "width 80!, height 22!";
+   private static final String PANEL_CONSTRAINT = "fillx, gap 0, insets 2";
 
    protected JButton listButton_;
    private JSpinner afSkipInterval_;
@@ -267,7 +268,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
     */
    private JPanel createTimePoints() {
       framesPanel_ = createCheckBoxPanel("Time points");
-      framesPanel_.setLayout(new MigLayout("fillx, gap 0, insets 0"));
+      framesPanel_.setLayout(new MigLayout(PANEL_CONSTRAINT));
       defaultTimesPanel_ = new JPanel(new MigLayout("flowx, gap 0, insets 0"));
       framesPanel_.add(defaultTimesPanel_, "hidemode 2");
       customTimesPanel_ = new JPanel(new MigLayout("flowx, gap 0, insets 0"));
@@ -277,7 +278,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       final JLabel numberLabel = new JLabel("Number");
       numberLabel.setFont(DEFAULT_FONT);
 
-      defaultTimesPanel_.add(numberLabel);
+      defaultTimesPanel_.add(numberLabel, "gapleft push");
 
       SpinnerModel sModel = new SpinnerNumberModel(1, 1, null, 1);
 
@@ -299,7 +300,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       intervalLabel.setToolTipText(
             "Interval between successive time points.  Setting an interval " +
             "less than the exposure time will cause micromanager to acquire a 'burst' of images as fast as possible");
-      defaultTimesPanel_.add(intervalLabel, "split 3, spanx");
+      defaultTimesPanel_.add(intervalLabel, "split 3, spanx, gapleft push");
 
       interval_ = new JFormattedTextField(numberFormat_);
       interval_.setColumns(5);
@@ -345,7 +346,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    private JPanel createMultiPositions() {
       positionsPanel_ = createCheckBoxPanel("Multiple positions (XY)");
       positionsPanel_.setMinimumSize(new Dimension(190, 0));
-      positionsPanel_.setLayout(new MigLayout("fillx, insets 0, gap 0"));
+      positionsPanel_.setLayout(new MigLayout(PANEL_CONSTRAINT));
       listButton_ = new JButton("Edit position list...");
       listButton_.setToolTipText("Open XY list dialog");
       listButton_.setIcon(IconLoader.getIcon(
@@ -366,11 +367,13 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
    private JPanel createZStacks() {
       slicesPanel_ = createCheckBoxPanel("Z-stacks (slices)");
-      slicesPanel_.setLayout(new MigLayout("fillx, flowx, gap 0, insets 0"));
+      slicesPanel_.setLayout(new MigLayout("fillx, flowx, gap 0, insets 2"));
+
+      String labelConstraint = "gapleft push, alignx left";
 
       final JLabel zbottomLabel = new JLabel("Z-start [\u00b5m]");
       zbottomLabel.setFont(DEFAULT_FONT);
-      slicesPanel_.add(zbottomLabel);
+      slicesPanel_.add(zbottomLabel, labelConstraint);
 
       zBottom_ = new JFormattedTextField(numberFormat_);
       zBottom_.setColumns(5);
@@ -396,7 +399,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
       final JLabel ztopLabel = new JLabel("Z-end [\u00b5m]");
       ztopLabel.setFont(DEFAULT_FONT);
-      slicesPanel_.add(ztopLabel);
+      slicesPanel_.add(ztopLabel, labelConstraint);
 
       zTop_ = new JFormattedTextField(numberFormat_);
       zTop_.setColumns(5);
@@ -419,7 +422,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
       final JLabel zstepLabel = new JLabel("Z-step [\u00b5m]");
       zstepLabel.setFont(DEFAULT_FONT);
-      slicesPanel_.add(zstepLabel);
+      slicesPanel_.add(zstepLabel, labelConstraint);
 
       zStep_ = new JFormattedTextField(numberFormat_);
       zStep_.setColumns(5);
@@ -462,7 +465,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    private JPanel createAcquisitionOrder() {
       acquisitionOrderPanel_ = createLabelPanel("Acquisition order");
       acquisitionOrderPanel_.setLayout(
-            new MigLayout("fillx, flowy, insets 0, gap 0"));
+            new MigLayout(PANEL_CONSTRAINT + ", flowy"));
       acquisitionOrderPanel_.setMinimumSize(new Dimension(200, 80));
       acqOrderBox_ = new JComboBox();
       acqOrderBox_.setFont(new Font("", Font.PLAIN, 10));
@@ -486,7 +489,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
    private JPanel createAutoFocus() {
       afPanel_ = createCheckBoxPanel("Autofocus");
-      afPanel_.setLayout(new MigLayout("fillx, flowx, gap 0, insets 0"));
+      afPanel_.setLayout(new MigLayout(PANEL_CONSTRAINT));
 
       JButton afButton = new JButton("Options...");
       afButton.setToolTipText("Set autofocus options");
@@ -533,7 +536,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
    private JPanel createSummary() {
       summaryPanel_ = createLabelPanel("Summary");
-      summaryPanel_.setLayout(new MigLayout("fill, insets 0, gap 0"));
+      summaryPanel_.setLayout(new MigLayout(PANEL_CONSTRAINT + ", filly"));
       summaryTextArea_ = new JTextArea(8, 25);
       summaryTextArea_.setFont(new Font("Arial", Font.PLAIN, 11));
       summaryTextArea_.setEditable(false);
@@ -545,11 +548,11 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
    private JPanel createChannelsPanel() {
       channelsPanel_ = createCheckBoxPanel("Channels");
-      channelsPanel_.setLayout(new MigLayout("fill, flowx, insets 0, gap 0"));
+      channelsPanel_.setLayout(new MigLayout(PANEL_CONSTRAINT));
 
       final JLabel channelsLabel = new JLabel("Channel group:");
       channelsLabel.setFont(DEFAULT_FONT);
-      channelsPanel_.add(channelsLabel, "split 3, spanx");
+      channelsPanel_.add(channelsLabel, "split 3, spanx, alignx center");
 
       channelGroupCombo_ = new JComboBox();
       channelGroupCombo_.setFont(new Font("", Font.PLAIN, 10));
@@ -775,7 +778,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
    private JPanel createSavePanel() {
       savePanel_ = createCheckBoxPanel("Save images");
-      savePanel_.setLayout(new MigLayout("fillx, flowx, insets 0, gap 0"));
+      savePanel_.setLayout(new MigLayout(PANEL_CONSTRAINT));
 
       rootLabel_ = new JLabel("Directory root:");
       rootLabel_.setFont(DEFAULT_FONT);
@@ -847,7 +850,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
    private JPanel createCommentsPanel() {
       commentsPanel_ = createLabelPanel("Acquisition Comments");
-      commentsPanel_.setLayout(new MigLayout("fillx, insets 0, gap 0"));
+      commentsPanel_.setLayout(new MigLayout(PANEL_CONSTRAINT));
 
       commentTextArea_ = new JTextArea() {
          @Override
@@ -922,9 +925,8 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       acqEng_ = acqEng;
       acqEng.addSettingsListener(this);
 
-      getContentPane().setLayout(new MigLayout("insets 2, gap 2"));
       setTitle("Multi-Dimensional Acquisition");
-      setLayout(new MigLayout("flowy, insets 2, gap 0"));
+      setLayout(new MigLayout("flowy, gap 2, insets 6", "[grow]"));
 
       // Contains timepoints, multiple positions, and Z-slices; acquisition
       // order, autofocus, and summary; control buttons, in three columns.
@@ -983,6 +985,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
       this.loadAndRestorePosition(100, 100);
       pack();
+      setMinimumSize(getSize());
 
       studio_.events().registerForEvents(this);
    }
