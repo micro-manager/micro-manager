@@ -237,7 +237,21 @@ public class InspectorFrame extends MMFrame implements Inspector {
       // Create a dropdown menu to select which display to show info/controls
       // for. By default, we show info on the topmost display (changing when
       // that display changes).
-      displayChooser_ = new JComboBox();
+      displayChooser_ = new JComboBox() {
+         // HACK: ignore the size of the elements of this combobox for purposes
+         // of determining its minimum size. This prevents displays with very
+         // long titles from blowing out the width of the inspector frame.
+         @Override
+         public Dimension getMinimumSize() {
+            return new Dimension(200, super.getSize().height);
+         }
+         @Override
+         public Dimension getPreferredSize() {
+            Dimension superSize = super.getPreferredSize();
+            return new Dimension(Math.min(superSize.width, 200),
+                  superSize.height);
+         }
+      };
       populateChooser();
       displayChooser_.addActionListener(new ActionListener() {
          @Override
@@ -493,9 +507,9 @@ public class InspectorFrame extends MMFrame implements Inspector {
       else {
          DisplayMenuItem item = (DisplayMenuItem) (displayChooser_.getSelectedItem());
          if (item.getDisplay() == null) {
-            // Show the title of the current display, to make it clear which one
-            // we're controlling.
-            String name = truncateName(display_.getName(), 60);
+            // Show the title of the current display, to make it clear which
+            // one we're controlling.
+            String name = truncateName(display_.getName(), 55);
             curDisplayTitle_.setText(name);
             curDisplayTitle_.setVisible(true);
          }
@@ -516,6 +530,10 @@ public class InspectorFrame extends MMFrame implements Inspector {
       if (name.length() > maxLen) {
          File file = new File(name);
          String finalName = file.getName();
+         // If the final name itself is too long, then truncate it.
+         if (finalName.length() > maxLen) {
+            return finalName.substring(0, maxLen - 3) + "...";
+         }
          // Subtract 3 for the ellipses.
          int remainingLength = maxLen - finalName.length() - 3;
          name = name.substring(0, remainingLength) + "..." + finalName;
