@@ -22,14 +22,16 @@
 package org.micromanager.internal.utils;
 
 import java.awt.geom.NoninvertibleTransformException;
-import org.apache.commons.math.linear.DecompositionSolver;
-import org.apache.commons.math.linear.RealMatrix;
+
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.commons.math.linear.Array2DRowRealMatrix;
-import org.apache.commons.math.linear.QRDecompositionImpl;
+
+import org.apache.commons.math3.linear.DecompositionSolver;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.QRDecomposition;
 
 public class MathFunctions {
 
@@ -65,7 +67,7 @@ public class MathFunctions {
       }
       // Find the 3x3 linear least squares solution to u*m'=v
       // (the last row should be [0,0,1]):
-      DecompositionSolver solver = (new QRDecompositionImpl(u)).getSolver();
+      DecompositionSolver solver = (new QRDecomposition(u)).getSolver();
       double[][] m = solver.solve(v).transpose().getData();
 
       // Create an AffineTransform object from the elements of m
