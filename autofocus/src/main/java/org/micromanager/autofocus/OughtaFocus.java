@@ -70,7 +70,7 @@ import org.scijava.plugin.SciJavaPlugin;
 @Plugin(type = AutofocusPlugin.class)
 public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJavaPlugin {
 
-   private Studio app_;
+   private Studio studio_;
    private static final String AF_DEVICE_NAME = "OughtaFocus";
    private static final String SEARCH_RANGE = "SearchRange_um";
    private static final String TOLERANCE = "Tolerance_um";
@@ -174,9 +174,9 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          scoringMethod = getPropertyValue(SCORING_METHOD);
 
       } catch (MMException ex) {
-         app_.logs().logError(ex);
+         studio_.logs().logError(ex);
       } catch (ParseException ex) {
-         app_.logs().logError(ex);
+         studio_.logs().logError(ex);
       }
    }
 
@@ -185,9 +185,9 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       startTimeMs_ = System.currentTimeMillis();
       applySettings();
       try {
-         Rectangle oldROI = app_.compat().getROI();
-         CMMCore core = app_.getCMMCore();
-         liveModeOn_ = app_.live().getIsLiveModeOn();
+         Rectangle oldROI = studio_.compat().getROI();
+         CMMCore core = studio_.getCMMCore();
+         liveModeOn_ = studio_.live().getIsLiveModeOn();
 
          //ReportingUtils.logMessage("Original ROI: " + oldROI);
          int w = (int) (oldROI.width * cropFactor);
@@ -205,7 +205,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
 
          // avoid wasting time on setting roi if it is the same
          if (cropFactor < 1.0) {
-            app_.compat().setROI(newROI);
+            studio_.compat().setROI(newROI);
             core.waitForDevice(core.getCameraDevice());
          }
          double oldExposure = core.getExposure();
@@ -214,7 +214,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          double z = runAutofocusAlgorithm();
 
          if (cropFactor < 1.0) {
-            app_.compat().setROI(oldROI);
+            studio_.compat().setROI(oldROI);
             core.waitForDevice(core.getCameraDevice());
          }
          if (oldState != null) {
@@ -267,7 +267,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
 
       imageCount_ = 0;
 
-      CMMCore core = app_.getCMMCore();
+      CMMCore core = studio_.getCMMCore();
       double z = core.getPosition(core.getFocusDevice());
       startZUm_ = z;
       
@@ -275,7 +275,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
               GoalType.MAXIMIZE,
               new MaxEval(100),
               new SearchInterval(z - searchRange / 2, z + searchRange / 2));
-      app_.logs().logMessage("OughtaFocus Iterations: " + brentOptimizer.getIterations()
+      studio_.logs().logMessage("OughtaFocus Iterations: " + brentOptimizer.getIterations()
               + ", z=" + TextUtils.FMT2.format(result.getPoint())
               + ", dz=" + TextUtils.FMT2.format(result.getPoint() - startZUm_)
               + ", t=" + (System.currentTimeMillis() - startTimeMs_));
@@ -283,7 +283,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    }
 
    private void setZPosition(double z) throws Exception {
-      CMMCore core = app_.getCMMCore();
+      CMMCore core = studio_.getCMMCore();
       String focusDevice = core.getFocusDevice();
       core.setPosition(focusDevice, z);
       core.waitForDevice(focusDevice);
@@ -326,7 +326,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
 
 
    public double measureFocusScore(double z) throws Exception {
-      CMMCore core = app_.getCMMCore();
+      CMMCore core = studio_.getCMMCore();
       long start = System.currentTimeMillis();
       try {
          setZPosition(z);
@@ -346,12 +346,12 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
                   @Override
                   public void run() {
                      try {
-                        app_.live().displayImage(app_.data().convertTaggedImage(img1));
+                        studio_.live().displayImage(studio_.data().convertTaggedImage(img1));
                      }
                      catch (JSONException e) {
-                        app_.logs().showError(e);
+                        studio_.logs().showError(e);
                      } catch (MMScriptException e) {
-                        app_.logs().showError(e);
+                        studio_.logs().showError(e);
                      }
                   }
                });
@@ -361,14 +361,14 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          ImageProcessor proc = makeMonochromeProcessor(core, getMonochromePixels(img));
          double score = computeScore(proc);
          long tC = System.currentTimeMillis() - start - tZ - tI;
-         app_.logs().logMessage("OughtaFocus: image=" + imageCount_++
+         studio_.logs().logMessage("OughtaFocus: image=" + imageCount_++
                  + ", t=" + (System.currentTimeMillis() - startTimeMs_)
                  + ", z=" + TextUtils.FMT2.format(z)
                  + ", score=" + TextUtils.FMT2.format(score)
                  + ", Tz=" + tZ + ", Ti=" + tI + ", Tc=" + tC);
          return score;
       } catch (Exception e) {
-         app_.logs().logError(e);
+         studio_.logs().logError(e);
          throw e;
       }
    }
@@ -390,7 +390,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
 
    @Override
    public double getCurrentFocusScore() {
-      CMMCore core = app_.getCMMCore();
+      CMMCore core = studio_.getCMMCore();
       double score = 0.0;
       try {
          double z = core.getPosition(core.getFocusDevice());
@@ -398,14 +398,14 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          core.snapImage();
          TaggedImage img = core.getTaggedImage();
          if (show.contentEquals("Yes")) {
-            app_.live().displayImage(app_.data().convertTaggedImage(img));
+            studio_.live().displayImage(studio_.data().convertTaggedImage(img));
          }
          ImageProcessor proc = ImageUtils.makeProcessor(core, img);
          score = computeScore(proc);
-         app_.logs().logMessage("OughtaFocus: z=" + TextUtils.FMT2.format(z)
+         studio_.logs().logMessage("OughtaFocus: z=" + TextUtils.FMT2.format(z)
                  + ", score=" + TextUtils.FMT2.format(score));
       } catch (Exception e) {
-         app_.logs().logError(e);
+         studio_.logs().logError(e);
       }
       return score;
    }
@@ -582,7 +582,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          ps.setRoi(outerCutoff);
          return ps.getStatistics().mean;
       } catch (Exception e) {
-         app_.logs().logError(e);
+         studio_.logs().logError(e);
          return 0;
       }
    }
@@ -955,8 +955,8 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
 
    @Override
    public void setContext(Studio app) {
-      app_ = app;
-      CMMCore core = app_.getCMMCore();
+      studio_ = app;
+      CMMCore core = studio_.getCMMCore();
       String chanGroup = core.getChannelGroup();
       String curChan;
       try {
@@ -964,7 +964,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          createProperty(CHANNEL, curChan,
                  core.getAvailableConfigs(core.getChannelGroup()).toArray());
       } catch (Exception ex) {
-         app_.logs().logError(ex);
+         studio_.logs().logError(ex);
       }
 
       if (!settingsLoaded_) {
