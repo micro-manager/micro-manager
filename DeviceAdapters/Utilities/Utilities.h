@@ -45,6 +45,8 @@
 #define ERR_NO_AUTOFOCUS_DEVICE_FOUND      10009
 #define ERR_NO_PHYSICAL_CAMERA             10010
 #define ERR_NO_EQUAL_SIZE                  10011
+#define ERR_AUTOFOCUS_NOT_SUPPORTED        10012
+#define ERR_NO_PHYSICAL_STAGE              10013
 #define ERR_TIMEOUT                        10021
 
 
@@ -171,6 +173,64 @@ private:
    unsigned int nrCamerasInUse_;
    bool initialized_;
    ImgBuffer img_;
+};
+
+
+class MultiStage : public CStageBase<MultiStage>
+{
+public:
+   MultiStage();
+   virtual ~MultiStage();
+
+public:
+   virtual void GetName(char* name) const;
+
+   virtual int Initialize();
+   virtual int Shutdown();
+
+   virtual bool Busy();
+
+   virtual int Move(double velocity) { return DEVICE_UNSUPPORTED_COMMAND; }
+   virtual int Stop();
+   virtual int Home();
+
+   virtual int SetPositionUm(double pos);
+   virtual int GetPositionUm(double& pos);
+   virtual int SetPositionSteps(long steps);
+   virtual int GetPositionSteps(long& steps);
+
+   virtual int SetOrigin() { return DEVICE_UNSUPPORTED_COMMAND; }
+
+   virtual int GetLimits(double& lower, double& upper);
+   virtual bool IsContinuousFocusDrive() const;
+
+   virtual int IsStageSequenceable(bool& isSequenceable) const;
+   virtual int GetStageSequenceMaxLength(long& nrEvents) const;
+   virtual int StartStageSequence();
+   virtual int StopStageSequence();
+   virtual int ClearStageSequence();
+   virtual int AddToStageSequence(double position);
+   virtual int SendStageSequence();
+
+private:
+   int OnNrStages(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnStepSize(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPhysicalStage(MM::PropertyBase* pProp, MM::ActionType eAct, long nr);
+   int OnScaling(MM::PropertyBase* pProp, MM::ActionType eAct, long nr);
+   int OnTranslationUm(MM::PropertyBase* pProp, MM::ActionType eAct, long nr);
+   int OnBringIntoSync(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   unsigned nrPhysicalStages_; // constant while initialized
+   double simulatedStepSizeUm_;
+   bool initialized_;
+
+   // The following vectors should always have nrPhysicalStages_ elements while
+   // initialized
+   std::vector<std::string> usedStages_;
+   std::vector<MM::Stage*> physicalStages_;
+   std::vector<double> stageScalings_;
+   std::vector<double> stageTranslations_;
 };
 
 /**
