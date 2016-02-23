@@ -983,9 +983,10 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
       createToolTips();
 
-      this.loadAndRestorePosition(100, 100);
       pack();
-      setMinimumSize(getSize());
+      Dimension size = getSize();
+      setMinimumSize(size);
+      this.loadAndRestorePosition(100, 100, size.width, size.height);
 
       studio_.events().registerForEvents(this);
    }
