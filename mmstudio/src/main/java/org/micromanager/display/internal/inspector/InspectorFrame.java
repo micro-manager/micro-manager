@@ -28,6 +28,9 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.GraphicsConfiguration;
+import java.awt.Insets;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
@@ -451,6 +454,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
       }
       pack();
       setSizeLocks(false);
+      enforceSaneHeight();
    }
 
    @Override
@@ -476,16 +480,10 @@ public class InspectorFrame extends MMFrame implements Inspector {
             wrapper.setVisible(wrapper.getPanel().getIsValid(display_));
          }
       }
-      // HACK: coerce minimum size to our default size for the duration
-      // of this pack; otherwise our default size effectively gets
-      // ignored on a routine basis.
-      Dimension minSize = getMinimumSize();
-      int width = getDefaultWidth();
-      setMinimumSize(new Dimension(width, (int) minSize.getHeight()));
       setSizeLocks(true);
       pack();
-      setMinimumSize(minSize);
       setSizeLocks(false);
+      enforceSaneHeight();
    }
 
    /**
@@ -496,6 +494,52 @@ public class InspectorFrame extends MMFrame implements Inspector {
       for (WrapperPanel wrapper : wrapperPanels_) {
          wrapper.setShouldOverrideSize(shouldLock && wrapper.getIsActive());
       }
+   }
+
+   /**
+    * Ensure that our frame doesn't extend off the bottom of the screen.
+    * Certain actions can cause it to grow; we may need to compress it until
+    * the bottom edge is on-screen.
+    */
+   private void enforceSaneHeight() {
+      GraphicsConfiguration config = getGraphicsConfiguration();
+      Rectangle screenBounds = config.getBounds();
+      Insets insets = getToolkit().getScreenInsets(config);
+      Rectangle ourBounds = getBounds();
+      int bottomAltitude = ourBounds.y + ourBounds.height;
+      int displayBottom = screenBounds.y + screenBounds.height - insets.bottom;
+      if (bottomAltitude <= displayBottom) {
+         // Already safe.
+         return;
+      }
+      int excess = bottomAltitude - displayBottom;
+      // Prefer to move the frame up, if possible.
+      int topGap = ourBounds.y - (screenBounds.y + insets.top);
+      if (topGap >= excess) {
+         ourBounds.y -= excess;
+         setBounds(ourBounds);
+         return;
+      }
+      // Otherwise, combine moving up with compressing our visible panels.
+      excess -= (ourBounds.y - screenBounds.y + insets.top);
+      ourBounds.y = screenBounds.y + insets.top;
+      for (WrapperPanel wrapper : wrapperPanels_) {
+         if (!wrapper.getIsActive()) {
+            // Inactive panels can't be compressed anyway.
+            continue;
+         }
+         int curHeight = wrapper.getSize().height;
+         int minHeight = wrapper.getMinimumSize().height;
+         int newHeight = Math.max(curHeight - excess, minHeight);
+         wrapper.setSize(wrapper.getSize().width, newHeight);
+         excess -= (curHeight - newHeight);
+         if (excess == 0) {
+            break;
+         }
+      }
+      setSizeLocks(true);
+      pack();
+      setSizeLocks(false);
    }
 
    @Subscribe
