@@ -127,7 +127,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    private JCheckBox stackKeepShutterOpenCheckBox_;
    private JCheckBox chanKeepShutterOpenCheckBox_;
    private AcqOrderMode[] acqOrderModes_;
-   private AdvancedOptionsDialog advancedOptionsWindow_;
+   private CustomTimesDialog customTimesWindow;
    // persistent properties (app settings)
    private static final String ACQ_FILE_DIR = "dir";
    private static final String ACQ_INTERVAL = "acqInterval";
@@ -293,7 +293,19 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
          }
       });
 
-      defaultTimesPanel_.add(numFrames_, "wrap");
+      defaultTimesPanel_.add(numFrames_);
+
+      JButton advancedButton = new JButton("Advanced");
+      advancedButton.setFont(DEFAULT_FONT);
+      advancedButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            showCustomTimesDialog();
+            updateGUIContents();
+         }
+      });
+
+      defaultTimesPanel_.add(advancedButton, "wrap");
 
       final JLabel intervalLabel = new JLabel("Interval");
       intervalLabel.setFont(DEFAULT_FONT);
@@ -764,19 +776,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       return result;
    }
 
-   private JComponent createCustomTimesButton() {
-      final JButton advancedButton = new JButton("Advanced");
-      advancedButton.setFont(DEFAULT_FONT);
-      advancedButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            showAdvancedDialog();
-            updateGUIContents();
-         }
-      });
-      return advancedButton;
-   }
-
    private JPanel createSavePanel() {
       savePanel_ = createCheckBoxPanel("Save images");
       savePanel_.setLayout(new MigLayout(PANEL_CONSTRAINT));
@@ -945,9 +944,8 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       topPanel.add(createCloseButton(),
             BUTTON_SIZE + ", split, spany, " + gapleft);
       topPanel.add(createRunButtons(), "gaptop 10, " + gapleft);
-      topPanel.add(createSaveButtons(), "gaptop 10, " + gapleft);
-      topPanel.add(createCustomTimesButton(),
-            BUTTON_SIZE + ", gaptop 30, gapbottom push, " + gapleft);
+      topPanel.add(createSaveButtons(),
+            "gaptop 10, gapbottom push, " + gapleft);
 
       add(topPanel, "growx");
       add(createChannelsPanel(), "grow");
@@ -1903,11 +1901,11 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       applySettings();
    }
 
-   private void showAdvancedDialog() {
-      if (advancedOptionsWindow_ == null) {
-         advancedOptionsWindow_ = new AdvancedOptionsDialog(acqEng_,studio_);
+   private void showCustomTimesDialog() {
+      if (customTimesWindow == null) {
+         customTimesWindow = new CustomTimesDialog(acqEng_,studio_);
       }
-      advancedOptionsWindow_.setVisible(true);
+      customTimesWindow.setVisible(true);
    }
 
    @SuppressWarnings("serial")

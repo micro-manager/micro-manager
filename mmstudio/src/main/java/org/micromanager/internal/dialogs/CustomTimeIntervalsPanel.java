@@ -8,6 +8,7 @@ import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.Window;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -55,12 +56,13 @@ public class CustomTimeIntervalsPanel extends JPanel {
     private LinearTimeDialog linearTimeDialog_;
     private LogTimeDialog logTimeDialog_;
     private JCheckBox useIntervalsCheckBox_;
-    private final JTabbedPane window_;
+    private final Window parent_;
 
     @SuppressWarnings("LeakingThisInConstructor")
-    public CustomTimeIntervalsPanel(AcquisitionEngine acqEng, JTabbedPane window, Studio gui) {
+    public CustomTimeIntervalsPanel(AcquisitionEngine acqEng, Studio gui,
+          Window parent) {
         super();
-        window_ = window;
+        parent_ = parent;
         acqEng_ = acqEng;
         createTable();
         createButtons();
@@ -192,16 +194,8 @@ public class CustomTimeIntervalsPanel extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 acqEng_.enableCustomTimeIntervals(useIntervalsCheckBox_.isSelected());
-                setTabTitle();
             }});
         
-    }
-
-    private void setTabTitle() {
-        if (acqEng_.customTimeIntervalsEnabled())
-            window_.setTitleAt(0, "Custom time intervals (Enabled)");
-        else
-             window_.setTitleAt(0, "Custom time intervals (Disabled)");
     }
 
     private void configureLayout() {
@@ -219,7 +213,6 @@ public class CustomTimeIntervalsPanel extends JPanel {
      public void syncCheckBoxFromAcqEng() {
          useIntervalsCheckBox_.setEnabled(acqEng_.getCustomTimeIntervals() != null);
          useIntervalsCheckBox_.setSelected(acqEng_.customTimeIntervalsEnabled());
-         setTabTitle();
      }  
      
      public void syncIntervalsFromAcqEng() {
@@ -247,7 +240,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
             this.setSize(new Dimension(520, 300));
             this.setResizable(false);
             this.setTitle("Create logarithmically spaced time points");
-            this.setLocationRelativeTo(window_);
+            this.setLocationRelativeTo(parent_);
             
             this.getContentPane().setLayout(new BoxLayout(this.getContentPane(),BoxLayout.Y_AXIS));
             createCheckBoxes();
@@ -601,7 +594,7 @@ public class CustomTimeIntervalsPanel extends JPanel {
             this.setResizable(false);
             initComponents();
             this.setTitle("Create equal interval time points");
-            this.setLocationRelativeTo(window_);
+            this.setLocationRelativeTo(parent_);
         }
 
         private void initComponents() {
