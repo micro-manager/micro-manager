@@ -89,6 +89,7 @@ import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMap.PropertyMapBuilder;
+import org.micromanager.SequenceSettings;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Coords.CoordsBuilder;
@@ -112,6 +113,7 @@ import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.asidispim.data.AcquisitionSettings;
 import org.micromanager.asidispim.data.ChannelSpec;
 import org.micromanager.asidispim.data.Devices.Sides;
+import org.micromanager.asidispim.events.SPIMAcquisitionStartedEvent;
 import org.micromanager.asidispim.utils.ControllerUtils;
 import org.micromanager.asidispim.utils.AutofocusUtils;
 import org.micromanager.asidispim.utils.SPIMFrame;
@@ -1486,10 +1488,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acqThread acqt = new acqThread("diSPIM Acquisition");
       acqt.start(); 
    }
-   
-   private Color getChannelColor(int channelIndex) {
-      return (colors[channelIndex % colors.length]);
-   }
+
    
    /**
     * Actually runs the acquisition; does the dirty work of setting
@@ -1499,7 +1498,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @param testAcqSide only applies to test acquisition, passthrough from runTestAcquisition() 
     * @return true if ran without any fatal errors.
     */
-   private boolean runAcquisitionPrivate(boolean testAcq, Devices.Sides testAcqSide) throws DatastoreFrozenException, DatastoreRewriteException, Exception {
+   private boolean runAcquisitionPrivate(boolean testAcq, Devices.Sides testAcqSide) 
+           throws DatastoreFrozenException, DatastoreRewriteException, Exception {
       
 
       // sanity check, shouldn't call this unless we aren't running an acquisition
@@ -2013,6 +2013,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             pmb.putString("MVRotations", viewString);
 
             store.setSummaryMetadata(smb.userData(pmb.build()).build());
+            
+            // note that these SequenceSettings are quite incomplete
+            SequenceSettings settings = acqSettings.getSequenceSettings();
+            
+            gui_.events().post(new SPIMAcquisitionStartedEvent(store, settings));
 
             // get circular buffer ready
             // do once here but not per-trigger; need to ensure ROI changes registered
