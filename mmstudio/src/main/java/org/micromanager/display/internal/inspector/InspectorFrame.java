@@ -120,10 +120,14 @@ public class InspectorFrame extends MMFrame implements Inspector {
    private class WrapperPanel extends JPanel {
       private JPanel header_;
       private InspectorPanel panel_;
+      private boolean shouldOverrideSize_ = false;
+      private Dimension overrideSize_ = null;
+      private String title_;
       public WrapperPanel(String title, InspectorPanel panel) {
          super(new MigLayout("flowy, insets 0, fill"));
          setBorder(BorderFactory.createRaisedBevelBorder());
          panel_ = panel;
+         title_ = title;
 
          // Create a clickable header to show/hide contents, and hold a gear
          // menu if available.
@@ -162,13 +166,15 @@ public class InspectorFrame extends MMFrame implements Inspector {
             @Override
             public void mouseClicked(MouseEvent e) {
                boolean shouldShow = !panel_.isVisible();
-               panel_.setVisible(shouldShow);
                if (shouldShow) {
                   label.setIcon(UIManager.getIcon("Tree.expandedIcon"));
                }
                else {
                   label.setIcon(UIManager.getIcon("Tree.collapsedIcon"));
+                  // Remember the size we were minimized at.
+                  overrideSize_ = getSize();
                }
+               panel_.setVisible(shouldShow);
                if (gearButton != null) {
                   gearButton.setVisible(panel_.isVisible());
                }
@@ -188,12 +194,53 @@ public class InspectorFrame extends MMFrame implements Inspector {
          }
       }
 
+      public void setShouldOverrideSize(boolean shouldOverride) {
+         // In the time between when the panel is made visible and when the
+         // layout updates, it has a height and width of zero; we should not
+         // record that size.
+         if (shouldOverride && panel_.isVisible() &&
+               panel_.getSize().height > 0) {
+            overrideSize_ = getSize();
+         }
+         shouldOverrideSize_ = shouldOverride;
+      }
+
+      // HACK: we temporarily override our sizes so that they can be retained
+      // "through" calls to InspectorFrame.pack().
+      @Override
+      public Dimension getMinimumSize() {
+         return fixSize(super.getMinimumSize());
+      }
+
+      @Override
+      public Dimension getPreferredSize() {
+         return fixSize(super.getPreferredSize());
+      }
+
+      private Dimension fixSize(Dimension superSize) {
+         if (shouldOverrideSize_ && overrideSize_ != null) {
+            // We always prefer the largest possible size; overrideSize_ can
+            // be too small e.g. when switching histograms from a
+            // single-channel to dual-channel layout.
+            return new Dimension(
+                  Math.max(overrideSize_.width, superSize.width),
+                  Math.max(overrideSize_.height, superSize.height));
+         }
+         return superSize;
+      }
+
       public InspectorPanel getPanel() {
          return panel_;
       }
 
       public boolean getIsActive() {
          return panel_.isVisible();
+      }
+
+      // For debugging purposes only.
+      @Override
+      public String toString() {
+         return String.format("<WrapperPanel for %s>", title_);
       }
    }
 
@@ -392,6 +439,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
     * to panels that are currently visible.
     */
    private void refillContents() {
+      setSizeLocks(true);
       contents_.removeAll();
       contents_.add(new JLabel("Show info for:"), "flowx, split 3, pushy 0");
       contents_.add(displayChooser_);
@@ -402,6 +450,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
                (wrapper.getIsActive() ? "grow, pushy 100" : "growx"));
       }
       pack();
+      setSizeLocks(false);
    }
 
    @Override
@@ -433,8 +482,20 @@ public class InspectorFrame extends MMFrame implements Inspector {
       Dimension minSize = getMinimumSize();
       int width = getDefaultWidth();
       setMinimumSize(new Dimension(width, (int) minSize.getHeight()));
+      setSizeLocks(true);
       pack();
       setMinimumSize(minSize);
+      setSizeLocks(false);
+   }
+
+   /**
+    * Temporarily lock the sizes of our active WrapperPanels so that their
+    * sizes will persist through a call to pack().
+    */
+   private void setSizeLocks(boolean shouldLock) {
+      for (WrapperPanel wrapper : wrapperPanels_) {
+         wrapper.setShouldOverrideSize(shouldLock && wrapper.getIsActive());
+      }
    }
 
    @Subscribe
