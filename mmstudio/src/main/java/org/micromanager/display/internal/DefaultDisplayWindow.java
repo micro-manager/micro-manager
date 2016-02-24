@@ -164,6 +164,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    // Ensures that we don't try to close the window when in the middle of
    // drawing.
    private final Object drawLock_ = new Object();
+   // This flag indicates that the DisplayWindow has finished setting up its
+   // UI components. It is set at the end of makeGUI().
    private boolean haveCreatedGUI_ = false;
 
    // Used by the pack() method to track changes in our size.
@@ -212,7 +214,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       // defensively to avoid double-calls.
       store.registerForEvents(result);
       if (store.getNumImages() > 0) {
-         result.makeGUI();
+         result.makeGUI(null);
       }
       DefaultEventManager.getInstance().post(
             new DefaultNewDisplayEvent(result));
@@ -299,8 +301,11 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     * our UI and the objects we'll use to communicate with ImageJ. Actual
     * construction is spun off into the EDT (Event Dispatch Thread), unless
     * of course we're already in that thread.
+    * @param imageToShow image to call receiveNewImage() with, once the GUI is
+    * complete; this allows the onNewImage event subscriber to return
+    * immediately instead of having to block until GUI creation is completed.
     */
-   private void makeGUI() {
+   private void makeGUI(final Image imageToShow) {
       if (haveCreatedGUI_) {
          // Already done this.
          return;
@@ -308,23 +313,12 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
 
       // Postpone to EDT if necessary.
       if (!SwingUtilities.isEventDispatchThread()) {
-         try {
-            SwingUtilities.invokeAndWait(new Runnable() {
-               @Override
-               public void run() {
-                  makeGUI();
-               }
-            });
-         }
-         catch (InterruptedException e) {
-            // This should never happen.
-            studio_.logs().showError(e,
-                  "Interrupted while creating DisplayWindow");
-         }
-         catch (java.lang.reflect.InvocationTargetException e) {
-            studio_.logs().showError(e,
-                  "Exception while creating DisplayWindow");
-         }
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               makeGUI(imageToShow);
+            }
+         });
          return;
       }
 
@@ -384,6 +378,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
 
       }
       DefaultEventManager.getInstance().post(new DefaultDisplayAboutToShowEvent(this));
+      if (imageToShow != null) {
+         receiveNewImage(imageToShow);
+      }
    }
 
    /**
@@ -925,8 +922,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
 
    @Override
    public synchronized boolean getIsClosed() {
-      // TODO: is this a proper indicator for if the window is closed?
-      return (!isVisible() && fullScreenFrame_ == null);
+      return haveClosed_;
    }
 
    /**
@@ -1065,22 +1061,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    public void onNewImage(final NewImageEvent event) {
       try {
          if (!haveCreatedGUI_) {
-            // Time to make our components, but we should only do so in the EDT.
-            final DefaultDisplayWindow thisWindow = this;
-            try {
-               GUIUtils.invokeAndWait(new Runnable() {
-                  @Override
-                  public void run() {
-                     thisWindow.makeGUI();
-                  }
-               });
-            }
-            catch (InterruptedException e) {
-               studio_.logs().logError(e, "Couldn't make window controls");
-            }
-            catch (java.lang.reflect.InvocationTargetException e) {
-               studio_.logs().logError(e, "Couldn't make window controls");
-            }
+            // makeGUI will display the image for us, once it finishes.
+            makeGUI(event.getImage());
+            return;
          }
          receiveNewImage(event.getImage());
       }
