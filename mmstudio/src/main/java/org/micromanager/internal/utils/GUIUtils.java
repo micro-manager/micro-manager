@@ -307,15 +307,6 @@ public class GUIUtils {
       }
     }
 
-   /**
-    * Add an icon from the "org/micromanager/icons/ folder with
-    * given file name, to specified the button or menu.
-    */
-   public static void setIcon(AbstractButton component, String iconFileName) {
-      component.setIcon(IconLoader.getIcon(
-              "/org/micromanager/icons/" + iconFileName));
-   }
-      
    /////////////////////// MENU ITEM UTILITY METHODS ///////////
    
    /**
@@ -390,7 +381,8 @@ public class GUIUtils {
            final String iconFileName) {
       final JMenuItem menuItem = addMenuItem(parentMenu,
               menuItemText, menuItemToolTip, menuActionRunnable);
-      setIcon(menuItem, iconFileName);
+      menuItem.setIcon(
+            IconLoader.getIcon("/org/micromanager/icons/" + iconFileName));
       return menuItem;
    }
   
@@ -411,66 +403,6 @@ public class GUIUtils {
    }
    
    ////////////// END MENU ITEM UTILITY METHODS ////////////////
-   
-    /* Add a component to the parent panel, set positions of the edges of
-     * component relative to panel. If edges are positive, then they are
-     * positioned relative to north and west edges of parent container. If edges
-     * are negative, then they are positioned relative to south and east
-     * edges of parent container.
-     * Requires that parent container uses SpringLayout.
-     */
-   public static void addWithEdges(Container parentContainer, JComponent component, int west, int north, int east, int south) {
-      parentContainer.add(component);
-      SpringLayout topLayout = (SpringLayout) parentContainer.getLayout();
-      topLayout.putConstraint(SpringLayout.EAST, component, east,
-              (east > 0) ? SpringLayout.WEST : SpringLayout.EAST, parentContainer);
-      topLayout.putConstraint(SpringLayout.WEST, component, west,
-              (west >= 0) ? SpringLayout.WEST : SpringLayout.EAST, parentContainer);
-      topLayout.putConstraint(SpringLayout.SOUTH, component, south,
-              (south > 0) ? SpringLayout.NORTH : SpringLayout.SOUTH, parentContainer);
-      topLayout.putConstraint(SpringLayout.NORTH, component, north,
-              (north >= 0) ? SpringLayout.NORTH : SpringLayout.SOUTH, parentContainer);
-   }
-
-   /** 
-    * Adds a component to the parent panel, set positions of the edges of
-    * component relative to panel. If edges are positive, then they are
-    * positioned relative to north and west edges of parent container. If edges
-    * are negative, then they are positioned relative to south and east
-    * edges of parent container.
-    * Requires that parent container uses SpringLayout.
-    */
-   public static AbstractButton createButton(final boolean isToggleButton,
-           final String name,
-           final String text,
-           final String toolTipText,
-           final Runnable buttonActionRunnable,
-           final String iconFileName,
-           final Container parentPanel,
-           int west, int north, int east, int south) {
-      AbstractButton button = isToggleButton ? new JToggleButton() : new JButton();
-      button.setFont(new Font("Arial", Font.PLAIN, 10));
-      button.setMargin(new Insets(0, 0, 0, 0));
-      button.setName(name);
-      if (text != null) {
-         button.setText(text);
-      }
-      if (iconFileName != null) {
-         button.setIconTextGap(4);
-         setIcon(button, iconFileName);
-      }
-      if (toolTipText != null) {
-         button.setToolTipText(toolTipText);
-      }
-      button.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            buttonActionRunnable.run();
-         }
-      });
-      GUIUtils.addWithEdges(parentPanel, button, west, north, east, south);
-      return button;
-   }
 
    public interface StringValidator {
       public void validate(String string);
