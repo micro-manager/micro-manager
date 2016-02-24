@@ -432,7 +432,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
     * @param title Title of the panel
     * @param panel Inspector Panel to be added
     */
-   public final void addPanel(String title, final InspectorPanel panel) {
+   private final void addPanel(String title, final InspectorPanel panel) {
       panel.setInspector(this);
       wrapperPanels_.add(new WrapperPanel(title, panel));
    }
@@ -569,7 +569,6 @@ public class InspectorFrame extends MMFrame implements Inspector {
    public void onDisplayActivated(DisplayActivatedEvent event) {
       DataViewer newDisplay = event.getDisplay();
       if (newDisplay.getIsClosed()) {
-
          // TODO: why do we get notified of this?
          return;
       }
@@ -591,7 +590,18 @@ public class InspectorFrame extends MMFrame implements Inspector {
       }
    }
 
-   private void setDisplay(DataViewer display) {
+   private void setDisplay(final DataViewer display) {
+      // This involves updating the UIs of the various InspectorPanels, so
+      // should be done only in the EDT.
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               setDisplay(display);
+            }
+         });
+         return;
+      }
       // Update our listing of displays.
       display_ = display;
       populateChooser();
