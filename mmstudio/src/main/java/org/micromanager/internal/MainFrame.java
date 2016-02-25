@@ -349,7 +349,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       JPanel subPanel = new JPanel(
             new MigLayout("fill, flowy, insets 1, gap 0"));
       subPanel.add(createLabel("Configuration settings", true),
-            "flowx, growx, split 2");
+            "flowx, growx, pushy 0, split 2");
 
       saveConfigButton_ = createButton("Save", null,
          "Save current presets to the configuration file",
@@ -360,7 +360,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
             }
          });
       subPanel.add(saveConfigButton_,
-            "gapleft push, alignx right, w 88!, h 20!");
+            "pushy 0, gapleft push, alignx right, w 88!, h 20!");
 
       configPad_ = new ConfigGroupPad();
       configPadButtonPanel_ = new ConfigPadButtonPanel();
@@ -372,9 +372,9 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       // Allowing the config pad to grow horizontally and vertically requires
       // us to override its preferred size.
       subPanel.add(configPad_,
-            "grow, alignx center, w min::9999, h min::9999, span");
+            "grow, pushy 100, alignx center, w min::9999, h min::9999, span");
       subPanel.add(configPadButtonPanel_,
-            "growx, alignx left, w 320!, h 20!, span");
+            "growx, pushy 0, alignx left, w 320!, h 20!, span");
       return subPanel;
    }
 
@@ -468,7 +468,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       // Must not be a completely empty label or else our size calculations
       // fail when setting the minimum size of the frame.
       labelImageDimensions_ = createLabel(" ", false);
-      overPanel.add(labelImageDimensions_, "growx, span, gap 2 0 2 0");
+      overPanel.add(labelImageDimensions_, "growx, pushy 0, span, gap 2 0 2 0");
       return overPanel;
    }
 
