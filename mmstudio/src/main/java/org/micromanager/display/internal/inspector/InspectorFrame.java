@@ -257,10 +257,27 @@ public class InspectorFrame extends MMFrame implements Inspector {
    private static boolean haveCreatedInspector_ = false;
    public static boolean createFirstInspector() {
       if (!haveCreatedInspector_) {
-         new InspectorFrame(null);
+         createInspector(null);
          return true;
       }
       return false;
+   }
+
+   /**
+    * This method simply makes certain that newly-created inspector windows
+    * are created on the EDT.
+    */
+   public static void createInspector(final DataViewer viewer) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               createInspector(viewer);
+            }
+         });
+         return;
+      }
+      new InspectorFrame(viewer);
    }
 
    private DataViewer display_;

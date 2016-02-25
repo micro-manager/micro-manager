@@ -234,7 +234,7 @@ public final class DefaultDisplayManager implements DisplayManager {
 
    @Override
    public void createInspector(DataViewer display) {
-      new InspectorFrame(display);
+      InspectorFrame.createInspector(display);
    }
 
    @Override

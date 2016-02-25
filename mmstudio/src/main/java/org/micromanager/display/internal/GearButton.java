@@ -49,7 +49,7 @@ public class GearButton extends JButton {
       openInspector.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            new InspectorFrame(display);
+            InspectorFrame.createInspector(display);
          }
       });
       menu_.add(openInspector);
