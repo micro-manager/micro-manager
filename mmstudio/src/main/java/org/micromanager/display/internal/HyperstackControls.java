@@ -18,11 +18,6 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-/*
- * HyperstackControls.java
- *
- * Created on Jul 15, 2010, 2:54:37 PM
- */
 package org.micromanager.display.internal;
 
 import com.google.common.base.Joiner;
@@ -55,7 +50,12 @@ import org.micromanager.display.internal.events.MouseMovedEvent;
 import org.micromanager.display.internal.events.StatusEvent;
 import org.micromanager.internal.utils.ReportingUtils;
 
-
+/**
+ * This panel contains the ScrollerPanel that handles navigation of a multi-
+ * dimensional dataset. It also contains some status text, showing information
+ * like pixel intensities, FPS, and some brief information on the displayed
+ * image.
+ */
 public class HyperstackControls extends JPanel {
 
    private final DisplayWindow display_;
@@ -118,7 +118,7 @@ public class HyperstackControls extends JPanel {
       fpsLabel_.setMinimumSize(labelDimension);
       fpsLabel_.setFont(labelFont);
       labelsPanel.add(fpsLabel_, "grow");
-      
+
       countdownLabel_ = new JLabel();
       countdownLabel_.setMinimumSize(labelDimension);
       countdownLabel_.setFont(labelFont);
@@ -313,30 +313,37 @@ public class HyperstackControls extends JPanel {
       // Cancel the timer that will blank the FPS, as we have updated info.
       blankingTimer_.cancel();
 
-      // Default to assuming we'll be blanking the label.
-      String newLabel = "";
-      double deltaSec = (System.currentTimeMillis() - msSinceLastFPSUpdate_) / 1000.0;
+      // Calculate our data FPS and display FPS. The two use different
+      // methodologies: data FPS prefers to operate from the image metadata
+      // if possible (to determine how much time has passed and how many images
+      // the camera snapped), while display FPS operates based on our
+      // measurement of elapsed time and number of display operations performed
+      String dataFPS = "";
+      String displayFPS = "";
+
+      double displaySec = (System.currentTimeMillis() - msSinceLastFPSUpdate_) / 1000.0;
+      double dataSec = displaySec;
       Metadata newMetadata = newImage.getMetadata();
       Metadata oldMetadata = imageFromLastFPS_.getMetadata();
       if (newMetadata.getElapsedTimeMs() != null &&
             oldMetadata.getElapsedTimeMs() != null) {
-         deltaSec = (newMetadata.getElapsedTimeMs() - oldMetadata.getElapsedTimeMs()) / 1000.0;
+         dataSec = (newMetadata.getElapsedTimeMs() - oldMetadata.getElapsedTimeMs()) / 1000.0;
       }
-      long elapsedImages = imagesReceived_;
-      if (newMetadata.getImageNumber() != null &&
+      long dataImages = imagesReceived_;
+      // Only attempt to set data FPS if we know that at least one image has
+      // arrived during this interval, so we don't show data FPS during display
+      // updates after data acquisition has finished.
+      if (imagesReceived_ != 0 && newMetadata.getImageNumber() != null &&
             oldMetadata.getImageNumber() != null) {
-         elapsedImages = newMetadata.getImageNumber() - oldMetadata.getImageNumber();
+         dataImages = newMetadata.getImageNumber() - oldMetadata.getImageNumber();
       }
-      if (elapsedImages != 0 && elapsedImages / deltaSec >= 1) {
-         // Show both data FPS (number of new images) and display FPS
-         // (rate at which display updates).
-         newLabel = String.format("FPS: %.1f (display %.1f)",
-               elapsedImages / deltaSec, displayUpdates_ / deltaSec);
+
+      String newLabel = "";
+      if (dataImages != 0) {
+         newLabel += String.format("Data %.1ffps   ", dataImages / dataSec);
       }
-      else if (displayUpdates_ != 0 && displayUpdates_ / deltaSec >= 1) {
-         // Show just the display FPS.
-         newLabel = String.format("Display FPS: %.1f",
-               displayUpdates_ / deltaSec);
+      if (displayUpdates_ != 0) {
+         newLabel += String.format("Display %.1ffps", displayUpdates_ / displaySec);
       }
       fpsLabel_.setText(newLabel);
       msSinceLastFPSUpdate_ = System.currentTimeMillis();
