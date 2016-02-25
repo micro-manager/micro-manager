@@ -404,7 +404,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
 
       // Text at the top of the window for image information.
       infoLine_ = new ImageInfoLine(this);
-      contentsPanel_.add(infoLine_, "wrap");
+      contentsPanel_.add(infoLine_, "growx, wrap");
 
       recreateCanvas();
       contentsPanel_.add(canvasPanel_, "align center, wrap, grow");

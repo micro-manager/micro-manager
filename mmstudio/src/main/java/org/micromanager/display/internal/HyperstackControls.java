@@ -24,7 +24,7 @@ import com.google.common.base.Joiner;
 import com.google.common.eventbus.Subscribe;
 
 import java.awt.Dimension;
-import java.awt.FlowLayout;
+import java.awt.Font;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.Timer;
@@ -32,6 +32,7 @@ import java.util.TimerTask;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -45,8 +46,6 @@ import org.micromanager.display.PixelsSetEvent;
 import org.micromanager.data.internal.IncomingImageEvent;
 import org.micromanager.data.internal.NewImageEvent;
 import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
-import org.micromanager.display.internal.events.MouseExitedEvent;
-import org.micromanager.display.internal.events.MouseMovedEvent;
 import org.micromanager.display.internal.events.StatusEvent;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -62,13 +61,8 @@ public class HyperstackControls extends JPanel {
    private final Datastore store_;
    private final MMVirtualStack stack_;
 
-   // Last known mouse positions.
-   private int mouseX_ = -1;
-   private int mouseY_ = -1;
-
    // Controls common to both control sets
    private ScrollerPanel scrollerPanel_;
-   private JLabel pixelInfoLabel_;
    private JLabel fpsLabel_;
    private long msSinceLastFPSUpdate_ = 0;
    private Image imageFromLastFPS_ = null;
@@ -89,7 +83,7 @@ public class HyperstackControls extends JPanel {
     */
    public HyperstackControls(Datastore store, MMVirtualStack stack,
          DisplayWindow display, boolean shouldUseLiveControls) {
-      super(new FlowLayout(FlowLayout.LEADING));
+      super(new MigLayout("insets 0, fillx, align center"));
       display_ = display;
       store_ = store;
       store_.registerForEvents(this);
@@ -99,120 +93,34 @@ public class HyperstackControls extends JPanel {
    }
 
    private void initComponents() {
-      // This layout minimizes space between components.
-      setLayout(new MigLayout("insets 0, fillx, align center"));
-
-      java.awt.Font labelFont = new java.awt.Font("Lucida Grande", 0, 10);
+      Font labelFont = new Font("Lucida Grande", 0, 10);
       // HACK: we allocate excessive height for our text fields on purpose;
       // if we try to make them precise to the text that will be displayed,
-      // then we risk them growing and taking space that should be used for
-      // the canvas.
+      // then we risk them growing when their text changes, and taking space
+      // that should be used for the canvas.
       Dimension labelDimension = new Dimension(10, 13);
-      JPanel labelsPanel = new JPanel(new MigLayout("insets 0"));
-      pixelInfoLabel_ = new JLabel();
-      pixelInfoLabel_.setMinimumSize(labelDimension);
-      pixelInfoLabel_.setFont(labelFont);
-      labelsPanel.add(pixelInfoLabel_, "grow");
+      JPanel labelsPanel = new JPanel(new MigLayout("fillx, insets 0, gap 0"));
 
-      fpsLabel_ = new JLabel();
-      fpsLabel_.setMinimumSize(labelDimension);
-      fpsLabel_.setFont(labelFont);
-      labelsPanel.add(fpsLabel_, "grow");
+      statusLabel_ = new JLabel();
+      statusLabel_.setMinimumSize(labelDimension);
+      statusLabel_.setFont(labelFont);
+      labelsPanel.add(statusLabel_, "grow, gapright push");
 
       countdownLabel_ = new JLabel();
       countdownLabel_.setMinimumSize(labelDimension);
       countdownLabel_.setFont(labelFont);
       labelsPanel.add(countdownLabel_, "grow");
 
-      statusLabel_ = new JLabel();
-      statusLabel_.setMinimumSize(labelDimension);
-      statusLabel_.setFont(labelFont);
-      labelsPanel.add(statusLabel_, "grow");
+      fpsLabel_ = new JLabel();
+      fpsLabel_.setHorizontalAlignment(SwingConstants.RIGHT);
+      fpsLabel_.setMinimumSize(labelDimension);
+      fpsLabel_.setFont(labelFont);
+      labelsPanel.add(fpsLabel_, "grow");
 
       add(labelsPanel, "span, growx, align center, wrap");
 
       scrollerPanel_ = new ScrollerPanel(store_, display_);
       add(scrollerPanel_, "span, growx, shrinkx, wrap 0px");
-   }
-
-   /**
-    * User moused over the display; update our indication of pixel intensities.
-    **/
-   @Subscribe
-   public void onMouseMoved(MouseMovedEvent event) {
-      try {
-         mouseX_ = event.getX();
-         mouseY_ = event.getY();
-         setPixelInfo(mouseX_, mouseY_);
-      }
-      catch (Exception e) {
-         ReportingUtils.logError(e, "Failed to get image pixel info");
-      }
-   }
-
-   /**
-    * User's mouse left the display; stop showing pixel intensities.
-    */
-   @Subscribe
-   public void onMouseExited(MouseExitedEvent event) {
-      mouseX_ = -1;
-      mouseY_ = -1;
-      pixelInfoLabel_.setVisible(false);
-   }
-
-   public String getIntensityString(int x, int y) {
-      int numChannels = store_.getAxisLength("channel");
-      if (numChannels > 1) {
-         // Multi-channel case: display each channel with a "/" in-between.
-         String intensity = "[";
-         for (int i = 0; i < numChannels; ++i) {
-            Coords imageCoords = stack_.getCurrentImageCoords().copy().channel(i).build();
-            // We may not have an image yet for these coords (e.g. for the
-            // second channel of a multi-channel acquisition).
-            if (store_.hasImage(imageCoords)) {
-               Image image = store_.getImage(imageCoords);
-               intensity += image.getIntensityStringAt(x, y);
-            }
-            if (i != numChannels - 1) {
-               intensity += "/";
-            }
-         }
-         intensity += "]";
-         return intensity;
-      }
-      else {
-         // Single-channel case; simple.
-         Coords coords = stack_.getCurrentImageCoords();
-         if (store_.hasImage(coords)) {
-            Image image = store_.getImage(coords);
-            try {
-               return image.getIntensityStringAt(x, y);
-            }
-            catch (IllegalArgumentException e) {
-               // Our x/y values were out-of-bounds; this should never happen.
-               ReportingUtils.logError("Invalid pixel coordinates " + x + ", " + y);
-            }
-         }
-      }
-      return "";
-   }
-
-   /**
-    * Update our pixel info text.
-    */
-   private void setPixelInfo(int x, int y) {
-      if (x >= 0 && y >= 0) {
-         String intensity = getIntensityString(x, y);
-         pixelInfoLabel_.setText(String.format("x=%d, y=%d, value=%s",
-                  x, y, intensity));
-         pixelInfoLabel_.setVisible(true);
-      }
-      // If the pixel info display grows (e.g. due to extra digits in the
-      // intensity display) then we don't want to let it shrink again, or else
-      // the FPS display to its right will get bounced back and forth.
-      pixelInfoLabel_.setMinimumSize(pixelInfoLabel_.getSize());
-      // This validate call reduces the chance that the text will be truncated.
-      validate();
    }
 
    /**
@@ -276,17 +184,12 @@ public class HyperstackControls extends JPanel {
    }
 
    /**
-    * The displayed image has changed, so update our pixel info display. We
-    * also need to track the display FPS (the rate at which images are
-    * displayed).
+    * The displayed image has changed, so update our display FPS (the rate at
+    * which images are displayed).
     */
    @Subscribe
    public void onCanvasDrawComplete(CanvasDrawCompleteEvent event) {
       Image image = display_.getDisplayedImages().get(0);
-      if (mouseX_ >= 0 && mouseX_ < image.getWidth() &&
-            mouseY_ >= 0 && mouseY_ < image.getHeight()) {
-         setPixelInfo(mouseX_, mouseY_);
-      }
       displayUpdates_++;
       updateFPS(image);
    }
@@ -381,15 +284,16 @@ public class HyperstackControls extends JPanel {
          tokens.add(metadata.getPositionName());
       }
       if (metadata.getElapsedTimeMs() != null) {
-         tokens.add(String.format("%.2fs", metadata.getElapsedTimeMs()));
+         tokens.add(String.format("t=%s",
+                  elapsedTimeDisplayString(metadata.getElapsedTimeMs() / 1000)));
       }
       if (metadata.getZPositionUm() != null) {
-         tokens.add(String.format("z: %.2f\u00b5m", metadata.getZPositionUm()));
+         tokens.add(String.format("z=%.2f\u00b5m", metadata.getZPositionUm()));
       }
       if (metadata.getCamera() != null && !metadata.getCamera().equals("")) {
          tokens.add(metadata.getCamera());
       }
-      statusLabel_.setText(Joiner.on(", ").join(tokens));
+      statusLabel_.setText(Joiner.on("   ").join(tokens));
    }
 
    public static String elapsedTimeDisplayString(double seconds) {
