@@ -1015,11 +1015,19 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          ourSize = fullScreenFrame_.getSize();
          insets = fullScreenFrame_.getInsets();
       }
-      Dimension controlsSize = controlsPanel_.getSize();
+      Dimension controlsSize = controlsPanel_.getPreferredSize();
+      // HACK: make the result slightly shorter than there would otherwise be
+      // space for, to account for the insets between the infoline and canvas,
+      // canvas and controls, and around the edges of everything.
+      // Removing this fiddle factor can lead to a display refresh feedback
+      // loop between the canvas and the FPS display, as they end up
+      // overlapping and causing each other to be redrawn every time one of
+      // them changes.
+      int fiddleFactor = 10;
       Dimension result = new Dimension(
             ourSize.width - insets.left - insets.right,
             ourSize.height - insets.top - insets.bottom - controlsSize.height -
-            infoLine_.getHeight());
+            infoLine_.getHeight() - fiddleFactor);
       return result;
    }
 
