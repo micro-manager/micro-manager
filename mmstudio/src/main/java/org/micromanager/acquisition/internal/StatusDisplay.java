@@ -31,6 +31,7 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -70,7 +71,12 @@ public class StatusDisplay extends JFrame {
             }
             if (!hasVisibleContent_ &&
                studio_.acquisitions().isAcquisitionRunning()) {
-               showStatusDisplay();
+               SwingUtilities.invokeLater(new Runnable() {
+                  @Override
+                  public void run() {
+                     showStatusDisplay();
+                  }
+               });
             }
          }
       }).start();
