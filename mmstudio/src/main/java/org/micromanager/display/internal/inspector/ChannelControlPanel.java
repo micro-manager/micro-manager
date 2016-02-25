@@ -43,6 +43,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
+import javax.swing.SwingUtilities;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -167,6 +168,15 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void initialize() {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               initialize();
+            }
+         });
+         return;
+      }
       initComponents();
       reloadDisplaySettings();
       // Default to modifying the first component.
@@ -176,6 +186,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
 
       haveInitialized_.set(true);
       parent_.relayout();
+      updateHighlight();
+      redraw();
    }
 
    private void initComponents() {
@@ -805,8 +817,10 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          }
 
          if (!haveInitialized_.get()) {
-            // Need to create our GUI now.
+            // Need to create our GUI now. GUI creation will also call
+            // updateHighlight() and redraw().
             initialize();
+            return;
          }
          updateHighlight();
          redraw();
