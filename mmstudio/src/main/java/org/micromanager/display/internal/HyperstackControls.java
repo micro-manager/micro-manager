@@ -150,29 +150,18 @@ public class HyperstackControls extends JPanel {
       try {
          final Timer countdownTimer = new Timer("Next image countdown");
 
-         final double nextTime = event.getNextImageTime();
+         final double nextTime = event.getNextImageNanoTime();
          TimerTask task = new TimerTask() {
             @Override
             public void run() {
-               double remainingMs = nextTime - System.currentTimeMillis();
+               double remainingMs = nextTime - (System.nanoTime() / 1000000);
                if (remainingMs <= 0) {
                   // Cancel the timer, so we don't show negative values.
                   countdownTimer.cancel();
                   countdownLabel_.setText("");
                   return;
                }
-               int hours = (int) (remainingMs / 3600000);
-               remainingMs -= hours * 3600000;
-               int minutes = (int) (remainingMs / 60000);
-               remainingMs -= minutes * 60000;
-               String text = "";
-               if (hours > 0) {
-                  text += hours + "h ";
-               }
-               if (minutes > 0) {
-                  text += minutes + "m ";
-               }
-               text += String.format("%.1fs", remainingMs / 1000);
+               String text = elapsedTimeDisplayString(remainingMs / 1000);
                countdownLabel_.setText("Next image: " + text);
             }
          };

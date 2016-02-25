@@ -14,7 +14,13 @@ public class IncomingImageEvent {
       nextImageTime_ = nextImageTime;
    }
 
-   public double getNextImageTime() {
+   /**
+    * This method is so named because the value it provides was generated
+    * using System.nanoTime() (see the acquisition engine), so this is a
+    * reminder to users that they shouldn't compare it to
+    * System.currentTimeMillis().
+    */
+   public double getNextImageNanoTime() {
       return nextImageTime_;
    }
 }
