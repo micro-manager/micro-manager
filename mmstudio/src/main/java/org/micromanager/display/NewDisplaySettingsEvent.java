@@ -22,7 +22,9 @@ package org.micromanager.display;
 
 /**
  * This class signifies that new display settings have been set for a
- * DataViewer, and provides access to those DisplaySettings.
+ * DataViewer, and provides access to those DisplaySettings. Third-party code
+ * should post this event when DisplaySettings are updated, so that other
+ * components (e.g. the Inspector) can be updated.
  */
 public class NewDisplaySettingsEvent {
    private final DisplaySettings settings_;

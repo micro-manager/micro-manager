@@ -24,7 +24,8 @@ import ij.ImagePlus;
 
 /**
  * This event is published by the display's EventBus to indicate that it is
- * using a new ImagePlus object.
+ * using a new ImagePlus object. Third-party code is not expected to produce
+ * this event.
  */
 public interface NewImagePlusEvent {
    /**

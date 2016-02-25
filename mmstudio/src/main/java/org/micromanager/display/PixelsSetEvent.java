@@ -31,6 +31,7 @@ import org.micromanager.data.Image;
  * response to this event is a bad idea because you'll slow down the GUI.
  * Also note that this event can fire multiple times for the same image, due
  * to requests to the display to refresh the image display.
+ * Third-party code is not expected to produce this event.
  */
 public interface PixelsSetEvent {
    /**

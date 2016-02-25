@@ -24,6 +24,7 @@ package org.micromanager.display;
  * This event signifies that a DisplayWindow wants to close. If this is
  * acceptable to whatever is controlling the DisplayWindow, then that entity
  * should call DisplayWindow.forceClosed().
+ * Third-party code is not expected to produce this event.
  */
 public interface RequestToCloseEvent {
    /**
