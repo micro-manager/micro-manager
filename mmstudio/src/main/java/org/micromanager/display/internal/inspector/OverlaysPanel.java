@@ -176,6 +176,11 @@ class OverlaysPanel extends InspectorPanel {
    }
 
    @Override
+   public boolean getGrowsVertically() {
+      return false;
+   }
+
+   @Override
    public synchronized void cleanup() {
       if (display_ != null) {
          try {

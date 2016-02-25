@@ -466,8 +466,9 @@ public class InspectorFrame extends MMFrame implements Inspector {
       contents_.add(raiseButton_);
       contents_.add(curDisplayTitle_, "hidemode 2, pushy 0");
       for (WrapperPanel wrapper : wrapperPanels_) {
+         boolean doesGrow = wrapper.getIsActive() && wrapper.getPanel().getGrowsVertically();
          contents_.add(wrapper, "hidemode 2, " +
-               (wrapper.getIsActive() ? "grow, pushy 100" : "growx"));
+               (doesGrow ? "grow, pushy 100" : "growx"));
       }
       pack();
       setSizeLocks(false);
@@ -509,7 +510,8 @@ public class InspectorFrame extends MMFrame implements Inspector {
     */
    private void setSizeLocks(boolean shouldLock) {
       for (WrapperPanel wrapper : wrapperPanels_) {
-         wrapper.setShouldOverrideSize(shouldLock && wrapper.getIsActive());
+         wrapper.setShouldOverrideSize(shouldLock && wrapper.getIsActive() &&
+               wrapper.getPanel().getGrowsVertically());
       }
    }
 

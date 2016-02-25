@@ -72,6 +72,15 @@ public abstract class InspectorPanel extends JPanel {
    public void setDataViewer(DataViewer viewer) {}
 
    /**
+    * Provides sizing rules for when the Inspector window is resized.
+    * @return Whether or not this panel should be allowed to grow vertically to
+    * take up extra space when the Inspector window is resized.
+    */
+   public boolean getGrowsVertically() {
+      return true;
+   }
+
+   /**
     * Release resources and unregister for events, because the Inspector that
     * this panel is a part of is about to be destroyed. For example, if your
     * InspectorPanel is registered to a DisplayWindow's event system, then it
