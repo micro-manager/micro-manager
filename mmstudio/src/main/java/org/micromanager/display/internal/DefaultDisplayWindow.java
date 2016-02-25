@@ -976,13 +976,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
 
    @Override
    public GraphicsConfiguration getScreenConfig() {
-      Point p = getLocation();
-      GraphicsConfiguration result = GUIUtils.getGraphicsConfigurationContaining(p.x, p.y);
-      // HACK: if our corner is invalid, find the one with the greatest overlap 
-      if (result == null) {
-         result = GUIUtils.getGraphicsConfigurationBestMatching(getBounds());
-      }
-      return result;
+      return getGraphicsConfiguration();
    }
 
    /**
@@ -1001,7 +995,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    }
 
    /**
-    * As above, but assumes the window does not move from its current position.
+    * Get the maximum safe size for the window assuming it does not change its
+    * location on-screen. "Safe" means that it does not extend off the monitor.
     */
    public Dimension getMaxSafeSizeFromHere() {
       Rectangle bounds = getSafeBounds();
