@@ -97,6 +97,8 @@ import org.micromanager.internal.conf2.MicroscopeModel;
 
 import org.micromanager.data.internal.DefaultDataManager;
 
+import org.micromanager.internal.diagnostics.EDTHangLogger;
+
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.dialogs.CalibrationListDlg;
 import org.micromanager.internal.dialogs.IntroDlg;
@@ -322,7 +324,7 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
          // Give up.
          return;
       }
-      // Initialize hardware.
+
       String logFileName = LogFileManager.makeLogFileNameForCurrentSession();
       new File(logFileName).getParentFile().mkdirs();
       try {
@@ -337,6 +339,10 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
          LogFileManager.deleteLogFilesDaysOld(
                getCoreLogLifetimeDays(), logFileName);
       }
+
+      // Use parameters that ensure a stack trace dump within 10 seconds of an
+      // EDT hang (and _no_ dump on hangs under 5.5 seconds)
+      EDTHangLogger.startDefault(core_, 4500, 1000);
 
       ReportingUtils.setCore(core_);
       logStartupProperties();
@@ -1025,6 +1031,8 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       }
 
       synchronized (shutdownLock_) {
+         EDTHangLogger.stopDefault();
+
          try {
             if (core_ != null) {
                ReportingUtils.setCore(null);
