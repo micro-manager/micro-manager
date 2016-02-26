@@ -88,7 +88,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    private static final String SAVE_MODE = "default save mode";
    private static final String SHOULD_CHECK_EXPOSURE_SANITY = "whether to prompt the user if their exposure times seem excessively long";
    private static final String BUTTON_SIZE = "width 80!, height 22!";
-   private static final String PANEL_CONSTRAINT = "fillx, gap 0, insets 2";
+   private static final String PANEL_CONSTRAINT = "fillx, gap 1, insets 2";
 
    protected JButton listButton_;
    private JSpinner afSkipInterval_;
@@ -275,7 +275,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       customTimesPanel_.setVisible(false);
       framesPanel_.add(customTimesPanel_, "hidemode 2");
 
-      final JLabel numberLabel = new JLabel("Number");
+      final JLabel numberLabel = new JLabel("Number ");
       numberLabel.setFont(DEFAULT_FONT);
 
       defaultTimesPanel_.add(numberLabel, "gapleft push");
@@ -307,12 +307,12 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
       defaultTimesPanel_.add(advancedButton, "wrap");
 
-      final JLabel intervalLabel = new JLabel("Interval");
+      final JLabel intervalLabel = new JLabel("Interval ");
       intervalLabel.setFont(DEFAULT_FONT);
       intervalLabel.setToolTipText(
             "Interval between successive time points.  Setting an interval " +
             "less than the exposure time will cause micromanager to acquire a 'burst' of images as fast as possible");
-      defaultTimesPanel_.add(intervalLabel, "split 3, spanx, gapleft push");
+      defaultTimesPanel_.add(intervalLabel, "split 3, spanx");
 
       interval_ = new JFormattedTextField(numberFormat_);
       interval_.setColumns(5);
@@ -383,7 +383,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
       String labelConstraint = "gapleft push, alignx left";
 
-      final JLabel zbottomLabel = new JLabel("Z-start [\u00b5m]");
+      final JLabel zbottomLabel = new JLabel("Z-start [\u00b5m] ");
       zbottomLabel.setFont(DEFAULT_FONT);
       slicesPanel_.add(zbottomLabel, labelConstraint);
 
@@ -392,7 +392,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       zBottom_.setFont(DEFAULT_FONT);
       zBottom_.setValue(1.0);
       zBottom_.addPropertyChangeListener("value", this);
-      slicesPanel_.add(zBottom_);
+      slicesPanel_.add(zBottom_, "gapleft 2");
 
       // Slightly smaller than BUTTON_SIZE
       String buttonSize = "width 50!, height 20!";
@@ -409,7 +409,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       });
       slicesPanel_.add(setBottomButton_, buttonSize + ", wrap");
 
-      final JLabel ztopLabel = new JLabel("Z-end [\u00b5m]");
+      final JLabel ztopLabel = new JLabel("Z-end [\u00b5m] ");
       ztopLabel.setFont(DEFAULT_FONT);
       slicesPanel_.add(ztopLabel, labelConstraint);
 
@@ -418,7 +418,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       zTop_.setFont(DEFAULT_FONT);
       zTop_.setValue(1.0);
       zTop_.addPropertyChangeListener("value", this);
-      slicesPanel_.add(zTop_);
+      slicesPanel_.add(zTop_, "gapleft 2");
 
       setTopButton_ = new JButton("Set");
       setTopButton_.setMargin(new Insets(-5, -5, -5, -5));
@@ -432,7 +432,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       });
       slicesPanel_.add(setTopButton_, buttonSize + ", wrap");
 
-      final JLabel zstepLabel = new JLabel("Z-step [\u00b5m]");
+      final JLabel zstepLabel = new JLabel("Z-step [\u00b5m] ");
       zstepLabel.setFont(DEFAULT_FONT);
       slicesPanel_.add(zstepLabel, labelConstraint);
 
@@ -441,7 +441,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       zStep_.setFont(DEFAULT_FONT);
       zStep_.setValue(1.0);
       zStep_.addPropertyChangeListener("value", this);
-      slicesPanel_.add(zStep_, "wrap");
+      slicesPanel_.add(zStep_, "gapleft 2, wrap");
 
       zValCombo_ = new JComboBox(new String[] {RELATIVE_Z, ABSOLUTE_Z});
       zValCombo_.setFont(DEFAULT_FONT);
@@ -451,7 +451,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
             zValCalcChanged();
          }
       });
-      slicesPanel_.add(zValCombo_, "alignx center, spanx, wrap");
+      slicesPanel_.add(zValCombo_, "gaptop 4, alignx center, spanx, wrap");
 
       stackKeepShutterOpenCheckBox_ = new JCheckBox("Keep shutter open");
       stackKeepShutterOpenCheckBox_.setFont(DEFAULT_FONT);
