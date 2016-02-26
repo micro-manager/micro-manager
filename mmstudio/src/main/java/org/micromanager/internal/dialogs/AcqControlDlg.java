@@ -88,7 +88,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    private static final String SAVE_MODE = "default save mode";
    private static final String SHOULD_CHECK_EXPOSURE_SANITY = "whether to prompt the user if their exposure times seem excessively long";
    private static final String BUTTON_SIZE = "width 80!, height 22!";
-   private static final String PANEL_CONSTRAINT = "fillx, gap 1, insets 2";
+   private static final String PANEL_CONSTRAINT = "fillx, gap 2, insets 2";
 
    protected JButton listButton_;
    private JSpinner afSkipInterval_;
