@@ -269,16 +269,19 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    private JPanel createTimePoints() {
       framesPanel_ = createCheckBoxPanel("Time points");
       framesPanel_.setLayout(new MigLayout(PANEL_CONSTRAINT));
-      defaultTimesPanel_ = new JPanel(new MigLayout("flowx, gap 0, insets 0"));
-      framesPanel_.add(defaultTimesPanel_, "hidemode 2");
-      customTimesPanel_ = new JPanel(new MigLayout("flowx, gap 0, insets 0"));
+      defaultTimesPanel_ = new JPanel(
+            new MigLayout("fill, flowx, gap 0, insets 0",
+               "push[]2[]2[]", "[]2[]"));
+      framesPanel_.add(defaultTimesPanel_, "grow, hidemode 2");
+      customTimesPanel_ = new JPanel(
+            new MigLayout("fill, flowx, gap 0, insets 0"));
       customTimesPanel_.setVisible(false);
-      framesPanel_.add(customTimesPanel_, "hidemode 2");
+      framesPanel_.add(customTimesPanel_, "grow, hidemode 2");
 
       final JLabel numberLabel = new JLabel("Number ");
       numberLabel.setFont(DEFAULT_FONT);
 
-      defaultTimesPanel_.add(numberLabel, "gapleft push");
+      defaultTimesPanel_.add(numberLabel);
 
       SpinnerModel sModel = new SpinnerNumberModel(1, 1, null, 1);
 
@@ -293,26 +296,14 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
          }
       });
 
-      defaultTimesPanel_.add(numFrames_);
-
-      JButton advancedButton = new JButton("Advanced");
-      advancedButton.setFont(DEFAULT_FONT);
-      advancedButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            showCustomTimesDialog();
-            updateGUIContents();
-         }
-      });
-
-      defaultTimesPanel_.add(advancedButton, "wrap");
+      defaultTimesPanel_.add(numFrames_, "wrap");
 
       final JLabel intervalLabel = new JLabel("Interval ");
       intervalLabel.setFont(DEFAULT_FONT);
       intervalLabel.setToolTipText(
             "Interval between successive time points.  Setting an interval " +
             "less than the exposure time will cause micromanager to acquire a 'burst' of images as fast as possible");
-      defaultTimesPanel_.add(intervalLabel, "split 3, spanx");
+      defaultTimesPanel_.add(intervalLabel);
 
       interval_ = new JFormattedTextField(numberFormat_);
       interval_.setColumns(5);
@@ -324,9 +315,21 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       timeUnitCombo_ = new JComboBox();
       timeUnitCombo_.setModel(new DefaultComboBoxModel(new String[]{"ms", "s", "min"}));
       timeUnitCombo_.setFont(DEFAULT_FONT);
-      timeUnitCombo_.setBounds(120, 27, 67, 24);
-      defaultTimesPanel_.add(timeUnitCombo_);
+      // We shove this thing to the left a bit so that it takes up the same
+      // vertical space as the spinner for the number of timepoints.
+      defaultTimesPanel_.add(timeUnitCombo_, "pad 0 -15 0 0, wrap");
 
+      JButton advancedButton = new JButton("Advanced");
+      advancedButton.setFont(DEFAULT_FONT);
+      advancedButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            showCustomTimesDialog();
+            updateGUIContents();
+         }
+      });
+
+      defaultTimesPanel_.add(advancedButton, "spanx, alignx right, wrap");
 
       JLabel overrideLabel = new JLabel("Custom time intervals enabled");
       overrideLabel.setFont(new Font("Arial", Font.BOLD, 12));
@@ -363,7 +366,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       listButton_.setToolTipText("Open XY list dialog");
       listButton_.setIcon(IconLoader.getIcon(
             "/org/micromanager/icons/application_view_list.png"));
-      listButton_.setMargin(new Insets(2, 5, 2, 5));
       listButton_.setFont(new Font("Dialog", Font.PLAIN, 10));
       listButton_.addActionListener(new ActionListener() {
          @Override
@@ -379,11 +381,22 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
    private JPanel createZStacks() {
       slicesPanel_ = createCheckBoxPanel("Z-stacks (slices)");
-      slicesPanel_.setLayout(new MigLayout("fillx, flowx, gap 0, insets 2"));
+      slicesPanel_.setLayout(new MigLayout("fillx, flowx, gap 0, insets 2",
+            "", "push[]2[]2[]2[]push"));
 
-      String labelConstraint = "gapleft push, alignx left";
+      String labelConstraint = "pushx 100, alignx right, gapright 6";
 
-      final JLabel zbottomLabel = new JLabel("Z-start [\u00b5m] ");
+      // Simplify inserting unit labels slightly.
+      Runnable addUnits = new Runnable() {
+         @Override
+         public void run() {
+            JLabel label = new JLabel("\u00b5m");
+            label.setFont(DEFAULT_FONT);
+            slicesPanel_.add(label, "gapleft 0, gapright 4");
+         }
+      };
+
+      final JLabel zbottomLabel = new JLabel("Z-start");
       zbottomLabel.setFont(DEFAULT_FONT);
       slicesPanel_.add(zbottomLabel, labelConstraint);
 
@@ -392,7 +405,8 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       zBottom_.setFont(DEFAULT_FONT);
       zBottom_.setValue(1.0);
       zBottom_.addPropertyChangeListener("value", this);
-      slicesPanel_.add(zBottom_, "gapleft 2");
+      slicesPanel_.add(zBottom_);
+      addUnits.run();
 
       // Slightly smaller than BUTTON_SIZE
       String buttonSize = "width 50!, height 20!";
@@ -407,9 +421,9 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
             setBottomPosition();
          }
       });
-      slicesPanel_.add(setBottomButton_, buttonSize + ", wrap");
+      slicesPanel_.add(setBottomButton_, buttonSize + ", pushx 100, wrap");
 
-      final JLabel ztopLabel = new JLabel("Z-end [\u00b5m] ");
+      final JLabel ztopLabel = new JLabel("Z-end");
       ztopLabel.setFont(DEFAULT_FONT);
       slicesPanel_.add(ztopLabel, labelConstraint);
 
@@ -418,7 +432,8 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       zTop_.setFont(DEFAULT_FONT);
       zTop_.setValue(1.0);
       zTop_.addPropertyChangeListener("value", this);
-      slicesPanel_.add(zTop_, "gapleft 2");
+      slicesPanel_.add(zTop_);
+      addUnits.run();
 
       setTopButton_ = new JButton("Set");
       setTopButton_.setMargin(new Insets(-5, -5, -5, -5));
@@ -430,9 +445,9 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
             setTopPosition();
          }
       });
-      slicesPanel_.add(setTopButton_, buttonSize + ", wrap");
+      slicesPanel_.add(setTopButton_, buttonSize + ", pushx 100, wrap");
 
-      final JLabel zstepLabel = new JLabel("Z-step [\u00b5m] ");
+      final JLabel zstepLabel = new JLabel("Z-step");
       zstepLabel.setFont(DEFAULT_FONT);
       slicesPanel_.add(zstepLabel, labelConstraint);
 
@@ -441,7 +456,9 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       zStep_.setFont(DEFAULT_FONT);
       zStep_.setValue(1.0);
       zStep_.addPropertyChangeListener("value", this);
-      slicesPanel_.add(zStep_, "gapleft 2, wrap");
+      slicesPanel_.add(zStep_);
+      addUnits.run();
+      slicesPanel_.add(new JLabel(""), "wrap");
 
       zValCombo_ = new JComboBox(new String[] {RELATIVE_Z, ABSOLUTE_Z});
       zValCombo_.setFont(DEFAULT_FONT);
@@ -451,7 +468,8 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
             zValCalcChanged();
          }
       });
-      slicesPanel_.add(zValCombo_, "gaptop 4, alignx center, spanx, wrap");
+      slicesPanel_.add(zValCombo_,
+            "skip 1, spanx, gaptop 4, gapbottom 0, alignx left, wrap");
 
       stackKeepShutterOpenCheckBox_ = new JCheckBox("Keep shutter open");
       stackKeepShutterOpenCheckBox_.setFont(DEFAULT_FONT);
@@ -462,7 +480,8 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
             applySettings();
          }
       });
-      slicesPanel_.add(stackKeepShutterOpenCheckBox_, "alignx center, spanx");
+      slicesPanel_.add(stackKeepShutterOpenCheckBox_,
+            "skip 1, spanx, gaptop 0, alignx left");
 
       slicesPanel_.addActionListener(new ActionListener() {
          @Override
@@ -931,21 +950,18 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       // Contains timepoints, multiple positions, and Z-slices; acquisition
       // order, autofocus, and summary; control buttons, in three columns.
       JPanel topPanel = new JPanel(new MigLayout(
-               "fillx, flowy, insets 0, gap 0", "[grow][grow][]"));
+               "fillx, flowy, insets 0, gap 0", "[grow]6[grow]6[]"));
       topPanel.add(createTimePoints(), "growx, split, spany");
       topPanel.add(createMultiPositions(), "growx");
       topPanel.add(createZStacks(), "grow, wrap");
       topPanel.add(createAcquisitionOrder(), "growx, split, spany");
       topPanel.add(createAutoFocus(), "growx");
-      topPanel.add(createSummary(), "growx, wrap");
-      // This matches the insets of the overall dialog, making the button
-      // column look centered when at the default size.
-      String gapleft = "gapleft 6";
+      topPanel.add(createSummary(), "grow, wrap");
       topPanel.add(createCloseButton(),
-            BUTTON_SIZE + ", split, spany, " + gapleft);
-      topPanel.add(createRunButtons(), "gaptop 10, " + gapleft);
+            BUTTON_SIZE + ", split, spany");
+      topPanel.add(createRunButtons(), "gaptop 10");
       topPanel.add(createSaveButtons(),
-            "gaptop 10, gapbottom push, " + gapleft);
+            "gaptop 10, gapbottom push");
 
       add(topPanel, "growx");
       add(createChannelsPanel(), "grow");
