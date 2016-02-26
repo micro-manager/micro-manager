@@ -564,6 +564,13 @@ public class InspectorFrame extends MMFrame implements Inspector {
       setSizeLocks(true);
       pack();
       setSizeLocks(false);
+      // Finally, no matter what, we have to be short enough to fit on-screen,
+      // even if that means showing a scrollbar.
+      Dimension ourSize = getSize();
+      int availHeight = screenBounds.height - insets.top - insets.bottom;
+      if (ourSize.height > availHeight) {
+         setSize(new Dimension(ourSize.width, availHeight));
+      }
    }
 
    @Subscribe
