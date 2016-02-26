@@ -470,7 +470,12 @@ public class InspectorFrame extends MMFrame implements Inspector {
          contents_.add(wrapper, "hidemode 2, " +
                (doesGrow ? "grow, pushy 100" : "growx"));
       }
+      // HACK: ensure we keep the same window width when packing. Appearance/
+      // disappearance of the scrollbar when panels are added or removed can
+      // otherwise gradually shift the width of the window.
+      int width = getSize().width;
       pack();
+      setSize(width, getSize().height);
       setSizeLocks(false);
       enforceSaneHeight();
    }
