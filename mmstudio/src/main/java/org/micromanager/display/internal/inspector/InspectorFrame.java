@@ -284,6 +284,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
    // Maps InspectorPanels to the WrapperPanels that contain them in our UI.
    private ArrayList<WrapperPanel> wrapperPanels_;
    private final JPanel contents_;
+   private JScrollPane scroller_;
    private JComboBox displayChooser_;
    private JButton raiseButton_;
    private final JLabel curDisplayTitle_;
@@ -353,10 +354,10 @@ public class InspectorFrame extends MMFrame implements Inspector {
       curDisplayTitle_ = new JLabel("");
       curDisplayTitle_.setVisible(false);
 
-      JScrollPane scroller = new JScrollPane(contents_,
+      scroller_ = new JScrollPane(contents_,
             ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
             ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-      add(scroller);
+      add(scroller_);
       setVisible(true);
 
       // Hard-coded initial panels.
@@ -470,12 +471,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
          contents_.add(wrapper, "hidemode 2, " +
                (doesGrow ? "grow, pushy 100" : "growx"));
       }
-      // HACK: ensure we keep the same window width when packing. Appearance/
-      // disappearance of the scrollbar when panels are added or removed can
-      // otherwise gradually shift the width of the window.
-      int width = getSize().width;
-      pack();
-      setSize(width, getSize().height);
+      conservedWidthPack();
       setSizeLocks(false);
       enforceSaneHeight();
    }
@@ -504,7 +500,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
          }
       }
       setSizeLocks(true);
-      pack();
+      conservedWidthPack();
       setSizeLocks(false);
       enforceSaneHeight();
    }
@@ -562,7 +558,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
          }
       }
       setSizeLocks(true);
-      pack();
+      conservedWidthPack();
       setSizeLocks(false);
       // Finally, no matter what, we have to be short enough to fit on-screen,
       // even if that means showing a scrollbar.
@@ -570,7 +566,19 @@ public class InspectorFrame extends MMFrame implements Inspector {
       int availHeight = screenBounds.height - insets.top - insets.bottom;
       if (ourSize.height > availHeight) {
          setSize(new Dimension(ourSize.width, availHeight));
+         Dimension scrollSize = scroller_.getSize();
+         scroller_.setSize(scrollSize.width,
+               scrollSize.height - (ourSize.height - availHeight));
       }
+   }
+
+   /**
+    * Does a pack, except that we constrain our width to not change.
+    */
+   private void conservedWidthPack() {
+      int width = getSize().width;
+      pack();
+      setSize(width, getSize().height);
    }
 
    @Subscribe
