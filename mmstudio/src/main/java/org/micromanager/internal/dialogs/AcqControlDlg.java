@@ -267,21 +267,24 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
     * case its normal contents get hidden.
     */
    private JPanel createTimePoints() {
-      framesPanel_ = createCheckBoxPanel("Time points");
-      framesPanel_.setLayout(new MigLayout(PANEL_CONSTRAINT));
-      defaultTimesPanel_ = new JPanel(
-            new MigLayout("fill, flowx, gap 0, insets 0",
-               "push[]2[]2[]", "[]2[]"));
-      framesPanel_.add(defaultTimesPanel_, "grow, hidemode 2");
-      customTimesPanel_ = new JPanel(
-            new MigLayout("fill, flowx, gap 0, insets 0"));
-      customTimesPanel_.setVisible(false);
-      framesPanel_.add(customTimesPanel_, "grow, hidemode 2");
+      framesPanel_ = createCheckBoxPanel("Time Points");
+      framesPanel_.setLayout(new MigLayout(PANEL_CONSTRAINT + ", hidemode 3",
+               "[grow, fill]", "[grow, fill]"));
 
-      final JLabel numberLabel = new JLabel("Number ");
+      defaultTimesPanel_ = new JPanel(
+            new MigLayout("fill, gap 2, insets 0",
+               "push[][][]push", "[][][]"));
+      framesPanel_.add(defaultTimesPanel_, "grow");
+
+      customTimesPanel_ = new JPanel(
+            new MigLayout("fill, gap 0, insets 0"));
+      customTimesPanel_.setVisible(false);
+      framesPanel_.add(customTimesPanel_, "grow");
+
+      final JLabel numberLabel = new JLabel("Count:");
       numberLabel.setFont(DEFAULT_FONT);
 
-      defaultTimesPanel_.add(numberLabel);
+      defaultTimesPanel_.add(numberLabel, "alignx label");
 
       SpinnerModel sModel = new SpinnerNumberModel(1, 1, null, 1);
 
@@ -298,12 +301,12 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
       defaultTimesPanel_.add(numFrames_, "wrap");
 
-      final JLabel intervalLabel = new JLabel("Interval ");
+      final JLabel intervalLabel = new JLabel("Interval:");
       intervalLabel.setFont(DEFAULT_FONT);
       intervalLabel.setToolTipText(
             "Interval between successive time points.  Setting an interval " +
             "less than the exposure time will cause micromanager to acquire a 'burst' of images as fast as possible");
-      defaultTimesPanel_.add(intervalLabel);
+      defaultTimesPanel_.add(intervalLabel, "alignx label");
 
       interval_ = new JFormattedTextField(numberFormat_);
       interval_.setColumns(5);
@@ -319,7 +322,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       // vertical space as the spinner for the number of timepoints.
       defaultTimesPanel_.add(timeUnitCombo_, "pad 0 -15 0 0, wrap");
 
-      JButton advancedButton = new JButton("Advanced");
+      JButton advancedButton = new JButton("Advanced...");
       advancedButton.setFont(DEFAULT_FONT);
       advancedButton.addActionListener(new ActionListener() {
          @Override
@@ -329,7 +332,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
          }
       });
 
-      defaultTimesPanel_.add(advancedButton, "spanx, alignx right, wrap");
+      defaultTimesPanel_.add(advancedButton, "skip, span 2, align left");
 
       JLabel overrideLabel = new JLabel("Custom time intervals enabled");
       overrideLabel.setFont(new Font("Arial", Font.BOLD, 12));
@@ -346,8 +349,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       disableCustomIntervalsButton.setFont(DEFAULT_FONT);
 
       customTimesPanel_.add(overrideLabel, "alignx center, wrap");
-      customTimesPanel_.add(disableCustomIntervalsButton,
-            "growx, alignx center");
+      customTimesPanel_.add(disableCustomIntervalsButton, "alignx center");
 
       framesPanel_.addActionListener(new ActionListener() {
          @Override
@@ -359,10 +361,10 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    }
 
    private JPanel createMultiPositions() {
-      positionsPanel_ = createCheckBoxPanel("Multiple positions (XY)");
-      positionsPanel_.setMinimumSize(new Dimension(190, 0));
-      positionsPanel_.setLayout(new MigLayout(PANEL_CONSTRAINT));
-      listButton_ = new JButton("Edit position list...");
+      positionsPanel_ = createCheckBoxPanel("Multiple Positions (XY)");
+      positionsPanel_.setLayout(new MigLayout(PANEL_CONSTRAINT,
+               "[grow]", "[grow, fill]"));
+      listButton_ = new JButton("Edit Position List...");
       listButton_.setToolTipText("Open XY list dialog");
       listButton_.setIcon(IconLoader.getIcon(
             "/org/micromanager/icons/application_view_list.png"));
@@ -373,18 +375,19 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
             studio_.compat().showPositionList();
          }
       });
-      // This "wrap" *looks* pointless, but prevents the alignment from
-      // mysteriously changing as soon as we refresh the GUI.
-      positionsPanel_.add(listButton_, "alignx center, wrap");
+
+      // Not sure why 'span' is needed to prevent second column from appearing
+      // (interaction with CheckBoxPanel layout??)
+      positionsPanel_.add(listButton_, "span, alignx center");
       return positionsPanel_;
    }
 
    private JPanel createZStacks() {
-      slicesPanel_ = createCheckBoxPanel("Z-stacks (slices)");
-      slicesPanel_.setLayout(new MigLayout("fillx, flowx, gap 0, insets 2",
-            "", "push[]2[]2[]2[]push"));
+      slicesPanel_ = createCheckBoxPanel("Z-Stacks (Slices)");
+      slicesPanel_.setLayout(new MigLayout("fillx, gap 2, insets 2",
+            "push[][][][]push", ""));
 
-      String labelConstraint = "pushx 100, alignx right, gapright 6";
+      String labelConstraint = "pushx 100, alignx label";
 
       // Simplify inserting unit labels slightly.
       Runnable addUnits = new Runnable() {
@@ -396,7 +399,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
          }
       };
 
-      final JLabel zbottomLabel = new JLabel("Z-start");
+      final JLabel zbottomLabel = new JLabel("Start Z:");
       zbottomLabel.setFont(DEFAULT_FONT);
       slicesPanel_.add(zbottomLabel, labelConstraint);
 
@@ -423,7 +426,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       });
       slicesPanel_.add(setBottomButton_, buttonSize + ", pushx 100, wrap");
 
-      final JLabel ztopLabel = new JLabel("Z-end");
+      final JLabel ztopLabel = new JLabel("End Z:");
       ztopLabel.setFont(DEFAULT_FONT);
       slicesPanel_.add(ztopLabel, labelConstraint);
 
@@ -447,7 +450,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       });
       slicesPanel_.add(setTopButton_, buttonSize + ", pushx 100, wrap");
 
-      final JLabel zstepLabel = new JLabel("Z-step");
+      final JLabel zstepLabel = new JLabel("Step size:");
       zstepLabel.setFont(DEFAULT_FONT);
       slicesPanel_.add(zstepLabel, labelConstraint);
 
@@ -494,17 +497,16 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    }
 
    private JPanel createAcquisitionOrder() {
-      acquisitionOrderPanel_ = createLabelPanel("Acquisition order");
+      acquisitionOrderPanel_ = createLabelPanel("Acquisition Order");
       acquisitionOrderPanel_.setLayout(
             new MigLayout(PANEL_CONSTRAINT + ", flowy"));
-      acquisitionOrderPanel_.setMinimumSize(new Dimension(200, 80));
       acqOrderBox_ = new JComboBox();
       acqOrderBox_.setFont(new Font("", Font.PLAIN, 10));
       acquisitionOrderPanel_.add(acqOrderBox_, "alignx center");
       acquisitionOrderText_ = new JTextArea(3, 25);
       acquisitionOrderText_.setEditable(false);
       acquisitionOrderText_.setFont(new Font("", Font.PLAIN, 9));
-      acquisitionOrderPanel_.add(acquisitionOrderText_);
+      acquisitionOrderPanel_.add(acquisitionOrderText_, "alignx center");
 
       acqOrderModes_ = new AcqOrderMode[4];
       acqOrderModes_[0] = new AcqOrderMode(AcqOrderMode.TIME_POS_SLICE_CHANNEL);
@@ -536,7 +538,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       });
       afPanel_.add(afButton, "alignx center, wrap");
 
-      final JLabel afSkipFrame1 = new JLabel("Skip frame(s): ");
+      final JLabel afSkipFrame1 = new JLabel("Skip frame(s):");
       afSkipFrame1.setFont(new Font("Dialog", Font.PLAIN, 10));
       afSkipFrame1.setToolTipText("How many frames to skip between running autofocus. Autofocus is always run at new stage positions");
 
@@ -567,11 +569,10 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
    private JPanel createSummary() {
       summaryPanel_ = createLabelPanel("Summary");
-      summaryPanel_.setLayout(new MigLayout(PANEL_CONSTRAINT + ", filly"));
+      summaryPanel_.setLayout(new MigLayout(PANEL_CONSTRAINT + ", filly, insets 4 8 4 8"));
       summaryTextArea_ = new JTextArea(8, 25);
       summaryTextArea_.setFont(new Font("Arial", Font.PLAIN, 11));
       summaryTextArea_.setEditable(false);
-      summaryTextArea_.setMargin(new Insets(2, 2, 2, 2));
       summaryTextArea_.setOpaque(false);
       summaryPanel_.add(summaryTextArea_, "grow");
       return summaryPanel_;
@@ -579,11 +580,12 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
    private JPanel createChannelsPanel() {
       channelsPanel_ = createCheckBoxPanel("Channels");
-      channelsPanel_.setLayout(new MigLayout(PANEL_CONSTRAINT));
+      channelsPanel_.setLayout(new MigLayout("fill, gap 2, insets 2",
+               "[grow][]", "[][grow]"));
 
       final JLabel channelsLabel = new JLabel("Channel group:");
       channelsLabel.setFont(DEFAULT_FONT);
-      channelsPanel_.add(channelsLabel, "split 3, spanx, alignx center");
+      channelsPanel_.add(channelsLabel, "split, alignx label");
 
       channelGroupCombo_ = new JComboBox();
       channelGroupCombo_.setFont(new Font("", Font.PLAIN, 10));
@@ -603,7 +605,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
             }
          }
       });
-      channelsPanel_.add(channelGroupCombo_);
+      channelsPanel_.add(channelGroupCombo_, "alignx left");
 
       chanKeepShutterOpenCheckBox_ = new JCheckBox("Keep shutter open");
       chanKeepShutterOpenCheckBox_.setFont(DEFAULT_FONT);
@@ -614,30 +616,15 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
          }
       });
       chanKeepShutterOpenCheckBox_.setSelected(false);
-      channelsPanel_.add(chanKeepShutterOpenCheckBox_, "wrap");
+      channelsPanel_.add(chanKeepShutterOpenCheckBox_, "gapleft push, wrap");
 
-      channelTablePane_ = new JScrollPane() {
-         @Override
-         public Dimension getMinimumSize() {
-            return new Dimension(450, 90);
-         }
-         // HACK: manually set preferred size based on number of rows, because
-         // JTable preferred sizes tend to be ridiculously tall.
-         @Override
-         public Dimension getPreferredSize() {
-            Dimension superSize = super.getPreferredSize();
-            int rowHeight = channelTable_.getRowHeight();
-            int numRows = channelTable_.getRowCount();
-            return new Dimension(superSize.width,
-                  Math.min(superSize.height, rowHeight * numRows + 5));
-         }
-      };
+      channelTablePane_ = new JScrollPane();
       channelTablePane_.setFont(DEFAULT_FONT);
-      channelsPanel_.add(channelTablePane_, "grow, pushx 100");
+      channelsPanel_.add(channelTablePane_, "height 60:60:, grow");
 
       // Slightly smaller than BUTTON_SIZE, and the gap matches the insets of
       // the panel.
-      String buttonConstraint = "width 60!, height 20!, gapleft 2, pushx 0";
+      String buttonConstraint = "width 60!, height 20!, gapleft 2";
 
       final JButton addButton = new JButton("New");
       addButton.setFont(DEFAULT_FONT);
@@ -651,7 +638,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
             model_.fireTableStructureChanged();
          }
       });
-      channelsPanel_.add(addButton, buttonConstraint + ", flowy, spany, split");
+      channelsPanel_.add(addButton, buttonConstraint + ", flowy, split, aligny top");
 
       final JButton removeButton = new JButton("Remove");
       removeButton.setFont(DEFAULT_FONT);
@@ -739,7 +726,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    }
 
    private JPanel createRunButtons() {
-      JPanel result = new JPanel(new MigLayout("flowy, insets 0, gap 0"));
+      JPanel result = new JPanel(new MigLayout("flowy, insets 0, gapx 0, gapy 2"));
       acquireButton_ = new JButton("Acquire!");
       acquireButton_.setMargin(new Insets(-9, -9, -9, -9));
       acquireButton_.setFont(new Font("Arial", Font.BOLD, 12));
@@ -768,7 +755,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    }
 
    private JPanel createSaveButtons() {
-      JPanel result = new JPanel(new MigLayout("flowy, insets 0, gap 0"));
+      JPanel result = new JPanel(new MigLayout("flowy, insets 0, gapx 0, gapy 2"));
       final JButton loadButton = new JButton("Load...");
       loadButton.setToolTipText("Load acquisition settings");
       loadButton.setFont(DEFAULT_FONT);
@@ -796,16 +783,17 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    }
 
    private JPanel createSavePanel() {
-      savePanel_ = createCheckBoxPanel("Save images");
-      savePanel_.setLayout(new MigLayout(PANEL_CONSTRAINT));
+      savePanel_ = createCheckBoxPanel("Save Images");
+      savePanel_.setLayout(new MigLayout(PANEL_CONSTRAINT,
+               "[][grow, fill][]", "[][][]"));
 
       rootLabel_ = new JLabel("Directory root:");
       rootLabel_.setFont(DEFAULT_FONT);
-      savePanel_.add(rootLabel_);
+      savePanel_.add(rootLabel_, "alignx label");
 
       rootField_ = new JTextField();
       rootField_.setFont(DEFAULT_FONT);
-      savePanel_.add(rootField_, "grow, pushx 100");
+      savePanel_.add(rootField_);
 
       browseRootButton_ = new JButton("...");
       browseRootButton_.setToolTipText("Browse");
@@ -821,15 +809,15 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
       namePrefixLabel_ = new JLabel("Name prefix:");
       namePrefixLabel_.setFont(DEFAULT_FONT);
-      savePanel_.add(namePrefixLabel_);
+      savePanel_.add(namePrefixLabel_, "alignx label");
 
       nameField_ = new JTextField();
       nameField_.setFont(DEFAULT_FONT);
-      savePanel_.add(nameField_, "grow, pushx 100, wrap");
+      savePanel_.add(nameField_, "wrap");
 
-      saveTypeLabel_ = new JLabel("Saving format: ");
+      saveTypeLabel_ = new JLabel("Saving format:");
       saveTypeLabel_.setFont(DEFAULT_FONT);
-      savePanel_.add(saveTypeLabel_, "split, spanx");
+      savePanel_.add(saveTypeLabel_, "alignx label");
 
       singleButton_ = new JRadioButton("Separate image files");
       singleButton_.setFont(DEFAULT_FONT);
@@ -840,7 +828,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
                Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES);
          }
       });
-      savePanel_.add(singleButton_);
+      savePanel_.add(singleButton_, "spanx, split");
 
       multiButton_ = new JRadioButton("Image stack file");
       multiButton_.setFont(DEFAULT_FONT);
@@ -851,7 +839,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
                Datastore.SaveMode.MULTIPAGE_TIFF);
          }
       });
-      savePanel_.add(multiButton_);
+      savePanel_.add(multiButton_, "gapafter push");
 
       ButtonGroup buttonGroup = new ButtonGroup();
       buttonGroup.add(singleButton_);
@@ -869,24 +857,23 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
 
    private JPanel createCommentsPanel() {
       commentsPanel_ = createLabelPanel("Acquisition Comments");
-      commentsPanel_.setLayout(new MigLayout(PANEL_CONSTRAINT));
+      commentsPanel_.setLayout(new MigLayout(PANEL_CONSTRAINT,
+               "[grow, fill]", "[]"));
 
-      commentTextArea_ = new JTextArea() {
-         @Override
-         public Dimension getMinimumSize() {
-            return new Dimension(0, 45);
-         }
-      };
+      commentTextArea_ = new JTextArea();
       commentTextArea_.setRows(4);
       commentTextArea_.setFont(new Font("", Font.PLAIN, 10));
-      commentTextArea_.setToolTipText("Comment for the current acquisition");
+      commentTextArea_.setToolTipText("Comment for the acquisition to be run");
       commentTextArea_.setWrapStyleWord(true);
       commentTextArea_.setLineWrap(true);
-      commentTextArea_.setBorder(BorderFactory.createCompoundBorder(
+
+      JScrollPane commentScrollPane = new JScrollPane();
+      commentScrollPane.setBorder(BorderFactory.createCompoundBorder(
                BorderFactory.createLoweredBevelBorder(),
                BorderFactory.createEtchedBorder()));
+      commentScrollPane.setViewportView(commentTextArea_);
 
-      commentsPanel_.add(commentTextArea_, "grow");
+      commentsPanel_.add(commentScrollPane, "wmin 0, height pref!, span");
       return commentsPanel_;
    }
 
@@ -945,31 +932,50 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       acqEng.addSettingsListener(this);
 
       setTitle("Multi-Dimensional Acquisition");
-      setLayout(new MigLayout("flowy, gap 2, insets 6", "[grow]"));
+      setLayout(new MigLayout("fill, flowy, gap 2, insets 6",
+               "[grow, fill]",
+               "[][grow][][]"));
 
       // Contains timepoints, multiple positions, and Z-slices; acquisition
       // order, autofocus, and summary; control buttons, in three columns.
       JPanel topPanel = new JPanel(new MigLayout(
-               "fillx, flowy, insets 0, gap 0", "[grow]6[grow]6[]"));
-      topPanel.add(createTimePoints(), "growx, split, spany");
-      topPanel.add(createMultiPositions(), "growx");
-      topPanel.add(createZStacks(), "grow, wrap");
-      topPanel.add(createAcquisitionOrder(), "growx, split, spany");
-      topPanel.add(createAutoFocus(), "growx");
-      topPanel.add(createSummary(), "grow, wrap");
-      topPanel.add(createCloseButton(),
-            BUTTON_SIZE + ", split, spany");
-      topPanel.add(createRunButtons(), "gaptop 10");
-      topPanel.add(createSaveButtons(),
-            "gaptop 10, gapbottom push");
+               "fill, insets 0",
+               "[grow, fill]6[grow, fill]6[]",
+               "[grow, fill]"));
 
-      add(topPanel, "growx");
+      JPanel topLeftPanel = new JPanel(new MigLayout(
+               "fill, flowy, insets 0",
+               "[grow, fill]",
+               "[]push[]push[]"));
+      JPanel topMiddlePanel = new JPanel(new MigLayout(
+               "fill, flowy, insets 0",
+               "[grow, fill]",
+               "[]push[]push[]"));
+      JPanel topRightPanel = new JPanel(new MigLayout(
+               "flowy, insets 0",
+               "[]",
+               "10[]10[]10[]push"));
+
+      topLeftPanel.add(createTimePoints());
+      topLeftPanel.add(createMultiPositions());
+      topLeftPanel.add(createZStacks());
+
+      topMiddlePanel.add(createAcquisitionOrder());
+      topMiddlePanel.add(createAutoFocus());
+      topMiddlePanel.add(createSummary());
+
+      topRightPanel.add(createCloseButton(), BUTTON_SIZE);
+      topRightPanel.add(createRunButtons());
+      topRightPanel.add(createSaveButtons());
+
+      topPanel.add(topLeftPanel);
+      topPanel.add(topMiddlePanel);
+      topPanel.add(topRightPanel);
+
+      add(topPanel, "grow");
       add(createChannelsPanel(), "grow");
       add(createSavePanel(), "growx");
       add(createCommentsPanel(), "growx");
-
-      // update GUI contents
-      // -------------------
 
 
       // add update event listeners
@@ -1004,7 +1010,8 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       createToolTips();
 
       pack();
-      Dimension size = getSize();
+      Dimension size = getPreferredSize();
+      size.height += 10; // Compensate for inaccurate size given by Apple Java 6
       setMinimumSize(size);
       this.loadAndRestorePosition(100, 100, size.width, size.height);
 
