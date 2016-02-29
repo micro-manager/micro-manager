@@ -155,7 +155,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          public void run() {
             grabImages();
          }
-      });
+      }, "Live mode image grabber");
       grabberThread_.start();
       try {
          core_.startContinuousSequenceAcquisition(0);
