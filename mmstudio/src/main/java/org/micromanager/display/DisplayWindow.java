@@ -102,6 +102,11 @@ public interface DisplayWindow extends DataViewer {
     * window is closed. Typically this is called by the "owner" of the display
     * after a RequestToCloseEvent has been posted and the owner has determined
     * that it is okay to remove the display.
+    * This method must be invoked from the Event Dispatch Thread (EDT). If it
+    * detects that it is not on the EDT, then it will postpone the logic of
+    * actually closing the display until later. Consequently, there is no
+    * guarantee that after this method runs, the display will in fact be
+    * closed.
     */
    public void forceClosed();
 

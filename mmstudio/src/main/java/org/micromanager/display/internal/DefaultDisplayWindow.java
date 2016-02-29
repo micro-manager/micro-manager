@@ -877,6 +877,15 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          // Only ever call this method once.
          return;
       }
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               forceClosed();
+            }
+         });
+         return;
+      }
       savePosition();
       displayBus_.post(new DisplayDestroyedEvent(this));
       DefaultEventManager.getInstance().post(
@@ -915,7 +924,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     */
    @Subscribe
    public void onDisplayDestroyed(GlobalDisplayDestroyedEvent event) {
-      if (event.getDisplay() != this) {
+      if (event.getDisplay() != this && haveCreatedGUI_) {
          canvasQueue_.reapplyLUTs();
       }
    }
