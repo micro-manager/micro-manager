@@ -558,7 +558,6 @@ int AndorCamera::GetListOfAvailableCameras()
             if (ret == DRV_SUCCESS)
                ret = ::Initialize(const_cast<char*>(driverDir_.c_str()));
          }
-
          if(ret != DRV_SUCCESS) {
             return ret;
          }
@@ -3817,7 +3816,7 @@ int AndorCamera::GetListOfAvailableCameras()
       {
          {
             DriverGuard dg(camera_);
-            ret = GetAcquisitionProgress(&acc, &series);
+            ret = GetTotalNumberImagesAcquired(&series);
          }
 		
 		
@@ -3948,10 +3947,22 @@ int AndorCamera::GetListOfAvailableCameras()
 
 
       // prepare the camera
-      int ret = SetAcquisitionMode(5); // run till abort
+      bool kineticSeries = LONG_MAX != numImages;
+
+      int ret = SetAcquisitionMode(kineticSeries ? 3 : 5); // kinetic series : run till abort
       if (ret != DRV_SUCCESS)
          return ret;
-      LogMessage("Set acquisition mode to 5", true);
+      std::string debugMsg = "Set acquisition mode to ";
+      debugMsg.append(kineticSeries ? "3." : "5.");
+      LogMessage(debugMsg, true);
+
+      if(kineticSeries) {
+        ret = SetNumberKinetics(numImages);
+        LogMessage("Set Number of kinetics to " + numImages, true);
+          if (ret != DRV_SUCCESS) {
+           return ret;
+          }
+      }
 
       // set AD-channel to 14-bit
       //   ret = SetADChannel(0);
@@ -4208,8 +4219,19 @@ int AndorCamera::GetListOfAvailableCameras()
          
 
          ret = GetImages16(imageCountFirst,imageCountLast, (WORD*) fullFrameBuffer_, imagesPerDMA*width*height, &validFirst, &validLast);
-         if (ret != DRV_SUCCESS)
-            return (int)ret;
+         if (ret == DRV_NO_NEW_DATA) {
+           int status = 0;
+           ret = GetStatus (&status);
+           if (status == DRV_ACQUIRING) {
+             ret = WaitForAcquisition ();
+             if (ret != DRV_SUCCESS) {
+               return ret;
+             }
+           }
+         }
+         else if (ret != DRV_SUCCESS) {
+           return ret;
+         }
 
       }
 
