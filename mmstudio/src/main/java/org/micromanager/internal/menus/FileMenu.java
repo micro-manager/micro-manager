@@ -31,11 +31,9 @@ public class FileMenu {
    private static final int MAX_HISTORY_SIZE = 15;
    private MMStudio studio_;
 
-   public FileMenu(MMStudio studio) {
+   public FileMenu(MMStudio studio, JMenuBar menuBar) {
       studio_ = studio;
-   }
 
-   public void initializeFileMenu(JMenuBar menuBar) {
       // We generate the menu contents on the fly, as the "open recent"
       // menu items are dynamically-generated.
       final JMenu fileMenu = GUIUtils.createMenuInMenuBar(menuBar, "File");

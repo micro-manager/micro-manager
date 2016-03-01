@@ -111,6 +111,7 @@ import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.display.internal.DefaultDisplayManager;
 
 import org.micromanager.internal.logging.LogFileManager;
+import org.micromanager.internal.menus.ConfigMenu;
 import org.micromanager.internal.menus.FileMenu;
 import org.micromanager.internal.menus.HelpMenu;
 import org.micromanager.internal.menus.ToolsMenu;
@@ -168,6 +169,7 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
    private DefaultPluginManager pluginManager_;
    private final SnapLiveManager snapLiveManager_;
    private final ToolsMenu toolsMenu_;
+   private final ConfigMenu configMenu_;
 
    private List<Component> MMFrames_
            = Collections.synchronizedList(new ArrayList<Component>());
@@ -303,11 +305,11 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
 
       menuBar_ = new JMenuBar();
 
-      FileMenu fileMenu = new FileMenu(studio_);
-      fileMenu.initializeFileMenu(menuBar_);
+      FileMenu fileMenu = new FileMenu(studio_, menuBar_);
 
-      toolsMenu_ = new ToolsMenu(studio_, core_);
-      toolsMenu_.initializeToolsMenu(menuBar_);
+      toolsMenu_ = new ToolsMenu(studio_, core_, menuBar_);
+
+      configMenu_ = new ConfigMenu(studio_, core_, menuBar_);
 
       HelpMenu helpMenu = new HelpMenu(studio_, core_);
 
@@ -1193,7 +1195,7 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       frame_.setEnabled(true);
       initializeGUI();
 
-      toolsMenu_.updateSwitchConfigurationMenu();
+      configMenu_.updateSwitchConfigurationMenu();
 
       FileDialogs.storePath(FileDialogs.MM_CONFIG_FILE, new File(sysConfigFile_));
 

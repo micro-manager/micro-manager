@@ -38,7 +38,6 @@ public class ToolsMenu {
    private static final String MOUSE_MOVES_STAGE = "whether or not the hand tool can be used to move the stage";
 
    private JMenu toolsMenu_;
-   private final JMenu switchConfigurationMenu_;
    private final JMenu quickAccessMenu_;
    private JCheckBoxMenuItem centerAndDragMenuItem_;
 
@@ -46,15 +45,11 @@ public class ToolsMenu {
    private final CMMCore core_;
 
    @SuppressWarnings("LeakingThisInConstructor")
-   public ToolsMenu(MMStudio studio, CMMCore core) {
+   public ToolsMenu(MMStudio studio, CMMCore core, JMenuBar menuBar) {
       studio_ = studio;
       core_ = core;
       quickAccessMenu_ = new JMenu("Quick Access Panels");
-      switchConfigurationMenu_ = new JMenu();
-      studio_.events().registerForEvents(this);
-   }
-   
-   public void initializeToolsMenu(JMenuBar menuBar) {
+
       toolsMenu_ = GUIUtils.createMenuInMenuBar(menuBar, "Tools");
 
       GUIUtils.addMenuItem(toolsMenu_, "Refresh GUI",
@@ -101,15 +96,6 @@ public class ToolsMenu {
                  }
               });
 
-      GUIUtils.addMenuItem(toolsMenu_, "Device Property Browser...",
-              "Open new window to view and edit device property values",
-              new Runnable() {
-                 @Override
-                 public void run() {
-                    studio_.createPropertyEditor();
-                 }
-              });
-      
       toolsMenu_.addSeparator();
 
       GUIUtils.addMenuItem(toolsMenu_, "Stage Control...",
@@ -172,58 +158,6 @@ public class ToolsMenu {
 
       toolsMenu_.addSeparator();
 
-      GUIUtils.addMenuItem(toolsMenu_, "Hardware Configuration Wizard...",
-              "Open wizard to create new hardware configuration",
-              new Runnable() {
-                 @Override
-                 public void run() {
-                    runHardwareWizard();
-                 }
-              });
-
-      GUIUtils.addMenuItem(toolsMenu_, "Load Hardware Configuration...",
-              "Un-initialize current configuration and initialize new one",
-              new Runnable() {
-                 @Override
-                 public void run() {
-                    loadConfiguration();
-                    studio_.initializeGUI();
-                 }
-              });
-
-      GUIUtils.addMenuItem(toolsMenu_, "Reload Hardware Configuration",
-              "Shutdown current configuration and initialize most recently loaded configuration",
-              new Runnable() {
-                 @Override
-                 public void run() {
-                    studio_.loadSystemConfiguration();
-                    studio_.initializeGUI();
-                 }
-              });
-
-      for (int i=0; i<5; i++)
-      {
-         JMenuItem configItem = new JMenuItem();
-         configItem.setText(Integer.toString(i));
-         switchConfigurationMenu_.add(configItem);
-      }
-      
-      switchConfigurationMenu_.setText("Switch Hardware Configuration");
-      toolsMenu_.add(switchConfigurationMenu_);
-      switchConfigurationMenu_.setToolTipText("Switch between recently used configurations");
-
-      GUIUtils.addMenuItem(toolsMenu_, "Save Configuration Settings As...",
-              "Save current configuration settings as new configuration file",
-              new Runnable() {
-                 @Override
-                 public void run() {
-                    studio_.saveConfigPresets();
-                    studio_.updateChannelCombos();
-                 }
-              });
-
-      toolsMenu_.addSeparator();
-
       GUIUtils.addMenuItem(toolsMenu_, "Options...",
               "Set a variety of Micro-Manager configuration options",
               new Runnable() {
@@ -244,63 +178,8 @@ public class ToolsMenu {
             }
          }
       });
-   }
 
-   private void loadConfiguration() {
-      File configFile = FileDialogs.openFile(MMStudio.getFrame(), 
-            "Load a config file", FileDialogs.MM_CONFIG_FILE);
-      if (configFile != null) {
-         studio_.setSysConfigFile(configFile.getAbsolutePath());
-      }
-   }
-
-   private void runHardwareWizard() {
-      try {
-         if (studio_.getIsConfigChanged()) {
-            Object[] options = {"Yes", "No"};
-            int n = JOptionPane.showOptionDialog(null,
-                  "Save Changed Configuration?", "Micro-Manager",
-                  JOptionPane.YES_NO_OPTION,
-                  JOptionPane.QUESTION_MESSAGE, null, options,
-                  options[0]);
-            if (n == JOptionPane.YES_OPTION) {
-               studio_.saveConfigPresets();
-            }
-            studio_.setConfigChanged(false);
-         }
-
-         studio_.live().setSuspended(true);
-
-         // unload all devices before starting configurator
-         core_.reset();
-         GUIUtils.preventDisplayAdapterChangeExceptions();
-
-         // run Configurator
-         ConfiguratorDlg2 cfg2 = null;
-         MainFrame frame = MMStudio.getFrame();
-         try {
-            frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            cfg2 = new ConfiguratorDlg2(core_, studio_.getSysConfigFile());
-         } finally {
-            frame.setCursor(Cursor.getDefaultCursor());
-         }
-
-         if (cfg2 == null)
-         {
-            ReportingUtils.showError("Failed to launch Hardware Configuration Wizard");
-            return;
-         }
-         cfg2.setVisible(true);
-         GUIUtils.preventDisplayAdapterChangeExceptions();
-
-         // re-initialize the system with the new configuration file
-         studio_.setSysConfigFile(cfg2.getFileName());
-
-         GUIUtils.preventDisplayAdapterChangeExceptions();
-         studio_.live().setSuspended(false);
-      } catch (Exception e) {
-         ReportingUtils.showError(e);
-      }
+      studio_.events().registerForEvents(this);
    }
 
    private void populateQuickAccessMenu() {
@@ -380,26 +259,6 @@ public class ToolsMenu {
                   }
                }
             });
-   }
-
-   public void updateSwitchConfigurationMenu() {
-      switchConfigurationMenu_.removeAll();
-      HashSet<String> seenConfigs = new HashSet<String>();
-      for (final String configFile : IntroDlg.getRecentlyUsedConfigs()) {
-         if (configFile.equals(studio_.getSysConfigFile()) ||
-               seenConfigs.contains(configFile)) {
-            continue;
-         }
-         GUIUtils.addMenuItem(switchConfigurationMenu_,
-                 configFile, null,
-                 new Runnable() {
-            @Override
-            public void run() {
-               studio_.setSysConfigFile(configFile);
-            }
-         });
-         seenConfigs.add(configFile);
-      }
    }
 
    @Subscribe
