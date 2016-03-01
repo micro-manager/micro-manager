@@ -39,9 +39,11 @@ public class DefaultUserProfile implements UserProfile {
    static {
       staticInstance_ = new DefaultUserProfile();
    }
+   private final String globalProfilePath_ = new File(
+         UserProfile.GLOBAL_SETTINGS_FILE).getAbsolutePath();
    private HashMap<String, String> nameToFile_;
    private String profileName_;
-   private final DefaultPropertyMap globalProfile_;
+   private DefaultPropertyMap globalProfile_;
    private DefaultPropertyMap userProfile_;
    // This object exists to give us something consistent to lock on.
    private static final Object lockObject_ = new Object();
@@ -52,8 +54,7 @@ public class DefaultUserProfile implements UserProfile {
 
    public DefaultUserProfile() {
       nameToFile_ = loadProfileMapping();
-      String globalPath = new File(UserProfile.GLOBAL_SETTINGS_FILE).getAbsolutePath();
-      globalProfile_ = loadPropertyMap(globalPath);
+      globalProfile_ = loadPropertyMap(globalProfilePath_);
       // Naturally we start with the default user loaded.
       setCurrentProfile(DEFAULT_USER);
       startSaveThread();
@@ -263,10 +264,8 @@ public class DefaultUserProfile implements UserProfile {
          if (result != null) {
             return result;
          }
-      }
-      // Try the global profile.
-      synchronized(globalProfile_) {
-         String result = globalProfile_.getString(key);
+         // Try the global profile.
+         result = globalProfile_.getString(key);
          if (result != null) {
             return result;
          }
@@ -282,10 +281,8 @@ public class DefaultUserProfile implements UserProfile {
          if (result != null) {
             return result;
          }
-      }
-      // Try the global profile.
-      synchronized(globalProfile_) {
-         String[] result = globalProfile_.getStringArray(key);
+         // Try the global profile.
+         result = globalProfile_.getStringArray(key);
          if (result != null) {
             return result;
          }
@@ -314,10 +311,8 @@ public class DefaultUserProfile implements UserProfile {
          if (result != null) {
             return result;
          }
-      }
-      // Try the global profile.
-      synchronized(globalProfile_) {
-         Integer result = globalProfile_.getInt(key);
+         // Try the global profile.
+         result = globalProfile_.getInt(key);
          if (result != null) {
             return result;
          }
@@ -333,10 +328,8 @@ public class DefaultUserProfile implements UserProfile {
          if (result != null) {
             return result;
          }
-      }
-      // Try the global profile.
-      synchronized(globalProfile_) {
-         Integer[] result = globalProfile_.getIntArray(key);
+         // Try the global profile.
+         result = globalProfile_.getIntArray(key);
          if (result != null) {
             return result;
          }
@@ -365,10 +358,8 @@ public class DefaultUserProfile implements UserProfile {
          if (result != null) {
             return result;
          }
-      }
-      // Try the global profile.
-      synchronized(globalProfile_) {
-         Long result = globalProfile_.getLong(key);
+         // Try the global profile.
+         result = globalProfile_.getLong(key);
          if (result != null) {
             return result;
          }
@@ -384,10 +375,8 @@ public class DefaultUserProfile implements UserProfile {
          if (result != null) {
             return result;
          }
-      }
-      // Try the global profile.
-      synchronized(globalProfile_) {
-         Long[] result = globalProfile_.getLongArray(key);
+         // Try the global profile.
+         result = globalProfile_.getLongArray(key);
          if (result != null) {
             return result;
          }
@@ -416,10 +405,8 @@ public class DefaultUserProfile implements UserProfile {
          if (result != null) {
             return result;
          }
-      }
-      // Try the global profile.
-      synchronized(globalProfile_) {
-         Double result = globalProfile_.getDouble(key);
+         // Try the global profile.
+         result = globalProfile_.getDouble(key);
          if (result != null) {
             return result;
          }
@@ -435,10 +422,8 @@ public class DefaultUserProfile implements UserProfile {
          if (result != null) {
             return result;
          }
-      }
-      // Try the global profile.
-      synchronized(globalProfile_) {
-         Double[] result = globalProfile_.getDoubleArray(key);
+         // Try the global profile.
+         result = globalProfile_.getDoubleArray(key);
          if (result != null) {
             return result;
          }
@@ -467,10 +452,8 @@ public class DefaultUserProfile implements UserProfile {
          if (result != null) {
             return result;
          }
-      }
-      // Try the global profile.
-      synchronized(globalProfile_) {
-         Boolean result = globalProfile_.getBoolean(key);
+         // Try the global profile.
+         result = globalProfile_.getBoolean(key);
          if (result != null) {
             return result;
          }
@@ -486,10 +469,8 @@ public class DefaultUserProfile implements UserProfile {
          if (result != null) {
             return result;
          }
-      }
-      // Try the global profile.
-      synchronized(globalProfile_) {
-         Boolean[] result = globalProfile_.getBooleanArray(key);
+         // Try the global profile.
+         result = globalProfile_.getBooleanArray(key);
          if (result != null) {
             return result;
          }
@@ -518,9 +499,7 @@ public class DefaultUserProfile implements UserProfile {
          if (result != null) {
             return result;
          }
-      }
-      // Try the global profile.
-      synchronized(globalProfile_) {
+         // Try the global profile.
          return globalProfile_.getObject(key, fallback);
       }
    }
@@ -660,8 +639,6 @@ public class DefaultUserProfile implements UserProfile {
    }
 
    public Set<String> getProfileNames() {
-      // HACK: don't reveal the global profile since it's not technically a
-      // "user".
       HashSet<String> result = new HashSet<String>(nameToFile_.keySet());
       return result;
    }
@@ -789,6 +766,35 @@ public class DefaultUserProfile implements UserProfile {
             nameToFile_.get(profileName)).delete();
       nameToFile_.remove(profileName);
       writeProfileMapping(nameToFile_);
+   }
+
+   /**
+    * Insert a string value into the global profile.
+    */
+   public void setGlobalString(String key, String value) {
+      synchronized(lockObject_) {
+         globalProfile_ = (DefaultPropertyMap) (globalProfile_.copy()
+               .putString(key, value).build());
+      }
+   }
+
+   /**
+    * Retrieve a string value from the global profile.
+    */
+   public String getGlobalString(String key, String defaultVal) {
+      synchronized(lockObject_) {
+         return globalProfile_.getString(key, defaultVal);
+      }
+   }
+
+   public void saveGlobalProfile() {
+      // TODO: how do we actually write to the directory?
+      // One possible solution: have a separate program that can run with
+      // elevated permissions; write the program to a temporary file, then
+      // run the separate program to do the copy with elevated permissions.
+      // This may be relevant:
+      // http://stackoverflow.com/questions/1385866/java-run-as-administrator
+      ReportingUtils.showError("Not yet implemented");
    }
 
    public static DefaultUserProfile getInstance() {
