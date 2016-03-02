@@ -32,6 +32,7 @@ import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.ListeningJTabbedPane;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
+import org.micromanager.asidispim.Utils.PiezoSleepPreventer;
 
 import java.awt.Container;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -57,7 +58,7 @@ import org.micromanager.utils.MMFrame;
 
 import mmcorej.CMMCore;
 
-//TODO devices tab automatically recognize default device names
+//TODO devices tab automatically recognize default device names, e.g. autopopulate
 //TODO "swap sides" button (during alignment)
 //TODO alignment wizard that would guide through alignment steps
 //TODO easy mode that pulls most-used bits from all panels
@@ -80,9 +81,7 @@ import mmcorej.CMMCore;
 //TODO execute autofocus during acquisition before the desired time point is reached instead of waiting until a timepoint should be collected
 //       or else do autofocus after acquisition instead of before
 //TODO smart default joystick settings (e.g. different defaults different panels/wheels)
-//TODO easily take "test acquisition" that wouldn't need to be saved, only do 1 timepoint, etc. From both acquisition and setup tabs (setup tab would only do that side)
 //TODO calculate and show estimated disk space as part of "durations"
-//TODO prevent user from closing plugin window during acquisition
 
 
 /**
@@ -117,6 +116,7 @@ public class ASIdiSPIMFrame extends MMFrame
    private final StatusSubPanel statusSubPanel_;
    private final StagePositionUpdater stagePosUpdater_;
    private final ListeningJTabbedPane tabbedPane_;
+   private PiezoSleepPreventer piezoSleepPreventer_;
    
    private final AtomicBoolean hardwareInUse_ = new AtomicBoolean(false);   // true if acquisition or autofocus running
    
@@ -205,6 +205,8 @@ public class ASIdiSPIMFrame extends MMFrame
       stagePosUpdater_.addPanel(setupPanelB_);
       stagePosUpdater_.addPanel(navigationPanel_);
       stagePosUpdater_.addPanel(statusSubPanel_);
+      
+      piezoSleepPreventer_ = new PiezoSleepPreventer(gui_, devices_, props_);
 
       // attach live mode listeners
       MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelB_);
@@ -215,33 +217,16 @@ public class ASIdiSPIMFrame extends MMFrame
          @Override
          public void liveModeEnabled(boolean enabled) {
             if (enabled) {
-               try {
-                  for (Devices.Keys piezoKey : Devices.PIEZOS) {
-                     if (devices_.isValidMMDevice(piezoKey)) {
-                        if (props_.getPropValueInteger(piezoKey, Properties.Keys.AUTO_SLEEP_DELAY) > 0) {
-                           core_.setRelativePosition(devices_.getMMDevice(piezoKey), 0);
-                        }
-                     }
-                  }
-               } catch (Exception e) {
-                  MyDialogUtils.showError("Could not reset piezo's positions");
-               }
+               piezoSleepPreventer_.start();
+            } else {
+               piezoSleepPreventer_.stop();
             }
          }
       });
-      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener(new LiveModeListener() {
-         // update camera/scanner settings
-         @Override
-         public void liveModeEnabled(boolean enabled) {
-            if (enabled) {
-               int scan = props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_CAMERA_LIVE_SCAN);
-               props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
-                     Properties.Keys.SPIM_LINESCAN_PERIOD, scan, true);
-               props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
-                     Properties.Keys.SA_PATTERN_X, Properties.Values.SAM_TRIANGLE, true);
-            }
-         }
-      });
+      
+      // set scan for live mode to be triangle
+      props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+            Properties.Keys.SA_PATTERN_X, Properties.Values.SAM_TRIANGLE, true);
       
       // make sure gotDeSelected() and gotSelected() get called whenever we switch tabs
       tabbedPane_.addChangeListener(new ChangeListener() {
