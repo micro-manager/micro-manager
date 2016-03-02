@@ -40,12 +40,14 @@ public class PiezoSleepPreventer {
    private final Properties props_;
    private Timer timer_;
    
+   private final int unsleepPeriodSeconds = 40;  // run every 40 seconds
+   
    /**
-    * Utility class for stage position timer.
-    * 
-    * The timer will be constructed when the start function is called.
-    * Panels to be informed of updated stage positions should be added
-    * using the addPanel function.
+    * Utility class to periodically "move" piezos to prevent them from sleeping.
+    *  (move is of distance 0 so nothing happens in practice)
+    *  
+    * The timer is intended to be started when live mode is enabled and stopped when
+    *   live mode is disabled.
     * 
     * @param positions
     * @param props
@@ -58,7 +60,7 @@ public class PiezoSleepPreventer {
    }
    
    /**
-    * Start the timer.  Uses its own thread viajava.util.Timer.scheduleAtFixedRate().
+    * Start the timer on own thread via java.util.Timer.scheduleAtFixedRate().
     * Call stop() to stop.
     */
    public void start() {
@@ -72,8 +74,8 @@ public class PiezoSleepPreventer {
             public void run() {
                unsleepPiezos();
             }
-          }, 0, 40*1000);  // run every 40 seconds
-//      unsleepPiezos();
+          }, 0, unsleepPeriodSeconds*1000);
+      // will run immediately after start
    }
    
    /**
