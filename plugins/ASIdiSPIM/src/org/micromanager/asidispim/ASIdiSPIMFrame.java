@@ -31,7 +31,6 @@ import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.ListeningJTabbedPane;
-import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.asidispim.Utils.PiezoSleepPreventer;
 
 import java.awt.Container;
@@ -55,8 +54,6 @@ import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.internalinterfaces.LiveModeListener; 
 import org.micromanager.utils.MMFrame;
-
-import mmcorej.CMMCore;
 
 //TODO devices tab automatically recognize default device names, e.g. autopopulate
 //TODO "swap sides" button (during alignment)
@@ -94,7 +91,6 @@ public class ASIdiSPIMFrame extends MMFrame
       implements MMListenerInterface {
    
    private final ScriptInterface gui_;
-   private final CMMCore core_;
    private final Properties props_; 
    private final Prefs prefs_;
    private final Devices devices_;
@@ -131,7 +127,6 @@ public class ASIdiSPIMFrame extends MMFrame
 
       // create interface objects used by panels
       gui_ = gui;
-      core_ = gui.getMMCore();
       prefs_ = new Prefs(Preferences.userNodeForPackage(this.getClass()));
       devices_ = new Devices(gui_, prefs_);
       props_ = new Properties(gui_, devices_, prefs_);
