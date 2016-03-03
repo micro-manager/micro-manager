@@ -42,8 +42,8 @@ public class DefaultMDAPlugin implements AcquisitionDialogPlugin, SciJavaPlugin 
    public ImageIcon getIcon() {
       // This icon based on the public-domain icon at
       // https://openclipart.org/detail/2757/movie-tape
-      return new ImageIcon(
-            IconLoader.loadFromResource("/org/micromanager/icons/film.png"));
+      return new ImageIcon(getClass().getClassLoader().getResource(
+            "org/micromanager/icons/film.png"));
    }
 
    @Override
