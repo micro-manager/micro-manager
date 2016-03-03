@@ -133,6 +133,10 @@ public final class HistogramsPanel extends InspectorPanel {
       // arrive while we're doing our setup.
       display.registerForEvents(this);
       display.getDatastore().registerForEvents(this);
+      if (display.getDatastore().getAnyImage() == null) {
+         // No need to create any panels yet.
+         return;
+      }
       synchronized(panelLock_) {
          // Check the display to see how many histograms it needs at the start.
          // If there's no channel axis, then it gets 1 histogram.
