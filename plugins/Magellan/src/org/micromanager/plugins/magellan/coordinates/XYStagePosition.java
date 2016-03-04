@@ -108,15 +108,16 @@ public class XYStagePosition {
    }
    
    public JSONObject getMMPosition() {
+      return getMMPosition(Magellan.getCore().getXYStageDevice());
+   }
+   
+   public JSONObject getMMPosition(String xyStageName) {
       try {
-         //make intitial position list, with current position and 0,0 as coordinates
-         CMMCore core = Magellan.getCore();
-
          JSONObject coordinates = new JSONObject();
          JSONArray xy = new JSONArray();
          xy.put(center_.x);
          xy.put(center_.y);
-         coordinates.put(core.getXYStageDevice(), xy);
+         coordinates.put(xyStageName, xy);
          JSONObject pos = new JSONObject();
          pos.put("DeviceCoordinatesUm", coordinates);
          pos.put("GridColumnIndex", gridCol_);

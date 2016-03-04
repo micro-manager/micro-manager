@@ -668,7 +668,7 @@ public abstract class VirtualAcquisitionDisplay{
                if (!location.isDirectory()) {
                   location = location.getParentFile();
                }
-               Runtime.getRuntime().exec("open " + location.getAbsolutePath());
+               Runtime.getRuntime().exec(new String[]{ "open", location.getAbsolutePath()});
             }
          } catch (IOException ex) {
             Log.log(ex);

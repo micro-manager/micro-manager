@@ -25,6 +25,8 @@ import java.util.TreeMap;
 import java.util.prefs.Preferences;
 import org.micromanager.plugins.magellan.misc.JavaUtils;
 import org.micromanager.MMStudio;
+import org.micromanager.plugins.magellan.main.Magellan;
+import org.micromanager.plugins.magellan.misc.GlobalSettings;
 
 public class AffineUtils {
 
@@ -79,5 +81,11 @@ public class AffineUtils {
       return new AffineTransform(matrix);
 
    }
+
+    public static void storeAffineTransform(String pixelSizeConfig, AffineTransform transform) {
+       Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
+         GlobalSettings.putObjectInPrefs(prefs, "affine_transform_" + 
+                 pixelSizeConfig, transform);         
+    }
 
 }

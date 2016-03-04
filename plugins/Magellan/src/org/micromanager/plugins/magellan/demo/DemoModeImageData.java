@@ -35,16 +35,19 @@ public class DemoModeImageData {
    public DemoModeImageData() {
 //      Interpreter.batchMode = true; //batch mode makes everything ridiculously slow for some reason
       
-      String name = "Navigator demo LN" + 
-              (Magellan.getCore().getBytesPerPixel() > 1 ? "16Bit" : "")+ ".tif";
-      if (JavaUtils.isMac()) {
-         //Laptop         
-         IJ.runMacro("run(\"TIFF Virtual Stack...\", \"open=[/Applications/Micro-Manager1.4/Navigator demo LN.tif]\");");
-      } else {
-         //BIDC computer
-         IJ.runMacro("run(\"TIFF Virtual Stack...\", \"open=[C:/Program Files/Micro-Manager-1.4/" + name+ "]\");");
-      }
-      img_ = WindowManager.getImage(name);
+//      String name = "Navigator demo LN" + 
+//              (Magellan.getCore().getBytesPerPixel() > 1 ? "16Bit" : "")+ ".tif";      
+//      if (JavaUtils.isMac()) {
+//         //Laptop         
+//         IJ.runMacro("run(\"TIFF Virtual Stack...\", \"open=[/Applications/Micro-Manager1.4/Navigator demo LN.tif]\");");
+//      } else {
+//         //BIDC computer
+//         IJ.runMacro("run(\"TIFF Virtual Stack...\", \"open=[C:/Program Files/Micro-Manager-1.4/" + name+ "]\");");
+//      }
+//      img_ = WindowManager.getImage(name);
+      
+      IJ.runMacro("run(\"TIFF Virtual Stack...\", \"open=[./Magellan_demo_data.tif]\");");
+      img_ =  WindowManager.getImage("Magellan_demo_data.tif");
       img_.getWindow().setState(Frame.ICONIFIED);
    }
    

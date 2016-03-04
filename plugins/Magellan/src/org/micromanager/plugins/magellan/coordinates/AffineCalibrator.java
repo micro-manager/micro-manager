@@ -117,8 +117,7 @@ public class AffineCalibrator {
                "Store calculated affine transform?", JOptionPane.YES_NO_OPTION);
       if (result == JOptionPane.YES_OPTION) {
          //store affine
-         Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
-         GlobalSettings.putObjectInPrefs(prefs, "affine_transform_" + core.getCurrentPixelSizeConfig(), transform);
+         AffineUtils.storeAffineTransform(core.getCurrentPixelSizeConfig(),transform);
          //mark as updated
          AffineUtils.transformUpdated(core.getCurrentPixelSizeConfig(), transform);
       }

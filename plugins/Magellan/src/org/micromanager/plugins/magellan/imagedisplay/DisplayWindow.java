@@ -29,6 +29,9 @@ import java.awt.*;
 import java.awt.event.*;
 import java.text.DecimalFormat;
 import java.util.Comparator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import javax.swing.*;
 import org.micromanager.plugins.magellan.misc.Log;
@@ -211,13 +214,18 @@ public class DisplayWindow extends StackWindow {
       rightPanel.add(nonImagePanel_, BorderLayout.CENTER);
       this.add(rightPanel, BorderLayout.LINE_END);
 
+      //get screen size for default window sizing
+      Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+      int width = (int) screenSize.getWidth();
+      int height = (int) screenSize.getHeight();
       //Set window size based on saved prefs for each type of acquisition
+
       if (disp.getAcquisition() instanceof ExploreAcquisition) {
-         this.setSize(new Dimension(displayPrefs_.getInt(WINDOWSIZEX_EXPLORE, 1000),
-                 displayPrefs_.getInt(WINDOWSIZEY_EXPLORE, 1000)));
+         this.setSize(new Dimension(displayPrefs_.getInt(WINDOWSIZEX_EXPLORE, width),
+                 displayPrefs_.getInt(WINDOWSIZEY_EXPLORE, height)));
       } else {
-         this.setSize(new Dimension(displayPrefs_.getInt(WINDOWSIZEX_FIXED, 1000),
-                 displayPrefs_.getInt(WINDOWSIZEY_FIXED, 1000)));
+         this.setSize(new Dimension(displayPrefs_.getInt(WINDOWSIZEX_FIXED, width),
+                 displayPrefs_.getInt(WINDOWSIZEY_FIXED, height)));
       }
       cmcPanel_.initialize(disp);
       doLayout();

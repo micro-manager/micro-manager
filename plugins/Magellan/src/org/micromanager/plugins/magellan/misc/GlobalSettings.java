@@ -17,6 +17,7 @@
 
 package org.micromanager.plugins.magellan.misc;
 
+import java.awt.geom.AffineTransform;
 import org.micromanager.plugins.magellan.demo.DemoModeImageData;
 import org.micromanager.plugins.magellan.gui.GUI;
 import java.io.ByteArrayInputStream;
@@ -28,6 +29,8 @@ import java.util.ArrayList;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import javax.swing.filechooser.FileSystemView;
+import org.micromanager.MMStudio;
+import org.micromanager.plugins.magellan.coordinates.AffineUtils;
 import org.micromanager.plugins.magellan.main.Magellan;
 
 /**
@@ -57,12 +60,19 @@ public class GlobalSettings {
       //Demo mode 
       try {
          String s = Magellan.getConfigFileName();
-         if (s.endsWith("NavDemo.cfg") || s.endsWith("NavDemo16Bit.cfg")) {
+         if (s.endsWith("MagellanDemo.cfg")) {
+            //generate a dummy affine transformation for current pixel size config
+             String psConfig = MMStudio.getInstance().getCore().getCurrentPixelSizeConfig();
+             AffineTransform demoTransform = new AffineTransform(new double[]{1,0,0,1});
+             AffineUtils.storeAffineTransform(psConfig, demoTransform);
+             //Set stage to the middle of the demo sample
+             Magellan.getCore().setXYPosition(700, 700);         
             demoMode_ = true;
             new DemoModeImageData();
          } 
          bidc2P_ = Magellan.getCore().getCameraDevice().equals("BitFlowCamera") || Magellan.getCore().getCameraDevice().equals("BitFlowCameraX2");
       } catch (Exception e) {
+          Log.log("Couldn't initialize Demo mode");
       }
       
       

@@ -36,7 +36,7 @@ import org.micromanager.api.ScriptInterface;
  */
 public class Magellan implements MMPlugin{
 
-   private static final String VERSION = "1.0";
+   private static final String VERSION = "1.01";
            
    public static final String menuName = "Micro-Magellan";
    public static final String tooltipDescription = "High throughout, automated micrscopy for spatiotemporal exploration";

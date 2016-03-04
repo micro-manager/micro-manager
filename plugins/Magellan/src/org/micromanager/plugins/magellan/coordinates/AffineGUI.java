@@ -120,8 +120,7 @@ public class AffineGUI extends javax.swing.JFrame {
            return;
        }
         //store affine
-        Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
-        JavaUtils.putObjectInPrefs(prefs, "affine_transform_" + pixelSizeConfig_, rotAT);
+        AffineUtils.storeAffineTransform(pixelSizeConfig_, rotAT);
         //mark as updated
         AffineUtils.transformUpdated(pixelSizeConfig_, rotAT);
     }

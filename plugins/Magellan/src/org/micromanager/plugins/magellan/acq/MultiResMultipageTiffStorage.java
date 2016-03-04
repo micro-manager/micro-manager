@@ -102,7 +102,7 @@ public class MultiResMultipageTiffStorage {
          
       //create position manager
       try {
-         if (MD.isExploreAcq(summaryMD_)) {
+         if (MD.isExploreAcq(summaryMD_) ) {
             TreeMap<Integer, XYStagePosition> positions = new TreeMap<Integer, XYStagePosition>();
             for (String key : fullResStorage_.imageKeys()) {
                int[] indices = MD.getIndices(key);
@@ -112,10 +112,10 @@ public class MultiResMultipageTiffStorage {
                   positions.put(posIndex, new XYStagePosition(new Point2D.Double(MD.getStageX(md),MD.getStageY(md)), 
                           MD.getGridRow(md), MD.getGridCol(md)));
                }
-            }
+            }          
             JSONArray pList = new JSONArray();
             for (XYStagePosition xyPos : positions.values()) {
-               pList.put(xyPos.getMMPosition());
+               pList.put(xyPos.getMMPosition(MD.getCoreXY(summaryMD_)));
             }
             posManager_ = new PositionManager(affine_, summaryMD_, tileWidth_, tileHeight_, tileWidth_, tileHeight_, xOverlap_, xOverlap_, pList);
          } else {

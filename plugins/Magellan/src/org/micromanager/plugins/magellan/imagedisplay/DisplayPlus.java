@@ -281,7 +281,9 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       activeDisplays_.remove(this);
       redrawPixelsExecutor_.shutdownNow();
       //make sure acquisition is done before allowing imagestorage to close
-      acq_.waitUntilClosed(); 
+      if (acq_ != null){ 
+         acq_.waitUntilClosed();
+      } 
       super.onWindowClose(event);
       bar.setVisible(false);
    }

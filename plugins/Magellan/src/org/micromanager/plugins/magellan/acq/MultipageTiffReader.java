@@ -262,7 +262,7 @@ public class MultipageTiffReader {
          long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.DISPLAY_SETTINGS_OFFSET_HEADER,16);
           ByteBuffer header = readIntoBuffer(offset, 8);
           if (header.getInt(0) != MultipageTiffWriter.DISPLAY_SETTINGS_HEADER) {
-             Log.log("Can't find display settings in file: " + file_.getName(), true);
+             Log.log("Can't find display settings in file: " + file_.getName(), false);
              return null;
           }
           ByteBuffer buffer = readIntoBuffer(offset + 8, header.getInt(4));
