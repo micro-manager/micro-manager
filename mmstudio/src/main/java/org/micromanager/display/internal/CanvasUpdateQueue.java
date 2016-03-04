@@ -176,44 +176,62 @@ public class CanvasUpdateQueue {
     * Only called on the EDT.
     */
    private void consumeImages() {
-      // Depending on if we're in composite view or not, we may need to draw
-      // multiple images or just the most recent image.
-      boolean isComposite = (plus_ instanceof CompositeImage &&
-            ((CompositeImage) plus_).getMode() == CompositeImage.COMPOSITE);
-      HashMap<Integer, Coords> channelToCoords = new HashMap<Integer, Coords>();
-      Coords lastCoords = null;
-      if (amWaitingForDraw_) {
-         // No point in running right now as we're waiting for a draw
-         // request to make its way through the EDT.
-         return;
-      }
-      // Grab images from the queue until we get the last one, so all
-      // others get ignored (because we don't have time to display them).
-      while (!coordsQueue_.isEmpty()) {
-         lastCoords = coordsQueue_.poll();
-         if (isComposite) {
-            channelToCoords.put(lastCoords.getChannel(), lastCoords);
+      try {
+         // Depending on if we're in composite view or not, we may need to draw
+         // multiple images or just the most recent image.
+         boolean isComposite = (plus_ instanceof CompositeImage &&
+               ((CompositeImage) plus_).getMode() == CompositeImage.COMPOSITE);
+         HashMap<Integer, Coords> channelToCoords = new HashMap<Integer, Coords>();
+         Coords lastCoords = null;
+         if (amWaitingForDraw_) {
+            // No point in running right now as we're waiting for a draw
+            // request to make its way through the EDT.
+            return;
          }
-      }
-      if (lastCoords == null) {
-         // No images in the queue; nothing to do.
-         return;
-      }
-      if (plus_.getCanvas() == null) {
-         // The display may have gone away while we were waiting.
-         return;
-      }
-      if (isComposite) {
-         for (Coords c : channelToCoords.values()) {
-            if (store_.hasImage(c)) {
-               showImage(store_.getImage(c));
+         // Grab images from the queue until we get the last one, so all
+         // others get ignored (because we don't have time to display them).
+         while (!coordsQueue_.isEmpty()) {
+            lastCoords = coordsQueue_.poll();
+            if (isComposite) {
+               channelToCoords.put(lastCoords.getChannel(), lastCoords);
+            }
+         }
+         if (lastCoords == null) {
+            // No images in the queue; nothing to do.
+            return;
+         }
+         if (plus_.getCanvas() == null) {
+            // The display may have gone away while we were waiting.
+            return;
+         }
+         if (isComposite) {
+            for (Coords c : channelToCoords.values()) {
+               if (store_.hasImage(c)) {
+                  Image image = store_.getImage(c);
+                  // HACK: in rare cases (like, running DemoCamera live mode at
+                  // 100FPS, 2k x 2k with Fast Image, for half an hour kinds of
+                  // rare) this image can be null despite the store claiming
+                  // that it has an image. I don't know how. But attempting to
+                  // show a null image will break the update queue, so this
+                  // extra check is necessary to keep things working, until we
+                  // figure out what's going on.
+                  if (image != null) {
+                     showImage(image);
+                  }
+                  else {
+                     ReportingUtils.logError("Unexpected null image at " + c);
+                  }
+               }
+            }
+         }
+         else {
+            if (store_.hasImage(lastCoords)) {
+               showImage(store_.getImage(lastCoords));
             }
          }
       }
-      else {
-         if (store_.hasImage(lastCoords)) {
-            showImage(store_.getImage(lastCoords));
-         }
+      catch (Exception e) {
+         ReportingUtils.logError(e, "Error consuming images");
       }
    }
 
@@ -235,78 +253,73 @@ public class CanvasUpdateQueue {
       // the objects needed to perform drawing operations while we are trying
       // to do those operations.
       synchronized(drawLock_) {
-         try {
-            if (plus_.getProcessor() == null) {
-               // Display went away since we last checked.
-               return;
-            }
-            amWaitingForDraw_ = true;
-            stack_.setCoords(image.getCoords());
-            Object pixels = image.getRawPixels();
-            // If we have an RGB byte array, we need to convert it to an
-            // int array for ImageJ's consumption.
-            if (plus_.getProcessor() instanceof ColorProcessor &&
-                  pixels instanceof byte[]) {
-               pixels = ImageUtils.convertRGB32BytesToInt(
-                     (byte[]) pixels);
-            }
-            plus_.getProcessor().setPixels(pixels);
-            // Recalculate histogram data, if necessary (because the image
-            // is different from the last one we've calculated or because we
-            // need to force an update).
-            int channel = image.getCoords().getChannel();
-            if (!channelToHistory_.containsKey(channel)) {
-               HistogramHistory history = new HistogramHistory();
-               channelToHistory_.put(channel, history);
-            }
-            HistogramHistory history = channelToHistory_.get(channel);
-            // We check two things to determine if this is the last image
-            // we drew:
-            // - UUID: should be unique per-image but can be duplicated if
-            //   Metadata objects are copied.
-            // - Coords hash: uniquely identifies a coordinate location, but
-            //   it is allowed to replace images in Datastores so this does not
-            //   mean that the image itself is the same.
-            // Note that we do NOT check the image's hash, as disk-based
-            // storage systems may create a new Image object every time
-            // Datastore.getImage() is called, which would have a different
-            // hash code.
-            boolean uuidMatch = false;
-            UUID oldUUID = history.imageUUID_;
-            UUID newUUID = image.getMetadata().getUUID();
-            uuidMatch = (oldUUID == null && newUUID == null) ||
-               (oldUUID != null && newUUID != null && oldUUID.equals(newUUID));
-            if (history.needsUpdate_ || !uuidMatch ||
-                  history.coordsHash_ != image.getCoords().hashCode()) {
-               scheduleHistogramUpdate(image, history);
-               DisplaySettings settings = display_.getDisplaySettings();
-               // After a histogram update, we may need to reapply LUTs.
-               // TODO: This is pointless in situations where the histogram
-               // update rate isn't "every image".
-               shouldReapplyLUTs_ = (shouldReapplyLUTs_ ||
-                     (settings.getShouldAutostretch() != null &&
-                      settings.getShouldAutostretch()));
-            }
-            // RGB images need to have their LUTs reapplied, because the
-            // image scaling is encoded into the pixel data. And in other
-            // situations we also need to just reapply LUTs now.
-            if (shouldReapplyLUTs_ ||
-                  plus_.getProcessor() instanceof ColorProcessor) {
-               if (plus_.getProcessor() instanceof ColorProcessor) {
-                  // Create a new snapshot which will be used as a basis for
-                  // calculating image stats.
-                  ((ColorProcessor) plus_.getProcessor()).snapshot();
-               }
-               // Must apply LUTs to the display now that it has pixels.
-               LUTMaster.initializeDisplay(display_);
-               shouldReapplyLUTs_ = false;
-            }
-            plus_.updateAndDraw();
-            display_.postEvent(new DefaultPixelsSetEvent(image, display_));
+         if (plus_.getProcessor() == null) {
+            // Display went away since we last checked.
+            return;
          }
-         catch (Exception e) {
-            ReportingUtils.logError(e, "Error drawing image at " + image.getCoords());
+         amWaitingForDraw_ = true;
+         stack_.setCoords(image.getCoords());
+         Object pixels = image.getRawPixels();
+         // If we have an RGB byte array, we need to convert it to an
+         // int array for ImageJ's consumption.
+         if (plus_.getProcessor() instanceof ColorProcessor &&
+               pixels instanceof byte[]) {
+            pixels = ImageUtils.convertRGB32BytesToInt(
+                  (byte[]) pixels);
          }
+         plus_.getProcessor().setPixels(pixels);
+         // Recalculate histogram data, if necessary (because the image
+         // is different from the last one we've calculated or because we
+         // need to force an update).
+         int channel = image.getCoords().getChannel();
+         if (!channelToHistory_.containsKey(channel)) {
+            HistogramHistory history = new HistogramHistory();
+            channelToHistory_.put(channel, history);
+         }
+         HistogramHistory history = channelToHistory_.get(channel);
+         // We check two things to determine if this is the last image
+         // we drew:
+         // - UUID: should be unique per-image but can be duplicated if
+         //   Metadata objects are copied.
+         // - Coords hash: uniquely identifies a coordinate location, but
+         //   it is allowed to replace images in Datastores so this does not
+         //   mean that the image itself is the same.
+         // Note that we do NOT check the image's hash, as disk-based
+         // storage systems may create a new Image object every time
+         // Datastore.getImage() is called, which would have a different
+         // hash code.
+         boolean uuidMatch = false;
+         UUID oldUUID = history.imageUUID_;
+         UUID newUUID = image.getMetadata().getUUID();
+         uuidMatch = (oldUUID == null && newUUID == null) ||
+            (oldUUID != null && newUUID != null && oldUUID.equals(newUUID));
+         if (history.needsUpdate_ || !uuidMatch ||
+               history.coordsHash_ != image.getCoords().hashCode()) {
+            scheduleHistogramUpdate(image, history);
+            DisplaySettings settings = display_.getDisplaySettings();
+            // After a histogram update, we may need to reapply LUTs.
+            // TODO: This is pointless in situations where the histogram
+            // update rate isn't "every image".
+            shouldReapplyLUTs_ = (shouldReapplyLUTs_ ||
+                  (settings.getShouldAutostretch() != null &&
+                   settings.getShouldAutostretch()));
+         }
+         // RGB images need to have their LUTs reapplied, because the
+         // image scaling is encoded into the pixel data. And in other
+         // situations we also need to just reapply LUTs now.
+         if (shouldReapplyLUTs_ ||
+               plus_.getProcessor() instanceof ColorProcessor) {
+            if (plus_.getProcessor() instanceof ColorProcessor) {
+               // Create a new snapshot which will be used as a basis for
+               // calculating image stats.
+               ((ColorProcessor) plus_.getProcessor()).snapshot();
+            }
+            // Must apply LUTs to the display now that it has pixels.
+            LUTMaster.initializeDisplay(display_);
+            shouldReapplyLUTs_ = false;
+         }
+         plus_.updateAndDraw();
+         display_.postEvent(new DefaultPixelsSetEvent(image, display_));
       }
    }
 
