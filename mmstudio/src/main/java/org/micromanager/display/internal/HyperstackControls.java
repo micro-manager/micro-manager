@@ -307,7 +307,7 @@ public class HyperstackControls extends JPanel {
       }
 
       String secondsString;
-      if (hours == 0 && fraction > 0.01) {
+      if (hours == 0) {
          secondsString = String.format("%.2fs", wholeSeconds + fraction);
       }
       else {
