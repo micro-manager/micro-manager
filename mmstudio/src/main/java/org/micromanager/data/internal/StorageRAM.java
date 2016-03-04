@@ -48,7 +48,6 @@ public class StorageRAM implements RewritableStorage {
    private HashMap<Coords, Image> coordsToImage_;
    private Coords maxIndex_;
    private SummaryMetadata summaryMetadata_;
-   private boolean amInDebugMode_ = false;
 
    public StorageRAM(Datastore store) {
       coordsToImage_ = new HashMap<Coords, Image>();
@@ -57,14 +56,6 @@ public class StorageRAM implements RewritableStorage {
       // It is imperative that we be notified of new images before anyone who
       // wants to retrieve the images from the store is notified.
       ((DefaultDatastore) store).registerForEvents(this, 0);
-   }
-
-   /**
-    * Toggle debug mode on/off. In debug mode, any request for an image will
-    * be satisfied, by snapping new images if necessary.
-    */
-   public void setDebugMode(boolean amInDebugMode) {
-      amInDebugMode_ = amInDebugMode;
    }
 
    /**
@@ -96,23 +87,7 @@ public class StorageRAM implements RewritableStorage {
       if (coordsToImage_.containsKey(coords)) {
          return coordsToImage_.get(coords);
       }
-      if (!amInDebugMode_) {
-         // No image available, and can't make a new one.
-         return null;
-      }
-      ReportingUtils.logError("Snapping new image for " + coords);
-
-      MMStudio studio = MMStudio.getInstance();
-      try {
-         List<Image> images = studio.live().snap(false);
-         Image result = images.get(0).copyAtCoords(coords);
-         putImage(result);
-         return result;
-      }
-      catch (Exception e) {
-         ReportingUtils.logError(e, "Failed to generate a new image");
-         return null;
-      }
+      return null;
    }
 
    @Override
