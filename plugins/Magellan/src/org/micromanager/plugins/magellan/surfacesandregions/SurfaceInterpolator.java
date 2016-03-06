@@ -52,11 +52,11 @@ import org.micromanager.plugins.magellan.propsandcovariants.SurfaceData;
  */
 public abstract class SurfaceInterpolator implements XYFootprint {
    
-   public static final int MIN_PIXELS_PER_INTERP_POINT = 8;
+   public static final int MIN_PIXELS_PER_INTERP_POINT = 2;
    public static final int NUM_XY_TEST_POINTS = 8;
   
    private static final int ABOVE_SURFACE = 0;
-   private static final int BELOW_SURFACE = 1;
+   private static final int BELOW_SURFACE = 1; 
    private static final int ON_SURFACE = 1;
    
    private String name_;
