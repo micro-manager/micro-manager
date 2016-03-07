@@ -225,8 +225,15 @@ public class CanvasUpdateQueue {
             }
          }
          else {
+            // HACK: see above HACK note regarding a similar null image check.
             if (store_.hasImage(lastCoords)) {
-               showImage(store_.getImage(lastCoords));
+               Image image = store_.getImage(lastCoords);
+               if (image != null) {
+                  showImage(image);
+               }
+               else {
+                  ReportingUtils.logError("Unexpected null image at " + lastCoords);
+               }
             }
          }
       }
