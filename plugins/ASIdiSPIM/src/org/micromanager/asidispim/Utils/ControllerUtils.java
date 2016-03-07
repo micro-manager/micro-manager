@@ -640,6 +640,7 @@ public class ControllerUtils {
          break;
       case PIEZO_SLICE_SCAN:
       case SLICE_SCAN_ONLY:
+      case PIEZO_SCAN_ONLY:
       case NO_SCAN:
          // in actuality only matters which device we trigger if there are
          //   two micro-mirror cards, which hasn't ever been done in practice yet
