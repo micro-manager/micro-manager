@@ -243,10 +243,14 @@ public class Cameras {
          switch (mode) {
          case EDGE:
          case PSEUDO_OVERLAP:
-         case LEVEL:
             props_.setPropValue(devKey,
                   Properties.Keys.TRIGGER_MODE_PCO,
                   Properties.Values.EXTERNAL_LC, true);
+            break;
+         case LEVEL:
+            props_.setPropValue(devKey,
+                  Properties.Keys.TRIGGER_MODE_PCO,
+                  Properties.Values.LEVEL_PCO, true);
             break;
          case INTERNAL:
             props_.setPropValue(devKey,
@@ -486,7 +490,8 @@ public class Cameras {
    /**
     * Gets an estimate of a specific camera's time between trigger and global
     * exposure, i.e. how long it takes for reset. Will depend on whether we
-    * have/use global reset, the ROI size, etc.
+    * have/use global reset, the ROI size, etc.  To first order this is the same
+    * as the camera readout time in edge-trigger mode so we utilize that.
     * 
     * @param camKey
     * @return
@@ -494,7 +499,7 @@ public class Cameras {
    public float computeCameraResetTime(Devices.Keys camKey) {
       float resetTimeMs = 10;
       double rowReadoutTime = getRowReadoutTime(camKey);
-      float camReadoutTime = computeCameraReadoutTime(camKey, false);
+      float camReadoutTime = computeCameraReadoutTime(camKey, CameraModes.Keys.EDGE);
       int numRowsOverhead;
       switch (devices_.getMMDeviceLibrary(camKey)) {
       case HAMCAM:
@@ -529,82 +534,66 @@ public class Cameras {
    
    /**
     * Gets an estimate of a specific camera's readout time based on ROI and 
-    * other settings.  If overlap mode is selected then readout time is 0
-    * (or very close).
+    * other settings.  Returns 0 for overlap mode and 0.25ms pseudo-overlap mode.
     * 
     * @param camKey device key for camera in question
-    * @param isOverlap only return extra overhead time for overlap (usually 0)
+    * @param camMode camera mode
     * @return readout time in ms
     */
-   public float computeCameraReadoutTime(Devices.Keys camKey, boolean isOverlap) {
+   public float computeCameraReadoutTime(Devices.Keys camKey, CameraModes.Keys camMode) {
 
       // TODO restructure code so that we don't keep calling this function over and over
       //      (e.g. could cache some values or something)
       
-      if (isOverlap) {
-         return computeCameraReadoutTimeOverlap(camKey);
-      }
-      
-      // below code only applies to non-overlap
-      
       float readoutTimeMs = 10f;
-      double rowReadoutTime = getRowReadoutTime(camKey);
-      int numReadoutRows;
-
-      Rectangle roi = getCameraROI(camKey);
-      Rectangle sensorSize = getSensorSize(camKey);
-
-      switch (devices_.getMMDeviceLibrary(camKey)) {
-      case HAMCAM:
-         // device adapter provides readout time rounded to nearest 0.1ms; we
-         // calculate it ourselves instead
-         // note that Flash4's ROI is always set in increments of 4 pixels
-         if (props_.getPropValueString(camKey, Properties.Keys.SENSOR_MODE)
-               .equals(Properties.Values.PROGRESSIVE.toString())) {
-            numReadoutRows = roi.height;
-         } else {
-            numReadoutRows = roiReadoutRowsSplitReadout(roi, sensorSize);
-         }
-         readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
-         break;
-      case PCOCAM:
-         numReadoutRows = roiReadoutRowsSplitReadout(roi, sensorSize);
-         if (isEdge55(camKey)) {
-            numReadoutRows = numReadoutRows + 2; // 2 rows overhead for 5.5, none for 4.2
-         }
-         readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
-         break;
-      case ANDORCAM:
-         numReadoutRows = roiReadoutRowsSplitReadout(roi, sensorSize);
-         readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
-         break;
-      case DEMOCAM:
-         numReadoutRows = roiReadoutRowsSplitReadout(roi, sensorSize);
-         readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
-         break;
-      default:
-         break;
-      }
-      ReportingUtils.logDebugMessage("camera readout time computed as " + readoutTimeMs + 
-            " for camera " + devices_.getMMDevice(camKey));
-      return readoutTimeMs;  // assume 10ms readout if not otherwise possible to calculate
-   }
-   
-   /**
-    * Gets an estimate of the camera's readout time if in overlap mode
-    * (should be 0 or close to it)
-    * @param camKey
-    * @return
-    */
-   public float computeCameraReadoutTimeOverlap(Devices.Keys camKey) {
-      float readoutTimeMs = 0f;
       
-      // special case of pseudo-overlap
-      if (devices_.getMMDeviceLibrary(camKey) == Devices.Libraries.PCOCAM) {
+      if (camMode == CameraModes.Keys.OVERLAP) {
+         readoutTimeMs = 0.0f;
+      } else if (camMode == CameraModes.Keys.PSEUDO_OVERLAP) {
          readoutTimeMs = 0.25f;
-      }
+      } else {
+         
+         // below code only applies to non-overlap
+         double rowReadoutTime = getRowReadoutTime(camKey);
+         int numReadoutRows;
+
+         Rectangle roi = getCameraROI(camKey);
+         Rectangle sensorSize = getSensorSize(camKey);
+
+         switch (devices_.getMMDeviceLibrary(camKey)) {
+         case HAMCAM:
+            // device adapter provides readout time rounded to nearest 0.1ms; we
+            // calculate it ourselves instead
+            // note that Flash4's ROI is always set in increments of 4 pixels
+            if (props_.getPropValueString(camKey, Properties.Keys.SENSOR_MODE)
+                  .equals(Properties.Values.PROGRESSIVE.toString())) {
+               numReadoutRows = roi.height;
+            } else {
+               numReadoutRows = roiReadoutRowsSplitReadout(roi, sensorSize);
+            }
+            readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
+            break;
+         case PCOCAM:
+            numReadoutRows = roiReadoutRowsSplitReadout(roi, sensorSize);
+            if (isEdge55(camKey)) {
+               numReadoutRows = numReadoutRows + 2; // 2 rows overhead for 5.5, none for 4.2
+            }
+            readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
+            break;
+         case ANDORCAM:
+            numReadoutRows = roiReadoutRowsSplitReadout(roi, sensorSize);
+            readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
+            break;
+         case DEMOCAM:
+            numReadoutRows = roiReadoutRowsSplitReadout(roi, sensorSize);
+            readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
+            break;
+         default:
+            break;
+         }//switch
+      }//else
       
-      ReportingUtils.logDebugMessage("camera readout time for overlap computed as " + readoutTimeMs + 
+      ReportingUtils.logDebugMessage("camera readout time computed as " + readoutTimeMs + 
             " for camera " + devices_.getMMDevice(camKey));
       return readoutTimeMs;  // assume 10ms readout if not otherwise possible to calculate
    }

@@ -52,7 +52,7 @@ public class CameraModes {
    public static enum Keys { 
       EDGE("Edge trigger", 1),
       OVERLAP("Overlap/synchronous", 2),
-      LEVEL("Level trigger (not yet implemented)", 3),
+      LEVEL("Level trigger", 3),
       PSEUDO_OVERLAP("Pseudo Overlap", 4),
       INTERNAL("Internal", 0);
       private final String text;
@@ -212,7 +212,7 @@ public class CameraModes {
                return keyList;
             }
             keyList.add(Keys.EDGE);
-//          keyList.add(Keys.LEVEL);
+            keyList.add(Keys.LEVEL);
             if (cameraSupportsOverlap(Devices.Keys.CAMERAA) &&
                   cameraSupportsOverlap(Devices.Keys.CAMERAB)) {
                keyList.add(Keys.OVERLAP);
@@ -226,7 +226,7 @@ public class CameraModes {
                return keyList;
             }
             keyList.add(Keys.EDGE);
-//          keyList.add(Keys.LEVEL);
+            keyList.add(Keys.LEVEL);
             if (cameraSupportsOverlap(camKey)) {
                keyList.add(Keys.OVERLAP);
             } else if (cameraSupportsPseudoOverlap(camKey)) {
