@@ -66,6 +66,9 @@ public class StagePositionUpdater {
       timer_ = null;
    }
    
+   /**
+    * @return requested update interval in msec
+    */
    private int getPositionUpdateInterval() {
       // get interval from plugin property stored as preference
       // property/pref value has units of seconds, interval_ has units of milliseconds

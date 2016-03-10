@@ -142,7 +142,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JComboBox numSides_;
    private final JComboBox firstSide_;
    private final JSpinner numScansPerSlice_;
-   private final JSpinner lineScanPeriod_;
+   private final JSpinner lineScanDuration_;
    private final JSpinner delayScan_;
    private final JSpinner delayLaser_;
    private final JSpinner delayCamera_;
@@ -315,36 +315,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       desiredSlicePeriodLabel_ = new JLabel("Slice period [ms]:"); 
       volPanel_.add(desiredSlicePeriodLabel_);
       volPanel_.add(desiredSlicePeriod_, "wrap");
-      desiredSlicePeriod_.addChangeListener(new ChangeListener() {
-         @Override
-         public void stateChanged(ChangeEvent ce) {
-            // make sure is multiple of 0.25
-            float userVal = PanelUtils.getSpinnerFloatValue(desiredSlicePeriod_);
-            float nearestValid = MyNumberUtils.roundToQuarterMs(userVal);
-            if (!MyNumberUtils.floatsEqual(userVal, nearestValid)) {
-               PanelUtils.setSpinnerFloatValue(desiredSlicePeriod_, nearestValid);
-            }
-         }
-      });
+      desiredSlicePeriod_.addChangeListener(PanelUtils.coerceToQuarterIntegers(desiredSlicePeriod_));
       desiredSlicePeriod_.addChangeListener(recalculateTimingDisplayCL);
       
       // special field that is enabled/disabled depending on whether advanced timing is enabled
       desiredLightExposureLabel_ = new JLabel("Sample exposure [ms]:"); 
       volPanel_.add(desiredLightExposureLabel_);
-      desiredLightExposure_ = pu.makeSpinnerFloat(2.5, 1000.5, 1,
+      desiredLightExposure_ = pu.makeSpinnerFloat(1.0, 1000, 0.25,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DESIRED_EXPOSURE, 8.5);
-      desiredLightExposure_.addChangeListener(new ChangeListener() {
-         @Override
-         public void stateChanged(ChangeEvent ce) {
-            // make sure is 2.5, 2.5, 3.5, ... 
-            float val = PanelUtils.getSpinnerFloatValue(desiredLightExposure_);
-            float nearestValid = (float) Math.round(val+0.5f) - 0.5f; 
-            if (!MyNumberUtils.floatsEqual(val, nearestValid)) {
-               PanelUtils.setSpinnerFloatValue(desiredLightExposure_, nearestValid);
-            }
-            recalculateSliceTiming(!minSlicePeriodCB_.isSelected());
-         }
-      });
+      desiredLightExposure_.addChangeListener(PanelUtils.coerceToQuarterIntegers(desiredLightExposure_));
       desiredLightExposure_.addChangeListener(recalculateTimingDisplayCL);
       volPanel_.add(desiredLightExposure_, "wrap");
       
@@ -386,6 +365,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       delayScan_ = pu.makeSpinnerFloat(0, 10000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DELAY_SCAN, 0);
+      delayScan_.addChangeListener(PanelUtils.coerceToQuarterIntegers(delayScan_));
       delayScan_.addChangeListener(recalculateTimingDisplayCL);
       slicePanel_.add(delayScan_, "wrap");
 
@@ -397,19 +377,21 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       numScansPerSlice_.addChangeListener(recalculateTimingDisplayCL);
       slicePanel_.add(numScansPerSlice_, "wrap");
 
-      JLabel lineScanPeriodLabel = new JLabel("Line scan period [ms]:");
+      JLabel lineScanPeriodLabel = new JLabel("Line scan duration [ms]:");
       slicePanel_.add(lineScanPeriodLabel);
-      lineScanPeriod_ = pu.makeSpinnerInteger(1, 10000,
+      lineScanDuration_ = pu.makeSpinnerFloat(1, 10000, 0.25,
               new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
-              Properties.Keys.SPIM_LINESCAN_PERIOD, 10);
-      lineScanPeriod_.addChangeListener(recalculateTimingDisplayCL);
-      slicePanel_.add(lineScanPeriod_, "wrap");
+              Properties.Keys.SPIM_DURATION_SCAN, 10);
+      lineScanDuration_.addChangeListener(PanelUtils.coerceToQuarterIntegers(lineScanDuration_));
+      lineScanDuration_.addChangeListener(recalculateTimingDisplayCL);
+      slicePanel_.add(lineScanDuration_, "wrap");
       
       JLabel delayLaserLabel = new JLabel("Delay before laser [ms]:");
       slicePanel_.add(delayLaserLabel);
       delayLaser_ = pu.makeSpinnerFloat(0, 10000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DELAY_LASER, 0);
+      delayLaser_.addChangeListener(PanelUtils.coerceToQuarterIntegers(delayLaser_));
       delayLaser_.addChangeListener(recalculateTimingDisplayCL);
       slicePanel_.add(delayLaser_, "wrap");
       
@@ -418,6 +400,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       durationLaser_ = pu.makeSpinnerFloat(0, 10000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DURATION_LASER, 1);
+      durationLaser_.addChangeListener(PanelUtils.coerceToQuarterIntegers(durationLaser_));
       durationLaser_.addChangeListener(recalculateTimingDisplayCL);
       slicePanel_.add(durationLaser_, "span 2, wrap");
       
@@ -426,6 +409,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       delayCamera_ = pu.makeSpinnerFloat(0, 10000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DELAY_CAMERA, 0);
+      delayCamera_.addChangeListener(PanelUtils.coerceToQuarterIntegers(delayCamera_));
       delayCamera_.addChangeListener(recalculateTimingDisplayCL);
       slicePanel_.add(delayCamera_, "wrap");
       
@@ -434,10 +418,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       durationCamera_ = pu.makeSpinnerFloat(0, 1000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DURATION_CAMERA, 0);
+      durationCamera_.addChangeListener(PanelUtils.coerceToQuarterIntegers(durationCamera_));
       durationCamera_.addChangeListener(recalculateTimingDisplayCL);
       slicePanel_.add(durationCamera_, "wrap");
       
-      JLabel exposureLabel = new JLabel("Camera exposure[ms]:");
+      JLabel exposureLabel = new JLabel("Camera exposure [ms]:");
       slicePanel_.add(exposureLabel);
       exposureCamera_ = pu.makeSpinnerFloat(0, 1000, 0.25,
             Devices.Keys.PLUGIN,
@@ -453,7 +438,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             minSlicePeriodCB_, desiredSlicePeriodLabel_,
             desiredLightExposureLabel_};
       final JComponent[] advancedTimingComponents = {
-            delayScan_, numScansPerSlice_, lineScanPeriod_, 
+            delayScan_, numScansPerSlice_, lineScanDuration_, 
             delayLaser_, durationLaser_, delayCamera_,
             durationCamera_, exposureCamera_, alternateBeamScanCB_};
       PanelUtils.componentsSetEnabled(advancedTimingComponents, advancedSliceTimingCB_.isSelected());
@@ -996,7 +981,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       SliceTiming s = new SliceTiming();
       s.scanDelay = PanelUtils.getSpinnerFloatValue(delayScan_);
       s.scanNum = (Integer) numScansPerSlice_.getValue();
-      s.scanPeriod = (Integer) lineScanPeriod_.getValue();
+      s.scanPeriod = PanelUtils.getSpinnerFloatValue(lineScanDuration_);
       s.laserDelay = PanelUtils.getSpinnerFloatValue(delayLaser_);
       s.laserDuration = PanelUtils.getSpinnerFloatValue(durationLaser_);
       s.cameraDelay = PanelUtils.getSpinnerFloatValue(delayCamera_);
@@ -1020,7 +1005,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // 5. turn on laser as soon as camera global exposure, leave laser on for desired light exposure time
       // 7. end camera exposure in final 0.25ms, post-filter scan waveform also ends now
       
-      final float scanLaserBufferTime = 0.25f;
+      final float scanLaserBufferTime = MyNumberUtils.roundToQuarterMs(0.25f);  // below assumed to be multiple of 0.25ms
       final Color foregroundColorOK = Color.BLACK;
       final Color foregroundColorError = Color.RED;
       final Component elementToColor  = desiredSlicePeriod_.getEditor().getComponent(0);
@@ -1032,99 +1017,131 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // can we use acquisition settings directly? because they may be in flux
       final AcquisitionSettings acqSettings = getCurrentAcquisitionSettings();
       
-      // get delay between camera trigger and exposure starts so we can decrease
-      //   camera exposure accordingly for edge mode (this is slight correction only)
-      // for overlap mode we don't set exposure time directly anyway
-      // for pseudo-overlap mode the delay is minimal (0-1 row readout time) so ignore
-      float cameraExposureDelayTime = 0;
-      if (acqSettings.cameraMode == CameraModes.Keys.EDGE) {
-         // for now simply recover "overhead time" in computeCameraResetTime()
-         // if readout/reset calculations change then this may need to be more sophisticated
-         cameraExposureDelayTime = cameraResetTime - cameraReadoutTime;
-         ReportingUtils.logMessage("Exposure delay time is " + cameraExposureDelayTime); 
-      }
-      
-      final float desiredPeriod = acqSettings.minimizeSlicePeriod ? 0 : 
-         acqSettings.desiredSlicePeriod;
-      final float desiredExposure = acqSettings.desiredLightExposure;
-      
       final float cameraReadout_max = MyNumberUtils.ceilToQuarterMs(cameraReadoutTime);
       final float cameraReset_max = MyNumberUtils.ceilToQuarterMs(cameraResetTime);
-      final float slicePeriod = MyNumberUtils.roundToQuarterMs(desiredPeriod);
-      final int scanPeriod = Math.round(desiredExposure + 2*scanLaserBufferTime);  // specified in integer number of ms
+      
+      // we will wait cameraReadout_max before triggering camera, then wait another cameraReset_max for global exposure
+      // this will also be in 0.25ms increment
+      final float globalExposureDelay_max = cameraReadout_max + cameraReset_max;
+      
+      final float laserDuration = MyNumberUtils.roundToQuarterMs(acqSettings.desiredLightExposure);
+      final float scanDuration = laserDuration + 2*scanLaserBufferTime;
       // scan will be longer than laser by 0.25ms at both start and end
-      final float laserDuration = scanPeriod - 2*scanLaserBufferTime;  // will be integer plus 0.5
-      
-      // computer "extra" per-slice time: period minus camera reset and readout times minus (scan time - 0.25ms)
-      // the last 0.25ms correction comes because we start the scan 0.25ms before camera global exposure
-      float globalDelay = slicePeriod - cameraReadout_max - cameraReset_max - scanPeriod + scanLaserBufferTime;
-      
-      // if calculated delay is negative then we have to reduce exposure time in 1 sec increments
-      if (globalDelay < 0) {
-         float extraTimeNeeded = MyNumberUtils.ceilToQuarterMs(-1f*globalDelay);  // positive number
-            globalDelay += extraTimeNeeded;
-            if (showWarnings) {
-               MyDialogUtils.showError(
-                     "Increasing slice period to meet laser exposure constraint\n"
-                           + "(time required for camera readout; readout time depends on ROI).\n");
-               elementToColor.setForeground(foregroundColorError);
-               // considered actually changing the value, but decided against it because
-               // maybe the user just needs to set the ROI appropriately and recalculate
-            } else {
-               elementToColor.setForeground(foregroundColorOK);
-            }
-      } else {
-         elementToColor.setForeground(foregroundColorOK);
-      }
       
       // account for delay in scan position based on Bessel filter by starting the scan slightly earlier
-      // than we otherwise would; delay is (empirically) ~0.33/(freq in kHz)
-      // find better results adding 0.4/(freq in kHz) though
-      // group delay for bessel filter approx 1/w or ~0.16/freq, or half/third the empirical value (not sure why discrepancy)
+      // than we otherwise would; delay to start is (empirically) 0.07ms + 0.25/(freq in kHz)
+      // delay to midpoint is empirically 0.38/(freq in kHz) which is probably better measure, and closer to old 0.4/freq value
+      // group delay for bessel filter approx 1/w or ~0.16/freq (not sure why discrepancy from empirical value)
       final float scanFilterFreq = Math.max(props_.getPropValueFloat(Devices.Keys.GALVOA,  Properties.Keys.SCANNER_FILTER_X),
             props_.getPropValueFloat(Devices.Keys.GALVOB,  Properties.Keys.SCANNER_FILTER_X));
       float scanDelayFilter = 0;
       if (scanFilterFreq != 0) {
-         scanDelayFilter = MyNumberUtils.roundToQuarterMs(0.4f/scanFilterFreq);
-      }
-      
-      // Add 0.25ms to globalDelay if it is 0 and we are on overlap mode and scan has been shifted forward
-      // basically the last 0.25ms of scan time that would have determined the slice period isn't
-      //   there any more because the scan time is moved up  => add in the 0.25ms at the start of the slice
-      // in edge or level trigger mode the camera trig falling edge marks the end of the slice period
-      // not sure if PCO pseudo-overlap needs this, probably not because adding 0.25ms overhead in that case
-      if (MyNumberUtils.floatsEqual(cameraReadout_max, 0f)  // true iff overlap being used
-            && (scanDelayFilter > 0.01f)) {
-         globalDelay += 0.25f;
+         scanDelayFilter = MyNumberUtils.roundToQuarterMs(0.38f/scanFilterFreq);
       }
       
       // If the PLogic card is used, account for 0.25ms delay it introduces to
       // the camera and laser trigger signals => subtract 0.25ms from the scanner delay
       // (start scanner 0.25ms later than it would be otherwise)
-      // (really it is 0.25ms minus the evaluation time to generate the signals)
       // this time-shift opposes the Bessel filter delay
+      // scanDelayFilter won't be negative unless scanFilterFreq is more than 3kHz which shouldn't happen
       if (devices_.isValidMMDevice(Devices.Keys.PLOGIC)) {
          scanDelayFilter -= 0.25f;
       }
-
-      s.scanDelay = cameraReadout_max + globalDelay + cameraReset_max - scanDelayFilter - scanLaserBufferTime;  
-      s.scanNum = 1;
-      s.scanPeriod = scanPeriod;
-      s.laserDelay = cameraReadout_max + globalDelay + cameraReset_max;
-      s.laserDuration = laserDuration;
-      s.cameraDelay = cameraReadout_max + globalDelay;
-      s.cameraDuration = cameraReset_max + scanPeriod - scanLaserBufferTime;  // approx. same as exposure, can be used in bulb mode
-      s.cameraExposure = s.cameraDuration
-            - 0.10f  // give up 0.10ms of our 0.25ms overhead here because camera might round up
-                     //  from the set exposure time and thus exceed total period
-            - cameraExposureDelayTime;
       
-      // change camera duration for overlap mode to be short trigger
-      // needed because exposure time is set by difference between pulses in this mode
-      if (acqSettings.cameraMode == CameraModes.Keys.OVERLAP) {
-         // for Hamamatsu's "synchronous" or Zyla's "overlap" mode
-         // send single short trigger
-         s.cameraDuration = 1;
+      s.scanDelay = globalExposureDelay_max - scanLaserBufferTime   // start scan 0.25ms before camera's global exposure
+            - scanDelayFilter;    // start galvo moving early due to card's Bessel filter and delay of TTL signals via PLC
+      s.scanNum = 1;
+      s.scanPeriod = scanDuration;
+      s.laserDelay = globalExposureDelay_max;  // turn on laser as soon as camera's global exposure is reached
+      s.laserDuration = laserDuration;
+      s.cameraDelay = cameraReadout_max;       // camera must readout last frame before triggering again
+      
+      // figure out desired time for camera to be exposing (including reset time)
+      // because both camera trigger and laser on occur on 0.25ms intervals (i.e. we may not
+      //    trigger the laser until 0.24ms after global exposure) use cameraReset_max
+      final float cameraExposure = cameraReset_max + laserDuration;
+      
+      // account for possible slight delay between trigger and actual exposure start
+      // which means our exposure time should be slightly shorter
+      // for now simply recover "overhead time" in computeCameraResetTime()
+      // if readout/reset calculations change then this may need to be more sophisticated
+      final float cameraExposureDelayTime = (cameraResetTime - cameraReadoutTime);
+      
+      switch (acqSettings.cameraMode) {
+      case EDGE:
+         s.cameraDuration = 1;  // doesn't really matter, 1ms should be plenty fast yet easy to see for debugging
+         s.cameraExposure = cameraExposure - cameraExposureDelayTime + 0.1f;  // add 0.1ms as safety margin, may require adding an additional 0.25ms to slice
+         // ensure not to miss triggers by not being done with readout in time for next trigger, add 0.25ms if needed
+         if (getSliceDuration(s) < (s.cameraExposure + cameraReadoutTime)) {
+            ReportingUtils.logDebugMessage("Added 0.25ms in edge-trigger mode to make sure camera exposure long enough without dropping frames");
+            s.cameraDelay += 0.25f;
+            s.laserDelay += 0.25f;
+            s.scanDelay += 0.25f;
+         }
+         break;
+      case LEVEL:  // AKA "bulb mode", TTL rising starts exposure, TTL falling ends it
+         s.cameraDuration = MyNumberUtils.ceilToQuarterMs(cameraExposure);
+         s.cameraExposure = 1;  // doesn't really matter, controlled by TTL
+         break;
+      case OVERLAP:  // only Hamamatsu or Andor
+         s.cameraDuration = 1;  // doesn't really matter, 1ms should be plenty fast yet easy to see for debugging
+         s.cameraExposure = 1;  // doesn't really matter, controlled by interval between triggers
+         break;
+      case PSEUDO_OVERLAP:  // only PCO, enforce 0.25ms between end exposure and start of next exposure by triggering camera 0.25ms into the slice
+         s.cameraDuration = 1;  // doesn't really matter, 1ms should be plenty fast yet easy to see for debugging
+         s.cameraExposure = getSliceDuration(s) - s.cameraDelay;  // s.cameraDelay should be 0.25ms
+         if (!MyNumberUtils.floatsEqual(s.cameraDelay, 0.25f)) {
+            MyDialogUtils.showError("Camera delay should be 0.25ms for pseudo-overlap mode.");
+         }
+         break;
+      case INTERNAL:
+      default:
+         MyDialogUtils.showError("Invalid camera mode");
+         break;
+      }
+      
+      // fix corner case of negative calculated scanDelay
+      if (s.scanDelay < 0) {
+         s.cameraDelay -= s.scanDelay;
+         s.laserDelay -= s.scanDelay;
+         s.scanDelay = 0;  // same as (-= s.scanDelay)
+      }
+      
+      // if a specific slice period was requested, add corresponding delay to scan/laser/camera
+      elementToColor.setForeground(foregroundColorOK);
+      if (!acqSettings.minimizeSlicePeriod) {
+         float globalDelay = acqSettings.desiredSlicePeriod - getSliceDuration(s);  // both should be in 0.25ms increments // TODO fix
+         if (globalDelay < 0) {
+            globalDelay = 0;
+            if (showWarnings) {  // only true when user has specified period that is unattainable
+               MyDialogUtils.showError(
+                     "Increasing slice period to meet laser exposure constraint\n"
+                           + "(time required for camera readout; readout time depends on ROI).");
+               elementToColor.setForeground(foregroundColorError);
+            }
+         }
+         s.scanDelay += globalDelay;
+         s.cameraDelay += globalDelay;
+         s.laserDelay += globalDelay;
+      }
+
+//      // Add 0.25ms to globalDelay if it is 0 and we are on overlap mode and scan has been shifted forward
+//      // basically the last 0.25ms of scan time that would have determined the slice period isn't
+//      //   there any more because the scan time is moved up  => add in the 0.25ms at the start of the slice
+//      // in edge or level trigger mode the camera trig falling edge marks the end of the slice period
+//      // not sure if PCO pseudo-overlap needs this, probably not because adding 0.25ms overhead in that case
+//      if (MyNumberUtils.floatsEqual(cameraReadout_max, 0f)  // true iff overlap being used
+//            && (scanDelayFilter > 0.01f)) {
+//         globalDelay += 0.25f;
+//      }
+      
+      // fix corner case of (exposure time + readout time) being greater than the slice duration
+      // most of the time the slice duration is already larger
+      float globalDelay = MyNumberUtils.ceilToQuarterMs((s.cameraExposure + cameraReadoutTime) - getSliceDuration(s));
+      if (globalDelay > 0) {
+         s.scanDelay += globalDelay;
+         s.cameraDelay += globalDelay;
+         s.laserDelay += globalDelay;
       }
       
       // update the slice duration based on our new values
@@ -1151,11 +1168,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       sliceTiming_ = getTimingFromPeriodAndLightExposure(showWarnings);
       PanelUtils.setSpinnerFloatValue(delayScan_, sliceTiming_.scanDelay);
       numScansPerSlice_.setValue(sliceTiming_.scanNum);
-      lineScanPeriod_.setValue(sliceTiming_.scanPeriod);
+      PanelUtils.setSpinnerFloatValue(lineScanDuration_, sliceTiming_.scanPeriod);
       PanelUtils.setSpinnerFloatValue(delayLaser_, sliceTiming_.laserDelay);
       PanelUtils.setSpinnerFloatValue(durationLaser_, sliceTiming_.laserDuration);
       PanelUtils.setSpinnerFloatValue(delayCamera_, sliceTiming_.cameraDelay);
       PanelUtils.setSpinnerFloatValue(durationCamera_, sliceTiming_.cameraDuration );
+      PanelUtils.setSpinnerFloatValue(exposureCamera_, sliceTiming_.cameraExposure );
    }
    
    /**
@@ -1316,21 +1334,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @return
     */
    private float computeCameraReadoutTime() {
-      float readoutTime;
       CameraModes.Keys camMode = getSPIMCameraMode();
-      boolean isOverlap =  (camMode ==  CameraModes.Keys.OVERLAP ||
-            camMode == CameraModes.Keys.PSEUDO_OVERLAP);
       if (getNumSides() > 1) {
-         readoutTime = Math.max(cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAA, isOverlap),
-               cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAB, isOverlap));
+         return Math.max(cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAA, camMode),
+               cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAB, camMode));
       } else {
          if (isFirstSideA()) {
-            readoutTime = cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAA, isOverlap);
+            return cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAA, camMode);
          } else {
-            readoutTime = cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAB, isOverlap);
+            return cameras_.computeCameraReadoutTime(Devices.Keys.CAMERAB, camMode);
          }
       }
-      return readoutTime;
    }
    
    /**
@@ -1697,7 +1711,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          // should only only possible to mess this up using advanced timing settings
          // or if there are errors in our own calculations
          MyDialogUtils.showError("Exposure time of " + exposureTime +
-               " is longer than time needed for a line scan with " +
+               " is longer than time needed for a line scan with" +
                " readout time of " + cameraReadoutTime + "\n" + 
                "This will result in dropped frames. " +
                "Please change input");
@@ -2213,7 +2227,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            Thread.sleep(5);
                         }
                         if (now - start >= timeout) {
-                           throw new Exception("Camera did not send first image within a reasonable time");
+                           String msg = "Camera did not send first image within a reasonable time.\n";
+                           if (acqSettings.isStageScanning) {
+                              msg += "Make sure jumpers are correct on XY card and also micro-micromirror card.";
+                           } else {
+                              msg += "Make sure camera trigger cables are connected properly.";
+                           }
+                           throw new Exception(msg);
                         }
 
                         // grab all the images from the cameras, put them into the acquisition
@@ -2893,7 +2913,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
 
    public void setVolumeSampleExposure(double exposureMs) throws ASIdiSPIMException {
-      if (MyNumberUtils.outsideRange(exposureMs, 2.5, 1000.5)) {
+      if (MyNumberUtils.outsideRange(exposureMs, 1.0, 1000.0)) {
          throw new ASIdiSPIMException("illegal value for sample exposure");
       }
       desiredLightExposure_.setValue(exposureMs);        
