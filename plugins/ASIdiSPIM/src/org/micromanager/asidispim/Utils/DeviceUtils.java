@@ -80,7 +80,7 @@ public class DeviceUtils {
             } else if (firmwareVersion < (float) 2.829) {
                MyDialogUtils.showError("Device " + devices_.getMMDevice(key)
                        + ": Piezo firmware is old; piezo may not move correctly in sync with sheet."
-                       + " Contact ASI for updated firmware.");
+                       + " Get updated firmware on http://dispim.org/ or contact ASI.");
             }
             break;
          case GALVOA:
@@ -90,26 +90,30 @@ public class DeviceUtils {
             } else if (firmwareVersion < (float) 2.809) {
                MyDialogUtils.showError("Device " + devices_.getMMDevice(key)
                        + ": Micromirror firmware is old; wheel control of some scanner axes may not work."
-                       + " Contact ASI for updated firmware.");
+                       + " Get updated firmware on http://dispim.org/ or contact ASI.");
             } else if (firmwareVersion < (float) 2.829) {
                MyDialogUtils.showError("Device " + devices_.getMMDevice(key)
                        + ": Micromirror firmware is old; imaging piezo not set correctly the first stack."
-                       + " Contact ASI for updated firmware.");
+                       + " Get updated firmware on http://dispim.org/ or contact ASI.");
             } else if (firmwareVersion < (float) 2.859) {
                MyDialogUtils.showError("Device " + devices_.getMMDevice(key)
                        + ": Micromirror firmware is old; not all timing parameters are supported."
-                       + " Contact ASI for updated firmware.");
+                       + " Get updated firmware on http://dispim.org/ or contact ASI.");
             } else if (firmwareVersion < (float) 2.889) {
                MyDialogUtils.showError("Device " + devices_.getMMDevice(key)
                      + ": Micromirror firmware is old; some properties used by plugin aren't present."
-                     + " Contact ASI for updated firmware.");
+                     + " Get updated firmware on http://dispim.org/ or contact ASI.");
+            } else if (firmwareVersion < (float) 3.139) {
+               MyDialogUtils.showError("Device " + devices_.getMMDevice(key)
+                     + ": Micromirror firmware is old, scan settings for acquisition and live mode not handled properly."
+                     + " Get updated firmware on http://dispim.org/ or contact ASI.");
             }
             break;
          case PLOGIC:
             if (firmwareVersion < 3.089) {
                MyDialogUtils.showError("Device " + devices_.getMMDevice(key)
                      + ": PLogic firmware is old; some features may not work."
-                     + " Contact ASI for updated firmware.");
+                     + " Get updated firmware on http://dispim.org/ or contact ASI.");
             }
             break;
          default:

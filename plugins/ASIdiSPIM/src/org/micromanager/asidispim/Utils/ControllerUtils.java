@@ -320,19 +320,23 @@ public class ControllerUtils {
       // round to nearest 0.0001 degrees, which is approximately the DAC resolution
       sliceAmplitude = MyNumberUtils.roundFloatToPlace(sliceAmplitude, 4);
       sliceCenter = MyNumberUtils.roundFloatToPlace(sliceCenter, 4);
-      // only do triangle wave if user has it enabled on the advanced timing panel
-      //    and the user is using advanced timing
-      final boolean triangleWave = prefs_.getBoolean(
+      
+      // only do alternating scan directions if the user is using advanced timing
+      //    and user has option enabled on the advanced timing panel
+      final boolean oppositeDirections = prefs_.getBoolean(
             MyStrings.PanelNames.ACQUSITION.toString(),
             Properties.Keys.PREFS_ADVANCED_SLICE_TIMING, false)
             && prefs_.getBoolean(
             MyStrings.PanelNames.ACQUSITION.toString(),  
             Properties.Keys.PREFS_SCAN_OPPOSITE_DIRECTIONS, false);
-      Properties.Values scanPattern = triangleWave ?
-            Properties.Values.SAM_TRIANGLE : Properties.Values.SAM_RAMP;
-      props_.setPropValue(galvoDevice, Properties.Keys.SA_PATTERN_X, 
-              scanPattern, skipScannerWarnings);
-      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_LINESCAN_PERIOD,
+      if (oppositeDirections) {
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_ALTERTATE_DIRECTIONS, 
+               Properties.Values.YES, skipScannerWarnings);
+      } else {
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_ALTERTATE_DIRECTIONS, 
+               Properties.Values.NO, skipScannerWarnings);
+      }
+      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_DURATION_SCAN,
             settings.sliceTiming.scanPeriod, skipScannerWarnings);
       props_.setPropValue(galvoDevice, Properties.Keys.SA_AMPLITUDE_Y_DEG,
             sliceAmplitude, skipScannerWarnings);
@@ -394,19 +398,28 @@ public class ControllerUtils {
             settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED) {
          if (settings.useChannels && settings.channelMode == MultichannelModes.Keys.SLICE_HW) {
             // TODO understand/document what this is doing, eliminate if possible
+            // will take one slice from each channel before switching sides
             props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SLICES_PER_PIEZO,
                   settings.numChannels, skipScannerWarnings);
          }
       }
       if (settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED) {
-         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_PIEZO_HOME_ENABLE,
-               Properties.Values.NO, skipScannerWarnings);
-      } else {
-         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_PIEZO_HOME_ENABLE,
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_PIEZO_HOME_DISABLE,
                Properties.Values.YES, skipScannerWarnings);
+      } else {
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_PIEZO_HOME_DISABLE,
+               Properties.Values.NO, skipScannerWarnings);
       }
       
       // set interleaved sides flag low unless we are doing interleaved stage scan
+      if (settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED) {
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_INTERLEAVE_SIDES,
+               Properties.Values.YES, skipScannerWarnings); // make sure to check for errors
+      } else {
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_INTERLEAVE_SIDES,
+               Properties.Values.NO, true);  // ignore errors b/c older firmware won't have it
+      }
+      
       if (settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED) {
          props_.setPropValue(galvoDevice, Properties.Keys.SPIM_INTERLEAVE_SIDES,
                Properties.Values.YES, skipScannerWarnings); // make sure to check for errors

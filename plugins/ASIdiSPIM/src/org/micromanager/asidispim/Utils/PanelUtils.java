@@ -780,6 +780,26 @@ public class PanelUtils {
    }
    
    /**
+    * creates change listener for float-based spinner that will coerce the value
+    * to quarter integers (e.g. 1.00, 1.25, 1.50, 1.75, 2.00, etc.)
+    * @param sp
+    * @return
+    */
+   public static ChangeListener coerceToQuarterIntegers(final JSpinner sp) {
+      return new ChangeListener() {
+         @Override
+         public void stateChanged(ChangeEvent ce) {
+            // make sure is multiple of 0.25
+            float userVal = PanelUtils.getSpinnerFloatValue(sp);
+            float nearestValid = MyNumberUtils.roundToQuarterMs(userVal);
+            if (!MyNumberUtils.floatsEqual(userVal, nearestValid)) {
+               PanelUtils.setSpinnerFloatValue(sp, nearestValid);
+            }
+         }
+      };
+   }
+   
+   /**
     * makes border with centered title text
     * @param title
     * @return

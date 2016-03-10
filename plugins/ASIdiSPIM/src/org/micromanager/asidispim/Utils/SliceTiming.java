@@ -32,7 +32,7 @@ package org.micromanager.asidispim.Utils;
 public class SliceTiming {
    public float scanDelay;
    public int scanNum;
-   public int scanPeriod;
+   public float scanPeriod;
    public float laserDelay;
    public float laserDuration;
    public float cameraDelay;

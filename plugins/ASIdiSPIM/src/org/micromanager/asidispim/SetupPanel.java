@@ -795,6 +795,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       Rectangle roi = cameras_.getCameraROI(cameraKey);
       float width = (float) (roi.height * (Double) sheetWidthSlope_.getValue() / 1000f);
       // TODO add extra width to compensate for filter depending on sweep rate and filter freq
+      // TODO calculation should account for sample exposure to make sure 0.25ms edges get appropriately compensated for
       width *= 1.1f;  // 10% extra width just to be sure
       props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_X_DEG, width);
    }
@@ -859,11 +860,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             ReportingUtils.showError(e, "could not move illumination piezo to home");
          }
       }
-      
-      // set scan waveform to be triangle
-      // SPIM use can change, but for alignment avoid sharp edges
-      props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_PATTERN_X, 
-              Properties.Values.SAM_TRIANGLE, true);
       
       // move piezo and scanner to "center" position
       centerPiezoAndGalvo();

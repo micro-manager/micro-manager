@@ -156,13 +156,13 @@ public class SettingsPanel extends ListeningJPanel {
       scannerPanel.setBorder(PanelUtils.makeTitledBorder("Scanner"));
 
       scannerPanel.add(new JLabel("Filter freq, sheet axis [kHz]:"));
-      final JSpinner scannerFilterX = pu.makeSpinnerFloat(0.1, 5, 0.1,
+      final JSpinner scannerFilterX = pu.makeSpinnerFloat(0.1, 1, 0.1,
             new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SCANNER_FILTER_X, 0.8);
       scannerPanel.add(scannerFilterX, "wrap");
       
       scannerPanel.add(new JLabel("Filter freq, slice axis [kHz]:"));
-      final JSpinner scannerFilterY = pu.makeSpinnerFloat(0.1, 5, 0.1,
+      final JSpinner scannerFilterY = pu.makeSpinnerFloat(0.1, 1, 0.1,
             new Devices.Keys [] {Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SCANNER_FILTER_Y, 0.4);
       scannerPanel.add(scannerFilterY, "wrap");
@@ -206,9 +206,12 @@ public class SettingsPanel extends ListeningJPanel {
          public void stateChanged(ChangeEvent arg0) {
             int scan = (Integer) liveScanMs_.getValue(); 
             props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
-                  Properties.Keys.SPIM_LINESCAN_PERIOD, scan, true);
+                  Properties.Keys.SA_PERIOD_X, scan, true);
          }
       });
+      // set it the first time
+      props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+            Properties.Keys.SA_PERIOD_X, (Integer) liveScanMs_.getValue(), true);
       cameraPanel.add(liveScanMs_, "wrap");
       
       // end camera panel

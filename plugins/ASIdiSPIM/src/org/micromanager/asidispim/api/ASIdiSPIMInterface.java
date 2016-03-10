@@ -428,16 +428,15 @@ public interface ASIdiSPIMInterface {
    
    /**
     * @return exposure time in milliseconds that the laser will be on to
-    *   expose the sample. The galvo sweep time is usually 0.5 ms longer,
-    *   and this value is usually a half-integer (e.g. 3.5, 4.5, etc.)
+    *   expose the sample. The galvo sweep time is usually 0.5 ms longer.
     */
    public double getVolumeSampleExposure() throws ASIdiSPIMException;
    
    /**
     * @param exposureMs is the exposure time of the sample to the laser in
     *   milliseconds (related but not the same as the camera's exposure time).
-    *   Currently will be rounded to the nearest half-integer (e.g. 3.5, 4.5, etc.)
-    * If exposureMs is not between 2.5 and 1000.5 then ASIdiSPIMException is thrown.
+    *   Will be rounded to the nearest multiple of 0.25 ms.
+    * If exposureMs is not between 1.0 and 1000 then ASIdiSPIMException is thrown.
     */
    public void setVolumeSampleExposure(double exposureMs) throws ASIdiSPIMException;
    

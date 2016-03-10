@@ -218,20 +218,10 @@ public class ASIdiSPIMFrame extends MMFrame
             }
          }
       });
-      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener(new LiveModeListener() {
-         // set scan for live mode to be triangle
-         @Override
-         public void liveModeEnabled(boolean enabled) {
-            if (enabled) {
-               int scan = props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_CAMERA_LIVE_SCAN); 
-               props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB}, 
-                     Properties.Keys.SPIM_LINESCAN_PERIOD, scan, true); 
-               props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
-                     Properties.Keys.SA_PATTERN_X, Properties.Values.SAM_TRIANGLE, true);
-            }
-         }
-      });
       
+      // set scan for live mode to be triangle (now live mode setting not affected by SPIM setting)
+      props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+            Properties.Keys.SA_PATTERN_X, Properties.Values.SAM_TRIANGLE, true);
       
       // make sure gotDeSelected() and gotSelected() get called whenever we switch tabs
       tabbedPane_.addChangeListener(new ChangeListener() {
