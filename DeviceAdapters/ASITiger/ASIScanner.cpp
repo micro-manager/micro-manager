@@ -471,17 +471,17 @@ int CScanner::Initialize()
 
       if (FirmwareVersionAtLeast(2.89))  // get 2.89 features
       {
-         pAct = new CPropertyAction (this, &CScanner::OnSPIMScannerHomeEnable);
-         CreateProperty(g_SPIMScannerHomeEnable, "0", MM::String, false, pAct);
-         AddAllowedValue(g_SPIMScannerHomeEnable, g_YesState);
-         AddAllowedValue(g_SPIMScannerHomeEnable, g_NoState);
-         UpdateProperty(g_SPIMScannerHomeEnable);
+         pAct = new CPropertyAction (this, &CScanner::OnSPIMScannerHomeDisable);
+         CreateProperty(g_SPIMScannerHomeDisable, g_NoState, MM::String, false, pAct);
+         AddAllowedValue(g_SPIMScannerHomeDisable, g_YesState);
+         AddAllowedValue(g_SPIMScannerHomeDisable, g_NoState);
+         UpdateProperty(g_SPIMScannerHomeDisable);
 
-         pAct = new CPropertyAction (this, &CScanner::OnSPIMPiezoHomeEnable);
-         CreateProperty(g_SPIMPiezoHomeEnable, "0", MM::String, false, pAct);
-         AddAllowedValue(g_SPIMPiezoHomeEnable, g_YesState);
-         AddAllowedValue(g_SPIMPiezoHomeEnable, g_NoState);
-         UpdateProperty(g_SPIMPiezoHomeEnable);
+         pAct = new CPropertyAction (this, &CScanner::OnSPIMPiezoHomeDisable);
+         CreateProperty(g_SPIMPiezoHomeDisable, "0", MM::String, false, pAct);
+         AddAllowedValue(g_SPIMPiezoHomeDisable, g_YesState);
+         AddAllowedValue(g_SPIMPiezoHomeDisable, g_NoState);
+         UpdateProperty(g_SPIMPiezoHomeDisable);
       }
 
       if (FirmwareVersionAtLeast(3.01))  // in 3.01 added setting to allow multiple slices per piezo movement
@@ -496,13 +496,28 @@ int CScanner::Initialize()
 
       if (FirmwareVersionAtLeast(3.09)) {  // in 3.09 added bit 4 of SPIM mode for interleaved slices
          pAct = new CPropertyAction (this, &CScanner::OnSPIMInterleaveSidesEnable);
-         CreateProperty(g_SPIMInterleaveSidesEnable, "0", MM::String, false, pAct);
+         CreateProperty(g_SPIMInterleaveSidesEnable, g_NoState, MM::String, false, pAct);
          AddAllowedValue(g_SPIMInterleaveSidesEnable, g_YesState);
          AddAllowedValue(g_SPIMInterleaveSidesEnable, g_NoState);
          UpdateProperty(g_SPIMInterleaveSidesEnable);
       }
 
-   }
+      if (FirmwareVersionAtLeast(3.14)) {
+         // in 3.14 added bit 5 of SPIM mode for alternate directions
+         pAct = new CPropertyAction (this, &CScanner::OnSPIMAlternateDirectionsEnable);
+         CreateProperty(g_SPIMAlternateDirectionsEnable, g_NoState, MM::String, false, pAct);
+         AddAllowedValue(g_SPIMAlternateDirectionsEnable, g_YesState);
+         AddAllowedValue(g_SPIMAlternateDirectionsEnable, g_NoState);
+         UpdateProperty(g_SPIMAlternateDirectionsEnable);
+
+         // before 3.14 the single axis period value of the axis (OnSAPeriodX) was used
+         // now we have a dedicated property (card-specific, not axis-specific)
+         pAct = new CPropertyAction (this, &CScanner::OnSPIMScanDuration);
+         CreateProperty(g_SPIMScanDurationPropertyName, "0", MM::Float, false, pAct);
+         UpdateProperty(g_SPIMScanDurationPropertyName);
+      }
+
+   } // adding SPIM properties
 
    // add ring buffer properties if supported (starting 2.81)
    if ((FirmwareVersionAtLeast(2.81)) && (build.vAxesProps[0] & BIT1))
@@ -2908,7 +2923,7 @@ int CScanner::OnLaserOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int CScanner::OnSPIMScannerHomeEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CScanner::OnSPIMScannerHomeDisable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
    long tmp = 0;
@@ -2926,8 +2941,8 @@ int CScanner::OnSPIMScannerHomeEnable(MM::PropertyBase* pProp, MM::ActionType eA
       switch (tmp)
       {
          // note that bit set high _disables_ the feature
-         case 0: success = pProp->Set(g_YesState); break;
-         case 1: success = pProp->Set(g_NoState); break;
+         case 0: success = pProp->Set(g_NoState); break;
+         case 1: success = pProp->Set(g_YesState); break;
          default: success = 0;
       }
       if (!success)
@@ -2936,9 +2951,9 @@ int CScanner::OnSPIMScannerHomeEnable(MM::PropertyBase* pProp, MM::ActionType eA
    else if (eAct == MM::AfterSet) {
       string tmpstr;
       pProp->Get(tmpstr);
-      if (tmpstr.compare(g_YesState) == 0)
+      if (tmpstr.compare(g_NoState) == 0)
          tmp = 0;
-      else if (tmpstr.compare(g_NoState) == 0)
+      else if (tmpstr.compare(g_YesState) == 0)
          tmp = 1;
       else
          return DEVICE_INVALID_PROPERTY_VALUE;
@@ -2955,7 +2970,8 @@ int CScanner::OnSPIMScannerHomeEnable(MM::PropertyBase* pProp, MM::ActionType eA
    return DEVICE_OK;
 }
 
-int CScanner::OnSPIMPiezoHomeEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CScanner::OnSPIMPiezoHomeDisable(MM::PropertyBase* pProp, MM::ActionType eAct)
+// TODO have mode byte be cached and shared between cards so we don't need to query before setting
 {
    ostringstream command; command.str("");
    long tmp = 0;
@@ -2973,8 +2989,8 @@ int CScanner::OnSPIMPiezoHomeEnable(MM::PropertyBase* pProp, MM::ActionType eAct
       switch (tmp)
       {
          // note that bit set high _disables_ the feature
-         case 0: success = pProp->Set(g_YesState); break;
-         case 1: success = pProp->Set(g_NoState); break;
+         case 0: success = pProp->Set(g_NoState); break;
+         case 1: success = pProp->Set(g_YesState); break;
          default: success = 0;
       }
       if (!success)
@@ -2983,9 +2999,9 @@ int CScanner::OnSPIMPiezoHomeEnable(MM::PropertyBase* pProp, MM::ActionType eAct
    else if (eAct == MM::AfterSet) {
       string tmpstr;
       pProp->Get(tmpstr);
-      if (tmpstr.compare(g_YesState) == 0)
+      if (tmpstr.compare(g_NoState) == 0)
          tmp = 0;
-      else if (tmpstr.compare(g_NoState) == 0)
+      else if (tmpstr.compare(g_YesState) == 0)
          tmp = 1;
       else
          return DEVICE_INVALID_PROPERTY_VALUE;
@@ -3041,6 +3057,52 @@ int CScanner::OnSPIMInterleaveSidesEnable(MM::PropertyBase* pProp, MM::ActionTyp
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp2) );
       tmp += (tmp2 & (0xEF));  // keep bit 4 from tmp, all others use current setting
+      command.str("");
+      command << addressChar_ << "NR Z=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CScanner::OnSPIMAlternateDirectionsEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   bool success;
+
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NR Z?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = tmp >> 5;   // shift left to get bits 5 in position of LSB
+      tmp &= (0x01);    // mask off all but what used to be bit 4
+      switch (tmp)
+      {
+         case 0: success = pProp->Set(g_NoState); break;
+         case 1: success = pProp->Set(g_YesState); break;
+         default: success = 0;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_NoState) == 0)
+         tmp = 0;
+      else if (tmpstr.compare(g_YesState) == 0)
+         tmp = 1;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      tmp = tmp << 5;  // right shift to get the value to bit 5
+      command << addressChar_ << "NR Z?";
+      long tmp2;
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp2) );
+      tmp += (tmp2 & (0xDF));  // keep bit 5 from tmp, all others use current setting
       command.str("");
       command << addressChar_ << "NR Z=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
@@ -3197,6 +3259,28 @@ int CScanner::OnSPIMDelayBeforeLaser(MM::PropertyBase* pProp, MM::ActionType eAc
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
       command << addressChar_ << "NV R=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CScanner::OnSPIMScanDuration(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "RT F?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A F="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "RT F=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
