@@ -74,7 +74,7 @@ public:
 
    // Shutter API
    int SetOpen(bool open = true);
-   int GetOpen(bool& open) {open = open_; return DEVICE_OK;}
+   int GetOpen(bool& open);
    int Fire (double /* deltaT */) { return DEVICE_UNSUPPORTED_COMMAND;}
    // ---------
 
@@ -90,6 +90,12 @@ private:
    long nrPhysicalShutters_;
    bool open_;
    bool initialized_;
+
+   // Synchronize access to physical shutters. This is needed because
+   // MultiShutter could be called from multiple threads at the same time if
+   // used with a MultiCamera. Currently there is no other mechanism to prevent
+   // concurrent access to the physical shutters.
+   MMThreadLock physicalShutterLock_;
 };
 
 /**

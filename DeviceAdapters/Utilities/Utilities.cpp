@@ -156,6 +156,8 @@ void MultiShutter::GetName(char* name) const
                                                                              
 int MultiShutter::Initialize() 
 {
+   MMThreadGuard g(physicalShutterLock_);
+
    // get list with available Shutters.   
    // TODO: this is a initialization parameter, which makes it harder for the end-user to set up!
    std::vector<std::string> availableShutters;
@@ -209,6 +211,8 @@ int MultiShutter::Initialize()
 
 bool MultiShutter::Busy()
 {
+   MMThreadGuard g(physicalShutterLock_);
+
    std::vector<MM::Shutter*>::iterator iter;
    for (iter = physicalShutters_.begin(); iter != physicalShutters_.end(); iter++ ) {
       if ( (*iter != 0) && (*iter)->Busy())
@@ -223,6 +227,8 @@ bool MultiShutter::Busy()
  */
 int MultiShutter::SetOpen(bool open)
 {
+   MMThreadGuard g(physicalShutterLock_);
+
    std::vector<MM::Shutter*>::iterator iter;
    for (iter = physicalShutters_.begin(); iter != physicalShutters_.end(); iter++ ) {
       if (*iter != 0) {
@@ -235,11 +241,22 @@ int MultiShutter::SetOpen(bool open)
    return DEVICE_OK;
 }
 
+
+int MultiShutter::GetOpen(bool& open)
+{
+   MMThreadGuard g(physicalShutterLock_);
+
+   open = open_;
+   return DEVICE_OK;
+}
+
 ///////////////////////////////////////
 // Action Interface
 //////////////////////////////////////
 int MultiShutter::OnPhysicalShutter(MM::PropertyBase* pProp, MM::ActionType eAct, long i)
 {
+   MMThreadGuard g(physicalShutterLock_);
+
    if (eAct == MM::BeforeGet)
    {
       pProp->Set(usedShutters_[i].c_str());
