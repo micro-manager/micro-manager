@@ -325,9 +325,10 @@ const char* const g_SPIMNumSlicesPerPiezoPropertyName = "SPIMNumSlicesPerPiezo";
 const char* const g_SPIMNumScansPerSlicePropertyName = "SPIMNumScansPerSlice";
 const char* const g_SPIMNumSidesPropertyName = "SPIMNumSides";
 const char* const g_SPIMFirstSidePropertyName = "SPIMFirstSide";
-const char* const g_SPIMPiezoHomeEnable = "SPIMPiezoHomeEnable";
-const char* const g_SPIMScannerHomeEnable = "SPIMScannerHomeEnable";
+const char* const g_SPIMPiezoHomeDisable = "SPIMPiezoHomeDisable";
+const char* const g_SPIMScannerHomeDisable = "SPIMScannerHomeDisable";
 const char* const g_SPIMInterleaveSidesEnable = "SPIMInterleaveSidesEnable";
+const char* const g_SPIMAlternateDirectionsEnable = "SPIMAlternateDirectionsEnable";
 const char* const g_SPIMNumRepeatsPropertyName = "SPIMNumRepeats";
 const char* const g_SPIMArmForTTLPropertyName = "SPIMArm";
 const char* const g_SPIMStatePropertyName = "SPIMState";
@@ -339,6 +340,7 @@ const char* const g_SPIMDelayBeforeCameraPropertyName = "SPIMDelayBeforeCamera(m
 const char* const g_SPIMDelayBeforeLaserPropertyName = "SPIMDelayBeforeLaser(ms)";
 const char* const g_SPIMCameraDurationPropertyName = "SPIMCameraDuration(ms)";
 const char* const g_SPIMLaserDurationPropertyName = "SPIMLaserDuration(ms)";
+const char* const g_SPIMScanDurationPropertyName = "SPIMScanDuration(ms)";
 
 // SPIM laser TTL property names
 const char* const g_LaserOutputModePropertyName = "LaserOutputMode";
