@@ -2444,6 +2444,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // if we did stage scanning restore its position and speed
       if (acqSettings.isStageScanning) {
          try {
+            // make sure stage scanning state machine is stopped, otherwise setting speed/position won't take
+            props_.setPropValue(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_STATE,
+                  Properties.Values.SPIM_IDLE);
             core_.setXYPosition(devices_.getMMDevice(Devices.Keys.XYSTAGE), 
                     xyPosUm.x, xyPosUm.y);
             props_.setPropValue(Devices.Keys.XYSTAGE,
