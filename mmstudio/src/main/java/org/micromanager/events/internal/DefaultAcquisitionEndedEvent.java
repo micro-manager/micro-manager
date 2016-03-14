@@ -25,12 +25,19 @@ import org.micromanager.events.AcquisitionEndedEvent;
 
 public class DefaultAcquisitionEndedEvent implements AcquisitionEndedEvent {
    private Datastore store_;
-   public DefaultAcquisitionEndedEvent(Datastore store) {
+   private Object source_;
+   public DefaultAcquisitionEndedEvent(Datastore store, Object source) {
       store_ = store;
+      source_ = source;
    }
 
    @Override
    public Datastore getStore() {
       return store_;
+   }
+
+   @Override
+   public Object getSource() {
+      return source_;
    }
 }

@@ -55,11 +55,11 @@ import org.scijava.plugin.SciJavaPlugin;
  */
 @Plugin(type = WidgetPlugin.class)
 public class MDAButtons extends WidgetPlugin implements SciJavaPlugin {
-   private Studio studio_;
+   private MMStudio studio_;
 
    @Override
    public void setContext(Studio studio) {
-      studio_ = studio;
+      studio_ = (MMStudio) studio;
    }
 
    @Override
@@ -105,7 +105,7 @@ public class MDAButtons extends WidgetPlugin implements SciJavaPlugin {
       dialogButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            ((MMStudio) studio_).openAcqControlDialog();
+            studio_.openAcqControlDialog();
          }
       });
       dialogButton.setFont(GUIUtils.buttonFont);
@@ -130,14 +130,18 @@ public class MDAButtons extends WidgetPlugin implements SciJavaPlugin {
          }
          @Subscribe
          public void onAcquisitionStart(AcquisitionStartedEvent event) {
-            setIcon(IconLoader.getIcon(
-                     "/org/micromanager/icons/cancel.png"));
-            setText("Stop!");
+            if (event.getSource() == studio_.getAcquisitionEngine()) {
+               setIcon(IconLoader.getIcon(
+                        "/org/micromanager/icons/cancel.png"));
+               setText("Stop!");
+            }
          }
          @Subscribe
          public void onAcquisitionEnded(AcquisitionEndedEvent event) {
-            setIcon(null);
-            setText("Acquire!");
+            if (event.getSource() == studio_.getAcquisitionEngine()) {
+               setIcon(null);
+               setText("Acquire!");
+            }
          }
       };
       studio_.events().registerForEvents(runButton);

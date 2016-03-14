@@ -60,7 +60,8 @@ public class DefaultTaggedImageSink  {
                         // Acquisition has ended.
                         pipeline_.halt();
                         DefaultEventManager.getInstance().post(
-                              new DefaultAcquisitionEndedEvent(store_));
+                              new DefaultAcquisitionEndedEvent(
+                                 store_, engine_));
                         break;
                      }
                      try {

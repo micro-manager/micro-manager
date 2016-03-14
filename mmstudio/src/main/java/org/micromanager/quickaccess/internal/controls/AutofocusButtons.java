@@ -36,8 +36,6 @@ import javax.swing.JPanel;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.events.AcquisitionEndedEvent;
-import org.micromanager.events.AcquisitionStartedEvent;
 import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.quickaccess.WidgetPlugin;
 import org.micromanager.PropertyMap;

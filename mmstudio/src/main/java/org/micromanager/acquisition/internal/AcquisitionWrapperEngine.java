@@ -158,7 +158,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          }
 
          studio_.events().post(new DefaultAcquisitionStartedEvent(curStore_,
-                  acquisitionSettings));
+                  this, acquisitionSettings));
 
          // Start pumping images through the pipeline and into the datastore.
          DefaultTaggedImageSink sink = new DefaultTaggedImageSink(
@@ -174,7 +174,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
       } catch (Throwable ex) {
          ReportingUtils.showError(ex);
-         studio_.events().post(new DefaultAcquisitionEndedEvent(curStore_));
+         studio_.events().post(new DefaultAcquisitionEndedEvent(
+                  curStore_, this));
          return null;
       }
    }
