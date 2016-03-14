@@ -130,7 +130,7 @@ public class MDAButtons extends WidgetPlugin implements SciJavaPlugin {
          }
          @Subscribe
          public void onAcquisitionStart(AcquisitionStartedEvent event) {
-            if (event.getSource() == studio_.getAcquisitionEngine()) {
+            if (studio_.acquisitions().isOurAcquisition(event.getSource())) {
                setIcon(IconLoader.getIcon(
                         "/org/micromanager/icons/cancel.png"));
                setText("Stop!");
@@ -138,7 +138,7 @@ public class MDAButtons extends WidgetPlugin implements SciJavaPlugin {
          }
          @Subscribe
          public void onAcquisitionEnded(AcquisitionEndedEvent event) {
-            if (event.getSource() == studio_.getAcquisitionEngine()) {
+            if (studio_.acquisitions().isOurAcquisition(event.getSource())) {
                setIcon(null);
                setText("Acquire!");
             }

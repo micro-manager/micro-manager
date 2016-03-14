@@ -188,4 +188,18 @@ public interface AcquisitionManager {
     * get required values.
     */
    public Metadata generateMetadata(Image image, boolean includeHardwareState) throws Exception;
+
+   /**
+    * Test the provided Object, and return true if it corresponds to the
+    * "source" object that Micro-Manager's acquisition system uses when
+    * publishing AcquisitionStartedEvent and AcquisitionEndedEvent. In other
+    * words, you can use this method to determine if an acquisition originated
+    * from Micro-Manager.
+    * @param source Result of calling getSource() on an AcquisitionStartedEvent
+    *        or AcquisitionEndedEvent.
+    * @return true if acquisition was started by Micro-Manager, false if it
+    *         was started elsewhere (e.g. by a plugin or other third-party
+    *         code).
+    */
+   public boolean isOurAcquisition(Object source);
 }

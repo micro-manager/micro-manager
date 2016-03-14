@@ -311,4 +311,9 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
       }
       return result.build();
    }
+
+   @Override
+   public boolean isOurAcquisition(Object source) {
+      return source == engine_;
+   }
 }
