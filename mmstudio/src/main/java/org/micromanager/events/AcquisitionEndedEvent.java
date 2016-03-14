@@ -35,10 +35,8 @@ public interface AcquisitionEndedEvent {
    /**
     * Return an Object used to identify the entity in charge of the
     * acquisition. This can be used by recipients to distinguish different
-    * types of acquisitions. If you have code that publishes
-    * AcquisitionEndedEvents, then that code should re-use the same object for
-    * each event. This object must be the same object that published the
-    * corresponding AcquisitionStartedEvent to this acquisition.
+    * types of acquisitions. This object must be the same object that published
+    * the corresponding AcquisitionStartedEvent to this acquisition.
     */
    public Object getSource();
 }

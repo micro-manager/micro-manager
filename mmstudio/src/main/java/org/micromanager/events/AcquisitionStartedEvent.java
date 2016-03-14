@@ -27,7 +27,8 @@ import org.micromanager.SequenceSettings;
  * This class signals that an acquisition is starting, and provides access to
  * the Datastore that images from the acquisition will be put into. Third-party
  * code may subclass this event to provide notifications of their own
- * acquisitions.
+ * acquisitions. If they do so, they should also publish AcquisitionEndedEvents
+ * when their acquisitions cease.
  */
 public interface AcquisitionStartedEvent {
    /**
@@ -39,9 +40,8 @@ public interface AcquisitionStartedEvent {
    /**
     * Return an Object used to identify the entity in charge of the
     * acquisition. This can be used by recipients to distinguish different
-    * types of acquisitions. If you have code that publishes
-    * AcquisitionStartedEvents, then that code should re-use the same object
-    * for each event.
+    * types of acquisitions. You must re-use the same object for the
+    * AcquisitionEndedEvent that you post.
     */
    public Object getSource();
 }
