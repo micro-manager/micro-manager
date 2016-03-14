@@ -226,15 +226,19 @@ public class MMAcquisition {
        * Create a SubscribedButton and subscribe it to the relevant event
        * buses.
        */
-      public static SubscribedButton makeButton(ImageIcon icon, DisplayWindow display) {
-         SubscribedButton result = new SubscribedButton(icon);
+      public static SubscribedButton makeButton(Studio studio,
+            ImageIcon icon, DisplayWindow display) {
+         SubscribedButton result = new SubscribedButton(studio, icon);
          DefaultEventManager.getInstance().registerForEvents(result);
          display.registerForEvents(result);
          return result;
       }
 
-      public SubscribedButton(ImageIcon icon) {
+      private Studio studio_;
+
+      public SubscribedButton(Studio studio, ImageIcon icon) {
          super(icon);
+         studio_ = studio;
       }
 
       @Subscribe
@@ -245,7 +249,9 @@ public class MMAcquisition {
 
       @Subscribe
       public void onAcquisitionEnded(AcquisitionEndedEvent e) {
-         setEnabled(false);
+         if (studio_.acquisitions().isOurAcquisition(e.getSource())) {
+            setEnabled(false);
+         }
       }
    }
 
@@ -261,7 +267,8 @@ public class MMAcquisition {
          @Override
          public List<Component> makeControls(final DisplayWindow display) {
             ArrayList<Component> result = new ArrayList<Component>();
-            JButton abortButton = SubscribedButton.makeButton(new ImageIcon(
+            JButton abortButton = SubscribedButton.makeButton(studio_,
+                  new ImageIcon(
                      getClass().getResource("/org/micromanager/icons/cancel.png")),
                   display);
             abortButton.setBackground(new Color(255, 255, 255));
@@ -283,7 +290,7 @@ public class MMAcquisition {
             final ImageIcon playIcon = new ImageIcon(getClass().getResource(
                   "/org/micromanager/icons/resultset_next.png"));
             final JButton pauseButton = SubscribedButton.makeButton(
-                  pauseIcon, display);
+                  studio_, pauseIcon, display);
             pauseButton.setToolTipText("Pause data acquisition");
             pauseButton.setFocusable(false);
             pauseButton.setMaximumSize(new Dimension(30, 28));

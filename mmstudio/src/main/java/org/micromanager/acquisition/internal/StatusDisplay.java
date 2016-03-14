@@ -115,7 +115,8 @@ public class StatusDisplay extends JFrame {
 
    @Subscribe
    public void onAcquisitionEnded(AcquisitionEndedEvent event) {
-      if (event.getStore() == store_) {
+      if (studio_.acquisitions().isOurAcquisition(event.getSource()) &&
+            event.getStore() == store_) {
          // All done here.
          studio_.events().unregisterForEvents(this);
          dispose();
