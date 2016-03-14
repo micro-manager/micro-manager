@@ -435,7 +435,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    }
 
    private JLabel createPleaLabel() {
-      JLabel citePleaLabel = new JLabel("<html>Please <a href=\"http://micro-manager.org\">cite Micro-Manager</a> so funding will continue!</html>");
+      JLabel citePleaLabel = new JLabel("<html>Please <a href=\"http://micro-manager.org\">cite Micro-Manager</a> in your publications!</html>");
       citePleaLabel.setFont(new Font("Arial", Font.PLAIN, 11));
 
       // When users click on the citation plea, we spawn a new thread to send
