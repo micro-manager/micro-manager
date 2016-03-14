@@ -19,19 +19,19 @@ package org.micromanager.asidispim.events;
 
 import org.micromanager.SequenceSettings;
 import org.micromanager.data.Datastore;
-import org.micromanager.events.AcquisitionStartedEvent;
+import org.micromanager.events.AcquisitionSequenceStartedEvent;
 
 /**
  *
  * @author nico
  */
-public class SPIMAcquisitionStartedEvent implements AcquisitionStartedEvent {
+public class SPIMAcquisitionStartedEvent implements AcquisitionSequenceStartedEvent {
    final private Datastore store_;
-   final private SequenceSettings settings_;
+   final private SequenceSettings sequence_;
    
-   public SPIMAcquisitionStartedEvent(Datastore store, SequenceSettings settings) {
+   public SPIMAcquisitionStartedEvent(Datastore store, SequenceSettings sequence) {
       store_ = store;
-      settings_ = settings;
+      sequence_ = sequence;
    }
    
    @Override
@@ -40,8 +40,13 @@ public class SPIMAcquisitionStartedEvent implements AcquisitionStartedEvent {
    }
 
    @Override
+   public Object getSource() {
+      return this;
+   }
+
+   @Override
    public SequenceSettings getSettings() {
-      return settings_;
+      return sequence_;
    }
    
 }
