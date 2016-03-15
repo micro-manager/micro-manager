@@ -1,4 +1,8 @@
 //////////////////////////////////////////////////////////////////////////////
+//
+//PROJECT:       diSPIM
+//-----------------------------------------------------------------------------
+//
 // AUTHOR:       Nico Stuurman
 //
 // COPYRIGHT:    University of California, San Francisco 2015
@@ -13,42 +17,33 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-
+ 
 package org.micromanager.asidispim.events;
 
-import org.micromanager.SequenceSettings;
 import org.micromanager.data.Datastore;
-import org.micromanager.events.AcquisitionSequenceStartedEvent;
+import org.micromanager.events.AcquisitionEndedEvent;
 
 /**
  *
  * @author nico
  */
-public class SPIMAcquisitionStartedEvent implements AcquisitionSequenceStartedEvent {
-   final private Datastore store_;
-   final private SequenceSettings sequence_;
-   final private Object object_;
+public class SPIMAcquisitionEndedEvent implements AcquisitionEndedEvent {
+   private final Datastore store_;
+   private final Object object_;
    
-   public SPIMAcquisitionStartedEvent(Datastore store, SequenceSettings sequence,
-           Object object) {
+   public SPIMAcquisitionEndedEvent (Datastore store, Object object) {
       store_ = store;
-      sequence_ = sequence;
       object_ = object;
    }
    
    @Override
-   public Datastore getDatastore() {
+   public Datastore getStore() {
       return store_;
    }
 
    @Override
    public Object getSource() {
       return object_;
-   }
-
-   @Override
-   public SequenceSettings getSettings() {
-      return sequence_;
    }
    
 }

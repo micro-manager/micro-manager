@@ -113,6 +113,7 @@ import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.asidispim.data.AcquisitionSettings;
 import org.micromanager.asidispim.data.ChannelSpec;
 import org.micromanager.asidispim.data.Devices.Sides;
+import org.micromanager.asidispim.events.SPIMAcquisitionEndedEvent;
 import org.micromanager.asidispim.events.SPIMAcquisitionStartedEvent;
 import org.micromanager.asidispim.utils.ControllerUtils;
 import org.micromanager.asidispim.utils.AutofocusUtils;
@@ -2017,7 +2018,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // note that these SequenceSettings are quite incomplete
             SequenceSettings settings = acqSettings.getSequenceSettings();
             
-            gui_.events().post(new SPIMAcquisitionStartedEvent(store, settings));
+            gui_.events().post(new SPIMAcquisitionStartedEvent(store, settings, this));
 
             // get circular buffer ready
             // do once here but not per-trigger; need to ensure ROI changes registered
@@ -2341,6 +2342,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
                // flag that we are done with acquisition
                acquisitionRunning_.set(false);
+               
+               gui_.events().post(new SPIMAcquisitionEndedEvent(store, this));
 
             } catch (Exception ex) {
                // exception while stopping sequence acquisition, not sure what to do...
