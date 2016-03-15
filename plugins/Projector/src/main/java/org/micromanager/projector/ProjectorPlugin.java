@@ -33,8 +33,8 @@ import org.scijava.plugin.SciJavaPlugin;
 // ad-hoc or planned as part of a multi-dimensional acquisition.
 @Plugin(type = MenuPlugin.class)
 public class ProjectorPlugin implements MenuPlugin, SciJavaPlugin {
-   public static final String menuName = "Projector";
-   public static final String tooltipDescription =
+   public static final String MENUNAME = "Projector";
+   public static final String TOOLTIP_DESCRIPTION =
       "Control galvo or SLM devices that project a spot or pattern " +
       "on the sample";
    
@@ -86,7 +86,7 @@ public class ProjectorPlugin implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public String getName() {
-      return menuName;
+      return MENUNAME;
    }
 
    @Override
@@ -96,7 +96,7 @@ public class ProjectorPlugin implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public String getHelpText() {
-      return tooltipDescription;
+      return TOOLTIP_DESCRIPTION;
    }
 
    @Override
