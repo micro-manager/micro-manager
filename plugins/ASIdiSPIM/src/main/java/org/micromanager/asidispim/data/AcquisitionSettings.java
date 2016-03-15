@@ -21,6 +21,8 @@
 
 package org.micromanager.asidispim.data;
 
+import java.util.ArrayList;
+import org.micromanager.SequenceSettings;
 import org.micromanager.asidispim.utils.SliceTiming;
 
 /**
@@ -113,5 +115,28 @@ public class AcquisitionSettings {
    
    // true if we are doing separate acquisition (viewer and file) for every timepoint
    public boolean separateTimepoints;
+   
+   /**
+    * Fills in as many of the MM Sequence Settings parameters as possible
+    * so that we can give MM an idea what we are up to
+    * @return MM Sequence Settings
+    */
+   public SequenceSettings getSequenceSettings() {
+      SequenceSettings mmss = new SequenceSettings();
+      mmss.numFrames = this.numTimepoints;
+      mmss.channelGroup = this.channelGroup;
+      //mmss.channels = new ArrayList<ChannelSpec>(Arrays.asList(this.channels));
+
+      ArrayList<Double> slices = new ArrayList<Double>(this.numSlices);
+      for (int z = 0; z < this.numSlices; z++) {
+         // todo: add the start z position
+         slices.add(this.stepSizeUm * (double) z);
+      }      
+      mmss.slices = slices;     
+      
+      mmss.usePositionList = this.useMultiPositions;
+      
+      return mmss;
+   }
    
 }
