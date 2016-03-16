@@ -56,14 +56,10 @@ import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -77,6 +73,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.text.DefaultFormatter;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
@@ -84,11 +82,12 @@ import mmcorej.DeviceType;
 import mmcorej.TaggedImage;
 import org.micromanager.data.Datastore;
 import org.micromanager.Studio;
-// TODO should not depend on this module.
-import org.micromanager.display.internal.MMVirtualStack;
-import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.MMListenerAdapter;
 import org.micromanager.PropertyMap;
+
+// TODO should not depend on internal code.
+import org.micromanager.display.internal.MMVirtualStack;
+import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.MathFunctions;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -113,6 +112,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private MosaicSequencingFrame mosaicSequencingFrame_;
    private String targetingShutter_;
    private Boolean disposing_ = false;
+   
+   public final static String DELAY = "Delay";
 
    /**
     * Simple utility methods for points
@@ -864,17 +865,20 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private static Roi[] homogenizeROIs(Roi[] rois) {
       List<Roi> roiList = new ArrayList<Roi>();
       for (Roi roi : rois) {
-         if (roi.getType() == Roi.POINT) {
-            Polygon poly = ((PointRoi) roi).getPolygon();
-            for (int i = 0; i < poly.npoints; ++i) {
-               roiList.add(new PointRoi(
-                     poly.xpoints[i],
-                     poly.ypoints[i]));
-            }
-         } else if (roi.getType() == Roi.OVAL) {
-            roiList.add(asEllipseRoi((OvalRoi) roi));
-         } else {
-            roiList.add(roi);
+         switch (roi.getType()) {
+            case Roi.POINT:
+               Polygon poly = ((PointRoi) roi).getPolygon();
+               for (int i = 0; i < poly.npoints; ++i) {
+                  roiList.add(new PointRoi(
+                          poly.xpoints[i],
+                          poly.ypoints[i]));
+               }  break;
+            case Roi.OVAL:
+               roiList.add(asEllipseRoi((OvalRoi) roi));
+               break;
+            default:
+               roiList.add(roi);
+               break;
          }
       }
       return roiList.toArray(rois);
@@ -1248,15 +1252,20 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    public final void updateROISettings() {
       boolean roisSubmitted;
       int numROIs = individualRois_.length;
-      if (numROIs == 0) {
-         roiStatusLabel.setText("No ROIs submitted");
-         roisSubmitted = false;
-      } else if (numROIs == 1) {
-         roiStatusLabel.setText("One ROI submitted");
-         roisSubmitted = true;
-      } else { // numROIs > 1
-         roiStatusLabel.setText("" + numROIs + " ROIs submitted");
-         roisSubmitted = true;
+      switch (numROIs) {
+         case 0:
+            roiStatusLabel.setText("No ROIs submitted");
+            roisSubmitted = false;
+            break;
+         case 1:
+            roiStatusLabel.setText("One ROI submitted");
+            roisSubmitted = true;
+            break;
+         default:
+            // numROIs > 1
+            roiStatusLabel.setText("" + numROIs + " ROIs submitted");
+            roisSubmitted = true;
+            break;
       }
 
       roiLoopLabel.setEnabled(roisSubmitted);
@@ -1350,7 +1359,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * Constructor. Creates the main window for the Projector plugin.
     */
    private ProjectorControlForm(CMMCore core, Studio app) {
+      // Let the Netbeans code make the GUI
       initComponents();
+      
       app_ = app;
       core_ = app.getCMMCore();
       String slm = core_.getSLMDevice();
@@ -1386,7 +1397,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
               this.getClass(),"channel", ""));
       populateShutterComboBox(app_.profile().getString(
               this.getClass(), "shutter", ""));
-      this.addWindowFocusListener(new WindowAdapter() {
+      super.addWindowFocusListener(new WindowAdapter() {
          @Override
          public void windowGainedFocus(WindowEvent e) {
             if (!disposing_)
@@ -1413,8 +1424,25 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             }
          }
       });
+      
+      delayField_.setText(app_.profile().getString(this.getClass(), DELAY, "0"));
+      // Listen for changes in the text
+      delayField_.getDocument().addDocumentListener(new DocumentListener() {
+         @Override
+         public void insertUpdate(DocumentEvent e) { updateProfile(); }
 
-      this.loadAndRestorePosition(500, 300);
+         @Override
+         public void removeUpdate(DocumentEvent e) { updateProfile(); }
+
+         @Override
+         public void changedUpdate(DocumentEvent e) { updateProfile(); }
+         
+         void updateProfile() {
+            app_.profile().setString(this.getClass(), DELAY, delayField_.getText());
+         }
+      });
+
+      super.loadAndRestorePosition(500, 300);
       updateROISettings();
    }
    
