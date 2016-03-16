@@ -24,7 +24,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
 //
 // AUTHOR:        Jizhen Zhao (j.zhao@andor.com) based on code by Nenad Amodaj, April 2007, modified by Nico Stuurman, 12/2007
-// MAINTAINER     Maintained by Nico Stuurman (nico@cmp.ucsf.edu)
+// MAINTAINER     Maintained by Nico Stuurman (nico@cmp.ucsf.edu) and Jon Daniels (jon@asiimaging.com)
 //
 
 #ifdef WIN32
@@ -330,6 +330,45 @@ int ASIBase::CheckDeviceStatus(void)
    return ret;
 }
 
+unsigned int ASIBase::ConvertDay(int year, int month, int day)
+{
+   return day + 31*(month-1) + 372*(year-2000);
+}
+
+unsigned int ASIBase::ExtractCompileDay(const char* compile_date)
+{
+   const char* months = "anebarprayunulugepctovec";
+   if (strlen(compile_date) < 11)
+      return 0;
+   int year = 0;
+   int month = 0;
+   int day = 0;
+   if (strlen(compile_date) >= 11
+         && compile_date[7] == '2'  // must be 20xx for sanity checking
+         && compile_date[8] == '0'
+         && compile_date[9] <= '9'
+         && compile_date[9] >= '0'
+         && compile_date[10] <= '9'
+         && compile_date[10] >= '0')
+   {
+      year = 2000 + 10*(compile_date[9]-'0') + (compile_date[10]-'0');
+      // look for the year based on the last two characters of the abbreviated month name
+      month = 1;
+      for (int i=0; i<12; i++)
+      {
+         if (compile_date[1] == months[2*i] &&
+         compile_date[2] == months[2*i+1])
+         {
+            month = i + 1;
+         }
+      }
+      day = 10*(compile_date[4]-'0') + 10*(compile_date[5]-'0');
+      if (day < 1 || day > 31)
+         day = 1;
+      return ConvertDay(year, month, day);
+   }
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // XYStage
@@ -348,7 +387,7 @@ XYStage::XYStage() :
    answerTimeoutMs_(1000),
    serialOnlySendChanged_(true),
    manualSerialAnswer_(""),
-   compileYear_(0)
+   compileDay_(0)
 {
    InitializeDefaultErrorMessages();
 
@@ -404,23 +443,15 @@ int XYStage::Initialize()
    CreateProperty("CompileDate", "", MM::String, true, pAct);
    UpdateProperty("CompileDate");
 
-   // get the year of the firmware
+   // get the date of the firmware
    char compile_date[MM::MaxStrLength];
-   if (GetProperty("CompileDate", compile_date) == DEVICE_OK
-         && strlen(compile_date) >= 11
-         && compile_date[7] == '2'  // must be 20xx
-         && compile_date[8] == '0'
-         && compile_date[9] <= '9'
-         && compile_date[9] >= '0'
-         && compile_date[10] <= '9'
-         && compile_date[10] >= '0') {
-      compileYear_ = 2000 + 10*(compile_date[9]-'0') + (compile_date[10]-'0');
-   }
+   if (GetProperty("CompileDate", compile_date) == DEVICE_OK)
+      compileDay_ = ExtractCompileDay(compile_date);
 
    // if really old firmware then don't get build name
    // build name is really just for diagnostic purposes anyway
    // I think it was present before 2010 but this is easy way
-   if (compileYear_ >= 2010)
+   if (compileDay_ >= ConvertDay(2010, 1, 1))
    {
       pAct = new CPropertyAction (this, &XYStage::OnBuildName);
       CreateProperty("BuildName", "", MM::String, true, pAct);
@@ -1106,8 +1137,8 @@ int XYStage::OnWait(MM::PropertyBase* pProp, MM::ActionType eAct)
 
       // if firmware date is 2009+  then use msec/int definition of WaitCycles
       // would be better to parse firmware (8.4 and earlier used unsigned char)
-      // and that transition occurred ~2008 but this is easier
-      if (compileYear_ >= 2009)
+      // and that transition occurred ~2008 but not sure exactly when
+      if (compileDay_ >= ConvertDay(2009, 1, 1))
       {
          // don't enforce upper limit
       }
@@ -1853,7 +1884,7 @@ ZStage::ZStage() :
    nrEvents_(50),
    maxSpeed_(7.5),
    motorOn_(true),
-   compileYear_(0)
+   compileDay_(0)
 {
    InitializeDefaultErrorMessages();
 
@@ -1929,18 +1960,10 @@ int ZStage::Initialize()
    CreateProperty("CompileDate", "", MM::String, true, pAct);
    UpdateProperty("CompileDate");
 
-   // get the year of the firmware
+   // get the date of the firmware
    char compile_date[MM::MaxStrLength];
-   if (GetProperty("CompileDate", compile_date) == DEVICE_OK
-         && strlen(compile_date) >= 11
-         && compile_date[7] == '2'  // must be 20xx
-         && compile_date[8] == '0'
-         && compile_date[9] <= '9'
-         && compile_date[9] >= '0'
-         && compile_date[10] <= '9'
-         && compile_date[10] >= '0') {
-      compileYear_ = 2000 + 10*(compile_date[9]-'0') + (compile_date[10]-'0');
-   }
+   if (GetProperty("CompileDate", compile_date) == DEVICE_OK)
+      compileDay_ = ExtractCompileDay(compile_date);
 
    if (HasRingBuffer())
    {
@@ -2310,7 +2333,7 @@ int ZStage::SendStageSequence()
       {
          ostringstream os;
          os.precision(0);
-         // Strange, but this command needs <CR><LF>.  
+         // Strange, but this command needs <CR><LF>.
          // It appears for WhizKid the LD reply is :A without <CR><LF> so maybe sending extra one helps
          // that is also why the answer can have :N-1
          // basically we are trying to compensate for the controller's faults here
@@ -2604,7 +2627,7 @@ int ZStage::OnWait(MM::PropertyBase* pProp, MM::ActionType eAct)
       // would be better to parse firmware (8.4 and earlier used unsigned char)
       // and that transition occurred ~2008 but this is easier than trying to
       // parse version strings
-      if (compileYear_ >= 2009)
+      if (compileDay_ >= ConvertDay(2009, 1, 1))
       {
          // don't enforce upper limit
       }
@@ -3544,7 +3567,7 @@ CRISP::CRISP() :
    na_(0.65),
    waitAfterLock_(1000),
    answerTimeoutMs_(1000),
-   compileYear_(0)
+   compileDay_(0)
 {
    InitializeDefaultErrorMessages();
 
@@ -3619,18 +3642,10 @@ int CRISP::Initialize()
    CreateProperty("CompileDate", "", MM::String, true, pAct);
    UpdateProperty("CompileDate");
 
-   // get the year of the firmware
+   // get the date of the firmware
    char compile_date[MM::MaxStrLength];
-   if (GetProperty("CompileDate", compile_date) == DEVICE_OK
-         && strlen(compile_date) >= 11
-         && compile_date[7] == '2'  // must be 20xx
-         && compile_date[8] == '0'
-         && compile_date[9] <= '9'
-         && compile_date[9] >= '0'
-         && compile_date[10] <= '9'
-         && compile_date[10] >= '0') {
-      compileYear_ = 2000 + 10*(compile_date[9]-'0') + (compile_date[10]-'0');
-   }
+   if (GetProperty("CompileDate", compile_date) == DEVICE_OK)
+      compileDay_ = ExtractCompileDay(compile_date);
 
    pAct = new CPropertyAction(this, &CRISP::OnWaitAfterLock);
    CreateProperty("Wait ms after Lock", "3000", MM::Integer, false, pAct);
@@ -3657,7 +3672,9 @@ int CRISP::Initialize()
    CreateProperty("Number of Averages", "1", MM::Integer, false, pAct);
    SetPropertyLimits("Number of Averages", 0, 10);
 
-   if (compileYear_ >= 2015) {
+   // not sure exactly when Gary made these firmware changes, but they were there by start of 2015
+   if (compileDay_ >= ConvertDay(2015, 1, 1))
+   {
       pAct = new CPropertyAction(this, &CRISP::OnNumSkips);
       CreateProperty("Number of Skips", "0", MM::Integer, false, pAct);
       SetPropertyLimits("Number of Skips", 0, 100);

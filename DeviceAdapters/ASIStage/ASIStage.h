@@ -68,6 +68,8 @@ public:
    int SendCommand(const char *command) const;
    int QueryCommandACK(const char *command);
    int QueryCommand(const char *command, std::string &answer) const;
+   unsigned int ConvertDay(int year, int month, int day);
+   unsigned int ExtractCompileDay(const char *compile_date);
 
 protected:
    bool oldstage_;
@@ -161,7 +163,7 @@ private:
    bool stopSignal_;
    bool serialOnlySendChanged_;        // if true the serial command is only sent when it has changed
    std::string manualSerialAnswer_; // last answer received when the SerialCommand property was used
-   unsigned int compileYear_;    // four digit compile year if firmware is year 2000 or newer. 0 for 1999 and older firmware.
+   unsigned int compileDay_;  // "days" since Jan 1 2000 since the firmware was compiled according to (compile day + 31*(compile month-1) + 12*31*(compile year-2000))
 };
 
 class ZStage : public CStageBase<ZStage>, public ASIBase
@@ -238,7 +240,7 @@ private:
    long curSteps_;
    double maxSpeed_;
    bool motorOn_;
-   unsigned int compileYear_;    // four digit compile year if firmware is year 2000 or newer. 0 for 1999 and older firmware.
+   unsigned int compileDay_;  // "days" since Jan 1 2000 since the firmware was compiled according to (compile day + 31*(compile month-1) + 12*31*(compile year-2000))
 };
 
 
@@ -348,7 +350,7 @@ private:
    std::string focusState_;
    long waitAfterLock_;
    int answerTimeoutMs_;
-   unsigned int compileYear_;    // four digit compile year if firmware is year 2000 or newer. 0 for 1999 and older firmware.
+   unsigned int compileDay_;  // "days" since Jan 1 2000 since the firmware was compiled according to (compile day + 31*(compile month-1) + 12*31*(compile year-2000))
 };
 
 class AZ100Turret : public CStateDeviceBase<AZ100Turret>, public ASIBase
