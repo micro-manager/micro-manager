@@ -1061,16 +1061,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       //    trigger the laser until 0.24ms after global exposure) use cameraReset_max
       final float cameraExposure = cameraReset_max + laserDuration;
       
-      // account for possible slight delay between trigger and actual exposure start
-      // which means our exposure time should be slightly shorter
-      // for now simply recover "overhead time" in computeCameraResetTime()
-      // if readout/reset calculations change then this may need to be more sophisticated
-      final float cameraExposureDelayTime = (cameraResetTime - cameraReadoutTime);
-      
       switch (acqSettings.cameraMode) {
       case EDGE:
          s.cameraDuration = 1;  // doesn't really matter, 1ms should be plenty fast yet easy to see for debugging
-         s.cameraExposure = cameraExposure - cameraExposureDelayTime + 0.1f;  // add 0.1ms as safety margin, may require adding an additional 0.25ms to slice
+         s.cameraExposure = cameraExposure + 0.1f;  // add 0.1ms as safety margin, may require adding an additional 0.25ms to slice
+         // slight delay between trigger and actual exposure start
+         //   is included in exposure time for Hamamatsu and negligible for Andor and PCO cameras
          // ensure not to miss triggers by not being done with readout in time for next trigger, add 0.25ms if needed
          if (getSliceDuration(s) < (s.cameraExposure + cameraReadoutTime)) {
             ReportingUtils.logDebugMessage("Added 0.25ms in edge-trigger mode to make sure camera exposure long enough without dropping frames");
