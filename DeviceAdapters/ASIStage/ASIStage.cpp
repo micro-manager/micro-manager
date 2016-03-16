@@ -1881,7 +1881,7 @@ ZStage::ZStage() :
    sequenceable_(false),
    runningFastSequence_(false),
    hasRingBuffer_(false),
-   nrEvents_(50),
+   nrEvents_(0),
    maxSpeed_(7.5),
    motorOn_(true),
    compileDay_(0)
@@ -1907,12 +1907,6 @@ ZStage::ZStage() :
    AddAllowedValue("Axis", "F");
    AddAllowedValue("Axis", "P");
    AddAllowedValue("Axis", "Z");
-
-   // size of the ring buffer
-   pAct = new CPropertyAction (this, &ZStage::OnRingBufferSize);
-   CreateProperty("RingBufferSize", "50", MM::Integer, false, pAct, true);
-   AddAllowedValue("RingBufferSize", "50");
-   AddAllowedValue("RingBufferSize", "250");
 }
 
 ZStage::~ZStage()
@@ -1964,6 +1958,16 @@ int ZStage::Initialize()
    char compile_date[MM::MaxStrLength];
    if (GetProperty("CompileDate", compile_date) == DEVICE_OK)
       compileDay_ = ExtractCompileDay(compile_date);
+
+   if (HasRingBuffer() && nrEvents_ == 0)
+   {
+      // we couldn't detect size of the ring buffer automatically so create property
+      pAct = new CPropertyAction (this, &ZStage::OnRingBufferSize);
+      CreateProperty("RingBufferSize", "50", MM::Integer, false, pAct);
+      AddAllowedValue("RingBufferSize", "50");
+      AddAllowedValue("RingBufferSize", "250");
+      nrEvents_ = 50;
+   }
 
    if (HasRingBuffer())
    {
@@ -2333,18 +2337,28 @@ int ZStage::SendStageSequence()
       {
          ostringstream os;
          os.precision(0);
-         // Strange, but this command needs <CR><LF>.
-         // It appears for WhizKid the LD reply is :A without <CR><LF> so maybe sending extra one helps
-         // that is also why the answer can have :N-1
-         // basically we are trying to compensate for the controller's faults here
-         os << fixed << "LD " << axis_ << "=" << sequence_[i] * 10 << "\r\n"; 
-         ret = QueryCommand(os.str().c_str(), answer);
-         if (ret != DEVICE_OK)
-            return ret;
+         if (compileDay_ >= ConvertDay(2015, 10, 23))
+         {
+            os << fixed << "LD " << axis_ << "=" << sequence_[i] * 10;  // 10 here is for unit multiplier/1000
+            ret = QueryCommand(os.str().c_str(), answer);
+            if (ret != DEVICE_OK)
+               return ret;
+         }
+         else
+         {
+            // For WhizKid the LD reply originally was :A without <CR><LF> so
+            //   send extra "empty command"  and get back :N-1 which we ignore
+            // basically we are trying to compensate for the controller's faults here
+            // but as of 2015-10-23 the firmware to "properly" responds with <CR><LF>
+            os << fixed << "LD " << axis_ << "=" << sequence_[i] * 10 << "\r\n";
+            ret = QueryCommand(os.str().c_str(), answer);
+            if (ret != DEVICE_OK)
+               return ret;
 
-         // the answer will also have a :N-1 in it, ignore.
-         if (! (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0) )
-            return ERR_UNRECOGNIZED_ANSWER;
+            // the answer will also have a :N-1 in it, ignore.
+            if (! (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0) )
+               return ERR_UNRECOGNIZED_ANSWER;
+         }
       }
    }
 
@@ -2400,10 +2414,12 @@ int ZStage::GetControllerInfo()
          hasRingBuffer_ = true;
          if (token.size() > ringBuffer.size()) 
          {
+            // tries to read ring buffer size, this works since 2013-09-03
+            //   change to firmware which prints max size
             int rsize = atoi(token.substr(ringBuffer.size()).c_str());
-            // untested code, trying to be safe
-            if (rsize > 50) 
+            if (rsize > 0)
             {
+               // only used in GetStageSequenceMaxLength as defined in .h file
                nrEvents_ = rsize;
             }
          }
