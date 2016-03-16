@@ -362,11 +362,12 @@ unsigned int ASIBase::ExtractCompileDay(const char* compile_date)
             month = i + 1;
          }
       }
-      day = 10*(compile_date[4]-'0') + 10*(compile_date[5]-'0');
+      day = 10*(compile_date[4]-'0') + (compile_date[5]-'0');
       if (day < 1 || day > 31)
          day = 1;
       return ConvertDay(year, month, day);
    }
+   return 0;
 }
 
 
@@ -1962,11 +1963,19 @@ int ZStage::Initialize()
    if (HasRingBuffer() && nrEvents_ == 0)
    {
       // we couldn't detect size of the ring buffer automatically so create property
+      //   to allow user to change it
       pAct = new CPropertyAction (this, &ZStage::OnRingBufferSize);
       CreateProperty("RingBufferSize", "50", MM::Integer, false, pAct);
       AddAllowedValue("RingBufferSize", "50");
       AddAllowedValue("RingBufferSize", "250");
-      nrEvents_ = 50;
+      nrEvents_ = 50;  // modified in action handler
+   }
+   else
+   {
+      ostringstream tmp;
+      tmp.str("");
+      tmp << nrEvents_;  // initialized in GetControllerInfo() if we got here
+      CreateProperty("RingBufferSize", tmp.str().c_str(), MM::String, true);
    }
 
    if (HasRingBuffer())
