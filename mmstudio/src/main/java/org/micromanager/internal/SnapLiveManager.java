@@ -47,6 +47,7 @@ import org.micromanager.data.Pipeline;
 import org.micromanager.data.PipelineErrorException;
 import org.micromanager.data.internal.DefaultRewritableDatastore;
 import org.micromanager.data.internal.DefaultImage;
+import org.micromanager.data.internal.DefaultMetadata;
 
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.DefaultDisplayWindow;
@@ -461,7 +462,8 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
             }
          }
          try {
-            DefaultImage newImage = new DefaultImage(image, image.getCoords(), image.getMetadata());
+            DefaultImage newImage = new DefaultImage(image, image.getCoords(),
+                  studio_.acquisitions().generateMetadata(image, true));
             // Find any image to compare against, at all.
             DefaultImage lastImage = null;
             if (channelToLastImage_.keySet().size() > 0) {
@@ -509,6 +511,10 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
             // image); replace it.
             reset();
             displayImage(image);
+         }
+         catch (Exception e) {
+            // Error getting metadata from the system state cache.
+            studio_.logs().logError(e, "Error drawing image in snap/live view");
          }
       }
    }
