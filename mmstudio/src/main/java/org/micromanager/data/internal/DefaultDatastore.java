@@ -447,6 +447,10 @@ public class DefaultDatastore implements Datastore {
          // Ideally we'd fix the OME metadata writer to be able to handle
          // images in arbitrary order, but that would require understanding
          // that code...
+         // We also need to sort by frame (and while we're at it, sort by
+         // z and channel as well), since FileSet.writeImage() assumes that
+         // timepoints are written sequentially and can potentially cause
+         // invalid metadata if they are not.
          ArrayList<Coords> tmp = new ArrayList<Coords>();
          for (Coords coords : getUnorderedImageCoords()) {
             tmp.add(coords);
@@ -454,9 +458,24 @@ public class DefaultDatastore implements Datastore {
          java.util.Collections.sort(tmp, new java.util.Comparator<Coords>() {
             @Override
             public int compare(Coords a, Coords b) {
-               int p1 = a.getIndex(Coords.STAGE_POSITION);
-               int p2 = b.getIndex(Coords.STAGE_POSITION);
-               return (p1 < p2) ? -1 : 1;
+               int p1 = a.getStagePosition();
+               int p2 = b.getStagePosition();
+               if (p1 != p2) {
+                  return p1 < p2 ? -1 : 1;
+               }
+               int t1 = a.getTime();
+               int t2 = b.getTime();
+               if (t1 != t2) {
+                  return t1 < t2 ? -1 : 1;
+               }
+               int z1 = a.getZ();
+               int z2 = b.getZ();
+               if (z1 != z2) {
+                  return z1 < z2 ? -1 : 1;
+               }
+               int c1 = a.getChannel();
+               int c2 = b.getChannel();
+               return c1 < c2 ? -1 : 1;
             }
          });
          for (Coords coords : tmp) {
