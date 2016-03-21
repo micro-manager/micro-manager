@@ -701,6 +701,10 @@ public class DefaultDisplaySettings implements DisplaySettings {
                   contrastSettings.toArray(new DefaultContrastSettings[] {}));
          }
 
+         if (tags.has(CHANNEL_COLOR_MODE)) {
+            builder.channelColorMode(ColorMode.fromInt(
+                     tags.getInt(CHANNEL_COLOR_MODE)));
+         }
          if (tags.has(MAGNIFICATION)) {
             builder.magnification(tags.getDouble(MAGNIFICATION));
          }
@@ -852,6 +856,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
             result.put("ChContrastMin", mins);
             result.put("ChContrastMax", maxes);
          }
+         result.put(CHANNEL_COLOR_MODE, channelColorMode_.getIndex());
          result.put(MAGNIFICATION, magnification_);
          result.put(ANIMATION_FPS_DOUBLE, animationFPS_);
          result.put(HISTOGRAM_UPDATE_RATE, histogramUpdateRate_);
