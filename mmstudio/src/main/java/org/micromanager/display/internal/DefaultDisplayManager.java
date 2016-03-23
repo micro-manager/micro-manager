@@ -118,13 +118,13 @@ public final class DefaultDisplayManager implements DisplayManager {
       // Iterate over all display windows, find those associated with this
       // datastore, and manually associate them now.
       ArrayList<DisplayWindow> displays = new ArrayList<DisplayWindow>();
+      storeToDisplays_.put(store, displays);
       for (DisplayWindow display : getAllImageWindows()) {
          if (display.getDatastore() == store) {
             displays.add(display);
             display.registerForEvents(this);
          }
       }
-      storeToDisplays_.put(store, displays);
    }
 
    @Override
@@ -500,9 +500,15 @@ public final class DefaultDisplayManager implements DisplayManager {
       try {
          DisplayWindow display = event.getDisplay();
          Datastore store = display.getDatastore();
-         if (getIsManaged(store) &&
-               storeToDisplays_.get(store).contains(display)) {
-            storeToDisplays_.get(store).remove(display);
+         if (getIsManaged(store)) {
+            if (storeToDisplays_.get(store).contains(display)) {
+               storeToDisplays_.get(store).remove(display);
+            }
+            if (storeToDisplays_.get(store).size() == 0) {
+               // No more references to this display exist. Clean it up.
+               storeToDisplays_.remove(store);
+               store.close();
+            }
          }
          if (displayFocusHistory_.contains(display)) {
             displayFocusHistory_.remove(display);
