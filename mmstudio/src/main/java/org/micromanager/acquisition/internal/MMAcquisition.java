@@ -399,7 +399,6 @@ public class MMAcquisition {
       if (display_ != null) {
          display_.requestToClose();
       }
-//      store_.lock();
    }
 
    @Subscribe
@@ -413,6 +412,7 @@ public class MMAcquisition {
             studio_.displays().promptToSave(store_, display_)) {
          // Datastore is saved, or user declined to save.
          display_.forceClosed();
+         store_.close();
       }
    }
 
