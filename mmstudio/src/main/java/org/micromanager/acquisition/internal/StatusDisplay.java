@@ -23,6 +23,8 @@ import com.google.common.eventbus.Subscribe;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.GraphicsConfiguration;
 import java.awt.Rectangle;
 
@@ -88,10 +90,23 @@ public class StatusDisplay extends JFrame {
     * status display.
     */
    private void showStatusDisplay() {
+      if (hasVisibleContent_) {
+         // Between when SwingUtilities scheduled calling us and when we got
+         // called, a DisplayWindow showed up.
+         return;
+      }
       setUndecorated(true);
       JPanel contents = new JPanel(new MigLayout("flowy"));
       contents.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
       contents.add(new JLabel("Acquisition started, waiting for images..."));
+      JButton clearButton = new JButton("Close");
+      clearButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            dispose();
+         }
+      });
+      contents.add(clearButton, "spanx, alignx right");
       add(contents);
       pack();
       // Put us centered, on the same display as the main window.
@@ -108,8 +123,13 @@ public class StatusDisplay extends JFrame {
    public void onDisplayAboutToShow(DisplayAboutToShowEvent event) {
       if (event.getDisplay().getDatastore() == store_) {
          // There is visible content for our datastore.
-         hasVisibleContent_ = true;
-         dispose();
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               hasVisibleContent_ = true;
+               dispose();
+            }
+         });
       }
    }
 
