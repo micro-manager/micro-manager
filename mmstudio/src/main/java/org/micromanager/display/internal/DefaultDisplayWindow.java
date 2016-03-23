@@ -174,6 +174,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    private CanvasUpdateQueue canvasQueue_;
 
    private boolean haveClosed_ = false;
+   private boolean amClosing_ = false;
 
    // Custom string in the title.
    private String customName_;
@@ -873,9 +874,12 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
 
    @Override
    public void forceClosed() {
-      if (haveClosed_) {
-         // Only ever call this method once.
-         return;
+      synchronized(this) {
+         if (haveClosed_ || amClosing_) {
+            // Only ever call this method once.
+            return;
+         }
+         amClosing_ = true;
       }
       if (!SwingUtilities.isEventDispatchThread()) {
          SwingUtilities.invokeLater(new Runnable() {
