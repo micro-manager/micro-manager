@@ -703,4 +703,9 @@ public class StorageSinglePlaneTiffSeries implements Storage {
                DefaultSummaryMetadata.METADATA_VERSION).build();
       }
    }
+
+   @Override
+   public void close() {
+      // We don't maintain any state that needs to be cleaned up.
+   }
 }

@@ -126,6 +126,17 @@ class FileSet {
       finished_ = true;
    }
 
+   public void closeFileDescriptors() {
+      for (MultipageTiffWriter writer : tiffWriters_) {
+         try {
+            writer.getReader().close();
+         }
+         catch (IOException e) {
+            ReportingUtils.logError(e, "Error closing file descriptor");
+         }
+      }
+   }
+
    public MultipageTiffReader getCurrentReader() {
       return tiffWriters_.getLast().getReader();
    }

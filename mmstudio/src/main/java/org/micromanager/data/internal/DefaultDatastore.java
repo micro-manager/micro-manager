@@ -349,6 +349,9 @@ public class DefaultDatastore implements Datastore {
    public void close() {
       DefaultEventManager.getInstance().post(
             new DefaultDatastoreClosingEvent(this));
+      if (storage_ != null) {
+         storage_.close();
+      }
    }
 
    @Override

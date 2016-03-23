@@ -157,4 +157,10 @@ public class StorageRAM implements RewritableStorage {
       }
       coordsToImage_.remove(coords);
    }
+
+   @Override
+   public void close() {
+      // Nothing to be done; we get GC'd automatically when all references are
+      // gone.
+   }
 }

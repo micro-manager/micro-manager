@@ -136,7 +136,7 @@ public final class StorageMultipageTiff implements Storage {
       coordsToReader_ = new TreeMap<Coords, MultipageTiffReader>();
 
       // TODO: throw error if no existing dataset
-      if (!amInWriteMode_) {       
+      if (!amInWriteMode_) {
          openExistingDataSet();
       }
    }
@@ -702,6 +702,28 @@ public final class StorageMultipageTiff implements Storage {
    public boolean hasImage(Coords coords) {
       return coordsToPendingImage_.containsKey(coords) ||
          coordsToReader_.containsKey(coords);
+   }
+
+   /**
+    * Remove open file descriptors.
+    */
+   @Override
+   public void close() {
+      // For files we wrote ourselves.
+      if (positionToFileSet_ != null) {
+         for (FileSet fileset : positionToFileSet_.values()) {
+            fileset.closeFileDescriptors();
+         }
+      }
+      // For files we read from disk.
+      for (MultipageTiffReader reader : coordsToReader_.values()) {
+         try {
+            reader.close();
+         }
+         catch (IOException e) {
+            ReportingUtils.logError(e, "Error cleaning up open file descriptor");
+         }
+      }
    }
 
    public static boolean getShouldGenerateMetadataFile() {

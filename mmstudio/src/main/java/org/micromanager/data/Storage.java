@@ -121,4 +121,10 @@ public interface Storage {
     * @return number of images in this dataset
     */
    public int getNumImages();
+
+   /**
+    * Release any resources used by the Storage, for example open file
+    * descriptors.
+    */
+   public void close();
 }

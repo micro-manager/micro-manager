@@ -239,10 +239,10 @@ public interface Datastore extends Closeable {
    /**
     * Close the Datastore, removing all references to it from MicroManager's
     * code. This will in turn cause the resources used by the Datastore (e.g.
-    * RAM storage) to be released, assuming that there are no references to the
-    * Datastore in other parts of the program (e.g. in plugins or Beanshell
-    * scripts). Displays attached to the Datastore will automatically be closed,
-    * with no prompt for data to be saved.
+    * RAM storage and file descriptors) to be released, assuming that there are
+    * no references to the Datastore in other parts of the program (e.g. in
+    * plugins or Beanshell scripts). Displays attached to the Datastore will
+    * automatically be closed, with no prompt for data to be saved.
     */
    @Override
    public void close();
