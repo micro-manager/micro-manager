@@ -112,6 +112,7 @@ public class FileMenu {
             return;
          }
          studio_.displays().loadDisplays(store);
+         studio_.displays().manage(store);
          updateFileHistory(store.getSavePath());
       }
       catch (IOException e) {
@@ -139,8 +140,12 @@ public class FileMenu {
                      try {
                         Datastore store = studio_.data().loadData(path,
                            isVirtual);
-                        if (store != null) {
+                        if (store != null && store.getAnyImage() != null) {
                            studio_.displays().loadDisplays(store);
+                           studio_.displays().manage(store);
+                        }
+                        else {
+                           studio_.logs().showError("Unable to load any images; file may be invalid or missing.");
                         }
                         updateFileHistory(path);
                      }
