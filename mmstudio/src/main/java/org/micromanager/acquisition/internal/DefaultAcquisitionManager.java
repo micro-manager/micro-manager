@@ -284,9 +284,8 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
             throw new IllegalArgumentException("Unrecognized pixel type");
          }
       }
+
       Metadata.MetadataBuilder result = new DefaultMetadata.Builder()
-         // TODO: do we have a better way to get integer property values?
-         .binning(Integer.parseInt(studio_.core().getProperty(camera, "Binning")))
          .bitDepth((int) studio_.core().getImageBitDepth())
          .camera(camera)
          .ijType(ijType)
@@ -296,6 +295,26 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
          .xPositionUm(studio_.core().getXYStagePosition().x)
          .yPositionUm(studio_.core().getXYStagePosition().y)
          .zPositionUm(studio_.core().getPosition());
+
+      String binning = studio_.core().getProperty(camera, "Binning");
+      if (binning.contains("x")) {
+         // HACK: assume the binning parameter is e.g. "1x1" or "2x2" and
+         // just take the first number.
+         try {
+            result.binning(Integer.parseInt(binning.split("x", 2)[0]));
+         }
+         catch (NumberFormatException e) {
+            studio_.logs().logError("Unable to determine binning from " + binning);
+         }
+      }
+      else {
+         try {
+            result.binning(Integer.parseInt(binning));
+         }
+         catch (NumberFormatException e) {
+            studio_.logs().logError("Unable to determine binning from " + binning);
+         }
+      }
       if (includeHardwareState) {
          PropertyMap.PropertyMapBuilder scopeBuilder = studio_.data().getPropertyMapBuilder();
          Configuration config = studio_.core().getSystemStateCache();
