@@ -31,13 +31,15 @@ import org.micromanager.Studio;
 public class SplitViewFactory implements ProcessorFactory {
    private Studio studio_;
    private String orientation_;
+   private int numSplits_;
    public SplitViewFactory(Studio studio, PropertyMap settings) {
       studio_ = studio;
       orientation_ = settings.getString("orientation");
+      numSplits_ = settings.getInt("splits", 2);
    }
 
    @Override
    public Processor createProcessor() {
-      return new SplitViewProcessor(studio_, orientation_);
+      return new SplitViewProcessor(studio_, orientation_, numSplits_);
    }
 }

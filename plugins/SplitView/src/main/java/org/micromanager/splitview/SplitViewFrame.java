@@ -34,12 +34,18 @@ import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
+import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 
+import javax.swing.ButtonGroup;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
@@ -64,60 +70,51 @@ import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.MMTags;
 
-/** 
+/**
  * Micro-Manager plugin that can split the acquired image top-down or left-right
- * and display the split image as a two channel image.
- * Note that this class used to use a form editor, but was modified to use
- * MigLayout instead; some remnants of the old system remain.
+ * and arrange the split images along the channel axis.
  *
  * @author nico, modified by Chris Weisiger
  */
 public class SplitViewFrame extends MMFrame implements ProcessorConfigurator {
+   private static final int DEFAULT_WIN_X = 100;
+   private static final int DEFAULT_WIN_Y = 100;
+   private static final String ORIENTATION = "Orientation";
+   private static final String NUM_SPLITS = "numSplits";
+   private static final String[] SPLIT_OPTIONS = new String[] {"Two", "Three",
+      "Four", "Five"};
+   public static final String LR = "lr";
+   public static final String TB = "tb";
 
    private final Studio studio_;
    private final CMMCore core_;
-   private long imgDepth_;
-   private int width_;
-   private int height_;
-   private int newWidth_;
-   private int newHeight_;
    private String orientation_;
-   private final int frameXPos_ = 100;
-   private final int frameYPos_ = 100;
-   private double interval_ = 30;
-   private static final String ACQNAME = "Split View";
-   public static final String LR = "lr";
-   public static final String TB = "tb";
-   private static final String TOPLEFTCOLOR = "TopLeftColor";
-   private static final String BOTTOMRIGHTCOLOR = "BottomRightColor";
-   private static final String ORIENTATION = "Orientation";
-   private boolean autoShutterOrg_;
-   private String shutterLabel_;
-   private boolean shutterOrg_;
+   private int numSplits_;
+   private JRadioButton lrRadio_;
+   private JRadioButton tbRadio_;
 
    public SplitViewFrame(PropertyMap settings, Studio studio) {
       studio_ = studio;
       core_ = studio_.getCMMCore();
 
       orientation_ = settings.getString("orientation",
-            studio_.profile().getString(this.getClass(), ORIENTATION, LR));
-
-      Font buttonFont = new Font("Arial", Font.BOLD, 10);
+            studio_.profile().getString(getClass(), ORIENTATION, LR));
+      numSplits_ = settings.getInt("splits",
+            studio_.profile().getInt(getClass(), NUM_SPLITS, 2));
 
       initComponents();
 
-      loadAndRestorePosition(frameXPos_, frameYPos_);
+      loadAndRestorePosition(DEFAULT_WIN_X, DEFAULT_WIN_Y);
 
-      Dimension buttonSize = new Dimension(120, 20);
-
-      lrRadioButton.setSelected(orientation_.equals(LR));
-      tbRadioButton.setSelected(orientation_.equals(TB));
+      lrRadio_.setSelected(orientation_.equals(LR));
+      tbRadio_.setSelected(orientation_.equals(TB));
    }
 
    @Override
    public PropertyMap getSettings() {
       PropertyMap.PropertyMapBuilder builder = studio_.data().getPropertyMapBuilder();
       builder.putString("orientation", orientation_);
+      builder.putInt("splits", numSplits_);
       return builder.build();
    }
 
@@ -131,79 +128,99 @@ public class SplitViewFrame extends MMFrame implements ProcessorConfigurator {
       dispose();
    }
 
-   private void calculateSize() {
-      imgDepth_ = core_.getBytesPerPixel();
-      
-      width_ = (int) core_.getImageWidth();
-      height_ = (int) core_.getImageHeight();
-
-      newWidth_ = SplitViewProcessor.calculateWidth(width_, orientation_);
-      newHeight_ = SplitViewProcessor.calculateHeight(height_, orientation_);
-   }
-  
    /** This method is called from within the constructor to
     * initialize the form.
     */
    @SuppressWarnings("unchecked")
    private void initComponents() {
-
-      buttonGroup1 = new javax.swing.ButtonGroup();
-      lrRadioButton = new javax.swing.JRadioButton();
-      tbRadioButton = new javax.swing.JRadioButton();
-
-      setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
       setTitle("SplitView");
-      addWindowListener(new java.awt.event.WindowAdapter() {
-         public void windowClosed(java.awt.event.WindowEvent evt) {
-            formWindowClosed(evt);
+      setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+
+      ButtonGroup group = new ButtonGroup();
+      lrRadio_ = new JRadioButton("Left-Right Split");
+      tbRadio_ = new JRadioButton("Top-Bottom Split");
+      group.add(lrRadio_);
+      group.add(tbRadio_);
+
+      lrRadio_.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent evt) {
+            updateSettings(LR, numSplits_);
          }
       });
 
-      buttonGroup1.add(lrRadioButton);
-      lrRadioButton.setText("Left-Right Split");
-      lrRadioButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            lrRadioButtonActionPerformed(evt);
-         }
-      });
-
-      buttonGroup1.add(tbRadioButton);
-      tbRadioButton.setText("Top-Bottom Split");
-      tbRadioButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            tbRadioButtonActionPerformed(evt);
+      tbRadio_.setText("Top-Bottom Split");
+      tbRadio_.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent evt) {
+            updateSettings(TB, numSplits_);
          }
       });
 
       setLayout(new MigLayout("flowx"));
 
-      add(new JLabel(IconLoader.getIcon("/org/micromanager/icons/lr.png")),
-            "align center");
-      add(new JLabel(IconLoader.getIcon("/org/micromanager/icons/tb.png")),
-            "align center, wrap");
-      add(lrRadioButton);
-      add(tbRadioButton);
-      pack();
+      add(new Preview(true), "align center");
+      add(new Preview(false), "align center, wrap");
+      add(lrRadio_);
+      add(tbRadio_, "wrap");
 
+      final JComboBox splitSelector = new JComboBox(SPLIT_OPTIONS);
+      splitSelector.setSelectedIndex(numSplits_ - 2);
+      splitSelector.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            // Because the first option at index 0 is 2 splits, etc.
+            updateSettings(orientation_,
+                  splitSelector.getSelectedIndex() + 2);
+         }
+      });
+      add(new JLabel("Number of Splits:"));
+      add(splitSelector, "wrap");
+      add(new JLabel("<html>Note: if the image size does not evenly<br> " +
+                     "divide the number of splits, then some<br>" +
+                     "rows or columns from the source image will<br>" +
+                     "be discarded.</html>"), "span, wrap");
+      pack();
    }
 
-    private void lrRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {
-       orientation_ = LR;
-       studio_.profile().setString(this.getClass(),ORIENTATION, LR);
-       studio_.data().notifyPipelineChanged();
-    }
+   private void updateSettings(String orientation, int numSplits) {
+      orientation_ = orientation;
+      numSplits_ = numSplits;
+      studio_.profile().setString(getClass(),ORIENTATION, orientation);
+      studio_.profile().setInt(getClass(), NUM_SPLITS, numSplits_);
+      studio_.data().notifyPipelineChanged();
+      repaint();
+   }
 
-    private void tbRadioButtonActionPerformed(java.awt.event.ActionEvent evt) {
-       orientation_ = TB;
-       studio_.profile().setString(this.getClass(),ORIENTATION, TB);
-       studio_.data().notifyPipelineChanged();
-    }
+   private class Preview extends JPanel {
+      private boolean isLeftRight_;
+      public Preview(boolean isLeftRight) {
+         isLeftRight_ = isLeftRight;
+      }
 
-    private void formWindowClosed(java.awt.event.WindowEvent evt) {
-     
-    }
+      @Override
+      public Dimension getMinimumSize() {
+         return new Dimension(50, 50);
+      }
 
-   private javax.swing.ButtonGroup buttonGroup1;
-   private javax.swing.JRadioButton lrRadioButton;
-   private javax.swing.JRadioButton tbRadioButton;
+      @Override
+      public void paint(Graphics graphics) {
+         Graphics2D g = (Graphics2D) graphics;
+         g.setColor(Color.WHITE);
+         g.fillRect(0, 0, 50, 50);
+         g.setColor(Color.BLACK);
+         // Draw a box around the outside
+         int[] xPoints = new int[] {0, 50, 50, 0};
+         int[] yPoints = new int[] {0, 0, 50, 50};
+         g.drawPolygon(xPoints, yPoints, 4);
+         // Draw dividers.
+         int splitSize = 50 / numSplits_;
+         for (int i = 0; i < numSplits_; ++i) {
+            if (isLeftRight_) {
+               g.drawLine(i * splitSize, 0, i * splitSize, 50);
+            }
+            else {
+               g.drawLine(0, i * splitSize, 50, i * splitSize);
+            }
+         }
+      }
+   }
 }

@@ -25,6 +25,9 @@ package org.micromanager.splitview;
 
 import ij.process.ImageProcessor;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import org.micromanager.data.Coords;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
@@ -37,35 +40,37 @@ import org.micromanager.Studio;
 /**
  * DataProcessor that splits images as instructed in SplitViewFrame
  *
- * @author nico
+ * @author nico, heavily updated by Chris Weisiger
  */
 public class SplitViewProcessor extends Processor {
 
    private Studio studio_;
    private String orientation_ = SplitViewFrame.LR;
+   private int numSplits_;
+   private ArrayList<String> channelSuffixes_;
 
-   public SplitViewProcessor(Studio studio, String orientation) {
+   public SplitViewProcessor(Studio studio, String orientation, int numSplits) {
       studio_ = studio;
       orientation_ = orientation;
-   }
+      numSplits_ = numSplits;
 
-   private String getChannelSuffix(int channelIndex) {
-      String token;
       if (orientation_.equals(SplitViewFrame.LR)) {
-
-         if ((channelIndex % 2) == 0) {
-            token = "Left";
-         } else {
-            token = "Right";
-         }
-      } else { // orientation is "TB"
-         if ((channelIndex % 2) == 0) {
-            token = "Top";
-         } else {
-            token = "Bottom";
+         channelSuffixes_ = new ArrayList<String>(Arrays.asList(
+                  new String[] {"Left", "Right"}));
+      }
+      else {
+         channelSuffixes_ = new ArrayList<String>(Arrays.asList(
+                  new String[] {"Top", "Bottom"}));
+      }
+      // Insert "Middle" suffixes.
+      if (numSplits_ == 3) {
+         channelSuffixes_.add(1, "Middle");
+      }
+      else if (numSplits_ > 3) {
+         for (int i = 0; i < numSplits_ - 2; ++i) {
+            channelSuffixes_.add(i + 1, "Middle " + (i + 1));
          }
       }
-      return token;
    }
 
    @Override
@@ -76,11 +81,12 @@ public class SplitViewProcessor extends Processor {
          // Can't do anything as we don't know how many names there'll be.
          return summary;
       }
-      String[] newNames = new String[names.length * 2];
+      String[] newNames = new String[names.length * numSplits_];
       for (int i = 0; i < names.length; ++i) {
          String base = summary.getSafeChannelName(i);
-         newNames[i * 2] = base + getChannelSuffix(i * 2);
-         newNames[i * 2 + 1] = base + getChannelSuffix(i * 2 + 1);
+         for (int j = 0; j < numSplits_; ++j) {
+            newNames[i * numSplits_ + j] = base + channelSuffixes_.get(j);
+         }
       }
       return summary.copy().channelNames(newNames).build();
    }
@@ -88,50 +94,30 @@ public class SplitViewProcessor extends Processor {
    @Override
    public void processImage(Image image, ProcessorContext context) {
       ImageProcessor proc = studio_.data().ij().createProcessor(image);
-      int channelIndex = image.getCoords().getChannel();
 
-      proc.setPixels(image.getRawPixels());
-
-      int height = image.getHeight();
       int width = image.getWidth();
-      height = calculateHeight(height, orientation_);
-      width = calculateWidth(width, orientation_);
-
-      proc.setRoi(0, 0, width, height);
-
-      // first channel
-      Coords firstCoords = image.getCoords().copy().channel(channelIndex * 2).build();
-      Image first = studio_.data().createImage(proc.crop().getPixels(),
-            width, height, image.getBytesPerPixel(), image.getNumComponents(),
-            firstCoords, image.getMetadata());
-      context.outputImage(first);
-
-      // second channel
-      if (orientation_.equals(SplitViewFrame.LR)) {
-         proc.setRoi(width, 0, width, height);
-      } else if (orientation_.equals(SplitViewFrame.TB)) {
-         proc.setRoi(0, height, width, height);
+      int height = image.getHeight();
+      int xStep = 0;
+      int yStep = 0;
+      if (orientation_.equals(SplitViewFrame.TB)) {
+         height /= numSplits_;
+         yStep = height;
       }
-      Coords secondCoords = image.getCoords().copy().channel(channelIndex * 2 + 1).build();
-      Image second = studio_.data().createImage(proc.crop().getPixels(),
-            width, height, image.getBytesPerPixel(), image.getNumComponents(),
-            secondCoords, image.getMetadata());
-      context.outputImage(second);
-   }
-
-   public static int calculateWidth(int width, String orientation) {
-      int newWidth = width;
-      if (orientation.equals(SplitViewFrame.LR)) {
-         newWidth = width / 2;
+      else {
+         width /= numSplits_;
+         xStep = width;
       }
-      return newWidth;
-   }
 
-   public static int calculateHeight(int height, String orientation) {
-      int newHeight = height;
-      if (orientation.equals(SplitViewFrame.TB)) {
-         newHeight = height / 2;
+      int channelIndex = image.getCoords().getChannel();
+      for (int i = 0; i < numSplits_; ++i) {
+         proc.setRoi(i * xStep, i * yStep, width, height);
+
+         Coords coords = image.getCoords().copy()
+            .channel(channelIndex * numSplits_ + i).build();
+         Image output = studio_.data().createImage(proc.crop().getPixels(),
+               width, height, image.getBytesPerPixel(),
+               image.getNumComponents(), coords, image.getMetadata());
+         context.outputImage(output);
       }
-      return newHeight;
    }
 }
