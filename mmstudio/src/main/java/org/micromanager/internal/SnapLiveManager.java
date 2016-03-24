@@ -36,7 +36,6 @@ import org.micromanager.data.Image;
 import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Metadata;
 import org.micromanager.display.ControlsFactory;
-import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.PixelsSetEvent;
@@ -338,17 +337,13 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
     */
    private void createDatastore() {
       synchronized(pipelineLock_) {
-         if (store_ != null) {
-            store_.unregisterForEvents(this);
+         if (pipeline_ != null) {
+            pipeline_.halt();
          }
          // Note that unlike in most situations, we do *not* ask the
          // DataManager to track this Datastore for us.
          store_ = new DefaultRewritableDatastore();
-         store_.registerForEvents(this);
          store_.setStorage(new StorageRAM(store_));
-         if (pipeline_ != null) {
-            pipeline_.halt();
-         }
          // Use a synchronous pipeline for live mode.
          pipeline_ = studio_.data().copyApplicationPipeline(store_, true);
       }
@@ -525,11 +520,11 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    private void reset() {
       // Remember the position of the window.
       Point displayLoc = null;
+      createDatastore();
       if (display_ != null) {
          displayLoc = display_.getAsWindow().getLocation();
          display_.forceClosed();
       }
-      createDatastore();
       createDisplay();
       displayUpdateTimes_.clear();
       if (displayLoc != null) {
