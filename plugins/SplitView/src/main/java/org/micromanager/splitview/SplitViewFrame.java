@@ -172,19 +172,20 @@ public class SplitViewFrame extends MMFrame implements ProcessorConfigurator {
                   splitSelector.getSelectedIndex() + 2);
          }
       });
-      add(new JLabel("Number of Splits:"));
+      add(new JLabel("Number of Splits:"), "alignx right");
       add(splitSelector, "wrap");
-      add(new JLabel("<html>Note: if the image size does not evenly<br> " +
-                     "divide the number of splits, then some<br>" +
-                     "rows or columns from the source image will<br>" +
-                     "be discarded.</html>"), "span, wrap");
+      add(new JLabel(
+               "<html>Note: if the image size does not evenly divide<br> " +
+               "the number of splits, then some rows or columns<br>" +
+               "from the source image will be discarded.</html>"),
+            "span, wrap");
       pack();
    }
 
    private void updateSettings(String orientation, int numSplits) {
       orientation_ = orientation;
       numSplits_ = numSplits;
-      studio_.profile().setString(getClass(),ORIENTATION, orientation);
+      studio_.profile().setString(getClass(), ORIENTATION, orientation);
       studio_.profile().setInt(getClass(), NUM_SPLITS, numSplits_);
       studio_.data().notifyPipelineChanged();
       repaint();
