@@ -67,8 +67,10 @@ public class SplitViewProcessor extends Processor {
          channelSuffixes_.add(1, "Middle");
       }
       else if (numSplits_ > 3) {
-         for (int i = 0; i < numSplits_ - 2; ++i) {
-            channelSuffixes_.add(i + 1, "Middle " + (i + 1));
+         // Just number things.
+         channelSuffixes_.clear();
+         for (int i = 0; i < numSplits_; ++i) {
+            channelSuffixes_.add(Integer.toString(i + 1));
          }
       }
    }
