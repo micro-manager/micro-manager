@@ -920,11 +920,19 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       }
       histogram_.setCurComponent(curComponent_);
       histogram_.repaint();
-      minMaxLabel_.setText(String.format(
-               "<html>Min/Max/Mean:<br>%d/%d/%d</html>",
+      String label = String.format("Min/Max/Mean");
+      String values = String.format("%d/%d/%d",
                lastHistograms_[curComponent_].getMinVal(),
                lastHistograms_[curComponent_].getMaxVal(),
-               lastHistograms_[curComponent_].getMean()));
+               lastHistograms_[curComponent_].getMean());
+      if (lastHistograms_[curComponent_].getStdDev() > 0) {
+         // Have a valid standard deviation.
+         label += "/Std";
+         values += String.format("/%.2f",
+               lastHistograms_[curComponent_].getStdDev());
+      }
+      minMaxLabel_.setText(String.format(
+               "<html>%s:<br>%s</html>", label, values));
    }
 
    public void redraw() {

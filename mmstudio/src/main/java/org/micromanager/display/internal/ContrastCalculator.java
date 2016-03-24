@@ -62,14 +62,17 @@ public class ContrastCalculator {
       private final Object pixels_;
       private final double extremaPercentage_;
       private final int depthPower_;
+      private final boolean shouldCalcStdDev_;
 
       private int minVal_;
       private int maxVal_;
       private long meanVal_;
       private int numPixels_;
+      private double stdDev_;
 
       public InternalCalculator(Image image, ImagePlus plus, int component,
-            int binPower, int depthPower, double extremaPercentage) {
+            int binPower, int depthPower, double extremaPercentage,
+            boolean shouldCalcStdDev) {
          width_ = image.getWidth();
          height_ = image.getHeight();
          bytesPerPixel_ = image.getBytesPerPixel();
@@ -77,6 +80,7 @@ public class ContrastCalculator {
          component_ = component;
          depthPower_ = depthPower;
          extremaPercentage_ = extremaPercentage;
+         shouldCalcStdDev_ = shouldCalcStdDev;
 
          minVal_ = Integer.MAX_VALUE;
          maxVal_ = Integer.MIN_VALUE;
@@ -256,9 +260,29 @@ public class ContrastCalculator {
             meanVal_ = meanVal_ / numPixels_;
          }
 
+         // Algorithm adapted from ImageJ's standard deviation calculations.
+         double stdDev = -1;
+         if (shouldCalcStdDev_) {
+            double sum = 0;
+            double sumSquared = 0;
+            for (int i = 0; i < histogram_.length; ++i) {
+               // Prevent overflow when we square the histogram value.
+               double tmp = i;
+               sum += histogram_[i] * tmp;
+               sumSquared += histogram_[i] * (tmp * tmp);
+            }
+            stdDev = (numPixels_ * sumSquared - (sum * sum)) / numPixels_;
+            if (stdDev > 0) {
+               stdDev = Math.sqrt(stdDev / numPixels_);
+            }
+            else {
+               stdDev = -1;
+            }
+         }
+
          HistogramData result = new HistogramData(histogram_,
                numPixels_, minVal_, maxVal_, contrastMin,
-               contrastMax, (int) meanVal_, depthPower_, binSize_);
+               contrastMax, (int) meanVal_, stdDev, depthPower_, binSize_);
          return result;
       }
 
@@ -455,9 +479,9 @@ public class ContrastCalculator {
     */
    public static HistogramData calculateHistogram(Image image,
          ImagePlus plus, int component, int binPower, int depthPower,
-         double extremaPercentage) {
+         double extremaPercentage, boolean shouldCalcStdDev) {
       return new InternalCalculator(image, plus, component, binPower,
-            depthPower, extremaPercentage).calculate();
+            depthPower, extremaPercentage, shouldCalcStdDev).calculate();
    }
 
    /**
@@ -472,9 +496,13 @@ public class ContrastCalculator {
       if (percentage == null) {
          percentage = 0.0;
       }
+      Boolean shouldStdDev = settings.getShouldCalculateStdDev();
+      if (shouldStdDev == null) {
+         shouldStdDev = false;
+      }
       // We use the bit depth as the bin power, so that each individual
       // intensity gets its own bin.
       return calculateHistogram(image, plus, component, bitDepth, bitDepth,
-            percentage);
+            percentage, shouldStdDev);
    }
 }

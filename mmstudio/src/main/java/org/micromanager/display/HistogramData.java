@@ -34,6 +34,7 @@ public class HistogramData {
    private final int minIgnoringOutliers_;
    private final int maxIgnoringOutliers_;
    private final int mean_;
+   private final double stdDev_;
    private final int bitDepth_;
    private final int binSize_;
 
@@ -54,6 +55,8 @@ public class HistogramData {
     *        lowest samples are ignored. See the extremaPercentage parameter
     *        of DisplayManager.calculateHistogram().
     * @param mean The average intensity of all samples.
+    * @param stdDev The standard deviation of all samples, or -1 if this value
+    *        was not calculated.
     * @param bitDepth The dynamic range of the histogram. The histogram will
     *        cover values from 0 to (2^bitDepth - 1), inclusive.
     * @param binSize How many distinct intensities are combined into a single
@@ -63,7 +66,7 @@ public class HistogramData {
     */
    public HistogramData(int[] histogram, int numSamples, int minVal,
          int maxVal, int minIgnoringOutliers, int maxIgnoringOutliers,
-         int mean, int bitDepth, int binSize) {
+         int mean, double stdDev, int bitDepth, int binSize) {
       histogram_ = histogram;
       numSamples_ = numSamples;
       minVal_ = minVal;
@@ -71,6 +74,7 @@ public class HistogramData {
       minIgnoringOutliers_ = minIgnoringOutliers;
       maxIgnoringOutliers_ = maxIgnoringOutliers;
       mean_ = mean;
+      stdDev_ = stdDev;
       bitDepth_ = bitDepth;
       binSize_ = binSize;
    }
@@ -138,6 +142,16 @@ public class HistogramData {
     */
    public int getMean() {
       return mean_;
+   }
+
+   /**
+    * Retrieve the standard deviation of all samples in the dataset, or -1
+    * if standard deviation calculation was disabled or if a calculation error
+    * occurred while calculating the standard deviation.
+    * @return standard deviation, or -1
+    */
+   public double getStdDev() {
+      return stdDev_;
    }
 
    /**

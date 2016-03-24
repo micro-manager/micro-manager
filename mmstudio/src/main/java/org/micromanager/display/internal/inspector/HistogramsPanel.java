@@ -418,20 +418,35 @@ public final class HistogramsPanel extends InspectorPanel {
 
       // Add option for turning log display on/off.
       JCheckBoxMenuItem logDisplay = new JCheckBoxMenuItem("Logarithmic Y axis");
-      final Boolean shouldLog = settings.getShouldUseLogScale();
-      if (shouldLog != null) {
-         logDisplay.setState(shouldLog);
-      }
+      final Boolean shouldLog = settings.getShouldUseLogScale() != null ?
+         settings.getShouldUseLogScale() : false;
+      logDisplay.setState(shouldLog);
       logDisplay.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            // Invert current setting; null counts as false here.
-            Boolean newVal = !(shouldLog == null || shouldLog);
-            DisplaySettings newSettings = settings.copy().shouldUseLogScale(newVal).build();
+            DisplaySettings newSettings = settings.copy()
+               .shouldUseLogScale(!shouldLog).build();
             viewer_.setDisplaySettings(newSettings);
          }
       });
       result.add(logDisplay);
+
+      // Whether or not to include standard deviation in histogram
+      // calculations.
+      JCheckBoxMenuItem calcStdDev = new JCheckBoxMenuItem("Calculate Standard Deviation");
+      calcStdDev.setToolTipText("Calculate standard deviations of image data. This may reduce your image refresh rate.");
+      final Boolean shouldCalc = settings.getShouldCalculateStdDev() != null ?
+         settings.getShouldCalculateStdDev() : false;
+      calcStdDev.setState(shouldCalc);
+      calcStdDev.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            DisplaySettings newSettings = settings.copy()
+               .shouldCalculateStdDev(!shouldCalc).build();
+            viewer_.setDisplaySettings(newSettings);
+         }
+      });
+      result.add(calcStdDev);
 
       // The display mode menu opens a sub-menu with three options, one of
       // which starts selected depending on the current color settings of the

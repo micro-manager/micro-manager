@@ -185,6 +185,7 @@ public interface DisplaySettings {
       DisplaySettingsBuilder extremaPercentage(Double extremaPercentage);
       DisplaySettingsBuilder bitDepthIndices(Integer[] bitDepthIndices);
       DisplaySettingsBuilder shouldUseLogScale(Boolean shouldUseLogScale);
+      DisplaySettingsBuilder shouldCalculateStdDev(Boolean shouldCalculateStdDev);
 
       DisplaySettingsBuilder userData(PropertyMap userData);
    }
@@ -394,6 +395,14 @@ public interface DisplaySettings {
     * @return True if log scale should be used
     */
    public Boolean getShouldUseLogScale();
+
+   /**
+    * Whether or not histograms should calculate the standard deviation of
+    * image pixel data. This costs some amount of CPU time and can slow down
+    * display update rates somewhat.
+    * @return True if the standard deviation should be calculated.
+    */
+   public Boolean getShouldCalculateStdDev();
 
    /**
     * Any additional user-supplied data

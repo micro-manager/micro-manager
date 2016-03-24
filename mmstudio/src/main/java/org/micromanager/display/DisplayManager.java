@@ -109,10 +109,13 @@ public interface DisplayManager {
     *        then an ArrayIndexOutOfBoundsException will be thrown.
     * @param extremaPercentage The percentage of pixels to ignore when
     *        calculating the min/max intensities.
+    * @param shouldCalcStdDev If true, the standard deviation will be
+    *        calculated in the resulting HistogramData; otherwise it will be -1
     * @return a HistogramData derived from the pixels in the image.
     */
    public HistogramData calculateHistogram(Image image, int component,
-         int binPower, int bitDepth, double extremaPercentage);
+         int binPower, int bitDepth, double extremaPercentage,
+         boolean shouldCalcStdDev);
 
    /**
     * Generate a HistogramData object based on the pixels in the provided

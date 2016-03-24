@@ -190,9 +190,10 @@ public final class DefaultDisplayManager implements DisplayManager {
 
    @Override
    public HistogramData calculateHistogram(Image image, int component,
-         int binPower, int bitDepth, double extremaPercentage) {
+         int binPower, int bitDepth, double extremaPercentage,
+         boolean shouldCalcStdDev) {
       return ContrastCalculator.calculateHistogram(image, null, component,
-            binPower, bitDepth, extremaPercentage);
+            binPower, bitDepth, extremaPercentage, shouldCalcStdDev);
    }
 
    @Override

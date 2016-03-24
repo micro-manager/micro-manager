@@ -60,6 +60,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    private static final String EXTREMA_PERCENTAGE = "extremaPercentage";
    private static final String BIT_DEPTH_INDICES = "bitDepthIndices";
    private static final String SHOULD_USE_LOG_SCALE = "shouldUseLogScale";
+   private static final String SHOULD_CALCULATE_STD_DEV = "shouldCalculateStdDev";
    private static final String USER_DATA = "userData";
 
    /**
@@ -112,6 +113,9 @@ public class DefaultDisplaySettings implements DisplaySettings {
       builder.shouldUseLogScale(profile.getBoolean(
             DefaultDisplaySettings.class,
                key + SHOULD_USE_LOG_SCALE, false));
+      builder.shouldCalculateStdDev(profile.getBoolean(
+            DefaultDisplaySettings.class,
+               key + SHOULD_CALCULATE_STD_DEV, false));
       // Note we don't store user data in the prefs explicitly; let third-party
       // code manually access the prefs if they want.
       return builder.build();
@@ -148,6 +152,9 @@ public class DefaultDisplaySettings implements DisplaySettings {
             key + BIT_DEPTH_INDICES, settings.getBitDepthIndices());
       profile.setBoolean(DefaultDisplaySettings.class,
             key + SHOULD_USE_LOG_SCALE, settings.getShouldUseLogScale());
+      profile.setBoolean(DefaultDisplaySettings.class,
+            key + SHOULD_CALCULATE_STD_DEV,
+            settings.getShouldCalculateStdDev());
    }
 
    /**
@@ -339,6 +346,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       private Double extremaPercentage_ = null;
       private Integer[] bitDepthIndices_ = null;
       private Boolean shouldUseLogScale_ = null;
+      private Boolean shouldCalculateStdDev_ = null;
       private PropertyMap userData_ = null;
 
       @Override
@@ -456,6 +464,12 @@ public class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
+      public DisplaySettingsBuilder shouldCalculateStdDev(Boolean shouldCalculateStdDev) {
+         shouldCalculateStdDev_ = shouldCalculateStdDev;
+         return this;
+      }
+
+      @Override
       public DisplaySettingsBuilder userData(PropertyMap userData) {
          userData_ = userData;
          return this;
@@ -473,6 +487,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    private Double extremaPercentage_ = null;
    private Integer[] bitDepthIndices_ = null;
    private Boolean shouldUseLogScale_ = null;
+   private Boolean shouldCalculateStdDev_ = null;
    private PropertyMap userData_ = null;
 
    public DefaultDisplaySettings(Builder builder) {
@@ -487,6 +502,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       extremaPercentage_ = builder.extremaPercentage_;
       bitDepthIndices_ = builder.bitDepthIndices_;
       shouldUseLogScale_ = builder.shouldUseLogScale_;
+      shouldCalculateStdDev_ = builder.shouldCalculateStdDev_;
       userData_ = builder.userData_;
    }
 
@@ -622,6 +638,11 @@ public class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
+   public Boolean getShouldCalculateStdDev() {
+      return shouldCalculateStdDev_;
+   }
+
+   @Override
    public PropertyMap getUserData() {
       return userData_;
    }
@@ -640,6 +661,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
             .extremaPercentage(extremaPercentage_)
             .bitDepthIndices(bitDepthIndices_)
             .shouldUseLogScale(shouldUseLogScale_)
+            .shouldCalculateStdDev(shouldCalculateStdDev_)
             .userData(userData_);
    }
 
@@ -733,6 +755,10 @@ public class DefaultDisplaySettings implements DisplaySettings {
          }
          if (tags.has(SHOULD_USE_LOG_SCALE)) {
             builder.shouldUseLogScale(tags.getBoolean(SHOULD_USE_LOG_SCALE));
+         }
+         if (tags.has(SHOULD_CALCULATE_STD_DEV)) {
+            builder.shouldCalculateStdDev(
+                  tags.getBoolean(SHOULD_CALCULATE_STD_DEV));
          }
          if (tags.has(USER_DATA)) {
             builder.userData(DefaultPropertyMap.fromJSON(tags.getJSONObject(USER_DATA)));
@@ -871,6 +897,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
             result.put(BIT_DEPTH_INDICES, indices);
          }
          result.put(SHOULD_USE_LOG_SCALE, shouldUseLogScale_);
+         result.put(SHOULD_CALCULATE_STD_DEV, shouldCalculateStdDev_);
          if (userData_ != null) {
             result.put(USER_DATA, ((DefaultPropertyMap) userData_).toJSON());
          }
