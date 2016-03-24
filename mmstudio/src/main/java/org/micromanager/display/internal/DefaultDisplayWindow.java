@@ -879,7 +879,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
             // Only ever call this method once.
             return;
          }
-         amClosing_ = true;
       }
       if (!SwingUtilities.isEventDispatchThread()) {
          SwingUtilities.invokeLater(new Runnable() {
@@ -890,6 +889,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          });
          return;
       }
+      amClosing_ = true;
       savePosition();
       displayBus_.post(new DisplayDestroyedEvent(this));
       DefaultEventManager.getInstance().post(
