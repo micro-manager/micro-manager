@@ -143,10 +143,11 @@ public class ChannelCellEditor extends AbstractCellEditor implements TableCellEd
             // As a side effect, change to the color and exposure of the new
             // channel. If no color is available, use the "next" colorblind-
             // friendly color, based on our row index.
+            int colorIndex = editRow_ % ColorSets.COLORBLIND_COLORS.length;
             channel_.color = new Color(AcqControlDlg.getChannelColor(
                      acqEng_.getChannelGroup(),
                      (String) channelSelect_.getSelectedItem(),
-                     ColorSets.COLORBLIND_COLORS[editRow_].getRGB()));
+                     ColorSets.COLORBLIND_COLORS[colorIndex].getRGB()));
             channel_.exposure = AcqControlDlg.getChannelExposure(
                   acqEng_.getChannelGroup(), channel_.config, 10.0);
             return channelSelect_.getSelectedItem();
