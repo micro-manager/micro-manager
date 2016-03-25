@@ -769,6 +769,24 @@ public class DefaultUserProfile implements UserProfile {
    }
 
    /**
+    * Insert a int value into the global profile.
+    */
+   public void setGlobalInt(String key, Integer value) {
+      synchronized(lockObject_) {
+         globalProfile_ = (DefaultPropertyMap) (globalProfile_.copy()
+               .putInt(key, value).build());
+      }
+   }
+
+   /**
+    * Retrieve a int value from the global profile.
+    */
+   public Integer getGlobalInt(String key, Integer defaultVal) {
+      synchronized(lockObject_) {
+         return globalProfile_.getInt(key, defaultVal);
+      }
+   }
+   /**
     * Insert a string value into the global profile.
     */
    public void setGlobalString(String key, String value) {
