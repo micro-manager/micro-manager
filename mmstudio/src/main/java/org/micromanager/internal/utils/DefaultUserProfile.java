@@ -789,6 +789,16 @@ public class DefaultUserProfile implements UserProfile {
    }
 
    /**
+    * Insert a boolean value into the global profile.
+    */
+   public void setGlobalBoolean(String key, Boolean value) {
+      synchronized(lockObject_) {
+         globalProfile_ = (DefaultPropertyMap) (globalProfile_.copy()
+               .putBoolean(key, value).build());
+      }
+   }
+
+   /**
     * Note this function assumes we have write access to files in the
     * installation directory -- which should always be true as we write our
     * CoreLogs to that directory as well.
