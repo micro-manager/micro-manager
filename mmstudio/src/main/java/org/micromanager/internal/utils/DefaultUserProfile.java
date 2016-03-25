@@ -779,29 +779,12 @@ public class DefaultUserProfile implements UserProfile {
    }
 
    /**
-    * Retrieve a int value from the global profile.
-    */
-   public Integer getGlobalInt(String key, Integer defaultVal) {
-      synchronized(lockObject_) {
-         return globalProfile_.getInt(key, defaultVal);
-      }
-   }
-   /**
     * Insert a string value into the global profile.
     */
    public void setGlobalString(String key, String value) {
       synchronized(lockObject_) {
          globalProfile_ = (DefaultPropertyMap) (globalProfile_.copy()
                .putString(key, value).build());
-      }
-   }
-
-   /**
-    * Retrieve a string value from the global profile.
-    */
-   public String getGlobalString(String key, String defaultVal) {
-      synchronized(lockObject_) {
-         return globalProfile_.getString(key, defaultVal);
       }
    }
 
