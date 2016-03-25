@@ -771,30 +771,30 @@ public class DefaultUserProfile implements UserProfile {
    /**
     * Insert a int value into the global profile.
     */
-   public void setGlobalInt(String key, Integer value) {
+   public void setGlobalInt(Class<?> c, String key, Integer value) {
       synchronized(lockObject_) {
          globalProfile_ = (DefaultPropertyMap) (globalProfile_.copy()
-               .putInt(key, value).build());
+               .putInt(genKey(c, key), value).build());
       }
    }
 
    /**
     * Insert a string value into the global profile.
     */
-   public void setGlobalString(String key, String value) {
+   public void setGlobalString(Class<?> c, String key, String value) {
       synchronized(lockObject_) {
          globalProfile_ = (DefaultPropertyMap) (globalProfile_.copy()
-               .putString(key, value).build());
+               .putString(genKey(c, key), value).build());
       }
    }
 
    /**
     * Insert a boolean value into the global profile.
     */
-   public void setGlobalBoolean(String key, Boolean value) {
+   public void setGlobalBoolean(Class<?> c, String key, Boolean value) {
       synchronized(lockObject_) {
          globalProfile_ = (DefaultPropertyMap) (globalProfile_.copy()
-               .putBoolean(key, value).build());
+               .putBoolean(genKey(c, key), value).build());
       }
    }
 
