@@ -787,14 +787,15 @@ public class DefaultUserProfile implements UserProfile {
       }
    }
 
-   public void saveGlobalProfile() {
-      // TODO: how do we actually write to the directory?
-      // One possible solution: have a separate program that can run with
-      // elevated permissions; write the program to a temporary file, then
-      // run the separate program to do the copy with elevated permissions.
-      // This may be relevant:
-      // http://stackoverflow.com/questions/1385866/java-run-as-administrator
-      ReportingUtils.showError("Not yet implemented");
+   /**
+    * Note this function assumes we have write access to files in the
+    * installation directory -- which should always be true as we write our
+    * CoreLogs to that directory as well.
+    */
+   public void saveGlobalProfile() throws IOException {
+      synchronized(lockObject_) {
+         exportPropertyMapToFile(globalProfile_, globalProfilePath_);
+      }
    }
 
    public static DefaultUserProfile getInstance() {
