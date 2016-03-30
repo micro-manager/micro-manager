@@ -451,7 +451,7 @@ public final class HistogramsPanel extends InspectorPanel {
       // The display mode menu opens a sub-menu with three options, one of
       // which starts selected depending on the current color settings of the
       // display.
-      JMenu displayMode = new JMenu("Color presets");
+      JMenu displayMode = new JMenu("Color Presets");
       JCheckBoxMenuItem rgb = new JCheckBoxMenuItem("RGBCMYW");
       rgb.addActionListener(new ActionListener() {
          @Override
