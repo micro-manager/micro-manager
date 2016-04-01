@@ -63,16 +63,6 @@ public class ToolsMenu {
               },
               "arrow_refresh.png");
 
-      GUIUtils.addMenuItem(toolsMenu_, "Rebuild GUI",
-              "Regenerate Micro-Manager user interface",
-              new Runnable() {
-                 @Override
-                 public void run() {
-                    studio_.initializeGUI();
-                    core_.updateSystemStateCache();
-                 }
-              });
-      
       toolsMenu_.addSeparator();
 
       GUIUtils.addMenuItem(toolsMenu_, "Script Panel...",
