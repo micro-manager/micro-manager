@@ -250,14 +250,14 @@ public class MMImageCanvas extends ImageCanvas {
       display_.unregisterForEvents(this);
    }
 
-   /**
-    * Our preferred size is dictated for us by our window, because it depends
-    * on how much available space there is.
-    */
    @Override
-   public Dimension getPreferredSize() {
-      Dimension maxSize = display_.getMaxCanvasSize();
-      updateSize(maxSize);
-      return getSize();
+   public Dimension getMaximumSize() {
+      return new Dimension((int) (ijImage_.getWidth() * this.magnification),
+            (int) (ijImage_.getHeight() * this.magnification));
+   }
+
+   @Override
+   public Dimension getMinimumSize() {
+      return new Dimension(16, 16);
    }
 }

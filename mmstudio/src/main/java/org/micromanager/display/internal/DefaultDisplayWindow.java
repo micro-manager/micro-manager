@@ -445,9 +445,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    private void recreateCanvas() {
       canvas_ = new MMImageCanvas(ijImage_, this);
 
-      // HACK: set the minimum size. If we don't do this, then the canvas
-      // doesn't shrink properly when the window size is reduced. Why?!
-      canvas_.setMinimumSize(new Dimension(16, 16));
       Double mag = displaySettings_.getMagnification();
       // Wrap the canvas in a subpanel so that we can get events when it
       // resizes.
@@ -676,11 +673,21 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       }
    }
 
-   /**   
-    * Our layout has changed and we need to repack.
-    */         
+   /**
+    * Our layout has changed and we need to repack. We attempt to retain the
+    * same canvas size as before, growing the window as needed, unless of
+    * course there is not enough room to grow the window.
+    */
    @Subscribe
-   public void onLayoutChanged(LayoutChangedEvent event) {
+   public void onLayoutChanged(final LayoutChangedEvent event) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               onLayoutChanged(event);
+            }
+         });
+      }
       try {
          validate();
          pack();
@@ -1015,33 +1022,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       Rectangle bounds = getSafeBounds();
       Point loc = getLocation();
       return new Dimension(bounds.width - loc.x, bounds.height - loc.y);
-   }
-
-   /**
-    * Provided so our canvas can know what its preferred size should be; this
-    * method returns the available space for the canvas.
-    */
-   public Dimension getMaxCanvasSize() {
-      Dimension ourSize = getSize();
-      Insets insets = getInsets();
-      if (fullScreenFrame_ != null) {
-         ourSize = fullScreenFrame_.getSize();
-         insets = fullScreenFrame_.getInsets();
-      }
-      Dimension controlsSize = controlsPanel_.getPreferredSize();
-      // HACK: make the result slightly shorter than there would otherwise be
-      // space for, to account for the insets between the infoline and canvas,
-      // canvas and controls, and around the edges of everything.
-      // Removing this fiddle factor can lead to a display refresh feedback
-      // loop between the canvas and the FPS display, as they end up
-      // overlapping and causing each other to be redrawn every time one of
-      // them changes.
-      int fiddleFactor = 10;
-      Dimension result = new Dimension(
-            ourSize.width - insets.left - insets.right,
-            ourSize.height - insets.top - insets.bottom - controlsSize.height -
-            infoLine_.getHeight() - fiddleFactor);
-      return result;
    }
 
    @Override
