@@ -40,6 +40,7 @@ import org.micromanager.internal.utils.TextUtils;
 
 /**
  * Simple class used to cache information that doesn't change very often.
+ * TODO: rename this.
  */
 class StaticInfo {
    static public long width_;

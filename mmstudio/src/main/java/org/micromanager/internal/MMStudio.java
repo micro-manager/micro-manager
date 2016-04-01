@@ -886,6 +886,12 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       }
    }
 
+   // TODO: This method should be renamed!
+   // resetGUIForNewHardwareConfig or something like that.
+   // TODO: this method should be automatically invoked when
+   // SystemConfigurationLoaded event occurs, and in no other way.
+   // Better: each of these entities should listen for
+   // SystemConfigurationLoaded itself and handle its own updates.
    public void initializeGUI() {
       try {
          staticInfo_.refreshValues();

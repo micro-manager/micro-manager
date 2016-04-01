@@ -74,6 +74,7 @@ public class ConfigMenu {
                  @Override
                  public void run() {
                     loadConfiguration();
+                    // TODO: this may be redundant.
                     studio_.initializeGUI();
                  }
               });
@@ -84,6 +85,7 @@ public class ConfigMenu {
                  @Override
                  public void run() {
                     studio_.loadSystemConfiguration();
+                    // TODO: this is redundant.
                     studio_.initializeGUI();
                  }
               });
