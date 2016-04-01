@@ -1204,7 +1204,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          // Use the file prefix instead.
          name = store_.getSummaryMetadata().getPrefix();
       }
-      if (name == null) {
+      if (name == null || name.contentEquals("")) {
          // Must be an anonymous RAM datastore. First, scan for other displays
          // for this datastore that may already have had a name invented for
          // them; if that fails, then invent a new name and store it
