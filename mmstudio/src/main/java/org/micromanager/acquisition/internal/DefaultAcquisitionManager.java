@@ -286,34 +286,57 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
       }
 
       Metadata.MetadataBuilder result = new DefaultMetadata.Builder()
-         .bitDepth((int) studio_.core().getImageBitDepth())
          .camera(camera)
          .ijType(ijType)
          .pixelType(pixelType)
          .receivedTime(formatter_.format(new Date()))
-         .uuid(UUID.randomUUID())
-         .xPositionUm(studio_.core().getXYStagePosition().x)
-         .yPositionUm(studio_.core().getXYStagePosition().y)
-         .zPositionUm(studio_.core().getPosition());
+         .uuid(UUID.randomUUID());
+      try {
+         double x = studio_.core().getXYStagePosition().x;
+         double y = studio_.core().getXYStagePosition().y;
+         result.xPositionUm(x).yPositionUm(y);
+      }
+      catch (Exception ignored) {
+         // This can potentially happen if there's no valid XY stage device.
+      }
+      try {
+         double z = studio_.core().getPosition();
+         result.zPositionUm(z);
+      }
+      catch (Exception ignored) {
+         // This can potentially happen if there's no valid Z stage device.
+      }
+      try {
+         result.bitDepth((int) studio_.core().getImageBitDepth());
+      }
+      catch (Exception ignored) {
+         // This can fail if there is no camera. Unlikely, but possible for
+         // images loaded from a data file.
+      }
 
-      String binning = studio_.core().getProperty(camera, "Binning");
-      if (binning.contains("x")) {
-         // HACK: assume the binning parameter is e.g. "1x1" or "2x2" and
-         // just take the first number.
-         try {
-            result.binning(Integer.parseInt(binning.split("x", 2)[0]));
+      try {
+         String binning = studio_.core().getProperty(camera, "Binning");
+         if (binning.contains("x")) {
+            // HACK: assume the binning parameter is e.g. "1x1" or "2x2" and
+            // just take the first number.
+            try {
+               result.binning(Integer.parseInt(binning.split("x", 2)[0]));
+            }
+            catch (NumberFormatException e) {
+               studio_.logs().logError("Unable to determine binning from " + binning);
+            }
          }
-         catch (NumberFormatException e) {
-            studio_.logs().logError("Unable to determine binning from " + binning);
+         else {
+            try {
+               result.binning(Integer.parseInt(binning));
+            }
+            catch (NumberFormatException e) {
+               studio_.logs().logError("Unable to determine binning from " + binning);
+            }
          }
       }
-      else {
-         try {
-            result.binning(Integer.parseInt(binning));
-         }
-         catch (NumberFormatException e) {
-            studio_.logs().logError("Unable to determine binning from " + binning);
-         }
+      catch (Exception ignored) {
+         // Again, this can fail if there is no camera.
       }
       if (includeHardwareState) {
          PropertyMap.PropertyMapBuilder scopeBuilder = studio_.data().getPropertyMapBuilder();
