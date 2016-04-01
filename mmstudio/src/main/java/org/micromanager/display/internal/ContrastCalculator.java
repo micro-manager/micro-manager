@@ -207,7 +207,7 @@ public class ContrastCalculator {
          // problem as our bin size is usually 1.
          for (int i = 0; i < histogram_.length; ++i) {
             numPixels_ += histogram_[i];
-            if (minVal_ == Integer.MAX_VALUE) {
+            if (minVal_ == Integer.MAX_VALUE && histogram_[i] > 0) {
                minVal_ = i * binSize_;
             }
          }
