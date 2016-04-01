@@ -185,6 +185,7 @@ public:
    // ---------
   int SetPositionUm(double pos);
   int GetPositionUm(double& pos);
+  int SetRelativePositionUm(double d);
   int SetPositionSteps(long steps);
   int GetPositionSteps(long& steps);
   int SetOrigin();

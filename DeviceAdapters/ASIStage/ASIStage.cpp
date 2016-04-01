@@ -2150,6 +2150,36 @@ int ZStage::GetPositionUm(double& pos)
 
    return ERR_UNRECOGNIZED_ANSWER;
 }
+
+int ZStage::SetRelativePositionUm(double d)
+{
+   // empty the Rx serial buffer before sending command
+   ClearPort();
+
+   ostringstream command;
+   command << fixed << "R " << axis_ << "=" << d / stepSizeUm_; // in 10th of micros
+
+   string answer;
+   // query the device
+   int ret = QueryCommand(command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0)
+   {
+      // we don't know the updated position to call this
+      //this->OnStagePositionChanged(pos);
+      return DEVICE_OK;
+   }
+   // deal with error later
+   else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+   {
+      int errNo = atoi(answer.substr(4).c_str());
+      return ERR_OFFSET + errNo;
+   }
+
+   return ERR_UNRECOGNIZED_ANSWER;
+}
   
 int ZStage::SetPositionSteps(long pos)
 {
