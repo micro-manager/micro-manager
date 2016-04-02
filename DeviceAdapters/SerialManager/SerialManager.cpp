@@ -252,7 +252,8 @@ void SerialPortLister::ListPorts(std::vector<std::string> &availablePorts)
  * Caches this list in g_PortList and only queries hardware when this cache is absent or stale
  */
 MODULE_API void InitializeModuleData()
-{	                                                                                                                                                          // Determine whether portList is fresh enough (i.e. younger than 15 seconds):
+{  
+   // Determine whether portList is fresh enough (i.e. younger than 15 seconds):
    time_t seconds = time(NULL);
    time_t timeout = 15;
    bool stale = seconds - g_PortListLastUpdated > timeout ? true : false;
@@ -265,10 +266,7 @@ MODULE_API void InitializeModuleData()
 
    std::vector<std::string>::iterator it = g_PortList.begin();
    while (it < g_PortList.end()) {
-      /*  work-around for spurious duplicate device names on OS X
-      if( std::string::npos == (*it).find("KeySerial"))
-      */
-         RegisterDevice((*it).c_str(), MM::SerialDevice, "Serial communication port");
+      RegisterDevice((*it).c_str(), MM::SerialDevice, "Serial communication port");
       it++;
    }
 
@@ -315,10 +313,8 @@ MM::Device* SerialManager::CreatePort(const char* portName)
 
    // no such port found, so try to create a new one
    SerialPort* pPort = new SerialPort(portName);
-   //pPort->LogMessage(("created new Port " + std::string(portName)).c_str() , true);
    ports_.push_back(pPort);
    pPort->AddReference();
-   //pPort->LogMessage(("adding reference to Port " + std::string(portName)).c_str() , true);
    return pPort;
 
 }
@@ -332,13 +328,11 @@ void SerialManager::DestroyPort(MM::Device* port)
       {
          char theName[MM::MaxStrLength];
          (*i)->GetName(theName);
-         //(*i)->LogMessage("Removing reference to Port " + std::string(theName) , true);
          (*i)->RemoveReference();
 
          // really destroy only if there are no references pointing to the port
          if ((*i)->OKToDelete())
          {
-            //(*i)->LogMessage("deleting Port " + std::string(theName)) , true);
             delete *i;
             ports_.erase(i);
          }
@@ -582,6 +576,7 @@ int SerialPort::OpenWin32SerialPort(const std::string& portName,
    dcb.fDsrSensitivity = FALSE;
    dcb.fNull = FALSE;
    dcb.fAbortOnError = FALSE;
+   //dcb.fDtrControl = DTR_CONTROL_DISABLE;
 
    // The following lines work around crashes caused by invalid or incorrect
    // values returned by some serial port drivers (some versions of Silicon
