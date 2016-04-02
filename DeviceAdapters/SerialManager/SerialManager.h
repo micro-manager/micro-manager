@@ -108,6 +108,7 @@ public:
    int OnStopBits(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnParity(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnHandshaking(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnDTR(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBaud(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTimeout(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDelayBetweenCharsMs(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -139,12 +140,13 @@ private:
    std::string stopBits_;
    std::string parity_;
 
-   // create these guys in the order of declaration
+   // create these varaiable in the order of declaration
    boost::asio::io_service* pService_;
    AsioClient* pPort_;
    // the worker thread
    boost::thread* pThread_;
    bool verbose_; // if false, turn off LogBinaryMessage even in Debug Log
+   bool dtrEnable_; // currently only used on Windows
 
 #ifdef _WIN32
    int OpenWin32SerialPort(const std::string& portName, HANDLE& portHandle);
