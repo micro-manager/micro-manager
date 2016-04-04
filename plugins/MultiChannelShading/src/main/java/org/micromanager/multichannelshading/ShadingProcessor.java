@@ -107,7 +107,10 @@ public class ShadingProcessor extends Processor {
             ImageProcessor ipBackground = background.getProcessor();
             try {
                 ip = ImageUtils.subtractImageProcessors(ip, ipBackground);
-                userData = userData.copy().putBoolean("Background-corrected", true).build();
+                if (userData != null){
+                    // We are likely in acquisition mode
+                    userData = userData.copy().putBoolean("Background-corrected", true).build();
+                }
             } catch (MMException e) {
                 studio_.logs().logError(e, "Unable to subtract background");
             }
@@ -126,8 +129,12 @@ public class ShadingProcessor extends Processor {
             return;
         }
 
-        userData = userData.copy().putBoolean("Flatfield-corrected", true).build();
-        metadata = metadata.copy().userData(userData).build();
+        if (userData != null){
+            // We are likely in acquisition mode
+            userData = userData.copy().putBoolean("Flatfield-corrected", true).build();
+            metadata = metadata.copy().userData(userData).build();
+        }
+                
         if (image.getBytesPerPixel() == 1) {
             byte[] newPixels = new byte[width * height];
             byte[] oldPixels = (byte[]) image.getRawPixels();
