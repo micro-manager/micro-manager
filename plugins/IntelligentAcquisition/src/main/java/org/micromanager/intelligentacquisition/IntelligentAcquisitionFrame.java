@@ -77,7 +77,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
    private static final String EXPFIELDSX = "EXPFIELDSX";
    private static final String EXPFIELDSY = "EXPFIELDSY";
    
-   private final String[] ACQSUFFIXES = {"xml"};
+   private final String[] ACQSUFFIXES = {"txt"};
    private final String[] SCRIPTSUFFIXES = {"bsh", "txt", "ijm"};
    
    private String acqFileNameA_ = "";
