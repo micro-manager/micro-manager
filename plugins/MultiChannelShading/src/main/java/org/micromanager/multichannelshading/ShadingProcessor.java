@@ -18,8 +18,6 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-
-
 package org.micromanager.multichannelshading;
 
 import ij.ImagePlus;
@@ -44,14 +42,15 @@ import org.micromanager.internal.utils.MMException;
  * @author nico, modified for MM2.0 by Chris Weisiger
  */
 public class ShadingProcessor extends Processor {
+
    private Studio studio_;
    private ImageCollection imageCollection_;
    private String channelGroup_;
    private String[] presets_;
 
    public ShadingProcessor(Studio studio, String channelGroup,
-         String backgroundFile, String[] presets,
-         String[] files) {
+           String backgroundFile, String[] presets,
+           String[] files) {
       studio_ = studio;
       channelGroup_ = channelGroup;
       presets_ = presets;
@@ -59,8 +58,7 @@ public class ShadingProcessor extends Processor {
       if (backgroundFile != null && !backgroundFile.equals("")) {
          try {
             imageCollection_.setBackground(backgroundFile);
-         }
-         catch (MMException e) {
+         } catch (MMException e) {
             studio_.logs().logError(e, "Unable to set background file to " + backgroundFile);
          }
       }
@@ -68,8 +66,7 @@ public class ShadingProcessor extends Processor {
          for (int i = 0; i < presets.length; ++i) {
             imageCollection_.addFlatField(presets[i], files[i]);
          }
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
          studio_.logs().logError(e, "Error recreating ImageCollection");
       }
    }
@@ -78,7 +75,7 @@ public class ShadingProcessor extends Processor {
    public void processImage(Image image, ProcessorContext context) {
       int width = image.getWidth();
       int height = image.getHeight();
-      
+
       // For now, this plugin only works with 8 or 16 bit grayscale images
       if (image.getNumComponents() > 1 || image.getBytesPerPixel() > 2) {
          String msg = "Cannot flatfield correct images other than 8 or 16 bit grayscale";
@@ -102,8 +99,7 @@ public class ShadingProcessor extends Processor {
       ImagePlusInfo background = null;
       try {
          background = imageCollection_.getBackground(binning, rect);
-      }
-      catch (MMException e) {
+      } catch (MMException e) {
          studio_.logs().logError(e, "Error getting background for bin mode " + binning + " and rect " + rect);
       }
       if (background != null) {
@@ -111,17 +107,18 @@ public class ShadingProcessor extends Processor {
          ImageProcessor ipBackground = background.getProcessor();
          try {
             ip = ImageUtils.subtractImageProcessors(ip, ipBackground);
-            userData = userData.copy().putBoolean("Background-corrected", true).build();
-         }
-         catch (MMException e) {
+            if (userData != null) {
+               userData = userData.copy().putBoolean("Background-corrected", true).build();
+            }
+         } catch (MMException e) {
             studio_.logs().logError(e, "Unable to subtract background");
          }
          bgSubtracted = studio_.data().ij().createImage(ip, image.getCoords(),
-               metadata.copy().userData(userData).build());
+                 metadata.copy().userData(userData).build());
       }
-      
+
       ImagePlusInfo flatFieldImage = getMatchingFlatFieldImage(
-            metadata, binning, rect);       
+              metadata, binning, rect);
 
       // do not calculate flat field if we don't have a matching channel;
       // just return the background-subtracted image (which is the unmodified
@@ -131,15 +128,18 @@ public class ShadingProcessor extends Processor {
          return;
       }
 
-      userData = userData.copy().putBoolean("Flatfield-corrected", true).build();
-      metadata = metadata.copy().userData(userData).build();
+      if (userData != null) {
+         userData = userData.copy().putBoolean("Flatfield-corrected", true).build();
+         metadata = metadata.copy().userData(userData).build();
+      }
+      
       if (image.getBytesPerPixel() == 1) {
          byte[] newPixels = new byte[width * height];
          byte[] oldPixels = (byte[]) image.getRawPixels();
          int length = oldPixels.length;
          float[] flatFieldPixels = (float[]) flatFieldImage.getProcessor().getPixels();
-         for (int index = 0; index < length; index++){
-            float oldPixel = (float)((int)(oldPixels[index]) & 0x000000ff);
+         for (int index = 0; index < length; index++) {
+            float oldPixel = (float) ((int) (oldPixels[index]) & 0x000000ff);
             float newValue = oldPixel * flatFieldPixels[index];
             if (newValue > 2 * Byte.MAX_VALUE) {
                newValue = 2 * Byte.MAX_VALUE;
@@ -147,36 +147,37 @@ public class ShadingProcessor extends Processor {
             newPixels[index] = (byte) (newValue);
          }
          result = studio_.data().createImage(newPixels, width, height,
-               1, 1, image.getCoords(), metadata);
-         context.outputImage(result);       
+                 1, 1, image.getCoords(), metadata);
+         context.outputImage(result);
       } else if (image.getBytesPerPixel() == 2) {
          short[] newPixels = new short[width * height];
          short[] oldPixels = (short[]) bgSubtracted.getRawPixels();
          int length = oldPixels.length;
-         for (int index = 0; index < length; index++){
+         for (int index = 0; index < length; index++) {
             // shorts are signed in java so have to do this conversion to get 
             // the right value
-            float oldPixel = (float)((int)(oldPixels[index]) & 0x0000ffff);
-            float newValue = (oldPixel * 
-                    flatFieldImage.getProcessor().getf(index)) + 0.5f;
+            float oldPixel = (float) ((int) (oldPixels[index]) & 0x0000ffff);
+            float newValue = (oldPixel
+                    * flatFieldImage.getProcessor().getf(index)) + 0.5f;
             if (newValue > 2 * Short.MAX_VALUE) {
                newValue = 2 * Short.MAX_VALUE;
             }
             newPixels[index] = (short) (((int) newValue) & 0x0000ffff);
          }
          result = studio_.data().createImage(newPixels, width, height,
-               2, 1, image.getCoords(), metadata);
-         context.outputImage(result);       
+                 2, 1, image.getCoords(), metadata);
+         context.outputImage(result);
       }
    }
 
    /**
-    * Given the metadata of the image currently being processed,
-    * find a matching preset from the channelgroup used by the tablemodel
+    * Given the metadata of the image currently being processed, find a matching
+    * preset from the channelgroup used by the tablemodel
+    *
     * @param metadata Metadata of image being processed
     * @return matching flat field image
     */
-   ImagePlusInfo getMatchingFlatFieldImage(Metadata metadata, int binning, 
+   ImagePlusInfo getMatchingFlatFieldImage(Metadata metadata, int binning,
            Rectangle rect) {
       PropertyMap scopeData = metadata.getScopeData();
       for (String preset : presets_) {
@@ -188,8 +189,8 @@ public class ShadingProcessor extends Processor {
                PropertySetting ps = config.getSetting(i);
                String key = ps.getKey();
                String value = ps.getPropertyValue();
-               if (scopeData.containsKey(key) &&
-                     scopeData.getPropertyType(key) == String.class) {
+               if (scopeData.containsKey(key)
+                       && scopeData.getPropertyType(key) == String.class) {
                   String tagValue = scopeData.getString(key);
                   if (value.equals(tagValue)) {
                      presetMatch = true;
@@ -203,10 +204,10 @@ public class ShadingProcessor extends Processor {
          } catch (Exception ex) {
             studio_.logs().logError(ex, "Exception in tag matching");
          }
-      }      
+      }
       return null;
    }
-   
+
    public ImageCollection getImageCollection() {
       return imageCollection_;
    }
