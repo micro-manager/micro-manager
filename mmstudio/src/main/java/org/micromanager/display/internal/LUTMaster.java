@@ -380,6 +380,16 @@ public class LUTMaster {
       // here because of the call to getSafeContrastSettings() earlier.
       lut.min = contrastSettings.getSafeContrastMin(0, 0);
       lut.max = contrastSettings.getSafeContrastMax(0, 0);
+      // HACK: don't allow min to equal max as this can cause images to render
+      // as wholly black.
+      if (lut.min == lut.max) {
+         if (lut.min > 0) {
+            lut.min--;
+         }
+         else {
+            lut.max++;
+         }
+      }
       if (composite == null) {
          // Single-channel.
          processor.setColorModel(lut);
