@@ -335,7 +335,7 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
                  DARKFIELDFILENAME, backgroundFileName_);
          studio_.data().notifyPipelineChanged();
       } catch (MMException ex) {
-         studio_.logs().showError(ex, "Failed to set background image");
+         studio_.logs().logError(ex, "Failed to set background image");
          return "";
       }
       return fileName;
