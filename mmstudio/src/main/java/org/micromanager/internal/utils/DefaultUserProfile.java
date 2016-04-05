@@ -601,9 +601,14 @@ public class DefaultUserProfile implements UserProfile {
             }
             destination.renameTo(backup);
          }
-         if (!tempFile.renameTo(destination)) {
-            ReportingUtils.logError("Unable to move exported property map to " + path + "; temporary backup file is available at " + tempFile.getAbsolutePath());
-         }
+         
+          try {
+              Files.move(tempFile, destination);
+          } catch (IOException e) {
+              ReportingUtils.logError(e);
+              ReportingUtils.logError("Unable to move exported property map to " + path + "; temporary backup file is available at " + tempFile.getAbsolutePath());
+          }
+         
       }
       catch (FileNotFoundException e) {
          ReportingUtils.logError(e, "Unable to open writer to save user profile mapping file");
