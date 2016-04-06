@@ -422,14 +422,15 @@ SerialPort::SerialPort(const char* portName) :
    AddAllowedValue(MM::g_Keyword_Handshaking, g_Handshaking_Hardware, (long)boost::asio::serial_port_base::flow_control::hardware);
    AddAllowedValue(MM::g_Keyword_Handshaking, g_Handshaking_Software, (long)boost::asio::serial_port_base::flow_control::software);
 
-   // on Windows only, DTR Enable:
-#ifdef WIN32
-   CPropertyAction* pActDTREnable = new CPropertyAction(this, &SerialPort::OnDTR);
-   ret = CreateProperty("DTR Control", "Enable", MM::String, false, pActDTREnable, true);
-   assert (ret == DEVICE_OK);
-   AddAllowedValue("DTR Control", "Enable");
-   AddAllowedValue("DTR Control", "Disable");
-#endif
+// on Windows only, DTR Enable:
+// Since this does not make a difference for Sam Lord and Diskovery, comment out for now
+// #ifdef WIN32
+//   CPropertyAction* pActDTREnable = new CPropertyAction(this, &SerialPort::OnDTR);
+//   ret = CreateProperty("DTR Control", "Enable", MM::String, false, pActDTREnable, true);
+//   assert (ret == DEVICE_OK);
+//   AddAllowedValue("DTR Control", "Enable");
+//   AddAllowedValue("DTR Control", "Disable");
+//#endif
 
    // answer timeout
    CPropertyAction* pActTimeout = new CPropertyAction (this, &SerialPort::OnTimeout);
@@ -586,10 +587,11 @@ int SerialPort::OpenWin32SerialPort(const std::string& portName,
    dcb.fDsrSensitivity = FALSE;
    dcb.fNull = FALSE;
    dcb.fAbortOnError = FALSE;
-   if (dtrEnable_)
-      dcb.fDtrControl = DTR_CONTROL_ENABLE;
-   else
-      dcb.fDtrControl = DTR_CONTROL_DISABLE;
+   // Since this does not make a difference for Sam Lord and Diskovery, comment out for now
+   //if (dtrEnable_)
+   //   dcb.fDtrControl = DTR_CONTROL_ENABLE;
+   //else
+   //   dcb.fDtrControl = DTR_CONTROL_DISABLE;
 
    // The following lines work around crashes caused by invalid or incorrect
    // values returned by some serial port drivers (some versions of Silicon
