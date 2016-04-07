@@ -590,25 +590,33 @@ public class DefaultUserProfile implements UserProfile {
          writer.write(serialization.toString(2) + "\n");
          writer.close();
          File destination = new File(path);
-         // Some operating systems (specifically, Windows) don't allow you to
-         // overwrite files with a move operation, so move the destination file
-         // first.
-         if (JavaUtils.isWindows() && destination.exists()) {
+         // Some operating systems (Windows at the very least) don't allow you
+         // to overwrite files with a move operation, so move the destination
+         // file first.
+         if (destination.exists()) {
             File backup = new File(destination.getAbsolutePath() + "-autobak");
             if (backup.exists() && !backup.delete()) {
                ReportingUtils.logError("Unable to delete existing backup property map file at " + backup.getAbsolutePath() + " to make room for new backup; giving up.");
                return;
             }
-            destination.renameTo(backup);
+            try {
+               Files.move(destination, backup);
+            }
+            catch (IOException e) {
+               ReportingUtils.logError(e, "Unable to move " + destination +
+                     " to " + backup + "; aborting file export.");
+               return;
+            }
          }
-         
-          try {
-              Files.move(tempFile, destination);
-          } catch (IOException e) {
-              ReportingUtils.logError(e);
-              ReportingUtils.logError("Unable to move exported property map to " + path + "; temporary backup file is available at " + tempFile.getAbsolutePath());
-          }
-         
+         try {
+            Files.move(tempFile, destination);
+         }
+         catch (IOException e) {
+            ReportingUtils.logError(e,
+                  "Unable to move exported property map to " + path +
+                  "; temporary backup file is available at " +
+                  tempFile.getAbsolutePath());
+         }
       }
       catch (FileNotFoundException e) {
          ReportingUtils.logError(e, "Unable to open writer to save user profile mapping file");
