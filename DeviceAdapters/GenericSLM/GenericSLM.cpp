@@ -98,7 +98,8 @@ GenericSLM::GenericSLM(const char* name) :
    monochromeColorNum_(0),
    inversionStr_("Off"),
    monochromeColorStr_("White"),
-   chosenDisplayIndex_(-1)
+   chosenDisplayIndex_(-1),
+   ddObject_(NULL)
 {
    assert(strlen(name) < (unsigned int) MM::MaxStrLength);
 
