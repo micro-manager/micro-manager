@@ -30,6 +30,7 @@ import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.internal.DefaultImage;
+import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplayWindow;
 
 import org.micromanager.internal.MMStudio;
@@ -52,15 +53,42 @@ public class DefaultAlbum implements Album {
    @Override
    public boolean addImage(Image image) {
       MMStudio studio = MMStudio.getInstance();
-      boolean didCreateNew = false;
-      if (store_ == null || store_.getIsFrozen()) {
+      boolean mustCreateNew = (store_ == null || store_.getIsFrozen());
+      String curChannel = "";
+      try {
+         curChannel = studio.core().getCurrentConfig(
+               studio.core().getChannelGroup());
+      }
+      catch (Exception e) {
+         studio.logs().logError(e, "Error getting current channel name");
+      }
+      if (store_ != null) {
+         String oldChannel = store_.getSummaryMetadata().getSafeChannelName(0);
+         if (!oldChannel.contentEquals(curChannel)) {
+            mustCreateNew = true;
+         }
+      }
+      if (mustCreateNew) {
          // Need to create a new album.
          store_ = studio.data().createRAMDatastore();
+         try {
+            SummaryMetadata summary = studio.acquisitions()
+               .generateSummaryMetadata().copy()
+               .channelNames(new String[] {curChannel}).build();
+            store_.setSummaryMetadata(summary);
+         }
+         catch (DatastoreFrozenException e) {
+            // This should never happen!
+            studio.logs().logError(e, "Unable to set summary of newly-created datastore");
+         }
+         catch (DatastoreRewriteException e) {
+            // This should also never happen!
+            studio.logs().logError(e, "Unable to set summary of newly-created datastore");
+         }
          studio.displays().manage(store_);
          DisplayWindow display = studio.displays().createDisplay(store_);
          display.setCustomTitle("Album");
          curTime_ = null;
-         didCreateNew = true;
       }
       // We want to add new images to the next timepoint, or to the current
       // timepoint if there's no image for this channel at the current
@@ -92,7 +120,7 @@ public class DefaultAlbum implements Album {
          // This should never happen.
          ReportingUtils.showError(e, "Unable to add image at " + newCoords + " to album as another image with those coords already exists.");
       }
-      return didCreateNew;
+      return mustCreateNew;
    }
 
    @Override

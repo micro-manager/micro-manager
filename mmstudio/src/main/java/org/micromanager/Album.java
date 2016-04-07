@@ -45,8 +45,13 @@ public interface Album {
 
    /**
     * Add the specified Image to the Album's datastore. If no Datastore exists
-    * for the Album yet, or if the current Datastore is frozen, then a new one
-    * will be created, as well as a new DisplayWindow to go with it.
+    * for the Album yet, or if the current Datastore is frozen, or if the
+    * channel has changed, then a new Datastore will be created, as well as a
+    * new DisplayWindow to go with it, and future additions will be sent to
+    * that Datastore.
+    * The channel name used for the image will be the current channel (i.e. the
+    * config setting for the config group set as the channel group), or "" if
+    * it does not exist.
     *
     * @param image The Image to add to the album
     * @return True if a new Datastore and DisplayWindow were created as a
@@ -55,10 +60,8 @@ public interface Album {
    public boolean addImage(Image image);
 
    /**
-    * Add the specified Images to the Album's datastore. If no Datastore exists
-    * for the Album yet, or if the current Datastore is frozen, then a new one
-    * will be created, as well as a new DisplayWindow to go with it. Equivalent
-    * to repeatedly calling addImage().
+    * Add the specified Images to the Album's datastore. Equivalent to
+    * repeatedly calling addImage().
     *
     * @param images The Images to add to the album
     * @return True if a new Datastore and DisplayWindow were created as a
