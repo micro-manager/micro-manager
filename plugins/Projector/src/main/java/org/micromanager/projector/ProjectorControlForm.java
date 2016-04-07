@@ -1495,16 +1495,6 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       pointAndShootOnButton = new javax.swing.JToggleButton();
       pointAndShootOffButton = new javax.swing.JToggleButton();
       phototargetInstructionsLabel = new javax.swing.JLabel();
-      setupTab = new javax.swing.JPanel();
-      calibrateButton_ = new javax.swing.JButton();
-      allPixelsButton = new javax.swing.JButton();
-      centerButton = new javax.swing.JButton();
-      channelComboBox = new javax.swing.JComboBox();
-      phototargetingChannelDropdownLabel = new javax.swing.JLabel();
-      shutterComboBox = new javax.swing.JComboBox();
-      phototargetingShutterDropdownLabel = new javax.swing.JLabel();
-      jLabel1 = new javax.swing.JLabel();
-      delayField_ = new javax.swing.JTextField();
       roisTab = new javax.swing.JPanel();
       roiLoopLabel = new javax.swing.JLabel();
       roiLoopTimesLabel = new javax.swing.JLabel();
@@ -1531,6 +1521,17 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       startFrameSpinner = new javax.swing.JSpinner();
       repeatEveryFrameSpinner = new javax.swing.JSpinner();
       repeatEveryFrameUnitLabel = new javax.swing.JLabel();
+      setupTab = new javax.swing.JPanel();
+      calibrateButton_ = new javax.swing.JButton();
+      allPixelsButton = new javax.swing.JButton();
+      centerButton = new javax.swing.JButton();
+      channelComboBox = new javax.swing.JComboBox();
+      phototargetingChannelDropdownLabel = new javax.swing.JLabel();
+      shutterComboBox = new javax.swing.JComboBox();
+      phototargetingShutterDropdownLabel = new javax.swing.JLabel();
+      jLabel1 = new javax.swing.JLabel();
+      delayField_ = new javax.swing.JTextField();
+      checkerBoardButton_ = new javax.swing.JButton();
       offButton = new javax.swing.JButton();
       ExposureTimeLabel = new javax.swing.JLabel();
       pointAndShootIntervalSpinner = new javax.swing.JSpinner();
@@ -1604,101 +1605,6 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       );
 
       mainTabbedPane.addTab("Point and Shoot", pointAndShootTab);
-
-      calibrateButton_.setText("Calibrate!");
-      calibrateButton_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            calibrateButton_ActionPerformed(evt);
-         }
-      });
-
-      allPixelsButton.setText("All Pixels");
-      allPixelsButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            allPixelsButtonActionPerformed(evt);
-         }
-      });
-
-      centerButton.setText("Show center spot");
-      centerButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            centerButtonActionPerformed(evt);
-         }
-      });
-
-      channelComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-      channelComboBox.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            channelComboBoxActionPerformed(evt);
-         }
-      });
-
-      phototargetingChannelDropdownLabel.setText("Phototargeting channel:");
-
-      shutterComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-      shutterComboBox.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            shutterComboBoxActionPerformed(evt);
-         }
-      });
-
-      phototargetingShutterDropdownLabel.setText("Phototargeting shutter:");
-
-      jLabel1.setText("Delay(ms):");
-
-      delayField_.setText("0");
-
-      javax.swing.GroupLayout setupTabLayout = new javax.swing.GroupLayout(setupTab);
-      setupTab.setLayout(setupTabLayout);
-      setupTabLayout.setHorizontalGroup(
-         setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(setupTabLayout.createSequentialGroup()
-            .addGap(39, 39, 39)
-            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addGroup(setupTabLayout.createSequentialGroup()
-                  .addComponent(centerButton)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(allPixelsButton))
-               .addGroup(setupTabLayout.createSequentialGroup()
-                  .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addComponent(phototargetingChannelDropdownLabel)
-                     .addComponent(phototargetingShutterDropdownLabel))
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addComponent(shutterComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(channelComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)))
-               .addGroup(setupTabLayout.createSequentialGroup()
-                  .addComponent(calibrateButton_)
-                  .addGap(18, 18, 18)
-                  .addComponent(jLabel1)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(delayField_, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)))
-            .addContainerGap(127, Short.MAX_VALUE))
-      );
-      setupTabLayout.setVerticalGroup(
-         setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(setupTabLayout.createSequentialGroup()
-            .addGap(27, 27, 27)
-            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(centerButton)
-               .addComponent(allPixelsButton))
-            .addGap(18, 18, 18)
-            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(calibrateButton_)
-               .addComponent(jLabel1)
-               .addComponent(delayField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 89, Short.MAX_VALUE)
-            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(phototargetingChannelDropdownLabel)
-               .addComponent(channelComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(shutterComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-               .addComponent(phototargetingShutterDropdownLabel))
-            .addGap(83, 83, 83))
-      );
-
-      mainTabbedPane.addTab("Setup", setupTab);
 
       roiLoopLabel.setText("Loop:");
 
@@ -1949,6 +1855,111 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
 
       mainTabbedPane.addTab("ROIs", roisTab);
 
+      calibrateButton_.setText("Calibrate!");
+      calibrateButton_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            calibrateButton_ActionPerformed(evt);
+         }
+      });
+
+      allPixelsButton.setText("All Pixels");
+      allPixelsButton.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            allPixelsButtonActionPerformed(evt);
+         }
+      });
+
+      centerButton.setText("Center spot");
+      centerButton.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            centerButtonActionPerformed(evt);
+         }
+      });
+
+      channelComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+      channelComboBox.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            channelComboBoxActionPerformed(evt);
+         }
+      });
+
+      phototargetingChannelDropdownLabel.setText("Phototargeting channel:");
+
+      shutterComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+      shutterComboBox.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            shutterComboBoxActionPerformed(evt);
+         }
+      });
+
+      phototargetingShutterDropdownLabel.setText("Phototargeting shutter:");
+
+      jLabel1.setText("Delay(ms):");
+
+      delayField_.setText("0");
+
+      checkerBoardButton_.setText("CheckerBoard");
+      checkerBoardButton_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            checkerBoardButton_ActionPerformed(evt);
+         }
+      });
+
+      javax.swing.GroupLayout setupTabLayout = new javax.swing.GroupLayout(setupTab);
+      setupTab.setLayout(setupTabLayout);
+      setupTabLayout.setHorizontalGroup(
+         setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+         .addGroup(setupTabLayout.createSequentialGroup()
+            .addGap(39, 39, 39)
+            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+               .addGroup(setupTabLayout.createSequentialGroup()
+                  .addComponent(centerButton)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(allPixelsButton)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(checkerBoardButton_))
+               .addGroup(setupTabLayout.createSequentialGroup()
+                  .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                     .addComponent(phototargetingChannelDropdownLabel)
+                     .addComponent(phototargetingShutterDropdownLabel))
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                     .addComponent(shutterComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
+                     .addComponent(channelComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)))
+               .addGroup(setupTabLayout.createSequentialGroup()
+                  .addComponent(calibrateButton_)
+                  .addGap(18, 18, 18)
+                  .addComponent(jLabel1)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(delayField_, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)))
+            .addContainerGap(100, Short.MAX_VALUE))
+      );
+      setupTabLayout.setVerticalGroup(
+         setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+         .addGroup(setupTabLayout.createSequentialGroup()
+            .addGap(27, 27, 27)
+            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+               .addComponent(centerButton)
+               .addComponent(allPixelsButton)
+               .addComponent(checkerBoardButton_))
+            .addGap(18, 18, 18)
+            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+               .addComponent(calibrateButton_)
+               .addComponent(jLabel1)
+               .addComponent(delayField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 89, Short.MAX_VALUE)
+            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+               .addComponent(phototargetingChannelDropdownLabel)
+               .addComponent(channelComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+               .addComponent(shutterComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+               .addComponent(phototargetingShutterDropdownLabel))
+            .addGap(83, 83, 83))
+      );
+
+      mainTabbedPane.addTab("Setup", setupTab);
+
       offButton.setText("Off");
       offButton.setSelected(true);
       offButton.addActionListener(new java.awt.event.ActionListener() {
@@ -2145,6 +2156,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       updateROISettings();
    }//GEN-LAST:event_repeatEveryIntervalSpinnerStateChanged
 
+   private void checkerBoardButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkerBoardButton_ActionPerformed
+     dev_.showCheckerBoard(16, 16);
+   }//GEN-LAST:event_checkerBoardButton_ActionPerformed
+
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JLabel ExposureTimeLabel;
@@ -2154,6 +2169,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private javax.swing.JButton calibrateButton_;
    private javax.swing.JButton centerButton;
    private javax.swing.JComboBox channelComboBox;
+   private javax.swing.JButton checkerBoardButton_;
    private javax.swing.JTextField delayField_;
    private javax.swing.JLabel jLabel1;
    private javax.swing.JLabel jLabel2;

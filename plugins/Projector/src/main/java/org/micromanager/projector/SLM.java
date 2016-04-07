@@ -136,6 +136,30 @@ public class SLM implements ProjectionDevice {
          app_.logs().showError(ex);
       }
    }
+   
+       @Override
+    public void showCheckerBoard(int x, int y) {
+      ImageProcessor proc = new ByteProcessor(slmWidth_, slmHeight_);
+      proc.setColor(Color.black);
+      proc.fill();
+      proc.setColor(Color.white);
+      int xSize = slmWidth_ / x;
+      int ySize = slmHeight_ / y;
+      for (int i = 0; i < x; i++){
+         for (int j = 0; j < y; j++) {
+            if (i % 2 == j % 2) {
+               proc.fill(new Roi(i * xSize, j * ySize, xSize, ySize));
+            }
+         }
+      }
+      fillSpot(proc, x, y, spotDiameter_);
+      try {
+         mmc_.setSLMImage(slm_, (byte[]) proc.getPixels());
+         mmc_.displaySLMImage(slm_);
+      } catch (Throwable e) {
+         app_.logs().showError("SLM not connecting properly.");
+      }
+    }
 
    // Fills a circular spot in an ImageJ ImageProcessor with diatemer dia.
    private static void fillSpot(ImageProcessor proc, int x, int y, double dia) {

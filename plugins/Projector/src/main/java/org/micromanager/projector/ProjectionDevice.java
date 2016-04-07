@@ -40,6 +40,12 @@ public interface ProjectionDevice {
    public void turnOff();
    public void displaySpot(double x, double y);
    public void activateAllPixels();
+   /**
+    * Projects an x * y checkboard pattern on the SLM 
+    * @param x # of fields (black + white) in x direction
+    * @param y # of fields (black + white) in y direction
+    */
+   public void showCheckerBoard(int x, int y);
 
    // ## ROIs
    public void loadRois(List<FloatPolygon> rois);
