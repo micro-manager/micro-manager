@@ -56,25 +56,38 @@
 #define PVCAM_PARAM_EXPOSE_OUT_DEFINED
 // The SMART streaming feature is currently only supported on Windows (PVCAM 2.8.0+)
 #define PVCAM_SMART_STREAMING_SUPPORTED
+// Metadata, Multi-ROI, Centroids and other features that were added to PVCAM 3.0.12 (Win)
+#define PVCAM_3_0_12_SUPPORTED // TODO: Rename this once the PVCAM is officially out
 #endif
 
+// PVCAM 3.1+ has some additional PL_COLOR_MODES defined which we use across the code
+// even if we don't compile against that PVCAM. To make it easier we define them ourselves.
+#ifndef PVCAM_3_0_12_SUPPORTED
+#define COLOR_GRBG 3
+#define COLOR_GBRG 4
+#define COLOR_BGGR 5
+#endif
 
 #include "NotificationEntry.h"
 #include "PvCircularBuffer.h"
 #include "PpParam.h"
 #include "PvRoi.h"
+#include "AcqConfig.h"
 
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
 //
-#define ERR_INVALID_BUFFER            10002
-#define ERR_INVALID_PARAMETER_VALUE   10003
-#define ERR_BUSY_ACQUIRING            10004
-#define ERR_STREAM_MODE_NOT_SUPPORTED 10005
-#define ERR_CAMERA_NOT_FOUND          10006
-#define ERR_ROI_SIZE_NOT_SUPPORTED    10007
-#define ERR_BUFFER_TOO_LARGE          10008
+#define ERR_INVALID_BUFFER              10002
+#define ERR_INVALID_PARAMETER_VALUE     10003
+#define ERR_BUSY_ACQUIRING              10004
+#define ERR_STREAM_MODE_NOT_SUPPORTED   10005
+#define ERR_CAMERA_NOT_FOUND            10006
+#define ERR_ROI_SIZE_NOT_SUPPORTED      10007
+#define ERR_BUFFER_TOO_LARGE            10008
+#define ERR_ROI_DEFINITION_INVALID      10009
+#define ERR_BUFFER_PROCESSING_FAILED    10010
+#define ERR_BINNING_INVALID             10011 // Binning value is not valid for current configuration
 
 //////////////////////////////////////////////////////////////////////////////
 // Constants
@@ -88,6 +101,7 @@
 typedef struct 
 {
    const char * name;
+   const char * debugName;
    uns32 id;
 } ParamNameIdPair;
 
@@ -98,12 +112,30 @@ typedef struct
 {
     uns16 pixTime;         // Readout rate in ns
     int16 bitDepth;        // Bit depth
-    int16 gainMin;         // Min gain index for this speed
-    int16 gainMax;         // Max gain index for this speed
+    rs_bool gainAvail;     // Gain available
+    int16   gainMin;       // Min gain index for this speed
+    int16   gainMax;       // Max gain index for this speed
+    int16   gainDef;       // Default gain for this speed
+    std::map<std::string, int16> gainNameMap; // Gain names (i.e., "name:index" map)
+    std::map<int16, std::string> gainNameMapReverse; // Reverse lookup map
     int16 spdIndex;        // Speed index 
     uns32 portIndex;       // Port index
     std::string spdString; // A string that describes this choice in GUI
+    int32       colorMask;    // Sensor color mask (PARAM_COLOR_MODE) 
+    std::string colorMaskStr; // Sensor color mask description (retrieved from PVCAM)
 } SpdTabEntry;
+
+/***
+* Camera Model is identified mostly by Chip Name. Most of the cameras and every
+* unknown camera is treated as "Generic". PVCAM and this uM adapter is mostly
+* camera-agnostic, however a couple of camera models may need special treatment.
+*/
+typedef enum PvCameraModel
+{
+    PvCameraModel_Generic = 0,
+    PvCameraModel_OptiMos_M1,
+    PvCameraModel_Retiga6000C
+} PvCameraModel;
 
 inline double round( double value )
 {
@@ -139,9 +171,9 @@ public:
    int SnapImage();
    const unsigned char* GetImageBuffer();
    const unsigned int* GetImageBufferAsRGB32();
-   unsigned GetImageWidth() const         { return img_.Width(); }
-   unsigned GetImageHeight() const        { return img_.Height(); }
-   unsigned GetImageBytesPerPixel() const { return rgbaColor_ ? colorImg_.Depth() : img_.Depth(); } 
+   unsigned GetImageWidth() const         { return acqCfgCur_.Roi.ImageRgnWidth(); }
+   unsigned GetImageHeight() const        { return acqCfgCur_.Roi.ImageRgnHeight(); }
+   unsigned GetImageBytesPerPixel() const { return acqCfgCur_.ColorProcessingEnabled ? 4 : 2; } 
    long GetImageBufferSize() const;
    unsigned GetBitDepth() const;
    int GetBinning() const;
@@ -149,7 +181,7 @@ public:
    double GetExposure() const;
    void SetExposure(double dExp);
    int IsExposureSequenceable(bool& isSequenceable) const { isSequenceable = false; return DEVICE_OK; }
-   unsigned GetNumberOfComponents() const {return rgbaColor_ ? 4 : 1;}
+   unsigned GetNumberOfComponents() const {return acqCfgCur_.ColorProcessingEnabled ? 4 : 1;}
 
 #ifndef linux
    // micromanager calls the "live" acquisition a "sequence"
@@ -187,10 +219,12 @@ public:
    int OnCircBufferFrameCount(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCircBufferFrameRecovery(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnColorMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSensorCfaMask(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnRedScale(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGreenScale(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBlueScale(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnCFAmask(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAlgorithmCfaMask(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAlgorithmCfaMaskAuto(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnInterpolationAlgorithm(MM::PropertyBase* pProp, MM::ActionType eAct);
 #ifdef PVCAM_CALLBACKS_SUPPORTED
    int OnAcquisitionMethod(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -199,6 +233,11 @@ public:
    int OnSmartStreamingEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSmartStreamingValues(MM::PropertyBase* pProp, MM::ActionType eAct);
 #endif
+   int OnMetadataEnabled(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnCentroidsEnabled(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnCentroidsRadius(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnCentroidsCount(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFanSpeedSetpoint(MM::PropertyBase* pProp, MM::ActionType eAct);
    bool IsCapturing();
 
    // Published to allow other classes access the camera
@@ -246,14 +285,14 @@ private:
    short           hPVCAM_;               // Camera handle
    static int      refCount_;             // This class reference counter
    static bool     PVCAM_initialized_;    // Global PVCAM initialization status
-   ImgBuffer       img_;                  // Single image buffer
-   ImgBuffer       colorImg_;             // color image buffer
    PvDebayer       debayer_;              // debayer processor
 
    MM::MMTime      startTime_;            // Acquisition start time
 
    short           cameraId_;             // 0-based camera ID, used to allow multiple cameras connected
-   PvCircularBuffer circBuf_;
+   PvCameraModel   cameraModel_;
+   char            deviceLabel_[MM::MaxStrLength]; // Cached device label used when inserting metadata
+
    bool            circBufSizeAuto_;
    int             circBufFrameCount_; // number of frames to allocate the buffer for
    bool            circBufFrameRecoveryEnabled_; // True if we perform recovery from lost callbacks
@@ -279,38 +318,56 @@ private:
    long            outputTriggerFirstMissing_;
 
    /// CAMERA PARAMETERS:
-   PvRoi           roi_;                  // Current user-selected ROI
-   rgn_type        camRegion_;            // Current PVCAM region based on ROI
    uns16           camParSize_;           // CCD parallel size
    uns16           camSerSize_;           // CCD serial size
-   uns32           camFWellCapacity_;     // CCD full well capacity
    double          exposure_;             // Current Exposure
 
-   unsigned        binSize_;              // Symmetric binning value
-   unsigned        binXSize_;             // Asymmetric binning value
-   unsigned        binYSize_;             // Asymmetric binning value
-
-   // These are cached values for binning. Used when changing binning during live mode
-   unsigned        newBinSize_;
-   unsigned        newBinXSize_;
-   unsigned        newBinYSize_;
-
    char            camName_[CAM_NAME_LEN];
-   char            camChipName_[CCD_NAME_LEN];
+   std::string     camChipName_;
    PvParam<int16>* prmTemp_;              // CCD temperature
    PvParam<int16>* prmTempSetpoint_;      // Desired CCD temperature
    PvParam<int16>* prmGainIndex_;
    PvParam<uns16>* prmGainMultFactor_;
+   PvEnumParam*    prmBinningSer_;
+   PvEnumParam*    prmBinningPar_;
+
+   std::vector<std::string>        binningLabels_;
+   std::vector<int32>              binningValuesX_;
+   std::vector<int32>              binningValuesY_;
+   bool                            binningRestricted_;
 
    double           redScale_;
    double           greenScale_;
    double           blueScale_;
 
-   // color mode
-   int selectedCFAmask_;
-   int selectedInterpolationAlgorithm_;
-   bool rgbaColor_;
-   bool newRgbaColor_; // Cached values, used when changing color mode during live mode
+   // Acquisition configuration
+   AcqConfig acqCfgCur_; // Current configuration
+   AcqConfig acqCfgNew_; // New configuration waiting to be applied
+
+   // Single Snaps and Live mode has each its own buffer. However, depending on
+   // the configuration the buffer may need to be further processed before its used by MMCore.
+
+   // PVCAM helper structure for decoding an embedded-metadata-enabled frame buffer
+#ifdef PVCAM_3_0_12_SUPPORTED
+   md_frame*        metaFrameStruct_;
+#endif
+   // A buffer used for creating a black-filled frame when Centroids or Multi-ROI
+   // acquisition is running. Used in both single snap and live mode if needed.
+   unsigned char*   metaBlackFilledBuf_;
+   size_t           metaBlackFilledBufSz_;
+   // A buffer used in setup_seq() only (single snaps mode)
+   unsigned char*   singleFrameBufRaw_;
+   size_t           singleFrameBufRawSz_;
+   // A pointer to the final, post processed image buffer that will be returned
+   // in GetImageBuffer() and GetImageBufferAsRGB32(). This is a pointer only that
+   // points to either RAW, RGB or Black-Filled buffer.
+   unsigned char*   singleFrameBufFinal_;
+   // Circular buffer, used in setup_cont() only (live mode)
+   PvCircularBuffer circBuf_;
+   // Color image buffer. Used in both single snap and live mode if needed.
+   ImgBuffer*       rgbImgBuf_;
+   
+
 
 #ifdef PVCAM_SMART_STREAMING_SUPPORTED
    double          smartStreamValuesDouble_[SMART_STREAM_MAX_EXPOSURES];
@@ -328,15 +385,21 @@ private:
    PvParam<smart_stream_type>* prmSmartStreamingValues_;
    PvParam<rs_bool>* prmSmartStreamingEnabled_;
 #endif
-   PvEnumParam*    prmTriggerMode_;       // (PARAM_EXPOSURE_MODE)
-   PvParam<uns16>* prmExpResIndex_;
-   PvEnumParam*    prmExpRes_;
-   PvEnumParam*    prmExposeOutMode_;
-   PvParam<uns16>* prmClearCycles_;
-   PvEnumParam*    prmReadoutPort_;
-   PvParam<int32>* prmColorMode_;
+   PvEnumParam*      prmTriggerMode_;     // (PARAM_EXPOSURE_MODE)
+   PvParam<uns16>*   prmExpResIndex_;
+   PvEnumParam*      prmExpRes_;
+   PvEnumParam*      prmExposeOutMode_;
+   PvParam<uns16>*   prmClearCycles_;
+   PvEnumParam*      prmReadoutPort_;
+   PvEnumParam*      prmColorMode_;
+   PvParam<ulong64>* prmFrameBufSize_;
 
-   
+   PvParam<rs_bool>* prmMetadataEnabled_;
+   PvParam<rs_bool>* prmCentroidsEnabled_;
+   PvParam<uns16>*   prmCentroidsRadius_;
+   PvParam<uns16>*   prmCentroidsCount_;
+   PvEnumParam*      prmFanSpeedSetpoint_;
+
    // List of post processing features
    std::vector<PpParam> PostProc_;
 
@@ -358,9 +421,15 @@ private:
    int initializePostProcessing();
    int refreshPostProcValues();
    int revertPostProcValue( long absoluteParamIdx, MM::PropertyBase* pProp);
-   int buildSpdTable();
-   int speedChanged();
    int portChanged();
+   int speedChanged();
+   int buildSpdTable();
+   int updateCircBufRange(unsigned int frameSize);
+   int selectDebayerAlgMask(int xRoiPos, int yRoiPos, int32 colorMask) const;
+
+   int applyAcqConfig();
+   int reinitProcessingBuffers();
+   int postProcessSingleFrame(unsigned char** pOutBuf, unsigned char* pInBuf, size_t inBufSz);
 
    // other internal functions
    int ClearROI();

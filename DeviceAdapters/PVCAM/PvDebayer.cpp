@@ -93,6 +93,18 @@ int PvDebayer::ProcessT(ImgBuffer& out, const T* in, int width, int height, int 
    assert(sizeof(int) == 4);
    out.Resize(width, height, 4);
    int* outBuf = reinterpret_cast<int*>(out.GetPixelsRW());
+
+   // TODO: There seems to be bug somewhere in the conversion routine. When Binning is switched from 1x1 to 2x2 or other
+   // the image cannot be debayered (obviously), however when switching back to 1x1 the blue channel seems to contain
+   // some incorrect values from the 2x2 binned image. After adding the clear() calls below the issue disappeared.
+   // This suggests that the debayering algorithm preserves some data from previous frames and tampers the current frame.
+   // TODO: The algorithm itself is very inefficient, we should consider using OpenCV or at least revisit the algorithms,
+   // at least the SetPixel(), GetPixel() and all the loops using vectors needs to be improved.
+   // (remove conditions from Get,SetPixel, avoid using std::vector)
+   r.clear();
+   g.clear();
+   b.clear();
+
    return Convert(in, outBuf, width, height, bitDepth, orderIndex, algoIndex);
 }
 

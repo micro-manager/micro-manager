@@ -160,6 +160,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AcqConfig.cpp" />
     <ClCompile Include="NotificationEntry.cpp" />
     <ClCompile Include="NotificationThread.cpp" />
     <ClCompile Include="PollingThread.cpp" />
@@ -172,6 +173,7 @@
     <ClCompile Include="PvFrameInfo.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AcqConfig.h" />
     <ClInclude Include="NotificationEntry.h" />
     <ClInclude Include="NotificationThread.h" />
     <ClInclude Include="PollingThread.h" />
