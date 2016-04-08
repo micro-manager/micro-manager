@@ -439,8 +439,15 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
       try {
          dev_.turnOff();
-         // JonD: wait to make sure the device gets turned off
-         Thread.sleep(300);
+         // This sleep was likely inserted by Arthur to make the code work with 
+         // the Andor Mosaic.  It is not needed for the GenericSLM, and 
+         // also not for several other devices. We could have user-input for
+         // this and two other sleeps in this function, however, that will make
+         // things quite confusing for the user.  For now, have a single delay 
+         // field and use it in multiple locations where a sleep is warranted
+         // for one reason or another.
+         int delayMs = Integer.parseInt(delayField_.getText());
+         Thread.sleep(delayMs);
          core_.snapImage();
          TaggedImage image = core_.getTaggedImage();
          ImageProcessor proc1 = ImageUtils.makeMonochromeProcessor(image);
@@ -455,7 +462,6 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          // if we add "dev_.waitForDevice(), then the RAPP UGA-40 will already have ended
          // its exposure before returning control
          // For now, wait for a user specified delay
-         int delayMs = Integer.parseInt(delayField_.getText());
          Thread.sleep(delayMs);
          core_.snapImage();
          // JonD: added line below to short-circuit exposure time
@@ -473,7 +479,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          Point maxPt = findPeak(diffImage);
          IJ.getImage().setRoi(new PointRoi(maxPt.x, maxPt.y));
          // NS: what is this second sleep good for????
-         // core_.sleep(500);
+         Thread.sleep(delayMs);
          return maxPt;
       } catch (Exception e) {
          ReportingUtils.showError(e);
