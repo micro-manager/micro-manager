@@ -47,13 +47,14 @@ import org.micromanager.Studio;
  */
 public class Alert extends JDialog {
    private static ArrayList<Alert> allAlerts_ = new ArrayList<Alert>();
+   // This is shown if there's not enough room to show all alerts.
+   private static Alert moreAlert_ = new Alert(null, "And more...");
 
    public static void addAlert(Studio studio, String text) {
       Alert alert = new Alert(studio, text);
 
       allAlerts_.add(alert);
       adjustPositions();
-      alert.setVisible(true);
    }
 
    private Studio studio_;
@@ -70,14 +71,16 @@ public class Alert extends JDialog {
       JPanel contents = new JPanel(new MigLayout());
       contents.setBorder(BorderFactory.createLineBorder(Color.BLACK));
       contents.add(new JLabel(text));
-      contents.addMouseListener(new MouseAdapter() {
-         @Override
-         public void mouseReleased(MouseEvent e) {
-            allAlerts_.remove(Alert.this);
-            dispose();
-            adjustPositions();
-         }
-      });
+      if (this != moreAlert_) {
+         contents.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+               allAlerts_.remove(Alert.this);
+               dispose();
+               adjustPositions();
+            }
+         });
+      }
       setContentPane(contents);
       pack();
    }
@@ -92,13 +95,31 @@ public class Alert extends JDialog {
       Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(config);
       Rectangle screenBounds = config.getBounds();
       int yOffset = 0;
+      boolean isVisible = true;
       for (Alert alert : allAlerts_) {
+         if (yOffset + 200 > screenBounds.height - (insets.top + insets.bottom)) {
+            // Not enough room to show this and future alerts.
+            isVisible = false;
+         }
+         alert.setVisible(isVisible);
+         if (!isVisible) {
+            continue;
+         }
          Dimension ourSize = alert.getSize();
          alert.setLocation(screenBounds.x + screenBounds.width -
                   ourSize.width - insets.right - 5,
                screenBounds.y + insets.top + 5 + yOffset);
          Rectangle bounds = alert.getBounds();
          yOffset = bounds.y + bounds.height;
+      }
+      // Show the "more alert" only if necessary.
+      moreAlert_.setVisible(!isVisible);
+      if (!isVisible) {
+         Dimension moreSize = moreAlert_.getSize();
+         moreAlert_.setLocation(screenBounds.x + screenBounds.width -
+               moreSize.width - insets.right - 5,
+            screenBounds.y + screenBounds.height - insets.bottom - 5 -
+               moreSize.height);
       }
    }
 }
