@@ -45,6 +45,7 @@ import org.micromanager.asidispim.utils.ControllerUtils;
 import org.micromanager.asidispim.utils.ListeningJTabbedPane;
 import org.micromanager.asidispim.utils.MyDialogUtils;
 import static org.micromanager.asidispim.utils.MyJavaUtils.isMac;
+import org.micromanager.asidispim.utils.PiezoSleepPreventer;
 import org.micromanager.asidispim.utils.StagePositionUpdater;
 import org.micromanager.asidispim.utils.SPIMFrame;
 
@@ -53,7 +54,7 @@ import org.micromanager.events.LiveModeEvent;
 
 
 
-//TODO devices tab automatically recognize default device names
+//TODO devices tab automatically recognize default device names, e.g. autopopulate
 //TODO "swap sides" button (during alignment)
 //TODO alignment wizard that would guide through alignment steps
 //TODO easy mode that pulls most-used bits from all panels
@@ -76,9 +77,7 @@ import org.micromanager.events.LiveModeEvent;
 //TODO execute autofocus during acquisition before the desired time point is reached instead of waiting until a timepoint should be collected
 //       or else do autofocus after acquisition instead of before
 //TODO smart default joystick settings (e.g. different defaults different panels/wheels)
-//TODO easily take "test acquisition" that wouldn't need to be saved, only do 1 timepoint, etc. From both acquisition and setup tabs (setup tab would only do that side)
 //TODO calculate and show estimated disk space as part of "durations"
-//TODO prevent user from closing plugin window during acquisition
 
 
 /**
@@ -111,6 +110,7 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
    private final StatusSubPanel statusSubPanel_;
    private final StagePositionUpdater stagePosUpdater_;
    private final ListeningJTabbedPane tabbedPane_;
+   private PiezoSleepPreventer piezoSleepPreventer_;
    
    private final AtomicBoolean hardwareInUse_ = new AtomicBoolean(false);   // true if acquisition or autofocus running
    
@@ -199,6 +199,8 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
       stagePosUpdater_.addPanel(setupPanelB_);
       stagePosUpdater_.addPanel(navigationPanel_);
       stagePosUpdater_.addPanel(statusSubPanel_);
+      
+      piezoSleepPreventer_ = new PiezoSleepPreventer(gui_, devices_, props_);
 
       // attach live mode listeners
       gui_.events().registerForEvents(setupPanelA_);
@@ -355,25 +357,16 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
    @Subscribe
    public void liveModeEnabled(LiveModeEvent liveEvent) {
       if (liveEvent.getIsOn()) {
-         // make sure to "wake up" any piezos with autosleep enabled before we start imaging 
-         try {
-            for (Devices.Keys piezoKey : Devices.PIEZOS) {
-               if (devices_.isValidMMDevice(piezoKey)) {
-                  if (props_.getPropValueInteger(piezoKey, Properties.Keys.AUTO_SLEEP_DELAY) > 0) {
-                     gui_.getCMMCore().setRelativePosition(devices_.getMMDevice(piezoKey), 0);
-                  }
-               }
-            }
-         } catch (Exception e) {
-            MyDialogUtils.showError("Could not reset piezo's positions");
-         }
-         // update camera/scanner settings
-         int scan = props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_CAMERA_LIVE_SCAN);
-         props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
-                 Properties.Keys.SPIM_LINESCAN_PERIOD, scan, true);
-         props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
-                 Properties.Keys.SA_PATTERN_X, Properties.Values.SAM_TRIANGLE, true);
+         piezoSleepPreventer_.start();
+      } else {
+         piezoSleepPreventer_.stop();
       }
+      // update camera/scanner settings
+      int scan = props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_CAMERA_LIVE_SCAN);
+      props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+              Properties.Keys.SPIM_LINESCAN_PERIOD, scan, true);
+      props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+                 Properties.Keys.SA_PATTERN_X, Properties.Values.SAM_TRIANGLE, true);
    }
 
 }
