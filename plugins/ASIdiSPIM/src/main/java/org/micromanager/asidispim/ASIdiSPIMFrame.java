@@ -206,6 +206,11 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
       gui_.events().registerForEvents(setupPanelB_);
       gui_.events().registerForEvents(navigationPanel_);
       
+      // set scan for live mode to be triangle 
+      // (now live mode setting not affected by SPIM setting)
+      props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
+                 Properties.Keys.SA_PATTERN_X, Properties.Values.SAM_TRIANGLE, true);
+
       // make sure gotDeSelected() and gotSelected() get called whenever we switch tabs
       tabbedPane_.addChangeListener(new ChangeListener() {
          int lastSelectedIndex_ = tabbedPane_.getSelectedIndex();
@@ -357,20 +362,9 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
    public void liveModeEnabled(LiveModeEvent liveEvent) {
       if (liveEvent.getIsOn()) {
          piezoSleepPreventer_.start();
-         int scan = props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_CAMERA_LIVE_SCAN); 
-         props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB}, 
-                     Properties.Keys.SPIM_LINESCAN_PERIOD, scan, true); 
-         props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
-                     Properties.Keys.SA_PATTERN_X, Properties.Values.SAM_TRIANGLE, true);
       } else {
          piezoSleepPreventer_.stop();
       }
-      // update camera/scanner settings
-      int scan = props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_CAMERA_LIVE_SCAN);
-      props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
-              Properties.Keys.SPIM_LINESCAN_PERIOD, scan, true);
-      props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
-                 Properties.Keys.SA_PATTERN_X, Properties.Values.SAM_TRIANGLE, true);
    }
 
 }
