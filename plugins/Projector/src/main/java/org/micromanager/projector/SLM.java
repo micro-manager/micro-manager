@@ -152,7 +152,6 @@ public class SLM implements ProjectionDevice {
             }
          }
       }
-      fillSpot(proc, x, y, spotDiameter_);
       try {
          mmc_.setSLMImage(slm_, (byte[]) proc.getPixels());
          mmc_.displaySLMImage(slm_);
