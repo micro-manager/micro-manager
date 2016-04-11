@@ -29,7 +29,7 @@ public class HelpMenu {
       final JMenu helpMenu = GUIUtils.createMenuInMenuBar(menuBar, "Help");
         
       GUIUtils.addMenuItem(helpMenu, "User's Guide", null,
-         GUIUtils.makeURLRunnable("http://micro-manager.org/wiki/Micro-Manager_User%27s_Guide")
+         GUIUtils.makeURLRunnable("https://micro-manager.org/wiki/Version_2.0_Users_Guide")
       );
         
       GUIUtils.addMenuItem(helpMenu, "Configuration Guide", null,
