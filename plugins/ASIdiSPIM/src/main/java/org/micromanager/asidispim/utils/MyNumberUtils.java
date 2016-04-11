@@ -54,7 +54,7 @@ public class MyNumberUtils {
    }
    
    /**
-    * "rounds up" to nearest increment of 0.25, e.g. 0 goes to 0 but 0.01 goes to 0.25
+    * "rounds up" to nearest increment of 0.25, e.g. 0.0 goes to 0.0 but 0.01 goes to 0.25
     * @param f
     * @return
     */
@@ -63,7 +63,7 @@ public class MyNumberUtils {
    }
    
    /**
-    * "rounds up" to nearest increment of 0.25
+    * rounds to nearest increment of 0.25
     * @param f
     * @return
     */
