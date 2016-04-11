@@ -658,7 +658,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
          @Override
          public void actionPerformed(ActionEvent e) {
             try {
-               ij.plugin.BrowserLauncher.openURL("https://micro-manager.org/wiki/Script_Panel_GUI");
+               ij.plugin.BrowserLauncher.openURL("https://micro-manager.org/wiki/Version_2.0_Users_Guide#Script_Panel");
             } catch (IOException e1) {
                ReportingUtils.showError(e1, scriptPanelFrame);
             }
