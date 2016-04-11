@@ -93,4 +93,9 @@ public class StagePosition {
       return (x == spAlt.x && y == spAlt.y && z == spAlt.z &&
             numAxes == spAlt.numAxes && stageName.equals(spAlt.stageName));
    }
+
+   @Override
+   public String toString() {
+      return getVerbose();
+   }
 }
