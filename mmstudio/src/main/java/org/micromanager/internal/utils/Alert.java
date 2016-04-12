@@ -48,31 +48,53 @@ import org.micromanager.Studio;
 public class Alert extends JDialog {
    private static ArrayList<Alert> allAlerts_ = new ArrayList<Alert>();
    // This is shown if there's not enough room to show all alerts.
-   private static Alert moreAlert_ = new Alert(null, "And more...");
+   // Note we can't use addAlert to create this one, as addAlert calls
+   // adjustPositions, which refers to moreAlert_. Plus we don't want
+   // moreAlert_ to be in the allAlerts_ list.
+   private static Alert moreAlert_;
+   static {
+      JPanel contents = new JPanel(new MigLayout());
+      contents.add(new JLabel("And more..."));
+      moreAlert_ = new Alert(null, contents);
+   }
 
-   public static void addAlert(Studio studio, String text) {
-      Alert alert = new Alert(studio, text);
+   /**
+    * Create a simple alert with a text message.
+    */
+   public static Alert addAlert(Studio studio, String text) {
+      JPanel contents = new JPanel(new MigLayout());
+      contents.add(new JLabel(text));
+      return addAlert(studio, contents);
+   }
 
+   /**
+    * Create a custom alert with any contents
+    */
+   public static Alert addAlert(Studio studio, JPanel contents) {
+      Alert alert = new Alert(studio, contents);
       allAlerts_.add(alert);
       adjustPositions();
+      return alert;
    }
 
    private Studio studio_;
-   private String text_;
+   private JPanel contents_;
 
-   private Alert(Studio studio, String text) {
+   private Alert(Studio studio, JPanel contents) {
       super();
       studio_ = studio;
-      text_ = text;
+      layout(contents);
+   }
+
+   private void layout(JPanel contents) {
+      contents_ = contents;
       setUndecorated(true);
       setResizable(false);
       setModal(false);
       setFocusableWindowState(false);
-      JPanel contents = new JPanel(new MigLayout());
-      contents.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-      contents.add(new JLabel(text));
+      contents_.setBorder(BorderFactory.createLineBorder(Color.BLACK));
       if (this != moreAlert_) {
-         contents.addMouseListener(new MouseAdapter() {
+         contents_.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent e) {
                allAlerts_.remove(Alert.this);
@@ -81,7 +103,7 @@ public class Alert extends JDialog {
             }
          });
       }
-      setContentPane(contents);
+      setContentPane(contents_);
       pack();
    }
 
