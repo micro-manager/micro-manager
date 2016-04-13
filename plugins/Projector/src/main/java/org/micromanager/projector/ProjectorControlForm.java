@@ -56,14 +56,10 @@ import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -77,6 +73,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.text.DefaultFormatter;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
@@ -84,11 +82,12 @@ import mmcorej.DeviceType;
 import mmcorej.TaggedImage;
 import org.micromanager.data.Datastore;
 import org.micromanager.Studio;
-// TODO should not depend on this module.
-import org.micromanager.display.internal.MMVirtualStack;
-import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.MMListenerAdapter;
 import org.micromanager.PropertyMap;
+
+// TODO should not depend on internal code.
+import org.micromanager.display.internal.MMVirtualStack;
+import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.MathFunctions;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -113,6 +112,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private MosaicSequencingFrame mosaicSequencingFrame_;
    private String targetingShutter_;
    private Boolean disposing_ = false;
+   
+   public final static String DELAY = "Delay";
 
    /**
     * Simple utility methods for points
@@ -438,8 +439,15 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
       try {
          dev_.turnOff();
-         // JonD: wait to make sure the device gets turned off
-         Thread.sleep(300);
+         // This sleep was likely inserted by Arthur to make the code work with 
+         // the Andor Mosaic.  It is not needed for the GenericSLM, and 
+         // also not for several other devices. We could have user-input for
+         // this and two other sleeps in this function, however, that will make
+         // things quite confusing for the user.  For now, have a single delay 
+         // field and use it in multiple locations where a sleep is warranted
+         // for one reason or another.
+         int delayMs = Integer.parseInt(delayField_.getText());
+         Thread.sleep(delayMs);
          core_.snapImage();
          TaggedImage image = core_.getTaggedImage();
          ImageProcessor proc1 = ImageUtils.makeMonochromeProcessor(image);
@@ -454,7 +462,6 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          // if we add "dev_.waitForDevice(), then the RAPP UGA-40 will already have ended
          // its exposure before returning control
          // For now, wait for a user specified delay
-         int delayMs = Integer.parseInt(delayField_.getText());
          Thread.sleep(delayMs);
          core_.snapImage();
          // JonD: added line below to short-circuit exposure time
@@ -472,7 +479,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          Point maxPt = findPeak(diffImage);
          IJ.getImage().setRoi(new PointRoi(maxPt.x, maxPt.y));
          // NS: what is this second sleep good for????
-         // core_.sleep(500);
+         Thread.sleep(delayMs);
          return maxPt;
       } catch (Exception e) {
          ReportingUtils.showError(e);
@@ -864,17 +871,20 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private static Roi[] homogenizeROIs(Roi[] rois) {
       List<Roi> roiList = new ArrayList<Roi>();
       for (Roi roi : rois) {
-         if (roi.getType() == Roi.POINT) {
-            Polygon poly = ((PointRoi) roi).getPolygon();
-            for (int i = 0; i < poly.npoints; ++i) {
-               roiList.add(new PointRoi(
-                     poly.xpoints[i],
-                     poly.ypoints[i]));
-            }
-         } else if (roi.getType() == Roi.OVAL) {
-            roiList.add(asEllipseRoi((OvalRoi) roi));
-         } else {
-            roiList.add(roi);
+         switch (roi.getType()) {
+            case Roi.POINT:
+               Polygon poly = ((PointRoi) roi).getPolygon();
+               for (int i = 0; i < poly.npoints; ++i) {
+                  roiList.add(new PointRoi(
+                          poly.xpoints[i],
+                          poly.ypoints[i]));
+               }  break;
+            case Roi.OVAL:
+               roiList.add(asEllipseRoi((OvalRoi) roi));
+               break;
+            default:
+               roiList.add(roi);
+               break;
          }
       }
       return roiList.toArray(rois);
@@ -1248,15 +1258,20 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    public final void updateROISettings() {
       boolean roisSubmitted;
       int numROIs = individualRois_.length;
-      if (numROIs == 0) {
-         roiStatusLabel.setText("No ROIs submitted");
-         roisSubmitted = false;
-      } else if (numROIs == 1) {
-         roiStatusLabel.setText("One ROI submitted");
-         roisSubmitted = true;
-      } else { // numROIs > 1
-         roiStatusLabel.setText("" + numROIs + " ROIs submitted");
-         roisSubmitted = true;
+      switch (numROIs) {
+         case 0:
+            roiStatusLabel.setText("No ROIs submitted");
+            roisSubmitted = false;
+            break;
+         case 1:
+            roiStatusLabel.setText("One ROI submitted");
+            roisSubmitted = true;
+            break;
+         default:
+            // numROIs > 1
+            roiStatusLabel.setText("" + numROIs + " ROIs submitted");
+            roisSubmitted = true;
+            break;
       }
 
       roiLoopLabel.setEnabled(roisSubmitted);
@@ -1350,7 +1365,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * Constructor. Creates the main window for the Projector plugin.
     */
    private ProjectorControlForm(CMMCore core, Studio app) {
+      // Let the Netbeans code make the GUI
       initComponents();
+      
       app_ = app;
       core_ = app.getCMMCore();
       String slm = core_.getSLMDevice();
@@ -1386,7 +1403,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
               this.getClass(),"channel", ""));
       populateShutterComboBox(app_.profile().getString(
               this.getClass(), "shutter", ""));
-      this.addWindowFocusListener(new WindowAdapter() {
+      super.addWindowFocusListener(new WindowAdapter() {
          @Override
          public void windowGainedFocus(WindowEvent e) {
             if (!disposing_)
@@ -1413,8 +1430,25 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             }
          }
       });
+      
+      delayField_.setText(app_.profile().getString(this.getClass(), DELAY, "0"));
+      // Listen for changes in the text
+      delayField_.getDocument().addDocumentListener(new DocumentListener() {
+         @Override
+         public void insertUpdate(DocumentEvent e) { updateProfile(); }
 
-      this.loadAndRestorePosition(500, 300);
+         @Override
+         public void removeUpdate(DocumentEvent e) { updateProfile(); }
+
+         @Override
+         public void changedUpdate(DocumentEvent e) { updateProfile(); }
+         
+         void updateProfile() {
+            app_.profile().setString(this.getClass(), DELAY, delayField_.getText());
+         }
+      });
+
+      super.loadAndRestorePosition(500, 300);
       updateROISettings();
    }
    
@@ -1467,16 +1501,6 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       pointAndShootOnButton = new javax.swing.JToggleButton();
       pointAndShootOffButton = new javax.swing.JToggleButton();
       phototargetInstructionsLabel = new javax.swing.JLabel();
-      setupTab = new javax.swing.JPanel();
-      calibrateButton_ = new javax.swing.JButton();
-      allPixelsButton = new javax.swing.JButton();
-      centerButton = new javax.swing.JButton();
-      channelComboBox = new javax.swing.JComboBox();
-      phototargetingChannelDropdownLabel = new javax.swing.JLabel();
-      shutterComboBox = new javax.swing.JComboBox();
-      phototargetingShutterDropdownLabel = new javax.swing.JLabel();
-      jLabel1 = new javax.swing.JLabel();
-      delayField_ = new javax.swing.JTextField();
       roisTab = new javax.swing.JPanel();
       roiLoopLabel = new javax.swing.JLabel();
       roiLoopTimesLabel = new javax.swing.JLabel();
@@ -1503,6 +1527,17 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       startFrameSpinner = new javax.swing.JSpinner();
       repeatEveryFrameSpinner = new javax.swing.JSpinner();
       repeatEveryFrameUnitLabel = new javax.swing.JLabel();
+      setupTab = new javax.swing.JPanel();
+      calibrateButton_ = new javax.swing.JButton();
+      allPixelsButton = new javax.swing.JButton();
+      centerButton = new javax.swing.JButton();
+      channelComboBox = new javax.swing.JComboBox();
+      phototargetingChannelDropdownLabel = new javax.swing.JLabel();
+      shutterComboBox = new javax.swing.JComboBox();
+      phototargetingShutterDropdownLabel = new javax.swing.JLabel();
+      jLabel1 = new javax.swing.JLabel();
+      delayField_ = new javax.swing.JTextField();
+      checkerBoardButton_ = new javax.swing.JButton();
       offButton = new javax.swing.JButton();
       ExposureTimeLabel = new javax.swing.JLabel();
       pointAndShootIntervalSpinner = new javax.swing.JSpinner();
@@ -1576,101 +1611,6 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       );
 
       mainTabbedPane.addTab("Point and Shoot", pointAndShootTab);
-
-      calibrateButton_.setText("Calibrate!");
-      calibrateButton_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            calibrateButton_ActionPerformed(evt);
-         }
-      });
-
-      allPixelsButton.setText("All Pixels");
-      allPixelsButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            allPixelsButtonActionPerformed(evt);
-         }
-      });
-
-      centerButton.setText("Show center spot");
-      centerButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            centerButtonActionPerformed(evt);
-         }
-      });
-
-      channelComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-      channelComboBox.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            channelComboBoxActionPerformed(evt);
-         }
-      });
-
-      phototargetingChannelDropdownLabel.setText("Phototargeting channel:");
-
-      shutterComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-      shutterComboBox.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            shutterComboBoxActionPerformed(evt);
-         }
-      });
-
-      phototargetingShutterDropdownLabel.setText("Phototargeting shutter:");
-
-      jLabel1.setText("Delay(ms):");
-
-      delayField_.setText("0");
-
-      javax.swing.GroupLayout setupTabLayout = new javax.swing.GroupLayout(setupTab);
-      setupTab.setLayout(setupTabLayout);
-      setupTabLayout.setHorizontalGroup(
-         setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(setupTabLayout.createSequentialGroup()
-            .addGap(39, 39, 39)
-            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addGroup(setupTabLayout.createSequentialGroup()
-                  .addComponent(centerButton)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(allPixelsButton))
-               .addGroup(setupTabLayout.createSequentialGroup()
-                  .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addComponent(phototargetingChannelDropdownLabel)
-                     .addComponent(phototargetingShutterDropdownLabel))
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addComponent(shutterComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(channelComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)))
-               .addGroup(setupTabLayout.createSequentialGroup()
-                  .addComponent(calibrateButton_)
-                  .addGap(18, 18, 18)
-                  .addComponent(jLabel1)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(delayField_, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)))
-            .addContainerGap(127, Short.MAX_VALUE))
-      );
-      setupTabLayout.setVerticalGroup(
-         setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(setupTabLayout.createSequentialGroup()
-            .addGap(27, 27, 27)
-            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(centerButton)
-               .addComponent(allPixelsButton))
-            .addGap(18, 18, 18)
-            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(calibrateButton_)
-               .addComponent(jLabel1)
-               .addComponent(delayField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 89, Short.MAX_VALUE)
-            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(phototargetingChannelDropdownLabel)
-               .addComponent(channelComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(shutterComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-               .addComponent(phototargetingShutterDropdownLabel))
-            .addGap(83, 83, 83))
-      );
-
-      mainTabbedPane.addTab("Setup", setupTab);
 
       roiLoopLabel.setText("Loop:");
 
@@ -1921,6 +1861,111 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
 
       mainTabbedPane.addTab("ROIs", roisTab);
 
+      calibrateButton_.setText("Calibrate!");
+      calibrateButton_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            calibrateButton_ActionPerformed(evt);
+         }
+      });
+
+      allPixelsButton.setText("All Pixels");
+      allPixelsButton.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            allPixelsButtonActionPerformed(evt);
+         }
+      });
+
+      centerButton.setText("Center spot");
+      centerButton.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            centerButtonActionPerformed(evt);
+         }
+      });
+
+      channelComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+      channelComboBox.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            channelComboBoxActionPerformed(evt);
+         }
+      });
+
+      phototargetingChannelDropdownLabel.setText("Phototargeting channel:");
+
+      shutterComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+      shutterComboBox.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            shutterComboBoxActionPerformed(evt);
+         }
+      });
+
+      phototargetingShutterDropdownLabel.setText("Phototargeting shutter:");
+
+      jLabel1.setText("Delay(ms):");
+
+      delayField_.setText("0");
+
+      checkerBoardButton_.setText("CheckerBoard");
+      checkerBoardButton_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            checkerBoardButton_ActionPerformed(evt);
+         }
+      });
+
+      javax.swing.GroupLayout setupTabLayout = new javax.swing.GroupLayout(setupTab);
+      setupTab.setLayout(setupTabLayout);
+      setupTabLayout.setHorizontalGroup(
+         setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+         .addGroup(setupTabLayout.createSequentialGroup()
+            .addGap(39, 39, 39)
+            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+               .addGroup(setupTabLayout.createSequentialGroup()
+                  .addComponent(centerButton)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(allPixelsButton)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(checkerBoardButton_))
+               .addGroup(setupTabLayout.createSequentialGroup()
+                  .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                     .addComponent(phototargetingChannelDropdownLabel)
+                     .addComponent(phototargetingShutterDropdownLabel))
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                     .addComponent(shutterComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
+                     .addComponent(channelComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)))
+               .addGroup(setupTabLayout.createSequentialGroup()
+                  .addComponent(calibrateButton_)
+                  .addGap(18, 18, 18)
+                  .addComponent(jLabel1)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(delayField_, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)))
+            .addContainerGap(100, Short.MAX_VALUE))
+      );
+      setupTabLayout.setVerticalGroup(
+         setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+         .addGroup(setupTabLayout.createSequentialGroup()
+            .addGap(27, 27, 27)
+            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+               .addComponent(centerButton)
+               .addComponent(allPixelsButton)
+               .addComponent(checkerBoardButton_))
+            .addGap(18, 18, 18)
+            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+               .addComponent(calibrateButton_)
+               .addComponent(jLabel1)
+               .addComponent(delayField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 89, Short.MAX_VALUE)
+            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+               .addComponent(phototargetingChannelDropdownLabel)
+               .addComponent(channelComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+               .addComponent(shutterComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+               .addComponent(phototargetingShutterDropdownLabel))
+            .addGap(83, 83, 83))
+      );
+
+      mainTabbedPane.addTab("Setup", setupTab);
+
       offButton.setText("Off");
       offButton.setSelected(true);
       offButton.addActionListener(new java.awt.event.ActionListener() {
@@ -2117,6 +2162,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       updateROISettings();
    }//GEN-LAST:event_repeatEveryIntervalSpinnerStateChanged
 
+   private void checkerBoardButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkerBoardButton_ActionPerformed
+     dev_.showCheckerBoard(16, 16);
+   }//GEN-LAST:event_checkerBoardButton_ActionPerformed
+
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JLabel ExposureTimeLabel;
@@ -2126,6 +2175,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private javax.swing.JButton calibrateButton_;
    private javax.swing.JButton centerButton;
    private javax.swing.JComboBox channelComboBox;
+   private javax.swing.JButton checkerBoardButton_;
    private javax.swing.JTextField delayField_;
    private javax.swing.JLabel jLabel1;
    private javax.swing.JLabel jLabel2;

@@ -349,4 +349,9 @@ public class Galvo implements ProjectionDevice {
     public void activateAllPixels() {
         // Do nothing.
     }
+    
+    @Override
+    public void showCheckerBoard(int x, int y) {
+       // Do nothing
+    }
 }
