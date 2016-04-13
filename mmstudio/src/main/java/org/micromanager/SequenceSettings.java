@@ -36,27 +36,93 @@ public class SequenceSettings {
    public static final double Version = 1.0;
 
    // acquisition protocol
-   public int numFrames = 1;                                                 // number of frames
-   public double intervalMs = 0.0;                                           // frame interval
-   public ArrayList<Double> customIntervalsMs = null;                        // sequence of custom intervals or null
-   public ArrayList<ChannelSpec> channels = new ArrayList<ChannelSpec>();    // an array of ChannelSpec settings (one for each channel)
-   public ArrayList<Double> slices = new ArrayList<Double>();                // slice Z coordinates
-   public boolean relativeZSlice = false;                                    // are Z coordinates relative or absolute
-   public boolean slicesFirst = false;                                       // slice coordinate changes first
-   public boolean timeFirst = false;                                         // frame coordinate changes first
-   public boolean keepShutterOpenSlices = false;                             // do we keep shutter open during slice changes
-   public boolean keepShutterOpenChannels = false;                           // do we keep shutter open channel changes
-   public boolean useAutofocus = false;                                      // are we going to run autofocus before acquiring each position/frame
-   public int skipAutofocusCount = 0;                                        // how many af opportunities to skip                          
-   public boolean save = false;                                              // save to disk?
-   public String root = null;                                                // root directory name
-   public String prefix = null;                                              // acquisition name
-   public double zReference = 0.0;                                           // referent z position for relative moves                                            
-   public String comment = "";                                               // comment text
-   public String channelGroup = "";                                          // which group is used to define fluorescence channels
-   public boolean usePositionList = false;                                   // true if we want to have multiple positions
-   public int cameraTimeout = 20000;                                         // Minimum camera timeout, in ms, for sequence acquisitions (actual timeout depends on exposure time and other factors)
-      
+   /**
+    * number of frames
+    */
+   public int numFrames = 1;
+   /**
+    * frame interval
+    */
+   public double intervalMs = 0.0;
+   /**
+    * Whether or not to use custom time intervals. Do not set this to true
+    * if customIntervalsMs is null!
+    */
+   public boolean useCustomIntervals;
+   /**
+    * sequence of custom intervals or null
+    */
+   public ArrayList<Double> customIntervalsMs = null;
+   /**
+    * an array of ChannelSpec settings (one for each channel)
+    */
+   public ArrayList<ChannelSpec> channels = new ArrayList<ChannelSpec>();
+   /**
+    * slice Z coordinates
+    */
+   public ArrayList<Double> slices = new ArrayList<Double>();
+   /**
+    * are Z coordinates relative or absolute
+    */
+   public boolean relativeZSlice = false;
+   /**
+    * slice coordinate changes first
+    */
+   public boolean slicesFirst = false;
+   /**
+    * frame coordinate changes first
+    */
+   public boolean timeFirst = false;
+   /**
+    * do we keep shutter open during slice changes
+    */
+   public boolean keepShutterOpenSlices = false;
+   /**
+    * do we keep shutter open channel changes
+    */
+   public boolean keepShutterOpenChannels = false;
+   /**
+    * are we going to run autofocus before acquiring each position/frame
+    */
+   public boolean useAutofocus = false;
+   /**
+    * how many autofocus opportunities to skip
+    */
+   public int skipAutofocusCount = 0;
+   /**
+    * save to disk?
+    */
+   public boolean save = false;
+   /**
+    * root directory name
+    */
+   public String root = null;
+   /**
+    * acquisition name
+    */
+   public String prefix = null;
+   /**
+    * referent z position for relative moves
+    */
+   public double zReference = 0.0;
+   /**
+    * comment text
+    */
+   public String comment = "";
+   /**
+    * which configuration group is used to define channels
+    */
+   public String channelGroup = "";
+   /**
+    * true if we want to have multiple positions
+    */
+   public boolean usePositionList = false;
+   /**
+    * Minimum camera timeout, in ms, for sequence acquisitions
+    * (actual timeout depends on exposure time and other factors)
+    */
+   public int cameraTimeout = 20000;
+
    public static String toJSONStream(SequenceSettings settings) {
       Gson gson = new GsonBuilder().setPrettyPrinting().create();
       return gson.toJson(settings);      

@@ -279,6 +279,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
       // Frames
       if (useFrames_) {
+         acquisitionSettings.useCustomIntervals = useCustomIntervals_;
          if (useCustomIntervals_) {
             acquisitionSettings.customIntervalsMs = customTimeIntervalsMs_;
             acquisitionSettings.numFrames = acquisitionSettings.customIntervalsMs.size();
@@ -355,6 +356,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
       // Frames
       useFrames_ = true;
+      useCustomIntervals_ = ss.useCustomIntervals;
       if (useCustomIntervals_) {
          customTimeIntervalsMs_ = ss.customIntervalsMs;
          numFrames_ = ss.customIntervalsMs.size();
