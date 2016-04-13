@@ -194,7 +194,7 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
     private void GetCFAPattern() {
         String cfaPattern;
         try {
-            cfaPattern = core_.getProperty(CameraLabel, "Color - Sensor CFA Pattern");
+            cfaPattern = core_.getProperty(CameraLabel, "Color - Algorithm CFA");
         } catch (Exception ex) {
             cfaPattern = "R-G-G-B";
             Logger
@@ -1077,7 +1077,7 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
     //WB plugin
     @Override
     public void propertyChangedAlert(String string, String string1, String string2) {
-        if (string1.equals("Color - Sensor CFA Pattern")) {
+        if (string1.equals("Color - Algorithm CFA")) {
             SetCFAPattern(string2);
         } else if (string1.equals("PixelType")) {
             GetBitDepth();
