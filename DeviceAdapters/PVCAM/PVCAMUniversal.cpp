@@ -4213,7 +4213,7 @@ int Universal::ProcessNotification( const NotificationEntry& entry )
            // Since we cannot add per-ROI metadata we will format the MD to a simple JSON array
            // and add it as a per-Frame metadata TAG. Example:
            // "[{"nr":1,"coords":[0,0,0,0,0,0],"borNs":123,"eorNs":456},{"nr":2,"coords":[0,0,0,0,0,0],"borNs":123,"eorNs":456}]"
-           roiMdStr << "{\"nr:\"" << rHdr->roiNr
+           roiMdStr << "{\"nr\":" << rHdr->roiNr
                << ",\"coords\":["
                << rHdr->roi.s1 << "," << rHdr->roi.s2 << "," << rHdr->roi.sbin << ","
                << rHdr->roi.p1 << "," << rHdr->roi.p2 << "," << rHdr->roi.pbin << "],"
