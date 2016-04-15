@@ -1,0 +1,12 @@
+PDL2000 Release Notes
+
+* v1.0.2
+  - Changed pdl2000.h to UTF-8 encoding
+  - PdlChannelStatusEnum: added more enumeration values
+
+* v1.0.1
+  - Corrected a synchronisation issue after a communication failure.
+  - SiUSBXp DLL Update: v3.2.2 -> v3.5.0 (http://www.silabs.com/Support%20Documents/Software/USBXpress_rel_notes.txt)
+  
+* v1.0.0
+  - Initial Release
