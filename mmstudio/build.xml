@@ -33,7 +33,7 @@
 	<target name="jar" depends="compile,copy-files">
 		<mkdir dir="${outdir}"/>
 		<mm-jar basedir="${intdir}" destfile="${jarfile}">
-			<attribute name="Main-Class" value="org.micromanager.MMStudio"/>
+			<attribute name="Main-Class" value="org.micromanager.internal.MMStudio"/>
 		</mm-jar>
 	</target>
 </project>
