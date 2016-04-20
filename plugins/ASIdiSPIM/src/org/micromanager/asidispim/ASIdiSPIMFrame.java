@@ -37,6 +37,9 @@ import java.awt.Container;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.prefs.Preferences;
 
+import javax.swing.BorderFactory;
+import javax.swing.border.Border;
+import javax.swing.JLabel;
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
@@ -79,6 +82,9 @@ import org.micromanager.utils.MMFrame;
 //       or else do autofocus after acquisition instead of before
 //TODO smart default joystick settings (e.g. different defaults different panels/wheels)
 //TODO calculate and show estimated disk space as part of "durations"
+//TODO Make it easier to adjust stack center (or start and end) including autodetect start/end based on content
+//TODO allow different stack center, number of slices, offset, or other settings for each XY position
+//TODO iconify tab labels and/or other parts of plugin
 
 
 /**
@@ -189,6 +195,15 @@ public class ASIdiSPIMFrame extends MMFrame
       tabbedPane_.addLTab(settingsPanel_);    // tabIndex = 7
       tabbedPane_.addLTab(helpPanel_);        // tabIndex = 8
       final int helpTabIndex = tabbedPane_.getTabCount() - 1;
+      
+      // make taller tabs for easier navigation between them
+      // we create own labels instead of having JTabbedPane do it from titles
+      final Border paddingBorder = BorderFactory.createEmptyBorder(4,0,4,0);
+      for (int i=0; i<tabbedPane_.getTabCount(); i++) {
+         JLabel lab = new JLabel(((ListeningJPanel)tabbedPane_.getComponentAt(i)).getPanelName());
+         lab.setBorder(paddingBorder);
+         tabbedPane_.setTabComponentAt(i, lab);
+      }
       
       // add the testing panel explicitly by uncommenting following lines
       // intended to only be done in short term for testing
