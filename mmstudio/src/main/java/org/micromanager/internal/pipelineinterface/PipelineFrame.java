@@ -76,6 +76,7 @@ final public class PipelineFrame extends MMFrame
    private final JButton removeButton_;
    private final JButton moveUpButton_;
    private final JButton moveDownButton_;
+   private final JButton replayButton_;
 
    public PipelineFrame(Studio studio) {
       super(TITLE);
@@ -163,6 +164,19 @@ final public class PipelineFrame extends MMFrame
             + "images acquired by the camera."
             + "</div></html>");
       add(explanationLabel);
+
+      replayButton_ = new JButton("Process Old Data");
+      replayButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            if (getTableModel().getEnabledConfigurators().size() == 0) {
+               studio_.logs().showError("Please set up a pipeline first.");
+               return;
+            }
+            ReplayDialog.makeDialog(studio_);
+         }
+      });
+      add(replayButton_);
 
       //
       // Overall constraints
