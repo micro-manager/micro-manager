@@ -865,7 +865,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    }
 
    private void updateHighlight() {
-      if (histogram_ != null) {
+      if (haveInitialized_.get()) {
          if (lastX_ >= 0 && lastY_ >= 0) {
             // Highlight the intensity of the pixel the mouse is on in the
             // image.
