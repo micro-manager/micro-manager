@@ -948,6 +948,7 @@
       "Slices" (max 1 (count (:slices settings)))
       "SlicesFirst" (:slices-first settings)
       "Source" "Micro-Manager"
+      "StartTime" (get-current-time-str)
       "TimeFirst" (:time-first settings)
       "UserName" (System/getProperty "user.name")
       "UUID" (UUID/randomUUID)
