@@ -641,12 +641,13 @@ public class ControllerUtils {
     */
    public boolean triggerControllerStartAcquisition(
            final AcquisitionModes.Keys spimMode, final boolean isFirstSideA) {
+      final Devices.Keys galvoDevice = isFirstSideA ? Devices.Keys.GALVOA : Devices.Keys.GALVOB;
       switch (spimMode) {
       case STAGE_SCAN:
       case STAGE_SCAN_INTERLEAVED:
          // for stage scan we send trigger to stage card, which sends
          //    hardware trigger to the micro-mirror card
-         props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_STATE,
                Properties.Values.SPIM_ARMED);
          props_.setPropValue(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_STATE,
                Properties.Values.SPIM_RUNNING);
@@ -657,7 +658,6 @@ public class ControllerUtils {
       case NO_SCAN:
          // in actuality only matters which device we trigger if there are
          //   two micro-mirror cards, which hasn't ever been done in practice yet
-         Devices.Keys galvoDevice = isFirstSideA ? Devices.Keys.GALVOA : Devices.Keys.GALVOB;
          props_.setPropValue(galvoDevice, Properties.Keys.SPIM_STATE,
                Properties.Values.SPIM_RUNNING, getSkipScannerWarnings(galvoDevice));
          break;
