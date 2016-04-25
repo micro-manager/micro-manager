@@ -261,6 +261,11 @@ public class DataAnalysisPanel extends ListeningJPanel {
                multiPosition = true;
             }
             
+            boolean firstSideIsA = true;
+            if (mmW.getSummaryMetaData().getString("FirstSide").equals("B")) {
+               firstSideIsA = false;
+            }
+            
             for (int position = 0; position < mmW.getNumberOfPositions(); position++) {
                
                ImageProcessor iProc = ip.getProcessor();
@@ -277,20 +282,22 @@ public class DataAnalysisPanel extends ListeningJPanel {
                String [] channelDirArray = new String[mmW.getNumberOfChannels()];
                if (usesChannels) {
                   for (int c = 0; c < mmW.getNumberOfChannels(); c++) {
+                     //ChNames are always in order, which means
                      String chName = (String)mmW.getSummaryMetaData().getJSONArray("ChNames").get(c);
                      String colorName = chName.substring(chName.indexOf("-")+1);  // matches with AcquisitionPanel naming convention
                      channelDirArray[c] = targetDirectory_ + File.separator + baseName_ + File.separator
                            + (multiPosition ? ("Pos" + position + File.separator) : "")
-                           + (((c % nrSides) == 0) ? "SPIMA" : "SPIMB") + File.separator + colorName;
+                           + "SPIM" + (((c % nrSides) == 0) ? (firstSideIsA ? "A" : "B") : (firstSideIsA ? "B" : "A"))
+                           + File.separator + colorName;
                   }
                } else {  // two channels are from two views, no need for separate folders for each channel
                   channelDirArray[0] = targetDirectory_ + File.separator + baseName_ + File.separator
                         + (multiPosition ? ("Pos" + position + File.separator) : "")
-                        + "SPIMA";
+                        + "SPIM" + (firstSideIsA ? "A" : "B");
                   if (nrSides > 1) {
                      channelDirArray[1] = targetDirectory_ + File.separator + baseName_ + File.separator
                            + (multiPosition ? ("Pos" + position + File.separator) : "")
-                           + "SPIMB";
+                           + "SPIM" + (firstSideIsA ? "B" : "A");
                   }
                }
 
@@ -337,8 +344,8 @@ public class DataAnalysisPanel extends ListeningJPanel {
                      }
                      ImagePlus ipN = new ImagePlus("tmp", stack);
                      ipN.setCalibration(ip.getCalibration());
-                     ij.IJ.save(ipN, channelDirArray[c] + File.separator 
-                           + (((c % nrSides) == 0) ? "SPIMA" : "SPIMB")
+                     ij.IJ.save(ipN, channelDirArray[c] + File.separator + "SPIM"
+                           + (((c % nrSides) == 0) ? (firstSideIsA ? "A" : "B") : (firstSideIsA ? "B" : "A"))
                            + "-" + t + ".tif");
                   }
                }
