@@ -2,6 +2,9 @@
 #define _ACQCONFIG_H_
 
 #include "PvRoi.h"
+
+#include <map>
+
 /**
 * This class holds the camera and acquisition configuration. The idea is that
 * if user changes a property during live mode the configuration is stored in
@@ -73,6 +76,15 @@ public:
     * This must correspond to defines in PvDebayer.h (ALG_REPLICATION, ALG_BILINEAR, etc)
     */
     int DebayerAlgInterpolation;
+    /**
+    * A map of trigger signals and their muxing settings.
+    *  key = PARAM_TRIGTAB_SIGNAL value
+    *  val = PARAM_LAST_MUXED_SIGNAL value
+    * Example:
+    *  ExposeOutSignal: 4
+    *  ReadoutSignal: 2
+    */
+    std::map<int, int> TrigTabLastMuxMap;
 };
 
 #endif

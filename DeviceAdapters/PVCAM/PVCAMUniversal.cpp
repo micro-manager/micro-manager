@@ -54,6 +54,7 @@
 
 #include "PollingThread.h"
 #include "NotificationThread.h"
+#include "Version.h"
 
 using namespace std;
 
@@ -251,7 +252,9 @@ prmMetadataEnabled_(0),
 prmCentroidsEnabled_(0),
 prmCentroidsRadius_(0),
 prmCentroidsCount_(0),
-prmFanSpeedSetpoint_(0)
+prmFanSpeedSetpoint_(0),
+prmTrigTabSignal_(0),
+prmLastMuxedSignal_(0)
 {
    InitializeDefaultErrorMessages();
 
@@ -322,6 +325,8 @@ Universal::~Universal()
    delete prmCentroidsRadius_;
    delete prmCentroidsCount_;
    delete prmFanSpeedSetpoint_;
+   delete prmTrigTabSignal_;
+   delete prmLastMuxedSignal_;
 #ifdef PVCAM_SMART_STREAMING_SUPPORTED
    delete prmSmartStreamingEnabled_;
    delete prmSmartStreamingValues_;
@@ -362,6 +367,15 @@ int Universal::Initialize()
             return LogCamError(__LINE__, "Second PVCAM init failed");
       }
       PVCAM_initialized_ = true;
+
+#ifdef PVCAM_ADAPTER_CUSTOM_BUILD
+      // If this is a custom build show a warning popup before initializing the adapter.
+      char msg[256];
+      sprintf_s(msg, "You are using a Micro-Manager with custom PVCAM adapter build.\nAdapter version %u.%u.%u.%u.",
+          PVCAM_ADAPTER_VERSION_MAJOR, PVCAM_ADAPTER_VERSION_MINOR,
+          PVCAM_ADAPTER_VERSION_BUILD, PVCAM_ADAPTER_VERSION_REVISION);
+      MessageBoxA(NULL, msg, "Warning", MB_OK | MB_ICONWARNING | MB_SETFOREGROUND);
+#endif
    }
    else
    {
@@ -956,6 +970,56 @@ int Universal::Initialize()
       return LogCamError(__LINE__, "Failed to initialize the FRAME_INFO structure");
    }
 #endif
+
+   // TRIGGER TABLE
+   // We will create a property for every TrigTab and LastMuxed combination so we will end up with something similar
+   // to how Post Processing is displayed:
+   //  Trigger-Expose Out-Mux
+   //  Trigger-Expose Out-AnyOtherFutureProperty
+   //  Trigger-Read Out-Mux
+   //  Trigger-Read Out-AnyOtherFutureProperty
+   prmTrigTabSignal_ = new PvEnumParam( "PARAM_TRIGTAB_SIGNAL", PARAM_TRIGTAB_SIGNAL, this, true );
+   prmLastMuxedSignal_ = new PvParam<uns8>( "PARAM_LAST_MUXED_SIGNAL", PARAM_LAST_MUXED_SIGNAL, this, true );
+   if (prmTrigTabSignal_->IsAvailable())
+   {
+      const std::vector<std::string>& trigTabStrs = prmTrigTabSignal_->GetEnumStrings();
+      const std::vector<int>&         trigTabVals = prmTrigTabSignal_->GetEnumValues();
+
+      for (size_t iTrigSig = 0; iTrigSig < trigTabVals.size(); ++iTrigSig)
+      {
+         const std::string trigName = trigTabStrs[iTrigSig]; // ExposeOut, ReadOut, etc.
+         const int         trigVal  = trigTabVals[iTrigSig]; // 0,         1,       etc.
+         // Apply the signal we want to work with
+         nRet = prmTrigTabSignal_->SetAndApply(trigVal);
+         if (nRet != DEVICE_OK)
+            return LogCamError(__LINE__, "Failed to set trigger signal");
+
+         // Check the property of each signal and build the UI properties
+         // At the moment we support the PARAM_LAST_MUXED_SIGNAL only
+         if (prmLastMuxedSignal_->IsAvailable())
+         {
+            const std::string propName = "Trigger-" + trigName + "-Mux";
+            const uns8 curVal = prmLastMuxedSignal_->Current();
+            const uns8 minVal = prmLastMuxedSignal_->Min();
+            const uns8 maxVal = prmLastMuxedSignal_->Max();
+            CPropertyActionEx *pExAct = new CPropertyActionEx(this, &Universal::OnTrigTabLastMux, trigVal);
+            nRet = CreateProperty(propName.c_str(), CDeviceUtils::ConvertToString(curVal), MM::String, false, pExAct);
+            if (nRet != DEVICE_OK)
+               return LogCamError(__LINE__, "Failed to create property for PARAM_LAST_MUXED_SIGNAL");
+            // The MUX won't be a high number (4 physical cables for Prime) so we will display
+            // the property as a combo box with a couple of allowed values
+            for (int val = minVal; val <= maxVal; ++val)
+            {
+                AddAllowedValue(propName.c_str(), CDeviceUtils::ConvertToString(val));
+            }
+            // Store the actual Last Mux value of this signal to our settings map
+            acqCfgNew_.TrigTabLastMuxMap[trigVal] = curVal;
+         }
+         // TODO: Any other signal properties (similar to PARAM_LAST_MUXED_SIGNAL)
+         // will be added here with corresponding map created in settings container.
+         // e.g. acqCfgNew_.TrigTabSuperMuxMap
+      }
+   }
 
    // Initialize the acquisition configuration
    acqCfgNew_.Roi = PvRoi(0, 0, camSerSize_, camParSize_);
@@ -1704,6 +1768,31 @@ int Universal::OnFanSpeedSetpoint(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get( valStr );
 
       acqCfgNew_.FanSpeedSetpoint = prmFanSpeedSetpoint_->GetEnumValue(valStr);
+      return applyAcqConfig();
+   }
+   return DEVICE_OK;
+}
+
+int Universal::OnTrigTabLastMux(MM::PropertyBase* pProp, MM::ActionType eAct, long trigSignal)
+{
+   START_ONPROPERTY("Universal::OnTrigTabLastMux", eAct);
+
+   // Check if the signal exists. This is more a developer check, the trigSignal
+   // value cannot be set by the user, it's assigned to every property and the
+   // TrigTabLastMuxMap is build during initialization.
+   if (acqCfgCur_.TrigTabLastMuxMap.find(trigSignal) == acqCfgCur_.TrigTabLastMuxMap.end())
+      return DEVICE_CAN_NOT_SET_PROPERTY;
+
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set((long)acqCfgCur_.TrigTabLastMuxMap[trigSignal]);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long val;
+      pProp->Get( val );
+
+      acqCfgNew_.TrigTabLastMuxMap[trigSignal] = static_cast<int>(val);
       return applyAcqConfig();
    }
    return DEVICE_OK;
@@ -3102,6 +3191,32 @@ int Universal::applyAcqConfig()
    {
       configChanged = true;
       debayer_.SetAlgorithmIndex(acqCfgNew_.DebayerAlgInterpolation);
+   }
+
+   // Iterate over the trigger "last mux map" and check if any signal has changed the Mux value
+   for(std::map<int, int>::iterator it = acqCfgNew_.TrigTabLastMuxMap.begin(); it != acqCfgNew_.TrigTabLastMuxMap.end(); it++)
+   {
+      const int32 trigSig = it->first;
+      const uns8  muxValNew  = static_cast<uns8>(it->second);
+      const uns8  muxValCur  = static_cast<uns8>(acqCfgCur_.TrigTabLastMuxMap[trigSig]);
+      if (muxValNew != muxValCur)
+      {
+         configChanged = true;
+         // Set the PARAM_TRIGTAB_SIGNAL we want to work with first (e.g. 0-Expose Out)
+         nRet = prmTrigTabSignal_->SetAndApply(trigSig);
+         if (nRet != DEVICE_OK)
+         {
+            acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
+            return nRet; // Error logged in SetAndApply()
+         }
+         // Set the PARAM_LAST_MUXED_SIGNAL, e.g. to 4
+         nRet = prmLastMuxedSignal_->SetAndApply(muxValNew);
+         if (nRet != DEVICE_OK)
+         {
+            acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
+            return nRet; // Error logged in SetAndApply()
+         }
+      }
    }
 
    if (bufferResizeRequired)

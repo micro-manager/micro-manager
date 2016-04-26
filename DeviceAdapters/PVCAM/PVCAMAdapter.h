@@ -238,6 +238,7 @@ public:
    int OnCentroidsRadius(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCentroidsCount(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFanSpeedSetpoint(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnTrigTabLastMux(MM::PropertyBase* pProp, MM::ActionType eAct, long trigSignal);
    bool IsCapturing();
 
    // Published to allow other classes access the camera
@@ -399,6 +400,8 @@ private:
    PvParam<uns16>*   prmCentroidsRadius_;
    PvParam<uns16>*   prmCentroidsCount_;
    PvEnumParam*      prmFanSpeedSetpoint_;
+   PvEnumParam*      prmTrigTabSignal_;
+   PvParam<uns8>*    prmLastMuxedSignal_;
 
    // List of post processing features
    std::vector<PpParam> PostProc_;

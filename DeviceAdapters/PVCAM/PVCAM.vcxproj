@@ -185,6 +185,7 @@
     <ClInclude Include="PVCAMParam.h" />
     <ClInclude Include="PvFrameInfo.h" />
     <ClInclude Include="PvRoi.h" />
+    <ClInclude Include="Version.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\MMDevice\MMDevice-SharedRuntime.vcxproj">
