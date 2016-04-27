@@ -173,8 +173,11 @@ public interface SummaryMetadata {
     * first entry in this array is the first axis to have a nonzero value;
     * the second entry is the second to have a nonzero value, etc. In other
     * words, the entries should be ordered from changes-most-frequently to
-    * changes-least-frequently. This array will be populated automatically when
-    * images are added to the Datastore, if you decide not to set it yourself.
+    * changes-least-frequently.
+    * RewritableDatastores will automatically update this property as images
+    * are added to the Datastore, if the property is not set manually. Other
+    * Datastore types cannot change the SummaryMetadata as images are added;
+    * thus this property will need to be set manually in those cases.
     * @return Axis names in order of change rate.
     */
    public String[] getAxisOrder();

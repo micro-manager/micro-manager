@@ -200,43 +200,10 @@ public class DefaultDatastore implements Datastore {
          }
       }
 
-      // Track changes to our axes so we can note the axis order.
-      SummaryMetadata summary = getSummaryMetadata();
-      ArrayList<String> axisOrderList = null;
-      if (summary != null) {
-         String[] axisOrder = summary.getAxisOrder();
-         if (axisOrder == null) {
-            axisOrderList = new ArrayList<String>();
-         }
-         else {
-            axisOrderList = new ArrayList<String>(Arrays.asList(axisOrder));
-         }
-      }
-
       if (storage_ != null) {
          storage_.putImage(image);
       }
       bus_.post(new NewImageEvent(image, this));
-
-      if (summary != null) {
-         boolean didAdd = false;
-         for (String axis : coords.getAxes()) {
-            if (!axisOrderList.contains(axis) && coords.getIndex(axis) > 0) {
-               // This axis is newly nonzero.
-               axisOrderList.add(axis);
-               didAdd = true;
-            }
-         }
-         if (didAdd) {
-            // Update summary metadata.
-            // TODO: this is cheating: normally a Datastore can only have its
-            // summary metadata be set once, which is why we just post an
-            // event rather than call our setSummaryMetadata() method.
-            summary = summary.copy().axisOrder(
-                  axisOrderList.toArray(new String[] {})).build();
-            bus_.post(new NewSummaryMetadataEvent(summary));
-         }
-      }
    }
 
    @Override

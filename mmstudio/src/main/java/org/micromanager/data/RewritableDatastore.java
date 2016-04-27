@@ -39,6 +39,8 @@ public interface RewritableDatastore extends Datastore {
     * image with the same coordinates is already in the Datastore. An
     * ImageOverwrittenEvent will be published on the Datastore's EventBus if
     * this occurs.
+    * This method will also update the axisOrder property of the Datastore's
+    * SummaryMetadata, if appropriate.
     *
     * @param image Micro-Manager Image object
     * @throws DatastoreFrozenException if the freeze() method has been called.
@@ -78,7 +80,7 @@ public interface RewritableDatastore extends Datastore {
     * For example, calling this method with a Coords of {@code <"z" = 9>}
     * would delete all Images whose Z coordinate is 9. Calling this method
     * with an empty Coords object will delete every image in the Datastore,
-    * as per deleteAllImages() except without the additional event.
+    * as per deleteAllImages() except without posting a DatastoreClearedEvent.
     * This method may potentially remove no images.
     * @param coords Potentially-underspecified coordinates of the image(s) to
     *        remove.

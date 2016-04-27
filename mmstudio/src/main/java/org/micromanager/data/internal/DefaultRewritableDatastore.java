@@ -20,6 +20,9 @@
 
 package org.micromanager.data.internal;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import org.micromanager.data.Coords;
 import org.micromanager.data.RewritableDatastore;
 import org.micromanager.data.RewritableStorage;
@@ -67,6 +70,35 @@ public class DefaultRewritableDatastore extends DefaultDatastore implements Rewr
             // This should never happen.
             ReportingUtils.logError(e2, "Unable to insert image after having cleared space for it.");
          }
+      }
+
+      // Track changes to our axes so we can note the axis order.
+      Coords coords = image.getCoords();
+      SummaryMetadata summary = getSummaryMetadata();
+      if (summary == null) {
+         return;
+      }
+      ArrayList<String> axisOrderList = null;
+      String[] axisOrder = summary.getAxisOrder();
+      if (axisOrder == null) {
+         axisOrderList = new ArrayList<String>();
+      }
+      else {
+         axisOrderList = new ArrayList<String>(Arrays.asList(axisOrder));
+      }
+      boolean didAdd = false;
+      for (String axis : coords.getAxes()) {
+         if (!axisOrderList.contains(axis) && coords.getIndex(axis) > 0) {
+            // This axis is newly nonzero.
+            axisOrderList.add(axis);
+            didAdd = true;
+         }
+      }
+      if (didAdd) {
+         // Update summary metadata with the new axis order.
+         summary = summary.copy().axisOrder(
+               axisOrderList.toArray(new String[] {})).build();
+         setSummaryMetadata(summary);
       }
    }
 
