@@ -38,6 +38,7 @@
     [org.json JSONArray JSONObject]
     [org.micromanager.acquisition.internal AcquisitionSleepEvent]
     [org.micromanager.acquisition.internal TaggedImageQueue]
+    [org.micromanager.data Coords]
     [org.micromanager.data.internal DefaultSummaryMetadata]
     [org.micromanager.display.internal RememberedChannelSettings]
     [org.micromanager PositionList SequenceSettings]
@@ -904,6 +905,16 @@
                         "GridColumnIndex" grid-col
                         "DeviceCoordinatesUm" json-positions}))))))
 
+(defn generate-axis-order [settings]
+  ; This is highly redundant, but oh well.
+  ; Remember the first entry in this list is the first axis to change.
+  (let [order [
+               (if (:slices-first settings) Coords/Z Coords/CHANNEL)
+               (if (:slices-first settings) Coords/CHANNEL Coords/Z)
+               (if (:time-first settings) Coords/TIME Coords/STAGE_POSITION)
+               (if (:time-first settings) Coords/STAGE_POSITION Coords/TIME)]]
+    (JSONArray. order)))
+
 (defn make-summary-metadata [settings position-list]
   (let [depth (core getBytesPerPixel)
         channels (:channels settings)
@@ -916,6 +927,7 @@
         ch-names (vec (map :name super-channels))
         computer (try (.. InetAddress getLocalHost getHostName) (catch UnknownHostException e ""))]
      (JSONObject. {
+      "AxisOrder" (generate-axis-order settings)
       "BitDepth" (core getImageBitDepth)
       "CameraTimeout" (:camera-timeout settings)
       "Channels" (max 1 (count super-channels))
