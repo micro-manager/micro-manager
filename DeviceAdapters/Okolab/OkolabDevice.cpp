@@ -3,7 +3,7 @@
 #include <ModuleInterface.h>
 #include <cmath>
 
-
+/* String constants */
 std::vector<std::string> OkolabDevice::_ports;
 bool OkolabDevice::_initialized = false;
 const char* g_MyDeviceName = "OkoLab";
@@ -11,7 +11,25 @@ const char* g_DevicePort = "Device Port";
 const char* g_AutoLabel = "Auto";
 const char* g_RefreshInterval = "Time between refresh [ms]";
 const char* DB_PATH = "okolib";
-const char* DAL_VERSION = "2.1.0";
+const char* DAL_VERSION = "2.2.0";
+
+/* Constant array and string sizes */
+#define PROP_NAME_SIZE	100
+#define ERR_MSG_SIZE	500
+#define PORT_NAME_SIZE	100
+#define PORT_NUMBER_MAX	100
+#define VERSION_SIZE	50
+#define PROP_VAL_SIZE	120
+#define FILE_NAME_SIZE	(MAX_PATH) // defined in Microsoft API
+
+/* Refresh interval property: minimum, maximum and default  */
+#define REFRESH_INTERVAL_MIN	100
+#define REFRESH_INTERVAL_MAX	10000
+#define REFRESH_INTERVAL_DEF	1000
+
+/* Timing */
+#define THREAD_SLEEP_MS	500
+#define LOGGING_TIME_MS 1000
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
@@ -61,7 +79,7 @@ OkolabDevice::OkolabDevice(void)
 	_busy = false;
 	_module = "";
 	_deviceHandle = (uint32_t) -1; 
-	_timeBetweenUpdates = 1000;
+	_timeBetweenUpdates = REFRESH_INTERVAL_DEF;
 	_okolabThread = NULL;
 	int nRet = CreateStringProperty(g_DevicePort, g_AutoLabel, false, NULL, true);
 	if (nRet != DEVICE_OK)
@@ -73,7 +91,7 @@ OkolabDevice::OkolabDevice(void)
 	{
 		LogMessage("Error Time between updates", false);
 	}
-	nRet = SetPropertyLimits(g_RefreshInterval, 100, 10000);
+	nRet = SetPropertyLimits(g_RefreshInterval, REFRESH_INTERVAL_MIN, REFRESH_INTERVAL_MAX);
 	if (nRet != DEVICE_OK)
 	{
 		LogMessage("Error setting Time between updates limits.", false);
@@ -158,18 +176,20 @@ int OkolabDevice::Initialize()
 
 void OkolabDevice::LogOkolabError(oko_res_type err, std::string title)
 {
-	std::string errMessage = title;
-	char msg_err[501];
-	oko_LibGetLastError(msg_err, 500);
+	std::string errMessage = "";
+	char msg_err[ERR_MSG_SIZE] = "";
+	oko_LibGetLastError(msg_err, ERR_MSG_SIZE);
+
 	std::stringstream s;
 	s << (int)err;
 	std::string converted(s.str());
-	errMessage += " Okolab err code: " + converted;
+	errMessage = title + ". Okolib error code: " + converted;
+	
 	if (msg_err[0] != 0)
 	{
-		errMessage += " Error: " + std::string(msg_err);
-		LogMessage(errMessage, false);
+		errMessage += ". Error: " + std::string(msg_err);
 	}
+	LogMessage(errMessage, false);
 }
 
 int OkolabDevice::initializeVersionAndDetectPorts()
@@ -320,9 +340,9 @@ void OkolabDevice::DetectPorts()
 		LogOkolabError(ret, "Error getting number of Ports");
 	}
 
-	char *names[100];
-	for (unsigned h = 0; h < 100; h++)
-		names[h] = (char*) malloc(100 * sizeof(char));
+	char *names[PORT_NUMBER_MAX];
+	for (unsigned h = 0; h < PORT_NUMBER_MAX; h++)
+		names[h] = (char*) malloc(PORT_NAME_SIZE * sizeof(char));
 
 	ret = oko_LibGetPortNames(names);
 	if (OKO_OK != ret)
@@ -341,7 +361,7 @@ void OkolabDevice::DetectPorts()
 		/*}
 		ret = oko_DeviceClose(dev);*/
 	}
-	for (unsigned h = 0; h < 100; h++)
+	for (unsigned h = 0; h < PORT_NUMBER_MAX; h++)
 		free(names[h]);
 }
 
@@ -393,7 +413,7 @@ int OkolabDevice::initializeVersionProperties()
 		LogMessage("Error creating Device adapter Version", false);
 	}
 
-	char okolibVersion[100] = "";
+	char okolibVersion[VERSION_SIZE] = "";
 	oko_LibGetVersion(okolibVersion);
 	nRet = CreateStringProperty("Okolib version", okolibVersion, true, NULL);
 	if (nRet != DEVICE_OK && nRet != DEVICE_DUPLICATE_PROPERTY)
@@ -446,7 +466,7 @@ void OkolabDevice::createOkolabProperties()
 void OkolabDevice::AddOkolabProperty(uint32_t propertyIndex)
 {
 	LogMessage("void OkolabDevice::AddOkolabProperty(uint32_t propertyIndex)", true);
-	char name[50] = "";
+	char name[PROP_NAME_SIZE] = "";
 	oko_res_type ret = oko_PropertyGetName(_deviceHandle, propertyIndex, name);
 	if (ret != OKO_OK)
 	{
@@ -460,12 +480,24 @@ void OkolabDevice::AddOkolabProperty(uint32_t propertyIndex)
 		return;
 	}
 
+	// If the property is not supported, do nothing
+	ret = oko_PropertyUpdate(_deviceHandle, name);
+	if (ret == OKO_ERR_NOTSUPP)
+	{
+		return;
+	}
+
+	else if (ret != OKO_OK)
+	{
+		LogOkolabError(ret, "oko_PropertyUpdate");
+	}
+
 	oko_prop_type type = OKO_PROP_UNDEF;
 
 	ret = oko_PropertyGetType(_deviceHandle, name, &type);
 	if (ret != OKO_OK)
 	{
-		LogOkolabError(ret, "Add Property");
+		LogOkolabError(ret, "oko_PropertyGetType");
 		return;
 	}
 
@@ -473,31 +505,29 @@ void OkolabDevice::AddOkolabProperty(uint32_t propertyIndex)
 	ret = oko_PropertyGetReadOnly(_deviceHandle, name, &isReadOnly);
 	if (ret != OKO_OK)
 	{
-		LogOkolabError(ret, "Add Property");
+		LogOkolabError(ret, "oko_PropertyGetReadOnly");
 		return;
 	}
 
 	int nRet = DEVICE_OK;
-
-	CPropertyActionEx * pAct = new CPropertyActionEx(this, &OkolabDevice::OnOkolabPropertyChanged, propertyIndex);
-	ret = oko_PropertyUpdate(_deviceHandle, name);
-	if (ret != OKO_OK)
-	{
-		LogOkolabError(ret, "Add Property");
-	}
 	std::string errString("");
+
+	CPropertyActionEx * pAct = NULL;
+	if(!isReadOnly)
+		pAct = new CPropertyActionEx(this, &OkolabDevice::OnOkolabPropertyChanged, propertyIndex);
+
 	switch(type)
 	{
 	case OKO_PROP_STRING:
 		{
-			char value[1024] = "";
+			char value[PROP_VAL_SIZE] = "";
 			ret = oko_PropertyReadString(_deviceHandle, name, value);
 			if (ret != OKO_OK)
 			{
-				LogOkolabError(ret, "Add Property");
+				LogOkolabError(ret, "oko_PropertyReadString");
 				errString = createPropertyError(ret);
 			}
-			nRet = CreateStringProperty(name, value, isReadOnly, isReadOnly ? NULL : pAct);
+			nRet = CreateStringProperty(name, value, isReadOnly, pAct);
 			break;
 		}
 	case OKO_PROP_INT:
@@ -506,10 +536,10 @@ void OkolabDevice::AddOkolabProperty(uint32_t propertyIndex)
 			ret = oko_PropertyReadInt(_deviceHandle, name, &value);
 			if (ret != OKO_OK)
 			{
-				LogOkolabError(ret, "Add Property");
+				LogOkolabError(ret, "oko_PropertyReadInt");
 				errString = createPropertyError(ret);
 			}
-			nRet = CreateIntegerProperty(name, value, isReadOnly, isReadOnly ? NULL : pAct);
+			nRet = CreateIntegerProperty(name, value, isReadOnly, pAct);
 			break;
 		}
 	case OKO_PROP_DOUBLE:
@@ -518,37 +548,37 @@ void OkolabDevice::AddOkolabProperty(uint32_t propertyIndex)
 			ret = oko_PropertyReadDouble(_deviceHandle, name, &value);
 			if (ret != OKO_OK)
 			{
-				LogOkolabError(ret, "Add Property");
+				LogOkolabError(ret, "oko_PropertyReadDouble");
 				errString = createPropertyError(ret);
 			}
-			nRet = CreateFloatProperty(name, value, isReadOnly, isReadOnly ? NULL : pAct);
+			nRet = CreateFloatProperty(name, value, isReadOnly, pAct);
 			break;
 		}
 	case OKO_PROP_ENUM:
 		{
-			char value[1024] = "";
+			char value[PROP_VAL_SIZE] = "";
 			ret = oko_PropertyReadString(_deviceHandle, name, value);
 			if (ret != OKO_OK)
 			{
-				LogOkolabError(ret, "Add Property");
+				LogOkolabError(ret, "oko_PropertyReadString");
 				errString = createPropertyError(ret);
 			}
-			nRet = CreateStringProperty(name, value, isReadOnly, isReadOnly ? NULL : pAct);
+			nRet = CreateStringProperty(name, value, isReadOnly, pAct);
 			unsigned int numEnums = 0;
 			ret = oko_PropertyGetEnumNumber(_deviceHandle, name, &numEnums);
 			if (ret != OKO_OK)
 			{
-				LogOkolabError(ret, "Add Property");
+				LogOkolabError(ret, "oko_PropertyGetEnumNumber");
 				errString = createPropertyError(ret);
 			}
 			std::vector<std::string> enumValues;
 			for (unsigned int i = 0; i < numEnums; ++i)
 			{
-				char enumValue[1024] = "";
+				char enumValue[PROP_VAL_SIZE] = "";
 				ret = oko_PropertyGetEnumName(_deviceHandle, name, i, enumValue);
 				if (ret != OKO_OK)
 				{
-					LogOkolabError(ret, "Add Property");
+					LogOkolabError(ret, "oko_PropertyGetEnumName");
 					errString = createPropertyError(ret);
 				}
 				enumValues.push_back(std::string(enumValue));
@@ -571,7 +601,7 @@ void OkolabDevice::AddOkolabProperty(uint32_t propertyIndex)
 	ret = oko_PropertyHasLimits(_deviceHandle, name, &hasLimits);
 	if (ret != OKO_OK)
 	{
-		LogOkolabError(ret, "Add Property");
+		LogOkolabError(ret, "oko_PropertyHasLimits");
 		return;
 	}
 	if (hasLimits)
@@ -581,7 +611,7 @@ void OkolabDevice::AddOkolabProperty(uint32_t propertyIndex)
 		ret = oko_PropertyGetLimits(_deviceHandle, name, &low, &high);
 		if (ret != OKO_OK)
 		{
-			LogOkolabError(ret, "Add Property");
+			LogOkolabError(ret, "oko_PropertyGetLimits");
 			return;
 		}
 		SetPropertyLimits(name, low, high);
@@ -592,7 +622,7 @@ void OkolabDevice::AddOkolabProperty(uint32_t propertyIndex)
 int OkolabDevice::OnOkolabPropertyChanged(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
 {
 	LogMessage("int OkolabDevice::OnOkolabPropertyChanged(MM::PropertyBase* pProp, MM::ActionType eAct, long index)", true);
-	char name[50] = "";
+	char name[PROP_NAME_SIZE] = "";
 	oko_res_type ret;
 	ret = oko_PropertyGetName(_deviceHandle, (uint32_t) index, name);
 	if (ret != OKO_OK)
@@ -656,7 +686,7 @@ int OkolabDevice::OnLogToFileChanged(MM::PropertyBase* pProp, MM::ActionType eAc
 	oko_res_type res = OKO_OK;
 	if (eAct == MM::BeforeGet)
 	{
-		char filename[100];
+		char filename[FILE_NAME_SIZE];
 		res = oko_PropertyLoggingGetFileName(_deviceHandle, filename);
 	}
 	else if (eAct == MM::AfterSet)
@@ -665,7 +695,7 @@ int OkolabDevice::OnLogToFileChanged(MM::PropertyBase* pProp, MM::ActionType eAc
 		pProp->Get(value);
 		if (value != "")
 		{
-			res = oko_StartPropertyLogging(_deviceHandle, value.c_str(), 1000);
+			res = oko_StartPropertyLogging(_deviceHandle, value.c_str(), LOGGING_TIME_MS);
 		}
 		else
 		{
@@ -680,7 +710,7 @@ int OkolabDevice::OnPlaybackFileChanged(MM::PropertyBase* pProp, MM::ActionType 
 	oko_res_type res = OKO_OK;
 	if (eAct == MM::BeforeGet)
 	{
-		char filename[100];
+		char filename[FILE_NAME_SIZE];
 		res = oko_PlaybakGetFileName(_deviceHandle, filename);
 	}
 	else if (eAct == MM::AfterSet)
@@ -722,7 +752,7 @@ int OkolabDevice::updateOkolabProperties(MM::MMTime startTime)
 			{
 				return DEVICE_OK;
 			}
-			char name[50] = "";
+			char name[PROP_NAME_SIZE] = "";
 			ret = oko_PropertyGetName(_deviceHandle, i, name);
 			if (ret != OKO_OK)
 			{
@@ -739,7 +769,7 @@ int OkolabDevice::updateOkolabProperties(MM::MMTime startTime)
 				LogOkolabError(ret, "Property Changed");
 			}
 
-			char value[1024] = "";			
+			char value[PROP_VAL_SIZE] = "";			
 			MM::PropertyType propType;
 			GetPropertyType(name, propType);
 			switch (propType)
@@ -819,7 +849,7 @@ int OkolabDevice::openDeviceIfNecessary()
 	oko_res_type ret;
 	if (_deviceHandle != -1)
 	{
-		char port[100] = "";
+		char port[PORT_NAME_SIZE] = "";
 		ret = oko_DeviceGetPortName(_deviceHandle, port);
 		if (_workingPort != std::string(port))
 		{
@@ -969,7 +999,7 @@ void OkolabThread::Start(double intervalMs)
 	_actualDuration = 0;
 	_startTime = _device->GetCurrentMMTime();
 	_lastFrameTime = 0;
-	Sleep(500);
+	Sleep(THREAD_SLEEP_MS);
 }
 
 bool OkolabThread::IsStopped(){
