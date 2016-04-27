@@ -70,35 +70,79 @@
  *
  * @tableofcontents
  *
- * @section v46 0.4.6
+ * @section v091 0.9.1
+ * - FIXED possible memory access error in @ref oko_LibGetLastError
+ *
+ * @section v090 0.9.0
+ * - Improved internal check to avoid false positive communication errors
+ *
+ * @section v080 0.8.0
+ * - FIXED auto-connection after OKO_ERR_PORT_NOTVALID error (removed USB device)
+ * - ADDED @ref oko_PropertyGetWriteOnly
+ * - ADDED functions to write a parameter in volatile memory
+ * - ADDED @ref oko_PropertyGetWriteType
+ *
+ * @section v072 0.7.2
+ * - FIXED @ref OKO_ERR_TIMEOUT was returned instead of @ref OKO_ERR_NOTSUPP (when checksum was used)
+ *
+ * @section v070 0.7.0
+ * - Improved asynchronous write logic: now it uses a queue and it's thread-safe
+ * - Fixed auto-update value hang after a while
+ * - Restored previous serial settings
+ *
+ * @section v060 0.6.0
+ * - Added file info
+ * - Improved serial settings
+ *
+ * @section v057 0.5.7
+ * - FIXED random @ref OKO_ERR_PORT_NOTVALID errors
+ *
+ * @section v056 0.5.6
+ * - FIXED Checksum detection for some stand-alone gas controllers (e.g. CO2-UNIT-3L)
+ * - FIXED Checksum protocol error with special characters
+ *
+ * @section v055 0.5.5
+ * - ADDED "Disabled" value for "status" parameters
+ *
+ * @section v054 0.5.4
+ * - FIXED @ref OKO_ERR_PORT_NOTVALID
+ * - FIXED Connection is restored if USB device is unplugged and then plugged
+ *
+ * @section v053 0.5.3
+ * - ADDED @ref OKO_ERR_COMM and @ref OKO_ERR_TIMEOUT errors
+ *
+ * @section v052 0.5.2
+ * - IMPROVED error checking
+ * 
+ * @section v046 0.4.6
  * - ADDED @ref oko_LibGetPortName
  * - FIXED @ref oko_DeviceClose, now device port is reset
  *
- * @section v45 0.4.5
+ * @section v045 0.4.5
  * - ADDED data playback and logging.
  * - FIXED @ref oko_ModulesDetect now returns OKO_OK even if a single module is found.
  * - FIXED @ref oko_LibInit now is able to expand a complex path.
  *
- * @section v44 0.4.4
+ * @section v044 0.4.4
  * - FIXED Temperature write setpoint with integer values (eg. 37.0).
  * - ADDED default limits for devices without minimum and maximum commands (eg. UNO)
  *
- * @section v43 0.4.3
+ * @section v043 0.4.3
  * - FIXED Temperature module detection using Smart Box.
  *
- * @section v42 0.4.2
+ * @section v042 0.4.2
  * - FIXED strange characters returned instead of degree symbol (&deg;)
  *
- * @section v41 0.4.1
+ * @section v041 0.4.1
  * - MODIFIED modules enable/disable logic, see @ref oko_ModuleGetEnabled and @ref oko_ModuleSetEnabled
  *
- * @section v40 0.4.0
+ * @section v040 0.4.0
  * - ADDED Checksum protocol
  *
- * @section v31 0.3.1
+ * @section v031 0.3.1
  * - FIXED oko_ModuleGetDetails: can_disable was TRUE, even for firmware version without this property.
  *
- * @section v30 0.3.0
+ * @section v030 0.3.0
  * - ADDED Modules component (see @ref Modules)
  * - FIXED crash when USB is connected to a Slave device
  *
@@ -299,15 +343,19 @@ typedef enum _oko_res_type
 	OKO_ERR_NOTSUPP 		= -4,	//!< The requested operation is not supported by this system or device.
 	OKO_ERR_CLOSED 			= -5,	//!< The specified device is not opened.
 	OKO_ERR_UNCONN 			= -6,	//!< The specified device is not connected.
-	OKO_ERR_PORT_BUSY  		= -7,  //!< Serial port busy
-	OKO_ERR_PORT_CFG  		= -8, 	//!< Serial port configuration failed
-	OKO_ERR_PORT_SPEED		= -9, 	//!< Serial port speed settings failed
+	OKO_ERR_PORT_BUSY  		= -7,   //!< Serial port busy
+	OKO_ERR_PORT_CFG  		= -8, 	//!< Port configuration failed
+	OKO_ERR_PORT_NOTVALID	= -9, 	//!< Port not valid
 	OKO_ERR_DB_OPEN  		= -10, 	//!< Database error on open
 	OKO_ERR_PROP_NOTFOUND	= -11, 	//!< Property not found
 	OKO_ERR_DEV_NOTFOUND	= -12,  //!< Device not found
-	OKO_ERR_PROTOCOL   		= -13,  //!< Protocol error
+	OKO_ERR_COMM	   		= -13,  //!< Communication error
 	OKO_ERR_ENUM_NOTFOUND  	= -14,  //!< Enum of the Property not found
 	OKO_ERR_MODULE_NOTFOUND	= -15,  //!< Module specified not found
+	OKO_ERR_DEV_SLAVE		= -16,  //!< Slave device
+	OKO_ERR_DEV_NOTRUNNING	= -17,  //!< Device not running
+	OKO_ERR_MEMORY			= -18,  //!< Memory allocation failed
+	OKO_ERR_TIMEOUT			= -19,  //!< Timeout error
 	OKO_ERR_UNDEF  			= -999, //!< Undefined error
 } oko_res_type;
 
@@ -608,6 +656,15 @@ oko_DeviceSetChecksumUsage(uint32_t deviceh, bool use_checksum);
 OKO_API oko_res_type OKO_EXPORT
 oko_DeviceGetChecksumUsage(uint32_t deviceh, bool *use_checksum);
 
+/*!
+ * Check if the communication protocol of the
+ * specified device supports checksum.
+ * @param[in] deviceh A valid device handle.
+ * @param[out] checksum true if checksum is available
+ * @return OKO_OK upon success, an error code otherwise.
+ */
+OKO_API oko_res_type OKO_EXPORT
+oko_DeviceGetChecksumAvailable(uint32_t deviceh, bool *checksum);
 
 /**
  * @}
@@ -706,7 +763,7 @@ OKO_API oko_res_type OKO_EXPORT
 oko_PropertyGetDescription(uint32_t deviceh, const char *name, char *desc);
 
 /*!
- * Verify if the specified property can be write.
+ * Verify if the specified property is read-only.
  * @param[in] deviceh A valid device handle.
  * @param[in] name The property name.
  * @param[out] read_only TRUE if the property is read-only.
@@ -714,6 +771,39 @@ oko_PropertyGetDescription(uint32_t deviceh, const char *name, char *desc);
  */
 OKO_API oko_res_type OKO_EXPORT
 oko_PropertyGetReadOnly(uint32_t deviceh, const char *name, bool *read_only);
+
+/**
+* Specifies the available write types
+**/
+typedef enum _oko_write_type
+{
+    OKO_WRITE_NONE		= 0,	//!< No write available (read-only)
+    OKO_WRITE_EEPROM	= 1,	//!< Only standard write is available
+	OKO_WRITE_VOLATILE	= 2,	//!< Only volatile write is available
+	OKO_WRITE_BOTH		= 3,	//!< Standard and volatile write types are available
+} oko_write_type;
+
+
+/*!
+ * Verify if the specified property is write-only.
+ * @param[in] deviceh A valid device handle.
+ * @param[in] name The property name.
+ * @param[out] write_only TRUE if the property is write-only.
+ * @return OKO_OK upon success, an error code otherwise.
+ */
+OKO_API oko_res_type OKO_EXPORT
+oko_PropertyGetWriteOnly(uint32_t deviceh, const char *name, bool *write_only);
+
+/*!
+ * Get the write type of the specified property
+ * @param[in] deviceh A valid device handle.
+ * @param[in] name The property name.
+ * @param[out] write_type The property type as defined in @ref oko_prop_type.
+ * @return OKO_OK upon success, an error code otherwise.
+ */
+OKO_API oko_res_type OKO_EXPORT
+oko_PropertyGetWriteType(uint32_t deviceh, const char *name, oko_write_type *write_type);
+
 
 /*!
  * Verify if the specified property has readable limits.
@@ -814,7 +904,7 @@ oko_PropertyUpdate(uint32_t deviceh, const char *name);  // refresh, read ?
 */
 
 /*!
- * Change the current value of the specified string property,
+ * Change the current value of the specified string property.
  *
  * @param[in] deviceh A valid device handle.
  * @param[in] name The property name.
@@ -849,7 +939,41 @@ oko_PropertyWriteInt(uint32_t deviceh, const char *name, int32_t val, char async
 OKO_API oko_res_type OKO_EXPORT
 oko_PropertyWriteDouble(uint32_t deviceh, const char *name, double val, char async);
 
+/*!
+ * Change the current value of the specified string property in the volatile memory.
+ *
+ * @param[in] deviceh A valid device handle.
+ * @param[in] name The property name.
+ * @param[in] val Value to set.
+ * @param[in] async set asynchronous mode on/off (If true, then the value will be wrote as soon as possible but not now)
+ * @return OKO_OK upon success, an error code otherwise.
+ */
+OKO_API oko_res_type OKO_EXPORT
+oko_PropertyWriteVolatileString(uint32_t deviceh, const char *name, const char *val, bool async);
 
+/*!
+ * Change the current value of the specified integer property in the volatile memory.
+ *
+ * @param[in] deviceh A valid device handle.
+ * @param[in] name The property name.
+ * @param[in] val Value to set.
+ * @param[in] async (1/0) set asynchronous mode on/off (If 1 then the value will be wrote as soon as possible but not now)
+ * @return OKO_OK upon success, an error code otherwise.
+ */
+OKO_API oko_res_type OKO_EXPORT
+oko_PropertyWriteVolatileInt(uint32_t deviceh, const char *name, int32_t val, char async);
+
+/*!
+ * Change the current value of the specified double property in the volatile memory.
+ *
+ * @param[in] deviceh A valid device handle.
+ * @param[in] name The property name.
+ * @param[in] val Value to set.
+ * @param[in] async (1/0) set asynchronous mode on/off (If 1 then the value will be wrote as soon as possible but not now)
+ * @return OKO_OK upon success, an error code otherwise.
+ */
+OKO_API oko_res_type OKO_EXPORT
+oko_PropertyWriteVolatileDouble(uint32_t deviceh, const char *name, double val, char async);
 
 /**
  * @}
@@ -948,6 +1072,11 @@ oko_PlaybakGetFileName(uint32_t deviceh, char *filename);
 OKO_API oko_res_type OKO_EXPORT
 oko_CommandExecute(uint32_t deviceh, const char *name);
 
+
+/*! \cond PRIVATE */
+OKO_API oko_res_type OKO_EXPORT
+oko_OkolabSetDebugPropertiesUsage(bool debug_properties);
+/*! \endcond */
 
 /**
  * @}
