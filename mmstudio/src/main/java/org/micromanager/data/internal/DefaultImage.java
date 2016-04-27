@@ -61,7 +61,6 @@ import org.micromanager.internal.utils.ReportingUtils;
  * getRawPixels(), the method exposed in the Image interface to access pixel
  * data, returns an ImageJ-style array, while getPixelBuffer (which is not
  * exposed in the API) returns the raw buffer.
- * TODO: add method to generate an ImagePlus from the image.
  */
 public class DefaultImage implements Image {
    private static final String COORDS_TAG = "completeCoords";
@@ -73,10 +72,11 @@ public class DefaultImage implements Image {
    int pixelWidth_;
    // Height of the image, in pixels
    int pixelHeight_;
-   // How many bytes are allocated to each pixel in rawPixels_. This is
-   // different from the bits per pixel, which is in the Metadata, and
-   // indicates the range of values that the camera can output (e.g. a 12-bit
-   // pixel has values in [0, 4095].
+   // How many bytes are allocated to each pixel in rawPixels_. This is the
+   // "stride" between pixels in the pixel array, and thus has no direct
+   // bearing on the range of intensity values that may be represented by the
+   // image; use bytesPerComponent_ for that (as well as the bits per pixel
+   // property in the Metadata).
    int bytesPerPixel_;
    // How many bytes are allocated to a single component's intensity in a
    // given pixel. For example, 1 for single-component 8-bit, 2 for
