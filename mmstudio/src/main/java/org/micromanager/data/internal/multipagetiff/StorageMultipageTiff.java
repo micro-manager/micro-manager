@@ -156,13 +156,27 @@ public final class StorageMultipageTiff implements Storage {
    }
 
    boolean slicesFirst() {
-      ReportingUtils.logError("TODO: handle slicesFirst; returning false by default");
-      return false;
+      String[] order = summaryMetadata_.getAxisOrder();
+      if (order == null) {
+         // HACK: default to true.
+         return true;
+      }
+      List<String> orderList = Arrays.asList(order);
+      int sliceIndex = orderList.indexOf(Coords.Z);
+      int channelIndex = orderList.indexOf(Coords.CHANNEL);
+      return (sliceIndex < channelIndex);
    }
 
    boolean timeFirst() {
-      ReportingUtils.logError("TODO: handle timeFirst; returning false by default");
-      return false;
+      String[] order = summaryMetadata_.getAxisOrder();
+      if (order == null) {
+         // HACK: default to false.
+         return false;
+      }
+      List<String> orderList = Arrays.asList(order);
+      int timeIndex = orderList.indexOf(Coords.TIME);
+      int positionIndex = orderList.indexOf(Coords.STAGE_POSITION);
+      return (timeIndex < positionIndex);
    }
 
    private void openExistingDataSet() {
@@ -508,8 +522,6 @@ public final class StorageMultipageTiff implements Storage {
       JSONObject summaryJSON = summary.toJSON();
       if (summaryJSON != null) {
          summaryMetadataString_ = summaryJSON.toString();
-         boolean slicesFirst = summaryJSON.optBoolean("SlicesFirst", true);
-         boolean timeFirst = summaryJSON.optBoolean("TimeFirst", false);
          TreeMap<Coords, MultipageTiffReader> oldImageMap = coordsToReader_;
          coordsToReader_ = new TreeMap<Coords, MultipageTiffReader>();
          if (showProgress && !GraphicsEnvironment.isHeadless()) {
