@@ -880,47 +880,67 @@ int OkolabDevice::translateError(oko_res_type ret)
 	case OKO_OK: //!< Operation completed successfully.
 		nRet = DEVICE_OK;
 		break;
+
 	case OKO_ERR_UNINIT: //!< Library not initialized yet.
 		nRet = DEVICE_NATIVE_MODULE_FAILED;
 		break;
+
 	case OKO_ERR_ARG: //!< Invalid arguments were passed to the function.
 		nRet = DEVICE_INVALID_INPUT_PARAM;
 		break;
+
 	case OKO_ERR_FAIL: //!< A system error occurred while executing the operation.
 		nRet = DEVICE_ERR;
 		break;
+
 	case OKO_ERR_NOTSUPP: //!< The requested operation is not supported by this system or device.
-		nRet = DEVICE_NOT_SUPPORTED;
+		nRet = DEVICE_UNSUPPORTED_COMMAND;
 		break;
+
 	case OKO_ERR_CLOSED: //!< The specified device is not opened.
 		nRet = DEVICE_NOT_CONNECTED;
 		break;
+
 	case OKO_ERR_UNCONN: //!< The specified device is not connected.
 		nRet = DEVICE_NOT_CONNECTED;
 		break;
-	case OKO_ERR_PORT_BUSY: //!< Serial port busy
-	case OKO_ERR_PORT_CFG: //!< Serial port configuration failed
-	case OKO_ERR_PORT_SPEED: //!< Serial port speed settings failed
-	case OKO_ERR_DB_OPEN: //!< Database error on open
+
+	case OKO_ERR_PORT_CFG:	//!< Serial port configuration failed
+	case OKO_ERR_DB_OPEN:	//!< Database error on open
+	case OKO_ERR_MEMORY:	//!< Memory allocation failed
 		nRet = DEVICE_INTERNAL_INCONSISTENCY;
 		break;
+
 	case OKO_ERR_PROP_NOTFOUND:	 //!< Property not found
-		nRet = DEVICE_ERR;
+		nRet = DEVICE_INVALID_PROPERTY;
+		break;
+
+	case OKO_ERR_PORT_NOTVALID:	 //!< Port not valid
+		nRet = DEVICE_COMM_HUB_MISSING;
+		break;
+
 	case OKO_ERR_DEV_NOTFOUND: //!< Device not found
 		nRet = DEVICE_NOT_CONNECTED;
 		break;
-	case OKO_ERR_PROTOCOL: //!< Protocol error
-		nRet = DEVICE_ERR;
-		break;
+		
 	case OKO_ERR_ENUM_NOTFOUND: //!< Enum of the Property not found
-		nRet = DEVICE_ERR;
+		nRet = DEVICE_UNSUPPORTED_COMMAND;
 		break;
+
 	case OKO_ERR_MODULE_NOTFOUND: //!< Module specified not found
+		nRet = DEVICE_UNSUPPORTED_COMMAND;
+		break;
+
+	case OKO_ERR_DEV_SLAVE:		 //!< Slave device
+	case OKO_ERR_DEV_NOTRUNNING: //!< Device not running
+	case OKO_ERR_TIMEOUT:		 //!< Timeout error
 		nRet = DEVICE_ERR;
 		break;
+
 	case OKO_ERR_UNDEF: //!< Undefined error
 		nRet = DEVICE_ERR;
 		break;
+
 	default: 
 		nRet = DEVICE_ERR;
 		break;
