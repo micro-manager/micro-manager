@@ -151,4 +151,6 @@ private:
    void SequenceFinishCallback();
 
    int AdHocErrorCode(const std::string& message);
+
+   void LogIIDCMessage(const std::string& message, bool isDebug);
 };

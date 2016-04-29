@@ -57,15 +57,25 @@ enum PixelFormat
 class Interface : boost::noncopyable, public boost::enable_shared_from_this<Interface>
 {
    dc1394_t* libdc1394context_;
+   boost::function<void (const std::string&, bool)> logger_;
 
 public:
    Interface();
+   Interface(boost::function<void (const std::string&, bool)> logger);
    ~Interface();
 
    dc1394_t* GetLibDC1394Context() { return libdc1394context_; }
 
    std::vector<std::string> GetCameraIDs();
    boost::shared_ptr<Camera> NewCamera(const std::string& idString);
+
+   // Needed to cope with MMCore logging, which is tied to device lifetime.
+   void RemoveLogger();
+
+private:
+   void Construct();
+   static void LogLibDC1394Message(dc1394log_t logType, const char* message,
+         void* user);
 };
 
 

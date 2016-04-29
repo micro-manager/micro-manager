@@ -254,6 +254,9 @@ class MMIIDCHub {
    static boost::weak_ptr<Self> instance_s;
 
    MMIIDCHub() : iidc_(new IIDC::Interface()) {}
+   MMIIDCHub(boost::function<void (const std::string&, bool)> logger) :
+      iidc_(new IIDC::Interface(logger))
+   {}
 
 public:
    static boost::shared_ptr<Self> GetInstance()
@@ -261,6 +264,16 @@ public:
       if (boost::shared_ptr<Self> instance = instance_s.lock())
          return instance;
       boost::shared_ptr<Self> instance(new Self());
+      instance_s = instance;
+      return instance;
+   }
+
+   static boost::shared_ptr<Self> GetInstance(
+         boost::function<void (const std::string&, bool)> logger)
+   {
+      if (boost::shared_ptr<Self> instance = instance_s.lock())
+         return instance;
+      boost::shared_ptr<Self> instance(new Self(logger));
       instance_s = instance;
       return instance;
    }
@@ -286,6 +299,11 @@ public:
    void PutCamera(const std::string& id)
    {
       activeCameras_.erase(id);
+   }
+
+   void RemoveLogger()
+   {
+      iidc_->RemoveLogger();
    }
 };
 
@@ -371,7 +389,9 @@ MMIIDCCamera::Initialize()
 
    try
    {
-      hub_ = MMIIDCHub::GetInstance();
+      // We use this device for MMCore logging, if this is the first device.
+      hub_ = MMIIDCHub::GetInstance(
+            boost::bind(&MMIIDCCamera::LogIIDCMessage, this, _1, _2));
 
       if (cameraID == MMIIDC_Property_PreInitCameraID_NextAvailable || cameraID.empty())
          iidcCamera_ = hub_->GetNextAvailableCamera();
@@ -435,7 +455,14 @@ MMIIDCCamera::Shutdown()
       iidcCamera_.reset();
 
       if (!cameraID.empty())
+      {
+         // The first camera device is used for MMCore logging, so we need to
+         // disable it. For now, we do not bother to continue logging after the
+         // first camera has been unloaded.
+         hub_->RemoveLogger();
+
          hub_->PutCamera(cameraID);
+      }
    }
    CATCH_AND_RETURN_ERROR
 
@@ -1617,4 +1644,11 @@ MMIIDCCamera::AdHocErrorCode(const std::string& message)
    int code = nextAdHocErrorCode_++;
    SetErrorText(code, message.c_str());
    return code;
+}
+
+
+void
+MMIIDCCamera::LogIIDCMessage(const std::string& message, bool isDebug)
+{
+   LogMessage(message.c_str(), isDebug);
 }

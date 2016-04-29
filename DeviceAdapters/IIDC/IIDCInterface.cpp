@@ -130,11 +130,32 @@ GetVideoModeMaxFramerateForIsoSpeed(dc1394video_mode_t mode, unsigned nominalMbp
 
 Interface::Interface()
 {
+   Construct();
+}
+
+
+Interface::Interface(boost::function<void (const std::string&, bool)> logger) :
+   logger_(logger)
+{
+   for (int t = DC1394_LOG_MIN; t <= DC1394_LOG_MAX; ++t)
+   {
+      dc1394error_t err;
+      err = dc1394_log_register_handler(static_cast<dc1394log_t>(t),
+            &Interface::LogLibDC1394Message, this);
+   }
+   if (logger)
+      logger("Registered libdc1394 logger", true);
+
+   Construct();
+}
+
+
+void
+Interface::Construct()
+{
    libdc1394context_ = dc1394_new();
    if (!libdc1394context_)
       throw Error("Cannot create libdc1394 context");
-
-   // TODO dc1394_log_register_handler()
 }
 
 
@@ -170,6 +191,47 @@ Interface::NewCamera(const std::string& idString)
    dc1394camera_id_t id;
    StringToCameraId(idString, &id);
    return boost::make_shared<Camera>(shared_from_this(), id.guid, id.unit);
+}
+
+
+void
+Interface::RemoveLogger()
+{
+   if (!logger_)
+      return;
+   logger_("Disabling further libdc1394 logging", true);
+   logger_ = boost::function<void (const std::string&, bool)>();
+}
+
+
+void
+Interface::LogLibDC1394Message(dc1394log_t logType, const char* message,
+      void* user)
+{
+   if (!message || !user)
+      return;
+
+   Interface* self = reinterpret_cast<Interface*>(user);
+   if (!self->logger_)
+      return;
+
+   bool isDebug = false;
+   const char* prefix = "[libdc1394    ] ";
+   switch (logType)
+   {
+      case DC1394_LOG_ERROR:
+         prefix = "[libdc1394 ERR] ";
+         break;
+      case DC1394_LOG_WARNING:
+         prefix = "[libdc1394 WRN] ";
+         break;
+      case DC1394_LOG_DEBUG:
+         prefix = "[libdc1394 DBG] ";
+         isDebug = true;
+         break;
+   }
+
+   self->logger_(prefix + std::string(message), isDebug);
 }
 
 
