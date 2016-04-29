@@ -255,16 +255,26 @@ Camera::Camera(boost::shared_ptr<Interface> context, uint64_t guid, int unit)
    // It might be that some platforms do cleanup automatically, but it appears
    // that at least Linux does not.
    // TODO Test on each platform after forced kill
-#ifdef WIN32 // For some reason, dc1394_iso_release_*() are not available in some Linux distros.
+#if defined(_WIN32) || defined(__APPLE__)
    // The maximum total isochronous bandwidth units is 4915 (releasing more
    // than is allocated is documented to be okay).
    dc1394_iso_release_bandwidth(libdc1394camera_, 4915);
    // Channels range from 0 to 63; release all.
    for (int i = 0; i < 64; ++i)
       dc1394_iso_release_channel(libdc1394camera_, i);
+   // TODO Can the above be replaced by a call to dc1394_iso_release_all()?
 #else
-   // Possible alternative:
-   // (Known not to be implemented on Windows)
+   // dc1394_iso_release_*() are not available in some (newer) Linux distros
+   // that use the Juju driver stack. But the kernel will clean up after a
+   // crash if we are using the libdc1394 Juju backend, so actually we don't
+   // need to do anything. (see
+   // https://sourceforge.net/p/libdc1394/mailman/message/22544548/)
+
+   // If using the old Linux drivers we do need to release iso bandwidth and
+   // channels. Here we just reset the bus (which also releases iso bandwidth),
+   // but TODO really we ought to call dc1394_iso_release_all() after checking
+   // that we are not using Juju.
+   // Note that dc1394_reset_bus() is not available on Windows and OS X.
    dc1394_reset_bus(libdc1394camera_);
 #endif
 
