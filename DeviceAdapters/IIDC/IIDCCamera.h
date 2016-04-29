@@ -126,6 +126,10 @@ public:
 
    unsigned GetBitsPerSample();
 
+   void GetImagePositionUnits(unsigned& hUnit, unsigned& vUnit);
+   void GetImageSizeUnits(unsigned& hUnit, unsigned& vUnit);
+   void SetImageROI(unsigned left, unsigned top, unsigned width, unsigned height);
+
    /*
     * Set the framerate to the maximum possible given the current format, video
     * mode, and (for Format_7) color coding and ROI.

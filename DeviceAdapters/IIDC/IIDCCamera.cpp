@@ -432,6 +432,81 @@ Camera::GetBitsPerSample()
 
 
 void
+Camera::GetImagePositionUnits(unsigned& hUnit, unsigned& vUnit)
+{
+   boost::shared_ptr<VideoMode> mode = GetVideoMode();
+   if (mode->IsFormat7())
+   {
+      dc1394error_t err;
+      err = dc1394_format7_get_unit_position(libdc1394camera_,
+            mode->GetLibDC1394Mode(), &hUnit, &vUnit);
+      if (err != DC1394_SUCCESS)
+         throw Error(err, "Cannot get image ROI position units for format 7 video mode");
+   }
+   else
+   {
+      hUnit = mode->GetMaxWidth();
+      vUnit = mode->GetMaxHeight();
+   }
+}
+
+
+void
+Camera::GetImageSizeUnits(unsigned& hUnit, unsigned& vUnit)
+{
+   boost::shared_ptr<VideoMode> mode = GetVideoMode();
+   if (mode->IsFormat7())
+   {
+      dc1394error_t err;
+      err = dc1394_format7_get_unit_size(libdc1394camera_,
+            mode->GetLibDC1394Mode(), &hUnit, &vUnit);
+      if (err != DC1394_SUCCESS)
+         throw Error(err, "Cannot get image ROI size units for format 7 video mode");
+   }
+   else
+   {
+      hUnit = mode->GetMaxWidth();
+      vUnit = mode->GetMaxHeight();
+   }
+}
+
+
+void
+Camera::SetImageROI(unsigned left, unsigned top, unsigned width, unsigned height)
+{
+   boost::shared_ptr<VideoMode> mode = GetVideoMode();
+   if (mode->IsFormat7())
+   {
+      // Set position to (0, 0) first, so that at no point in time do we have
+      // an invalid ROI (not sure if this is actually necessary).
+      dc1394error_t err;
+      err = dc1394_format7_set_image_position(libdc1394camera_,
+            mode->GetLibDC1394Mode(), 0, 0);
+      if (err != DC1394_SUCCESS)
+         throw Error(err, "Cannot set format 7 image position to 0, 0");
+      err = dc1394_format7_set_image_size(libdc1394camera_,
+            mode->GetLibDC1394Mode(), width, height);
+      if (err != DC1394_SUCCESS)
+         throw Error(err, "Cannot set format 7 image size");
+      if (left == 0 && top == 0)
+         return;
+      err = dc1394_format7_set_image_position(libdc1394camera_,
+            mode->GetLibDC1394Mode(), left, top);
+      if (err != DC1394_SUCCESS)
+         throw Error(err, "Cannot set format 7 image position");
+   }
+   else
+   {
+      if (left != 0 || top != 0 ||
+            width != mode->GetMaxWidth() || height != mode->GetMaxHeight())
+      {
+         throw Error("Cannot set non-full ROI in non-format-7 video mode");
+      }
+   }
+}
+
+
+void
 Camera::SetMaxFramerate(unsigned format7NegativeDeltaUnits)
 {
    /*
