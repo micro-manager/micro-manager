@@ -20,6 +20,11 @@
 #include "IIDCFeature.h"
 
 #include <dc1394/dc1394.h>
+
+#ifdef __APPLE__
+#include <dc1394/macosx.h>
+#endif
+
 #ifdef _MSC_VER
 #undef restrict
 #endif
@@ -99,6 +104,12 @@ private:
    FrameCallbackFunction captureFrameCallback_;
    boost::shared_ptr<Capture> currentCapture_;
    boost::unique_future<void> captureFuture_; // Note: boost::future in more recent versions
+
+#ifdef __APPLE__
+   boost::thread osxCaptureRunLoopThread_;
+   boost::barrier osxCaptureRunLoopStartBarrier_;
+   CFRunLoopRef osxCaptureRunLoop_;
+#endif
 
 public:
    // Use Interface::NewCamera to create instances; do not directly call
@@ -201,6 +212,10 @@ private:
    void EnsureReadyForCapture();
    void RunCaptureInBackground(boost::shared_ptr<Capture> capture);
    void HandleCapturedFrame(dc1394video_frame_t* frame);
+
+#ifdef __APPLE__
+   static void OSXCaptureRunLoop(Camera* self);
+#endif
 };
 
 } // namespace IIDC

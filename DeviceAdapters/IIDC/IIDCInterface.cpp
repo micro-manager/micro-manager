@@ -236,6 +236,9 @@ Interface::LogLibDC1394Message(dc1394log_t logType, const char* message,
 
 
 Camera::Camera(boost::shared_ptr<Interface> context, uint64_t guid, int unit)
+#ifdef __APPLE__
+   : osxCaptureRunLoopStartBarrier_(2)
+#endif
 {
    libdc1394camera_ = dc1394_camera_new_unit(context->GetLibDC1394Context(), guid, unit);
    if (!libdc1394camera_)
@@ -282,12 +285,38 @@ Camera::Camera(boost::shared_ptr<Interface> context, uint64_t guid, int unit)
    err = dc1394_camera_reset(libdc1394camera_);
    if (err != DC1394_SUCCESS)
       throw Error(err, "Cannot reset camera settings");
+
+#ifdef __APPLE__
+   // Setting up a runloop is crucial on OS X (it is not necessary or supported
+   // on other platforms). Starting a capture requires a runloop (CFRunLoop),
+   // and that runloop must continue to exist until (just after) capture is
+   // stopped. See Apple's CFRunLoop documentation. Since there is exactly one
+   // runloop for each thread, we need a dedicated thread. We create this
+   // thread once and keep it for the lifetime of this Camera object.
+
+   boost::thread th(&Camera::OSXCaptureRunLoop, this);
+   osxCaptureRunLoopThread_ = boost::move(th);
+
+   // Wait for the thread to register and start running the run loop
+   osxCaptureRunLoopStartBarrier_.count_down_and_wait();
+
+   if (!osxCaptureRunLoop_)
+      throw Error(err, "Cannot start OS X capture run loop");
+#endif // __APPLE__
 }
 
 
 Camera::~Camera()
 {
    StopCapture();
+
+#ifdef __APPLE__
+   if (osxCaptureRunLoopThread_.joinable())
+   {
+      CFRunLoopStop(osxCaptureRunLoop_);
+      osxCaptureRunLoopThread_.join();
+   }
+#endif
 
    if (IsPowerSwitchable())
    {
@@ -823,5 +852,38 @@ Camera::HandleCapturedFrame(dc1394video_frame_t* frame)
    PixelFormat pf = PixelFormatForLibDC1394ColorCoding(frame->color_coding);
    captureFrameCallback_(frame->image, frame->size[0], frame->size[1], pf);
 }
+
+
+#ifdef __APPLE__
+void
+Camera::OSXCaptureRunLoop(Camera* self)
+{
+   // Use this thread's runloop for capture
+   self->osxCaptureRunLoop_ = CFRunLoopGetCurrent();
+   dc1394error_t err;
+   // The cast is needed due to what appears to be a typo in libdc1394 headers
+   // (return value is int instead of dc1394error_t).
+   err = static_cast<dc1394error_t>(
+         dc1394_capture_schedule_with_runloop(self->libdc1394camera_,
+            self->osxCaptureRunLoop_, kCFRunLoopCommonModes));
+   if (err != DC1394_SUCCESS)
+   {
+      self->osxCaptureRunLoop_ = NULL;
+      self->osxCaptureRunLoopStartBarrier_.count_down_and_wait();
+      return;
+   }
+
+   // Signal that we are ready as soon as the run loop starts running
+   CFRunLoopPerformBlock(self->osxCaptureRunLoop_, kCFRunLoopDefaultMode,
+         ^{
+            self->osxCaptureRunLoopStartBarrier_.count_down_and_wait();
+            dc1394_log_debug("[mm] Started OS X capture run loop on this thread");
+         });
+
+   CFRunLoopRun();
+
+   dc1394_log_debug("[mm] Exiting OS X capture run loop");
+}
+#endif // __APPLE__
 
 } // namespace IIDC
