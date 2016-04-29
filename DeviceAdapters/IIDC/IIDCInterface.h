@@ -131,7 +131,6 @@ public:
    bool IsMultiShotCapable() const { return libdc1394camera_->multi_shot_capable != DC1394_FALSE; }
    bool IsPowerSwitchable() const { return libdc1394camera_->can_switch_on_off != DC1394_FALSE; }
 
-   void ResetBus(); // Use sparingly.
    std::pair<uint32_t, uint32_t> Get1394NodeAndGeneration();
 
    void Enable1394B(bool flag);

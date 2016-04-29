@@ -372,18 +372,6 @@ Camera::GetIIDCVersion() const
 }
 
 
-void
-Camera::ResetBus()
-{
-   EnsureNotCapturing();
-
-   dc1394error_t err;
-   err = dc1394_reset_bus(libdc1394camera_);
-   if (err != DC1394_SUCCESS)
-      throw Error(err, "Cannot reset 1394 bus");
-}
-
-
 std::pair<uint32_t, uint32_t>
 Camera::Get1394NodeAndGeneration()
 {
