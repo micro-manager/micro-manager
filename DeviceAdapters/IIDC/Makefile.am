@@ -7,6 +7,8 @@ AM_CPPFLAGS = $(BOOST_CPPFLAGS) -DBOOST_THREAD_VERSION=2
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS)
 deviceadapter_LTLIBRARIES = libmmgr_dal_IIDC.la
 libmmgr_dal_IIDC_la_SOURCES = \
+	IIDCCamera.cpp \
+	IIDCCamera.h \
 	IIDCCapture.cpp \
 	IIDCCapture.h \
 	IIDCConvert.h \
@@ -15,6 +17,8 @@ libmmgr_dal_IIDC_la_SOURCES = \
 	IIDCFeature.h \
 	IIDCInterface.cpp \
 	IIDCInterface.h \
+	IIDCUtils.cpp \
+	IIDCUtils.h \
 	IIDCVideoMode.cpp \
 	IIDCVideoMode.h \
 	MMIIDCCamera.cpp \

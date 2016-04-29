@@ -136,17 +136,22 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="IIDCCamera.h" />
     <ClInclude Include="IIDCCapture.h" />
+    <ClInclude Include="IIDCConvert.h" />
     <ClInclude Include="IIDCError.h" />
     <ClInclude Include="IIDCFeature.h" />
     <ClInclude Include="IIDCInterface.h" />
+    <ClInclude Include="IIDCUtils.h" />
     <ClInclude Include="IIDCVideoMode.h" />
     <ClInclude Include="MMIIDCCamera.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="IIDCCamera.cpp" />
     <ClCompile Include="IIDCCapture.cpp" />
     <ClCompile Include="IIDCFeature.cpp" />
     <ClCompile Include="IIDCInterface.cpp" />
+    <ClCompile Include="IIDCUtils.cpp" />
     <ClCompile Include="IIDCVideoMode.cpp" />
     <ClCompile Include="MMIIDCCamera.cpp" />
   </ItemGroup>

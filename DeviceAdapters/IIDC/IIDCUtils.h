@@ -19,46 +19,20 @@
 #pragma once
 
 #include <dc1394/dc1394.h>
-
 #ifdef _MSC_VER
 #undef restrict
 #endif
 
-#include <boost/enable_shared_from_this.hpp>
-#include <boost/function.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/utility.hpp>
 #include <string>
-#include <vector>
 
 
 namespace IIDC {
+namespace detail {
 
-class Camera;
+std::string CameraIdToString(const dc1394camera_id_t* id);
+void StringToCameraId(const std::string& idString, dc1394camera_id_t* id);
 
+float GetVideoModeMaxFramerateForIsoSpeed(dc1394video_mode_t mode, unsigned nominalMbps);
 
-class Interface : boost::noncopyable, public boost::enable_shared_from_this<Interface>
-{
-   dc1394_t* libdc1394context_;
-   boost::function<void (const std::string&, bool)> logger_;
-
-public:
-   Interface();
-   Interface(boost::function<void (const std::string&, bool)> logger);
-   ~Interface();
-
-   dc1394_t* GetLibDC1394Context() { return libdc1394context_; }
-
-   std::vector<std::string> GetCameraIDs();
-   boost::shared_ptr<Camera> NewCamera(const std::string& idString);
-
-   // Needed to cope with MMCore logging, which is tied to device lifetime.
-   void RemoveLogger();
-
-private:
-   void Construct();
-   static void LogLibDC1394Message(dc1394log_t logType, const char* message,
-         void* user);
-};
-
+} // namespace detail
 } // namespace IIDC

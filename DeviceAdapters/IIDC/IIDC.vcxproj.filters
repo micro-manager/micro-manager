@@ -33,6 +33,15 @@
     <ClInclude Include="MMIIDCCamera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="IIDCCamera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IIDCConvert.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IIDCUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="IIDCCapture.cpp">
@@ -48,6 +57,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MMIIDCCamera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IIDCCamera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IIDCUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
