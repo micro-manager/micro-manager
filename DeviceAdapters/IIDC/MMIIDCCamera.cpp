@@ -161,7 +161,7 @@ inline bool HostIsLittleEndian()
 
 inline void ApplySoftROI(void* mmiidc_restrict dst,
       const void* mmiidc_restrict src, size_t bytesPerPixel,
-      size_t srcWidth, size_t srcHeight,
+      size_t srcWidth, size_t /* srcHeight */,
       size_t left, size_t top, size_t width, size_t height)
 {
    size_t srcStart = top * srcWidth + left;
