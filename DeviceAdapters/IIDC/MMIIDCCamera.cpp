@@ -28,6 +28,7 @@
 #include "IIDCError.h"
 #include "IIDCFeature.h"
 #include "IIDCVideoMode.h"
+#include "IIDCVendorAVT.h"
 
 #include "DeviceBase.h"
 #include "ModuleInterface.h"
@@ -968,8 +969,11 @@ MMIIDCCamera::InitializeInformationalProperties()
       return err;
 
    boost::shared_ptr<IIDC::ShutterFeature> shutter = iidcCamera_->GetShutterFeature();
+   bool hasAbsoluteShutterControl =
+      iidcCamera_->GetVendorAVT()->HasExtendedShutter() ||
+      iidcCamera_->GetShutterFeature()->HasAbsoluteControl();
    err = CreateStringProperty(MMIIDC_Property_SupportsAbsoluteShutter,
-         shutter->HasAbsoluteControl() ? "Yes" : "No", true);
+         hasAbsoluteShutterControl ? "Yes" : "No", true);
    if (err != DEVICE_OK)
       return err;
 
@@ -1109,7 +1113,11 @@ MMIIDCCamera::InitializeVideoModeDependentState()
    {
       shutter->SetAutoMode(false);
 
-      if (shutter->HasAbsoluteControl())
+      if (iidcCamera_->GetVendorAVT()->HasExtendedShutter())
+      {
+         LogMessage("Camera has AVT-specific extended shutter control; using");
+      }
+      else if (shutter->HasAbsoluteControl())
       {
          LogMessage("Camera allows shutter control in absolute units; enabling");
          shutter->SetAbsoluteControl(true);
@@ -1322,6 +1330,17 @@ MMIIDCCamera::VideoModeDidChange()
 void
 MMIIDCCamera::SetExposureImpl(double milliseconds)
 {
+   if (iidcCamera_->GetVendorAVT()->HasExtendedShutter())
+   {
+      uint32_t microseconds =
+         static_cast<uint32_t>(std::floor(1000.0 * milliseconds) + 0.5);
+      iidcCamera_->GetVendorAVT()->SetExtendedShutterUs(microseconds);
+      cachedExposure_ = GetExposureUncached();
+      return;
+   }
+
+   // Standard IIDC case
+
    boost::shared_ptr<IIDC::ShutterFeature> shutter = iidcCamera_->GetShutterFeature();
    if (!shutter->IsPresent() || !shutter->HasManualMode())
    {
@@ -1372,6 +1391,12 @@ MMIIDCCamera::SetExposureImpl(double milliseconds)
 double
 MMIIDCCamera::GetExposureUncached()
 {
+   if (iidcCamera_->GetVendorAVT()->HasExtendedShutter())
+   {
+      uint32_t microseconds = iidcCamera_->GetVendorAVT()->GetExtendedShutterUs();
+      return static_cast<double>(microseconds) / 1000.0;
+   }
+
    boost::shared_ptr<IIDC::ShutterFeature> shutter = iidcCamera_->GetShutterFeature();
    if (!shutter->IsPresent() || !shutter->IsReadable())
    {
@@ -1395,6 +1420,13 @@ MMIIDCCamera::GetExposureUncached()
 std::pair<double, double>
 MMIIDCCamera::GetExposureLimits()
 {
+   if (iidcCamera_->GetVendorAVT()->HasExtendedShutter())
+   {
+      return std::make_pair(
+            iidcCamera_->GetVendorAVT()->GetExtendedShutterMinUs() / 1000.0,
+            iidcCamera_->GetVendorAVT()->GetExtendedShutterMaxUs() / 1000.0);
+   }
+
    boost::shared_ptr<IIDC::ShutterFeature> shutter = iidcCamera_->GetShutterFeature();
    if (!shutter->IsPresent() || !shutter->HasManualMode())
    {

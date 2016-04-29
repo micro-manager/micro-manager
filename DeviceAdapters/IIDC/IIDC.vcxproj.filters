@@ -42,6 +42,9 @@
     <ClInclude Include="IIDCUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="IIDCVendorAVT.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="IIDCCapture.cpp">
@@ -63,6 +66,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="IIDCUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IIDCVendorAVT.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -21,6 +21,8 @@ libmmgr_dal_IIDC_la_SOURCES = \
 	IIDCUtils.h \
 	IIDCVideoMode.cpp \
 	IIDCVideoMode.h \
+	IIDCVendorAVT.cpp \
+	IIDCVendorAVT.h \
 	MMIIDCCamera.cpp \
 	MMIIDCCamera.h
 

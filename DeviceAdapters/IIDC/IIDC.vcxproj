@@ -143,6 +143,7 @@
     <ClInclude Include="IIDCFeature.h" />
     <ClInclude Include="IIDCInterface.h" />
     <ClInclude Include="IIDCUtils.h" />
+    <ClInclude Include="IIDCVendorAVT.h" />
     <ClInclude Include="IIDCVideoMode.h" />
     <ClInclude Include="MMIIDCCamera.h" />
   </ItemGroup>
@@ -152,6 +153,7 @@
     <ClCompile Include="IIDCFeature.cpp" />
     <ClCompile Include="IIDCInterface.cpp" />
     <ClCompile Include="IIDCUtils.cpp" />
+    <ClCompile Include="IIDCVendorAVT.cpp" />
     <ClCompile Include="IIDCVideoMode.cpp" />
     <ClCompile Include="MMIIDCCamera.cpp" />
   </ItemGroup>

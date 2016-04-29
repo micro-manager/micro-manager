@@ -22,6 +22,7 @@
 #include "IIDCError.h"
 #include "IIDCInterface.h"
 #include "IIDCUtils.h"
+#include "IIDCVendorAVT.h"
 #include "IIDCVideoMode.h"
 
 #include <boost/bind.hpp>
@@ -111,12 +112,16 @@ Camera::Camera(boost::shared_ptr<Interface> context, uint64_t guid, int unit)
    if (!osxCaptureRunLoop_)
       throw Error(err, "Cannot start OS X capture run loop");
 #endif // __APPLE__
+
+   vendorAVT_ = boost::make_shared<VendorAVT>(this);
 }
 
 
 Camera::~Camera()
 {
    StopCapture();
+
+   vendorAVT_.reset();
 
 #ifdef __APPLE__
    if (osxCaptureRunLoopThread_.joinable())

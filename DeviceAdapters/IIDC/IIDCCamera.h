@@ -46,6 +46,7 @@ namespace IIDC {
 class Capture;
 class Interface;
 class VideoMode;
+class VendorAVT;
 
 
 enum PixelFormat
@@ -80,6 +81,9 @@ private:
    FrameCallbackFunction captureFrameCallback_;
    boost::shared_ptr<Capture> currentCapture_;
    boost::unique_future<void> captureFuture_; // Note: boost::future in more recent versions
+
+   boost::shared_ptr<VendorAVT> vendorAVT_;
+   friend class VendorAVT;
 
 #ifdef __APPLE__
    boost::thread osxCaptureRunLoopThread_;
@@ -146,6 +150,11 @@ public:
    { return boost::make_shared<GainFeature>(shared_from_this(), libdc1394camera_); }
    boost::shared_ptr<FrameRateFeature> GetFrameRateFeature()
    { return boost::make_shared<FrameRateFeature>(shared_from_this(), libdc1394camera_); }
+
+   /*
+    * Vendor-specific features
+    */
+   boost::shared_ptr<VendorAVT> GetVendorAVT() { return vendorAVT_; }
 
    /*
     * Start a standard capture and stop after nrFrames have been retrieved. If
