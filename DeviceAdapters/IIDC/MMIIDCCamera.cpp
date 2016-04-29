@@ -635,8 +635,10 @@ MMIIDCCamera::GetImageBytesPerPixel() const
       switch (currentVideoMode_->GetPixelFormat())
       {
          case IIDC::PixelFormatGray8:
+         case IIDC::PixelFormatRaw8:
             return 1;
          case IIDC::PixelFormatGray16:
+         case IIDC::PixelFormatRaw16:
             return 2;
          case IIDC::PixelFormatYUV444:
          case IIDC::PixelFormatYUV422:
@@ -661,6 +663,8 @@ MMIIDCCamera::GetNumberOfComponents() const
       {
          case IIDC::PixelFormatGray8:
          case IIDC::PixelFormatGray16:
+         case IIDC::PixelFormatRaw8:
+         case IIDC::PixelFormatRaw16:
             return 1;
          case IIDC::PixelFormatYUV444:
          case IIDC::PixelFormatYUV422:
@@ -1210,6 +1214,8 @@ MMIIDCCamera::InitializeVideoMode()
          case IIDC::PixelFormatYUV422:
          case IIDC::PixelFormatYUV411:
          case IIDC::PixelFormatRGB8:
+         case IIDC::PixelFormatRaw8:
+         case IIDC::PixelFormatRaw16:
             videoModes_.push_back(mode);
             LogMessage("Video mode [" + mode->ToString() + "]: supported", true);
             break;
@@ -1677,10 +1683,12 @@ MMIIDCCamera::ProcessImage(const void* source, bool ownResultBuffer,
    switch (sourceFormat)
    {
       case IIDC::PixelFormatGray8:
+      case IIDC::PixelFormatRaw8:
          destBytesPerPixel = 1;
          break;
 
       case IIDC::PixelFormatGray16:
+      case IIDC::PixelFormatRaw16:
          destBytesPerPixel = 2;
          break;
 

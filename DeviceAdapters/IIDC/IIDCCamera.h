@@ -58,6 +58,8 @@ enum PixelFormat
    PixelFormatYUV422,
    PixelFormatYUV411,
    PixelFormatRGB8,
+   PixelFormatRaw8,
+   PixelFormatRaw16,
 };
 
 

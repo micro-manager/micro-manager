@@ -413,8 +413,10 @@ Camera::GetBitsPerSample()
       case DC1394_COLOR_CODING_YUV422:
       case DC1394_COLOR_CODING_YUV411:
       case DC1394_COLOR_CODING_RGB8:
+      case DC1394_COLOR_CODING_RAW8:
          return 8;
       case DC1394_COLOR_CODING_MONO16:
+      case DC1394_COLOR_CODING_RAW16:
          {
             uint32_t depth;
             dc1394error_t err;

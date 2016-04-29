@@ -36,6 +36,8 @@ PixelFormatForLibDC1394ColorCoding(dc1394color_coding_t coding)
       case DC1394_COLOR_CODING_YUV422: return PixelFormatYUV422;
       case DC1394_COLOR_CODING_YUV411: return PixelFormatYUV411;
       case DC1394_COLOR_CODING_RGB8: return PixelFormatRGB8;
+      case DC1394_COLOR_CODING_RAW8: return PixelFormatRaw8;
+      case DC1394_COLOR_CODING_RAW16: return PixelFormatRaw16;
       default: return PixelFormatUnsupported;
    }
 }
