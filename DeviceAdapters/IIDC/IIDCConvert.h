@@ -45,7 +45,8 @@ ConvertToRGB8(uint8_t* dst, const uint8_t* src, size_t width, size_t height,
       default:
          return;
    }
-   dc1394_convert_to_RGB8(const_cast<uint8_t*>(src), dst, width, height,
+   dc1394_convert_to_RGB8(const_cast<uint8_t*>(src), dst,
+         static_cast<uint32_t>(width), static_cast<uint32_t>(height),
          DC1394_BYTE_ORDER_UYVY, coding, 8);
 }
 

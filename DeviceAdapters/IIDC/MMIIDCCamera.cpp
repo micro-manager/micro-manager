@@ -707,17 +707,17 @@ MMIIDCCamera::SetExposure(double milliseconds)
 static void
 ComputeHardROI(unsigned roiPos, unsigned roiSize, unsigned maxSize,
       unsigned posUnit, unsigned sizUnit,
-      size_t& hardPos, size_t& hardSize)
+      unsigned& hardPos, unsigned& hardSize)
 {
    // Right/lower-most hardware ROI position to contain desired ROI
-   size_t maxHardPos = posUnit * (roiPos / posUnit);
+   unsigned maxHardPos = posUnit * (roiPos / posUnit);
 
    hardSize = maxSize; // Initialize to be defensive
    bool ok = false;
    for (hardPos = maxHardPos; ; hardPos -= posUnit)
    {
       // Smallest width/height to contain desired ROI, given hardPos
-      size_t minHardSize = roiSize + roiPos - hardPos;
+      unsigned minHardSize = roiSize + roiPos - hardPos;
 
       hardSize = sizUnit * ((minHardSize - 1) / sizUnit + 1);
 
@@ -748,8 +748,8 @@ ComputeHardROI(unsigned roiPos, unsigned roiSize, unsigned maxSize,
 int
 MMIIDCCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
-   size_t maxWidth = currentVideoMode_->GetMaxWidth();
-   size_t maxHeight = currentVideoMode_->GetMaxHeight();
+   unsigned maxWidth = currentVideoMode_->GetMaxWidth();
+   unsigned maxHeight = currentVideoMode_->GetMaxHeight();
 
    if (x + xSize > maxWidth)
       return AdHocErrorCode("ROI exceeds allowed maximum size");
@@ -773,7 +773,7 @@ MMIIDCCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
    }
    CATCH_AND_RETURN_ERROR
 
-   size_t hardLeft, hardTop, hardWidth, hardHeight;
+   unsigned hardLeft, hardTop, hardWidth, hardHeight;
    ComputeHardROI(roiLeft_, roiWidth_, maxWidth,
          posUnitH, sizUnitH,
          hardLeft, hardWidth);

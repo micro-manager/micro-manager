@@ -67,9 +67,9 @@ class MMIIDCCamera : public CCameraBase<MMIIDCCamera>
     * (implemented in this device adapter), so that we can always set the ROI
     * at 1-pixel resolution.
     */
-   size_t roiLeft_, roiTop_; // As presented to MMCore
-   size_t roiWidth_, roiHeight_; // As presented to MMCore
-   size_t softROILeft_, softROITop_; // Relative to hard ROI
+   unsigned roiLeft_, roiTop_; // As presented to MMCore
+   unsigned roiWidth_, roiHeight_; // As presented to MMCore
+   unsigned softROILeft_, softROITop_; // Relative to hard ROI
 
    /*
     * Keep snapped image in our own buffer
