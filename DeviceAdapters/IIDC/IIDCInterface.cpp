@@ -313,6 +313,9 @@ Camera::~Camera()
 #ifdef __APPLE__
    if (osxCaptureRunLoopThread_.joinable())
    {
+      CFRunLoopRemoveTimer(osxCaptureRunLoop_, osxDummyRunLoopTimer_,
+            kCFRunLoopCommonModes);
+      CFRelease(osxDummyRunLoopTimer_);
       CFRunLoopStop(osxCaptureRunLoop_);
       osxCaptureRunLoopThread_.join();
    }
@@ -855,6 +858,9 @@ Camera::HandleCapturedFrame(dc1394video_frame_t* frame)
 
 
 #ifdef __APPLE__
+
+static void DummyTimerCallback(CFRunLoopTimerRef timer, void* info) { }
+
 void
 Camera::OSXCaptureRunLoop(Camera* self)
 {
@@ -880,10 +886,23 @@ Camera::OSXCaptureRunLoop(Camera* self)
             dc1394_log_debug("[mm] Started OS X capture run loop on this thread");
          });
 
+   // We also need to add either a run loop source or timer, because the run
+   // loop automatically exits once all sources and timers are removed. We use
+   // a timer since it's much easier to create.
+   CFRunLoopTimerContext context = { 0, NULL, NULL, NULL, NULL };
+   // Schedule the timer to never fire in practice
+   self->osxDummyRunLoopTimer_ = CFRunLoopTimerCreate(kCFAllocatorDefault,
+         60 * 60 * 24 * 365.24 * 1000, // Fire date (seconds since Jan 1, 2001)
+         60 * 60 * 24, // Interval (seconds)
+         0, 0, DummyTimerCallback, &context);
+   CFRunLoopAddTimer(self->osxCaptureRunLoop_, self->osxDummyRunLoopTimer_,
+         kCFRunLoopCommonModes);
+
    CFRunLoopRun();
 
    dc1394_log_debug("[mm] Exiting OS X capture run loop");
 }
+
 #endif // __APPLE__
 
 } // namespace IIDC

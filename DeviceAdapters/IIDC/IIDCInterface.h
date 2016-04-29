@@ -109,6 +109,7 @@ private:
    boost::thread osxCaptureRunLoopThread_;
    boost::barrier osxCaptureRunLoopStartBarrier_;
    CFRunLoopRef osxCaptureRunLoop_;
+   CFRunLoopTimerRef osxDummyRunLoopTimer_;
 #endif
 
 public:
