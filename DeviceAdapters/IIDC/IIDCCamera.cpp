@@ -140,7 +140,7 @@ Camera::~Camera()
       err = dc1394_camera_set_power(libdc1394camera_, DC1394_OFF);
       if (err != DC1394_SUCCESS)
       {
-         // TODO Log
+         dc1394_log_warning("[mm] Failed to switch off camera power");
       }
    }
 
