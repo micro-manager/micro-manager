@@ -61,11 +61,17 @@ FrameRetriever::Run()
       // deliver images for the current settings. Once we've got the first frame,
       // we can be reasonably confident that subsequent frames will follow, so we
       // switch to the more efficient blocking method.
+      // However, we avoid this on Windows because the POLL policy does not
+      // appear to work with the CMU driver (tested with AVT Pike F421, PCIe
+      // FireWire card with LSI/Agere FW643 chipset, Microsoft Legacy OHCI driver,
+      // Windows 7 64-bit).
+#ifndef _WIN32
       if (!requestedFrames_ || retrievedFrames_ < requestedFrames_)
       {
          dc1394_log_debug("[mm] Polling for the first frame");
          RetrieveFrame(firstFrameTimeoutMs_, 1);
       }
+#endif
 
       dc1394_log_debug("[mm] Using the WAIT policy to retrieve any remaining frames");
       while (!requestedFrames_ || retrievedFrames_ < requestedFrames_)
