@@ -398,6 +398,8 @@ MMIIDCCamera::Initialize()
       else
          iidcCamera_ = hub_->GetCameraByID(cameraID);
 
+      LogMessage(("Camera info from libdc1394:\n" + iidcCamera_->GetInfoDump()).c_str(), true);
+
       iidcCamera_->Enable1394B(opMode == MMIIDC_Property_PreInit1394Mode_1394B);
       iidcCamera_->SetIsoSpeed(isoSpeed);
 

@@ -384,6 +384,49 @@ Camera::Get1394NodeAndGeneration()
 }
 
 
+std::string
+Camera::GetInfoDump() const
+{
+   FILE* tmpf = tmpfile();
+   if (!tmpf)
+      return "CANNOT OPEN TEMPFILE";
+
+   dc1394error_t err;
+   err = dc1394_camera_print_info(libdc1394camera_, tmpf);
+   if (err != DC1394_SUCCESS)
+   {
+      fprintf(tmpf, "%s\n", Error(err, "Cannot print camera info").what());
+   }
+
+   dc1394featureset_t features;
+   err = dc1394_feature_get_all(libdc1394camera_, &features);
+   if (err != DC1394_SUCCESS)
+   {
+      fprintf(tmpf, "%s\n", Error(err, "Cannot get camera features").what());
+   }
+   else
+   {
+      err = dc1394_feature_print_all(&features, tmpf);
+      if (err != DC1394_SUCCESS)
+      {
+         fprintf(tmpf, "%s\n", Error(err, "Cannot print camera features").what());
+      }
+   }
+
+   long bytes = ftell(tmpf);
+   char* buf = static_cast<char*>(calloc(bytes + 1, 1));
+
+   rewind(tmpf);
+   fread(buf, 1, bytes, tmpf);
+   fclose(tmpf);
+
+   std::string text(buf);
+   free(buf);
+
+   return text;
+}
+
+
 void
 Camera::Enable1394B(bool flag)
 {

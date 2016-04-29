@@ -133,6 +133,8 @@ public:
 
    std::pair<uint32_t, uint32_t> Get1394NodeAndGeneration();
 
+   std::string GetInfoDump() const;
+
    void Enable1394B(bool flag);
    bool Is1394BEnabled();
    void SetIsoSpeed(unsigned nominalMbps); // E.g. 400 or 800.
