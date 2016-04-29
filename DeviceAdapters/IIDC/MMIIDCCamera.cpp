@@ -412,7 +412,13 @@ MMIIDCCamera::MMIIDCCamera() :
    AddAllowedValue(MMIIDC_Property_PreInit1394Mode, MMIIDC_Property_PreInit1394Mode_1394A);
    AddAllowedValue(MMIIDC_Property_PreInit1394Mode, MMIIDC_Property_PreInit1394Mode_1394B);
 
-   CreateStringProperty(MMIIDC_Property_PreInitIsoSpeed, MMIIDC_Property_PreInitIsoSpeed_800,
+   CreateStringProperty(MMIIDC_Property_PreInitIsoSpeed,
+#ifdef _WIN32
+         // 800 Mbps does not appear to work on Windows (CMU driver)
+         MMIIDC_Property_PreInitIsoSpeed_400,
+#else
+         MMIIDC_Property_PreInitIsoSpeed_800,
+#endif
          false, 0, true);
    AddAllowedValue(MMIIDC_Property_PreInitIsoSpeed, MMIIDC_Property_PreInitIsoSpeed_100, 100);
    AddAllowedValue(MMIIDC_Property_PreInitIsoSpeed, MMIIDC_Property_PreInitIsoSpeed_200, 200);
