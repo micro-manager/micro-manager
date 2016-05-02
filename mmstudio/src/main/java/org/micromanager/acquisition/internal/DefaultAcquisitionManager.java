@@ -290,6 +290,7 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
          .ijType(ijType)
          .pixelType(pixelType)
          .receivedTime(formatter_.format(new Date()))
+         .pixelSizeUm(studio_.core().getPixelSizeUm())
          .uuid(UUID.randomUUID());
       try {
          double x = studio_.core().getXYStagePosition().x;
