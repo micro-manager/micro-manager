@@ -52,9 +52,9 @@ public class FrameProcessor extends Processor {
          channelsToAvoid_ = convertToList(channelsToAvoidString);
       }
 
-      log_.logMessage("FrameProcessor : Algorithm applied on stack image is " + processorAlgo_);
-      log_.logMessage("FrameProcessor : Number of frames to process " + Integer.toString(numerOfImagesToProcess));
-      log_.logMessage("FrameProcessor : Channels avoided are " + channelsToAvoid_.toString() + " (during MDA)");
+//      log_.logMessage("FrameProcessor : Algorithm applied on stack image is " + processorAlgo_);
+//      log_.logMessage("FrameProcessor : Number of frames to process " + Integer.toString(numerOfImagesToProcess));
+//      log_.logMessage("FrameProcessor : Channels avoided are " + channelsToAvoid_.toString() + " (during MDA)");
 
       // Initialize a hashmap of all combinations of the different acquisitions
       // Each index will be a combination of Z, Channel and StagePosition

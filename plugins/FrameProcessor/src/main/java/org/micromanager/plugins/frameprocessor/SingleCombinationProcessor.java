@@ -1,7 +1,5 @@
 package org.micromanager.plugins.frameprocessor;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.micromanager.LogManager;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
@@ -77,7 +75,7 @@ public class SingleCombinationProcessor {
             // Process last `numerOfImagesToProcess_` images
             processBufferImages();
          } catch (Exception ex) {
-            Logger.getLogger(FrameProcessor.class.getName()).log(Level.SEVERE, null, ex);
+            log_.logError(ex);
          }
 
          // Clean buffered images

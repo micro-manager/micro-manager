@@ -20,7 +20,7 @@ public class FrameProcessorFactory implements ProcessorFactory {
 
    @Override
    public Processor createProcessor() {
-      log_.logMessage("FrameProcessor : Create FrameProcessorProcessor");
+      // log_.logMessage("FrameProcessor : Create FrameProcessorProcessor");
       return new FrameProcessor(studio_,
               settings_.getString("processorAlgo", FrameProcessorPlugin.PROCESSOR_ALGO_MEAN),
               settings_.getInt("numerOfImagesToProcess", 10),
