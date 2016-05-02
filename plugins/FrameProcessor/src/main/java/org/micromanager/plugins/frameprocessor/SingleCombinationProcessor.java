@@ -16,7 +16,7 @@ public class SingleCombinationProcessor {
    private final LogManager log_;
 
    private final Coords coords_;
-   private Image processedImage;
+   private Image processedImage_;
 
    private final String processorAlgo_;
    private final int numerOfImagesToProcess_;
@@ -25,10 +25,10 @@ public class SingleCombinationProcessor {
    private final boolean processCombinations_;
    private final boolean isAnyChannelToAvoid_;
 
-   private int current_frame_index;
-   private int processed_frame_index;
-   private Image[] bufferImages;
-   private int currentBufferIndex;
+   private int current_frame_index_;
+   private int processed_frame_index_;
+   private Image[] bufferImages_;
+   private int currentBufferIndex_;
 
    public SingleCombinationProcessor(Coords coords, Studio studio, String processorAlgo,
            int numerOfImagesToProcess, boolean processCombinations, boolean isAnyChannelToAvoid) {
@@ -43,15 +43,15 @@ public class SingleCombinationProcessor {
       processCombinations_ = processCombinations;
       isAnyChannelToAvoid_ = isAnyChannelToAvoid;
 
-      current_frame_index = 0;
-      processed_frame_index = 0;
-      bufferImages = new Image[numerOfImagesToProcess_];
+      current_frame_index_ = 0;
+      processed_frame_index_ = 0;
+      bufferImages_ = new Image[numerOfImagesToProcess_];
 
       for (int i = 0; i < numerOfImagesToProcess_; i++) {
-         bufferImages[i] = null;
+         bufferImages_[i] = null;
       }
 
-      processedImage = null;
+      processedImage_ = null;
 
    }
 
@@ -68,10 +68,10 @@ public class SingleCombinationProcessor {
          return;
       }
 
-      currentBufferIndex = current_frame_index % numerOfImagesToProcess_;
-      bufferImages[currentBufferIndex] = image;
+      currentBufferIndex_ = current_frame_index_ % numerOfImagesToProcess_;
+      bufferImages_[currentBufferIndex_] = image;
 
-      if (currentBufferIndex == (numerOfImagesToProcess_ - 1)) {
+      if (currentBufferIndex_ == (numerOfImagesToProcess_ - 1)) {
 
          try {
             // Process last `numerOfImagesToProcess_` images
@@ -82,11 +82,11 @@ public class SingleCombinationProcessor {
 
          // Clean buffered images
          for (int i = 0; i < numerOfImagesToProcess_; i++) {
-            bufferImages[i] = null;
+            bufferImages_[i] = null;
          }
 
          // Add metadata to the processed image
-         Metadata metadata = processedImage.getMetadata();
+         Metadata metadata = processedImage_.getMetadata();
          PropertyMap userData = metadata.getUserData();
          if (userData != null) {
             userData = userData.copy().putBoolean("FrameProcessed", true).build();
@@ -94,32 +94,32 @@ public class SingleCombinationProcessor {
             userData = userData.copy().putInt("FrameProcessed-StackNumber", numerOfImagesToProcess_).build();
             metadata = metadata.copy().userData(userData).build();
          }
-         processedImage = processedImage.copyWithMetadata(metadata);
+         processedImage_ = processedImage_.copyWithMetadata(metadata);
 
          // Add correct metadata if in acquisition mode
          if (studio_.acquisitions().isAcquisitionRunning() && !isAnyChannelToAvoid_) {
-            Coords.CoordsBuilder builder = processedImage.getCoords().copy();
-            builder.time(processed_frame_index);
-            processedImage = processedImage.copyAtCoords(builder.build());
-            processed_frame_index += 1;
+            Coords.CoordsBuilder builder = processedImage_.getCoords().copy();
+            builder.time(processed_frame_index_);
+            processedImage_ = processedImage_.copyAtCoords(builder.build());
+            processed_frame_index_ += 1;
          }
 
          // Output processed image
-         context.outputImage(processedImage);
+         context.outputImage(processedImage_);
 
          // Clean processed image
-         processedImage = null;
+         processedImage_ = null;
       }
 
-      current_frame_index += 1;
+      current_frame_index_ += 1;
 
    }
 
    public void clear() {
       for (int i = 0; i < numerOfImagesToProcess_; i++) {
-         bufferImages[i] = null;
+         bufferImages_[i] = null;
       }
-      bufferImages = null;
+      bufferImages_ = null;
    }
 
    public void processBufferImages() throws Exception {
@@ -141,7 +141,7 @@ public class SingleCombinationProcessor {
    public void meanProcessImages(boolean onlySum) {
 
       // Could be moved outside processImage() ?
-      Image img = bufferImages[0];
+      Image img = bufferImages_[0];
       int bitDepth = img.getMetadata().getBitDepth();
       int width = img.getWidth();
       int height = img.getHeight();
@@ -162,7 +162,7 @@ public class SingleCombinationProcessor {
          for (int i = 0; i < numerOfImagesToProcess_; i++) {
 
             // Get current frame pixels
-            img = bufferImages[i];
+            img = bufferImages_[i];
             byte[] imgPixels = (byte[]) img.getRawPixels();
 
             // Iterate over all pixels
@@ -192,7 +192,7 @@ public class SingleCombinationProcessor {
          for (int i = 0; i < numerOfImagesToProcess_; i++) {
 
             // Get current frame pixels
-            img = bufferImages[i];
+            img = bufferImages_[i];
             short[] imgPixels = (short[]) img.getRawPixels();
 
             // Iterate over all pixels
@@ -215,7 +215,7 @@ public class SingleCombinationProcessor {
       }
 
       // Create the processed image
-      processedImage = studio_.data().createImage(resultPixels, width, height,
+      processedImage_ = studio_.data().createImage(resultPixels, width, height,
               bytesPerPixel, numComponents, coords, metadata);
 
    }
@@ -223,7 +223,7 @@ public class SingleCombinationProcessor {
    public void extremaProcessImages(String extremaType) throws Exception {
 
       // Could be moved outside processImage() ?
-      Image img = bufferImages[0];
+      Image img = bufferImages_[0];
       int bitDepth = img.getMetadata().getBitDepth();
       int width = img.getWidth();
       int height = img.getHeight();
@@ -260,7 +260,7 @@ public class SingleCombinationProcessor {
          for (int i = 0; i < numerOfImagesToProcess_; i++) {
 
             // Get current frame pixels
-            img = bufferImages[i];
+            img = bufferImages_[i];
             short[] imgPixels = (short[]) img.getRawPixels();
 
             // Iterate over all pixels
@@ -311,7 +311,7 @@ public class SingleCombinationProcessor {
          for (int i = 0; i < numerOfImagesToProcess_; i++) {
 
             // Get current frame pixels
-            img = bufferImages[i];
+            img = bufferImages_[i];
             short[] imgPixels = (short[]) img.getRawPixels();
 
             // Iterate over all pixels
@@ -339,7 +339,7 @@ public class SingleCombinationProcessor {
       }
 
       // Create the processed image
-      processedImage = studio_.data().createImage(resultPixels, width, height,
+      processedImage_ = studio_.data().createImage(resultPixels, width, height,
               bytesPerPixel, numComponents, coords, metadata);
 
    }

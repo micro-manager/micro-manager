@@ -28,9 +28,9 @@ public class FrameProcessor extends Processor {
    private final boolean enableDuringLive_;
    private final List<Integer> channelsToAvoid_;
 
-   private int newIntendedTime;
+   private int newIntendedTime_;
 
-   private HashMap<Coords, SingleCombinationProcessor> singleAquisitions;
+   private HashMap<Coords, SingleCombinationProcessor> singleAquisitions_;
 
    public FrameProcessor(Studio studio, String processorAlgo,
            int numerOfImagesToProcess, boolean enableDuringAcquisition,
@@ -58,7 +58,7 @@ public class FrameProcessor extends Processor {
 
       // Initialize a hashmap of all combinations of the different acquisitions
       // Each index will be a combination of Z, Channel and StagePosition
-      singleAquisitions = new HashMap();
+      singleAquisitions_ = new HashMap();
 
    }
 
@@ -75,7 +75,7 @@ public class FrameProcessor extends Processor {
 
       // If this coordinates index does not exist in singleAquisitions hasmap, create it
       SingleCombinationProcessor singleAcquProc;
-      if (!singleAquisitions.containsKey(coords)) {
+      if (!singleAquisitions_.containsKey(coords)) {
 
          // Check whether this combinations of coords are allowed to be processed
          boolean processCombinations = true;
@@ -85,9 +85,9 @@ public class FrameProcessor extends Processor {
 
          singleAcquProc = new SingleCombinationProcessor(coords, studio_, processorAlgo_,
                  numerOfImagesToProcess_, processCombinations, !channelsToAvoid_.isEmpty());
-         singleAquisitions.put(coords, singleAcquProc);
+         singleAquisitions_.put(coords, singleAcquProc);
       } else {
-         singleAcquProc = singleAquisitions.get(coords);
+         singleAcquProc = singleAquisitions_.get(coords);
       }
 
       // This method will output the processed image if needed
@@ -100,11 +100,11 @@ public class FrameProcessor extends Processor {
       if (studio_.acquisitions().isAcquisitionRunning()) {
 
          // Calculate new number of times
-         newIntendedTime = (int) (summary.getIntendedDimensions().getTime() / numerOfImagesToProcess_);
+         newIntendedTime_ = (int) (summary.getIntendedDimensions().getTime() / numerOfImagesToProcess_);
 
          Coords.CoordsBuilder coordsBuilder = summary.getIntendedDimensions().copy();
          SummaryMetadata.SummaryMetadataBuilder builder = summary.copy();
-         builder.intendedDimensions(coordsBuilder.time(newIntendedTime).build());
+         builder.intendedDimensions(coordsBuilder.time(newIntendedTime_).build());
 
          return builder.build();
       } else {
@@ -125,11 +125,11 @@ public class FrameProcessor extends Processor {
    @Override
    public void cleanup(ProcessorContext context) {
 
-      for (Map.Entry<Coords, SingleCombinationProcessor> entry : singleAquisitions.entrySet()) {
+      for (Map.Entry<Coords, SingleCombinationProcessor> entry : singleAquisitions_.entrySet()) {
          entry.getValue().clear();
-         singleAquisitions.put(entry.getKey(), null);
+         singleAquisitions_.put(entry.getKey(), null);
       }
-      singleAquisitions = null;
+      singleAquisitions_ = null;
 
    }
 
