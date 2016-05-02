@@ -28,6 +28,9 @@ public class FrameProcessor extends Processor {
    private final boolean enableDuringLive_;
    private final List<Integer> channelsToAvoid_;
 
+   private boolean imageNotProcessedFirstTime_ = true;
+   private boolean imageCanBeProcessed_ = true;
+
    private int newIntendedTime_;
 
    private HashMap<Coords, SingleCombinationProcessor> singleAquisitions_;
@@ -55,7 +58,6 @@ public class FrameProcessor extends Processor {
 //      log_.logMessage("FrameProcessor : Algorithm applied on stack image is " + processorAlgo_);
 //      log_.logMessage("FrameProcessor : Number of frames to process " + Integer.toString(numerOfImagesToProcess));
 //      log_.logMessage("FrameProcessor : Channels avoided are " + channelsToAvoid_.toString() + " (during MDA)");
-
       // Initialize a hashmap of all combinations of the different acquisitions
       // Each index will be a combination of Z, Channel and StagePosition
       singleAquisitions_ = new HashMap();
@@ -65,7 +67,7 @@ public class FrameProcessor extends Processor {
    @Override
    public void processImage(Image image, ProcessorContext context) {
 
-      if (!isProcessorEnable()) {
+      if (!isProcessorEnable() || !imageGoodToProcess(image)) {
          context.outputImage(image);
          return;
       }
@@ -120,6 +122,26 @@ public class FrameProcessor extends Processor {
       }
 
       return true;
+   }
+
+   /**
+    * Check if the image can be processed or not.
+    *
+    * @param image the image to process.
+    * @return
+    */
+   public boolean imageGoodToProcess(Image image) {
+
+      if (imageNotProcessedFirstTime_ && (image.getBytesPerPixel() > 2 || image.getNumComponents() > 1)) {
+
+         if (imageNotProcessedFirstTime_) {
+            log_.showError("This type of image cannot be processed by FrameProcessor.");
+            imageNotProcessedFirstTime_ = false;
+            imageCanBeProcessed_ = false;
+         }
+
+         return false;
+      } else return imageCanBeProcessed_;
    }
 
    @Override
