@@ -97,7 +97,7 @@ public class FrameProcessor extends Processor {
    @Override
    public SummaryMetadata processSummaryMetadata(SummaryMetadata summary) {
 
-      if (studio_.acquisitions().isAcquisitionRunning()) {
+      if (summary.getIntendedDimensions() != null) {
 
          // Calculate new number of times
          newIntendedTime_ = (int) (summary.getIntendedDimensions().getTime() / numerOfImagesToProcess_);
