@@ -1,0 +1,3 @@
+<project name="FrameProcessor" default="jar">
+	<import file="../javapluginbuild.xml"/>
+</project>
