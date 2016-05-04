@@ -23,9 +23,17 @@
 #include <dc1394/dc1394.h>
 
 #ifdef __APPLE__
-// For libdc1394 2.2.1; header changes to dc1394/macosx.h in 2.2.2
+// TODO Auto-detect the libdc1394 version if possible
+#if 1
+// libdc1394 2.2.1
+#include <mach/mach.h>
+#include <CoreFoundation/CoreFoundation.h>
 #include <dc1394/macosx/capture.h>
+#else
+// libdc1394 2.2.2
+#include <dc1394/macosx.h>
 #endif
+#endif // __APPLE__
 
 #ifdef _MSC_VER
 #undef restrict
