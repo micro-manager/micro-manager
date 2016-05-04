@@ -52,6 +52,7 @@ public:
    int OnRefreshProperties    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnIntensity            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnState                (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnCurrentLimit         (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    bool open_;       // true when LED turned on
