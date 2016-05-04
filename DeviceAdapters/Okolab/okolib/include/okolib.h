@@ -70,6 +70,9 @@
  *
  * @tableofcontents
  *
+ * @section v092 0.9.2
+ * - FIXED DEMO mode bug, modifying okolib.demo template
+ *
  * @section v091 0.9.1
  * - FIXED possible memory access error in @ref oko_LibGetLastError
  *
