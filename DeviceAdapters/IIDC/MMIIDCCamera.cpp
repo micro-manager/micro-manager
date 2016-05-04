@@ -1797,9 +1797,9 @@ MMIIDCCamera::ProcessImage(const void* source, bool ownResultBuffer,
          bufferConvertedTo32Bit.reset(dest);
       }
 
-      // On OS X we seem to get BGR images out of libdc1394 (seen with iSight
-      // YUV formats and AVT YUV or RGB formats), so handle BGR-to-RGB at the
-      // same time. TODO: Confirm on other OSs.
+      // We seem to get BGR images out of libdc1394 (seen with iSight YUV
+      // formats on OS X; AVT YUV or RGB formats on OS X and Windows), so
+      // handle BGR-to-RGB at the same time.
       BGR24ToRGB32(dest, pixels, destWidth * destHeight);
       pixels = dest;
    }
