@@ -23,7 +23,8 @@
 #include <dc1394/dc1394.h>
 
 #ifdef __APPLE__
-#include <dc1394/macosx.h>
+// For libdc1394 2.2.1; header changes to dc1394/macosx.h in 2.2.2
+#include <dc1394/macosx/capture.h>
 #endif
 
 #ifdef _MSC_VER
