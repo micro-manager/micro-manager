@@ -60,25 +60,32 @@ public class CoreEventCallback extends MMEventCallback {
       // TODO: remove test once acquisition engine is fully multithreaded
       if (engine_ != null && engine_.isAcquisitionRunning()) {
          core_.logMessage("Notification from MMCore ignored because acquistion is running!", true);
-      } else {
-         if (ignorePropertyChanges_) {
-            core_.logMessage("Notification from MMCore ignored since the system is still loading", true);
-         } else {
-            core_.updateSystemStateCache();
-            // update all registered listeners 
-            for (MMListenerInterface mmIntf : MMListeners_) {
-               mmIntf.propertiesChangedAlert();
-            }
-            core_.logMessage("Notification from MMCore!", true);
-         }
+         return;
+      }
+      if (ignorePropertyChanges_) {
+         core_.logMessage("Notification from MMCore ignored since the system is still loading", true);
+         return;
+      }
+
+      core_.updateSystemStateCache();
+
+      core_.logMessage("Notification from MMCore!", true);
+      for (MMListenerInterface mmIntf : MMListeners_) {
+         mmIntf.propertiesChangedAlert();
       }
    }
 
    @Override
    public void onPropertyChanged(String deviceName, String propName, String propValue) {
+      if (ignorePropertyChanges_) {
+         core_.logMessage("Notification for Device: " + deviceName +
+               " Property: " + propName + " changed to value: " + propValue +
+               " ignored since the system is still loading", true);
+         return;
+      }
+
       core_.logMessage("Notification for Device: " + deviceName + " Property: " +
             propName + " changed to value: " + propValue, true);
-      // update all registered listeners
       for (MMListenerInterface mmIntf:MMListeners_) {
          mmIntf.propertyChangedAlert(deviceName, propName, propValue);
       }
