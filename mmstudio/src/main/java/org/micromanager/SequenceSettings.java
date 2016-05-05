@@ -30,8 +30,8 @@ import org.micromanager.internal.utils.ChannelSpec;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+
 public class SequenceSettings {
-   
    // version ID for the sequence settings
    public static final double Version = 1.0;
 
@@ -123,19 +123,49 @@ public class SequenceSettings {
     */
    public int cameraTimeout = 20000;
 
+   /**
+    * Create a copy of this SequenceSettings. All parameters will be copied,
+    * with new objects being created as necessary (i.e. this is a deep copy).
+    * @return Copy of this SequenceSettings.
+    */
+   public SequenceSettings copy() {
+      SequenceSettings result = new SequenceSettings();
+      result.cameraTimeout = cameraTimeout;
+      result.channelGroup = channelGroup;
+      result.channels = channels == null ? null : new ArrayList<ChannelSpec>(channels);
+      result.comment = comment;
+      result.customIntervalsMs = customIntervalsMs == null ? null : new ArrayList<Double>(customIntervalsMs);
+      result.intervalMs = intervalMs;
+      result.keepShutterOpenSlices = keepShutterOpenSlices;
+      result.keepShutterOpenChannels = keepShutterOpenChannels;
+      result.numFrames = numFrames;
+      result.prefix = prefix;
+      result.relativeZSlice = relativeZSlice;
+      result.root = root;
+      result.save = save;
+      result.skipAutofocusCount = skipAutofocusCount;
+      result.slices = slices == null ? null : new ArrayList<Double>(slices);
+      result.slicesFirst = slicesFirst;
+      result.timeFirst = timeFirst;
+      result.useAutofocus = useAutofocus;
+      result.useCustomIntervals = useCustomIntervals;
+      result.usePositionList = usePositionList;
+      result.zReference = zReference;
+      return result;
+   }
+
    public static String toJSONStream(SequenceSettings settings) {
       Gson gson = new GsonBuilder().setPrettyPrinting().create();
-      return gson.toJson(settings);      
+      return gson.toJson(settings);
    }
-   
+
    public static SequenceSettings fromJSONStream(String stream) {
       Gson gson = new Gson();
       return gson.fromJson(stream, SequenceSettings.class);
    }
-   
+
    // test serialization
    public synchronized static void main(String[] args) {
-      
       // encode
       SequenceSettings s = new SequenceSettings();
       String channelGroup = "Channel";
