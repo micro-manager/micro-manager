@@ -21,6 +21,7 @@
 
 package org.micromanager.acquisition;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.micromanager.data.Datastore;
@@ -92,13 +93,29 @@ public interface AcquisitionManager {
    public Datastore runAcquisition(String name, String root) throws MMScriptException;
 
    /**
-    * Loads setting for Acquisition Dialog from file
-    * Will open Acquisition Dialog when it is not open yet
-    * @param path file path from which setting for acquisition dialog should
-    * be loaded
+    * Load a file containing a SequenceSettings object, and apply the settings
+    * found in it to the Multi-D Acquisition (MDA) dialog. Will open the
+    * dialog if it is not currently open.
+    * @param path File path to the SequenceSettings object.
     * @throws MMScriptException
     */
    public void loadAcquisition(String path) throws MMScriptException;
+
+   /**
+    * Load a SequenceSettings file and return the SequenceSettings object. The
+    * settings will *not* be applied to the Multi-D Acquisition dialog.
+    * @param path File path to the SequenceSettings object.
+    * @throws IOException if there was an error reading the file.
+    */
+   public SequenceSettings loadSequenceSettings(String path) throws IOException;
+
+   /**
+    * Save the provided SequenceSettings object to disk at the specified path.
+    * @param settings SequenceSettings object to save.
+    * @param path Path to save the SequenceSettings to.
+    * @throws IOException if there was an error writing the file to disk.
+    */
+   public void saveSequenceSettings(SequenceSettings settings, String path) throws IOException;
 
    /**
     * Returns true when an acquisition is currently running (note: this
@@ -140,7 +157,8 @@ public interface AcquisitionManager {
    public void clearRunnables();
 
    /**
-    * Return current acquisition settings
+    * Return current acquisition settings as shown in the Multi-D Acquisition
+    * dialog.
     * @return acquisition settings instance
     */
    public SequenceSettings getAcquisitionSettings();

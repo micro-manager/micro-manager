@@ -18,8 +18,17 @@
 //
 package org.micromanager.acquisition.internal;
 
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
+
 import ij.ImagePlus;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
@@ -171,6 +180,27 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
          }
       } catch (MMScriptException ex) {
          throw new MMScriptException(ex.getMessage());
+      }
+   }
+
+   @Override
+   public SequenceSettings loadSequenceSettings(String path) throws IOException {
+      return SequenceSettings.fromJSONStream(
+            Files.toString(new File(path), Charsets.UTF_8));
+   }
+
+   public void saveSequenceSettings(SequenceSettings settings, String path) throws IOException {
+      File file = new File(path);
+      FileWriter writer = null;
+      try {
+         writer = new FileWriter(file);
+         writer.write(SequenceSettings.toJSONStream(settings));
+         writer.close();
+      }
+      finally {
+         if (writer != null) {
+            writer.close();
+         }
       }
    }
 
