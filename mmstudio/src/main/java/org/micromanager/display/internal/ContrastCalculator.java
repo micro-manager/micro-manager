@@ -502,9 +502,13 @@ public class ContrastCalculator {
       if (shouldStdDev == null) {
          shouldStdDev = false;
       }
+      Boolean shouldScaleWithROI = settings.getShouldScaleWithROI();
+      if (shouldScaleWithROI == null) {
+         shouldScaleWithROI = true;
+      }
       // We use the bit depth as the bin power, so that each individual
       // intensity gets its own bin.
       return calculateHistogram(image, plus, component, bitDepth, bitDepth,
-            percentage, shouldStdDev, settings.getShouldScaleWithROI());
+            percentage, shouldStdDev, shouldScaleWithROI);
    }
 }
