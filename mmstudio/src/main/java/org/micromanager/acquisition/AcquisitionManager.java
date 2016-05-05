@@ -98,9 +98,9 @@ public interface AcquisitionManager {
     * found in it to the Multi-D Acquisition (MDA) dialog. Will open the
     * dialog if it is not currently open.
     * @param path File path to the SequenceSettings object.
-    * @throws MMScriptException
+    * @throws IOException if the sequence settings cannot be loaded.
     */
-   public void loadAcquisition(String path) throws MMScriptException;
+   public void loadAcquisition(String path) throws IOException;
 
    /**
     * Load a SequenceSettings file and return the SequenceSettings object. The

@@ -30,6 +30,7 @@ import java.awt.Insets;
 import java.awt.Frame;
 
 import java.io.File;
+import java.io.IOException;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -134,6 +135,9 @@ public class SavedMDAButton extends WidgetPlugin implements SciJavaPlugin {
             try {
                studio_.acquisitions().loadAcquisition(path);
                studio_.acquisitions().runAcquisition();
+            }
+            catch (IOException e) {
+               studio_.logs().showError(e, "Error loading settings from " + path);
             }
             catch (MMScriptException e) {
                studio_.logs().showError(e, "Unable to run acquisition");

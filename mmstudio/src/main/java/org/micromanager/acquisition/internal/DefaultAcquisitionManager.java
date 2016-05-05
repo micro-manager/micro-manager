@@ -169,17 +169,20 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
     * @throws MMScriptException 
     */
    @Override
-   public void loadAcquisition(String path) throws MMScriptException {
-      ((MMStudio) studio_).testForAbortRequests();
+   public void loadAcquisition(String path) throws IOException {
       try {
-         engine_.shutdown();
+         ((MMStudio) studio_).testForAbortRequests();
+      }
+      catch (MMScriptException e) {
+         // We do not in practice expect this to happen, hence why it isn't
+         // raised to the user.
+         studio_.logs().logError(e, "Error testing for abort");
+      }
+      engine_.shutdown();
 
-         // load protocol
-         if (mdaDialog_ != null) {
-            mdaDialog_.loadAcqSettingsFromFile(path);
-         }
-      } catch (MMScriptException ex) {
-         throw new MMScriptException(ex.getMessage());
+      // load protocol
+      if (mdaDialog_ != null) {
+         mdaDialog_.loadAcqSettingsFromFile(path);
       }
    }
 

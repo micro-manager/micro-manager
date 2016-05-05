@@ -46,7 +46,7 @@ import mmcorej.CMMCore;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.acquisition.internal.AcquisitionEngine;
+import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.display.internal.RememberedChannelSettings;
@@ -70,6 +70,7 @@ import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TooltipTextMaker;
+import org.micromanager.SequenceSettings;
 
 /**
  * Time-lapse, channel and z-stack acquisition setup dialog.
@@ -105,7 +106,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    private JFormattedTextField zStep_;
    private JFormattedTextField zTop_;
    private JFormattedTextField zBottom_;
-   private AcquisitionEngine acqEng_;
+   private AcquisitionWrapperEngine acqEng_;
    private JScrollPane channelTablePane_;
    private JTable channelTable_;
    private JSpinner numFrames_;
@@ -908,7 +909,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
     * @param acqEng - acquisition engine
     * @param gui - ScriptINterface
     */
-   public AcqControlDlg(AcquisitionEngine acqEng, MMStudio gui) {
+   public AcqControlDlg(AcquisitionWrapperEngine acqEng, MMStudio gui) {
       super("acquisition configuration dialog");
 
       studio_ = gui;
@@ -1393,43 +1394,48 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       if (f != null) {
          try {
             loadAcqSettingsFromFile(f.getAbsolutePath());
-         } catch (MMScriptException ex) {
-            ReportingUtils.showError("Failed to load Acquisition setting file");
+         }
+         catch (IOException ex) {
+            ReportingUtils.showError(ex, "Failed to load Acquisition setting file");
          }
       }
    }
 
-   public void loadAcqSettingsFromFile(String path) throws MMScriptException {
+   public void loadAcqSettingsFromFile(String path) throws IOException {
       acqFile_ = new File(path);
-      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      final SequenceSettings settings = studio_.acquisitions().loadSequenceSettings(path);
       try {
-         profile.appendFile(path);
-         loadAcqSettings();
          GUIUtils.invokeAndWait(new Runnable() {
             @Override
             public void run() {
+               acqEng_.setSequenceSettings(settings);
                updateGUIContents();
+               acqDir_ = acqFile_.getParent();
+               if (acqDir_ != null) {
+                  studio_.profile().setString(
+                     this.getClass(), ACQ_FILE_DIR, acqDir_);
+               }
             }
          });
-         acqDir_ = acqFile_.getParent();
-         if (acqDir_ != null) {
-            profile.setString(this.getClass(), ACQ_FILE_DIR, acqDir_);
-         }
-      } catch (InterruptedException e) {
-         throw new MMScriptException (e);
-      } catch (InvocationTargetException e) {
-         throw new MMScriptException (e);
+      }
+      catch (InterruptedException e) {
+         ReportingUtils.logError(e, "Interrupted while updating GUI");
+      }
+      catch (InvocationTargetException e) {
+         ReportingUtils.logError(e, "Error updating GUI");
       }
    }
-   
+
    protected boolean saveAsAcqSettingsToFile() {
       saveAcqSettings();
-      File f = FileDialogs.save(this, "Save the acquisition settings file", ACQ_SETTINGS_FILE);
-      if (f != null) {
+      File file = FileDialogs.save(this, "Save the acquisition settings file", ACQ_SETTINGS_FILE);
+      if (file != null) {
          try {
-            DefaultUserProfile.getInstance().exportProfileSubsetToFile(
-                  this.getClass(), f.getAbsolutePath());
-         } catch (IOException e) {
+            SequenceSettings settings = acqEng_.getSequenceSettings();
+            studio_.acquisitions().saveSequenceSettings(settings,
+                  file.getAbsolutePath());
+         }
+         catch (IOException e) {
             ReportingUtils.showError(e);
             return false;
          }
