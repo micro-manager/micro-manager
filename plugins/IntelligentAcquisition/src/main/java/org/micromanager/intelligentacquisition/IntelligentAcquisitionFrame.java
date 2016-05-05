@@ -22,6 +22,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import java.io.File;
+import java.io.IOException;
 import java.text.ParseException;
 import mmcorej.CMMCore;
 
@@ -604,7 +605,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
             try {
                acqFileNameB_ = acqTextField2_.getText();
                gui_.acquisitions().loadAcquisition(acqFileNameB_);
-            } catch (MMScriptException ex) {
+            } catch (IOException ex) {
                gui_.logs().showError("Unable to load Imaging Acquisition Settings. "
                        + "Please select a valid file and try again");
                return;
@@ -614,11 +615,11 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
             try {
                acqFileNameA_ = acqTextField1_.getText();
                gui_.acquisitions().loadAcquisition(acqFileNameA_);
-            } catch (MMScriptException ex) {
+            } catch (IOException ex) {
                try {
                   acqSettingsButton1_ActionPerformed(null);
                   gui_.acquisitions().loadAcquisition(acqFileNameA_);
-               } catch (MMScriptException ex1) {
+               } catch (IOException ex1) {
                   gui_.logs().showError(ex1, "Failed to load exploration acquisition settings");
                   return;
                }
