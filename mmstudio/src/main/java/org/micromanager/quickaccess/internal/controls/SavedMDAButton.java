@@ -47,6 +47,7 @@ import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMScriptException;
+import org.micromanager.internal.utils.TextUtils;
 
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
@@ -99,7 +100,8 @@ public class SavedMDAButton extends WidgetPlugin implements SciJavaPlugin {
    public JComponent createControl(PropertyMap config) {
       final File file = new File(config.getString("settingsPath", ""));
       // Size it to mostly fill its frame.
-      JButton result = new JButton(file.getName(),
+      JButton result = new JButton(
+            TextUtils.truncateFilename(file.getName(), 15),
             studio_.quickAccess().getCustomIcon(config,
                IconLoader.getIcon("/org/micromanager/icons/film_file.png"))) {
          @Override

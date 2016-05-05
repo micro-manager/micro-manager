@@ -46,6 +46,7 @@ import org.micromanager.Studio;
 import org.micromanager.internal.script.ScriptPanel;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.TextUtils;
 
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
@@ -99,8 +100,9 @@ public class ScriptButton extends WidgetPlugin implements SciJavaPlugin {
       final File file = new File(config.getString("scriptPath", ""));
       Icon icon = studio_.quickAccess().getCustomIcon(config,
             IconLoader.getIcon("/org/micromanager/icons/file.png"));
+      String name = TextUtils.truncateFilename(file.getName(), 15);
       // Size it to mostly fill its frame.
-      JButton result = new JButton(file.getName(), icon) {
+      JButton result = new JButton(name, icon) {
          @Override
          public Dimension getPreferredSize() {
             return QuickAccessPlugin.getPaddedCellSize();
