@@ -129,6 +129,7 @@ public class DefaultPipeline implements Pipeline {
       amHalting_ = true;
       if (contexts_.size() == 0) {
          // Automatically done waiting.
+         isHalted_ = true;
          return;
       }
       // Flush the pipeline, so we know that there aren't any more images ready
