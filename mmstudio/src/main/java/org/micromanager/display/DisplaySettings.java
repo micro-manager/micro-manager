@@ -362,7 +362,7 @@ public interface DisplaySettings {
    public Boolean getShouldAutostretch();
    
    /**
-    * Whether each newly-displayed image should use the pixels inside the ROI to scale the contrast.
+    * Whether histogram calculations should use only the pixels in the current ROI.
     * @return True if ROI should be used
     */
    public Boolean getShouldScaleWithROI();
