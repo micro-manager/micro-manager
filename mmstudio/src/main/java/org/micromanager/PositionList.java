@@ -46,7 +46,7 @@ import org.micromanager.internal.utils.MMSerializationException;
  * Navigation list of positions for the XYStage.
  * Used for multi site acquisition support.
  */
-public class PositionList {
+public class PositionList implements Iterable<MultiStagePosition> {
    private final ArrayList<MultiStagePosition> positions_;
    private final static String ID = "Micro-Manager XY-position list";
    private final static String ID_KEY = "ID";
@@ -422,6 +422,41 @@ public class PositionList {
          throw new MMException(e.getMessage());
       }
       notifyChangeListeners();
-   }   
+   }
+
+   @Override
+   public Iterator<MultiStagePosition> iterator() {
+      return new PosListIterator(this);
+   }
+
+   /**
+    * Provides an iterator for a PositionList. The remove() method is not
+    * implemented. You can access this iterator by calling the iterator()
+    * method of PositionList, or by trying to iterator over it.
+    */
+   public static class PosListIterator implements Iterator<MultiStagePosition> {
+      private PositionList list_;
+      private int index_ = 0;
+      public PosListIterator(PositionList list) {
+         list_ = list;
+      }
+
+      @Override
+      public boolean hasNext() {
+         return index_ < list_.getNumberOfPositions();
+      }
+
+      @Override
+      public MultiStagePosition next() {
+         MultiStagePosition result = list_.getPosition(index_);
+         index_++;
+         return result;
+      }
+
+      @Override
+      public void remove() {
+         // Not implemented.
+      }
+   }
 }
 
