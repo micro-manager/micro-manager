@@ -182,6 +182,7 @@ public interface DisplaySettings {
       DisplaySettingsBuilder histogramUpdateRate(Double histogramUpdateRate);
       DisplaySettingsBuilder shouldSyncChannels(Boolean shouldSyncChannels);
       DisplaySettingsBuilder shouldAutostretch(Boolean shouldAutostretch);
+      DisplaySettingsBuilder shouldScaleWithROI(Boolean shouldScaleWithROI);
       DisplaySettingsBuilder extremaPercentage(Double extremaPercentage);
       DisplaySettingsBuilder bitDepthIndices(Integer[] bitDepthIndices);
       DisplaySettingsBuilder shouldUseLogScale(Boolean shouldUseLogScale);
@@ -359,6 +360,12 @@ public interface DisplaySettings {
     * @return True if new images should be auto-stretched
     */
    public Boolean getShouldAutostretch();
+   
+   /**
+    * Whether each newly-displayed image should use the pixels inside the ROI to scale the contrast.
+    * @return True if ROI should be used
+    */
+   public Boolean getShouldScaleWithROI();
 
    /**
     * The percentage of values off the top and bottom of the image's value

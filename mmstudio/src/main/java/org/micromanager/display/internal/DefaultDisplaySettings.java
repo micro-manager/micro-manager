@@ -57,6 +57,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    private static final String MAGNIFICATION = "magnification";
    private static final String SHOULD_SYNC_CHANNELS = "shouldSyncChannels";
    private static final String SHOULD_AUTOSTRETCH = "shouldAutostretch";
+   private static final String SHOULD_SCALE_WITH_ROI = "shouldScaleWithROI";
    private static final String EXTREMA_PERCENTAGE = "extremaPercentage";
    private static final String BIT_DEPTH_INDICES = "bitDepthIndices";
    private static final String SHOULD_USE_LOG_SCALE = "shouldUseLogScale";
@@ -104,6 +105,9 @@ public class DefaultDisplaySettings implements DisplaySettings {
       builder.shouldAutostretch(profile.getBoolean(
             DefaultDisplaySettings.class,
                key + SHOULD_AUTOSTRETCH, true));
+      builder.shouldScaleWithROI(profile.getBoolean(
+            DefaultDisplaySettings.class,
+               key + SHOULD_SCALE_WITH_ROI, true));
       builder.extremaPercentage(profile.getDouble(
             DefaultDisplaySettings.class,
                key + EXTREMA_PERCENTAGE, 0.0));
@@ -146,6 +150,8 @@ public class DefaultDisplaySettings implements DisplaySettings {
             key + SHOULD_SYNC_CHANNELS, settings.getShouldSyncChannels());
       profile.setBoolean(DefaultDisplaySettings.class,
             key + SHOULD_AUTOSTRETCH, settings.getShouldAutostretch());
+      profile.setBoolean(DefaultDisplaySettings.class,
+            key + SHOULD_SCALE_WITH_ROI, settings.getShouldScaleWithROI());
       profile.setDouble(DefaultDisplaySettings.class,
             key + EXTREMA_PERCENTAGE, settings.getExtremaPercentage());
       profile.setIntArray(DefaultDisplaySettings.class,
@@ -343,6 +349,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       private Double histogramUpdateRate_ = null;
       private Boolean shouldSyncChannels_ = null;
       private Boolean shouldAutostretch_ = null;
+      private Boolean shouldScaleWithROI_ = null;
       private Double extremaPercentage_ = null;
       private Integer[] bitDepthIndices_ = null;
       private Boolean shouldUseLogScale_ = null;
@@ -444,6 +451,12 @@ public class DefaultDisplaySettings implements DisplaySettings {
          shouldAutostretch_ = shouldAutostretch;
          return this;
       }
+      
+      @Override
+      public DisplaySettingsBuilder shouldScaleWithROI(Boolean shouldScaleWithROI) {
+         shouldScaleWithROI_ = shouldScaleWithROI;
+         return this;
+      }
 
       @Override
       public DisplaySettingsBuilder extremaPercentage(Double extremaPercentage) {
@@ -484,6 +497,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
    private Double histogramUpdateRate_ = null;
    private Boolean shouldSyncChannels_ = null;
    private Boolean shouldAutostretch_ = null;
+   private Boolean shouldScaleWithROI_ = null;
    private Double extremaPercentage_ = null;
    private Integer[] bitDepthIndices_ = null;
    private Boolean shouldUseLogScale_ = null;
@@ -499,6 +513,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
       histogramUpdateRate_ = builder.histogramUpdateRate_;
       shouldSyncChannels_ = builder.shouldSyncChannels_;
       shouldAutostretch_ = builder.shouldAutostretch_;
+      shouldScaleWithROI_ = builder.shouldScaleWithROI_;
       extremaPercentage_ = builder.extremaPercentage_;
       bitDepthIndices_ = builder.bitDepthIndices_;
       shouldUseLogScale_ = builder.shouldUseLogScale_;
@@ -610,6 +625,11 @@ public class DefaultDisplaySettings implements DisplaySettings {
    public Boolean getShouldAutostretch() {
       return shouldAutostretch_;
    }
+   
+   @Override
+   public Boolean getShouldScaleWithROI() {
+      return shouldScaleWithROI_;
+   }
 
    @Override
    public Double getExtremaPercentage() {
@@ -658,6 +678,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
             .histogramUpdateRate(histogramUpdateRate_)
             .shouldSyncChannels(shouldSyncChannels_)
             .shouldAutostretch(shouldAutostretch_)
+            .shouldScaleWithROI(shouldScaleWithROI_)
             .extremaPercentage(extremaPercentage_)
             .bitDepthIndices(bitDepthIndices_)
             .shouldUseLogScale(shouldUseLogScale_)
@@ -741,6 +762,9 @@ public class DefaultDisplaySettings implements DisplaySettings {
          }
          if (tags.has(SHOULD_AUTOSTRETCH)) {
             builder.shouldAutostretch(tags.getBoolean(SHOULD_AUTOSTRETCH));
+         }
+         if (tags.has(SHOULD_SCALE_WITH_ROI)) {
+            builder.shouldScaleWithROI(tags.getBoolean(SHOULD_SCALE_WITH_ROI));
          }
          if (tags.has(EXTREMA_PERCENTAGE)) {
             builder.extremaPercentage(tags.getDouble(EXTREMA_PERCENTAGE));
@@ -888,6 +912,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
          result.put(HISTOGRAM_UPDATE_RATE, histogramUpdateRate_);
          result.put(SHOULD_SYNC_CHANNELS, shouldSyncChannels_);
          result.put(SHOULD_AUTOSTRETCH, shouldAutostretch_);
+         result.put(SHOULD_SCALE_WITH_ROI, shouldScaleWithROI_);
          result.put(EXTREMA_PERCENTAGE, extremaPercentage_);
          if (bitDepthIndices_ != null && bitDepthIndices_.length > 0) {
             JSONArray indices = new JSONArray();
