@@ -77,6 +77,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    protected JSONObject summaryMetadata_;
    private ArrayList<AcqSettingsListener> settingsListeners_;
    private Datastore curStore_;
+   private Pipeline curPipeline_;
 
    public AcquisitionWrapperEngine() {
       useCustomIntervals_ = false;
@@ -153,6 +154,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
                  summaryMetadata_, acquisitionSettings.save, this,
                  shouldShow);
          curStore_ = acq.getDatastore();
+         curPipeline_ = acq.getPipeline();
          if (shouldShow) {
             new StatusDisplay(studio_, curStore_);
          }
@@ -162,7 +164,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
          // Start pumping images through the pipeline and into the datastore.
          DefaultTaggedImageSink sink = new DefaultTaggedImageSink(
-                 engineOutputQueue, acq.getPipeline(), curStore_, this);
+                 engineOutputQueue, curPipeline_, curStore_, this);
          sink.start(new Runnable() {
             @Override
             public void run() {
@@ -480,8 +482,11 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 //// State Queries /////////////////////////////////////////////////////
    @Override
    public boolean isAcquisitionRunning() {
+      // Even after the acquisition finishes, if the pipeline is still "live",
+      // we should consider the acquisition to be running.
       if (acquisitionEngine2010_ != null) {
-         return acquisitionEngine2010_.isRunning();
+         return (acquisitionEngine2010_.isRunning() ||
+               !curPipeline_.isHalted());
       } else {
          return false;
       }

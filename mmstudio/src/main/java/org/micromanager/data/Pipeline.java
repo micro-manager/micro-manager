@@ -113,6 +113,13 @@ public interface Pipeline {
    public void halt();
 
    /**
+    * Returns true if the pipeline has been halted (that is, its halt() method
+    * has been executed to completion), false otherwise. If this method
+    * returns true, then the pipeline cannot generate any more images.
+    */
+   public boolean isHalted();
+
+   /**
     * Return a list containing any exceptions that have occurred during
     * processing of images. If this list has any elements in it, then calls
     * to insertImage() will provoke a PipelineErrorException.

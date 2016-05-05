@@ -42,6 +42,7 @@ public class DefaultPipeline implements Pipeline {
    private Datastore store_;
    private boolean isSynchronous_;
    private boolean haveInsertedImages_ = false;
+   private boolean amHalting_ = false;
    private boolean isHalted_ = false;
    private boolean isFlushComplete_ = false;
    private ArrayList<Exception> exceptions_;
@@ -71,7 +72,7 @@ public class DefaultPipeline implements Pipeline {
 
    @Override
    public void insertSummaryMetadata(SummaryMetadata summary) throws DatastoreFrozenException, DatastoreRewriteException, PipelineErrorException {
-      if (isHalted_) {
+      if (amHalting_) {
          throw new PipelineErrorException("Attempted to pass summary metadata through pipeline after it has been halted.");
       }
       else if (haveInsertedImages_) {
@@ -88,7 +89,7 @@ public class DefaultPipeline implements Pipeline {
 
    @Override
    public synchronized void insertImage(Image image) throws DatastoreFrozenException, DatastoreRewriteException, PipelineErrorException {
-      if (isHalted_) {
+      if (amHalting_) {
          // Ignore it.
          return;
       }
@@ -125,7 +126,7 @@ public class DefaultPipeline implements Pipeline {
 
    @Override
    public synchronized void halt() {
-      isHalted_ = true;
+      amHalting_ = true;
       if (contexts_.size() == 0) {
          // Automatically done waiting.
          return;
@@ -145,6 +146,12 @@ public class DefaultPipeline implements Pipeline {
       catch (InterruptedException e) {
          ReportingUtils.logError("Interrupted while waiting for flush to complete.");
       }
+      isHalted_ = true;
+   }
+
+   @Override
+   public boolean isHalted() {
+      return isHalted_;
    }
 
    @Override

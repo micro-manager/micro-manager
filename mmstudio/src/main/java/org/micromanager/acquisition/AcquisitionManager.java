@@ -43,8 +43,9 @@ import org.micromanager.internal.utils.MMScriptException;
 public interface AcquisitionManager {
    /**
     * Executes Acquisition with settings as in the MDA dialog.
-    * Will open the Acquisition Dialog when it is not open yet
-    * Returns after Acquisition finishes
+    * Will open the Acquisition Dialog if it is not open yet.
+    * Returns after Acquisition finishes and the data processing pipeline has
+    * finished processing all images.
     * Note that this function should not be executed on the EDT (which is the
     * thread running the UI).
     * @return The Datastore containing the images from the acquisition.
