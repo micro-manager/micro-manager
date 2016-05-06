@@ -106,7 +106,7 @@ using namespace std;
  * (Keep the 3 numbers on one line to make it easier to look at diffs when
  * merging/rebasing.)
  */
-const int MMCore_versionMajor = 8, MMCore_versionMinor = 1, MMCore_versionPatch = 2;
+const int MMCore_versionMajor = 8, MMCore_versionMinor = 1, MMCore_versionPatch = 3;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -6344,15 +6344,22 @@ void CMMCore::loadSystemConfigurationImpl(const char* fileName) throw (CMMError)
 
    // file parsing finished, try to set startup configuration
    if (isConfigDefined(MM::g_CFGGroup_System, MM::g_CFGGroup_System_Startup))
+   {
+      // We need to build the system state cache once here because setConfig()
+      // can fail in certain cases otherwise.
+      waitForSystem();
+      updateSystemStateCache();
+
       this->setConfig(MM::g_CFGGroup_System, MM::g_CFGGroup_System_Startup);
+   }
 
    waitForSystem();
-
-   // update the system cache
    updateSystemStateCache();
 
    if (externalCallback_)
-         externalCallback_->onSystemConfigurationLoaded();
+   {
+      externalCallback_->onSystemConfigurationLoaded();
+   }
 }
 
 
