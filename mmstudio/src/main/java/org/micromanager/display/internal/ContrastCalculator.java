@@ -63,6 +63,7 @@ public class ContrastCalculator {
       private final double extremaPercentage_;
       private final int depthPower_;
       private final boolean shouldCalcStdDev_;
+      private final boolean shouldScaleWithROI_;
 
       private int minVal_;
       private int maxVal_;
@@ -72,7 +73,7 @@ public class ContrastCalculator {
 
       public InternalCalculator(Image image, ImagePlus plus, int component,
             int binPower, int depthPower, double extremaPercentage,
-            boolean shouldCalcStdDev) {
+            boolean shouldCalcStdDev, boolean shouldScaleWithROI) {
          width_ = image.getWidth();
          height_ = image.getHeight();
          bytesPerPixel_ = image.getBytesPerPixel();
@@ -81,6 +82,7 @@ public class ContrastCalculator {
          depthPower_ = depthPower;
          extremaPercentage_ = extremaPercentage;
          shouldCalcStdDev_ = shouldCalcStdDev;
+         shouldScaleWithROI_ = shouldScaleWithROI;
 
          minVal_ = Integer.MAX_VALUE;
          maxVal_ = Integer.MIN_VALUE;
@@ -97,7 +99,7 @@ public class ContrastCalculator {
          // Get ROI information. This consists of a rectangle containing the
          // ROI, and then, for non-rectangular ROIs, a pixel mask (fortunately
          // not a *bit* mask though; each byte is one pixel).
-         if (plus != null) {
+         if (plus != null && shouldScaleWithROI_) {
             if (plus.getMask() != null) {
                maskPixels_ = (byte[]) (plus.getMask().getPixels());
             }
@@ -479,9 +481,9 @@ public class ContrastCalculator {
     */
    public static HistogramData calculateHistogram(Image image,
          ImagePlus plus, int component, int binPower, int depthPower,
-         double extremaPercentage, boolean shouldCalcStdDev) {
+         double extremaPercentage, boolean shouldCalcStdDev, boolean shouldScaleWithROI) {
       return new InternalCalculator(image, plus, component, binPower,
-            depthPower, extremaPercentage, shouldCalcStdDev).calculate();
+            depthPower, extremaPercentage, shouldCalcStdDev, shouldScaleWithROI).calculate();
    }
 
    /**
@@ -500,9 +502,13 @@ public class ContrastCalculator {
       if (shouldStdDev == null) {
          shouldStdDev = false;
       }
+      Boolean shouldScaleWithROI = settings.getShouldScaleWithROI();
+      if (shouldScaleWithROI == null) {
+         shouldScaleWithROI = true;
+      }
       // We use the bit depth as the bin power, so that each individual
       // intensity gets its own bin.
       return calculateHistogram(image, plus, component, bitDepth, bitDepth,
-            percentage, shouldStdDev);
+            percentage, shouldStdDev, shouldScaleWithROI);
    }
 }

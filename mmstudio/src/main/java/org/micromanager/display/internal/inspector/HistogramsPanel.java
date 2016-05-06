@@ -95,6 +95,7 @@ public final class HistogramsPanel extends InspectorPanel {
    // histograms. Make this a static singleton, maybe?
    private final HashMap<DataViewer, ArrayList<ChannelControlPanel>> displayToPanels_;
    private JCheckBox shouldAutostretch_;
+   private JCheckBoxMenuItem shouldScaleWithROI;
    private JLabel extremaLabel_;
    private JSpinner extrema_;
    private JLabel percentLabel_;
@@ -200,7 +201,7 @@ public final class HistogramsPanel extends InspectorPanel {
       add(new JLabel("Color mode: "), "split 2, flowx, gapleft 15");
       ColorModeCombo colorModeCombo = new ColorModeCombo(viewer_);
       add(colorModeCombo, "align right");
-
+      
       boolean shouldAutostretchSetting = true;
       if (viewer_.getDisplaySettings().getShouldAutostretch() != null) {
          shouldAutostretchSetting = viewer_.getDisplaySettings().getShouldAutostretch();
@@ -246,6 +247,7 @@ public final class HistogramsPanel extends InspectorPanel {
             viewer_.setDisplaySettings(newSettings);
          }
       });
+      
    }
 
    private void setExtremaPercentage(JSpinner extrema) {
@@ -550,6 +552,26 @@ public final class HistogramsPanel extends InspectorPanel {
       updateRate.add(oncePerSec);
       updateRate.add(never);
       result.add(updateRate);
+      
+      boolean shouldScaleWithROISetting = true;
+      if (viewer_.getDisplaySettings().getShouldScaleWithROI() != null) {
+         shouldScaleWithROISetting = viewer_.getDisplaySettings().getShouldScaleWithROI();
+      }
+      
+      shouldScaleWithROI = new JCheckBoxMenuItem("Use ROI When Scaling");
+      shouldScaleWithROI.setSelected(shouldScaleWithROISetting);
+      shouldScaleWithROI.setToolTipText("Use the pixels inside the ROI to rescale the histograms.");
+      result.add(shouldScaleWithROI);
+      
+      shouldScaleWithROI.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            boolean newVal = shouldScaleWithROI.isSelected();
+            DisplaySettings newSettings = viewer_.getDisplaySettings()
+                  .copy().shouldScaleWithROI(newVal).build();
+            viewer_.setDisplaySettings(newSettings);
+         }
+      });
 
       return result;
    }

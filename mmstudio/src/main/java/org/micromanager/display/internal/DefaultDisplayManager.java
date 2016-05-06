@@ -192,8 +192,14 @@ public final class DefaultDisplayManager implements DisplayManager {
    public HistogramData calculateHistogram(Image image, int component,
          int binPower, int bitDepth, double extremaPercentage,
          boolean shouldCalcStdDev) {
+      
+      Boolean shouldScaleWithROI = getStandardDisplaySettings().getShouldScaleWithROI();
+      if (shouldScaleWithROI == null) {
+         shouldScaleWithROI = true;
+      }
+      
       return ContrastCalculator.calculateHistogram(image, null, component,
-            binPower, bitDepth, extremaPercentage, shouldCalcStdDev);
+            binPower, bitDepth, extremaPercentage, shouldCalcStdDev, shouldScaleWithROI);
    }
 
    @Override
