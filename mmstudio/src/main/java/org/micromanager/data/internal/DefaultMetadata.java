@@ -572,8 +572,28 @@ public class DefaultMetadata implements Metadata {
       }
       catch (JSONException e) {}
 
+      // There's three possible sources for this value:
+      // - When loading a previously-serialized DefaultMetadata, it stores any
+      //   camera property under "Camera"
+      // - The Acquisition Engine in multicamera setups stores the camera name
+      //   under "Camera"
+      // - The Acquisition Engine in single-camera setups stores "" under
+      //   "Camera", so we have to resort to the Core-Camera property instead.
+      // The Acquisition Engine function that does this is
+      // get-camera-channel-names.
+      // Note that our logic here makes it impossible to deserialize a
+      // DefaultMetadata which has a non-null Camera with value ""; it will
+      // end up being null.
       try {
-         builder.camera(tags.getString("Camera"));
+         String camera;
+         if (tags.has("Camera") &&
+               !tags.getString("Camera").contentEquals("")) {
+            camera = tags.getString("Camera");
+         }
+         else {
+            camera = tags.getString("Core-Camera");
+         }
+         builder.camera(camera);
       }
       catch (JSONException e) {}
 
