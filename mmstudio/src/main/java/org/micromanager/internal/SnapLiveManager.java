@@ -169,6 +169,17 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    }
 
    private void stopLiveMode() {
+      // Kill the grabber thread before we stop the sequence acquisition, to
+      // ensure we don't try to grab images while stopping the acquisition.
+      if (grabberThread_ != null) {
+         shouldStopGrabberThread_ = true;
+         try {
+            grabberThread_.join();
+         }
+         catch (InterruptedException e) {
+            ReportingUtils.logError(e, "Interrupted while waiting for grabber thread to end");
+         }
+      }
       try {
          if (core_.isSequenceRunning()) {
             core_.stopSequenceAcquisition();
@@ -179,15 +190,6 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          // again, after waiting 1s, with claims that the error was caused by
          // failing to close a shutter. I've left that out of this version.
          ReportingUtils.showError(e, "Failed to stop sequence acquisition. Double-check shutter status.");
-      }
-      if (grabberThread_ != null) {
-         shouldStopGrabberThread_ = true;
-         try {
-            grabberThread_.join();
-         }
-         catch (InterruptedException e) {
-            ReportingUtils.logError(e, "Interrupted while waiting for grabber thread to end");
-         }
       }
    }
 
