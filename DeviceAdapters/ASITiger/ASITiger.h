@@ -312,6 +312,8 @@ const char* const g_CRISPDitherErrorPropertyName = "Dither Error";
 const char* const g_CRISPLogAmpAGCPropertyName = "LogAmpAGC";
 const char* const g_CRISPNumberSkipsPropertyName = "Number of Skips";
 const char* const g_CRISPInFocusRangePropertyName = "In Focus Range(um)";
+const char* const g_CRISPOffsetPropertyName = "Lock Offset";
+const char* const g_CRISPSumPropertyName = "Sum";
 
 // ring buffer property names
 const char* const g_RB_DelayPropertyName = "RingBufferDelayBetweenPoints(ms)";

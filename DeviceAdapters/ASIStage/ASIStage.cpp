@@ -83,6 +83,8 @@ const char* g_CRISP_C = "Curve";
 const char* g_CRISP_B = "Balance";
 const char* g_CRISP_RFO = "Reset Focus Offset";
 const char* g_CRISP_S = "Save to Controller";
+const char* const g_CRISPOffsetPropertyName = "Lock Offset";
+const char* const g_CRISPSumPropertyName = "Sum";
 
 using namespace std;
 
@@ -3727,6 +3729,14 @@ int CRISP::Initialize()
    CreateProperty("Number of Averages", "1", MM::Integer, false, pAct);
    SetPropertyLimits("Number of Averages", 0, 10);
 
+   pAct = new CPropertyAction(this, &CRISP::OnOffset);
+   CreateProperty(g_CRISPOffsetPropertyName, "", MM::Integer, true, pAct);
+   UpdateProperty(g_CRISPOffsetPropertyName);
+
+   pAct = new CPropertyAction(this, &CRISP::OnSum);
+   CreateProperty(g_CRISPSumPropertyName, "", MM::Integer, true, pAct);
+   UpdateProperty(g_CRISPSumPropertyName);
+
    // not sure exactly when Gary made these firmware changes, but they were there by start of 2015
    if (compileDay_ >= ConvertDay(2015, 1, 1))
    {
@@ -3772,6 +3782,7 @@ int CRISP::Initialize()
       return ret;
    na_ = (double) val;
 
+   sum_=0;
    return DEVICE_OK;
 }
 
@@ -4399,14 +4410,31 @@ int CRISP::OnDitherError(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (ret != DEVICE_OK)
          return ret;
 
-      long val;
+     // long val;
       std::istringstream is(answer);
-      std::string tok;
+      std::string tok,tok2;
       for (int i=0; i <3; i++)
-         is >> tok;
-      std::istringstream s(tok);
-      s >> val;
-      pProp->Set(val);
+      {   
+		  if(i==1)
+		  {
+		  is>>tok2; //2nd "is" is sum 
+		  }
+		  is >> tok; //3rd "is" is error
+
+	  }
+
+     // std::istringstream s(tok);
+      //s >> val;
+      //pProp->Set(val);
+
+	  pProp->Set(tok.c_str());
+
+	  //std::istringstream s2(tok2);
+	 // s2 >> val;
+	  //sum_= val;
+
+	  sum_=atol(tok2.c_str());
+
    }
    return DEVICE_OK;
 }
@@ -4471,6 +4499,51 @@ int CRISP::OnInFocusRange(MM::PropertyBase* pProp, MM::ActionType eAct)
 
    return DEVICE_OK;
 }
+
+   
+int CRISP::OnSum(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+  if (eAct == MM::BeforeGet)
+   {
+     /*  std::string answer;
+      int ret = QueryCommand("EXTRA X?", answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      long val;
+      std::istringstream is(answer);
+      std::string tok;
+      for (int i=0; i <2; i++) //SUM is 2nd last number
+         is >> tok;
+      std::istringstream s(tok);
+      s >> val;
+      pProp->Set(val); */
+	// more efficient way, sum is retrived same time as dither error
+	   pProp->Set((long)sum_);
+
+
+   }
+   return DEVICE_OK;
+}
+
+int CRISP::OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      double numSkips;
+      //int ret = GetValue("LK Z?", numSkips);
+      
+	  int ret= GetOffset(numSkips);
+	  if (ret != DEVICE_OK)
+         return ret; 
+   
+	  if (!pProp->Set(numSkips))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+
+   return DEVICE_OK;
+}
+
 
 
 

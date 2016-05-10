@@ -9,9 +9,10 @@
 * First Draft
 * 2.01
 * Bugfix , Pause refresh during Log Cal to avoid getting error
-
+* 2.02
+* Shows Offset and Sum Values
  */
-package com.asiimaging.CRISPv2;//ASI_CRISP_V2;
+package com.asiimaging.CRISPv2;//ASI_CRISP_V2;//
 
 import mmcorej.CMMCore;
 import org.micromanager.api.MMPlugin;
@@ -74,7 +75,7 @@ public class ASI_CRISP_V2 implements org.micromanager.api.MMPlugin {
 
     @Override
     public String getVersion() {
-        return"2.0" ;
+        return"2.02" ;
                 }
 
     @Override
