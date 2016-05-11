@@ -149,7 +149,9 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       snapLiveManager_ = manager;
       snapLiveManager_.addLiveModeListener(this);
 
-      setTitle(MICRO_MANAGER_TITLE + " " + MMVersion.VERSION_STRING);
+      setTitle(String.format("%s %s (%s)",
+            MICRO_MANAGER_TITLE, MMVersion.VERSION_STRING,
+            studio_.profile().getProfileName()));
 
       JPanel contents = new JPanel();
       // Minimize insets.
@@ -574,7 +576,9 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    }
 
    public void updateTitle(String configFile) {
-      this.setTitle(MICRO_MANAGER_TITLE + " " + MMVersion.VERSION_STRING + " - " + configFile);
+      setTitle(String.format("%s %s - %s (%s)",
+            MICRO_MANAGER_TITLE, MMVersion.VERSION_STRING, configFile,
+            studio_.profile().getProfileName()));
    }
 
    public final void setExitStrategy(boolean closeOnExit) {
