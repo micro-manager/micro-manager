@@ -236,7 +236,7 @@ public class DaytimeNighttime {
     */
    public static String getBackgroundMode() {
       return DefaultUserProfile.getInstance().getString(DaytimeNighttime.class,
-            BACKGROUND_MODE, CompatibilityInterface.DAY);
+            BACKGROUND_MODE, CompatibilityInterface.NIGHT);
    }
 
    /**
