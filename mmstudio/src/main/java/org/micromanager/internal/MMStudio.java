@@ -59,6 +59,7 @@ import mmcorej.MMCoreJ;
 import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.acquisition.internal.DefaultAcquisitionManager;
 import org.micromanager.Album;
+import org.micromanager.AlertManager;
 import org.micromanager.Application;
 import org.micromanager.ApplicationSkin;
 import org.micromanager.AutofocusManager;
@@ -94,6 +95,8 @@ import org.micromanager.internal.hcwizard.MMConfigFileException;
 import org.micromanager.internal.hcwizard.MicroscopeModel;
 
 import org.micromanager.data.internal.DefaultDataManager;
+
+import org.micromanager.internal.alerts.DefaultAlertManager;
 
 import org.micromanager.internal.diagnostics.EDTHangLogger;
 
@@ -1672,6 +1675,16 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
    @Override
    public ApplicationSkin getApplicationSkin() {
       return skin();
+   }
+
+   @Override
+   public AlertManager alerts() {
+      return DefaultAlertManager.getInstance();
+   }
+
+   @Override
+   public AlertManager getAlertManager() {
+      return alerts();
    }
 
    @Override

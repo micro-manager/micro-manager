@@ -95,11 +95,24 @@ public interface Studio {
    public AcquisitionManager getAcquisitionManager();
 
    /**
+    * Provide access to the AlertManager, for creating low-profile, non-
+    * interrupting alerts in the user interface.
+    */
+   public AlertManager alerts();
+
+   /**
+    * Provide access to the AlertManager, for creating low-profile, non-
+    * interrupting alerts in the user interface. Identical to alerts() except
+    * in name.
+    */
+   public AlertManager getAlertManager();
+
+   /**
     * Provide access to the AutofocusManager, for performing autofocus
     * operations.
     */
    public AutofocusManager getAutofocusManager();
-   
+
    /**
     * Provides access to the Core and its functionality.
     * @return Micro-Manager core object. 
