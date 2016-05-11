@@ -116,9 +116,11 @@ public final class BeamSubPanel extends ListeningJPanel {
             Properties.Keys.SA_MODE_X, instanceLabel_, Prefs.Keys.EPI_SCAN_ENABLED);
       
       if (noSide) {
-         add(new JLabel("Path A:"));
-         add(beamABox_);
-         add(sheetABox_, "wrap");
+         if (!ASIdiSPIM.oSPIM) {
+            add(new JLabel("Path A:"));
+            add(beamABox_);
+            add(sheetABox_, "wrap");
+         }
          add(new JLabel("Path B:"));
          add(beamBBox_);
          add(sheetBBox_, "wrap");         
@@ -126,9 +128,11 @@ public final class BeamSubPanel extends ListeningJPanel {
          add(new JLabel("Excitation side:"));
          add(beamABox_);
          add(sheetABox_, "wrap");
-         add(new JLabel("Epi side:"));
-         add(beamBBox_);
-         add(sheetBBox_, "wrap");   
+         if (!ASIdiSPIM.oSPIM) {
+            add(new JLabel("Epi side:"));
+            add(beamBBox_);
+            add(sheetBBox_, "wrap");   
+         }
       }
       
       // mechanism to disable the sheetA/B boxes when beam is off and vice versa

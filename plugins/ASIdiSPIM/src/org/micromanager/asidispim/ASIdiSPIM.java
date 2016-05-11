@@ -29,10 +29,13 @@ import org.micromanager.api.ScriptInterface;
 
 
 public class ASIdiSPIM implements MMPlugin {
-   public final static String menuName = "ASI diSPIM";
-   public final static String tooltipDescription = "Control the ASI diSPIM";
+   
+   public static final boolean oSPIM = false;
+   
+   public final static String menuName = "ASI " + (oSPIM ? "oSPIM" : "diSPIM");
+   public final static String tooltipDescription = "Control the " + menuName;
    public final static Color borderColor = Color.gray;
-
+   
    private ScriptInterface gui_;
    private static ASIdiSPIMFrame myFrame_ = null;
 
@@ -73,12 +76,12 @@ public class ASIdiSPIM implements MMPlugin {
    @Override
    public void show() {
       @SuppressWarnings("unused")
-      String ig = "ASI diSPIM";
+      String ig = menuName;
    }
 
    @Override
    public String getInfo () {
-      return "ASI diSPIM";
+      return menuName;
    }
 
    @Override
@@ -88,11 +91,11 @@ public class ASIdiSPIM implements MMPlugin {
 
    @Override
    public String getVersion() {
-      return "0.2";
+      return "0.3";
    }
 
    @Override
    public String getCopyright() {
-      return "University of California and ASI, 2013";
+      return "University of California and Applied Scientific Instrumentation (ASI), 2013-2016";
    }
 }

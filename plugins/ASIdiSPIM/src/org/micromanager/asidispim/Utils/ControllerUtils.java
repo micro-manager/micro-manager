@@ -148,14 +148,20 @@ public class ControllerUtils {
             sliceDuration *= 2;
          }
          
-         final double requestedMotorSpeed = settings.stepSizeUm * Math.sqrt(2.) / sliceDuration / settings.numChannels;
+         // stage has to go faster than the slice spacing because viewing at an angle
+         // with diSPIM, angle is 45 degrees so go 1.4x faster
+         // with oSPIM, angle is 60 degrees so go 1.15x faster
+         final double speedFactor = ASIdiSPIM.oSPIM ? (2 / Math.sqrt(3.)) : Math.sqrt(2.);
+         
+         double requestedMotorSpeed = settings.stepSizeUm * speedFactor / sliceDuration / settings.numChannels;
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED, (float)requestedMotorSpeed);
          
          // ask for the actual speed and calculate the actual step size
          final double actualMotorSpeed = props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED);
-         final double actualStepSizeUm = actualMotorSpeed / Math.sqrt(2.) * sliceDuration * settings.numChannels;  
+         final double actualStepSizeUm = actualMotorSpeed / speedFactor * sliceDuration * settings.numChannels;  
          
-         final double scanDistance = settings.numSlices * actualStepSizeUm * Math.sqrt(2.);
+         final double scanDistance = settings.numSlices * actualStepSizeUm * speedFactor;
+         
          Point2D.Double posUm;
          try {
             posUm = core_.getXYStagePosition(devices_.getMMDevice(xyDevice));

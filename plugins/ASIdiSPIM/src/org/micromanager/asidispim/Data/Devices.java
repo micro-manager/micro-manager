@@ -92,13 +92,14 @@ public class Devices {
       // SOURCE_SPIM, SOURCE_LOWER,
       PLOGIC,
       TIGERCOMM,
+      UPPERHDRIVE, // horizontal drive for oSPIM head
       // ASGALVOA, ASGALVOB,
       // when adding new devices update Devices constructor, 
       // getDefaultDeviceData(), and Libraries enum
    };
    
    public final static Set<Devices.Keys> STAGES1D = EnumSet.of(
-         Devices.Keys.LOWERZDRIVE, Devices.Keys.UPPERZDRIVE,
+         Devices.Keys.LOWERZDRIVE, Devices.Keys.UPPERZDRIVE, Devices.Keys.UPPERHDRIVE,
          Devices.Keys.PIEZOA, Devices.Keys.PIEZOB);
    public final static Set<Devices.Keys> PIEZOS = EnumSet.of(
          Devices.Keys.PIEZOA, Devices.Keys.PIEZOB);
@@ -703,6 +704,9 @@ public class Devices {
       case UPPERZDRIVE:
          return new DeviceData(key, "SPIM Head Height",
                Sides.NONE, true);
+      case UPPERHDRIVE:
+         return new DeviceData(key, "SPIM Head Horzntl",
+               Sides.NONE, true);
          // case ASGALVOA: return new DeviceData(Keys.ASGALVOA,
          // "Anti-striping Micromirror", Sides.A, true);
          // case ASGALVOB: return new DeviceData(Keys.ASGALVOB,
@@ -765,6 +769,7 @@ public class Devices {
       deviceInfo_.put(Keys.UPPERZDRIVE, getDefaultDeviceData(Keys.UPPERZDRIVE));
       deviceInfo_.put(Keys.PLOGIC, getDefaultDeviceData(Keys.PLOGIC));
       deviceInfo_.put(Keys.TIGERCOMM, getDefaultDeviceData(Keys.TIGERCOMM));
+      deviceInfo_.put(Keys.UPPERHDRIVE, getDefaultDeviceData(Keys.UPPERHDRIVE));
       // deviceInfo_.put(Keys.SOURCE_SPIM,  getDefaultDeviceData(Keys.SOURCE_SPIM));
       // deviceInfo_.put(Keys.SOURCE_LOWER,  getDefaultDeviceData(Keys.SOURCE_LOWER));
       // deviceInfo_.put(Keys.ASGALVOA, getDefaultDeviceData(Keys.ASGALVOA));
