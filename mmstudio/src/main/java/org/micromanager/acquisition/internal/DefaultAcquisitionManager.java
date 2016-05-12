@@ -318,7 +318,7 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
          }
       }
 
-      Metadata.MetadataBuilder result = new DefaultMetadata.Builder()
+      Metadata.MetadataBuilder result = image.getMetadata().copy()
          .camera(camera)
          .ijType(ijType)
          .pixelType(pixelType)
