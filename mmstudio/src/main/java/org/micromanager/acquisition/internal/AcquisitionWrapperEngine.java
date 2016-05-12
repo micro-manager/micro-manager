@@ -71,6 +71,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private int afSkipInterval_;
    private boolean absoluteZ_;
    private int cameraTimeout_ = 20000;
+   private boolean shouldDisplayImages_ = true;
    private IAcquisitionEngine2010 acquisitionEngine2010_;
    private ArrayList<Double> customTimeIntervalsMs_;
    private boolean useCustomIntervals_;
@@ -149,7 +150,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
                  studio_.getAutofocusManager().getAutofocusMethod());
          summaryMetadata_ = getAcquisitionEngine2010().getSummaryMetadata();
 
-         boolean shouldShow = !AcqControlDlg.getShouldHideMDADisplay();
+         boolean shouldShow = acquisitionSettings.shouldDisplayImages;
          MMAcquisition acq = new MMAcquisition(studio_, "Acq",
                  summaryMetadata_, acquisitionSettings.save, this,
                  shouldShow);
@@ -349,6 +350,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       acquisitionSettings.comment = comment_;
       acquisitionSettings.usePositionList = this.useMultiPosition_;
       acquisitionSettings.cameraTimeout = this.cameraTimeout_;
+      acquisitionSettings.shouldDisplayImages = shouldDisplayImages_;
       return acquisitionSettings;
    }
 
@@ -425,6 +427,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       
       useMultiPosition_ = ss.usePositionList;
       cameraTimeout_ = ss.cameraTimeout;
+      shouldDisplayImages_ = ss.shouldDisplayImages;
    }
 
 //////////////////// Actions ///////////////////////////////////////////
@@ -744,12 +747,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    @Override
-   @Deprecated
-   public void setCameraConfig(String cfg) {
-      // do nothing
-   }
-
-   @Override
    public void setDirName(String text) {
       dirName_ = text;
    }
@@ -760,14 +757,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       settingsChanged();
    }
 
-   /*
-    * @deprecated
-    */
-    @Override
-    public boolean addChannel(String config, double exp, Boolean doZStack, double zOffset, ContrastSettings con8, ContrastSettings con16, int skip, Color c, boolean use) {
-        return addChannel(config, exp, doZStack, zOffset, con8, skip, c, use);
-    }
-    
    /**
     * Add new channel if the current state of the hardware permits.
     *
@@ -798,26 +787,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       }
    }
 
-   /**
-    * Add new channel if the current state of the hardware permits.
-    *
-    * @param config - configuration name
-    * @param exp
-    * @param zOffset
-    * @param c8
-    * @param c16
-    * @param skip
-    * @param c
-    * @return - true if successful
-    * @Deprecated
-    */
-   @Override
-   @Deprecated
-   public boolean addChannel(String config, double exp, double zOffset, 
-           ContrastSettings c8, ContrastSettings c16, int skip, Color c) {
-      return addChannel(config, exp, true, zOffset, c16, skip, c, true);
-   }
-
    @Override
    public void setSaveFiles(boolean selected) {
       saveFiles_ = selected;
@@ -829,20 +798,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    @Override
-   @Deprecated
-   public void setDisplayMode(int mode) {
-      //Ignore
-   }
-
-   @Override
    public int getAcqOrderMode() {
       return acqOrderMode_;
-   }
-
-   @Override
-   @Deprecated
-   public int getDisplayMode() {
-      return 0;
    }
 
    @Override
@@ -871,21 +828,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    @Override
-   @Deprecated
-   public void setSingleFrame(boolean selected) {
-      //Ignore
-   }
-
-   @Override
-   @Deprecated
-   public void setSingleWindow(boolean selected) {
-      //Ignore
-   }
-
-   @Override
-   @Deprecated
-   public String installAutofocusPlugin(String className) {
-      throw new UnsupportedOperationException("Not supported yet.");
+   public void setShouldDisplayImages(boolean shouldDisplay) {
+      shouldDisplayImages_ = shouldDisplay;
    }
 
    protected boolean enoughDiskSpace() {
@@ -989,15 +933,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          }
       }
       return false;
-   }
-
-   @Override
-   @Deprecated
-   public String[] getCameraConfigs() {
-      if (core_ == null) {
-         return new String[0];
-      }
-      return core_.getAvailableConfigs(cameraGroup_).toArray();
    }
 
    @Override

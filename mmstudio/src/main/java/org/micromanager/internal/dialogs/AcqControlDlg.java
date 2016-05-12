@@ -1254,6 +1254,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
          Color c = new Color(r, g, b);
          acqEng_.addChannel(name, exp, doZStack, zOffset, con, skip, c, use);
       }
+      acqEng_.setShouldDisplayImages(!getShouldHideMDADisplay());
 
       // Restore Column Width and Column order
       int columnCount = 7;
@@ -1849,6 +1850,8 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       acqEng_.setComment(commentTextArea_.getText());
 
       acqEng_.enableAutoFocus(afPanel_.isSelected());
+
+      acqEng_.setShouldDisplayImages(!getShouldHideMDADisplay());
 
       disableGUItoSettings_ = false;
       updateGUIContents();

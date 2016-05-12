@@ -318,13 +318,6 @@ public interface AcquisitionEngine {
     */
    public void setRootName(String absolutePath);
 
-
-   /**
-    * @deprecated
-    */
-   @Deprecated
-   public void setCameraConfig(String config);
-
    /**
     * Sets the name for the directory in which the images and data are
     * contained. Also known as the "prefix". This dir will be nested inside the root
@@ -337,31 +330,6 @@ public interface AcquisitionEngine {
     * Equivalent to the comment box in the Multi-Dimensional Acquisition setup window.
     */
    public void setComment(String text);
-
-   
-   /**
-    * @deprecated
-    */
-   @Deprecated
-   public boolean addChannel(String name, double exp, double offset, 
-           ContrastSettings s8, ContrastSettings s16, int skip, Color c);
-
-
-   /*
-    * Adds a channel to the acquisition settings.
-    * @param name - The name of the channel, matching a configuration preset in the channel group.
-    * @param exp - The exposure time for this channel
-    * @param doZStack - If false, then z stacks will be skipped for this channel
-    * @param offset - If nonzero, offsets z positions for this channel by the provided amount, in microns.
-    * @param s8 - Provides contrast settings for this channel for 8-bit images.
-    * @param s16 - Provides contrast settings for this channel for 16-bit images.
-    * @param skip - If nonzero, this channel is skipped for some frames.
-    * @param c - Provides the preferred color for this channel
-    * @param use - If false, this channel will not be included in the acquisition.
-    */
-   public boolean addChannel(String name, double exp, Boolean doZStack,
-           double offset, ContrastSettings s8, ContrastSettings s16, int skip, Color c,
-           boolean use);
 
    /*
     * Adds a channel to the acquisition settings.
@@ -391,18 +359,6 @@ public interface AcquisitionEngine {
     * to disk during acquisition.
     */
    public boolean getSaveFiles();
-
-   /**
-    * @deprecated
-    */
-   @Deprecated
-   public int getDisplayMode();
-
-   /**
-    * @deprecated
-    */
-   @Deprecated
-   public void setDisplayMode(int mode);
 
    /**
     * Returns the setting for the order of the four dimensions (P, T, C, Z).
@@ -440,36 +396,10 @@ public interface AcquisitionEngine {
     */
    public void setAfSkipInterval (int interval);
 
-   /*
-    * @deprecated
-    */
-   @Deprecated
-   public void setSingleFrame(boolean selected);
-
-   /*
-    * @deprecated
-    */
-   @Deprecated
-   public void setSingleWindow(boolean selected);
-
-   /*
-    * @deprecated
-    */
-   @Deprecated
-   public String installAutofocusPlugin(String className);
-   
    // utility
    public String getVerboseSummary();
 
-   
    public boolean isConfigAvailable(String config_);
-
-   /*
-    * @deprecated
-    * Returns available configurations for the camera group.
-    */
-   @Deprecated
-   public String[] getCameraConfigs();
 
    /*
     * Returns the available groups in Micro-Manager's configuration settings.
@@ -533,4 +463,6 @@ public interface AcquisitionEngine {
    public void removeSettingsListener(AcqSettingsListener listener);
    
    public boolean getZAbsoluteMode();
+
+   public void setShouldDisplayImages(boolean shouldDisplay);
 }
