@@ -25,6 +25,7 @@ import com.bulenkov.iconloader.IconLoader;
 
 import com.google.common.eventbus.Subscribe;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.dnd.DropTarget;
 import java.awt.event.ActionEvent;
@@ -48,6 +49,7 @@ import java.util.List;
 import java.util.Vector;
 
 import javax.swing.AbstractButton;
+import javax.swing.border.MatteBorder;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -467,20 +469,24 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       // Must not be a completely empty label or else our size calculations
       // fail when setting the minimum size of the frame.
       labelImageDimensions_ = createLabel(" ", false);
+      labelImageDimensions_.setBorder(new MatteBorder(1, 0, 0, 0,
+               new Color(200, 200, 200)));
       overPanel.add(labelImageDimensions_, "growx, pushy 0, span, gap 2 0 2 0");
       return overPanel;
    }
 
    private JPanel createConfigProfileLine() {
       JPanel subPanel = new JPanel(
-            new MigLayout("flowx, insets 1 1 0 1, gap 0, fill"));
-      configFile_ = new JLabel();
-      configFile_.setFont(defaultFont_);
-      subPanel.add(configFile_, "alignx left");
+            new MigLayout("flowx, insets 0 1 0 1, gap 0, fill"));
+      subPanel.setBorder(new MatteBorder(0, 0, 1, 0,
+               new Color(200, 200, 200)));
       profileName_ = new JLabel();
       profileName_.setFont(defaultFont_);
       profileName_.setText("Profile: " + studio_.profile().getProfileName());
-      subPanel.add(profileName_, "alignx right, gapleft push, wrap");
+      subPanel.add(profileName_, "alignx left");
+      configFile_ = new JLabel();
+      configFile_.setFont(defaultFont_);
+      subPanel.add(configFile_, "alignx right, gapleft push, wrap");
       return subPanel;
    }
 
