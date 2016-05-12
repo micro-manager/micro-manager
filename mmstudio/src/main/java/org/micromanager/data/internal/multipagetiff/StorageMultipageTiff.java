@@ -60,7 +60,6 @@ import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.internal.utils.DefaultUserProfile;
-import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.ProgressBar;
@@ -135,8 +134,18 @@ public final class StorageMultipageTiff implements Storage {
       store_.setSavePath(directory_);
       coordsToReader_ = new TreeMap<Coords, MultipageTiffReader>();
 
-      // TODO: throw error if no existing dataset
-      if (!amInWriteMode_) {
+      if (amInWriteMode_) {
+         positionToFileSet_ = new HashMap<Integer, FileSet>();
+         // Create the directory now, even though we have nothing to write to
+         // it, so we can detect e.g. permissions errors that would cause
+         // problems later.
+         File dirFile = new File(directory_);
+         dirFile.mkdirs();
+         if (!dirFile.canWrite()) {
+            throw new IOException("Insufficient permission to write to " + dirFile);
+         }
+      }
+      else {
          openExistingDataSet();
       }
    }
@@ -338,15 +347,6 @@ public final class StorageMultipageTiff implements Storage {
          }
       }
 
-      if (positionToFileSet_ == null) {
-         try {
-            positionToFileSet_ = new HashMap<Integer, FileSet>();
-            JavaUtils.createDirectory(directory_);
-         } catch (Exception ex) {
-            ReportingUtils.logError(ex);
-         }
-      }
-          
       if (omeMetadata_ == null) {
          omeMetadata_ = new OMEMetadata(this);
       }
