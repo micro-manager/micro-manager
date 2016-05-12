@@ -117,12 +117,14 @@ public:
    int OnSPIMNumSlicesPerPiezo(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMNumSides         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMFirstSide        (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnSPIMScannerHomeEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnSPIMPiezoHomeEnable  (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSPIMScannerHomeDisable(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSPIMPiezoHomeDisable (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMInterleaveSidesEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSPIMAlternateDirectionsEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMModeByte         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMNumRepeats       (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMState            (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSPIMScanDuration     (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMCameraDuration   (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMLaserDuration    (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMDelayBeforeScan  (MM::PropertyBase* pProp, MM::ActionType eAct);

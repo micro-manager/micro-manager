@@ -27,14 +27,17 @@
    #define snprintf _snprintf 
 #endif
 
+#include "CoherentOBIS.h"
 
 #include "../../MMDevice/MMDevice.h"
-#include "CoherentOBIS.h"
-#include <string>
-#include <math.h>
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMDevice/DeviceUtils.h"
+
+#include <algorithm>
+#include <math.h>
 #include <sstream>
+#include <string>
+
 
 // Controller
 const char* g_ControllerName = "CoherentObis";
@@ -441,10 +444,11 @@ void CoherentObis::SetState(long state)
 void CoherentObis::GetState(long &value)
 {
    string ans = this->queryLaser(laserOnToken_);
-   if (ans.compare("On")){
+   std::transform(ans.begin(), ans.end(), ans.begin(), ::tolower);
+   if (ans.find("on") == 0) {
       value = 1;
    }
-   else if (ans.compare("Off")){
+   else if (ans.find("off") == 0) {
       value = 0;
    }
    else{

@@ -2,7 +2,8 @@
 //
 // AUTHOR:        Mark A. Tsuchida
 //
-// COPYRIGHT:     University of California, San Francisco, 2014
+// COPYRIGHT:     2014-2015, Regents of the University of California
+//                2016, Open Imaging, Inc.
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -17,9 +18,10 @@
 
 #pragma once
 
-#include "DeviceBase.h"
-
 #include "IIDCInterface.h"
+#include "IIDCCamera.h"
+
+#include "DeviceBase.h"
 
 #include <boost/thread.hpp>
 #include <boost/shared_array.hpp>
@@ -60,9 +62,19 @@ class MMIIDCCamera : public CCameraBase<MMIIDCCamera>
    int nextAdHocErrorCode_;
 
    /*
+    * ROI state
+    * We have a "hard" ROI (implemented in camera and IIDC) and "soft" ROI
+    * (implemented in this device adapter), so that we can always set the ROI
+    * at 1-pixel resolution.
+    */
+   unsigned roiLeft_, roiTop_; // As presented to MMCore
+   unsigned roiWidth_, roiHeight_; // As presented to MMCore
+   unsigned softROILeft_, softROITop_; // Relative to hard ROI
+
+   /*
     * Keep snapped image in our own buffer
     */
-   boost::shared_array<unsigned char> snappedPixels_;
+   boost::shared_array<const unsigned char> snappedPixels_;
    size_t snappedWidth_, snappedHeight_, snappedBytesPerPixel_;
 
 public:
@@ -140,15 +152,31 @@ private:
    int InitializeVideoModeDependentState();
    int InitializeFeatureProperties();
 
+   int UpdateFramerate();
    int VideoModeDidChange();
 
    void SetExposureImpl(double exposure);
    double GetExposureUncached();
    std::pair<double, double> GetExposureLimits();
 
-   void SnapCallback(const void* pixels, size_t width, size_t height, IIDC::PixelFormat format);
-   void SequenceCallback(const void* pixels, size_t width, size_t height, IIDC::PixelFormat format);
+   void ProcessImage(const void* source, bool ownResultBuffer,
+         IIDC::PixelFormat sourceFormat,
+         size_t sourceWidth, size_t sourceHeight,
+         size_t destLeft, size_t destTop,
+         size_t destWidth, size_t destHeight,
+         boost::function<void (const void*, size_t)> resultCallback);
+
+   void SnapCallback(const void* pixels, size_t width, size_t height,
+         IIDC::PixelFormat format);
+   void SequenceCallback(const void* pixels, size_t width, size_t height,
+         IIDC::PixelFormat format);
+   void ProcessedSnapCallback(const void* pixels, size_t width, size_t height,
+         size_t bytesPerPixel);
+   void ProcessedSequenceCallback(const void* pixels, size_t width, size_t height,
+         size_t bytesPerPixel);
    void SequenceFinishCallback();
 
    int AdHocErrorCode(const std::string& message);
+
+   void LogIIDCMessage(const std::string& message, bool isDebug);
 };

@@ -252,7 +252,8 @@ void SerialPortLister::ListPorts(std::vector<std::string> &availablePorts)
  * Caches this list in g_PortList and only queries hardware when this cache is absent or stale
  */
 MODULE_API void InitializeModuleData()
-{	                                                                                                                                                          // Determine whether portList is fresh enough (i.e. younger than 15 seconds):
+{  
+   // Determine whether portList is fresh enough (i.e. younger than 15 seconds):
    time_t seconds = time(NULL);
    time_t timeout = 15;
    bool stale = seconds - g_PortListLastUpdated > timeout ? true : false;
@@ -265,10 +266,7 @@ MODULE_API void InitializeModuleData()
 
    std::vector<std::string>::iterator it = g_PortList.begin();
    while (it < g_PortList.end()) {
-      /*  work-around for spurious duplicate device names on OS X
-      if( std::string::npos == (*it).find("KeySerial"))
-      */
-         RegisterDevice((*it).c_str(), MM::SerialDevice, "Serial communication port");
+      RegisterDevice((*it).c_str(), MM::SerialDevice, "Serial communication port");
       it++;
    }
 
@@ -315,10 +313,8 @@ MM::Device* SerialManager::CreatePort(const char* portName)
 
    // no such port found, so try to create a new one
    SerialPort* pPort = new SerialPort(portName);
-   //pPort->LogMessage(("created new Port " + std::string(portName)).c_str() , true);
    ports_.push_back(pPort);
    pPort->AddReference();
-   //pPort->LogMessage(("adding reference to Port " + std::string(portName)).c_str() , true);
    return pPort;
 
 }
@@ -332,13 +328,11 @@ void SerialManager::DestroyPort(MM::Device* port)
       {
          char theName[MM::MaxStrLength];
          (*i)->GetName(theName);
-         //(*i)->LogMessage("Removing reference to Port " + std::string(theName) , true);
          (*i)->RemoveReference();
 
          // really destroy only if there are no references pointing to the port
          if ((*i)->OKToDelete())
          {
-            //(*i)->LogMessage("deleting Port " + std::string(theName)) , true);
             delete *i;
             ports_.erase(i);
          }
@@ -358,7 +352,8 @@ SerialPort::SerialPort(const char* portName) :
    pService_(0),
    pPort_(0),
    pThread_(0),
-   verbose_(true)
+   verbose_(true),
+   dtrEnable_(true)
 {
 
    portName_ = portName;
@@ -426,6 +421,16 @@ SerialPort::SerialPort(const char* portName) :
    AddAllowedValue(MM::g_Keyword_Handshaking, g_Handshaking_Off, (long)boost::asio::serial_port_base::flow_control::none);
    AddAllowedValue(MM::g_Keyword_Handshaking, g_Handshaking_Hardware, (long)boost::asio::serial_port_base::flow_control::hardware);
    AddAllowedValue(MM::g_Keyword_Handshaking, g_Handshaking_Software, (long)boost::asio::serial_port_base::flow_control::software);
+
+// on Windows only, DTR Enable:
+// Since this does not make a difference for Sam Lord and Diskovery, comment out for now
+// #ifdef WIN32
+//   CPropertyAction* pActDTREnable = new CPropertyAction(this, &SerialPort::OnDTR);
+//   ret = CreateProperty("DTR Control", "Enable", MM::String, false, pActDTREnable, true);
+//   assert (ret == DEVICE_OK);
+//   AddAllowedValue("DTR Control", "Enable");
+//   AddAllowedValue("DTR Control", "Disable");
+//#endif
 
    // answer timeout
    CPropertyAction* pActTimeout = new CPropertyAction (this, &SerialPort::OnTimeout);
@@ -582,6 +587,11 @@ int SerialPort::OpenWin32SerialPort(const std::string& portName,
    dcb.fDsrSensitivity = FALSE;
    dcb.fNull = FALSE;
    dcb.fAbortOnError = FALSE;
+   // Since this does not make a difference for Sam Lord and Diskovery, comment out for now
+   //if (dtrEnable_)
+   //   dcb.fDtrControl = DTR_CONTROL_ENABLE;
+   //else
+   //   dcb.fDtrControl = DTR_CONTROL_DISABLE;
 
    // The following lines work around crashes caused by invalid or incorrect
    // values returned by some serial port drivers (some versions of Silicon
@@ -932,6 +942,29 @@ int SerialPort::OnHandshaking(MM::PropertyBase* /*pProp*/, MM::ActionType eAct)
 
    return DEVICE_OK;
 }
+
+int SerialPort::OnDTR(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      if (dtrEnable_)
+         pProp->Set("Enable");
+      else
+         pProp->Set("Disable");
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string answer;
+      pProp->Get(answer);
+      if (answer == "Enable")
+         dtrEnable_ = true;
+      else
+         dtrEnable_ = false;
+   }
+
+   return DEVICE_OK;
+}
+
 
 int SerialPort::OnTimeout(MM::PropertyBase* pProp, MM::ActionType eAct)
 {

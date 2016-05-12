@@ -1,9 +1,8 @@
 #include "PVCAMParam.h"
 
-PvUniversalParam::PvUniversalParam( std::string aName, uns32 aParamId, Universal* aCamera ) :
-    PvParamBase( aName, aParamId, aCamera )
+PvUniversalParam::PvUniversalParam( const std::string& aDebugName, uns32 aParamId, Universal* aCamera, bool aDbgPrint ) :
+    PvParamBase( aDebugName, aParamId, aCamera, aDbgPrint )
 {
-    this->mName = aName;
     this->mId = aParamId;
     this->mCamera = aCamera;
     initialize();

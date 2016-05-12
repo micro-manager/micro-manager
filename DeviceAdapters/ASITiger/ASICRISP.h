@@ -68,11 +68,14 @@ public:
    int OnLogAmpAGC         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnNumSkips          (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnInFocusRange      (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSum			   (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnOffset			   (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    string axisLetter_;
    string focusState_;
    long waitAfterLock_;
+   long sum_;
 
    int UpdateFocusState();
    int SetFocusState(string focusState);

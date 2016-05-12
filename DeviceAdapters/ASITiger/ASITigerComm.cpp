@@ -260,7 +260,7 @@ int CTigerCommHub::DetectInstalledDevices()
          case 'i': // TGLED
             name = g_LEDDeviceName;
 			// on TGLED card multiple channels fall under 1 axis
-			//Now lets figure out how channels there are onboard
+			//Now lets figure out how many channels there are onboard
 			 command.str("");
 			 command << build.vAxesAddr[i] << "BU";
 			 ret=QueryCommandVerify(command.str(), "TGLED");
@@ -273,7 +273,23 @@ int CTigerCommHub::DetectInstalledDevices()
 			 ParseAnswerAfterUnderscore(channels);
 			 }
             break; 
-         default:
+          case 'c': // TGPMT
+            name = g_PMTDeviceName;
+			// on TGPMT card multiple channels fall under 1 axis
+			//Now lets figure out how many channels there are onboard
+			 command.str("");
+			 command << build.vAxesAddr[i] << "BU";
+			 ret=QueryCommandVerify(command.str(), "TGPMT");
+		     if(ret == ERR_UNRECOGNIZED_ANSWER)
+			 { //error , lets go with a guess which is 2
+			 channels=2;
+			 }
+			 else
+			 {
+			 ParseAnswerAfterUnderscore(channels);
+			 }
+            break; 
+		 default:
             command.str("");
             command << "Device type " <<  build.vAxesType[i] << " not supported by Tiger device adapter, skipping it";
             LogMessage(command.str());

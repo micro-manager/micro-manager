@@ -338,6 +338,9 @@ int CoreCallback::AcqFinished(const MM::Device* caller, int /*statusCode*/)
       return DEVICE_ERR;
    }
 
+   boost::shared_ptr<DeviceInstance> currentCamera =
+      core_->currentCameraDevice_.lock();
+
    if (core_->autoShutter_)
    {
       boost::shared_ptr<ShutterInstance> shutter =
@@ -352,6 +355,18 @@ int CoreCallback::AcqFinished(const MM::Device* caller, int /*statusCode*/)
             // camera live in the same module. It is not safe, but this is how
             // _all_ cases used to be implemented, and I can't immediately
             // think of a fully safe fix that is reasonably simple.
+            shutter->SetOpen(false);
+         }
+         else if (currentCamera && currentCamera->GetAdapterModule() ==
+               shutter->GetAdapterModule())
+         {
+            // Likewise, we might be called as a result of a call to
+            // StopSequenceAcquisition() on a virtual wrapper camera device
+            // (such as Multi Camera), in which case we would get a deadlock if
+            // the shutter is in the same module as the virtual camera.
+            // This is an even nastier hack in that it ignores the possibility
+            // of StopSequenceAcquisition() being called on a camera other than
+            // currentCamera, but such cases are rare.
             shutter->SetOpen(false);
          }
          else

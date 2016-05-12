@@ -2,7 +2,8 @@
 //
 // AUTHOR:        Mark A. Tsuchida
 //
-// COPYRIGHT:     University of California, San Francisco, 2014
+// COPYRIGHT:     2014-2015, Regents of the University of California
+//                2016, Open Imaging, Inc.
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.

@@ -191,6 +191,15 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       command.str("");
    }
 
+   // Suppress event reporting for side port
+   if (scopeModel_->IsDeviceAvailable(::g_Side_Port)) {
+      command << ::g_Side_Port << "003 0 0 0 0 0 0 0 0 0";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
    // Suppress event reporting for DIC Turret
    if (scopeModel_->IsDeviceAvailable(g_DIC_Turret)) {
       command << g_DIC_Turret << "003 0";
@@ -217,15 +226,7 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
          return ret;
       command.str("");
    }
-	
-   // Suppress event reporting for side port
-	if (scopeModel_->IsDeviceAvailable(::g_Side_Port)) {
-		command << ::g_Side_Port << "003 0 0 0 0 0 0 0 0 0";
-      ret = GetAnswer(device, core, command.str().c_str(), answer);
-      if (ret != DEVICE_OK)
-         return ret;
-      command.str("");
-   }
+
    CDeviceUtils::SleepMs(100);
 
    if (scopeModel_->IsDeviceAvailable(g_Lamp)) {
@@ -301,6 +302,13 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
          return ret;
    }
 
+   if(scopeModel_->IsDeviceAvailable(g_Side_Port))
+   {
+      ret = GetSidePortInfo(device, core);
+      if( DEVICE_OK != ret)
+         return ret;
+   }
+
    if (scopeModel_->IsDeviceAvailable(g_TL_Polarizer)) {
       ret = GetTLPolarizerInfo(device, core);
       if (ret != DEVICE_OK)
@@ -318,13 +326,6 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       if (ret != DEVICE_OK)
          return ret;
    }
-
-	if(scopeModel_->IsDeviceAvailable(g_Side_Port))
-	{
-		ret = GetSidePortInfo(device, core);
-			if( DEVICE_OK != ret)
-				return ret;
-	}
 
    // Start all events at this point
 
@@ -420,6 +421,15 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       command.str("");
    }
 
+   // Start event reporting for side port
+   if (scopeModel_->IsDeviceAvailable(::g_Side_Port)) {
+      command << g_Side_Port << "003 1";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
    // Start event reporting for Polarizer
    if (scopeModel_->IsDeviceAvailable(g_TL_Polarizer)) {
       command << g_TL_Polarizer << "003 1";
@@ -444,15 +454,6 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
    // Start event reporting for AFC
    if (scopeModel_->IsDeviceAvailable(g_AFC)) {
       command << g_AFC << "003 1 0 0 1 1 0 1 0 0";
-      ret = GetAnswer(device, core, command.str().c_str(), answer);
-      if (ret != DEVICE_OK)
-         return ret;
-      command.str("");
-   }
-
-	   // Start event reporting for side port
-	if (scopeModel_->IsDeviceAvailable(::g_Side_Port)) {
-      command << g_Side_Port << "003 1";
       ret = GetAnswer(device, core, command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
@@ -501,7 +502,13 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
    }
 
    if (scopeModel_->IsDeviceAvailable(g_Revolver)) {
-      command << g_IL_Turret << "023";
+      command << g_Revolver << "023";
+      ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+
+      command << g_Revolver << "028";
       ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
       if (ret != DEVICE_OK)
          return ret;
@@ -554,6 +561,14 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
 
    if (scopeModel_->IsDeviceAvailable(g_Mag_Changer_Mot)) {
       command << g_Mag_Changer_Mot << "023";
+      ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
+   if (scopeModel_->IsDeviceAvailable(g_Side_Port)) {
+      command << g_Side_Port << "023";
       ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
       if (ret != DEVICE_OK)
          return ret;
@@ -2099,42 +2114,6 @@ int LeicaMonitoringThread::svc()
                deviceId = atoi(command.substr(0,2).c_str());
             }
             switch (deviceId) {
-
-					case (::g_Side_Port) :
-                  switch (commandId) {
-                     case (4) :
-                     {
-                        int status;
-                        os >> status;
-                        if (status == 1) {
-                           scopeModel_->sidePort_.SetBusy(false);
-                        }
-                        break;
-                     }
-							case (22) :
-							{
-								// the scope echoed the command
-							   //scopeModel_->sidePort_.SetBusy(false);
-							}
-							break;
-                     case (23) : // Absolute position
-                     {
-
-								int pos;
-								os >> pos;
-								scopeModel_->sidePort_.SetPosition(pos);
-                        scopeModel_->sidePort_.SetBusy(false);
-                        
-                     }
-							break;
-                     case (28) : // Absolute position
-                     {
-                        scopeModel_->sidePort_.SetBusy(false);
-                        break;
-                     }
-                     break;
-                  }
-                  break;
                case (g_Master) :
                    switch (commandId) {
                       // Set Method command, signals completion of command sends
@@ -2180,7 +2159,7 @@ int LeicaMonitoringThread::svc()
                    break;
                 case (g_IL_Turret) :
                    switch (commandId) {
-                      case(22) :
+                      case (22) :
                          scopeModel_->ILTurret_.SetBusy(false);
                          break;
                       case (4) :
@@ -2280,6 +2259,11 @@ int LeicaMonitoringThread::svc()
                             scopeModel_->ObjectiveTurret_.SetBusy(false);
                             break;
                          }
+                      case (27) : // Acknowledge of set immersion method
+                         // BUG: We need to manage 'busy' separately for
+                         // position and immersion method
+                         scopeModel_->ObjectiveTurret_.SetBusy(false);
+                         break;
                       case (28) : //Immersion method
                          {
                             char method;
@@ -2504,6 +2488,9 @@ int LeicaMonitoringThread::svc()
                                scopeModel_->apertureDiaphragmTL_.SetBusy(false);
                          }
                          break;
+                      case (22) : // Acknowledge of set position
+                         scopeModel_->apertureDiaphragmTL_.SetBusy(false);
+                         break;
                       case (23) : // Absolute position
                          {
                             int pos;
@@ -2526,6 +2513,9 @@ int LeicaMonitoringThread::svc()
                             else
                                scopeModel_->fieldDiaphragmIL_.SetBusy(false);
                          }
+                         break;
+                      case (22) : // Acknowledge of set position
+                         scopeModel_->fieldDiaphragmIL_.SetBusy(false);
                          break;
                       case (23) : // Absolute position
                          {
@@ -2550,6 +2540,9 @@ int LeicaMonitoringThread::svc()
                                scopeModel_->apertureDiaphragmIL_.SetBusy(false);
                          }
                          break;
+                      case (22) : // Acknowledge of set position
+                         scopeModel_->apertureDiaphragmIL_.SetBusy(false);
+                         break;
                       case (23) : // Absolute position
                          {
                             int pos;
@@ -2571,6 +2564,9 @@ int LeicaMonitoringThread::svc()
                         }
                         break;
                      }
+                     case (22) : // Acknowledge of set position
+                        scopeModel_->magChanger_.SetBusy(false);
+                        break;
                      case (23) : // Absolute position
                      {
                         int pos;
@@ -2590,6 +2586,39 @@ int LeicaMonitoringThread::svc()
                      break;
                   }
                   break;
+               case (g_Side_Port) :
+                  switch (commandId) {
+                     case (4) :
+                        {
+                           int status;
+                           os >> status;
+                           if (status == 1) {
+                              scopeModel_->sidePort_.SetBusy(false);
+                           }
+                           break;
+                        }
+                     case (22) : // Acknowledge of set position
+                        scopeModel_->sidePort_.SetBusy(false);
+                        break;
+                     case (23) : // Absolute position
+                        {
+                           int pos;
+                           os >> pos;
+                           scopeModel_->sidePort_.SetPosition(pos);
+                           scopeModel_->sidePort_.SetBusy(false);
+                           break;
+                        }
+                     case (28) : // Absolute position
+                        {
+                           int pos;
+                           os >> pos;
+                           scopeModel_->sidePort_.SetPosition(pos);
+                           scopeModel_->sidePort_.SetBusy(false);
+                           break;
+                        }
+                        break;
+                  }
+                  break;
                case (g_TL_Polarizer) :
                   switch (commandId) {
                      case (4) :
@@ -2601,6 +2630,9 @@ int LeicaMonitoringThread::svc()
                         }
                         break;
                      }
+                     case (22) : // Acknowledge of set position
+                        scopeModel_->tlPolarizer_.SetBusy(false);
+                        break;
                      case (23) : // Absolute position
                      {
                         int pos;
@@ -2622,6 +2654,9 @@ int LeicaMonitoringThread::svc()
                   break;
                case (g_DIC_Turret) :
                   switch (commandId) {
+                     case (22) : // Acknowledge of set position
+                        scopeModel_->dicTurret_.SetBusy(false);
+                        break;
                      case (23) : // Absolute position
                      {
                         int pos;
