@@ -42,6 +42,9 @@
 using namespace std;
 
 
+// TODO faster busy check for typical case where axes are on same card by just querying card busy
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // CXYStage
 //
@@ -107,9 +110,11 @@ int CXYStage::Initialize()
 
    // max motor speed - read only property
    double maxSpeedX = getMaxSpeed(axisLetterX_, hub_);
+   command.str("");
    command << maxSpeedX;
    CreateProperty(g_MaxMotorSpeedXPropertyName, command.str().c_str(), MM::Float, true);
    double maxSpeedY = getMaxSpeed(axisLetterY_, hub_);
+   command.str("");
    command << maxSpeedY;
    CreateProperty(g_MaxMotorSpeedYPropertyName, command.str().c_str(), MM::Float, true);
 

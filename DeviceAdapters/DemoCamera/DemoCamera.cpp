@@ -238,7 +238,8 @@ CDemoCamera::CDemoCamera() :
    stripeWidth_(1.0),
    nComponents_(1),
    mode_(0),
-   imgManpl_(0)
+   imgManpl_(0),
+   pcf_(1.0)
 {
    memset(testProperty_,0,sizeof(testProperty_));
 
@@ -482,6 +483,12 @@ int CDemoCamera::Initialize()
    CreateStringProperty(propName.c_str(), g_Sine_Wave, false, pAct);
    AddAllowedValue(propName.c_str(), g_Sine_Wave);
    AddAllowedValue(propName.c_str(), g_Norm_Noise);
+
+   // Photon Conversion Factor for Noise type camera
+   pAct = new CPropertyAction(this, &CDemoCamera::OnPCF);
+   propName = "Photon Conversion Factor";
+   CreateFloatProperty(propName.c_str(), pcf_, false, pAct);
+   SetPropertyLimits(propName.c_str(), 0.4, 4.0);
 
    // Simulate application crash
    pAct = new CPropertyAction(this, &CDemoCamera::OnCrash);
@@ -1656,6 +1663,19 @@ int CDemoCamera::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CDemoCamera::OnPCF(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(pcf_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(pcf_);
+   }
+   return DEVICE_OK;
+}
+
 
 int CDemoCamera::OnCrash(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -1750,19 +1770,21 @@ void CDemoCamera::GenerateEmptyImage(ImgBuffer& img)
 * 2. Gaussian noise
 */
 void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
-{ 
+{
   
    MMThreadGuard g(imgPixelsLock_);
 
    if (mode_ == 1)
    {
       double max = 1 << GetBitDepth();
-      int mean = 10;
+      int offset = 10;
       if (max > 256)
       {
-         mean = 100;
+         offset = 100;
       }
-      AddBackgroundAndNoise(img, mean, 3.0);
+	   double readNoise = 3.0;
+      AddBackgroundAndNoise(img, offset, readNoise);
+      AddSignal (img, 50.0, exp, pcf_);
       if (imgManpl_ != 0)
       {
          imgManpl_->ChangePixels(img);
@@ -1773,7 +1795,7 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
 	//std::string pixelType;
 	char buf[MM::MaxStrLength];
    GetProperty(MM::g_Keyword_PixelType, buf);
-	std::string pixelType(buf);
+   std::string pixelType(buf);
 
 	if (img.Height() == 0 || img.Width() == 0 || img.Depth() == 0)
       return;
@@ -2096,7 +2118,7 @@ void CDemoCamera::TestResourceLocking(const bool recurse)
 }
 
 /**
-* Generate an image with offsetplus noise
+* Generate an image with offset plus noise
 */
 void CDemoCamera::AddBackgroundAndNoise(ImgBuffer& img, double mean, double stdDev)
 { 
@@ -2141,6 +2163,63 @@ void CDemoCamera::AddBackgroundAndNoise(ImgBuffer& img, double mean, double stdD
       }
    }
 }
+
+
+/**
+* Adds signal to an image
+* Assume a homogenuous illumination
+* Calculates the signal for each pixel individually as:
+* photon flux * exposure time / conversion factor
+* Assumes QE of 100%
+*/
+void CDemoCamera::AddSignal(ImgBuffer& img, double photonFlux, double exp, double cf)
+{ 
+	char buf[MM::MaxStrLength];
+   GetProperty(MM::g_Keyword_PixelType, buf);
+	std::string pixelType(buf);
+
+   int maxValue = (1 << GetBitDepth()) -1;
+   long nrPixels = img.Width() * img.Height();
+   double photons = photonFlux * exp;
+   double shotNoise = sqrt(photons);
+   double digitalValue = photons / cf;
+   double shotNoiseDigital = shotNoise / cf;
+   if (pixelType.compare(g_PixelType_8bit) == 0)
+   {
+      unsigned char* pBuf = (unsigned char*) const_cast<unsigned char*>(img.GetPixels());
+      for (long i = 0; i < nrPixels; i++) 
+      {
+         double value = *(pBuf + i) + GaussDistributedValue(digitalValue, shotNoiseDigital);
+         if (value < 0) 
+         {
+            value = 0;
+         }
+         else if (value > maxValue)
+         {
+            value = maxValue;
+         }
+         *(pBuf + i) =  (unsigned char) value;
+      }
+   }
+   else if (pixelType.compare(g_PixelType_16bit) == 0)
+   {
+      unsigned short* pBuf = (unsigned short*) const_cast<unsigned char*>(img.GetPixels());
+      for (long i = 0; i < nrPixels; i++) 
+      {
+         double value = *(pBuf + i) + GaussDistributedValue(digitalValue, shotNoiseDigital);
+         if (value < 0) 
+         {
+            value = 0;
+         }
+         else if (value > maxValue)
+         {
+            value = maxValue;
+         }
+         *(pBuf + i) = (unsigned short) value;
+      }
+   }
+}
+
 
 /**
  * Uses Marsaglia polar method to generate Gaussian distributed value.  

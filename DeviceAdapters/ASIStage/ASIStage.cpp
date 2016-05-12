@@ -24,7 +24,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
 //
 // AUTHOR:        Jizhen Zhao (j.zhao@andor.com) based on code by Nenad Amodaj, April 2007, modified by Nico Stuurman, 12/2007
-// MAINTAINER     Maintained by Nico Stuurman (nico@cmp.ucsf.edu)
+// MAINTAINER     Maintained by Nico Stuurman (nico@cmp.ucsf.edu) and Jon Daniels (jon@asiimaging.com)
 //
 
 #ifdef WIN32
@@ -83,6 +83,8 @@ const char* g_CRISP_C = "Curve";
 const char* g_CRISP_B = "Balance";
 const char* g_CRISP_RFO = "Reset Focus Offset";
 const char* g_CRISP_S = "Save to Controller";
+const char* const g_CRISPOffsetPropertyName = "Lock Offset";
+const char* const g_CRISPSumPropertyName = "Sum";
 
 using namespace std;
 
@@ -330,6 +332,46 @@ int ASIBase::CheckDeviceStatus(void)
    return ret;
 }
 
+unsigned int ASIBase::ConvertDay(int year, int month, int day)
+{
+   return day + 31*(month-1) + 372*(year-2000);
+}
+
+unsigned int ASIBase::ExtractCompileDay(const char* compile_date)
+{
+   const char* months = "anebarprayunulugepctovec";
+   if (strlen(compile_date) < 11)
+      return 0;
+   int year = 0;
+   int month = 0;
+   int day = 0;
+   if (strlen(compile_date) >= 11
+         && compile_date[7] == '2'  // must be 20xx for sanity checking
+         && compile_date[8] == '0'
+         && compile_date[9] <= '9'
+         && compile_date[9] >= '0'
+         && compile_date[10] <= '9'
+         && compile_date[10] >= '0')
+   {
+      year = 2000 + 10*(compile_date[9]-'0') + (compile_date[10]-'0');
+      // look for the year based on the last two characters of the abbreviated month name
+      month = 1;
+      for (int i=0; i<12; i++)
+      {
+         if (compile_date[1] == months[2*i] &&
+         compile_date[2] == months[2*i+1])
+         {
+            month = i + 1;
+         }
+      }
+      day = 10*(compile_date[4]-'0') + (compile_date[5]-'0');
+      if (day < 1 || day > 31)
+         day = 1;
+      return ConvertDay(year, month, day);
+   }
+   return 0;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // XYStage
@@ -348,7 +390,7 @@ XYStage::XYStage() :
    answerTimeoutMs_(1000),
    serialOnlySendChanged_(true),
    manualSerialAnswer_(""),
-   compileYear_(0)
+   compileDay_(0)
 {
    InitializeDefaultErrorMessages();
 
@@ -404,23 +446,15 @@ int XYStage::Initialize()
    CreateProperty("CompileDate", "", MM::String, true, pAct);
    UpdateProperty("CompileDate");
 
-   // get the year of the firmware
+   // get the date of the firmware
    char compile_date[MM::MaxStrLength];
-   if (GetProperty("CompileDate", compile_date) == DEVICE_OK
-         && strlen(compile_date) >= 11
-         && compile_date[7] == '2'  // must be 20xx
-         && compile_date[8] == '0'
-         && compile_date[9] <= '9'
-         && compile_date[9] >= '0'
-         && compile_date[10] <= '9'
-         && compile_date[10] >= '0') {
-      compileYear_ = 2000 + 10*(compile_date[9]-'0') + (compile_date[10]-'0');
-   }
+   if (GetProperty("CompileDate", compile_date) == DEVICE_OK)
+      compileDay_ = ExtractCompileDay(compile_date);
 
    // if really old firmware then don't get build name
    // build name is really just for diagnostic purposes anyway
    // I think it was present before 2010 but this is easy way
-   if (compileYear_ >= 2010)
+   if (compileDay_ >= ConvertDay(2010, 1, 1))
    {
       pAct = new CPropertyAction (this, &XYStage::OnBuildName);
       CreateProperty("BuildName", "", MM::String, true, pAct);
@@ -1106,8 +1140,8 @@ int XYStage::OnWait(MM::PropertyBase* pProp, MM::ActionType eAct)
 
       // if firmware date is 2009+  then use msec/int definition of WaitCycles
       // would be better to parse firmware (8.4 and earlier used unsigned char)
-      // and that transition occurred ~2008 but this is easier
-      if (compileYear_ >= 2009)
+      // and that transition occurred ~2008 but not sure exactly when
+      if (compileDay_ >= ConvertDay(2009, 1, 1))
       {
          // don't enforce upper limit
       }
@@ -1850,10 +1884,10 @@ ZStage::ZStage() :
    sequenceable_(false),
    runningFastSequence_(false),
    hasRingBuffer_(false),
-   nrEvents_(50),
+   nrEvents_(0),
    maxSpeed_(7.5),
    motorOn_(true),
-   compileYear_(0)
+   compileDay_(0)
 {
    InitializeDefaultErrorMessages();
 
@@ -1876,12 +1910,6 @@ ZStage::ZStage() :
    AddAllowedValue("Axis", "F");
    AddAllowedValue("Axis", "P");
    AddAllowedValue("Axis", "Z");
-
-   // size of the ring buffer
-   pAct = new CPropertyAction (this, &ZStage::OnRingBufferSize);
-   CreateProperty("RingBufferSize", "50", MM::Integer, false, pAct, true);
-   AddAllowedValue("RingBufferSize", "50");
-   AddAllowedValue("RingBufferSize", "250");
 }
 
 ZStage::~ZStage()
@@ -1929,17 +1957,27 @@ int ZStage::Initialize()
    CreateProperty("CompileDate", "", MM::String, true, pAct);
    UpdateProperty("CompileDate");
 
-   // get the year of the firmware
+   // get the date of the firmware
    char compile_date[MM::MaxStrLength];
-   if (GetProperty("CompileDate", compile_date) == DEVICE_OK
-         && strlen(compile_date) >= 11
-         && compile_date[7] == '2'  // must be 20xx
-         && compile_date[8] == '0'
-         && compile_date[9] <= '9'
-         && compile_date[9] >= '0'
-         && compile_date[10] <= '9'
-         && compile_date[10] >= '0') {
-      compileYear_ = 2000 + 10*(compile_date[9]-'0') + (compile_date[10]-'0');
+   if (GetProperty("CompileDate", compile_date) == DEVICE_OK)
+      compileDay_ = ExtractCompileDay(compile_date);
+
+   if (HasRingBuffer() && nrEvents_ == 0)
+   {
+      // we couldn't detect size of the ring buffer automatically so create property
+      //   to allow user to change it
+      pAct = new CPropertyAction (this, &ZStage::OnRingBufferSize);
+      CreateProperty("RingBufferSize", "50", MM::Integer, false, pAct);
+      AddAllowedValue("RingBufferSize", "50");
+      AddAllowedValue("RingBufferSize", "250");
+      nrEvents_ = 50;  // modified in action handler
+   }
+   else
+   {
+      ostringstream tmp;
+      tmp.str("");
+      tmp << nrEvents_;  // initialized in GetControllerInfo() if we got here
+      CreateProperty("RingBufferSize", tmp.str().c_str(), MM::String, true);
    }
 
    if (HasRingBuffer())
@@ -2110,6 +2148,36 @@ int ZStage::GetPositionUm(double& pos)
 	  curSteps_ = (long)zz;
 
       return DEVICE_OK;
+   }
+
+   return ERR_UNRECOGNIZED_ANSWER;
+}
+
+int ZStage::SetRelativePositionUm(double d)
+{
+   // empty the Rx serial buffer before sending command
+   ClearPort();
+
+   ostringstream command;
+   command << fixed << "R " << axis_ << "=" << d / stepSizeUm_; // in 10th of micros
+
+   string answer;
+   // query the device
+   int ret = QueryCommand(command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0)
+   {
+      // we don't know the updated position to call this
+      //this->OnStagePositionChanged(pos);
+      return DEVICE_OK;
+   }
+   // deal with error later
+   else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+   {
+      int errNo = atoi(answer.substr(4).c_str());
+      return ERR_OFFSET + errNo;
    }
 
    return ERR_UNRECOGNIZED_ANSWER;
@@ -2310,18 +2378,28 @@ int ZStage::SendStageSequence()
       {
          ostringstream os;
          os.precision(0);
-         // Strange, but this command needs <CR><LF>.  
-         // It appears for WhizKid the LD reply is :A without <CR><LF> so maybe sending extra one helps
-         // that is also why the answer can have :N-1
-         // basically we are trying to compensate for the controller's faults here
-         os << fixed << "LD " << axis_ << "=" << sequence_[i] * 10 << "\r\n"; 
-         ret = QueryCommand(os.str().c_str(), answer);
-         if (ret != DEVICE_OK)
-            return ret;
+         if (compileDay_ >= ConvertDay(2015, 10, 23))
+         {
+            os << fixed << "LD " << axis_ << "=" << sequence_[i] * 10;  // 10 here is for unit multiplier/1000
+            ret = QueryCommand(os.str().c_str(), answer);
+            if (ret != DEVICE_OK)
+               return ret;
+         }
+         else
+         {
+            // For WhizKid the LD reply originally was :A without <CR><LF> so
+            //   send extra "empty command"  and get back :N-1 which we ignore
+            // basically we are trying to compensate for the controller's faults here
+            // but as of 2015-10-23 the firmware to "properly" responds with <CR><LF>
+            os << fixed << "LD " << axis_ << "=" << sequence_[i] * 10 << "\r\n";
+            ret = QueryCommand(os.str().c_str(), answer);
+            if (ret != DEVICE_OK)
+               return ret;
 
-         // the answer will also have a :N-1 in it, ignore.
-         if (! (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0) )
-            return ERR_UNRECOGNIZED_ANSWER;
+            // the answer will also have a :N-1 in it, ignore.
+            if (! (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0) )
+               return ERR_UNRECOGNIZED_ANSWER;
+         }
       }
    }
 
@@ -2377,10 +2455,12 @@ int ZStage::GetControllerInfo()
          hasRingBuffer_ = true;
          if (token.size() > ringBuffer.size()) 
          {
+            // tries to read ring buffer size, this works since 2013-09-03
+            //   change to firmware which prints max size
             int rsize = atoi(token.substr(ringBuffer.size()).c_str());
-            // untested code, trying to be safe
-            if (rsize > 50) 
+            if (rsize > 0)
             {
+               // only used in GetStageSequenceMaxLength as defined in .h file
                nrEvents_ = rsize;
             }
          }
@@ -2604,7 +2684,7 @@ int ZStage::OnWait(MM::PropertyBase* pProp, MM::ActionType eAct)
       // would be better to parse firmware (8.4 and earlier used unsigned char)
       // and that transition occurred ~2008 but this is easier than trying to
       // parse version strings
-      if (compileYear_ >= 2009)
+      if (compileDay_ >= ConvertDay(2009, 1, 1))
       {
          // don't enforce upper limit
       }
@@ -3544,7 +3624,7 @@ CRISP::CRISP() :
    na_(0.65),
    waitAfterLock_(1000),
    answerTimeoutMs_(1000),
-   compileYear_(0)
+   compileDay_(0)
 {
    InitializeDefaultErrorMessages();
 
@@ -3619,18 +3699,10 @@ int CRISP::Initialize()
    CreateProperty("CompileDate", "", MM::String, true, pAct);
    UpdateProperty("CompileDate");
 
-   // get the year of the firmware
+   // get the date of the firmware
    char compile_date[MM::MaxStrLength];
-   if (GetProperty("CompileDate", compile_date) == DEVICE_OK
-         && strlen(compile_date) >= 11
-         && compile_date[7] == '2'  // must be 20xx
-         && compile_date[8] == '0'
-         && compile_date[9] <= '9'
-         && compile_date[9] >= '0'
-         && compile_date[10] <= '9'
-         && compile_date[10] >= '0') {
-      compileYear_ = 2000 + 10*(compile_date[9]-'0') + (compile_date[10]-'0');
-   }
+   if (GetProperty("CompileDate", compile_date) == DEVICE_OK)
+      compileDay_ = ExtractCompileDay(compile_date);
 
    pAct = new CPropertyAction(this, &CRISP::OnWaitAfterLock);
    CreateProperty("Wait ms after Lock", "3000", MM::Integer, false, pAct);
@@ -3657,7 +3729,17 @@ int CRISP::Initialize()
    CreateProperty("Number of Averages", "1", MM::Integer, false, pAct);
    SetPropertyLimits("Number of Averages", 0, 10);
 
-   if (compileYear_ >= 2015) {
+   pAct = new CPropertyAction(this, &CRISP::OnOffset);
+   CreateProperty(g_CRISPOffsetPropertyName, "", MM::Integer, true, pAct);
+   UpdateProperty(g_CRISPOffsetPropertyName);
+
+   pAct = new CPropertyAction(this, &CRISP::OnSum);
+   CreateProperty(g_CRISPSumPropertyName, "", MM::Integer, true, pAct);
+   UpdateProperty(g_CRISPSumPropertyName);
+
+   // not sure exactly when Gary made these firmware changes, but they were there by start of 2015
+   if (compileDay_ >= ConvertDay(2015, 1, 1))
+   {
       pAct = new CPropertyAction(this, &CRISP::OnNumSkips);
       CreateProperty("Number of Skips", "0", MM::Integer, false, pAct);
       SetPropertyLimits("Number of Skips", 0, 100);
@@ -3700,6 +3782,7 @@ int CRISP::Initialize()
       return ret;
    na_ = (double) val;
 
+   sum_=0;
    return DEVICE_OK;
 }
 
@@ -4327,14 +4410,31 @@ int CRISP::OnDitherError(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (ret != DEVICE_OK)
          return ret;
 
-      long val;
+     // long val;
       std::istringstream is(answer);
-      std::string tok;
+      std::string tok,tok2;
       for (int i=0; i <3; i++)
-         is >> tok;
-      std::istringstream s(tok);
-      s >> val;
-      pProp->Set(val);
+      {   
+		  if(i==1)
+		  {
+		  is>>tok2; //2nd "is" is sum 
+		  }
+		  is >> tok; //3rd "is" is error
+
+	  }
+
+     // std::istringstream s(tok);
+      //s >> val;
+      //pProp->Set(val);
+
+	  pProp->Set(tok.c_str());
+
+	  //std::istringstream s2(tok2);
+	 // s2 >> val;
+	  //sum_= val;
+
+	  sum_=atol(tok2.c_str());
+
    }
    return DEVICE_OK;
 }
@@ -4399,6 +4499,51 @@ int CRISP::OnInFocusRange(MM::PropertyBase* pProp, MM::ActionType eAct)
 
    return DEVICE_OK;
 }
+
+   
+int CRISP::OnSum(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+  if (eAct == MM::BeforeGet)
+   {
+     /*  std::string answer;
+      int ret = QueryCommand("EXTRA X?", answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      long val;
+      std::istringstream is(answer);
+      std::string tok;
+      for (int i=0; i <2; i++) //SUM is 2nd last number
+         is >> tok;
+      std::istringstream s(tok);
+      s >> val;
+      pProp->Set(val); */
+	// more efficient way, sum is retrived same time as dither error
+	   pProp->Set((long)sum_);
+
+
+   }
+   return DEVICE_OK;
+}
+
+int CRISP::OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      double numSkips;
+      //int ret = GetValue("LK Z?", numSkips);
+      
+	  int ret= GetOffset(numSkips);
+	  if (ret != DEVICE_OK)
+         return ret; 
+   
+	  if (!pProp->Set(numSkips))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+
+   return DEVICE_OK;
+}
+
 
 
 

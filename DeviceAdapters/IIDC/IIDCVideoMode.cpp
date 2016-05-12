@@ -2,7 +2,8 @@
 //
 // AUTHOR:        Mark A. Tsuchida
 //
-// COPYRIGHT:     University of California, San Francisco, 2014
+// COPYRIGHT:     2014-2015, Regents of the University of California
+//                2016, Open Imaging, Inc.
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -35,6 +36,8 @@ PixelFormatForLibDC1394ColorCoding(dc1394color_coding_t coding)
       case DC1394_COLOR_CODING_YUV422: return PixelFormatYUV422;
       case DC1394_COLOR_CODING_YUV411: return PixelFormatYUV411;
       case DC1394_COLOR_CODING_RGB8: return PixelFormatRGB8;
+      case DC1394_COLOR_CODING_RAW8: return PixelFormatRaw8;
+      case DC1394_COLOR_CODING_RAW16: return PixelFormatRaw16;
       default: return PixelFormatUnsupported;
    }
 }

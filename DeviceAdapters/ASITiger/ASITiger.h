@@ -108,6 +108,7 @@ const char* const g_PiezoDeviceName = "PiezoStage";
 const char* const g_CRISPDeviceName = "CRISPAFocus";
 const char* const g_LEDDeviceName = "LED";
 const char* const g_PLogicDeviceName = "PLogic";
+const char* const g_PMTDeviceName = "PMT";
 
 // corresponding device descriptions
 const char* const g_TigerCommHubDescription = "ASI TigerComm Hub (TG-1000)";
@@ -121,6 +122,7 @@ const char* const g_PiezoDeviceDescription = "ASI Piezo Stage";
 const char* const g_CRISPDeviceDescription = "ASI CRISP AutoFocus";
 const char* const g_LEDDeviceDescription = "ASI LED Illuminator";
 const char* const g_PLogicDeviceDescription = "ASI Programmable Logic";
+const char* const g_PMTDeviceDescription = "ASI Photo Multiplier Tube ";  
 
 // constant values
 const double g_StageMinStepSize = 0.001;   // in units of um
@@ -310,6 +312,8 @@ const char* const g_CRISPDitherErrorPropertyName = "Dither Error";
 const char* const g_CRISPLogAmpAGCPropertyName = "LogAmpAGC";
 const char* const g_CRISPNumberSkipsPropertyName = "Number of Skips";
 const char* const g_CRISPInFocusRangePropertyName = "In Focus Range(um)";
+const char* const g_CRISPOffsetPropertyName = "Lock Offset";
+const char* const g_CRISPSumPropertyName = "Sum";
 
 // ring buffer property names
 const char* const g_RB_DelayPropertyName = "RingBufferDelayBetweenPoints(ms)";
@@ -325,9 +329,10 @@ const char* const g_SPIMNumSlicesPerPiezoPropertyName = "SPIMNumSlicesPerPiezo";
 const char* const g_SPIMNumScansPerSlicePropertyName = "SPIMNumScansPerSlice";
 const char* const g_SPIMNumSidesPropertyName = "SPIMNumSides";
 const char* const g_SPIMFirstSidePropertyName = "SPIMFirstSide";
-const char* const g_SPIMPiezoHomeEnable = "SPIMPiezoHomeEnable";
-const char* const g_SPIMScannerHomeEnable = "SPIMScannerHomeEnable";
+const char* const g_SPIMPiezoHomeDisable = "SPIMPiezoHomeDisable";
+const char* const g_SPIMScannerHomeDisable = "SPIMScannerHomeDisable";
 const char* const g_SPIMInterleaveSidesEnable = "SPIMInterleaveSidesEnable";
+const char* const g_SPIMAlternateDirectionsEnable = "SPIMAlternateDirectionsEnable";
 const char* const g_SPIMNumRepeatsPropertyName = "SPIMNumRepeats";
 const char* const g_SPIMArmForTTLPropertyName = "SPIMArm";
 const char* const g_SPIMStatePropertyName = "SPIMState";
@@ -339,6 +344,7 @@ const char* const g_SPIMDelayBeforeCameraPropertyName = "SPIMDelayBeforeCamera(m
 const char* const g_SPIMDelayBeforeLaserPropertyName = "SPIMDelayBeforeLaser(ms)";
 const char* const g_SPIMCameraDurationPropertyName = "SPIMCameraDuration(ms)";
 const char* const g_SPIMLaserDurationPropertyName = "SPIMLaserDuration(ms)";
+const char* const g_SPIMScanDurationPropertyName = "SPIMScanDuration(ms)";
 
 // SPIM laser TTL property names
 const char* const g_LaserOutputModePropertyName = "LaserOutputMode";
@@ -351,6 +357,7 @@ const char* const g_TargetSettlingTimePropertyName = "TargetSettlingTime(ms)";
 // LED property names
 const char* const g_LEDIntensityPropertyName = "LED Intensity(%)";
 const char* const g_ShutterState = "State";
+const char* const g_LEDCurrentLimitPropertyName = "Current Limit in milliamps";
 
 // clocked device property names
 const char* const g_NumPositionsPropertyName = "NumPositions";
@@ -589,7 +596,13 @@ const char* const g_CRISP_C = "Curve";
 const char* const g_CRISP_B = "Balance";
 const char* const g_CRISP_RFO = "Reset Focus Offset";
 const char* const g_CRISP_SSZ = "Save to Controller";
-
+// TGPMT
+const char* const g_PMTGainPropertyName = "PMT Gain";
+const char* const g_PMTAVGPropertyName = "ADC Averaging Size";
+const char* const g_PMTSignal="PMT Signal";
+const char* const g_PMTOverload="PMT Overloaded";
+const char* const g_PMTOverloadReset="PMT Overload Reset";
+const char* const g_PMTOverloadDone="Reset Applied";
 
 struct build_info_type
 {

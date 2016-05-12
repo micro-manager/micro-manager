@@ -186,10 +186,12 @@ public:
    int OnCCDTemp(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnIsSequenceable(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPCF(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCrash(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    // Special public DemoCamera methods
    void AddBackgroundAndNoise(ImgBuffer& img, double mean, double stdDev);
+   void AddSignal(ImgBuffer& img, double photonFlux, double exp, double cf);
    // this function replace normal_distribution in C++11
    double GaussDistributedValue(double mean, double std);
 
@@ -248,6 +250,7 @@ private:
    MySequenceThread * thd_;
    int mode_;
    ImgManipulator* imgManpl_;
+   double pcf_;
 };
 
 class MySequenceThread : public MMDeviceThreadBase

@@ -48,6 +48,12 @@
     <ClCompile Include="ASILED.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ASIPLogic.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ASIPmt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ASIBase.h">
@@ -87,6 +93,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ASILED.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ASIPLogic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ASIPmt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
