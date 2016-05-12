@@ -108,6 +108,8 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    private static final String SMALLBUTTON_SIZE = "w 30!, h 20!";
 
    // GUI components
+   private JLabel configFile_;
+   private JLabel profileName_;
    private JComboBox comboBinning_;
    private JComboBox shutterComboBox_;
    private JTextField textFieldExp_;
@@ -149,9 +151,8 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       snapLiveManager_ = manager;
       snapLiveManager_.addLiveModeListener(this);
 
-      setTitle(String.format("%s %s (%s)",
-            MICRO_MANAGER_TITLE, MMVersion.VERSION_STRING,
-            studio_.profile().getProfileName()));
+      setTitle(String.format("%s %s", MICRO_MANAGER_TITLE,
+               MMVersion.VERSION_STRING));
 
       JPanel contents = new JPanel();
       // Minimize insets.
@@ -173,6 +174,8 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                getClass().getResource("/org/micromanager/icons/microscope.gif")));
 
       setJMenuBar(menuBar);
+
+      setConfigText("");
       // Set minimum size so we can't resize smaller and hide some of our
       // contents. Our insets are only available after the first call to
       // pack().
@@ -453,6 +456,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
 
    private JPanel createComponents() {
       JPanel overPanel = new JPanel(new MigLayout("fill, flowx, insets 1, gap 0"));
+      overPanel.add(createConfigProfileLine(), "growx, spanx, wrap");
       JPanel subPanel = new JPanel(new MigLayout("flowx, insets 1, gap 0"));
       subPanel.add(createCommonActionButtons(), "growy, aligny top");
       subPanel.add(createImagingSettingsWidgets(), "gapleft 10, growx, wrap");
@@ -465,6 +469,19 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       labelImageDimensions_ = createLabel(" ", false);
       overPanel.add(labelImageDimensions_, "growx, pushy 0, span, gap 2 0 2 0");
       return overPanel;
+   }
+
+   private JPanel createConfigProfileLine() {
+      JPanel subPanel = new JPanel(
+            new MigLayout("flowx, insets 1 1 0 1, gap 0, fill"));
+      configFile_ = new JLabel();
+      configFile_.setFont(defaultFont_);
+      subPanel.add(configFile_, "alignx left");
+      profileName_ = new JLabel();
+      profileName_.setFont(defaultFont_);
+      profileName_.setText("Profile: " + studio_.profile().getProfileName());
+      subPanel.add(profileName_, "alignx right, gapleft push, wrap");
+      return subPanel;
    }
 
    private JPanel createUtilityButtons() {
@@ -575,10 +592,8 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       return subPanel;
    }
 
-   public void updateTitle(String configFile) {
-      setTitle(String.format("%s %s - %s (%s)",
-            MICRO_MANAGER_TITLE, MMVersion.VERSION_STRING, configFile,
-            studio_.profile().getProfileName()));
+   public void setConfigText(String configFile) {
+      configFile_.setText("Config file: " + configFile);
    }
 
    public final void setExitStrategy(boolean closeOnExit) {

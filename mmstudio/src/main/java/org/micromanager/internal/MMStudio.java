@@ -675,7 +675,7 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
             sysConfigFile_ = f.getAbsolutePath();
             configChanged_ = false;
             frame_.setConfigSaveButtonStatus(configChanged_);
-            frame_.updateTitle(sysConfigFile_);
+            frame_.setConfigText(sysConfigFile_);
          }
       } catch (MMConfigFileException e) {
          ReportingUtils.showError(e);
@@ -975,7 +975,7 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
-      frame_.updateTitle(sysConfigFile_);
+      frame_.setConfigText(sysConfigFile_);
       events().post(new GUIRefreshEvent());
    }
 
