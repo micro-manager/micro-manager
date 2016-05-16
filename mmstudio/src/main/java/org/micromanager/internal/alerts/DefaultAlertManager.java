@@ -40,7 +40,8 @@ public class DefaultAlertManager implements AlertManager {
    }
 
    private Studio studio_;
-   private HashMap<Object, Alert> ownerToAlert_ = new HashMap<Object, Alert>();
+   private HashMap<Object, Alert> ownerToTextAlert_ = new HashMap<Object, Alert>();
+   private HashMap<Object, Alert> ownerToCustomAlert_ = new HashMap<Object, Alert>();
 
    private DefaultAlertManager(Studio studio) {
       studio_ = studio;
@@ -52,28 +53,48 @@ public class DefaultAlertManager implements AlertManager {
    }
 
    @Override
-   public void showTextAlert(String text, Object owner) {
+   public void showTextAlert(String text, Object owner) throws IllegalArgumentException {
+      if (ownerToCustomAlert_.containsKey(owner)) {
+         throw new IllegalArgumentException("Incompatible alert with owner " + owner + " already exists");
+      }
       Alert alert;
-      if (ownerToAlert_.containsKey(owner) &&
-            ownerToAlert_.get(owner).isUsable()) {
-         alert = ownerToAlert_.get(owner);
+      if (ownerToTextAlert_.containsKey(owner) &&
+            ownerToTextAlert_.get(owner).isUsable()) {
+         alert = ownerToTextAlert_.get(owner);
       }
       else {
          // Make a new Alert to hold messages from this owner.
          JPanel contents = new JPanel(
                new MigLayout("flowy, fill", "[fill, grow]", "[fill, grow]"));
          alert = Alert.addAlert(studio_, contents, false);
-         ownerToAlert_.put(owner, alert);
+         ownerToTextAlert_.put(owner, alert);
       }
       alert.getContents().add(new JLabel(text), "growx");
       alert.pack();
    }
 
    @Override
-   public void showAlert(JComponent contents) {
+   public void showAlert(JComponent contents, Object owner) {
+      if (ownerToTextAlert_.containsKey(owner) ||
+            ownerToCustomAlert_.containsKey(owner)) {
+         throw new IllegalArgumentException("Alert with owner " + owner + " already exists");
+      }
       JPanel panel = new JPanel(new MigLayout("insets 0, gap 0, fill"));
       panel.add(contents, "grow");
-      Alert.addAlert(studio_, panel, false);
+      Alert alert = Alert.addAlert(studio_, panel, false);
+      ownerToCustomAlert_.put(owner, alert);
+   }
+
+   @Override
+   public void dismissAlert(Object owner) {
+      if (ownerToTextAlert_.containsKey(owner)) {
+         ownerToTextAlert_.get(owner).dispose();
+         ownerToTextAlert_.remove(owner);
+      }
+      if (ownerToCustomAlert_.containsKey(owner)) {
+         ownerToCustomAlert_.get(owner).dispose();
+         ownerToCustomAlert_.remove(owner);
+      }
    }
 
    public static DefaultAlertManager getInstance() {
