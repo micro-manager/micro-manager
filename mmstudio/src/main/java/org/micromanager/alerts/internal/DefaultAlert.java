@@ -19,7 +19,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager.internal.alerts;
+package org.micromanager.alerts.internal;
 
 import com.bulenkov.iconloader.IconLoader;
 
@@ -40,7 +40,6 @@ import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
@@ -48,30 +47,26 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.Studio;
 
+import org.micromanager.alerts.Alert;
 import org.micromanager.internal.utils.GUIUtils;
 
-/**
- * An Alert is a temporary, undecorated dialog that shows up along the side of
- * the screen for information that doesn't need to interrupt the user. Alerts
- * should be created via the AlertManager.
- */
-public class Alert extends JDialog {
-   private static ArrayList<Alert> allAlerts_ = new ArrayList<Alert>();
+public class DefaultAlert extends Alert {
+   private static ArrayList<DefaultAlert> allAlerts_ = new ArrayList<DefaultAlert>();
    // This is shown if there's not enough room to show all alerts.
    // Note we can't use addAlert to create this one, as addAlert calls
    // adjustPositions, which refers to moreAlert_. Plus we don't want
    // moreAlert_ to be in the allAlerts_ list.
-   private static Alert moreAlert_;
+   private static DefaultAlert moreAlert_;
    static {
       JPanel contents = new JPanel(new MigLayout());
       contents.add(new JLabel("And more..."));
-      moreAlert_ = new Alert(null, contents, true);
+      moreAlert_ = new DefaultAlert(null, contents, true);
    }
 
    /**
     * Create a simple alert with a text message.
     */
-   public static Alert addOneShotAlert(Studio studio, String text) {
+   public static DefaultAlert addOneShotAlert(Studio studio, String text) {
       JPanel contents = new JPanel(new MigLayout());
       contents.add(new JLabel(text));
       return addAlert(studio, contents, true);
@@ -80,9 +75,9 @@ public class Alert extends JDialog {
    /**
     * Create a custom alert with any contents
     */
-   public static Alert addAlert(Studio studio, JPanel contents,
+   public static DefaultAlert addAlert(Studio studio, JPanel contents,
          boolean isOneShot) {
-      Alert alert = new Alert(studio, contents, isOneShot);
+      DefaultAlert alert = new DefaultAlert(studio, contents, isOneShot);
       allAlerts_.add(alert);
       adjustPositions();
       return alert;
@@ -98,7 +93,7 @@ public class Alert extends JDialog {
     * @param isOneShot: if true, then clicking on the alert dismisses it;
     * if false, we add a specific button for dismissing the alert instead.
     */
-   private Alert(Studio studio, JPanel contents, boolean isOneShot) {
+   private DefaultAlert(Studio studio, JPanel contents, boolean isOneShot) {
       super();
       studio_ = studio;
       isOneShot_ = isOneShot;
@@ -197,6 +192,7 @@ public class Alert extends JDialog {
    /**
     * Returns whether or not this alert can have more content added to it.
     */
+   @Override
    public boolean isUsable() {
       return isUsable_;
    }
@@ -216,7 +212,7 @@ public class Alert extends JDialog {
       Rectangle screenBounds = config.getBounds();
       int yOffset = 0;
       boolean isVisible = true;
-      for (Alert alert : allAlerts_) {
+      for (DefaultAlert alert : allAlerts_) {
          if (yOffset + alert.getSize().height + 50 > screenBounds.height - (insets.top + insets.bottom)) {
             // Not enough room to show this and future alerts.
             isVisible = false;

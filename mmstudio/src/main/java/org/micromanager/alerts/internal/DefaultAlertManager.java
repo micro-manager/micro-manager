@@ -18,7 +18,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager.internal.alerts;
+package org.micromanager.alerts.internal;
 
 import java.util.HashMap;
 
@@ -28,7 +28,8 @@ import javax.swing.JPanel;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.micromanager.AlertManager;
+import org.micromanager.alerts.Alert;
+import org.micromanager.alerts.AlertManager;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
 
@@ -40,24 +41,24 @@ public class DefaultAlertManager implements AlertManager {
    }
 
    private Studio studio_;
-   private HashMap<Object, Alert> ownerToTextAlert_ = new HashMap<Object, Alert>();
-   private HashMap<Object, Alert> ownerToCustomAlert_ = new HashMap<Object, Alert>();
+   private HashMap<Object, DefaultAlert> ownerToTextAlert_ = new HashMap<Object, DefaultAlert>();
+   private HashMap<Object, DefaultAlert> ownerToCustomAlert_ = new HashMap<Object, DefaultAlert>();
 
    private DefaultAlertManager(Studio studio) {
       studio_ = studio;
    }
 
    @Override
-   public void showTextAlert(String text) {
-      Alert.addOneShotAlert(studio_, text);
+   public Alert showTextAlert(String text) {
+      return DefaultAlert.addOneShotAlert(studio_, text);
    }
 
    @Override
-   public void showTextAlert(String text, Object owner) throws IllegalArgumentException {
+   public Alert showTextAlert(String text, Object owner) throws IllegalArgumentException {
       if (ownerToCustomAlert_.containsKey(owner)) {
          throw new IllegalArgumentException("Incompatible alert with owner " + owner + " already exists");
       }
-      Alert alert;
+      DefaultAlert alert;
       if (ownerToTextAlert_.containsKey(owner) &&
             ownerToTextAlert_.get(owner).isUsable()) {
          alert = ownerToTextAlert_.get(owner);
@@ -66,23 +67,25 @@ public class DefaultAlertManager implements AlertManager {
          // Make a new Alert to hold messages from this owner.
          JPanel contents = new JPanel(
                new MigLayout("flowy, fill", "[fill, grow]", "[fill, grow]"));
-         alert = Alert.addAlert(studio_, contents, false);
+         alert = DefaultAlert.addAlert(studio_, contents, false);
          ownerToTextAlert_.put(owner, alert);
       }
       alert.getContents().add(new JLabel(text), "growx");
       alert.pack();
+      return alert;
    }
 
    @Override
-   public void showAlert(JComponent contents, Object owner) {
+   public Alert showAlert(JComponent contents, Object owner) {
       if (ownerToTextAlert_.containsKey(owner) ||
             ownerToCustomAlert_.containsKey(owner)) {
          throw new IllegalArgumentException("Alert with owner " + owner + " already exists");
       }
       JPanel panel = new JPanel(new MigLayout("insets 0, gap 0, fill"));
       panel.add(contents, "grow");
-      Alert alert = Alert.addAlert(studio_, panel, false);
+      DefaultAlert alert = DefaultAlert.addAlert(studio_, panel, false);
       ownerToCustomAlert_.put(owner, alert);
+      return alert;
    }
 
    @Override

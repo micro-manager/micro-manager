@@ -96,7 +96,8 @@ import org.micromanager.internal.hcwizard.MicroscopeModel;
 
 import org.micromanager.data.internal.DefaultDataManager;
 
-import org.micromanager.internal.alerts.DefaultAlertManager;
+import org.micromanager.alerts.AlertManager;
+import org.micromanager.alerts.internal.DefaultAlertManager;
 
 import org.micromanager.internal.diagnostics.EDTHangLogger;
 

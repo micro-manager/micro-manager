@@ -81,6 +81,8 @@ import org.micromanager.events.internal.DefaultEventManager;
 
 import org.micromanager.internal.dialogs.AcqControlDlg;
 
+import org.micromanager.alerts.Alert;
+
 import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.DisplayWindow;
@@ -131,6 +133,7 @@ public class MMAcquisition {
    private int imagesReceived_ = 0;
    private int imagesExpected_ = 0;
    private JLabel progressLabel_ = new JLabel();
+   private Alert alert_;
 
    public MMAcquisition(Studio studio, String name, JSONObject summaryMetadata,
          boolean diskCached, AcquisitionEngine eng, boolean show) {
@@ -199,12 +202,12 @@ public class MMAcquisition {
          display_.registerForEvents(this);
          JPanel alertContents = new JPanel();
          alertContents.add(progressLabel_);
-         studio_.alerts().showAlert(alertContents, this);
+         alert_ = studio_.alerts().showAlert(alertContents, this);
       }
       store_.registerForEvents(this);
       DefaultEventManager.getInstance().registerForEvents(this);
   }
-   
+
    private String createAcqDirectory(String root, String prefix) throws Exception {
       File rootDir = JavaUtils.createDirectory(root);
       int curIndex = getCurrentMaxDirIndex(rootDir, prefix + "_");
@@ -453,6 +456,7 @@ public class MMAcquisition {
       imagesReceived_++;
       progressLabel_.setText(String.format("Received %d of %d images",
                imagesReceived_, imagesExpected_));
+      alert_.pack();
    }
 
    /**
