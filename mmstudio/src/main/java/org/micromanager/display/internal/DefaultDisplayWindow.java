@@ -270,22 +270,28 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
          }
       });
 
+      // HACK: ensure that ImageJ knows that we're the current window whenever
+      // we receive focus.
       // HACK: on OSX, we want to show the ImageJ menubar for our windows.
       // However, if we simply do setMenuBar(Menus.getMenuBar()), then somehow
       // ImageJ *loses* the menubar: it, and the items in it, can only be
       // attached to one window at a time, apparently. So we have to put it
       // back when we lose focus.
-      if (JavaUtils.isMac()) {
-         addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowActivated(WindowEvent e) {
+      addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowActivated(WindowEvent e) {
+            if (JavaUtils.isMac()) {
                // Steal the menubar from ImageJ.
                setMenuBar(Menus.getMenuBar());
             }
+            WindowManager.setCurrentWindow(dummyWindow_);
+         }
 
-            @Override
-            public void windowDeactivated(WindowEvent e) {
-               // Find the primary ImageJ window and give it its menubar back.
+         @Override
+         public void windowDeactivated(WindowEvent e) {
+            if (JavaUtils.isMac()) {
+               // Find the primary ImageJ window and give it its menubar
+               // back.
                for (Frame f : Frame.getFrames()) {
                   if (f instanceof ij.ImageJ) {
                      f.setMenuBar(getMenuBar());
@@ -293,8 +299,8 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
                   }
                }
             }
-         });
-      }
+         }
+      });
    }
 
    /**
