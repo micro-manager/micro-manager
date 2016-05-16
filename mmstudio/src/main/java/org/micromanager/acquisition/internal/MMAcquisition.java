@@ -403,10 +403,13 @@ public class MMAcquisition {
 
    @Subscribe
    public void onRequestToClose(RequestToCloseEvent event) {
-      // Prompt to stop the acquisition if it's still running.
-      if (!eng_.abortRequest()) {
-         // User cancelled abort.
-         return;
+      // Prompt to stop the acquisition if it's still running. Only if our
+      // display is the display for the current active acquisition.
+      if (eng_.getAcquisitionDatastore() == store_) {
+         if (!eng_.abortRequest()) {
+            // User cancelled abort.
+            return;
+         }
       }
       if (store_.getSavePath() != null ||
             studio_.displays().promptToSave(store_, display_)) {

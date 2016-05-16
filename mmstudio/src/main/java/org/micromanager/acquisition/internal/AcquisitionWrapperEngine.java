@@ -91,6 +91,11 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    @Override
+   public Datastore getAcquisitionDatastore() {
+      return curStore_;
+   }
+
+   @Override
    public void addSettingsListener(AcqSettingsListener listener) {
        settingsListeners_.add(listener);
    }

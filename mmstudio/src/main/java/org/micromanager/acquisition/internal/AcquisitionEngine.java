@@ -83,6 +83,12 @@ public interface AcquisitionEngine {
    public Datastore acquire() throws MMException;
 
    /**
+    * Return Datastore for current or most recent acquisition, or null if no
+    * acquisition has been run yet.
+    */
+   public Datastore getAcquisitionDatastore();
+
+   /**
     * Stops a running Acquisition
     * @param   interrupted when set, multifield acquisition will also be stopped
     */
