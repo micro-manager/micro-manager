@@ -332,7 +332,8 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
          .bitDepth(mmstudio.getCachedBitDepth());
 
       try {
-         String binning = studio_.core().getProperty(camera, "Binning");
+         String binning = studio_.core().getPropertyFromCache(
+               camera, "Binning");
          if (binning.contains("x")) {
             // HACK: assume the binning parameter is e.g. "1x1" or "2x2" and
             // just take the first number.
