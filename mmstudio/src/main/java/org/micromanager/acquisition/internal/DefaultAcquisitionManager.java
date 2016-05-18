@@ -318,28 +318,17 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
          }
       }
 
+      MMStudio mmstudio = (MMStudio) studio_;
       Metadata.MetadataBuilder result = image.getMetadata().copy()
          .camera(camera)
          .ijType(ijType)
          .pixelType(pixelType)
          .receivedTime(formatter_.format(new Date()))
          .pixelSizeUm(studio_.core().getPixelSizeUm())
-         .uuid(UUID.randomUUID());
-      try {
-         double x = studio_.core().getXYStagePosition().x;
-         double y = studio_.core().getXYStagePosition().y;
-         result.xPositionUm(x).yPositionUm(y);
-      }
-      catch (Exception ignored) {
-         // This can potentially happen if there's no valid XY stage device.
-      }
-      try {
-         double z = studio_.core().getPosition();
-         result.zPositionUm(z);
-      }
-      catch (Exception ignored) {
-         // This can potentially happen if there's no valid Z stage device.
-      }
+         .uuid(UUID.randomUUID())
+         .xPositionUm(mmstudio.getCachedXPosition())
+         .yPositionUm(mmstudio.getCachedYPosition())
+         .zPositionUm(mmstudio.getCachedZPosition());
       try {
          result.bitDepth((int) studio_.core().getImageBitDepth());
       }

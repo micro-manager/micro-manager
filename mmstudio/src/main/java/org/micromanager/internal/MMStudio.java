@@ -1670,6 +1670,18 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       }
    }
 
+   public double getCachedXPosition() {
+      return staticInfo_.getStageX();
+   }
+
+   public double getCachedYPosition() {
+      return staticInfo_.getStageY();
+   }
+
+   public double getCachedZPosition() {
+      return staticInfo_.getStageZ();
+   }
+
    public static boolean getShouldDeleteOldCoreLogs() {
       return DefaultUserProfile.getInstance().getBoolean(MMStudio.class,
             SHOULD_DELETE_OLD_CORE_LOGS, false);

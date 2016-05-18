@@ -173,4 +173,16 @@ class StaticInfo {
          MDUtils.setZPositionUm(ti.tags, zPos_);
       }
    }
+
+   public double getStageX() {
+      return x_;
+   }
+
+   public double getStageY() {
+      return y_;
+   }
+
+   public double getStageZ() {
+      return zPos_;
+   }
 }
