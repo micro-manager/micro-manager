@@ -185,4 +185,8 @@ class StaticInfo {
    public double getStageZ() {
       return zPos_;
    }
+
+   public int getImageBitDepth() {
+      return (int) imageBitDepth_;
+   }
 }

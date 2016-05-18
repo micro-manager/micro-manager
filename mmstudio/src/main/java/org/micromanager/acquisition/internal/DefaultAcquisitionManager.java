@@ -328,14 +328,8 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
          .uuid(UUID.randomUUID())
          .xPositionUm(mmstudio.getCachedXPosition())
          .yPositionUm(mmstudio.getCachedYPosition())
-         .zPositionUm(mmstudio.getCachedZPosition());
-      try {
-         result.bitDepth((int) studio_.core().getImageBitDepth());
-      }
-      catch (Exception ignored) {
-         // This can fail if there is no camera. Unlikely, but possible for
-         // images loaded from a data file.
-      }
+         .zPositionUm(mmstudio.getCachedZPosition())
+         .bitDepth(mmstudio.getCachedBitDepth());
 
       try {
          String binning = studio_.core().getProperty(camera, "Binning");
