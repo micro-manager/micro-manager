@@ -60,6 +60,66 @@ double CameraInstance::GetExposure() const { return GetImpl()->GetExposure(); }
 int CameraInstance::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize) { return GetImpl()->SetROI(x, y, xSize, ySize); }
 int CameraInstance::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize) { return GetImpl()->GetROI(x, y, xSize, ySize); }
 int CameraInstance::ClearROI() { return GetImpl()->ClearROI(); }
+
+/**
+ * Queries if the camera supports multiple simultaneous ROIs.
+ */
+bool CameraInstance::SupportsMultiROI()
+{
+   return GetImpl()->SupportsMultiROI();
+}
+
+/**
+ * Queries if multiple ROIs have been set (via the SetMultiROI method). Must
+ * return true even if only one ROI was set via that method, but must return
+ * false if an ROI was set via SetROI() or if ROIs have been cleared.
+ */
+bool CameraInstance::IsMultiROISet()
+{
+   return GetImpl()->IsMultiROISet();
+}
+
+/**
+ * Queries for the current set number of ROIs. Must return zero if multiple
+ * ROIs are not set (including if an ROI has been set via SetROI).
+ */
+int CameraInstance::GetMultiROICount(unsigned int& count)
+{
+   return GetImpl()->GetMultiROICount(count);
+}
+
+/**
+ * Set multiple ROIs. Replaces any existing ROI settings including ROIs set
+ * via SetROI.
+ * @param xs Array of X indices of upper-left corner of the ROIs.
+ * @param ys Array of Y indices of upper-left corner of the ROIs.
+ * @param widths Widths of the ROIs, in pixels.
+ * @param heights Heights of the ROIs, in pixels.
+ * @param numROIs Length of the arrays.
+ */
+int CameraInstance::SetMultiROI(const unsigned int* xs, const unsigned int* ys,
+      const unsigned* widths, const unsigned int* heights,
+      unsigned numROIs)
+{
+   return GetImpl()->SetMultiROI(xs, ys, widths, heights, numROIs);
+}
+
+/**
+ * Queries for current multiple-ROI setting. May be called even if no ROIs of
+ * any type have been set. Must return length of 0 in that case.
+ * @param xs (Return value) X indices of upper-left corner of the ROIs.
+ * @param ys (Return value) Y indices of upper-left corner of the ROIs.
+ * @param widths (Return value) Widths of the ROIs, in pixels.
+ * @param heights (Return value) Heights of the ROIs, in pixels.
+ * @param numROIs Length of the input arrays. If there are fewer ROIs than
+ *        this, then this value must be updated to reflect the new count.
+ */
+int CameraInstance::GetMultiROI(unsigned* xs, unsigned* ys, unsigned* widths,
+      unsigned* heights, unsigned* length)
+{
+   return GetImpl()->GetMultiROI(xs, ys, widths, heights, length);
+}
+
 int CameraInstance::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow) { return GetImpl()->StartSequenceAcquisition(numImages, interval_ms, stopOnOverflow); }
 int CameraInstance::StartSequenceAcquisition(double interval_ms) { return GetImpl()->StartSequenceAcquisition(interval_ms); }
 int CameraInstance::StopSequenceAcquisition() { return GetImpl()->StopSequenceAcquisition(); }

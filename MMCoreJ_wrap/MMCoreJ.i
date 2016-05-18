@@ -342,8 +342,6 @@
 %typemap(javain) unsigned char* "$javainput" 
 
 
-
- 
 // Map input argument: java List<byte[]> -> C++ std::vector<unsigned char*>
 %typemap(jni) std::vector<unsigned char*>        "jobject"
 %typemap(jtype) std::vector<unsigned char*>      "java.util.List<byte[]>"
@@ -613,6 +611,8 @@
    import org.json.JSONObject;
    import java.awt.geom.Point2D;
    import java.awt.Rectangle;
+   import java.util.ArrayList;
+   import java.util.List;
 %}
 
 %typemap(javacode) CMMCore %{
@@ -784,6 +784,43 @@
       return new Rectangle(a[0][0], a[1][0], a[2][0], a[3][0]);
    }
 
+   /*
+    * Convenience function: returns multiple ROIs of the current camera as a
+    * list of java.awt.Rectangles.
+    */
+   public List<Rectangle> getMultiROI() throws java.lang.Exception {
+      UnsignedVector xs = new UnsignedVector();
+      UnsignedVector ys = new UnsignedVector();
+      UnsignedVector widths = new UnsignedVector();
+      UnsignedVector heights = new UnsignedVector();
+      getMultiROI(xs, ys, widths, heights);
+      ArrayList<Rectangle> result = new ArrayList<Rectangle>();
+      for (int i = 0; i < xs.size(); ++i) {
+         Rectangle r = new Rectangle((int) xs.get(i), (int) ys.get(i),
+               (int) widths.get(i), (int) heights.get(i));
+         result.add(r);
+      }
+      return result;
+   }
+
+   /*
+    * Convenience function: convert incoming list of Rectangles into vectors
+    * of ints to set multiple ROIs.
+    */
+   public void setMultiROI(List<Rectangle> rects) throws java.lang.Exception {
+      UnsignedVector xs = new UnsignedVector();
+      UnsignedVector ys = new UnsignedVector();
+      UnsignedVector widths = new UnsignedVector();
+      UnsignedVector heights = new UnsignedVector();
+      for (Rectangle r : rects) {
+         xs.add(r.x);
+         ys.add(r.y);
+         widths.add(r.width);
+         heights.add(r.height);
+      }
+      setMultiROI(xs, ys, widths, heights);
+   }
+
    /* 
     * Convenience function. Returns the current x,y position of the stage in a Point2D.Double.
     */
@@ -929,6 +966,51 @@ namespace std {
 	%}
 	
 
+	%typemap(javaimports) vector<unsigned> %{
+		import java.lang.Iterable;
+		import java.util.Iterator;
+		import java.util.NoSuchElementException;
+		import java.lang.UnsupportedOperationException;
+	%}
+
+   %typemap(javainterfaces) vector<unsigned> %{ Iterable<Long>%}
+
+   %typemap(javacode) vector<unsigned> %{
+      public Iterator<Long> iterator() {
+         return new Iterator<Long>() {
+
+            private int i_=0;
+
+            public boolean hasNext() {
+               return (i_<size());
+            }
+
+            public Long next() throws NoSuchElementException {
+               if (hasNext()) {
+                  ++i_;
+                  return get(i_-1);
+               } else {
+                  throw new NoSuchElementException();
+               }
+            }
+
+            public void remove() throws UnsupportedOperationException {
+               throw new UnsupportedOperationException();
+            }
+         };
+      }
+
+      public Long[] toArray() {
+         if (0==size())
+            return new Long[0];
+
+         Long ints[] = new Long[(int) size()];
+         for (int i=0; i<size(); ++i) {
+            ints[i] = get(i);
+         }
+         return ints;
+      }
+   %}
 
 
 
@@ -938,6 +1020,7 @@ namespace std {
     %template(DoubleVector) vector<double>;
     %template(StrVector)    vector<string>;
     %template(BooleanVector)    vector<bool>;
+    %template(UnsignedVector) vector<unsigned>;
     %template(pair_ss)      pair<string, string>;
     %template(StrMap)       map<string, string>;
 
