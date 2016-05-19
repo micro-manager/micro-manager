@@ -555,6 +555,26 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       return new Rectangle(a[0][0], a[1][0], a[2][0], a[3][0]);
    }
 
+   /**
+    * Set the ROI to the center quad of the camera.
+    */
+   public void setCenterQuad() {
+      ImagePlus curImage = WindowManager.getCurrentImage();
+      if (curImage == null) {
+         return;
+      }
+
+      Rectangle r = curImage.getProcessor().getRoi();
+      int width = r.width / 2;
+      int height = r.height / 2;
+      int xOffset = r.x + width / 2;
+      int yOffset = r.y + height / 2;
+
+      curImage.setRoi(xOffset, yOffset, width, height);
+      Roi roi = curImage.getRoi();
+      updateROI(roi);
+   }
+
    public void setROI() {
       ImagePlus curImage = WindowManager.getCurrentImage();
       if (curImage == null) {
@@ -562,59 +582,58 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       }
 
       Roi roi = curImage.getRoi();
-      
-      try {
-         if (roi == null) {
-            // if there is no ROI, create one
-            Rectangle r = curImage.getProcessor().getRoi();
-            int iWidth = r.width;
-            int iHeight = r.height;
-            int iXROI = r.x;
-            int iYROI = r.y;
-            if (roi == null) {
-               iWidth /= 2;
-               iHeight /= 2;
-               iXROI += iWidth / 2;
-               iYROI += iHeight / 2;
-            }
+      if (roi == null) {
+         // Nothing to be done.
+         return;
+      }
+      if (roi.getType() != Roi.RECTANGLE) {
+         handleError("ROI must be a rectangle.\nUse the ImageJ rectangle tool to draw the ROI.");
+         return;
+      }
+      updateROI(roi);
+   }
 
-            curImage.setRoi(iXROI, iYROI, iWidth, iHeight);
-            roi = curImage.getRoi();
-         }
+   /**
+    * Apply the given ROI, after adjusting for any current ROI that may be in
+    * use.
+    */
+   private void updateROI(Roi roi) {
+      Rectangle r = roi.getBounds();
 
-         if (roi.getType() != Roi.RECTANGLE) {
-            handleError("ROI must be a rectangle.\nUse the ImageJ rectangle tool to draw the ROI.");
-            return;
-         }
+      // If the image has ROI info attached to it, correct for the offsets.
+      // Otherwise, assume the image was taken with the current camera ROI
+      // (which is a horrendously buggy way to do things, but that was the
+      // old behavior and I'm leaving it in case there are cases where it is
+      // necessary).
+      Rectangle originalROI = null;
 
-         Rectangle r = roi.getBounds();
+      DisplayWindow curWindow = displays().getCurrentWindow();
+      if (curWindow != null) {
+         List<Image> images = curWindow.getDisplayedImages();
+         // Just take the first one.
+         originalROI = images.get(0).getMetadata().getROI();
+      }
 
-         // If the image has ROI info attached to it, correct for the offsets.
-         // Otherwise, assume the image was taken with the current camera ROI
-         // (which is a horrendously buggy way to do things, but that was the
-         // old behavior and I'm leaving it in case there are cases where it is
-         // necessary).
-         Rectangle originalROI = null;
-
-         DisplayWindow curWindow = displays().getCurrentWindow();
-         if (curWindow != null) {
-            List<Image> images = curWindow.getDisplayedImages();
-            // Just take the first one.
-            originalROI = images.get(0).getMetadata().getROI();
-         }
-
-         if (originalROI == null) {
+      if (originalROI == null) {
+         try {
             originalROI = getROI();
          }
+         catch (MMScriptException e) {
+            // Core failed to provide an ROI.
+            logs().logError(e, "Unable to get core ROI");
+            return;
+         }
+      }
 
-         r.x += originalROI.x;
-         r.y += originalROI.y;
+      r.x += originalROI.x;
+      r.y += originalROI.y;
 
-         // Stop (and restart) live mode if it is running
+      try {
          setROI(r);
-
-      } catch (MMScriptException e) {
-         ReportingUtils.showError(e);
+      }
+      catch (MMScriptException e) {
+         // Core failed to set new ROI.
+         logs().logError(e, "Unable to set new ROI");
       }
    }
 
