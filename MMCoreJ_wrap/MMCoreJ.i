@@ -794,7 +794,6 @@
       UnsignedVector widths = new UnsignedVector();
       UnsignedVector heights = new UnsignedVector();
       getMultiROI(xs, ys, widths, heights);
-	  System.out.println(String.format("Have result arrays sized %d, %d, %d, %d", xs.size(), ys.size(), widths.size(), heights.size()));
       ArrayList<Rectangle> result = new ArrayList<Rectangle>();
       for (int i = 0; i < xs.size(); ++i) {
          Rectangle r = new Rectangle((int) xs.get(i), (int) ys.get(i),
@@ -809,7 +808,6 @@
     * of ints to set multiple ROIs.
     */
    public void setMultiROI(List<Rectangle> rects) throws java.lang.Exception {
-      System.out.println("Setting multi ROIs from " + rects);
       UnsignedVector xs = new UnsignedVector();
       UnsignedVector ys = new UnsignedVector();
       UnsignedVector widths = new UnsignedVector();
@@ -820,7 +818,6 @@
          widths.add(r.width);
          heights.add(r.height);
       }
-	  System.out.println(String.format("Have input arrays sized %d, %d, %d, %d", xs.size(), ys.size(), widths.size(), heights.size()));
       setMultiROI(xs, ys, widths, heights);
    }
 

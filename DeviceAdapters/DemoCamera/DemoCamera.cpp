@@ -741,7 +741,6 @@ int CDemoCamera::ClearROI()
  */
 bool CDemoCamera::SupportsMultiROI()
 {
-    std::cout << "Checking supports multi ROI " << supportsMultiROI_ << std::endl;
    return supportsMultiROI_;
 }
 

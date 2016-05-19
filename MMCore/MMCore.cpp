@@ -4246,7 +4246,6 @@ void CMMCore::setMultiROI(std::vector<unsigned> xs, std::vector<unsigned> ys,
       std::vector<unsigned> widths,
       std::vector<unsigned> heights) throw (CMMError)
 {
-    std::cout << "setMultiROI called with " << xs.size() << std::endl;
    boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
    if (!camera)
    {
