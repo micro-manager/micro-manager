@@ -225,22 +225,20 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
     * processing), and returns the updated display rate.
     */
    private void waitForNextDisplay() {
-      long average = 0;
+      long shortestWait = Long.MAX_VALUE;
       // Determine our sleep time based on image display times (a.k.a. the
       // amount of time passed between PixelsSetEvents).
       synchronized(displayUpdateTimes_) {
          for (int i = 0; i < displayUpdateTimes_.size() - 1; ++i) {
-            average += displayUpdateTimes_.get(i + 1) - displayUpdateTimes_.get(i);
-         }
-         if (displayUpdateTimes_.size() > 1) {
-            average /= (displayUpdateTimes_.size() - 1);
+            shortestWait = Math.min(shortestWait,
+                  displayUpdateTimes_.get(i + 1) - displayUpdateTimes_.get(i));
          }
       }
       // Sample faster than the achieved rate because glitches should not cause
       // the system to permanently bog down; this allows us to recover if we
       // temporarily end up displaying images slowly than we normally can.
       // Don't sample more slowly than 2x/second.
-      long waitTime = (long) Math.min(500, Math.max(33, average * .75));
+      long waitTime = (long) Math.min(500, Math.max(33, shortestWait * .75));
       try {
          Thread.sleep((int) waitTime);
       }
