@@ -85,6 +85,11 @@ public:
     *  ReadoutSignal: 2
     */
     std::map<int, int> TrigTabLastMuxMap;
+
+    /**
+    * Current PMode value
+    */
+    int PMode;
 };
 
 #endif

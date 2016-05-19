@@ -239,6 +239,7 @@ public:
    int OnCentroidsCount(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFanSpeedSetpoint(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTrigTabLastMux(MM::PropertyBase* pProp, MM::ActionType eAct, long trigSignal);
+   int OnPMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    bool IsCapturing();
 
    // Published to allow other classes access the camera
@@ -402,6 +403,7 @@ private:
    PvEnumParam*      prmFanSpeedSetpoint_;
    PvEnumParam*      prmTrigTabSignal_;
    PvParam<uns8>*    prmLastMuxedSignal_;
+   PvEnumParam*      prmPMode_;
 
    // List of post processing features
    std::vector<PpParam> PostProc_;
@@ -427,6 +429,7 @@ private:
    int portChanged();
    int speedChanged();
    int buildSpdTable();
+   int postExpSetupInit();
    int updateCircBufRange(unsigned int frameSize);
    int selectDebayerAlgMask(int xRoiPos, int yRoiPos, int32 colorMask) const;
 

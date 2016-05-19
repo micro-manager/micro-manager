@@ -108,6 +108,28 @@ public:
         return roi;
     }
 
+    bool Equals(const PvRoi& other) const
+    {
+        if (m_sensorRgnX == other.m_sensorRgnX && m_sensorRgnY == other.m_sensorRgnY &&
+            m_sensorRgnWidth == other.m_sensorRgnWidth && m_sensorRgnHeight == other.m_sensorRgnHeight &&
+            m_binX == other.m_binX && m_binY == other.m_binY)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    bool IsValid(int sensorWidth, int sensorHeight) const
+    {
+       if (m_sensorRgnWidth > sensorWidth || m_sensorRgnHeight > sensorHeight ||
+           m_sensorRgnX > sensorWidth || m_sensorRgnY > sensorHeight ||
+           m_sensorRgnX + m_sensorRgnWidth > sensorWidth || m_sensorRgnY + m_sensorRgnHeight > sensorHeight)
+       {
+           return false;
+       }
+       return true;
+    }
+
 private:
     uns16 m_sensorRgnX;
     uns16 m_sensorRgnY;

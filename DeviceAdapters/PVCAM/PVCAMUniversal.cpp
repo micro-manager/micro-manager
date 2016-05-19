@@ -159,6 +159,7 @@ const char* g_Keyword_CentroidsEnabled = "CentroidsEnabled";
 const char* g_Keyword_CentroidsRadius  = "CentroidsRadius";
 const char* g_Keyword_CentroidsCount   = "CentroidsCount";
 const char* g_Keyword_FanSpeedSetpoint = "FanSpeedSetpoint";
+const char* g_Keyword_PMode            = "PMode";
 
 // Universal parameters
 // These parameters, their ranges or allowed values are read out from the camera automatically.
@@ -174,7 +175,6 @@ const char* g_Keyword_FanSpeedSetpoint = "FanSpeedSetpoint";
 // a simple readonly MM property without a handler (see examples in Initialize())
 ParamNameIdPair g_UniversalParams[] = {
    {MM::g_Keyword_Offset, "PARAM_ADC_OFFSET",         PARAM_ADC_OFFSET},         // INT16
-   {"PMode",              "PARAM_PMODE",              PARAM_PMODE},              // ENUM
    {"ClearMode",          "PARAM_CLEAR_MODE",         PARAM_CLEAR_MODE},         // ENUM
    {"PreampDelay",        "PARAM_PREAMP_DELAY",       PARAM_PREAMP_DELAY},       // UNS16
    {"PreampOffLimit",     "PARAM_PREAMP_OFF_CONTROL", PARAM_PREAMP_OFF_CONTROL}, // UNS32 // preamp is off during exposure if exposure time is less than this
@@ -254,7 +254,8 @@ prmCentroidsRadius_(0),
 prmCentroidsCount_(0),
 prmFanSpeedSetpoint_(0),
 prmTrigTabSignal_(0),
-prmLastMuxedSignal_(0)
+prmLastMuxedSignal_(0),
+prmPMode_(0)
 {
    InitializeDefaultErrorMessages();
 
@@ -327,6 +328,7 @@ Universal::~Universal()
    delete prmFanSpeedSetpoint_;
    delete prmTrigTabSignal_;
    delete prmLastMuxedSignal_;
+   delete prmPMode_;
 #ifdef PVCAM_SMART_STREAMING_SUPPORTED
    delete prmSmartStreamingEnabled_;
    delete prmSmartStreamingValues_;
@@ -371,9 +373,8 @@ int Universal::Initialize()
 #ifdef PVCAM_ADAPTER_CUSTOM_BUILD
       // If this is a custom build show a warning popup before initializing the adapter.
       char msg[256];
-      sprintf_s(msg, "You are using a Micro-Manager with custom PVCAM adapter build.\nAdapter version %u.%u.%u.%u.",
-          PVCAM_ADAPTER_VERSION_MAJOR, PVCAM_ADAPTER_VERSION_MINOR,
-          PVCAM_ADAPTER_VERSION_BUILD, PVCAM_ADAPTER_VERSION_REVISION);
+      sprintf_s(msg, "You are using a Micro-Manager with custom PVCAM adapter build.\nAdapter version %u.%u.%u.",
+          PVCAM_ADAPTER_VERSION_MAJOR, PVCAM_ADAPTER_VERSION_MINOR, PVCAM_ADAPTER_VERSION_REVISION);
       MessageBoxA(NULL, msg, "Warning", MB_OK | MB_ICONWARNING | MB_SETFOREGROUND);
 #endif
    }
@@ -403,6 +404,12 @@ int Universal::Initialize()
    nRet = CreateProperty("PVCAM Version", ver.str().c_str(), MM::String, true);
    ver << ". Number of cameras detected: " << numCameras;
    LogMessage("PVCAM: PVCAM version: " + ver.str());
+   assert(nRet == DEVICE_OK);
+
+   stringstream verAdapter;
+   verAdapter << PVCAM_ADAPTER_VERSION_MAJOR << "." << PVCAM_ADAPTER_VERSION_MINOR << "." << PVCAM_ADAPTER_VERSION_REVISION;
+   nRet = CreateProperty("PVCAM Adapter Version", verAdapter.str().c_str(), MM::String, true);
+   LogMessage("PVCAM: PVCAM Adapter version: " + verAdapter.str());
    assert(nRet == DEVICE_OK);
 
    // find camera
@@ -1019,6 +1026,26 @@ int Universal::Initialize()
          // will be added here with corresponding map created in settings container.
          // e.g. acqCfgNew_.TrigTabSuperMuxMap
       }
+   }
+
+   prmPMode_ = new PvEnumParam( "PARAM_PMODE", PARAM_PMODE, this, true );
+   if (prmPMode_->IsAvailable())
+   {
+      const std::vector<std::string>& pmodeStrs = prmPMode_->GetEnumStrings();
+      const int32 cur = prmPMode_->Current();
+      const std::string curStr = prmPMode_->GetEnumString(cur);
+
+      pAct = new CPropertyAction(this, &Universal::OnPMode);
+      nRet = CreateProperty(g_Keyword_PMode, curStr.c_str(), MM::String, false, pAct);
+      if (nRet != DEVICE_OK)
+         return LogCamError(__LINE__, "Failed to create property for PARAM_PMODE");
+
+      for (size_t i = 0; i < pmodeStrs.size(); ++i)
+      {
+          AddAllowedValue(g_Keyword_PMode, pmodeStrs[i].c_str());
+      }
+
+      acqCfgNew_.PMode = cur;
    }
 
    // Initialize the acquisition configuration
@@ -1793,6 +1820,25 @@ int Universal::OnTrigTabLastMux(MM::PropertyBase* pProp, MM::ActionType eAct, lo
       pProp->Get( val );
 
       acqCfgNew_.TrigTabLastMuxMap[trigSignal] = static_cast<int>(val);
+      return applyAcqConfig();
+   }
+   return DEVICE_OK;
+}
+
+int Universal::OnPMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   START_ONPROPERTY("Universal::OnPMode", eAct);
+
+   if (eAct == MM::BeforeGet)
+   {
+       pProp->Set(prmPMode_->GetEnumString(acqCfgCur_.PMode).c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      string valStr;
+      pProp->Get( valStr );
+
+      acqCfgNew_.PMode = prmPMode_->GetEnumValue(valStr);
       return applyAcqConfig();
    }
    return DEVICE_OK;
@@ -2944,6 +2990,23 @@ int Universal::buildSpdTable()
 }
 
 /**
+* This function is called right after pl_exp_setup_seq() and pl_exp_setup_cont()
+* After setup is called following parameters become available or may change their values:
+*  PARAM_READOUT_TIME - camera calculated readout time.
+*  PARAM_TEMP_SETPOINT - depends on PARAM_PMODE that is applied during setup.
+*  PARAM_FRAME_BUFFER_SIZE - Frame buffer size depends on setup() arguments.
+*/
+int Universal::postExpSetupInit()
+{
+    int nRet = DEVICE_OK;
+
+    if (prmTempSetpoint_->IsAvailable())
+        nRet = prmTempSetpoint_->Update();
+
+    return nRet;
+}
+
+/**
 * Calculates and sets the circular buffer count limits based on frame
 * size and hardcoded limits.
 */
@@ -3077,10 +3140,7 @@ int Universal::applyAcqConfig()
    // ROI that was drawn on a different image. Or drawn on an image acquired with 1x1 binning but
    // the current configuration uses 2x2 binning. We cannot easily detect that because uM
    // won't tell us what binning we should use when applying ROI.
-   if (newRoi.SensorRgnWidth() > camSerSize_ || newRoi.SensorRgnHeight() > camParSize_ ||
-       newRoi.SensorRgnX() > camSerSize_ || newRoi.SensorRgnY() > camParSize_ ||
-       newRoi.SensorRgnX() + newRoi.SensorRgnWidth() > camSerSize_ ||
-       newRoi.SensorRgnY() + newRoi.SensorRgnHeight() > camParSize_)
+   if (!newRoi.IsValid(camSerSize_, camParSize_))
    {
       acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
       LogCamError( __LINE__, "Universal::applyAcqConfig() ROI definition is invalid for current camera configuration" );
@@ -3096,9 +3156,7 @@ int Universal::applyAcqConfig()
    }
 
    // Change in ROI or binning requires buffer reallocation
-   if (newRoi.BinX() != curRoi.BinX() || newRoi.BinY() != curRoi.BinY() ||
-       newRoi.SensorRgnX() != curRoi.SensorRgnX() || newRoi.SensorRgnY() != curRoi.SensorRgnY() ||
-       newRoi.SensorRgnWidth() != curRoi.SensorRgnWidth() || newRoi.SensorRgnHeight() != curRoi.SensorRgnHeight())
+   if (!newRoi.Equals(curRoi))
    {
        configChanged = true;
        bufferResizeRequired = true;
@@ -3219,14 +3277,56 @@ int Universal::applyAcqConfig()
       }
    }
 
-   if (bufferResizeRequired)
+   if (acqCfgNew_.PMode != acqCfgCur_.PMode)
    {
-      sequenceModeReady_ = false;
-      singleFrameModeReady_ = false;
+       configChanged = true;
+       nRet = prmPMode_->SetAndApply(acqCfgNew_.PMode);
+       if (nRet != DEVICE_OK)
+       {
+          acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
+          return nRet; // Error logged in SetAndApply()
+       }
+       // Workaround: When PMODE changes we force buffer reinitialization (which results
+       // in pl_exp_setup_seq/cont getting called, which applies script, which then
+       // forces the camera to update the PARAM_TEMP_SETPOINT for DELTA LS and this
+       // results in GUI getting immediately updated with correct setpoint.
+       bufferResizeRequired = true;
    }
 
-   // The new properties have been applied
+   // The new properties have been applied. Since we now reinitialize the buffers
+   // immediately the acqCfgCur_ must already contain correct configuration.
    acqCfgCur_ = acqCfgNew_;
+
+   if (bufferResizeRequired)
+   {
+      // Automatically prepare the acquisition. This helps with following problem:
+      // Some parameters (PARAM_TEMP_SETPOINT, PARAM_READOUT_TIME) update their values only
+      // after the pl_exp_setup is called. This means that the GUI would not be updated immediately
+      // but after the user presses Snap or Live. (for example on Delta LS when user changes PMODE
+      // the temperature setpoint is updated, however without calling pl_exp_setup the GUI would
+      // keep displaying the incorrect value)
+      // See postExpSetupInit()
+      // We prepare the acquisition based on previous configuration. If user was snapping single
+      // frames, we prepare the single frame, if user was running live, we prepare live.
+      if (sequenceModeReady_)
+      {
+         sequenceModeReady_ = false;
+         nRet = ResizeImageBufferContinuous();
+         sequenceModeReady_ = true;
+      }
+      else
+      {
+         singleFrameModeReady_ = false;
+         nRet = ResizeImageBufferSingle();
+         singleFrameModeReady_ = true;
+      }
+      if (nRet != DEVICE_OK) 
+      {
+         sequenceModeReady_ = false;
+         singleFrameModeReady_ = false;
+         return nRet;
+      }
+   }
 
    // Update the Device/Property browser UI
    if (configChanged)
@@ -3593,13 +3693,17 @@ int Universal::ResizeImageBufferContinuous()
       {
          g_pvcamLock.Unlock();
 
-         nRet = LogCamError(__LINE__, "pl_exp_setup_seq failed");
+         nRet = LogCamError(__LINE__, "pl_exp_setup_cont failed");
          SetBinning(1); // The error might have been caused by not supported BIN or ROI, so do a reset
          this->GetCoreCallback()->OnPropertiesChanged(this); // Notify the MM UI to update the BIN and ROI
          SetErrorText( nRet, "Failed to setup the acquisition" );
          return nRet;
       }
       g_pvcamLock.Unlock();
+
+      nRet = postExpSetupInit();
+      if (nRet != DEVICE_OK)
+         return nRet; // Message logged in the failing method
 
       nRet = reinitProcessingBuffers();
       if (nRet != DEVICE_OK)
@@ -3721,6 +3825,10 @@ int Universal::ResizeImageBufferSingle()
          return nRet;
       }
       g_pvcamLock.Unlock();
+
+      nRet = postExpSetupInit();
+      if (nRet != DEVICE_OK)
+         return nRet; // Message logged in the failing method
 
       // Reallocate the single frame buffer if needed. This is the raw buffer
       // that is sent to PVCAM in start_seq(). We always need this buffer.
