@@ -1686,6 +1686,10 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       return staticInfo_.getImageBitDepth();
    }
 
+   public double getCachedPixelSizeUm() {
+      return staticInfo_.getPixelSizeUm();
+   }
+
    public static boolean getShouldDeleteOldCoreLogs() {
       return DefaultUserProfile.getInstance().getBoolean(MMStudio.class,
             SHOULD_DELETE_OLD_CORE_LOGS, false);

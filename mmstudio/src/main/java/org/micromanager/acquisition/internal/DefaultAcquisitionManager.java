@@ -324,7 +324,7 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
          .ijType(ijType)
          .pixelType(pixelType)
          .receivedTime(formatter_.format(new Date()))
-         .pixelSizeUm(studio_.core().getPixelSizeUm())
+         .pixelSizeUm(mmstudio.getCachedPixelSizeUm())
          .uuid(UUID.randomUUID())
          .xPositionUm(mmstudio.getCachedXPosition())
          .yPositionUm(mmstudio.getCachedYPosition())

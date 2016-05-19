@@ -189,4 +189,8 @@ class StaticInfo {
    public int getImageBitDepth() {
       return (int) imageBitDepth_;
    }
+
+   public double getPixelSizeUm() {
+      return pixSizeUm_;
+   }
 }
