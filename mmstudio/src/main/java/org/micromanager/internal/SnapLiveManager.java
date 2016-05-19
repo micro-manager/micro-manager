@@ -205,16 +205,6 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
     * "get next image" calls, though, which it doesn't.
     */
    private void grabImages() {
-      // We try to grab images at 30 FPS or the rate at which images are
-      // actually displayed, whichever is slower.
-      long displayRate = 33;
-      try {
-         displayRate = (long) Math.max(displayRate, core_.getExposure());
-      }
-      catch (Exception e) {
-         // Getting exposure time failed; go with the default.
-         ReportingUtils.logError(e, "Couldn't get exposure time for live mode.");
-      }
       // Reset our list of when images have updated.
       synchronized(displayUpdateTimes_) {
          displayUpdateTimes_.clear();
@@ -223,7 +213,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       long numCameras = core_.getNumberOfCameraChannels();
       String camName = core_.getCameraDevice();
       while (!shouldStopGrabberThread_) {
-         displayRate = waitForNextDisplay(displayRate);
+         waitForNextDisplay();
          grabAndAddImages(numCameras, camName);
       }
    }
@@ -234,34 +224,27 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
     * showing images (which thus takes into account delays e.g. due to image
     * processing), and returns the updated display rate.
     */
-   private long waitForNextDisplay(long displayRate) {
-      // Update our sleep time based on image display times (a.k.a. the
-      // amount of time passed between PixelsSetEvents). Only if we
-      // aren't using a nontrivial pipeline.
-      if (pipeline_ == null || pipeline_.getProcessors().size() == 0) {
-         synchronized(displayUpdateTimes_) {
-            long average = 0;
-            for (int i = 0; i < displayUpdateTimes_.size() - 1; ++i) {
-               average += displayUpdateTimes_.get(i + 1) - displayUpdateTimes_.get(i);
-            }
-            if (displayUpdateTimes_.size() > 1) {
-               average /= (displayUpdateTimes_.size() - 1);
-            }
-            if (average > 1) {
-               // Sample faster than the achieved rate because glitches
-               // should not cause the system to permanently bog down; this
-               // allows us to recover if we temporarily end up displaying
-               // images slowly than we normally can.
-               // Don't sample more slowly than 2x/second.
-               displayRate = (long) Math.min(500, Math.max(33, average * .75));
-            }
+   private void waitForNextDisplay() {
+      long average = 0;
+      // Determine our sleep time based on image display times (a.k.a. the
+      // amount of time passed between PixelsSetEvents).
+      synchronized(displayUpdateTimes_) {
+         for (int i = 0; i < displayUpdateTimes_.size() - 1; ++i) {
+            average += displayUpdateTimes_.get(i + 1) - displayUpdateTimes_.get(i);
+         }
+         if (displayUpdateTimes_.size() > 1) {
+            average /= (displayUpdateTimes_.size() - 1);
          }
       }
+      // Sample faster than the achieved rate because glitches should not cause
+      // the system to permanently bog down; this allows us to recover if we
+      // temporarily end up displaying images slowly than we normally can.
+      // Don't sample more slowly than 2x/second.
+      long waitTime = (long) Math.min(500, Math.max(33, average * .75));
       try {
-         Thread.sleep((int) displayRate);
+         Thread.sleep((int) waitTime);
       }
       catch (InterruptedException e) {}
-      return displayRate;
    }
 
    /**
