@@ -543,6 +543,23 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       return AcqControlDlg.getShouldHideMDADisplay();
    }
 
+   public void setCenterQuad() {
+      ImagePlus curImage = WindowManager.getCurrentImage();
+      if (curImage == null) {
+         return;
+      }
+
+      Rectangle r = curImage.getProcessor().getRoi();
+      int width = r.width / 2;
+      int height = r.height / 2;
+      int xOffset = r.x + width / 2;
+      int yOffset = r.y + height / 2;
+
+      curImage.setRoi(xOffset, yOffset, width, height);
+      Roi roi = curImage.getRoi();
+      updateROI(roi);
+   }
+
    public void setROI() {
       ImagePlus curImage = WindowManager.getCurrentImage();
       if (curImage == null) {
@@ -551,28 +568,21 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
 
       Roi roi = curImage.getRoi();
       if (roi == null) {
-         // if there is no ROI, create one
-         Rectangle r = curImage.getProcessor().getRoi();
-         int iWidth = r.width;
-         int iHeight = r.height;
-         int iXROI = r.x;
-         int iYROI = r.y;
-         if (roi == null) {
-            iWidth /= 2;
-            iHeight /= 2;
-            iXROI += iWidth / 2;
-            iYROI += iHeight / 2;
-         }
-
-         curImage.setRoi(iXROI, iYROI, iWidth, iHeight);
-         roi = curImage.getRoi();
+         // Nothing to be done.
+         return;
       }
-
       if (roi.getType() != Roi.RECTANGLE) {
          handleError("ROI must be a rectangle.\nUse the ImageJ rectangle tool to draw the ROI.");
          return;
       }
+      updateROI(roi);
+   }
 
+   /**
+    * Apply the given ROI, after adjusting for any current ROI that may be in
+    * use.
+    */
+   private void updateROI(Roi roi) {
       Rectangle r = roi.getBounds();
 
       // If the image has ROI info attached to it, correct for the offsets.
@@ -589,17 +599,26 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
          originalROI = images.get(0).getMetadata().getROI();
       }
 
-      try {
-         if (originalROI == null) {
+      if (originalROI == null) {
+         try {
             originalROI = core().getROI();
          }
-         r.x += originalROI.x;
-         r.y += originalROI.y;
-         // Stop (and restart) live mode if it is running
+         catch (Exception e) {
+            // Core failed to provide an ROI.
+            logs().logError(e, "Unable to get core ROI");
+            return;
+         }
+      }
+
+      r.x += originalROI.x;
+      r.y += originalROI.y;
+
+      try {
          setROI(r);
       }
       catch (Exception e) {
-         ReportingUtils.showError(e);
+         // Core failed to set new ROI.
+         logs().logError(e, "Unable to set new ROI");
       }
    }
 

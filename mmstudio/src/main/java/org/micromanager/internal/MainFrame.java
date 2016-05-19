@@ -505,6 +505,15 @@ public class MainFrame extends MMFrame implements LiveModeListener {
             }
          });
       roiPanel.add(setRoiButton_, SMALLBUTTON_SIZE);
+      JButton centerQuadButton = createButton(null, "center_quad.png",
+         "Set Region Of Interest to center quad of camera",
+         new Runnable() {
+            @Override
+            public void run() {
+               studio_.setCenterQuad();
+            }
+         });
+      roiPanel.add(centerQuadButton, SMALLBUTTON_SIZE);
 
       clearRoiButton_ = createButton(null, "arrow_out.png",
          "Reset Region of Interest to full frame",

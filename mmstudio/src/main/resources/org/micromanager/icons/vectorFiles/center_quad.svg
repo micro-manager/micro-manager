@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg7535"
+   version="1.1"
+   inkscape:version="0.48.5 r10040"
+   sodipodi:docname="roi_multi.svg">
+  <defs
+     id="defs7537">
+    <linearGradient
+       id="linearGradient8053">
+      <stop
+         style="stop-color:#c8c8ff;stop-opacity:1;"
+         offset="0"
+         id="stop8055" />
+      <stop
+         style="stop-color:#6464ff;stop-opacity:1"
+         offset="1"
+         id="stop8057" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient8053"
+       id="linearGradient8567"
+       gradientUnits="userSpaceOnUse"
+       x1="114.64286"
+       y1="259.50504"
+       x2="291.07144"
+       y2="445.21933"
+       gradientTransform="translate(-2.8571429,-40)" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient8053"
+       id="linearGradient8590"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.76007656,0,0,1.115437,143.66745,145.47875)"
+       x1="114.64286"
+       y1="259.50504"
+       x2="291.07144"
+       y2="445.21933" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient8053"
+       id="linearGradient8594"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.83442266,0,0,1.0253968,38.073452,294.16223)"
+       x1="114.64286"
+       y1="259.50504"
+       x2="291.07144"
+       y2="445.21933" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.35"
+     inkscape:cx="-133.57143"
+     inkscape:cy="520"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1261"
+     inkscape:window-height="759"
+     inkscape:window-x="25"
+     inkscape:window-y="3"
+     inkscape:window-maximized="0" />
+  <metadata
+     id="metadata7540">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:none;stroke:#000000;stroke-width:4.72191143;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="rect8598"
+       width="495.27808"
+       height="495.27808"
+       x="77.360954"
+       y="279.72314"
+       ry="3.4626691"
+       inkscape:export-filename="/Users/chriswei/centerQuad@2x.png"
+       inkscape:export-xdpi="5.7600002"
+       inkscape:export-ydpi="5.7600002" />
+    <rect
+       style="fill:none;stroke:#000000;stroke-width:5.04322767;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="rect8602"
+       width="244.95677"
+       height="244.95677"
+       x="77.521614"
+       y="529.88379"
+       ry="3.4926054"
+       inkscape:export-filename="/Users/chriswei/centerQuad@2x.png"
+       inkscape:export-xdpi="5.7600002"
+       inkscape:export-ydpi="5.7600002" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#rect8602"
+       id="use8604"
+       transform="translate(250,0)"
+       width="744.09448"
+       height="1052.3622"
+       inkscape:export-filename="/Users/chriswei/centerQuad@2x.png"
+       inkscape:export-xdpi="5.7600002"
+       inkscape:export-ydpi="5.7600002" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#use8604"
+       id="use8606"
+       transform="translate(0,-249.99999)"
+       width="744.09448"
+       height="1052.3622"
+       inkscape:export-filename="/Users/chriswei/centerQuad@2x.png"
+       inkscape:export-xdpi="5.7600002"
+       inkscape:export-ydpi="5.7600002" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#use8606"
+       id="use8608"
+       transform="translate(-250,0)"
+       width="744.09448"
+       height="1052.3622"
+       inkscape:export-filename="/Users/chriswei/centerQuad@2x.png"
+       inkscape:export-xdpi="5.7600002"
+       inkscape:export-ydpi="5.7600002" />
+    <rect
+       ry="1.7156537"
+       y="404.66412"
+       x="202.30193"
+       height="245.39615"
+       width="245.39615"
+       id="use8083"
+       style="fill:url(#linearGradient8590);fill-opacity:1;stroke:#3232ff;stroke-width:4.60385084;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       inkscape:export-filename="/Users/chriswei/centerQuad@2x.png"
+       inkscape:export-xdpi="5.7600002"
+       inkscape:export-ydpi="5.7600002" />
+  </g>
+</svg>
