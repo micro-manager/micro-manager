@@ -196,12 +196,15 @@ public interface AcquisitionManager {
     * will be used as a base, with the following fields overwritten based on
     * the image properties and current hardware state, if possible: binning,
     * bitDepth, camera, ijType, pixelType, receivedTime (to the current time),
-    * uuid, xPositionUm, yPositionUm, zPositionUm (all three based on
-    * cached stage position(s), as displayed in the µManager main window).
+    * uuid, xPositionUm, yPositionUm, zPositionUm. Note that stage positions
+    * are based on cached values, and may be inaccurate if the cache has not
+    * been refreshed since the last time the stage moved.
     * Additionally, if the includeHardwareState boolean is set to true, then
     * the current state of the system state cache (i.e. Micro-Manager's
     * understanding of all device property values) will be included in the
-    * scopeData property.
+    * scopeData property. As with the stage positions, these values do not
+    * necessarily reflect reality; they are just the last-known values in the
+    * cache.
     * @param image Image whose metadata should be populated.
     * @param includeHardwareState if true, then the scopeData field will be
     *        populated in the result Metadata.
