@@ -4233,9 +4233,8 @@ bool CMMCore::isMultiROIEnabled() throw (CMMError)
 
 /**
  * Set multiple ROIs for the current camera device. Will fail if the camera
- * does not support multiple ROIs, any of the positions are negative, any
- * widths or heights are nonpositive, or if the vectors do not all have the
- * same length.
+ * does not support multiple ROIs, any widths or heights are nonpositive,
+ * or if the vectors do not all have the same length.
  *
  * @param xs X indices for the upper-left corners of each ROI.
  * @param ys Y indices for the upper-left corners of each ROI.
@@ -4246,6 +4245,12 @@ void CMMCore::setMultiROI(std::vector<unsigned> xs, std::vector<unsigned> ys,
       std::vector<unsigned> widths,
       std::vector<unsigned> heights) throw (CMMError)
 {
+   if (xs.size() != ys.size() ||
+	   xs.size() != widths.size() ||
+	   xs.size() != heights.size())
+   {
+	   throw CMMError("Inconsistent ROI parameter lengths");
+   }
    boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
    if (!camera)
    {
@@ -4277,7 +4282,8 @@ void CMMCore::setMultiROI(std::vector<unsigned> xs, std::vector<unsigned> ys,
 
 /**
  * Get multiple ROIs from the current camera device. Will fail if the camera
- * does not support multiple ROIs.
+ * does not support multiple ROIs. Will return empty vectors if multiple ROIs
+ * are not currently being used.
  * @param xs (Return value) X indices for the upper-left corners of each ROI.
  * @param ys (Return value) Y indices for the upper-left corners of each ROI.
  * @param widths (Return value) Width in pixels for each ROI.
@@ -4308,10 +4314,10 @@ void CMMCore::getMultiROI(std::vector<unsigned>& xs, std::vector<unsigned>& ys,
    nRet = camera->GetMultiROI(xsArr, ysArr, widthsArr, heightsArr, &newNum);
    if (nRet != DEVICE_OK)
    {
-	  free(xsArr);
-	  free(ysArr);
-	  free(widthsArr);
-	  free(heightsArr);
+      free(xsArr);
+      free(ysArr);
+      free(widthsArr);
+      free(heightsArr);
       throw CMMError(getDeviceErrorText(nRet, camera).c_str(), MMERR_DEVICE_GENERIC);
    }
    if (newNum > numROI)

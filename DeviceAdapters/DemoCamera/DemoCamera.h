@@ -143,7 +143,7 @@ public:
    bool SupportsMultiROI();
    bool IsMultiROISet();
    int GetMultiROICount(unsigned& count);
-   int SetMultiROI(const unsigned* xs, const unsigned* ys, 
+   int SetMultiROI(const unsigned* xs, const unsigned* ys,
            const unsigned* widths, const unsigned* heights,
            unsigned numROIs);
    int GetMultiROI(unsigned* xs, unsigned* ys, unsigned* widths,
