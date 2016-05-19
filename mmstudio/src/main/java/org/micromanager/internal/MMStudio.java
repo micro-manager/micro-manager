@@ -29,6 +29,7 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.Roi;
+import ij.gui.ShapeRoi;
 import ij.gui.Toolbar;
 
 import java.awt.Component;
@@ -557,7 +558,13 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
 
       curImage.setRoi(xOffset, yOffset, width, height);
       Roi roi = curImage.getRoi();
-      updateROI(roi);
+      try {
+         setROI(updateROI(roi));
+      }
+      catch (Exception e) {
+         // Core failed to set new ROI.
+         logs().logError(e, "Unable to set new ROI");
+      }
    }
 
    public void setROI() {
@@ -571,18 +578,52 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
          // Nothing to be done.
          return;
       }
-      if (roi.getType() != Roi.RECTANGLE) {
-         handleError("ROI must be a rectangle.\nUse the ImageJ rectangle tool to draw the ROI.");
+      if (roi.getType() == Roi.RECTANGLE) {
+         try {
+            setROI(updateROI(roi));
+         }
+         catch (Exception e) {
+            // Core failed to set new ROI.
+            logs().logError(e, "Unable to set new ROI");
+         }
          return;
       }
-      updateROI(roi);
+      // Dealing with multiple ROIs; this may not be supported.
+      try {
+         if (!(roi instanceof ShapeRoi && core_.isMultiROISupported())) {
+            handleError("ROI must be a rectangle.\nUse the ImageJ rectangle tool to draw the ROI.");
+            return;
+         }
+      }
+      catch (Exception e) {
+         handleError("Unable to determine if multiple ROIs is supported");
+         return;
+      }
+      // Generate list of rectangles for the ROIs.
+      ArrayList<Rectangle> rois = new ArrayList<Rectangle>();
+      for (Roi subRoi : ((ShapeRoi) roi).getRois()) {
+         // HACK: just use the bounding box of each sub-ROI. Determining if
+         // sub-ROIs are rectangles is difficult (they "decompose" to Polygons
+         // once there's more than one at a time, so as far as I can tell we
+         // would have to test each angle of each polygon to see if it's
+         // 90 degrees and has the correct handedness), and this provides a
+         // good- enough solution for now.
+         rois.add(updateROI(subRoi));
+      }
+      try {
+         setMultiROI(rois);
+      }
+      catch (Exception e) {
+         // Core failed to set new ROI.
+         logs().logError(e, "Unable to set new ROI");
+      }
    }
 
    /**
-    * Apply the given ROI, after adjusting for any current ROI that may be in
-    * use.
+    * Adjust the provided rectangular ROI based on any current ROI that may be
+    * in use.
     */
-   private void updateROI(Roi roi) {
+   private Rectangle updateROI(Roi roi) {
       Rectangle r = roi.getBounds();
 
       // If the image has ROI info attached to it, correct for the offsets.
@@ -606,20 +647,13 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
          catch (Exception e) {
             // Core failed to provide an ROI.
             logs().logError(e, "Unable to get core ROI");
-            return;
+            return null;
          }
       }
 
       r.x += originalROI.x;
       r.y += originalROI.y;
-
-      try {
-         setROI(r);
-      }
-      catch (Exception e) {
-         // Core failed to set new ROI.
-         logs().logError(e, "Unable to set new ROI");
-      }
+      return r;
    }
 
    public void clearROI() {
@@ -1452,6 +1486,13 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
    public void setROI(Rectangle r) throws Exception {
       live().setSuspended(true);
       core_.setROI(r.x, r.y, r.width, r.height);
+      staticInfo_.refreshValues();
+      live().setSuspended(false);
+   }
+
+   public void setMultiROI(List<Rectangle> rois) throws Exception {
+      live().setSuspended(true);
+      core_.setMultiROI(rois);
       staticInfo_.refreshValues();
       live().setSuspended(false);
    }
