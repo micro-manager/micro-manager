@@ -3,20 +3,21 @@
 //-------------------------------------------|       (*) header    //
 // Project     | PCO                         |       ( ) others    //
 //-----------------------------------------------------------------//
-// Platform    | Embedded System, PC                               //
+// Platform    | - Embedded platforms like M16C, AVR32, PIC32 etc. //
+//             | - PC with several Windows versions, Linux etc.    //
 //-----------------------------------------------------------------//
-// Environment | All 'C'-compiler used at PCO                      //
+// Environment | - Platform dependent                              //
 //-----------------------------------------------------------------//
 // Purpose     | Defines, constants for use with SDK commands for  //
 //             | pco.camera (SC2)                                  //
 //-----------------------------------------------------------------//
-// Author      | LWA, MBL, PCO AG                                  //
+// Author      | MBl/FRe/LWa/AGr and others, PCO AG                //
 //-----------------------------------------------------------------//
-// Revision    | Rev. 0.25                                         //
+// Revision    | versioned using SVN                               //
 //-----------------------------------------------------------------//
 // Notes       |                                                   //
 //-----------------------------------------------------------------//
-// (c) 2004 PCO AG  *  Donaupark 11 *  D-93309 Kelheim / Germany   //
+// (c) 2003-2014 PCO AG * Donaupark 11 * D-93309 Kelheim / Germany //
 // *  Phone: +49 (0)9441 / 2005-0  *                               //
 // *  Fax:   +49 (0)9441 / 2005-20 *  Email: info@pco.de           //
 //-----------------------------------------------------------------//
@@ -96,6 +97,9 @@
 //  0.28     | 09.12.2013 |  RFR: Added defines for pco.flim       //
 //           |            |  commands                              //
 //-----------------------------------------------------------------//
+//  0.29     | 21.02.2014 |  USB PID,VID and EP addresses added    //
+//           |            |  VTI                                   //
+//-----------------------------------------------------------------//
 
 // Do not change any values after release! Only additions are allowed!
 
@@ -129,18 +133,39 @@
 
 
 // pco.dimax types
-#define CAMERATYPE_PCO_DIMAX_STD          0x1000
-#define CAMERATYPE_PCO_DIMAX_TV           0x1010
-#define CAMERATYPE_PCO_DIMAX_AUTOMOTIVE   0x1020
+#define CAMERATYPE_PCO_DIMAX_STD           0x1000
+#define CAMERATYPE_PCO_DIMAX_TV            0x1010
 
-#define CAMERASUBTYPE_PCO_DIMAX_Weisscam  0x0064   // 100 = Weisscam, all features
-#define CAMERASUBTYPE_PCO_DIMAX_HD        0x80FF   // pco.dimax HD
-#define CAMERASUBTYPE_PCO_DIMAX_HD_plus   0xC0FF   // pco.dimax HD+
-#define CAMERASUBTYPE_PCO_DIMAX_X35       0x00C8   // 200 = Weisscam/P+S HD35
+#define CAMERATYPE_PCO_DIMAX_AUTOMOTIVE    0x1020   // obsolete and not used for the pco.dimax, please remove from your sources!
+#define CAMERATYPE_PCO_DIMAX_CS            0x1020   // code is now used for pco.dimax CS
 
-#define CAMERASUBTYPE_PCO_DIMAX_HS1       0x207F   
-#define CAMERASUBTYPE_PCO_DIMAX_HS2       0x217F   
-#define CAMERASUBTYPE_PCO_DIMAX_HS4       0x237F   
+#define CAMERASUBTYPE_PCO_DIMAX_Weisscam   0x0064   // 100 = Weisscam, all features
+#define CAMERASUBTYPE_PCO_DIMAX_HD         0x80FF   // pco.dimax HD
+#define CAMERASUBTYPE_PCO_DIMAX_HD_plus    0xC0FF   // pco.dimax HD+
+#define CAMERASUBTYPE_PCO_DIMAX_X35        0x00C8   // 200 = Weisscam/P+S HD35
+
+#define CAMERASUBTYPE_PCO_DIMAX_HS1        0x207F   
+#define CAMERASUBTYPE_PCO_DIMAX_HS2        0x217F   
+#define CAMERASUBTYPE_PCO_DIMAX_HS4        0x237F   
+
+#define CAMERASUBTYPE_PCO_DIMAX_CS_AM      0x407F   
+#define CAMERASUBTYPE_PCO_DIMAX_CS_RFU_1   0x417F   
+#define CAMERASUBTYPE_PCO_DIMAX_CS_RFU_2   0x427F   
+#define CAMERASUBTYPE_PCO_DIMAX_CS_RFU_3   0x437F   
+#define CAMERASUBTYPE_PCO_DIMAX_CS_RFU_4   0x447F   
+#define CAMERASUBTYPE_PCO_DIMAX_CS_RFU_5   0x457F   
+#define CAMERASUBTYPE_PCO_DIMAX_CS_RFU_6   0x467F   
+#define CAMERASUBTYPE_PCO_DIMAX_CS_RFU_7   0x477F   
+        
+#define CAMERASUBTYPE_PCO_DIMAX_CS_OEM_IX  0x507F   
+#define CAMERASUBTYPE_PCO_DIMAX_CS_OEM_1   0x517F   
+#define CAMERASUBTYPE_PCO_DIMAX_CS_OEM_2   0x527F   
+#define CAMERASUBTYPE_PCO_DIMAX_CS_OEM_3   0x537F   
+#define CAMERASUBTYPE_PCO_DIMAX_CS_OEM_4   0x547F   
+#define CAMERASUBTYPE_PCO_DIMAX_CS_OEM_5   0x557F   
+#define CAMERASUBTYPE_PCO_DIMAX_CS_OEM_6   0x567F   
+#define CAMERASUBTYPE_PCO_DIMAX_CS_OEM_7   0x577F   
+
 
 // pco.sensicam types                   // tbd., all names are internal ids
 #define CAMERATYPE_SC3_SONYQE    0x1200 // SC3 based - Sony 285
@@ -155,12 +180,20 @@
 #define CAMERATYPE_PCO_EDGE_GL               0x1310 // pco.edge 5.5 (Sensor CIS2521) Interface: CameraLink , global  shutter
 #define CAMERATYPE_PCO_EDGE_USB3             0x1320 // pco.edge     (all sensors   ) Interface: USB 3.0    ,(all shutter modes)
 #define CAMERATYPE_PCO_EDGE_HS               0x1340 // pco.edge     (all sensors   ) Interface: high speed ,(all shutter modes) 
+#define CAMERATYPE_PCO_EDGE_MT               0x1304 // pco.edge MT2 (all sensors   ) Interface: CameraLink Base, rolling shutter
 
 
 #define CAMERASUBTYPE_PCO_EDGE_SPRINGFIELD   0x0006
+#define CAMERASUBTYPE_PCO_EDGE_31            0x0031
+#define CAMERASUBTYPE_PCO_EDGE_42            0x0042
+#define CAMERASUBTYPE_PCO_EDGE_55            0x0055
 #define CAMERASUBTYPE_PCO_EDGE_DEVELOPMENT   0x0100
 #define CAMERASUBTYPE_PCO_EDGE_X2            0x0200
+#define CAMERASUBTYPE_PCO_EDGE_RESOLFT       0x0300
 #define CAMERASUBTYPE_PCO_EDGE_GOLD          0x0FF0
+#define CAMERASUBTYPE_PCO_EDGE_DUAL_CLOCK    0x000D
+#define CAMERASUBTYPE_PCO_EDGE_DICAM         0xDC00
+#define CAMERASUBTYPE_PCO_EDGE_42_LT         0x8042
 
 
 // pco.flim types
@@ -168,6 +201,9 @@
 
 // pco.flow types
 #define CAMERATYPE_PCO_FLOW      0x1500 // pco.flow
+
+// pco.panda types
+#define CAMERATYPE_PCO_PANDA     0x1600 // pco.panda
 
 //#define CAMERATYPE_PCOUPDATE     0xFFFF   // indicates Camera in update mode!
 
@@ -183,6 +219,37 @@
 #define INTERFACE_USB3           0x0006
 #define INTERFACE_CAMERALINKHS   0x0007
 #define INTERFACE_COAXPRESS      0x0008
+
+// ------------------------------------------------------------------------ //
+// -- Defines for USB devices --------------------------------------------- //
+// ------------------------------------------------------------------------ //
+//USB 2.0 and USB 3.0 Vendor ID
+#define USB_VID                   0x1CB2
+//USB 2.0 Product IDs
+#define USB_PID_IF_GIGEUSB_20     0x0001      // FX2 (Cypress 68013a)
+#define USB_PID_CAM_PIXFLY_20     0x0002      // FX2 (Cypress 68013a)
+#define USB_PID_IF_GIGEUSB_30     0x0003      // FX3 (Cypress CYUSB3014-BZX) Application Code
+#define USB_PID_IF_GIGEUSB_30_B1  0x0004      // FX3 (Cypress CYUSB3014-BZX) SPI Boot Code (FPGA Update)
+#define USB_PID_IF_GIGEUSB_30_B2  0x0005      // FX3 (Cypress CYUSB3014-BZX) I2C Boot Code (FX3 Update)
+#define USB_PID_CAM_EDGEUSB_30    0x0006      // Fx3 (Cypress CYUSB3014-BZX)
+#define USB_PID_CAM_FLOW_20       0x0007      // AVR32
+#define USB_PID_CAM_EDGEHS_20     0x0008      // AVR32
+#define USB_PID_P5CTR             0x0009      // FTDI FT2232H (for updating P5CTR framegrabber)
+#define USB_PID_P5CTR_PROD        0x000A      // FTDI FT2232H (usb bridge for controlling the production tool for the P5CTR framegrabber)
+#define USB_PID_DMCT_DEBUG        0x0080      // Microchip PIC32MZ / DMCT debug port
+
+
+//USB Device Endpoint addresses
+// IN: From device to PC
+// OUT: From PC to device
+#define USB_EP_FX2_CTRL_IN        0x84
+#define USB_EP_FX2_CTRL_OUT       0x02
+#define USB_EP_FX2_IMG_IN         0x86
+#define USB_EP_FX3_CTRL_IN        0x81
+#define USB_EP_FX3_CTRL_OUT       0x01
+#define USB_EP_FX3_IMG_IN         0x82
+#define USB_EP_AVR32_CTRL_IN      0x81
+#define USB_EP_AVR32_CTRL_OUT     0x02
 
 // ------------------------------------------------------------------------ //
 // -- Defines for CameraLink DataFormat  ---------------------------------- //
@@ -233,6 +300,9 @@
 #define WARNING_EXTERNAL_BATTERY_LOW    0x00000010
 #define WARNING_OFFSET_REGULATION_RANGE 0x00000020
 
+#define WARNING_CAMERARAM               0x00020000
+
+
 #define ERROR_POWERSUPPLYVOLTAGERANGE   0x00000001
 #define ERROR_POWERSUPPLYTEMPERATURE    0x00000002
 #define ERROR_CAMERATEMPERATURE         0x00000004
@@ -255,7 +325,7 @@
 #define STATUS_IS_IN_POWERSAVE          0x00000100
 #define STATUS_POWERSAVE_LEFT           0x00000200
 #define STATUS_LOCKED_TO_IRIG           0x00000400
-
+#define STATUS_IS_IN_BOOTLOADER         0x80000000
 
 
 // ------------------------------------------------------------------------ //
@@ -358,7 +428,7 @@ const PCO_SENSOR_TYPE_DEF far pco_sensor[] =
                SENSOR_ICX407AK, "Sony ICX407AK",
                SENSOR_ICX414AL, "Sony ICX414AL",
                SENSOR_ICX414AK, "Sony ICX414AK",
-			   SENSOR_ICX407BLA, "Sony ICX407BLA",
+            SENSOR_ICX407BLA, "Sony ICX407BLA",
 
                // Kodak sensor types
                SENSOR_KAI2000M,   "Kodak KAI2000M",
@@ -389,8 +459,8 @@ const PCO_SENSOR_TYPE_DEF far pco_sensor[] =
                // Other sensor types
                SENSOR_TC285SPD, "TI TC285SPD",
                
-			   SENSOR_CYPRESS_RR_V1_BW,  "Cypress Roadrunner V1 BW",
-			   SENSOR_CYPRESS_RR_V1_COL, "Cypress Roadrunner V1 Color",
+            SENSOR_CYPRESS_RR_V1_BW,  "Cypress Roadrunner V1 BW",
+            SENSOR_CYPRESS_RR_V1_COL, "Cypress Roadrunner V1 Color",
                
                SENSOR_CIS2051_V1_FI_BW, "Fairchild CIS2051 V1 I-Front BW",
                SENSOR_CIS2051_V1_BI_BW, "Fairchild CIS2051 V1 I-Back BW",
@@ -408,9 +478,13 @@ extern const PCO_SENSOR_TYPE_DEF far pco_sensor[];
 extern const int far PCO_SENSOR_TYPE_DEF_NUM;
 #endif
 
-#define INFO_STRING_CAMERA  1               // Camera name
-#define INFO_STRING_SENSOR  2               // Sensor name
+#define INFO_STRING_CAMERA              1   // Camera name
+#define INFO_STRING_SENSOR              2   // Sensor name
 #define INFO_STRING_PCO_MATERIALNUMBER  3   // get PCO material number
+
+#define INFO_STRING_BUILD               4   // Build number and date
+#define INFO_STRING_PCO_INCLUDE         5   // PCO_Include rev used for building
+
 
 
   // these are defines for interpreting the dwGeneralCaps1 member of the
@@ -466,6 +540,17 @@ extern const int far PCO_SENSOR_TYPE_DEF_NUM;
 // defines for interpreting the dwGeneralCaps2 member are therefore in sc2_defs_intern.h
 
 
+// dwGeneralCaps3:
+
+#define GENERALCAPS3_HDSDI_1G5                         0x00000001 // with HD/SDI interface, 1.5 GBit data rate
+#define GENERALCAPS3_HDSDI_3G                          0x00000002 // with HD/SDI interface, 3.0 GBit data rate
+#define GENERALCAPS3_IRIG_B_UNMODULATED                0x00000004 // can evaluate an IRIG B unmodulated signal
+#define GENERALCAPS3_IRIG_B_MODULATED                  0x00000008 // can evaluate an IRIG B modulated signal
+#define GENERALCAPS3_CAMERA_SYNC                       0x00000010 // has camera sync mode implemented
+#define GENERALCAPS3_RESERVED0                         0x00000020 // reserved
+#define GENERALCAPS3_HS_READOUT_MODE                   0x00000040 // special fast sensor readout mode 
+#define GENERALCAPS3_EXT_SYNC_1HZ_MODE                 0x00000080 // in trigger mode external synchronized, multiples of 
+                                                                  //   1 F/s can be set (until now: 100 Hz)
 
 
 // ------------------------------------------------------------------------ //
@@ -485,6 +570,17 @@ extern const int far PCO_SENSOR_TYPE_DEF_NUM;
 #define PCO_EDGE_SETUP_ROLLING_SHUTTER 0x00000001         // rolling shutter
 #define PCO_EDGE_SETUP_GLOBAL_SHUTTER  0x00000002         // global shutter
 #define PCO_EDGE_SETUP_GLOBAL_RESET    0x00000004         // global reset rolling readout
+
+
+#define PCO_DIMAX_CS_CAMERA_SETUP_TYPE_RSRVD_0     0x1001  // pco.dimax CS CameraSetup 
+#define PCO_DIMAX_CS_CAMERA_SETUP_TYPE_RSRVD_1     0x1002  //   definitions for type parameter
+#define PCO_DIMAX_CS_CAMERA_SETUP_TYPE_RSRVD_2     0x1004  //   used for calibration purposes
+#define PCO_DIMAX_CS_CAMERA_SETUP_TYPE_RSRVD_3     0x1008
+#define PCO_DIMAX_CS_CAMERA_SETUP_TYPE_RSRVD_4     0x1010
+#define PCO_DIMAX_CS_CAMERA_SETUP_TYPE_RSRVD_5     0x1020
+#define PCO_DIMAX_CS_CAMERA_SETUP_TYPE_RSRVD_6     0x1040
+#define PCO_DIMAX_CS_CAMERA_SETUP_TYPE_RSRVD_7     0x1080
+
 
 // ------------------------------------------------------------------------ //
 // -- Defines for Read/Write Mailbox & Get Mailbox Status Commands: ------- //
@@ -661,6 +757,7 @@ extern const int far PCO_SENSOR_TYPE_DEF_NUM;
 #define TRIGGER_MODE_EXTERNAL_SYNCHRONIZED            0x0004
 #define TRIGGER_MODE_FAST_EXTERNALEXPOSURECONTROL     0x0005
 #define TRIGGER_MODE_EXTERNAL_CDS                     0x0006
+#define TRIGGER_MODE_SLOW_EXTERNALEXPOSURECONTROL     0x0007
 
 
 // ------------------------------------------------------------------------ //
@@ -795,6 +892,7 @@ extern const int far PCO_SENSOR_TYPE_DEF_NUM;
 #define SIGNAL_STATE_IDLE               0x00000002
 #define SIGNAL_STATE_EXP                0x00000004
 #define SIGNAL_STATE_READ               0x00000008
+#define SIGNAL_STATE_FIFO_FULL          0x00000010
 
 
 // ------------------------------------------------------------------------ //
@@ -854,6 +952,7 @@ extern const int far PCO_SENSOR_TYPE_DEF_NUM;
 #define SET_INTERFACE_CAMERALINK                                  0x0002 // sccmos
 #define SET_INTERFACE_USB                                         0x0003 // usb pixelfly
 #define SET_INTERFACE_DVI                                         0x0004 // dimax
+#define SET_INTERFACE_CLHS                                        0x0005 // EdgeHS
 
 //wFormat
 #define HDSDI_FORMAT_OUTPUT_OFF                                   0x0000
@@ -957,6 +1056,8 @@ extern const int far PCO_SENSOR_TYPE_DEF_NUM;
 #define IMAGE_TRANSFER_MODE_SCALED_XY_8BIT     0x0001 
 #define IMAGE_TRANSFER_MODE_CUTOUT_XY_8BIT     0x0002 
 #define IMAGE_TRANSFER_MODE_FULL_RGB_24BIT     0x0003 
+#define IMAGE_TRANSFER_MODE_BIN_SCALED_8BIT_BW 0x0004 
+#define IMAGE_TRANSFER_MODE_BIN_SCALED_8BIT_COLOR 0x0005 
 #define IMAGE_TRANSFER_MODE_TEST_ONLY          0x8000
 
 
@@ -967,8 +1068,8 @@ extern const int far PCO_SENSOR_TYPE_DEF_NUM;
 #define SCCMOS_FORMAT_CENTER_TOP_BOTTOM_CENTER                    0x0300  //Mode C
 #define SCCMOS_FORMAT_TOP_CENTER_CENTER_BOTTOM                    0x0400  //Mode D
 
-#define USB_FORMAT_14BIT						                  0x0000
-#define USB_FORMAT_12BIT						                  0x0001
+#define USB_FORMAT_14BIT                                    0x0000
+#define USB_FORMAT_12BIT                                    0x0001
 
 // ------------------------------------------------------------------------ //
 // -- Defines for Get Image Timing: --------------------------------------- //
@@ -1054,7 +1155,16 @@ extern const int far PCO_SENSOR_TYPE_DEF_NUM;
 #define HW_IO_SIGNAL_TIMING_EXPOSURE_RS_GLOBAL      0x00000002
 #define HW_IO_SIGNAL_TIMING_EXPOSURE_RS_LASTLINE    0x00000003
 #define HW_IO_SIGNAL_TIMING_EXPOSURE_RS_ALLLINES    0x00000004
+// ATTENTION: Set timing max value at least to the biggest signal timing
+// value in the parameters list
+#define HW_IO_SIGNAL_TIMING_MAX_VALUE               0x00000010
 
+// ------------------------------------------------------------------------ //
+// -- Defines for HW LED Signal ------------------------------------------- //
+// ------------------------------------------------------------------------ //
+
+#define HW_LED_SIGNAL_OFF                               0x00000000
+#define HW_LED_SIGNAL_ON                                0xFFFFFFFF
 
 // ------------------------------------------------------------------------ //
 // -- Defines for pco.flim Commands --------------------------------------- //
@@ -1091,6 +1201,8 @@ extern const int far PCO_SENSOR_TYPE_DEF_NUM;
 
 #define FLIM_ASYMMETRY_CORRECTION_OFF        0x0000
 #define FLIM_ASYMMETRY_CORRECTION_AVERAGE    0x0001
+
+#define FLIM_OUTPUT_MODE_MULT_X2_FLAG        0x0001 // pixel raw values are multiplied by two
 
 
 #endif

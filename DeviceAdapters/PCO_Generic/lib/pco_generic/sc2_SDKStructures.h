@@ -139,13 +139,16 @@
 #define PCO_INTERFACE_CL_ME4 7         // Cameralink Silicon Software Me4
 #define PCO_INTERFACE_USB3   8         // USB 3.0
 #define PCO_INTERFACE_WLAN   9         // WLan (Only control path, not data path)
+#define PCO_INTERFACE_CLHS  11         // Cameralink HS 
 
-#define PCO_LASTINTERFACE PCO_INTERFACE_WLAN
+#define PCO_LASTINTERFACE PCO_INTERFACE_CLHS
 
 #define PCO_INTERFACE_CL_SER 10
 #define PCO_INTERFACE_GENERIC 20
 
-#define PCO_OPENFLAG_GENERIC_IS_CAMLINK  0x0001
+#define PCO_OPENFLAG_GENERIC_IS_CAMLINK  0x0001 // In case a generic Camerlink interface is used (serial port)
+                                       // set this flag (not necessary in automatic scanning)
+#define PCO_OPENFLAG_HIDE_PROGRESS       0x0002 // Hides the progress dialog when automatic scanning runs
 
 typedef struct                         // Buffer list structure for  PCO_WaitforBuffer
 {
@@ -158,8 +161,13 @@ typedef struct                         // Buffer list structure for  PCO_Waitfor
 typedef struct
 {
   WORD          wSize;                 // Sizeof this struct
-  WORD          wInterfaceType;        // 1: Firewire, 2: CamLink with Matrox, 3: CamLink with Silicon SW
-  WORD          wCameraNumber;
+  WORD          wInterfaceType;        // 1: Firewire, 2: CamLink with Matrox, 3: CamLink with Silicon SW Me3
+                                       // 4: CamLink with NI, 5: GigE, 6: USB2.0, 7: CamLink with Silicon SW Me4,
+                                       // 8: USB3.0, 8: WLan
+  WORD          wCameraNumber;         // Start with 0 and increment till error 'No driver' is returned
+                                       // Due to port occupation it might be necessary to increment this 
+                                       // value a second time to get the next camera.
+                                       // (e.g. pco.edge needs two CL ports).
   WORD          wCameraNumAtInterface; // Current number of camera at the interface
   WORD          wOpenFlags[10];        // [0]: moved to dwnext to position 0xFF00
                                        // [1]: moved to dwnext to position 0xFFFF0000
@@ -167,6 +175,8 @@ typedef struct
                                        //            Set this bit in case of a generic Cameralink interface
                                        //            This enables the import of the additional three camera-
                                        //            link interface functions.
+                                       //      Bit1: PCO_OPENFLAG_HIDE_PROGRESS
+                                       //            Set this bit to disable scanner dialog
 
   DWORD         dwOpenFlags[5];        // [0]-[4]: moved to strCLOpen.dummy[0]-[4]
   void*         wOpenPtr[6];
@@ -253,15 +263,16 @@ typedef struct
   WORD        wRoiHorStepsDESC;        // Minimum granularity of ROI in pixels
   WORD        wRoiVertStepsDESC;       // Minimum granularity of ROI in pixels
   WORD        wNumADCsDESC;            // Number of ADCs in system              // 30
-  WORD        ZZwAlignDummy1;
+  WORD        wMinSizeHorzDESC;        // Minimum x-size in pixels in horz. direction
   DWORD       dwPixelRateDESC[4];      // Possible pixelrate in Hz              // 48
   DWORD       ZZdwDummypr[20];                                                  // 128
   WORD        wConvFactDESC[4];        // Possible conversion factor in e/cnt   // 136
-  WORD        ZZdwDummycv[18];                                                  // 172
+  SHORT       sCoolingSetpoints[10];   // Cooling setpoints in case there is no cooling range // 156
+  WORD        ZZdwDummycv[8];                                                   // 172
   WORD        wSoftRoiHorStepsDESC;    // Minimum granularity of SoftROI in pixels
   WORD        wSoftRoiVertStepsDESC;   // Minimum granularity of SoftROI in pixels
   WORD        wIRDESC;                 // IR enhancment possibility
-  WORD        ZZwAlignDummy2;
+  WORD        wMinSizeVertDESC;        // Minimum y-size in pixels in vert. direction
   DWORD       dwMinDelayDESC;          // Minimum delay time in ns
   DWORD       dwMaxDelayDESC;          // Maximum delay time in ms
   DWORD       dwMinDelayStepDESC;      // Minimum stepping of delay time in ns  // 192
@@ -299,11 +310,10 @@ typedef struct
                                        //  -----------------
                                        // 
   WORD        wPatternTypeDESC;        // Pattern type of color chip
-                                       // 0: Bayer pattern RGB
-                                       // 1: Bayer pattern CMY
+                                       // 1: Bayer pattern RGB
   WORD        wDummy1;                 // former DSNU correction mode             // 240
   WORD        wDummy2;                 //
-  WORD        ZZwAlignDummy3;          //
+  WORD        wNumCoolingSetpoints;    //
   DWORD       dwGeneralCapsDESC1;      // General capabilities:
                                        // Bit 0: Noisefilter available
                                        // Bit 1: Hotpixelfilter available
@@ -329,9 +339,17 @@ typedef struct
                                        // Bit17: Camera has CCM
                                        // Bit18: Camera can be synched externally
                                        // Bit19: Global shutter setting not available
-                                        
-                                       // Bit20: // Bit21: // Bit22: // Bit23: reserved for future use
-                                       // Bit24: // Bit25: // Bit26: // Bit27: reserved for future use
+
+                                       // Bit20: Camera supports global reset rolling readout
+                                       // Bit21: Camera supports extended acquire command
+                                       // Bit22: Camera supports fan control command
+                                       // Bit23: Camera vert.ROI must be symmetrical to horizontal axis
+
+                                       // Bit24: Camera horz.ROI must be symmetrical to vertical axis
+                                       // Bit25: Camera has cooling setpoints instead of cooling range
+
+                                       // Bit26: 
+                                       // Bit27: reserved for future use
                                        
                                        // Bit28: reserved for future desc.// Bit29:  reserved for future desc.
 
@@ -342,8 +360,9 @@ typedef struct
                                        // Bit 0 ... 29: reserved for future use
                                        // Bit 30: used internally (sc2_defs_intern.h)
                                        // Bit 31: used internally (sc2_defs_intern.h)
-  DWORD       dwExtSyncFrequency[2];   // lists two frequencies for external sync feature
-  DWORD       dwReservedDESC[4];       // 32bit dummy                             // 276
+  DWORD       dwExtSyncFrequency[4];   // lists four frequencies for external sync feature
+  DWORD       dwGeneralCapsDESC3;      // general capabilites descr. 3 
+  DWORD       dwGeneralCapsDESC4;      // general capabilites descr. 4            // 276
   DWORD       ZZdwDummy[40];                                                      // 436
 } PCO_Description;
 
@@ -385,32 +404,7 @@ typedef struct
 
 
 // Hardware IO Signals definition
-// SIGNAL options definitions (up to 16 different defines)
-#define SIGNAL_DEF_ENABLE   0x00000001 // Signal can be enabled/disabled
-#define SIGNAL_DEF_OUTPUT   0x00000002 // Signal is a status signal (output)
-#define SIGNAL_DEF_MASK     0x000000FF // Signal options mask
-
-// SIGNAL Type definitions (up to 16 different types)
-#define SIGNAL_TYPE_TTL     0x00000001 // Signal can be switched to TTL level
-                                       // (0V to 0.8V, 2V to VCC, VCC is 4.75V to 5.25V)
-#define SIGNAL_TYPE_HL_SIG  0x00000002 // Signal can be switched to high level signal
-                                       // (0V to 5V, 10V to VCC, VCC is 56V)
-#define SIGNAL_TYPE_CONTACT 0x00000004 // Signal can be switched to contact level
-#define SIGNAL_TYPE_RS485   0x00000008 // Signal can be switched to RS485 level
-#define SIGNAL_TYPE_MASK    0x0000FFFF // Signal type mask
-
-// SIGNAL Polarity definitions (up to 16 different types)
-#define SIGNAL_POL_HIGH     0x00000001 // Signal can be switched to sense low level
-#define SIGNAL_POL_LOW      0x00000002 // Signal can be switched to sense high level
-#define SIGNAL_POL_RISE     0x00000004 // Signal can be switched to sense rising edge
-#define SIGNAL_POL_FALL     0x00000008 // Signal can be switched to sense falling edge
-#define SIGNAL_POL_MASK     0x0000FFFF // Signal polarity mask
-
-// SIGNAL Filter settings definitions (up to 16 different filter)
-#define SIGNAL_FILTER_OFF   0x00000001 // Filter can be switched off (t > ~65ns)
-#define SIGNAL_FILTER_MED   0x00000002 // Filter can be switched to medium (t > 1us)
-#define SIGNAL_FILTER_HIGH  0x00000004 // Signal can be switched to high (t > 100ms)
-#define SIGNAL_FILTER_MASK  0x0000FFFF // Signal polarity mask
+// see sc2_defs.h for signal options, type, polarity and filter definitions
 
 #define NUM_MAX_SIGNALS     20         // Maximum number of signals available
 #define NUM_SIGNALS 4
@@ -420,9 +414,14 @@ typedef struct
   WORD  wSize;                         // Sizeof ‘this’ (for future enhancements)
   WORD  ZZwAlignDummy1;
   char  strSignalName[NUM_SIGNAL_NAMES][25];// Name of signal 104
+                                       // Specifies NUM_SIGNAL_NAMES functionalities (1-4)
   WORD wSignalDefinitions;             // Flags showing signal options
                                        // 0x01: Signal can be enabled/disabled
                                        // 0x02: Signal is a status (output)
+                                       // 0x10: Func. 1 has got timing settings
+                                       // 0x20: Func. 2 has got timing settings
+                                       // 0x40: Func. 3 has got timing settings
+                                       // 0x80: Func. 4 has got timing settings
                                        // Rest: future use, set to zero!
   WORD wSignalTypes;                   // Flags showing the selectability of signal types
                                        // 0x01: TTL
@@ -432,8 +431,8 @@ typedef struct
                                        // Rest: future use, set to zero!
   WORD wSignalPolarity;                // Flags showing the selectability
                                        // of signal levels/transitions
-                                       // 0x01: Low Level active
-                                       // 0x02: High Level active
+                                       // 0x01: High Level active
+                                       // 0x02: Low Level active
                                        // 0x04: Rising edge active
                                        // 0x08: Falling edge active
                                        // Rest: future use, set to zero!
@@ -490,14 +489,17 @@ typedef struct
 typedef struct
 {
   WORD  wSize;                         // Sizeof this struct
-  WORD  wSignalNum;                    // Index for strSignal
+  WORD  wSignalNum;                    // Index for strSignal (0,1,2,3,)
   WORD  wEnabled;                      // Flag shows enable state of the signal (0: off, 1: on)
-  WORD  wType;                         // Selected signal type
-  WORD  wPolarity;                     // Selected signal polarity
-  WORD  wFilterSetting;                // Selected signal filter // 12
+  WORD  wType;                         // Selected signal type (1: TTL, 2: HL TTL, 4: contact, 8: RS485)
+  WORD  wPolarity;                     // Selected signal polarity (1: H, 2: L, 4: rising, 8: falling)
+  WORD  wFilterSetting;                // Selected signal filter (1: off, 2: med, 4: high) // 12
   WORD  wSelected;                     // Select signal (0: standard signal, >1 other signal)
   WORD  ZZwReserved;
-  DWORD ZZdwReserved[11];              // 60
+  DWORD dwParameter[4];                // Timing parameter for signal[wSelected]
+  DWORD dwSignalFunctionality[4];      // Type of functionality behind the signal[wSelected] to select the
+                                       // correct parameter set (e.g. 7->Parameter for 'Rolling Shutter exp.signal'
+  DWORD ZZdwReserved[3];               // 60
 } PCO_Signal;
 
 typedef struct
@@ -616,7 +618,8 @@ typedef struct
   WORD        wRoiSoftY1;              // SoftRoi lower right y
   WORD        wRoiSoftXRes;            // Res. h. = resulting horz.res.(softroi resolution, ROI, binning)
   WORD        wRoiSoftYRes;            // Res. v. = resulting vert.res.(softroi resolution, ROI, binning)
-  WORD        ZZwDummy[34];                                               // 108
+  WORD        wRoiSoftDouble;          // Soft ROI with double image
+  WORD        ZZwDummy[33];                                               // 108
 } PCO_Segment;
 
 typedef struct
@@ -697,7 +700,9 @@ typedef struct
                                        // or another device removal
 #define TAKENFLAG_HANDLEVALID 0x0004   // The handle of this device is valid. Changed accoring to DEADHANDLE flag.
 
-#define APIMANAGEMENTFLAG_SOFTROI 0x0001 // Soft ROI is active
+#define APIMANAGEMENTFLAG_SOFTROI_MASK  0xFEFE
+#define APIMANAGEMENTFLAG_SOFTROI       0x0001 // Soft ROI is active
+#define APIMANAGEMENTFLAG_SOFTROI_RESET 0x0100 // Reset Soft ROI to default camera ROI
 
 typedef struct
 {
@@ -727,7 +732,10 @@ typedef struct
   WORD          wRoiSoftY0;
   WORD          wRoiSoftX1;
   WORD          wRoiSoftY1;
-  WORD          ZZwDummy[21];                                                               // 2976
+  WORD          wImageTransferParam[2];
+  WORD          wImageTransferTxWidth;
+  WORD          wImageTransferTxHeight;
+  WORD          ZZwDummy[17];                                                               // 2976
 } PCO_APIManagement;
 
 typedef struct
