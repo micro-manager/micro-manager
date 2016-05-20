@@ -84,6 +84,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    private final ArrayList<LiveModeListener> listeners_;
    private boolean isLiveOn_ = false;
    private Object liveModeLock_ = new Object();
+   private int numCameraChannels_ = 0;
    // Suspended means that we *would* be running except we temporarily need
    // to halt for the duration of some action (e.g. changing the exposure
    // time). See setSuspended().
@@ -210,11 +211,16 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          displayUpdateTimes_.clear();
       }
 
-      long numCameras = core_.getNumberOfCameraChannels();
+      long coreCameras = core_.getNumberOfCameraChannels();
+      if (coreCameras != numCameraChannels_) {
+         // Number of camera channels has changed; need to reset the display.
+         shouldForceReset_ = true;
+      }
+      numCameraChannels_ = (int) coreCameras;
       String camName = core_.getCameraDevice();
       while (!shouldStopGrabberThread_) {
          waitForNextDisplay();
-         grabAndAddImages(numCameras, camName);
+         grabAndAddImages(camName);
       }
    }
 
@@ -249,14 +255,14 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
     * This method takes images out of the Core and inserts them into our
     * pipeline.
     */
-   private void grabAndAddImages(long numCameras, String camName) {
+   private void grabAndAddImages(String camName) {
       try {
-         // We scan over 2*numCameras here because, in multi-camera
+         // We scan over 2*numCameraChannels here because, in multi-camera
          // setups, one camera could be generating images faster than the
-         // other(s). Of course, 2x isn't guaranteed to be enough here,
-         // either, but it's what we've historically used.
+         // other(s). Of course, 2x isn't guaranteed to be enough here, either,
+         // but it's what we've historically used.
          HashSet<Integer> channelsSet = new HashSet<Integer>();
-         for (int c = 0; c < 2 * numCameras; ++c) {
+         for (int c = 0; c < 2 * numCameraChannels_; ++c) {
             TaggedImage tagged;
             try {
                tagged = core_.getNBeforeLastTaggedImage(c);
@@ -284,7 +290,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
                .uuid(UUID.randomUUID()).build();
             displayImage(image.copyWith(newCoords, newMetadata));
             channelsSet.add(imageChannel);
-            if (channelsSet.size() == numCameras) {
+            if (channelsSet.size() == numCameraChannels_) {
                // Got every channel.
                break;
             }
@@ -351,7 +357,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          // default of composite mode) if there is no existing profile settings
          // for the user and we do not have a multicamera setup.
          DisplaySettings.ColorMode mode = DefaultDisplaySettings.getStandardColorMode(TITLE, null);
-         if (mode == null && core_.getNumberOfCameraChannels() == 1) {
+         if (mode == null && numCameraChannels_ == 1) {
             DisplaySettings settings = display_.getDisplaySettings();
             settings = settings.copy()
                .channelColorMode(DisplaySettings.ColorMode.GRAYSCALE)
@@ -418,9 +424,6 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    @Override
    public void displayImage(Image image) {
       synchronized(displayLock_) {
-         // Check for changes in the number of channels, indicating e.g.
-         // changing multicamera.
-         long numCameras = core_.getNumberOfCameraChannels();
          boolean shouldReset = shouldForceReset_;
          if (store_ != null) {
             String[] channelNames = store_.getSummaryMetadata().getChannelNames();
@@ -431,8 +434,8 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
             catch (Exception e) {
                ReportingUtils.logError(e, "Error getting current channel");
             }
-            for (int i = 0; i < numCameras; ++i) {
-               String name = makeChannelName(curChannel, i, (int) numCameras);
+            for (int i = 0; i < numCameraChannels_; ++i) {
+               String name = makeChannelName(curChannel, i);
                if (i >= channelNames.length || !name.equals(channelNames[i])) {
                   // Channel name changed.
                   shouldReset = true;
@@ -519,11 +522,9 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       // correct colors.
       try {
          String channel = core_.getCurrentConfig(core_.getChannelGroup());
-         // Fun fact: Java (at least, Java 6) requires an int size for arrays.
-         int numCameras = (int) core_.getNumberOfCameraChannels();
-         String[] channelNames = new String[numCameras];
-         for (int i = 0; i < numCameras; ++i) {
-            channelNames[i] = makeChannelName(channel, i, numCameras);
+         String[] channelNames = new String[numCameraChannels_];
+         for (int i = 0; i < numCameraChannels_; ++i) {
+            channelNames[i] = makeChannelName(channel, i);
          }
          try {
             store_.setSummaryMetadata(store_.getSummaryMetadata().copy()
@@ -543,10 +544,9 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    /**
     * Make a name up for the given channel/camera number combination.
     */
-   private String makeChannelName(String channel, int cameraIndex,
-         int numCameras) {
+   private String makeChannelName(String channel, int cameraIndex) {
       String result = channel;
-      if (numCameras > 1) {
+      if (numCameraChannels_ > 1) {
          result = result + " " + cameraIndex;
       }
       return result;
