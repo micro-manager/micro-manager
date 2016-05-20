@@ -85,6 +85,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    private boolean isLiveOn_ = false;
    private Object liveModeLock_ = new Object();
    private int numCameraChannels_ = 0;
+   private double exposureMs_ = 0;
    // Suspended means that we *would* be running except we temporarily need
    // to halt for the duration of some action (e.g. changing the exposure
    // time). See setSuspended().
@@ -217,6 +218,13 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          shouldForceReset_ = true;
       }
       numCameraChannels_ = (int) coreCameras;
+      try {
+         exposureMs_ = core_.getExposure();
+      }
+      catch (Exception e) {
+         studio_.logs().showError(e, "Unable to determine exposure time");
+         return;
+      }
       String camName = core_.getCameraDevice();
       while (!shouldStopGrabberThread_) {
          waitForNextDisplay();
@@ -245,13 +253,15 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
             }
          }
       }
-      // Sample faster than the achieved rate because glitches should not cause
-      // the system to permanently bog down; this allows us to recover if we
+      // Sample faster than shortestWait because glitches should not cause the
+      // system to permanently bog down; this allows us to recover if we
       // temporarily end up displaying images slowly than we normally can.
-      // Don't sample more slowly than 2x/second.
-      long waitTime = (long) Math.min(500, Math.max(33, shortestWait * .75));
+      // On the other hand, we don't want to sample faster than the exposure
+      // time, or slower than 2x/second.
+      int rateLimit = (int) Math.max(33, exposureMs_);
+      int waitTime = (int) Math.min(500, Math.max(rateLimit, shortestWait * .75));
       try {
-         Thread.sleep((int) waitTime);
+         Thread.sleep(waitTime);
       }
       catch (InterruptedException e) {}
    }
