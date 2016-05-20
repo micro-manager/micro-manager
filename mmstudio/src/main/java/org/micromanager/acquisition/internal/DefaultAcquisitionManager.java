@@ -292,7 +292,10 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
 
    @Override
    public Metadata generateMetadata(Image image, boolean includeHardwareState) throws Exception {
-      String camera = studio_.core().getCameraDevice();
+      String camera = image.getMetadata().getCamera();
+      if (camera == null) {
+         camera = studio_.core().getCameraDevice();
+      }
       int ijType = -1;
       String pixelType = null;
       if (image.getNumComponents() == 1) {
