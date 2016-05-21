@@ -1046,15 +1046,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       final float scanDuration = laserDuration + 2*scanLaserBufferTime;
       // scan will be longer than laser by 0.25ms at both start and end
       
-      // account for delay in scan position based on Bessel filter by starting the scan slightly earlier
-      // than we otherwise would; delay to start is (empirically) 0.07ms + 0.25/(freq in kHz)
-      // delay to midpoint is empirically 0.38/(freq in kHz) which is probably better measure, and closer to old 0.4/freq value
-      // group delay for bessel filter approx 1/w or ~0.16/freq (not sure why discrepancy from empirical value)
+      // account for delay in scan position due to Bessel filter by starting the scan slightly earlier
+      // than we otherwise would (Bessel filter selected b/c stretches out pulse without any ripples)
+      // delay to start is (empirically) 0.07ms + 0.25/(freq in kHz)
+      // delay to midpoint is empirically 0.38/(freq in kHz)
+      // group delay for 5th-order bessel filter ~0.39/freq from theory and ~0.4/freq from IC datasheet 
       final float scanFilterFreq = Math.max(props_.getPropValueFloat(Devices.Keys.GALVOA,  Properties.Keys.SCANNER_FILTER_X),
             props_.getPropValueFloat(Devices.Keys.GALVOB,  Properties.Keys.SCANNER_FILTER_X));
       float scanDelayFilter = 0;
       if (scanFilterFreq != 0) {
-         scanDelayFilter = MyNumberUtils.roundToQuarterMs(0.38f/scanFilterFreq);
+         scanDelayFilter = MyNumberUtils.roundToQuarterMs(0.39f/scanFilterFreq);
       }
       
       // If the PLogic card is used, account for 0.25ms delay it introduces to
