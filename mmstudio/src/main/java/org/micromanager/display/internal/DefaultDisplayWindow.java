@@ -782,26 +782,35 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
 
    @Override
    public void setDisplaySettings(DisplaySettings settings) {
+      setDisplaySettings(settings, true);
+   }
+
+   /**
+    * Set the display settings, and optionally redraw the display.
+    */
+   public void setDisplaySettings(DisplaySettings settings, boolean shouldRedraw) {
       displaySettings_ = settings;
-      if (haveCreatedGUI_) {
-         boolean magChanged = (settings.getMagnification() != null &&
-               settings.getMagnification() != canvas_.getMagnification());
-         DefaultDisplaySettings.setStandardSettings(settings,
-               settingsProfileKey_);
-         RememberedChannelSettings.saveSettingsToProfile(settings,
-               store_.getSummaryMetadata(), store_.getAxisLength(Coords.CHANNEL));
-         // This will cause the canvas to pick up magnification changes, note.
-         displayBus_.post(new NewDisplaySettingsEvent(settings, this));
-         if (magChanged) {
-            // Ensure that any changes in the canvas size (and thus in our
-            // window size) properly adjust other elements.
-            constrainWindowShape();
-         }
-         // Assume any change in display settings will necessitate a redraw.
-         requestRedraw();
-         // And the magnification may have changed.
-         resetTitle();
+      if (!haveCreatedGUI_) {
+         return;
       }
+      boolean magChanged = (settings.getMagnification() != null &&
+            settings.getMagnification() != canvas_.getMagnification());
+      DefaultDisplaySettings.setStandardSettings(settings,
+            settingsProfileKey_);
+      RememberedChannelSettings.saveSettingsToProfile(settings,
+            store_.getSummaryMetadata(), store_.getAxisLength(Coords.CHANNEL));
+      // This will cause the canvas to pick up magnification changes, note.
+      displayBus_.post(new NewDisplaySettingsEvent(settings, this));
+      if (magChanged) {
+         // Ensure that any changes in the canvas size (and thus in our
+         // window size) properly adjust other elements.
+         constrainWindowShape();
+      }
+      if (shouldRedraw) {
+         requestRedraw();
+      }
+      // The magnification may have changed.
+      resetTitle();
    }
 
    /**

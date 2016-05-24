@@ -99,7 +99,7 @@ public class CanvasUpdateQueue {
    private final Datastore store_;
    private final MMVirtualStack stack_;
    private ImagePlus plus_;
-   private final DisplayWindow display_;
+   private final DefaultDisplayWindow display_;
    private final Runnable consumer_;
 
    private final Object drawLock_;
@@ -118,7 +118,7 @@ public class CanvasUpdateQueue {
    // everything.
    private boolean amSettingDisplaySettings_;
 
-   public static CanvasUpdateQueue makeQueue(DisplayWindow display,
+   public static CanvasUpdateQueue makeQueue(DefaultDisplayWindow display,
          MMVirtualStack stack, Object drawLock) {
       CanvasUpdateQueue queue = new CanvasUpdateQueue(display, stack,
             drawLock);
@@ -128,12 +128,12 @@ public class CanvasUpdateQueue {
 
    /**
     * The drawLock parameter is a shared object between this class and the
-    * DisplayWindow, as the display is not allowed to close when we are in
-    * the middle of drawing anything (or equivalently, we are not allowed to
+    * DefaultDisplayWindow, as the display is not allowed to close when we are
+    * in the middle of drawing anything (or equivalently, we are not allowed to
     * draw when the display is closing).
     */
-   private CanvasUpdateQueue(DisplayWindow display, MMVirtualStack stack,
-         Object drawLock) {
+   private CanvasUpdateQueue(DefaultDisplayWindow display,
+         MMVirtualStack stack, Object drawLock) {
       display_ = display;
       stack_ = stack;
       drawLock_ = drawLock;
@@ -451,7 +451,9 @@ public class CanvasUpdateQueue {
                      channel);
                amSettingDisplaySettings_ = true;
                DisplaySettings newSettings = builder.build();
-               display_.setDisplaySettings(newSettings);
+               // Normally calling setDisplaySettings forces a redraw, but
+               // we're about to draw the display anyway.
+               display_.setDisplaySettings(newSettings, false);
                // And post a contrast event so linked displays also get updated.
                display_.postEvent(new ContrastEvent(channel,
                         display_.getDatastore().getSummaryMetadata().getSafeChannelName(channel),
