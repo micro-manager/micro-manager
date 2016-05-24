@@ -83,6 +83,16 @@ public class DefaultAlert extends Alert {
       return alert;
    }
 
+   /**
+    * Variant of the above specifically for MultiTextAlerts.
+    */
+   public static MultiTextAlert addTextAlert(Studio studio) {
+      MultiTextAlert alert = MultiTextAlert.addAlert(studio);
+      allAlerts_.add(alert);
+      adjustPositions();
+      return alert;
+   }
+
    private Studio studio_;
    private JPanel wrapper_;
    private JPanel contents_;
@@ -93,7 +103,7 @@ public class DefaultAlert extends Alert {
     * @param isOneShot: if true, then clicking on the alert dismisses it;
     * if false, we add a specific button for dismissing the alert instead.
     */
-   private DefaultAlert(Studio studio, JPanel contents, boolean isOneShot) {
+   protected DefaultAlert(Studio studio, JPanel contents, boolean isOneShot) {
       super();
       studio_ = studio;
       isOneShot_ = isOneShot;

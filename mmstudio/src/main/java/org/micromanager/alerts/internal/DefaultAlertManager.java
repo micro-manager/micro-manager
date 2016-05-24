@@ -41,7 +41,7 @@ public class DefaultAlertManager implements AlertManager {
    }
 
    private Studio studio_;
-   private HashMap<Object, DefaultAlert> ownerToTextAlert_ = new HashMap<Object, DefaultAlert>();
+   private HashMap<Object, MultiTextAlert> ownerToTextAlert_ = new HashMap<Object, MultiTextAlert>();
    private HashMap<Object, DefaultAlert> ownerToCustomAlert_ = new HashMap<Object, DefaultAlert>();
 
    private DefaultAlertManager(Studio studio) {
@@ -58,20 +58,17 @@ public class DefaultAlertManager implements AlertManager {
       if (ownerToCustomAlert_.containsKey(owner)) {
          throw new IllegalArgumentException("Incompatible alert with owner " + owner + " already exists");
       }
-      DefaultAlert alert;
+      MultiTextAlert alert;
       if (ownerToTextAlert_.containsKey(owner) &&
             ownerToTextAlert_.get(owner).isUsable()) {
          alert = ownerToTextAlert_.get(owner);
       }
       else {
          // Make a new Alert to hold messages from this owner.
-         JPanel contents = new JPanel(
-               new MigLayout("flowy, fill", "[fill, grow]", "[fill, grow]"));
-         alert = DefaultAlert.addAlert(studio_, contents, false);
+         alert = DefaultAlert.addTextAlert(studio_);
          ownerToTextAlert_.put(owner, alert);
       }
-      alert.getContents().add(new JLabel(text), "growx");
-      alert.pack();
+      alert.addText(text);
       return alert;
    }
 
