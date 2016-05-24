@@ -66,6 +66,9 @@ public:
     int OnReturnToOrigin(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnEncoded(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnIterativeMove(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnImRetry(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnImToleranceUm(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 
 private:
@@ -99,6 +102,11 @@ private:
 	double lastZ_;
     int axis_;
 	bool isMD1_;
+
+	bool iterativeMoves_;
+	int imRetry_;
+	double imToleranceUm_;
+
 };
 
 #endif

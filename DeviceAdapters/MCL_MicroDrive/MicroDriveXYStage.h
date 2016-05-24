@@ -69,6 +69,9 @@ public:
    int OnPositionXYmm(MM::PropertyBase* pProp, MM::ActionType eAct);  
    int OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct);  
    int OnEncoded(MM::PropertyBase* pProp, MM::ActionType eAct);  
+   int OnIterativeMove(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnImRetry(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnImToleranceUm(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    /// Private methods
@@ -113,6 +116,10 @@ private:
    bool encoded_;
    double lastX_;
    double lastY_;
+
+   bool iterativeMoves_;
+   int imRetry_;
+   double imToleranceUm_;
 };
 
 

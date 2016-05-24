@@ -34,6 +34,9 @@ static const char* g_Keyword_Calibrate = "Calibrate";
 static const char* g_Keyword_ReturnToOrigin = "Return to origin";
 static const char* g_Keyword_PositionTypeAbsRel = "Position type (absolute/relative)";
 static const char* g_Keyword_Encoded = "EncodersPresent";
+static const char* g_Keyword_IterativeMove = "Enable iterative moves";
+static const char* g_Keyword_ImRetry = "IM number of retries";
+static const char* g_Keyword_ImTolerance = "IM tolerance in Um";
 
 static const char* g_Listword_No = "No";
 static const char* g_Listword_Yes = "Yes";
