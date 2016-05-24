@@ -31,7 +31,13 @@ import javax.swing.JDialog;
 public abstract class Alert extends JDialog {
    /**
     * Returns whether or not this Alert is still visible to the user and can
-    * therefore be updated or have more content added to it.
+    * therefore be updated or have more content added to it. Alerts that have
+    * been dismissed are no longer usable.
     */
    public abstract boolean isUsable();
+
+   /**
+    * Dismiss the Alert, causing it to no longer be visible to the user.
+    */
+   public abstract void dismiss();
 }

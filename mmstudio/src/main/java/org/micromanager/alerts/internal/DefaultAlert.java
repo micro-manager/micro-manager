@@ -189,6 +189,11 @@ public class DefaultAlert extends Alert {
       adjustPositions();
    }
 
+   @Override
+   public void dismiss() {
+      dispose();
+   }
+
    /**
     * Returns whether or not this alert can have more content added to it.
     */

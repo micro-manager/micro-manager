@@ -40,9 +40,10 @@ public interface AlertManager {
 
    /**
     * Create a text alert for the user that is associated with the provided
-    * owner Object. If there is already a text alert for the owner, then the
-    * new text will be added as an additional line in the alert. If the owner
-    * is null, then this method is equivalent to calling showTextAlert.
+    * owner Object. If there is already a text alert for the owner, and that
+    * alert is still usable (per its isUsable() method), then the new text will
+    * be added as an additional line in the alert. If the owner is null, then
+    * this method is equivalent to calling showTextAlert.
     * @param text Text to display to the user.
     * @param owner Owner of this alert; multiple alerts from the same owner
     *        will be combined together.

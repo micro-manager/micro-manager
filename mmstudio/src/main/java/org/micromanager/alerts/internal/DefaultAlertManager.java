@@ -91,11 +91,11 @@ public class DefaultAlertManager implements AlertManager {
    @Override
    public void dismissAlert(Object owner) {
       if (ownerToTextAlert_.containsKey(owner)) {
-         ownerToTextAlert_.get(owner).dispose();
+         ownerToTextAlert_.get(owner).dismiss();
          ownerToTextAlert_.remove(owner);
       }
       if (ownerToCustomAlert_.containsKey(owner)) {
-         ownerToCustomAlert_.get(owner).dispose();
+         ownerToCustomAlert_.get(owner).dismiss();
          ownerToCustomAlert_.remove(owner);
       }
    }
