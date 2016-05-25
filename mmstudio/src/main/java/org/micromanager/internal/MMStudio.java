@@ -29,6 +29,7 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.Roi;
+import ij.gui.ShapeRoi;
 import ij.gui.Toolbar;
 
 import java.awt.Component;
@@ -555,6 +556,32 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       return new Rectangle(a[0][0], a[1][0], a[2][0], a[3][0]);
    }
 
+   /**
+    * Set the ROI to the center quad of the camera.
+    */
+   public void setCenterQuad() {
+      ImagePlus curImage = WindowManager.getCurrentImage();
+      if (curImage == null) {
+         return;
+      }
+
+      Rectangle r = curImage.getProcessor().getRoi();
+      int width = r.width / 2;
+      int height = r.height / 2;
+      int xOffset = r.x + width / 2;
+      int yOffset = r.y + height / 2;
+
+      curImage.setRoi(xOffset, yOffset, width, height);
+      Roi roi = curImage.getRoi();
+      try {
+         setROI(updateROI(roi));
+      }
+      catch (MMScriptException e) {
+         // Core failed to set new ROI.
+         logs().logError(e, "Unable to set new ROI");
+      }
+   }
+
    public void setROI() {
       ImagePlus curImage = WindowManager.getCurrentImage();
       if (curImage == null) {
@@ -562,60 +589,86 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       }
 
       Roi roi = curImage.getRoi();
-      
-      try {
-         if (roi == null) {
-            // if there is no ROI, create one
-            Rectangle r = curImage.getProcessor().getRoi();
-            int iWidth = r.width;
-            int iHeight = r.height;
-            int iXROI = r.x;
-            int iYROI = r.y;
-            if (roi == null) {
-               iWidth /= 2;
-               iHeight /= 2;
-               iXROI += iWidth / 2;
-               iYROI += iHeight / 2;
-            }
-
-            curImage.setRoi(iXROI, iYROI, iWidth, iHeight);
-            roi = curImage.getRoi();
+      if (roi == null) {
+         // Nothing to be done.
+         return;
+      }
+      if (roi.getType() == Roi.RECTANGLE) {
+         try {
+            setROI(updateROI(roi));
          }
-
-         if (roi.getType() != Roi.RECTANGLE) {
+         catch (MMScriptException e) {
+            // Core failed to set new ROI.
+            logs().logError(e, "Unable to set new ROI");
+         }
+         return;
+      }
+      // Dealing with multiple ROIs; this may not be supported.
+      try {
+         if (!(roi instanceof ShapeRoi && core_.isMultiROISupported())) {
             handleError("ROI must be a rectangle.\nUse the ImageJ rectangle tool to draw the ROI.");
             return;
          }
+      }
+      catch (Exception e) {
+         handleError("Unable to determine if multiple ROIs is supported");
+         return;
+      }
+      // Generate list of rectangles for the ROIs.
+      ArrayList<Rectangle> rois = new ArrayList<Rectangle>();
+      for (Roi subRoi : ((ShapeRoi) roi).getRois()) {
+         // HACK: just use the bounding box of each sub-ROI. Determining if
+         // sub-ROIs are rectangles is difficult (they "decompose" to Polygons
+         // once there's more than one at a time, so as far as I can tell we
+         // would have to test each angle of each polygon to see if it's
+         // 90 degrees and has the correct handedness), and this provides a
+         // good- enough solution for now.
+         rois.add(updateROI(subRoi));
+      }
+      try {
+         setMultiROI(rois);
+      }
+      catch (Exception e) {
+         // Core failed to set new ROI.
+         logs().logError(e, "Unable to set new ROI");
+      }
+   }
 
-         Rectangle r = roi.getBounds();
+   /**
+    * Adjust the provided rectangular ROI based on any current ROI that may be
+    * in use.
+    */
+   private Rectangle updateROI(Roi roi) {
+      Rectangle r = roi.getBounds();
 
-         // If the image has ROI info attached to it, correct for the offsets.
-         // Otherwise, assume the image was taken with the current camera ROI
-         // (which is a horrendously buggy way to do things, but that was the
-         // old behavior and I'm leaving it in case there are cases where it is
-         // necessary).
-         Rectangle originalROI = null;
+      // If the image has ROI info attached to it, correct for the offsets.
+      // Otherwise, assume the image was taken with the current camera ROI
+      // (which is a horrendously buggy way to do things, but that was the
+      // old behavior and I'm leaving it in case there are cases where it is
+      // necessary).
+      Rectangle originalROI = null;
 
-         DisplayWindow curWindow = displays().getCurrentWindow();
-         if (curWindow != null) {
-            List<Image> images = curWindow.getDisplayedImages();
-            // Just take the first one.
-            originalROI = images.get(0).getMetadata().getROI();
-         }
+      DisplayWindow curWindow = displays().getCurrentWindow();
+      if (curWindow != null) {
+         List<Image> images = curWindow.getDisplayedImages();
+         // Just take the first one.
+         originalROI = images.get(0).getMetadata().getROI();
+      }
 
-         if (originalROI == null) {
+      if (originalROI == null) {
+         try {
             originalROI = getROI();
          }
-
-         r.x += originalROI.x;
-         r.y += originalROI.y;
-
-         // Stop (and restart) live mode if it is running
-         setROI(r);
-
-      } catch (MMScriptException e) {
-         ReportingUtils.showError(e);
+         catch (MMScriptException e) {
+            // Core failed to provide an ROI.
+            logs().logError(e, "Unable to get core ROI");
+            return null;
+         }
       }
+
+      r.x += originalROI.x;
+      r.y += originalROI.y;
+      return r;
    }
 
    public void clearROI() {
@@ -1467,6 +1520,13 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       } catch (Exception e) {
          throw new MMScriptException(e.getMessage());
       }
+      staticInfo_.refreshValues();
+      live().setSuspended(false);
+   }
+
+   public void setMultiROI(List<Rectangle> rois) throws Exception {
+      live().setSuspended(true);
+      core_.setMultiROI(rois);
       staticInfo_.refreshValues();
       live().setSuspended(false);
    }
