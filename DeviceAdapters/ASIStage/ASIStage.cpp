@@ -3939,7 +3939,7 @@ int CRISP::ForceSetFocusState(std::string focusState)
    else if (focusState == g_CRISP_RFO)
    {
       // Reset focus offset
-      const char* command = "LK F=108";
+      const char* command = "LK F=111";
       return SetCommand(command);
    }
 
