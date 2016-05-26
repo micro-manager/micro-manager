@@ -85,11 +85,19 @@ public:
     *  ReadoutSignal: 2
     */
     std::map<int, int> TrigTabLastMuxMap;
-
     /**
     * Current PMode value
     */
     int PMode;
+    /**
+    * Whether to use circular buffer for live acquisition or not
+    */
+    bool CircBufEnabled;
+
+    /**
+    * True if PVCAM callbacks are active, false to use polling
+    */
+    bool CallbacksEnabled;
 };
 
 #endif

@@ -37,6 +37,7 @@
 #include "DeviceBase.h"
 #include "PvDebayer.h"
 #include "PVCAMIncludes.h"
+#include "Event.h"
 
 #if(WIN32 && NDEBUG)
    WINBASEAPI
@@ -88,6 +89,8 @@
 #define ERR_ROI_DEFINITION_INVALID      10009
 #define ERR_BUFFER_PROCESSING_FAILED    10010
 #define ERR_BINNING_INVALID             10011 // Binning value is not valid for current configuration
+#define ERR_OPERATION_TIMED_OUT         10012 // Generic timeout error
+#define ERR_FRAME_READOUT_FAILED        10013 // Polling: status = READOUT_FAILED
 
 //////////////////////////////////////////////////////////////////////////////
 // Constants
@@ -145,6 +148,7 @@ inline double round( double value )
 
 class PollingThread;
 class NotificationThread;
+class AcqThread;
 template<class T> class PvParam;
 class PvUniversalParam;
 class PvEnumParam;
@@ -215,6 +219,7 @@ public:
    int OnClearCycles(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTriggerTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnOutputTriggerFirstMissing(MM::PropertyBase* pProp, MM::ActionType eAct); 
+   int OnCircBufferEnabled(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCircBufferSizeAuto(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCircBufferFrameCount(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCircBufferFrameRecovery(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -245,7 +250,7 @@ public:
    // Published to allow other classes access the camera
    short Handle() { return hPVCAM_; }
    // Utility logging functions (published to allow usage from other classes)
-   int16 LogCamError(int lineNr, std::string message="", bool debug=false) throw();
+   int16 LogCamError(int lineNr, const std::string& message, int16 pvErrCode = pl_error_code(), bool debug = false) throw();
    int   LogMMError(int errCode, int lineNr, std::string message="", bool debug=false) const throw();
    void  LogMMMessage(int lineNr, std::string message="", bool debug=true) const throw();
 
@@ -272,7 +277,13 @@ private:
    unsigned int EstimateMaxReadoutTimeMs() const;
    int ResizeImageBufferContinuous();
    int ResizeImageBufferSingle();
-   bool WaitForExposureDone() throw();
+
+   int acquireFrameSeq();
+   int waitForFrameSeq();
+   int waitForFrameSeqPolling(const MM::MMTime& timeout);
+   int waitForFrameSeqCallbacks(const MM::MMTime& timeout);
+
+   int waitForFrameConPolling(const MM::MMTime& timeout);
 #ifdef PVCAM_SMART_STREAMING_SUPPORTED
    int SendSmartStreamingToCamera();
 #endif
@@ -306,7 +317,6 @@ private:
    bool            singleFrameModeReady_; // Single frame mode acquisition prepared
    bool            sequenceModeReady_;    // Continuous acquisition prepared
 
-   bool            isUsingCallbacks_;
    bool            isAcquiring_;
 
    long            triggerTimeout_;       // Max time to wait for an external trigger
@@ -316,6 +326,8 @@ private:
    PollingThread*  pollingThd_;           // Pointer to the sequencing thread
    friend class    NotificationThread;
    NotificationThread* notificationThd_;  // Frame notification thread
+   friend class    AcqThread;
+   AcqThread*      acqThd_;               // Non-CB live thread
 
    long            outputTriggerFirstMissing_;
 
@@ -368,8 +380,9 @@ private:
    PvCircularBuffer circBuf_;
    // Color image buffer. Used in both single snap and live mode if needed.
    ImgBuffer*       rgbImgBuf_;
-   
 
+   Event            eofEvent_;
+   MMThreadLock     acqLock_;
 
 #ifdef PVCAM_SMART_STREAMING_SUPPORTED
    double          smartStreamValuesDouble_[SMART_STREAM_MAX_EXPOSURES];

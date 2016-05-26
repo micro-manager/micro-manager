@@ -7,7 +7,7 @@ AcqConfig::AcqConfig() :
     RoiCount(1), FanSpeedSetpoint(0), Roi(0, 0, 0, 0), 
     ColorProcessingEnabled(false),
     DebayerAlgMask(0), DebayerAlgMaskAuto(false), DebayerAlgInterpolation(0),
-    PMode(0)
+    PMode(0), CircBufEnabled(true), CallbacksEnabled(true)
 {
 
 }
