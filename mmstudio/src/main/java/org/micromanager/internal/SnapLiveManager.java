@@ -158,13 +158,19 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
             grabImages();
          }
       }, "Live mode image grabber");
-      grabberThread_.start();
+      // NOTE: start the grabber thread *after* the sequence acquisition
+      // starts, because the grabber thread will need to acquire a core camera
+      // lock as part of its setup (to get e.g. the number of core camera
+      // channels), and that lock is also acquired as part of
+      // startSequenceAcquisition. Thus if we start the grabber thread first,
+      // in certain circumstances we can get a deadlock.
       try {
          core_.startContinuousSequenceAcquisition(0);
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Couldn't start live mode sequence acquisition");
       }
+      grabberThread_.start();
       if (display_ != null) {
          display_.toFront();
       }
