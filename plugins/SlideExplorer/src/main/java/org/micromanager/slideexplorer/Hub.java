@@ -22,7 +22,6 @@ import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.JavaUtils;
-import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public class Hub {
@@ -320,7 +319,7 @@ public class Hub {
       try {
          app_.positions().setPositionList(roiManager_.convertRoiManagerToPositionList());
          app_.compat().showPositionList();
-      } catch (MMScriptException ex) {
+      } catch (Exception ex) {
          ex.printStackTrace();
       }
    }

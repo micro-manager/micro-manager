@@ -1244,7 +1244,7 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
                   afMgr_.getAutofocusMethod().fullFocus();
                   live().setSuspended(false);
                }
-               catch (MMException ex) {
+               catch (Exception ex) {
                   ReportingUtils.showError(ex, "An error occurred during autofocus");
                }
             }

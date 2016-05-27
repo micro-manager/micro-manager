@@ -59,8 +59,6 @@ import org.micromanager.Studio;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MDUtils;
-import org.micromanager.internal.utils.MMException;
-import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.TextUtils;
 
@@ -173,59 +171,53 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          show = getPropertyValue(SHOW_IMAGES);
          scoringMethod = getPropertyValue(SCORING_METHOD);
 
-      } catch (MMException ex) {
-         studio_.logs().logError(ex);
-      } catch (ParseException ex) {
+      } catch (Exception ex) {
          studio_.logs().logError(ex);
       }
    }
 
    @Override
-   public double fullFocus() throws MMException {
+   public double fullFocus() throws Exception {
       startTimeMs_ = System.currentTimeMillis();
       applySettings();
-      try {
-         Rectangle oldROI = studio_.compat().getROI();
-         CMMCore core = studio_.getCMMCore();
-         liveModeOn_ = studio_.live().getIsLiveModeOn();
+      Rectangle oldROI = studio_.compat().getROI();
+      CMMCore core = studio_.getCMMCore();
+      liveModeOn_ = studio_.live().getIsLiveModeOn();
 
-         //ReportingUtils.logMessage("Original ROI: " + oldROI);
-         int w = (int) (oldROI.width * cropFactor);
-         int h = (int) (oldROI.height * cropFactor);
-         int x = oldROI.x + (oldROI.width - w) / 2;
-         int y = oldROI.y + (oldROI.height - h) / 2;
-         Rectangle newROI = new Rectangle(x, y, w, h);
-         //ReportingUtils.logMessage("Setting ROI to: " + newROI);
-         Configuration oldState = null;
-         if (channel.length() > 0) {
-            String chanGroup = core.getChannelGroup();
-            oldState = core.getConfigGroupState(chanGroup);
-            core.setConfig(chanGroup, channel);
-         }
-
-         // avoid wasting time on setting roi if it is the same
-         if (cropFactor < 1.0) {
-            studio_.compat().setROI(newROI);
-            core.waitForDevice(core.getCameraDevice());
-         }
-         double oldExposure = core.getExposure();
-         core.setExposure(exposure);
-
-         double z = runAutofocusAlgorithm();
-
-         if (cropFactor < 1.0) {
-            studio_.compat().setROI(oldROI);
-            core.waitForDevice(core.getCameraDevice());
-         }
-         if (oldState != null) {
-            core.setSystemState(oldState);
-         }
-         core.setExposure(oldExposure);
-         setZPosition(z);
-         return z;
-      } catch (Exception ex) {
-         throw new MMException(ex.getMessage());
+      //ReportingUtils.logMessage("Original ROI: " + oldROI);
+      int w = (int) (oldROI.width * cropFactor);
+      int h = (int) (oldROI.height * cropFactor);
+      int x = oldROI.x + (oldROI.width - w) / 2;
+      int y = oldROI.y + (oldROI.height - h) / 2;
+      Rectangle newROI = new Rectangle(x, y, w, h);
+      //ReportingUtils.logMessage("Setting ROI to: " + newROI);
+      Configuration oldState = null;
+      if (channel.length() > 0) {
+         String chanGroup = core.getChannelGroup();
+         oldState = core.getConfigGroupState(chanGroup);
+         core.setConfig(chanGroup, channel);
       }
+
+      // avoid wasting time on setting roi if it is the same
+      if (cropFactor < 1.0) {
+         studio_.compat().setROI(newROI);
+         core.waitForDevice(core.getCameraDevice());
+      }
+      double oldExposure = core.getExposure();
+      core.setExposure(exposure);
+
+      double z = runAutofocusAlgorithm();
+
+      if (cropFactor < 1.0) {
+         studio_.compat().setROI(oldROI);
+         core.waitForDevice(core.getCameraDevice());
+      }
+      if (oldState != null) {
+         core.setSystemState(oldState);
+      }
+      core.setExposure(oldExposure);
+      setZPosition(z);
+      return z;
    }
 
    private static class LocalException extends RuntimeException {
@@ -302,7 +294,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       }
    }
 
-   public static Object getMonochromePixels(TaggedImage image) throws JSONException, MMScriptException {
+   public static Object getMonochromePixels(TaggedImage image) throws JSONException, Exception {
       if (MDUtils.isRGB32(image)) {
          final byte[][] planes = ImageUtils.getColorPlanesFromRGB32((byte[]) image.pix);
          final int numPixels = planes[0].length;
@@ -350,7 +342,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
                      }
                      catch (JSONException e) {
                         studio_.logs().showError(e);
-                     } catch (MMScriptException e) {
+                     } catch (Exception e) {
                         studio_.logs().showError(e);
                      }
                   }
@@ -374,7 +366,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    }
 
    @Override
-   public double incrementalFocus() throws MMException {
+   public double incrementalFocus() throws Exception {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 

@@ -105,7 +105,6 @@ import org.micromanager.display.DisplayWindow;
 
 import org.micromanager.internal.dialogs.ComponentTitledBorder;
 import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -1250,7 +1249,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // where positions aren't completed in time for next position)
             return gui_.positions().getPositionList().getNumberOfPositions() *
                   (volumeDuration + 1500 + PanelUtils.getSpinnerFloatValue(positionDelay_));
-         } catch (MMScriptException ex) {
+         } catch (Exception ex) {
             MyDialogUtils.showError(ex, "Error getting position list for multiple XY positions");
          }
       }
@@ -1670,7 +1669,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          try {
             positionList = gui_.positions().getPositionList();
             nrPositions = positionList.getNumberOfPositions();
-         } catch (MMScriptException ex) {
+         } catch (Exception ex) {
             MyDialogUtils.showError(ex, "Error getting position list for multiple XY positions");
          }
          if (nrPositions < 1) {
@@ -2342,8 +2341,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          } catch (IllegalMonitorStateException ex) {
             // do nothing, the acquisition was simply halted during its operation
             // will log error message during finally clause
-         } catch (MMScriptException mex) {
-            MyDialogUtils.showError(mex);
          } catch (Exception ex) {
             MyDialogUtils.showError(ex);
          } finally {  // end of this acquisition (could be about to restart if separate viewers)
@@ -2526,15 +2523,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @param position - position at which to insert image
     * @param ms - Time stamp to be added to the image metadata
     * @param taggedImg - image + metadata to be added
-    * @throws org.micromanager.internal.utils.MMScriptException
     * @throws org.json.JSONException
     * @throws org.micromanager.data.DatastoreFrozenException
      * @throws org.micromanager.data.DatastoreRewriteException
     */
    public void addImageToAcquisition(Datastore store, int frame, int channel, 
-           int slice, int position, long ms, TaggedImage taggedImg) 
-           throws MMScriptException, JSONException, DatastoreFrozenException, 
-           DatastoreRewriteException
+           int slice, int position, long ms, TaggedImage taggedImg) throws
+           JSONException, DatastoreFrozenException, 
+           DatastoreRewriteException, Exception
             {
 
       CoordsBuilder cb = gui_.data().getCoordsBuilder();
@@ -2593,7 +2589,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
 
       } catch (JSONException e) {
-         throw new MMScriptException(e);
+         throw new Exception(e);
       }
 
       bq.put(taggedImg);

@@ -23,10 +23,6 @@
 package org.micromanager;
 
 
-// These ought not be part of the public API and methods that refer to them are
-// deprecated.
-import org.micromanager.internal.utils.MMScriptException;
-
 
 /**
  * This entity provides access to methods for interacting with the Stage
@@ -40,17 +36,17 @@ public interface PositionListManager {
     * Replaces the list in the PositionList Window
     * It will open a position list dialog if it was not already open.
     * @param pl PosiionLIst to be made the current one
-    * @throws MMScriptException
+    * @throws Exception
     */
-   public void setPositionList(PositionList pl) throws MMScriptException;
+   public void setPositionList(PositionList pl) throws Exception;
 
    /**
     * Returns a copy of the current PositionList, the one used by the
     * Acquisition Protocol
     * @return copy of the current PositionList
-    * @throws MMScriptException
+    * @throws Exception
     */
-   public PositionList getPositionList() throws MMScriptException;
+   public PositionList getPositionList() throws Exception;
 
    /**
     * Opens the XYPositionList when it is not opened.

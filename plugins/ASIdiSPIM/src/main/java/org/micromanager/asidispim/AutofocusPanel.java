@@ -161,10 +161,10 @@ public class AutofocusPanel extends ListeningJPanel{
                                prefs_.getInt(MyStrings.PanelNames.AUTOFOCUS.toString(),
                                        Properties.Keys.AUTOFOCUS_SCORING_ALGORITHM,
                                        Fitter.Algorithm.VOLATH.getPrefCode())).toString());
-            } catch (MMException mmse) {
-               MyDialogUtils.showError("Failed to select the Oughtafocus plugin.  Is it present in the mmautofocus directory?");
             } catch (ASIdiSPIMException se) {
                MyDialogUtils.showError(se.getMessage());
+            } catch (Exception ex) {
+               MyDialogUtils.showError("Failed to select the Oughtafocus plugin.  Is it present in the mmautofocus directory?");
             }
          }
       });

@@ -35,7 +35,6 @@ import org.micromanager.data.Datastore;
 
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
-import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.NumberUtils;
 
 import ij.measure.ResultsTable;
@@ -554,7 +553,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       public void run() {
          try {
             gui_.acquisitions().runAcquisition();
-         } catch (MMScriptException ex) {
+         } catch (Exception ex) {
             gui_.logs().showError(ex, "Error during acquisition");
          }
       }
@@ -642,7 +641,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                Datastore store;
                try {
                   store = gui_.acquisitions().runAcquisition();
-               } catch (MMScriptException e) {
+               } catch (Exception e) {
                   gui_.logs().showError(e, "Exploration acquisition failed");
                   break;
                }

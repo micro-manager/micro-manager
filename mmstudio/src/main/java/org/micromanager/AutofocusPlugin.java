@@ -22,7 +22,6 @@ package org.micromanager;
 
 import ij.process.ImageProcessor;
 
-import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.PropertyItem;
 
 /*
@@ -41,12 +40,12 @@ public interface AutofocusPlugin extends MMPlugin {
     * Run a full, one-shot autofocus protocol. Blocks until focusing is
     * finished.
     */
-   public double fullFocus() throws MMException;
+   public double fullFocus() throws Exception;
 
    /*
     * Run a single, incremental focusing step.
     */
-   public double incrementalFocus() throws MMException;
+   public double incrementalFocus() throws Exception;
    
    /*
     * Returns the number of images acquired
@@ -71,22 +70,22 @@ public interface AutofocusPlugin extends MMPlugin {
    /*
     * Returns the name and value of properties for the autofocus plugin.
     */
-   public PropertyItem getProperty(String key) throws MMException;
+   public PropertyItem getProperty(String key) throws Exception;
 
    /*
     * Sets the value of a particular property.
     */
-   public void setProperty(PropertyItem p) throws MMException;
+   public void setProperty(PropertyItem p) throws Exception;
 
    /*
     * Gets the value of a named property.
     */
-   public String getPropertyValue(String name) throws MMException;
+   public String getPropertyValue(String name) throws Exception;
 
    /*
     * Sets the value of a named property.
     */
-   public void setPropertyValue(String name, String value) throws MMException;
+   public void setPropertyValue(String name, String value) throws Exception;
 
    /*
     * Returns the current focus "score" (goodness of focus).
@@ -97,20 +96,20 @@ public interface AutofocusPlugin extends MMPlugin {
     * Turns on continuous autofocus. Typically used by hardware autofocus
     * devices such as the Nikon Perfect Focus (PFS).
     */
-   public void enableContinuousFocus(boolean enable) throws MMException;
+   public void enableContinuousFocus(boolean enable) throws Exception;
 
    /*
     * Returns true if continuous autofocus has been enabled. Typically used
     * by hardware autofocus devices such as the Nikon Perfect Focus (PFS).
     */
-   public boolean isContinuousFocusEnabled() throws MMException;
+   public boolean isContinuousFocusEnabled() throws Exception;
 
    /*
     * Returns true if continuous autofocus is currently locked (successfully
     * following the specimen). Typically used by hardware autofocus devices
     * such as the Nikon Perfect Focus (PFS).
     */
-   public boolean isContinuousFocusLocked() throws MMException;
+   public boolean isContinuousFocusLocked() throws Exception;
    
    /**
     * Computes a focus score for the given image

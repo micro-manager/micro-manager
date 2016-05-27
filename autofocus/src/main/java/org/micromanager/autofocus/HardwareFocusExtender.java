@@ -34,7 +34,6 @@ import org.micromanager.Studio;
 
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.internal.utils.AutofocusBase;
-import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -107,10 +106,8 @@ public class HardwareFocusExtender extends AutofocusBase implements AutofocusPlu
                  getPropertyValue(LOWER_LIMIT));
          upperLimit_ = NumberUtils.displayStringToDouble(
                  getPropertyValue(UPPER_LIMIT));
-      } catch (MMException e) {
+      } catch (Exception e) {
          ReportingUtils.logError(e);
-      } catch (ParseException ex) {
-         ReportingUtils.logError(ex);
       }
    }
 
@@ -129,10 +126,10 @@ public class HardwareFocusExtender extends AutofocusBase implements AutofocusPlu
    /**
     *
     * @return z position for in focus image
-    * @throws MMException
+    * @throws Exception
     */
    @Override
-   public double fullFocus() throws MMException {
+   public double fullFocus() throws Exception {
       if (hardwareFocusDevice_ == null || zDrive_ == null) {
          ReportingUtils.showError("Autofocus, and/or ZDrive have not been set");
          return 0.0;
@@ -207,7 +204,7 @@ public class HardwareFocusExtender extends AutofocusBase implements AutofocusPlu
    }
    
    @Override
-   public double incrementalFocus() throws MMException {
+   public double incrementalFocus() throws Exception {
       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
    }
 

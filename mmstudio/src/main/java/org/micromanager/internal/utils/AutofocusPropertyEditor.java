@@ -337,9 +337,7 @@ public class AutofocusPropertyEditor extends MMDialog {
                refresh();
 
                fireTableCellUpdated(row, col);
-            } catch (ParseException e) {
-               handleException(e);
-            } catch (MMException e) {
+            } catch (Exception e) {
                handleException(e);
             }
          }
@@ -369,7 +367,7 @@ public class AutofocusPropertyEditor extends MMDialog {
             }
         	
             this.fireTableDataChanged();
-         } catch (MMException e) {
+         } catch (Exception e) {
             handleException(e);
          }
       }

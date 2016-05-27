@@ -21,7 +21,6 @@ import org.micromanager.Studio;
 import org.micromanager.SequenceSettings;
 import org.micromanager.StagePosition;
 import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -240,7 +239,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                 gui_.compat().refreshGUI();
                 Datastore store = gui_.acquisitions().runAcquisition(currRegion.filename, currRegion.directory);
                 gui_.displays().closeDisplaysFor(store);
-            } catch (MMScriptException ex) {
+            } catch (Exception ex) {
                 handleError(ex);
             }
         }

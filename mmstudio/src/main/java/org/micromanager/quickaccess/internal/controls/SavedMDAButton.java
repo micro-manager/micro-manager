@@ -46,7 +46,6 @@ import org.micromanager.Studio;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
-import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.TextUtils;
 
 import org.scijava.plugin.Plugin;
@@ -141,7 +140,7 @@ public class SavedMDAButton extends WidgetPlugin implements SciJavaPlugin {
             catch (IOException e) {
                studio_.logs().showError(e, "Error loading settings from " + path);
             }
-            catch (MMScriptException e) {
+            catch (Exception e) {
                studio_.logs().showError(e, "Unable to run acquisition");
             }
          }

@@ -73,7 +73,6 @@ import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMDialog;
-import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
@@ -518,7 +517,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
          try {
             getPositionList().save(fileName);
             posListDir_ = curFile_.getParent();
-         } catch (MMException e) {
+         } catch (Exception e) {
             ReportingUtils.showError(e);
             return false;
          }
@@ -535,7 +534,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
          try {
             getPositionList().load(curFile_.getAbsolutePath());
             posListDir_ = curFile_.getParent();
-         } catch (MMException e) {
+         } catch (Exception e) {
             ReportingUtils.showError(e);
          } finally {
             updatePositionData();            

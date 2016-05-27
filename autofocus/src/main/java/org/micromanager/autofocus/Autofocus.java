@@ -42,7 +42,6 @@ import mmcorej.StrVector;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.AutofocusBase;
-import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.PropertyItem;
 
 import org.scijava.plugin.Plugin;
@@ -130,7 +129,7 @@ public class Autofocus extends AutofocusBase implements AutofocusPlugin, SciJava
       } catch (NumberFormatException e) {
          // TODO Auto-generated catch block
          e.printStackTrace();
-      } catch (MMException e) {
+      } catch (Exception e) {
          // TODO Auto-generated catch block
          e.printStackTrace();
       }
@@ -492,7 +491,7 @@ public class Autofocus extends AutofocusBase implements AutofocusPlugin, SciJava
          if (!found)
             p.value = allowedChannels[0];
          setProperty(p);
-      } catch (MMException e1) {
+      } catch (Exception e1) {
          // TODO Auto-generated catch block
          e1.printStackTrace();
       }

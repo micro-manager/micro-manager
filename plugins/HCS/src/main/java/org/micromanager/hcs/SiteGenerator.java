@@ -24,7 +24,6 @@ import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.StagePosition;
 import org.micromanager.internal.utils.MMFrame;
-import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.TextUtils;
 
 import com.swtdesigner.SwingResourceManager;
@@ -535,7 +534,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
          if (app_ != null) {
             app_.positions().setPositionList(platePl);
          }
-      } catch (MMScriptException e) {
+      } catch (Exception e) {
          displayError(e.getMessage());
       }
 
@@ -561,7 +560,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
          chckbxThreePt_.setSelected(true);
          platePanel_.repaint();
 
-      } catch (MMScriptException e) {
+      } catch (Exception e) {
          displayError(e.getMessage());
       }
    }

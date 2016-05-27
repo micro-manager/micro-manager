@@ -29,7 +29,6 @@ import mmcorej.TaggedImage;
 
 import org.json.JSONException;
 
-import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.PropertyMap;
 
 /**
@@ -225,10 +224,10 @@ public interface DataManager {
     * @param tagged TaggedImage to be converted
     * @return An Image based on the TaggedImage
     * @throws JSONException if the TaggedImage's metadata cannot be read
-    * @throws MMScriptException if portions of the TaggedImage's metadata are
+    * @throws Exception if portions of the TaggedImage's metadata are
     *         malformed.
     */
-   public Image convertTaggedImage(TaggedImage tagged) throws JSONException, MMScriptException;
+   public Image convertTaggedImage(TaggedImage tagged) throws JSONException, Exception;
 
    /**
     * Given a TaggedImage input, output an Image based on the TaggedImage,
@@ -240,11 +239,11 @@ public interface DataManager {
     *        will be derived from the TaggedImage instead.
     * @return An Image based on the TaggedImage
     * @throws JSONException if the TaggedImage's metadata cannot be read
-    * @throws MMScriptException if portions of the TaggedImage's metadata are
+    * @throws Exception if portions of the TaggedImage's metadata are
     *         malformed.
     */
    public Image convertTaggedImage(TaggedImage tagged, Coords coords,
-         Metadata metadata) throws JSONException, MMScriptException;
+         Metadata metadata) throws JSONException, Exception;
 
    /**
     * Generate a "blank" MetadataBuilder for use in constructing new

@@ -31,7 +31,6 @@ import mmcorej.CMMCore;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.AutofocusBase;
-import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -79,7 +78,7 @@ public class AutofocusDuo extends AutofocusBase implements AutofocusPlugin, SciJ
       try {
          autoFocus1_ = getPropertyValue(KEY_AUTOFOCUS1);
          autoFocus2_ = getPropertyValue(KEY_AUTOFOCUS2);
-      } catch (MMException e) {
+      } catch (Exception e) {
          ReportingUtils.logError(e);
       }
       
@@ -176,7 +175,7 @@ public class AutofocusDuo extends AutofocusBase implements AutofocusPlugin, SciJ
          if (!found2)
             p2.value = allowedAfDevices[0];
          setProperty(p2);
-      } catch (MMException e1) {
+      } catch (Exception e1) {
          // TODO Auto-generated catch block
          e1.printStackTrace();
       }

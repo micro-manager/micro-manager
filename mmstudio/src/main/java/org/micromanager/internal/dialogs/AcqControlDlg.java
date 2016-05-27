@@ -66,7 +66,6 @@ import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.MMFrame;
-import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TooltipTextMaker;
@@ -1477,7 +1476,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       int numPositions = 1;
       try {
          numPositions = Math.max(1, studio_.positions().getPositionList().getNumberOfPositions());
-      } catch (MMScriptException ex) {
+      } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }
       

@@ -30,10 +30,6 @@ import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.SequenceSettings;
 
-// These ought not be part of the public API and methods that refer to them are
-// deprecated.
-import org.micromanager.internal.utils.MMScriptException;
-
 
 /**
  * This interface provides access to methods related to the acquisition engine
@@ -49,18 +45,18 @@ public interface AcquisitionManager {
     * Note that this function should not be executed on the EDT (which is the
     * thread running the UI).
     * @return The Datastore containing the images from the acquisition.
-    * @throws MMScriptException if the acquisition is started on the EDT
+    * @throws Exception if the acquisition is started on the EDT
     */
-   public Datastore runAcquisition() throws MMScriptException;
+   public Datastore runAcquisition() throws Exception;
 
    /**
     * As runAcquisition, but will return as soon as the acquisition is set up
     * and started; useful for code that wants access to the Datastore for the
     * acquisition before it finishes.
     * @return The Datastore containing the images from the acquisition.
-    * @throws MMScriptException if the acquisition is started on the EDT
+    * @throws Exception if the acquisition is started on the EDT
     */
-   public Datastore runAcquisitionNonblocking() throws MMScriptException;
+   public Datastore runAcquisitionNonblocking() throws Exception;
 
    /**
     * Execute an acquisition using the provided SequenceSettings. This function
@@ -70,10 +66,10 @@ public interface AcquisitionManager {
     * @param shouldBlock if true, the method will block until the acquisition
     *        is completed.
     * @return The Datastore containing the images from the acquisition.
-    * @throws MMScriptException if the acquisition is started on the EDT.
+    * @throws Exception if the acquisition is started on the EDT.
     */
    public Datastore runAcquisitionWithSettings(SequenceSettings settings,
-         boolean shouldBlock) throws MMScriptException;
+         boolean shouldBlock) throws Exception;
 
    /**
     * Halt any ongoing acquisition as soon as possible.
@@ -89,9 +85,9 @@ public interface AcquisitionManager {
     * @param name Name of this acquisition.
     * @param root Place in the file system where data can be stored.
     * @return The Datastore containing the images from the acquisition.
-    * @throws MMScriptException
+    * @throws Exception
     */
-   public Datastore runAcquisition(String name, String root) throws MMScriptException;
+   public Datastore runAcquisition(String name, String root) throws Exception;
 
    /**
     * Load a file containing a SequenceSettings object, and apply the settings

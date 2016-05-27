@@ -28,10 +28,6 @@ import java.awt.Rectangle;
 
 import org.micromanager.data.Datastore;
 
-// These ought not be part of the public API and methods that refer to them are
-// deprecated.
-import org.micromanager.internal.utils.MMScriptException;
-
 
 /**
  * Legacy interface that implements some methods from the old 1.4 API.
@@ -107,16 +103,16 @@ public interface CompatibilityInterface {
    /**
     * Get the default camera's ROI -- a convenience function.
     * @return default camera's ROI
-    * @throws MMScriptException
+    * @throws Exception
     */
-   public Rectangle getROI() throws MMScriptException;
+   public Rectangle getROI() throws Exception;
 
    /**
     * Set the default camera's ROI -- a convenience function.
     * @param r
-    * @throws MMScriptException
+    * @throws Exception
     */
-   public void setROI(Rectangle r) throws MMScriptException;
+   public void setROI(Rectangle r) throws Exception;
 
    /**
     * Displays an error message and returns true if the run-time Micro-Manager version
@@ -132,9 +128,9 @@ public interface CompatibilityInterface {
     * @param version - minimum version needen to run this code
     * @return true if the run-time Micro-Manager version is less than the 
     * one specified
-    * @throws MMScriptException
+    * @throws Exception
     */
-   public boolean versionLessThan(String version) throws MMScriptException;
+   public boolean versionLessThan(String version) throws Exception;
 
    /**
     * Write various properties of MM and the OS to the log.

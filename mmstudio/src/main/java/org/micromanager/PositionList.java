@@ -39,8 +39,6 @@ import javax.swing.event.ChangeListener;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.internal.utils.MMException;
-import org.micromanager.internal.utils.MMSerializationException;
 
 /**
  * Navigation list of positions for the XYStage.
@@ -241,105 +239,97 @@ public class PositionList implements Iterable<MultiStagePosition> {
    /**
     * Serialize object into the JSON encoded stream.
     * @return JSON encoded string with position list and metadata 
-    * @throws MMSerializationException
+    * @throws JSONException if serialization fails.
     */
-   public String serialize() throws MMSerializationException {
+   public String serialize() throws JSONException {
       JSONObject meta = new JSONObject();
-      try {
-         meta.put(ID_KEY, ID);
-         meta.put(VERSION_KEY, VERSION);
-         JSONArray listOfPositions = new JSONArray();
-         // iterate on positions
-         for (int i=0; i<positions_.size(); i++) {
-            MultiStagePosition msp = positions_.get(i);
+      meta.put(ID_KEY, ID);
+      meta.put(VERSION_KEY, VERSION);
+      JSONArray listOfPositions = new JSONArray();
+      // iterate on positions
+      for (int i=0; i<positions_.size(); i++) {
+         MultiStagePosition msp = positions_.get(i);
 
-            JSONObject mspData = new JSONObject();
-            // annotate position with label
-            mspData.put(LABEL_KEY, positions_.get(i).getLabel());
-            mspData.put(GRID_ROW_KEY, msp.getGridRow());
-            mspData.put(GRID_COL_KEY, msp.getGridColumn());
-            mspData.put(DEFAULT_XY_STAGE, msp.getDefaultXYStage());
-            mspData.put(DEFAULT_Z_STAGE, msp.getDefaultZStage());
-            JSONArray devicePosData = new JSONArray();            
-            // iterate on devices
-            for (int j=0; j<msp.size(); j++) {
-               StagePosition sp = msp.get(j);
-               JSONObject stage = new JSONObject();
-               stage.put(X_KEY, sp.x);
-               stage.put(Y_KEY, sp.y);
-               stage.put(Z_KEY, sp.z);
-               stage.put(NUMAXES_KEY, sp.numAxes);
-               stage.put(DEVICE_KEY, sp.stageName);
-               
-               devicePosData.put(j, stage);
-            }
-            mspData.put(DEVARRAY_KEY, devicePosData);
+         JSONObject mspData = new JSONObject();
+         // annotate position with label
+         mspData.put(LABEL_KEY, positions_.get(i).getLabel());
+         mspData.put(GRID_ROW_KEY, msp.getGridRow());
+         mspData.put(GRID_COL_KEY, msp.getGridColumn());
+         mspData.put(DEFAULT_XY_STAGE, msp.getDefaultXYStage());
+         mspData.put(DEFAULT_Z_STAGE, msp.getDefaultZStage());
+         JSONArray devicePosData = new JSONArray();            
+         // iterate on devices
+         for (int j=0; j<msp.size(); j++) {
+            StagePosition sp = msp.get(j);
+            JSONObject stage = new JSONObject();
+            stage.put(X_KEY, sp.x);
+            stage.put(Y_KEY, sp.y);
+            stage.put(Z_KEY, sp.z);
+            stage.put(NUMAXES_KEY, sp.numAxes);
+            stage.put(DEVICE_KEY, sp.stageName);
             
-            // insert properties
-            JSONObject props = new JSONObject();
-            String keys[] = msp.getPropertyNames();
-            for (String key : keys) {
-               String val = msp.getProperty(key);
-               props.put(key, val);
-            }
-            
-            mspData.put(PROPERTIES_KEY, props);
-               
-            listOfPositions.put(i, mspData);
+            devicePosData.put(j, stage);
          }
-         meta.put(POSARRAY_KEY, listOfPositions);
-         return meta.toString(3);
-      } catch (JSONException e) {
-         throw new MMSerializationException("Unable to serialize XY positition data into formatted string.");
+         mspData.put(DEVARRAY_KEY, devicePosData);
+         
+         // insert properties
+         JSONObject props = new JSONObject();
+         String keys[] = msp.getPropertyNames();
+         for (String key : keys) {
+            String val = msp.getProperty(key);
+            props.put(key, val);
+         }
+         
+         mspData.put(PROPERTIES_KEY, props);
+            
+         listOfPositions.put(i, mspData);
       }
+      meta.put(POSARRAY_KEY, listOfPositions);
+      return meta.toString(3);
    }
    
    /**
     * Restore object data from the JSON encoded stream.
     * @param stream
-    * @throws MMSerializationException
+    * @throws JSONException if the serialized data could not be loaded.
     */
-   public void restore(String stream) throws MMSerializationException {
-      try {
-         JSONObject meta = new JSONObject(stream);
-         JSONArray posArray = meta.getJSONArray(POSARRAY_KEY);
-         int version = meta.getInt(VERSION_KEY);
-         positions_.clear();
-         
-         for (int i=0; i<posArray.length(); i++) {
-            JSONObject mspData = posArray.getJSONObject(i);
-            MultiStagePosition msp = new MultiStagePosition();
-            msp.setLabel(mspData.getString(LABEL_KEY));
-            if (version >= 2)
-               msp.setGridCoordinates(mspData.getInt(GRID_ROW_KEY), mspData.getInt(GRID_COL_KEY));
-            if (version >= 3) {
-               msp.setDefaultXYStage(mspData.getString(DEFAULT_XY_STAGE));
-               msp.setDefaultZStage(mspData.getString(DEFAULT_Z_STAGE));               
-            }
-
-            JSONArray devicePosData = mspData.getJSONArray(DEVARRAY_KEY);
-            for (int j=0; j < devicePosData.length(); j++) {
-               JSONObject stage = devicePosData.getJSONObject(j);
-               StagePosition pos = new StagePosition();
-               pos.x = stage.getDouble(X_KEY);
-               pos.y = stage.getDouble(Y_KEY);
-               pos.z = stage.getDouble(Z_KEY);
-               pos.stageName = stage.getString(DEVICE_KEY);
-               pos.numAxes = stage.getInt(NUMAXES_KEY);
-               msp.add(pos);
-            }
-            
-            // get properties
-            JSONObject props = mspData.getJSONObject(PROPERTIES_KEY);
-            for (Iterator<String> it = props.keys(); it.hasNext();) {
-               String key = it.next();
-               msp.setProperty(key, props.getString(key));
-            }
-            
-            positions_.add(msp);
+   public void restore(String stream) throws JSONException {
+      JSONObject meta = new JSONObject(stream);
+      JSONArray posArray = meta.getJSONArray(POSARRAY_KEY);
+      int version = meta.getInt(VERSION_KEY);
+      positions_.clear();
+      
+      for (int i=0; i<posArray.length(); i++) {
+         JSONObject mspData = posArray.getJSONObject(i);
+         MultiStagePosition msp = new MultiStagePosition();
+         msp.setLabel(mspData.getString(LABEL_KEY));
+         if (version >= 2)
+            msp.setGridCoordinates(mspData.getInt(GRID_ROW_KEY), mspData.getInt(GRID_COL_KEY));
+         if (version >= 3) {
+            msp.setDefaultXYStage(mspData.getString(DEFAULT_XY_STAGE));
+            msp.setDefaultZStage(mspData.getString(DEFAULT_Z_STAGE));               
          }
-      } catch (JSONException e) {
-         throw new MMSerializationException("Invalid or corrupted serialization data.");
+
+         JSONArray devicePosData = mspData.getJSONArray(DEVARRAY_KEY);
+         for (int j=0; j < devicePosData.length(); j++) {
+            JSONObject stage = devicePosData.getJSONObject(j);
+            StagePosition pos = new StagePosition();
+            pos.x = stage.getDouble(X_KEY);
+            pos.y = stage.getDouble(Y_KEY);
+            pos.z = stage.getDouble(Z_KEY);
+            pos.stageName = stage.getString(DEVICE_KEY);
+            pos.numAxes = stage.getInt(NUMAXES_KEY);
+            msp.add(pos);
+         }
+         
+         // get properties
+         JSONObject props = mspData.getJSONObject(PROPERTIES_KEY);
+         for (Iterator<String> it = props.keys(); it.hasNext();) {
+            String key = it.next();
+            msp.setProperty(key, props.getString(key));
+         }
+         
+         positions_.add(msp);
       }
       notifyChangeListeners();
    }
@@ -384,43 +374,31 @@ public class PositionList implements Iterable<MultiStagePosition> {
    /**
     * Save list to a file.
     * @param path
-    * @throws MMException
+    * @throws Exception
     */
-   public void save(String path) throws MMException {
+   public void save(String path) throws Exception {
       File f = new File(path);
-      try {
-         String serList = serialize();
-         FileWriter fw = new FileWriter(f);
-         fw.write(serList);
-         fw.close();
-      } catch (MMSerializationException e) {
-         throw new MMException(e.getMessage());
-      } catch (IOException e) {
-         throw new MMException(e.getMessage());
-      }
+      String serList = serialize();
+      FileWriter fw = new FileWriter(f);
+      fw.write(serList);
+      fw.close();
    }
    
    /**
     * Load position list from a file.
     * @param path
-    * @throws MMException
+    * @throws Exception
     */
-   public void load(String path) throws MMException {
+   public void load(String path) throws Exception {
       File f = new File(path);
-      try {
-         StringBuilder contents = new StringBuilder();
-         BufferedReader input = new BufferedReader(new FileReader(f));
-         String line;
-         while (( line = input.readLine()) != null){
-            contents.append(line);
-            contents.append(System.getProperty("line.separator"));
-         }
-         restore(contents.toString());
-      } catch (IOException e) {
-         throw new MMException(e.getMessage());
-      } catch (MMSerializationException e) {
-         throw new MMException(e.getMessage());
+      StringBuilder contents = new StringBuilder();
+      BufferedReader input = new BufferedReader(new FileReader(f));
+      String line;
+      while (( line = input.readLine()) != null){
+         contents.append(line);
+         contents.append(System.getProperty("line.separator"));
       }
+      restore(contents.toString());
       notifyChangeListeners();
    }
 
