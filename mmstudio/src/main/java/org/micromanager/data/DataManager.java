@@ -224,10 +224,10 @@ public interface DataManager {
     * @param tagged TaggedImage to be converted
     * @return An Image based on the TaggedImage
     * @throws JSONException if the TaggedImage's metadata cannot be read
-    * @throws Exception if portions of the TaggedImage's metadata are
-    *         malformed.
+    * @throws IllegalArgumentException if portions of the TaggedImage's
+    *         metadata are malformed.
     */
-   public Image convertTaggedImage(TaggedImage tagged) throws JSONException, Exception;
+   public Image convertTaggedImage(TaggedImage tagged) throws JSONException, IllegalArgumentException;
 
    /**
     * Given a TaggedImage input, output an Image based on the TaggedImage,
@@ -239,11 +239,11 @@ public interface DataManager {
     *        will be derived from the TaggedImage instead.
     * @return An Image based on the TaggedImage
     * @throws JSONException if the TaggedImage's metadata cannot be read
-    * @throws Exception if portions of the TaggedImage's metadata are
+    * @throws IllegalArgumentException if portions of the TaggedImage's metadata are
     *         malformed.
     */
    public Image convertTaggedImage(TaggedImage tagged, Coords coords,
-         Metadata metadata) throws JSONException, Exception;
+         Metadata metadata) throws JSONException, IllegalArgumentException;
 
    /**
     * Generate a "blank" MetadataBuilder for use in constructing new

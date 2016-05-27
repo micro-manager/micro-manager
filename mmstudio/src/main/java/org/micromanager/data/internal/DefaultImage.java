@@ -46,7 +46,6 @@ import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.DirectBuffers;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MDUtils;
-import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -95,7 +94,7 @@ public class DefaultImage implements Image {
     * constructor that this method calls.
     * @param tagged A TaggedImage to base the Image on.
     */
-   public DefaultImage(TaggedImage tagged) throws JSONException, MMScriptException {
+   public DefaultImage(TaggedImage tagged) throws JSONException, IllegalArgumentException {
       this(tagged, null, null);
    }
 
@@ -104,7 +103,7 @@ public class DefaultImage implements Image {
     * overridden.
     */
    public DefaultImage(TaggedImage tagged, Coords coords, Metadata metadata)
-         throws JSONException, MMScriptException {
+         throws JSONException, IllegalArgumentException {
       JSONObject tags = tagged.tags;
       if (metadata == null) {
          metadata = DefaultMetadata.legacyFromJSON(tags);
