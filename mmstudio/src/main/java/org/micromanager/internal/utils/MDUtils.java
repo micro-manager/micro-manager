@@ -233,7 +233,7 @@ public class MDUtils {
       map.put("FileName", filename);
    }
 
-   public static int getIJType(JSONObject map) throws JSONException, MMScriptException {
+   public static int getIJType(JSONObject map) throws JSONException, IllegalArgumentException {
       try {
          return map.getInt("IJType");
       } catch (JSONException e) {
@@ -248,10 +248,10 @@ public class MDUtils {
             } else if (pixelType.contentEquals("RGB32")) {
                return ImagePlus.COLOR_RGB;
             } else {
-               throw new MMScriptException("Can't figure out IJ type.");
+               throw new IllegalArgumentException("Can't figure out IJ type.");
             }
          } catch (JSONException e2) {
-            throw new MMScriptException("Can't figure out IJ type");
+            throw new IllegalArgumentException("Can't figure out IJ type");
          }
       }
    }
@@ -260,7 +260,7 @@ public class MDUtils {
       return (map.has("PixelType") || map.has("IJType"));
    }
 
-   public static String getPixelType(JSONObject map)  throws JSONException, MMScriptException {
+   public static String getPixelType(JSONObject map)  throws JSONException, IllegalArgumentException {
       try {
          if (map != null)
             return map.getString("PixelType");
@@ -280,12 +280,12 @@ public class MDUtils {
                return "RGB32";
             }
             else {
-               throw new MMScriptException("Can't figure out pixel type");
+               throw new IllegalArgumentException("Can't figure out pixel type");
             }
             // There is no IJType for RGB64.
          }
          catch (JSONException e2) {
-            throw new MMScriptException("Can't figure out pixel type");
+            throw new IllegalArgumentException("Can't figure out pixel type");
          }
       }
       return "";
@@ -345,7 +345,7 @@ public class MDUtils {
       }
    }
       
-   public static int getBytesPerPixel(JSONObject map) throws JSONException, MMScriptException {
+   public static int getBytesPerPixel(JSONObject map) throws JSONException, IllegalArgumentException {
        if (isGRAY8(map)) return 1;
        if (isGRAY16(map)) return 2;
        if (isGRAY32(map)) return 4;
@@ -355,7 +355,7 @@ public class MDUtils {
    }
 
 
-   public static int getSingleChannelType(JSONObject map) throws JSONException, MMScriptException {
+   public static int getSingleChannelType(JSONObject map) throws JSONException, IllegalArgumentException {
       String pixelType = getPixelType(map);
       if (pixelType.contentEquals("GRAY8")) {
          return ImagePlus.GRAY8;
@@ -368,11 +368,11 @@ public class MDUtils {
       } else if (pixelType.contentEquals("RGB64")) {
          return ImagePlus.GRAY16;
       } else {
-         throw new MMScriptException("Can't figure out channel type.");
+         throw new IllegalArgumentException("Can't figure out channel type.");
       }
    }
 
-   public static int getNumberOfComponents(JSONObject map) throws MMScriptException, JSONException {
+   public static int getNumberOfComponents(JSONObject map) throws IllegalArgumentException, JSONException {
       String pixelType = getPixelType(map);
       if (pixelType.contentEquals("GRAY8"))
            return 1;
@@ -385,59 +385,59 @@ public class MDUtils {
       else if (pixelType.contentEquals("RGB64"))
            return 3;
       else {
-         throw new MMScriptException("Pixel type \"" + pixelType + "\"not recognized!");
+         throw new IllegalArgumentException("Pixel type \"" + pixelType + "\"not recognized!");
       }
    }
 
-   public static boolean isGRAY8(JSONObject map) throws JSONException, MMScriptException {
+   public static boolean isGRAY8(JSONObject map) throws JSONException, IllegalArgumentException {
       return getPixelType(map).contentEquals("GRAY8");
    }
 
-   public static boolean isGRAY16(JSONObject map) throws JSONException, MMScriptException {
+   public static boolean isGRAY16(JSONObject map) throws JSONException, IllegalArgumentException {
       return getPixelType(map).contentEquals("GRAY16");
    }
    
-   public static boolean isGRAY32(JSONObject map) throws JSONException, MMScriptException {
+   public static boolean isGRAY32(JSONObject map) throws JSONException, IllegalArgumentException {
       return getPixelType(map).contentEquals("GRAY32");
    }
 
-   public static boolean isRGB32(JSONObject map) throws JSONException, MMScriptException {
+   public static boolean isRGB32(JSONObject map) throws JSONException, IllegalArgumentException {
       return getPixelType(map).contentEquals("RGB32");
    }
 
-   public static boolean isRGB64(JSONObject map) throws JSONException, MMScriptException {
+   public static boolean isRGB64(JSONObject map) throws JSONException, IllegalArgumentException {
       return getPixelType(map).contentEquals("RGB64");
    }
 
-   public static boolean isGRAY8(TaggedImage img) throws JSONException, MMScriptException {
+   public static boolean isGRAY8(TaggedImage img) throws JSONException, IllegalArgumentException {
       return isGRAY8(img.tags);
    }
 
-   public static boolean isGRAY16(TaggedImage img) throws JSONException, MMScriptException {
+   public static boolean isGRAY16(TaggedImage img) throws JSONException, IllegalArgumentException {
       return isGRAY16(img.tags);
    }
 
-   public static boolean isRGB32(TaggedImage img) throws JSONException, MMScriptException {
+   public static boolean isRGB32(TaggedImage img) throws JSONException, IllegalArgumentException {
       return isRGB32(img.tags);
    }
 
-   public static boolean isRGB64(TaggedImage img) throws JSONException, MMScriptException {
+   public static boolean isRGB64(TaggedImage img) throws JSONException, IllegalArgumentException {
       return isRGB64(img.tags);
    }
 
-   public static boolean isGRAY(JSONObject map) throws JSONException, MMScriptException {
+   public static boolean isGRAY(JSONObject map) throws JSONException, IllegalArgumentException {
       return (isGRAY8(map) || isGRAY16(map) || isGRAY32(map));
    }
 
-   public static boolean isRGB(JSONObject map) throws JSONException, MMScriptException {
+   public static boolean isRGB(JSONObject map) throws JSONException, IllegalArgumentException {
       return (isRGB32(map) || isRGB64(map));
    }
 
-   public static boolean isGRAY(TaggedImage img) throws JSONException, MMScriptException {
+   public static boolean isGRAY(TaggedImage img) throws JSONException, IllegalArgumentException {
       return isGRAY(img.tags);
    }
 
-   public static boolean isRGB(TaggedImage img) throws JSONException, MMScriptException {
+   public static boolean isRGB(TaggedImage img) throws JSONException, IllegalArgumentException {
       return isRGB(img.tags);
    }
 
@@ -537,11 +537,11 @@ public class MDUtils {
    }
 
    public static Rectangle getROI(JSONObject tags)
-      throws MMScriptException, JSONException {
+      throws IllegalArgumentException, JSONException {
       String roiString = tags.getString("ROI");
       String[] xywh = roiString.split("-");
       if (xywh.length != 4) {
-         throw new MMScriptException("Invalid ROI tag");
+         throw new IllegalArgumentException("Invalid ROI tag");
       }
       int x, y, w, h;
       x = Integer.parseInt(xywh[0]);
@@ -558,7 +558,7 @@ public class MDUtils {
       tags.put("ROI", roiString);
    }
 
-   public static int getDepth(JSONObject tags) throws MMScriptException, JSONException {
+   public static int getDepth(JSONObject tags) throws IllegalArgumentException, JSONException {
       String pixelType = getPixelType(tags);
       if (pixelType.contains(MMTags.Values.PIX_TYPE_GRAY_8))
          return 1;
