@@ -100,9 +100,6 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
       if (SwingUtilities.isEventDispatchThread()) {
          throw new IllegalThreadStateException("Acquisition can not be run from this (EDT) thread");
       }
-      if (((MMStudio) studio_).isAbortRequested()) {
-         return null;
-      }
       Datastore store = null;
       if (settings == null) {
          // Use the MDA dialog's runAcquisition logic.
@@ -147,10 +144,6 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
    @Override
    public Datastore runAcquisition(String name, String root)
          throws IllegalThreadStateException {
-      if (((MMStudio) studio_).isAbortRequested()) {
-         // User cancelled.
-         return null;
-      }
       if (mdaDialog_ != null) {
          Datastore store = mdaDialog_.runAcquisition(name, root);
          try {
@@ -173,9 +166,6 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
     */
    @Override
    public void loadAcquisition(String path) throws IOException {
-      if (((MMStudio) studio_).isAbortRequested()) {
-         // Ignore it.
-      }
       engine_.shutdown();
 
       // load protocol
