@@ -17,7 +17,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.acquisition;
+package org.micromanager.acquisition.internal;
 
 import com.bulenkov.iconloader.IconLoader;
 
