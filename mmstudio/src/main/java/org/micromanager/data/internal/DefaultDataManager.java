@@ -245,13 +245,13 @@ public class DefaultDataManager implements DataManager {
    }
 
    @Override
-   public Image convertTaggedImage(TaggedImage tagged) throws JSONException, MMScriptException {
+   public Image convertTaggedImage(TaggedImage tagged) throws JSONException {
       return new DefaultImage(tagged);
    }
 
    @Override
    public Image convertTaggedImage(TaggedImage tagged, Coords coords,
-         Metadata metadata) throws JSONException, MMScriptException {
+         Metadata metadata) throws JSONException {
       return new DefaultImage(tagged, coords, metadata);
    }
 

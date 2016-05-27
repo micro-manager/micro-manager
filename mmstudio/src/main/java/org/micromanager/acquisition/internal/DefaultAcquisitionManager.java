@@ -61,7 +61,6 @@ import org.micromanager.Studio;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.MMException;
-import org.micromanager.internal.utils.MMScriptException;
 
 /**
  * TODO: this class still depends on MMStudio for many things.
@@ -82,26 +81,28 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
    }
 
    @Override
-   public Datastore runAcquisition() throws MMScriptException {
+   public Datastore runAcquisition() throws IllegalThreadStateException {
       return executeAcquisition(null, true);
    }
 
    @Override
-   public Datastore runAcquisitionNonblocking() throws MMScriptException {
+   public Datastore runAcquisitionNonblocking() throws IllegalThreadStateException {
       return executeAcquisition(null, false);
    }
 
    @Override
    public Datastore runAcquisitionWithSettings(SequenceSettings settings,
-         boolean shouldBlock) throws MMScriptException {
+         boolean shouldBlock) throws IllegalThreadStateException {
       return executeAcquisition(settings, shouldBlock);
    }
 
-   private Datastore executeAcquisition(SequenceSettings settings, boolean isBlocking) throws MMScriptException {
+   private Datastore executeAcquisition(SequenceSettings settings, boolean isBlocking) throws IllegalThreadStateException {
       if (SwingUtilities.isEventDispatchThread()) {
-         throw new MMScriptException("Acquisition can not be run from this (EDT) thread");
+         throw new IllegalThreadStateException("Acquisition can not be run from this (EDT) thread");
       }
-      ((MMStudio) studio_).testForAbortRequests();
+      if (((MMStudio) studio_).isAbortRequested()) {
+         return null;
+      }
       Datastore store = null;
       if (settings == null) {
          // Use the MDA dialog's runAcquisition logic.
@@ -122,7 +123,7 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
             store = engine_.acquire();
          }
          catch (MMException e) {
-            throw new MMScriptException(e.toString());
+            throw new RuntimeException(e);
          }
       }
       if (isBlocking) {
@@ -145,8 +146,11 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
 
    @Override
    public Datastore runAcquisition(String name, String root)
-         throws MMScriptException {
-      ((MMStudio) studio_).testForAbortRequests();
+         throws IllegalThreadStateException {
+      if (((MMStudio) studio_).isAbortRequested()) {
+         // User cancelled.
+         return null;
+      }
       if (mdaDialog_ != null) {
          Datastore store = mdaDialog_.runAcquisition(name, root);
          try {
@@ -158,7 +162,7 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
          }
          return store;
       } else {
-         throw new MMScriptException(
+         throw new IllegalThreadStateException(
                "Acquisition setup window must be open for this command to work.");
       }
    }
@@ -166,17 +170,11 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
    /**
     * Loads acquisition settings from file
     * @param path file containing previously saved acquisition settings
-    * @throws MMScriptException 
     */
    @Override
    public void loadAcquisition(String path) throws IOException {
-      try {
-         ((MMStudio) studio_).testForAbortRequests();
-      }
-      catch (MMScriptException e) {
-         // We do not in practice expect this to happen, hence why it isn't
-         // raised to the user.
-         studio_.logs().logError(e, "Error testing for abort");
+      if (((MMStudio) studio_).isAbortRequested()) {
+         // Ignore it.
       }
       engine_.shutdown();
 

@@ -1255,12 +1255,11 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       }
    }
 
-   public void testForAbortRequests() throws MMScriptException {
+   public boolean isAbortRequested() {
       if (scriptPanel_ != null) {
-         if (scriptPanel_.stopRequestPending()) {
-            throw new MMScriptException("Script interrupted by the user!");
-         }
+         return scriptPanel_.stopRequestPending();
       }
+      return false;
    }
 
    // //////////////////////////////////////////////////////////////////////////
@@ -1385,7 +1384,9 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
 
    @Override
    public void setPositionList(PositionList pl) throws MMScriptException {
-      testForAbortRequests();
+      if (isAbortRequested()) {
+         return;
+      }
       // use serialization to clone the PositionList object
       posList_ = pl; // PositionList.newInstance(pl);
       SwingUtilities.invokeLater(new Runnable() {
@@ -1404,10 +1405,8 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
    }
 
    @Override
-   public PositionList getPositionList() throws MMScriptException {
-      testForAbortRequests();
-      // use serialization to clone the PositionList object
-      return posList_; //PositionList.newInstance(posList_);
+   public PositionList getPositionList() {
+      return posList_;
    }
 
    @Override

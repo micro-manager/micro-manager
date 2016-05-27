@@ -286,10 +286,6 @@ public class MultipageTiffReader {
          ReportingUtils.logError(e,
                "Couldn't convert TaggedImage to DefaultImage");
       }
-      catch (MMScriptException e) {
-         ReportingUtils.logError(e,
-               "Couldn't convert TaggedImage to DefaultImage");
-      }
       return null;
    }
 
@@ -320,9 +316,6 @@ public class MultipageTiffReader {
             MDUtils.setPixelType(tags, MDUtils.getSingleChannelType(summaryJSON_));
          }
          catch (JSONException e) {
-            ReportingUtils.logError(e, "Failed to get image pixel type from summary JSON");
-         }
-         catch (MMScriptException e) {
             ReportingUtils.logError(e, "Failed to get image pixel type from summary JSON");
          }
       }

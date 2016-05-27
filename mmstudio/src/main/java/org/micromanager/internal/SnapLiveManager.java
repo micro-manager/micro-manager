@@ -320,9 +320,6 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       catch (JSONException e) {
          ReportingUtils.logError(e, "Exception in image grabber thread.");
       }
-      catch (MMScriptException e) {
-         ReportingUtils.logError(e, "Exception in image grabber thread.");
-      }
    }
 
    public void addLiveModeListener(LiveModeListener listener) {
