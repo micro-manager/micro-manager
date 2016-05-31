@@ -19,7 +19,7 @@
            [org.json JSONArray JSONObject]
            [java.text SimpleDateFormat]
            [org.micromanager MultiStagePosition StagePosition]
-           [org.micromanager.internal.utils ChannelSpec]
+           [org.micromanager ChannelSpec]
            [java.util Date]
            [ij IJ]
            [javax.swing SwingUtilities])

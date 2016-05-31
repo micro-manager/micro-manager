@@ -9,7 +9,7 @@ import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 
 import org.micromanager.acquisition.internal.AcquisitionEngine;
-import org.micromanager.internal.utils.ChannelSpec;
+import org.micromanager.ChannelSpec;
 import org.micromanager.internal.utils.NumberUtils;
 
 /**

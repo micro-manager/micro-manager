@@ -18,7 +18,7 @@ import javax.swing.table.TableCellEditor;
 
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.display.internal.ColorSets;
-import org.micromanager.internal.utils.ChannelSpec;
+import org.micromanager.ChannelSpec;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 

@@ -35,8 +35,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
-import org.micromanager.internal.utils.ChannelSpec;
-import org.micromanager.internal.utils.ContrastSettings;
+import org.micromanager.ChannelSpec;
 import org.micromanager.internal.utils.MMException;
 
 /**
@@ -343,14 +342,12 @@ public interface AcquisitionEngine {
     * @param exp - The exposure time for this channel
     * @param doZStack - If false, then z stacks will be skipped for this channel
     * @param offset - If nonzero, offsets z positions for this channel by the provided amount, in microns.
-    * @param con - Provides contrast settings for this channel.
     * @param skip - If nonzero, this channel is skipped for some frames.
     * @param c - Provides the preferred color for this channel
     * @param use - If false, this channel will not be included in the acquisition.
     */
    public boolean addChannel(String name, double exp, Boolean doZStack,
-           double offset, ContrastSettings con, int skip, Color c,
-           boolean use);
+           double offset, int skip, Color c, boolean use);
 
    /*
     * Sets whether image data should be stored to disk or to RAM during

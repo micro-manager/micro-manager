@@ -12,7 +12,7 @@ import javax.swing.table.TableModel;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.display.internal.inspector.HistogramsPanel;
 import org.micromanager.Studio;
-import org.micromanager.internal.utils.ChannelSpec;
+import org.micromanager.ChannelSpec;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TooltipTextMaker;
 

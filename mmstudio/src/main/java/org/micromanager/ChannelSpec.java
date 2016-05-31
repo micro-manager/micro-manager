@@ -20,35 +20,43 @@
 //
 // CVS:          $Id$
 //
-package org.micromanager.internal.utils;
+package org.micromanager;
+
 import java.awt.Color;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 /**
- * Channel acquisition protocol. 
+ * A ChannelSpec is a description of how a specific channel will be used in an
+ * MDA (multi-dimensional acquisition). It contains fields corresponding to
+ * each of the columns in the Channels section of the MDA dialog. ChannelSpecs
+ * are used by the SequenceSettings object to set up channels for acquisitions.
  */
 @SuppressWarnings("unused")
 public class ChannelSpec {
-   public static final String DEFAULT_CHANNEL_GROUP = "Channel";
-   public static final double Version = 1.0;
 
+   /** Whether this channel should be imaged in each Z slice of the stack */
    public Boolean doZStack = true;
-   public String config = ""; // Configuration setting name
-   public double exposure = 10.0; // ms
-   public double zOffset = 0.0; // um
+   /** Name of the channel */
+   public String config = "";
+   /** Exposure time, in milliseconds */
+   public double exposure = 10.0;
+   /** Z-offset, in microns */
+   public double zOffset = 0.0;
+   /** Color to use when displaying this channel */
    public Color color = Color.gray;
-   public ContrastSettings contrast;
+   /** Number of frames to skip between each time this channel is imaged. */
    public int skipFactorFrame = 0;
+   /** Whether the channel is enabled for imaging at all. */
    public boolean useChannel = true;
+   /** Name of the camera to use. */
    public String camera = "";
-   
+
    public ChannelSpec(){
-      contrast = new ContrastSettings(0, 65535);
       color = Color.WHITE;
    }
-   
+
    /**
     * Serialize to JSON encoded string
     */
@@ -56,7 +64,7 @@ public class ChannelSpec {
       Gson gson = new GsonBuilder().setPrettyPrinting().create();
       return gson.toJson(cs);
    }
-   
+
    /**
     * De-serialize from JSON encoded string
     */
@@ -65,19 +73,5 @@ public class ChannelSpec {
       ChannelSpec cs = gson.fromJson(stream, ChannelSpec.class);
       return cs;
    }
-   
-   // test serialization
-   public synchronized static void main(String[] args) {
-      
-      // encode
-      ChannelSpec cs = new ChannelSpec();
-      String stream = ChannelSpec.toJSONStream(cs);
-      System.out.println("Encoded:\n" + stream);
-      
-      // decode
-      ChannelSpec resultCs = ChannelSpec.fromJSONStream(stream);
-      System.out.println("Decoded:\n" + ChannelSpec.toJSONStream(resultCs));
-   }
-   
 }
 

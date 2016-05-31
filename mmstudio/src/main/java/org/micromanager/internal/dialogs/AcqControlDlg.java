@@ -47,6 +47,7 @@ import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
+import org.micromanager.ChannelSpec;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.display.internal.RememberedChannelSettings;
@@ -55,10 +56,8 @@ import org.micromanager.events.internal.ChannelGroupEvent;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.AcqOrderMode;
-import org.micromanager.internal.utils.ChannelSpec;
 import org.micromanager.internal.utils.ColorEditor;
 import org.micromanager.internal.utils.ColorRenderer;
-import org.micromanager.internal.utils.ContrastSettings;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs;
@@ -1242,16 +1241,12 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
          double exp = profile.getDouble(this.getClass(), CHANNEL_EXPOSURE_PREFIX + i, 0.0);
          Boolean doZStack = profile.getBoolean(this.getClass(), CHANNEL_DOZSTACK_PREFIX + i, true);
          double zOffset = profile.getDouble(this.getClass(), CHANNEL_ZOFFSET_PREFIX + i, 0.0);
-         ContrastSettings con = new ContrastSettings();
-         con.min = profile.getInt(this.getClass(), CHANNEL_CONTRAST_MIN_PREFIX + i, defaultChannel.contrast.min);
-         con.max = profile.getInt(this.getClass(), CHANNEL_CONTRAST_MAX_PREFIX + i, defaultChannel.contrast.max);
-         con.gamma = profile.getDouble(this.getClass(), CHANNEL_CONTRAST_GAMMA_PREFIX + i, defaultChannel.contrast.gamma);
          int r = profile.getInt(this.getClass(), CHANNEL_COLOR_R_PREFIX + i, defaultChannel.color.getRed());
          int g = profile.getInt(this.getClass(), CHANNEL_COLOR_G_PREFIX + i, defaultChannel.color.getGreen());
          int b = profile.getInt(this.getClass(), CHANNEL_COLOR_B_PREFIX + i, defaultChannel.color.getBlue());
          int skip = profile.getInt(this.getClass(), CHANNEL_SKIP_PREFIX + i, defaultChannel.skipFactorFrame);
          Color c = new Color(r, g, b);
-         acqEng_.addChannel(name, exp, doZStack, zOffset, con, skip, c, use);
+         acqEng_.addChannel(name, exp, doZStack, zOffset, skip, c, use);
       }
       acqEng_.setShouldDisplayImages(!getShouldHideMDADisplay());
 
@@ -1304,9 +1299,6 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
          profile.setDouble(this.getClass(), CHANNEL_EXPOSURE_PREFIX + i, channel.exposure);
          profile.setBoolean(this.getClass(), CHANNEL_DOZSTACK_PREFIX + i, channel.doZStack);
          profile.setDouble(this.getClass(), CHANNEL_ZOFFSET_PREFIX + i, channel.zOffset);
-         profile.setInt(this.getClass(), CHANNEL_CONTRAST_MIN_PREFIX + i, channel.contrast.min);
-         profile.setInt(this.getClass(), CHANNEL_CONTRAST_MAX_PREFIX + i, channel.contrast.max);
-         profile.setDouble(this.getClass(), CHANNEL_CONTRAST_GAMMA_PREFIX + i, channel.contrast.gamma);
          profile.setInt(this.getClass(), CHANNEL_COLOR_R_PREFIX + i, channel.color.getRed());
          profile.setInt(this.getClass(), CHANNEL_COLOR_G_PREFIX + i, channel.color.getGreen());
          profile.setInt(this.getClass(), CHANNEL_COLOR_B_PREFIX + i, channel.color.getBlue());

@@ -25,7 +25,7 @@ package org.micromanager;
 
 import java.util.ArrayList;
 
-import org.micromanager.internal.utils.ChannelSpec;
+import org.micromanager.ChannelSpec;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

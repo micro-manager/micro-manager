@@ -21,6 +21,7 @@ import mmcorej.StrVector;
 import mmcorej.TaggedImage;
 
 import org.json.JSONObject;
+import org.micromanager.ChannelSpec;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.internal.IncomingImageEvent;
@@ -37,8 +38,6 @@ import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.AcqOrderMode;
-import org.micromanager.internal.utils.ChannelSpec;
-import org.micromanager.internal.utils.ContrastSettings;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -773,7 +772,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
     * @return - true if successful
     */
    @Override
-   public boolean addChannel(String config, double exp, Boolean doZStack, double zOffset, ContrastSettings con, int skip, Color c, boolean use) {
+   public boolean addChannel(String config, double exp, Boolean doZStack, double zOffset, int skip, Color c, boolean use) {
       if (isConfigAvailable(config)) {
          ChannelSpec channel = new ChannelSpec();
          channel.config = config;
@@ -781,7 +780,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          channel.exposure = exp;
          channel.doZStack = doZStack;
          channel.zOffset = zOffset;
-         channel.contrast = con;
          channel.color = c;
          channel.skipFactorFrame = skip;
          channels_.add(channel);

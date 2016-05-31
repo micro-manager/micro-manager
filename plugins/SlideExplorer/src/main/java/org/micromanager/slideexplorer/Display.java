@@ -13,7 +13,6 @@ import java.awt.Rectangle;
 
 import org.micromanager.internal.MMStudio;
 import org.micromanager.slideexplorer.Hub.ModeManager;
-import org.micromanager.internal.utils.ContrastSettings;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
