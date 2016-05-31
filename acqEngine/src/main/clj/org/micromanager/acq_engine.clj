@@ -36,17 +36,18 @@
     [java.util.concurrent CountDownLatch LinkedBlockingQueue TimeUnit]
     [mmcorej Configuration Metadata TaggedImage]
     [org.json JSONArray JSONObject]
+    [org.micromanager.acquisition SequenceSettings]
     [org.micromanager.acquisition.internal AcquisitionSleepEvent]
     [org.micromanager.acquisition.internal TaggedImageQueue]
     [org.micromanager.data Coords]
     [org.micromanager.data.internal DefaultSummaryMetadata]
     [org.micromanager.display.internal RememberedChannelSettings]
-    [org.micromanager PositionList SequenceSettings]
+    [org.micromanager PositionList]
     [org.micromanager.internal MMStudio]
     [org.micromanager.internal.utils MDUtils ReportingUtils])
   (:gen-class
     :name org.micromanager.internal.AcquisitionEngine2010
-    :implements [org.micromanager.IAcquisitionEngine2010]
+    :implements [org.micromanager.acquisition.internal.IAcquisitionEngine2010]
     :init init
     :constructors {[org.micromanager.Studio] [] [mmcorej.CMMCore] []}
     :state state))

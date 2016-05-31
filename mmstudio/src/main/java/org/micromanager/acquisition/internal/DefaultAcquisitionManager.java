@@ -55,7 +55,7 @@ import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.PropertyMap;
-import org.micromanager.SequenceSettings;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.Studio;
 
 import org.micromanager.internal.dialogs.AcqControlDlg;

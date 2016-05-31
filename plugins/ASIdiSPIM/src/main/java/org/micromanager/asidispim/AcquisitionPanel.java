@@ -89,7 +89,7 @@ import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMap.PropertyMapBuilder;
-import org.micromanager.SequenceSettings;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Coords.CoordsBuilder;

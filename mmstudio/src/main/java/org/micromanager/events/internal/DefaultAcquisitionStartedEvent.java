@@ -22,7 +22,7 @@ package org.micromanager.events.internal;
 
 import org.micromanager.data.Datastore;
 import org.micromanager.events.AcquisitionSequenceStartedEvent;
-import org.micromanager.SequenceSettings;
+import org.micromanager.acquisition.SequenceSettings;
 
 public class DefaultAcquisitionStartedEvent implements AcquisitionSequenceStartedEvent {
    private Datastore store_;

@@ -22,7 +22,7 @@
 package org.micromanager.asidispim.data;
 
 import java.util.ArrayList;
-import org.micromanager.SequenceSettings;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.asidispim.utils.SliceTiming;
 
 /**

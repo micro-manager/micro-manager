@@ -18,7 +18,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
-import org.micromanager.SequenceSettings;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.StagePosition;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.ReportingUtils;

@@ -47,7 +47,7 @@ import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
-import org.micromanager.ChannelSpec;
+import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.display.internal.RememberedChannelSettings;
@@ -68,7 +68,7 @@ import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TooltipTextMaker;
-import org.micromanager.SequenceSettings;
+import org.micromanager.acquisition.SequenceSettings;
 
 /**
  * Time-lapse, channel and z-stack acquisition setup dialog.

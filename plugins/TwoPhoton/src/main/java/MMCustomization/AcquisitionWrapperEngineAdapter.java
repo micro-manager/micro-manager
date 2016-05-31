@@ -29,7 +29,7 @@ import org.micromanager.acquisition.internal.DefaultTaggedImageSink;
 import org.micromanager.acquisition.internal.MMImageCache;
 import org.micromanager.IAcquisitionEngine2010;
 import org.micromanager.ImageCache;
-import org.micromanager.SequenceSettings;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.TaggedImageStorage;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MDUtils;

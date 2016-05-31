@@ -20,7 +20,7 @@
 //
 // CVS:          $Id$
 //
-package org.micromanager;
+package org.micromanager.acquisition;
 
 import java.awt.Color;
 

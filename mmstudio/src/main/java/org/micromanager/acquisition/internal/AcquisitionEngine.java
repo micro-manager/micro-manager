@@ -35,7 +35,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
-import org.micromanager.ChannelSpec;
+import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.internal.utils.MMException;
 
 /**

@@ -21,11 +21,11 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager;
+package org.micromanager.acquisition;
 
 import java.util.ArrayList;
 
-import org.micromanager.ChannelSpec;
+import org.micromanager.acquisition.ChannelSpec;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

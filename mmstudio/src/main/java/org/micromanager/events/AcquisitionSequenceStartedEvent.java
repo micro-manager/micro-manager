@@ -21,7 +21,7 @@
 package org.micromanager.events;
 
 import org.micromanager.data.Datastore;
-import org.micromanager.SequenceSettings;
+import org.micromanager.acquisition.SequenceSettings;
 
 /**
  * This variant of the AcquisitionStartedEvent is used for acquisitions that

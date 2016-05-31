@@ -16,7 +16,7 @@
 
 package org.micromanager.asidispim.events;
 
-import org.micromanager.SequenceSettings;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Datastore;
 import org.micromanager.events.AcquisitionSequenceStartedEvent;
 

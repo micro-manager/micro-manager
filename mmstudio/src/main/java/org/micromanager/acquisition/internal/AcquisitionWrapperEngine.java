@@ -21,14 +21,13 @@ import mmcorej.StrVector;
 import mmcorej.TaggedImage;
 
 import org.json.JSONObject;
-import org.micromanager.ChannelSpec;
+import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.internal.IncomingImageEvent;
-import org.micromanager.IAcquisitionEngine2010;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
-import org.micromanager.SequenceSettings;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.events.internal.ChannelGroupEvent;
 import org.micromanager.events.internal.DefaultAcquisitionEndedEvent;
 import org.micromanager.events.internal.DefaultAcquisitionStartedEvent;
