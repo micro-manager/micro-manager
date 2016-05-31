@@ -180,7 +180,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    public double fullFocus() throws Exception {
       startTimeMs_ = System.currentTimeMillis();
       applySettings();
-      Rectangle oldROI = studio_.compat().getROI();
+      Rectangle oldROI = studio_.core().getROI();
       CMMCore core = studio_.getCMMCore();
       liveModeOn_ = studio_.live().getIsLiveModeOn();
 
