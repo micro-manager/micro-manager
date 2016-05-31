@@ -820,37 +820,32 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
    }
 
    @Override
-   public boolean versionLessThan(String version) throws MMScriptException {
-      try {
-         String[] v = MMVersion.VERSION_STRING.split(" ", 2);
-         String[] m = v[0].split("\\.", 3);
-         String[] v2 = version.split(" ", 2);
-         String[] m2 = v2[0].split("\\.", 3);
-         for (int i=0; i < 3; i++) {
-            if (Integer.parseInt(m[i]) < Integer.parseInt(m2[i])) {
-               ReportingUtils.showError("This code needs Micro-Manager version " + version + " or greater");
-               return true;
-            }
-            if (Integer.parseInt(m[i]) > Integer.parseInt(m2[i])) {
-               return false;
-            }
-         }
-         if (v2.length < 2 || v2[1].equals("") )
-            return false;
-         if (v.length < 2 ) {
+   public boolean versionLessThan(String version) throws NumberFormatException {
+      String[] v = MMVersion.VERSION_STRING.split(" ", 2);
+      String[] m = v[0].split("\\.", 3);
+      String[] v2 = version.split(" ", 2);
+      String[] m2 = v2[0].split("\\.", 3);
+      for (int i=0; i < 3; i++) {
+         if (Integer.parseInt(m[i]) < Integer.parseInt(m2[i])) {
             ReportingUtils.showError("This code needs Micro-Manager version " + version + " or greater");
             return true;
          }
-         if (Integer.parseInt(v[1]) < Integer.parseInt(v2[1])) {
-            ReportingUtils.showError("This code needs Micro-Manager version " + version + " or greater");
+         if (Integer.parseInt(m[i]) > Integer.parseInt(m2[i])) {
             return false;
          }
-         return true;
-
-      } catch (NumberFormatException ex) {
-         throw new MMScriptException ("Format of version String should be \"a.b.c\"");
       }
-   } 
+      if (v2.length < 2 || v2[1].equals("") )
+         return false;
+      if (v.length < 2 ) {
+         ReportingUtils.showError("This code needs Micro-Manager version " + version + " or greater");
+         return true;
+      }
+      if (Integer.parseInt(v[1]) < Integer.parseInt(v2[1])) {
+         ReportingUtils.showError("This code needs Micro-Manager version " + version + " or greater");
+         return false;
+      }
+      return true;
+   }
 
    private boolean isCurrentImageFormatSupported() {
       long channels = core_.getNumberOfComponents();

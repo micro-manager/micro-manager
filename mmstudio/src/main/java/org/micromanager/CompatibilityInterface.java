@@ -110,22 +110,23 @@ public interface CompatibilityInterface {
    public void setROI(Rectangle rect) throws Exception;
 
    /**
-    * Displays an error message and returns true if the run-time Micro-Manager version
-    * is less than the one specified.
+    * Displays an error message and returns true if the run-time Micro-Manager
+    * version is less than the one specified.
     * Versions in Micro-Manager are of the format:
     * major.minor.minute date
     * where ' date' can be omitted
     * Examples:
     * 1.4.6
     * 1.4.6 20110831
-    * When a date is appended to a version number, it will be newer than the same version 
-    * without a date
+    * When a date is appended to a version number, it will be newer than the
+    * same version without a date
     * @param version - minimum version needen to run this code
-    * @return true if the run-time Micro-Manager version is less than the 
+    * @return true if the run-time Micro-Manager version is less than the
     * one specified
-    * @throws Exception
+    * @throws NumberFormatException if the version number is not in the format
+    * expected.
     */
-   public boolean versionLessThan(String version) throws Exception;
+   public boolean versionLessThan(String version) throws NumberFormatException;
 
    /**
     * Write various properties of MM and the OS to the log.
