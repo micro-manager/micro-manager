@@ -36,17 +36,15 @@ public interface PositionListManager {
     * Replaces the list in the PositionList Window
     * It will open a position list dialog if it was not already open.
     * @param pl PosiionLIst to be made the current one
-    * @throws Exception
     */
-   public void setPositionList(PositionList pl) throws Exception;
+   public void setPositionList(PositionList pl);
 
    /**
     * Returns a copy of the current PositionList, the one used by the
     * Acquisition Protocol
     * @return copy of the current PositionList
-    * @throws Exception
     */
-   public PositionList getPositionList() throws Exception;
+   public PositionList getPositionList();
 
    /**
     * Opens the XYPositionList when it is not opened.

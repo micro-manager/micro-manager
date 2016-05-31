@@ -1355,20 +1355,21 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
    }
 
    @Override
-   public void setPositionList(PositionList pl) throws MMScriptException {
+   public void setPositionList(PositionList pl) {
       // use serialization to clone the PositionList object
       posList_ = pl; // PositionList.newInstance(pl);
       SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
-            if (posListDlg_ != null)
+            if (posListDlg_ != null) {
                posListDlg_.setPositionList(posList_);
-            
-            if (engine_ != null)
+            }
+            if (engine_ != null) {
                engine_.setPositionList(posList_);
-            
-            if (acqControlWin_ != null)
+            }
+            if (acqControlWin_ != null) {
                acqControlWin_.updateGUIContents();
+            }
          }
       });
    }
