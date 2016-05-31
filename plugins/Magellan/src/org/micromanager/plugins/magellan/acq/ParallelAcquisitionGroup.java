@@ -16,6 +16,7 @@
 //
 package org.micromanager.plugins.magellan.acq;
 
+import com.google.common.eventbus.EventBus;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -44,7 +45,7 @@ public class ParallelAcquisitionGroup implements AcquisitionEventSource {
      * constructor for a single acquisition (nothing actually in parallel)
      */
     public ParallelAcquisitionGroup(final List<FixedAreaAcquisitionSettings> settingsList,
-            MultipleAcquisitionManager acqManager) {
+            MultipleAcquisitionManager acqManager, EventBus bus) {
         multiAcqManager_ = acqManager;
         acqs_ = new ArrayList<FixedAreaAcquisition>();
         //create all
@@ -52,6 +53,7 @@ public class ParallelAcquisitionGroup implements AcquisitionEventSource {
             try {
                 acqs_.add(new FixedAreaAcquisition(settingsList.get(i), ParallelAcquisitionGroup.this));
             } catch (Exception ex) {
+               ex.printStackTrace();
                 Log.log("Couldn't create acqusition: " + settingsList.get(i).name_);
             }
         }
@@ -65,6 +67,12 @@ public class ParallelAcquisitionGroup implements AcquisitionEventSource {
         //now that first one is started, return so that multi acquisition manager has a reference to the group for aborting purposes
         //each acquisition will call finished time point when it is done, allowing parallel group to move to the next
         //in the case that an individual acqusiition is aborted, it will call acqAborted so parallel group knows to move on
+    }
+    
+    public void signalAcqSettingsChange() {
+       for (FixedAreaAcquisition acq : acqs_) {
+          acq.acqSettingsUpdated();
+       }
     }
 
     public synchronized void signalAborted(FixedAreaAcquisition acq) {

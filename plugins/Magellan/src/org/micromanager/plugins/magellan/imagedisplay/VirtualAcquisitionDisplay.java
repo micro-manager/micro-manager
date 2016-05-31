@@ -442,15 +442,13 @@ public abstract class VirtualAcquisitionDisplay{
       axisToPosition.put("channel", channel);
       axisToPosition.put("position", position);
       axisToPosition.put("time", frame);
-      if (((DisplayPlus) this).getAcquisition() instanceof ExploreAcquisition) {
+      if (((DisplayPlus) this).getAcquisition() != null) {
          //intercept event and edit slice index
          //make slice index >= 0 for viewer   
-         axisToPosition.put("z", slice - ((ExploreAcquisition)((DisplayPlus) this).getAcquisition()).getLowestExploredSliceIndex());
+         axisToPosition.put("z", slice - (((DisplayPlus) this).getAcquisition()).getMinSliceIndex());
       } else if (((DisplayPlus) this).getAcquisition() == null) {
          axisToPosition.put("z", slice - ((DisplayPlus) this).getStorage().getMinSliceIndexOpenedDataset());
-      } else {
-         axisToPosition.put("z", slice);
-      }
+      } 
       
       bus_.post(new NewImageEvent(axisToPosition));
 

@@ -29,7 +29,7 @@ import org.micromanager.plugins.magellan.surfacesandregions.RegionManager;
  */
 class RegionTableModel extends AbstractTableModel implements ListDataListener {
 
-   private final String[] COLUMNS = {"Name", "XY Device", "# Rows", "# Cols", "Width (µm)", "Height (µm)"};
+   private final String[] COLUMNS = {"Name", "XY Device", "# Rows", "# Cols", "Width (um)", "Height (um)"};
    private RegionManager manager_;
    
    public RegionTableModel(RegionManager manager) {

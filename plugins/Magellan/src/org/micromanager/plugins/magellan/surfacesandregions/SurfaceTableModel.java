@@ -26,7 +26,7 @@ import org.micromanager.plugins.magellan.misc.Log;
  */
 class SurfaceTableModel extends AbstractTableModel  {
 
-   private final String[] COLUMNS = {"Name", "XY Device", "Z Device", "XY padding (µm)", "# Positions"};
+   private final String[] COLUMNS = {"Name", "XY Device", "Z Device", "XY padding (um)", "# Positions"};
    private SurfaceManager manager_;
    
    public SurfaceTableModel(SurfaceManager manager) {

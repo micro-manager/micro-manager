@@ -319,4 +319,10 @@ public class MultipleAcquisitionManager {
       currentAcqs_ = null;
    }
    
+   public void signalAcqSettingsChange() {
+      if (running_) {
+         currentAcqs_.signalAcqSettingsChange();
+      }
+   }
+   
 }

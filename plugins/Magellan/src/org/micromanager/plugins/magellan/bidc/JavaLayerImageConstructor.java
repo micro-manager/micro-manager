@@ -219,13 +219,13 @@ public class JavaLayerImageConstructor {
                 for (int c = 0; c < 6; c++) {
                     JSONObject tags = convertTaggedImage(core_.getTaggedImage()).tags;
                     MD.setChannelIndex(tags, c);
-                    MagellanEngine.addImageMetadata(tags, event, event.timeIndex_, c, currentTime, 1);
+                    MagellanEngine.addImageMetadata(tags, event, event.timeIndex_, c, currentTime - event.acquisition_.getStartTime_ms(), 1);
                     event.acquisition_.addImage(makeDemoImage(c, event.xyPosition_.getCenter(), event.zPosition_, tags));
                 }
             } else {
                 for (int c = 0; c < core_.getNumberOfCameraChannels(); c++) {
                     MagellanTaggedImage img = convertTaggedImage(core_.getTaggedImage(c));
-                    MagellanEngine.addImageMetadata(img.tags, event, event.timeIndex_, c, currentTime, 1);
+                    MagellanEngine.addImageMetadata(img.tags, event, event.timeIndex_, c, currentTime - event.acquisition_.getStartTime_ms(), 1);
                     event.acquisition_.addImage(img);
                 }
             }

@@ -145,6 +145,12 @@ public class MultiPosRegion implements XYFootprint{
    public Point2D.Double center() {
       return center_;
    }
+   
+   public void updateCenter(Point2D.Double newCenter) {
+      center_.x = newCenter.x;
+      center_.y = newCenter.y;
+      manager_.drawRegionOverlay(this);
+   }
 
    public void translate(double dx, double dy) {
       center_ = new Point2D.Double(center_.x + dx, center_.y + dy);

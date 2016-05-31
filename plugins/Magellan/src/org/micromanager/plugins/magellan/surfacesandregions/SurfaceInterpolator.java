@@ -642,7 +642,10 @@ public abstract class SurfaceInterpolator implements XYFootprint {
                   //use the most recently set overlap value for display purposes. When it comes time to calc the real thing, 
                   //get it from the acquisition settings
                   fitXYPositionsToConvexHull(FixedAreaAcquisitionSettings.getStoredTileOverlapPercentage());
+                  //Interpolate surface as specified by the subclass method
                   interpolateSurface(points);
+                  //let manager handle event firing to acquisitions using surface
+                  manager_.surfaceUpdated(SurfaceInterpolator.this);
                } catch (InterruptedException e) {
                   return;
                }

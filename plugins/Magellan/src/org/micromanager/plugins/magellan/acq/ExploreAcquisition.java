@@ -41,7 +41,7 @@ public class ExploreAcquisition extends Acquisition {
     
     
    private volatile double zTop_, zBottom_;
-   private volatile int lowestSliceIndex_ = 0, highestSliceIndex_ = 0;
+   private volatile int minSliceIndex_ = 0, maxSliceIndex_ = 0;
    private ExecutorService eventAdderExecutor_ = Executors.newSingleThreadExecutor();
    private int imageFilterType_;
    private ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>> queuedTileEvents_ = new ConcurrentHashMap<Integer, LinkedBlockingQueue<ExploreTileWaitingToAcquire>>();
@@ -160,7 +160,7 @@ public class ExploreAcquisition extends Acquisition {
                //update lowest slice for the benefit of the zScrollbar in the viewer
                updateLowestAndHighestSlices();
                //Add events for each channel, slice            
-               for (int sliceIndex = getMinSliceIndex(); sliceIndex <= getMaxSliceIndex(); sliceIndex++) {
+               for (int sliceIndex = getZLimitMinSliceIndex(); sliceIndex <= getZLimitMaxSliceIndex(); sliceIndex++) {
                   for (int channelIndex = 0; channelIndex < Math.max(1,channels_.size()); channelIndex++) {
                      if (channels_ != null && !channels_.isEmpty()) {
                         if (!channels_.get(channelIndex).uniqueEvent_ || !channels_.get(channelIndex).use_) {
@@ -198,15 +198,15 @@ public class ExploreAcquisition extends Acquisition {
    }
 
    @Override
-   public double getZCoordinateOfSlice(int sliceIndex) {
+   public double getZCoordinateOfDisplaySlice(int displaySliceIndex) {
       //No frames in explorer acquisition
-      sliceIndex += lowestSliceIndex_;
-      return zOrigin_ + zStep_ * sliceIndex;
+      displaySliceIndex += minSliceIndex_;
+      return zOrigin_ + zStep_ * displaySliceIndex;
    }
 
    @Override
-   public int getSliceIndexFromZCoordinate(double z) {
-      return (int) Math.round((z - zOrigin_) / zStep_) - lowestSliceIndex_;
+   public int getDisplaySliceIndexFromZCoordinate(double z) {
+      return (int) Math.round((z - zOrigin_) / zStep_) - minSliceIndex_;
    }
 
    /**
@@ -214,18 +214,18 @@ public class ExploreAcquisition extends Acquisition {
     *
     * @return
     */
-   public int getLowestExploredSliceIndex() {
-      return lowestSliceIndex_;
+   public int getMinSliceIndex() {
+      return minSliceIndex_;
    }
 
-   public int getHighestExploredSliceIndex() {
-      return highestSliceIndex_;
+   public int getMaxSliceIndex() {
+      return maxSliceIndex_;
    }
 
    public void updateLowestAndHighestSlices() {
       //keep track of this for the purposes of the viewer
-      lowestSliceIndex_ = Math.min(lowestSliceIndex_, getMinSliceIndex());
-      highestSliceIndex_ = Math.max(highestSliceIndex_, getMaxSliceIndex());
+      minSliceIndex_ = Math.min(minSliceIndex_, getZLimitMinSliceIndex());
+      maxSliceIndex_ = Math.max(maxSliceIndex_, getZLimitMaxSliceIndex());
    }
 
    /**
@@ -233,7 +233,7 @@ public class ExploreAcquisition extends Acquisition {
     *
     * @return
     */
-   public int getMinSliceIndex() {
+   private int getZLimitMinSliceIndex() {
       return (int) Math.round((zTop_ - zOrigin_) / zStep_);
    }
 
@@ -242,7 +242,7 @@ public class ExploreAcquisition extends Acquisition {
     *
     * @return
     */
-   public int getMaxSliceIndex() {
+   private int getZLimitMaxSliceIndex() {
       return (int) Math.round((zBottom_ - zOrigin_) / zStep_);
    }
 

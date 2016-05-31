@@ -546,6 +546,9 @@ public class DisplayWindow extends StackWindow {
    
    public String createSubtitle() {
       String s = "";
+      if (disp_ == null || disp_.getZoomableStack() == null) {
+         return s; //not ready yet
+      }
       /////"w x h um (w x h) in pixels
       Calibration cal = imp.getCalibration();
       if (cal.scaled()) {

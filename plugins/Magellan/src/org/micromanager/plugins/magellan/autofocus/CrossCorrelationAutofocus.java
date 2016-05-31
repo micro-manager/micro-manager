@@ -145,7 +145,7 @@ public class CrossCorrelationAutofocus {
             //figure out how much downsampling needed to run autofocus in a reasonable amount of time
             //factor of two is for z padding
             BigDecimal numPix2D = new BigDecimal(tileWidth.multiply(numCols).multiply(tileHeight).multiply(numRows));
-            BigDecimal numXCorrSlices = new BigDecimal((acq_.getMaxSliceIndex() + 1) + "");
+            BigDecimal numXCorrSlices = new BigDecimal((acq_.getNumSlices()) + "");
             double dsFactor = //ratio of number of voxels to voxel target
                     Math.sqrt(numPix2D.multiply(numXCorrSlices).divide(new BigDecimal((double) NUM_VOXEL_TARGET), 
                     RoundingMode.UP).doubleValue());
@@ -190,7 +190,7 @@ public class CrossCorrelationAutofocus {
    private static ImageStack createAFStack(FixedAreaAcquisition acq, int timeIndex, int channelIndex, int width, int height, int dsIndex) {
       ImageStack stack = new ImageStack(width, height);
       //get background pixel value
-      for (int slice = 0; slice < acq.getMaxSliceIndex() + 1; slice++) {
+      for (int slice = acq.getMinSliceIndex(); slice < acq.getMinSliceIndex() + acq.getNumSlices(); slice++) {
          //add as int
          float[] pix32;
          if (Magellan.getCore().getBytesPerPixel() == 1) {

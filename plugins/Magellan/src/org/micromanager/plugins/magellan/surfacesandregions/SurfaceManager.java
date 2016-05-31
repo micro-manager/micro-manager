@@ -16,6 +16,7 @@
 //
 package org.micromanager.plugins.magellan.surfacesandregions;
 
+import com.google.common.eventbus.EventBus;
 import org.micromanager.plugins.magellan.gui.GUI;
 import org.micromanager.plugins.magellan.imagedisplay.DisplayPlus;
 import java.awt.FileDialog;
@@ -26,6 +27,7 @@ import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -43,11 +45,20 @@ public class SurfaceManager {
   
    private ArrayList<SurfaceInterpolator> surfaces_ = new ArrayList<SurfaceInterpolator>();
    private ArrayList<SurfaceRegionComboBoxModel> comboBoxModels_ = new ArrayList<SurfaceRegionComboBoxModel>();
+   private ArrayList<SurfaceChangedListener> surfaceChangeListeners_ = new ArrayList<SurfaceChangedListener>();
    private SurfaceTableModel tableModel_;
    private static SurfaceManager singletonInstance_;
    
    public SurfaceManager() {
       singletonInstance_ = this;
+   }
+   
+   public void registerSurfaceChangedListener(SurfaceChangedListener l ) {
+      surfaceChangeListeners_.add(l);
+   }
+   
+   public void removeSurfaceChangedListener(SurfaceChangedListener l ) {
+      surfaceChangeListeners_.remove(l);
    }
    
    public static SurfaceManager getInstance() {
@@ -146,6 +157,12 @@ public class SurfaceManager {
       DisplayPlus.redrawSurfaceOverlay(surface); //redraw overlay for all displays showing this surface
    }
    
+   public void surfaceUpdated(SurfaceInterpolator surface) {
+      for (SurfaceChangedListener l : surfaceChangeListeners_) {
+         l.SurfaceChanged(surface);
+      }
+   }
+   
    public void updateSurfaceTableAndCombos() {
       for (SurfaceRegionComboBoxModel m : comboBoxModels_) {
          m.update();
@@ -238,7 +255,7 @@ public class SurfaceManager {
    public void loadSurfaces(GUI gui) {
         File selectedFile = null;
       if (JavaUtils.isMac()) {
-         FileDialog fd = new FileDialog(gui, "Save covariant pairing values", FileDialog.LOAD);
+         FileDialog fd = new FileDialog(gui, "Load surfaces", FileDialog.LOAD);
          fd.setFilenameFilter(new FilenameFilter() {
 
             @Override
@@ -255,7 +272,7 @@ public class SurfaceManager {
       } else {
          JFileChooser fc = new JFileChooser();
          fc.setFileFilter(new FileNameExtensionFilter("Text file", "txt", "TXT"));
-         fc.setDialogTitle("Save covariant pairing values");
+         fc.setDialogTitle("Save surfaces");
          int returnVal = fc.showSaveDialog(gui);
          if (returnVal == JFileChooser.APPROVE_OPTION) {
             selectedFile = fc.getSelectedFile();
@@ -317,4 +334,17 @@ public class SurfaceManager {
       updateSurfaceTableAndCombos();
    }
 
+   //Let acquisitions know surfaces have changed so they can update accordingly
+   public static class SurfaceChangedEvent {
+
+      public SurfaceInterpolator surface_;
+      
+      public SurfaceChangedEvent(SurfaceInterpolator surface) {
+         surface_ = surface;
+      }
+
+   }
+
+
+   
 }

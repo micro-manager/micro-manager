@@ -24,9 +24,11 @@ import org.micromanager.plugins.magellan.bidc.JavaLayerImageConstructor;
 import org.micromanager.plugins.magellan.channels.ChannelSetting;
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.concurrent.LinkedBlockingDeque;
 import org.micromanager.plugins.magellan.json.JSONArray;
 import org.micromanager.plugins.magellan.json.JSONObject;
 import org.micromanager.plugins.magellan.main.Magellan;
+import org.micromanager.plugins.magellan.misc.MD;
 
 /**
  * Abstract class that manages a generic acquisition. Subclassed into specific
@@ -42,7 +44,8 @@ public abstract class Acquisition implements AcquisitionEventSource{
    protected String xyStage_, zStage_;
    protected boolean zStageHasLimits_ = false;
    protected double zStageLowerLimit_, zStageUpperLimit_;
-   protected BlockingQueue<AcquisitionEvent> events_;
+   protected LinkedBlockingDeque<AcquisitionEvent> events_;
+   protected AcquisitionEvent lastEvent_ = null;
    protected TaggedImageSink imageSink_;
    protected volatile boolean finished_ = false;
    private String name_;
@@ -68,7 +71,7 @@ public abstract class Acquisition implements AcquisitionEventSource{
            }
        }
       zStep_ = zStep;
-      events_ = new LinkedBlockingQueue<AcquisitionEvent>(getAcqEventQueueCap());
+      events_ = new LinkedBlockingDeque<AcquisitionEvent>(getAcqEventQueueCap());
    }
    
    public AcquisitionEvent getNextEvent() throws InterruptedException {
@@ -77,7 +80,9 @@ public abstract class Acquisition implements AcquisitionEventSource{
             pauseLock_.wait();
          }
       }   
-      return events_.take();
+      AcquisitionEvent event = events_.take();
+      lastEvent_ = event;
+      return event;
    }
 
    public abstract double getRank();
@@ -105,9 +110,9 @@ public abstract class Acquisition implements AcquisitionEventSource{
     * @param frameIndex -
     * @return
     */
-   public abstract double getZCoordinateOfSlice(int displaySliceIndex);
+   public abstract double getZCoordinateOfDisplaySlice(int displaySliceIndex);
 
-   public abstract int getSliceIndexFromZCoordinate(double z);
+   public abstract int getDisplaySliceIndexFromZCoordinate(double z);
 
    /**
     * Return the maximum number of possible channels for the acquisition, not all of which are neccessarily active
@@ -129,10 +134,17 @@ public abstract class Acquisition implements AcquisitionEventSource{
    
    public abstract int getInitialNumSlicesEstimate();
    
+   public int getNumSlices() {
+      return getMaxSliceIndex() - getMinSliceIndex() + 1;
+   }
+
+   public abstract int getMinSliceIndex();
+
+   public abstract int getMaxSliceIndex();
+   
    public boolean isFinished() {
       return finished_;
    }
-   
    
    public abstract void abort();
    

@@ -111,7 +111,7 @@ public class DisplayWindowControls extends Panel {
    }
 
    @Subscribe
-   public void onNewImageEvent(NewImageEvent event) {
+   public void onSetImageEvent(ScrollerPanel.SetImageEvent event) {
        if(display_.isClosing()) {
            return;
        }
@@ -136,7 +136,7 @@ public class DisplayWindowControls extends Panel {
 //         datasetSizeLabel_.setText(sizeBytes / 1024 / 1024 / 1024 / 1024 + "  TB");
 //      }
       long elapsed = MD.getElapsedTimeMs(tags);
-      long days = elapsed / 60/60/24/1000, hours = elapsed/60/60/1000, minutes = elapsed/60/1000, seconds = elapsed/1000;
+      long days = elapsed / (60*60*24*1000), hours = elapsed/60/60/1000, minutes = elapsed/60/1000, seconds = elapsed/1000;
       elapsedTimeLabel_.setText(String.format("%d:%d:%d:%d",
               days, hours - 24*days, minutes - 24*60*days - 60*hours, seconds - 24*60*60*days - 60*60*hours - 60*minutes));
       zPosLabel_.setText(MD.getZPositionUm(tags) + "um");

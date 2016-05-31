@@ -1,7 +1,19 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+///////////////////////////////////////////////////////////////////////////////
+// AUTHOR:       Henry Pinkard, henry.pinkard@gmail.com
+//
+// COPYRIGHT:    University of California, San Francisco, 2015
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
 package org.micromanager.plugins.magellan.imagedisplay;
 
 import org.micromanager.plugins.magellan.acq.Acquisition;
@@ -22,13 +34,11 @@ import java.awt.event.AdjustmentListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.text.DecimalFormat;
-import java.util.HashMap;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 import org.micromanager.plugins.magellan.main.Magellan;
 import org.micromanager.plugins.magellan.misc.JavaUtils;
 import org.micromanager.plugins.magellan.misc.Log;
@@ -62,12 +72,17 @@ public class SubImageControls extends Panel {
       bus_.register(this);
       acq_ = acq;
       zStep_ = acq != null ? acq_.getZStep() : 0;
-      initComponents();
+      try {
+         initComponents();
+      } catch (Exception e) {
+         Log.log("Problem initializing subimage controls");
+         Log.log(e);
+      }
    }
-   
+
    /**
     * used for forcing scrollbars to show when opening dataset on disk
-    */  
+    */
    public void makeScrollersAppear(int numChannels, int numSlices, int numFrames) {
       for (AxisScroller s : scrollerPanel_.scrollers_) {
          if (numChannels > 1 && s.getAxis().equals("channel")) {
@@ -90,15 +105,15 @@ public class SubImageControls extends Panel {
    public void unlockAllScrollers() {
       scrollerPanel_.unlockAllScrollers();
    }
-   
+
    public void superLockAllScroller() {
       scrollerPanel_.superlockAllScrollers();
    }
-   
+
    public void setAnimateFPS(double fps) {
       scrollerPanel_.setFramesPerSecond(fps);
    }
-   
+
    private void updateZTopAndBottom() {
       //Update the text fields next to the sliders in response to adjustment
       double zBottom = zStep_ * zBottomScrollbar_.getValue() + zOrigin_;
@@ -110,25 +125,25 @@ public class SubImageControls extends Panel {
       //update colored areas on z scrollbar
       //convert to 0 based index based on which slices have been explored
    }
-   
+
    private void expandZLimitsIfNeeded(int topScrollbarIndex, int bottomScrollbarIndex) {
       //extent of 1 needs to be accounted for on top
-      if (topScrollbarIndex >= zTopScrollbar_.getMaximum() - 1 || bottomScrollbarIndex >= zBottomScrollbar_.getMaximum() - 1) {         
-         zTopScrollbar_.setMaximum(Math.max(topScrollbarIndex,bottomScrollbarIndex) + 2); 
-         zBottomScrollbar_.setMaximum(Math.max(topScrollbarIndex,bottomScrollbarIndex) + 2); 
-      }      
+      if (topScrollbarIndex >= zTopScrollbar_.getMaximum() - 1 || bottomScrollbarIndex >= zBottomScrollbar_.getMaximum() - 1) {
+         zTopScrollbar_.setMaximum(Math.max(topScrollbarIndex, bottomScrollbarIndex) + 2);
+         zBottomScrollbar_.setMaximum(Math.max(topScrollbarIndex, bottomScrollbarIndex) + 2);
+      }
       if (bottomScrollbarIndex <= zBottomScrollbar_.getMinimum() || topScrollbarIndex <= zTopScrollbar_.getMinimum()) {
-         zTopScrollbar_.setMinimum(Math.min(bottomScrollbarIndex, topScrollbarIndex) - 1); 
-         zBottomScrollbar_.setMinimum(Math.min(bottomScrollbarIndex, topScrollbarIndex) - 1); 
-      }     
+         zTopScrollbar_.setMinimum(Math.min(bottomScrollbarIndex, topScrollbarIndex) - 1);
+         zBottomScrollbar_.setMinimum(Math.min(bottomScrollbarIndex, topScrollbarIndex) - 1);
+      }
       this.repaint();
    }
-   
+
    private void zTopTextFieldAction() {
       //check if new position is outside bounds of current z range
       //and if so expand sliders as needed
       double val = Double.parseDouble(zTopTextField_.getText());
-      int newSliderindex =  (int) Math.round((val  - zOrigin_) / zStep_);
+      int newSliderindex = (int) Math.round((val - zOrigin_) / zStep_);
       expandZLimitsIfNeeded(newSliderindex, zBottomScrollbar_.getValue());
       //now that scollbar expanded, set value
       zTopScrollbar_.setValue(newSliderindex);
@@ -139,12 +154,12 @@ public class SubImageControls extends Panel {
       //check if new position is outside bounds of current z range
       //and if so expand sliders as needed
       double val = Double.parseDouble(zBottomTextField_.getText());
-      int newSliderindex =  (int) Math.round((val  - zOrigin_) / zStep_);
-      expandZLimitsIfNeeded(zTopScrollbar_.getValue(),newSliderindex);
+      int newSliderindex = (int) Math.round((val - zOrigin_) / zStep_);
+      expandZLimitsIfNeeded(zTopScrollbar_.getValue(), newSliderindex);
       zBottomScrollbar_.setValue(newSliderindex);
       updateZTopAndBottom();
    }
-   
+
    private void zTopSliderAdjustment() {
       //Top must be <= to bottom
       if (zTopScrollbar_.getValue() > zBottomScrollbar_.getValue()) {
@@ -153,7 +168,7 @@ public class SubImageControls extends Panel {
       expandZLimitsIfNeeded(zTopScrollbar_.getValue(), zBottomScrollbar_.getValue());
       updateZTopAndBottom();
    }
-   
+
    private void zBottomSliderAdjustment() {
       //Top must be <= to bottom
       if (zTopScrollbar_.getValue() > zBottomScrollbar_.getValue()) {
@@ -171,24 +186,33 @@ public class SubImageControls extends Panel {
 
       if (acq_ instanceof ExploreAcquisition) {
          sliderPanel_ = new JPanel(new MigLayout("insets 0", "[][][grow]", ""));
+
+         CMMCore core = Magellan.getCore();
+         String z = core.getFocusDevice();
          try {
-            CMMCore core = Magellan.getCore();
-            String z = core.getFocusDevice();
             zOrigin_ = core.getPosition(z);
-            //Initialize z to current position with space to move one above or below           
-            //value, extent, min, max
-            //max value of scrollbar is max - extent
+         } catch (Exception ex) {
+            Log.log("couldn't get z postition from core", true);
+         }
+         //Initialize z to current position with space to move one above or below           
+         //value, extent, min, max
+         //max value of scrollbar is max - extent
+         try {
             zTopScrollbar_ = new JScrollBar(JScrollBar.HORIZONTAL, 0, 1, -1, 2);
             zBottomScrollbar_ = new JScrollBar(JScrollBar.HORIZONTAL, 0, 1, -1, 2);
             zTopScrollbar_.setUI(new ColorableScrollbarUI());
             zBottomScrollbar_.setUI(new ColorableScrollbarUI());
-            zTopTextField_ = new JTextField(zOrigin_ + "");
-            zTopTextField_.addActionListener(new ActionListener() {
-               @Override
-               public void actionPerformed(ActionEvent ae) {
-                  zTopTextFieldAction();
-               }
-            });
+         } catch (Exception e) {
+            Log.log("problem creating z limit scrollbars",true);
+            Log.log(e);
+         }
+         zTopTextField_ = new JTextField(zOrigin_ + "");
+         zTopTextField_.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+               zTopTextFieldAction();
+            }
+         });
             zBottomTextField_ = new JTextField(zOrigin_ + "");
             zBottomTextField_.addActionListener(new ActionListener() {
                @Override
@@ -228,16 +252,11 @@ public class SubImageControls extends Panel {
 
             }
             controlsPanel.add(sliderPanel_, "span, growx, align center, wrap");
-         } catch (Exception e) {
-            e.printStackTrace();
-            Log.log("Couldn't create z sliders");
-         }
+
       }
 
       this.setLayout(new BorderLayout());
       this.add(controlsPanel, BorderLayout.CENTER);
-
-
 
       // Propagate resizing through to our JPanel
       this.addComponentListener(new ComponentAdapter() {
@@ -268,22 +287,21 @@ public class SubImageControls extends Panel {
 
          @Override
          public void onNewImageEvent(NewImageEvent event) {
-            if (acq_ instanceof ExploreAcquisition) {               
-               // show/expand z scroll bar if needed
-               if (((ExploreAcquisition) acq_).getHighestExploredSliceIndex() - ((ExploreAcquisition) acq_).getLowestExploredSliceIndex() + 1 > scrollerPanel_.getMaxPosition("z")) {
-                  for (AxisScroller scroller : scrollers_) {
-                     if (scroller.getAxis().equals("z") && scroller.getMaximum() == 1) {
-                        scroller.setVisible(true);
-                        add(scroller, "wrap 0px, align center, growx");
-                        //resize controls to reflect newly shown scroller
-                        bus_.post(new ScrollerPanel.LayoutChangedEvent());
-                     }
+            // show/expand z scroll bar if needed
+            if (acq_.getNumSlices() > scrollerPanel_.getMaxPosition("z")) {
+               for (AxisScroller scroller : scrollers_) {
+                  if (scroller.getAxis().equals("z") && scroller.getMaximum() == 1) {
+                     scroller.setVisible(true);
+                     add(scroller, "wrap 0px, align center, growx");
+                     //resize controls to reflect newly shown scroller
+                     bus_.post(new ScrollerPanel.LayoutChangedEvent());
                   }
-                  this.setMaxPosition("z", ((ExploreAcquisition) acq_).getHighestExploredSliceIndex() - ((ExploreAcquisition) acq_).getLowestExploredSliceIndex() + 1);
-                  //tell the imageplus about new number of slices so everything works properly
-                  ((IMMImagePlus) display_.getHyperImage()).setNSlicesUnverified(scrollerPanel_.getMaxPosition("z"));
                }
-            } 
+               this.setMaxPosition("z", acq_.getNumSlices());
+               //tell the imageplus about new number of slices so everything works properly
+               ((IMMImagePlus) display_.getHyperImage()).setNSlicesUnverified(scrollerPanel_.getMaxPosition("z"));
+            }
+
             super.onNewImageEvent(event);
          }
       };
@@ -330,26 +348,26 @@ public class SubImageControls extends Panel {
       } catch (NoSuchFieldException e) {
          Log.log("Unexpected exception when trying to set image position");
       }
-      
+
       synchronized (this) {
          channelIndex_ = channel - 1;
          frameIndex_ = frame - 1;
          sliceIndex_ = slice - 1;
          display_.getHyperImage().setPosition(channel, slice, frame);
       }
-      
+
       display_.drawOverlay();
       if (acq_ instanceof ExploreAcquisition) {
          //convert slice index to explore scrollbar index       
-         ((ColorableScrollbarUI)zTopScrollbar_.getUI()).setHighlightedIndices(sliceIndex_ + ((ExploreAcquisition) acq_).getLowestExploredSliceIndex(),
-                 ((ExploreAcquisition) acq_).getLowestExploredSliceIndex(), ((ExploreAcquisition) acq_).getHighestExploredSliceIndex());
-         ((ColorableScrollbarUI)zBottomScrollbar_.getUI()).setHighlightedIndices(sliceIndex_ + ((ExploreAcquisition) acq_).getLowestExploredSliceIndex() ,
-                 ((ExploreAcquisition) acq_).getLowestExploredSliceIndex(), ((ExploreAcquisition) acq_).getHighestExploredSliceIndex());
+         ((ColorableScrollbarUI) zTopScrollbar_.getUI()).setHighlightedIndices(sliceIndex_ + ((ExploreAcquisition) acq_).getMinSliceIndex(),
+                 ((ExploreAcquisition) acq_).getMinSliceIndex(), ((ExploreAcquisition) acq_).getMaxSliceIndex());
+         ((ColorableScrollbarUI) zBottomScrollbar_.getUI()).setHighlightedIndices(sliceIndex_ + ((ExploreAcquisition) acq_).getMinSliceIndex(),
+                 ((ExploreAcquisition) acq_).getMinSliceIndex(), ((ExploreAcquisition) acq_).getMaxSliceIndex());
          this.repaint();
       }
-      
+
    }
-   
+
    public int getDisplayedSlice() {
       return sliceIndex_;
    }
@@ -357,11 +375,11 @@ public class SubImageControls extends Panel {
    public int getDisplayedChannel() {
       return channelIndex_;
    }
-   
+
    public int getDisplayedFrame() {
       return frameIndex_;
    }
-   
+
    @Subscribe
    public void onLayoutChange(ScrollerPanel.LayoutChangedEvent event) {
       this.setPreferredSize(new Dimension(this.getPreferredSize().width,

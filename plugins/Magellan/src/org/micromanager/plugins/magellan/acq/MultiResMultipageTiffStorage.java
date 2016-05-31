@@ -310,7 +310,6 @@ public class MultiResMultipageTiffStorage {
     * @param y coordinate of topmost pixel in requested resolution
     * @param width pixel width of image at requested resolution
     * @param height pixel height of image at requested resolution
-    * @param fillEmptyPixelsWithBackground determine the value of background pixels and use this for autofocus 
     * @return Tagged image or taggeded image with background pixels and null tags if no
     * pixel data is present
     */

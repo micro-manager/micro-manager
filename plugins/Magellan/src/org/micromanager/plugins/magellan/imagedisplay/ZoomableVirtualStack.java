@@ -229,8 +229,8 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
    }
 
    private void moveViewToVisibleArea() {
-      //compensate for the possibility of negative slice indices in explore acquisition
-      int slice = disp_.getVisibleSliceIndex() + ((ExploreAcquisition) acquisition_).getLowestExploredSliceIndex();
+      //compensate for the possibility of negative slice indices 
+      int slice = disp_.getVisibleSliceIndex() + ((ExploreAcquisition) acquisition_).getMinSliceIndex();
       //check for valid tiles (at lowest res) at this slice        
       Set<Point> tiles = multiResStorage_.getExploredTilesAtSlice(slice);
       if (tiles.size() == 0) {
@@ -370,7 +370,7 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
     * @return 
     */
    public double getZCoordinateOfDisplayedSlice(int displayedSliceIndex) {
-      return acquisition_.getZCoordinateOfSlice(displayedSliceIndex);
+      return acquisition_.getZCoordinateOfDisplaySlice(displayedSliceIndex);
    }
    
    /**
@@ -380,7 +380,7 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
     * @return 
     */
    public int getSliceIndexFromZCoordinate(double zPos) {
-      return acquisition_.getSliceIndexFromZCoordinate(zPos);
+      return acquisition_.getDisplaySliceIndexFromZCoordinate(zPos);
    }
 
    //this method is called to get the tagged image for display purposes only
@@ -391,8 +391,8 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
       //to alter image size and not change tags to reflect that
       
       //compensate for the possibility of negative slice indices in explore acquisition
-      if (acquisition_ instanceof ExploreAcquisition) {
-         slice += ((ExploreAcquisition) acquisition_).getLowestExploredSliceIndex();
+      if (acquisition_ != null) {
+         slice +=  acquisition_.getMinSliceIndex();
       } else if (acquisition_ == null) {
          slice += disp_.getStorage().getMinSliceIndexOpenedDataset();
       }
