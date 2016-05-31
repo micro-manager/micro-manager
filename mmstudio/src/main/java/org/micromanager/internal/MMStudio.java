@@ -542,19 +542,6 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       return AcqControlDlg.getShouldHideMDADisplay();
    }
 
-   @Override
-   public Rectangle getROI() throws MMScriptException {
-      // ROI values are given as x,y,w,h in individual one-member arrays (pointers in C++):
-      int[][] a = new int[4][1];
-      try {
-         core_.getROI(a[0], a[1], a[2], a[3]);
-      } catch (Exception e) {
-         throw new MMScriptException(e.getMessage());
-      }
-      // Return as a single array with x,y,w,h:
-      return new Rectangle(a[0][0], a[1][0], a[2][0], a[3][0]);
-   }
-
    public void setROI() {
       ImagePlus curImage = WindowManager.getCurrentImage();
       if (curImage == null) {
@@ -562,58 +549,55 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       }
 
       Roi roi = curImage.getRoi();
-      
-      try {
+      if (roi == null) {
+         // if there is no ROI, create one
+         Rectangle r = curImage.getProcessor().getRoi();
+         int iWidth = r.width;
+         int iHeight = r.height;
+         int iXROI = r.x;
+         int iYROI = r.y;
          if (roi == null) {
-            // if there is no ROI, create one
-            Rectangle r = curImage.getProcessor().getRoi();
-            int iWidth = r.width;
-            int iHeight = r.height;
-            int iXROI = r.x;
-            int iYROI = r.y;
-            if (roi == null) {
-               iWidth /= 2;
-               iHeight /= 2;
-               iXROI += iWidth / 2;
-               iYROI += iHeight / 2;
-            }
-
-            curImage.setRoi(iXROI, iYROI, iWidth, iHeight);
-            roi = curImage.getRoi();
+            iWidth /= 2;
+            iHeight /= 2;
+            iXROI += iWidth / 2;
+            iYROI += iHeight / 2;
          }
 
-         if (roi.getType() != Roi.RECTANGLE) {
-            handleError("ROI must be a rectangle.\nUse the ImageJ rectangle tool to draw the ROI.");
-            return;
-         }
+         curImage.setRoi(iXROI, iYROI, iWidth, iHeight);
+         roi = curImage.getRoi();
+      }
 
-         Rectangle r = roi.getBounds();
+      if (roi.getType() != Roi.RECTANGLE) {
+         handleError("ROI must be a rectangle.\nUse the ImageJ rectangle tool to draw the ROI.");
+         return;
+      }
 
-         // If the image has ROI info attached to it, correct for the offsets.
-         // Otherwise, assume the image was taken with the current camera ROI
-         // (which is a horrendously buggy way to do things, but that was the
-         // old behavior and I'm leaving it in case there are cases where it is
-         // necessary).
-         Rectangle originalROI = null;
+      Rectangle r = roi.getBounds();
 
-         DisplayWindow curWindow = displays().getCurrentWindow();
-         if (curWindow != null) {
-            List<Image> images = curWindow.getDisplayedImages();
-            // Just take the first one.
-            originalROI = images.get(0).getMetadata().getROI();
-         }
+      // If the image has ROI info attached to it, correct for the offsets.
+      // Otherwise, assume the image was taken with the current camera ROI
+      // (which is a horrendously buggy way to do things, but that was the
+      // old behavior and I'm leaving it in case there are cases where it is
+      // necessary).
+      Rectangle originalROI = null;
 
+      DisplayWindow curWindow = displays().getCurrentWindow();
+      if (curWindow != null) {
+         List<Image> images = curWindow.getDisplayedImages();
+         // Just take the first one.
+         originalROI = images.get(0).getMetadata().getROI();
+      }
+
+      try {
          if (originalROI == null) {
-            originalROI = getROI();
+            originalROI = core().getROI();
          }
-
          r.x += originalROI.x;
          r.y += originalROI.y;
-
          // Stop (and restart) live mode if it is running
          setROI(r);
-
-      } catch (MMScriptException e) {
+      }
+      catch (Exception e) {
          ReportingUtils.showError(e);
       }
    }
@@ -1449,13 +1433,9 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
    }
 
    @Override
-   public void setROI(Rectangle r) throws MMScriptException {
+   public void setROI(Rectangle r) throws Exception {
       live().setSuspended(true);
-      try {
-         core_.setROI(r.x, r.y, r.width, r.height);
-      } catch (Exception e) {
-         throw new MMScriptException(e.getMessage());
-      }
+      core_.setROI(r.x, r.y, r.width, r.height);
       staticInfo_.refreshValues();
       live().setSuspended(false);
    }

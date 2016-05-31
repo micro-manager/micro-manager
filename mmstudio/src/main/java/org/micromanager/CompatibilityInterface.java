@@ -101,18 +101,13 @@ public interface CompatibilityInterface {
    public void removeMMListener(MMListenerInterface oldL);
 
    /**
-    * Get the default camera's ROI -- a convenience function.
-    * @return default camera's ROI
-    * @throws Exception
+    * Set the default camera's ROI -- a convenience function. Will stop and
+    * start Live mode for you, and update the GUI's display of values such as
+    * the view dimensions.
+    * @param rect Rectangle defining the ROI
+    * @throws Exception if there is an error in the Core when setting the ROI
     */
-   public Rectangle getROI() throws Exception;
-
-   /**
-    * Set the default camera's ROI -- a convenience function.
-    * @param r
-    * @throws Exception
-    */
-   public void setROI(Rectangle r) throws Exception;
+   public void setROI(Rectangle rect) throws Exception;
 
    /**
     * Displays an error message and returns true if the run-time Micro-Manager version
