@@ -47,6 +47,13 @@ public interface CompatibilityInterface {
    public void refreshGUIFromCache();
 
    /**
+    * Set the exposure time for the current channel (if any). Equivalent to
+    * updating the exposure time field in the main window.
+    * @param exposureMs Exposure time, in milliseconds.
+    */
+   public void setExposure(double exposureMs);
+
+   /**
     * Updates the exposure time associated with the given preset
     * If the channel-group and channel name match the current state
     * the exposure time will also be updated

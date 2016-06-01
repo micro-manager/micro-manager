@@ -492,6 +492,7 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       acquisitionEngine2010LoadingThread_.start();
    }
 
+   @Override
    public void setExposure(final double exposureTime) {
       // Avoid redundantly setting the exposure time.
       try {
