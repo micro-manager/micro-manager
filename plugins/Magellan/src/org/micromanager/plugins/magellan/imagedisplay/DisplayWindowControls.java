@@ -136,9 +136,17 @@ public class DisplayWindowControls extends Panel {
 //         datasetSizeLabel_.setText(sizeBytes / 1024 / 1024 / 1024 / 1024 + "  TB");
 //      }
       long elapsed = MD.getElapsedTimeMs(tags);
-      long days = elapsed / (60*60*24*1000), hours = elapsed/60/60/1000, minutes = elapsed/60/1000, seconds = elapsed/1000;
-      elapsedTimeLabel_.setText(String.format("%d:%d:%d:%d",
-              days, hours - 24*days, minutes - 24*60*days - 60*hours, seconds - 24*60*60*days - 60*60*hours - 60*minutes));
+      long days = elapsed / (60 * 60 * 24 * 1000), hours = elapsed / 60 / 60 / 1000, minutes = elapsed / 60 / 1000, seconds = elapsed / 1000;
+
+      hours = hours % 24;
+      minutes = minutes % 60;
+      seconds = seconds % 60;
+      String h = ("0" + hours).substring(("0" + hours).length() - 2);
+      String m = ("0" + (minutes)).substring(("0" + minutes).length() - 2);
+      String s = ("0" + (seconds)).substring(("0" + seconds).length() - 2);
+      String label = days + ":" + h + ":" + m + ":" + s + " (D:H:M:S)";
+
+      elapsedTimeLabel_.setText(label);
       zPosLabel_.setText(MD.getZPositionUm(tags) + "um");
    }
 
@@ -244,25 +252,25 @@ public class DisplayWindowControls extends Panel {
                .addGroup(statusPanel_Layout.createSequentialGroup()
                   .addComponent(jLabel2)
                   .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(elapsedTimeLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE))
+                  .addComponent(elapsedTimeLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, 286, javax.swing.GroupLayout.PREFERRED_SIZE))
                .addGroup(statusPanel_Layout.createSequentialGroup()
                   .addComponent(jLabel3)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                  .addComponent(zPosLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, 160, javax.swing.GroupLayout.PREFERRED_SIZE)))
-            .addContainerGap(476, Short.MAX_VALUE))
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(zPosLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, 219, javax.swing.GroupLayout.PREFERRED_SIZE)))
+            .addContainerGap(473, Short.MAX_VALUE))
       );
       statusPanel_Layout.setVerticalGroup(
          statusPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(statusPanel_Layout.createSequentialGroup()
             .addContainerGap()
-            .addGroup(statusPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(jLabel2)
-               .addComponent(elapsedTimeLabel_))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addGroup(statusPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+               .addComponent(elapsedTimeLabel_, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+               .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addGroup(statusPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(jLabel3)
-               .addComponent(zPosLabel_))
-            .addContainerGap(61, Short.MAX_VALUE))
+               .addComponent(zPosLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addGap(44, 44, 44))
       );
 
       tabbedPane_.addTab("Status", statusPanel_);
@@ -287,7 +295,7 @@ public class DisplayWindowControls extends Panel {
 
       gridRowsLabel_.setText("Rows:");
 
-      gridRowsSpinner_.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(1), Integer.valueOf(1), null, Integer.valueOf(1)));
+      gridRowsSpinner_.setModel(new javax.swing.SpinnerNumberModel(1, 1, null, 1));
       gridRowsSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
          public void stateChanged(javax.swing.event.ChangeEvent evt) {
             gridRowsSpinner_StateChanged(evt);
@@ -296,7 +304,7 @@ public class DisplayWindowControls extends Panel {
 
       gridColsLabel_.setText("Columns:");
 
-      gridColsSpinner_.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(1), Integer.valueOf(1), null, Integer.valueOf(1)));
+      gridColsSpinner_.setModel(new javax.swing.SpinnerNumberModel(1, 1, null, 1));
       gridColsSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
          public void stateChanged(javax.swing.event.ChangeEvent evt) {
             gridColsSpinner_StateChanged(evt);

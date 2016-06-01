@@ -26,6 +26,7 @@ import javax.swing.SwingUtilities;
 import org.micromanager.plugins.magellan.main.Magellan;
 import org.micromanager.plugins.magellan.misc.JavaUtils;
 import org.micromanager.MMStudio;
+import org.micromanager.plugins.magellan.misc.GlobalSettings;
 import org.micromanager.utils.GUIUtils;
 
 /**
@@ -106,7 +107,7 @@ public class StartupHelpWindow extends javax.swing.JFrame {
             String pix = Magellan.getCore().getCurrentPixelSizeConfig();
             //Get affine transform from prefs
             Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
-            known = JavaUtils.getObjectFromPrefs(prefs, "affine_transform_" + pix, (AffineTransform) null) != null;
+            known = GlobalSettings.getObjectFromPrefs(prefs, "affine_transform_" + pix, (AffineTransform) null) != null;
          } catch (Exception e) {
             
          }

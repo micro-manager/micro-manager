@@ -28,10 +28,13 @@ import java.util.List;
 public interface XYFootprint {
    
    /**
-    * @return read only list of XY positions
+    * @param tileOverlapPercent
+    * @return read only list of XY positions after updating them to reflect potential changes in overlap
     */
     public List<XYStagePosition> getXYPositions(double tileOverlapPercent) throws InterruptedException;
 
+    public List<XYStagePosition> getXYPositionsNoUpdate() throws InterruptedException;
+    
    public String getXYDevice();
     
 }

@@ -551,8 +551,12 @@
                               </Group>
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
-                              <EmptySpace min="-2" pref="345" max="-2" attributes="0"/>
-                              <Component id="runAcqButton_" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="-2" pref="337" max="-2" attributes="0"/>
+                              <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+                          </Group>
+                          <Group type="102" alignment="0" attributes="0">
+                              <EmptySpace min="-2" pref="153" max="-2" attributes="0"/>
+                              <Component id="createdByHenryLabel_" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace min="-2" pref="121" max="-2" attributes="0"/>
@@ -564,16 +568,15 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="userGuideLink_" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <Group type="102" alignment="0" attributes="0">
-                              <EmptySpace min="-2" pref="337" max="-2" attributes="0"/>
-                              <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Group type="102" alignment="0" attributes="0">
-                              <EmptySpace min="-2" pref="153" max="-2" attributes="0"/>
-                              <Component id="createdByHenryLabel_" min="-2" max="-2" attributes="0"/>
+                          <Group type="102" alignment="1" attributes="0">
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="runAcqButton_" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace max="-2" attributes="0"/>
+                              <Component id="estDurationLabel_" min="-2" max="-2" attributes="0"/>
+                              <EmptySpace min="-2" pref="341" max="-2" attributes="0"/>
                           </Group>
                       </Group>
-                      <EmptySpace max="32767" attributes="0"/>
+                      <EmptySpace pref="71" max="32767" attributes="0"/>
                   </Group>
                   <Component id="acqTabbedPane_" max="32767" attributes="0"/>
               </Group>
@@ -615,8 +618,11 @@
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="acqTabbedPane_" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="runAcqButton_" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="21" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="3" attributes="0">
+                          <Component id="estDurationLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="runAcqButton_" alignment="3" min="-2" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace min="-2" pref="33" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="configPropsButton_" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="jButton1" alignment="3" min="-2" max="-2" attributes="0"/>
@@ -852,7 +858,7 @@
                               <Component id="savingNameLabel_" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="savingNameTextField_" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace pref="311" max="32767" attributes="0"/>
+                              <EmptySpace pref="289" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -905,7 +911,7 @@
                               <Component id="timePointsCheckBox_" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="timePointsPanel_" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace pref="242" max="32767" attributes="0"/>
+                              <EmptySpace pref="220" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -1130,7 +1136,7 @@
                                       </Group>
                                   </Group>
                               </Group>
-                              <EmptySpace pref="104" max="32767" attributes="0"/>
+                              <EmptySpace pref="82" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -1865,7 +1871,7 @@
                                   <Component id="ChannelGroupCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jScrollPane1" pref="334" max="32767" attributes="0"/>
+                              <Component id="jScrollPane1" pref="312" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -1966,7 +1972,7 @@
                               </Group>
                               <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="propertyPairValuesScrollpane_" pref="301" max="32767" attributes="0"/>
+                                  <Component id="propertyPairValuesScrollpane_" pref="279" max="32767" attributes="0"/>
                                   <Component id="propertyPairingsScrollpane_" pref="0" max="32767" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
@@ -2144,7 +2150,7 @@
                               <Component id="useAutofocusCheckBox_" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="autofocusComponentsPanel_" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace pref="138" max="32767" attributes="0"/>
+                              <EmptySpace pref="116" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -2434,7 +2440,7 @@
                                   <Component id="ch5OffsetSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="ch5OffsetLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace pref="137" max="32767" attributes="0"/>
+                              <EmptySpace pref="115" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -2754,6 +2760,11 @@
                   <Font name="Tahoma" size="14" style="0"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="&lt;html&gt;&lt;a href=\u005c&quot;https://micro-manager.org/wiki/MicroMagellan\u005c&quot;&gt;Micro-Magellan User Guide&lt;/a&gt;&lt;/html&gt;" containsInvalidXMLChars="true"/>
+              </Properties>
+            </Component>
+            <Component class="javax.swing.JLabel" name="estDurationLabel_">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Estimted Duration: "/>
               </Properties>
             </Component>
           </SubComponents>

@@ -66,7 +66,7 @@ public class AffineUtils {
       } else {
          //Get affine transform from prefs
          Preferences prefs = Preferences.userNodeForPackage(MMStudio.class);
-         transform = JavaUtils.getObjectFromPrefs(prefs, "affine_transform_" + pixelSizeConfig, (AffineTransform) null);
+         transform = GlobalSettings.getObjectFromPrefs(prefs, "affine_transform_" + pixelSizeConfig, (AffineTransform) null);
          //create transform
          if (transform == null) {
             return null;

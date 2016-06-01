@@ -455,17 +455,16 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
                break; //2D regions only have 1 slice
             }
 
-            if (isImagingVolumeUndefinedAtPosition(position)) {
-//               Log.log("Surface undefined at position " + position.getName());
+            if (isImagingVolumeUndefinedAtPosition(spaceMode_, settings_, position)) {
                break;
             }
 
-            if (isZBelowImagingVolume(position, zPos) || (zStageHasLimits_ && zPos > zStageUpperLimit_)) {
+            if (isZBelowImagingVolume(spaceMode_, settings_, position, zPos, zOrigin_) || (zStageHasLimits_ && zPos > zStageUpperLimit_)) {
                //position is below z stack or limit of focus device, z stack finished
                break;
             }
             //3D region
-            if (isZAboveImagingVolume(position, zPos) || (zStageHasLimits_ && zPos < zStageLowerLimit_)) {
+            if (isZAboveImagingVolume(spaceMode_, settings_, position, zPos, zOrigin_) || (zStageHasLimits_ && zPos < zStageLowerLimit_)) {
                sliceIndex++;
                continue; //position is above imaging volume or range of focus device
             }
@@ -518,12 +517,12 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
       SurfaceManager.getInstance().removeSurfaceChangedListener(this);
    }
 
-   private boolean isImagingVolumeUndefinedAtPosition(XYStagePosition position) {
-      if (spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
-         return !settings_.fixedSurface_.isSurfaceDefinedAtPosition(position);
-      } else if (spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
-         return !settings_.topSurface_.isSurfaceDefinedAtPosition(position)
-                 && !settings_.bottomSurface_.isSurfaceDefinedAtPosition(position);
+   public static boolean isImagingVolumeUndefinedAtPosition(int spaceMode, FixedAreaAcquisitionSettings settings, XYStagePosition position) {
+      if (spaceMode == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
+         return !settings.fixedSurface_.isSurfaceDefinedAtPosition(position);
+      } else if (spaceMode == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
+         return !settings.topSurface_.isSurfaceDefinedAtPosition(position)
+                 && !settings.bottomSurface_.isSurfaceDefinedAtPosition(position);
       }
       return false;
    }
@@ -536,58 +535,63 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
     * @param zPos
     * @return
     */
-   private boolean isZAboveImagingVolume(XYStagePosition position, double zPos) throws InterruptedException {
-      if (spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
-         return settings_.fixedSurface_.isPositionCompletelyAboveSurface(position, settings_.fixedSurface_, zPos + settings_.distanceAboveFixedSurface_);
-      } else if (spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
-         return settings_.topSurface_.isPositionCompletelyAboveSurface(position, settings_.topSurface_, zPos + settings_.distanceAboveTopSurface_);
-      } else if (spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
-         return zPos < settings_.zStart_;
+   public static boolean isZAboveImagingVolume(int spaceMode, FixedAreaAcquisitionSettings settings, XYStagePosition position, double zPos, double zOrigin) throws InterruptedException {
+      if (spaceMode == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
+         return settings.fixedSurface_.isPositionCompletelyAboveSurface(position, settings.fixedSurface_, zPos + settings.distanceAboveFixedSurface_);
+      } else if (spaceMode == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
+         return settings.topSurface_.isPositionCompletelyAboveSurface(position, settings.topSurface_, zPos + settings.distanceAboveTopSurface_);
+      } else if (spaceMode == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
+         return zPos < settings.zStart_;
       } else {
          //no zStack
-         return zPos < zOrigin_;
+         return zPos < zOrigin;
       }
    }
 
-   private boolean isZBelowImagingVolume(XYStagePosition position, double zPos) throws InterruptedException {
-      if (spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
-         return settings_.fixedSurface_.isPositionCompletelyBelowSurface(position, settings_.fixedSurface_, zPos - settings_.distanceBelowFixedSurface_);
-      } else if (spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
-         return settings_.bottomSurface_.isPositionCompletelyBelowSurface(position, settings_.bottomSurface_, zPos - settings_.distanceBelowBottomSurface_);
-      } else if (spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
-         return zPos > settings_.zEnd_;
+   public static boolean isZBelowImagingVolume(int spaceMode, FixedAreaAcquisitionSettings settings, XYStagePosition position, double zPos, double zOrigin) throws InterruptedException {
+      if (spaceMode == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
+         return settings.fixedSurface_.isPositionCompletelyBelowSurface(position, settings.fixedSurface_, zPos - settings.distanceBelowFixedSurface_);
+      } else if (spaceMode == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
+         return settings.bottomSurface_.isPositionCompletelyBelowSurface(position, settings.bottomSurface_, zPos - settings.distanceBelowBottomSurface_);
+      } else if (spaceMode == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
+         return zPos > settings.zEnd_;
       } else {
          //no zStack
-         return zPos > zOrigin_;
+         return zPos > zOrigin;
       }
    }
-
+   
    private double getZTopCoordinate() {
-      if (spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
-         Point3d[] interpPoints = settings_.fixedSurface_.getPoints();
-         if (towardsSampleIsPositive_) {
-            double top = interpPoints[0].z - settings_.distanceAboveFixedSurface_;
-            return zStageHasLimits_ ? Math.max(zStageLowerLimit_, top) : top;
+      return getZTopCoordinate(spaceMode_, settings_, towardsSampleIsPositive_, zStageHasLimits_,  zStageLowerLimit_,  zStageUpperLimit_, zStage_);
+   }
+
+   public static double getZTopCoordinate(int spaceMode, FixedAreaAcquisitionSettings settings, boolean towardsSampleIsPositive,
+           boolean zStageHasLimits, double zStageLowerLimit, double zStageUpperLimit, String zStage) {
+      if (spaceMode == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
+         Point3d[] interpPoints = settings.fixedSurface_.getPoints();
+         if (towardsSampleIsPositive) {
+            double top = interpPoints[0].z - settings.distanceAboveFixedSurface_;
+            return zStageHasLimits ? Math.max(zStageLowerLimit, top) : top;
          } else {
-            double top = interpPoints[interpPoints.length - 1].z + settings_.distanceAboveFixedSurface_;
-            return zStageHasLimits_ ? Math.max(zStageUpperLimit_, top) : top;
+            double top = interpPoints[interpPoints.length - 1].z + settings.distanceAboveFixedSurface_;
+            return zStageHasLimits ? Math.max(zStageUpperLimit, top) : top;
          }
-      } else if (spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
-         if (towardsSampleIsPositive_) {
-            Point3d[] interpPoints = settings_.topSurface_.getPoints();
-            double top = interpPoints[0].z - settings_.distanceAboveTopSurface_;
-            return zStageHasLimits_ ? Math.max(zStageLowerLimit_, top) : top;
+      } else if (spaceMode == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
+         if (towardsSampleIsPositive) {
+            Point3d[] interpPoints = settings.topSurface_.getPoints();
+            double top = interpPoints[0].z - settings.distanceAboveTopSurface_;
+            return zStageHasLimits ? Math.max(zStageLowerLimit, top) : top;
          } else {
-            Point3d[] interpPoints = settings_.topSurface_.getPoints();
-            double top = interpPoints[interpPoints.length - 1].z + settings_.distanceAboveTopSurface_;
-            return zStageHasLimits_ ? Math.max(zStageLowerLimit_, top) : top;
+            Point3d[] interpPoints = settings.topSurface_.getPoints();
+            double top = interpPoints[interpPoints.length - 1].z + settings.distanceAboveTopSurface_;
+            return zStageHasLimits ? Math.max(zStageLowerLimit, top) : top;
          }
-      } else if (spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
-         return settings_.zStart_;
+      } else if (spaceMode == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
+         return settings.zStart_;
       } else {
          try {
             //region2D or no region
-            return Magellan.getCore().getPosition(zStage_);
+            return Magellan.getCore().getPosition(zStage);
          } catch (Exception ex) {
             Log.log("couldn't get z position", true);
             throw new RuntimeException();

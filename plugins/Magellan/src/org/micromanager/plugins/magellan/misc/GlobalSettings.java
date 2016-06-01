@@ -218,6 +218,10 @@ public class GlobalSettings {
           prefs.node(key).putByteArray(String.format("%09d",i), chunk);
       }
    }
+   
+    public Preferences getGlobalPrefernces() {
+       return prefs_;
+    }
 
    /**
     * Retrieves an object from Preferences (deserialized).

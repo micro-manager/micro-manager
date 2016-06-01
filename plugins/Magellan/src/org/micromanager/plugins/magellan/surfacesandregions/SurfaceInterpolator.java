@@ -208,7 +208,12 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       }
    }
 
+   @Override
+   public List<XYStagePosition> getXYPositionsNoUpdate() {
+      return xyPositions_;
+   }
 
+   
    @Override
    public List<XYStagePosition> getXYPositions(double overlap) throws InterruptedException {
       synchronized (xyPositionLock_) {

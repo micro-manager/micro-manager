@@ -53,8 +53,9 @@ import org.micromanager.plugins.magellan.propsandcovariants.CovariantPairing;
  */
 public class MagellanEngine {
 
-   private static final int DEMO_DELAY_Z = 10;
-   private static final int DEMO_DELAY_XY = 50;
+   private static final int DEMO_DELAY_Z = 25;
+   private static final int DEMO_DELAY_XY = 100;
+   private static final int DEMO_DELAY_IMAGE_CAPTURE = 50;
 
    private static final int HARDWARE_ERROR_RETRIES = 6;
    private static final int DELWAY_BETWEEN_RETRIES_MS = 5;
@@ -65,9 +66,11 @@ public class MagellanEngine {
    private MultipleAcquisitionManager multiAcqManager_;
    private ExecutorService acqExecutor_;
    private EventBus bus_;
+   private AcqDurationEstimator acqDurationEstiamtor_;
 
-   public MagellanEngine(CMMCore core) {
+   public MagellanEngine(CMMCore core, AcqDurationEstimator acqDurationEstiamtor) {
       core_ = core;
+      acqDurationEstiamtor_ = acqDurationEstiamtor;
       acqExecutor_ = Executors.newSingleThreadExecutor(new ThreadFactory() {
          @Override
          public Thread newThread(Runnable r) {
@@ -252,7 +255,16 @@ public class MagellanEngine {
          setAutofocusPosition(event.autofocusZName_, event.autofocusPosition_);
       } else {
          updateHardware(event);
+         double startTime = System.currentTimeMillis();
          acquireImage(event);
+         if (GlobalSettings.getInstance().getDemoMode()) {
+            Thread.sleep(DEMO_DELAY_IMAGE_CAPTURE);
+         }
+         try {
+            acqDurationEstiamtor_.storeImageAcquisitionTime(core_.getExposure(), System.currentTimeMillis() - startTime );
+         } catch (Exception ex) {
+            Log.log(ex);
+         }
          if (event.acquisition_ instanceof ExploreAcquisition) {
             ((ExploreAcquisition) event.acquisition_).eventAcquired(event);
          }
@@ -326,7 +338,8 @@ public class MagellanEngine {
 
       //move Z before XY 
       /////////////////////////////Z stage/////////////////////////////
-      if (lastEvent_ == null || event.sliceIndex_ != lastEvent_.sliceIndex_) {
+      if (lastEvent_ == null || event.sliceIndex_ != lastEvent_.sliceIndex_) {            
+         double startTime = System.currentTimeMillis();
          //wait for it to not be busy (is this even needed?)
          loopHardwareCommandRetries(new HardwareCommand() {
             @Override
@@ -356,10 +369,17 @@ public class MagellanEngine {
                }
             }
          }, "waiting for Z stage to not be busy");
+         try {
+            acqDurationEstiamtor_.storeZMoveTime(System.currentTimeMillis() - startTime);
+         } catch (Exception ex) {
+            Log.log(ex);
+         }
       }
 
+
       /////////////////////////////XY Stage/////////////////////////////
-      if (lastEvent_ == null || event.positionIndex_ != lastEvent_.positionIndex_) {
+      if (lastEvent_ == null || event.positionIndex_ != lastEvent_.positionIndex_) {     
+         double startTime = System.currentTimeMillis();
          //wait for it to not be busy (is this even needed??)
          loopHardwareCommandRetries(new HardwareCommand() {
             @Override
@@ -389,11 +409,17 @@ public class MagellanEngine {
                }
             }
          }, "waiting for XY stage to not be busy");
+         try {
+            acqDurationEstiamtor_.storeXYMoveTime(System.currentTimeMillis() - startTime);
+         } catch (Exception ex) {
+            Log.log(ex);
+         }
       }
-
+      
       /////////////////////////////Channels/////////////////////////////
       if (lastEvent_ == null || event.channelIndex_ != lastEvent_.channelIndex_
               && event.acquisition_.channels_ != null && !event.acquisition_.channels_.isEmpty()) {
+         double startTime = System.currentTimeMillis();
          try {
             final ChannelSetting setting = event.acquisition_.channels_.get(event.channelIndex_);
             if (setting.use_ && setting.config_ != null) {
@@ -407,6 +433,11 @@ public class MagellanEngine {
 
          } catch (Exception ex) {
             Log.log("Couldn't change channel group");
+         }
+         try {
+            acqDurationEstiamtor_.storeChannelSwitchTime(System.currentTimeMillis() - startTime);
+         } catch (Exception ex) {
+            Log.log(ex);
          }
       }
 
