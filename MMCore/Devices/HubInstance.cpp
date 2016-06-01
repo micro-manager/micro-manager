@@ -47,6 +47,10 @@ HubInstance::GetInstalledPeripheralNames()
       {
          names.push_back(nameBuf.Get());
       }
+      else
+      {
+         LOG_WARNING(Logger()) << "Device adapter reported installed peripheral with empty name; this will be ignored";
+      }
    }
 
    return names;
