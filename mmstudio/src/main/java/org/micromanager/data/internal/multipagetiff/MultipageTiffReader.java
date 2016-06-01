@@ -365,7 +365,7 @@ public class MultipageTiffReader {
          // Already have a comments annotation set up; bail.
          return;
       }
-      CommentsHelper.createAnnotation(store);
+      boolean didCreate = false;
       ByteBuffer buffer = null;
       try {
          long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.COMMENTS_OFFSET_HEADER, 24);
@@ -378,6 +378,14 @@ public class MultipageTiffReader {
          JSONObject comments = new JSONObject(getString(buffer));
          Coords.CoordsBuilder builder = new DefaultCoords.Builder();
          for (String key : MDUtils.getKeys(comments)) {
+            if (comments.getString(key).equals("")) {
+               continue;
+            }
+            if (!didCreate) {
+               // Have at least one comment, so create the annotation.
+               CommentsHelper.createAnnotation(store);
+               didCreate = true;
+            }
             if (key.equals("Summary")) {
                CommentsHelper.setSummaryComment(store, comments.getString(key));
                continue;
@@ -390,7 +398,9 @@ public class MultipageTiffReader {
             CommentsHelper.setImageComment(store, builder.build(),
                   comments.getString(key));
          }
-         CommentsHelper.saveComments(store);
+         if (didCreate) {
+            CommentsHelper.saveComments(store);
+         }
       }
       catch (JSONException e) {
          ReportingUtils.logError(e, "Unable to generate JSON from buffer " + getString(buffer));
