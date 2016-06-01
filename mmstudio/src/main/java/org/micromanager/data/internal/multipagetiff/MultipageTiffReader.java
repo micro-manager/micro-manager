@@ -410,34 +410,6 @@ public class MultipageTiffReader {
       }
    }
 
-   public void rewriteComments() throws IOException {
-      String comments = CommentsHelper.getSummaryComment(
-            masterStorage_.getDatastore());
-      if (writingFinished_) {
-         byte[] bytes = getBytesFromString(comments.toString());
-         ByteBuffer byteCount = ByteBuffer.wrap(new byte[4]).order(byteOrder_).putInt(0,bytes.length);
-         ByteBuffer buffer = ByteBuffer.wrap(bytes);
-         long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.COMMENTS_OFFSET_HEADER, 24);
-         fileChannel_.write(byteCount,offset + 4);
-         fileChannel_.write(buffer, offset +8);
-      }
-   }
-
-   public void rewriteDisplaySettings(DisplaySettings settings) throws IOException, JSONException {
-      if (writingFinished_) {
-         long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.DISPLAY_SETTINGS_OFFSET_HEADER, 16);
-         int numReservedBytes = readIntoBuffer(offset + 4, 4).getInt(0);
-         byte[] blank = new byte[numReservedBytes];
-         for (int i = 0; i < blank.length; i++) {
-            blank[i] = 0;
-         }
-         fileChannel_.write(ByteBuffer.wrap(blank), offset+8);
-         byte[] bytes = getBytesFromString(settings.toString());
-         ByteBuffer buffer = ByteBuffer.wrap(bytes);
-         fileChannel_.write(buffer, offset+8);
-      }
-   }
-
    private ByteBuffer readIntoBuffer(long position, int length) throws IOException {
       ByteBuffer buffer = ByteBuffer.allocate(length).order(byteOrder_);
       fileChannel_.read(buffer, position);

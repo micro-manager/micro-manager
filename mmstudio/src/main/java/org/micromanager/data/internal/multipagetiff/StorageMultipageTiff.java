@@ -554,20 +554,6 @@ public final class StorageMultipageTiff implements Storage {
       return splitByXYPosition_;
    }
 
-   public void writeDisplaySettings() {
-      for (MultipageTiffReader r : new HashSet<MultipageTiffReader>(coordsToReader_.values())) {
-         try {
-            r.rewriteDisplaySettings(DefaultDisplaySettings.getStandardSettings(
-                     DefaultDisplayWindow.DEFAULT_SETTINGS_KEY));
-            r.rewriteComments();
-         } catch (JSONException ex) {
-            ReportingUtils.logError("Error writing display settings");
-         } catch (IOException ex) {
-            ReportingUtils.logError(ex);
-         }
-      }
-   }
-
    public String getDiskLocation() {
       return directory_;
    }
