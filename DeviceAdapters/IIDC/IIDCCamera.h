@@ -23,15 +23,14 @@
 #include <dc1394/dc1394.h>
 
 #ifdef __APPLE__
-// TODO Auto-detect the libdc1394 version if possible
-#if 1
-// libdc1394 2.2.1
+#ifdef HAVE_LIBDC1394_2_2_2_MACOSX_H
+// libdc1394 >= 2.2.2
+#include <dc1394/macosx.h>
+#else
+// libdc1394 <= 2.2.1
 #include <mach/mach.h>
 #include <CoreFoundation/CoreFoundation.h>
 #include <dc1394/macosx/capture.h>
-#else
-// libdc1394 2.2.2
-#include <dc1394/macosx.h>
 #endif
 #endif // __APPLE__
 
