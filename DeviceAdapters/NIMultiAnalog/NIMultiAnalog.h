@@ -31,9 +31,48 @@
 #include <vector>
 
 
+// Mix-in class for error code handling.
+template <typename TDevice>
+class ErrorTranslator
+{
+protected:
+   explicit ErrorTranslator(int minCode, int maxCode,
+         void (TDevice::*setCodeFunc)(int, const char*)) :
+      minErrorCode_(minCode),
+      maxErrorCode_(maxCode),
+      nextErrorCode_(minCode),
+      setCodeFunc_(setCodeFunc)
+   {}
+
+   int NewErrorCode(const std::string& msg)
+   {
+      if (nextErrorCode_ > maxErrorCode_)
+         nextErrorCode_ = minErrorCode_;
+      int code = nextErrorCode_++;
+
+      (static_cast<TDevice*>(this)->*setCodeFunc_)(code, msg.c_str());
+      return code;
+   }
+
+   int TranslateNIError(int32 nierr)
+   {
+      char buf[1024];
+      if (DAQmxGetErrorString(nierr, buf, sizeof(buf)))
+         return NewErrorCode("[Cannot get DAQmx error message]");
+      return NewErrorCode(buf);
+   }
+
+private:
+   int minErrorCode_, maxErrorCode_;
+   int nextErrorCode_;
+   void (TDevice::*setCodeFunc_)(int, const char*);
+};
+
+
 // A hub-peripheral device set for driving multiple analog output ports,
 // possibly with hardware-triggered sequencing using a shared trigger input.
 class MultiAnalogOutHub : public HubBase<MultiAnalogOutHub>,
+   ErrorTranslator<MultiAnalogOutHub>,
    boost::noncopyable
 {
 public:
@@ -63,6 +102,12 @@ public:
    virtual int GetSequenceMaxLength(long& maxLength) const;
 
 private:
+   int GetVoltageRangeForDevice(const std::string& device,
+      double& minVolts, double& maxVolts);
+   std::vector<std::string> GetTriggerPortsForDevice(
+      const std::string& device);
+   std::vector<std::string> GetAnalogPortsForDevice(
+      const std::string& device);
    std::string GetPhysicalChannelListForSequencing() const;
    int GetLCMSamplesPerChannel(size_t& seqLen) const;
    void GetLCMSequence(double* buffer) const;
@@ -102,6 +147,7 @@ private:
 
 
 class MultiAnalogOutPort : public CSignalIOBase<MultiAnalogOutPort>,
+   ErrorTranslator<MultiAnalogOutPort>,
    boost::noncopyable
 {
 public:
@@ -140,6 +186,7 @@ private:
 private:
    MultiAnalogOutHub* GetAOHub() const
    { return static_cast<MultiAnalogOutHub*>(GetParentHub()); }
+   int TranslateHubError(int err);
    int StartOnDemandTask(double voltage);
    int StopTask();
 

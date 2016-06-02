@@ -12,7 +12,7 @@ class NotificationEntry
 public:
 
     NotificationEntry();
-    NotificationEntry(const void* pData, const PvFrameInfo& metadata);
+    NotificationEntry(const void* pData, unsigned int dataSz, const PvFrameInfo& metadata);
 
     /**
     * Returns the frame metadata
@@ -25,13 +25,19 @@ public:
     */
     const void* FrameData() const;
 
+    /**
+    * Returns the size of the frame data in bytes
+    * @return Frame data size in bytes
+    */
+    unsigned int FrameDataSize() const;
+
 private:
 
     // Copy of the frame metadata
     PvFrameInfo frameMetaData_;
 
-    // Pointer to the frame in circular buffer
-    const void* pFrameData_;
+    const void*  pFrameData_;  ///< Pointer to the frame in circular buffer
+    unsigned int frameDataSz_; ///< Size of the data in bytes
 };
 
 #endif // _NOTIFICATIONENTRY_H_

@@ -50,7 +50,7 @@ CLED::CLED(const char* name) :
    ASIPeripheralBase< ::CShutterBase, CLED >(name),
    open_(false),
    intensity_(50),
-   channel_(1),
+   channel_(0),  // 0 for LED on 2-axis card
    channelAxisChar_('X')
 {
    //Figure out what channel we are on
@@ -78,6 +78,7 @@ CLED::CLED(const char* name) :
       channelAxisChar_='R';
       break;
    case 1:
+   case 0:  // use 'X' for 2-axis LED
    default:
       channelAxisChar_='X';
       break;
@@ -92,7 +93,11 @@ int CLED::Initialize()
    // create MM description; this doesn't work during hardware configuration wizard but will work afterwards
    ostringstream command;
    command.str("");
-   command << g_LEDDeviceDescription << " HexAddr=" << addressString_<<" Channel="<<channel_<<":"<<channelAxisChar_;
+   command << g_LEDDeviceDescription << " HexAddr=" << addressString_;
+   if (channel_ > 0)
+   {
+      command << " Channel=" << channel_ << ":" << channelAxisChar_;
+   }
    CreateProperty(MM::g_Keyword_Description, command.str().c_str(), MM::String, true);
    
    CPropertyAction* pAct;
@@ -126,13 +131,15 @@ int CLED::Initialize()
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsOrig);
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsDone);
 
-   //LED current limit , card wide setting
-   pAct = new CPropertyAction (this, &CLED::OnCurrentLimit);
-   CreateProperty(g_LEDCurrentLimitPropertyName  , "700", MM::Integer, false, pAct);
-   SetPropertyLimits(g_LEDCurrentLimitPropertyName , 0, 1000);
-   UpdateProperty(g_LEDCurrentLimitPropertyName );  // this takes care of initializing open_ and intensity_
-
-
+   // LED current limit, card wide setting
+   // once mechanism for shared settings devices gets implemented use for this one
+   if (channel_ > 0)
+   {
+      pAct = new CPropertyAction (this, &CLED::OnCurrentLimit);
+      CreateProperty(g_LEDCurrentLimitPropertyName  , "700", MM::Integer, false, pAct);
+      SetPropertyLimits(g_LEDCurrentLimitPropertyName , 0, 1000);
+      UpdateProperty(g_LEDCurrentLimitPropertyName );
+   }
 
    initialized_ = true;
    return DEVICE_OK;
