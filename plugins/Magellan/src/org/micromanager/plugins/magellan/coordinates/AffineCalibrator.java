@@ -17,6 +17,7 @@
 
 package org.micromanager.plugins.magellan.coordinates;
 
+import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.FloatProcessor;
@@ -26,6 +27,8 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 import org.micromanager.plugins.magellan.main.Magellan;
@@ -37,6 +40,9 @@ import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.micromanager.MMStudio;
+import org.micromanager.plugins.magellan.acq.TaggedImageStorageMultipageTiff;
+import org.micromanager.plugins.magellan.misc.ProgressBar;
+import org.micromanager.utils.MMScriptException;
 
 
 /**
@@ -74,9 +80,22 @@ public class AffineCalibrator {
    public void abort() {
       abort_ = true;
       readyForNextImage();
+      //close window
+      String albumName = Magellan.getScriptInterface().getCurrentAlbum();
+      try {
+         Magellan.getScriptInterface().closeAcquisitionWindow(albumName);
+      } catch (MMScriptException ex) {
+         Log.log("Cpuldn't close album");
+      }
    }
    
    public void computeAffine() throws Exception {
+      IJ.log("Automatic affine calibration.");
+      IJ.log(" ");
+      IJ.log("This module will attempt to estimate the affine transformation matrix based on \n"
+              + "three images of the same object in a different part of the field of view. Between \n"
+              + "each successive image, the XY stage must be tranlsated so that the object is in a \n"
+              + "different part of the field of view. The first image has already been captured.");
       CMMCore core = Magellan.getCore();
       String xyStage = core.getXYStageDevice();
       Point2D.Double[] stagePositions = new Point2D.Double[3], pixPositions = new Point2D.Double[3];
@@ -103,10 +122,17 @@ public class AffineCalibrator {
       TaggedImage img2 = snapAndAdd();
 
       //use Xcorr to calculate pixel coordinates
-//      IJ.log("Calculating Affine Transform. This process may take several minutes");
-      pixPositions[0] = new Point2D.Double(0,0); // define first one as the origin
+      ProgressBar progressBar = new ProgressBar("Computing affine transform (may take several minutes)", 0, 3);
+      progressBar.setProgress(0);
+      progressBar.setVisible(true);
+      pixPositions[0] = new Point2D.Double(0, 0); // define first one as the origin
+      progressBar.setProgress(1);
       pixPositions[1] = crossCorrelate(img0, img1);
+      progressBar.setProgress(2);
       pixPositions[2] = crossCorrelate(img0, img2);
+      progressBar.setProgress(3);
+      progressBar.setVisible(false);
+
 
       //3) compute affine from three pairs of points
       AffineTransform transform = computeAffine(pixPositions[0], pixPositions[1], pixPositions[2],

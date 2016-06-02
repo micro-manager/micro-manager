@@ -248,9 +248,8 @@ public class AcqDurationEstimator {
                GlobalSettings.putObjectInPrefs(GlobalSettings.getInstance().getGlobalPrefernces(), CHANNEL_KEY, channelSwitchTimeList_);
 
             } catch (InterruptedException ex) {
-               return;
+               return; //Interrupted, return with no result
             } catch (Exception e) {
-               Log.log(e, false);               
                GUI.updateEstiamtedDurationLabel("Error estimting acquisiton duration");
                return;
             }
