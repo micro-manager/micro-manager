@@ -79,90 +79,21 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 }
 
 
-//
-// Utility functions
-//
-
-static int
-GetVoltageRangeForDevice(const std::string& device,
-   double& minVolts, double& maxVolts)
+inline std::string GetNIError(int32 nierr)
 {
-   const int MAX_PORTS = 64;
-   float64 ranges[2 * MAX_PORTS];
-   for (int i = 0; i < MAX_PORTS; ++i)
-   {
-      ranges[2 * i] = 0.0;
-      ranges[2 * i + 1] = 0.0;
-   }
-
-   int32 ret = DAQmxGetDevAOVoltageRngs(device.c_str(), ranges,
-      sizeof(ranges) / sizeof(float64));
-   if (ret != 0)
-      return ret;
-
-   // Find the common min and max.
-   double commonMin = ranges[0];
-   double commonMax = ranges[1];
-   for (int i = 0; i < MAX_PORTS; ++i)
-   {
-      if (ranges[2 * i] == 0.0 && ranges[2 * i + 1] == 0.0)
-         break;
-
-      if (ranges[2 * i] != commonMin)
-         return ERR_NONUNIFORM_CHANNEL_VOLTAGE_RANGES;
-      if (ranges[2 * i + 1] != commonMax)
-         return ERR_NONUNIFORM_CHANNEL_VOLTAGE_RANGES;
-   }
-
-   minVolts = commonMin;
-   maxVolts = commonMax;
-
-   return DEVICE_OK;
-}
-
-static std::vector<std::string>
-GetTriggerPortsForDevice(const std::string& device)
-{
-   std::vector<std::string> result;
-
-   char ports[4096];
-   int32 ret = DAQmxGetDevTerminals(device.c_str(), ports, sizeof(ports));
-   if (ret == 0)
-   {
-      std::vector<std::string> terminals;
-      boost::split(terminals, ports, boost::is_any_of(", "),
-         boost::token_compress_on);
-
-      // Only return the PFI terminals.
-      for (std::vector<std::string>::const_iterator
-         it = terminals.begin(), end = terminals.end();
-         it != end; ++it)
-      {
-         if (it->find("PFI") != std::string::npos)
-         {
-            result.push_back(*it);
-         }
-      }
-   }
-
-   return result;
+   char buf[1024];
+   if (DAQmxGetErrorString(nierr, buf, sizeof(buf)))
+      return "[failed to get DAQmx error code]";
+   return buf;
 }
 
 
-static std::vector<std::string>
-GetAnalogPortsForDevice(const std::string& device)
+inline std::string GetNIDetailedErrorForMostRecentCall()
 {
-   std::vector<std::string> result;
-
-   char ports[4096];
-   int32 ret = DAQmxGetDevAOPhysicalChans(device.c_str(), ports, sizeof(ports));
-   if (ret == 0)
-   {
-      boost::split(result, ports, boost::is_any_of(", "),
-         boost::token_compress_on);
-   }
-
-   return result;
+   char buf[1024];
+   if (DAQmxGetExtendedErrorInfo(buf, sizeof(buf)))
+      return "[failed to get DAQmx extended error info]";
+   return buf;
 }
 
 
@@ -171,6 +102,7 @@ GetAnalogPortsForDevice(const std::string& device)
 //
 
 MultiAnalogOutHub::MultiAnalogOutHub() :
+   ErrorTranslator(20000, 20999, &MultiAnalogOutHub::SetErrorText),
    initialized_(false),
    maxSequenceLength_(1024),
    sequencingEnabled_(false),
@@ -180,10 +112,10 @@ MultiAnalogOutHub::MultiAnalogOutHub() :
    task_(0)
 {
    CPropertyAction* pAct = new CPropertyAction(this, &MultiAnalogOutHub::OnDevice);
-   int ret = CreateStringProperty("Device", "", false, pAct, true);
+   int err = CreateStringProperty("Device", "", false, pAct, true);
 
    pAct = new CPropertyAction(this, &MultiAnalogOutHub::OnMaxSequenceLength);
-   ret = CreateIntegerProperty("MaxSequenceLength",
+   err = CreateIntegerProperty("MaxSequenceLength",
       static_cast<long>(maxSequenceLength_), false, pAct, true);
 }
 
@@ -203,15 +135,15 @@ int MultiAnalogOutHub::Initialize()
       return DEVICE_ERR;
 
    // Determine the possible voltage range
-   int ret = GetVoltageRangeForDevice(niDeviceName_, minVolts_, maxVolts_);
-   if (ret != DEVICE_OK)
-      return ret;
+   int err = GetVoltageRangeForDevice(niDeviceName_, minVolts_, maxVolts_);
+   if (err != DEVICE_OK)
+      return err;
 
    CPropertyAction* pAct = new CPropertyAction(this, &MultiAnalogOutHub::OnSequencingEnabled);
-   ret = CreateStringProperty("Sequence", sequencingEnabled_ ? g_On : g_Off,
+   err = CreateStringProperty("Sequence", sequencingEnabled_ ? g_On : g_Off,
       false, pAct);
-   if (ret != DEVICE_OK)
-      return ret;
+   if (err != DEVICE_OK)
+      return err;
    AddAllowedValue("Sequence", g_On);
    AddAllowedValue("Sequence", g_Off);
 
@@ -220,9 +152,9 @@ int MultiAnalogOutHub::Initialize()
    {
       niTriggerPort_ = triggerPorts[0];
       pAct = new CPropertyAction(this, &MultiAnalogOutHub::OnTriggerInputPort);
-      ret = CreateStringProperty("TriggerInputPort", niTriggerPort_.c_str(), false, pAct);
-      if (ret != DEVICE_OK)
-         return ret;
+      err = CreateStringProperty("TriggerInputPort", niTriggerPort_.c_str(), false, pAct);
+      if (err != DEVICE_OK)
+         return err;
       for (std::vector<std::string>::const_iterator it = triggerPorts.begin(),
             end = triggerPorts.end();
             it != end; ++it)
@@ -231,9 +163,9 @@ int MultiAnalogOutHub::Initialize()
       }
 
       pAct = new CPropertyAction(this, &MultiAnalogOutHub::OnSampleRate);
-      ret = CreateFloatProperty("SampleRateHz", sampleRateHz_, false, pAct);
-      if (ret != DEVICE_OK)
-         return ret;
+      err = CreateFloatProperty("SampleRateHz", sampleRateHz_, false, pAct);
+      if (err != DEVICE_OK)
+         return err;
    }
 
    initialized_ = true;
@@ -246,13 +178,13 @@ int MultiAnalogOutHub::Shutdown()
    if (!initialized_)
       return DEVICE_OK;
 
-   int ret = StopTask();
+   int err = StopTask();
 
    physicalChannels_.clear();
    channelSequences_.clear();
 
    initialized_ = false;
-   return ret;
+   return err;
 }
 
 
@@ -292,17 +224,17 @@ int MultiAnalogOutHub::GetVoltageLimits(double& minVolts, double& maxVolts)
 int MultiAnalogOutHub::StartSequenceForPort(const std::string& port,
    const std::vector<double> sequence)
 {
-   int ret = StopTask();
-   if (ret != DEVICE_OK)
-      return ret;
+   int err = StopTask();
+   if (err != DEVICE_OK)
+      return err;
 
-   ret = AddPortToSequencing(port, sequence);
-   if (ret != DEVICE_OK)
-      return ret;
+   err = AddPortToSequencing(port, sequence);
+   if (err != DEVICE_OK)
+      return err;
 
-   ret = StartSequencingTask();
-   if (ret != DEVICE_OK)
-      return ret;
+   err = StartSequencingTask();
+   if (err != DEVICE_OK)
+      return err;
    // We don't restart the task without this port on failure.
    // There is little point in doing so.
 
@@ -312,9 +244,9 @@ int MultiAnalogOutHub::StartSequenceForPort(const std::string& port,
 
 int MultiAnalogOutHub::StopSequenceForPort(const std::string& port)
 {
-   int ret = StopTask();
-   if (ret != DEVICE_OK)
-      return ret;
+   int err = StopTask();
+   if (err != DEVICE_OK)
+      return err;
    RemovePortFromSequencing(port);
    // We do not restart sequencing for the remaining ports,
    // since it is meaningless (we can't preserve their state).
@@ -362,6 +294,102 @@ int MultiAnalogOutHub::GetSequenceMaxLength(long& maxLength) const
 {
    maxLength = static_cast<long>(maxSequenceLength_);
    return DEVICE_OK;
+}
+
+
+int MultiAnalogOutHub::GetVoltageRangeForDevice(
+   const std::string& device, double& minVolts, double& maxVolts)
+{
+   const int MAX_PORTS = 64;
+   float64 ranges[2 * MAX_PORTS];
+   for (int i = 0; i < MAX_PORTS; ++i)
+   {
+      ranges[2 * i] = 0.0;
+      ranges[2 * i + 1] = 0.0;
+   }
+
+   int32 nierr = DAQmxGetDevAOVoltageRngs(device.c_str(), ranges,
+      sizeof(ranges) / sizeof(float64));
+   if (nierr != 0)
+   {
+      LogMessage(GetNIDetailedErrorForMostRecentCall().c_str());
+      return TranslateNIError(nierr);
+   }
+
+   // Find the common min and max.
+   double commonMin = ranges[0];
+   double commonMax = ranges[1];
+   for (int i = 0; i < MAX_PORTS; ++i)
+   {
+      if (ranges[2 * i] == 0.0 && ranges[2 * i + 1] == 0.0)
+         break;
+
+      if (ranges[2 * i] != commonMin)
+         return ERR_NONUNIFORM_CHANNEL_VOLTAGE_RANGES;
+      if (ranges[2 * i + 1] != commonMax)
+         return ERR_NONUNIFORM_CHANNEL_VOLTAGE_RANGES;
+   }
+
+   minVolts = commonMin;
+   maxVolts = commonMax;
+
+   return DEVICE_OK;
+}
+
+
+std::vector<std::string>
+MultiAnalogOutHub::GetTriggerPortsForDevice(const std::string& device)
+{
+   std::vector<std::string> result;
+
+   char ports[4096];
+   int32 nierr = DAQmxGetDevTerminals(device.c_str(), ports, sizeof(ports));
+   if (nierr == 0)
+   {
+      std::vector<std::string> terminals;
+      boost::split(terminals, ports, boost::is_any_of(", "),
+         boost::token_compress_on);
+
+      // Only return the PFI terminals.
+      for (std::vector<std::string>::const_iterator
+         it = terminals.begin(), end = terminals.end();
+         it != end; ++it)
+      {
+         if (it->find("PFI") != std::string::npos)
+         {
+            result.push_back(*it);
+         }
+      }
+   }
+   else
+   {
+      LogMessage(GetNIDetailedErrorForMostRecentCall().c_str());
+      LogMessage("Cannot get list of trigger ports");
+   }
+
+   return result;
+}
+
+
+std::vector<std::string>
+MultiAnalogOutHub::GetAnalogPortsForDevice(const std::string& device)
+{
+   std::vector<std::string> result;
+
+   char ports[4096];
+   int32 nierr = DAQmxGetDevAOPhysicalChans(device.c_str(), ports, sizeof(ports));
+   if (nierr == 0)
+   {
+      boost::split(result, ports, boost::is_any_of(", "),
+         boost::token_compress_on);
+   }
+   else
+   {
+      LogMessage(GetNIDetailedErrorForMostRecentCall().c_str());
+      LogMessage("Cannot get list of analog ports");
+   }
+
+   return result;
 }
 
 
@@ -451,46 +479,61 @@ int MultiAnalogOutHub::StartSequencingTask()
    LogMessage("LCM sequence length = " +
       boost::lexical_cast<std::string>(samplesPerChan), true);
 
-   int32 ret = DAQmxCreateTask("AOSeqTask", &task_);
-   if (ret != 0)
-      return ret;
+   int32 nierr = DAQmxCreateTask("AOSeqTask", &task_);
+   if (nierr != 0)
+   {
+      LogMessage(GetNIDetailedErrorForMostRecentCall().c_str());
+      return nierr;
+   }
    LogMessage("Created task", true);
 
    const std::string chanList = GetPhysicalChannelListForSequencing();
-   ret = DAQmxCreateAOVoltageChan(task_, chanList.c_str(),
+   nierr = DAQmxCreateAOVoltageChan(task_, chanList.c_str(),
       "AOSeqChan", minVolts_, maxVolts_, DAQmx_Val_Volts,
       NULL);
-   if (ret != 0)
+   if (nierr != 0)
+   {
+      LogMessage(GetNIDetailedErrorForMostRecentCall().c_str());
       goto error;
+   }
    LogMessage(("Created AO voltage channel for: " + chanList).c_str(), true);
 
-   ret = DAQmxCfgSampClkTiming(task_, niTriggerPort_.c_str(),
+   nierr = DAQmxCfgSampClkTiming(task_, niTriggerPort_.c_str(),
       sampleRateHz_, DAQmx_Val_Rising,
       DAQmx_Val_ContSamps, samplesPerChan);
-   if (ret != 0)
+   if (nierr != 0)
+   {
+      LogMessage(GetNIDetailedErrorForMostRecentCall().c_str());
       goto error;
+   }
    LogMessage("Configured sample clock timing to use " + niTriggerPort_, true);
 
    samples.reset(new float64[samplesPerChan * numChans]);
    GetLCMSequence(samples.get());
 
    int32 numWritten = 0;
-   ret = DAQmxWriteAnalogF64(task_, static_cast<int32>(samplesPerChan),
+   nierr = DAQmxWriteAnalogF64(task_, static_cast<int32>(samplesPerChan),
       false, DAQmx_Val_WaitInfinitely, DAQmx_Val_GroupByChannel,
       samples.get(), &numWritten, NULL);
-   if (ret != 0)
+   if (nierr != 0)
+   {
+      LogMessage(GetNIDetailedErrorForMostRecentCall().c_str());
       goto error;
+   }
    if (numWritten != samplesPerChan)
    {
       LogMessage("Failed to write complete sequence");
-      ret = DEVICE_ERR; // This is presumably unlikely
+      // This is presumably unlikely; no error code here
       goto error;
    }
    LogMessage("Wrote samples", true);
 
-   ret = DAQmxStartTask(task_);
-   if (ret != 0)
+   nierr = DAQmxStartTask(task_);
+   if (nierr != 0)
+   {
+      LogMessage(GetNIDetailedErrorForMostRecentCall().c_str());
       goto error;
+   }
    LogMessage("Started task", true);
 
    return DEVICE_OK;
@@ -498,9 +541,17 @@ int MultiAnalogOutHub::StartSequencingTask()
 error:
    DAQmxClearTask(task_);
    task_ = 0;
-   LogMessage(("Failed with error " + boost::lexical_cast<std::string>(ret) +
-         "; task cleared").c_str(), true);
-   return ret;
+   err;
+   if (nierr != 0)
+   {
+      LogMessage("Failed; task cleared");
+      err = TranslateNIError(nierr);
+   }
+   else
+   {
+      err = DEVICE_ERR;
+   }
+   return err;
 }
 
 
@@ -509,9 +560,9 @@ int MultiAnalogOutHub::StopTask()
    if (!task_)
       return DEVICE_OK;
 
-   int32 ret = DAQmxClearTask(task_);
-   if (ret != 0)
-      return ret;
+   int32 nierr = DAQmxClearTask(task_);
+   if (nierr != 0)
+      return TranslateNIError(nierr);
    task_ = 0;
    LogMessage("Stopped task", true);
 
@@ -620,6 +671,7 @@ int MultiAnalogOutHub::OnSampleRate(MM::PropertyBase* pProp, MM::ActionType eAct
 //
 
 MultiAnalogOutPort::MultiAnalogOutPort(const std::string& port) :
+   ErrorTranslator(21000, 21999, &MultiAnalogOutPort::SetErrorText),
    niPort_(port),
    initialized_(false),
    gateOpen_(true),
@@ -656,25 +708,25 @@ int MultiAnalogOutPort::Initialize()
    // Check that the voltage range is allowed (since we cannot
    // enforce this when creating pre-init properties)
    double minVolts, maxVolts;
-   int ret = GetAOHub()->GetVoltageLimits(minVolts, maxVolts);
-   if (ret != DEVICE_OK)
-      return ret;
+   int err = GetAOHub()->GetVoltageLimits(minVolts, maxVolts);
+   if (err != DEVICE_OK)
+      return TranslateHubError(err);
    LogMessage("Device voltage limits: " + boost::lexical_cast<std::string>(minVolts) +
       " to " + boost::lexical_cast<std::string>(maxVolts), true);
    if (minVolts_ < minVolts || maxVolts_ > maxVolts)
       return ERR_VOLTAGE_RANGE_EXCEEDS_DEVICE_LIMITS;
 
    CPropertyAction* pAct = new CPropertyAction(this, &MultiAnalogOutPort::OnVoltage);
-   ret = CreateFloatProperty("Voltage", gatedVoltage_, false, pAct);
-   if (ret != DEVICE_OK)
-      return ret;
-   ret = SetPropertyLimits("Voltage", minVolts_, maxVolts_);
-   if (ret != DEVICE_OK)
-      return ret;
+   err = CreateFloatProperty("Voltage", gatedVoltage_, false, pAct);
+   if (err != DEVICE_OK)
+      return err;
+   err = SetPropertyLimits("Voltage", minVolts_, maxVolts_);
+   if (err != DEVICE_OK)
+      return err;
 
-   ret = StartOnDemandTask(gateOpen_ ? gatedVoltage_ : 0.0);
-   if (ret != DEVICE_OK)
-      return ret;
+   err = StartOnDemandTask(gateOpen_ ? gatedVoltage_ : 0.0);
+   if (err != DEVICE_OK)
+      return err;
 
    return DEVICE_OK;
 }
@@ -685,13 +737,13 @@ int MultiAnalogOutPort::Shutdown()
    if (!initialized_)
       return DEVICE_OK;
 
-   int ret = StopTask();
+   int err = StopTask();
 
    unsentSequence_.clear();
    sentSequence_.clear();
 
    initialized_ = false;
-   return ret;
+   return err;
 }
 
 
@@ -706,15 +758,15 @@ int MultiAnalogOutPort::SetGateOpen(bool open)
 {
    if (open && !gateOpen_)
    {
-      int ret = StartOnDemandTask(gatedVoltage_);
-      if (ret != DEVICE_OK)
-         return ret;
+      int err = StartOnDemandTask(gatedVoltage_);
+      if (err != DEVICE_OK)
+         return err;
    }
    else if (!open && gateOpen_)
    {
-      int ret = StartOnDemandTask(0.0);
-      if (ret != DEVICE_OK)
-         return ret;
+      int err = StartOnDemandTask(0.0);
+      if (err != DEVICE_OK)
+         return err;
    }
 
    gateOpen_ = open;
@@ -737,9 +789,9 @@ int MultiAnalogOutPort::SetSignal(double volts)
    gatedVoltage_ = volts;
    if (gateOpen_)
    {
-      int ret = StartOnDemandTask(gatedVoltage_);
-      if (ret != DEVICE_OK)
-         return ret;
+      int err = StartOnDemandTask(gatedVoltage_);
+      if (err != DEVICE_OK)
+         return err;
    }
    return DEVICE_OK;
 }
@@ -758,12 +810,14 @@ int MultiAnalogOutPort::IsDASequenceable(bool& isSequenceable) const
    if (neverSequenceable_)
       return false;
 
+   // Translation from hub error code skipped (since this never fails)
    return GetAOHub()->IsSequencingEnabled(isSequenceable);
 }
 
 
 int MultiAnalogOutPort::GetDASequenceMaxLength(long& maxLength) const
 {
+   // Translation from hub error code skipped (since this never fails)
    return GetAOHub()->GetSequenceMaxLength(maxLength);
 }
 
@@ -775,9 +829,9 @@ int MultiAnalogOutPort::StartDASequence()
 
    sequenceRunning_ = true;
 
-   int ret = GetAOHub()->StartSequenceForPort(niPort_, sentSequence_);
-   if (ret != DEVICE_OK)
-      return ret;
+   int err = GetAOHub()->StartSequenceForPort(niPort_, sentSequence_);
+   if (err != DEVICE_OK)
+      return TranslateHubError(err);
 
    return DEVICE_OK;
 }
@@ -785,17 +839,17 @@ int MultiAnalogOutPort::StartDASequence()
 
 int MultiAnalogOutPort::StopDASequence()
 {
-   int ret = GetAOHub()->StopSequenceForPort(niPort_);
-   if (ret != DEVICE_OK)
-      return ret;
+   int err = GetAOHub()->StopSequenceForPort(niPort_);
+   if (err != DEVICE_OK)
+      return TranslateHubError(err);
 
    sequenceRunning_ = false;
 
    // Recover voltage from before sequencing started, so that we
    // are back in sync
-   ret = StartOnDemandTask(gateOpen_ ? gatedVoltage_ : 0.0);
-   if (ret != DEVICE_OK)
-      return ret;
+   err = StartOnDemandTask(gateOpen_ ? gatedVoltage_ : 0.0);
+   if (err != DEVICE_OK)
+      return err;
 
    return DEVICE_OK;
 }
@@ -885,11 +939,22 @@ int MultiAnalogOutPort::OnVoltage(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       double voltage;
       pProp->Get(voltage);
-      int ret = SetSignal(voltage);
-      if (ret != DEVICE_OK)
-         return ret;
+      int err = SetSignal(voltage);
+      if (err != DEVICE_OK)
+         return err;
    }
    return DEVICE_OK;
+}
+
+
+int MultiAnalogOutPort::TranslateHubError(int err)
+{
+   if (err == DEVICE_OK)
+      return DEVICE_OK;
+   char buf[MM::MaxStrLength];
+   if (GetAOHub()->GetErrorText(err, buf))
+      return NewErrorCode(buf);
+   return NewErrorCode("Unknown hub error");
 }
 
 
@@ -907,30 +972,39 @@ int MultiAnalogOutPort::StartOnDemandTask(double voltage)
 
    LogMessage("Starting on-demand task", true);
 
-   int32 ret = DAQmxCreateTask(NULL, &task_);
-   if (ret != 0)
-      return ret;
+   int32 nierr = DAQmxCreateTask(NULL, &task_);
+   if (nierr != 0)
+   {
+      LogMessage(GetNIDetailedErrorForMostRecentCall().c_str());
+      return TranslateNIError(nierr);
+   }
    LogMessage("Created task", true);
 
-   ret = DAQmxCreateAOVoltageChan(task_,
+   nierr = DAQmxCreateAOVoltageChan(task_,
       niPort_.c_str(), NULL, minVolts_, maxVolts_,
       DAQmx_Val_Volts, NULL);
-   if (ret != 0)
+   if (nierr != 0)
+   {
+      LogMessage(GetNIDetailedErrorForMostRecentCall().c_str());
       goto error;
+   }
    LogMessage("Created AO voltage channel", true);
 
    float64 samples[1];
    samples[0] = voltage;
    int32 numWritten = 0;
-   ret = DAQmxWriteAnalogF64(task_, 1,
+   nierr = DAQmxWriteAnalogF64(task_, 1,
       true, DAQmx_Val_WaitInfinitely, DAQmx_Val_GroupByChannel,
       samples, &numWritten, NULL);
-   if (ret != 0)
+   if (nierr != 0)
+   {
+      LogMessage(GetNIDetailedErrorForMostRecentCall().c_str());
       goto error;
+   }
    if (numWritten != 1)
    {
       LogMessage("Failed to write voltage");
-      ret = DEVICE_ERR; // This is presumably unlikely
+      // This is presumably unlikely; no error code here
       goto error;
    }
    LogMessage(("Wrote voltage with task autostart: " +
@@ -941,9 +1015,17 @@ int MultiAnalogOutPort::StartOnDemandTask(double voltage)
 error:
    DAQmxClearTask(task_);
    task_ = 0;
-   LogMessage(("Failed with error " + boost::lexical_cast<std::string>(ret) +
-         "; task cleared").c_str(), true);
-   return ret;
+   int err;
+   if (nierr != 0)
+   {
+      LogMessage("Failed; task cleared");
+      err = TranslateNIError(nierr);
+   }
+   else
+   {
+      err = DEVICE_ERR;
+   }
+   return err;
 }
 
 
@@ -952,9 +1034,9 @@ int MultiAnalogOutPort::StopTask()
    if (!task_)
       return DEVICE_OK;
 
-   int32 ret = DAQmxClearTask(task_);
-   if (ret != 0)
-      return ret;
+   int32 nierr = DAQmxClearTask(task_);
+   if (nierr != 0)
+      return TranslateNIError(nierr);
    task_ = 0;
    LogMessage("Stopped task", true);
 
