@@ -244,7 +244,7 @@ public final class StorageMultipageTiff implements Storage {
                   "to fix it?",
                   "Micro-Manager", JOptionPane.YES_NO_OPTION);
             if (choice != JOptionPane.YES_OPTION) {
-               return;
+               return null;
             }
             // Attempt to repair it. This constructor automatically invokes
             // the fixIndexMap method (and is the only constructor that
