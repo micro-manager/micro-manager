@@ -31,23 +31,18 @@ import org.micromanager.plugins.magellan.misc.JavaUtils;
 public class DemoModeImageData {
       
    private static ImagePlus img_;
+   private static int pixelSizeZ_ = 3;
+   private static int imageSizeZ_ = 399;
    
    public DemoModeImageData() {
-//      Interpreter.batchMode = true; //batch mode makes everything ridiculously slow for some reason
-      
-//      String name = "Navigator demo LN" + 
-//              (Magellan.getCore().getBytesPerPixel() > 1 ? "16Bit" : "")+ ".tif";      
-//      if (JavaUtils.isMac()) {
-//         //Laptop         
-//         IJ.runMacro("run(\"TIFF Virtual Stack...\", \"open=[/Applications/Micro-Manager1.4/Navigator demo LN.tif]\");");
-//      } else {
-//         //BIDC computer
-//         IJ.runMacro("run(\"TIFF Virtual Stack...\", \"open=[C:/Program Files/Micro-Manager-1.4/" + name+ "]\");");
-//      }
-//      img_ = WindowManager.getImage(name);
-      
-      IJ.runMacro("run(\"TIFF Virtual Stack...\", \"open=[./Magellan_demo_data.tif]\");");
-      img_ =  WindowManager.getImage("Magellan_demo_data.tif");
+      String name = "wholeIVMwindow_1.tif";
+      IJ.runMacro("run(\"TIFF Virtual Stack...\", \"open=[/Users/henrypinkard/Desktop/ForHenry/wholeIVMwindow_1.tif]\");");
+      img_ = WindowManager.getImage(name);
+      pixelSizeZ_ = (int) img_.getCalibration().pixelDepth;
+      imageSizeZ_ = img_.getDimensions()[3] * pixelSizeZ_;
+
+//      IJ.runMacro("run(\"TIFF Virtual Stack...\", \"open=[./Magellan_demo_data.tif]\");");
+//      img_ =  WindowManager.getImage("Magellan_demo_data.tif");
       img_.getWindow().setState(Frame.ICONIFIED);
    }
    
@@ -58,10 +53,10 @@ public class DemoModeImageData {
       int fullHeight = img_.getHeight();      
       while (x < 0) x+= fullWidth;
       while (y < 0) y+= fullHeight;
-      while (z < 0) z+= 399;
+      while (z < 0) z+= imageSizeZ_;
       x = x % fullWidth;
       y = y % fullHeight;
-      int sliceIndex = (z % 399) / 3;
+      int sliceIndex = (z % imageSizeZ_) / pixelSizeZ_;
       short[] fullSlice = (short[]) img_.getStack().getPixels(6 * sliceIndex + channel + 1);
       short[] pixels = new short[width * height];
       for (int line = 0; line < height; line++) {
@@ -85,10 +80,10 @@ public class DemoModeImageData {
       int fullHeight = img_.getHeight();      
       while (x < 0) x+= fullWidth;
       while (y < 0) y+= fullHeight;
-      while (z < 0) z+= 399;
+      while (z < 0) z+= imageSizeZ_;
       x = x % fullWidth;
       y = y % fullHeight;
-      int sliceIndex = (z % 399) / 3;
+      int sliceIndex = (z % imageSizeZ_) / pixelSizeZ_;
       byte[] fullSlice = (byte[]) img_.getStack().getPixels(6 * sliceIndex + channel + 1);
       byte[] pixels = new byte[width * height];
       for (int line = 0; line < height; line++) {
