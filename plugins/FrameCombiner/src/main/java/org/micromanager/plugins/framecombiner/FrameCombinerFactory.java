@@ -1,4 +1,4 @@
-package org.micromanager.plugins.frameprocessor;
+package org.micromanager.plugins.framecombiner;
 
 import org.micromanager.LogManager;
 import org.micromanager.data.Processor;
@@ -6,13 +6,13 @@ import org.micromanager.data.ProcessorFactory;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 
-public class FrameProcessorFactory implements ProcessorFactory {
+public class FrameCombinerFactory implements ProcessorFactory {
 
    private final Studio studio_;
    private final PropertyMap settings_;
    private final LogManager log_;
 
-   public FrameProcessorFactory(Studio studio, PropertyMap settings) {
+   public FrameCombinerFactory(Studio studio, PropertyMap settings) {
       studio_ = studio;
       settings_ = settings;
       log_ = studio_.logs();
@@ -20,9 +20,9 @@ public class FrameProcessorFactory implements ProcessorFactory {
 
    @Override
    public Processor createProcessor() {
-      // log_.logMessage("FrameProcessor : Create FrameProcessorProcessor");
-      return new FrameProcessor(studio_,
-              settings_.getString("processorAlgo", FrameProcessorPlugin.PROCESSOR_ALGO_MEAN),
+      // log_.logMessage("FrameCombiner : Create FrameCombinerProcessor");
+      return new FrameCombiner(studio_,
+              settings_.getString("processorAlgo", FrameCombinerPlugin.PROCESSOR_ALGO_MEAN),
               settings_.getInt("numerOfImagesToProcess", 10),
               settings_.getBoolean("enableDuringAcquisition", true),
               settings_.getBoolean("enableDuringLive", true),

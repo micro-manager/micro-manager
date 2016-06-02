@@ -11,7 +11,7 @@ nobase_mmplugin_DATA = \
 	ClojureEditor.jar \
 	CRISP.jar \
 	CRISPv2.jar \
-	FrameProcessor.jar \
+	FrameCombiner.jar \
 	Gaussian.jar \
 	HCS.jar \
 	ImageFlipper.jar \

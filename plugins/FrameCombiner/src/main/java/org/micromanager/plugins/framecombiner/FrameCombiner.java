@@ -1,4 +1,4 @@
-package org.micromanager.plugins.frameprocessor;
+package org.micromanager.plugins.framecombiner;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,7 +17,7 @@ import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
 import org.micromanager.data.SummaryMetadata;
 
-public class FrameProcessor extends Processor {
+public class FrameCombiner extends Processor {
 
    private final Studio studio_;
    private final LogManager log_;
@@ -35,7 +35,7 @@ public class FrameProcessor extends Processor {
 
    private HashMap<Coords, SingleCombinationProcessor> singleAquisitions_;
 
-   public FrameProcessor(Studio studio, String processorAlgo,
+   public FrameCombiner(Studio studio, String processorAlgo,
            int numerOfImagesToProcess, boolean enableDuringAcquisition,
            boolean enableDuringLive, String channelsToAvoidString) {
 
@@ -55,9 +55,9 @@ public class FrameProcessor extends Processor {
          channelsToAvoid_ = convertToList(channelsToAvoidString);
       }
 
-//      log_.logMessage("FrameProcessor : Algorithm applied on stack image is " + processorAlgo_);
-//      log_.logMessage("FrameProcessor : Number of frames to process " + Integer.toString(numerOfImagesToProcess));
-//      log_.logMessage("FrameProcessor : Channels avoided are " + channelsToAvoid_.toString() + " (during MDA)");
+//      log_.logMessage("FrameCombiner : Algorithm applied on stack image is " + processorAlgo_);
+//      log_.logMessage("FrameCombiner : Number of frames to process " + Integer.toString(numerOfImagesToProcess));
+//      log_.logMessage("FrameCombiner : Channels avoided are " + channelsToAvoid_.toString() + " (during MDA)");
       // Initialize a hashmap of all combinations of the different acquisitions
       // Each index will be a combination of Z, Channel and StagePosition
       singleAquisitions_ = new HashMap();
@@ -135,7 +135,7 @@ public class FrameProcessor extends Processor {
       if (imageNotProcessedFirstTime_ && (image.getBytesPerPixel() > 2 || image.getNumComponents() > 1)) {
 
          if (imageNotProcessedFirstTime_) {
-            log_.showError("This type of image cannot be processed by FrameProcessor.");
+            log_.showError("This type of image cannot be processed by FrameCombiner.");
             imageNotProcessedFirstTime_ = false;
             imageCanBeProcessed_ = false;
          }

@@ -1,4 +1,4 @@
-package org.micromanager.plugins.frameprocessor;
+package org.micromanager.plugins.framecombiner;
 
 import org.micromanager.LogManager;
 import org.micromanager.PropertyMap;
@@ -122,16 +122,16 @@ public class SingleCombinationProcessor {
 
    public void processBufferImages() throws Exception {
 
-      if (processorAlgo_.equals(FrameProcessorPlugin.PROCESSOR_ALGO_MEAN)) {
+      if (processorAlgo_.equals(FrameCombinerPlugin.PROCESSOR_ALGO_MEAN)) {
          meanProcessImages(false);
-      } else if (processorAlgo_.equals(FrameProcessorPlugin.PROCESSOR_ALGO_SUM)) {
+      } else if (processorAlgo_.equals(FrameCombinerPlugin.PROCESSOR_ALGO_SUM)) {
          meanProcessImages(true);
-      } else if (processorAlgo_.equals(FrameProcessorPlugin.PROCESSOR_ALGO_MAX)) {
+      } else if (processorAlgo_.equals(FrameCombinerPlugin.PROCESSOR_ALGO_MAX)) {
          extremaProcessImages("max");
-      } else if (processorAlgo_.equals(FrameProcessorPlugin.PROCESSOR_ALGO_MIN)) {
+      } else if (processorAlgo_.equals(FrameCombinerPlugin.PROCESSOR_ALGO_MIN)) {
          extremaProcessImages("min");
       } else {
-         throw new Exception("FrameProcessor : Algorithm called " + processorAlgo_ + " is not implemented or not found.");
+         throw new Exception("FrameCombiner : Algorithm called " + processorAlgo_ + " is not implemented or not found.");
       }
 
    }
@@ -251,7 +251,7 @@ public class SingleCombinationProcessor {
                newPixels[i] = Byte.MAX_VALUE;
             }
          } else {
-            throw new Exception("FrameProcessor : Wrong extremaType " + extremaType);
+            throw new Exception("FrameCombiner : Wrong extremaType " + extremaType);
          }
 
          // Iterate over all frames
@@ -271,7 +271,7 @@ public class SingleCombinationProcessor {
                } else if (extremaType.equals("min")) {
                   newPixels[index] = (float) Math.min(currentValue, actualValue);
                } else {
-                  throw new Exception("FrameProcessor : Wrong extremaType " + extremaType);
+                  throw new Exception("FrameCombiner : Wrong extremaType " + extremaType);
                }
             }
          }
@@ -302,7 +302,7 @@ public class SingleCombinationProcessor {
                newPixels[i] = Byte.MAX_VALUE;
             }
          } else {
-            throw new Exception("FrameProcessor : Wrong extremaType " + extremaType);
+            throw new Exception("FrameCombiner : Wrong extremaType " + extremaType);
          }
 
          // Iterate over all frames
@@ -322,7 +322,7 @@ public class SingleCombinationProcessor {
                } else if (extremaType.equals("min")) {
                   newPixels[index] = (float) Math.min(currentValue, actualValue);
                } else {
-                  throw new Exception("FrameProcessor : Wrong extremaType " + extremaType);
+                  throw new Exception("FrameCombiner : Wrong extremaType " + extremaType);
                }
             }
          }

@@ -1,4 +1,4 @@
-package org.micromanager.plugins.frameprocessor;
+package org.micromanager.plugins.framecombiner;
 
 import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.data.ProcessorFactory;
@@ -10,10 +10,10 @@ import org.scijava.plugin.SciJavaPlugin;
 import org.scijava.plugin.Plugin;
 
 @Plugin(type = ProcessorPlugin.class)
-public class FrameProcessorPlugin implements ProcessorPlugin, SciJavaPlugin {
+public class FrameCombinerPlugin implements ProcessorPlugin, SciJavaPlugin {
 
-   public static String menuName = "Frame Processor";
-   public static String tooltipDescription = "Live Frame Processing during acquisition";
+   public static String menuName = "Frame Combiner";
+   public static String tooltipDescription = "Combine multiple images into a single output image (mean/sum/max/min)";
    public static String versionNumber = "1.0";
    public static String copyright = "Hadrien Mary";
 
@@ -32,12 +32,12 @@ public class FrameProcessorPlugin implements ProcessorPlugin, SciJavaPlugin {
 
    @Override
    public ProcessorConfigurator createConfigurator(PropertyMap settings) {
-      return new FrameProcessorConfigurator(settings, studio_);
+      return new FrameCombinerConfigurator(settings, studio_);
    }
 
    @Override
    public ProcessorFactory createFactory(PropertyMap settings) {
-      return new FrameProcessorFactory(studio_, settings);
+      return new FrameCombinerFactory(studio_, settings);
    }
 
    @Override

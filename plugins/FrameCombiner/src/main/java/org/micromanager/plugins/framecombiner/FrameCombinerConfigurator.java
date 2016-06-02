@@ -1,4 +1,4 @@
-package org.micromanager.plugins.frameprocessor;
+package org.micromanager.plugins.framecombiner;
 
 import java.text.NumberFormat;
 import javax.swing.text.NumberFormatter;
@@ -10,7 +10,7 @@ import org.micromanager.Studio;
 import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.internal.utils.MMFrame;
 
-public class FrameProcessorConfigurator extends MMFrame implements ProcessorConfigurator {
+public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfigurator {
 
    private static final String PROCESSOR_ALGO = "Algorithm to apply on stack images";
    private static final String NUMBER_TO_PROCESS = "Number of images to process";
@@ -22,7 +22,7 @@ public class FrameProcessorConfigurator extends MMFrame implements ProcessorConf
    private final CMMCore core_;
    private final PropertyMap settings_;
 
-   public FrameProcessorConfigurator(PropertyMap settings, Studio studio) {
+   public FrameCombinerConfigurator(PropertyMap settings, Studio studio) {
       studio_ = studio;
       core_ = studio_.getCMMCore();
       settings_ = settings;
@@ -53,7 +53,7 @@ public class FrameProcessorConfigurator extends MMFrame implements ProcessorConf
       jLabel3 = new javax.swing.JLabel();
 
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-      setTitle("FrameProcessor Processor Configuration");
+      setTitle("FrameCombiner Processor Configuration");
 
       enableDuringAcquisitionBox_.setText("Enable during acquisition");
       enableDuringAcquisitionBox_.setName(""); // NOI18N
@@ -64,11 +64,11 @@ public class FrameProcessorConfigurator extends MMFrame implements ProcessorConf
 
       jLabel2.setText("Algorithm to apply on image stack");
 
-      processorAlgoBox_.addItem(FrameProcessorPlugin.PROCESSOR_ALGO_MEAN);
-      //processorAlgoBox_.addItem(FrameProcessorPlugin.PROCESSOR_ALGO_MEDIAN);
-      processorAlgoBox_.addItem(FrameProcessorPlugin.PROCESSOR_ALGO_SUM);
-      processorAlgoBox_.addItem(FrameProcessorPlugin.PROCESSOR_ALGO_MAX);
-      processorAlgoBox_.addItem(FrameProcessorPlugin.PROCESSOR_ALGO_MIN);
+      processorAlgoBox_.addItem(FrameCombinerPlugin.PROCESSOR_ALGO_MEAN);
+      //processorAlgoBox_.addItem(FrameCombinerPlugin.PROCESSOR_ALGO_MEDIAN);
+      processorAlgoBox_.addItem(FrameCombinerPlugin.PROCESSOR_ALGO_SUM);
+      processorAlgoBox_.addItem(FrameCombinerPlugin.PROCESSOR_ALGO_MAX);
+      processorAlgoBox_.addItem(FrameCombinerPlugin.PROCESSOR_ALGO_MIN);
 
       channelsToAvoidField_.setName("_"); // NOI18N
 
@@ -189,52 +189,52 @@ public class FrameProcessorConfigurator extends MMFrame implements ProcessorConf
    }
 
    private String getProcessorAglo() {
-      return studio_.profile().getString(FrameProcessorConfigurator.class,
-              PROCESSOR_ALGO, FrameProcessorPlugin.PROCESSOR_ALGO_MEAN);
+      return studio_.profile().getString(FrameCombinerConfigurator.class,
+              PROCESSOR_ALGO, FrameCombinerPlugin.PROCESSOR_ALGO_MEAN);
    }
 
    private void setProcessorAglo(String processorAlgo) {
-      studio_.profile().setString(FrameProcessorConfigurator.class,
+      studio_.profile().setString(FrameCombinerConfigurator.class,
               PROCESSOR_ALGO, processorAlgo);
    }
 
    private int getNumerOfImagesToProcess() {
-      return studio_.profile().getInt(FrameProcessorConfigurator.class,
+      return studio_.profile().getInt(FrameCombinerConfigurator.class,
               NUMBER_TO_PROCESS, 10);
    }
 
    private void setNumerOfImagesToProcess(int numerOfImagesToProcess) {
-      studio_.profile().setInt(FrameProcessorConfigurator.class,
+      studio_.profile().setInt(FrameCombinerConfigurator.class,
               NUMBER_TO_PROCESS, numerOfImagesToProcess);
    }
 
    private boolean getEnableDuringAcquisition() {
-      return studio_.profile().getBoolean(FrameProcessorConfigurator.class,
+      return studio_.profile().getBoolean(FrameCombinerConfigurator.class,
               ENABLE_MDA, true);
    }
 
    private void setEnableDuringAcquisition(boolean enableDuringAcquisition) {
-      studio_.profile().setBoolean(FrameProcessorConfigurator.class,
+      studio_.profile().setBoolean(FrameCombinerConfigurator.class,
               ENABLE_MDA, enableDuringAcquisition);
    }
 
    private boolean getEnableDuringLive() {
-      return studio_.profile().getBoolean(FrameProcessorConfigurator.class,
+      return studio_.profile().getBoolean(FrameCombinerConfigurator.class,
               ENABLE_LIVE, true);
    }
 
    private void setEnableDuringLive(boolean enableDuringLive) {
-      studio_.profile().getBoolean(FrameProcessorConfigurator.class,
+      studio_.profile().getBoolean(FrameCombinerConfigurator.class,
               ENABLE_LIVE, true);
    }
    
    private String getChannelsToAvoid() {
-      return studio_.profile().getString(FrameProcessorConfigurator.class,
+      return studio_.profile().getString(FrameCombinerConfigurator.class,
               CHANNEL_TO_AVOID, "");
    }
 
    private void setChannelsToAvoid(String channelsToAvoid) {
-      studio_.profile().setString(FrameProcessorConfigurator.class,
+      studio_.profile().setString(FrameCombinerConfigurator.class,
               CHANNEL_TO_AVOID, channelsToAvoid);
    }
 
