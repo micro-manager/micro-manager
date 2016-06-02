@@ -412,9 +412,8 @@ int MultiAnalogOutHub::GetLCMSamplesPerChannel(size_t& seqLen) const
 void MultiAnalogOutHub::GetLCMSequence(double* buffer) const
 {
    size_t seqLen;
-   if (GetLCMSamplesPerChannel(seqLen))
+   if (GetLCMSamplesPerChannel(seqLen) != DEVICE_OK)
       return;
-   seqLen;
 
    for (int i = 0; i < channelSequences_.size(); ++i)
    {
@@ -457,13 +456,13 @@ int MultiAnalogOutHub::StartSequencingTask()
       return ret;
    LogMessage("Created task", true);
 
-   ret = DAQmxCreateAOVoltageChan(task_,
-      GetPhysicalChannelListForSequencing().c_str(),
+   const std::string chanList = GetPhysicalChannelListForSequencing();
+   ret = DAQmxCreateAOVoltageChan(task_, chanList.c_str(),
       "AOSeqChan", minVolts_, maxVolts_, DAQmx_Val_Volts,
       NULL);
    if (ret != 0)
       goto error;
-   LogMessage("Created AO voltage channel", true);
+   LogMessage(("Created AO voltage channel for: " + chanList).c_str(), true);
 
    ret = DAQmxCfgSampClkTiming(task_, niTriggerPort_.c_str(),
       sampleRateHz_, DAQmx_Val_Rising,
@@ -499,6 +498,8 @@ int MultiAnalogOutHub::StartSequencingTask()
 error:
    DAQmxClearTask(task_);
    task_ = 0;
+   LogMessage(("Failed with error " + boost::lexical_cast<std::string>(ret) +
+         "; task cleared").c_str(), true);
    return ret;
 }
 
@@ -932,13 +933,16 @@ int MultiAnalogOutPort::StartOnDemandTask(double voltage)
       ret = DEVICE_ERR; // This is presumably unlikely
       goto error;
    }
-   LogMessage("Wrote voltage with task autostart", true);
+   LogMessage(("Wrote voltage with task autostart: " +
+         boost::lexical_cast<std::string>(voltage) + " V").c_str(), true);
 
    return DEVICE_OK;
 
 error:
    DAQmxClearTask(task_);
    task_ = 0;
+   LogMessage(("Failed with error " + boost::lexical_cast<std::string>(ret) +
+         "; task cleared").c_str(), true);
    return ret;
 }
 
