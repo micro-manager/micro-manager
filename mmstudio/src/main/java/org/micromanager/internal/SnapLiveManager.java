@@ -181,11 +181,15 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       // ensure we don't try to grab images while stopping the acquisition.
       if (grabberThread_ != null) {
          shouldStopGrabberThread_ = true;
-         try {
-            grabberThread_.join();
-         }
-         catch (InterruptedException e) {
-            ReportingUtils.logError(e, "Interrupted while waiting for grabber thread to end");
+         // We can in rare cases be stopped from within the grabber thread;
+         // in such cases joining it is obviously futile.
+         if (Thread.currentThread() != grabberThread_) {
+            try {
+               grabberThread_.join();
+            }
+            catch (InterruptedException e) {
+               ReportingUtils.logError(e, "Interrupted while waiting for grabber thread to end");
+            }
          }
       }
       try {
@@ -498,9 +502,10 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
                         "Unable to insert image into pipeline; this should never happen.");
                }
                catch (PipelineErrorException e) {
-                  // Notify the user, then continue on.
+                  // Notify the user, and halt live.
                   studio_.logs().showError(e,
                         "An error occurred while processing images.");
+                  stopLiveMode();
                   pipeline_.clearExceptions();
                }
             }
