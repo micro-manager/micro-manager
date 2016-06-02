@@ -16,7 +16,10 @@ MicroDriveXYStage::MicroDriveXYStage():
    rounding_(0),
    encoded_(true),
    lastX_(0),
-   lastY_(0)
+   lastY_(0),
+   iterativeMoves_(false),
+   imRetry_(0),
+   imToleranceUm_(.250)
 {
    InitializeDefaultErrorMessages();
 
@@ -252,6 +255,28 @@ int MicroDriveXYStage::CreateMicroDriveXYProperties()
 	if (err != DEVICE_OK)
 		return err;
 
+	// Iterative Moves
+	pAct = new CPropertyAction(this, &MicroDriveXYStage::OnIterativeMove);
+	err = CreateProperty(g_Keyword_IterativeMove, "No", MM::String, false, pAct);
+	if (err != DEVICE_OK)
+		return err;
+	err = SetAllowedValues(g_Keyword_IterativeMove, yesNoList);
+	if (err != DEVICE_OK)
+		return err;
+
+	// Iterative Retries
+	pAct = new CPropertyAction(this, &MicroDriveXYStage::OnImRetry);
+	err = CreateProperty(g_Keyword_ImRetry, "0", MM::Integer, false, pAct);
+	if (err != DEVICE_OK)
+		return err;
+
+	// Iterative Tolerance
+	sprintf(iToChar, "%f", imToleranceUm_);
+	pAct = new CPropertyAction(this, &MicroDriveXYStage::OnImToleranceUm);
+	err = CreateProperty(g_Keyword_ImTolerance, iToChar, MM::Float, false, pAct);
+	if (err != DEVICE_OK)
+		return err;
+
 	return DEVICE_OK;
 }
 
@@ -293,9 +318,11 @@ int MicroDriveXYStage::GetPositionUm(double& x, double& y)
 	return err;
 }
 
-int MicroDriveXYStage::SetPositionMm(double x, double y)
+int MicroDriveXYStage::SetPositionMm(double goalX, double goalY)
 {
 	int err;
+	int currentRetries = 0;
+	bool moveFinished = false;
 
 	//Calculate the absolute position.
 	double xCurrent, yCurrent;
@@ -303,42 +330,83 @@ int MicroDriveXYStage::SetPositionMm(double x, double y)
 	if (err != MCL_SUCCESS)
 		return err;
 
-	x -= xCurrent;
-	y -= yCurrent;
-
-	bool noXMovement = (fabs(x) < stepSize_mm_); 
-	bool noYMovement = (fabs(y) < stepSize_mm_);
-
-	if (noXMovement && noYMovement)
+	do 
 	{
-		///No movement	
-	}
-	else if (noXMovement || XMoveBlocked(x))
-	{ 
-		err = MCL_MicroDriveMoveProfile(YAXIS, velocity_, y, rounding_, MCLhandle_);
+		double xMove = goalX - xCurrent;
+		double yMove = goalY - yCurrent;
+
+		bool noXMovement = (fabs(xMove) < stepSize_mm_); 
+		bool noYMovement = (fabs(yMove) < stepSize_mm_);
+
+		if (noXMovement && noYMovement)
+		{
+			///No movement	
+		}
+		else if (noXMovement || XMoveBlocked(xMove))
+		{ 
+			err = MCL_MicroDriveMoveProfile(YAXIS, velocity_, yMove, rounding_, MCLhandle_);
+			if (err != MCL_SUCCESS)
+				return err;
+			lastY_ += yMove;
+		}
+		else if (noYMovement || YMoveBlocked(yMove))
+		{
+			err = MCL_MicroDriveMoveProfile(XAXIS, velocity_, xMove, rounding_, MCLhandle_);
+			if (err != MCL_SUCCESS)
+				return err;
+			lastX_ += xMove;
+		}
+		else 
+		{
+			double twoAxisVelocity = min(maxVelocityTwoAxis_, velocity_);
+			err = MCL_MicroDriveMoveProfileXYZ(twoAxisVelocity, xMove, rounding_, twoAxisVelocity, yMove, rounding_,0,0, 0,MCLhandle_);
+			if (err != MCL_SUCCESS)
+				return err;
+			lastX_ += xMove;
+			lastY_ += yMove;
+		}
+
+		PauseDevice();
+
+		// Update current position
+		err = GetPositionMm(xCurrent, yCurrent);
 		if (err != MCL_SUCCESS)
 			return err;
-      lastY_ += y;
-
-	}
-	else if (noYMovement || YMoveBlocked(y))
-	{
-		err = MCL_MicroDriveMoveProfile(XAXIS, velocity_, x, rounding_, MCLhandle_);
+		Sleep(50);
+		err = GetPositionMm(xCurrent, yCurrent);
 		if (err != MCL_SUCCESS)
 			return err;
-      lastX_ += x;
-	}
-	else 
-	{
-		double twoAxisVelocity = min(maxVelocityTwoAxis_, velocity_);
-		err = MCL_MicroDriveMoveProfileXYZ(twoAxisVelocity, x, rounding_, twoAxisVelocity, y, rounding_,0,0, 0,MCLhandle_);
-		if (err != MCL_SUCCESS)
-			return err;
-      lastX_ += x;
-      lastY_ += y;
-	}
 
-	PauseDevice();
+		if(iterativeMoves_ && encoded_)
+		{
+			double absDiffUmX = abs(goalX - xCurrent) * 1000.0; 
+			double absDiffUmY = abs(goalY - yCurrent) * 1000.0;
+			bool xInTolerance = noXMovement || (!noXMovement && absDiffUmX < imToleranceUm_);
+			bool yInTolerance = noYMovement || (!noYMovement && absDiffUmY < imToleranceUm_);
+			
+			if(xInTolerance && yInTolerance)
+			{
+				moveFinished = true;
+			}
+			else 
+			{
+				currentRetries++;
+				if(currentRetries <= imRetry_)
+				{
+					moveFinished = false;
+				}
+				else
+				{
+					moveFinished = true;
+				}
+			}
+		}
+		else
+		{
+			moveFinished = true;
+		}
+	} while( !moveFinished );
+
 	return DEVICE_OK;
 }
 
@@ -361,40 +429,16 @@ int MicroDriveXYStage::SetRelativePositionMm(double x, double y){
     if (mirrorY)
         y = -y;
 
-	bool noXMovement = (fabs(x) < stepSize_mm_); 
-	bool noYMovement = (fabs(y) < stepSize_mm_);
+	//Calculate the absolute position.
+	double xCurrent, yCurrent;
+	err = GetPositionMm(xCurrent, yCurrent);
+	if (err != MCL_SUCCESS)
+		return err;
 
-	if (noXMovement && noYMovement)
-	{
-		///No movement	
-	}
-	else if (noXMovement || XMoveBlocked(x))
-	{ 
-		err = MCL_MicroDriveMoveProfile(YAXIS, velocity_, y, rounding_, MCLhandle_);
-      if (err != MCL_SUCCESS)
-			return err;
-		lastY_ += y;
-	}
-	else if (noYMovement || YMoveBlocked(y))
-	{
-		err = MCL_MicroDriveMoveProfile(XAXIS, velocity_, x, rounding_, MCLhandle_);
-      if (err != MCL_SUCCESS)
-			return err;
-		lastX_ += x;
-   }
-	else 
-	{
-		double twoAxisVelocity = min(maxVelocityTwoAxis_, velocity_);
-		err = MCL_MicroDriveMoveProfileXYZ(twoAxisVelocity, x, rounding_, twoAxisVelocity, y, rounding_,0,0,0, MCLhandle_);
-		
-      if (err != MCL_SUCCESS)
-			return err;
-      lastX_ += x;
-      lastY_ += y;
-	}
+	double xGoal = xCurrent + x;
+	double yGoal = yCurrent + y;
 
-	PauseDevice();
-	return DEVICE_OK;
+	return SetPositionMm(xGoal, yGoal);
 }
 
 int MicroDriveXYStage::GetPositionMm(double& x, double& y)
@@ -817,9 +861,57 @@ int MicroDriveXYStage::OnEncoded(MM::PropertyBase* pProp, MM::ActionType eAct)
 	}
 	else if (eAct == MM::AfterSet)
 	{
-   	string message;
-      pProp->Get(message);
+   		string message;
+		pProp->Get(message);
 		encoded_ = (message.compare(g_Listword_Yes) == 0);
+	}
+
+	return DEVICE_OK;
+}
+
+int MicroDriveXYStage::OnIterativeMove(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet)
+	{
+	    pProp->Set(iterativeMoves_ ? g_Listword_Yes : g_Listword_No);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+	   	string message;
+		pProp->Get(message);
+		iterativeMoves_ = (message.compare(g_Listword_Yes) == 0);
+	}
+
+	return DEVICE_OK;
+}
+
+int MicroDriveXYStage::OnImRetry(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set((long)imRetry_);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		long retries = 0;
+		pProp->Get(retries);
+		imRetry_ = retries;
+	}
+
+	return DEVICE_OK;
+}
+
+int MicroDriveXYStage::OnImToleranceUm(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set(imToleranceUm_);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		double tol;
+		pProp->Get(tol);
+		imToleranceUm_ = tol;
 	}
 
 	return DEVICE_OK;

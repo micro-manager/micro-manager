@@ -57,7 +57,7 @@ public:
 private:
    bool open_;       // true when LED turned on
    int intensity_;   // intensity from 1 to 100 (controller reports 0 intensity if off, we use that to set open_)
-   int channel_; 
+   int channel_;     // 0 for LED on 2-axis card, 1-4 for TGLED card
    char channelAxisChar_;
    int UpdateOpenIntensity();
 };

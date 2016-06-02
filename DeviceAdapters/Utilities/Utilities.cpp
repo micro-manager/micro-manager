@@ -48,6 +48,7 @@ const char* g_DeviceNameDAMonochromator = "DA Monochromator";
 const char* g_DeviceNameDAZStage = "DA Z Stage";
 const char* g_DeviceNameDAXYStage = "DA XY Stage";
 const char* g_DeviceNameDATTLStateDevice = "DA TTL State Device";
+const char* g_DeviceNameMultiDAStateDevice = "Multi DA State Device";
 const char* g_DeviceNameAutoFocusStage = "AutoFocus Stage";
 const char* g_DeviceNameStateDeviceShutter = "State Device Shutter";
 
@@ -80,6 +81,7 @@ MODULE_API void InitializeModuleData()
    RegisterDevice(g_DeviceNameDAZStage, MM::StageDevice, "DA-controlled Z-stage");
    RegisterDevice(g_DeviceNameDAXYStage, MM::XYStageDevice, "DA-controlled XY-stage");
    RegisterDevice(g_DeviceNameDATTLStateDevice, MM::StateDevice, "Several DAs as a TTL state device");
+   RegisterDevice(g_DeviceNameMultiDAStateDevice, MM::StateDevice, "Several DAs as a single state device allowing digital masking");
    RegisterDevice(g_DeviceNameAutoFocusStage, MM::StageDevice, "AutoFocus offset acting as a Z-stage");
    RegisterDevice(g_DeviceNameStateDeviceShutter, MM::ShutterDevice, "State device used as a shutter");
 }
@@ -105,6 +107,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       return new DAXYStage();
    } else if (strcmp(deviceName, g_DeviceNameDATTLStateDevice) == 0) {
       return new DATTLStateDevice();
+   } else if (strcmp(deviceName, g_DeviceNameMultiDAStateDevice) == 0) {
+      return new MultiDAStateDevice();
    } else if (strcmp(deviceName, g_DeviceNameAutoFocusStage) == 0) { 
       return new AutoFocusStage();
    } else if (strcmp(deviceName, g_DeviceNameStateDeviceShutter) == 0) {
@@ -3299,6 +3303,401 @@ int DATTLStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
             if (ret != DEVICE_OK)
                return ret;
          }
+      }
+   }
+   return DEVICE_OK;
+}
+
+
+MultiDAStateDevice::MultiDAStateDevice() :
+   numberOfDADevices_(1),
+   minVoltage_(0.0),
+   maxVoltage_(5.0),
+   initialized_(false),
+   mask_(0L),
+   lastChangeTime_(0, 0)
+{
+   CPropertyAction* pAct = new CPropertyAction(this,
+      &MultiDAStateDevice::OnNumberOfDADevices);
+   CreateIntegerProperty("NumberOfDADevices",
+      static_cast<long>(numberOfDADevices_),
+      false, pAct, true);
+   for (int i = 1; i <= 8; ++i)
+   {
+      AddAllowedValue("NumberOfDADevices", boost::lexical_cast<std::string>(i).c_str());
+   }
+
+   pAct = new CPropertyAction(this, &MultiDAStateDevice::OnMinVoltage);
+   CreateFloatProperty("MinimumVoltage", minVoltage_, false, pAct, true);
+   pAct = new CPropertyAction(this, &MultiDAStateDevice::OnMaxVoltage);
+   CreateFloatProperty("MaximumVoltage", maxVoltage_, false, pAct, true);
+
+   EnableDelay(true);
+}
+
+
+MultiDAStateDevice::~MultiDAStateDevice()
+{
+   Shutdown();
+}
+
+
+int MultiDAStateDevice::Initialize()
+{
+   if (initialized_)
+      return DEVICE_OK;
+
+   daDeviceLabels_.clear();
+   daDevices_.clear();
+   voltages_.clear();
+   for (int i = 0; i < numberOfDADevices_; ++i)
+   {
+      daDeviceLabels_.push_back("");
+      daDevices_.push_back(0);
+      voltages_.push_back(0.0);
+   }
+
+   // Get labels of DA (SignalIO) devices
+   std::vector<std::string> daDevices;
+   char deviceName[MM::MaxStrLength];
+   unsigned int deviceIterator = 0;
+   for (;;)
+   {
+      GetLoadedDeviceOfType(MM::SignalIODevice, deviceName, deviceIterator++);
+      if( 0 < strlen(deviceName))
+      {
+         daDevices.push_back(std::string(deviceName));
+      }
+      else
+         break;
+   }
+
+   for (int i = 0; i < numberOfDADevices_; ++i)
+   {
+      const std::string propName =
+         "DADevice-" + boost::lexical_cast<std::string>(i);
+      CPropertyActionEx* pAct = new CPropertyActionEx(this,
+         &MultiDAStateDevice::OnDADevice, i);
+      int ret = CreateStringProperty(propName.c_str(), "", false, pAct);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      AddAllowedValue(propName.c_str(), "");
+      for (std::vector<std::string>::const_iterator it = daDevices.begin(),
+         end = daDevices.end(); it != end; ++it)
+      {
+         AddAllowedValue(propName.c_str(), it->c_str());
+      }
+   }
+
+   int numPos = GetNumberOfPositions();
+   for (int i = 0; i < numPos; ++i)
+   {
+      SetPositionLabel(i, boost::lexical_cast<std::string>(i).c_str());
+   }
+
+   if (minVoltage_ > maxVoltage_)
+   {
+      std::swap(minVoltage_, maxVoltage_);
+   }
+
+   CPropertyAction* pAct = new CPropertyAction(this, &MultiDAStateDevice::OnState);
+   int ret = CreateIntegerProperty(MM::g_Keyword_State, 0, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+   SetPropertyLimits(MM::g_Keyword_State, 0, numPos - 1);
+
+   pAct = new CPropertyAction(this, &MultiDAStateDevice::OnLabel);
+   ret = CreateStringProperty(MM::g_Keyword_Label, "0", false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   ret = CreateIntegerProperty(MM::g_Keyword_Closed_Position, 0, false);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   for (int i = 0; i < numberOfDADevices_; ++i)
+   {
+      const std::string propName =
+         "DADevice-" + boost::lexical_cast<std::string>(i) + "-Voltage";
+      CPropertyActionEx* pAct = new CPropertyActionEx(this,
+            &MultiDAStateDevice::OnVoltage, i);
+      int ret = CreateFloatProperty(propName.c_str(), voltages_[i],
+            false, pAct);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      ret = SetPropertyLimits(propName.c_str(), minVoltage_, maxVoltage_);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+
+   initialized_ = true;
+   return DEVICE_OK;
+}
+
+
+int MultiDAStateDevice::Shutdown()
+{
+   if (!initialized_)
+      return DEVICE_OK;
+
+   daDeviceLabels_.clear();
+   daDevices_.clear();
+   voltages_.clear();
+
+   initialized_ = false;
+   return DEVICE_OK;
+}
+
+
+void MultiDAStateDevice::GetName(char* name) const
+{
+   CDeviceUtils::CopyLimitedString(name, g_DeviceNameMultiDAStateDevice);
+}
+
+
+bool MultiDAStateDevice::Busy()
+{
+   // We are busy if any of the underlying DA devices are busy, OR
+   // the delay interval has not yet elapsed.
+
+   for (int i = 0; i < numberOfDADevices_; ++i)
+   {
+      MM::SignalIO* da = daDevices_[i];
+      if (da && da->Busy())
+         return true;
+   }
+
+   MM::MMTime delay(GetDelayMs() * 1000.0);
+   if (GetCurrentMMTime() < lastChangeTime_ + delay)
+      return true;
+
+   return false;
+}
+
+
+unsigned long MultiDAStateDevice::GetNumberOfPositions() const
+{
+   return 1 << numberOfDADevices_;
+}
+
+
+int MultiDAStateDevice::OnNumberOfDADevices(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(static_cast<long>(numberOfDADevices_));
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long num;
+      pProp->Get(num);
+      numberOfDADevices_ = num;
+   }
+   return DEVICE_OK;
+}
+
+
+int MultiDAStateDevice::OnMinVoltage(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(minVoltage_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(minVoltage_);
+   }
+   return DEVICE_OK;
+}
+
+
+int MultiDAStateDevice::OnMaxVoltage(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(maxVoltage_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(maxVoltage_);
+   }
+   return DEVICE_OK;
+}
+
+
+int MultiDAStateDevice::OnDADevice(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(daDeviceLabels_[index].c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string da;
+      pProp->Get(da);
+      daDeviceLabels_[index] = da;
+      if (!da.empty())
+      {
+         MM::Device* daDevice = GetDevice(da.c_str());
+         daDevices_[index] = static_cast<MM::SignalIO*>(daDevice);
+      }
+      else
+      {
+         daDevices_[index] = 0;
+      }
+   }
+   return DEVICE_OK;
+}
+
+
+int MultiDAStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(mask_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      bool gateOpen;
+      GetGateOpen(gateOpen);
+      long gatedMask = 0;
+      pProp->Get(gatedMask);
+      long mask = gatedMask;
+      if (!gateOpen)
+      {
+         GetProperty(MM::g_Keyword_Closed_Position, mask);
+      }
+
+      for (int i = 0; i < numberOfDADevices_; ++i)
+      {
+         if (daDevices_[i])
+         {
+            double volts = voltages_[i];
+            int ret = daDevices_[i]->SetSignal((mask & (1 << i)) ? volts : 0.0);
+            lastChangeTime_ = GetCurrentMMTime();
+            if (ret != DEVICE_OK)
+               return ret;
+         }
+      }
+      mask_ = gatedMask;
+   }
+   else if (eAct == MM::IsSequenceable)
+   {
+      bool allSequenceable = true;
+      long maxSeqLen = LONG_MAX;
+      for (int i = 0; i < numberOfDADevices_; ++i)
+      {
+         if (daDevices_[i])
+         {
+            bool sequenceable = false;
+            int ret = daDevices_[i]->IsDASequenceable(sequenceable);
+            if (ret != DEVICE_OK)
+               return ret;
+            if (sequenceable)
+            {
+               long daMaxLen = 0;
+               int ret = daDevices_[i]->GetDASequenceMaxLength(daMaxLen);
+               if (ret != DEVICE_OK)
+                  return ret;
+               if (daMaxLen < maxSeqLen)
+                  maxSeqLen = daMaxLen;
+            }
+            else
+            {
+               allSequenceable = false;
+            }
+         }
+      }
+      if (maxSeqLen == LONG_MAX) // No device?
+         maxSeqLen = 0;
+      pProp->SetSequenceable(maxSeqLen);
+   }
+   else if (eAct == MM::AfterLoadSequence)
+   {
+      std::vector<std::string> sequence = pProp->GetSequence();
+      std::vector<long> values;
+      for (std::vector<std::string>::const_iterator it = sequence.begin(),
+         end = sequence.end(); it != end; ++it)
+      {
+         try
+         {
+            values.push_back(boost::lexical_cast<long>(*it));
+         }
+         catch (boost::bad_lexical_cast&)
+         {
+            return DEVICE_ERR;
+         }
+      }
+
+      for (int i = 0; i < numberOfDADevices_; ++i)
+      {
+         if (daDevices_[i])
+         {
+            int ret = daDevices_[i]->ClearDASequence();
+            if (ret != DEVICE_OK)
+               return ret;
+            for (std::vector<long>::const_iterator it = values.begin(),
+               end = values.end(); it != end; ++it)
+            {
+               double volts = voltages_[i];
+               int ret = daDevices_[i]->AddToDASequence(*it & (1 << i) ? volts : 0.0);
+               if (ret != DEVICE_OK)
+                  return ret;
+            }
+            ret = daDevices_[i]->SendDASequence();
+            if (ret != DEVICE_OK)
+               return ret;
+         }
+      }
+   }
+   else if (eAct == MM::StartSequence)
+   {
+      for (int i = 0; i < numberOfDADevices_; ++i)
+      {
+         if (daDevices_[i])
+         {
+            int ret = daDevices_[i]->StartDASequence();
+            if (ret != DEVICE_OK)
+               return ret;
+         }
+      }
+   }
+   else if (eAct == MM::StopSequence)
+   {
+      for (int i = 0; i < numberOfDADevices_; ++i)
+      {
+         if (daDevices_[i])
+         {
+            int ret = daDevices_[i]->StopDASequence();
+            if (ret != DEVICE_OK)
+               return ret;
+         }
+      }
+   }
+   return DEVICE_OK;
+}
+
+
+int MultiDAStateDevice::OnVoltage(MM::PropertyBase* pProp, MM::ActionType eAct, long i)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(voltages_[i]);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(voltages_[i]);
+
+      bool gateOpen;
+      GetGateOpen(gateOpen);
+      if (gateOpen && daDevices_[i] && (mask_ & (1 << i)))
+      {
+         int ret = daDevices_[i]->SetSignal(voltages_[i]);
+         lastChangeTime_ = GetCurrentMMTime();
+         if (ret != DEVICE_OK)
+            return ret;
       }
    }
    return DEVICE_OK;

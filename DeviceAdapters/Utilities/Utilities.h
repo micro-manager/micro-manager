@@ -515,6 +515,53 @@ private:
 };
 
 
+// Use several DA (SignalIO) devices as a state device with adjustable voltage
+class MultiDAStateDevice : public CStateDeviceBase<MultiDAStateDevice>
+{
+public:
+   MultiDAStateDevice();
+   virtual ~MultiDAStateDevice();
+
+   virtual int Initialize();
+   virtual int Shutdown();
+   virtual void GetName(char* name) const;
+   virtual bool Busy();
+
+   virtual unsigned long GetNumberOfPositions() const;
+
+private:
+   // Pre-init property action handlers
+   int OnNumberOfDADevices(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnMinVoltage(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnMaxVoltage(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+   // Post-init property action handlers
+   int OnDADevice(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnVoltage(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
+
+private:
+   // Invariant: daDeviceLabels_, daDevices_, and voltages_ are always size
+   // numberOfDADevices_ once Initialize() returns.
+   size_t numberOfDADevices_;
+   std::vector<std::string> daDeviceLabels_;
+   std::vector<MM::SignalIO*> daDevices_;
+
+   // Voltage range is common to all analog channels and is set before
+   // initialization and remains constant.
+   double minVoltage_;
+   double maxVoltage_;
+
+   bool initialized_;
+
+   std::vector<double> voltages_;
+
+   long mask_;
+
+   MM::MMTime lastChangeTime_;
+};
+
+
 /**
  * Treats an AutoFocus device as a Drive.
  * Can be used to make the AutoFocus offset appear in the position list

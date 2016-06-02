@@ -321,9 +321,9 @@ int CCRISP::ForceSetFocusState(string focusState)
    else if (focusState == g_CRISP_f) // dither
          command << addressChar_ << "LK F=102";
    else if (focusState == g_CRISP_RFO) // reset focus offset
-         command << addressChar_ << "LK F=108";
+         command << addressChar_ << "LK F=111";
 
-   if (command.str() == "")
+		 if (command.str() == "")
       return DEVICE_OK;  // don't complain if we try to set to something else
    else
       return hub_->QueryCommandVerify(command.str(), ":A");

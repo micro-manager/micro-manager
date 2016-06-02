@@ -155,15 +155,12 @@ protected:
 
    static int GetChannelFromExtName(const char* name)
    {
-         vector<string> vName;
+      vector<string> vName;
       CDeviceUtils::Tokenize(name, vName, ":");
       if (vName.size() > 3)
-	  {
-		  return atoi(vName[3].c_str());
- 	  }
-	  else
-         return 1; //default is 1
-   
+         return atoi(vName[3].c_str());
+      else
+         return 0; // if no channel is provided (LED on 2-axis card) return 0
    }
 
    static int double_cmp(const double d1, const double d2)

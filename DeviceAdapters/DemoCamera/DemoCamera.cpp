@@ -3327,10 +3327,18 @@ int DemoShutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 DemoMagnifier::DemoMagnifier () :
       position_ (0),
-      highMag_ (1.6) 
+      zoomPosition_(1.0),
+      highMag_ (1.6),
+      variable_ (false)
 {
    CPropertyAction* pAct = new CPropertyAction (this, &DemoMagnifier::OnHighMag);
    CreateFloatProperty("High Position Magnification", 1.6, false, pAct, true);
+
+   pAct = new CPropertyAction (this, &DemoMagnifier::OnVariable);
+   std::string propName = "Freely variable or fixed magnification";
+   CreateStringProperty(propName.c_str(), "Fixed", false, pAct, true);
+   AddAllowedValue(propName.c_str(), "Fixed");
+   AddAllowedValue(propName.c_str(), "Variable");
 
    // parent ID display
    CreateHubIDProperty();
@@ -3353,17 +3361,27 @@ int DemoMagnifier::Initialize()
    else
       LogMessage(NoHubError);
 
-   CPropertyAction* pAct = new CPropertyAction (this, &DemoMagnifier::OnPosition);
-   int ret = CreateStringProperty("Position", "1x", false, pAct);
-   if (ret != DEVICE_OK) 
-      return ret; 
+   if (variable_)
+   {
+      CPropertyAction* pAct = new CPropertyAction (this, &DemoMagnifier::OnZoom);
+      int ret = CreateFloatProperty("Zoom", zoomPosition_, false, pAct);
+      if (ret != DEVICE_OK) 
+         return ret; 
+      SetPropertyLimits("Zoom", 0.1, highMag_);
+   } else
+   {
+      CPropertyAction* pAct = new CPropertyAction (this, &DemoMagnifier::OnPosition);
+      int ret = CreateStringProperty("Position", "1x", false, pAct);
+      if (ret != DEVICE_OK) 
+         return ret; 
 
-   position_ = 0;
+      position_ = 0;
 
-   AddAllowedValue("Position", "1x"); 
-   AddAllowedValue("Position", highMagString().c_str()); 
+      AddAllowedValue("Position", "1x"); 
+      AddAllowedValue("Position", highMagString().c_str()); 
+   }
 
-   ret = UpdateStatus();
+   int ret = UpdateStatus();
    if (ret != DEVICE_OK)
       return ret;
 
@@ -3377,9 +3395,16 @@ std::string DemoMagnifier::highMagString() {
 }
 
 double DemoMagnifier::GetMagnification() {
-   if (position_ == 0)
-      return 1.0;
-   return highMag_;
+   if (variable_)
+   {
+      return zoomPosition_;
+   }
+   else 
+   {
+      if (position_ == 0)
+         return 1.0;
+      return highMag_;
+   }
 }
 
 int DemoMagnifier::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct) 
@@ -3405,6 +3430,20 @@ int DemoMagnifier::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int DemoMagnifier::OnZoom(MM::PropertyBase* pProp, MM::ActionType eAct) 
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(zoomPosition_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(zoomPosition_);
+      OnMagnifierChanged();
+   }
+   return DEVICE_OK;
+}
+
 int DemoMagnifier::OnHighMag(MM::PropertyBase* pProp, MM::ActionType eAct) 
 {
    if (eAct == MM::BeforeGet)
@@ -3419,6 +3458,27 @@ int DemoMagnifier::OnHighMag(MM::PropertyBase* pProp, MM::ActionType eAct)
       AddAllowedValue("Position", highMagString().c_str()); 
    }
 
+   return DEVICE_OK;
+}
+
+int DemoMagnifier::OnVariable(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      std::string response = "Fixed";
+      if (variable_)
+         response = "Variable";
+      pProp->Set(response.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string response;
+      pProp->Get(response);
+      if (response == "Fixed")
+         variable_ = false;
+      else
+         variable_ = true;
+   }
    return DEVICE_OK;
 }
 

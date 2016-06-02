@@ -357,7 +357,7 @@ const char* const g_TargetSettlingTimePropertyName = "TargetSettlingTime(ms)";
 // LED property names
 const char* const g_LEDIntensityPropertyName = "LED Intensity(%)";
 const char* const g_ShutterState = "State";
-const char* const g_LEDCurrentLimitPropertyName = "Current Limit in milliamps";
+const char* const g_LEDCurrentLimitPropertyName = "Current Limit(mA)";
 
 // clocked device property names
 const char* const g_NumPositionsPropertyName = "NumPositions";

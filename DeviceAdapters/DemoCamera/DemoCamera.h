@@ -694,13 +694,17 @@ public:
    // action interface
    // ----------------
    int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnZoom(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnHighMag(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnVariable(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    std::string highMagString();
 
    int position_;
+   double zoomPosition_;
    double highMag_;
+   bool variable_;
 };
 
 //////////////////////////////////////////////////////////////////////////////

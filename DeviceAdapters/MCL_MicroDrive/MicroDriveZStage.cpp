@@ -13,7 +13,10 @@ MCL_MicroDrive_ZStage::MCL_MicroDrive_ZStage() :
 	initialized_(false),
 	settlingTimeZ_ms_(100),
 	MCLhandle_(0),
-	isMD1_(false)
+	isMD1_(false),
+	iterativeMoves_(false),
+	imRetry_(0),
+	imToleranceUm_(.250)
 {
 	
 	// Basically only construct error messages in the constructor
@@ -492,6 +495,57 @@ int MCL_MicroDrive_ZStage::OnEncoded(MM::PropertyBase* pProp, MM::ActionType eAc
 }
 
 
+int MCL_MicroDrive_ZStage::OnIterativeMove(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet)
+	{
+	    pProp->Set(iterativeMoves_ ? g_Listword_Yes : g_Listword_No);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+	   	string message;
+		pProp->Get(message);
+		iterativeMoves_ = (message.compare(g_Listword_Yes) == 0);
+	}
+
+	return DEVICE_OK;
+}
+
+
+int MCL_MicroDrive_ZStage::OnImRetry(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set((long)imRetry_);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		long retries = 0;
+		pProp->Get(retries);
+		imRetry_ = retries;
+	}
+
+	return DEVICE_OK;
+}
+
+
+int MCL_MicroDrive_ZStage::OnImToleranceUm(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set(imToleranceUm_);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		double tol;
+		pProp->Get(tol);
+		imToleranceUm_ = tol;
+	}
+
+	return DEVICE_OK;
+}
+
+
 int MCL_MicroDrive_ZStage::CreateZStageProperties()
 {
 	int err;
@@ -573,13 +627,37 @@ int MCL_MicroDrive_ZStage::CreateZStageProperties()
 	if (err != DEVICE_OK)
 		return err;
 
+	// Iterative Moves
+	pAct = new CPropertyAction(this, &MCL_MicroDrive_ZStage::OnIterativeMove);
+	err = CreateProperty(g_Keyword_IterativeMove, "No", MM::String, false, pAct);
+	if (err != DEVICE_OK)
+		return err;
+	err = SetAllowedValues(g_Keyword_IterativeMove, yesNoList);
+	if (err != DEVICE_OK)
+		return err;
+
+	// Iterative Retries
+	pAct = new CPropertyAction(this, &MCL_MicroDrive_ZStage::OnImRetry);
+	err = CreateProperty(g_Keyword_ImRetry, "0", MM::Integer, false, pAct);
+	if (err != DEVICE_OK)
+		return err;
+
+	// Iterative Tolerance
+	sprintf(iToChar, "%f", imToleranceUm_);
+	pAct = new CPropertyAction(this, &MCL_MicroDrive_ZStage::OnImToleranceUm);
+	err = CreateProperty(g_Keyword_ImTolerance, iToChar, MM::Float, false, pAct);
+	if (err != DEVICE_OK)
+		return err;
+
 	return DEVICE_OK;
 }
 	
-	
-int MCL_MicroDrive_ZStage::SetPositionMm(double z)
+
+int MCL_MicroDrive_ZStage::SetPositionMm(double goalZ)
 {
 	int err;
+	int currentRetries = 0;
+	bool moveFinished = false;
 
 	//Calculate the absolute position.
 	double zCurrent;
@@ -587,18 +665,59 @@ int MCL_MicroDrive_ZStage::SetPositionMm(double z)
 	if (err != MCL_SUCCESS)
 		return err;
 
-	z -= zCurrent;
+	do 
+	{
+		double zMove = goalZ - zCurrent;
+		if(isMD1_)
+			err = MCL_MD1MoveProfile(velocity_, zMove, rounding_, MCLhandle_);
+		else
+			err = MCL_MicroDriveMoveProfile(axis_, velocity_, zMove, rounding_, MCLhandle_);
+		if (err != MCL_SUCCESS)
+				return err;
+		lastZ_ += zMove;
 
-	if(isMD1_)
-		err = MCL_MD1MoveProfile(velocity_, z, rounding_, MCLhandle_);
-	else
-		err = MCL_MicroDriveMoveProfile(axis_, velocity_, z, rounding_, MCLhandle_);
+		PauseDevice();
 
-	PauseDevice();
+		// Update current position
+		err = GetPositionMm(zCurrent);
+		if (err != MCL_SUCCESS)
+			return err;
+		Sleep(50);
+		err = GetPositionMm(zCurrent);
+		if (err != MCL_SUCCESS)
+			return err;
+
+		if(iterativeMoves_ && encoded_)
+		{
+			double absDiffUmZ = abs(goalZ - zCurrent) * 1000.0; 
+			bool zInTolerance = absDiffUmZ < imToleranceUm_;
+			if(zInTolerance)
+			{
+				moveFinished = true;
+			}
+			else 
+			{
+				currentRetries++;
+				if(currentRetries <= imRetry_)
+				{
+					moveFinished = false;
+				}
+				else
+				{
+					moveFinished = true;
+				}
+			}
+		}
+		else
+		{
+			moveFinished = true;
+		}
+	} while( !moveFinished );
+
 	return DEVICE_OK;
 }
-	
-	
+
+
 int MCL_MicroDrive_ZStage::GetPositionMm(double& z)
 {
 	double tempX, tempY, tempZ;
@@ -638,17 +757,15 @@ int MCL_MicroDrive_ZStage::SetRelativePositionMm(double z)
 {
 	int err;
 
-	if(isMD1_)
-		err = MCL_MD1MoveProfile(velocity_, z, rounding_, MCLhandle_);
-	else
-		err = MCL_MicroDriveMoveProfile(axis_, velocity_, z, rounding_, MCLhandle_);
-
-	if(err != MCL_SUCCESS)
+	//Calculate the absolute position.
+	double zCurrent;
+	err = GetPositionMm(zCurrent);
+	if (err != MCL_SUCCESS)
 		return err;
-	lastZ_ += z;
 
-	PauseDevice();
-	return DEVICE_OK;
+	double zGoal = zCurrent + z;
+
+	return SetPositionMm(zGoal);
 }
 
 
