@@ -366,12 +366,18 @@ public class IntroDlg extends JDialog {
       configs = new ArrayList<String>(new HashSet<String>(configs));
       Collections.sort(configs);
       for (String config : configs) {
-         cfgFileDropperDown_.addItem(config);
+         // Check for the empty config option.
+         if (!config.equals("")) {
+            cfgFileDropperDown_.addItem(config);
+         }
       }
       cfgFileDropperDown_.addItem("(none)");
 
       if (doesExist) {
          cfgFileDropperDown_.setSelectedItem(path);
+      }
+      else if (path.equals("")) {
+         cfgFileDropperDown_.setSelectedItem("(none)");
       }
       else {
          String[] recentlyUsed = getRecentlyUsedConfigs();

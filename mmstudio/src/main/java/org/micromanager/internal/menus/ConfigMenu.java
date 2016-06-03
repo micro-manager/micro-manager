@@ -96,7 +96,7 @@ public class ConfigMenu {
          configItem.setText(Integer.toString(i));
          switchConfigurationMenu_.add(configItem);
       }
-      
+
       switchConfigurationMenu_.setText("Switch Hardware Configuration");
       configMenu_.add(switchConfigurationMenu_);
       switchConfigurationMenu_.setToolTipText("Switch between recently used configurations");
@@ -177,8 +177,12 @@ public class ConfigMenu {
                seenConfigs.contains(configFile)) {
             continue;
          }
+         String label = configFile;
+         if (configFile.equals("")) {
+            label = "(none)";
+         }
          GUIUtils.addMenuItem(switchConfigurationMenu_,
-                 configFile, null,
+                 label, null,
                  new Runnable() {
             @Override
             public void run() {
