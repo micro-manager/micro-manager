@@ -158,6 +158,7 @@
    (merge-with #(or %2 %1) ; only overwrite tags if generated tag is not nil
      (:tags img)
      (generate-metadata event state)
+     {"StateCache-keys" (JSONArray. (keys (:system-state state)))}
      {"ElapsedTime-ms" elapsed-time-ms}
      )}) ;; include any existing metadata
 

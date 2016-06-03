@@ -758,27 +758,45 @@ public class MDUtils {
     * lot into a PropertyMap.
     */
    public static PropertyMap extractScopeData(JSONObject tags) {
-      HashSet<String> devices = new HashSet<String>();
-      for (String device : MMStudio.getInstance().getCore().getLoadedDevices()) {
-         devices.add(device + "-");
-      }
-
       DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();
-      for (String key : getKeys(tags)) {
-         boolean shouldKeep = false;
-         for (String device : devices) {
-            if (key.startsWith(device)) {
-               shouldKeep = true;
-               break;
-            }
-         }
-         if (shouldKeep) {
-            try {
+      if (tags.has("StateCache-keys")) {
+         // Rely on the specified scope data values.
+         try {
+            JSONArray keys = tags.getJSONArray("StateCache-keys");
+            for (int i = 0; i < keys.length(); ++i) {
+               String key = keys.getString(i);
                putProperty(builder, key, tags.get(key));
             }
-            catch (JSONException e) {
-               // This should never happen.
-               ReportingUtils.logError(e, "Error extracting key " + key + " from JSON tags");
+         }
+         catch (JSONException e) {
+            // This should never happen.
+            ReportingUtils.logError(e, "Error extracting specified scope data values");
+         }
+      }
+      else {
+         // Determine valid device names and extract values by examining
+         // property names.
+         HashSet<String> devices = new HashSet<String>();
+         for (String device : MMStudio.getInstance().getCore().getLoadedDevices()) {
+            devices.add(device + "-");
+         }
+
+         for (String key : getKeys(tags)) {
+            boolean shouldKeep = false;
+            for (String device : devices) {
+               if (key.startsWith(device)) {
+                  shouldKeep = true;
+                  break;
+               }
+            }
+            if (shouldKeep) {
+               try {
+                  putProperty(builder, key, tags.get(key));
+               }
+               catch (JSONException e) {
+                  // This should never happen.
+                  ReportingUtils.logError(e, "Error extracting key " + key + " from JSON tags");
+               }
             }
          }
       }
