@@ -250,6 +250,8 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
                  canvas_.getHeight() - 2 * DisplayWindow.CANVAS_PIXEL_BORDER);
 
          super.getHyperImage().setStack(newStack);
+         //remove scrollbars that get added
+         ((DisplayWindow)super.getHyperImage().getWindow()).removeIJScrollbars();
       } catch (NoSuchFieldException ex) {
          Log.log("Couldn't change ImageCanvas width");
       } catch (NullPointerException exc) {

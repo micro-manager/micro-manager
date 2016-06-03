@@ -1065,7 +1065,7 @@
                                   <Group type="102" alignment="0" attributes="0">
                                       <Component id="checkBox3D_" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace min="-2" pref="40" max="-2" attributes="0"/>
-                                      <Component id="zStepLabel" min="-2" max="-2" attributes="0"/>
+                                      <Component id="zStepLabel_" min="-2" max="-2" attributes="0"/>
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="zStepSpinner_" min="-2" pref="77" max="-2" attributes="0"/>
                                       <EmptySpace min="-2" pref="37" max="-2" attributes="0"/>
@@ -1073,7 +1073,7 @@
                                       <EmptySpace max="-2" attributes="0"/>
                                       <Component id="acqOverlapPercentSpinner_" min="-2" pref="65" max="-2" attributes="0"/>
                                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                      <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tileOverlapPercentLabel_" min="-2" max="-2" attributes="0"/>
                                   </Group>
                                   <Group type="102" alignment="0" attributes="0">
                                       <Group type="103" groupAlignment="0" attributes="0">
@@ -1103,10 +1103,10 @@
                                   <Component id="checkBox3D_" min="-2" max="-2" attributes="0"/>
                                   <Group type="103" groupAlignment="3" attributes="0">
                                       <Component id="zStepSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="zStepLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="zStepLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="acqTileOverlapLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                                       <Component id="acqOverlapPercentSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
-                                      <Component id="jLabel4" alignment="3" min="-2" max="-2" attributes="0"/>
+                                      <Component id="tileOverlapPercentLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                                   </Group>
                               </Group>
                               <Group type="103" groupAlignment="0" attributes="0">
@@ -1698,7 +1698,7 @@
                         </Component>
                       </SubComponents>
                     </Container>
-                    <Component class="javax.swing.JLabel" name="zStepLabel">
+                    <Component class="javax.swing.JLabel" name="zStepLabel_">
                       <Properties>
                         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                           <Font name="Tahoma" size="14" style="0"/>
@@ -1823,7 +1823,7 @@
                         <EventHandler event="stateChanged" listener="javax.swing.event.ChangeListener" parameters="javax.swing.event.ChangeEvent" handler="acqOverlapPercentSpinner_StateChanged"/>
                       </Events>
                     </Component>
-                    <Component class="javax.swing.JLabel" name="jLabel4">
+                    <Component class="javax.swing.JLabel" name="tileOverlapPercentLabel_">
                       <Properties>
                         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                           <Font name="Tahoma" size="14" style="0"/>

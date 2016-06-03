@@ -62,14 +62,14 @@ public class GlobalSettings {
          String s = Magellan.getConfigFileName();
          if (s.endsWith("MagellanDemo.cfg")) {
             //generate a dummy affine transformation for current pixel size config
-             String psConfig = MMStudio.getInstance().getCore().getCurrentPixelSizeConfig();
-             AffineTransform demoTransform = new AffineTransform(new double[]{1,0,0,1});
-             AffineUtils.storeAffineTransform(psConfig, demoTransform);
-             //Set stage to the middle of the demo sample
-             Magellan.getCore().setXYPosition(700, 700);         
+            String psConfig = MMStudio.getInstance().getCore().getCurrentPixelSizeConfig();
+            AffineTransform demoTransform = new AffineTransform(new double[]{1, 0, 0, 1});
+            AffineUtils.storeAffineTransform(psConfig, demoTransform);
+            //Set stage to the middle of the demo sample
+            Magellan.getCore().setXYPosition(700, 700);
             demoMode_ = true;
             new DemoModeImageData();
-         } 
+         }
          bidc2P_ = Magellan.getCore().getCameraDevice().equals("BitFlowCamera") || Magellan.getCore().getCameraDevice().equals("BitFlowCameraX2");
       } catch (Exception e) {
           Log.log("Couldn't initialize Demo mode");

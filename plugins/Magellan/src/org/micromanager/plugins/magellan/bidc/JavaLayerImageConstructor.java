@@ -216,7 +216,7 @@ public class JavaLayerImageConstructor {
         } else {
             if (GlobalSettings.getInstance().getDemoMode()) {
                 //add demo image
-                for (int c = 0; c < 6; c++) {
+                for (int c = 0; c < DemoModeImageData.getNumChannels(); c++) {
                     JSONObject tags = convertTaggedImage(core_.getTaggedImage()).tags;
                     MD.setChannelIndex(tags, c);
                     MagellanEngine.addImageMetadata(tags, event, event.timeIndex_, c, currentTime - event.acquisition_.getStartTime_ms(), 1);

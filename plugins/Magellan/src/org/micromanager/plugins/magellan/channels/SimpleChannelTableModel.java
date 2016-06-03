@@ -27,6 +27,7 @@ import org.micromanager.plugins.magellan.main.Magellan;
 import org.micromanager.plugins.magellan.misc.GlobalSettings;
 import mmcorej.CMMCore;
 import org.micromanager.api.events.ExposureChangedEvent;
+import org.micromanager.plugins.magellan.demo.DemoModeImageData;
 
 /**
  *
@@ -152,7 +153,7 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
    @Override
    public void setValueAt(Object value, int row, int columnIndex) {
       //use name exposure, color  
-      int numCamChannels = (int) (GlobalSettings.getInstance().getDemoMode() ? 6 : core_.getNumberOfCameraChannels());
+      int numCamChannels = (int) (GlobalSettings.getInstance().getDemoMode() ? DemoModeImageData.getNumChannels() : core_.getNumberOfCameraChannels());
       
       if (columnIndex == 0) {                   
          channels_.get(row).use_ = (Boolean) value;

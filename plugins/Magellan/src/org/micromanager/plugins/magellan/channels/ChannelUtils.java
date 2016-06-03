@@ -24,6 +24,7 @@ import org.micromanager.plugins.magellan.main.Magellan;
 import org.micromanager.plugins.magellan.misc.GlobalSettings;
 import org.micromanager.plugins.magellan.misc.Log;
 import mmcorej.StrVector;
+import org.micromanager.plugins.magellan.demo.DemoModeImageData;
 
 /**
  *
@@ -57,7 +58,7 @@ public class ChannelUtils {
    }
 
    public static ArrayList<ChannelSetting> getAvailableChannels(String channelGroup) {
-      int numCamChannels = (int) (GlobalSettings.getInstance().getDemoMode() ? 6 : Magellan.getCore().getNumberOfCameraChannels());
+      int numCamChannels = (int) (GlobalSettings.getInstance().getDemoMode() ? DemoModeImageData.getNumChannels() : Magellan.getCore().getNumberOfCameraChannels());
       ArrayList<ChannelSetting> channels = new ArrayList<ChannelSetting>();
       double exposure = 10;
       try {

@@ -45,6 +45,8 @@ import org.micromanager.plugins.magellan.misc.GlobalSettings;
 import org.micromanager.plugins.magellan.misc.Log;
 import org.micromanager.plugins.magellan.misc.MD;
 import mmcorej.CMMCore;
+import org.micromanager.plugins.magellan.demo.DemoModeImageData;
+import org.micromanager.plugins.magellan.gui.GUI;
 import org.micromanager.plugins.magellan.propsandcovariants.CovariantPairing;
 
 /**
@@ -142,10 +144,10 @@ public class MagellanEngine {
     * Called by run acquisition button
     */
    public void runFixedAreaAcquisition(final FixedAreaAcquisitionSettings settings) {
-      try {
+      try {                   
          runInterleavedAcquisitions(Arrays.asList(new FixedAreaAcquisitionSettings[]{settings}), false);
       } catch (Exception ex) {
-         Log.log(ex);
+         Log.log(ex);                   
       }
    }
 
@@ -223,13 +225,22 @@ public class MagellanEngine {
       acqExecutor_.submit(new Runnable() {
          @Override
          public void run() {
+            if (!(acq instanceof ExploreAcquisition)) {
+               GUI.getInstance().acquisitionRunning(true);
+            }
             while (true) {
                try {
                   if (Thread.interrupted()) {
+                     if (!(acq instanceof ExploreAcquisition)) {
+                        GUI.getInstance().acquisitionRunning(false);
+                     }
                      return;
                   }
                   AcquisitionEvent event = acq.getNextEvent();
                   if (event.isEngineTaskFinishedEvent()) {
+                     if (!(acq instanceof ExploreAcquisition)) {
+                        GUI.getInstance().acquisitionRunning(false);
+                     }
                      break; //this parallel group or explore acqusition is done
                   }
                   executeAcquisitionEvent(event);
@@ -504,7 +515,7 @@ public class MagellanEngine {
 
    public static JSONObject makeSummaryMD(Acquisition acq, String prefix) {
       //num channels is camera channels * acquisitionChannels
-      int numChannels = GlobalSettings.getInstance().getDemoMode() ? 6 : acq.getNumChannels();
+      int numChannels = GlobalSettings.getInstance().getDemoMode() ? DemoModeImageData.getNumChannels() : acq.getNumChannels();
 
       CMMCore core = Magellan.getCore();
       JSONObject summary = new JSONObject();

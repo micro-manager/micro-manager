@@ -33,6 +33,9 @@ import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.text.DecimalFormat;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -78,6 +81,7 @@ public class SubImageControls extends Panel {
          Log.log("Problem initializing subimage controls");
          Log.log(e);
       }
+
    }
 
    /**
@@ -287,7 +291,7 @@ public class SubImageControls extends Panel {
 
          @Override
          public void onNewImageEvent(NewImageEvent event) {
-            // show/expand z scroll bar if needed
+            // show/expand z scroll bar if needed     
             if (acq_.getNumSlices() > scrollerPanel_.getMaxPosition("z")) {
                for (AxisScroller scroller : scrollers_) {
                   if (scroller.getAxis().equals("z") && scroller.getMaximum() == 1) {
