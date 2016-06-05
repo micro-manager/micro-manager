@@ -63,7 +63,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    //surface coordinates are neccessarily associated with the coordinate space of particular xy and z devices
    private final  String xyDeviceName_, zDeviceName_;
    private final boolean towardsSampleIsPositive_;
-   private volatile TreeSet<Point3d> points_;
+   protected volatile TreeSet<Point3d> points_;
    private MonotoneChain mChain_;
    private final RegionFactory<Euclidean2D> regionFacotry_ = new RegionFactory<Euclidean2D>();
    protected volatile Vector2D[] convexHullVertices_;
@@ -237,7 +237,7 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       }
    }
    
-   public boolean isSurfaceDefinedAtPosition(XYStagePosition position) {
+   public boolean isDefinedAtPosition(XYStagePosition position) {
       //create square region correpsonding to stage pos
       Region<Euclidean2D> square = getStagePositionRegion(position);
       //if convex hull and position have no intersection, delete
@@ -254,8 +254,8 @@ public abstract class SurfaceInterpolator implements XYFootprint {
     * 
     * @return true if every part of position is above surface, false otherwise
     */
-   public boolean isPositionCompletelyAboveSurface(XYStagePosition pos, SurfaceInterpolator surface, double zPos) throws InterruptedException {
-      return testPositionRelativeToSurface(pos, surface, zPos, ABOVE_SURFACE);
+   public boolean isPositionCompletelyAboveSurface(XYStagePosition pos, SurfaceInterpolator surface, double zPos, boolean extrapolate) throws InterruptedException {
+      return testPositionRelativeToSurface(pos, surface, zPos, ABOVE_SURFACE, extrapolate);
    }
   
    /**
@@ -263,23 +263,30 @@ public abstract class SurfaceInterpolator implements XYFootprint {
     *
     * @return true if every part of position is above surface, false otherwise
     */
-   public boolean isPositionCompletelyBelowSurface(XYStagePosition pos, SurfaceInterpolator surface, double zPos ) throws InterruptedException {
-      return testPositionRelativeToSurface(pos, surface, zPos, BELOW_SURFACE);
+   public boolean isPositionCompletelyBelowSurface(XYStagePosition pos, SurfaceInterpolator surface, double zPos, boolean extrapolate ) throws InterruptedException {
+      return testPositionRelativeToSurface(pos, surface, zPos, BELOW_SURFACE, extrapolate);
    }
    
    /**
     * test whether XY position is completely abve or completely below surface
     * @throws InterruptedException 
     */
-   public boolean testPositionRelativeToSurface(XYStagePosition pos, SurfaceInterpolator surface, double zPos, int mode) throws InterruptedException {
+   public boolean testPositionRelativeToSurface(XYStagePosition pos, SurfaceInterpolator surface, double zPos, 
+           int mode, boolean extrapolate) throws InterruptedException {
       //get the corners with padding added in
       Point2D.Double[] corners = getPositionCornersWithPadding(pos, surface.xyPadding_um_);
       //First check position corners before going into a more detailed set of test points
       for (Point2D.Double point : corners) {
-           if (!surface.waitForCurentInterpolation().isInterpDefined(point.x, point.y)) {
-             continue;
+         float interpVal;
+         if (!surface.waitForCurentInterpolation().isInterpDefined(point.x, point.y)) {
+            if (extrapolate) {
+               interpVal = surface.getExtrapolatedValue(point.x, point.y);
+            } else {
+               continue;
+            }
+         } else {
+            interpVal = surface.waitForCurentInterpolation().getInterpolatedValue(point.x, point.y);
          }
-         float interpVal = surface.waitForCurentInterpolation().getInterpolatedValue(point.x, point.y);
          if ((towardsSampleIsPositive_ && mode == ABOVE_SURFACE && zPos >= interpVal)
                  || (towardsSampleIsPositive_ && mode == BELOW_SURFACE && zPos <= interpVal)
                  || (!towardsSampleIsPositive_ && mode == ABOVE_SURFACE && zPos <= interpVal)
@@ -312,10 +319,16 @@ public abstract class SurfaceInterpolator implements XYFootprint {
             Point2D.Double stageCoords = new Point2D.Double();
             transform.transform(new Point2D.Double(x, y), stageCoords);
             //test point for inclusion of position
+            float interpVal;
             if (!surface.waitForCurentInterpolation().isInterpDefined(stageCoords.x, stageCoords.y)) {
-               continue;
+               if (extrapolate) {
+                  interpVal = surface.getExtrapolatedValue(stageCoords.x, stageCoords.y);
+               } else {
+                  continue;
+               }
+            } else {
+               interpVal = surface.waitForCurentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y);
             }
-            float interpVal = surface.waitForCurentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y);
             if ((towardsSampleIsPositive_ && mode == ABOVE_SURFACE && zPos >= interpVal)
                     || (towardsSampleIsPositive_ && mode == BELOW_SURFACE && zPos <= interpVal)
                     || (!towardsSampleIsPositive_ && mode == ABOVE_SURFACE && zPos <= interpVal)
@@ -351,11 +364,11 @@ public abstract class SurfaceInterpolator implements XYFootprint {
       ArrayList<XYStagePosition> positionsAtSlice = new ArrayList<XYStagePosition>();
       for (XYStagePosition pos : xyPositions_) {
          if (!above) {
-            if (!isPositionCompletelyAboveSurface(pos, this, zPos)) { //not completely above = below
+            if (!isPositionCompletelyAboveSurface(pos, this, zPos, false)) { //not completely above = below
                positionsAtSlice.add(pos);
             }
          } else {
-            if (!isPositionCompletelyBelowSurface(pos, this, zPos)) { // not completely below = above
+            if (!isPositionCompletelyBelowSurface(pos, this, zPos, false)) { // not completely below = above
                positionsAtSlice.add(pos);
             }
          }
@@ -448,6 +461,11 @@ public abstract class SurfaceInterpolator implements XYFootprint {
    }
 
    protected abstract void interpolateSurface(LinkedList<Point3d> points) throws InterruptedException;
+   
+   /**
+    * calculated ad hoc unlike interpolated values which are cached
+    */
+   public abstract float getExtrapolatedValue(double x, double y);
 
    private void fitXYPositionsToConvexHull(double overlap) throws InterruptedException {
       int fullTileWidth = JavaLayerImageConstructor.getInstance().getImageWidth();

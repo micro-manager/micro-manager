@@ -14,19 +14,22 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-
 package org.micromanager.plugins.magellan.surfacesandregions;
 
 import delaunay_triangulation.Delaunay_Triangulation;
 import delaunay_triangulation.Point_dt;
 import delaunay_triangulation.Triangle_dt;
+import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.TreeMap;
 import org.micromanager.plugins.magellan.main.Magellan;
 import org.apache.commons.math3.geometry.euclidean.threed.Line;
 import org.apache.commons.math3.geometry.euclidean.threed.Plane;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.apache.commons.math3.geometry.partitioning.Region;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Subclass that implements a particular interpolation method This one creates a
@@ -36,7 +39,7 @@ import org.apache.commons.math3.geometry.partitioning.Region;
 public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
 
    private static final double TOLERANCE = 0.01;
-   
+
    public SurfaceInterpolatorSimple(String xyName, String zName) {
       super(xyName, zName);
    }
@@ -86,10 +89,10 @@ public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
                   Vector3D v3 = new Vector3D(tri.p3().x(), tri.p3().y(), tri.p3().z());
                   Plane plane = new Plane(v1, v2, v3, TOLERANCE);
                   //intersetion of vertical line at these x+y values with plane gives point in plane
-                  Vector3D pointInPlane = plane.intersection(new Line(new Vector3D(xVal, yVal, 0), new Vector3D(xVal, yVal, 1),TOLERANCE));
-                  float zVal =  (float) pointInPlane.getZ();                  
+                  Vector3D pointInPlane = plane.intersection(new Line(new Vector3D(xVal, yVal, 0), new Vector3D(xVal, yVal, 1), TOLERANCE));
+                  float zVal = (float) pointInPlane.getZ();
                   interpVals[yInd][xInd] = zVal;
-                  float angle = (float) (Vector3D.angle(plane.getNormal(),new Vector3D(0, 0, 1)) / Math.PI * 180.0);
+                  float angle = (float) (Vector3D.angle(plane.getNormal(), new Vector3D(0, 0, 1)) / Math.PI * 180.0);
                   interpNormals[yInd][xInd] = angle;
                   interpDefined[yInd][xInd] = true;
                } else {
@@ -101,8 +104,8 @@ public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
             throw new InterruptedException();
          }
          synchronized (interpolationLock_) {
-            currentInterpolation_ = new SingleResolutionInterpolation(pixelsPerInterpPoint, interpDefined, interpVals, interpNormals, 
-            boundXMin_, boundXMax_, boundYMin_, boundYMax_,
+            currentInterpolation_ = new SingleResolutionInterpolation(pixelsPerInterpPoint, interpDefined, interpVals, interpNormals,
+                    boundXMin_, boundXMax_, boundYMin_, boundYMax_,
                     convexHullRegion_, convexHullVertices_, getPoints());
             interpolationLock_.notifyAll();
          }
@@ -111,5 +114,38 @@ public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
       }
    }
 
+   @Override
+   public float getExtrapolatedValue(double x, double y) {
+      //duplicate points for thread safety
+     final LinkedList<Point3d> points = new LinkedList<Point3d>(points_);
+
+      //find 3 closest points and calculate value
+      //find closest convex hull vertex
+      TreeMap<Double, Point3d> closest = new TreeMap<Double, Point3d>();
+      Iterator<Point3d> vertices = points.iterator();
+      for (int i = 0; i < 3; i++) {
+         Point3d vertex3 = vertices.next();
+         Vector2D vertex = new Vector2D(vertex3.x, vertex3.y);
+         closest.put(vertex.distance(new Vector2D(x, y)), vertex3);
+      }
+      while (vertices.hasNext()) {
+         Point3d vertex3 = vertices.next();
+         Vector2D vertex = new Vector2D(vertex3.x, vertex3.y);
+         double distance = vertex.distance(new Vector2D(x, y));
+         if (distance < closest.lastKey()) {
+            closest.put(distance, vertex3);
+            closest.remove(closest.lastKey());
+         }
+      }
+      Point3d[] closestPointList = closest.values().toArray(new Point3d[0]);
+      Vector3D v1 = new Vector3D(closestPointList[0].x, closestPointList[0].y, closestPointList[0].z);
+      Vector3D v2 = new Vector3D(closestPointList[1].x, closestPointList[1].y, closestPointList[1].z);
+      Vector3D v3 = new Vector3D(closestPointList[2].x, closestPointList[2].y, closestPointList[2].z);
+      Plane plane = new Plane(v1, v2, v3, TOLERANCE);
+      //intersetion of vertical line at these x+y values with plane gives point in plane
+      Vector3D pointInPlane = plane.intersection(new Line(new Vector3D(x, y, 0), new Vector3D(x, y, 1), TOLERANCE));
+      float zVal = (float) pointInPlane.getZ();
+      return zVal;
+   }
 
 }

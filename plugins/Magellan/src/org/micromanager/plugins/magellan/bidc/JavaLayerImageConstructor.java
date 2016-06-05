@@ -233,18 +233,14 @@ public class JavaLayerImageConstructor {
     }
 
     private MagellanTaggedImage makeDemoImage(int camChannelIndex, Point2D.Double position, double zPos, JSONObject tags) {
-        Object demoPix;
-        try {
-            if (core_.getBytesPerPixel() == 1) {
-                demoPix = DemoModeImageData.getBytePixelData(camChannelIndex, (int) position.x,
-                        (int) position.y, (int) zPos, MD.getWidth(tags), MD.getHeight(tags));
-            } else {
-                demoPix = DemoModeImageData.getShortPixelData(camChannelIndex, (int) position.x,
-                        (int) position.y, (int) zPos, MD.getWidth(tags), MD.getHeight(tags));
-            }
-            return new MagellanTaggedImage(demoPix, tags);
-        } catch (Exception e) {
-            e.printStackTrace();
+      Object demoPix;
+      try {
+         demoPix = DemoModeImageData.getBytePixelData(camChannelIndex, (int) position.x,
+                 (int) position.y, (int) zPos, MD.getWidth(tags), MD.getHeight(tags));
+
+         return new MagellanTaggedImage(demoPix, tags);
+      } catch (Exception e) {
+         e.printStackTrace();
             Log.log("Problem getting demo data");
             throw new RuntimeException();
         }

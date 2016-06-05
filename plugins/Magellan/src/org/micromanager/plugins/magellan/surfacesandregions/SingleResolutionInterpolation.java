@@ -17,11 +17,9 @@
 
 package org.micromanager.plugins.magellan.surfacesandregions;
 
-import ij.IJ;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.TreeSet;
-import org.micromanager.plugins.magellan.misc.Log;
 import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
 import org.apache.commons.math3.geometry.partitioning.Region;
@@ -123,29 +121,6 @@ public class SingleResolutionInterpolation {
 //         }
    }
       
-      
-
-   public float getExtrapolatedValue(double x, double y) {
-      //find closest convex hull vertex
-      Vector2D closest = null;
-      double minDistance = Integer.MAX_VALUE;
-      for (Vector2D vertex : convexHullVertices_) {
-         double distance = vertex.distance(new Vector2D(x, y));
-         if (distance < minDistance) {
-            minDistance = distance;
-            closest = vertex;
-         }
-      }
-      //find 3d point with same xy as convex hull vertex and use its z coordinate
-      for (Point3d p : allPoints_) {
-         if (closest.equals(new Vector2D(p.x, p.y))) {
-            return (float) p.z;
-         }
-      }
-      //if I ever get this error, either the two lists are out of sync or creating vecotrs causes some loss of precision
-      IJ.log("Couldn't find 3d point with same XY as convex hull");
-      throw new RuntimeException();
-   }
 
    private boolean isInsideConvexHull(double x, double y) {
       if (convexHullRegion_ == null) {

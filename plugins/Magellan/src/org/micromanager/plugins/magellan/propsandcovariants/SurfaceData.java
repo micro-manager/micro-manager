@@ -253,7 +253,7 @@ public class SurfaceData implements Covariant {
                //if position is outside of convex hull, assume min distance is 0
                minDistance = 0;
                //get extrapolated value for max distance
-               float interpVal = surface_.waitForCurentInterpolation().getExtrapolatedValue(stageCoords.x, stageCoords.y);
+               float interpVal = surface_.getExtrapolatedValue(stageCoords.x, stageCoords.y);
                maxDistance = Math.max(zVal - interpVal, maxDistance);
                //only take actual values for normals
             } else {

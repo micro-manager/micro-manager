@@ -384,7 +384,14 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
                   nextTimePointStartTime_ms_ = (long) (System.currentTimeMillis() + interval_ms);
 
                   while (true) {
-                     createEventsAtTimepoint(timeIndex);
+                     try {
+                        createEventsAtTimepoint(timeIndex);
+                     } catch (InterruptedException ie) {
+                        throw ie;
+                     } catch (Exception e) {
+                        Log.log("Exception in event generating thread");
+                        Log.log(e);
+                     }
                      //wait for final image of timepoint to be written before beginning end of timepoint stuff
                      //three ways to get past this barrier:
                      //1) interuption by an abort request will throw an interrupted exception and cause this thread to return
@@ -432,7 +439,7 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
       });
    }
 
-   private void createEventsAtTimepoint(int timeIndex) throws InterruptedException {
+   private void createEventsAtTimepoint(int timeIndex) throws InterruptedException, Exception {
       int positionIndex;
       if (lastEvent_ != null && lastEvent_.timeIndex_ == timeIndex) {
             //continuation of an exisitng time point due to a surface being changed
@@ -519,10 +526,10 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
 
    public static boolean isImagingVolumeUndefinedAtPosition(int spaceMode, FixedAreaAcquisitionSettings settings, XYStagePosition position) {
       if (spaceMode == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
-         return !settings.fixedSurface_.isSurfaceDefinedAtPosition(position);
+         return !settings.footprint_.isDefinedAtPosition(position);
       } else if (spaceMode == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
-         return !settings.topSurface_.isSurfaceDefinedAtPosition(position)
-                 && !settings.bottomSurface_.isSurfaceDefinedAtPosition(position);
+         return !settings.topSurface_.isDefinedAtPosition(position)
+                 && !settings.bottomSurface_.isDefinedAtPosition(position);
       }
       return false;
    }
@@ -537,9 +544,9 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
     */
    public static boolean isZAboveImagingVolume(int spaceMode, FixedAreaAcquisitionSettings settings, XYStagePosition position, double zPos, double zOrigin) throws InterruptedException {
       if (spaceMode == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
-         return settings.fixedSurface_.isPositionCompletelyAboveSurface(position, settings.fixedSurface_, zPos + settings.distanceAboveFixedSurface_);
+         return settings.fixedSurface_.isPositionCompletelyAboveSurface(position, settings.fixedSurface_, zPos + settings.distanceAboveFixedSurface_,true);
       } else if (spaceMode == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
-         return settings.topSurface_.isPositionCompletelyAboveSurface(position, settings.topSurface_, zPos + settings.distanceAboveTopSurface_);
+         return settings.topSurface_.isPositionCompletelyAboveSurface(position, settings.topSurface_, zPos + settings.distanceAboveTopSurface_, false);
       } else if (spaceMode == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
          return zPos < settings.zStart_;
       } else {
@@ -550,9 +557,9 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
 
    public static boolean isZBelowImagingVolume(int spaceMode, FixedAreaAcquisitionSettings settings, XYStagePosition position, double zPos, double zOrigin) throws InterruptedException {
       if (spaceMode == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
-         return settings.fixedSurface_.isPositionCompletelyBelowSurface(position, settings.fixedSurface_, zPos - settings.distanceBelowFixedSurface_);
+         return settings.fixedSurface_.isPositionCompletelyBelowSurface(position, settings.fixedSurface_, zPos - settings.distanceBelowFixedSurface_,true);
       } else if (spaceMode == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
-         return settings.bottomSurface_.isPositionCompletelyBelowSurface(position, settings.bottomSurface_, zPos - settings.distanceBelowBottomSurface_);
+         return settings.bottomSurface_.isPositionCompletelyBelowSurface(position, settings.bottomSurface_, zPos - settings.distanceBelowBottomSurface_,false);
       } else if (spaceMode == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
          return zPos > settings.zEnd_;
       } else {

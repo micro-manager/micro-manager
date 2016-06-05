@@ -14,7 +14,6 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-
 package org.micromanager.plugins.magellan.surfacesandregions;
 
 import org.micromanager.plugins.magellan.acq.FixedAreaAcquisitionSettings;
@@ -26,13 +25,21 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import org.micromanager.plugins.magellan.main.Magellan;
 import org.micromanager.plugins.magellan.misc.Log;
+import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
+import org.apache.commons.math3.geometry.euclidean.twod.PolygonsSet;
+import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
+import org.apache.commons.math3.geometry.euclidean.twod.hull.ConvexHull2D;
+import org.apache.commons.math3.geometry.euclidean.twod.hull.MonotoneChain;
+import org.apache.commons.math3.geometry.partitioning.Region;
+import org.apache.commons.math3.geometry.partitioning.RegionFactory;
 
 /**
  *
  * @author Henry
  */
-public class MultiPosRegion implements XYFootprint{
+public class MultiPosRegion implements XYFootprint {
 
+   private final RegionFactory<Euclidean2D> regionFacotry_ = new RegionFactory<Euclidean2D>();
    private volatile Point2D.Double center_; //stored in stage space
    private volatile int overlapX_, overlapY_, rows_, cols_;
    private RegionManager manager_;
@@ -40,7 +47,7 @@ public class MultiPosRegion implements XYFootprint{
    private String pixelSizeConfig_;
    private String XYDevice_;
 
-   public MultiPosRegion(RegionManager manager, String xyDevice, int r, int c, Point2D.Double center)  {
+   public MultiPosRegion(RegionManager manager, String xyDevice, int r, int c, Point2D.Double center) {
       manager_ = manager;
       name_ = manager.getNewName();
       center_ = center;
@@ -52,7 +59,7 @@ public class MultiPosRegion implements XYFootprint{
       }
       updateParams(r, c);
    }
-   
+
    public String getXYDevice() {
       return XYDevice_;
    }
@@ -91,7 +98,7 @@ public class MultiPosRegion implements XYFootprint{
       manager_.updateRegionTableAndCombos();
       manager_.drawRegionOverlay(this);
    }
-   
+
    private void updateOverlap(double overlapPercent) {
       overlapX_ = (int) (JavaLayerImageConstructor.getInstance().getImageWidth() * overlapPercent);
       overlapY_ = (int) (JavaLayerImageConstructor.getInstance().getImageHeight() * overlapPercent);
@@ -124,7 +131,7 @@ public class MultiPosRegion implements XYFootprint{
          throw new RuntimeException();
       }
    }
-   
+
    @Override
    public ArrayList<XYStagePosition> getXYPositions(double tileOverlapPercent) {
       try {
@@ -173,7 +180,7 @@ public class MultiPosRegion implements XYFootprint{
    public Point2D.Double center() {
       return center_;
    }
-   
+
    public void updateCenter(Point2D.Double newCenter) {
       center_.x = newCenter.x;
       center_.y = newCenter.y;
@@ -184,4 +191,31 @@ public class MultiPosRegion implements XYFootprint{
       center_ = new Point2D.Double(center_.x + dx, center_.y + dy);
       manager_.drawRegionOverlay(this);
    }
+
+   @Override
+   public boolean isDefinedAtPosition(XYStagePosition position) {
+      //create square region correpsonding to stage pos
+      Region<Euclidean2D> square = getStagePositionRegion(position);
+
+      for (XYStagePosition pos : getXYPositionsNoUpdate()) {
+         Region<Euclidean2D> tileSquare = getStagePositionRegion(pos);
+         Region<Euclidean2D> intersection = regionFacotry_.intersection(square, tileSquare);
+          if (!intersection.isEmpty()) {
+             return true;
+          }
+      }
+      return false;
+   }
+
+   private Region<Euclidean2D> getStagePositionRegion(XYStagePosition pos) {
+      Region<Euclidean2D> square;
+      Point2D.Double[] corners = pos.getDisplayedTileCorners();
+      square = new PolygonsSet(0.0001, new Vector2D[]{
+         new Vector2D(corners[0].x, corners[0].y),
+         new Vector2D(corners[1].x, corners[1].y),
+         new Vector2D(corners[2].x, corners[2].y),
+         new Vector2D(corners[3].x, corners[3].y)});
+      return square.checkPoint(new Vector2D(pos.getCenter().x, pos.getCenter().y)) == Region.Location.OUTSIDE ? regionFacotry_.getComplement(square) : square;
+   }
+
 }

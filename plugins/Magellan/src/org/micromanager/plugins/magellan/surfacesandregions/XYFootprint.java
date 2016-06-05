@@ -35,6 +35,11 @@ public interface XYFootprint {
 
     public List<XYStagePosition> getXYPositionsNoUpdate() throws InterruptedException;
     
+    /**
+     * @return true if there is any intersection between footprint and position
+     */
+    public boolean isDefinedAtPosition(XYStagePosition position); 
+    
    public String getXYDevice();
     
 }

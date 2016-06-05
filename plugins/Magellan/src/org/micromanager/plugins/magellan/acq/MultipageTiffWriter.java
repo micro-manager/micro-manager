@@ -40,6 +40,8 @@ import java.util.LinkedList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.micromanager.plugins.magellan.json.JSONArray;
 import org.micromanager.plugins.magellan.json.JSONException;
 import org.micromanager.plugins.magellan.json.JSONObject;
@@ -248,7 +250,11 @@ public class MultipageTiffWriter {
          headerBuffer.asCharBuffer().put(0,(char) 0x4949);
       }
       headerBuffer.asCharBuffer().put(1,(char) 42);
-      headerBuffer.putInt(4,40 + (int) (mdLength + indexMapSpace));
+      int firstIFDOffset = 40 + (int) (mdLength + indexMapSpace);
+      if (firstIFDOffset % 2 == 1) {
+         firstIFDOffset++; //Start first IFD on a word
+      }
+      headerBuffer.putInt(4,firstIFDOffset);
       
       //8 bytes for index map offset header and offset
       headerBuffer.putInt(8,INDEX_MAP_OFFSET_HEADER);
@@ -275,6 +281,11 @@ public class MultipageTiffWriter {
       
       fileChannelWrite(buffers);
       filePosition_ += headerBuffer.capacity() + mdLength +indexMapSpace;
+      
+      if (filePosition_ % 2 == 1) {
+         filePosition_++;
+         fileChannel_.position(fileChannel_.position() + 1);
+      }
    }
    
    /**
@@ -382,9 +393,23 @@ public class MultipageTiffWriter {
          }
       }
       long offset = filePosition_;
-      writeIFD(img);
+      boolean shiftByByte = writeIFD(img);
       addToIndexMap(MD.getLabel(img.tags), offset);
       writeBuffers();
+      //Make IFDs start on word
+      if (shiftByByte) {
+         executeWritingTask(new Runnable() {
+            @Override
+            public void run() {
+               try {
+                  fileChannel_.position(fileChannel_.position() + 1);
+               } catch (IOException ex) {
+                  Log.log("Couldn't incremement byte");
+               }
+            }
+         });
+      }
+      
       //wait until image has finished writing to return
 //      int size = writingExecutor_.getQueue().size();
 //      while (size > 0) {
@@ -449,9 +474,9 @@ public class MultipageTiffWriter {
          }
       }
       if (pixelOffset == -1 || bytesPerImage == -1) {
-         IJ.log("couldn't overwrite pixel data\n");
-         IJ.log("pixel offset " + pixelOffset);
-         IJ.log("bytes per image " + bytesPerImage);
+//         IJ.log("couldn't overwrite pixel data\n");
+//         IJ.log("pixel offset " + pixelOffset);
+//         IJ.log("bytes per image " + bytesPerImage);
          return;
       }
       
@@ -459,7 +484,7 @@ public class MultipageTiffWriter {
       fileChannelWrite(pixBuff, pixelOffset); 
    }
 
-   private void writeIFD(MagellanTaggedImage img) throws IOException {
+   private boolean writeIFD(MagellanTaggedImage img) throws IOException {
       char numEntries = ((firstIFD_  ? ENTRIES_PER_IFD + 4 : ENTRIES_PER_IFD));
       if (img.tags.has("Summary")) {
          img.tags.remove("Summary");
@@ -515,6 +540,9 @@ public class MultipageTiffWriter {
       writeIFDEntry(ifdBuffer,charView,MM_METADATA,(char)2,mdBytes.length,tagDataOffset);
       tagDataOffset += mdBytes.length;
       //NextIFDOffset
+       if (tagDataOffset % 2 == 1) { 
+         tagDataOffset++; //Make IFD start on word
+      }
       ifdBuffer.putInt(bufferPosition_, (int)tagDataOffset);
       bufferPosition_ += 4;
       
@@ -528,8 +556,15 @@ public class MultipageTiffWriter {
       buffers_.add(getResolutionValuesBuffer());   
       buffers_.add(ByteBuffer.wrap(mdBytes));
       
-      filePosition_ += totalBytes;
+
       firstIFD_ = false;
+
+      filePosition_ += totalBytes;
+      if (filePosition_ % 2 == 1) {
+         filePosition_++; //Make IFD start on word
+         return true;
+      }
+      return false;
    }
 
    private void writeIFDEntry(ByteBuffer buffer, CharBuffer cBuffer, char tag, char type, long count, long value) throws IOException {
