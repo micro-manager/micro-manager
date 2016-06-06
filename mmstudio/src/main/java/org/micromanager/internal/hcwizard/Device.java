@@ -118,7 +118,7 @@ import org.micromanager.internal.utils.ReportingUtils;
       } else if (type_ == DeviceType.AutoFocusDevice) {
          devType = "Autofocus";
       } else if (type_ == DeviceType.HubDevice) {
-         devType = "Motorized scope or Hub";
+         devType = "Motorized Microscope or Hub";
       } else if (type_ == DeviceType.GenericDevice) {
          devType = "Generic Device";
       } else if (type_ == DeviceType.AnyType) {
