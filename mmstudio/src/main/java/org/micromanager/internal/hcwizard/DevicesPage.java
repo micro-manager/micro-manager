@@ -76,7 +76,6 @@ public class DevicesPage extends PagePanel implements ListSelectionListener, Mou
    private JScrollPane availableScrollPane_;
    final String documentationURLroot_;
    String libraryDocumentationName_;
-   private JComboBox hubsCombo_;
 
 private JComboBox byLibCombo_;
 
@@ -318,7 +317,6 @@ private JComboBox byLibCombo_;
       			listByLib_ = true;
       		else {
       			listByLib_ = false;
-      			hubsCombo_.setSelectedIndex(1); // force show-all
       		}
       		buildTree();
       	}
@@ -326,18 +324,6 @@ private JComboBox byLibCombo_;
       byLibCombo_.setModel(new DefaultComboBoxModel(new String[] {"list by vendor", "list by type"}));
       byLibCombo_.setBounds(146, 270, 146, 20);
       add(byLibCombo_);
-      
-      hubsCombo_ = new JComboBox();
-      hubsCombo_.addActionListener(new ActionListener() {
-      	public void actionPerformed(ActionEvent e) {
-      		buildTree();
-      	}
-      });
-      hubsCombo_.setModel(new DefaultComboBoxModel(new String[] {"compact view", "show all"}));
-      hubsCombo_.setBounds(302, 270, 139, 20);
-      add(hubsCombo_);
-      //
-
    }
    
 
@@ -726,21 +712,17 @@ private JComboBox byLibCombo_;
    }
    
    private void buildTreeByType(MicroscopeModel model) {
-      Device devices_[] = null;
-      if (hubsCombo_.getSelectedIndex() == 1)
-         devices_ = model.getAvailableDeviceList();
-      else
-         devices_ = model.getAvailableDevicesCompact();
+      Device devices[] = model.getAvailableDeviceList();
 
       // organize devices by type
       Hashtable<String, Vector<Device>> nodes = new Hashtable<String, Vector<Device>>();
-      for (int i = 0; i < devices_.length; i++) {
-         if (nodes.containsKey(devices_[i].getTypeAsString()))
-            nodes.get(devices_[i].getTypeAsString()).add(devices_[i]);
+      for (int i = 0; i < devices.length; i++) {
+         if (nodes.containsKey(devices[i].getTypeAsString()))
+            nodes.get(devices[i].getTypeAsString()).add(devices[i]);
          else {
             Vector<Device> v = new Vector<Device>();
-            v.add(devices_[i]);
-            nodes.put(devices_[i].getTypeAsString(), v);
+            v.add(devices[i]);
+            nodes.put(devices[i].getTypeAsString(), v);
          }
       }
 
@@ -772,26 +754,22 @@ private JComboBox byLibCombo_;
    }
 
    private void buildTreeByLib(MicroscopeModel model) {
-      Device devices_[] = null;
-      if (hubsCombo_.getSelectedIndex() == 1)
-         devices_ = model.getAvailableDeviceList();
-      else
-         devices_ = model.getAvailableDevicesCompact();
+      Device devices[] = model.getAvailableDeviceList();
 
       String thisLibrary = "";
       DefaultMutableTreeNode root = new DefaultMutableTreeNode("Devices supported by " + "\u00B5" + "Manager");
       DeviceTreeNode node = null;
-      for (int idd = 0; idd < devices_.length; ++idd) {
+      for (int idd = 0; idd < devices.length; ++idd) {
          // assume that the first library doesn't have an empty name! (of
          // course!)
-         if (0 != thisLibrary.compareTo(devices_[idd].getLibrary())) {
+         if (0 != thisLibrary.compareTo(devices[idd].getLibrary())) {
             // create a new node of devices for this library
-            node = new DeviceTreeNode(devices_[idd].getLibrary(), true);
+            node = new DeviceTreeNode(devices[idd].getLibrary(), true);
             root.add(node);
-            thisLibrary = devices_[idd].getLibrary(); // remember which library
+            thisLibrary = devices[idd].getLibrary(); // remember which library
                                                       // we are processing
          }
-         Object[] userObject = { devices_[idd].getLibrary(), devices_[idd].getAdapterName(), devices_[idd].getDescription(), new Boolean(devices_[idd].isHub()) };
+         Object[] userObject = { devices[idd].getLibrary(), devices[idd].getAdapterName(), devices[idd].getDescription(), new Boolean(devices[idd].isHub()) };
          DeviceTreeNode aLeaf = new DeviceTreeNode("", true);
          aLeaf.setUserObject(userObject);
          node.add(aLeaf);
