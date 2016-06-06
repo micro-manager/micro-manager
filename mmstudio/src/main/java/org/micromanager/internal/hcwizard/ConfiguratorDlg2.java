@@ -255,10 +255,6 @@ public class ConfiguratorDlg2 extends MMDialog {
 
       titleLabel_.setText(pages_[curPage_].getTitle());
 
-      // By default, load plain text help
-      helpTextPane_.setContentType("text/plain");
-      helpTextPane_.setText(pages_[curPage_].getHelpText());
-       
       // Try to load html help text
       try {
          File curDir = new File(".");
@@ -269,8 +265,6 @@ public class ConfiguratorDlg2 extends MMDialog {
          String helpText = readStream(ConfiguratorDlg2.class.getResourceAsStream("/org/micromanager/conf2/" + helpFileName));
          helpTextPane_.setContentType("text/html; charset=ISO-8859-1");
          helpTextPane_.setText(helpText);
-         
-         
       } catch (MalformedURLException e1) {
          ReportingUtils.showError(e1);
       } catch (IOException e) {
