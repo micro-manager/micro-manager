@@ -19,29 +19,31 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager.internal;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+package org.micromanager.events.internal;
 
 import mmcorej.CMMCore;
 import mmcorej.MMEventCallback;
 
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
-import org.micromanager.internal.MMListenerInterface;
-import org.micromanager.events.internal.MMListenerProxy;
 
+import org.micromanager.events.ConfigGroupChangedEvent;
+import org.micromanager.events.ExposureChangedEvent;
+import org.micromanager.events.PixelSizeChangedEvent;
+import org.micromanager.events.PropertiesChangedEvent;
+import org.micromanager.events.PropertyChangedEvent;
+import org.micromanager.events.SLMExposureChangedEvent;
+import org.micromanager.events.StagePositionChangedEvent;
+import org.micromanager.events.SystemConfigurationLoadedEvent;
+import org.micromanager.events.XYStagePositionChangedEvent;
 
 /**
- * Callback to update Java layer when a change happens in the MMCore.
+ * Callback to update Java layer when a change happens in the MMCore. This
+ * posts events on the EventManager's event bus.
  */
 public class CoreEventCallback extends MMEventCallback {
 
    private final CMMCore core_;
    private final AcquisitionWrapperEngine engine_;
-   private final List<MMListenerInterface> MMListeners_
-         = Collections.synchronizedList(new ArrayList<MMListenerInterface>());
    private volatile boolean ignorePropertyChanges_;
 
    @SuppressWarnings("LeakingThisInConstructor")
@@ -50,7 +52,6 @@ public class CoreEventCallback extends MMEventCallback {
       core_ = core;
       engine_ = engine;
       core_.registerCallback(this);
-      addMMListener(new MMListenerProxy());
    }
 
    @Override
@@ -63,10 +64,8 @@ public class CoreEventCallback extends MMEventCallback {
             core_.logMessage("Notification from MMCore ignored since the system is still loading", true);
          } else {
             core_.updateSystemStateCache();
-            // update all registered listeners 
-            for (MMListenerInterface mmIntf : MMListeners_) {
-               mmIntf.propertiesChangedAlert();
-            }
+            DefaultEventManager.getInstance().post(
+                  new PropertiesChangedEvent());
             core_.logMessage("Notification from MMCore!", true);
          }
       }
@@ -76,43 +75,34 @@ public class CoreEventCallback extends MMEventCallback {
    public void onPropertyChanged(String deviceName, String propName, String propValue) {
       core_.logMessage("Notification for Device: " + deviceName + " Property: " +
             propName + " changed to value: " + propValue, true);
-      // update all registered listeners
-      for (MMListenerInterface mmIntf:MMListeners_) {
-         mmIntf.propertyChangedAlert(deviceName, propName, propValue);
-      }
+      DefaultEventManager.getInstance().post(
+            new PropertyChangedEvent(deviceName, propName, propValue));
    }
 
    @Override
    public void onConfigGroupChanged(String groupName, String newConfig) {
-      try {
-         for (MMListenerInterface mmIntf:MMListeners_) {
-            mmIntf.configGroupChangedAlert(groupName, newConfig);
-         }
-      } catch (Exception e) {
-      }
+      DefaultEventManager.getInstance().post(
+            new ConfigGroupChangedEvent(groupName, newConfig));
    }
    
    @Override
    public void onSystemConfigurationLoaded() {
-      for (MMListenerInterface mmIntf:MMListeners_) {
-         mmIntf.systemConfigurationLoaded();
-      }
+      DefaultEventManager.getInstance().post(
+            new SystemConfigurationLoadedEvent());
    }
 
    @Override
    public void onPixelSizeChanged(double newPixelSizeUm) {
-      for (MMListenerInterface mmIntf:MMListeners_) {
-         mmIntf.pixelSizeChangedAlert(newPixelSizeUm);
-      }
+      DefaultEventManager.getInstance().post(
+            new PixelSizeChangedEvent(newPixelSizeUm));
    }
 
    @Override
    public void onStagePositionChanged(String deviceName, double pos) {
       // TODO: this check should be in the core, not the java layer!
       if (deviceName.equals(core_.getFocusDevice())) {
-         for (MMListenerInterface mmIntf:MMListeners_) {
-            mmIntf.stagePositionChangedAlert(deviceName, pos);
-         }
+         DefaultEventManager.getInstance().post(
+               new StagePositionChangedEvent(deviceName, pos));
       }
    }
 
@@ -120,38 +110,21 @@ public class CoreEventCallback extends MMEventCallback {
    public void onXYStagePositionChanged(String deviceName, double xPos, double yPos) {
       // TODO: this check should be in the core, not the java layer!
       if (deviceName.equals(core_.getXYStageDevice())) {
-         for (MMListenerInterface mmIntf:MMListeners_) {
-            mmIntf.xyStagePositionChanged(deviceName, xPos, yPos);
-         }
+         DefaultEventManager.getInstance().post(
+               new XYStagePositionChangedEvent(deviceName, xPos, yPos));
       }
    }
 
    @Override
    public void onExposureChanged(String deviceName, double exposure) {
-      for (MMListenerInterface mmIntf:MMListeners_) {
-         mmIntf.exposureChanged(deviceName, exposure);
-      }
+      DefaultEventManager.getInstance().post(
+            new ExposureChangedEvent(deviceName, exposure));
    }
-   
+
    @Override
    public void onSLMExposureChanged(String deviceName, double exposure) {
-      for (MMListenerInterface mmIntf:MMListeners_) {
-         mmIntf.slmExposureChanged(deviceName, exposure);
-      }
-   }
-
-   public final void addMMListener(MMListenerInterface newL) {
-      if (MMListeners_.contains(newL)) {
-         return;
-      }
-      MMListeners_.add(newL);
-   }
-
-   public void removeMMListener(MMListenerInterface oldL) {
-      if (!MMListeners_.contains(oldL)) {
-         return;
-      }
-      MMListeners_.remove(oldL);
+      DefaultEventManager.getInstance().post(
+            new SLMExposureChangedEvent(deviceName, exposure));
    }
 
    public void setIgnoring(boolean isIgnoring) {
