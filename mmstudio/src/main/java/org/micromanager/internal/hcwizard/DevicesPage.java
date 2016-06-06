@@ -321,7 +321,7 @@ private JComboBox byLibCombo_;
       		buildTree();
       	}
       });
-      byLibCombo_.setModel(new DefaultComboBoxModel(new String[] {"list by vendor", "list by type"}));
+      byLibCombo_.setModel(new DefaultComboBoxModel(new String[] {"List by Adapter", "List by Type"}));
       byLibCombo_.setBounds(146, 270, 146, 20);
       add(byLibCombo_);
    }
