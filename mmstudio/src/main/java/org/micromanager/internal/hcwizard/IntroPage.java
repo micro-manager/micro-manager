@@ -31,6 +31,9 @@ import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
+
+import net.miginfocom.swing.MigLayout;
+
 import org.micromanager.internal.MMStudio;
 
 import org.micromanager.internal.utils.FileDialogs;
@@ -55,14 +58,14 @@ public class IntroPage extends PagePanel {
    public IntroPage() {
       super();
       title_ = "Select the configuration file";
-      helpText_ = "Welcome to the Micro-Manager Configurator.\n" +
-                  "The Configurator will guide you through the process of configuring the software to work with your hardware setup.\n" +
-                  "In this step you choose if you are creating a new hardware configuration or editing an existing one.";
-      
-      setLayout(null);
+      helpText_ = "Welcome to the Hardware Config Wizard.\n" +
+                  "This dialog guides you through setting up your microscope hardware. " +
+                  "Select whether to create a new setup from scratch, or start from an existing one.";
+
+      setLayout(new MigLayout("fillx, flowy"));
       setHelpFileName(HELP_FILE_NAME);
 
-      createNewRadioButton_ = new JRadioButton();
+      createNewRadioButton_ = new JRadioButton("Create new configuration");
       createNewRadioButton_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             model_.reset();
@@ -72,40 +75,32 @@ public class IntroPage extends PagePanel {
          }
       });
       buttonGroup.add(createNewRadioButton_);
-      createNewRadioButton_.setText("Create new configuration");
-      createNewRadioButton_.setBounds(10, 31, 424, 23);
       add(createNewRadioButton_);
 
-      modifyRadioButton_ = new JRadioButton();
+      modifyRadioButton_ = new JRadioButton("Modify or explore existing configuration");
       buttonGroup.add(modifyRadioButton_);
       modifyRadioButton_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             filePathField_.setEnabled(true);
             browseButton_.setEnabled(true);
-            
          }
       });
-      modifyRadioButton_.setText("Modify or explore existing configuration");
-      modifyRadioButton_.setBounds(10, 55, 424, 23);
       add(modifyRadioButton_);
 
       filePathField_ = new JTextField();
-      filePathField_.setBounds(10, 110, 509, 19);
-      add(filePathField_);
+      add(filePathField_, "growx");
 
-      browseButton_ = new JButton();
+      browseButton_ = new JButton("Browse...");
       browseButton_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             loadConfiguration();
          }
       });
-      browseButton_.setText("Browse...");
-      browseButton_.setBounds(10, 85, 100, 23);
-      add(browseButton_);
-      
+      add(browseButton_, "gapleft push");
+
       createNewRadioButton_.setSelected(true);
       filePathField_.setEnabled(false);
-      browseButton_.setEnabled(false);      
+      browseButton_.setEnabled(false);
    }
    
    public void loadSettings() {
