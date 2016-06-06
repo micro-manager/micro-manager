@@ -39,7 +39,7 @@ public class MultiCamera implements MenuPlugin, SciJavaPlugin {
       if (myFrame_ == null) {
          try {
             myFrame_ = new MultiCameraFrame(gui_);
-            gui_.compat().addMMListener(myFrame_);
+            gui_.events().registerForEvents(myFrame_);
          } catch (Exception e) {
             gui_.logs().showError(e);
             return;

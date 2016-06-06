@@ -2,7 +2,7 @@ package org.micromanager.events.internal;
 
 import com.google.common.eventbus.EventBus;
 
-import org.micromanager.MMListenerInterface;
+import org.micromanager.internal.MMListenerInterface;
 
 import org.micromanager.events.ConfigGroupChangedEvent;
 import org.micromanager.events.ExposureChangedEvent;

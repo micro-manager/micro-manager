@@ -19,12 +19,12 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager;
+package org.micromanager.internal;
 
 /**
- * As MMListenerInterface, however this class implements stubs of
- * all methods, so if you only care about certain callbacks, you don't have
- * to implement your own stubs.
+ * As MMListenerInterface, however this class implements stubs of all methods,
+ * so if you only care about certain callbacks, you don't have to implement
+ * your own stubs.
  */
 public class MMListenerAdapter implements MMListenerInterface {
    @Override

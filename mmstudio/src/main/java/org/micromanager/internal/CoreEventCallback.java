@@ -29,7 +29,7 @@ import mmcorej.CMMCore;
 import mmcorej.MMEventCallback;
 
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
-import org.micromanager.MMListenerInterface;
+import org.micromanager.internal.MMListenerInterface;
 import org.micromanager.events.internal.MMListenerProxy;
 
 

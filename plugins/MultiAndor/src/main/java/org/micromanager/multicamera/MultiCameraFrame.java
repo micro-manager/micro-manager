@@ -10,6 +10,8 @@
  */
 package org.micromanager.multicamera;
 
+import com.google.common.eventbus.Subscribe;
+
 import java.text.ParseException;
 
 import javax.swing.DefaultComboBoxModel;
@@ -21,8 +23,9 @@ import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
+import org.micromanager.events.PropertiesChangedEvent;
+import org.micromanager.events.PropertyChangedEvent;
 import org.micromanager.Studio;
-import org.micromanager.MMListenerInterface;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.NumberUtils;
 
@@ -30,7 +33,7 @@ import org.micromanager.internal.utils.NumberUtils;
  *
  * @author Nico Stuurman
  */
-public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
+public class MultiCameraFrame extends MMFrame {
    private static final long serialVersionUID = 1L;
    private final Studio gui_;
    private final CMMCore core_;
@@ -901,13 +904,16 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
    // End of variables declaration//GEN-END:variables
 
  
-   @Override
-   public void propertiesChangedAlert() {
+   @Subscribe
+   public void onPropertiesChanged(PropertiesChangedEvent event) {
       updateItems(speedComboBox, SPEED);
    }
 
-   @Override
-   public void propertyChangedAlert(String device, String property, String value) {
+   @Subscribe
+   public void onPropertyChanged(PropertyChangedEvent event) {
+      String device = event.getDevice();
+      String property = event.getProperty();
+      String value = event.getValue();
       try {
          if (device.equals("Core") && property.equals("Camera") )
             cameraSelectComboBox.setSelectedItem(value);
@@ -915,35 +921,6 @@ public class MultiCameraFrame extends MMFrame implements MMListenerInterface {
       }
    }
 
-   @Override
-   public void configGroupChangedAlert(String groupName, String newConfig) {
-   }
-   
-   @Override
-   public void systemConfigurationLoaded() {
-   }
-
-   @Override
-   public void pixelSizeChangedAlert(double newPixelSizeUm) {
-   }
-
-   @Override
-   public void stagePositionChangedAlert(String deviceName, double pos) {
-      
-   }
-
-   @Override
-   public void xyStagePositionChanged(String deviceName, double xPos, double yPos) {
-   }
-   
-   @Override
-   public void exposureChanged(String string, double d) { 
-   }
-
-   @Override
-   public void slmExposureChanged(String cameraName, double newExposureTime) {
-   }
-   
    private void setPropertyIfPossible(String device, String property, String value) {
       try {
          if (core_.hasProperty(device, property)) {

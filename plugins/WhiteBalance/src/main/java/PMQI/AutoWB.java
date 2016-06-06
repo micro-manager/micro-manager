@@ -44,7 +44,7 @@ public class AutoWB implements org.micromanager.MenuPlugin {
     public void onPluginSelected() {
         try {
             wbForm_ = new WhiteBalance_UI(gui_);
-            gui_.compat().addMMListener(wbForm_);
+            gui_.events().registerForEvents(wbForm_);
         } catch (Exception e) {
             Logger.getLogger(WhiteBalance_UI.class.getName()).log(Level.SEVERE, null, e);
             gui_.logs().showError(e);

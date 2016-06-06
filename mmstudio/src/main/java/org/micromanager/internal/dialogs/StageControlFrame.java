@@ -19,9 +19,12 @@
 
 package org.micromanager.internal.dialogs;
 
+import com.google.common.eventbus.Subscribe;
+
 import java.awt.BorderLayout;
 import java.awt.LayoutManager;
 import java.awt.event.ActionListener;
+
 import mmcorej.CMMCore;
 
 import java.text.NumberFormat;
@@ -35,7 +38,8 @@ import javax.swing.BorderFactory;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
-import org.micromanager.MMListenerInterface;
+import org.micromanager.events.StagePositionChangedEvent;
+import org.micromanager.events.SystemConfigurationLoadedEvent;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.MMFrame;
 
@@ -43,7 +47,7 @@ import org.micromanager.internal.utils.MMFrame;
  *
  * @author nico
  */
-public class StageControlFrame extends MMFrame implements MMListenerInterface {
+public class StageControlFrame extends MMFrame {
    private final Studio gui_;
    private final CMMCore core_;
 
@@ -78,7 +82,7 @@ public class StageControlFrame extends MMFrame implements MMListenerInterface {
       Studio studio = org.micromanager.internal.MMStudio.getInstance();
       if (staticFrame_ == null) {
          staticFrame_ = new StageControlFrame(studio);
-         studio.compat().addMMListener(staticFrame_);
+         studio.events().registerForEvents(staticFrame_);
       }
       staticFrame_.initialize();
       staticFrame_.setVisible(true);
@@ -1224,43 +1228,15 @@ public class StageControlFrame extends MMFrame implements MMListenerInterface {
    private javax.swing.JLabel zPositionLabel_;
    // End of variables declaration//GEN-END:variables
 
-   @Override
-   public void propertiesChangedAlert() {
-   }
-
-   @Override
-   public void propertyChangedAlert(String device, String property, String value) {
-   }
-
-   @Override
-   public void configGroupChangedAlert(String groupName, String newConfig) {
-   }
-
-   @Override
-   public void systemConfigurationLoaded() {
+   @Subscribe
+   public void onSystemConfigurationLoaded(SystemConfigurationLoadedEvent event) {
       initialize();
    }
 
-   @Override
-   public void pixelSizeChangedAlert(double newPixelSizeUm) {
-   }
-
-   @Override
-   public void stagePositionChangedAlert(String deviceName, double pos) {
-      if (deviceName.equals(currentZDrive_)) {
-         zPositionLabel_.setText(nf_.format(pos) + " \u00B5m" );
+   @Subscribe
+   public void onStagePositionChanged(StagePositionChangedEvent event) {
+      if (event.getDeviceName().equals(currentZDrive_)) {
+         zPositionLabel_.setText(nf_.format(event.getPos()) + " \u00B5m" );
       }
-   }
-
-   @Override
-   public void xyStagePositionChanged(String deviceName, double xPos, double yPos) {
-   }
-
-   @Override
-   public void exposureChanged(String cameraName, double newExposureTime) {
-   }
-   
-   @Override
-   public void slmExposureChanged(String cameraName, double newExposureTime) {
    }
 }

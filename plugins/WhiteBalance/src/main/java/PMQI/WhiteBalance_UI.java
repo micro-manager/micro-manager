@@ -14,24 +14,28 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 package PMQI;
 
+import com.google.common.eventbus.Subscribe;
+
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
+
 import mmcorej.CMMCore;
-import org.micromanager.MMListenerInterface;
+
+import org.micromanager.events.PropertyChangedEvent;
 import org.micromanager.Studio;
-//import 
 
 /**
  *
  * @author Andrej
  */
-public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInterface {
+public class WhiteBalance_UI extends javax.swing.JFrame {
 
     /**
      * Creates new form WhiteBalance_UI
@@ -1010,53 +1014,15 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
     private javax.swing.JLabel lblWBExposure;
     // End of variables declaration//GEN-END:variables
 
-    @Override
-    public void propertiesChangedAlert() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
     //if user changes the CFA pattern in the MM UI select the same pattern also in the 
     //WB plugin
 
-    @Override
-    public void propertyChangedAlert(String string, String string1, String string2) {
-        if (string1.equals("Color - Sensor CFA Pattern")) {
-            SetCFAPattern(string2);
+    @Subscribe
+    public void onPropertyChanged(PropertyChangedEvent event) {
+       String property = event.getProperty();
+       String value = event.getValue();
+        if (property.equals("Color - Sensor CFA Pattern")) {
+            SetCFAPattern(value);
         }
-    }
-
-    @Override
-    public void configGroupChangedAlert(String string, String string1) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void systemConfigurationLoaded() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void pixelSizeChangedAlert(double d) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void stagePositionChangedAlert(String string, double d) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void xyStagePositionChanged(String string, double d, double d1) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void exposureChanged(String string, double d) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void slmExposureChanged(String string, double d) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

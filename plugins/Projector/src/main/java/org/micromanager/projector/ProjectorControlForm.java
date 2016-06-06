@@ -27,6 +27,8 @@ package org.micromanager.projector;
 
 // TODO: finish converting to Javadoc
 
+import com.google.common.eventbus.Subscribe;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -41,6 +43,7 @@ import ij.plugin.filter.GaussianBlur;
 import ij.plugin.frame.RoiManager;
 import ij.process.FloatPolygon;
 import ij.process.ImageProcessor;
+
 import java.awt.AWTEvent;
 import java.awt.HeadlessException;
 import java.awt.Point;
@@ -55,11 +58,13 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -69,6 +74,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
 import javax.swing.JOptionPane;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
@@ -76,13 +82,15 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.DefaultFormatter;
+
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.DeviceType;
 import mmcorej.TaggedImage;
+
 import org.micromanager.data.Datastore;
+import org.micromanager.events.SLMExposureChangedEvent;
 import org.micromanager.Studio;
-import org.micromanager.MMListenerAdapter;
 import org.micromanager.PropertyMap;
 
 // TODO should not depend on internal code.
@@ -1422,9 +1430,11 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       pointAndShootIntervalSpinner.setValue(dev_.getExposure() / 1000);
       sequencingButton.setVisible(MosaicSequencingFrame.getMosaicDevices(core).size() > 0);
      
-      app_.compat().addMMListener(new MMListenerAdapter() {
-         @Override
-         public void slmExposureChanged(String deviceName, double exposure) {
+      app_.events().registerForEvents(new Object() {
+         @Subscribe
+         public void onSlmExposureChanged(SLMExposureChangedEvent event) {
+            String deviceName = event.getDeviceName();
+            double exposure = event.getNewExposureTime();
             if (deviceName.equals(dev_.getName())) {
                pointAndShootIntervalSpinner.setValue(exposure);
             }

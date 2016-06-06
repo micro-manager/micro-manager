@@ -60,8 +60,8 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
-import org.micromanager.Studio;
 import org.micromanager.StagePosition;
+import org.micromanager.Studio;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
@@ -136,7 +136,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
     * @param opts - MicroManager Options
     */
    @SuppressWarnings("LeakingThisInConstructor")
-   public PositionListDlg(CMMCore core, Studio gui, 
+   public PositionListDlg(CMMCore core, Studio gui,
                      PositionList posList, AcqControlDlg acd) {
       super("position list");
       final DefaultUserProfile profile = DefaultUserProfile.getInstance();
@@ -863,8 +863,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
    }
 
    protected void showCreateTileDlg() {
-      TileCreatorDlg tileCreatorDlg = new TileCreatorDlg(core_, this);
-      studio_.compat().addMMListener(tileCreatorDlg);
+      TileCreatorDlg tileCreatorDlg = new TileCreatorDlg(core_, studio_, this);
       tileCreatorDlg.setVisible(true);
    }
 

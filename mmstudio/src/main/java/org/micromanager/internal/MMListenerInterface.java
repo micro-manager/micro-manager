@@ -19,7 +19,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager;
+package org.micromanager.internal;
 
 /*
  * Provides a way to submit callbacks for various hardware events in

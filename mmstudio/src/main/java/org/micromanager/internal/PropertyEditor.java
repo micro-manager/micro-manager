@@ -28,6 +28,8 @@ package org.micromanager.internal;
  * PropertyEditor provides UI for manipulating sets of device properties
  */
 
+import com.google.common.eventbus.Subscribe;
+
 import java.awt.Font;
 import java.awt.Component;
 import java.awt.Toolkit;
@@ -49,8 +51,9 @@ import javax.swing.table.TableColumn;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
+import org.micromanager.events.PropertiesChangedEvent;
+import org.micromanager.events.PropertyChangedEvent;
 import org.micromanager.Studio;
-import org.micromanager.MMListenerAdapter;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.MMFrame;
@@ -87,27 +90,27 @@ public class PropertyEditor extends MMFrame {
    private final JScrollPane scrollPane_;
    private Studio gui_;
    
-   public class myMMListener extends MMListenerAdapter {
 
-      @Override
-      public void propertiesChangedAlert() {
-         // avoid re-executing a refresh because of callbacks while we are updating
-         if (!data_.updating()) {
-            refresh();
-         }
-      }
-
-      @Override
-      public void propertyChangedAlert(String device, String property, String value) {
-         data_.update(device, property, value);
+   @Subscribe
+   public void onPropertiesChanged(PropertiesChangedEvent event) {
+      // avoid re-executing a refresh because of callbacks while we are
+      // updating
+      if (!data_.updating()) {
+         refresh();
       }
    }
 
-   private final myMMListener myMMListener_ = new myMMListener();
+   @Subscribe
+   public void onPropertyChanged(PropertyChangedEvent event) {
+      String device = event.getDevice();
+      String property = event.getProperty();
+      String value = event.getValue();
+      data_.update(device, property, value);
+   }
 
    public void setGui(Studio gui) {
       gui_ = gui;
-      gui_.compat().addMMListener(myMMListener_);
+      gui_.events().registerForEvents(this);
    }
 
 

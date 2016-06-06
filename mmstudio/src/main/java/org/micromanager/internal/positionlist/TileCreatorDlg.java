@@ -21,6 +21,8 @@
 
 package org.micromanager.internal.positionlist;
 
+import com.google.common.eventbus.Subscribe;
+
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -36,14 +38,15 @@ import javax.swing.JComboBox;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 
-import org.micromanager.MMListenerInterface;
+import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.StagePosition;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
-public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
+public class TileCreatorDlg extends MMDialog {
    private static final long serialVersionUID = 1L;
    private CMMCore core_;
    private MultiStagePosition[] endPosition_;
@@ -72,7 +75,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
     * @param core - Micro-Manager Core object
     * @param positionListDlg - The position list dialog
     */
-   public TileCreatorDlg(CMMCore core,
+   public TileCreatorDlg(CMMCore core, Studio studio,
            PositionListDlg positionListDlg) {
       super("grid tile creator");
       setResizable(false);
@@ -362,7 +365,7 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       resetButton.setText("Reset");
       getContentPane().add(resetButton); 
 
-
+      studio.events().registerForEvents(this);
    }
 
 
@@ -932,43 +935,11 @@ public class TileCreatorDlg extends MMDialog implements MMListenerInterface {
       return name;
    }
 
-   // Implementation of MMListenerInterface
-   @Override
-   public void propertiesChangedAlert() {
-   }
-
-   @Override
-   public void propertyChangedAlert(String device, String property, String value) {
-   }
-
-   @Override
-   public void configGroupChangedAlert(String groupName, String newConfig) {
-   }
-
-   @Override
-   public void systemConfigurationLoaded() {
-   }
-
-   @Override
-   public void pixelSizeChangedAlert(double newPixelSizeUm) {
-      pixelSizeField_.setText(NumberUtils.doubleToDisplayString(newPixelSizeUm));
+   @Subscribe
+   public void onPixelSizeChanged(PixelSizeChangedEvent event) {
+      pixelSizeField_.setText(NumberUtils.doubleToDisplayString(
+               event.getNewPixelSizeUm()));
       updateCenteredSizeLabel();
-   }
-
-   @Override
-   public void stagePositionChangedAlert(String deviceName, double pos) {
-   }
-
-   @Override
-   public void xyStagePositionChanged(String deviceName, double xPos, double yPos) {
-   }
-
-   @Override
-   public void exposureChanged(String cameraName, double newExposureTime) {
-   }
-
-   @Override
-   public void slmExposureChanged(String cameraName, double newExposureTime) {
    }
 
    private class TileCreatorException extends Exception {

@@ -78,7 +78,7 @@ import org.micromanager.events.StartupCompleteEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.acquisition.internal.IAcquisitionEngine2010;
 import org.micromanager.LogManager;
-import org.micromanager.MMListenerInterface;
+import org.micromanager.internal.MMListenerInterface;
 import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
 import org.micromanager.PluginManager;
 import org.micromanager.PositionList;
@@ -1449,24 +1449,6 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
    @Override
    public AutofocusManager getAutofocusManager() {
       return afMgr_;
-   }
-
-   /**
-    * Allows MMListeners to register themselves
-    * @param newL
-    */
-   @Override
-   public void addMMListener(MMListenerInterface newL) {
-      coreCallback_.addMMListener(newL);
-   }
-
-   /**
-    * Allows MMListeners to remove themselves
-    * @param oldL
-    */
-   @Override
-   public void removeMMListener(MMListenerInterface oldL) {
-      coreCallback_.removeMMListener(oldL);
    }
 
    @Override

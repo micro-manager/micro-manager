@@ -95,19 +95,6 @@ public interface CompatibilityInterface {
    public void showPositionList();
 
    /**
-    * Allows MMListeners to register themselves so that they will receive
-    * alerts as defined in the MMListenerInterface
-    * @param newL
-    */
-   public void addMMListener(MMListenerInterface newL);
-
-   /**
-    * Allows MMListeners to remove themselves
-    * @param oldL
-    */
-   public void removeMMListener(MMListenerInterface oldL);
-
-   /**
     * Set the default camera's ROI -- a convenience function. Will stop and
     * start Live mode for you, and update the GUI's display of values such as
     * the view dimensions.
