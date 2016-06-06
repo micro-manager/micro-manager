@@ -21,7 +21,7 @@
 //
 // CVS:           $Id$
 
-import org.micromanager.internal.conf2.MicroscopeModel;
+import org.micromanager.internal.hcwizard.MicroscopeModel;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**

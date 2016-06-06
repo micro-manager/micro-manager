@@ -4,7 +4,7 @@
  * Created on Feb 14, 2011, 9:48:28 AM
  */
 
-package org.micromanager.internal.conf2;
+package org.micromanager.internal.hcwizard;
 
 /**
  *
