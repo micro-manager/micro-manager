@@ -39,7 +39,6 @@ public abstract class PagePanel extends JPanel{
    protected MicroscopeModel model_;
    protected CMMCore core_;
    protected String title_;
-   protected String helpText_;
    protected String helpFileName_;
    protected Dialog parent_;
    
@@ -59,16 +58,8 @@ public abstract class PagePanel extends JPanel{
       title_ = txt;
    }
    
-   public void setHelpText(String txt) {
-      helpText_ = txt;
-   }
-   
    public void setHelpFileName(String name) {
       helpFileName_ = name;
-   }
-   
-   public String getHelpText() {
-      return helpText_;
    }
    
    public String getTitle() {

@@ -60,10 +60,6 @@ public class RolesPage extends PagePanel {
    public RolesPage() {
       super();
       title_ = "Select default devices and choose auto-shutter setting";
-      helpText_ = "Default device roles must be defined so that GUI can send adequate commands to them.\n" +
-      "This is especially important for systems with multiple cameras, shutters or stages." +
-      " The GUI needs to know which ones are going to be treated as default.\n\n" +
-      "These roles can be changed on-the-fly thorugh configuration presets (in one of the subsequent steps).";
       setLayout(null);
       
       final JLabel cameraLabel = new JLabel();

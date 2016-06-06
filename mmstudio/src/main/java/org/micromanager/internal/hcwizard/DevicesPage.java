@@ -225,12 +225,6 @@ private JComboBox byLibCombo_;
    public DevicesPage() {
       super();
       title_ = "Add or remove devices";
-      helpText_ = "The list of selected devices is displayed above. " +
-      "You can add or remove devices to/from this list.\n" +
-      "The first column shows the device's assigned name for this particular configuration. " +
-      "In subsequent steps devices will be referred to by their assigned names.\n\n" +
-      "You can edit device names by double-clicking in the first column. Device name must be unique and should not contain any special characters.";
-      
       listByLib_ = true;
 
       setLayout(null);

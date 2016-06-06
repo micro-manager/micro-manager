@@ -132,10 +132,6 @@ public class DelayPage extends PagePanel {
    public DelayPage() {
       super();
       title_ = "Set delays for devices without synchronization capabilities";
-      helpText_ = "Some devices can't signal when they are done with the command, so that we have to guess by manually setting the delay. " +
-      "This means that the device will signal to be busy for the specified delay time after extecuting each command." +
-      " Devices that may require setting the delay manually are mostly shutters or filter wheels. " +
-      "\n\nIf device has normal synchronization capabilities, or you are not sure about it, leave this parameter at 0.";
       setHelpFileName("conf_delays_page.html");
       setLayout(null);
 

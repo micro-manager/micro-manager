@@ -58,9 +58,6 @@ public class IntroPage extends PagePanel {
    public IntroPage() {
       super();
       title_ = "Select the configuration file";
-      helpText_ = "Welcome to the Hardware Config Wizard.\n" +
-                  "This dialog guides you through setting up your microscope hardware. " +
-                  "Select whether to create a new setup from scratch, or start from an existing one.";
 
       setLayout(new MigLayout("fillx, flowy"));
       setHelpFileName(HELP_FILE_NAME);
