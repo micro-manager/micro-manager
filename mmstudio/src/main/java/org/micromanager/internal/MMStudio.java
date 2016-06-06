@@ -691,11 +691,15 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
    }
 
    /**
-    * Returns singleton instance of MainFrame. You should ideally not need
-    * to use this function.
+    * Returns singleton instance of MainFrame.
     * @return singleton instance of the mainFrame
     */
    public static MainFrame getFrame() {
+      return frame_;
+   }
+
+   @Override
+   public JFrame getMainWindow() {
       return frame_;
    }
 

@@ -25,6 +25,7 @@ package org.micromanager;
 
 import java.awt.geom.AffineTransform;
 import java.awt.Rectangle;
+import javax.swing.JFrame;
 
 import org.micromanager.data.Datastore;
 
@@ -206,4 +207,11 @@ public interface CompatibilityInterface {
     *        to set the affine transform for.
     */
    public void setCameraTransform(AffineTransform transform, String config);
+
+   /**
+    * Provide access to the main window of the program. This is largely
+    * intended to allow client code to position their windows with respect
+    * to the main window.
+    */
+   public JFrame getMainWindow();
 }
