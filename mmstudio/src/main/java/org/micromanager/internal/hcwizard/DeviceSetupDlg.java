@@ -48,7 +48,6 @@ public class DeviceSetupDlg extends MMDialog {
    private JButton detectButton;
    private DetectorJDialog progressDialog;
    private DetectionTask dt;
-   private final String DETECT_PORTS = "Scan";
    private final JTable comTable;
    private JTextField devLabel;
 
@@ -64,7 +63,7 @@ public class DeviceSetupDlg extends MMDialog {
       core = c;
       portDev = null;
       dev = d;
-      
+
       getContentPane().setLayout(new BorderLayout());
       contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
       getContentPane().add(contentPanel, BorderLayout.CENTER);
@@ -74,12 +73,12 @@ public class DeviceSetupDlg extends MMDialog {
          lblNewLabel.setBounds(10, 11, 35, 14);
          contentPanel.add(lblNewLabel);
       }
-      
+
       devLabel = new JTextField(dev.getName());
       devLabel.setBounds(47, 8, 165, 20);
       contentPanel.add(devLabel);
       devLabel.setColumns(10);
-                 
+
       {
          JPanel buttonPane = new JPanel();
          buttonPane.setLayout(new FlowLayout(FlowLayout.RIGHT));
@@ -108,26 +107,26 @@ public class DeviceSetupDlg extends MMDialog {
             buttonPane.add(cancelButton);
          }
       }
-      
+
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(final WindowEvent e) {
             savePosition();
          }
       });
-      
+
       setTitle("Device: " + dev.getAdapterName() + " | Library: " + dev.getLibrary());
-      
+
       JScrollPane scrollPaneProp = new JScrollPane();
       scrollPaneProp.setBounds(10, 64, 442, 164);
       contentPanel.add(scrollPaneProp);
-      
+
       propTable = new DaytimeNighttime.Table();
       propTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       propTable.setAutoCreateColumnsFromModel(false);
       scrollPaneProp.setViewportView(propTable);
-      
-      detectButton = new JButton(DETECT_PORTS);
+
+      detectButton = new JButton("Scan Ports");
       detectButton.setEnabled(false);
       detectButton.addActionListener(new ActionListener() {
 
@@ -135,7 +134,6 @@ public class DeviceSetupDlg extends MMDialog {
          public void actionPerformed(ActionEvent e) {
             if (dt != null && dt.isAlive())
                return;
-            
             progressDialog = new DetectorJDialog(DeviceSetupDlg.this, false);
             progressDialog.setTitle("\u00B5" + "Manager device detection");
             progressDialog.setLocationRelativeTo(DeviceSetupDlg.this);
@@ -145,32 +143,32 @@ public class DeviceSetupDlg extends MMDialog {
             dt.start();
          }
       });
-      
+
       detectButton.setToolTipText("Scan COM ports to detect this device");
       detectButton.setBounds(359, 247, 93, 23);
       contentPanel.add(detectButton);
-      
+
       JLabel portLbl = new JLabel("Port Properties (RS 232 settings)");
       portLbl.setBounds(10, 251, 442, 14);
       contentPanel.add(portLbl);
-      
+
       JScrollPane scrollPaneCOM = new JScrollPane();
       scrollPaneCOM.setBounds(10, 281, 442, 169);
       contentPanel.add(scrollPaneCOM);
-      
+
       comTable = new DaytimeNighttime.Table();
       scrollPaneCOM.setViewportView(comTable);
       comTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       comTable.setAutoCreateColumnsFromModel(false);
-      
+
       JLabel lblNewLabel_2 = new JLabel("Initialization Properties");
       lblNewLabel_2.setBounds(10, 49, 442, 14);
       contentPanel.add(lblNewLabel_2);
-      
+
       JLabel parentHub = new JLabel( (dev.getParentHub().length() == 0) ? "" : "Parent: " + dev.getParentHub());
       parentHub.setBounds(227, 11, 225, 14);
       contentPanel.add(parentHub);
-      
+
       loadSettings();
    }
 
@@ -184,32 +182,32 @@ public class DeviceSetupDlg extends MMDialog {
       savePosition();
       String oldName = dev.getName();
       String newName = devLabel.getText();
-      
+
       if (dev.getName().compareTo(devLabel.getText()) != 0) {
          if (model.findDevice(devLabel.getText()) != null) {
             showMessage("Device name " + devLabel.getText() + " is already in use.\nPress Cancel and try again.");
-            return;            
+            return;
          }
-          
+
          try {
             core.unloadDevice(dev.getName());
             dev.setInitialized(false);
-            core.loadDevice(devLabel.getText(), dev.getLibrary(), dev.getAdapterName()); 
+            core.loadDevice(devLabel.getText(), dev.getLibrary(), dev.getAdapterName());
             core.setParentLabel(devLabel.getText(), dev.getParentHub());
          } catch (Exception e) {
             showMessage("Device failed to re-load with changed name.");
             return;
          }
-         
+
          dev.setName(devLabel.getText());
       }
-      
+
       Device d = model.findDevice(devLabel.getText());
       if (d==null) {
          showMessage("Device " + devLabel.getText() + " is not loaded properly.\nPress Cancel and try again.");
          return;
       }
-      
+
       if (d.isInitialized()) {
          try {
             core.unloadDevice(d.getName());
@@ -218,7 +216,7 @@ public class DeviceSetupDlg extends MMDialog {
             ReportingUtils.logError(e);
          }
       }
-      
+
       if (initializeDevice()) {
          dispose();
          if (portDev != null)
@@ -229,7 +227,7 @@ public class DeviceSetupDlg extends MMDialog {
          dev.setInitialized(false);
          return;
       }
-      
+
       // make sure parent refs are updated
       if (!oldName.contentEquals(newName)) {
          Device devs[] = model.getDevices();
@@ -239,7 +237,7 @@ public class DeviceSetupDlg extends MMDialog {
             }
          }
       }
-   }  
+   }
 
    private void loadSettings() {
 
@@ -259,7 +257,7 @@ public class DeviceSetupDlg extends MMDialog {
          // to provide compatibility with older device adapters that share the same port
          ports.add(avPorts[i]);
       }
-      
+
       // identify "port" properties and assign available com ports declared for use
       boolean anyPorts = false;
       boolean anyProps = false;
@@ -267,7 +265,7 @@ public class DeviceSetupDlg extends MMDialog {
          PropertyItem p = dev.getProperty(i);
          if (p.preInit)
             anyProps = true;
-         
+
          if (p.name.compareTo(MMCoreJ.getG_Keyword_Port()) == 0) {
             anyPorts = true;
             if (ports.size() == 0) {
@@ -279,11 +277,11 @@ public class DeviceSetupDlg extends MMDialog {
             for (int k=0; k<ports.size(); k++)
                allowed[k] = ports.get(k).getName();
             p.allowed = allowed;
-            
+
             rebuildComTable(p.value);
          }
       }
-      
+
       // resize dialog based on the properties
       if (anyProps && !anyPorts) {
          Rectangle r = getBounds();
@@ -294,11 +292,11 @@ public class DeviceSetupDlg extends MMDialog {
          r.height = 112;
          setBounds(r);
       }
-      
+
    }
-   
+
    private void rebuildPropTable() {
-      
+
       PropertyTableModel tm = new PropertyTableModel(model, dev, this);
       propTable.setModel(tm);
       PropertyValueCellEditor propValueEditor = new PropertyValueCellEditor();
@@ -337,11 +335,11 @@ public class DeviceSetupDlg extends MMDialog {
    public void rebuildComTable(String portName) {
       if (portName == null)
          return;
-      
+
       portDev = model.findSerialPort(portName);
       if (portDev == null)
          return;
-      
+
       // load port if necessary
       StrVector loadedPorts = core.getLoadedDevicesOfType(DeviceType.SerialDevice);
       Iterator<String> lp = loadedPorts.iterator();
@@ -358,13 +356,13 @@ public class DeviceSetupDlg extends MMDialog {
             ReportingUtils.logError(e);
          }
       }
-      
+
       try {
          System.out.println("rebuild " + portDev.getPropertyValue("BaudRate"));
       } catch (MMConfigFileException e1) {
          ReportingUtils.logMessage("Property BaudRate is not defined");
       }
-      
+
       ComPropTableModel tm = new ComPropTableModel(model, portDev);
       comTable.setModel(tm);
       PropertyValueCellEditor propValueEditor = new PropertyValueCellEditor();
@@ -410,7 +408,7 @@ public class DeviceSetupDlg extends MMDialog {
             dev.updateSetupProperties();
             dev.discoverPeripherals(core);
             return true;
-         }            
+         }
          return false; // port failed
 
       } catch (Exception e) {
@@ -425,7 +423,7 @@ public class DeviceSetupDlg extends MMDialog {
          return false;
       }
    }
-   
+
    private boolean initializePort() {
       if (portDev != null) {
          try {
@@ -446,7 +444,7 @@ public class DeviceSetupDlg extends MMDialog {
             Thread.sleep(1000);
             portDev.loadDataFromHardware(core);
             model.useSerialPort(portDev, true);
-            
+
          } catch (Exception e) {
             showMessage(e.getMessage());
             return false;
@@ -454,7 +452,7 @@ public class DeviceSetupDlg extends MMDialog {
       }
       return true;
    }
-   
+
    public void showMessage(String msg) {
       JOptionPane.showMessageDialog(this, msg);
    }
@@ -467,7 +465,7 @@ public class DeviceSetupDlg extends MMDialog {
     * Thread that performs device detection
     */
    private class DetectionTask extends Thread {
-      
+
       private String foundPorts[];
       private String selectedPort;
 
@@ -493,7 +491,7 @@ public class DeviceSetupDlg extends MMDialog {
                // that were already used by other devices.
                // But, at this point we have to check all ports (used or not)
                // to provide compatibility with older device adapters that share the same port
-               
+
                ports.add(availablePorts[ip]);
             }
             for (Device p1 : ports) {
@@ -502,7 +500,7 @@ public class DeviceSetupDlg extends MMDialog {
                }
                portsInModel += p1.getName();
             }
-            
+
             // if the device does respond on any port, only communicating ports are allowed in the drop down
             Map<String, ArrayList<String>> portsFoundCommunicating = new HashMap<String, ArrayList<String>>();
             // if the device does not respond on any port, let the user pick any port that was setup with a valid serial port name, etc.
@@ -523,14 +521,14 @@ public class DeviceSetupDlg extends MMDialog {
                   // so do not show, but only log the error
                   ReportingUtils.logError(e);
                }
-               
+
                progressDialog.ProgressText("Looking for:\n" + looking);
                DeviceDetectionStatus st = core.detectDevice(dev.getName());
-               
+
                if (st == DeviceDetectionStatus.Unimplemented) {
                   JOptionPane.showMessageDialog(null, "This device does not support auto-detection.\n" +
                         "You have to manually choose port and settings.");
-                  
+
                   return;
                }
 
@@ -538,16 +536,16 @@ public class DeviceSetupDlg extends MMDialog {
                   System.out.print("cancel request");
                   return;
                }
-               
+
                if (DeviceDetectionStatus.CanCommunicate == st) {
                   ArrayList<String> llist = portsFoundCommunicating.get(dev.getName());
                   if (null == llist) {
                      portsFoundCommunicating.put(dev.getName(), llist = new ArrayList<String>());
                   }
                   llist.add(ports.get(i).getName());
-               } 
+               }
             }
-            
+
             String foundem = "";
             // show the user the result and populate the drop down data
             ArrayList<String> communicating = portsFoundCommunicating.get(dev.getName());
@@ -603,7 +601,7 @@ public class DeviceSetupDlg extends MMDialog {
             detectButton.setText(DETECT_PORTS);
          }
       }
-      
+
       public void finish() {
          try {
             join();
