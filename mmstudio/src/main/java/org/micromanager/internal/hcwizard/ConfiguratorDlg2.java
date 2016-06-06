@@ -204,7 +204,8 @@ public class ConfiguratorDlg2 extends MMDialog {
          }
       }
       setPage(0);
-
+      // Don't make the model think we've done anything yet.
+      microModel_.setModified(false);
    }
 
    private void setPage(int i) {
