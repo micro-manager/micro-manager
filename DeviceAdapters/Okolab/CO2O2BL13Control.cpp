@@ -445,6 +445,10 @@ int CO2O2BL13Control::SetO2SetPoint(double sp)
  return DEVICE_OK;                                                         
 } 
 
+bool CO2O2BL13Control::SupportsDeviceDetection(void)
+{
+   return true;
+}
 
 /*
  *  Test serial communication between OSC and device 

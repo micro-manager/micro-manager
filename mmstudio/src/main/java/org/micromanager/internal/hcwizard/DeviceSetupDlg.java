@@ -39,6 +39,8 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 public class DeviceSetupDlg extends MMDialog {
    private static final long serialVersionUID = 1L;
+   private static final String SCAN_PORTS = "Scan Ports";
+
    private final JPanel contentPanel = new JPanel();
    private CMMCore core;
    private Device portDev;
@@ -126,7 +128,7 @@ public class DeviceSetupDlg extends MMDialog {
       propTable.setAutoCreateColumnsFromModel(false);
       scrollPaneProp.setViewportView(propTable);
 
-      detectButton = new JButton("Scan Ports");
+      detectButton = new JButton(SCAN_PORTS);
       detectButton.setEnabled(false);
       detectButton.addActionListener(new ActionListener() {
 
@@ -319,7 +321,8 @@ public class DeviceSetupDlg extends MMDialog {
       for (int i = 0; i < devices.length; i++) {
           for (int j = 0; j < devices[i].getNumberOfProperties(); j++) {
               PropertyItem p = devices[i].getProperty(j);
-              if (p.name.compareTo(MMCoreJ.getG_Keyword_Port()) == 0) {
+              if (p.name.compareTo(MMCoreJ.getG_Keyword_Port()) == 0 &&
+                    core.supportsDeviceDetection(devices[i].getName())) {
                   any = true;
                   break;
               }
@@ -598,7 +601,7 @@ public class DeviceSetupDlg extends MMDialog {
                rebuildComTable(selectedPort);
             }
             // restore normal operation of the Detect button
-            detectButton.setText(DETECT_PORTS);
+            detectButton.setText(SCAN_PORTS);
          }
       }
 

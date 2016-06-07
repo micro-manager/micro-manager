@@ -146,6 +146,11 @@ int H101BasicControl::GetTemp(double& temp)
 
 
 
+bool H101BasicControl::SupportsDeviceDetection(void)
+{
+   return true;
+}
+
 MM::DeviceDetectionStatus H101BasicControl::DetectDevice(void)
 {
  int iport=-1;

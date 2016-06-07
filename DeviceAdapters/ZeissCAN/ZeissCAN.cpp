@@ -598,6 +598,11 @@ int ZeissScope::GetMCU28Version(std::string& ver)
    return DEVICE_OK;
 }
 
+bool ZeissScope::SupportsDeviceDetection(void)
+{
+   return true;
+}
+
 MM::DeviceDetectionStatus ZeissScope::DetectDevice(void)
 {
    // all conditions must be satisfied...

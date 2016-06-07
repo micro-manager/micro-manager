@@ -7108,6 +7108,18 @@ void CMMCore::updateAllowedChannelGroups()
 //
 
 /**
+ * Return whether or not the device supports automatic device detection
+ * (i.e. whether or not detectDevice() may be safely called).
+ */
+bool CMMCore::supportsDeviceDetection(char* label)
+{
+   boost::shared_ptr<DeviceInstance> pDevice =
+      deviceManager_->GetDevice(label);
+   mm::DeviceModuleLockGuard guard(pDevice);
+   return pDevice->SupportsDeviceDetection();
+}
+
+/**
  * Tries to communicate to a device through a given serial port
  * Used to automate discovery of correct serial port
  * Also configures the serial port correctly

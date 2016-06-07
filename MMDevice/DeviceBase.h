@@ -782,6 +782,9 @@ public:
    virtual int AcqAfterStack() {return DEVICE_OK;}
 
    // device discovery (auto-configuration)
+   virtual bool SupportsDeviceDetection(void) {
+       return false;
+   }
    virtual MM::DeviceDetectionStatus DetectDevice(void){ 
       return  MM::Unimplemented;
    };

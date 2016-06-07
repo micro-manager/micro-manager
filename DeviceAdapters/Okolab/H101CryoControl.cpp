@@ -136,6 +136,11 @@ int H101CryoControl::GetTemp(double& temp)
 
 
 
+bool H101CryoControl::SupportsDeviceDetection(void)
+{
+   return true;
+}
+
 MM::DeviceDetectionStatus H101CryoControl::DetectDevice(void)
 {
  int iport=-1;

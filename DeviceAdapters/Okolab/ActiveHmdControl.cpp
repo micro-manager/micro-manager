@@ -354,6 +354,10 @@ int HmdControl::SetSetPoint(double sp)
  return DEVICE_OK;                                                         
 } 
 
+bool ::SupportsDeviceDetection(void)
+{
+   return true;
+}
 
 /*
  *  Test serial communication between OSC and device 

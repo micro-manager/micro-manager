@@ -32,6 +32,7 @@ class CO2O2BL13Control: public OkolabDevice , public CGenericBase<CO2O2BL13Contr
 
 	void GetName(char* pszName) const;
     bool Busy();
+    bool SupportsDeviceDetection(void);
     MM::DeviceDetectionStatus DetectDevice(void);
 
 	// internal API 

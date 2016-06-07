@@ -334,6 +334,11 @@ int #TEMPLATE#Control::SetSetPoint(double sp)
 } 
 
 
+bool #TEMPLATE#Control::SupportsDeviceDetection(void)
+{
+   return true;
+}
+
 /*
  *  Test serial communication between OSC and device 
  */

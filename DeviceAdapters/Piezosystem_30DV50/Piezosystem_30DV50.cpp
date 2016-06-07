@@ -327,6 +327,11 @@ int Stage::GetVersion(std::string& version)
    return returnStatus;
 }
 
+bool Stage::SupportsDeviceDetection(void)
+{
+   return true;
+}
+
 MM::DeviceDetectionStatus Stage::DetectDevice(void)
 {
    // all conditions must be satisfied...
@@ -2849,6 +2854,12 @@ int Shutter::GetActuatorName(char* id){
 	LogMessage(id);
 	return DEVICE_OK;
 }
+
+bool Shutter::SupportsDeviceDetection(void)
+{
+   return true;
+}
+
 MM::DeviceDetectionStatus Shutter::DetectDevice(void)
 {
    // all conditions must be satisfied...

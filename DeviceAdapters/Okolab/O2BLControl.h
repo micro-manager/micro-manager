@@ -32,6 +32,7 @@ class O2BLControl: public OkolabDevice , public CGenericBase<O2BLControl>
 
 	void GetName(char* pszName) const;
     bool Busy();
+    bool SupportsDeviceDetection(void);
     MM::DeviceDetectionStatus DetectDevice(void);
 
 	// internal API 

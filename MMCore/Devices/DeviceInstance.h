@@ -210,6 +210,7 @@ public:
    void AcqAfterFrame();
    void AcqBeforeStack();
    void AcqAfterStack();
+   bool SupportsDeviceDetection();
    MM::DeviceDetectionStatus DetectDevice();
    void SetParentID(const char* parentId); // TODO Remove
    std::string GetParentID() const; // TODO Remove
