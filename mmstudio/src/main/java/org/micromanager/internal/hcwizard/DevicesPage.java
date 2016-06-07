@@ -586,20 +586,10 @@ private JComboBox byLibCombo_;
 
             Object[] userData = node.getUserDataArray();
             if (null == userData) {
-               // if a folder has one child go ahead and add the children
-               if (1 == node.getLeafCount()) {
-                  node = (DeviceTreeNode) node.getChildAt(0);
-                  userData = node.getUserDataArray();
-                  if (null == userData)
-                     return false;
-               }
-            }
-
-            // get selected device
-            if (userData == null) {
-               JOptionPane.showMessageDialog(this, "Multiple devices available in this node!\nPlease expand the node and select a specific device to add.");
+               // Adding a folder; invalid operation, so do nothing.
                return false;
             }
+
             String adapterName = userData[1].toString();
             String lib = userData[0].toString();
             String descr = userData[2].toString();
