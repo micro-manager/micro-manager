@@ -34,6 +34,8 @@ import org.micromanager.plugins.magellan.bidc.JavaLayerImageConstructor;
 import org.micromanager.plugins.magellan.channels.ChannelSetting;
 import org.micromanager.plugins.magellan.coordinates.AffineUtils;
 import java.awt.geom.Point2D;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.micromanager.plugins.magellan.json.JSONArray;
 import org.micromanager.plugins.magellan.main.Magellan;
 import org.micromanager.plugins.magellan.misc.Log;
@@ -389,6 +391,7 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
                      } catch (InterruptedException ie) {
                         throw ie;
                      } catch (Exception e) {
+                        e.printStackTrace();                                                                    
                         Log.log("Exception in event generating thread");
                         Log.log(e);
                      }
@@ -543,8 +546,10 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
     * @return
     */
    public static boolean isZAboveImagingVolume(int spaceMode, FixedAreaAcquisitionSettings settings, XYStagePosition position, double zPos, double zOrigin) throws InterruptedException {
-      if (spaceMode == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
-         return settings.fixedSurface_.isPositionCompletelyAboveSurface(position, settings.fixedSurface_, zPos + settings.distanceAboveFixedSurface_,true);
+      if (spaceMode == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {         
+         boolean extrapolate = settings.fixedSurface_ != settings.footprint_;
+         //extrapolate only if different surface used for XY positions than footprint
+         return settings.fixedSurface_.isPositionCompletelyAboveSurface(position, settings.fixedSurface_, zPos + settings.distanceAboveFixedSurface_,extrapolate);
       } else if (spaceMode == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
          return settings.topSurface_.isPositionCompletelyAboveSurface(position, settings.topSurface_, zPos + settings.distanceAboveTopSurface_, false);
       } else if (spaceMode == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
@@ -557,7 +562,9 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
 
    public static boolean isZBelowImagingVolume(int spaceMode, FixedAreaAcquisitionSettings settings, XYStagePosition position, double zPos, double zOrigin) throws InterruptedException {
       if (spaceMode == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
-         return settings.fixedSurface_.isPositionCompletelyBelowSurface(position, settings.fixedSurface_, zPos - settings.distanceBelowFixedSurface_,true);
+         boolean extrapolate = settings.fixedSurface_ != settings.footprint_;
+         //extrapolate only if different surface used for XY positions than footprint
+         return settings.fixedSurface_.isPositionCompletelyBelowSurface(position, settings.fixedSurface_, zPos - settings.distanceBelowFixedSurface_,extrapolate);
       } else if (spaceMode == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
          return settings.bottomSurface_.isPositionCompletelyBelowSurface(position, settings.bottomSurface_, zPos - settings.distanceBelowBottomSurface_,false);
       } else if (spaceMode == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {

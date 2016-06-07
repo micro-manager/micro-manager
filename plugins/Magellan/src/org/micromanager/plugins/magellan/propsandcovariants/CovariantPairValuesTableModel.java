@@ -50,7 +50,12 @@ public class CovariantPairValuesTableModel extends AbstractTableModel{
       if (pair_ == null) {
          return index == 0 ? " " : " ";
       }
-      return index == 0 ? pair_.getIndependentName(true) : pair_.getDependentName(true);
+      //for demoing
+      String depName = pair_.getDependentName(true);
+      if (depName.equals("Camera-TestProperty5")) {
+         depName = "Laser-ExcitationPower";
+      }
+      return index == 0 ? pair_.getIndependentName(true) : depName;
    }
 
    @Override

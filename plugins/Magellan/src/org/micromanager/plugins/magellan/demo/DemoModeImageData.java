@@ -22,7 +22,9 @@ import ij.ImagePlus;
 import ij.WindowManager;
 import java.awt.Frame;
 import org.micromanager.plugins.magellan.acq.MultiResMultipageTiffStorage;
+import org.micromanager.plugins.magellan.main.Magellan;
 import org.micromanager.plugins.magellan.misc.GlobalSettings;
+import org.micromanager.plugins.magellan.misc.Log;
 
 /**
  *
@@ -76,29 +78,28 @@ public class DemoModeImageData {
       img_ =  WindowManager.getImage("Magellan_demo_data.tif");
    
 
-
       img_.getWindow().setState(Frame.ICONIFIED);
    }
    
    
 //    public static byte[] getBytePixelData(int channel, int x, int y, int z, int width, int height) {
-//      int xOffset = -50;
-//      int yOffset = -50;
+//      int xOffset = 182;
+//      int yOffset = 75;
 //      int sliceIndex = (int) (z / 4.5);
-//      int frame = 2;
+//      int frame = 6;
 //      return (byte[]) storage_.getImageForDisplay(channel, sliceIndex, frame, 0, x+xOffset, y+yOffset, width, height).pix;
 //   }
    
    public static byte[] getBytePixelData(int channel, int x, int y, int z, int width, int height) {
       int fullWidth = img_.getWidth();
       int fullHeight = img_.getHeight();      
-//      while (x < 0) x+= fullWidth;
-//      while (y < 0) y+= fullHeight;
-//      while (z < 0) z+= imageSizeZ_;
-//      x = x % fullWidth;
-//      y = y % fullHeight;
-//      int sliceIndex = (z % imageSizeZ_) / pixelSizeZ_;
-      int sliceIndex = (z) / pixelSizeZ_;
+      while (x < 0) x+= fullWidth;
+      while (y < 0) y+= fullHeight;
+      while (z < 0) z+= imageSizeZ_;
+      x = x % fullWidth;
+      y = y % fullHeight;
+      int sliceIndex = (z % imageSizeZ_) / pixelSizeZ_;
+//      int sliceIndex = (z) / pixelSizeZ_;
   
 
       byte[] fullSlice = (byte[]) img_.getStack().getPixels(numChannels_ * sliceIndex + channel + 1);

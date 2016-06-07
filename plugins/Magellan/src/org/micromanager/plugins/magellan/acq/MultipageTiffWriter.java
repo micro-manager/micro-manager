@@ -284,7 +284,16 @@ public class MultipageTiffWriter {
       
       if (filePosition_ % 2 == 1) {
          filePosition_++;
-         fileChannel_.position(fileChannel_.position() + 1);
+         executeWritingTask(new Runnable() {
+            @Override
+            public void run() {
+               try {
+                  fileChannel_.position(fileChannel_.position() + 1);
+               } catch (IOException ex) {
+                  Log.log("Couldn't reposition file channel");
+               }
+            }
+         });
       }
    }
    

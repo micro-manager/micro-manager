@@ -55,9 +55,9 @@ import org.micromanager.plugins.magellan.propsandcovariants.CovariantPairing;
  */
 public class MagellanEngine {
 
-   private static final int DEMO_DELAY_Z = 30;
-   private static final int DEMO_DELAY_XY = 100;
-   private static final int DEMO_DELAY_IMAGE_CAPTURE = 150;
+   private static final int DEMO_DELAY_Z = 0;
+   private static final int DEMO_DELAY_XY = 0;
+   private static final int DEMO_DELAY_IMAGE_CAPTURE = 0;
 
    private static final int HARDWARE_ERROR_RETRIES = 6;
    private static final int DELWAY_BETWEEN_RETRIES_MS = 5;

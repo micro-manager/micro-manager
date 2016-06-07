@@ -291,6 +291,11 @@ public class CovariantPairing {
   
    @Override
    public String toString() {
-      return independent_.getAbbreviatedName() + " : " + dependent_.getAbbreviatedName();
+      String depName = dependent_.getAbbreviatedName();
+      //for demoing
+      if (depName.equals("Camera-TestProperty5")) {
+         depName = "Laser-ExcitationPower";
+      }
+      return independent_.getAbbreviatedName() + " : " + depName ;
    }
 }

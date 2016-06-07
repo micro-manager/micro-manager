@@ -162,6 +162,7 @@ public final class TaggedImageStorageMultipageTiff   {
                   maxFrameIndex_ = Math.max(maxFrameIndex_, Integer.parseInt(label.split("_")[2]));                 
                }
             } catch (IOException ex) {
+               ex.printStackTrace();
                Log.log("Couldn't open file: " + f.toString());
             }
          }

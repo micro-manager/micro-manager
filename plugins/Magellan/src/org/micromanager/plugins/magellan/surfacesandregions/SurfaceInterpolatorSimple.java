@@ -20,6 +20,8 @@ import delaunay_triangulation.Delaunay_Triangulation;
 import delaunay_triangulation.Point_dt;
 import delaunay_triangulation.Triangle_dt;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.TreeMap;
 import org.micromanager.plugins.magellan.main.Magellan;
@@ -121,26 +123,36 @@ public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
 
       //find 3 closest points and calculate value
       //find closest convex hull vertex
-      TreeMap<Double, Point3d> closest = new TreeMap<Double, Point3d>();
-      Iterator<Point3d> vertices = points.iterator();
-      for (int i = 0; i < 3; i++) {
-         Point3d vertex3 = vertices.next();
-         Vector2D vertex = new Vector2D(vertex3.x, vertex3.y);
-         closest.put(vertex.distance(new Vector2D(x, y)), vertex3);
-      }
-      while (vertices.hasNext()) {
-         Point3d vertex3 = vertices.next();
-         Vector2D vertex = new Vector2D(vertex3.x, vertex3.y);
+      final LinkedList<Integer> closestIndices = new LinkedList<Integer>();
+      final LinkedList<Double> closestDistances = new LinkedList<Double>();
+      for  (int i = 0; i < points.size(); i++) {
+         //get current distance
+         Vector2D vertex = new Vector2D(points.get(i).x, points.get(i).y);
          double distance = vertex.distance(new Vector2D(x, y));
-         if (distance < closest.lastKey()) {
-            closest.put(distance, vertex3);
-            closest.remove(closest.lastKey());
+         if (closestDistances.size() < 3) {
+            closestIndices.add(i);
+            closestDistances.add(distance);
+         } else if (distance < closestDistances.get(2)) {
+            closestIndices.removeLast();
+            closestDistances.removeLast();
+            closestIndices.add(i);
+            closestDistances.add(distance);
          }
+         //sort
+         Collections.sort(closestIndices, new Comparator<Integer>() {
+            public int compare(Integer left, Integer right) {
+               return (new Double(closestDistances.get(closestIndices.indexOf(left)))).
+                       compareTo(closestDistances.get(closestIndices.indexOf(right)));
+            }
+         });
+         Collections.sort(closestDistances);
       }
-      Point3d[] closestPointList = closest.values().toArray(new Point3d[0]);
-      Vector3D v1 = new Vector3D(closestPointList[0].x, closestPointList[0].y, closestPointList[0].z);
-      Vector3D v2 = new Vector3D(closestPointList[1].x, closestPointList[1].y, closestPointList[1].z);
-      Vector3D v3 = new Vector3D(closestPointList[2].x, closestPointList[2].y, closestPointList[2].z);
+      Point3d point1 = points.get(closestIndices.get(0));
+      Point3d point2 = points.get(closestIndices.get(1));
+      Point3d point3 = points.get(closestIndices.get(2));
+      Vector3D v1 = new Vector3D(point1.x, point1.y, point1.z);
+      Vector3D v2 = new Vector3D(point2.x, point2.y, point2.z);
+      Vector3D v3 = new Vector3D(point3.x, point3.y, point3.z);
       Plane plane = new Plane(v1, v2, v3, TOLERANCE);
       //intersetion of vertical line at these x+y values with plane gives point in plane
       Vector3D pointInPlane = plane.intersection(new Line(new Vector3D(x, y, 0), new Vector3D(x, y, 1), TOLERANCE));
@@ -148,4 +160,6 @@ public class SurfaceInterpolatorSimple extends SurfaceInterpolator {
       return zVal;
    }
 
+   
+   
 }
