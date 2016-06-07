@@ -117,7 +117,7 @@ public class RolesPage extends PagePanel {
       });
       add(focusComboBox_);
 
-      autoshutterCheckBox_ = new JCheckBox();
+      autoshutterCheckBox_ = new JCheckBox("Use Autoshutter By Default");
       autoshutterCheckBox_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             try {
@@ -132,8 +132,7 @@ public class RolesPage extends PagePanel {
             }
          }
       });
-      autoshutterCheckBox_.setText("Auto-shutter");
-      autoshutterCheckBox_.setBounds(21, 192, 141, 23);
+      autoshutterCheckBox_.setBounds(21, 192, 250, 23);
       add(autoshutterCheckBox_);
 
       focusDirectionPanel_ = new JPanel(new MigLayout());
