@@ -52,7 +52,6 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
 
    private static final int EVENT_QUEUE_CAP = 25;
 
-   private final int spaceMode_;
    final private FixedAreaAcquisitionSettings settings_;
    private List<XYStagePosition> positions_;
    private long nextTimePointStartTime_ms_;
@@ -93,7 +92,6 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
       SurfaceManager.getInstance().registerSurfaceChangedListener(this);
       acqGroup_ = acqGroup;
       settings_ = settings;
-      spaceMode_ = settings.spaceMode_;
       try {
          int dir = Magellan.getCore().getFocusDirection(zStage_);
          if (dir > 0) {
@@ -135,14 +133,14 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
    @Override
    public void SurfaceChanged(SurfaceInterpolator surface) {
       boolean updateNeeded = false;
-      if (spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK && settings_.fixedSurface_ == surface) {
+      if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK && settings_.fixedSurface_ == surface) {
          updateNeeded = true;
-      } else if (spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK
+      } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK
               && (settings_.topSurface_ == surface || settings_.bottomSurface_ == surface)) {
          updateNeeded = true;
-      } else if (spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
+      } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
 
-      } else if (spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D) {
+      } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D) {
 
       } else {
          //no space mode
@@ -166,14 +164,14 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
    private void setupXYPositions() {
       try {
          //get XY positions
-         if (spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
+         if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
             positions_ = settings_.footprint_.getXYPositions(settings_.tileOverlap_);
-         } else if (spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
+         } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
             positions_ = settings_.useTopOrBottomFootprint_ == FixedAreaAcquisitionSettings.FOOTPRINT_FROM_TOP
                     ? settings_.topSurface_.getXYPositions(settings_.tileOverlap_) : settings_.bottomSurface_.getXYPositions(settings_.tileOverlap_);
-         } else if (spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
+         } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
             positions_ = settings_.footprint_.getXYPositions(settings_.tileOverlap_);
-         } else if (spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D) {
+         } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D) {
             positions_ = settings_.footprint_.getXYPositions(settings_.tileOverlap_);
          } else {
             //no space mode, use current stage positon
@@ -460,21 +458,21 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
                throw new InterruptedException();
             }
             double zPos = zOrigin_ + sliceIndex * zStep_;
-            if ((spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D || spaceMode_ == FixedAreaAcquisitionSettings.NO_SPACE)
+            if ((settings_.spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D || settings_.spaceMode_ == FixedAreaAcquisitionSettings.NO_SPACE)
                     && sliceIndex > 0) {
                break; //2D regions only have 1 slice
             }
 
-            if (isImagingVolumeUndefinedAtPosition(spaceMode_, settings_, position)) {
+            if (isImagingVolumeUndefinedAtPosition(settings_.spaceMode_, settings_, position)) {
                break;
             }
 
-            if (isZBelowImagingVolume(spaceMode_, settings_, position, zPos, zOrigin_) || (zStageHasLimits_ && zPos > zStageUpperLimit_)) {
+            if (isZBelowImagingVolume(settings_.spaceMode_, settings_, position, zPos, zOrigin_) || (zStageHasLimits_ && zPos > zStageUpperLimit_)) {
                //position is below z stack or limit of focus device, z stack finished
                break;
             }
             //3D region
-            if (isZAboveImagingVolume(spaceMode_, settings_, position, zPos, zOrigin_) || (zStageHasLimits_ && zPos < zStageLowerLimit_)) {
+            if (isZAboveImagingVolume(settings_.spaceMode_, settings_, position, zPos, zOrigin_) || (zStageHasLimits_ && zPos < zStageLowerLimit_)) {
                sliceIndex++;
                continue; //position is above imaging volume or range of focus device
             }
@@ -576,7 +574,7 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
    }
    
    private double getZTopCoordinate() {
-      return getZTopCoordinate(spaceMode_, settings_, towardsSampleIsPositive_, zStageHasLimits_,  zStageLowerLimit_,  zStageUpperLimit_, zStage_);
+      return getZTopCoordinate(settings_.spaceMode_, settings_, towardsSampleIsPositive_, zStageHasLimits_,  zStageLowerLimit_,  zStageUpperLimit_, zStage_);
    }
 
    public static double getZTopCoordinate(int spaceMode, FixedAreaAcquisitionSettings settings, boolean towardsSampleIsPositive,
@@ -656,17 +654,17 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
 
    @Override
    public int getInitialNumSlicesEstimate() {
-      if (spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
+      if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK) {
          Point3d[] interpPoints = settings_.fixedSurface_.getPoints();
          double top = interpPoints[0].z;
          double bottom = interpPoints[interpPoints.length - 1].z;
          return (int) Math.ceil((Math.abs(top - bottom) + settings_.distanceAboveFixedSurface_ + settings_.distanceBelowFixedSurface_) / zStep_);
-      } else if (spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
+      } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK) {
          Point3d[] interpPoints = settings_.topSurface_.getPoints();
          double top = interpPoints[0].z;
          double bottom = interpPoints[interpPoints.length - 1].z;
          return (int) Math.ceil((Math.abs(top - bottom) + settings_.distanceAboveTopSurface_ + settings_.distanceBelowBottomSurface_) / zStep_);
-      } else if (spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
+      } else if (settings_.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK) {
          return (int) Math.ceil(Math.abs(settings_.zStart_ - settings_.zEnd_) / zStep_);
       } else {
          //region2D or no region

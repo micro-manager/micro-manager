@@ -148,14 +148,9 @@ public class GUI extends javax.swing.JFrame {
       zStepLabel_.setEnabled(!running);
       savingNameLabel_.setEnabled(!running);
       savingNameTextField_.setEnabled(!running);
-      checkBox2D_.setEnabled(!running);
-      checkBox3D_.setEnabled(!running);
       acqTileOverlapLabel_.setEnabled(!running);
       acqOverlapPercentSpinner_.setEnabled(!running);
       tileOverlapPercentLabel_.setEnabled(!running);
-      simpleZStackRadioButton_.setEnabled(!running);
-      volumeBetweenSurfacesRadioButton_.setEnabled(!running);
-      fixedDistanceFromSurfaceRadioButton_.setEnabled(!running);
       this.repaint();
    }
    
