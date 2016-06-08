@@ -54,9 +54,19 @@ public:
    int SetBinning(int binSize);
    void SetExposure(double exp_ms);
    double GetExposure() const;
+
    int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize);
    int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize);
    int ClearROI();
+   bool SupportsMultiROI();
+   bool IsMultiROISet();
+   int GetMultiROICount(unsigned& count);
+   int SetMultiROI(const unsigned* xs, const unsigned* ys,
+           const unsigned* widths, const unsigned* heights,
+           unsigned numROIs);
+   int GetMultiROI(unsigned* xs, unsigned* ys, unsigned* widths,
+           unsigned* heights, unsigned* length);
+
    int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
    int StartSequenceAcquisition(double interval_ms);
    int StopSequenceAcquisition();
