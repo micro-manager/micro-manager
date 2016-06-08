@@ -62,7 +62,6 @@ public class FinishPage extends PagePanel {
     public FinishPage() {
         super();
         title_ = "Save configuration and exit";
-        setHelpFileName("conf_finish_page.html");
         setLayout(new MigLayout("fillx"));
 
         JTextArea help = new JTextArea(

@@ -20,7 +20,6 @@
 			<fileset dir="${rscdir}">
 				<include name="**/*.png"/>
 				<include name="**/*.gif"/>
-				<include name="**/*.html"/>
 			</fileset>
         </copy>
 		<copy todir="${intdir}">

@@ -205,7 +205,6 @@ public class LabelsPage extends PagePanel {
    public LabelsPage() {
       super();
       title_ = "Define position labels for state devices";
-      setHelpFileName("conf_labels_page.html");
       setLayout(new MigLayout("fill"));
 
       JTextArea help = new JTextArea(

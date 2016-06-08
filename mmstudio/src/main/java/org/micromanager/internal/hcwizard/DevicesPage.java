@@ -71,7 +71,6 @@ public class DevicesPage extends PagePanel implements ListSelectionListener, Mou
 
    private JTable deviceTable_;
    private JScrollPane installedScrollPane_;
-   private static final String HELP_FILE_NAME = "conf_devices_page.html";
    private JButton editButton;
    private JButton removeButton;
    private JButton peripheralsButton;
@@ -230,7 +229,6 @@ private JComboBox byLibCombo_;
       listByLib_ = true;
 
       setLayout(new MigLayout("fill, flowx"));
-      setHelpFileName(HELP_FILE_NAME);
 
       JTextArea help = new JTextArea(
             "Select devices from the \"Available Devices\" list to include in this configuration.");

@@ -51,7 +51,6 @@ public class IntroPage extends PagePanel {
    private JRadioButton modifyRadioButton_;
    private JRadioButton createNewRadioButton_;
    private JButton browseButton_;
-   private static final String HELP_FILE_NAME = "conf_intro_page.html";
 
    /**
     * Create the panel
@@ -61,7 +60,6 @@ public class IntroPage extends PagePanel {
       title_ = "Select the configuration file";
 
       setLayout(new MigLayout("fillx, flowy"));
-      setHelpFileName(HELP_FILE_NAME);
 
       JTextArea help = new JTextArea(
                "This wizard will walk you through setting up \u00b5Manager to control the hardware in your system.");
