@@ -368,7 +368,6 @@ private JComboBox byLibCombo_;
                String props[] = sel[i].getPreInitProperties();
                if (props.length > 0) {
                   DeviceSetupDlg dlgProps = new DeviceSetupDlg(model_, core_, sel[i]);
-                  dlgProps.setVisible(true);
                   if (!sel[i].isInitialized()) {
                      core_.unloadDevice(sel[i].getName());
                      model_.removeDevice(sel[i].getName());
@@ -403,7 +402,6 @@ private JComboBox byLibCombo_;
          e.printStackTrace();
       }
       DeviceSetupDlg dlg = new DeviceSetupDlg(model_, core_, dev);
-      dlg.setVisible(true);
       model_.setModified(true);
       
       if (!dev.isInitialized()) {
@@ -617,7 +615,6 @@ private JComboBox byLibCombo_;
 
             // open device setup dialog
             DeviceSetupDlg dlg = new DeviceSetupDlg(model_, core_, dev);
-            dlg.setVisible(true);
 
             if (!dev.isInitialized()) {
                // user canceled or things did not work out
@@ -667,7 +664,6 @@ private JComboBox byLibCombo_;
                         String props[] = sel[i].getPreInitProperties();
                         if (props.length > 0) {
                            DeviceSetupDlg dlgProps = new DeviceSetupDlg(model_, core_, sel[i]);
-                           dlgProps.setVisible(true);
                            if (!sel[i].isInitialized()) {
                               core_.unloadDevice(sel[i].getName());
                               model_.removeDevice(sel[i].getName());
