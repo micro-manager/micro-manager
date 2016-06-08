@@ -7,6 +7,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -125,6 +126,21 @@ public class DeviceSetupDlg extends MMDialog {
       comTable_.setAutoCreateColumnsFromModel(false);
 
       JPanel buttonPane = new JPanel(new MigLayout("insets 0"));
+
+      JButton helpButton = new JButton("Help");
+      helpButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            try {
+               ij.plugin.BrowserLauncher.openURL(
+                  DevicesPage.WEBSITE_ROOT + device_.getLibrary());
+            } catch (IOException e1) {
+               ReportingUtils.showError(e1);
+            }
+         }
+      });
+      buttonPane.add(helpButton, "alignx right");
+
       JButton okButton = new JButton("OK");
       okButton.addActionListener(new ActionListener() {
          @Override
@@ -133,7 +149,7 @@ public class DeviceSetupDlg extends MMDialog {
          }
       });
       okButton.setActionCommand("OK");
-      buttonPane.add(okButton, "alignx right");
+      buttonPane.add(okButton);
       getRootPane().setDefaultButton(okButton);
 
       JButton cancelButton = new JButton("Cancel");
