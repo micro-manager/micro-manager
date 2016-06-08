@@ -37,6 +37,7 @@ import javax.swing.JScrollPane;
 import mmcorej.DeviceType;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
+
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.internal.utils.GUIUtils;
@@ -60,16 +61,11 @@ public class RolesPage extends PagePanel {
    public RolesPage() {
       super();
       title_ = "Select default devices and choose auto-shutter setting";
-      setLayout(null);
-      
-      final JLabel cameraLabel = new JLabel();
-      cameraLabel.setText("Default camera");
-      cameraLabel.setBounds(21, 11, 120, 24);
-      add(cameraLabel);
+      setLayout(new MigLayout("fill"));
 
+      add(new JLabel("Default Camera: "), "split");
       cameraComboBox_ = new JComboBox();
       cameraComboBox_.setAutoscrolls(true);
-      cameraComboBox_.setBounds(20, 35, 120, 22);
       cameraComboBox_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             try {
@@ -79,15 +75,10 @@ public class RolesPage extends PagePanel {
             }
          }
       });
-      add(cameraComboBox_);
-            
-      final JLabel cameraLabel_1 = new JLabel();
-      cameraLabel_1.setText("Default shutter");
-      cameraLabel_1.setBounds(22, 69, 120, 24);
-      add(cameraLabel_1);
+      add(cameraComboBox_, "wrap");
 
+      add(new JLabel("Default Shutter: "), "split");
       shutterComboBox_ = new JComboBox();
-      shutterComboBox_.setBounds(21, 93, 120, 22);
       shutterComboBox_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             try {
@@ -97,15 +88,10 @@ public class RolesPage extends PagePanel {
             }
          }
       });
-      add(shutterComboBox_);
+      add(shutterComboBox_, "wrap");
 
-      final JLabel cameraLabel_2 = new JLabel();
-      cameraLabel_2.setText("Default focus stage");
-      cameraLabel_2.setBounds(23, 128, 150, 24);
-      add(cameraLabel_2);
-
+      add(new JLabel("Default Focus Stage: "), "split");
       focusComboBox_ = new JComboBox();
-      focusComboBox_.setBounds(22, 152, 120, 22);
       focusComboBox_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             try {
@@ -115,7 +101,7 @@ public class RolesPage extends PagePanel {
             }
          }
       });
-      add(focusComboBox_);
+      add(focusComboBox_, "wrap");
 
       autoshutterCheckBox_ = new JCheckBox("Use Autoshutter By Default");
       autoshutterCheckBox_.addActionListener(new ActionListener() {
@@ -132,13 +118,11 @@ public class RolesPage extends PagePanel {
             }
          }
       });
-      autoshutterCheckBox_.setBounds(21, 192, 250, 23);
-      add(autoshutterCheckBox_);
+      add(autoshutterCheckBox_, "wrap");
 
-      focusDirectionPanel_ = new JPanel(new MigLayout());
+      focusDirectionPanel_ = new JPanel(new MigLayout("fill"));
       JScrollPane scrollPane = new JScrollPane(focusDirectionPanel_);
-      scrollPane.setBounds(21, 232, 512, 300);
-      add(scrollPane);
+      add(scrollPane, "push, spanx, wrap");
    }
 
    public boolean enterPage(boolean next) {
