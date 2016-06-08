@@ -34,6 +34,8 @@ import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
+import net.miginfocom.swing.MigLayout;
+
 import org.micromanager.internal.hcwizard.DevicesPage.DeviceTable_TableModel;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.GUIUtils;
@@ -54,10 +56,10 @@ public class DelayPage extends PagePanel {
             "Adapter",
             "Delay [ms]"
       };
-      
+
       MicroscopeModel model_;
       ArrayList<Device> devices_;
-      
+
       public DelayTableModel(MicroscopeModel model) {
          devices_ = new ArrayList<Device>();
          Device allDevices[] = model.getDevices();
@@ -67,7 +69,7 @@ public class DelayPage extends PagePanel {
          }
          model_ = model;
       }
-      
+
       public void setMicroscopeModel(MicroscopeModel mod) {
          Device allDevices[] = mod.getDevices();
          for (int i=0; i<allDevices.length; i++) {
@@ -76,7 +78,7 @@ public class DelayPage extends PagePanel {
          }
          model_ = mod;
       }
-      
+
       public int getRowCount() {
          return devices_.size();
       }
@@ -86,9 +88,9 @@ public class DelayPage extends PagePanel {
       public String getColumnName(int columnIndex) {
          return COLUMN_NAMES[columnIndex];
       }
-      
+
       public Object getValueAt(int rowIndex, int columnIndex) {
-         
+
          if (columnIndex == 0)
             return devices_.get(rowIndex).getName();
          else if (columnIndex == 1)
@@ -106,14 +108,14 @@ public class DelayPage extends PagePanel {
             }
          }
       }
-     
+
       public boolean isCellEditable(int nRow, int nCol) {
          if(nCol == 2)
             return true;
          else
             return false;
       }
-      
+
       public void refresh() {
          Device allDevices[] = model_.getDevices();
          for (int i=0; i<allDevices.length; i++) {
@@ -124,7 +126,7 @@ public class DelayPage extends PagePanel {
       }
    }
 
-   
+
    private JTable deviceTable_;
    /**
     * Create the panel
@@ -133,22 +135,22 @@ public class DelayPage extends PagePanel {
       super();
       title_ = "Set delays for devices without synchronization capabilities";
       setHelpFileName("conf_delays_page.html");
-      setLayout(null);
+      setLayout(new MigLayout());
 
       final JScrollPane scrollPane = new JScrollPane();
-      scrollPane.setBounds(22, 21, 517, 337);
-      add(scrollPane);
+      add(scrollPane, "grow, wrap");
 
       deviceTable_ = new DaytimeNighttime.Table();
       deviceTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      InputMap im = deviceTable_.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-      im.put( KeyStroke.getKeyStroke( KeyEvent.VK_ENTER, 0 ), "none" );
+      InputMap im = deviceTable_.getInputMap(
+            JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+      im.put( KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "none");
       scrollPane.setViewportView(deviceTable_);
-      GUIUtils.setClickCountToStartEditing(deviceTable_,1);
+      GUIUtils.setClickCountToStartEditing(deviceTable_, 1);
       GUIUtils.stopEditingOnLosingFocus(deviceTable_);
    }
 
-   public boolean enterPage(boolean next) {      
+   public boolean enterPage(boolean next) {
       rebuildTable();
       return true;
   }
@@ -169,7 +171,7 @@ public class DelayPage extends PagePanel {
       }
       return true;
    }
-   
+
    private void rebuildTable() {
       TableModel tm = deviceTable_.getModel();
       DelayTableModel tmd;
@@ -183,7 +185,7 @@ public class DelayPage extends PagePanel {
       tmd.fireTableStructureChanged();
       tmd.fireTableDataChanged();
    }
-   
+
    public void refresh() {
       rebuildTable();
    }
@@ -193,5 +195,4 @@ public class DelayPage extends PagePanel {
 
    public void saveSettings() {
    }
-
 }
