@@ -106,7 +106,7 @@ using namespace std;
  * (Keep the 3 numbers on one line to make it easier to look at diffs when
  * merging/rebasing.)
  */
-const int MMCore_versionMajor = 8, MMCore_versionMinor = 1, MMCore_versionPatch = 4;
+const int MMCore_versionMajor = 8, MMCore_versionMinor = 2, MMCore_versionPatch = 0;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -4081,6 +4081,9 @@ double CMMCore::getExposure() throw (CMMError)
  * A successful call to this method will clear any images in the sequence
  * buffer, even if the ROI does not change.
  *
+ * If multiple ROIs are set prior to this call, they will be replaced by the
+ * new single ROI.
+ *
  * The coordinates are in units of binned pixels. That is, conceptually,
  * binning is applied before the ROI.
  *
@@ -4117,7 +4120,9 @@ void CMMCore::setROI(int x, int y, int xSize, int ySize) throw (CMMError)
 }
 
 /**
- * Return the current hardware region of interest for the current camera.
+ * Return the current hardware region of interest for a camera. If multiple
+ * ROIs are set, this method instead returns a rectangle that describes the
+ * image that the camera will generate.
  *
  * The coordinates are in units of binned pixels. That is, conceptually,
  * binning is applied before the ROI.
@@ -4146,7 +4151,9 @@ void CMMCore::getROI(int& x, int& y, int& xSize, int& ySize) throw (CMMError)
 }
 
 /**
- * Return the current hardware region of interest for a camera.
+ * Return the current hardware region of interest for a camera. If multiple
+ * ROIs are set, this method instead returns a rectangle that describes the
+ * image that the camera will generate.
  *
  * @param label  camera label
  * @param x      coordinate of the top left corner
@@ -4194,6 +4201,146 @@ void CMMCore::clearROI() throw (CMMError)
       // discard such images.
       cbuf_->Clear();
    }
+}
+
+/**
+ * Queries the camera to determine if it supports multiple ROIs.
+ */
+bool CMMCore::isMultiROISupported() throw (CMMError)
+{
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (!camera)
+   {
+      throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
+   }
+   mm::DeviceModuleLockGuard guard(camera);
+   return camera->SupportsMultiROI();
+}
+
+/**
+ * Queries the camera to determine if multiple ROIs are currently set.
+ */
+bool CMMCore::isMultiROIEnabled() throw (CMMError)
+{
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (!camera)
+   {
+      throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
+   }
+   mm::DeviceModuleLockGuard guard(camera);
+   return camera->IsMultiROISet();
+}
+
+/**
+ * Set multiple ROIs for the current camera device. Will fail if the camera
+ * does not support multiple ROIs, any widths or heights are nonpositive,
+ * or if the vectors do not all have the same length.
+ *
+ * @param xs X indices for the upper-left corners of each ROI.
+ * @param ys Y indices for the upper-left corners of each ROI.
+ * @param widths Width in pixels for each ROI.
+ * @param heights Height in pixels for each ROI.
+ */
+void CMMCore::setMultiROI(std::vector<unsigned> xs, std::vector<unsigned> ys,
+      std::vector<unsigned> widths,
+      std::vector<unsigned> heights) throw (CMMError)
+{
+   if (xs.size() != ys.size() ||
+	   xs.size() != widths.size() ||
+	   xs.size() != heights.size())
+   {
+	   throw CMMError("Inconsistent ROI parameter lengths");
+   }
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (!camera)
+   {
+      throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
+   }
+   mm::DeviceModuleLockGuard guard(camera);
+   unsigned numROI = (unsigned) xs.size();
+   unsigned* xsArr = new unsigned[numROI];
+   unsigned* ysArr = new unsigned[numROI];
+   unsigned* widthsArr = new unsigned[numROI];
+   unsigned* heightsArr = new unsigned[numROI];
+   for (unsigned i = 0; i < numROI; ++i)
+   {
+      xsArr[i] = xs[i];
+      ysArr[i] = ys[i];
+      widthsArr[i] = widths[i];
+      heightsArr[i] = heights[i];
+   }
+   int nRet = camera->SetMultiROI(xsArr, ysArr, widthsArr, heightsArr, numROI);
+   free(xsArr);
+   free(ysArr);
+   free(widthsArr);
+   free(heightsArr);
+   if (nRet != DEVICE_OK)
+   {
+      throw CMMError(getDeviceErrorText(nRet, camera).c_str(), MMERR_DEVICE_GENERIC);
+   }
+}
+
+/**
+ * Get multiple ROIs from the current camera device. Will fail if the camera
+ * does not support multiple ROIs. Will return empty vectors if multiple ROIs
+ * are not currently being used.
+ * @param xs (Return value) X indices for the upper-left corners of each ROI.
+ * @param ys (Return value) Y indices for the upper-left corners of each ROI.
+ * @param widths (Return value) Width in pixels for each ROI.
+ * @param heights (Return value) Height in pixels for each ROI.
+ */
+void CMMCore::getMultiROI(std::vector<unsigned>& xs, std::vector<unsigned>& ys,
+      std::vector<unsigned>& widths,
+      std::vector<unsigned>& heights) throw (CMMError)
+{
+   boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+   if (!camera)
+   {
+      throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
+   }
+   mm::DeviceModuleLockGuard guard(camera);
+   unsigned numROI;
+   int nRet = camera->GetMultiROICount(numROI);
+   if (nRet != DEVICE_OK)
+   {
+      throw CMMError(getDeviceErrorText(nRet, camera).c_str(), MMERR_DEVICE_GENERIC);
+   }
+
+   unsigned* xsArr = new unsigned[numROI];
+   unsigned* ysArr = new unsigned[numROI];
+   unsigned* widthsArr = new unsigned[numROI];
+   unsigned* heightsArr = new unsigned[numROI];
+   unsigned newNum = numROI;
+   nRet = camera->GetMultiROI(xsArr, ysArr, widthsArr, heightsArr, &newNum);
+   if (nRet != DEVICE_OK)
+   {
+      free(xsArr);
+      free(ysArr);
+      free(widthsArr);
+      free(heightsArr);
+      throw CMMError(getDeviceErrorText(nRet, camera).c_str(), MMERR_DEVICE_GENERIC);
+   }
+   if (newNum > numROI)
+   {
+      // Camera returned more ROIs than can fit into the arrays we provided.
+      throw CMMError("Camera returned too many ROIs");
+   }
+
+   xs.clear();
+   ys.clear();
+   widths.clear();
+   heights.clear();
+   for (unsigned i = 0; i < newNum; ++i)
+   {
+      xs.push_back(xsArr[i]);
+      ys.push_back(ysArr[i]);
+      widths.push_back(widthsArr[i]);
+      heights.push_back(heightsArr[i]);
+   }
+   free(xsArr);
+   free(ysArr);
+   free(widthsArr);
+   free(heightsArr);
 }
 
 /**

@@ -354,6 +354,15 @@ public:
    void getROI(const char* label, int& x, int& y, int& xSize, int& ySize) throw (CMMError);
    void clearROI() throw (CMMError);
 
+   bool isMultiROISupported() throw (CMMError);
+   bool isMultiROIEnabled() throw (CMMError);
+   void setMultiROI(std::vector<unsigned> xs, std::vector<unsigned> ys,
+           std::vector<unsigned> widths,
+           std::vector<unsigned> heights) throw (CMMError);
+   void getMultiROI(std::vector<unsigned>& xs, std::vector<unsigned>& ys,
+           std::vector<unsigned>& widths,
+           std::vector<unsigned>& heights) throw (CMMError);
+
    void setExposure(double exp) throw (CMMError);
    void setExposure(const char* cameraLabel, double dExp) throw (CMMError);
    double getExposure() throw (CMMError);
