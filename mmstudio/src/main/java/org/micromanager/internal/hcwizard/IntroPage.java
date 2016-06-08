@@ -30,6 +30,7 @@ import java.io.File;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JRadioButton;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 import net.miginfocom.swing.MigLayout;
@@ -51,7 +52,7 @@ public class IntroPage extends PagePanel {
    private JRadioButton createNewRadioButton_;
    private JButton browseButton_;
    private static final String HELP_FILE_NAME = "conf_intro_page.html";
-   
+
    /**
     * Create the panel
     */
@@ -61,6 +62,13 @@ public class IntroPage extends PagePanel {
 
       setLayout(new MigLayout("fillx, flowy"));
       setHelpFileName(HELP_FILE_NAME);
+
+      JTextArea help = new JTextArea(
+               "Welcome to the Hardware Configuration Wizard! This dialog will walk you through setting up \u00b5Manager to control the hardware in your system.\nYou may modify an existing config file, or start from scratch.");
+      help.setWrapStyleWord(true);
+      help.setLineWrap(true);
+      help.setEditable(false);
+      add(help, "growx");
 
       createNewRadioButton_ = new JRadioButton("Create new configuration");
       createNewRadioButton_.addActionListener(new ActionListener() {

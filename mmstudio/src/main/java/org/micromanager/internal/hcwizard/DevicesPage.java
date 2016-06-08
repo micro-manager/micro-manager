@@ -56,6 +56,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 import mmcorej.MMCoreJ;
 
+import net.miginfocom.swing.MigLayout;
+
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -226,19 +228,21 @@ private JComboBox byLibCombo_;
       title_ = "Add or remove devices";
       listByLib_ = true;
 
-      setLayout(null);
+      setLayout(new MigLayout("flowx"));
       setHelpFileName(HELP_FILE_NAME);
       documentationURLroot_ = "https://micro-manager.org/wiki/";
 
-      installedScrollPane_ = new JScrollPane();
-      installedScrollPane_.setBounds(10, 21, 431, 241);
-      add(installedScrollPane_);
+      JLabel lblNewLabel = new JLabel("Installed Devices:");
+      lblNewLabel.setFont(new Font("Arial", Font.BOLD, 11));
+      add(lblNewLabel, "wrap");
 
+      installedScrollPane_ = new JScrollPane();
+      add(installedScrollPane_, "growy, width 430");
       deviceTable_ = new DaytimeNighttime.Table();
       deviceTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       installedScrollPane_.setViewportView(deviceTable_);
       deviceTable_.getSelectionModel().addListSelectionListener(this);
-      
+
       deviceTable_.addMouseListener(new MouseAdapter() {
          public void mouseClicked(MouseEvent e) {
             if (e.getClickCount() == 2) {
@@ -246,37 +250,15 @@ private JComboBox byLibCombo_;
             }
          }});
 
-      final JButton addButton = new JButton();
-      addButton.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent arg0) {
-            addDevice();
-         }
-      });
-      addButton.setText("Add...");
-      addButton.setBounds(451, 291, 99, 23);
-      add(addButton);
-
-      removeButton = new JButton();
-      removeButton.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent arg0) {
-            removeDevice();
-         }
-      });
-      removeButton.setText("Remove");
-      removeButton.setBounds(451, 72, 99, 23);
-      add(removeButton);
-      removeButton.setEnabled(false);
-      
       editButton = new JButton("Edit...");
       editButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
             editDevice();
          }
       });
-      editButton.setBounds(451, 21, 99, 23);
-      add(editButton);
+      add(editButton, "split, flowy, aligny top, width 115!");
       editButton.setEnabled(false);
-      
+
       peripheralsButton = new JButton("Peripherals...");
       peripheralsButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
@@ -284,23 +266,46 @@ private JComboBox byLibCombo_;
          }
       });
       peripheralsButton.setEnabled(false);
-      peripheralsButton.setBounds(451, 46, 99, 23);
-      add(peripheralsButton);
-      
-      JLabel lblNewLabel = new JLabel("Installed Devices:");
-      lblNewLabel.setFont(new Font("Tahoma", Font.BOLD, 11));
-      lblNewLabel.setBounds(10, 0, 431, 14);
-      add(lblNewLabel);
-      
-      JLabel lblNewLabel_1 = new JLabel("Available Devices:");
-      lblNewLabel_1.setFont(new Font("Tahoma", Font.BOLD, 11));
-      lblNewLabel_1.setBounds(10, 273, 128, 14);
-      add(lblNewLabel_1);
-      
-      availableScrollPane_ = new JScrollPane((Component) null);
-      availableScrollPane_.setBounds(10, 299, 431, 250);
-      add(availableScrollPane_);
-      
+      add(peripheralsButton, "width 115!");
+
+      removeButton = new JButton("Remove");
+      removeButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            removeDevice();
+         }
+      });
+      removeButton.setEnabled(false);
+      add(removeButton, "width 115!, wrap");
+
+      JLabel availDevices = new JLabel("Available Devices:");
+      availDevices.setFont(new Font("Arial", Font.BOLD, 11));
+      add(availDevices, "split, spanx");
+
+      byLibCombo_ = new JComboBox(new String[] {
+         "List by Adapter", "List by Type"});
+      byLibCombo_.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            if (byLibCombo_.getSelectedIndex() == 0)
+               listByLib_ = true;
+            else {
+               listByLib_ = false;
+            }
+            buildTree();
+         }
+      });
+      add(byLibCombo_, "wrap");
+
+      availableScrollPane_ = new JScrollPane();
+      add(availableScrollPane_, "growy, width 430");
+
+      final JButton addButton = new JButton("Add...");
+      addButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            addDevice();
+         }
+      });
+      add(addButton, "split, flowy, aligny top, width 115!");
+
       JButton helpButton = new JButton("Help");
       helpButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
@@ -308,24 +313,8 @@ private JComboBox byLibCombo_;
          }
       });
       helpButton.setBounds(451, 319, 99, 23);
-      add(helpButton);
-      
-      byLibCombo_ = new JComboBox();
-      byLibCombo_.addActionListener(new ActionListener() {
-      	public void actionPerformed(ActionEvent arg0) {
-      		if (byLibCombo_.getSelectedIndex() == 0)
-      			listByLib_ = true;
-      		else {
-      			listByLib_ = false;
-      		}
-      		buildTree();
-      	}
-      });
-      byLibCombo_.setModel(new DefaultComboBoxModel(new String[] {"List by Adapter", "List by Type"}));
-      byLibCombo_.setBounds(146, 270, 146, 20);
-      add(byLibCombo_);
+      add(helpButton, "width 115!");
    }
-   
 
    protected void editPeripherals() {
       int selRow = deviceTable_.getSelectedRow();
