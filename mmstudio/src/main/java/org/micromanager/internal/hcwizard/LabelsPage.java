@@ -32,6 +32,7 @@ import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
@@ -207,6 +208,12 @@ public class LabelsPage extends PagePanel {
       setHelpFileName("conf_labels_page.html");
       setLayout(new MigLayout());
 
+      JTextArea help = new JTextArea(
+            "Some devices, such as filter wheels and objective turrets, have discrete positions that can have names assigned to them. For example, position 1 of a filter wheel could be the Cy5 channel, position 2 the DAPI channel, etc. Assign names to positions here.");
+      help.setWrapStyleWord(true);
+      help.setLineWrap(true);
+      help.setEditable(false);
+      add(help, "spanx, growx, wrap");
       final JScrollPane devScrollPane = new JScrollPane();
       add(devScrollPane, "growy");
 
@@ -231,6 +238,7 @@ public class LabelsPage extends PagePanel {
       GUIUtils.stopEditingOnLosingFocus(labelTable_);
 
       final JButton readButton = new JButton("Read");
+      readButton.setToolTipText("When possible, reads position names from the device adapter.");
       readButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             readFromHardware();
