@@ -492,7 +492,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       // we should consider the acquisition to be running.
       if (acquisitionEngine2010_ != null) {
          return (acquisitionEngine2010_.isRunning() ||
-               !curPipeline_.isHalted());
+               (curPipeline_ != null && !curPipeline_.isHalted()));
       } else {
          return false;
       }
