@@ -206,16 +206,16 @@ public class LabelsPage extends PagePanel {
       super();
       title_ = "Define position labels for state devices";
       setHelpFileName("conf_labels_page.html");
-      setLayout(new MigLayout());
+      setLayout(new MigLayout("fill"));
 
       JTextArea help = new JTextArea(
-            "Some devices, such as filter wheels and objective turrets, have discrete positions that can have names assigned to them. For example, position 1 of a filter wheel could be the Cy5 channel, position 2 the DAPI channel, etc. Assign names to positions here.");
+            "Some devices, such as filter wheels and objective turrets, have discrete positions that can have names assigned to them. For example, position 1 of a filter wheel could be the DAPI channel, position 2 the FITC channel, etc. Assign names to positions here.");
       help.setWrapStyleWord(true);
       help.setLineWrap(true);
       help.setEditable(false);
       add(help, "spanx, growx, wrap");
       final JScrollPane devScrollPane = new JScrollPane();
-      add(devScrollPane, "growy");
+      add(devScrollPane, "growy, width 200!");
 
       devTable_ = new DaytimeNighttime.Table();
       DevTableModel m = new DevTableModel();
@@ -225,7 +225,7 @@ public class LabelsPage extends PagePanel {
       devScrollPane.setViewportView(devTable_);
 
       final JScrollPane labelsScrollPane = new JScrollPane();
-      add(labelsScrollPane, "growy");
+      add(labelsScrollPane, "growy, width 400!");
 
       labelTable_ = new DaytimeNighttime.Table();
       labelTable_.setModel(new LabelTableModel());

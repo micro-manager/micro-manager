@@ -63,10 +63,10 @@ public class FinishPage extends PagePanel {
         super();
         title_ = "Save configuration and exit";
         setHelpFileName("conf_finish_page.html");
-        setLayout(new MigLayout());
+        setLayout(new MigLayout("fillx"));
 
         JTextArea help = new JTextArea(
-              "All done! Choose where to save your config file. You can also send us your file to help us study how \u00b5Manager is used.");
+              "All done! Choose where to save your config file.");
         help.setWrapStyleWord(true);
         help.setLineWrap(true);
         help.setEditable(false);
@@ -96,7 +96,8 @@ public class FinishPage extends PagePanel {
 
         add(sendCheck_, "wrap");
 
-        final JLabel sendConfigExplain = new JLabel("Providing the configuration data will assist securing further project funding.");
+        final JLabel sendConfigExplain = new JLabel(
+              "Sending us your configuration file will help us study how \u00b5Manager is used.");
         sendConfigExplain.setAutoscrolls(true);
         sendConfigExplain.setFont(sendCheck_.getFont());
         add(sendConfigExplain, "wrap");
