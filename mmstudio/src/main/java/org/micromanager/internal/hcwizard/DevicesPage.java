@@ -67,6 +67,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 public class DevicesPage extends PagePanel implements ListSelectionListener, MouseListener, TreeSelectionListener {
    private static final long serialVersionUID = 1L;
+   public static final String WEBSITE_ROOT = "https://micro-manager.org/wiki/";
 
    private JTable deviceTable_;
    private JScrollPane installedScrollPane_;
@@ -77,7 +78,6 @@ public class DevicesPage extends PagePanel implements ListSelectionListener, Mou
    private boolean listByLib_;
    private TreeWContextMenu theTree_;
    private JScrollPane availableScrollPane_;
-   final String documentationURLroot_;
    String libraryDocumentationName_;
 
 private JComboBox byLibCombo_;
@@ -231,10 +231,9 @@ private JComboBox byLibCombo_;
 
       setLayout(new MigLayout("flowx"));
       setHelpFileName(HELP_FILE_NAME);
-      documentationURLroot_ = "https://micro-manager.org/wiki/";
 
       JTextArea help = new JTextArea(
-            "Select devices from the \"Available Devices\" list to include in this configuration. After selecting a device, you may need to perform additional configuration in a separate dialog. The \"Help\" button will take you to a page providing details on the specific selected device (requires an Internet connection).");
+            "Select devices from the \"Available Devices\" list to include in this configuration.");
       help.setWrapStyleWord(true);
       help.setLineWrap(true);
       help.setEditable(false);
@@ -776,7 +775,7 @@ private JComboBox byLibCombo_;
 
    private void displayDocumentation() {
       try {
-         ij.plugin.BrowserLauncher.openURL(documentationURLroot_ + libraryDocumentationName_);
+         ij.plugin.BrowserLauncher.openURL(WEBSITE_ROOT + libraryDocumentationName_);
       } catch (IOException e1) {
          ReportingUtils.showError(e1);
       }
