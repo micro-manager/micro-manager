@@ -33,6 +33,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 import net.miginfocom.swing.MigLayout;
@@ -63,6 +64,13 @@ public class FinishPage extends PagePanel {
         title_ = "Save configuration and exit";
         setHelpFileName("conf_finish_page.html");
         setLayout(new MigLayout());
+
+        JTextArea help = new JTextArea(
+              "All done! Choose where to save your config file. You can also send us your file to help us study how \u00b5Manager is used.");
+        help.setWrapStyleWord(true);
+        help.setLineWrap(true);
+        help.setEditable(false);
+        add(help, "spanx, growx, wrap");
 
         final JLabel configurationWillBeLabel = new JLabel("Filename:");
         add(configurationWillBeLabel, "span, wrap");
