@@ -44,6 +44,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.JTree;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
@@ -232,6 +233,12 @@ private JComboBox byLibCombo_;
       setHelpFileName(HELP_FILE_NAME);
       documentationURLroot_ = "https://micro-manager.org/wiki/";
 
+      JTextArea help = new JTextArea(
+            "Select devices from the \"Available Devices\" list to include in this configuration. After selecting a device, you may need to perform additional configuration in a separate dialog. The \"Help\" button will take you to a page providing details on the specific selected device (requires an Internet connection).");
+      help.setWrapStyleWord(true);
+      help.setLineWrap(true);
+      help.setEditable(false);
+      add(help, "spanx, growx, wrap");
       JLabel lblNewLabel = new JLabel("Installed Devices:");
       lblNewLabel.setFont(new Font("Arial", Font.BOLD, 11));
       add(lblNewLabel, "wrap");
