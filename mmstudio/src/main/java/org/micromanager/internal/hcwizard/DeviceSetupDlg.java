@@ -55,6 +55,7 @@ public class DeviceSetupDlg extends MMDialog {
    private final JTable comTable_;
    private JTextField devName_;
    private JPanel portSettingsPanel_;
+   private JLabel scanStatus_;
 
    /**
     * Create the dialog.
@@ -109,6 +110,10 @@ public class DeviceSetupDlg extends MMDialog {
 
       detectButton_.setToolTipText("Scan COM ports to detect this device");
       portSettingsPanel_.add(detectButton_, "gapleft push, wrap");
+      scanStatus_ = new JLabel();
+      scanStatus_.setVisible(false);
+      portSettingsPanel_.add(scanStatus_,
+            "hidemode 2, span, gapleft push, wrap");
 
       JScrollPane portSettingsScroller = new JScrollPane();
       portSettingsPanel_.add(portSettingsScroller,
@@ -238,6 +243,9 @@ public class DeviceSetupDlg extends MMDialog {
          // User cancelled.
          return;
       }
+      scanStatus_.setVisible(true);
+      scanStatus_.setText("Scanning ports...");
+      pack();
       progressDialog_ = new DetectorJDialog(DeviceSetupDlg.this, false);
       progressDialog_.setTitle("\u00B5" + "Manager device detection");
       progressDialog_.setLocationRelativeTo(DeviceSetupDlg.this);
@@ -477,6 +485,7 @@ public class DeviceSetupDlg extends MMDialog {
       @Override
       public void run() {
          boolean currentDebugLogSetting = core_.debugLogEnabled();
+         String resultPorts = "";
          try {
             ArrayList<Device> ports = new ArrayList<Device>();
             model_.removeDuplicateComPorts();
@@ -532,11 +541,13 @@ public class DeviceSetupDlg extends MMDialog {
                   JOptionPane.showMessageDialog(null,
                         "This device does not support auto-detection.\n" +
                         "You have to manually choose port and settings.");
+                  scanStatus_.setText("Scan failed");
                   return;
                }
 
                if (progressDialog_.CancelRequest()) {
                   ReportingUtils.logMessage("Scan cancelled by user");
+                  scanStatus_.setText("Scan cancelled");
                   return;
                }
 
@@ -551,7 +562,6 @@ public class DeviceSetupDlg extends MMDialog {
                }
             }
 
-            String foundem = "";
             // show the user the result and populate the drop down data
             ArrayList<String> communicating = portsFoundCommunicating.get(
                   device_.getName());
@@ -560,9 +570,9 @@ public class DeviceSetupDlg extends MMDialog {
                if (0 < communicating.size()) {
                   foundPorts = new String[communicating.size()];
                   int aiterator = 0;
-                  foundem += device_.getName() + " on ";
+                  resultPorts += device_.getName() + " on ";
                   for (String ss : communicating) {
-                     foundem += (ss + "\n");
+                     resultPorts += (ss + "\n");
                      foundPorts[aiterator++] = ss;
                   }
                }
@@ -584,7 +594,7 @@ public class DeviceSetupDlg extends MMDialog {
                   selectedPort = p.value;
                }
             }
-            progressDialog_.ProgressText("Found:\n " + foundem);
+            progressDialog_.ProgressText("Found:\n " + resultPorts);
             try {
                Thread.sleep(900);
             } catch (InterruptedException ex) {
@@ -592,6 +602,12 @@ public class DeviceSetupDlg extends MMDialog {
          } finally { // matches try at entry
             progressDialog_.setVisible(false);
             ReportingUtils.logMessage("Finished port scanning; spurious error messages no longer expected");
+            if (resultPorts.contentEquals("")) {
+               scanStatus_.setText("No valid ports found");
+            }
+            else {
+               scanStatus_.setText("Scan completed successfully");
+            }
             rebuildPropTable();
             if (! (selectedPort.length() == 0)) {
                Device pd = model_.findSerialPort(selectedPort);
