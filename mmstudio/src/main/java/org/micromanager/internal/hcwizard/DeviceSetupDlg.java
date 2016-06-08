@@ -136,6 +136,20 @@ public class DeviceSetupDlg extends MMDialog {
          public void actionPerformed(ActionEvent e) {
             if (dt != null && dt.isAlive())
                return;
+            int response = JOptionPane.showConfirmDialog(DeviceSetupDlg.this,
+               "\u00b5Manager will attempt to automatically detect the " +
+               "serial port and port settings\nrequired to communicate with " +
+               "this device.\n\nWARNING: this will send messages through all " +
+               "connected serial ports, potentially\ninterfering with other " +
+               "serial devices connected to this computer. We strongly\n" +
+               "recommend turning off all other serial devices prior to " +
+               "starting this scan.",
+               "Automatically Scan Serial Ports",
+               JOptionPane.OK_CANCEL_OPTION);
+            if (response != JOptionPane.OK_OPTION) {
+               // User cancelled.
+               return;
+            }
             progressDialog = new DetectorJDialog(DeviceSetupDlg.this, false);
             progressDialog.setTitle("\u00B5" + "Manager device detection");
             progressDialog.setLocationRelativeTo(DeviceSetupDlg.this);
