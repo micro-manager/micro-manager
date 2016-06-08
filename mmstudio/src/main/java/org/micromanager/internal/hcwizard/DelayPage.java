@@ -22,13 +22,18 @@
 //
 package org.micromanager.internal.hcwizard;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import javax.swing.CellEditor;
 import javax.swing.InputMap;
+import javax.swing.JButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
@@ -90,7 +95,6 @@ public class DelayPage extends PagePanel {
       }
 
       public Object getValueAt(int rowIndex, int columnIndex) {
-
          if (columnIndex == 0)
             return devices_.get(rowIndex).getName();
          else if (columnIndex == 1)
@@ -98,6 +102,11 @@ public class DelayPage extends PagePanel {
          else
             return new Double(devices_.get(rowIndex).getDelay());
       }
+
+      public Device getDevice(int rowIndex) {
+         return devices_.get(rowIndex);
+      }
+
       public void setValueAt(Object value, int row, int col) {
          if (col == 2) {
             try {
@@ -137,17 +146,39 @@ public class DelayPage extends PagePanel {
       setHelpFileName("conf_delays_page.html");
       setLayout(new MigLayout());
 
+      JTextArea help = new JTextArea(
+            "Set how long to wait for the device to act before \u00b5Manager will move on (for example, waiting for a shutter to open before an image is snapped). Many devices will determine this automatically; refer to the help for more information.");
+      help.setWrapStyleWord(true);
+      help.setLineWrap(true);
+      help.setEditable(false);
+      add(help, "spanx, growx, wrap");
       final JScrollPane scrollPane = new JScrollPane();
-      add(scrollPane, "grow, wrap");
+      add(scrollPane, "grow");
 
       deviceTable_ = new DaytimeNighttime.Table();
       deviceTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       InputMap im = deviceTable_.getInputMap(
             JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-      im.put( KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "none");
+      im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "none");
       scrollPane.setViewportView(deviceTable_);
       GUIUtils.setClickCountToStartEditing(deviceTable_, 1);
       GUIUtils.stopEditingOnLosingFocus(deviceTable_);
+
+      JButton helpButton = new JButton("Help");
+      helpButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            DelayTableModel model = (DelayTableModel) deviceTable_.getModel();
+            String library = model.getDevice(deviceTable_.getSelectedRow()).getLibrary();
+            try {
+               ij.plugin.BrowserLauncher.openURL(
+                  DevicesPage.WEBSITE_ROOT + library);
+            } catch (IOException e1) {
+               ReportingUtils.showError(e1);
+            }
+         }
+      });
+      add(helpButton, "aligny top, wrap");
    }
 
    public boolean enterPage(boolean next) {
@@ -162,7 +193,6 @@ public class DelayPage extends PagePanel {
       }
       // apply delays to hardware
       try {
-
          model_.applyDelaysToHardware(core_);
       } catch (Exception e) {
          ReportingUtils.logError(e);
