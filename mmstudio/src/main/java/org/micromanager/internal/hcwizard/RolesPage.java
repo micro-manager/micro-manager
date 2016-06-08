@@ -33,6 +33,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 
 import mmcorej.DeviceType;
 import mmcorej.MMCoreJ;
@@ -62,6 +63,13 @@ public class RolesPage extends PagePanel {
       super();
       title_ = "Select default devices and choose auto-shutter setting";
       setLayout(new MigLayout("fill"));
+
+      JTextArea help = new JTextArea(
+            "Select the default device, where available, to use for certain important roles.");
+      help.setWrapStyleWord(true);
+      help.setLineWrap(true);
+      help.setEditable(false);
+      add(help, "growx, span, wrap");
 
       add(new JLabel("Default Camera: "), "split");
       cameraComboBox_ = new JComboBox();
