@@ -39,6 +39,8 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
+import net.miginfocom.swing.MigLayout;
+
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -53,10 +55,10 @@ public class LabelsPage extends PagePanel {
    private Hashtable<String, String[]> originalLabels_ = new Hashtable<String, String[]>();
    ArrayList<Device> devices_ = new ArrayList<Device>();
    boolean originalLabelsStored_ = false;
-   
+
    public class SelectionListener implements ListSelectionListener {
       JTable table;
-  
+
       // It is necessary to keep the table since it is not possible
       // to determine the table from the event's source
       SelectionListener(JTable table) {
@@ -65,7 +67,7 @@ public class LabelsPage extends PagePanel {
       public void valueChanged(ListSelectionEvent e) {
          if (e.getValueIsAdjusting())
             return;
-         
+
          ListSelectionModel lsm = (ListSelectionModel)e.getSource();
          LabelTableModel ltm = (LabelTableModel)labelTable_.getModel();
 
@@ -82,11 +84,11 @@ public class LabelsPage extends PagePanel {
             String devName = (String) table.getValueAt(lsm.getMinSelectionIndex(), 0);
             ltm.setData(model_, devName);
          }
-         ltm.fireTableStructureChanged();         
+         ltm.fireTableStructureChanged();
          labelTable_.getColumnModel().getColumn(0).setWidth(40);
       }
    }
-   
+
    class LabelTableModel extends AbstractTableModel {
       private static final long serialVersionUID = 1L;
       public final String[] COLUMN_NAMES = new String[] {
@@ -106,11 +108,11 @@ public class LabelsPage extends PagePanel {
             labels_ = newLabels;
             return;
          }
-                  
+
          newLabels = new String[curDevice_.getNumberOfStates()];
          for (int i= 0; i<newLabels.length; i++)
             newLabels[i] = "State-" + i;
-         
+
          Label sLabels[] = curDevice_.getAllSetupLabels();
          for (int i=0; i<sLabels.length; i++) {
             newLabels[sLabels[i].state_] = sLabels[i].label_;
@@ -120,7 +122,7 @@ public class LabelsPage extends PagePanel {
          }
          labels_ = newLabels;
       }
-      
+
       public int getRowCount() {
          return labels_.length;
       }
@@ -137,7 +139,7 @@ public class LabelsPage extends PagePanel {
          else
             return labels_[rowIndex];
       }
-      
+
       @Override
       public boolean isCellEditable(int nRow, int nCol) {
          if(nCol == 1)
@@ -148,7 +150,7 @@ public class LabelsPage extends PagePanel {
       @Override
       public void setValueAt(Object value, int row, int col) {
          if (col == 1) {
-            try {    
+            try {
                String oldLabel = labels_[row];
                labels_[row] = (String) value;
                curDevice_.setSetupLabel(row, (String) value);
@@ -166,7 +168,7 @@ public class LabelsPage extends PagePanel {
       public final String[] COLUMN_NAMES = new String[] {
             "State devices"
       };
-      
+
       public void setData(MicroscopeModel model) {
          // identify state devices
          Device devs[] = model.getDevices();
@@ -178,7 +180,7 @@ public class LabelsPage extends PagePanel {
          }
          storeLabels();
       }
-      
+
       public int getRowCount() {
          return devices_.size();
       }
@@ -203,11 +205,20 @@ public class LabelsPage extends PagePanel {
       super();
       title_ = "Define position labels for state devices";
       setHelpFileName("conf_labels_page.html");
-      setLayout(null);
+      setLayout(new MigLayout());
+
+      final JScrollPane devScrollPane = new JScrollPane();
+      add(devScrollPane, "growy");
+
+      devTable_ = new DaytimeNighttime.Table();
+      DevTableModel m = new DevTableModel();
+      devTable_.setModel(m);
+      devTable_.getSelectionModel().addListSelectionListener(new SelectionListener(devTable_));
+      devTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+      devScrollPane.setViewportView(devTable_);
 
       final JScrollPane labelsScrollPane = new JScrollPane();
-      labelsScrollPane.setBounds(182, 30, 269, 482);
-      add(labelsScrollPane);
+      add(labelsScrollPane, "growy");
 
       labelTable_ = new DaytimeNighttime.Table();
       labelTable_.setModel(new LabelTableModel());
@@ -219,38 +230,21 @@ public class LabelsPage extends PagePanel {
       GUIUtils.setClickCountToStartEditing(labelTable_,1);
       GUIUtils.stopEditingOnLosingFocus(labelTable_);
 
-      final JScrollPane devScrollPane = new JScrollPane();
-      devScrollPane.setBounds(10, 30, 162, 482);
-      add(devScrollPane);
-
-      devTable_ = new DaytimeNighttime.Table();
-      DevTableModel m = new DevTableModel();
-      devTable_.setModel(m);
-      devTable_.getSelectionModel().addListSelectionListener(new SelectionListener(devTable_));
-      devTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      devScrollPane.setViewportView(devTable_);
-
-      final JButton readButton = new JButton();
+      final JButton readButton = new JButton("Read");
       readButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
-            // read labels from hardware
             readFromHardware();
          }
       });
-      readButton.setText("Read");
-      readButton.setBounds(457,30,93,23);
-      add(readButton);
+      add(readButton, "split, flowy, aligny top");
 
-      final JButton resetButton = new JButton();
+      final JButton resetButton = new JButton("Reset");
       resetButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
-            // read labels from hardware
             resetLabels();
          }
       });
-      resetButton.setText("Reset");
-      resetButton.setBounds(457,53,93,23);
-      add(resetButton);  
+      add(resetButton, "wrap");
    }
 
 
@@ -341,7 +335,7 @@ public class LabelsPage extends PagePanel {
          model_.loadDeviceDataFromHardware(core_);
       } catch (Exception e) {
          handleError(e.getMessage());
-         
+
          // prevent from going to the next page if there is an error
          if (toNextPage)
             return false;
@@ -350,7 +344,7 @@ public class LabelsPage extends PagePanel {
       }
       return true;
    }
-   
+
    public void refresh() {
    }
 
@@ -359,5 +353,4 @@ public class LabelsPage extends PagePanel {
 
    public void saveSettings() {
    }
-
 }
