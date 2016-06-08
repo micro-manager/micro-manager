@@ -27,7 +27,7 @@
 // Header version
 // If any of the class definitions changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 65
+#define DEVICE_INTERFACE_VERSION 66
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -496,6 +496,14 @@ namespace MM {
        * Resets the Region of Interest to full frame.
        */
       virtual int ClearROI() = 0;
+      virtual bool SupportsMultiROI() = 0;
+      virtual bool IsMultiROISet() = 0;
+      virtual int GetMultiROICount(unsigned& count) = 0;
+      virtual int SetMultiROI(const unsigned* xs, const unsigned* ys,
+              const unsigned* widths, const unsigned* heights,
+              unsigned numROIs) = 0;
+      virtual int GetMultiROI(unsigned* xs, unsigned* ys, unsigned* widths,
+              unsigned* heights, unsigned* length) = 0;
       /**
        * Starts continuous acquisition.
        */
@@ -1286,6 +1294,7 @@ namespace MM {
       virtual int InsertImage(const Device* caller, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, const char* serializedMetadata, const bool doProcess = true) = 0;
       virtual void ClearImageBuffer(const Device* caller) = 0;
       virtual bool InitializeImageBuffer(unsigned channels, unsigned slices, unsigned int w, unsigned int h, unsigned int pixDepth) = 0;
+      /// \deprecated Use the other forms instead.
       virtual int InsertMultiChannel(const Device* caller, const unsigned char* buf, unsigned numChannels, unsigned width, unsigned height, unsigned byteDepth, Metadata* md = 0) = 0;
 
       // autofocus

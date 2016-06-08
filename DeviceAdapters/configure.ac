@@ -136,6 +136,13 @@ AS_IF([test "x$want_libdc1394" != xno],
    MM_LIB_DC1394([$LIBDC1394_PREFIX],
    [
       use_libdc1394=yes
+
+      # The libdc1394 OS X header changed in version 2.2.2
+      AC_CHECK_HEADER([dc1394/macosx.h],
+                      [AC_DEFINE([HAVE_LIBDC1394_2_2_2_MACOSX_H], [1],
+                                 [Define if dc1394/macosx.h exists])],
+                      [],
+                      [[#include <dc1394/dc1394.h>]])
    ],
    [
       use_libdc1394=no
