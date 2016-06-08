@@ -143,7 +143,6 @@ public class DelayPage extends PagePanel {
    public DelayPage() {
       super();
       title_ = "Set delays for devices without synchronization capabilities";
-      setHelpFileName("conf_delays_page.html");
       setLayout(new MigLayout("fill"));
 
       JTextArea help = new JTextArea(

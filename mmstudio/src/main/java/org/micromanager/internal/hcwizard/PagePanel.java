@@ -39,7 +39,6 @@ public abstract class PagePanel extends JPanel{
    protected MicroscopeModel model_;
    protected CMMCore core_;
    protected String title_;
-   protected String helpFileName_;
    protected Dialog parent_;
    
    protected static final String CFG_PATH = "cfg_path";
@@ -58,18 +57,10 @@ public abstract class PagePanel extends JPanel{
       title_ = txt;
    }
    
-   public void setHelpFileName(String name) {
-      helpFileName_ = name;
-   }
-   
    public String getTitle() {
       return title_;
    }
    
-   public String getHelpFileName() {
-      return helpFileName_;
-   }
-
    public void setParentDialog(Dialog p) {
       this.parent_ = p;
    }
