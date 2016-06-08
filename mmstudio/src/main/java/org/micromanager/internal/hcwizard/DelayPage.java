@@ -144,7 +144,7 @@ public class DelayPage extends PagePanel {
       super();
       title_ = "Set delays for devices without synchronization capabilities";
       setHelpFileName("conf_delays_page.html");
-      setLayout(new MigLayout());
+      setLayout(new MigLayout("fill"));
 
       JTextArea help = new JTextArea(
             "Set how long to wait for the device to act before \u00b5Manager will move on (for example, waiting for a shutter to open before an image is snapped). Many devices will determine this automatically; refer to the help for more information.");

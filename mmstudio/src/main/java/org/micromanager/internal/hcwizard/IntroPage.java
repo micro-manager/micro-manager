@@ -64,7 +64,7 @@ public class IntroPage extends PagePanel {
       setHelpFileName(HELP_FILE_NAME);
 
       JTextArea help = new JTextArea(
-               "Welcome to the Hardware Configuration Wizard! This dialog will walk you through setting up \u00b5Manager to control the hardware in your system.\nYou may modify an existing config file, or start from scratch.");
+               "This wizard will walk you through setting up \u00b5Manager to control the hardware in your system.");
       help.setWrapStyleWord(true);
       help.setLineWrap(true);
       help.setEditable(false);

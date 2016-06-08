@@ -47,9 +47,11 @@ import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JEditorPane;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.WindowConstants;
@@ -58,6 +60,8 @@ import javax.swing.text.DefaultCaret;
 
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
+
+import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.DefaultUserProfile;
@@ -74,7 +78,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class ConfiguratorDlg2 extends MMDialog {
 
    private static final long serialVersionUID = 1L;
-   private JLabel pagesLabel_;
+   private JPanel pagePanel_;
    private JButton backButton_;
    private JButton nextButton_;
    private PagePanel pages_[];
@@ -82,7 +86,6 @@ public class ConfiguratorDlg2 extends MMDialog {
    private MicroscopeModel microModel_;
    private final CMMCore core_;
    private JLabel titleLabel_;
-   private JEditorPane helpTextPane_;
    private final String defaultPath_;
 
    private static final String CFG_OKAY_TO_SEND = "CFG_Okay_To_Send";
@@ -112,46 +115,17 @@ public class ConfiguratorDlg2 extends MMDialog {
            onCloseWindow();
          }
       });
-      setResizable(false);
-      getContentPane().setLayout(null);
+      getContentPane().setLayout(new MigLayout());
       setTitle("Hardware Configuration Wizard");
-      setBounds(50, 100, 859, 641);
       loadPosition(50, 100);
 
-      final JScrollPane scrollPane = new JScrollPane();
-      scrollPane.setBounds(584, 28, 259, 526);
-      getContentPane().add(scrollPane);
-      scrollPane.getViewport().setViewPosition(new Point(0,0));
+      titleLabel_ = new JLabel();
+      titleLabel_.setText("Title");
+      add(titleLabel_, "span, wrap");
 
-      helpTextPane_ = new JEditorPane();
-      scrollPane.setViewportView(helpTextPane_);
-      helpTextPane_.setEditable(false);
-      //helpTextPane_.setBorder(new LineBorder(Color.black, 1, false));
-
-      DefaultCaret caret = (DefaultCaret)helpTextPane_.getCaret();
-      caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
-      
-      helpTextPane_.setContentType("text/html; charset=ISO-8859-1");
-
-      nextButton_ = new JButton();
-      nextButton_.addActionListener(new ActionListener() {        
-         public void actionPerformed(ActionEvent arg0) {
-            if (curPage_ == pages_.length - 1) {
-               
-               // call the last page's exit
-               pages_[curPage_].exitPage(true);
-               onCloseWindow();
-            } else {
-               setPage(curPage_ + 1);
-            }
-         }
-      });
-
-
-      nextButton_.setText("Next >");
-      nextButton_.setBounds(750, 565, 93, 23);
-      getContentPane().add(nextButton_);
-      getRootPane().setDefaultButton(nextButton_);
+      pagePanel_ = new JPanel(new MigLayout("fill, insets 0"));
+      pagePanel_.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
+      add(pagePanel_, "width 700!, height 600!, span, wrap");
 
       backButton_ = new JButton();
       backButton_.addActionListener(new ActionListener() {
@@ -161,14 +135,33 @@ public class ConfiguratorDlg2 extends MMDialog {
          }
       });
       backButton_.setText("< Back");
-      backButton_.setBounds(647, 565, 93, 23);
-      getContentPane().add(backButton_);
-      pagesLabel_ = new JLabel();
-      pagesLabel_.setBorder(new LineBorder(Color.black, 1, false));
-      pagesLabel_.setBounds(9, 28, 565, 560);
-      getContentPane().add(pagesLabel_);
+      add(backButton_, "span, split, alignx right");
 
-      // add page panels
+      nextButton_ = new JButton("Next >");
+      nextButton_.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            if (curPage_ == pages_.length - 1) {
+               // call the last page's exit
+               pages_[curPage_].exitPage(true);
+               onCloseWindow();
+            } else {
+               setPage(curPage_ + 1);
+            }
+         }
+      });
+
+      add(nextButton_, "wrap");
+      getRootPane().setDefaultButton(nextButton_);
+
+      // Create microscope model used by pages.
+      microModel_ = new MicroscopeModel();
+      microModel_.setSendConfiguration(
+            DefaultUserProfile.getInstance().getBoolean(
+              ConfiguratorDlg2.class, CFG_OKAY_TO_SEND, true));
+      microModel_.loadAvailableDeviceList(core_);
+      microModel_.setFileName(defaultPath_);
+
+      // Set up page panels.
       pages_ = new PagePanel[6];
 
       int pageNumber = 0;
@@ -178,53 +171,32 @@ public class ConfiguratorDlg2 extends MMDialog {
       pages_[pageNumber++] = new DelayPage();
       pages_[pageNumber++] = new LabelsPage();
       pages_[pageNumber++] = new FinishPage();
-
-      microModel_ = new MicroscopeModel();
-      // default to allow sending of configuration to micro-manager.org server
-      boolean bvalue = DefaultUserProfile.getInstance().getBoolean(
-           ConfiguratorDlg2.class, CFG_OKAY_TO_SEND, true);
-      microModel_.setSendConfiguration( bvalue);
-      microModel_.loadAvailableDeviceList(core_);
-      microModel_.setFileName(defaultPath_);
-      Rectangle r = pagesLabel_.getBounds();
-
-      titleLabel_ = new JLabel();
-      titleLabel_.setText("Title");
-      titleLabel_.setBounds(9, 4, 578, 21);
-      getContentPane().add(titleLabel_);
       for (int i = 0; i < pages_.length; i++) {
          try {
             pages_[i].setModel(microModel_, core_);
             pages_[i].loadSettings();
-            pages_[i].setBounds(r);
             pages_[i].setTitle("Step " + (i + 1) + " of " + pages_.length + ": " + pages_[i].getTitle());
             pages_[i].setParentDialog(this);
          } catch (Exception e) {
             ReportingUtils.logError(e);
          }
       }
+
       setPage(0);
+
       // Don't make the model think we've done anything yet.
       microModel_.setModified(false);
    }
 
    private void setPage(int i) {
       // try to exit the current page
-
       if (i > 0) {
          if (!pages_[curPage_].exitPage(curPage_ < i ? true : false)) {
             return;
          }
       }
 
-      int newPage;
-      if (i < 0) {
-         newPage = 0;
-      } else if (i >= pages_.length) {
-         newPage = pages_.length - 1;
-      } else {
-         newPage = i;
-      }
+      int newPage = Math.max(0, Math.min(pages_.length - 1, i));
 
       // try to enter the new page
       if (!pages_[newPage].enterPage(curPage_ > newPage ? true : false)) {
@@ -232,12 +204,11 @@ public class ConfiguratorDlg2 extends MMDialog {
       }
 
       // everything OK so we can proceed with swapping pages
-      getContentPane().remove(pages_[curPage_]);
+      pagePanel_.removeAll();
       curPage_ = newPage;
 
-      getContentPane().add(pages_[curPage_]);
-      // Java 2.0 specific, uncomment once we go for Java 2
-      //frame.getContentPane().setComponentZOrder(pages_[curPage_], 0);
+      pagePanel_.add(pages_[curPage_], "grow");
+      pack();
       getContentPane().repaint();
       pages_[curPage_].refresh();
 
@@ -254,22 +225,6 @@ public class ConfiguratorDlg2 extends MMDialog {
       }
 
       titleLabel_.setText(pages_[curPage_].getTitle());
-
-      // Try to load html help text
-      try {
-         File curDir = new File(".");
-         String helpFileName = pages_[curPage_].getHelpFileName();
-         if (helpFileName == null) {
-            return;
-         }
-         String helpText = readStream(ConfiguratorDlg2.class.getResourceAsStream("/org/micromanager/conf2/" + helpFileName));
-         helpTextPane_.setContentType("text/html; charset=ISO-8859-1");
-         helpTextPane_.setText(helpText);
-      } catch (MalformedURLException e1) {
-         ReportingUtils.showError(e1);
-      } catch (IOException e) {
-         ReportingUtils.showError(e);
-      }
    }
 
    private String UploadCurrentConfigFile() {

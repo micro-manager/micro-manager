@@ -229,7 +229,7 @@ private JComboBox byLibCombo_;
       title_ = "Add or remove devices";
       listByLib_ = true;
 
-      setLayout(new MigLayout("flowx"));
+      setLayout(new MigLayout("fill, flowx"));
       setHelpFileName(HELP_FILE_NAME);
 
       JTextArea help = new JTextArea(
