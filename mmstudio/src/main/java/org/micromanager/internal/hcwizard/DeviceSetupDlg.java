@@ -125,7 +125,8 @@ public class DeviceSetupDlg extends MMDialog {
       comTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       comTable_.setAutoCreateColumnsFromModel(false);
 
-      JPanel buttonPane = new JPanel(new MigLayout("insets 0"));
+      JPanel buttonPane = new JPanel(
+            new MigLayout("fillx, insets 0", "0[grow]0[]0[]0"));
 
       JButton helpButton = new JButton("Help");
       helpButton.addActionListener(new ActionListener() {
@@ -139,7 +140,7 @@ public class DeviceSetupDlg extends MMDialog {
             }
          }
       });
-      buttonPane.add(helpButton, "alignx right");
+      buttonPane.add(helpButton, "alignx left");
 
       JButton okButton = new JButton("OK");
       okButton.addActionListener(new ActionListener() {
@@ -149,7 +150,7 @@ public class DeviceSetupDlg extends MMDialog {
          }
       });
       okButton.setActionCommand("OK");
-      buttonPane.add(okButton);
+      buttonPane.add(okButton, "gapleft push");
       getRootPane().setDefaultButton(okButton);
 
       JButton cancelButton = new JButton("Cancel");
@@ -161,7 +162,7 @@ public class DeviceSetupDlg extends MMDialog {
       });
       cancelButton.setActionCommand("Cancel");
       buttonPane.add(cancelButton, "wrap");
-      contents_.add(buttonPane, "spanx, alignx right, wrap");
+      contents_.add(buttonPane, "spanx, growx, wrap");
 
       addWindowListener(new WindowAdapter() {
          @Override
